@@ -46,7 +46,7 @@ export default function Home() {
 
         // Log QSA Audit
         try {
-            await fetch('http://localhost:8000/qsa/audit', {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/qsa/audit`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

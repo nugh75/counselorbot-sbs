@@ -21,7 +21,7 @@ import {
 } from 'recharts';
 
 // Dynamically import Plotly for client-side rendering only
-const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
+const Plot = dynamic(() => import('react-plotly.js'), { ssr: false }) as any;
 
 interface SurveyResponse {
     id: number;

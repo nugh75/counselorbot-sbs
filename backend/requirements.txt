@@ -8,3 +8,4 @@ openai
 anthropic
 google-generativeai
 mistralai
+edge-tts

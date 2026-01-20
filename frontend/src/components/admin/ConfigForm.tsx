@@ -55,7 +55,7 @@ export function ConfigForm() {
     const fetchConfigs = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:8000/admin/config', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/admin/config`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
@@ -88,7 +88,7 @@ export function ConfigForm() {
     const handleSave = async (item: ConfigItem) => {
         try {
             const token = localStorage.getItem('token');
-            await fetch('http://localhost:8000/admin/config', {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/admin/config`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
