@@ -76,3 +76,53 @@ Se hai popolato il database con script di test o registrato un utente:
 *   **Analisi QSA**: Inserimento manuale o caricamento assistito da AI (PDF/Foto).
 *   **Dashboard Admin**: Configurazione delle API Key (OpenAI, Anthropic, Gemini, ecc.) e gestione dei Prompt di sistema.
 *   **Chat AI**: Consulente virtuale basato sui punteggi QSA dell'utente.
+
+---
+
+## 🐳 Docker
+
+L'applicazione può essere avviata con Docker Compose per un setup rapido.
+
+### Prerequisiti Docker
+- Docker e Docker Compose installati
+
+### Avvio Rapido
+
+```bash
+docker compose up --build
+```
+
+Questo comando:
+1. Costruisce le immagini per frontend e backend
+2. Avvia entrambi i servizi
+3. Monta il database SQLite per la persistenza dei dati
+
+### Accesso
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000/docs
+
+### Configurazione API Keys
+Le chiavi API si configurano dal pannello admin:
+1. Vai su http://localhost:3000/login
+2. Accedi con `admin` / `admin123`
+3. Configura provider e API Key nella sezione Configurazione
+
+### Comandi Utili
+
+```bash
+# Avvia in background
+docker compose up -d
+
+# Ferma i container
+docker compose down
+
+# Ricostruisci dopo modifiche al codice
+docker compose up --build
+
+# Visualizza i log
+docker compose logs -f
+```
+
+### Note
+- Il database `counselorbot.db` viene montato come volume per persistere i dati
+- Assicurati che le porte 3000 e 8000 siano libere prima di avviare
