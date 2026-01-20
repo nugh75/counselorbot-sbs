@@ -40,13 +40,24 @@ export default function Home() {
         setStep('manual-input');
     };
 
+    // Safe UUID generation that works in HTTP (non-secure) contexts
+    const generateUUID = () => {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+            return crypto.randomUUID();
+        }
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    };
+
     const startInteraction = async () => {
-        const newSessionId = crypto.randomUUID();
+        const newSessionId = generateUUID();
         setSessionId(newSessionId);
 
         // Log QSA Audit
         try {
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/qsa/audit`, {
+            await fetch('/api/qsa/audit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

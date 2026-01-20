@@ -1,14 +1,29 @@
 services:
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: counselorbot_backend
     ports:
       - "8000:8000"
-    volumes:
-      - ./counselorbot.db:/app/counselorbot.db
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    depends_on:
+      - postgres
     restart: unless-stopped
+
+  postgres:
+    image: postgres:15
+    container_name: counselorbot_postgres
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
 
   frontend:
     build:
@@ -22,3 +37,6 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+
+volumes:
+  postgres_data:

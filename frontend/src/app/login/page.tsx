@@ -28,7 +28,7 @@ export default function LoginPage() {
             formData.append('username', data.username);
             formData.append('password', data.password);
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/token`, {
+            const res = await fetch('/api/token', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',

@@ -15,7 +15,11 @@ app = FastAPI()
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://0.0.0.0:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -222,8 +226,62 @@ async def audit_qsa(request: QsaAuditRequest, db: Session = Depends(get_db)):
         details={"scores": request.scores}
     )
     db.add(log_entry)
+    db.add(log_entry)
     db.commit()
     return {"status": "ok"}
+
+# --- Vision / Upload Endpoints ---
+from fastapi import UploadFile, File
+import shutil
+import subprocess
+import json
+import os
+import sys
+
+@app.post("/qsa/upload")
+async def upload_qsa_document(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    # 1. Save file temporarily
+    temp_dir = ".tmp"
+    os.makedirs(temp_dir, exist_ok=True)
+    temp_file_path = os.path.join(temp_dir, f"upload_{uuid.uuid4()}_{file.filename}")
+    
+    with open(temp_file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    try:
+        # 2. Call execution script
+        # Using python subprocess to call the script we defined in directives
+        script_path = "execution/extract_qsa_vision.py"
+        
+        # Ensure script exists
+        if not os.path.exists(script_path):
+             raise HTTPException(status_code=500, detail="Extraction script not found")
+        
+        result = subprocess.run(
+            [sys.executable, script_path, temp_file_path],
+            capture_output=True,
+            text=True
+        )
+        
+        if result.returncode != 0:
+             print(f"Script Error: {result.stderr}")
+             raise HTTPException(status_code=500, detail="Failed to process image")
+             
+        # 3. Parse result
+        try:
+            extraction_data = json.loads(result.stdout)
+            if "error" in extraction_data:
+                 raise HTTPException(status_code=400, detail=extraction_data["error"])
+            return extraction_data
+        except json.JSONDecodeError:
+             print(f"JSON Error: {result.stdout}")
+             raise HTTPException(status_code=500, detail="Invalid response from AI extractor")
+             
+    finally:
+        # 4. Clean up
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
+
 
 # Text-to-Speech Endpoint using edge-tts
 import edge_tts

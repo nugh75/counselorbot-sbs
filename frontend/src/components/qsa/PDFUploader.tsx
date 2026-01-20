@@ -11,6 +11,7 @@ interface PDFUploaderProps {
 export function PDFUploader({ onUploadComplete }: PDFUploaderProps) {
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [fileInputRef, setFileInputRef] = useState<HTMLInputElement | null>(null);
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault();
@@ -27,25 +28,52 @@ export function PDFUploader({ onUploadComplete }: PDFUploaderProps) {
         e.stopPropagation();
         setIsDragging(false);
 
-        // Mock upload process
         const files = e.dataTransfer.files;
         if (files && files[0]) {
-            startMockUpload(files[0]);
+            startUpload(files[0]);
         }
     };
 
-    const startMockUpload = (file: File) => {
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files && files[0]) {
+            startUpload(files[0]);
+        }
+    };
+
+    const triggerFileSelect = () => {
+        fileInputRef?.click();
+    };
+
+    const startUpload = async (file: File) => {
         setIsUploading(true);
-        // Simulate API call delay
-        setTimeout(() => {
+        
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            // Adjust the URL if necessary based on your Next.js proxy or backend URL
+            // Assuming Next.js rewrites /api -> Backend
+            // If direct to backend: http://localhost:8000/qsa/upload
+            const response = await fetch('http://localhost:8000/qsa/upload', {
+                method: 'POST',
+                body: formData,
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Upload failed');
+            }
+            
+            const data = await response.json();
+            onUploadComplete(data);
+            
+        } catch (error) {
+            console.error("Upload error:", error);
+            alert("Errore durante l'analisi del documento. Riprova o inserisci i dati manualmente.");
+        } finally {
             setIsUploading(false);
-            // Return some mock data for demo purposes
-            const mockScores = {
-                C1: 5, C2: 3, C3: 2, C4: 7, C5: 4, C6: 6, C7: 8,
-                A1: 2, A2: 6, A3: 5, A4: 3, A5: 2, A6: 7, A7: 1
-            };
-            onUploadComplete(mockScores);
-        }, 2000);
+        }
     };
 
     return (
@@ -74,7 +102,17 @@ export function PDFUploader({ onUploadComplete }: PDFUploaderProps) {
                         </div>
                         <p className="text-lg font-medium mb-1">Trascina qui il tuo file (PDF o Immagine)</p>
                         <p className="text-sm text-muted-foreground mb-6">oppure clicca per selezionare</p>
-                        <button className="px-6 py-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors font-medium text-sm">
+                        <input
+                            type="file"
+                            className="hidden"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            ref={setFileInputRef}
+                            onChange={handleFileSelect}
+                        />
+                        <button
+                            onClick={triggerFileSelect}
+                            className="px-6 py-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors font-medium text-sm"
+                        >
                             Seleziona File
                         </button>
                     </>

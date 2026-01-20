@@ -214,7 +214,7 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
 
         try {
             const scoresContext = formatScoresForPrompt(scores);
-            const res = await fetch('http://localhost:8000/chat', {
+            const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -256,7 +256,7 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
             // Ideally, user reads analysis, clicks "Next". But if they ask a question during analysis, we answer in that context.
             const mode = currentPhase === 'questions' ? 'generic' : PHASE_CONFIG[currentPhase].promptMode;
 
-            const res = await fetch('http://localhost:8000/chat', {
+            const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -302,7 +302,7 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
         setIsAudioLoading(true);
 
         try {
-            const response = await fetch('http://localhost:8000/tts', {
+            const response = await fetch('/api/tts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text }),
@@ -492,7 +492,7 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
                 {currentPhase === 'conclusion' ? (
                     <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-center">
                         <button
-                            onClick={() => router.push('/')}
+                            onClick={() => window.location.href = '/'}
                             className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-colors flex items-center gap-2 shadow-lg shadow-green-200"
                         >
                             <Home className="w-5 h-5" />
