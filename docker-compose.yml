@@ -29,11 +29,13 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: https://api-counselorbot-sbs.ai4educ.org
     container_name: counselorbot_frontend
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=https://api-counselorbot-sbs.ai4educ.org
     depends_on:
       - backend
     restart: unless-stopped

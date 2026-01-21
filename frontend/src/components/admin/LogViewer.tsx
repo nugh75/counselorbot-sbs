@@ -21,7 +21,7 @@ export function LogViewer() {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:8000/admin/logs', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/admin/logs`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {

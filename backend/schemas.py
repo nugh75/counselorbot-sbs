@@ -1,6 +1,7 @@
-from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, validator
+from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
+import json
 
 # Token
 class Token(BaseModel):
@@ -50,6 +51,16 @@ class LogResponse(LogBase):
     id: int
     timestamp: datetime
     user_id: Optional[int]
+    details: Optional[Union[Dict[str, Any], str]] = None
+
+    @validator('details', pre=True)
+    def parse_details(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except (ValueError, TypeError):
+                return {"raw_content": v}
+        return v
 
     class Config:
         from_attributes = True

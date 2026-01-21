@@ -44,7 +44,7 @@ export default function AdminPage() {
 
                     <button
                         onClick={handleLogout}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/10 text-sm text-gray-300 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors shadow-sm"
                     >
                         <LogOut className="w-4 h-4" />
                         Logout
