@@ -492,7 +492,7 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
                 {currentPhase === 'conclusion' ? (
                     <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-center">
                         <button
-                            onClick={() => window.location.href = '/'}
+                            onClick={() => window.location.href = '/counselorbot/'}
                             className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-colors flex items-center gap-2 shadow-lg shadow-green-200"
                         >
                             <Home className="w-5 h-5" />

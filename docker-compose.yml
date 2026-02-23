@@ -4,8 +4,8 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     container_name: counselorbot_backend
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     env_file:
       - .env
     environment:
@@ -13,6 +13,9 @@ services:
     depends_on:
       - postgres
     restart: unless-stopped
+    networks:
+      - default
+      - proxy-network
 
   postgres:
     image: postgres:15
@@ -22,23 +25,29 @@ services:
       - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    expose:
+      - "5432"
+    networks:
+      - default
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: https://api-counselorbot-sbs.ai4educ.org
     container_name: counselorbot_frontend
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=https://api-counselorbot-sbs.ai4educ.org
+    expose:
+      - "3000"
     depends_on:
       - backend
     restart: unless-stopped
+    networks:
+      - default
+      - proxy-network
 
 volumes:
   postgres_data:
+
+networks:
+  default:
+  proxy-network:
+    external: true

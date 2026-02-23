@@ -55,7 +55,7 @@ export function ConfigForm() {
     const fetchConfigs = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/admin/config`, {
+            const res = await fetch(`/api/admin/config`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
@@ -70,7 +70,7 @@ export function ConfigForm() {
             } else {
                 if (res.status === 401 || res.status === 403) {
                     localStorage.removeItem('token');
-                    window.location.href = '/login';
+                    window.location.href = '/counselorbot/login';
                 }
                 console.error('Failed to fetch config:', res.statusText);
             }
@@ -88,7 +88,7 @@ export function ConfigForm() {
     const handleSave = async (item: ConfigItem) => {
         try {
             const token = localStorage.getItem('token');
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/admin/config`, {
+            await fetch(`/api/admin/config`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

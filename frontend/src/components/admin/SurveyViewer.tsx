@@ -53,7 +53,7 @@ export function SurveyViewer() {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/admin/surveys`, {
+            const res = await fetch(`/api/admin/surveys`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
@@ -62,7 +62,7 @@ export function SurveyViewer() {
             } else {
                 if (res.status === 401 || res.status === 403) {
                     localStorage.removeItem('token');
-                    window.location.href = '/login';
+                    window.location.href = '/counselorbot/login';
                 }
                 console.error('Failed to fetch surveys:', res.statusText);
             }
@@ -83,7 +83,7 @@ export function SurveyViewer() {
 
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/admin/survey/${id}`, {
+            const res = await fetch(`/api/admin/survey/${id}`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` }
             });
