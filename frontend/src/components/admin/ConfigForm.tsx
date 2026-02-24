@@ -42,7 +42,20 @@ const PROVIDERS: Record<string, { label: string; models: string[] }> = {
     },
     ollama: {
         label: 'Ollama (Local)',
-        models: ['llama3', 'mistral', 'gemma2', 'phi3']
+        models: [
+            'qwen3:32b',
+            'qwen3:latest',
+            'qwen3-coder-next:latest',
+            'gemma3:27b',
+            'gemma3:12b',
+            'gemma3:latest',
+            'deepseek-r1:latest',
+            'deepseek-r1:8b',
+            'nemotron-3-nano:30b',
+            'mistral:7b',
+            'gpt-oss:20b',
+            'qwen2.5-coder:7b',
+        ]
     }
 };
 
@@ -51,15 +64,22 @@ export function ConfigForm() {
     const [loading, setLoading] = useState(true);
     const [activeProvider, setActiveProvider] = useState('openai');
     const [activeModel, setActiveModel] = useState('gpt-4o');
+    const [envOverrides, setEnvOverrides] = useState<Record<string, boolean>>({});
 
     const fetchConfigs = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`/api/admin/config`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data: ConfigItem[] = await res.json();
+            const [configRes, envRes] = await Promise.all([
+                fetch(`/counselorbot/api/admin/config`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                }),
+                fetch(`/counselorbot/api/admin/config/env-status`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+            ]);
+
+            if (configRes.ok) {
+                const data: ConfigItem[] = await configRes.json();
                 setConfigs(data);
 
                 // Sync local state
@@ -68,11 +88,15 @@ export function ConfigForm() {
                 if (prov) setActiveProvider(prov);
                 if (mod) setActiveModel(mod);
             } else {
-                if (res.status === 401 || res.status === 403) {
+                if (configRes.status === 401 || configRes.status === 403) {
                     localStorage.removeItem('token');
                     window.location.href = '/counselorbot/login';
                 }
-                console.error('Failed to fetch config:', res.statusText);
+                console.error('Failed to fetch config:', configRes.statusText);
+            }
+
+            if (envRes.ok) {
+                setEnvOverrides(await envRes.json());
             }
         } catch (error) {
             console.error('Failed to fetch config', error);
@@ -88,7 +112,7 @@ export function ConfigForm() {
     const handleSave = async (item: ConfigItem) => {
         try {
             const token = localStorage.getItem('token');
-            await fetch(`/api/admin/config`, {
+            await fetch(`/counselorbot/api/admin/config`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -179,6 +203,7 @@ export function ConfigForm() {
                 <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">API Keys</h3>
                 {apiKeys.map((def) => {
                     const currentVal = configs.find(c => c.key === def.key)?.value || '';
+                    const isEnvOverridden = envOverrides[def.key] || false;
                     const isActive =
                         (activeProvider === 'openai' && def.key === 'api_key_openai') ||
                         (activeProvider === 'anthropic' && def.key === 'api_key_anthropic') ||
@@ -190,12 +215,18 @@ export function ConfigForm() {
                     return (
                         <div key={def.key} className={`glass-panel p-4 rounded-xl flex items-center gap-4 transition-colors ${isActive ? 'bg-blue-50 border-blue-400 ring-1 ring-blue-400' : 'hover:border-slate-400'}`}>
                             <div className="flex-1">
-                                <label className="text-xs font-semibold text-slate-500 mb-1 block">{def.label}</label>
+                                <label className="text-xs font-semibold text-slate-500 mb-1 flex items-center gap-2">
+                                    {def.label}
+                                    {isEnvOverridden && (
+                                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">ENV</span>
+                                    )}
+                                </label>
                                 <input
                                     type="password"
-                                    className="w-full bg-transparent border-none p-0 text-sm text-slate-900 focus:ring-0 placeholder-slate-400 font-mono"
-                                    placeholder="sk-..."
-                                    value={currentVal}
+                                    className={`w-full bg-transparent border-none p-0 text-sm text-slate-900 focus:ring-0 placeholder-slate-400 font-mono ${isEnvOverridden ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    placeholder={isEnvOverridden ? 'Impostata tramite variabile d\'ambiente (.env)' : 'sk-...'}
+                                    value={isEnvOverridden ? '' : currentVal}
+                                    disabled={isEnvOverridden}
                                     onChange={(e) => {
                                         const newVal = e.target.value;
                                         setConfigs(prev => {
@@ -205,12 +236,14 @@ export function ConfigForm() {
                                     }}
                                 />
                             </div>
-                            <button
-                                onClick={() => handleSave({ key: def.key, value: configs.find(c => c.key === def.key)?.value || '', description: def.label })}
-                                className="p-2 hover:bg-slate-200 rounded-lg text-blue-600 transition-colors"
-                            >
-                                <Save className="w-4 h-4" />
-                            </button>
+                            {!isEnvOverridden && (
+                                <button
+                                    onClick={() => handleSave({ key: def.key, value: configs.find(c => c.key === def.key)?.value || '', description: def.label })}
+                                    className="p-2 hover:bg-slate-200 rounded-lg text-blue-600 transition-colors"
+                                >
+                                    <Save className="w-4 h-4" />
+                                </button>
+                            )}
                         </div>
                     )
                 })}

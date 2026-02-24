@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
@@ -98,6 +101,13 @@ async def create_or_update_config(config: schemas.ConfigCreate, current_user: mo
     db.commit()
     db.refresh(db_config)
     return db_config
+
+@app.get("/admin/config/env-status")
+async def get_env_override_status(current_user: models.User = Depends(auth.get_current_active_admin)):
+    """Restituisce quali chiavi config sono sovrascritte da variabili d'ambiente."""
+    import os
+    from .ai_service import ENV_KEY_MAP
+    return {db_key: bool(os.environ.get(env_var)) for db_key, env_var in ENV_KEY_MAP.items()}
 
 # --- Survey Endpoints ---
 

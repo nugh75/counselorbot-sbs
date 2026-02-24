@@ -55,7 +55,7 @@ export function PDFUploader({ onUploadComplete }: PDFUploaderProps) {
             // Adjust the URL if necessary based on your Next.js proxy or backend URL
             // Assuming Next.js rewrites /api -> Backend
             // If direct to backend: http://localhost:8000/qsa/upload
-            const response = await fetch('/api/qsa/upload', {
+            const response = await fetch('/counselorbot/api/qsa/upload', {
                 method: 'POST',
                 body: formData,
             });

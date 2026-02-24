@@ -7,6 +7,16 @@ import google.generativeai as genai
 from mistralai import Mistral
 from mistralai.models import UserMessage, SystemMessage
 
+# Mappa chiavi DB -> variabili d'ambiente per i segreti
+ENV_KEY_MAP = {
+    'api_key_openai': 'API_KEY_OPENAI',
+    'api_key_anthropic': 'API_KEY_ANTHROPIC',
+    'api_key_gemini': 'API_KEY_GEMINI',
+    'api_key_mistral': 'API_KEY_MISTRAL',
+    'api_key_openrouter': 'API_KEY_OPENROUTER',
+    'ollama_ip': 'OLLAMA_BASE_URL',
+}
+
 class AIService:
     def __init__(self, db: Session):
         self.db = db
@@ -14,7 +24,15 @@ class AIService:
 
     def _load_config(self):
         configs = self.db.query(models.Config).all()
-        return {c.key: c.value for c in configs}
+        config_dict = {c.key: c.value for c in configs}
+
+        # Le variabili d'ambiente hanno priorità sui valori nel DB
+        for db_key, env_var in ENV_KEY_MAP.items():
+            env_value = os.environ.get(env_var)
+            if env_value:
+                config_dict[db_key] = env_value
+
+        return config_dict
 
     def _get_api_key(self, provider_key):
         return self.config.get(provider_key)

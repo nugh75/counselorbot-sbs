@@ -57,7 +57,7 @@ export default function Home() {
 
         // Log QSA Audit
         try {
-            await fetch('/api/qsa/audit', {
+            await fetch('/counselorbot/api/qsa/audit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

@@ -214,7 +214,7 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
 
         try {
             const scoresContext = formatScoresForPrompt(scores);
-            const res = await fetch('/api/chat', {
+            const res = await fetch('/counselorbot/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -256,7 +256,7 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
             // Ideally, user reads analysis, clicks "Next". But if they ask a question during analysis, we answer in that context.
             const mode = currentPhase === 'questions' ? 'generic' : PHASE_CONFIG[currentPhase].promptMode;
 
-            const res = await fetch('/api/chat', {
+            const res = await fetch('/counselorbot/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -302,7 +302,7 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
         setIsAudioLoading(true);
 
         try {
-            const response = await fetch('/api/tts', {
+            const response = await fetch('/counselorbot/api/tts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text }),

@@ -21,7 +21,7 @@ export function LogViewer() {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`/api/admin/logs`, {
+            const res = await fetch(`/counselorbot/api/admin/logs`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
