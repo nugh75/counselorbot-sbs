@@ -27,6 +27,16 @@ class Log(Base):
     action = Column(String) # e.g., "login", "chat_message", "qsa_analysis"
     details = Column(JSON) # e.g., prompt used, score data, message content
 
+class GuidedStep(Base):
+    __tablename__ = "guided_steps"
+
+    id = Column(String, primary_key=True)
+    sort_order = Column(Integer, nullable=False)
+    label = Column(String, nullable=False)
+    prompt = Column(Text, nullable=False)
+    system_prompt_mode = Column(String, nullable=False, default="generic")
+    color_theme = Column(String, nullable=False, default="blue")
+
 class SurveyResponse(Base):
     __tablename__ = "survey_responses"
     

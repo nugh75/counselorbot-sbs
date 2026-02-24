@@ -7,17 +7,15 @@ import { QSAFactorCode, QSA_FACTORS, analyzeScore } from '@/lib/qsa-model';
 import ReactMarkdown from 'react-markdown';
 import { useRouter } from 'next/navigation';
 
-type Phase =
-    | 'cognitive'
-    | 'affective'
-    | 'sl-elaboration'      // 1. Elaborazione e Organizzazione
-    | 'sl-selfcontrol'      // 2. Autocontrollo e Concentrazione
-    | 'sl-motivation'       // 3. Motivazione e Volontà
-    | 'sl-emotions'         // 4. Gestione Emotiva
-    | 'sl-attribution'      // 5. Stile Attributivo
-    | 'sl-social'           // 6. Dimensione Sociale
-    | 'questions'           // 4. Domande (renamed from general)
-    | 'conclusion';
+// --- Types ---
+
+interface StepDef {
+    id: string;
+    sort_order: number;
+    label: string;
+    system_prompt_mode: string;
+    color_theme: string;
+}
 
 interface GuidedChatInterfaceProps {
     scores: Record<QSAFactorCode, number>;
@@ -25,84 +23,35 @@ interface GuidedChatInterfaceProps {
     sessionId: string;
 }
 
-const INVERTED_FACTORS: QSAFactorCode[] = ['C3', 'C6', 'A1', 'A4', 'A5', 'A7'];
+// --- Color theme mapping (string literals for Tailwind scanner) ---
 
-const PHASE_CONFIG: Record<Phase, { label: string; headerBg: string; iconBg: string; promptMode: string; promptText?: string }> = {
-    'cognitive': {
-        label: '1. Fattori Cognitivi',
-        headerBg: 'bg-blue-50',
-        iconBg: 'bg-blue-500',
-        promptMode: 'factor',
-        promptText: 'Analizza SOLO i fattori COGNITIVI (C1-C7) del mio profilo QSA. Per ciascuno dai il punteggio, interpretazione e breve commento.'
-    },
-    'affective': {
-        label: '2. Fattori Affettivi',
-        headerBg: 'bg-purple-50',
-        iconBg: 'bg-purple-500',
-        promptMode: 'factor',
-        promptText: 'Analizza SOLO i fattori AFFETTIVI (A1-A7) del mio profilo QSA. Per ciascuno dai il punteggio, interpretazione e breve commento.'
-    },
-    'sl-elaboration': {
-        label: '3.1 Elaborazione e Org.',
-        headerBg: 'bg-indigo-50',
-        iconBg: 'bg-indigo-500',
-        promptMode: 'second-level',
-        promptText: 'Analisi 2° Livello - Parte 1: ELABORAZIONE E ORGANIZZAZIONE. Analizza insieme i fattori: C1 (Strategie elaborative), C5 (Organizzatori semantici), C7 (Autointerrogazione). Valuta come lo studente processa e struttura le informazioni.'
-    },
-    'sl-selfcontrol': {
-        label: '3.2 Autocontrollo',
-        headerBg: 'bg-indigo-50',
-        iconBg: 'bg-indigo-500',
-        promptMode: 'second-level',
-        promptText: 'Analisi 2° Livello - Parte 2: AUTOCONTROLLO E CONCENTRAZIONE. Analizza insieme i fattori: C2 (Autoregolazione), C3 (Disorientamento), C6 (Difficoltà concentrazione). Valuta la capacità di gestire il processo di studio.'
-    },
-    'sl-motivation': {
-        label: '3.3 Motivazione',
-        headerBg: 'bg-pink-50',
-        iconBg: 'bg-pink-500',
-        promptMode: 'second-level',
-        promptText: 'Analisi 2° Livello - Parte 3: MOTIVAZIONE E VOLONTÀ. Analizza insieme i fattori: A2 (Volizione), A5 (Mancanza perseveranza), A6 (Percezione competenza). Valuta la spinta motivazionale e la fiducia in se stessi.'
-    },
-    'sl-emotions': {
-        label: '3.4 Gestione Emotiva',
-        headerBg: 'bg-pink-50',
-        iconBg: 'bg-pink-500',
-        promptMode: 'second-level',
-        promptText: 'Analisi 2° Livello - Parte 4: GESTIONE EMOTIVA. Analizza insieme i fattori: A1 (Ansietà di base), A7 (Interferenze emotive). Valuta la capacità di gestire stress ed emozioni negative.'
-    },
-    'sl-attribution': {
-        label: '3.5 Stile Attributivo',
-        headerBg: 'bg-orange-50',
-        iconBg: 'bg-orange-500',
-        promptMode: 'second-level',
-        promptText: 'Analisi 2° Livello - Parte 5: STILE ATTRIBUTIVO. Analizza insieme i fattori: A3 (Attribuzione controllabile), A4 (Attribuzione incontrollabile). Valuta come lo studente interpreta successi e insuccessi.'
-    },
-    'sl-social': {
-        label: '3.6 Dimensione Sociale',
-        headerBg: 'bg-teal-50',
-        iconBg: 'bg-teal-500',
-        promptMode: 'second-level',
-        promptText: 'Analisi 2° Livello - Parte 6: DIMENSIONE SOCIALE. Analizza il fattore C4 (Collaborazione). Valuta la propensione al lavoro di gruppo.'
-    },
-    'questions': {
-        label: '4. Domande e Approfondimenti',
-        headerBg: 'bg-green-50',
-        iconBg: 'bg-green-500',
-        promptMode: 'generic'
-    },
-    'conclusion': {
-        label: 'Conclusione',
-        headerBg: 'bg-slate-50',
-        iconBg: 'bg-slate-500',
-        promptMode: 'generic'
-    },
+const COLOR_THEMES: Record<string, { headerBg: string; iconBg: string }> = {
+    blue:   { headerBg: 'bg-blue-50',   iconBg: 'bg-blue-500' },
+    purple: { headerBg: 'bg-purple-50', iconBg: 'bg-purple-500' },
+    indigo: { headerBg: 'bg-indigo-50', iconBg: 'bg-indigo-500' },
+    pink:   { headerBg: 'bg-pink-50',   iconBg: 'bg-pink-500' },
+    orange: { headerBg: 'bg-orange-50', iconBg: 'bg-orange-500' },
+    teal:   { headerBg: 'bg-teal-50',   iconBg: 'bg-teal-500' },
+    green:  { headerBg: 'bg-green-50',  iconBg: 'bg-green-500' },
+    red:    { headerBg: 'bg-red-50',    iconBg: 'bg-red-500' },
+    amber:  { headerBg: 'bg-amber-50',  iconBg: 'bg-amber-500' },
+    cyan:   { headerBg: 'bg-cyan-50',   iconBg: 'bg-cyan-500' },
+    slate:  { headerBg: 'bg-slate-50',  iconBg: 'bg-slate-500' },
+    rose:   { headerBg: 'bg-rose-50',   iconBg: 'bg-rose-500' },
 };
 
-const PHASE_ORDER: Phase[] = [
-    'cognitive', 'affective',
-    'sl-elaboration', 'sl-selfcontrol', 'sl-motivation', 'sl-emotions', 'sl-attribution', 'sl-social',
-    'questions', 'conclusion'
-];
+const DEFAULT_COLOR = { headerBg: 'bg-blue-50', iconBg: 'bg-blue-500' };
+const QUESTIONS_COLOR = { headerBg: 'bg-green-50', iconBg: 'bg-green-500' };
+const CONCLUSION_COLOR = { headerBg: 'bg-slate-50', iconBg: 'bg-slate-500' };
+
+// --- Fixed phases ---
+
+const FIXED_QUESTIONS_ID = 'questions';
+const FIXED_CONCLUSION_ID = 'conclusion';
+
+// --- Helpers ---
+
+const INVERTED_FACTORS: QSAFactorCode[] = ['C3', 'C6', 'A1', 'A4', 'A5', 'A7'];
 
 function formatScoresForPrompt(scores: Record<QSAFactorCode, number>): string {
     const lines: string[] = ['PROFILO QSA DELLO STUDENTE:'];
@@ -146,17 +95,34 @@ function CompactScoreBar({ code, score }: { code: QSAFactorCode; score: number }
     );
 }
 
+// --- Main Component ---
+
 export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedChatInterfaceProps) {
     const router = useRouter();
-    const [currentPhase, setCurrentPhase] = useState<Phase>('cognitive');
+    const [steps, setSteps] = useState<StepDef[]>([]);
+    const [phases, setPhases] = useState<string[]>([]);
+    const [currentPhase, setCurrentPhase] = useState<string>('');
     const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [initialLoading, setInitialLoading] = useState(true);
     const [playingMessageIdx, setPlayingMessageIdx] = useState<number | null>(null);
     const [isAudioLoading, setIsAudioLoading] = useState(false);
+
+    // Fixed-phase configurable texts
+    const [questionsLabel, setQuestionsLabel] = useState('4. Domande e Approfondimenti');
+    const [conclusionLabel, setConclusionLabel] = useState('Conclusione');
+    const [questionsBanner, setQuestionsBanner] = useState('--- Fase 4: Domande e Approfondimenti ---');
+    const [questionsIntro, setQuestionsIntro] = useState(
+        "Abbiamo completato l'analisi strutturata. Ora puoi farmi qualsiasi domanda libera sul tuo metodo di studio, sui risultati o chiedere consigli specifici."
+    );
+    const [conclusionText, setConclusionText] = useState(
+        'Hai completato il percorso di analisi del QSA. Spero ti sia stato utile! Clicca sul pulsante in basso per tornare alla Home Page.'
+    );
+
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const lastProcessedPhase = useRef<Phase | null>(null);
+    const lastProcessedPhase = useRef<string | null>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -166,7 +132,6 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
         scrollToBottom();
     }, [messages]);
 
-    // Cleanup audio on unmount
     useEffect(() => {
         return () => {
             if (audioRef.current) {
@@ -175,41 +140,106 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
         };
     }, []);
 
-    // Initial trigger and Phase changes
+    // Load step definitions and config texts from backend
     useEffect(() => {
+        let isMounted = true;
+
+        const loadData = async () => {
+            try {
+                const res = await fetch('/counselorbot/api/qsa/guided-ui-texts');
+                if (!res.ok) return;
+
+                const data = await res.json();
+                if (!isMounted) return;
+
+                // Dynamic steps
+                const loadedSteps: StepDef[] = data.guided_steps || [];
+                setSteps(loadedSteps);
+
+                // Build phase order: [...step ids, 'questions', 'conclusion']
+                const phaseOrder = [
+                    ...loadedSteps.map((s: StepDef) => s.id),
+                    FIXED_QUESTIONS_ID,
+                    FIXED_CONCLUSION_ID,
+                ];
+                setPhases(phaseOrder);
+
+                // Set first phase
+                if (phaseOrder.length > 0) {
+                    setCurrentPhase(phaseOrder[0]);
+                }
+
+                // Fixed-phase labels and texts
+                if (data.label_guided_questions) setQuestionsLabel(data.label_guided_questions);
+                if (data.label_guided_conclusion) setConclusionLabel(data.label_guided_conclusion);
+                if (data.text_guided_questions_phase_banner) setQuestionsBanner(data.text_guided_questions_phase_banner);
+                if (data.text_guided_questions_intro) setQuestionsIntro(data.text_guided_questions_intro);
+                if (data.text_guided_conclusion) setConclusionText(data.text_guided_conclusion);
+            } catch {
+                // Fallback: empty steps, just questions + conclusion
+                setPhases([FIXED_QUESTIONS_ID, FIXED_CONCLUSION_ID]);
+                setCurrentPhase(FIXED_QUESTIONS_ID);
+            } finally {
+                if (isMounted) setInitialLoading(false);
+            }
+        };
+
+        loadData();
+        return () => { isMounted = false; };
+    }, []);
+
+    // Helpers for current phase
+    const getStepDef = (phaseId: string): StepDef | undefined => steps.find(s => s.id === phaseId);
+
+    const getPhaseLabel = (phaseId: string): string => {
+        if (phaseId === FIXED_QUESTIONS_ID) return questionsLabel;
+        if (phaseId === FIXED_CONCLUSION_ID) return conclusionLabel;
+        return getStepDef(phaseId)?.label || phaseId;
+    };
+
+    const getPhaseColors = (phaseId: string) => {
+        if (phaseId === FIXED_QUESTIONS_ID) return QUESTIONS_COLOR;
+        if (phaseId === FIXED_CONCLUSION_ID) return CONCLUSION_COLOR;
+        const step = getStepDef(phaseId);
+        return (step && COLOR_THEMES[step.color_theme]) || DEFAULT_COLOR;
+    };
+
+    const isAnalysisStep = (phaseId: string): boolean => {
+        return phaseId !== FIXED_QUESTIONS_ID && phaseId !== FIXED_CONCLUSION_ID;
+    };
+
+    // Phase change handler
+    useEffect(() => {
+        if (!currentPhase || initialLoading) return;
         if (lastProcessedPhase.current === currentPhase) return;
         lastProcessedPhase.current = currentPhase;
 
-        const config = PHASE_CONFIG[currentPhase];
-
-        if (currentPhase === 'questions') {
+        if (currentPhase === FIXED_QUESTIONS_ID) {
             setMessages(prev => [...prev, {
                 role: 'system',
-                content: '--- Fase 4: Domande e Approfondimenti ---'
+                content: questionsBanner,
             }, {
                 role: 'assistant',
-                content: 'Abbiamo completato l\'analisi strutturata. Ora puoi farmi qualsiasi domanda libera sul tuo metodo di studio, sui risultati o chiedere consigli specifici.'
+                content: questionsIntro,
             }]);
-        } else if (currentPhase === 'conclusion') {
-            // Conclusion is just a state to show the exit button, no auto-generation needed per se, 
-            // but we can add a closing message.
+        } else if (currentPhase === FIXED_CONCLUSION_ID) {
             setMessages(prev => [...prev, {
                 role: 'assistant',
-                content: 'Hai completato il percorso di analisi del QSA. Spero ti sia stato utile! Clicca sul pulsante in basso per tornare alla Home Page.'
+                content: conclusionText,
             }]);
         } else {
-            // Auto-generate analysis for structured phases
-            if (config.promptText) {
-                generateAnalysis(config.promptText, config.promptMode);
+            // Auto-generate analysis for dynamic steps
+            const step = getStepDef(currentPhase);
+            if (step) {
+                generateAnalysis(step);
             }
         }
-    }, [currentPhase]);
+    }, [currentPhase, initialLoading]);
 
-    const generateAnalysis = async (prompt: string, mode: string) => {
+    const generateAnalysis = async (step: StepDef) => {
         setIsLoading(true);
-        // Add a separator for readability in history
         if (messages.length > 0) {
-            setMessages(prev => [...prev, { role: 'system', content: `--- ${PHASE_CONFIG[currentPhase].label} ---` }]);
+            setMessages(prev => [...prev, { role: 'system', content: `--- ${step.label} ---` }]);
         }
 
         try {
@@ -218,30 +248,29 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    message: prompt,
-                    mode: mode,
+                    message: '',
+                    mode: step.system_prompt_mode,
+                    phase: step.id,
+                    use_phase_prompt: true,
                     scores_context: scoresContext,
-                    session_id: sessionId
+                    session_id: sessionId,
                 }),
             });
 
             if (res.ok) {
                 const data = await res.json();
-                setMessages(prev => [...prev, {
-                    role: 'assistant',
-                    content: data.response
-                }]);
+                setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
             } else {
-                setMessages(prev => [...prev, { role: 'assistant', content: 'Errore durante l\'analisi.' }]);
+                setMessages(prev => [...prev, { role: 'assistant', content: "Errore durante l'analisi." }]);
             }
-        } catch (error) {
+        } catch {
             setMessages(prev => [...prev, { role: 'assistant', content: 'Errore di connessione.' }]);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleSend = async (e: React.FormEvent) => {
+    const handleSend = async (e: { preventDefault: () => void }) => {
         e.preventDefault();
         if (!input.trim() || isLoading) return;
 
@@ -252,9 +281,10 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
 
         try {
             const scoresContext = formatScoresForPrompt(scores);
-            // In questions phase, use generic mode. In others, stick to the phase context (though usually user just reads in analysis phases)
-            // Ideally, user reads analysis, clicks "Next". But if they ask a question during analysis, we answer in that context.
-            const mode = currentPhase === 'questions' ? 'generic' : PHASE_CONFIG[currentPhase].promptMode;
+            const step = getStepDef(currentPhase);
+            const mode = currentPhase === FIXED_QUESTIONS_ID
+                ? 'generic'
+                : (step?.system_prompt_mode || 'generic');
 
             const res = await fetch('/counselorbot/api/chat', {
                 method: 'POST',
@@ -262,8 +292,9 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
                 body: JSON.stringify({
                     message: userMessage,
                     mode: mode,
+                    phase: currentPhase,
                     scores_context: scoresContext,
-                    session_id: sessionId
+                    session_id: sessionId,
                 }),
             });
 
@@ -271,7 +302,7 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
                 const data = await res.json();
                 setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
             }
-        } catch (error) {
+        } catch {
             setMessages(prev => [...prev, { role: 'assistant', content: 'Errore di connessione.' }]);
         } finally {
             setIsLoading(false);
@@ -279,9 +310,9 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
     };
 
     const advancePhase = () => {
-        const currentIndex = PHASE_ORDER.indexOf(currentPhase);
-        if (currentIndex < PHASE_ORDER.length - 1) {
-            setCurrentPhase(PHASE_ORDER[currentIndex + 1]);
+        const currentIndex = phases.indexOf(currentPhase);
+        if (currentIndex < phases.length - 1) {
+            setCurrentPhase(phases[currentIndex + 1]);
         }
     };
 
@@ -333,13 +364,27 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
         }
     };
 
+    // Loading state
+    if (initialLoading) {
+        return (
+            <div className="flex items-center justify-center h-[calc(100vh-140px)] min-h-[600px]">
+                <div className="text-center space-y-3">
+                    <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto" />
+                    <p className="text-sm text-slate-500">Caricamento percorso guidato...</p>
+                </div>
+            </div>
+        );
+    }
+
     const cognitiveScores = Object.entries(scores).filter(([k]) => k.startsWith('C')).sort(([a], [b]) => a.localeCompare(b));
     const affectiveScores = Object.entries(scores).filter(([k]) => k.startsWith('A')).sort(([a], [b]) => a.localeCompare(b));
-    const currentConfig = PHASE_CONFIG[currentPhase];
+    const currentColors = getPhaseColors(currentPhase);
 
-    // Simple step progress calculation
-    const currentStepIndex = PHASE_ORDER.indexOf(currentPhase) + 1;
-    const totalSteps = PHASE_ORDER.length;
+    const currentStepIndex = phases.indexOf(currentPhase) + 1;
+    const totalSteps = phases.length;
+
+    // Sidebar phases: exclude conclusion from the numbered list
+    const sidebarPhases = phases.filter(p => p !== FIXED_CONCLUSION_ID);
 
     return (
         <div className="grid lg:grid-cols-4 gap-6 h-[calc(100vh-140px)] min-h-[600px]">
@@ -353,10 +398,9 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
                     </div>
 
                     <div className="space-y-2">
-                        {PHASE_ORDER.slice(0, -1).map((phaseId, idx) => { // Exclude 'conclusion' from list if desired, or keep it.
-                            const pConfig = PHASE_CONFIG[phaseId];
+                        {sidebarPhases.map((phaseId, idx) => {
                             const isActive = currentPhase === phaseId;
-                            const isDone = PHASE_ORDER.indexOf(currentPhase) > idx;
+                            const isDone = phases.indexOf(currentPhase) > phases.indexOf(phaseId);
 
                             return (
                                 <div key={phaseId} className={cn(
@@ -370,20 +414,19 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
                                     )}>
                                         {isDone ? <CheckCircle2 className="w-2.5 h-2.5" /> : idx + 1}
                                     </div>
-                                    <span className="truncate">{pConfig.label}</span>
+                                    <span className="truncate">{getPhaseLabel(phaseId)}</span>
                                 </div>
-                            )
+                            );
                         })}
                     </div>
 
-                    {/* Advance Button (Available in all phases except Conclusion) */}
-                    {currentPhase !== 'conclusion' && (
+                    {currentPhase !== FIXED_CONCLUSION_ID && (
                         <button
                             onClick={advancePhase}
                             disabled={isLoading}
                             className="w-full mt-2 py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1 disabled:opacity-50 shadow-sm"
                         >
-                            {currentPhase === 'questions' ? 'Concludi Sessione' : 'Prossimo Step'}
+                            {currentPhase === FIXED_QUESTIONS_ID ? 'Concludi Sessione' : 'Prossimo Step'}
                             <ChevronRight className="w-3 h-3" />
                         </button>
                     )}
@@ -415,13 +458,13 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
             {/* Chat Area */}
             <div className="lg:col-span-3 flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
                 {/* Header */}
-                <div className={cn("p-4 border-b border-slate-100 flex items-center gap-3", currentConfig.headerBg)}>
-                    <div className={cn("w-10 h-10 rounded-full flex items-center justify-center shadow-sm", currentConfig.iconBg)}>
+                <div className={cn("p-4 border-b border-slate-100 flex items-center gap-3", currentColors.headerBg)}>
+                    <div className={cn("w-10 h-10 rounded-full flex items-center justify-center shadow-sm", currentColors.iconBg)}>
                         <Bot className="w-6 h-6 text-white" />
                     </div>
                     <div>
                         <h3 className="font-bold text-slate-800">CounselorBot AI</h3>
-                        <p className="text-xs text-slate-500 font-medium">{currentConfig.label}</p>
+                        <p className="text-xs text-slate-500 font-medium">{getPhaseLabel(currentPhase)}</p>
                     </div>
                 </div>
 
@@ -473,7 +516,6 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
                         </div>
                     ))}
 
-                    {/* Loading Indicator */}
                     {isLoading && (
                         <div className="flex justify-start">
                             <div className="px-5 py-4 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center gap-3">
@@ -489,7 +531,7 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
                 </div>
 
                 {/* Input Area */}
-                {currentPhase === 'conclusion' ? (
+                {currentPhase === FIXED_CONCLUSION_ID ? (
                     <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-center">
                         <button
                             onClick={() => window.location.href = '/counselorbot/'}
@@ -520,7 +562,7 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
                         </div>
                         <div className="mt-2 text-center">
                             <p className="text-[10px] text-slate-400">
-                                {currentPhase !== 'questions' ? "Puoi fare domande sull'analisi corrente oppure cliccare 'Prossimo Step'." : "Fai qualsiasi domanda libera."}
+                                {isAnalysisStep(currentPhase) ? "Puoi fare domande sull'analisi corrente oppure cliccare 'Prossimo Step'." : "Fai qualsiasi domanda libera."}
                             </p>
                         </div>
                     </form>

@@ -66,6 +66,33 @@ class LogResponse(LogBase):
         from_attributes = True
 
 # Survey
+# GuidedStep
+class GuidedStepBase(BaseModel):
+    id: str
+    sort_order: int
+    label: str
+    prompt: str
+    system_prompt_mode: str = "generic"
+    color_theme: str = "blue"
+
+class GuidedStepCreate(GuidedStepBase):
+    pass
+
+class GuidedStepUpdate(BaseModel):
+    label: Optional[str] = None
+    prompt: Optional[str] = None
+    system_prompt_mode: Optional[str] = None
+    color_theme: Optional[str] = None
+
+class GuidedStepResponse(GuidedStepBase):
+    class Config:
+        from_attributes = True
+
+class ReorderItem(BaseModel):
+    id: str
+    sort_order: int
+
+# Survey
 class SurveyCreate(BaseModel):
     eta: Optional[str] = None
     sesso: Optional[str] = None

@@ -6,9 +6,17 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import timedelta
-from typing import List
+from typing import List, Optional
 
 from . import models, schemas, auth, database
+from .prompt_config import (
+    ALL_CONFIG_TEXT_DEFINITIONS,
+    DEFAULT_SYSTEM_PROMPT_GENERIC,
+    DEFAULT_GUIDED_STEPS,
+    GUIDED_PUBLIC_UI_CONFIG_DEFINITIONS,
+    GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
+    MODE_TO_SYSTEM_PROMPT_KEY,
+)
 
 # Create Database Tables
 models.Base.metadata.create_all(bind=database.engine)
@@ -34,15 +42,51 @@ get_db = database.get_db
 
 @app.on_event("startup")
 def startup_event():
-    # Create initial admin user if not exists
     db = database.SessionLocal()
-    user = db.query(models.User).filter(models.User.username == "admin").first()
-    if not user:
-        hashed_password = auth.get_password_hash("admin123")
-        db_user = models.User(username="admin", hashed_password=hashed_password, is_admin=True)
-        db.add(db_user)
-        db.commit()
-    db.close()
+    try:
+        # Create initial admin user if not exists
+        user = db.query(models.User).filter(models.User.username == "admin").first()
+        if not user:
+            hashed_password = auth.get_password_hash("admin123")
+            db_user = models.User(username="admin", hashed_password=hashed_password, is_admin=True)
+            db.add(db_user)
+            db.commit()
+
+        # Seed text configs (system prompts + static messages) without overwriting
+        existing_configs = {cfg.key: cfg for cfg in db.query(models.Config).all()}
+        changed = False
+        for text_def in ALL_CONFIG_TEXT_DEFINITIONS:
+            existing = existing_configs.get(text_def["key"])
+            if existing is None:
+                db.add(
+                    models.Config(
+                        key=text_def["key"],
+                        value=text_def["default"],
+                        description=text_def["description"],
+                    )
+                )
+                changed = True
+                continue
+
+            if not (existing.value or "").strip():
+                existing.value = text_def["default"]
+                changed = True
+
+            if not existing.description:
+                existing.description = text_def["description"]
+                changed = True
+
+        if changed:
+            db.commit()
+
+        # Seed guided steps if table is empty
+        step_count = db.query(models.GuidedStep).count()
+        if step_count == 0:
+            for step_def in DEFAULT_GUIDED_STEPS:
+                db.add(models.GuidedStep(**step_def))
+            db.commit()
+    finally:
+        db.close()
 
 # --- Auth Endpoints ---
 
@@ -77,7 +121,7 @@ async def register_user(user: schemas.UserCreate, db: Session = Depends(get_db))
     db.refresh(db_user)
     return db_user
 
-# --- Admin Endpoints ---
+# --- Admin Config Endpoints ---
 
 @app.get("/admin/logs", response_model=List[schemas.LogResponse])
 async def read_logs(skip: int = 0, limit: int = 100, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
@@ -109,6 +153,53 @@ async def get_env_override_status(current_user: models.User = Depends(auth.get_c
     from .ai_service import ENV_KEY_MAP
     return {db_key: bool(os.environ.get(env_var)) for db_key, env_var in ENV_KEY_MAP.items()}
 
+# --- Admin Guided Steps CRUD ---
+
+@app.get("/admin/guided-steps", response_model=List[schemas.GuidedStepResponse])
+async def admin_list_guided_steps(current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    return db.query(models.GuidedStep).order_by(models.GuidedStep.sort_order).all()
+
+@app.post("/admin/guided-steps", response_model=schemas.GuidedStepResponse)
+async def admin_create_guided_step(step: schemas.GuidedStepCreate, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    existing = db.query(models.GuidedStep).filter(models.GuidedStep.id == step.id).first()
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Step with id '{step.id}' already exists")
+    db_step = models.GuidedStep(**step.model_dump())
+    db.add(db_step)
+    db.commit()
+    db.refresh(db_step)
+    return db_step
+
+@app.put("/admin/guided-steps/{step_id}", response_model=schemas.GuidedStepResponse)
+async def admin_update_guided_step(step_id: str, update: schemas.GuidedStepUpdate, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    db_step = db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).first()
+    if not db_step:
+        raise HTTPException(status_code=404, detail="Step not found")
+    update_data = update.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_step, field, value)
+    db.commit()
+    db.refresh(db_step)
+    return db_step
+
+@app.delete("/admin/guided-steps/{step_id}")
+async def admin_delete_guided_step(step_id: str, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    db_step = db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).first()
+    if not db_step:
+        raise HTTPException(status_code=404, detail="Step not found")
+    db.delete(db_step)
+    db.commit()
+    return {"status": "success", "message": f"Step '{step_id}' deleted"}
+
+@app.patch("/admin/guided-steps/reorder")
+async def admin_reorder_guided_steps(items: List[schemas.ReorderItem], current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    for item in items:
+        db_step = db.query(models.GuidedStep).filter(models.GuidedStep.id == item.id).first()
+        if db_step:
+            db_step.sort_order = item.sort_order
+    db.commit()
+    return {"status": "success"}
+
 # --- Survey Endpoints ---
 
 @app.post("/survey", response_model=schemas.SurveyResponseSchema)
@@ -125,14 +216,14 @@ async def get_surveys(skip: int = 0, limit: int = 100, current_user: models.User
     """Get all survey responses (admin only)"""
     surveys = db.query(models.SurveyResponse).order_by(models.SurveyResponse.submitted_at.desc()).offset(skip).limit(limit).all()
     return surveys
-    
+
 @app.delete("/admin/survey/{survey_id}")
 async def delete_survey(survey_id: int, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
     """Delete a survey response (admin only)"""
     survey = db.query(models.SurveyResponse).filter(models.SurveyResponse.id == survey_id).first()
     if not survey:
         raise HTTPException(status_code=404, detail="Survey not found")
-    
+
     db.delete(survey)
     db.commit()
     return {"status": "success", "message": "Survey deleted"}
@@ -142,78 +233,138 @@ async def delete_survey(survey_id: int, current_user: models.User = Depends(auth
 from .ai_service import AIService
 import uuid
 
+
+@app.get("/qsa/guided-ui-texts")
+async def get_guided_ui_texts(db: Session = Depends(get_db)):
+    """Public endpoint with guided-chat UI texts/labels and step definitions."""
+    ai_service = AIService(db)
+
+    result: dict = {}
+    # Static config texts (questions labels, conclusion label, static messages)
+    for ui_def in GUIDED_PUBLIC_UI_CONFIG_DEFINITIONS:
+        result[ui_def["key"]] = ai_service.config.get(ui_def["key"], ui_def["default"])
+
+    # Dynamic steps from guided_steps table
+    steps = db.query(models.GuidedStep).order_by(models.GuidedStep.sort_order).all()
+    result["guided_steps"] = [
+        {
+            "id": s.id,
+            "sort_order": s.sort_order,
+            "label": s.label,
+            "system_prompt_mode": s.system_prompt_mode,
+            "color_theme": s.color_theme,
+        }
+        for s in steps
+    ]
+
+    return result
+
+
 class ChatRequest(schemas.BaseModel):
-    message: str
+    message: str = ""
     mode: str = "generic"
-    session_id: str = None
+    session_id: Optional[str] = None
     scores_context: str = ""  # Formatted QSA scores from frontend
+    phase: Optional[str] = None
+    use_phase_prompt: bool = False
+
+
+def _resolve_system_prompt(ai_service: AIService, mode: str, phase: Optional[str], db: Session):
+    """Resolve system prompt key/value with guided-phase override support."""
+    # Questions phase has its own system prompt
+    if phase in GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS:
+        guided_system = GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS[phase]
+        guided_key = guided_system["key"]
+        return guided_key, ai_service.config.get(
+            guided_key,
+            ai_service.config.get("prompt_generic", DEFAULT_SYSTEM_PROMPT_GENERIC),
+        )
+
+    # For guided analysis steps, look up system_prompt_mode from the step
+    if phase:
+        step = db.query(models.GuidedStep).filter(models.GuidedStep.id == phase).first()
+        if step:
+            prompt_key = MODE_TO_SYSTEM_PROMPT_KEY.get(step.system_prompt_mode, "prompt_generic")
+            return prompt_key, ai_service.config.get(prompt_key, DEFAULT_SYSTEM_PROMPT_GENERIC)
+
+    # Fallback: mode-based system prompt
+    prompt_key = MODE_TO_SYSTEM_PROMPT_KEY.get(mode, "prompt_generic")
+    return prompt_key, ai_service.config.get(prompt_key, DEFAULT_SYSTEM_PROMPT_GENERIC)
+
+
+def _resolve_user_message_for_chat(ai_service: AIService, request: ChatRequest, db: Session):
+    """Resolve the effective user message, optionally loading a guided-step prompt from DB."""
+    if request.use_phase_prompt:
+        if not request.phase:
+            raise HTTPException(status_code=400, detail="phase is required when use_phase_prompt=true")
+
+        # Load prompt from guided_steps table
+        step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first()
+        if not step:
+            raise HTTPException(status_code=400, detail=f"Unsupported guided phase: {request.phase}")
+
+        return step.prompt, f"guided_step:{step.id}"
+
+    return request.message, None
 
 @app.post("/chat")
 async def chat(request: ChatRequest, db: Session = Depends(get_db)):
     session_id = request.session_id or str(uuid.uuid4())
-    
+
     # 1. Retrieve Configuration and System Prompt based on Mode
     ai_service = AIService(db)
-    
-    # Map mode to config key for prompt
-    mode_to_prompt = {
-        "factor": "prompt_factor",
-        "second-level": "prompt_second_level",
-        "generic": "prompt_generic",
-    }
-    prompt_key = mode_to_prompt.get(request.mode, "prompt_generic")
-    
-    default_prompt = "Sei CounselorBot, un assistente esperto nell'analisi del Questionario sulle Strategie di Apprendimento (QSA). Rispondi sempre in italiano in modo chiaro e professionale."
-    system_prompt = ai_service.config.get(prompt_key, default_prompt)
-    
+
+    prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
+    effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)
+
     # 2. Build the full message including student's QSA profile
     if request.scores_context:
-        full_message = f"{request.scores_context}\n\nDOMANDA DELLO STUDENTE:\n{request.message}"
+        full_message = f"{request.scores_context}\n\nDOMANDA DELLO STUDENTE:\n{effective_message}"
     else:
-        full_message = request.message
-    
+        full_message = effective_message
+
     # 3. Get AI Response
     response_content = ai_service.get_response(full_message, system_prompt, request.mode)
-    
-    # 3. Log Interaction
+
+    # 4. Log Interaction
     log_entry = models.Log(
         session_id=session_id,
         action="chat_message",
         details={
-            "mode": request.mode, 
-            "user_input": request.message, 
+            "mode": request.mode,
+            "phase": request.phase,
+            "user_input": request.message,
+            "effective_user_input": effective_message,
             "bot_response": response_content,
+            "system_prompt_key": prompt_key,
+            "guided_phase_prompt_key": phase_prompt_key,
             "provider": ai_service.config.get('active_provider', 'unknown'),
             "model": ai_service.config.get('model_name', 'unknown')
         }
     )
     db.add(log_entry)
     db.commit()
-    
+
     return {"response": response_content, "session_id": session_id}
 
 @app.post("/chat/message")
 async def chat_message(message: str, session_id: str, mode: str, db: Session = Depends(get_db)):
     # 1. Retrieve Configuration and System Prompt based on Mode
     ai_service = AIService(db)
-    
-    # Map mode to config key for prompt
-    prompt_key = "prompt_generic"
-    if mode == "factor": prompt_key = "prompt_factor"
-    elif mode == "second-level": prompt_key = "prompt_second_level"
-    
-    system_prompt = ai_service.config.get(prompt_key, "You are a helpful counselor.")
-    
+
+    prompt_key = MODE_TO_SYSTEM_PROMPT_KEY.get(mode, "prompt_generic")
+    system_prompt = ai_service.config.get(prompt_key, DEFAULT_SYSTEM_PROMPT_GENERIC)
+
     # 2. Get AI Response
     response_content = ai_service.get_response(message, system_prompt, mode)
-    
+
     # 3. Log Interaction
     log_entry = models.Log(
         session_id=session_id,
         action="chat_message",
         details={
-            "mode": mode, 
-            "user_input": message, 
+            "mode": mode,
+            "user_input": message,
             "bot_response": response_content,
             "provider": ai_service.config.get('active_provider', 'unknown'),
             "model": ai_service.config.get('model_name', 'unknown')
@@ -221,7 +372,7 @@ async def chat_message(message: str, session_id: str, mode: str, db: Session = D
     )
     db.add(log_entry)
     db.commit()
-    
+
     return {"response": response_content}
 
 class QsaAuditRequest(schemas.BaseModel):
@@ -236,7 +387,6 @@ async def audit_qsa(request: QsaAuditRequest, db: Session = Depends(get_db)):
         action="qsa_completed",
         details={"scores": request.scores}
     )
-    db.add(log_entry)
     db.add(log_entry)
     db.commit()
     return {"status": "ok"}
@@ -255,29 +405,27 @@ async def upload_qsa_document(file: UploadFile = File(...), db: Session = Depend
     temp_dir = ".tmp"
     os.makedirs(temp_dir, exist_ok=True)
     temp_file_path = os.path.join(temp_dir, f"upload_{uuid.uuid4()}_{file.filename}")
-    
+
     with open(temp_file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-        
+
     try:
         # 2. Call execution script
-        # Using python subprocess to call the script we defined in directives
         script_path = "execution/extract_qsa_vision.py"
-        
-        # Ensure script exists
+
         if not os.path.exists(script_path):
              raise HTTPException(status_code=500, detail="Extraction script not found")
-        
+
         result = subprocess.run(
             [sys.executable, script_path, temp_file_path],
             capture_output=True,
             text=True
         )
-        
+
         if result.returncode != 0:
              print(f"Script Error: {result.stderr}")
              raise HTTPException(status_code=500, detail="Failed to process image")
-             
+
         # 3. Parse result
         try:
             extraction_data = json.loads(result.stdout)
@@ -287,7 +435,7 @@ async def upload_qsa_document(file: UploadFile = File(...), db: Session = Depend
         except json.JSONDecodeError:
              print(f"JSON Error: {result.stdout}")
              raise HTTPException(status_code=500, detail="Invalid response from AI extractor")
-             
+
     finally:
         # 4. Clean up
         if os.path.exists(temp_file_path):
@@ -296,7 +444,6 @@ async def upload_qsa_document(file: UploadFile = File(...), db: Session = Depend
 
 # Text-to-Speech Endpoint using edge-tts
 import edge_tts
-import asyncio
 import io
 from fastapi.responses import StreamingResponse
 import re
@@ -307,16 +454,11 @@ class TTSRequest(schemas.BaseModel):
 
 def strip_markdown(text: str) -> str:
     """Remove markdown formatting for cleaner TTS"""
-    # Remove headers
     text = re.sub(r'#{1,6}\s*', '', text)
-    # Remove bold/italic
     text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)
     text = re.sub(r'\*([^*]+)\*', r'\1', text)
-    # Remove horizontal rules
     text = re.sub(r'---+', '', text)
-    # Remove bullet points
     text = re.sub(r'^[\-\*]\s*', '', text, flags=re.MULTILINE)
-    # Remove extra whitespace
     text = re.sub(r'\n{3,}', '\n\n', text)
     return text.strip()
 
@@ -324,21 +466,19 @@ def strip_markdown(text: str) -> str:
 async def text_to_speech(request: TTSRequest):
     try:
         clean_text = strip_markdown(request.text)
-        
-        # Limit text length for safety
+
         if len(clean_text) > 5000:
             clean_text = clean_text[:5000] + "... Testo troncato."
-        
+
         communicate = edge_tts.Communicate(clean_text, request.voice)
-        
-        # Collect audio bytes
+
         audio_bytes = io.BytesIO()
         async for chunk in communicate.stream():
             if chunk["type"] == "audio":
                 audio_bytes.write(chunk["data"])
-        
+
         audio_bytes.seek(0)
-        
+
         return StreamingResponse(
             audio_bytes,
             media_type="audio/mpeg",
