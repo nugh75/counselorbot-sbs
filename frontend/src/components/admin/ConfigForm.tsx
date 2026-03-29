@@ -58,16 +58,21 @@ const PROVIDERS: Record<string, { label: string; models: string[] }> = {
         models: [
             'qwen3:32b',
             'qwen3:latest',
+            'qwen3.5:9b',
             'qwen3-coder-next:latest',
+            'qwen3-embedding:4b',
+            'qwen2.5-coder:7b',
             'gemma3:27b',
             'gemma3:12b',
             'gemma3:latest',
             'deepseek-r1:latest',
             'deepseek-r1:8b',
+            'deepseek-v3.1:671b-cloud',
+            'gemini-3-flash-preview:cloud',
             'nemotron-3-nano:30b',
+            'nemotron-cascade-2:30b',
             'mistral:7b',
             'gpt-oss:20b',
-            'qwen2.5-coder:7b',
         ]
     }
 };

@@ -1,7 +1,8 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, Depends, HTTPException, status
+from contextlib import asynccontextmanager
+from fastapi import BackgroundTasks, FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -21,7 +22,33 @@ from .prompt_config import (
 # Create Database Tables
 models.Base.metadata.create_all(bind=database.engine)
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Precarica il modello Ollama in memoria all'avvio (evita cold start)
+    import asyncio
+    from .database import SessionLocal as _SessionLocal
+    from .ai_service import AIService as _AIService
+
+    async def _preload():
+        try:
+            db = _SessionLocal()
+            svc = _AIService(db)
+            if svc.config.get('active_provider') == 'ollama':
+                await asyncio.get_event_loop().run_in_executor(
+                    None, svc.preload_ollama_model
+                )
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Preload Ollama fallito: {e}")
+        finally:
+            db.close()
+
+    asyncio.create_task(_preload())
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 # CORS
 app.add_middleware(
@@ -39,6 +66,11 @@ app.add_middleware(
 
 # Semantic Dependencies
 get_db = database.get_db
+
+@app.on_event("startup")
+async def startup_memory_cleanup():
+    """Avvia il background task per la pulizia della memoria."""
+    asyncio.create_task(_memory_cleanup_loop())
 
 @app.on_event("startup")
 def startup_event():
@@ -151,7 +183,10 @@ async def get_env_override_status(current_user: models.User = Depends(auth.get_c
     """Restituisce quali chiavi config sono sovrascritte da variabili d'ambiente."""
     import os
     from .ai_service import ENV_KEY_MAP
-    return {db_key: bool(os.environ.get(env_var)) for db_key, env_var in ENV_KEY_MAP.items()}
+    return {
+        db_key: any(bool(os.environ.get(v)) for v in env_vars)
+        for db_key, env_vars in ENV_KEY_MAP.items()
+    }
 
 # --- Admin Guided Steps CRUD ---
 
@@ -231,7 +266,21 @@ async def delete_survey(survey_id: int, current_user: models.User = Depends(auth
 # --- Chat / QSA Endpoints ---
 
 from .ai_service import AIService
+from .memory_service import session_memory
 import uuid
+import logging
+import asyncio
+
+logger = logging.getLogger(__name__)
+
+
+async def _memory_cleanup_loop(interval_seconds: int = 600):
+    """Background task: pulisce sessioni scadute ogni 10 minuti."""
+    while True:
+        await asyncio.sleep(interval_seconds)
+        removed = session_memory.cleanup_expired()
+        if removed:
+            logger.info(f"Memory cleanup: rimosse {removed} sessioni scadute")
 
 
 @app.get("/qsa/guided-ui-texts")
@@ -307,8 +356,28 @@ def _resolve_user_message_for_chat(ai_service: AIService, request: ChatRequest, 
 
     return request.message, None
 
+def _generate_summary_background(
+    session_id: str, effective_message: str, response_content: str,
+    step_label: str, is_first_step: bool,
+):
+    """Background task: genera riassunto e aggiorna la memoria (usa propria sessione DB)."""
+    if is_first_step:
+        # Il primo step non ha contesto precedente, skip summary
+        return
+    db = database.SessionLocal()
+    try:
+        ai_service = AIService(db)
+        summary_chunk = ai_service.generate_summary(effective_message, response_content, step_label=step_label)
+        session_memory.append_summary(session_id, summary_chunk)
+        logger.info(f"Session {session_id}: riassunto aggiornato ({len(session_memory.get_summary(session_id))} chars)")
+    except Exception as e:
+        logger.error(f"Errore generazione riassunto per session {session_id}: {e}")
+    finally:
+        db.close()
+
+
 @app.post("/chat")
-async def chat(request: ChatRequest, db: Session = Depends(get_db)):
+async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     session_id = request.session_id or str(uuid.uuid4())
 
     # 1. Retrieve Configuration and System Prompt based on Mode
@@ -317,16 +386,45 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db)):
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
     effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)
 
+    # 1b. Reset memoria se inizia una nuova analisi guidata (primo step)
+    is_first_step = False
+    if request.use_phase_prompt and request.phase:
+        step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first()
+        if step:
+            first_step = db.query(models.GuidedStep).order_by(models.GuidedStep.sort_order).first()
+            if first_step and step.id == first_step.id:
+                is_first_step = True
+                session_memory.clear(session_id)
+                logger.info(f"Session {session_id}: memoria resettata (nuova analisi guidata)")
+
     # 2. Build the full message including student's QSA profile
     if request.scores_context:
         full_message = f"{request.scores_context}\n\nDOMANDA DELLO STUDENTE:\n{effective_message}"
     else:
         full_message = effective_message
 
-    # 3. Get AI Response
-    response_content = ai_service.get_response(full_message, system_prompt, request.mode)
+    # 3. Recupera il riassunto conversazionale accumulato
+    conversation_summary = session_memory.get_summary(session_id)
 
-    # 4. Log Interaction
+    # 4. Get AI Response (con contesto conversazionale)
+    response_content = ai_service.get_response(
+        full_message, system_prompt, request.mode,
+        conversation_summary=conversation_summary
+    )
+
+    # 5. Genera riassunto in BACKGROUND (non blocca la risposta)
+    step_label = ""
+    if request.phase:
+        step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first()
+        step_label = step.label if step else request.phase
+
+    background_tasks.add_task(
+        _generate_summary_background,
+        session_id, effective_message, response_content,
+        step_label, is_first_step,
+    )
+
+    # 6. Log Interaction
     log_entry = models.Log(
         session_id=session_id,
         action="chat_message",
@@ -339,7 +437,8 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db)):
             "system_prompt_key": prompt_key,
             "guided_phase_prompt_key": phase_prompt_key,
             "provider": ai_service.config.get('active_provider', 'unknown'),
-            "model": ai_service.config.get('model_name', 'unknown')
+            "model": ai_service.config.get('model_name', 'unknown'),
+            "conversation_summary_length": len(conversation_summary),
         }
     )
     db.add(log_entry)
@@ -348,17 +447,29 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db)):
     return {"response": response_content, "session_id": session_id}
 
 @app.post("/chat/message")
-async def chat_message(message: str, session_id: str, mode: str, db: Session = Depends(get_db)):
+async def chat_message(message: str, session_id: str, mode: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     # 1. Retrieve Configuration and System Prompt based on Mode
     ai_service = AIService(db)
 
     prompt_key = MODE_TO_SYSTEM_PROMPT_KEY.get(mode, "prompt_generic")
     system_prompt = ai_service.config.get(prompt_key, DEFAULT_SYSTEM_PROMPT_GENERIC)
 
-    # 2. Get AI Response
-    response_content = ai_service.get_response(message, system_prompt, mode)
+    # 2. Recupera il riassunto conversazionale accumulato
+    conversation_summary = session_memory.get_summary(session_id)
 
-    # 3. Log Interaction
+    # 3. Get AI Response (con contesto conversazionale)
+    response_content = ai_service.get_response(
+        message, system_prompt, mode,
+        conversation_summary=conversation_summary
+    )
+
+    # 4. Genera riassunto in BACKGROUND
+    background_tasks.add_task(
+        _generate_summary_background,
+        session_id, message, response_content, "", False,
+    )
+
+    # 5. Log Interaction
     log_entry = models.Log(
         session_id=session_id,
         action="chat_message",
@@ -367,7 +478,8 @@ async def chat_message(message: str, session_id: str, mode: str, db: Session = D
             "user_input": message,
             "bot_response": response_content,
             "provider": ai_service.config.get('active_provider', 'unknown'),
-            "model": ai_service.config.get('model_name', 'unknown')
+            "model": ai_service.config.get('model_name', 'unknown'),
+            "conversation_summary_length": len(conversation_summary),
         }
     )
     db.add(log_entry)

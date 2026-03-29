@@ -5,8 +5,34 @@ import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { QSAFactorCode, QSA_FACTORS, analyzeScore } from '@/lib/qsa-model';
 import ReactMarkdown from 'react-markdown';
+import type { Components } from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 type AnalysisMode = 'factor' | 'second-level' | 'generic';
+
+const markdownComponents: Components = {
+    table: ({ node, ...props }) => (
+        <table
+            className="w-full min-w-[760px] border-separate border-spacing-0 text-sm text-slate-800"
+            {...props}
+        />
+    ),
+    thead: ({ node, ...props }) => <thead className="bg-slate-50" {...props} />,
+    tbody: ({ node, ...props }) => <tbody className="[&_tr:nth-child(even)]:bg-slate-50/40" {...props} />,
+    tr: ({ node, ...props }) => <tr className="border-b border-slate-100" {...props} />,
+    th: ({ node, ...props }) => (
+        <th
+            className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600 border-b border-slate-200"
+            {...props}
+        />
+    ),
+    td: ({ node, ...props }) => <td className="px-3 py-2 align-top leading-relaxed border-b border-slate-100" {...props} />,
+    p: ({ node, ...props }) => <p className="my-1.5 text-sm leading-relaxed" {...props} />,
+    ul: ({ node, ...props }) => <ul className="my-2 pl-5 list-disc space-y-1" {...props} />,
+    ol: ({ node, ...props }) => <ol className="my-2 pl-5 list-decimal space-y-1" {...props} />,
+    li: ({ node, ...props }) => <li className="leading-relaxed" {...props} />,
+    strong: ({ node, ...props }) => <strong className="font-semibold text-slate-900" {...props} />,
+};
 
 interface ChatInterfaceProps {
     currentMode: string;
@@ -156,10 +182,17 @@ export function ChatInterface({ currentMode, onModeChange, scores }: ChatInterfa
                                 max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm
                                 ${msg.role === 'user'
                                     ? 'bg-blue-600 text-white rounded-tr-sm'
-                                    : 'bg-white border border-slate-100 text-slate-800 rounded-tl-sm prose prose-sm prose-slate max-w-none'}
+                                    : 'bg-white border border-slate-100 text-slate-800 rounded-tl-sm'}
                             `}>
                                 {msg.role === 'assistant' ? (
-                                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                    <div className="overflow-x-auto rounded-lg border border-slate-200/80 bg-white">
+                                        <ReactMarkdown
+                                            remarkPlugins={[remarkGfm]}
+                                            components={markdownComponents}
+                                        >
+                                            {msg.content}
+                                        </ReactMarkdown>
+                                    </div>
                                 ) : (
                                     msg.content
                                 )}
