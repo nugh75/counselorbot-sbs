@@ -306,20 +306,12 @@ export function GuidedChatInterface({ scores, onComplete, sessionId }: GuidedCha
         setIsLoading(true);
 
         try {
-            const scoresContext = formatScoresForPrompt(scores);
-            const step = getStepDef(currentPhase);
-            const mode = currentPhase === FIXED_QUESTIONS_ID
-                ? 'generic'
-                : (step?.system_prompt_mode || 'generic');
-
             const res = await fetch('/counselorbot/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message: userMessage,
-                    mode: mode,
-                    phase: currentPhase,
-                    scores_context: scoresContext,
+                    mode: 'generic',
                     session_id: sessionId,
                 }),
             });
