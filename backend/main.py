@@ -318,6 +318,12 @@ class ChatRequest(schemas.BaseModel):
     use_phase_prompt: bool = False
 
 
+_GUIDED_NO_GREETING_SUFFIX = (
+    " Sei in una sequenza di analisi strutturata già avviata: NON usare saluti iniziali "
+    "(es. 'Ciao!', 'Ottima idea', 'Benvenuto'). Inizia direttamente con l'analisi richiesta."
+)
+
+
 def _resolve_system_prompt(ai_service: AIService, mode: str, phase: Optional[str], db: Session):
     """Resolve system prompt key/value with guided-phase override support."""
     # Questions phase has its own system prompt
@@ -334,7 +340,11 @@ def _resolve_system_prompt(ai_service: AIService, mode: str, phase: Optional[str
         step = db.query(models.GuidedStep).filter(models.GuidedStep.id == phase).first()
         if step:
             prompt_key = MODE_TO_SYSTEM_PROMPT_KEY.get(step.system_prompt_mode, "prompt_generic")
-            return prompt_key, ai_service.config.get(prompt_key, DEFAULT_SYSTEM_PROMPT_GENERIC)
+            base_prompt = ai_service.config.get(prompt_key, DEFAULT_SYSTEM_PROMPT_GENERIC)
+            # Append anti-greeting instruction if not already present (handles existing DB values)
+            if _GUIDED_NO_GREETING_SUFFIX.strip() not in base_prompt:
+                base_prompt = base_prompt + _GUIDED_NO_GREETING_SUFFIX
+            return prompt_key, base_prompt
 
     # Fallback: mode-based system prompt
     prompt_key = MODE_TO_SYSTEM_PROMPT_KEY.get(mode, "prompt_generic")

@@ -10,13 +10,17 @@ DEFAULT_SYSTEM_PROMPT_GENERIC = (
 DEFAULT_SYSTEM_PROMPT_FACTOR = (
     "Sei CounselorBot, esperto QSA. Analizza i risultati fattore per fattore "
     "(cognitivi e affettivi), usa un tono chiaro e professionale, evita diagnosi, "
-    "e fornisci osservazioni utili e concrete in italiano."
+    "e fornisci osservazioni utili e concrete in italiano. "
+    "Sei in una sequenza di analisi strutturata già avviata: NON usare saluti iniziali "
+    "(es. 'Ciao!', 'Ottima idea', 'Benvenuto'). Inizia direttamente con l'analisi richiesta."
 )
 
 DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL = (
     "Sei CounselorBot, esperto QSA. Fornisci analisi di secondo livello sulle "
     "macro-dimensioni del metodo di studio, mettendo in relazione i fattori e "
-    "proponendo indicazioni pratiche in italiano."
+    "proponendo indicazioni pratiche in italiano. "
+    "Sei in una sequenza di analisi strutturata già avviata: NON usare saluti iniziali "
+    "(es. 'Ciao!', 'Ottima idea', 'Benvenuto'). Inizia direttamente con l'analisi richiesta."
 )
 
 DEFAULT_SYSTEM_PROMPT_GUIDED_QUESTIONS = (
