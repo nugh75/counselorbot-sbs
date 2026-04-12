@@ -1,40 +1,43 @@
 'use client';
 
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { QSA_FACTORS, QSAFactorCode } from '@/lib/qsa-model';
+import { QuestionnaireConfig, FactorDefinition } from '@/lib/questionnaires';
 import { cn } from '@/lib/utils';
-import { Info } from 'lucide-react';
 
-const schema = z.object({
-    scores: z.record(z.string(), z.coerce.number().min(1).max(9))
-});
+const schema_placeholder = null; // validation handled inline
 
-type FormData = z.infer<typeof schema>;
+type FormData = { scores: Record<string, string | number> };
+
+// Column header labels per prefix
+const PREFIX_LABEL: Record<string, { label: string; colorClass: string }> = {
+    C: { label: 'Strategie Cognitive (C)', colorClass: 'text-blue-700' },
+    A: { label: 'Strategie Affettive (A)', colorClass: 'text-purple-700' },
+    T: { label: 'Prospettiva Temporale (T)', colorClass: 'text-amber-700' },
+};
 
 interface ScoreInputFormProps {
-    onSubmit: (scores: Record<QSAFactorCode, number>) => void;
-    initialScores?: Record<QSAFactorCode, number>;
+    questionnaire: QuestionnaireConfig;
+    onSubmit: (scores: Record<string, number>) => void;
+    initialScores?: Record<string, number>;
 }
 
-export function ScoreInputForm({ onSubmit, initialScores }: ScoreInputFormProps) {
+export function ScoreInputForm({ questionnaire, onSubmit, initialScores }: ScoreInputFormProps) {
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
         defaultValues: { scores: initialScores || {} },
-        // resolver: zodResolver(schema) // Simple validation enough for now
     });
 
-    const cFactors = Object.values(QSA_FACTORS).filter(f => f.code.startsWith('C'));
-    const aFactors = Object.values(QSA_FACTORS).filter(f => f.code.startsWith('A'));
+    // Group factors by prefix
+    const groupedFactors = questionnaire.factorPrefix.map(prefix => ({
+        prefix,
+        factors: questionnaire.factors.filter(f => f.code.startsWith(prefix)),
+    }));
 
     const onFormSubmit = (data: any) => {
-        // Transform flat data if needed, but here simple record is fine
         onSubmit(data.scores);
     };
 
-    const InputRow = ({ factor }: { factor: typeof cFactors[0] }) => {
+    const InputRow = ({ factor }: { factor: FactorDefinition }) => {
         const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-            // Allow only numbers 1-9 and navigation keys
             if (
                 !/^[1-9]$/.test(e.key) &&
                 !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)
@@ -45,11 +48,9 @@ export function ScoreInputForm({ onSubmit, initialScores }: ScoreInputFormProps)
 
         const handleInput = (e: React.FormEvent<HTMLInputElement>) => {
             const target = e.currentTarget;
-            // Ensure only one character if it's a number
             if (target.value.length > 1) {
                 target.value = target.value.slice(0, 1);
             }
-            // If value is 0, clear or reset
             if (target.value === '0') {
                 target.value = '';
             }
@@ -84,26 +85,22 @@ export function ScoreInputForm({ onSubmit, initialScores }: ScoreInputFormProps)
         );
     };
 
+    const gridCols = groupedFactors.length === 1 ? 'grid-cols-1 max-w-xl mx-auto' : 'md:grid-cols-2';
+
     return (
         <form onSubmit={handleSubmit(onFormSubmit)} className="w-full max-w-4xl mx-auto space-y-8 animate-fade-in-up">
-            <div className="grid md:grid-cols-2 gap-8">
-
-                {/* Cognitive Strategies Column */}
-                <div className="space-y-4">
-                    <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-200">
-                        <h3 className="text-xl font-bold text-blue-700">Strategie Cognitive (C)</h3>
-                    </div>
-                    {cFactors.map(f => <InputRow key={f.code} factor={f} />)}
-                </div>
-
-                {/* Affective Strategies Column */}
-                <div className="space-y-4">
-                    <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-200">
-                        <h3 className="text-xl font-bold text-purple-700">Strategie Affettive (A)</h3>
-                    </div>
-                    {aFactors.map(f => <InputRow key={f.code} factor={f} />)}
-                </div>
-
+            <div className={cn("grid gap-8", gridCols)}>
+                {groupedFactors.map(({ prefix, factors }) => {
+                    const colStyle = PREFIX_LABEL[prefix] || { label: `Fattori ${prefix}`, colorClass: 'text-slate-700' };
+                    return (
+                        <div key={prefix} className="space-y-4">
+                            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-200">
+                                <h3 className={cn("text-xl font-bold", colStyle.colorClass)}>{colStyle.label}</h3>
+                            </div>
+                            {factors.map(f => <InputRow key={f.code} factor={f} />)}
+                        </div>
+                    );
+                })}
             </div>
 
             <div className="flex justify-end pt-6">

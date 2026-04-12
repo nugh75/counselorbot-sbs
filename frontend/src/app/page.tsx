@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { QSAFactorCode } from '@/lib/qsa-model';
 import { QuestionnaireConfig, QUESTIONNAIRES } from '@/lib/questionnaires';
 import { QuestionnaireSelector } from '@/components/questionnaire/QuestionnaireSelector';
 import { InputMethodSelector } from '@/components/qsa/InputMethodSelector';
@@ -18,7 +17,7 @@ type Step = 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-
 export default function Home() {
     const [step, setStep] = useState<Step>('questionnaire-select');
     const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<QuestionnaireConfig | null>(null);
-    const [scores, setScores] = useState<Record<QSAFactorCode, number> | null>(null);
+    const [scores, setScores] = useState<Record<string, number> | null>(null);
     const [sessionId, setSessionId] = useState<string>('');
 
     const handleQuestionnaireSelect = (questionnaire: QuestionnaireConfig) => {
@@ -30,7 +29,7 @@ export default function Home() {
         setStep(method === 'manual' ? 'manual-input' : 'upload-input');
     };
 
-    const handleScoresSubmit = (data: Record<QSAFactorCode, number>) => {
+    const handleScoresSubmit = (data: Record<string, number>) => {
         setScores(data);
         setStep('dashboard');
     };
@@ -55,14 +54,15 @@ export default function Home() {
         const newSessionId = generateUUID();
         setSessionId(newSessionId);
 
-        // Log QSA Audit
+        // Log Audit
         try {
             await fetch('/counselorbot/api/qsa/audit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     scores: scores,
-                    session_id: newSessionId
+                    session_id: newSessionId,
+                    questionnaire_type: selectedQuestionnaire?.id || 'QSA',
                 }),
             });
         } catch (e) {
@@ -169,8 +169,8 @@ export default function Home() {
                     )}
 
                     {/* Step: Manual Input */}
-                    {step === 'manual-input' && (
-                        <ScoreInputForm onSubmit={handleScoresSubmit} initialScores={scores || undefined} />
+                    {step === 'manual-input' && selectedQuestionnaire && (
+                        <ScoreInputForm questionnaire={selectedQuestionnaire} onSubmit={handleScoresSubmit} initialScores={scores || undefined} />
                     )}
 
                     {/* Step: PDF Upload */}
@@ -179,9 +179,9 @@ export default function Home() {
                     )}
 
                     {/* Step: Dashboard with Profile */}
-                    {step === 'dashboard' && scores && (
+                    {step === 'dashboard' && scores && selectedQuestionnaire && (
                         <div className="space-y-8 animate-fade-in-up">
-                            <ProfileVisualization scores={scores} />
+                            <ProfileVisualization scores={scores} questionnaire={selectedQuestionnaire} />
 
                             <div className="flex justify-center pt-8">
                                 <div className="glass-panel p-8 rounded-2xl text-center max-w-lg space-y-6">
@@ -207,9 +207,10 @@ export default function Home() {
                     )}
 
                     {/* Step: Guided Chat Interaction */}
-                    {step === 'interaction' && scores && (
+                    {step === 'interaction' && scores && selectedQuestionnaire && (
                         <GuidedChatInterface
                             scores={scores}
+                            questionnaireType={selectedQuestionnaire.id}
                             onComplete={handleInteractionComplete}
                             sessionId={sessionId}
                         />

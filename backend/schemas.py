@@ -74,6 +74,7 @@ class GuidedStepBase(BaseModel):
     prompt: str
     system_prompt_mode: str = "generic"
     color_theme: str = "blue"
+    questionnaire_type: str = "QSA"
 
 class GuidedStepCreate(GuidedStepBase):
     pass

@@ -36,6 +36,7 @@ class GuidedStep(Base):
     prompt = Column(Text, nullable=False)
     system_prompt_mode = Column(String, nullable=False, default="generic")
     color_theme = Column(String, nullable=False, default="blue")
+    questionnaire_type = Column(String, nullable=False, default="QSA")
 
 class SurveyResponse(Base):
     __tablename__ = "survey_responses"

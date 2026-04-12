@@ -49,6 +49,16 @@ const PLACEHOLDER_FACTORS: FactorDefinition[] = [
     { code: 'F3', name: 'Fattore 3', description: 'Da definire', lowLabel: 'Basso', midLabel: 'Medio', highLabel: 'Alto' },
 ];
 
+// ZTPI factor definitions (T1-T5, scala 1-9)
+// T1 e T4 sono fattori INVERTITI (punteggio basso = Forza)
+const ZTPI_FACTOR_DEFINITIONS: FactorDefinition[] = [
+    { code: 'T1', name: 'Passato Negativo', description: 'Ricordi negativi e rimpianti legati al passato', lowLabel: 'Forza', midLabel: 'Normale', highLabel: 'Area di crescita' },
+    { code: 'T2', name: 'Passato Positivo', description: 'Visione calda e nostalgica del passato', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+    { code: 'T3', name: 'Presente Edonistico', description: "Capacità di vivere l'attimo (carpe diem), orientamento al piacere nel presente", lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+    { code: 'T4', name: 'Presente Fatalistico', description: 'Senso di impotenza e rassegnazione verso la vita', lowLabel: 'Forza', midLabel: 'Normale', highLabel: 'Area di crescita' },
+    { code: 'T5', name: 'Futuro', description: 'Orientamento verso obiettivi, pianificazione e carriera', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+];
+
 export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
     QSA: {
         id: 'QSA',
@@ -100,8 +110,8 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         fullName: 'Zimbardo Time Perspective Inventory',
         description: 'Valutazione della prospettiva temporale secondo Zimbardo',
         factorPrefix: ['T'],
-        factors: PLACEHOLDER_FACTORS,
-        invertedFactors: [],
+        factors: ZTPI_FACTOR_DEFINITIONS,
+        invertedFactors: ['T1', 'T4'],
         color: 'bg-amber-500',
         icon: '⏰',
     },

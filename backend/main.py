@@ -13,7 +13,12 @@ from . import models, schemas, auth, database
 from .prompt_config import (
     ALL_CONFIG_TEXT_DEFINITIONS,
     DEFAULT_SYSTEM_PROMPT_GENERIC,
+    DEFAULT_SYSTEM_PROMPT_ZTPI_FACTOR,
+    DEFAULT_SYSTEM_PROMPT_ZTPI_BTP,
     DEFAULT_GUIDED_STEPS,
+    DEFAULT_ZTPI_GUIDED_STEPS,
+    DEFAULT_GUIDED_TEXT_ZTPI_QUESTIONS_INTRO,
+    DEFAULT_GUIDED_TEXT_ZTPI_CONCLUSION,
     GUIDED_PUBLIC_UI_CONFIG_DEFINITIONS,
     GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
     MODE_TO_SYSTEM_PROMPT_KEY,
@@ -74,8 +79,20 @@ async def startup_memory_cleanup():
 
 @app.on_event("startup")
 def startup_event():
+    from sqlalchemy import text as sa_text
+
     db = database.SessionLocal()
     try:
+        # Raw SQL migration: add questionnaire_type column if not present (idempotent)
+        with database.engine.connect() as conn:
+            try:
+                conn.execute(sa_text(
+                    "ALTER TABLE guided_steps ADD COLUMN questionnaire_type VARCHAR NOT NULL DEFAULT 'QSA'"
+                ))
+                conn.commit()
+            except Exception:
+                pass  # Column already exists
+
         # Create initial admin user if not exists
         user = db.query(models.User).filter(models.User.username == "admin").first()
         if not user:
@@ -111,11 +128,106 @@ def startup_event():
         if changed:
             db.commit()
 
-        # Seed guided steps if table is empty
-        step_count = db.query(models.GuidedStep).count()
-        if step_count == 0:
+        # Seed QSA guided steps if none exist for QSA
+        qsa_count = db.query(models.GuidedStep).filter(
+            models.GuidedStep.questionnaire_type == "QSA"
+        ).count()
+        if qsa_count == 0:
             for step_def in DEFAULT_GUIDED_STEPS:
+                db.add(models.GuidedStep(**{**step_def, "questionnaire_type": "QSA"}))
+            db.commit()
+
+        # Seed ZTPI guided steps if none exist for ZTPI
+        ztpi_count = db.query(models.GuidedStep).filter(
+            models.GuidedStep.questionnaire_type == "ZTPI"
+        ).count()
+        if ztpi_count == 0:
+            for step_def in DEFAULT_ZTPI_GUIDED_STEPS:
                 db.add(models.GuidedStep(**step_def))
+            db.commit()
+
+        # Upgrade legacy ZTPI prompt ranges if they still match old defaults.
+        legacy_changed = False
+
+        cfg_ztpi_factor = db.query(models.Config).filter(models.Config.key == "prompt_ztpi_factor").first()
+        if cfg_ztpi_factor:
+            factor_value = cfg_ztpi_factor.value or ""
+            is_old_factor_prompt = (
+                "Per T2, T3, T5: un punteggio alto (7-9) indica Forza" in factor_value
+                or "Indicazioni di lettura basate su fonti:" in factor_value and "SOLO interne" not in factor_value
+                or (
+                    "Usa queste fasce PTB su scala 1-9:" in factor_value
+                    and "Indicazioni di lettura basate su fonti:" not in factor_value
+                )
+            )
+            if is_old_factor_prompt:
+                cfg_ztpi_factor.value = DEFAULT_SYSTEM_PROMPT_ZTPI_FACTOR
+                legacy_changed = True
+
+        cfg_ztpi_btp = db.query(models.Config).filter(models.Config.key == "prompt_ztpi_btp").first()
+        if cfg_ztpi_btp:
+            btp_value = cfg_ztpi_btp.value or ""
+            is_old_btp_prompt = (
+                "T1 basso (1-3), T2 alto (7-9), T3 moderato (4-6), T4 basso (1-3), T5 alto (7-9)." in btp_value
+                or "Indicazioni di lettura basate su fonti:" in btp_value and "SOLO interne" not in btp_value
+                or (
+                    "Usa queste fasce operative:" in btp_value
+                    and "Indicazioni di lettura basate su fonti:" not in btp_value
+                )
+            )
+            if is_old_btp_prompt:
+                cfg_ztpi_btp.value = DEFAULT_SYSTEM_PROMPT_ZTPI_BTP
+                legacy_changed = True
+
+        ztpi_default_prompts_by_id = {step["id"]: step["prompt"] for step in DEFAULT_ZTPI_GUIDED_STEPS}
+        legacy_step_snippets = {
+            "ztpi-t1": [
+                "fattore INVERTITO: punteggio basso (1-3) è una Forza",
+                "Usa la fascia PTB su scala 1-9: ideale 2-4, vicino 1-5.",
+            ],
+            "ztpi-t2": [
+                "punteggio alto (7-9) è una Forza, basso (1-3) è Area di crescita",
+                "Usa la fascia PTB su scala 1-9: ideale 5-7, vicino 4-8.",
+            ],
+            "ztpi-t3": [
+                "range ottimale moderato (4-6)",
+                "Usa la fascia PTB su scala 1-9: ideale 7-8, vicino 6-9.",
+            ],
+            "ztpi-t4": [
+                "fattore INVERTITO: punteggio basso (1-3) è una Forza",
+                "Usa la fascia PTB su scala 1-9: ideale 1-3, vicino 1-4.",
+            ],
+            "ztpi-t5": [
+                "punteggio alto (7-9) è una Forza, basso (1-3) è Area di crescita",
+                "Usa la fascia PTB su scala 1-9: ideale 5-7, vicino 4-8.",
+            ],
+            "ztpi-btp": [
+                "T1 basso 1-3, T2 alto 7-9, T3 moderato 4-6, T4 basso 1-3, T5 alto 7-9",
+                "T1 ideale 2-4, T2 ideale 5-7, T3 ideale 7-8, T4 ideale 1-3, T5 ideale 5-7;",
+            ],
+        }
+
+        for step_id, legacy_snippets in legacy_step_snippets.items():
+            step = db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).first()
+            if not step:
+                continue
+            step_prompt = step.prompt or ""
+            has_new_hidden_rule = "Non esplicitare all'utente formule, conversioni o parametri tecnici." in step_prompt
+            has_old_exposed_reading = (
+                "Indicazione di lettura da fonte:" in step_prompt
+                or "indicazioni di lettura da fonte" in step_prompt
+            )
+            should_upgrade_step = (
+                (any(snippet in step_prompt for snippet in legacy_snippets) or has_old_exposed_reading)
+                and not has_new_hidden_rule
+            )
+            if should_upgrade_step:
+                new_prompt = ztpi_default_prompts_by_id.get(step_id)
+                if new_prompt and step.prompt != new_prompt:
+                    step.prompt = new_prompt
+                    legacy_changed = True
+
+        if legacy_changed:
             db.commit()
     finally:
         db.close()
@@ -283,18 +395,57 @@ async def _memory_cleanup_loop(interval_seconds: int = 600):
             logger.info(f"Memory cleanup: rimosse {removed} sessioni scadute")
 
 
+def _ensure_questionnaire_guided_steps(db: Session, questionnaire_type: str) -> None:
+    """Ensure default guided steps exist for the requested questionnaire."""
+    if questionnaire_type not in {"QSA", "ZTPI"}:
+        return
+
+    defaults = DEFAULT_ZTPI_GUIDED_STEPS if questionnaire_type == "ZTPI" else DEFAULT_GUIDED_STEPS
+
+    existing_ids = {
+        row.id
+        for row in (
+            db.query(models.GuidedStep.id)
+            .filter(models.GuidedStep.questionnaire_type == questionnaire_type)
+            .all()
+        )
+    }
+
+    changed = False
+    for step_def in defaults:
+        if step_def["id"] in existing_ids:
+            continue
+        payload = dict(step_def)
+        if questionnaire_type == "QSA":
+            payload["questionnaire_type"] = "QSA"
+        db.add(models.GuidedStep(**payload))
+        changed = True
+
+    if changed:
+        db.commit()
+
+
 @app.get("/qsa/guided-ui-texts")
-async def get_guided_ui_texts(db: Session = Depends(get_db)):
-    """Public endpoint with guided-chat UI texts/labels and step definitions."""
+async def get_guided_ui_texts(questionnaire_type: str = "QSA", db: Session = Depends(get_db)):
+    """Public endpoint with guided-chat UI texts/labels and step definitions.
+
+    Pass ?questionnaire_type=ZTPI to get ZTPI steps instead of QSA steps.
+    """
     ai_service = AIService(db)
+    _ensure_questionnaire_guided_steps(db, questionnaire_type)
 
     result: dict = {}
     # Static config texts (questions labels, conclusion label, static messages)
     for ui_def in GUIDED_PUBLIC_UI_CONFIG_DEFINITIONS:
         result[ui_def["key"]] = ai_service.config.get(ui_def["key"], ui_def["default"])
 
-    # Dynamic steps from guided_steps table
-    steps = db.query(models.GuidedStep).order_by(models.GuidedStep.sort_order).all()
+    # Dynamic steps filtered by questionnaire_type
+    steps = (
+        db.query(models.GuidedStep)
+        .filter(models.GuidedStep.questionnaire_type == questionnaire_type)
+        .order_by(models.GuidedStep.sort_order)
+        .all()
+    )
     result["guided_steps"] = [
         {
             "id": s.id,
@@ -305,6 +456,15 @@ async def get_guided_ui_texts(db: Session = Depends(get_db)):
         }
         for s in steps
     ]
+
+    # Override questions/conclusion texts for ZTPI
+    if questionnaire_type == "ZTPI":
+        result["text_guided_questions_intro"] = ai_service.config.get(
+            "text_ztpi_questions_intro", DEFAULT_GUIDED_TEXT_ZTPI_QUESTIONS_INTRO
+        )
+        result["text_guided_conclusion"] = ai_service.config.get(
+            "text_ztpi_conclusion", DEFAULT_GUIDED_TEXT_ZTPI_CONCLUSION
+        )
 
     return result
 
@@ -401,7 +561,12 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     if request.use_phase_prompt and request.phase:
         step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first()
         if step:
-            first_step = db.query(models.GuidedStep).order_by(models.GuidedStep.sort_order).first()
+            first_step = (
+                db.query(models.GuidedStep)
+                .filter(models.GuidedStep.questionnaire_type == step.questionnaire_type)
+                .order_by(models.GuidedStep.sort_order)
+                .first()
+            )
             if first_step and step.id == first_step.id:
                 is_first_step = True
                 session_memory.clear(session_id)
