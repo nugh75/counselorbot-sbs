@@ -2,7 +2,24 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  basePath: "/counselorbot",
+  serverExternalPackages: [],
+  experimental: {
+    proxyTimeout: 300_000, // 5 min for long AI responses
+  },
+  async redirects() {
+    return [
+      {
+        source: "/counselorbot",
+        destination: "/",
+        permanent: true,
+      },
+      {
+        source: "/counselorbot/:path*",
+        destination: "/:path*",
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return [
       {

@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from typing import List, Optional
+import re
 
 from . import models, schemas, auth, database
 from .prompt_config import (
@@ -15,13 +16,19 @@ from .prompt_config import (
     DEFAULT_SYSTEM_PROMPT_GENERIC,
     DEFAULT_SYSTEM_PROMPT_ZTPI_FACTOR,
     DEFAULT_SYSTEM_PROMPT_ZTPI_BTP,
+    DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTERVIEW,
+    DEFAULT_SYSTEM_PROMPT_SAVICKAS_SUMMARY,
     DEFAULT_GUIDED_STEPS,
     DEFAULT_ZTPI_GUIDED_STEPS,
+    DEFAULT_SAVICKAS_GUIDED_STEPS,
     DEFAULT_GUIDED_TEXT_ZTPI_QUESTIONS_INTRO,
     DEFAULT_GUIDED_TEXT_ZTPI_CONCLUSION,
+    DEFAULT_GUIDED_TEXT_SAVICKAS_QUESTIONS_INTRO,
+    DEFAULT_GUIDED_TEXT_SAVICKAS_CONCLUSION,
     GUIDED_PUBLIC_UI_CONFIG_DEFINITIONS,
     GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
     MODE_TO_SYSTEM_PROMPT_KEY,
+    SYSTEM_PROMPT_DEFAULTS,
 )
 
 # Create Database Tables
@@ -79,6 +86,8 @@ async def startup_memory_cleanup():
 
 @app.on_event("startup")
 def startup_event():
+    import logging
+    logger = logging.getLogger(__name__)
     from sqlalchemy import text as sa_text
 
     db = database.SessionLocal()
@@ -104,6 +113,7 @@ def startup_event():
         # Seed text configs (system prompts + static messages) without overwriting
         existing_configs = {cfg.key: cfg for cfg in db.query(models.Config).all()}
         changed = False
+        logger.info(f"Seeding check: {len(ALL_CONFIG_TEXT_DEFINITIONS)} definitions, {len(existing_configs)} existing")
         for text_def in ALL_CONFIG_TEXT_DEFINITIONS:
             existing = existing_configs.get(text_def["key"])
             if existing is None:
@@ -115,6 +125,7 @@ def startup_event():
                     )
                 )
                 changed = True
+                logger.info(f"Seeded new config key: {text_def['key']}")
                 continue
 
             if not (existing.value or "").strip():
@@ -127,6 +138,7 @@ def startup_event():
 
         if changed:
             db.commit()
+            logger.info("Config seeding committed")
 
         # Seed QSA guided steps if none exist for QSA
         qsa_count = db.query(models.GuidedStep).filter(
@@ -143,6 +155,15 @@ def startup_event():
         ).count()
         if ztpi_count == 0:
             for step_def in DEFAULT_ZTPI_GUIDED_STEPS:
+                db.add(models.GuidedStep(**step_def))
+            db.commit()
+
+        # Seed Savickas guided steps if none exist for SAVICKAS
+        savickas_count = db.query(models.GuidedStep).filter(
+            models.GuidedStep.questionnaire_type == "SAVICKAS"
+        ).count()
+        if savickas_count == 0:
+            for step_def in DEFAULT_SAVICKAS_GUIDED_STEPS:
                 db.add(models.GuidedStep(**step_def))
             db.commit()
 
@@ -177,6 +198,43 @@ def startup_event():
             )
             if is_old_btp_prompt:
                 cfg_ztpi_btp.value = DEFAULT_SYSTEM_PROMPT_ZTPI_BTP
+                legacy_changed = True
+
+        cfg_savickas_interview = db.query(models.Config).filter(models.Config.key == "prompt_savickas_interview").first()
+        if cfg_savickas_interview:
+            interview_value = cfg_savickas_interview.value or ""
+            if "[[AVANZA_STEP]]" not in interview_value:
+                cfg_savickas_interview.value = DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTERVIEW
+                legacy_changed = True
+
+        cfg_savickas_summary = db.query(models.Config).filter(models.Config.key == "prompt_savickas_summary").first()
+        if cfg_savickas_summary:
+            summary_value = cfg_savickas_summary.value or ""
+            if "[[AVANZA_STEP]]" not in summary_value:
+                cfg_savickas_summary.value = DEFAULT_SYSTEM_PROMPT_SAVICKAS_SUMMARY
+                legacy_changed = True
+
+        savickas_default_prompts_by_id = {step["id"]: step["prompt"] for step in DEFAULT_SAVICKAS_GUIDED_STEPS}
+        savickas_steps = (
+            db.query(models.GuidedStep)
+            .filter(models.GuidedStep.questionnaire_type == "SAVICKAS")
+            .all()
+        )
+        for step in savickas_steps:
+            default_prompt = savickas_default_prompts_by_id.get(step.id)
+            if not default_prompt:
+                continue
+            current_prompt = step.prompt or ""
+            if "[[AVANZA_STEP]]" in current_prompt:
+                continue
+            is_legacy_savickas_prompt = (
+                not current_prompt
+                or "Avvio percorso Savickas" in current_prompt
+                or "Intervista Savickas - domanda" in current_prompt
+                or "Sintesi finale intervista Savickas" in current_prompt
+            )
+            if is_legacy_savickas_prompt:
+                step.prompt = default_prompt
                 legacy_changed = True
 
         ztpi_default_prompts_by_id = {step["id"]: step["prompt"] for step in DEFAULT_ZTPI_GUIDED_STEPS}
@@ -397,10 +455,16 @@ async def _memory_cleanup_loop(interval_seconds: int = 600):
 
 def _ensure_questionnaire_guided_steps(db: Session, questionnaire_type: str) -> None:
     """Ensure default guided steps exist for the requested questionnaire."""
-    if questionnaire_type not in {"QSA", "ZTPI"}:
+    defaults_by_type = {
+        "QSA": DEFAULT_GUIDED_STEPS,
+        "ZTPI": DEFAULT_ZTPI_GUIDED_STEPS,
+        "SAVICKAS": DEFAULT_SAVICKAS_GUIDED_STEPS,
+    }
+
+    if questionnaire_type not in defaults_by_type:
         return
 
-    defaults = DEFAULT_ZTPI_GUIDED_STEPS if questionnaire_type == "ZTPI" else DEFAULT_GUIDED_STEPS
+    defaults = defaults_by_type[questionnaire_type]
 
     existing_ids = {
         row.id
@@ -416,8 +480,7 @@ def _ensure_questionnaire_guided_steps(db: Session, questionnaire_type: str) -> 
         if step_def["id"] in existing_ids:
             continue
         payload = dict(step_def)
-        if questionnaire_type == "QSA":
-            payload["questionnaire_type"] = "QSA"
+        payload["questionnaire_type"] = questionnaire_type
         db.add(models.GuidedStep(**payload))
         changed = True
 
@@ -429,7 +492,7 @@ def _ensure_questionnaire_guided_steps(db: Session, questionnaire_type: str) -> 
 async def get_guided_ui_texts(questionnaire_type: str = "QSA", db: Session = Depends(get_db)):
     """Public endpoint with guided-chat UI texts/labels and step definitions.
 
-    Pass ?questionnaire_type=ZTPI to get ZTPI steps instead of QSA steps.
+    Pass ?questionnaire_type=ZTPI or SAVICKAS for dedicated guided paths.
     """
     ai_service = AIService(db)
     _ensure_questionnaire_guided_steps(db, questionnaire_type)
@@ -450,7 +513,7 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", db: Session = Dep
         {
             "id": s.id,
             "sort_order": s.sort_order,
-            "label": s.label,
+            "label": _sanitize_ztpi_step_label(s.label) if questionnaire_type == "ZTPI" else s.label,
             "system_prompt_mode": s.system_prompt_mode,
             "color_theme": s.color_theme,
         }
@@ -459,11 +522,24 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", db: Session = Dep
 
     # Override questions/conclusion texts for ZTPI
     if questionnaire_type == "ZTPI":
+        result["text_guided_questions_intro"] = _sanitize_ztpi_user_text(
+            ai_service.config.get(
+                "text_ztpi_questions_intro", DEFAULT_GUIDED_TEXT_ZTPI_QUESTIONS_INTRO
+            )
+        )
+        result["text_guided_conclusion"] = _sanitize_ztpi_user_text(
+            ai_service.config.get(
+                "text_ztpi_conclusion", DEFAULT_GUIDED_TEXT_ZTPI_CONCLUSION
+            )
+        )
+    elif questionnaire_type == "SAVICKAS":
+        result["label_guided_questions"] = "7. Domande e Approfondimenti"
+        result["text_guided_questions_phase_banner"] = "--- Fase 7: Domande e Approfondimenti ---"
         result["text_guided_questions_intro"] = ai_service.config.get(
-            "text_ztpi_questions_intro", DEFAULT_GUIDED_TEXT_ZTPI_QUESTIONS_INTRO
+            "text_savickas_questions_intro", DEFAULT_GUIDED_TEXT_SAVICKAS_QUESTIONS_INTRO
         )
         result["text_guided_conclusion"] = ai_service.config.get(
-            "text_ztpi_conclusion", DEFAULT_GUIDED_TEXT_ZTPI_CONCLUSION
+            "text_savickas_conclusion", DEFAULT_GUIDED_TEXT_SAVICKAS_CONCLUSION
         )
 
     return result
@@ -483,6 +559,87 @@ _GUIDED_NO_GREETING_SUFFIX = (
     "(es. 'Ciao!', 'Ottima idea', 'Benvenuto'). Inizia direttamente con l'analisi richiesta."
 )
 
+_ZTPI_FACTOR_NAME_BY_CODE = {
+    "T1": "Passato Negativo",
+    "T2": "Passato Positivo",
+    "T3": "Presente Edonistico",
+    "T4": "Presente Fatalistico",
+    "T5": "Futuro",
+}
+
+
+def _sanitize_ztpi_user_text(text: str) -> str:
+    """Rende il testo utente ZTPI privo di sigle tecniche."""
+    if not text:
+        return text
+
+    cleaned = text
+
+    # Prima elimina forme duplicate tipo "T3 (Presente Edonistico)".
+    for code, name in _ZTPI_FACTOR_NAME_BY_CODE.items():
+        cleaned = re.sub(
+            rf"\b{code}\s*\(\s*{re.escape(name)}\s*\)",
+            name,
+            cleaned,
+            flags=re.IGNORECASE,
+        )
+
+    # Sostituisce i codici fattore con il nome completo.
+    for code, name in _ZTPI_FACTOR_NAME_BY_CODE.items():
+        cleaned = re.sub(rf"\b{code}\b", name, cleaned)
+
+    # Sostituisce sigle tecniche residue con formulazioni estese.
+    cleaned = re.sub(
+        r"\bZimbardo Time Perspective Inventory\s*\(\s*ZTPI\s*\)",
+        "prospettiva temporale di Zimbardo",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(
+        r"\bProfilo Temporale Bilanciato\s*\(\s*PTB\s*\)",
+        "profilo temporale equilibrato",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(r"\bprofilo temporale bilanciato\b", "profilo temporale equilibrato", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\bPTB\b", "profilo temporale equilibrato", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\bDBTP-r?\b", "distanza dal profilo temporale equilibrato", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\bZTPI\b", "prospettiva temporale", cleaned, flags=re.IGNORECASE)
+
+    # Normalizza eventuali ripetizioni create dalle sostituzioni.
+    for name in _ZTPI_FACTOR_NAME_BY_CODE.values():
+        cleaned = re.sub(
+            rf"{re.escape(name)}\s*\(\s*{re.escape(name)}\s*\)",
+            name,
+            cleaned,
+            flags=re.IGNORECASE,
+        )
+
+    cleaned = re.sub(r"(profilo temporale equilibrato)\s*\([^)]*\)", r"\1", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\(\s*profilo temporale equilibrato\s*\)", "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\s{2,}", " ", cleaned)
+    cleaned = re.sub(r"\s+([,.;:])", r"\1", cleaned)
+    return cleaned.strip()
+
+
+def _sanitize_ztpi_step_label(label: str) -> str:
+    """Pulisce le etichette step ZTPI rimuovendo prefissi con codici tecnici."""
+    if not label:
+        return label
+    cleaned = re.sub(r"\bT[1-5]\b\s*-\s*", "", label)
+    cleaned = re.sub(r"\bprofilo temporale bilanciato\b", "Profilo Temporale Equilibrato", cleaned, flags=re.IGNORECASE)
+    cleaned = _sanitize_ztpi_user_text(cleaned)
+    cleaned = re.sub(r"\bprofilo temporale equilibrato\b", "Profilo Temporale Equilibrato", cleaned, flags=re.IGNORECASE)
+    return cleaned
+
+
+def _should_sanitize_ztpi_text(mode: Optional[str], phase: Optional[str]) -> bool:
+    if mode in {"ztpi-factor", "ztpi-btp"}:
+        return True
+    if phase and phase.startswith("ztpi-"):
+        return True
+    return False
+
 
 def _resolve_system_prompt(ai_service: AIService, mode: str, phase: Optional[str], db: Session):
     """Resolve system prompt key/value with guided-phase override support."""
@@ -492,7 +649,7 @@ def _resolve_system_prompt(ai_service: AIService, mode: str, phase: Optional[str
         guided_key = guided_system["key"]
         return guided_key, ai_service.config.get(
             guided_key,
-            ai_service.config.get("prompt_generic", DEFAULT_SYSTEM_PROMPT_GENERIC),
+            guided_system.get("default", ai_service.config.get("prompt_generic", DEFAULT_SYSTEM_PROMPT_GENERIC)),
         )
 
     # For guided analysis steps, look up system_prompt_mode from the step
@@ -500,7 +657,10 @@ def _resolve_system_prompt(ai_service: AIService, mode: str, phase: Optional[str
         step = db.query(models.GuidedStep).filter(models.GuidedStep.id == phase).first()
         if step:
             prompt_key = MODE_TO_SYSTEM_PROMPT_KEY.get(step.system_prompt_mode, "prompt_generic")
-            base_prompt = ai_service.config.get(prompt_key, DEFAULT_SYSTEM_PROMPT_GENERIC)
+            base_prompt = ai_service.config.get(
+                prompt_key,
+                SYSTEM_PROMPT_DEFAULTS.get(prompt_key, DEFAULT_SYSTEM_PROMPT_GENERIC),
+            )
             # Append anti-greeting instruction if not already present (handles existing DB values)
             if _GUIDED_NO_GREETING_SUFFIX.strip() not in base_prompt:
                 base_prompt = base_prompt + _GUIDED_NO_GREETING_SUFFIX
@@ -508,7 +668,10 @@ def _resolve_system_prompt(ai_service: AIService, mode: str, phase: Optional[str
 
     # Fallback: mode-based system prompt
     prompt_key = MODE_TO_SYSTEM_PROMPT_KEY.get(mode, "prompt_generic")
-    return prompt_key, ai_service.config.get(prompt_key, DEFAULT_SYSTEM_PROMPT_GENERIC)
+    return prompt_key, ai_service.config.get(
+        prompt_key,
+        SYSTEM_PROMPT_DEFAULTS.get(prompt_key, DEFAULT_SYSTEM_PROMPT_GENERIC),
+    )
 
 
 def _resolve_user_message_for_chat(ai_service: AIService, request: ChatRequest, db: Session):
@@ -580,18 +743,24 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
 
     # 3. Recupera il riassunto conversazionale accumulato
     conversation_summary = session_memory.get_summary(session_id)
+    if _should_sanitize_ztpi_text(request.mode, request.phase):
+        conversation_summary = _sanitize_ztpi_user_text(conversation_summary)
 
     # 4. Get AI Response (con contesto conversazionale)
     response_content = ai_service.get_response(
         full_message, system_prompt, request.mode,
         conversation_summary=conversation_summary
     )
+    if _should_sanitize_ztpi_text(request.mode, request.phase):
+        response_content = _sanitize_ztpi_user_text(response_content)
 
     # 5. Genera riassunto in BACKGROUND (non blocca la risposta)
     step_label = ""
     if request.phase:
         step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first()
         step_label = step.label if step else request.phase
+    if _should_sanitize_ztpi_text(request.mode, request.phase):
+        step_label = _sanitize_ztpi_step_label(step_label)
 
     background_tasks.add_task(
         _generate_summary_background,
@@ -627,16 +796,23 @@ async def chat_message(message: str, session_id: str, mode: str, background_task
     ai_service = AIService(db)
 
     prompt_key = MODE_TO_SYSTEM_PROMPT_KEY.get(mode, "prompt_generic")
-    system_prompt = ai_service.config.get(prompt_key, DEFAULT_SYSTEM_PROMPT_GENERIC)
+    system_prompt = ai_service.config.get(
+        prompt_key,
+        SYSTEM_PROMPT_DEFAULTS.get(prompt_key, DEFAULT_SYSTEM_PROMPT_GENERIC),
+    )
 
     # 2. Recupera il riassunto conversazionale accumulato
     conversation_summary = session_memory.get_summary(session_id)
+    if _should_sanitize_ztpi_text(mode, None):
+        conversation_summary = _sanitize_ztpi_user_text(conversation_summary)
 
     # 3. Get AI Response (con contesto conversazionale)
     response_content = ai_service.get_response(
         message, system_prompt, mode,
         conversation_summary=conversation_summary
     )
+    if _should_sanitize_ztpi_text(mode, None):
+        response_content = _sanitize_ztpi_user_text(response_content)
 
     # 4. Genera riassunto in BACKGROUND
     background_tasks.add_task(
@@ -733,7 +909,6 @@ async def upload_qsa_document(file: UploadFile = File(...), db: Session = Depend
 import edge_tts
 import io
 from fastapi.responses import StreamingResponse
-import re
 
 class TTSRequest(schemas.BaseModel):
     text: str

@@ -2,12 +2,18 @@
 
 import { FileText, Keyboard, ArrowRight, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { QuestionnaireConfig } from '@/lib/questionnaires';
 
 interface InputMethodSelectorProps {
     onSelect: (method: 'manual' | 'upload') => void;
+    questionnaire?: QuestionnaireConfig;
 }
 
-export function InputMethodSelector({ onSelect }: InputMethodSelectorProps) {
+export function InputMethodSelector({ onSelect, questionnaire }: InputMethodSelectorProps) {
+    const manualDescription = questionnaire
+        ? `Inserisci i punteggi del tuo questionario ${questionnaire.name} (${questionnaire.factors.map(f => f.code).join(', ')}) direttamente nel form.`
+        : 'Inserisci i punteggi del tuo questionario direttamente nel form.';
+
     return (
         <div className="grid md:grid-cols-2 gap-6 w-full max-w-4xl mx-auto p-4">
             {/* Manual Entry Card */}
@@ -23,7 +29,7 @@ export function InputMethodSelector({ onSelect }: InputMethodSelectorProps) {
                 </div>
                 <h3 className="text-xl font-semibold mb-2 text-slate-900">Inserimento Manuale</h3>
                 <p className="text-sm text-center text-slate-600 px-4">
-                    Inserisci i punteggi del tuo questionario QSA (C1-C7, A1-A7) direttamente nel form.
+                    {manualDescription}
                 </p>
             </button>
 

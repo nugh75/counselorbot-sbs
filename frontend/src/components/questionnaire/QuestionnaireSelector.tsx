@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { QUESTIONNAIRE_LIST, QuestionnaireType, QuestionnaireConfig } from '@/lib/questionnaires';
 import { ChevronRight, ClipboardList } from 'lucide-react';
 
-const ACTIVE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'ZTPI'];
+const ACTIVE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'ZTPI', 'SAVICKAS'];
 
 interface QuestionnaireSelectorProps {
     onSelect: (questionnaire: QuestionnaireConfig) => void;
@@ -69,7 +69,7 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
             </div>
 
             <p className="text-center text-xs text-slate-400 mt-6">
-                QSA e ZTPI sono completamente implementati. Gli altri questionari saranno disponibili a breve.
+                QSA, ZTPI e l'intervista Savickas sono disponibili. Gli altri questionari saranno disponibili a breve.
             </p>
         </div>
     );

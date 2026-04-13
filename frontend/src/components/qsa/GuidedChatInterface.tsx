@@ -30,12 +30,13 @@ interface GuidedChatInterfaceProps {
 }
 
 const ZTPI_REQUIRED_STEP_IDS = ['ztpi-t1', 'ztpi-t2', 'ztpi-t3', 'ztpi-t4', 'ztpi-t5', 'ztpi-btp'];
+const SAVICKAS_REQUIRED_STEP_IDS = ['savickas-patto', 'savickas-q1', 'savickas-q2', 'savickas-q3', 'savickas-q4', 'savickas-q5', 'savickas-final'];
 
 const ZTPI_FALLBACK_STEPS: StepDef[] = [
     {
         id: 'ztpi-t1',
         sort_order: 1,
-        label: '1. T1 - Passato Negativo',
+        label: '1. Passato Negativo',
         system_prompt_mode: 'ztpi-factor',
         color_theme: 'rose',
         prompt: 'Analizza il fattore Passato Negativo del mio profilo temporale. Nel testo finale evita sigle tecniche.',
@@ -43,7 +44,7 @@ const ZTPI_FALLBACK_STEPS: StepDef[] = [
     {
         id: 'ztpi-t2',
         sort_order: 2,
-        label: '2. T2 - Passato Positivo',
+        label: '2. Passato Positivo',
         system_prompt_mode: 'ztpi-factor',
         color_theme: 'amber',
         prompt: 'Analizza il fattore Passato Positivo del mio profilo temporale. Nel testo finale evita sigle tecniche.',
@@ -51,7 +52,7 @@ const ZTPI_FALLBACK_STEPS: StepDef[] = [
     {
         id: 'ztpi-t3',
         sort_order: 3,
-        label: '3. T3 - Presente Edonistico',
+        label: '3. Presente Edonistico',
         system_prompt_mode: 'ztpi-factor',
         color_theme: 'orange',
         prompt: "Analizza il fattore Presente Edonistico del mio profilo temporale. Spiega in modo semplice che 'edonistico' significa anche vivere il presente e cogliere l'attimo (carpe diem), con equilibrio e responsabilità. Nel testo finale evita sigle tecniche.",
@@ -59,7 +60,7 @@ const ZTPI_FALLBACK_STEPS: StepDef[] = [
     {
         id: 'ztpi-t4',
         sort_order: 4,
-        label: '4. T4 - Presente Fatalistico',
+        label: '4. Presente Fatalistico',
         system_prompt_mode: 'ztpi-factor',
         color_theme: 'red',
         prompt: "Analizza il fattore Presente Fatalistico del mio profilo temporale. Spiega in modo semplice che 'fatalistico' significa percepire poco controllo personale e tendere alla rassegnazione. Nel testo finale evita sigle tecniche.",
@@ -67,7 +68,7 @@ const ZTPI_FALLBACK_STEPS: StepDef[] = [
     {
         id: 'ztpi-t5',
         sort_order: 5,
-        label: '5. T5 - Futuro',
+        label: '5. Futuro',
         system_prompt_mode: 'ztpi-factor',
         color_theme: 'teal',
         prompt: 'Analizza il fattore Futuro del mio profilo temporale. Nel testo finale evita sigle tecniche.',
@@ -75,10 +76,69 @@ const ZTPI_FALLBACK_STEPS: StepDef[] = [
     {
         id: 'ztpi-btp',
         sort_order: 6,
-        label: '6. Profilo Temporale Bilanciato',
+        label: '6. Profilo Temporale Equilibrato',
         system_prompt_mode: 'ztpi-btp',
         color_theme: 'purple',
         prompt: "Analisi finale del profilo temporale: confronta il mio profilo complessivo con il profilo temporale equilibrato. Spiega sempre in modo semplice cosa significano 'presente edonistico' (anche vivere il presente e cogliere l'attimo) e 'presente fatalistico'. Nel testo finale evita sigle tecniche.",
+    },
+];
+
+const SAVICKAS_FALLBACK_STEPS: StepDef[] = [
+    {
+        id: 'savickas-patto',
+        sort_order: 0,
+        label: '0. Patto di Collaborazione',
+        system_prompt_mode: 'savickas-interview',
+        color_theme: 'cyan',
+        prompt: "Apri l'intervista Savickas creando un patto con lo studente: obiettivo, metodo, ruoli, riservatezza e conferma esplicita prima di iniziare.",
+    },
+    {
+        id: 'savickas-q1',
+        sort_order: 1,
+        label: '1. Modelli di Ruolo',
+        system_prompt_mode: 'savickas-interview',
+        color_theme: 'blue',
+        prompt: 'Poni la domanda 1/5 dell’intervista Savickas sui modelli di ruolo (tre figure e qualità ammirate).',
+    },
+    {
+        id: 'savickas-q2',
+        sort_order: 2,
+        label: '2. Media Preferiti',
+        system_prompt_mode: 'savickas-interview',
+        color_theme: 'indigo',
+        prompt: 'Poni la domanda 2/5 dell’intervista Savickas su riviste/siti/contenuti preferiti e su cosa attira.',
+    },
+    {
+        id: 'savickas-q3',
+        sort_order: 3,
+        label: '3. Storia Preferita',
+        system_prompt_mode: 'savickas-interview',
+        color_theme: 'amber',
+        prompt: 'Poni la domanda 3/5 dell’intervista Savickas sulla storia preferita (libro/film/serie) e significato personale.',
+    },
+    {
+        id: 'savickas-q4',
+        sort_order: 4,
+        label: '4. Motto Personale',
+        system_prompt_mode: 'savickas-interview',
+        color_theme: 'teal',
+        prompt: 'Poni la domanda 4/5 dell’intervista Savickas sul motto personale e su come guida le scelte.',
+    },
+    {
+        id: 'savickas-q5',
+        sort_order: 5,
+        label: '5. Ricordi Precoci',
+        system_prompt_mode: 'savickas-interview',
+        color_theme: 'rose',
+        prompt: 'Poni la domanda 5/5 dell’intervista Savickas su tre ricordi precoci con un titolo breve per ciascuno.',
+    },
+    {
+        id: 'savickas-final',
+        sort_order: 6,
+        label: "6. Sintesi Narrativa e Piano d'Azione",
+        system_prompt_mode: 'savickas-summary',
+        color_theme: 'purple',
+        prompt: 'Produci la sintesi finale: tema centrale, risorse, ostacoli, ipotesi di direzione e piano 7/30/90 giorni.',
     },
 ];
 
@@ -88,11 +148,17 @@ function sleep(ms: number): Promise<void> {
 
 function normalizeLoadedSteps(questionnaireType: string, loadedSteps: StepDef[]): StepDef[] {
     const ordered = [...loadedSteps].sort((a, b) => a.sort_order - b.sort_order);
-    if (questionnaireType !== 'ZTPI') return ordered;
-
-    const ids = ordered.map((s) => s.id);
-    const hasAllRequired = ZTPI_REQUIRED_STEP_IDS.every((id) => ids.includes(id));
-    return hasAllRequired ? ordered : ZTPI_FALLBACK_STEPS;
+    if (questionnaireType === 'ZTPI') {
+        const ids = ordered.map((s) => s.id);
+        const hasAllRequired = ZTPI_REQUIRED_STEP_IDS.every((id) => ids.includes(id));
+        return hasAllRequired ? ordered : ZTPI_FALLBACK_STEPS;
+    }
+    if (questionnaireType === 'SAVICKAS') {
+        const ids = ordered.map((s) => s.id);
+        const hasAllRequired = SAVICKAS_REQUIRED_STEP_IDS.every((id) => ids.includes(id));
+        return hasAllRequired ? ordered : SAVICKAS_FALLBACK_STEPS;
+    }
+    return ordered;
 }
 
 // --- Color theme mapping (string literals for Tailwind scanner) ---
@@ -120,6 +186,7 @@ const CONCLUSION_COLOR = { headerBg: 'bg-slate-50', iconBg: 'bg-slate-500' };
 
 const FIXED_QUESTIONS_ID = 'questions';
 const FIXED_CONCLUSION_ID = 'conclusion';
+const STEP_ADVANCE_MARKER = '[[AVANZA_STEP]]';
 
 // --- Sidebar section labels per prefix ---
 
@@ -132,9 +199,15 @@ const PREFIX_SIDEBAR: Record<string, { label: string; colorClass: string }> = {
 // --- Score formatters per questionnaire type ---
 
 function buildScoresFormatter(questionnaireType: string): (scores: Record<string, number>) => string {
+    if (questionnaireType === 'SAVICKAS') {
+        return (): string => {
+            return 'CONTESTO INTERVISTA SAVICKAS: percorso narrativo qualitativo senza punteggi numerici.';
+        };
+    }
+
     if (questionnaireType === 'ZTPI') {
         return (scores: Record<string, number>): string => {
-            const lines: string[] = ['PROFILO ZTPI DELLO STUDENTE:'];
+            const lines: string[] = ['PROFILO DELLA PROSPETTIVA TEMPORALE DELLO STUDENTE:'];
             lines.push('\nProspettiva Temporale:');
             Object.entries(scores)
                 .filter(([k]) => k.startsWith('T'))
@@ -144,7 +217,7 @@ function buildScoresFormatter(questionnaireType: string): (scores: Record<string
                     if (!factor) return;
                     const analysis = analyzeZTPIScore(code as ZTPIFactorCode, value);
                     const invertedNote = factor.isInverted ? ' [INVERTITO]' : '';
-                    lines.push(`- ${code} ${factor.name}${invertedNote}: ${value}/9 (${analysis.interpretation})`);
+                    lines.push(`- ${factor.name}${invertedNote}: ${value}/9 (${analysis.interpretation})`);
                 });
             return lines.join('\n');
         };
@@ -258,6 +331,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const [lastAnalysisFailed, setLastAnalysisFailed] = useState(false);
     const [playingMessageIdx, setPlayingMessageIdx] = useState<number | null>(null);
     const [isAudioLoading, setIsAudioLoading] = useState(false);
+    const [showAdvanceSuggestion, setShowAdvanceSuggestion] = useState(false);
+    const [userMessagesInPhase, setUserMessagesInPhase] = useState(0);
 
     // Fixed-phase configurable texts
     const [questionsLabel, setQuestionsLabel] = useState('Domande e Approfondimenti');
@@ -314,7 +389,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
         const loadData = async () => {
             try {
-                const res = await fetch(`/counselorbot/api/qsa/guided-ui-texts?questionnaire_type=${questionnaireType}`);
+                const res = await fetch(`/api/qsa/guided-ui-texts?questionnaire_type=${questionnaireType}`);
                 if (!res.ok) return;
 
                 const data = await res.json();
@@ -325,12 +400,16 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 const normalizedSteps = normalizeLoadedSteps(questionnaireType, loadedSteps);
                 setSteps(normalizedSteps);
 
-                // Build phase order: [...step ids, 'questions', 'conclusion']
-                const phaseOrder = [
-                    ...normalizedSteps.map((s: StepDef) => s.id),
-                    FIXED_QUESTIONS_ID,
-                    FIXED_CONCLUSION_ID,
-                ];
+                const phaseOrder = questionnaireType === 'SAVICKAS'
+                    ? [
+                        ...normalizedSteps.map((s: StepDef) => s.id),
+                        FIXED_CONCLUSION_ID,
+                    ]
+                    : [
+                        ...normalizedSteps.map((s: StepDef) => s.id),
+                        FIXED_QUESTIONS_ID,
+                        FIXED_CONCLUSION_ID,
+                    ];
                 setPhases(phaseOrder);
 
                 // Set first phase
@@ -345,9 +424,16 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 if (data.text_guided_questions_intro) setQuestionsIntro(data.text_guided_questions_intro);
                 if (data.text_guided_conclusion) setConclusionText(data.text_guided_conclusion);
             } catch {
-                // Fallback: empty steps, just questions + conclusion
-                setPhases([FIXED_QUESTIONS_ID, FIXED_CONCLUSION_ID]);
-                setCurrentPhase(FIXED_QUESTIONS_ID);
+                if (questionnaireType === 'SAVICKAS') {
+                    setSteps(SAVICKAS_FALLBACK_STEPS);
+                    const fallbackOrder = [...SAVICKAS_FALLBACK_STEPS.map((s) => s.id), FIXED_CONCLUSION_ID];
+                    setPhases(fallbackOrder);
+                    setCurrentPhase(fallbackOrder[0]);
+                } else {
+                    // Fallback: empty steps, just questions + conclusion
+                    setPhases([FIXED_QUESTIONS_ID, FIXED_CONCLUSION_ID]);
+                    setCurrentPhase(FIXED_QUESTIONS_ID);
+                }
             } finally {
                 if (isMounted) setInitialLoading(false);
             }
@@ -377,11 +463,19 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         return phaseId !== FIXED_QUESTIONS_ID && phaseId !== FIXED_CONCLUSION_ID;
     };
 
+    const extractAdvanceSignal = (rawText: string): { cleanText: string; shouldAdvance: boolean } => {
+        const shouldAdvance = rawText.includes(STEP_ADVANCE_MARKER);
+        const cleanText = rawText.replace(/\[\[AVANZA_STEP\]\]/g, '').trim();
+        return { cleanText, shouldAdvance };
+    };
+
     // Phase change handler
     useEffect(() => {
         if (!currentPhase || initialLoading) return;
         if (lastProcessedPhase.current === currentPhase) return;
         lastProcessedPhase.current = currentPhase;
+        setShowAdvanceSuggestion(false);
+        setUserMessagesInPhase(0);
 
         if (currentPhase === FIXED_QUESTIONS_ID) {
             setLastAnalysisFailed(false);
@@ -444,7 +538,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             for (const payload of payloads) {
                 for (let attempt = 0; attempt < 2; attempt++) {
                     try {
-                        res = await fetch('/counselorbot/api/chat', {
+                        res = await fetch('/api/chat', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload),
@@ -461,8 +555,16 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
             if (res?.ok) {
                 const data = await res.json();
-                setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+                const { cleanText, shouldAdvance } = extractAdvanceSignal(data.response || '');
+                if (cleanText) {
+                    setMessages(prev => [...prev, { role: 'assistant', content: cleanText }]);
+                }
                 setLastAnalysisFailed(false);
+                const allowAutoAdvanceOnGenerate =
+                    questionnaireType !== 'SAVICKAS' || step.id === 'savickas-final';
+                if (shouldAdvance && allowAutoAdvanceOnGenerate) {
+                    advancePhase();
+                }
             } else {
                 setMessages(prev => [...prev, {
                     role: 'assistant',
@@ -481,6 +583,16 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         }
     };
 
+    const resolveInteractiveMode = (): string => {
+        if (isAnalysisStep(currentPhase)) {
+            return getStepDef(currentPhase)?.system_prompt_mode || 'generic';
+        }
+        if (questionnaireType === 'SAVICKAS') {
+            return 'savickas-interview';
+        }
+        return 'generic';
+    };
+
     const handleSend = async (e: { preventDefault: () => void }) => {
         e.preventDefault();
         if (!input.trim() || isLoading) return;
@@ -488,22 +600,57 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         const userMessage = input;
         setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
         setInput('');
+        setUserMessagesInPhase(prev => prev + 1);
+
+        // Patto Savickas: "accetto" → ack statico e avanza senza chiamare l'AI
+        const isPattoAck =
+            questionnaireType === 'SAVICKAS'
+            && currentPhase === 'savickas-patto'
+            && /\baccetto\b/i.test(userMessage);
+        if (isPattoAck) {
+            setMessages(prev => [...prev, {
+                role: 'assistant',
+                content: 'Perfetto, grazie per la conferma! Iniziamo il nostro percorso.',
+            }]);
+            advancePhase();
+            return;
+        }
+
         setIsLoading(true);
+        setShowAdvanceSuggestion(false);
 
         try {
-            const res = await fetch('/counselorbot/api/chat', {
+            const currentStep = isAnalysisStep(currentPhase) ? getStepDef(currentPhase) : undefined;
+            const effectiveMessage = (questionnaireType === 'SAVICKAS' && currentStep?.prompt)
+                ? `ISTRUZIONI STEP CORRENTE (INTERNE): ${currentStep.prompt}\n\nRISPOSTA STUDENTE:\n${userMessage}`
+                : userMessage;
+
+            const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    message: userMessage,
-                    mode: 'generic',
+                    message: effectiveMessage,
+                    mode: resolveInteractiveMode(),
+                    phase: isAnalysisStep(currentPhase) ? currentPhase : undefined,
                     session_id: sessionId,
                 }),
             });
 
             if (res.ok) {
                 const data = await res.json();
-                setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+                const { cleanText, shouldAdvance } = extractAdvanceSignal(data.response || '');
+                if (cleanText) {
+                    setMessages(prev => [...prev, { role: 'assistant', content: cleanText }]);
+                }
+                if (shouldAdvance) {
+                    // Per Savickas (tranne l'ultimo step): non avanzare automaticamente,
+                    // ma mostrare un suggerimento all'utente che può scegliere quando andare avanti
+                    if (questionnaireType === 'SAVICKAS' && currentPhase !== 'savickas-final') {
+                        setShowAdvanceSuggestion(true);
+                    } else {
+                        advancePhase();
+                    }
+                }
             }
         } catch {
             setMessages(prev => [...prev, { role: 'assistant', content: 'Errore di connessione.' }]);
@@ -513,6 +660,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     };
 
     const advancePhase = () => {
+        setShowAdvanceSuggestion(false);
         const currentIndex = phases.indexOf(currentPhase);
         if (currentIndex < phases.length - 1) {
             setCurrentPhase(phases[currentIndex + 1]);
@@ -542,7 +690,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         setIsAudioLoading(true);
 
         try {
-            const response = await fetch('/counselorbot/api/tts', {
+            const response = await fetch('/api/tts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text }),
@@ -589,6 +737,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const currentStepIndex = phases.indexOf(currentPhase) + 1;
     const totalSteps = phases.length;
     const sidebarPhases = phases.filter(p => p !== FIXED_CONCLUSION_ID);
+    const hasScoreEntries = scoreGroups.some(group => group.entries.length > 0);
 
     return (
         <div className="grid lg:grid-cols-4 gap-6 h-[calc(100vh-140px)] min-h-[600px]">
@@ -624,13 +773,24 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         })}
                     </div>
 
-                    {currentPhase !== FIXED_CONCLUSION_ID && (
+                    {currentPhase !== FIXED_CONCLUSION_ID && questionnaireType !== 'SAVICKAS' && (
                         <button
                             onClick={advancePhase}
                             disabled={isLoading}
                             className="w-full mt-2 py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1 disabled:opacity-50 shadow-sm"
                         >
                             {currentPhase === FIXED_QUESTIONS_ID ? 'Concludi Sessione' : 'Prossimo Step'}
+                            <ChevronRight className="w-3 h-3" />
+                        </button>
+                    )}
+
+                    {currentPhase !== FIXED_CONCLUSION_ID && questionnaireType === 'SAVICKAS' && (showAdvanceSuggestion || userMessagesInPhase >= 3) && (
+                        <button
+                            onClick={advancePhase}
+                            disabled={isLoading}
+                            className="w-full mt-2 py-2.5 px-3 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1 disabled:opacity-50 shadow-sm"
+                        >
+                            Prossimo Argomento
                             <ChevronRight className="w-3 h-3" />
                         </button>
                     )}
@@ -647,27 +807,29 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 </div>
 
                 {/* Scores Display */}
-                <div className="glass-panel p-4 rounded-xl space-y-3">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                        <BarChart3 className="w-4 h-4" />
-                        Punteggi
-                    </div>
-
-                    {scoreGroups.map((group, idx) => (
-                        <div key={group.prefix} className={cn("space-y-1.5", idx > 0 && "pt-2 border-t border-slate-100")}>
-                            <div className={cn("text-[10px] font-medium uppercase", group.colorClass)}>{group.label}</div>
-                            {group.entries.map(([code, score]) => (
-                                <CompactScoreBar
-                                    key={code}
-                                    code={code}
-                                    score={score}
-                                    invertedSet={invertedSet}
-                                    questionnaireType={questionnaireType}
-                                />
-                            ))}
+                {hasScoreEntries && (
+                    <div className="glass-panel p-4 rounded-xl space-y-3">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                            <BarChart3 className="w-4 h-4" />
+                            Punteggi
                         </div>
-                    ))}
-                </div>
+
+                        {scoreGroups.map((group, idx) => (
+                            <div key={group.prefix} className={cn("space-y-1.5", idx > 0 && "pt-2 border-t border-slate-100")}>
+                                <div className={cn("text-[10px] font-medium uppercase", group.colorClass)}>{group.label}</div>
+                                {group.entries.map(([code, score]) => (
+                                    <CompactScoreBar
+                                        key={code}
+                                        code={code}
+                                        score={score}
+                                        invertedSet={invertedSet}
+                                        questionnaireType={questionnaireType}
+                                    />
+                                ))}
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Chat Area */}
@@ -738,6 +900,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         </div>
                     ))}
 
+
+
                     {isLoading && (
                         <div className="flex justify-start">
                             <div className="px-5 py-4 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center gap-3">
@@ -756,7 +920,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 {currentPhase === FIXED_CONCLUSION_ID ? (
                     <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-center">
                         <button
-                            onClick={() => window.location.href = '/counselorbot/'}
+                            onClick={() => window.location.href = '/'}
                             className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-colors flex items-center gap-2 shadow-lg shadow-green-200"
                         >
                             <Home className="w-5 h-5" />
@@ -784,7 +948,11 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         </div>
                         <div className="mt-2 text-center">
                             <p className="text-[10px] text-slate-400">
-                                {isAnalysisStep(currentPhase) ? "Puoi fare domande sull'analisi corrente oppure cliccare 'Prossimo Step'." : "Fai qualsiasi domanda libera."}
+                                {isAnalysisStep(currentPhase)
+                                    ? questionnaireType === 'SAVICKAS'
+                                        ? "Rispondi liberamente. Quando hai condiviso abbastanza, apparirà un suggerimento per passare all'argomento successivo."
+                                        : "Puoi fare domande sull'analisi corrente oppure cliccare 'Prossimo Step'."
+                                    : "Fai qualsiasi domanda libera."}
                             </p>
                         </div>
                     </form>

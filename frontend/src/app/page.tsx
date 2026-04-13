@@ -22,6 +22,12 @@ export default function Home() {
 
     const handleQuestionnaireSelect = (questionnaire: QuestionnaireConfig) => {
         setSelectedQuestionnaire(questionnaire);
+        if (questionnaire.id === 'SAVICKAS') {
+            setScores({});
+            setSessionId(generateUUID());
+            setStep('interaction');
+            return;
+        }
         setStep('method-select');
     };
 
@@ -56,7 +62,7 @@ export default function Home() {
 
         // Log Audit
         try {
-            await fetch('/counselorbot/api/qsa/audit', {
+            await fetch('/api/qsa/audit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -86,7 +92,7 @@ export default function Home() {
         if (step === 'method-select') setStep('questionnaire-select');
         else if (step === 'manual-input' || step === 'upload-input') setStep('method-select');
         else if (step === 'dashboard') setStep('manual-input');
-        else if (step === 'interaction') setStep('dashboard');
+        else if (step === 'interaction') setStep(selectedQuestionnaire?.id === 'SAVICKAS' ? 'questionnaire-select' : 'dashboard');
         else if (step === 'completed') setStep('dashboard');
     };
 
@@ -97,7 +103,7 @@ export default function Home() {
             case 'manual-input': return 'Inserimento Punteggi';
             case 'upload-input': return 'Caricamento Documento';
             case 'dashboard': return 'Il Tuo Profilo';
-            case 'interaction': return 'Consulenza Guidata';
+            case 'interaction': return selectedQuestionnaire?.id === 'SAVICKAS' ? 'Intervista Savickas' : 'Consulenza Guidata';
             case 'completed': return 'Analisi Completata';
             default: return 'CounselorBot';
         }
@@ -110,7 +116,10 @@ export default function Home() {
             case 'manual-input': return 'Inserisci i punteggi da 1 a 9 per ogni fattore';
             case 'upload-input': return "L'IA estrarrà automaticamente i dati";
             case 'dashboard': return `Profilo ${selectedQuestionnaire?.name}`;
-            case 'interaction': return `Analisi guidata ${selectedQuestionnaire?.name}`;
+            case 'interaction':
+                return selectedQuestionnaire?.id === 'SAVICKAS'
+                    ? 'Career counseling narrativo in 5 domande'
+                    : `Analisi guidata ${selectedQuestionnaire?.name}`;
             case 'completed': return 'Grazie per aver utilizzato CounselorBot!';
             default: return '';
         }
@@ -164,8 +173,8 @@ export default function Home() {
                     )}
 
                     {/* Step: Input Method Selection */}
-                    {step === 'method-select' && (
-                        <InputMethodSelector onSelect={handleMethodSelect} />
+                    {step === 'method-select' && selectedQuestionnaire && (
+                        <InputMethodSelector onSelect={handleMethodSelect} questionnaire={selectedQuestionnaire} />
                     )}
 
                     {/* Step: Manual Input */}

@@ -56,11 +56,12 @@ const PROVIDERS: Record<string, { label: string; models: string[] }> = {
     ollama: {
         label: 'Ollama (Local)',
         models: [
+            'gemma4:31b',
+            'gemma4:26b',
             'qwen3:32b',
             'qwen3:latest',
             'qwen3.5:9b',
             'qwen3-coder-next:latest',
-            'qwen3-embedding:4b',
             'qwen2.5-coder:7b',
             'gemma3:27b',
             'gemma3:12b',
@@ -131,9 +132,9 @@ export function ConfigForm() {
     const fetchConfigs = async () => {
         try {
             const [configRes, envRes, stepsRes] = await Promise.all([
-                fetch('/counselorbot/api/admin/config', { headers: authHeaders() }),
-                fetch('/counselorbot/api/admin/config/env-status', { headers: authHeaders() }),
-                fetch('/counselorbot/api/admin/guided-steps', { headers: authHeaders() }),
+                fetch('/api/admin/config', { headers: authHeaders() }),
+                fetch('/api/admin/config/env-status', { headers: authHeaders() }),
+                fetch('/api/admin/guided-steps', { headers: authHeaders() }),
             ]);
 
             if (configRes.ok) {
@@ -145,7 +146,7 @@ export function ConfigForm() {
                 if (mod) setActiveModel(mod);
             } else if (configRes.status === 401 || configRes.status === 403) {
                 localStorage.removeItem('token');
-                window.location.href = '/counselorbot/login';
+                window.location.href = '/login';
             }
 
             if (envRes.ok) setEnvOverrides(await envRes.json());
@@ -163,7 +164,7 @@ export function ConfigForm() {
 
     const handleSaveConfig = async (item: ConfigItem) => {
         try {
-            await fetch('/counselorbot/api/admin/config', {
+            await fetch('/api/admin/config', {
                 method: 'POST',
                 headers: authJsonHeaders(),
                 body: JSON.stringify(item),
@@ -205,7 +206,7 @@ export function ConfigForm() {
 
     const handleSaveStep = async (step: GuidedStep) => {
         try {
-            const res = await fetch(`/counselorbot/api/admin/guided-steps/${step.id}`, {
+            const res = await fetch(`/api/admin/guided-steps/${step.id}`, {
                 method: 'PUT',
                 headers: authJsonHeaders(),
                 body: JSON.stringify({
@@ -229,7 +230,7 @@ export function ConfigForm() {
             sort_order: guidedSteps.length > 0 ? Math.max(...guidedSteps.map(s => s.sort_order)) + 1 : 1,
         };
         try {
-            const res = await fetch('/counselorbot/api/admin/guided-steps', {
+            const res = await fetch('/api/admin/guided-steps', {
                 method: 'POST',
                 headers: authJsonHeaders(),
                 body: JSON.stringify(stepToCreate),
@@ -248,7 +249,7 @@ export function ConfigForm() {
     const handleDeleteStep = async (stepId: string) => {
         if (!confirm(`Eliminare lo step "${stepId}"? Questa azione non è reversibile.`)) return;
         try {
-            const res = await fetch(`/counselorbot/api/admin/guided-steps/${stepId}`, {
+            const res = await fetch(`/api/admin/guided-steps/${stepId}`, {
                 method: 'DELETE',
                 headers: authHeaders(),
             });
@@ -274,7 +275,7 @@ export function ConfigForm() {
         setGuidedSteps(newSteps);
 
         try {
-            await fetch('/counselorbot/api/admin/guided-steps/reorder', {
+            await fetch('/api/admin/guided-steps/reorder', {
                 method: 'PATCH',
                 headers: authJsonHeaders(),
                 body: JSON.stringify(newSteps.map(s => ({ id: s.id, sort_order: s.sort_order }))),
@@ -301,11 +302,58 @@ export function ConfigForm() {
         { key: 'ollama_ip', label: 'Ollama IP Address' },
     ];
 
-    const systemPrompts = [
-        { key: 'prompt_factor', label: 'Prompt Analisi Fattori' },
-        { key: 'prompt_second_level', label: 'Prompt Secondo Livello' },
-        { key: 'prompt_generic', label: 'Prompt Chat Generica' },
+    const questionnaireConfigs = [
+        {
+            id: 'qsa',
+            title: 'QSA — Questionario Strategie di Apprendimento',
+            color: 'blue' as const,
+            systemPrompts: [
+                { key: 'prompt_factor', label: 'Prompt Analisi Fattori' },
+                { key: 'prompt_second_level', label: 'Prompt Secondo Livello' },
+                { key: 'prompt_generic', label: 'Prompt Chat Generica' },
+                { key: 'prompt_guided_questions', label: 'Prompt Fase Domande e Approfondimenti' },
+            ],
+            texts: [
+                { key: 'label_guided_questions', label: 'Titolo Step Domande', type: 'input' as const },
+                { key: 'text_guided_questions_phase_banner', label: 'Banner Ingresso Fase Domande', type: 'input' as const },
+                { key: 'text_guided_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
+                { key: 'label_guided_conclusion', label: 'Titolo Step Conclusione', type: 'input' as const },
+                { key: 'text_guided_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
+            ],
+        },
+        {
+            id: 'ztpi',
+            title: 'ZTPI — Zimbardo Time Perspective Inventory',
+            color: 'emerald' as const,
+            systemPrompts: [
+                { key: 'prompt_ztpi_factor', label: 'Prompt Analisi Fattori' },
+                { key: 'prompt_ztpi_btp', label: 'Prompt Profilo Temporale Bilanciato' },
+            ],
+            texts: [
+                { key: 'text_ztpi_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
+                { key: 'text_ztpi_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
+            ],
+        },
+        {
+            id: 'savickas',
+            title: 'Savickas — Career Construction Interview',
+            color: 'amber' as const,
+            systemPrompts: [
+                { key: 'prompt_savickas_interview', label: 'Prompt Intervista' },
+                { key: 'prompt_savickas_summary', label: 'Prompt Sintesi Finale' },
+            ],
+            texts: [
+                { key: 'text_savickas_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
+                { key: 'text_savickas_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
+            ],
+        },
     ];
+
+    const colorMap = {
+        blue: { border: 'border-blue-400', bg: 'bg-blue-50', title: 'text-blue-700', dot: 'bg-blue-500', ring: 'focus:ring-blue-500', subBg: 'bg-blue-100/50', subTitle: 'text-blue-600' },
+        emerald: { border: 'border-emerald-400', bg: 'bg-emerald-50', title: 'text-emerald-700', dot: 'bg-emerald-500', ring: 'focus:ring-emerald-500', subBg: 'bg-emerald-100/50', subTitle: 'text-emerald-600' },
+        amber: { border: 'border-amber-400', bg: 'bg-amber-50', title: 'text-amber-700', dot: 'bg-amber-500', ring: 'focus:ring-amber-500', subBg: 'bg-amber-100/50', subTitle: 'text-amber-600' },
+    };
 
     return (
         <div className="space-y-8">
@@ -399,40 +447,107 @@ export function ConfigForm() {
                 })}
             </div>
 
-            {/* 3. System Prompts (Legacy) */}
-            <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">System Prompts</h3>
-                <p className="text-xs text-slate-500 ml-1">
-                    Prompt di sistema usati dalle diverse modalità (analisi fattori, secondo livello, generica).
-                </p>
-                {systemPrompts.map((def) => {
-                    const currentVal = configs.find(c => c.key === def.key)?.value || '';
-                    return (
-                        <div key={def.key} className="glass-panel p-6 rounded-xl space-y-3">
-                            <div className="flex justify-between items-start gap-3">
-                                <h3 className="text-sm font-bold text-blue-700">{def.label}</h3>
-                                <button
-                                    onClick={() => handleSaveConfig({ key: def.key, value: currentVal, description: def.label })}
-                                    className="p-2 hover:bg-slate-100 rounded-lg text-blue-600 transition-colors shrink-0"
-                                >
-                                    <Save className="w-4 h-4" />
-                                </button>
+            {/* 3. Prompt e Testi — per Questionario */}
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">Prompt e Testi per Questionario</h3>
+            {questionnaireConfigs.map((q) => {
+                const c = colorMap[q.color];
+                const allKeys = [...q.systemPrompts.map(p => p.key), ...q.texts.map(t => t.key)];
+                return (
+                    <div key={q.id} className={`space-y-4 border-l-4 ${c.border} pl-4`}>
+                        {/* Header questionario */}
+                        <div className={`${c.bg} rounded-lg px-4 py-3 flex items-center justify-between`}>
+                            <div className="flex items-center gap-2">
+                                <div className={`w-3 h-3 rounded-full ${c.dot}`} />
+                                <h3 className={`text-sm font-bold ${c.title} uppercase tracking-wider`}>
+                                    {q.title}
+                                </h3>
                             </div>
-                            <textarea
-                                className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm min-h-[120px] focus:ring-2 focus:ring-blue-500 outline-none font-mono text-slate-900"
-                                value={currentVal}
-                                onChange={(e) => {
-                                    const newVal = e.target.value;
-                                    setConfigs(prev => {
-                                        const others = prev.filter(p => p.key !== def.key);
-                                        return [...others, { key: def.key, value: newVal, description: def.label }];
-                                    });
+                            <button
+                                onClick={async () => {
+                                    for (const key of allKeys) {
+                                        await saveConfigKey(key, key);
+                                    }
                                 }}
-                            />
+                                className={`flex items-center gap-1.5 px-3 py-1.5 hover:opacity-80 ${c.title} text-xs font-bold rounded-lg transition-colors border ${c.border}`}
+                                title="Salva tutto questo questionario"
+                            >
+                                <Save className="w-3.5 h-3.5" />
+                                Salva tutto
+                            </button>
                         </div>
-                    );
-                })}
-            </div>
+
+                        {/* Sub: Prompt di Sistema */}
+                        <div className="space-y-3">
+                            <div className={`${c.subBg} rounded px-3 py-1.5`}>
+                                <h4 className={`text-xs font-bold ${c.subTitle} uppercase tracking-wider`}>
+                                    Prompt di Sistema (istruzioni per l&apos;IA)
+                                </h4>
+                            </div>
+                            {q.systemPrompts.map((def) => {
+                                const currentVal = getConfigValue(def.key);
+                                return (
+                                    <div key={def.key} className="glass-panel p-5 rounded-xl space-y-3">
+                                        <div className="flex justify-between items-start gap-3">
+                                            <h3 className={`text-sm font-bold ${c.title}`}>{def.label}</h3>
+                                            <button
+                                                onClick={() => saveConfigKey(def.key, def.label)}
+                                                className="p-2 hover:bg-slate-100 rounded-lg text-blue-600 transition-colors shrink-0"
+                                            >
+                                                <Save className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                        <textarea
+                                            className={`w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm min-h-[120px] ${c.ring} outline-none font-mono text-slate-900`}
+                                            value={currentVal}
+                                            onChange={(e) => setConfigDraft(def.key, e.target.value, def.label)}
+                                        />
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Sub: Testi e Messaggi */}
+                        {q.texts.length > 0 && (
+                            <div className="space-y-3">
+                                <div className={`${c.subBg} rounded px-3 py-1.5`}>
+                                    <h4 className={`text-xs font-bold ${c.subTitle} uppercase tracking-wider`}>
+                                        Testi e Messaggi (mostrati allo studente)
+                                    </h4>
+                                </div>
+                                {q.texts.map((def) => {
+                                    const currentVal = getConfigValue(def.key);
+                                    return (
+                                        <div key={def.key} className="glass-panel p-5 rounded-xl space-y-3">
+                                            <div className="flex justify-between items-start gap-3">
+                                                <h3 className={`text-sm font-bold ${c.title}`}>{def.label}</h3>
+                                                <button
+                                                    onClick={() => saveConfigKey(def.key, def.label)}
+                                                    className="p-2 hover:bg-slate-100 rounded-lg text-blue-600 transition-colors shrink-0"
+                                                >
+                                                    <Save className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                            {def.type === 'input' ? (
+                                                <input
+                                                    className={`w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm ${c.ring} outline-none text-slate-900`}
+                                                    value={currentVal}
+                                                    onChange={(e) => setConfigDraft(def.key, e.target.value, def.label)}
+                                                />
+                                            ) : (
+                                                <textarea
+                                                    className={`w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm min-h-[80px] ${c.ring} outline-none font-mono text-slate-900`}
+                                                    value={currentVal}
+                                                    onChange={(e) => setConfigDraft(def.key, e.target.value, def.label)}
+                                                />
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                );
+            })}
 
             {/* 4. Dynamic Guided Steps */}
             <div className="space-y-4">
@@ -642,104 +757,6 @@ export function ConfigForm() {
                 </div>
             </div>
 
-            {/* 5. Questions Phase Config */}
-            <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">Fase Domande</h3>
-                <p className="text-xs text-slate-500 ml-1">
-                    Configurazione della fase domande libere (sempre presente dopo gli step di analisi).
-                </p>
-
-                <div className="glass-panel p-6 rounded-xl space-y-4">
-                    <div className="flex justify-between items-start gap-3">
-                        <h3 className="text-sm font-bold text-green-700">Domande e Approfondimenti</h3>
-                        <button
-                            onClick={async () => {
-                                await saveConfigKey('label_guided_questions', 'Nome step Domande');
-                                await saveConfigKey('prompt_guided_questions', 'Prompt sistema fase Domande');
-                                await saveConfigKey('text_guided_questions_phase_banner', 'Messaggio system fase Domande');
-                                await saveConfigKey('text_guided_questions_intro', 'Messaggio intro fase Domande');
-                            }}
-                            className="p-2 hover:bg-slate-100 rounded-lg text-blue-600 transition-colors shrink-0"
-                        >
-                            <Save className="w-4 h-4" />
-                        </button>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-500">Titolo Step</label>
-                        <input
-                            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-900"
-                            value={getConfigValue('label_guided_questions')}
-                            onChange={(e) => setConfigDraft('label_guided_questions', e.target.value, 'Nome step Domande')}
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-500">Prompt di Sistema</label>
-                        <textarea
-                            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm min-h-[100px] focus:ring-2 focus:ring-blue-500 outline-none font-mono text-slate-900"
-                            value={getConfigValue('prompt_guided_questions')}
-                            onChange={(e) => setConfigDraft('prompt_guided_questions', e.target.value, 'Prompt sistema fase Domande')}
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-500">Messaggio System Ingresso Fase</label>
-                        <input
-                            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-900"
-                            value={getConfigValue('text_guided_questions_phase_banner')}
-                            onChange={(e) => setConfigDraft('text_guided_questions_phase_banner', e.target.value, 'Messaggio system fase Domande')}
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-500">Messaggio Intro Fase</label>
-                        <textarea
-                            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm min-h-[80px] focus:ring-2 focus:ring-blue-500 outline-none text-slate-900"
-                            value={getConfigValue('text_guided_questions_intro')}
-                            onChange={(e) => setConfigDraft('text_guided_questions_intro', e.target.value, 'Messaggio intro fase Domande')}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* 6. Conclusion Phase Config */}
-            <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">Conclusione</h3>
-
-                <div className="glass-panel p-6 rounded-xl space-y-4">
-                    <div className="flex justify-between items-start gap-3">
-                        <h3 className="text-sm font-bold text-slate-700">Step Finale</h3>
-                        <button
-                            onClick={async () => {
-                                await saveConfigKey('label_guided_conclusion', 'Nome step Conclusione');
-                                await saveConfigKey('text_guided_conclusion', 'Messaggio Conclusione');
-                            }}
-                            className="p-2 hover:bg-slate-100 rounded-lg text-blue-600 transition-colors shrink-0"
-                        >
-                            <Save className="w-4 h-4" />
-                        </button>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-500">Titolo Step</label>
-                        <input
-                            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-900"
-                            value={getConfigValue('label_guided_conclusion')}
-                            onChange={(e) => setConfigDraft('label_guided_conclusion', e.target.value, 'Nome step Conclusione')}
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-500">Messaggio Finale</label>
-                        <textarea
-                            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm min-h-[80px] focus:ring-2 focus:ring-blue-500 outline-none text-slate-900"
-                            value={getConfigValue('text_guided_conclusion')}
-                            onChange={(e) => setConfigDraft('text_guided_conclusion', e.target.value, 'Messaggio Conclusione')}
-                        />
-                    </div>
-                </div>
-            </div>
         </div>
     );
 }

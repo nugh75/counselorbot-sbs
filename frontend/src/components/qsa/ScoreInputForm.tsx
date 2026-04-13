@@ -13,6 +13,7 @@ const PREFIX_LABEL: Record<string, { label: string; colorClass: string }> = {
     C: { label: 'Strategie Cognitive (C)', colorClass: 'text-blue-700' },
     A: { label: 'Strategie Affettive (A)', colorClass: 'text-purple-700' },
     T: { label: 'Prospettiva Temporale (T)', colorClass: 'text-amber-700' },
+    P: { label: 'Percezione Competenze (P)', colorClass: 'text-green-700' },
 };
 
 interface ScoreInputFormProps {

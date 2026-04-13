@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { CheckCircle, Send, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-const API_BASE = '/counselorbot/api';
+const API_BASE = '/api';
 
 // Options for demographics
 const ETA_OPTIONS = ['< 14', '14-16', '17-18', '19-24', '25-34', '35-44', '45-54', '55+'];

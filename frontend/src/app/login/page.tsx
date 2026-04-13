@@ -28,7 +28,7 @@ export default function LoginPage() {
             formData.append('username', data.username);
             formData.append('password', data.password);
 
-            const res = await fetch('/counselorbot/api/token', {
+            const res = await fetch('/api/token', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -112,7 +112,7 @@ export default function LoginPage() {
                     </div>
 
                     <div className="text-center text-sm text-gray-500">
-                        <a href="/counselorbot/register" className="text-blue-600 hover:underline font-medium">
+                        <a href="/register" className="text-blue-600 hover:underline font-medium">
                             Registra un nuovo account
                         </a>
                     </div>

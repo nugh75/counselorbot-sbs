@@ -21,7 +21,7 @@ export function LogViewer() {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`/counselorbot/api/admin/logs`, {
+            const res = await fetch(`/api/admin/logs`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
@@ -30,7 +30,7 @@ export function LogViewer() {
             } else {
                 if (res.status === 401 || res.status === 403) {
                     localStorage.removeItem('token');
-                    window.location.href = '/counselorbot/login';
+                    window.location.href = '/login';
                 }
                 console.error('Failed to fetch logs:', res.statusText);
             }

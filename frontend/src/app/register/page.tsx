@@ -32,7 +32,7 @@ export default function RegisterPage() {
     const onSubmit = async (data: RegisterForm) => {
         setError(null);
         try {
-            const res = await fetch(`/counselorbot/api/register`, {
+            const res = await fetch(`/api/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

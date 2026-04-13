@@ -8,4 +8,4 @@ sudo cp /home/nugh75/Counselorbot-10-step/nginx_custom_location.conf \
 
 sudo docker exec nginx-proxy-manager nginx -s reload
 
-echo "=== Fatto. Location attive: /questionari e /counselorbot ==="
+echo "=== Fatto. Location attive: /questionari e / (compat redirect da /counselorbot) ==="

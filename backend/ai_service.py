@@ -128,7 +128,7 @@ class AIService:
         api_key = self._get_api_key('api_key_openai')
         if not api_key: return "Error: OpenAI API Key not configured."
         
-        client = OpenAI(api_key=api_key)
+        client = OpenAI(api_key=api_key, timeout=240)
         response = client.chat.completions.create(
             model=model,
             messages=[
@@ -146,6 +146,7 @@ class AIService:
         client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
             api_key=api_key,
+            timeout=240,
         )
         response = client.chat.completions.create(
             model=model,
@@ -160,14 +161,14 @@ class AIService:
         api_key = self._get_api_key('api_key_anthropic')
         if not api_key: return "Error: Anthropic API Key not configured."
 
-        client = anthropic.Anthropic(api_key=api_key)
+        client = anthropic.Anthropic(api_key=api_key, timeout=240)
         response = client.messages.create(
             model=model,
             system=system_prompt,
             messages=[
                 {"role": "user", "content": user_message}
             ],
-            max_tokens=1024
+            max_tokens=4096
         )
         return response.content[0].text
 
@@ -180,7 +181,10 @@ class AIService:
         gemini_model = genai.GenerativeModel(model)
         
         full_prompt = f"System: {system_prompt}\nUser: {user_message}"
-        response = gemini_model.generate_content(full_prompt)
+        response = gemini_model.generate_content(
+            full_prompt,
+            request_options={"timeout": 240},
+        )
         return response.text
 
     def _call_mistral(self, user_message, system_prompt, model):
@@ -199,11 +203,13 @@ class AIService:
         return response.choices[0].message.content
 
     def _call_ollama(self, user_message, system_prompt, model):
+        import httpx
         base_url = self._get_api_key('ollama_ip') or "http://localhost:11434"
 
         client = OpenAI(
             base_url=f"{base_url}/v1",
             api_key="ollama", # required but not used
+            timeout=httpx.Timeout(240.0, connect=10.0),
         )
         response = client.chat.completions.create(
             model=model,
@@ -211,7 +217,7 @@ class AIService:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_message}
             ],
-            max_tokens=4000,
+            max_tokens=8000,
         )
         return response.choices[0].message.content
 
@@ -235,7 +241,7 @@ class AIService:
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
-            with urllib.request.urlopen(req, timeout=180) as r:
+            with urllib.request.urlopen(req, timeout=300) as r:
                 r.read()
             logger.info(f"Ollama model '{model}' preloaded with keep_alive=-1")
         except Exception as e:

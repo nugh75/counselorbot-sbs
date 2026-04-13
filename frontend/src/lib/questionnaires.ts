@@ -1,7 +1,7 @@
 // Questionnaire Configuration
 // This file defines all available questionnaires and their configurations
 
-export type QuestionnaireType = 'QSA' | 'QSAr' | 'QPCS' | 'QPCC' | 'ZTPI' | 'QAP';
+export type QuestionnaireType = 'QSA' | 'QSAr' | 'QPCS' | 'QPCC' | 'ZTPI' | 'QAP' | 'SAVICKAS';
 
 export interface QuestionnaireConfig {
     id: QuestionnaireType;
@@ -114,6 +114,17 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         invertedFactors: ['T1', 'T4'],
         color: 'bg-amber-500',
         icon: '⏰',
+    },
+    SAVICKAS: {
+        id: 'SAVICKAS',
+        name: 'SAVICKAS',
+        fullName: 'Intervista Savickas di Career Counseling',
+        description: 'Percorso narrativo guidato con le 5 domande della Career Construction Interview',
+        factorPrefix: [],
+        factors: [],
+        invertedFactors: [],
+        color: 'bg-emerald-500',
+        icon: '🧭',
     },
     QAP: {
         id: 'QAP',

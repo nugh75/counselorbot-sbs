@@ -7,8 +7,6 @@ services:
 
   postgres:
     ports:
-      - "5432:5432"
+      - "5435:5432"
 
-  frontend:
-    ports:
-      - "3000:3000"
+  frontend: {}

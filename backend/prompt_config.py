@@ -99,15 +99,59 @@ DEFAULT_SYSTEM_PROMPT_ZTPI_BTP = (
     "NON usare saluti iniziali. Inizia direttamente con l'analisi."
 )
 
+
+# --- Savickas Career Construction Interview (5 domande) ---
+
+DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTERVIEW = (
+    "Sei CounselorBot, counselor orientativo esperto nell'intervista di career construction "
+    "di Mark Savickas. Conduci un colloquio narrativo strutturato, una domanda alla volta. "
+    "Obiettivo: aiutare la persona a far emergere temi identitari utili per le scelte formative "
+    "e professionali. "
+    "Stile: chiaro, accogliente, professionale, non clinico. Evita diagnosi e giudizi. "
+    "Quando ricevi risposte brevi, proponi 1-2 domande di approfondimento concrete. "
+    "Per ogni step fai poche domande: una domanda principale e al massimo due approfondimenti. "
+    "Quando lo step e' completo (o raggiungi il limite), concludi la risposta e nell'ultima riga "
+    "inserisci solo il marker tecnico [[AVANZA_STEP]]. "
+    "Non spiegare mai il marker allo studente. "
+    "Riformula periodicamente in modo sintetico quanto emerso per verificare comprensione. "
+    "Mantieni il focus sulla domanda corrente dello step. NON usare saluti iniziali."
+)
+
+DEFAULT_SYSTEM_PROMPT_SAVICKAS_SUMMARY = (
+    "Sei CounselorBot, counselor orientativo esperto nell'intervista di career construction "
+    "di Mark Savickas. Produci la sintesi finale dell'intervista in italiano, con linguaggio chiaro "
+    "e operativo. "
+    "La sintesi deve includere: "
+    "1) tema centrale della storia professionale personale, "
+    "2) risorse e valori ricorrenti, "
+    "3) nodi/ostacoli ricorrenti da monitorare, "
+    "4) 2-3 ipotesi di direzione formativa/professionale coerenti (come ipotesi, non verità assolute), "
+    "5) piano d'azione concreto su 7/30/90 giorni. "
+    "Concludi con una domanda di riflessione utile al prossimo passo. "
+    "Nell'ultima riga inserisci solo il marker tecnico [[AVANZA_STEP]] e non spiegarlo allo studente. "
+    "NON usare saluti iniziali."
+)
+
 DEFAULT_GUIDED_TEXT_ZTPI_QUESTIONS_INTRO = (
     "Abbiamo completato l'analisi strutturata della tua prospettiva temporale. "
-    "Ora puoi farmi qualsiasi domanda libera sui risultati ZTPI o chiedere "
+    "Ora puoi farmi qualsiasi domanda libera sui risultati o chiedere "
     "consigli specifici su come lavorare sul tuo equilibrio temporale."
 )
 
 DEFAULT_GUIDED_TEXT_ZTPI_CONCLUSION = (
-    "Hai completato il percorso di analisi della tua Prospettiva Temporale (ZTPI). "
-    "Ricorda: lavorare verso un Profilo Temporale Bilanciato è un percorso graduale. "
+    "Hai completato il percorso di analisi della tua prospettiva temporale. "
+    "Ricorda: lavorare verso un profilo temporale equilibrato è un percorso graduale. "
+    "Clicca sul pulsante in basso per tornare alla Home Page."
+)
+
+DEFAULT_GUIDED_TEXT_SAVICKAS_QUESTIONS_INTRO = (
+    "Abbiamo completato le 5 domande dell'intervista Savickas. "
+    "Ora puoi chiedere chiarimenti sulla sintesi o approfondire i prossimi passi."
+)
+
+DEFAULT_GUIDED_TEXT_SAVICKAS_CONCLUSION = (
+    "Hai completato l'intervista Savickas di career counseling. "
+    "Puoi usare la sintesi come bussola e aggiornarla nel tempo mentre fai esperienza. "
     "Clicca sul pulsante in basso per tornare alla Home Page."
 )
 
@@ -145,7 +189,23 @@ SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
         "description": "Prompt di sistema per l'analisi del profilo bilanciato ZTPI",
         "default": DEFAULT_SYSTEM_PROMPT_ZTPI_BTP,
     },
+    {
+        "key": "prompt_savickas_interview",
+        "label": "Prompt Savickas Intervista",
+        "description": "Prompt di sistema per la conduzione dell'intervista Savickas",
+        "default": DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTERVIEW,
+    },
+    {
+        "key": "prompt_savickas_summary",
+        "label": "Prompt Savickas Sintesi Finale",
+        "description": "Prompt di sistema per la sintesi finale dell'intervista Savickas",
+        "default": DEFAULT_SYSTEM_PROMPT_SAVICKAS_SUMMARY,
+    },
 ]
+
+SYSTEM_PROMPT_DEFAULTS: Dict[str, str] = {
+    item["key"]: item["default"] for item in SYSTEM_PROMPT_DEFINITIONS
+}
 
 
 # Questions phase system prompt (stored in configs table)
@@ -191,6 +251,18 @@ GUIDED_STATIC_TEXT_DEFINITIONS: List[Dict[str, str]] = [
         "description": "Messaggio statico finale della guided chat ZTPI",
         "default": DEFAULT_GUIDED_TEXT_ZTPI_CONCLUSION,
     },
+    {
+        "key": "text_savickas_questions_intro",
+        "label": "Savickas - Messaggio intro fase Domande",
+        "description": "Messaggio introduttivo della fase domande per Savickas",
+        "default": DEFAULT_GUIDED_TEXT_SAVICKAS_QUESTIONS_INTRO,
+    },
+    {
+        "key": "text_savickas_conclusion",
+        "label": "Savickas - Messaggio Conclusione",
+        "description": "Messaggio statico finale della guided chat Savickas",
+        "default": DEFAULT_GUIDED_TEXT_SAVICKAS_CONCLUSION,
+    },
 ]
 
 
@@ -217,6 +289,8 @@ MODE_TO_SYSTEM_PROMPT_KEY: Dict[str, str] = {
     "generic": "prompt_generic",
     "ztpi-factor": "prompt_ztpi_factor",
     "ztpi-btp": "prompt_ztpi_btp",
+    "savickas-interview": "prompt_savickas_interview",
+    "savickas-summary": "prompt_savickas_summary",
 }
 
 
@@ -345,9 +419,9 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
     {
         "id": "ztpi-t1",
         "sort_order": 1,
-        "label": "1. T1 - Passato Negativo",
+        "label": "1. Passato Negativo",
         "prompt": (
-            "Analizza il fattore T1 (Passato Negativo) del mio profilo ZTPI. "
+            "Analizza il fattore Passato Negativo del mio profilo di prospettiva temporale. "
             "Usa internamente la fascia del profilo equilibrato su scala 1-9: ideale 2-4, vicino 1-5. "
             "Indica il punteggio, la zona di appartenenza "
             "(In linea con il profilo equilibrato / Vicino al profilo equilibrato / Area di crescita), "
@@ -361,9 +435,9 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
     {
         "id": "ztpi-t2",
         "sort_order": 2,
-        "label": "2. T2 - Passato Positivo",
+        "label": "2. Passato Positivo",
         "prompt": (
-            "Analizza il fattore T2 (Passato Positivo) del mio profilo ZTPI. "
+            "Analizza il fattore Passato Positivo del mio profilo di prospettiva temporale. "
             "Usa internamente la fascia del profilo equilibrato su scala 1-9: ideale 5-7, vicino 4-8. "
             "Indica il punteggio, la zona "
             "(In linea con il profilo equilibrato / Vicino al profilo equilibrato / Area di crescita), "
@@ -377,9 +451,9 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
     {
         "id": "ztpi-t3",
         "sort_order": 3,
-        "label": "3. T3 - Presente Edonistico",
+        "label": "3. Presente Edonistico",
         "prompt": (
-            "Analizza il fattore T3 (Presente Edonistico) del mio profilo ZTPI. "
+            "Analizza il fattore Presente Edonistico del mio profilo di prospettiva temporale. "
             "Usa internamente la fascia del profilo equilibrato su scala 1-9: ideale 7-8, vicino 6-9. "
             "Indica il punteggio, la zona "
             "(In linea con il profilo equilibrato / Vicino al profilo equilibrato / Area di crescita), "
@@ -395,9 +469,9 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
     {
         "id": "ztpi-t4",
         "sort_order": 4,
-        "label": "4. T4 - Presente Fatalistico",
+        "label": "4. Presente Fatalistico",
         "prompt": (
-            "Analizza il fattore T4 (Presente Fatalistico) del mio profilo ZTPI. "
+            "Analizza il fattore Presente Fatalistico del mio profilo di prospettiva temporale. "
             "Usa internamente la fascia del profilo equilibrato su scala 1-9: ideale 1-3, vicino 1-4. "
             "Indica il punteggio, la zona "
             "(In linea con il profilo equilibrato / Vicino al profilo equilibrato / Area di crescita), "
@@ -413,9 +487,9 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
     {
         "id": "ztpi-t5",
         "sort_order": 5,
-        "label": "5. T5 - Futuro",
+        "label": "5. Futuro",
         "prompt": (
-            "Analizza il fattore T5 (Futuro) del mio profilo ZTPI. "
+            "Analizza il fattore Futuro del mio profilo di prospettiva temporale. "
             "Usa internamente la fascia del profilo equilibrato su scala 1-9: ideale 5-7, vicino 4-8. "
             "Indica il punteggio, la zona "
             "(In linea con il profilo equilibrato / Vicino al profilo equilibrato / Area di crescita), "
@@ -429,14 +503,16 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
     {
         "id": "ztpi-btp",
         "sort_order": 6,
-        "label": "6. Profilo Temporale Bilanciato",
+        "label": "6. Profilo Temporale Equilibrato",
         "prompt": (
-            "Analisi Finale ZTPI: confronta il mio profilo complessivo con il "
-            "Profilo Temporale Bilanciato (PTB) ideale di Zimbardo "
+            "Analisi finale della prospettiva temporale: confronta il mio profilo complessivo con il "
+            "profilo temporale equilibrato ideale di Zimbardo "
             "usando internamente la parametrizzazione tecnica. "
-            "(T1 ideale 2-4, T2 ideale 5-7, T3 ideale 7-8, T4 ideale 1-3, T5 ideale 5-7; "
-            "fasce vicino: T1 1-5, T2 4-8, T3 6-9, T4 1-4, T5 4-8). "
-            "Indica quali fattori sono in linea con il PTB e quali si discostano, "
+            "(Passato Negativo ideale 2-4, Passato Positivo ideale 5-7, Presente Edonistico ideale 7-8, "
+            "Presente Fatalistico ideale 1-3, Futuro ideale 5-7; "
+            "fasce vicino: Passato Negativo 1-5, Passato Positivo 4-8, Presente Edonistico 6-9, "
+            "Presente Fatalistico 1-4, Futuro 4-8). "
+            "Indica quali fattori sono in linea con il profilo temporale equilibrato e quali si discostano, "
             "specificando per ogni fattore se è sotto, dentro o sopra il range ideale. "
             "Aggiungi una breve lettura dello scostamento complessivo. "
             "Nel testo per lo studente non usare sigle: sostituisci le sigle con nomi completi. "
@@ -449,5 +525,116 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
         "system_prompt_mode": "ztpi-btp",
         "color_theme": "purple",
         "questionnaire_type": "ZTPI",
+    },
+]
+
+
+# --- Default Savickas guided steps (seeded into guided_steps table) ---
+
+DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
+    {
+        "id": "savickas-patto",
+        "sort_order": 0,
+        "label": "0. Patto di Collaborazione",
+        "prompt": (
+            "Avvio percorso Savickas: costruisci il patto con lo studente. "
+            "Spiega in modo breve obiettivo, durata (5 domande + sintesi), metodo (domande narrative), "
+            "ruoli reciproci e riservatezza nel contesto orientativo. "
+            "Chiedi una conferma esplicita per iniziare (es. 'Se sei d'accordo, scrivi: accetto'). "
+            "NON avanzare finche non c'e' una conferma chiara. "
+            "Quando la conferma arriva, chiudi lo step e nell'ultima riga inserisci solo [[AVANZA_STEP]]."
+        ),
+        "system_prompt_mode": "savickas-interview",
+        "color_theme": "cyan",
+        "questionnaire_type": "SAVICKAS",
+    },
+    {
+        "id": "savickas-q1",
+        "sort_order": 1,
+        "label": "1. Modelli di Ruolo",
+        "prompt": (
+            "Intervista Savickas - domanda 1 di 5. "
+            "Poni questa domanda: 'Quali sono tre persone che hai ammirato crescendo "
+            "(reali o personaggi) e quali qualità specifiche ammiri in ciascuna?'. "
+            "Poi aggiungi 1-2 micro-domande di approfondimento utili. "
+            "Quando hai materiale sufficiente, fai una mini-sintesi e nell'ultima riga inserisci solo [[AVANZA_STEP]]."
+        ),
+        "system_prompt_mode": "savickas-interview",
+        "color_theme": "blue",
+        "questionnaire_type": "SAVICKAS",
+    },
+    {
+        "id": "savickas-q2",
+        "sort_order": 2,
+        "label": "2. Media Preferiti",
+        "prompt": (
+            "Intervista Savickas - domanda 2 di 5. "
+            "Poni questa domanda: 'Quali riviste, siti, canali o contenuti segui più volentieri "
+            "e cosa ti attrae di questi contenuti?'. "
+            "Poi aggiungi 1-2 micro-domande di approfondimento utili. "
+            "Quando hai materiale sufficiente, fai una mini-sintesi e nell'ultima riga inserisci solo [[AVANZA_STEP]]."
+        ),
+        "system_prompt_mode": "savickas-interview",
+        "color_theme": "indigo",
+        "questionnaire_type": "SAVICKAS",
+    },
+    {
+        "id": "savickas-q3",
+        "sort_order": 3,
+        "label": "3. Storia Preferita",
+        "prompt": (
+            "Intervista Savickas - domanda 3 di 5. "
+            "Poni questa domanda: 'Qual è la tua storia preferita da un libro, film o serie? "
+            "Raccontamela in breve e dimmi cosa ti colpisce di più.'. "
+            "Poi aggiungi 1-2 micro-domande di approfondimento utili. "
+            "Quando hai materiale sufficiente, fai una mini-sintesi e nell'ultima riga inserisci solo [[AVANZA_STEP]]."
+        ),
+        "system_prompt_mode": "savickas-interview",
+        "color_theme": "amber",
+        "questionnaire_type": "SAVICKAS",
+    },
+    {
+        "id": "savickas-q4",
+        "sort_order": 4,
+        "label": "4. Motto Personale",
+        "prompt": (
+            "Intervista Savickas - domanda 4 di 5. "
+            "Poni questa domanda: 'Qual è il tuo motto o la frase che ti guida più spesso? "
+            "Come la applichi nelle scelte importanti?'. "
+            "Poi aggiungi 1-2 micro-domande di approfondimento utili. "
+            "Quando hai materiale sufficiente, fai una mini-sintesi e nell'ultima riga inserisci solo [[AVANZA_STEP]]."
+        ),
+        "system_prompt_mode": "savickas-interview",
+        "color_theme": "teal",
+        "questionnaire_type": "SAVICKAS",
+    },
+    {
+        "id": "savickas-q5",
+        "sort_order": 5,
+        "label": "5. Ricordi Precoci",
+        "prompt": (
+            "Intervista Savickas - domanda 5 di 5. "
+            "Poni questa domanda: 'Raccontami tre ricordi precoci (idealmente tra 3 e 6 anni) "
+            "e assegna un titolo breve a ciascun ricordo.'. "
+            "Poi aggiungi 1-2 micro-domande di approfondimento utili. "
+            "Quando hai materiale sufficiente, fai una mini-sintesi e nell'ultima riga inserisci solo [[AVANZA_STEP]]."
+        ),
+        "system_prompt_mode": "savickas-interview",
+        "color_theme": "rose",
+        "questionnaire_type": "SAVICKAS",
+    },
+    {
+        "id": "savickas-final",
+        "sort_order": 6,
+        "label": "6. Sintesi Narrativa e Piano d'Azione",
+        "prompt": (
+            "Sintesi finale intervista Savickas: integra le risposte emerse nelle 5 domande e "
+            "costruisci un ritratto narrativo coerente. "
+            "Includi: tema centrale, risorse, ostacoli, 2-3 ipotesi di direzione e piano 7/30/90 giorni. "
+            "Nell'ultima riga inserisci solo [[AVANZA_STEP]]."
+        ),
+        "system_prompt_mode": "savickas-summary",
+        "color_theme": "purple",
+        "questionnaire_type": "SAVICKAS",
     },
 ]
