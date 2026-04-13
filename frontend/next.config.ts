@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   serverExternalPackages: [],
   experimental: {
-    proxyTimeout: 300_000, // 5 min for long AI responses
+    proxyTimeout: 600_000, // 10 min for long AI responses (matches nginx)
   },
   async redirects() {
     return [

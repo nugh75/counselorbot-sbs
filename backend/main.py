@@ -554,10 +554,7 @@ class ChatRequest(schemas.BaseModel):
     use_phase_prompt: bool = False
 
 
-_GUIDED_NO_GREETING_SUFFIX = (
-    " Sei in una sequenza di analisi strutturata già avviata: NON usare saluti iniziali "
-    "(es. 'Ciao!', 'Ottima idea', 'Benvenuto'). Inizia direttamente con l'analisi richiesta."
-)
+_GUIDED_NO_GREETING_SUFFIX = " NON iniziare con saluti. Vai direttamente all'analisi."
 
 _ZTPI_FACTOR_NAME_BY_CODE = {
     "T1": "Passato Negativo",
@@ -691,18 +688,22 @@ def _resolve_user_message_for_chat(ai_service: AIService, request: ChatRequest, 
 
 def _generate_summary_background(
     session_id: str, effective_message: str, response_content: str,
-    step_label: str, is_first_step: bool,
+    step_label: str, is_first_step: bool, previous_summary: str = "",
 ):
-    """Background task: genera riassunto e aggiorna la memoria (usa propria sessione DB)."""
+    """Background task: genera un rolling summary aggiornato e lo sostituisce in memoria."""
     if is_first_step:
         # Il primo step non ha contesto precedente, skip summary
         return
     db = database.SessionLocal()
     try:
         ai_service = AIService(db)
-        summary_chunk = ai_service.generate_summary(effective_message, response_content, step_label=step_label)
-        session_memory.append_summary(session_id, summary_chunk)
-        logger.info(f"Session {session_id}: riassunto aggiornato ({len(session_memory.get_summary(session_id))} chars)")
+        new_summary = ai_service.generate_summary(
+            effective_message, response_content,
+            step_label=step_label,
+            previous_summary=previous_summary,
+        )
+        session_memory.set_summary(session_id, new_summary)
+        logger.info(f"Session {session_id}: rolling summary aggiornato ({len(new_summary)} chars)")
     except Exception as e:
         logger.error(f"Errore generazione riassunto per session {session_id}: {e}")
     finally:
@@ -765,7 +766,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     background_tasks.add_task(
         _generate_summary_background,
         session_id, effective_message, response_content,
-        step_label, is_first_step,
+        step_label, is_first_step, conversation_summary,
     )
 
     # 6. Log Interaction
@@ -817,7 +818,7 @@ async def chat_message(message: str, session_id: str, mode: str, background_task
     # 4. Genera riassunto in BACKGROUND
     background_tasks.add_task(
         _generate_summary_background,
-        session_id, message, response_content, "", False,
+        session_id, message, response_content, "", False, conversation_summary,
     )
 
     # 5. Log Interaction
@@ -837,6 +838,27 @@ async def chat_message(message: str, session_id: str, mode: str, background_task
     db.commit()
 
     return {"response": response_content}
+
+# --- Memory debug/reset endpoints ---
+
+@app.get("/memory/status/{session_id}")
+async def memory_status(session_id: str):
+    """Restituisce la dimensione della memoria conversazionale per la sessione."""
+    summary = session_memory.get_summary(session_id)
+    return {
+        "session_id": session_id,
+        "summary_chars": len(summary),
+        "summary_blocks": len(summary.split("\n\n")) if summary else 0,
+        "preview": summary[:200] if summary else "",
+    }
+
+@app.delete("/memory/{session_id}")
+async def memory_reset(session_id: str):
+    """Resetta manualmente la memoria conversazionale per la sessione."""
+    session_memory.clear(session_id)
+    logger.info(f"Session {session_id}: memoria resettata via API")
+    return {"status": "cleared", "session_id": session_id}
+
 
 class QsaAuditRequest(schemas.BaseModel):
     scores: dict

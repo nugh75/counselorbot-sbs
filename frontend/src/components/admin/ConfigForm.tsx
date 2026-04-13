@@ -56,6 +56,8 @@ const PROVIDERS: Record<string, { label: string; models: string[] }> = {
     ollama: {
         label: 'Ollama (Local)',
         models: [
+            'gemma4:e4b',
+            'gemma4:e2b',
             'gemma4:31b',
             'gemma4:26b',
             'qwen3:32b',
@@ -392,6 +394,18 @@ export function ConfigForm() {
                                 ))}
                             </select>
                         </div>
+                    </div>
+
+                    <div className="space-y-2 md:col-span-2">
+                        <label className="text-sm font-medium text-slate-700">Modello per Riassunti <span className="text-xs text-slate-400">(opzionale, modello leggero per la memoria conversazionale)</span></label>
+                        <input
+                            type="text"
+                            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="es. qwen3.5:9b (vuoto = usa modello principale)"
+                            value={getConfigValue('summary_model_name')}
+                            onChange={(e) => setConfigDraft('summary_model_name', e.target.value, 'Modello leggero per i riassunti conversazionali')}
+                            onBlur={() => saveConfigKey('summary_model_name', 'Modello leggero per i riassunti conversazionali')}
+                        />
                     </div>
                 </div>
             </div>

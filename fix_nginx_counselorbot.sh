@@ -39,6 +39,11 @@ server {
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
+
+        # Timeout per risposte AI lente (Ollama modelli grandi)
+        proxy_read_timeout 600s;
+        proxy_connect_timeout 30s;
+        proxy_send_timeout 600s;
     }
 }
 EOF

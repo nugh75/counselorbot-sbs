@@ -12,8 +12,9 @@ from typing import Dict, Optional
 # Durata massima di una sessione in secondi (2 ore)
 DEFAULT_TTL_SECONDS = 7200
 
-# Lunghezza massima del riassunto cumulativo (in caratteri, ~6000 token)
-MAX_SUMMARY_CHARS = 24000
+# Lunghezza massima del riassunto cumulativo (in caratteri).
+# 10 step × 80 parole × ~5 char ≈ 4000 char. Limite a 6000 per avere margine.
+MAX_SUMMARY_CHARS = 6000
 
 
 class _SessionData:
@@ -46,25 +47,16 @@ class SessionMemory:
             data.touch()
             return data.summary
 
-    def append_summary(self, session_id: str, new_chunk: str) -> None:
-        """Appende un nuovo blocco di riassunto alla sessione, troncando i blocchi più vecchi se necessario."""
-        if not new_chunk or not new_chunk.strip():
+    def set_summary(self, session_id: str, new_summary: str) -> None:
+        """Sostituisce il riassunto della sessione con la versione aggiornata (rolling summary)."""
+        if not new_summary or not new_summary.strip():
             return
         with self._lock:
             data = self._store.get(session_id)
             if data is None:
                 data = _SessionData()
                 self._store[session_id] = data
-            if data.summary:
-                data.summary += "\n\n" + new_chunk.strip()
-            else:
-                data.summary = new_chunk.strip()
-            # Tronca i blocchi più vecchi se si supera il limite
-            if len(data.summary) > MAX_SUMMARY_CHARS:
-                blocks = data.summary.split("\n\n")
-                while len("\n\n".join(blocks)) > MAX_SUMMARY_CHARS and len(blocks) > 1:
-                    blocks.pop(0)
-                data.summary = "\n\n".join(blocks)
+            data.summary = new_summary.strip()[:MAX_SUMMARY_CHARS]
             data.touch()
 
     def clear(self, session_id: str) -> None:

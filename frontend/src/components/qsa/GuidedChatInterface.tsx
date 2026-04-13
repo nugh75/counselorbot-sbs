@@ -207,44 +207,28 @@ function buildScoresFormatter(questionnaireType: string): (scores: Record<string
 
     if (questionnaireType === 'ZTPI') {
         return (scores: Record<string, number>): string => {
-            const lines: string[] = ['PROFILO DELLA PROSPETTIVA TEMPORALE DELLO STUDENTE:'];
-            lines.push('\nProspettiva Temporale:');
-            Object.entries(scores)
+            const parts = Object.entries(scores)
                 .filter(([k]) => k.startsWith('T'))
                 .sort(([a], [b]) => a.localeCompare(b))
-                .forEach(([code, value]) => {
-                    const factor = ZTPI_FACTORS[code as ZTPIFactorCode];
-                    if (!factor) return;
-                    const analysis = analyzeZTPIScore(code as ZTPIFactorCode, value);
-                    const invertedNote = factor.isInverted ? ' [INVERTITO]' : '';
-                    lines.push(`- ${factor.name}${invertedNote}: ${value}/9 (${analysis.interpretation})`);
-                });
-            return lines.join('\n');
+                .map(([code, value]) => `${code}:${value}`)
+                .join(' ');
+            return `ZTPI ${parts}`;
         };
     }
 
-    // Default: QSA formatter
+    // Default: QSA formatter (compact — solo punteggi, il sistema prompt contiene le regole)
     return (scores: Record<string, number>): string => {
-        const lines: string[] = ['PROFILO QSA DELLO STUDENTE:'];
-        lines.push('\nStrategie Cognitive:');
-        Object.entries(scores)
+        const cog = Object.entries(scores)
             .filter(([k]) => k.startsWith('C'))
-            .forEach(([code, value]) => {
-                const factor = QSA_FACTORS[code as QSAFactorCode];
-                if (!factor) return;
-                const analysis = analyzeScore(code as QSAFactorCode, value);
-                lines.push(`- ${code} ${factor.name}: ${value}/9 (${analysis.interpretation})`);
-            });
-        lines.push('\nStrategie Affettive:');
-        Object.entries(scores)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([code, value]) => `${code}:${value}`)
+            .join(' ');
+        const aff = Object.entries(scores)
             .filter(([k]) => k.startsWith('A'))
-            .forEach(([code, value]) => {
-                const factor = QSA_FACTORS[code as QSAFactorCode];
-                if (!factor) return;
-                const analysis = analyzeScore(code as QSAFactorCode, value);
-                lines.push(`- ${code} ${factor.name}: ${value}/9 (${analysis.interpretation})`);
-            });
-        return lines.join('\n');
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([code, value]) => `${code}:${value}`)
+            .join(' ');
+        return `QSA C[${cog}] A[${aff}]`;
     };
 }
 
