@@ -119,3 +119,11 @@ class SurveyResponseSchema(SurveyCreate):
     
     class Config:
         from_attributes = True
+
+
+class StrategyFeedbackCreate(BaseModel):
+    strategy_ids: List[str]
+    questionnaire_type: Optional[str] = None
+    phase: Optional[str] = None
+    language: Optional[str] = None
+    helpful: bool

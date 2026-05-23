@@ -3,17 +3,18 @@
 import { useForm } from 'react-hook-form';
 import { QuestionnaireConfig, FactorDefinition } from '@/lib/questionnaires';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n-context';
 
 const schema_placeholder = null; // validation handled inline
 
 type FormData = { scores: Record<string, string | number> };
 
-// Column header labels per prefix
-const PREFIX_LABEL: Record<string, { label: string; colorClass: string }> = {
-    C: { label: 'Strategie Cognitive (C)', colorClass: 'text-blue-700' },
-    A: { label: 'Strategie Affettive (A)', colorClass: 'text-purple-700' },
-    T: { label: 'Prospettiva Temporale (T)', colorClass: 'text-amber-700' },
-    P: { label: 'Percezione Competenze (P)', colorClass: 'text-green-700' },
+// Color per prefix (label tradotta via i18n: score.prefix.<X>)
+const PREFIX_COLOR: Record<string, string> = {
+    C: 'text-blue-700',
+    A: 'text-purple-700',
+    T: 'text-amber-700',
+    P: 'text-green-700',
 };
 
 interface ScoreInputFormProps {
@@ -23,6 +24,7 @@ interface ScoreInputFormProps {
 }
 
 export function ScoreInputForm({ questionnaire, onSubmit, initialScores }: ScoreInputFormProps) {
+    const { t, tf } = useI18n();
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
         defaultValues: { scores: initialScores || {} },
     });
@@ -62,10 +64,10 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores }: Score
                 <div className="flex-1">
                     <div className="flex items-center gap-2">
                         <span className="font-mono text-blue-600 font-bold">{factor.code}</span>
-                        <span className="font-medium text-slate-700">{factor.name}</span>
+                        <span className="font-medium text-slate-700">{tf(`factor.${factor.code}.name`, factor.name)}</span>
                     </div>
                     <div className="text-xs text-slate-500 ml-8 flex items-center gap-1">
-                        {factor.description}
+                        {tf(`factor.${factor.code}.desc`, factor.description)}
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -92,11 +94,12 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores }: Score
         <form onSubmit={handleSubmit(onFormSubmit)} className="w-full max-w-4xl mx-auto space-y-8 animate-fade-in-up">
             <div className={cn("grid gap-8", gridCols)}>
                 {groupedFactors.map(({ prefix, factors }) => {
-                    const colStyle = PREFIX_LABEL[prefix] || { label: `Fattori ${prefix}`, colorClass: 'text-slate-700' };
+                    const colorClass = PREFIX_COLOR[prefix] || 'text-slate-700';
+                    const label = PREFIX_COLOR[prefix] ? t(`score.prefix.${prefix}`) : `${prefix}`;
                     return (
                         <div key={prefix} className="space-y-4">
                             <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-200">
-                                <h3 className={cn("text-xl font-bold", colStyle.colorClass)}>{colStyle.label}</h3>
+                                <h3 className={cn("text-xl font-bold", colorClass)}>{label}</h3>
                             </div>
                             {factors.map(f => <InputRow key={f.code} factor={f} />)}
                         </div>
@@ -109,7 +112,7 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores }: Score
                     type="submit"
                     className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg shadow-lg shadow-blue-500/20 transition-all hover:scale-105 active:scale-95"
                 >
-                    Analizza Profilo
+                    {t('score.submit')}
                 </button>
             </div>
         </form>

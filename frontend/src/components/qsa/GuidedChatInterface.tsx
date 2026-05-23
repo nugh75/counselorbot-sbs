@@ -1,15 +1,17 @@
 'use client';
 
-import { Send, Bot, ChevronRight, CheckCircle2, Loader2, BarChart3, Volume2, Square, Home } from 'lucide-react';
+import { Send, Bot, ChevronRight, CheckCircle2, Loader2, BarChart3, Volume2, Square, Home, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { QSAFactorCode, QSA_FACTORS, analyzeScore } from '@/lib/qsa-model';
 import { ZTPIFactorCode, ZTPI_FACTORS, analyzeZTPIScore, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
 import { QUESTIONNAIRES } from '@/lib/questionnaires';
+import { streamChat } from '@/lib/chat-stream';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useRouter } from 'next/navigation';
+import { useI18n } from '@/lib/i18n-context';
 
 // --- Types ---
 
@@ -27,6 +29,13 @@ interface GuidedChatInterfaceProps {
     questionnaireType: string;
     onComplete: () => void;
     sessionId: string;
+}
+
+interface ChatMessage {
+    role: string;
+    content: string;
+    strategyIds?: string[];
+    feedback?: boolean;
 }
 
 const ZTPI_REQUIRED_STEP_IDS = ['ztpi-t1', 'ztpi-t2', 'ztpi-t3', 'ztpi-t4', 'ztpi-t5', 'ztpi-btp'];
@@ -198,7 +207,10 @@ const PREFIX_SIDEBAR: Record<string, { label: string; colorClass: string }> = {
 
 // --- Score formatters per questionnaire type ---
 
-function buildScoresFormatter(questionnaireType: string): (scores: Record<string, number>) => string {
+function buildScoresFormatter(
+    questionnaireType: string,
+    factorName: (code: string, fallback: string) => string,
+): (scores: Record<string, number>) => string {
     if (questionnaireType === 'SAVICKAS') {
         return (): string => {
             return 'CONTESTO INTERVISTA SAVICKAS: percorso narrativo qualitativo senza punteggi numerici.';
@@ -210,25 +222,25 @@ function buildScoresFormatter(questionnaireType: string): (scores: Record<string
             const parts = Object.entries(scores)
                 .filter(([k]) => k.startsWith('T'))
                 .sort(([a], [b]) => a.localeCompare(b))
-                .map(([code, value]) => `${code}:${value}`)
+                .map(([code, value]) => `${code} (${factorName(code, ZTPI_FACTORS[code as ZTPIFactorCode]?.name || code)}): ${value}/9`)
                 .join(' ');
-            return `ZTPI ${parts}`;
+            return `PROFILO TEMPORALE DELLO STUDENTE:\n${parts}`;
         };
     }
 
-    // Default: QSA formatter (compact — solo punteggi, il sistema prompt contiene le regole)
+    // QSA: ogni codice arriva al modello gia accompagnato dal nome del fattore.
     return (scores: Record<string, number>): string => {
         const cog = Object.entries(scores)
             .filter(([k]) => k.startsWith('C'))
             .sort(([a], [b]) => a.localeCompare(b))
-            .map(([code, value]) => `${code}:${value}`)
-            .join(' ');
+            .map(([code, value]) => `- ${code} (${factorName(code, QSA_FACTORS[code as QSAFactorCode]?.name || code)}): ${value}/9`)
+            .join('\n');
         const aff = Object.entries(scores)
             .filter(([k]) => k.startsWith('A'))
             .sort(([a], [b]) => a.localeCompare(b))
-            .map(([code, value]) => `${code}:${value}`)
-            .join(' ');
-        return `QSA C[${cog}] A[${aff}]`;
+            .map(([code, value]) => `- ${code} (${factorName(code, QSA_FACTORS[code as QSAFactorCode]?.name || code)}): ${value}/9`)
+            .join('\n');
+        return `PROFILO QSA DELLO STUDENTE:\n\nFattori cognitivi:\n${cog}\n\nFattori affettivi:\n${aff}`;
     };
 }
 
@@ -252,11 +264,13 @@ function getScoreColor(
 
 function CompactScoreBar({
     code,
+    factorName,
     score,
     invertedSet,
     questionnaireType,
 }: {
     code: string;
+    factorName: string;
     score: number;
     invertedSet: Set<string>;
     questionnaireType: string;
@@ -265,12 +279,16 @@ function CompactScoreBar({
     const width = (score / 9) * 100;
 
     return (
-        <div className="flex items-center gap-2">
-            <span className="w-6 text-[10px] font-mono text-slate-500">{code}</span>
-            <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                <div className={cn("h-full rounded-full transition-all", color)} style={{ width: `${width}%` }} />
+        <div className="space-y-1">
+            <div className="text-[10px] leading-tight text-slate-600 break-words" title={`${code} (${factorName})`}>
+                <span className="font-mono font-semibold">{code}</span> <span>({factorName})</span>
             </div>
-            <span className="w-4 text-[10px] font-bold text-slate-600">{score}</span>
+            <div className="flex items-center gap-2">
+                <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div className={cn("h-full rounded-full transition-all", color)} style={{ width: `${width}%` }} />
+                </div>
+                <span className="w-4 text-[10px] font-bold text-slate-600">{score}</span>
+            </div>
         </div>
     );
 }
@@ -305,10 +323,11 @@ const markdownComponents: Components = {
 
 export function GuidedChatInterface({ scores, questionnaireType, onComplete, sessionId }: GuidedChatInterfaceProps) {
     const router = useRouter();
+    const { t, tf, lang } = useI18n();
     const [steps, setSteps] = useState<StepDef[]>([]);
     const [phases, setPhases] = useState<string[]>([]);
     const [currentPhase, setCurrentPhase] = useState<string>('');
-    const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
@@ -318,32 +337,32 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const [showAdvanceSuggestion, setShowAdvanceSuggestion] = useState(false);
     const [userMessagesInPhase, setUserMessagesInPhase] = useState(0);
 
-    // Fixed-phase configurable texts
-    const [questionsLabel, setQuestionsLabel] = useState('Domande e Approfondimenti');
-    const [conclusionLabel, setConclusionLabel] = useState('Conclusione');
-    const [questionsBanner, setQuestionsBanner] = useState('--- Fase Domande e Approfondimenti ---');
-    const [questionsIntro, setQuestionsIntro] = useState(
-        "Abbiamo completato l'analisi strutturata. Ora puoi farmi qualsiasi domanda libera."
-    );
-    const [conclusionText, setConclusionText] = useState(
-        'Hai completato il percorso di analisi. Clicca sul pulsante in basso per tornare alla Home Page.'
-    );
+    // Fixed-phase configurable texts (default tradotti via i18n; override da DB solo in italiano)
+    const [questionsLabel, setQuestionsLabel] = useState(() => t('guided.questionsLabel'));
+    const [conclusionLabel, setConclusionLabel] = useState(() => t('guided.conclusionLabel'));
+    const [questionsBanner, setQuestionsBanner] = useState(() => t('guided.questionsBanner'));
+    const [questionsIntro, setQuestionsIntro] = useState(() => t('guided.questionsIntro'));
+    const [conclusionText, setConclusionText] = useState(() => t('guided.conclusionText'));
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const requestRef = useRef<AbortController | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const lastProcessedPhase = useRef<string | null>(null);
 
     // Derived from questionnaire config
     const questionnaire = useMemo(() => QUESTIONNAIRES[questionnaireType as keyof typeof QUESTIONNAIRES], [questionnaireType]);
     const invertedSet = useMemo(() => new Set(questionnaire?.invertedFactors || []), [questionnaire]);
-    const formatScoresForPrompt = useMemo(() => buildScoresFormatter(questionnaireType), [questionnaireType]);
+    const formatScoresForPrompt = useMemo(
+        () => buildScoresFormatter(questionnaireType, (code, fallback) => tf(`factor.${code}.name`, fallback)),
+        [questionnaireType, tf],
+    );
 
     // Score groups for sidebar
     const scoreGroups = useMemo(() => {
         if (!questionnaire) return [];
         return questionnaire.factorPrefix.map(prefix => ({
             prefix,
-            label: PREFIX_SIDEBAR[prefix]?.label || prefix,
+            label: PREFIX_SIDEBAR[prefix] ? t(`sidebar.${prefix}`) : prefix,
             colorClass: PREFIX_SIDEBAR[prefix]?.colorClass || 'text-slate-600',
             entries: Object.entries(scores)
                 .filter(([k]) => k.startsWith(prefix))
@@ -364,8 +383,45 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             if (audioRef.current) {
                 audioRef.current.pause();
             }
+            requestRef.current?.abort();
         };
     }, []);
+
+    const beginRequest = () => {
+        requestRef.current?.abort();
+        const controller = new AbortController();
+        requestRef.current = controller;
+        return controller;
+    };
+
+    const setLastStrategies = (strategyIds?: string[]) => {
+        if (!strategyIds?.length) return;
+        setMessages(prev => {
+            const copy = [...prev];
+            copy[copy.length - 1] = { ...copy[copy.length - 1], strategyIds };
+            return copy;
+        });
+    };
+
+    const submitStrategyFeedback = async (messageIndex: number, helpful: boolean) => {
+        const message = messages[messageIndex];
+        if (!message?.strategyIds?.length || message.feedback !== undefined) return;
+        const response = await fetch('/api/strategy-feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                strategy_ids: message.strategyIds,
+                questionnaire_type: questionnaireType,
+                phase: currentPhase,
+                language: lang,
+                helpful,
+            }),
+        });
+        if (!response.ok) return;
+        setMessages(prev => prev.map((item, idx) => (
+            idx === messageIndex ? { ...item, feedback: helpful } : item
+        )));
+    };
 
     // Load step definitions and config texts from backend
     useEffect(() => {
@@ -401,12 +457,16 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     setCurrentPhase(phaseOrder[0]);
                 }
 
-                // Fixed-phase labels and texts
-                if (data.label_guided_questions) setQuestionsLabel(data.label_guided_questions);
-                if (data.label_guided_conclusion) setConclusionLabel(data.label_guided_conclusion);
-                if (data.text_guided_questions_phase_banner) setQuestionsBanner(data.text_guided_questions_phase_banner);
-                if (data.text_guided_questions_intro) setQuestionsIntro(data.text_guided_questions_intro);
-                if (data.text_guided_conclusion) setConclusionText(data.text_guided_conclusion);
+                // Fixed-phase labels and texts: i testi configurati in admin sono in italiano,
+                // quindi li applichiamo solo per la lingua italiana; per le altre lingue
+                // restano i default tradotti via i18n.
+                if (lang === 'it') {
+                    if (data.label_guided_questions) setQuestionsLabel(data.label_guided_questions);
+                    if (data.label_guided_conclusion) setConclusionLabel(data.label_guided_conclusion);
+                    if (data.text_guided_questions_phase_banner) setQuestionsBanner(data.text_guided_questions_phase_banner);
+                    if (data.text_guided_questions_intro) setQuestionsIntro(data.text_guided_questions_intro);
+                    if (data.text_guided_conclusion) setConclusionText(data.text_guided_conclusion);
+                }
             } catch {
                 if (questionnaireType === 'SAVICKAS') {
                     setSteps(SAVICKAS_FALLBACK_STEPS);
@@ -486,6 +546,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     }, [currentPhase, initialLoading]);
 
     const generateAnalysis = async (step: StepDef) => {
+        const controller = beginRequest();
         setIsLoading(true);
         setLastAnalysisFailed(false);
         if (messages.length > 0) {
@@ -502,6 +563,9 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         use_phase_prompt: false,
                         scores_context: scoresContext,
                         session_id: sessionId,
+                        questionnaire_type: questionnaireType,
+                        language: lang,
+                        max_tokens: 700,
                     };
                 }
                 return {
@@ -511,37 +575,40 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     use_phase_prompt: true,
                     scores_context: scoresContext,
                     session_id: sessionId,
+                    questionnaire_type: questionnaireType,
+                    language: lang,
+                    max_tokens: 700,
                 };
             };
 
-            const payloads = [buildPayload(false)];
-            if (step.prompt) payloads.push(buildPayload(true));
+            let responseText = '';
+            let streamOk = false;
+            const updateLast = (content: string) => {
+                setMessages(prev => {
+                    const copy = [...prev];
+                    copy[copy.length - 1] = { ...copy[copy.length - 1], role: 'assistant', content };
+                    return copy;
+                });
+            };
+            const dropLast = () => setMessages(prev => prev.slice(0, -1));
 
-            let res: Response | null = null;
-
-            for (const payload of payloads) {
-                for (let attempt = 0; attempt < 2; attempt++) {
-                    try {
-                        res = await fetch('/api/chat', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload),
-                        });
-                    } catch {
-                        res = null;
-                    }
-
-                    if (res?.ok) break;
-                    if (attempt === 0) await sleep(700);
-                }
-                if (res?.ok) break;
+            setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+            try {
+                const result = await streamChat(buildPayload(false), (full) => updateLast(full), controller.signal);
+                responseText = result.response || '';
+                setLastStrategies(result.strategy_ids);
+                streamOk = true;
+            } catch {
+                if (controller.signal.aborted) return;
+                dropLast();
             }
 
-            if (res?.ok) {
-                const data = await res.json();
-                const { cleanText, shouldAdvance } = extractAdvanceSignal(data.response || '');
+            if (streamOk) {
+                const { cleanText, shouldAdvance } = extractAdvanceSignal(responseText);
                 if (cleanText) {
-                    setMessages(prev => [...prev, { role: 'assistant', content: cleanText }]);
+                    updateLast(cleanText);
+                } else {
+                    dropLast();
                 }
                 setLastAnalysisFailed(false);
                 const allowAutoAdvanceOnGenerate =
@@ -552,18 +619,22 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             } else {
                 setMessages(prev => [...prev, {
                     role: 'assistant',
-                    content: "Non sono riuscito a completare questo passaggio per un problema temporaneo. Usa il pulsante 'Ripeti passaggio' per rilanciare lo step."
+                    content: t('guided.stepError')
                 }]);
                 setLastAnalysisFailed(true);
             }
         } catch {
+            if (controller.signal.aborted) return;
             setMessages(prev => [...prev, {
                 role: 'assistant',
-                content: "Errore di connessione durante questo passaggio. Usa il pulsante 'Ripeti passaggio' per riprovare."
+                content: t('guided.stepConnError')
             }]);
             setLastAnalysisFailed(true);
         } finally {
-            setIsLoading(false);
+            if (requestRef.current === controller) {
+                requestRef.current = null;
+                setIsLoading(false);
+            }
         }
     };
 
@@ -594,7 +665,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         if (isPattoAck) {
             setMessages(prev => [...prev, {
                 role: 'assistant',
-                content: 'Perfetto, grazie per la conferma! Iniziamo il nostro percorso.',
+                content: t('guided.pattoAck'),
             }]);
             advancePhase();
             return;
@@ -602,6 +673,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
         setIsLoading(true);
         setShowAdvanceSuggestion(false);
+        const controller = beginRequest();
 
         try {
             const currentStep = isAnalysisStep(currentPhase) ? getStepDef(currentPhase) : undefined;
@@ -609,37 +681,58 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 ? `ISTRUZIONI STEP CORRENTE (INTERNE): ${currentStep.prompt}\n\nRISPOSTA STUDENTE:\n${userMessage}`
                 : userMessage;
 
-            const res = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+            // Placeholder dell'assistente, riempito in streaming
+            setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+            const updateLast = (content: string) => {
+                setMessages(prev => {
+                    const copy = [...prev];
+                    copy[copy.length - 1] = { ...copy[copy.length - 1], role: 'assistant', content };
+                    return copy;
+                });
+            };
+            const dropLast = () => setMessages(prev => prev.slice(0, -1));
+
+            const result = await streamChat(
+                {
                     message: effectiveMessage,
+                    memory_message: userMessage,
                     mode: resolveInteractiveMode(),
                     phase: isAnalysisStep(currentPhase) ? currentPhase : undefined,
                     session_id: sessionId,
-                }),
-            });
+                    questionnaire_type: questionnaireType,
+                    language: lang,
+                    max_tokens: 900,
+                },
+                (full) => updateLast(full),
+                controller.signal,
+            );
+            const { response } = result;
+            setLastStrategies(result.strategy_ids);
 
-            if (res.ok) {
-                const data = await res.json();
-                const { cleanText, shouldAdvance } = extractAdvanceSignal(data.response || '');
-                if (cleanText) {
-                    setMessages(prev => [...prev, { role: 'assistant', content: cleanText }]);
-                }
-                if (shouldAdvance) {
-                    // Per Savickas (tranne l'ultimo step): non avanzare automaticamente,
-                    // ma mostrare un suggerimento all'utente che può scegliere quando andare avanti
-                    if (questionnaireType === 'SAVICKAS' && currentPhase !== 'savickas-final') {
-                        setShowAdvanceSuggestion(true);
-                    } else {
-                        advancePhase();
-                    }
+            // Sul testo completo applica il segnale di avanzamento
+            const { cleanText, shouldAdvance } = extractAdvanceSignal(response || '');
+            if (cleanText) {
+                updateLast(cleanText);
+            } else {
+                dropLast();
+            }
+            if (shouldAdvance) {
+                // Per Savickas (tranne l'ultimo step): non avanzare automaticamente,
+                // ma mostrare un suggerimento all'utente che può scegliere quando andare avanti
+                if (questionnaireType === 'SAVICKAS' && currentPhase !== 'savickas-final') {
+                    setShowAdvanceSuggestion(true);
+                } else {
+                    advancePhase();
                 }
             }
         } catch {
-            setMessages(prev => [...prev, { role: 'assistant', content: 'Errore di connessione.' }]);
+            if (controller.signal.aborted) return;
+            setMessages(prev => [...prev, { role: 'assistant', content: t('guided.connError') }]);
         } finally {
-            setIsLoading(false);
+            if (requestRef.current === controller) {
+                requestRef.current = null;
+                setIsLoading(false);
+            }
         }
     };
 
@@ -711,7 +804,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             <div className="flex items-center justify-center h-[calc(100vh-140px)] min-h-[600px]">
                 <div className="text-center space-y-3">
                     <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto" />
-                    <p className="text-sm text-slate-500">Caricamento percorso guidato...</p>
+                    <p className="text-sm text-slate-500">{t('guided.loading')}</p>
                 </div>
             </div>
         );
@@ -730,7 +823,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 {/* Phase Progress */}
                 <div className="glass-panel p-4 rounded-xl space-y-3">
                     <div className="flex justify-between items-center">
-                        <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Percorso</h3>
+                        <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">{t('guided.path')}</h3>
                         <span className="text-xs text-slate-500">{currentStepIndex}/{totalSteps}</span>
                     </div>
 
@@ -763,7 +856,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             disabled={isLoading}
                             className="w-full mt-2 py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1 disabled:opacity-50 shadow-sm"
                         >
-                            {currentPhase === FIXED_QUESTIONS_ID ? 'Concludi Sessione' : 'Prossimo Step'}
+                            {currentPhase === FIXED_QUESTIONS_ID ? t('guided.concludeSession') : t('guided.nextStep')}
                             <ChevronRight className="w-3 h-3" />
                         </button>
                     )}
@@ -774,7 +867,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             disabled={isLoading}
                             className="w-full mt-2 py-2.5 px-3 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1 disabled:opacity-50 shadow-sm"
                         >
-                            Prossimo Argomento
+                            {t('guided.nextTopic')}
                             <ChevronRight className="w-3 h-3" />
                         </button>
                     )}
@@ -785,7 +878,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             disabled={isLoading}
                             className="w-full mt-2 py-2.5 px-3 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-50 shadow-sm"
                         >
-                            Ripeti Passaggio
+                            {t('guided.repeatStep')}
                         </button>
                     )}
                 </div>
@@ -795,7 +888,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     <div className="glass-panel p-4 rounded-xl space-y-3">
                         <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                             <BarChart3 className="w-4 h-4" />
-                            Punteggi
+                            {t('guided.scores')}
                         </div>
 
                         {scoreGroups.map((group, idx) => (
@@ -805,6 +898,10 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                     <CompactScoreBar
                                         key={code}
                                         code={code}
+                                        factorName={tf(
+                                            `factor.${code}.name`,
+                                            questionnaire.factors.find((factor) => factor.code === code)?.name || code,
+                                        )}
                                         score={score}
                                         invertedSet={invertedSet}
                                         questionnaireType={questionnaireType}
@@ -859,25 +956,49 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                     </div>
 
                                     {msg.role === 'assistant' && (
-                                        <button
-                                            onClick={() => handlePlayTTS(msg.content, idx)}
-                                            disabled={isAudioLoading}
-                                            className={cn(
-                                                "flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium transition-colors border",
-                                                playingMessageIdx === idx
-                                                    ? "bg-blue-50 text-blue-600 border-blue-200"
-                                                    : "bg-transparent text-slate-400 border-transparent hover:bg-slate-50 hover:text-slate-600"
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={() => handlePlayTTS(msg.content, idx)}
+                                                disabled={isAudioLoading}
+                                                className={cn(
+                                                    "flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium transition-colors border",
+                                                    playingMessageIdx === idx
+                                                        ? "bg-blue-50 text-blue-600 border-blue-200"
+                                                        : "bg-transparent text-slate-400 border-transparent hover:bg-slate-50 hover:text-slate-600"
+                                                )}
+                                            >
+                                                {isAudioLoading && playingMessageIdx === idx ? (
+                                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                                ) : playingMessageIdx === idx ? (
+                                                    <Square className="w-3 h-3 fill-current" />
+                                                ) : (
+                                                    <Volume2 className="w-3 h-3" />
+                                                )}
+                                                {playingMessageIdx === idx ? t('guided.stopListen') : t('guided.listen')}
+                                            </button>
+                                            {!!msg.strategyIds?.length && (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        title={t('guided.feedback.helpful')}
+                                                        aria-label={t('guided.feedback.helpful')}
+                                                        onClick={() => submitStrategyFeedback(idx, true)}
+                                                        className={cn("p-1 rounded text-slate-400 hover:text-green-600", msg.feedback === true && "text-green-600")}
+                                                    >
+                                                        <ThumbsUp className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        title={t('guided.feedback.notHelpful')}
+                                                        aria-label={t('guided.feedback.notHelpful')}
+                                                        onClick={() => submitStrategyFeedback(idx, false)}
+                                                        className={cn("p-1 rounded text-slate-400 hover:text-red-600", msg.feedback === false && "text-red-600")}
+                                                    >
+                                                        <ThumbsDown className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </>
                                             )}
-                                        >
-                                            {isAudioLoading && playingMessageIdx === idx ? (
-                                                <Loader2 className="w-3 h-3 animate-spin" />
-                                            ) : playingMessageIdx === idx ? (
-                                                <Square className="w-3 h-3 fill-current" />
-                                            ) : (
-                                                <Volume2 className="w-3 h-3" />
-                                            )}
-                                            {playingMessageIdx === idx ? 'Stop Lettura' : 'Ascolta'}
-                                        </button>
+                                        </div>
                                     )}
                                 </div>
                             )}
@@ -893,7 +1014,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
                                 </span>
-                                <span className="text-xs font-medium text-slate-500">Elaborazione analisi...</span>
+                                <span className="text-xs font-medium text-slate-500">{t('guided.processing')}</span>
                             </div>
                         </div>
                     )}
@@ -908,7 +1029,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-colors flex items-center gap-2 shadow-lg shadow-green-200"
                         >
                             <Home className="w-5 h-5" />
-                            Torna alla Home Page
+                            {t('guided.backHome')}
                         </button>
                     </div>
                 ) : (
@@ -918,7 +1039,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                 type="text"
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                placeholder={isLoading ? "Attendi la risposta..." : "Chiedi chiarimenti su questa fase..."}
+                                placeholder={isLoading ? t('guided.input.waiting') : t('guided.input.placeholder')}
                                 disabled={isLoading}
                                 className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 disabled:opacity-50"
                             />
@@ -934,9 +1055,9 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             <p className="text-[10px] text-slate-400">
                                 {isAnalysisStep(currentPhase)
                                     ? questionnaireType === 'SAVICKAS'
-                                        ? "Rispondi liberamente. Quando hai condiviso abbastanza, apparirà un suggerimento per passare all'argomento successivo."
-                                        : "Puoi fare domande sull'analisi corrente oppure cliccare 'Prossimo Step'."
-                                    : "Fai qualsiasi domanda libera."}
+                                        ? t('guided.hint.savickas')
+                                        : t('guided.hint.analysis')
+                                    : t('guided.hint.free')}
                             </p>
                         </div>
                     </form>

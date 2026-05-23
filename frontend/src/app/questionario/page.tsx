@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, Send, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useI18n } from '@/lib/i18n-context';
 
 const API_BASE = '/api';
 
@@ -38,6 +39,7 @@ type FormData = {
 };
 
 export default function QuestionarioPage() {
+    const { t, tf } = useI18n();
     const [formData, setFormData] = useState<FormData>({
         eta: '',
         sesso: '',
@@ -91,14 +93,14 @@ export default function QuestionarioPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!consent) {
-            setError('Devi accettare le condizioni per inviare il questionario.');
+            setError(t('survey.err.consent'));
             return;
         }
 
         // Check if all quantitative questions are answered
         const hasUnansweredQuestions = QUESTIONS.some(q => formData[q.key] === null);
         if (hasUnansweredQuestions) {
-            setError('Devi rispondere a tutte le domande quantitative.');
+            setError(t('survey.err.unanswered'));
             return;
         }
 
@@ -119,12 +121,12 @@ export default function QuestionarioPage() {
             });
 
             if (!response.ok) {
-                throw new Error('Errore durante l\'invio. Riprova più tardi.');
+                throw new Error(t('survey.err.send'));
             }
 
             setIsSubmitted(true);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Errore sconosciuto');
+            setError(err instanceof Error ? err.message : t('survey.err.unknown'));
         } finally {
             setIsSubmitting(false);
         }
@@ -141,16 +143,16 @@ export default function QuestionarioPage() {
                     <div className="w-20 h-20 mx-auto rounded-full bg-green-100 flex items-center justify-center">
                         <CheckCircle className="w-10 h-10 text-green-600" />
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-800">Grazie!</h2>
+                    <h2 className="text-2xl font-bold text-slate-800">{t('survey.thanks.title')}</h2>
                     <p className="text-slate-500">
-                        Il tuo feedback è stato inviato con successo. Le tue risposte ci aiuteranno a migliorare il servizio.
+                        {t('survey.thanks.body')}
                     </p>
                     <Link
                         href="/"
                         className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors"
                     >
                         <ArrowLeft className="w-4 h-4" />
-                        Torna alla Home
+                        {t('survey.backHome')}
                     </Link>
                 </motion.div>
             </div>
@@ -170,51 +172,60 @@ export default function QuestionarioPage() {
                         <ArrowLeft className="w-6 h-6 text-slate-600" />
                     </Link>
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-800">Questionario Esperienza</h1>
-                        <p className="text-slate-500">Anonimo - Puoi rispondere solo alle domande che preferisci</p>
+                        <h1 className="text-3xl font-bold text-slate-800">{t('survey.title')}</h1>
+                        <p className="text-slate-500">{t('survey.subtitle')}</p>
                     </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-8">
                     {/* Dati di base */}
                     <div className="glass-panel p-6 rounded-2xl space-y-6">
-                        <h2 className="text-xl font-semibold text-slate-800">Dati di base</h2>
-                        <p className="text-sm text-slate-500">Richiesti per la parte quantitativa</p>
+                        <h2 className="text-xl font-semibold text-slate-800">{t('survey.basic.title')}</h2>
+                        <p className="text-sm text-slate-500">{t('survey.basic.sub')}</p>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <SelectField
-                                label="Età"
+                                label={t('survey.field.eta')}
+                                placeholder={t('survey.select.placeholder')}
                                 value={formData.eta}
                                 options={ETA_OPTIONS}
                                 onChange={(v) => handleDemographicChange('eta', v)}
                             />
                             <SelectField
-                                label="Sesso"
+                                label={t('survey.field.sesso')}
+                                placeholder={t('survey.select.placeholder')}
                                 value={formData.sesso}
                                 options={SESSO_OPTIONS}
+                                optionLabel={(v) => tf(`survey.opt.${v}`, v)}
                                 onChange={(v) => handleDemographicChange('sesso', v)}
                             />
                             <SelectField
-                                label="Istruzione"
+                                label={t('survey.field.istruzione')}
+                                placeholder={t('survey.select.placeholder')}
                                 value={formData.istruzione}
                                 options={ISTRUZIONE_OPTIONS}
+                                optionLabel={(v) => tf(`survey.opt.${v}`, v)}
                                 onChange={(v) => handleDemographicChange('istruzione', v)}
                             />
                             <SelectField
-                                label="Tipo istituto"
+                                label={t('survey.field.tipoIstituto')}
+                                placeholder={t('survey.select.placeholder')}
                                 value={formData.tipo_istituto}
                                 options={TIPO_ISTITUTO_OPTIONS}
+                                optionLabel={(v) => tf(`survey.opt.${v}`, v)}
                                 onChange={(v) => handleDemographicChange('tipo_istituto', v)}
                             />
                             <SelectField
-                                label="Provenienza"
+                                label={t('survey.field.provenienza')}
+                                placeholder={t('survey.select.placeholder')}
                                 value={formData.provenienza}
                                 options={PROVENIENZA_OPTIONS}
+                                optionLabel={(v) => tf(`survey.opt.${v}`, v)}
                                 onChange={(v) => handleDemographicChange('provenienza', v)}
                             />
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    Area di studio (automatica)
+                                    {t('survey.field.area')}
                                 </label>
                                 <input
                                     type="text"
@@ -228,16 +239,16 @@ export default function QuestionarioPage() {
 
                     {/* Valutazione quantitativa */}
                     <div className="glass-panel p-6 rounded-2xl space-y-6">
-                        <h2 className="text-xl font-semibold text-slate-800">Valutazione quantitativa</h2>
+                        <h2 className="text-xl font-semibold text-slate-800">{t('survey.quant.title')}</h2>
                         <p className="text-sm text-slate-500">
-                            Scala 1 = Per niente, 5 = Molto.
+                            {t('survey.quant.sub')}
                         </p>
 
                         <div className="space-y-4">
                             {QUESTIONS.map((q) => (
                                 <RatingField
                                     key={q.key}
-                                    label={q.label}
+                                    label={tf(`survey.q.${q.key}`, q.label)}
                                     value={formData[q.key] as number | null}
                                     onChange={(v) => handleRatingChange(q.key, v)}
                                 />
@@ -255,8 +266,7 @@ export default function QuestionarioPage() {
                                 className="mt-1 w-5 h-5 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
                             />
                             <span className="text-sm text-slate-600">
-                                Dichiaro di aver letto e compreso che le risposte sono raccolte in forma anonima senza alcun tracciamento.
-                                Acconsento all'uso dei dati aggregati esclusivamente per scopi di ricerca e miglioramento del servizio.
+                                {t('survey.consent')}
                             </span>
                         </label>
 
@@ -272,11 +282,11 @@ export default function QuestionarioPage() {
                         className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2"
                     >
                         {isSubmitting ? (
-                            <>Invio in corso...</>
+                            <>{t('survey.submitting')}</>
                         ) : (
                             <>
                                 <Send className="w-5 h-5" />
-                                Invia Questionario
+                                {t('survey.submit')}
                             </>
                         )}
                     </button>
@@ -292,11 +302,15 @@ function SelectField({
     value,
     options,
     onChange,
+    placeholder = '-- Seleziona --',
+    optionLabel,
 }: {
     label: string;
     value: string;
     options: string[];
     onChange: (value: string) => void;
+    placeholder?: string;
+    optionLabel?: (value: string) => string;
 }) {
     return (
         <div>
@@ -306,9 +320,9 @@ function SelectField({
                 onChange={(e) => onChange(e.target.value)}
                 className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-                <option value="">-- Seleziona --</option>
+                <option value="">{placeholder}</option>
                 {options.map((opt) => (
-                    <option key={opt} value={opt}>{opt}</option>
+                    <option key={opt} value={opt}>{optionLabel ? optionLabel(opt) : opt}</option>
                 ))}
             </select>
         </div>

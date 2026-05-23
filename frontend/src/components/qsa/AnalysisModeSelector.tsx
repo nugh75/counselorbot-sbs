@@ -1,17 +1,19 @@
 'use client';
 
 import { BarChart, Layers, HelpCircle } from 'lucide-react';
+import { useI18n } from '@/lib/i18n-context';
 
 interface AnalysisModeSelectorProps {
     onSelect: (mode: 'factor' | 'second-level' | 'generic') => void;
 }
 
 export function AnalysisModeSelector({ onSelect }: AnalysisModeSelectorProps) {
+    const { t } = useI18n();
     const options = [
         {
             id: 'factor',
-            title: 'Analisi Fattore per Fattore',
-            desc: 'Analizza ogni singolo punteggio (C1-C7, A1-A7) nel dettaglio.',
+            title: t('mode.factor.title'),
+            desc: t('mode.factor.desc'),
             icon: BarChart,
             color: 'text-blue-400',
             bg: 'bg-blue-500/10',
@@ -19,8 +21,8 @@ export function AnalysisModeSelector({ onSelect }: AnalysisModeSelectorProps) {
         },
         {
             id: 'second-level',
-            title: 'Analisi Secondo Livello',
-            desc: 'Analisi aggregata delle macro-aree cognitive ed affettive.',
+            title: t('mode.second-level.title'),
+            desc: t('mode.second-level.desc'),
             icon: Layers,
             color: 'text-purple-400',
             bg: 'bg-purple-500/10',
@@ -28,8 +30,8 @@ export function AnalysisModeSelector({ onSelect }: AnalysisModeSelectorProps) {
         },
         {
             id: 'generic',
-            title: 'Domande Generiche',
-            desc: 'Fai domande libere sul tuo metodo di studio.',
+            title: t('mode.generic.title'),
+            desc: t('mode.generic.desc'),
             icon: HelpCircle,
             color: 'text-green-400',
             bg: 'bg-green-500/10',

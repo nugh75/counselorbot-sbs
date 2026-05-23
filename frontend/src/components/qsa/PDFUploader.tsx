@@ -3,12 +3,14 @@
 import { UploadCloud, FileType } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n-context';
 
 interface PDFUploaderProps {
     onUploadComplete: (mockData: any) => void;
 }
 
 export function PDFUploader({ onUploadComplete }: PDFUploaderProps) {
+    const { t } = useI18n();
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [fileInputRef, setFileInputRef] = useState<HTMLInputElement | null>(null);
@@ -70,7 +72,7 @@ export function PDFUploader({ onUploadComplete }: PDFUploaderProps) {
             
         } catch (error) {
             console.error("Upload error:", error);
-            alert("Errore durante l'analisi del documento. Riprova o inserisci i dati manualmente.");
+            alert(t('pdf.error'));
         } finally {
             setIsUploading(false);
         }
@@ -92,16 +94,16 @@ export function PDFUploader({ onUploadComplete }: PDFUploaderProps) {
                 {isUploading ? (
                     <div className="flex flex-col items-center animate-pulse">
                         <UploadCloud className="w-12 h-12 text-blue-400 mb-4 animate-bounce" />
-                        <p className="text-lg font-medium">Analizzando il documento con AI...</p>
-                        <p className="text-sm text-muted-foreground mt-2">Estrazione dei 14 fattori in corso...</p>
+                        <p className="text-lg font-medium">{t('pdf.analyzing.title')}</p>
+                        <p className="text-sm text-muted-foreground mt-2">{t('pdf.analyzing.sub')}</p>
                     </div>
                 ) : (
                     <>
                         <div className="p-4 rounded-full bg-white/5 mb-4">
                             <FileType className="w-8 h-8 text-muted-foreground" />
                         </div>
-                        <p className="text-lg font-medium mb-1">Trascina qui il tuo file (PDF o Immagine)</p>
-                        <p className="text-sm text-muted-foreground mb-6">oppure clicca per selezionare</p>
+                        <p className="text-lg font-medium mb-1">{t('pdf.drop')}</p>
+                        <p className="text-sm text-muted-foreground mb-6">{t('pdf.or')}</p>
                         <input
                             type="file"
                             className="hidden"
@@ -113,13 +115,13 @@ export function PDFUploader({ onUploadComplete }: PDFUploaderProps) {
                             onClick={triggerFileSelect}
                             className="px-6 py-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors font-medium text-sm"
                         >
-                            Seleziona File
+                            {t('pdf.select')}
                         </button>
                     </>
                 )}
             </div>
             <p className="text-center text-xs text-muted-foreground mt-4">
-                Supporta: PDF, JPG, PNG. Dimensione massima: 10MB.
+                {t('pdf.support')}
             </p>
         </div>
     );

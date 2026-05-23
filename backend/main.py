@@ -2,11 +2,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from contextlib import asynccontextmanager
-from fastapi import BackgroundTasks, FastAPI, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import BackgroundTasks, FastAPI, Depends, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from datetime import timedelta
 from typing import List, Optional
 import re
 
@@ -46,7 +45,7 @@ async def lifespan(app: FastAPI):
         try:
             db = _SessionLocal()
             svc = _AIService(db)
-            if svc.config.get('active_provider') == 'ollama':
+            if svc.config.get('active_provider') == 'ollama' and svc.ollama_preload_enabled:
                 await asyncio.get_event_loop().run_in_executor(
                     None, svc.preload_ollama_model
                 )
@@ -292,36 +291,14 @@ def startup_event():
 
 # --- Auth Endpoints ---
 
-@app.post("/token", response_model=schemas.Token)
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.username == form_data.username).first()
-    if not user or not auth.verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = auth.create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
+# --- Auth ---
+# Login locale RIMOSSO: l'autenticazione avviene al bordo tramite ai4auth
+# (forward-auth, header Remote-*). Vedi backend/auth.py.
 
-@app.get("/users/me", response_model=schemas.User)
-async def read_users_me(current_user: models.User = Depends(auth.get_current_user)):
-    return current_user
-
-@app.post("/register", response_model=schemas.User)
-async def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.username == user.username).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Username already registered")
-    hashed_password = auth.get_password_hash(user.password)
-    db_user = models.User(username=user.username, hashed_password=hashed_password)
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
+@app.get("/auth/me")
+async def read_me(request: Request):
+    """Identità dell'utente corrente dagli header forward-auth (ai4auth)."""
+    return auth.get_identity(request)
 
 # --- Admin Config Endpoints ---
 
@@ -347,6 +324,13 @@ async def create_or_update_config(config: schemas.ConfigCreate, current_user: mo
     db.commit()
     db.refresh(db_config)
     return db_config
+
+@app.get("/admin/models")
+async def list_provider_models(provider: str = None, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    """Modelli realmente serviti dal provider (live). Vuoto se non interrogabile/irraggiungibile."""
+    svc = AIService(db)
+    return {"provider": provider or svc.config.get('active_provider', 'openai'),
+            "models": svc.list_models(provider)}
 
 @app.get("/admin/config/env-status")
 async def get_env_override_status(current_user: models.User = Depends(auth.get_current_active_admin)):
@@ -416,6 +400,26 @@ async def submit_survey(survey: schemas.SurveyCreate, db: Session = Depends(get_
     db.refresh(db_survey)
     return db_survey
 
+
+@app.post("/strategy-feedback")
+async def submit_strategy_feedback(feedback: schemas.StrategyFeedbackCreate, db: Session = Depends(get_db)):
+    """Registra un voto anonimo solo per strategie editorialmente approvate."""
+    valid_ids = strategy_memory.approved_ids()
+    accepted = [strategy_id for strategy_id in feedback.strategy_ids if strategy_id in valid_ids]
+    if not accepted:
+        raise HTTPException(status_code=400, detail="No approved strategy identifiers supplied")
+    for strategy_id in accepted:
+        db.add(models.StrategyFeedback(
+            strategy_id=strategy_id,
+            questionnaire_type=feedback.questionnaire_type,
+            phase=feedback.phase,
+            language=feedback.language,
+            helpful=feedback.helpful,
+        ))
+    db.commit()
+    return {"status": "success", "recorded": len(accepted)}
+
+
 @app.get("/admin/surveys", response_model=List[schemas.SurveyResponseSchema])
 async def get_surveys(skip: int = 0, limit: int = 100, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
     """Get all survey responses (admin only)"""
@@ -433,10 +437,22 @@ async def delete_survey(survey_id: int, current_user: models.User = Depends(auth
     db.commit()
     return {"status": "success", "message": "Survey deleted"}
 
+
+@app.get("/admin/strategy-feedback")
+async def strategy_feedback_summary(current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    """Aggregati anonimi utili alla revisione editoriale delle strategie."""
+    totals = {}
+    for feedback in db.query(models.StrategyFeedback).all():
+        row = totals.setdefault(feedback.strategy_id, {"strategy_id": feedback.strategy_id, "positive": 0, "negative": 0})
+        row["positive" if feedback.helpful else "negative"] += 1
+    return sorted(totals.values(), key=lambda row: (row["positive"] - row["negative"]), reverse=True)
+
+
 # --- Chat / QSA Endpoints ---
 
 from .ai_service import AIService
 from .memory_service import session_memory
+from .strategy_memory import strategy_memory
 import uuid
 import logging
 import asyncio
@@ -550,8 +566,152 @@ class ChatRequest(schemas.BaseModel):
     mode: str = "generic"
     session_id: Optional[str] = None
     scores_context: str = ""  # Formatted QSA scores from frontend
+    questionnaire_type: Optional[str] = None
     phase: Optional[str] = None
     use_phase_prompt: bool = False
+    language: Optional[str] = None  # 'it' (default), 'en', 'es', 'fr', 'de', 'sv'
+    max_tokens: Optional[int] = None
+    memory_message: Optional[str] = None  # Solo testo reale dell'utente, senza istruzioni interne
+
+
+def _clamp_max_tokens(value: Optional[int], default: Optional[int] = None) -> Optional[int]:
+    if value is None:
+        return default
+    return max(128, min(int(value), 2000))
+
+
+# Lingue supportate per la risposta dell'AI (codice -> nome inglese, nome nativo)
+SUPPORTED_AI_LANGUAGES = {
+    "it": ("Italian", "italiano"),
+    "en": ("English", "English"),
+    "es": ("Spanish", "español"),
+    "fr": ("French", "français"),
+    "de": ("German", "Deutsch"),
+    "sv": ("Swedish", "svenska"),
+}
+
+_QSA_FACTOR_NAMES = {
+    "it": {
+        "C1": "Strategie elaborative", "C2": "Autoregolazione", "C3": "Disorientamento",
+        "C4": "Disponibilità alla collaborazione", "C5": "Organizzatori semantici",
+        "C6": "Difficoltà di concentrazione", "C7": "Autointerrogazione",
+        "A1": "Ansietà di base", "A2": "Volizione",
+        "A3": "Attribuzione a cause controllabili", "A4": "Attribuzione a cause incontrollabili",
+        "A5": "Mancanza di perseveranza", "A6": "Percezione di competenza",
+        "A7": "Interferenze emotive",
+    },
+    "en": {
+        "C1": "Elaborative strategies", "C2": "Self-regulation", "C3": "Disorientation",
+        "C4": "Willingness to collaborate", "C5": "Semantic organisers",
+        "C6": "Concentration difficulties", "C7": "Self-questioning",
+        "A1": "Baseline anxiety", "A2": "Volition",
+        "A3": "Attribution to controllable causes", "A4": "Attribution to uncontrollable causes",
+        "A5": "Lack of perseverance", "A6": "Perceived competence",
+        "A7": "Emotional interference",
+    },
+    "es": {
+        "C1": "Estrategias elaborativas", "C2": "Autorregulación", "C3": "Desorientación",
+        "C4": "Disposición a colaborar", "C5": "Organizadores semánticos",
+        "C6": "Dificultades de concentración", "C7": "Autointerrogación",
+        "A1": "Ansiedad de base", "A2": "Volición",
+        "A3": "Atribución a causas controlables", "A4": "Atribución a causas incontrolables",
+        "A5": "Falta de perseverancia", "A6": "Percepción de competencia",
+        "A7": "Interferencias emocionales",
+    },
+    "fr": {
+        "C1": "Stratégies d'élaboration", "C2": "Autorégulation", "C3": "Désorientation",
+        "C4": "Disposition à collaborer", "C5": "Organisateurs sémantiques",
+        "C6": "Difficultés de concentration", "C7": "Auto-questionnement",
+        "A1": "Anxiété de base", "A2": "Volition",
+        "A3": "Attribution à des causes contrôlables", "A4": "Attribution à des causes incontrôlables",
+        "A5": "Manque de persévérance", "A6": "Perception de compétence",
+        "A7": "Interférences émotionnelles",
+    },
+    "de": {
+        "C1": "Elaborationsstrategien", "C2": "Selbstregulation", "C3": "Desorientierung",
+        "C4": "Kooperationsbereitschaft", "C5": "Semantische Organisatoren",
+        "C6": "Konzentrationsschwierigkeiten", "C7": "Selbstbefragung",
+        "A1": "Grundangst", "A2": "Volition",
+        "A3": "Attribution auf kontrollierbare Ursachen", "A4": "Attribution auf unkontrollierbare Ursachen",
+        "A5": "Mangelnde Ausdauer", "A6": "Kompetenzwahrnehmung",
+        "A7": "Emotionale Interferenzen",
+    },
+    "sv": {
+        "C1": "Bearbetningsstrategier", "C2": "Självreglering", "C3": "Desorientering",
+        "C4": "Samarbetsvilja", "C5": "Semantiska organisatörer",
+        "C6": "Koncentrationssvårigheter", "C7": "Självfrågande",
+        "A1": "Grundångest", "A2": "Vilja",
+        "A3": "Attribution till kontrollerbara orsaker", "A4": "Attribution till okontrollerbara orsaker",
+        "A5": "Brist på uthållighet", "A6": "Upplevd kompetens",
+        "A7": "Emotionella störningar",
+    },
+}
+
+
+def _apply_language_directive(system_prompt: str, language: Optional[str]) -> str:
+    """Aggiunge in coda al system prompt l'istruzione di rispondere nella lingua scelta.
+    'it' (o lingua sconosciuta) = nessuna modifica: i prompt base sono in italiano."""
+    if not language or language == "it" or language not in SUPPORTED_AI_LANGUAGES:
+        return system_prompt
+    eng, native = SUPPORTED_AI_LANGUAGES[language]
+    return (
+        f"{system_prompt}\n\n"
+        f"[LANGUAGE] You MUST write your ENTIRE response in {eng} ({native}), "
+        f"regardless of the language of the instructions or scores above. "
+        f"Translate any fixed phrases, headings and labels into {eng} as well. "
+        f"Do NOT mix languages."
+    )
+
+def _is_qsa(questionnaire_type: Optional[str]) -> bool:
+    return (questionnaire_type or "").upper() == "QSA"
+
+
+def _qsa_factor_names(language: Optional[str]) -> dict[str, str]:
+    return _QSA_FACTOR_NAMES.get(language or "it", _QSA_FACTOR_NAMES["it"])
+
+
+def _annotate_qsa_factor_codes(text: str, language: Optional[str], progressive: bool = False) -> str:
+    """Impedisce di presentare codici QSA privi del relativo nome."""
+    if not text:
+        return text
+    annotated = text
+    for code, name in _qsa_factor_names(language).items():
+        # Canonicalizza anche un nome gia prodotto dal modello.
+        annotated = re.sub(rf"\b{code}\b\s*\([^)]*\)", f"{code} ({name})", annotated)
+        if progressive:
+            # Durante lo stream la parentesi puo essere ancora incompleta:
+            # mostriamo subito l'etichetta completa senza esporre una sigla sola.
+            annotated = re.sub(rf"\b{code}\b\s*\([^)]*$", f"{code} ({name})", annotated)
+        annotated = re.sub(rf"\b{code}\b(?!\s*\()", f"{code} ({name})", annotated)
+    return annotated
+
+
+def _apply_qsa_factor_directive(system_prompt: str, questionnaire_type: str, language: Optional[str]) -> str:
+    if not _is_qsa(questionnaire_type):
+        return system_prompt
+    examples = ", ".join(
+        f"{code} ({name})" for code, name in _qsa_factor_names(language).items()
+    )
+    return (
+        f"{system_prompt}\n\n"
+        "[FACTOR LABELS] In ogni risposta rivolta allo studente, non scrivere mai "
+        "una sigla di fattore QSA isolata. Ogni sigla deve essere immediatamente "
+        "accompagnata dal nome esteso, nella forma `C2 (Autoregolazione)`. "
+        f"Riferimento obbligatorio: {examples}."
+    )
+
+
+def _student_visible_response(
+    text: str,
+    questionnaire_type: str,
+    language: Optional[str],
+    sanitize_ztpi: bool,
+) -> str:
+    if sanitize_ztpi:
+        return _sanitize_ztpi_user_text(text)
+    if _is_qsa(questionnaire_type):
+        return _annotate_qsa_factor_codes(text, language, progressive=True)
+    return text
 
 
 _GUIDED_NO_GREETING_SUFFIX = " NON iniziare con saluti. Vai direttamente all'analisi."
@@ -686,28 +846,44 @@ def _resolve_user_message_for_chat(ai_service: AIService, request: ChatRequest, 
 
     return request.message, None
 
-def _generate_summary_background(
+def _update_markdown_memory_background(
     session_id: str, effective_message: str, response_content: str,
     step_label: str, is_first_step: bool, previous_summary: str = "",
 ):
-    """Background task: genera un rolling summary aggiornato e lo sostituisce in memoria."""
-    if is_first_step:
-        # Il primo step non ha contesto precedente, skip summary
-        return
-    db = database.SessionLocal()
+    """Compat legacy: aggiorna la memoria Markdown senza chiamare il modello."""
     try:
-        ai_service = AIService(db)
-        new_summary = ai_service.generate_summary(
-            effective_message, response_content,
+        session_memory.record_interaction(
+            session_id,
+            user_message=effective_message,
+            bot_response=response_content,
             step_label=step_label,
-            previous_summary=previous_summary,
+            completed_step=bool(step_label),
         )
-        session_memory.set_summary(session_id, new_summary)
-        logger.info(f"Session {session_id}: rolling summary aggiornato ({len(new_summary)} chars)")
+        logger.info(f"Session {session_id}: memoria Markdown aggiornata")
     except Exception as e:
-        logger.error(f"Errore generazione riassunto per session {session_id}: {e}")
-    finally:
-        db.close()
+        logger.error(f"Errore aggiornamento memoria Markdown per session {session_id}: {e}")
+
+
+def _retrieved_context(
+    session_id: str,
+    request: ChatRequest,
+    questionnaire_type: str,
+    query: str,
+) -> tuple[str, List[str]]:
+    memory = session_memory.get_relevant_context(
+        session_id,
+        query=query,
+        include_scores=not bool(request.scores_context),
+    )
+    strategies = strategy_memory.retrieve(
+        questionnaire_type=questionnaire_type,
+        phase=request.phase or "",
+        query=query,
+        language=request.language or "it",
+    )
+    strategy_context = strategy_memory.render_context(strategies)
+    sections = [section for section in (memory, strategy_context) if section]
+    return "\n\n".join(sections), [strategy["id"] for strategy in strategies]
 
 
 @app.post("/chat")
@@ -716,15 +892,21 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
 
     # 1. Retrieve Configuration and System Prompt based on Mode
     ai_service = AIService(db)
+    max_tokens = _clamp_max_tokens(request.max_tokens)
 
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
+    system_prompt = _apply_language_directive(system_prompt, request.language)
     effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)
 
     # 1b. Reset memoria se inizia una nuova analisi guidata (primo step)
     is_first_step = False
+    step_label = ""
+    questionnaire_type = request.questionnaire_type or ""
     if request.use_phase_prompt and request.phase:
         step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first()
         if step:
+            step_label = step.label
+            questionnaire_type = step.questionnaire_type
             first_step = (
                 db.query(models.GuidedStep)
                 .filter(models.GuidedStep.questionnaire_type == step.questionnaire_type)
@@ -735,37 +917,62 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
                 is_first_step = True
                 session_memory.clear(session_id)
                 logger.info(f"Session {session_id}: memoria resettata (nuova analisi guidata)")
+    elif request.phase:
+        step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first()
+        if step:
+            step_label = step.label
+            questionnaire_type = step.questionnaire_type
+
+    system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language)
+    model_scores_context = (
+        _annotate_qsa_factor_codes(request.scores_context, request.language)
+        if _is_qsa(questionnaire_type) else request.scores_context
+    )
+    model_message = (
+        _annotate_qsa_factor_codes(effective_message, request.language)
+        if _is_qsa(questionnaire_type) else effective_message
+    )
+
+    session_memory.update_context(
+        session_id,
+        questionnaire_type=questionnaire_type,
+        scores_context=model_scores_context,
+        language=request.language or "",
+        phase=request.phase or "",
+        step_label=step_label,
+    )
 
     # 2. Build the full message including student's QSA profile
-    if request.scores_context:
-        full_message = f"{request.scores_context}\n\nDOMANDA DELLO STUDENTE:\n{effective_message}"
+    if model_scores_context:
+        full_message = f"{model_scores_context}\n\nDOMANDA DELLO STUDENTE:\n{model_message}"
     else:
-        full_message = effective_message
+        full_message = model_message
 
-    # 3. Recupera il riassunto conversazionale accumulato
-    conversation_summary = session_memory.get_summary(session_id)
+    # 3. Recupera solo la memoria pertinente e le strategie collettive approvate.
+    retrieval_query = f"{step_label} {model_message} {model_scores_context}".strip()
+    conversation_summary, strategy_ids = _retrieved_context(
+        session_id, request, questionnaire_type, retrieval_query
+    )
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         conversation_summary = _sanitize_ztpi_user_text(conversation_summary)
 
     # 4. Get AI Response (con contesto conversazionale)
     response_content = ai_service.get_response(
         full_message, system_prompt, request.mode,
-        conversation_summary=conversation_summary
+        conversation_summary=conversation_summary,
+        max_tokens=max_tokens,
     )
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         response_content = _sanitize_ztpi_user_text(response_content)
+    elif _is_qsa(questionnaire_type):
+        response_content = _annotate_qsa_factor_codes(response_content, request.language)
 
-    # 5. Genera riassunto in BACKGROUND (non blocca la risposta)
-    step_label = ""
-    if request.phase:
-        step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first()
-        step_label = step.label if step else request.phase
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         step_label = _sanitize_ztpi_step_label(step_label)
 
     background_tasks.add_task(
-        _generate_summary_background,
-        session_id, effective_message, response_content,
+        _update_markdown_memory_background,
+        session_id, request.memory_message if request.memory_message is not None else request.message, response_content,
         step_label, is_first_step, conversation_summary,
     )
 
@@ -789,7 +996,164 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     db.add(log_entry)
     db.commit()
 
-    return {"response": response_content, "session_id": session_id}
+    return {"response": response_content, "session_id": session_id, "strategy_ids": strategy_ids}
+
+
+@app.post("/chat/stream")
+async def chat_stream(request: ChatRequest, db: Session = Depends(get_db)):
+    """
+    Variante streaming di /chat (Server-Sent Events).
+    Eventi: {"delta": "..."} per ogni pezzo, poi {"done": true, "response": <full>, "session_id": ...}.
+    Il logging e l'aggiornamento della memoria Markdown avvengono al termine dello stream.
+    NB: la sessione `db` viene chiusa al ritorno della funzione (prima che il
+    generatore venga consumato), perciò l'AIService carica la config subito e
+    il logging usa una sessione fresca.
+    """
+    import json as _json
+    import threading
+
+    session_id = request.session_id or str(uuid.uuid4())
+
+    # Preparazione (usa la db della richiesta, ancora aperta qui)
+    ai_service = AIService(db)
+    max_tokens = _clamp_max_tokens(request.max_tokens)
+    prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
+    system_prompt = _apply_language_directive(system_prompt, request.language)
+    effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)
+
+    is_first_step = False
+    step_label = ""
+    questionnaire_type = request.questionnaire_type or ""
+    if request.use_phase_prompt and request.phase:
+        step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first()
+        if step:
+            step_label = step.label
+            questionnaire_type = step.questionnaire_type
+            first_step = (
+                db.query(models.GuidedStep)
+                .filter(models.GuidedStep.questionnaire_type == step.questionnaire_type)
+                .order_by(models.GuidedStep.sort_order)
+                .first()
+            )
+            if first_step and step.id == first_step.id:
+                is_first_step = True
+                session_memory.clear(session_id)
+                logger.info(f"Session {session_id}: memoria resettata (nuova analisi guidata, stream)")
+    elif request.phase:
+        step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first()
+        if step:
+            step_label = step.label
+            questionnaire_type = step.questionnaire_type
+
+    system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language)
+    model_scores_context = (
+        _annotate_qsa_factor_codes(request.scores_context, request.language)
+        if _is_qsa(questionnaire_type) else request.scores_context
+    )
+    model_message = (
+        _annotate_qsa_factor_codes(effective_message, request.language)
+        if _is_qsa(questionnaire_type) else effective_message
+    )
+
+    if model_scores_context:
+        full_message = f"{model_scores_context}\n\nDOMANDA DELLO STUDENTE:\n{model_message}"
+    else:
+        full_message = model_message
+
+    session_memory.update_context(
+        session_id,
+        questionnaire_type=questionnaire_type,
+        scores_context=model_scores_context,
+        language=request.language or "",
+        phase=request.phase or "",
+        step_label=step_label,
+    )
+
+    retrieval_query = f"{step_label} {model_message} {model_scores_context}".strip()
+    conversation_summary, strategy_ids = _retrieved_context(
+        session_id, request, questionnaire_type, retrieval_query
+    )
+    sanitize = _should_sanitize_ztpi_text(request.mode, request.phase)
+    if sanitize:
+        conversation_summary = _sanitize_ztpi_user_text(conversation_summary)
+
+    if sanitize:
+        step_label = _sanitize_ztpi_step_label(step_label)
+
+    provider = ai_service.config.get('active_provider', 'unknown')
+    model = ai_service.config.get('model_name', 'unknown')
+
+    def _log_stream(response_content: str):
+        log_db = database.SessionLocal()
+        try:
+            log_db.add(models.Log(
+                session_id=session_id,
+                action="chat_message",
+                details={
+                    "mode": request.mode,
+                    "phase": request.phase,
+                    "user_input": request.message,
+                    "effective_user_input": effective_message,
+                    "bot_response": response_content,
+                    "system_prompt_key": prompt_key,
+                    "guided_phase_prompt_key": phase_prompt_key,
+                    "provider": provider,
+                    "model": model,
+                    "conversation_summary_length": len(conversation_summary),
+                    "streamed": True,
+                },
+            ))
+            log_db.commit()
+        except Exception as e:
+            logger.error(f"Errore log stream session {session_id}: {e}")
+        finally:
+            log_db.close()
+
+    def event_gen():
+        chunks = []
+        try:
+            for delta in ai_service.stream_response(
+                full_message, system_prompt, request.mode,
+                conversation_summary=conversation_summary,
+                max_tokens=max_tokens,
+            ):
+                if not delta:
+                    continue
+                chunks.append(delta)
+                raw_response = "".join(chunks)
+                display_response = _student_visible_response(
+                    raw_response, questionnaire_type, request.language, sanitize
+                )
+                yield f"data: {_json.dumps({'delta': delta, 'display': display_response})}\n\n"
+
+            response_content = _student_visible_response(
+                "".join(chunks), questionnaire_type, request.language, sanitize
+            )
+
+            # Memoria Markdown in un thread separato: nessuna chiamata AI extra.
+            threading.Thread(
+                target=_update_markdown_memory_background,
+                args=(session_id, request.memory_message if request.memory_message is not None else request.message, response_content,
+                      step_label, is_first_step, conversation_summary),
+                daemon=True,
+            ).start()
+
+            _log_stream(response_content)
+
+            yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'strategy_ids': strategy_ids})}\n\n"
+        except Exception as e:
+            logger.error(f"Errore stream chat session {session_id}: {e}")
+            yield f"data: {_json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(
+        event_gen(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",  # disabilita il buffering di nginx
+            "Connection": "keep-alive",
+        },
+    )
 
 @app.post("/chat/message")
 async def chat_message(message: str, session_id: str, mode: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
@@ -802,8 +1166,8 @@ async def chat_message(message: str, session_id: str, mode: str, background_task
         SYSTEM_PROMPT_DEFAULTS.get(prompt_key, DEFAULT_SYSTEM_PROMPT_GENERIC),
     )
 
-    # 2. Recupera il riassunto conversazionale accumulato
-    conversation_summary = session_memory.get_summary(session_id)
+    # 2. Recupera una porzione compatta e pertinente della memoria Markdown.
+    conversation_summary = session_memory.get_relevant_context(session_id, query=message)
     if _should_sanitize_ztpi_text(mode, None):
         conversation_summary = _sanitize_ztpi_user_text(conversation_summary)
 
@@ -815,9 +1179,9 @@ async def chat_message(message: str, session_id: str, mode: str, background_task
     if _should_sanitize_ztpi_text(mode, None):
         response_content = _sanitize_ztpi_user_text(response_content)
 
-    # 4. Genera riassunto in BACKGROUND
+    # 4. Aggiorna memoria Markdown in BACKGROUND (nessuna chiamata AI extra)
     background_tasks.add_task(
-        _generate_summary_background,
+        _update_markdown_memory_background,
         session_id, message, response_content, "", False, conversation_summary,
     )
 
@@ -843,13 +1207,13 @@ async def chat_message(message: str, session_id: str, mode: str, background_task
 
 @app.get("/memory/status/{session_id}")
 async def memory_status(session_id: str):
-    """Restituisce la dimensione della memoria conversazionale per la sessione."""
-    summary = session_memory.get_summary(session_id)
+    """Restituisce la dimensione della memoria Markdown per la sessione."""
+    memory = session_memory.get_summary(session_id)
     return {
         "session_id": session_id,
-        "summary_chars": len(summary),
-        "summary_blocks": len(summary.split("\n\n")) if summary else 0,
-        "preview": summary[:200] if summary else "",
+        "memory_chars": len(memory),
+        "memory_blocks": len(memory.split("\n\n")) if memory else 0,
+        "preview": memory[:200] if memory else "",
     }
 
 @app.delete("/memory/{session_id}")

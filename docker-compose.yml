@@ -1,3 +1,4 @@
+name: counselorbot-10-step
 services:
   backend:
     build:
@@ -6,10 +7,16 @@ services:
     container_name: counselorbot_backend
     expose:
       - "8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     env_file:
       - .env
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - SESSION_MEMORY_DIR=/app/session_memory
+    volumes:
+      - ./session_memory:/app/session_memory
+      - ./knowledge:/app/knowledge:ro
     depends_on:
       - postgres
     restart: unless-stopped
@@ -25,8 +32,8 @@ services:
       - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    expose:
-      - "5432"
+    ports:
+      - "5435:5432"
     networks:
       - default
 

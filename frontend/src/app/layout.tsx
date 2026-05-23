@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { Header } from '@/components/layout/Header';
+import { I18nProvider } from '@/lib/i18n-context';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -18,10 +19,12 @@ export default function RootLayout({
     return (
         <html lang="it" className="dark" suppressHydrationWarning>
             <body className={`${inter.className} min-h-screen bg-gradient-to-br from-gray-900 to-black text-white selection:bg-blue-500/30`}>
-                <Header />
-                <main className="pt-20 px-4 pb-12">
-                    {children}
-                </main>
+                <I18nProvider>
+                    <Header />
+                    <main className="pt-32 px-4 pb-12">
+                        {children}
+                    </main>
+                </I18nProvider>
             </body>
         </html>
     );

@@ -2,57 +2,62 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, Settings, FileText, ClipboardList } from 'lucide-react';
+import { Settings, FileText, ClipboardList, ShieldAlert } from 'lucide-react';
 import { ConfigForm } from '@/components/admin/ConfigForm';
 import { LogViewer } from '@/components/admin/LogViewer';
 import { SurveyViewer } from '@/components/admin/SurveyViewer';
+import { getIdentity } from '@/lib/auth';
+import { useI18n } from '@/lib/i18n-context';
 
 import { cn } from '@/lib/utils';
 
 export default function AdminPage() {
     const router = useRouter();
+    const { t } = useI18n();
     const [activeTab, setActiveTab] = useState<'config' | 'logs' | 'surveys'>('config');
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [authState, setAuthState] = useState<'loading' | 'admin' | 'forbidden'>('loading');
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            router.push('/login');
-        } else {
-            setIsAuthenticated(true);
-        }
-    }, [router]);
+        getIdentity().then((id) => {
+            setAuthState(id?.is_admin ? 'admin' : 'forbidden');
+        });
+    }, []);
 
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        router.push('/login');
-    };
+    if (authState === 'loading') {
+        return <div className="min-h-screen flex items-center justify-center text-gray-400">{t('admin.verifying')}</div>;
+    }
 
-    if (!isAuthenticated) return null;
+    if (authState === 'forbidden') {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-background p-4">
+                <div className="max-w-md w-full glass-panel p-8 rounded-2xl text-center space-y-4 border border-white/10">
+                    <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                        <ShieldAlert className="w-6 h-6 text-red-600" />
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900">{t('admin.forbidden.title')}</h2>
+                    <p className="text-muted-foreground text-sm">
+                        {t('admin.forbidden.body')}
+                    </p>
+                    <button
+                        onClick={() => router.push('/')}
+                        className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                    >
+                        {t('admin.forbidden.cta')}
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-background">
-            {/* Header */}
-            <header className="border-b border-white/10 bg-black/20 backdrop-blur-md sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                            <Settings className="w-5 h-5 text-white" />
-                        </div>
-                        <h1 className="font-bold text-lg text-white">Admin Dashboard</h1>
+            <section className="max-w-7xl mx-auto px-4 py-8">
+                <div className="flex items-center gap-2 mb-8">
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <Settings className="w-5 h-5 text-white" />
                     </div>
-
-                    <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors shadow-sm"
-                    >
-                        <LogOut className="w-4 h-4" />
-                        Logout
-                    </button>
+                    <h1 className="font-bold text-lg text-slate-900">{t('admin.dashboard')}</h1>
                 </div>
-            </header>
-
-            <main className="max-w-7xl mx-auto px-4 py-8">
                 {/* Tabs */}
                 <div className="flex gap-4 mb-8">
                     <button
@@ -65,7 +70,7 @@ export default function AdminPage() {
                         )}
                     >
                         <Settings className="w-4 h-4" />
-                        Configurazione & Prompt
+                        {t('admin.tab.config')}
                     </button>
                     <button
                         onClick={() => setActiveTab('logs')}
@@ -77,7 +82,7 @@ export default function AdminPage() {
                         )}
                     >
                         <FileText className="w-4 h-4" />
-                        Log Conversazioni
+                        {t('admin.tab.logs')}
                     </button>
                     <button
                         onClick={() => setActiveTab('surveys')}
@@ -89,7 +94,7 @@ export default function AdminPage() {
                         )}
                     >
                         <ClipboardList className="w-4 h-4" />
-                        Questionari
+                        {t('admin.tab.surveys')}
                     </button>
                 </div>
 
@@ -99,7 +104,7 @@ export default function AdminPage() {
                     {activeTab === 'logs' && <LogViewer />}
                     {activeTab === 'surveys' && <SurveyViewer />}
                 </div>
-            </main>
+            </section>
         </div>
     );
 }

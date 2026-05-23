@@ -4,6 +4,7 @@ import { useState, useEffect, Fragment } from 'react';
 import { RefreshCw, Trash2, FileText, CheckCircle, BarChart3, TrendingUp, Users, Activity } from 'lucide-react';
 import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
+import { useI18n } from '@/lib/i18n-context';
 import {
     BarChart,
     Bar,
@@ -45,6 +46,7 @@ interface SurveyResponse {
 }
 
 export function SurveyViewer() {
+    const { t } = useI18n();
     const [surveys, setSurveys] = useState<SurveyResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedSurvey, setExpandedSurvey] = useState<number | null>(null);
@@ -52,17 +54,13 @@ export function SurveyViewer() {
     const fetchSurveys = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`/api/admin/surveys`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await fetch(`/api/admin/surveys`);
             if (res.ok) {
                 const data = await res.json();
                 setSurveys(data);
             } else {
                 if (res.status === 401 || res.status === 403) {
-                    localStorage.removeItem('token');
-                    window.location.href = '/login';
+                    window.location.href = '/';
                 }
                 console.error('Failed to fetch surveys:', res.statusText);
             }
@@ -79,13 +77,11 @@ export function SurveyViewer() {
 
     const handleDelete = async (id: number, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!confirm('Sei sicuro di voler eliminare questo sondaggio?')) return;
+        if (!confirm(t('admin.surveys.confirmDelete'))) return;
 
         try {
-            const token = localStorage.getItem('token');
             const res = await fetch(`/api/admin/survey/${id}`, {
                 method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
                 setSurveys(prev => prev.filter(s => s.id !== id));
@@ -117,16 +113,16 @@ export function SurveyViewer() {
         ];
 
         const fieldMetadata: Record<string, { label: string; color: string; bg: string }> = {
-            'q_utile': { label: 'Utile', color: '#3b82f6', bg: 'bg-blue-50' },          // Blue
-            'q_pertinente': { label: 'Pertinente', color: '#6366f1', bg: 'bg-indigo-50' }, // Indigo
-            'q_chiaro': { label: 'Chiaro', color: '#0ea5e9', bg: 'bg-sky-50' },          // Sky
-            'q_dettaglio': { label: 'Dettagliato', color: '#06b6d4', bg: 'bg-cyan-50' },   // Cyan
-            'q_facile': { label: 'Facile', color: '#14b8a6', bg: 'bg-teal-50' },          // Teal
-            'q_veloce': { label: 'Veloce', color: '#10b981', bg: 'bg-emerald-50' },       // Emerald
-            'q_fiducia': { label: 'Fiducia', color: '#22c55e', bg: 'bg-green-50' },       // Green
-            'q_riflettere': { label: 'Riflessivo', color: '#84cc16', bg: 'bg-lime-50' },   // Lime
-            'q_coinvolgente': { label: 'Coinvolgente', color: '#8b5cf6', bg: 'bg-violet-50' }, // Violet
-            'q_consiglierei': { label: 'Consiglierei', color: '#d946ef', bg: 'bg-fuchsia-50' } // Fuchsia
+            'q_utile': { label: t('admin.surveys.m.utile'), color: '#3b82f6', bg: 'bg-blue-50' },
+            'q_pertinente': { label: t('admin.surveys.m.pertinente'), color: '#6366f1', bg: 'bg-indigo-50' },
+            'q_chiaro': { label: t('admin.surveys.m.chiaro'), color: '#0ea5e9', bg: 'bg-sky-50' },
+            'q_dettaglio': { label: t('admin.surveys.m.dettaglio'), color: '#06b6d4', bg: 'bg-cyan-50' },
+            'q_facile': { label: t('admin.surveys.m.facile'), color: '#14b8a6', bg: 'bg-teal-50' },
+            'q_veloce': { label: t('admin.surveys.m.veloce'), color: '#10b981', bg: 'bg-emerald-50' },
+            'q_fiducia': { label: t('admin.surveys.m.fiducia'), color: '#22c55e', bg: 'bg-green-50' },
+            'q_riflettere': { label: t('admin.surveys.m.riflettere'), color: '#84cc16', bg: 'bg-lime-50' },
+            'q_coinvolgente': { label: t('admin.surveys.m.coinvolgente'), color: '#8b5cf6', bg: 'bg-violet-50' },
+            'q_consiglierei': { label: t('admin.surveys.m.consiglierei'), color: '#d946ef', bg: 'bg-fuchsia-50' }
         };
 
         let totalSum = 0;
@@ -197,7 +193,7 @@ export function SurveyViewer() {
                                 <Users className="w-6 h-6" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-500 font-medium">Totale Risposte</p>
+                                <p className="text-sm text-slate-500 font-medium">{t('admin.surveys.totalResponses')}</p>
                                 <h4 className="text-2xl font-bold text-slate-800">{stats.keyMetrics.total}</h4>
                             </div>
                         </div>
@@ -206,7 +202,7 @@ export function SurveyViewer() {
                                 <TrendingUp className="w-6 h-6" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-500 font-medium">Media Complessiva</p>
+                                <p className="text-sm text-slate-500 font-medium">{t('admin.surveys.overallAvg')}</p>
                                 <h4 className="text-2xl font-bold text-slate-800">{stats.keyMetrics.overallAvg}/5</h4>
                             </div>
                         </div>
@@ -215,7 +211,7 @@ export function SurveyViewer() {
                                 <Activity className="w-6 h-6" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-500 font-medium">Deviazione Std Media</p>
+                                <p className="text-sm text-slate-500 font-medium">{t('admin.surveys.avgStdDev')}</p>
                                 <h4 className="text-2xl font-bold text-slate-800">{stats.keyMetrics.avgStdDev}</h4>
                             </div>
                         </div>
@@ -224,7 +220,7 @@ export function SurveyViewer() {
                     {/* Detailed Metric Grid */}
                     <div>
                         <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-6 flex items-center gap-2">
-                            <BarChart3 className="w-4 h-4" /> Analisi Dimensionale
+                            <BarChart3 className="w-4 h-4" /> {t('admin.surveys.dimensionalAnalysis')}
                         </h4>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -270,7 +266,7 @@ export function SurveyViewer() {
             )}
 
             <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-slate-800">Dettaglio Risposte</h3>
+                <h3 className="text-lg font-semibold text-slate-800">{t('admin.surveys.detailTitle')}</h3>
                 <button
                     onClick={fetchSurveys}
                     className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-700 transition-colors"
@@ -284,10 +280,10 @@ export function SurveyViewer() {
                     <table className="w-full text-sm text-left">
                         <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
                             <tr>
-                                <th className="px-4 py-3 font-medium">Data</th>
-                                <th className="px-4 py-3 font-medium">Utente</th>
-                                <th className="px-4 py-3 font-medium">Valutazione Media</th>
-                                <th className="px-4 py-3 font-medium text-right">Azioni</th>
+                                <th className="px-4 py-3 font-medium">{t('admin.surveys.col.date')}</th>
+                                <th className="px-4 py-3 font-medium">{t('admin.surveys.col.user')}</th>
+                                <th className="px-4 py-3 font-medium">{t('admin.surveys.col.avgRating')}</th>
+                                <th className="px-4 py-3 font-medium text-right">{t('admin.surveys.col.actions')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -315,7 +311,7 @@ export function SurveyViewer() {
                                             </td>
                                             <td className="px-4 py-3">
                                                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700`}>
-                                                    Rating: {avgRating}/5
+                                                    {t('admin.surveys.rating')}: {avgRating}/5
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3 text-right">
@@ -331,29 +327,29 @@ export function SurveyViewer() {
                                             <tr className="bg-slate-50/50">
                                                 <td colSpan={4} className="px-4 py-4">
                                                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-xs">
-                                                        <div><span className="text-slate-400 block mb-1">Utile</span>{renderRating(survey.q_utile)}</div>
-                                                        <div><span className="text-slate-400 block mb-1">Pertinente</span>{renderRating(survey.q_pertinente)}</div>
-                                                        <div><span className="text-slate-400 block mb-1">Chiaro</span>{renderRating(survey.q_chiaro)}</div>
-                                                        <div><span className="text-slate-400 block mb-1">Dettagliato</span>{renderRating(survey.q_dettaglio)}</div>
-                                                        <div><span className="text-slate-400 block mb-1">Facile</span>{renderRating(survey.q_facile)}</div>
-                                                        <div><span className="text-slate-400 block mb-1">Veloce</span>{renderRating(survey.q_veloce)}</div>
-                                                        <div><span className="text-slate-400 block mb-1">Fiducia</span>{renderRating(survey.q_fiducia)}</div>
-                                                        <div><span className="text-slate-400 block mb-1">Riflettere</span>{renderRating(survey.q_riflettere)}</div>
-                                                        <div><span className="text-slate-400 block mb-1">Coinvolgente</span>{renderRating(survey.q_coinvolgente)}</div>
-                                                        <div><span className="text-slate-400 block mb-1">Consiglierei</span>{renderRating(survey.q_consiglierei)}</div>
+                                                        <div><span className="text-slate-400 block mb-1">{t('admin.surveys.m.utile')}</span>{renderRating(survey.q_utile)}</div>
+                                                        <div><span className="text-slate-400 block mb-1">{t('admin.surveys.m.pertinente')}</span>{renderRating(survey.q_pertinente)}</div>
+                                                        <div><span className="text-slate-400 block mb-1">{t('admin.surveys.m.chiaro')}</span>{renderRating(survey.q_chiaro)}</div>
+                                                        <div><span className="text-slate-400 block mb-1">{t('admin.surveys.m.dettaglio')}</span>{renderRating(survey.q_dettaglio)}</div>
+                                                        <div><span className="text-slate-400 block mb-1">{t('admin.surveys.m.facile')}</span>{renderRating(survey.q_facile)}</div>
+                                                        <div><span className="text-slate-400 block mb-1">{t('admin.surveys.m.veloce')}</span>{renderRating(survey.q_veloce)}</div>
+                                                        <div><span className="text-slate-400 block mb-1">{t('admin.surveys.m.fiducia')}</span>{renderRating(survey.q_fiducia)}</div>
+                                                        <div><span className="text-slate-400 block mb-1">{t('admin.surveys.m.riflettere')}</span>{renderRating(survey.q_riflettere)}</div>
+                                                        <div><span className="text-slate-400 block mb-1">{t('admin.surveys.m.coinvolgente')}</span>{renderRating(survey.q_coinvolgente)}</div>
+                                                        <div><span className="text-slate-400 block mb-1">{t('admin.surveys.m.consiglierei')}</span>{renderRating(survey.q_consiglierei)}</div>
 
                                                         <div className="col-span-2 md:col-span-5 mt-4 pt-4 border-t border-slate-200">
                                                             <div className="grid md:grid-cols-3 gap-4">
                                                                 <div>
-                                                                    <span className="text-slate-400 block mb-1">Istituto</span>
+                                                                    <span className="text-slate-400 block mb-1">{t('admin.surveys.det.istituto')}</span>
                                                                     <span className="font-medium text-slate-700">{survey.tipo_istituto || '-'}</span>
                                                                 </div>
                                                                 <div>
-                                                                    <span className="text-slate-400 block mb-1">Provenienza</span>
+                                                                    <span className="text-slate-400 block mb-1">{t('admin.surveys.det.provenienza')}</span>
                                                                     <span className="font-medium text-slate-700">{survey.provenienza || '-'}</span>
                                                                 </div>
                                                                 <div>
-                                                                    <span className="text-slate-400 block mb-1">Area di Studio</span>
+                                                                    <span className="text-slate-400 block mb-1">{t('admin.surveys.det.area')}</span>
                                                                     <span className="font-medium text-slate-700">{survey.area_studio || '-'}</span>
                                                                 </div>
                                                             </div>
@@ -369,7 +365,7 @@ export function SurveyViewer() {
                             {surveys.length === 0 && !loading && (
                                 <tr>
                                     <td colSpan={4} className="px-6 py-8 text-center text-slate-400">
-                                        Nessun sondaggio trovato.
+                                        {t('admin.surveys.empty')}
                                     </td>
                                 </tr>
                             )}

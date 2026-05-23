@@ -63,3 +63,17 @@ class SurveyResponse(Base):
     q_riflettere = Column(Integer, nullable=True)
     q_coinvolgente = Column(Integer, nullable=True)
     q_consiglierei = Column(Integer, nullable=True)
+
+
+class StrategyFeedback(Base):
+    """Valutazione anonima di una strategia condivisa gia approvata."""
+
+    __tablename__ = "strategy_feedback"
+
+    id = Column(Integer, primary_key=True, index=True)
+    strategy_id = Column(String, nullable=False, index=True)
+    questionnaire_type = Column(String, nullable=True)
+    phase = Column(String, nullable=True)
+    language = Column(String, nullable=True)
+    helpful = Column(Boolean, nullable=False)
+    submitted_at = Column(DateTime(timezone=True), server_default=func.now())

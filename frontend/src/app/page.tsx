@@ -11,15 +11,16 @@ import { PDFUploader } from '@/components/qsa/PDFUploader';
 import { ProfileVisualization } from '@/components/qsa/ProfileVisualization';
 import { GuidedChatInterface } from '@/components/qsa/GuidedChatInterface';
 import { ArrowLeft, MessageSquare, RotateCcw, LogOut } from 'lucide-react';
+import { useI18n } from '@/lib/i18n-context';
 
 type Step = 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed';
 
 export default function Home() {
+    const { t } = useI18n();
     const [step, setStep] = useState<Step>('questionnaire-select');
     const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<QuestionnaireConfig | null>(null);
     const [scores, setScores] = useState<Record<string, number> | null>(null);
     const [sessionId, setSessionId] = useState<string>('');
-
     const handleQuestionnaireSelect = (questionnaire: QuestionnaireConfig) => {
         setSelectedQuestionnaire(questionnaire);
         if (questionnaire.id === 'SAVICKAS') {
@@ -99,28 +100,28 @@ export default function Home() {
     const getStepTitle = () => {
         switch (step) {
             case 'questionnaire-select': return 'CounselorBot';
-            case 'method-select': return `${selectedQuestionnaire?.name} - Inserimento Dati`;
-            case 'manual-input': return 'Inserimento Punteggi';
-            case 'upload-input': return 'Caricamento Documento';
-            case 'dashboard': return 'Il Tuo Profilo';
-            case 'interaction': return selectedQuestionnaire?.id === 'SAVICKAS' ? 'Intervista Savickas' : 'Consulenza Guidata';
-            case 'completed': return 'Analisi Completata';
+            case 'method-select': return `${selectedQuestionnaire?.name} — ${t('step.methodSelect.titleSuffix')}`;
+            case 'manual-input': return t('step.manualInput.title');
+            case 'upload-input': return t('step.uploadInput.title');
+            case 'dashboard': return t('step.dashboard.title');
+            case 'interaction': return selectedQuestionnaire?.id === 'SAVICKAS' ? t('step.interaction.title.savickas') : t('step.interaction.title.guided');
+            case 'completed': return t('step.completed.title');
             default: return 'CounselorBot';
         }
     };
 
     const getStepDescription = () => {
         switch (step) {
-            case 'questionnaire-select': return 'Scegli quale questionario analizzare';
-            case 'method-select': return 'Come vuoi inserire i punteggi?';
-            case 'manual-input': return 'Inserisci i punteggi da 1 a 9 per ogni fattore';
-            case 'upload-input': return "L'IA estrarrà automaticamente i dati";
-            case 'dashboard': return `Profilo ${selectedQuestionnaire?.name}`;
+            case 'questionnaire-select': return t('step.questionnaireSelect.desc');
+            case 'method-select': return t('step.methodSelect.desc');
+            case 'manual-input': return t('step.manualInput.desc');
+            case 'upload-input': return t('step.uploadInput.desc');
+            case 'dashboard': return `${t('step.dashboard.descPrefix')} ${selectedQuestionnaire?.name}`;
             case 'interaction':
                 return selectedQuestionnaire?.id === 'SAVICKAS'
-                    ? 'Career counseling narrativo in 5 domande'
-                    : `Analisi guidata ${selectedQuestionnaire?.name}`;
-            case 'completed': return 'Grazie per aver utilizzato CounselorBot!';
+                    ? t('step.interaction.desc.savickas')
+                    : `${t('step.interaction.desc.guidedPrefix')} ${selectedQuestionnaire?.name}`;
+            case 'completed': return t('step.completed.desc');
             default: return '';
         }
     };
@@ -138,6 +139,7 @@ export default function Home() {
                     <h1 className="text-3xl font-bold text-slate-800">{getStepTitle()}</h1>
                     <p className="text-slate-500">{getStepDescription()}</p>
                 </div>
+
             </div>
 
             <AnimatePresence mode="wait">
@@ -161,10 +163,10 @@ export default function Home() {
                                     <span className="text-xl">📝</span>
                                     <div className="text-left">
                                         <div className="text-sm font-semibold text-slate-700 group-hover:text-blue-700 transition-colors">
-                                            Lascia un Feedback
+                                            {t('feedback.cta.title')}
                                         </div>
                                         <div className="text-xs text-slate-500">
-                                            Aiutaci a migliorare CounselorBot
+                                            {t('feedback.cta.sub')}
                                         </div>
                                     </div>
                                 </Link>
@@ -198,9 +200,9 @@ export default function Home() {
                                         <MessageSquare className="w-8 h-8 text-blue-600" />
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-semibold text-slate-800">Pronto per l'analisi?</h3>
+                                        <h3 className="text-xl font-semibold text-slate-800">{t('dashboard.ready.title')}</h3>
                                         <p className="text-slate-500 mt-2">
-                                            Inizia una consulenza guidata in tre fasi con CounselorBot.
+                                            {t('dashboard.ready.sub')}
                                         </p>
                                     </div>
                                     <button
@@ -208,7 +210,7 @@ export default function Home() {
                                         className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
                                     >
                                         <MessageSquare className="w-5 h-5" />
-                                        Inizia Interazione Guidata
+                                        {t('dashboard.ready.btn')}
                                     </button>
                                 </div>
                             </div>
@@ -233,11 +235,11 @@ export default function Home() {
                                     <span className="text-4xl">🎉</span>
                                 </div>
                                 <div>
-                                    <h2 className="text-2xl font-bold text-slate-800">Analisi Completata!</h2>
+                                    <h2 className="text-2xl font-bold text-slate-800">{t('completed.title')}</h2>
                                     <p className="text-slate-500 mt-3">
-                                        Hai concluso l'analisi del questionario <strong>{selectedQuestionnaire?.name}</strong>.
+                                        {t('completed.body1')} <strong>{selectedQuestionnaire?.name}</strong>.
                                         <br />
-                                        Vuoi analizzare un altro questionario?
+                                        {t('completed.body2')}
                                     </p>
                                 </div>
 
@@ -247,26 +249,26 @@ export default function Home() {
                                         className="py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2"
                                     >
                                         <RotateCcw className="w-5 h-5" />
-                                        Altro Questionario
+                                        {t('completed.another')}
                                     </button>
                                     <button
                                         onClick={() => setStep('questionnaire-select')}
                                         className="py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all flex items-center justify-center gap-2"
                                     >
                                         <LogOut className="w-5 h-5" />
-                                        Termina Sessione
+                                        {t('completed.end')}
                                     </button>
                                 </div>
 
                                 <div className="pt-4 border-t border-slate-100">
                                     <p className="text-sm text-slate-400 mb-3">
-                                        Grazie per aver utilizzato CounselorBot! 👋
+                                        {t('completed.thanks')}
                                     </p>
                                     <a
                                         href="/questionario"
                                         className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
                                     >
-                                        📝 Lascia un feedback sulla tua esperienza
+                                        {t('completed.feedbackLink')}
                                     </a>
                                 </div>
                             </div>

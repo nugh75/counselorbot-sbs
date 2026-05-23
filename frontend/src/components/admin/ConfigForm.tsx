@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, Server, Cpu, Plus, Trash2, ChevronUp, ChevronDown, Palette } from 'lucide-react';
+import { Save, Server, Cpu, Plus, Trash2, ChevronUp, ChevronDown, Palette, RefreshCw } from 'lucide-react';
+import { useI18n } from '@/lib/i18n-context';
 
 // --- Types ---
 
@@ -51,6 +52,17 @@ const PROVIDERS: Record<string, { label: string; models: string[] }> = {
             'openai/gpt-4o-mini',
             'mistralai/mistral-large-2411',
             'nvidia/llama-3.1-nemotron-70b-instruct'
+        ]
+    },
+    llamacpp: {
+        label: 'llama.cpp / llama-swap (Local)',
+        models: [
+            'default',
+            'qwen3',
+            'qwen2.5',
+            'gemma3',
+            'llama3.3',
+            'mistral',
         ]
     },
     ollama: {
@@ -103,23 +115,28 @@ const COLOR_THEMES = [
 
 // --- Helper to get auth header ---
 
+// Auth gestita al bordo da ai4auth (forward-auth): nessun token lato client.
 function authHeaders(): Record<string, string> {
-    const token = localStorage.getItem('token');
-    return { Authorization: `Bearer ${token}` };
+    return {};
 }
 
 function authJsonHeaders(): Record<string, string> {
-    return { ...authHeaders(), 'Content-Type': 'application/json' };
+    return { 'Content-Type': 'application/json' };
 }
 
 // --- Component ---
 
 export function ConfigForm() {
+    const { t } = useI18n();
     const [configs, setConfigs] = useState<ConfigItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeProvider, setActiveProvider] = useState('openai');
     const [activeModel, setActiveModel] = useState('gpt-4o');
     const [envOverrides, setEnvOverrides] = useState<Record<string, boolean>>({});
+
+    // Modelli realmente serviti dal provider (live). Vuoto = usa il fallback statico.
+    const [liveModels, setLiveModels] = useState<string[]>([]);
+    const [modelsLoading, setModelsLoading] = useState(false);
 
     // Dynamic guided steps
     const [guidedSteps, setGuidedSteps] = useState<GuidedStep[]>([]);
@@ -147,8 +164,7 @@ export function ConfigForm() {
                 if (prov) setActiveProvider(prov);
                 if (mod) setActiveModel(mod);
             } else if (configRes.status === 401 || configRes.status === 403) {
-                localStorage.removeItem('token');
-                window.location.href = '/login';
+                window.location.href = '/';
             }
 
             if (envRes.ok) setEnvOverrides(await envRes.json());
@@ -160,7 +176,32 @@ export function ConfigForm() {
         }
     };
 
+    const fetchModels = async (provider: string) => {
+        setModelsLoading(true);
+        try {
+            const res = await fetch(`/api/admin/models?provider=${encodeURIComponent(provider)}`, { headers: authHeaders() });
+            if (res.ok) {
+                const data = await res.json();
+                setLiveModels(Array.isArray(data?.models) ? data.models : []);
+            } else {
+                setLiveModels([]);
+            }
+        } catch {
+            setLiveModels([]);
+        } finally {
+            setModelsLoading(false);
+        }
+    };
+
     useEffect(() => { fetchConfigs(); }, []);
+    useEffect(() => { fetchModels(activeProvider); }, [activeProvider]);
+
+    // Opzioni della tendina: modelli live se disponibili, altrimenti fallback statico.
+    // Il modello attivo viene sempre incluso così resta selezionato anche se non in elenco.
+    const modelOptions = (() => {
+        const base = liveModels.length > 0 ? liveModels : (PROVIDERS[activeProvider]?.models || []);
+        return activeModel && !base.includes(activeModel) ? [activeModel, ...base] : base;
+    })();
 
     // --- Config helpers ---
 
@@ -249,7 +290,7 @@ export function ConfigForm() {
     };
 
     const handleDeleteStep = async (stepId: string) => {
-        if (!confirm(`Eliminare lo step "${stepId}"? Questa azione non è reversibile.`)) return;
+        if (!confirm(t('admin.config.confirmDeleteStep', { id: stepId }))) return;
         try {
             const res = await fetch(`/api/admin/guided-steps/${stepId}`, {
                 method: 'DELETE',
@@ -293,7 +334,7 @@ export function ConfigForm() {
 
     // --- Render ---
 
-    if (loading) return <div className="text-center py-8 text-gray-400">Caricamento configurazioni...</div>;
+    if (loading) return <div className="text-center py-8 text-gray-400">{t('admin.config.loading')}</div>;
 
     const apiKeys = [
         { key: 'api_key_openai', label: 'API Key OpenAI' },
@@ -302,6 +343,7 @@ export function ConfigForm() {
         { key: 'api_key_mistral', label: 'API Key Mistral' },
         { key: 'api_key_openrouter', label: 'API Key OpenRouter' },
         { key: 'ollama_ip', label: 'Ollama IP Address' },
+        { key: 'llamacpp_url', label: 'llama.cpp / llama-swap URL' },
     ];
 
     const questionnaireConfigs = [
@@ -363,12 +405,12 @@ export function ConfigForm() {
             <div className="glass-panel p-6 rounded-xl space-y-6">
                 <h3 className="text-lg font-medium text-slate-900 flex items-center gap-2">
                     <Server className="w-5 h-5 text-blue-600" />
-                    Configurazione IA Attiva
+                    {t('admin.config.aiActive')}
                 </h3>
 
                 <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">Provider</label>
+                        <label className="text-sm font-medium text-slate-700">{t('admin.config.provider')}</label>
                         <select
                             value={activeProvider}
                             onChange={(e) => handleProviderChange(e.target.value)}
@@ -381,7 +423,23 @@ export function ConfigForm() {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">Modello</label>
+                        <div className="flex items-center justify-between">
+                            <label className="text-sm font-medium text-slate-700">{t('admin.config.model')}</label>
+                            <button
+                                type="button"
+                                onClick={() => fetchModels(activeProvider)}
+                                disabled={modelsLoading}
+                                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 disabled:opacity-50"
+                                title={t('admin.config.reloadTitle')}
+                            >
+                                <RefreshCw className={`w-3 h-3 ${modelsLoading ? 'animate-spin' : ''}`} />
+                                {modelsLoading
+                                    ? t('admin.config.modelsLoading')
+                                    : liveModels.length > 0
+                                        ? t('admin.config.modelsLive', { n: liveModels.length })
+                                        : t('admin.config.reload')}
+                            </button>
+                        </div>
                         <div className="relative">
                             <Cpu className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
                             <select
@@ -389,30 +447,39 @@ export function ConfigForm() {
                                 onChange={(e) => handleModelChange(e.target.value)}
                                 className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 pl-10 text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
                             >
-                                {PROVIDERS[activeProvider]?.models.map((model) => (
+                                {modelOptions.map((model) => (
                                     <option key={model} value={model}>{model}</option>
                                 ))}
                             </select>
                         </div>
+                        {liveModels.length === 0 && !modelsLoading && (
+                            <p className="text-xs text-amber-600">{t('admin.config.providerUnreachable')}</p>
+                        )}
                     </div>
 
-                    <div className="space-y-2 md:col-span-2">
-                        <label className="text-sm font-medium text-slate-700">Modello per Riassunti <span className="text-xs text-slate-400">(opzionale, modello leggero per la memoria conversazionale)</span></label>
+                    <div className="md:col-span-2 flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
                         <input
-                            type="text"
-                            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="es. qwen3.5:9b (vuoto = usa modello principale)"
-                            value={getConfigValue('summary_model_name')}
-                            onChange={(e) => setConfigDraft('summary_model_name', e.target.value, 'Modello leggero per i riassunti conversazionali')}
-                            onBlur={() => saveConfigKey('summary_model_name', 'Modello leggero per i riassunti conversazionali')}
+                            id="disable_thinking"
+                            type="checkbox"
+                            className="w-4 h-4 accent-blue-600 cursor-pointer"
+                            checked={getConfigValue('disable_thinking') === 'true'}
+                            onChange={(e) => {
+                                const val = e.target.checked ? 'true' : 'false';
+                                setConfigDraft('disable_thinking', val, 'Disattiva il reasoning/thinking sui modelli che lo supportano');
+                                handleSaveConfig({ key: 'disable_thinking', value: val, description: 'Disattiva il reasoning/thinking sui modelli che lo supportano' });
+                            }}
                         />
+                        <label htmlFor="disable_thinking" className="text-sm font-medium text-slate-700 cursor-pointer">
+                            {t('admin.config.noThinking')} <strong>{t('admin.config.noThinkingName')}</strong>
+                            <span className="block text-xs text-slate-400 font-normal">{t('admin.config.noThinkingDesc')}</span>
+                        </label>
                     </div>
                 </div>
             </div>
 
             {/* 2. API Keys */}
             <div className="grid gap-4">
-                <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">API Keys</h3>
+                <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">{t('admin.config.apiKeys')}</h3>
                 {apiKeys.map((def) => {
                     const currentVal = configs.find(c => c.key === def.key)?.value || '';
                     const isEnvOverridden = envOverrides[def.key] || false;
@@ -422,7 +489,8 @@ export function ConfigForm() {
                         (activeProvider === 'gemini' && def.key === 'api_key_gemini') ||
                         (activeProvider === 'mistral' && def.key === 'api_key_mistral') ||
                         (activeProvider === 'openrouter' && def.key === 'api_key_openrouter') ||
-                        (activeProvider === 'ollama' && def.key === 'ollama_ip');
+                        (activeProvider === 'ollama' && def.key === 'ollama_ip') ||
+                        (activeProvider === 'llamacpp' && def.key === 'llamacpp_url');
 
                     return (
                         <div key={def.key} className={`glass-panel p-4 rounded-xl flex items-center gap-4 transition-colors ${isActive ? 'bg-blue-50 border-blue-400 ring-1 ring-blue-400' : 'hover:border-slate-400'}`}>
@@ -436,7 +504,7 @@ export function ConfigForm() {
                                 <input
                                     type="password"
                                     className={`w-full bg-transparent border-none p-0 text-sm text-slate-900 focus:ring-0 placeholder-slate-400 font-mono ${isEnvOverridden ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    placeholder={isEnvOverridden ? 'Impostata tramite variabile d\'ambiente (.env)' : 'sk-...'}
+                                    placeholder={isEnvOverridden ? t('admin.config.envSet') : 'sk-...'}
                                     value={isEnvOverridden ? '' : currentVal}
                                     disabled={isEnvOverridden}
                                     onChange={(e) => {
@@ -462,7 +530,7 @@ export function ConfigForm() {
             </div>
 
             {/* 3. Prompt e Testi — per Questionario */}
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">Prompt e Testi per Questionario</h3>
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">{t('admin.config.promptsTexts')}</h3>
             {questionnaireConfigs.map((q) => {
                 const c = colorMap[q.color];
                 const allKeys = [...q.systemPrompts.map(p => p.key), ...q.texts.map(t => t.key)];
@@ -483,10 +551,10 @@ export function ConfigForm() {
                                     }
                                 }}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 hover:opacity-80 ${c.title} text-xs font-bold rounded-lg transition-colors border ${c.border}`}
-                                title="Salva tutto questo questionario"
+                                title={t('admin.config.saveAllTitle')}
                             >
                                 <Save className="w-3.5 h-3.5" />
-                                Salva tutto
+                                {t('admin.config.saveAll')}
                             </button>
                         </div>
 
@@ -494,7 +562,7 @@ export function ConfigForm() {
                         <div className="space-y-3">
                             <div className={`${c.subBg} rounded px-3 py-1.5`}>
                                 <h4 className={`text-xs font-bold ${c.subTitle} uppercase tracking-wider`}>
-                                    Prompt di Sistema (istruzioni per l&apos;IA)
+                                    {t('admin.config.systemPrompts')}
                                 </h4>
                             </div>
                             {q.systemPrompts.map((def) => {
@@ -502,7 +570,7 @@ export function ConfigForm() {
                                 return (
                                     <div key={def.key} className="glass-panel p-5 rounded-xl space-y-3">
                                         <div className="flex justify-between items-start gap-3">
-                                            <h3 className={`text-sm font-bold ${c.title}`}>{def.label}</h3>
+                                            <h3 className={`text-sm font-bold ${c.title}`}>{t(`admin.config.label.${def.key}`)}</h3>
                                             <button
                                                 onClick={() => saveConfigKey(def.key, def.label)}
                                                 className="p-2 hover:bg-slate-100 rounded-lg text-blue-600 transition-colors shrink-0"
@@ -525,7 +593,7 @@ export function ConfigForm() {
                             <div className="space-y-3">
                                 <div className={`${c.subBg} rounded px-3 py-1.5`}>
                                     <h4 className={`text-xs font-bold ${c.subTitle} uppercase tracking-wider`}>
-                                        Testi e Messaggi (mostrati allo studente)
+                                        {t('admin.config.textsMessages')}
                                     </h4>
                                 </div>
                                 {q.texts.map((def) => {
@@ -533,7 +601,7 @@ export function ConfigForm() {
                                     return (
                                         <div key={def.key} className="glass-panel p-5 rounded-xl space-y-3">
                                             <div className="flex justify-between items-start gap-3">
-                                                <h3 className={`text-sm font-bold ${c.title}`}>{def.label}</h3>
+                                                <h3 className={`text-sm font-bold ${c.title}`}>{t(`admin.config.label.${def.key}`)}</h3>
                                                 <button
                                                     onClick={() => saveConfigKey(def.key, def.label)}
                                                     className="p-2 hover:bg-slate-100 rounded-lg text-blue-600 transition-colors shrink-0"
@@ -567,9 +635,9 @@ export function ConfigForm() {
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">Step Guidati</h3>
+                        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">{t('admin.config.guidedSteps')}</h3>
                         <p className="text-xs text-slate-500 ml-1 mt-1">
-                            Step di analisi automatica nel percorso guidato. Puoi aggiungere, rimuovere e riordinare.
+                            {t('admin.config.guidedStepsDesc')}
                         </p>
                     </div>
                     <button
@@ -577,30 +645,30 @@ export function ConfigForm() {
                         className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
-                        Aggiungi Step
+                        {t('admin.config.addStep')}
                     </button>
                 </div>
 
                 {/* New Step Form */}
                 {showNewStepForm && (
                     <div className="glass-panel p-6 rounded-xl space-y-4 border-2 border-dashed border-blue-300 bg-blue-50/30">
-                        <h3 className="text-sm font-bold text-blue-700">Nuovo Step</h3>
+                        <h3 className="text-sm font-bold text-blue-700">{t('admin.config.newStep')}</h3>
 
                         <div className="grid md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-500">ID (univoco, senza spazi)</label>
+                                <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepId')}</label>
                                 <input
                                     className="w-full bg-white border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 font-mono"
-                                    placeholder="es. analisi-metodo"
+                                    placeholder={t('admin.config.placeholderStepId')}
                                     value={newStep.id}
                                     onChange={(e) => setNewStep(prev => ({ ...prev, id: e.target.value }))}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-500">Titolo</label>
+                                <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepTitle')}</label>
                                 <input
                                     className="w-full bg-white border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-900"
-                                    placeholder="es. 4. Analisi del Metodo"
+                                    placeholder={t('admin.config.placeholderStepTitle')}
                                     value={newStep.label}
                                     onChange={(e) => setNewStep(prev => ({ ...prev, label: e.target.value }))}
                                 />
@@ -609,36 +677,36 @@ export function ConfigForm() {
 
                         <div className="grid md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-500">Prompt di Sistema</label>
+                                <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepSystemPrompt')}</label>
                                 <select
                                     className="w-full bg-white border border-slate-300 rounded-lg p-3 text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
                                     value={newStep.system_prompt_mode}
                                     onChange={(e) => setNewStep(prev => ({ ...prev, system_prompt_mode: e.target.value }))}
                                 >
                                     {SYSTEM_PROMPT_MODES.map(m => (
-                                        <option key={m.value} value={m.value}>{m.label}</option>
+                                        <option key={m.value} value={m.value}>{t(`admin.mode.${m.value}`)}</option>
                                     ))}
                                 </select>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-500">Colore</label>
+                                <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepColor')}</label>
                                 <select
                                     className="w-full bg-white border border-slate-300 rounded-lg p-3 text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
                                     value={newStep.color_theme}
                                     onChange={(e) => setNewStep(prev => ({ ...prev, color_theme: e.target.value }))}
                                 >
                                     {COLOR_THEMES.map(c => (
-                                        <option key={c.value} value={c.value}>{c.label}</option>
+                                        <option key={c.value} value={c.value}>{t(`admin.color.${c.value}`)}</option>
                                     ))}
                                 </select>
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-500">Prompt (inviato all&apos;AI per generare l&apos;analisi)</label>
+                            <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepPromptCreate')}</label>
                             <textarea
                                 className="w-full bg-white border border-slate-300 rounded-lg p-3 text-sm min-h-[100px] focus:ring-2 focus:ring-blue-500 outline-none font-mono text-slate-900"
-                                placeholder="Analizza i fattori..."
+                                placeholder={t('admin.config.placeholderStepPrompt')}
                                 value={newStep.prompt}
                                 onChange={(e) => setNewStep(prev => ({ ...prev, prompt: e.target.value }))}
                             />
@@ -650,13 +718,13 @@ export function ConfigForm() {
                                 disabled={!newStep.id.trim() || !newStep.label.trim() || !newStep.prompt.trim()}
                                 className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-50"
                             >
-                                Crea Step
+                                {t('admin.config.createStep')}
                             </button>
                             <button
                                 onClick={() => setShowNewStepForm(false)}
                                 className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-lg transition-colors"
                             >
-                                Annulla
+                                {t('admin.config.cancel')}
                             </button>
                         </div>
                     </div>
@@ -684,7 +752,7 @@ export function ConfigForm() {
                                             onClick={() => handleMoveStep(step.id, 'up')}
                                             disabled={idx === 0}
                                             className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-30"
-                                            title="Sposta su"
+                                            title={t('admin.config.moveUp')}
                                         >
                                             <ChevronUp className="w-4 h-4" />
                                         </button>
@@ -692,21 +760,21 @@ export function ConfigForm() {
                                             onClick={() => handleMoveStep(step.id, 'down')}
                                             disabled={idx === guidedSteps.length - 1}
                                             className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-30"
-                                            title="Sposta giù"
+                                            title={t('admin.config.moveDown')}
                                         >
                                             <ChevronDown className="w-4 h-4" />
                                         </button>
                                         <button
                                             onClick={() => handleSaveStep(step)}
                                             className="p-1.5 hover:bg-slate-100 rounded-lg text-blue-600 transition-colors"
-                                            title="Salva"
+                                            title={t('admin.config.save')}
                                         >
                                             <Save className="w-4 h-4" />
                                         </button>
                                         <button
                                             onClick={() => handleDeleteStep(step.id)}
                                             className="p-1.5 hover:bg-red-50 rounded-lg text-red-400 hover:text-red-600 transition-colors"
-                                            title="Elimina"
+                                            title={t('admin.config.delete')}
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
@@ -716,7 +784,7 @@ export function ConfigForm() {
                                 {/* Editable fields */}
                                 <div className="grid md:grid-cols-3 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-xs font-semibold text-slate-500">Titolo</label>
+                                        <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepTitle')}</label>
                                         <input
                                             className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-900"
                                             value={step.label}
@@ -724,20 +792,20 @@ export function ConfigForm() {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-xs font-semibold text-slate-500">Prompt di Sistema</label>
+                                        <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepSystemPrompt')}</label>
                                         <select
                                             className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
                                             value={step.system_prompt_mode}
                                             onChange={(e) => updateStepField(step.id, 'system_prompt_mode', e.target.value)}
                                         >
                                             {SYSTEM_PROMPT_MODES.map(m => (
-                                                <option key={m.value} value={m.value}>{m.label}</option>
+                                                <option key={m.value} value={m.value}>{t(`admin.mode.${m.value}`)}</option>
                                             ))}
                                         </select>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-                                            <Palette className="w-3 h-3" /> Colore
+                                            <Palette className="w-3 h-3" /> {t('admin.config.stepColor')}
                                         </label>
                                         <select
                                             className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
@@ -745,14 +813,14 @@ export function ConfigForm() {
                                             onChange={(e) => updateStepField(step.id, 'color_theme', e.target.value)}
                                         >
                                             {COLOR_THEMES.map(c => (
-                                                <option key={c.value} value={c.value}>{c.label}</option>
+                                                <option key={c.value} value={c.value}>{t(`admin.color.${c.value}`)}</option>
                                             ))}
                                         </select>
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-xs font-semibold text-slate-500">Prompt (inviato all&apos;AI)</label>
+                                    <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepPromptSend')}</label>
                                     <textarea
                                         className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm min-h-[100px] focus:ring-2 focus:ring-blue-500 outline-none font-mono text-slate-900"
                                         value={step.prompt}
@@ -765,7 +833,7 @@ export function ConfigForm() {
 
                     {guidedSteps.length === 0 && !showNewStepForm && (
                         <div className="text-center py-8 text-slate-400 text-sm">
-                            Nessuno step configurato. Clicca &quot;Aggiungi Step&quot; per iniziare.
+                            {t('admin.config.noSteps')}
                         </div>
                     )}
                 </div>

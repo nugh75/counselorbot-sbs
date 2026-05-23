@@ -9,31 +9,35 @@ import {
     analyzeZTPIScore,
     getZTPIAlignmentColorHex
 } from '@/lib/ztpi-model';
+import { useI18n } from '@/lib/i18n-context';
 
 interface ProfileVisualizationProps {
     scores: Record<string, number>;
     questionnaire: QuestionnaireConfig;
 }
 
-// Column header labels per prefix
-const PREFIX_SECTION_LABEL: Record<string, { label: string; colorClass: string }> = {
-    C: { label: 'Strategie Cognitive', colorClass: 'text-blue-700' },
-    A: { label: 'Strategie Affettive', colorClass: 'text-purple-700' },
-    T: { label: 'Prospettiva Temporale', colorClass: 'text-amber-700' },
+// Color per prefix (label tradotta via i18n: profile.section.<X>)
+const PREFIX_SECTION_COLOR: Record<string, string> = {
+    C: 'text-blue-700',
+    A: 'text-purple-700',
+    T: 'text-amber-700',
 };
+
+type Translator = (key: string, vars?: Record<string, string | number>) => string;
 
 function getInterpretation(
     code: string,
     score: number,
     invertedSet: Set<string>,
-    questionnaireId: string
+    questionnaireId: string,
+    t: Translator
 ): { label: string; color: string; zone: 'low' | 'mid' | 'high' } {
     if (questionnaireId === 'ZTPI' && code.startsWith('T')) {
         const analysis = analyzeZTPIScore(code as ZTPIFactorCode, score);
         const color = getZTPIAlignmentColorHex(code as ZTPIFactorCode, score);
-        if (analysis.zone === 'ideal') return { label: analysis.interpretation, color, zone: 'high' };
-        if (analysis.zone === 'near') return { label: analysis.interpretation, color, zone: 'mid' };
-        return { label: analysis.interpretation, color, zone: 'low' };
+        if (analysis.zone === 'ideal') return { label: t('profile.legend.ztpiPositive'), color, zone: 'high' };
+        if (analysis.zone === 'near') return { label: t('profile.legend.ztpiMid'), color, zone: 'mid' };
+        return { label: t('profile.growth'), color, zone: 'low' };
     }
 
     const isInverted = invertedSet.has(code);
@@ -45,15 +49,15 @@ function getInterpretation(
 
     if (isInverted) {
         switch (zone) {
-            case 'low': return { label: 'Forza', color: '#22c55e', zone };
-            case 'mid': return { label: 'Normale', color: '#eab308', zone };
-            case 'high': return { label: 'Area di crescita', color: '#ef4444', zone };
+            case 'low': return { label: t('profile.strength'), color: '#22c55e', zone };
+            case 'mid': return { label: t('profile.normal'), color: '#eab308', zone };
+            case 'high': return { label: t('profile.growth'), color: '#ef4444', zone };
         }
     } else {
         switch (zone) {
-            case 'low': return { label: 'Area di crescita', color: '#ef4444', zone };
-            case 'mid': return { label: 'Adeguato', color: '#eab308', zone };
-            case 'high': return { label: 'Forza', color: '#22c55e', zone };
+            case 'low': return { label: t('profile.growth'), color: '#ef4444', zone };
+            case 'mid': return { label: t('profile.adequate'), color: '#eab308', zone };
+            case 'high': return { label: t('profile.strength'), color: '#22c55e', zone };
         }
     }
 }
@@ -197,10 +201,13 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
 }
 
 export function ProfileVisualization({ scores, questionnaire }: ProfileVisualizationProps) {
+    const { t, tf } = useI18n();
     const invertedSet = new Set(questionnaire.invertedFactors);
     const isZTPI = questionnaire.id === 'ZTPI';
-    const positiveLegend = isZTPI ? 'In linea con il profilo equilibrato' : 'Forza';
-    const midLegend = isZTPI ? 'Vicino al profilo equilibrato' : 'Adeguato/Normale';
+    const positiveLegend = isZTPI ? t('profile.legend.ztpiPositive') : t('profile.strength');
+    const midLegend = isZTPI ? t('profile.legend.ztpiMid') : t('profile.legend.midDefault');
+    const isActiveQ = ['QSA', 'ZTPI', 'SAVICKAS'].includes(questionnaire.id);
+    const fullName = isActiveQ ? t(`q.${questionnaire.id}.fullName`) : questionnaire.fullName;
 
     // Group factors by prefix
     const columns = questionnaire.factorPrefix.map(prefix => ({
@@ -214,7 +221,7 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
 
     return (
         <div className="w-full glass-panel rounded-2xl p-6 space-y-6">
-            <h3 className="text-lg font-semibold text-center text-slate-800">{questionnaire.fullName}</h3>
+            <h3 className="text-lg font-semibold text-center text-slate-800">{fullName}</h3>
 
             {/* Legend */}
             <div className="flex justify-center gap-6 text-xs flex-wrap">
@@ -228,35 +235,36 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                    <span className="text-slate-600">Area di crescita</span>
+                    <span className="text-slate-600">{t('profile.growth')}</span>
                 </div>
                 {questionnaire.invertedFactors.length > 0 && (
                     <div className="flex items-center gap-1 text-slate-400">
                         <span>↔</span>
-                        <span>= Scala invertita</span>
+                        <span>= {t('profile.invertedScale')}</span>
                     </div>
                 )}
             </div>
 
             <div className={cn("grid gap-8", gridCols)}>
                 {columns.map(({ prefix, entries }) => {
-                    const section = PREFIX_SECTION_LABEL[prefix] || { label: `Fattori ${prefix}`, colorClass: 'text-slate-700' };
+                    const sectionColor = PREFIX_SECTION_COLOR[prefix] || 'text-slate-700';
+                    const sectionLabel = PREFIX_SECTION_COLOR[prefix] ? t(`profile.section.${prefix}`) : `${prefix}`;
                     return (
                         <div key={prefix} className="space-y-1">
-                            <h4 className={cn("text-sm font-semibold mb-3 pb-2 border-b border-slate-200", section.colorClass)}>
-                                {section.label}
+                            <h4 className={cn("text-sm font-semibold mb-3 pb-2 border-b border-slate-200", sectionColor)}>
+                                {sectionLabel}
                             </h4>
                             {entries.map(([code, score]) => {
                                 const factor = questionnaire.factors.find(f => f.code === code);
                                 const isInverted = invertedSet.has(code);
-                                const interpretation = getInterpretation(code, score, invertedSet, questionnaire.id);
+                                const interpretation = getInterpretation(code, score, invertedSet, questionnaire.id, t);
                                 return (
                                     <ScoreBar
                                         key={code}
                                         questionnaireId={questionnaire.id}
                                         code={code}
                                         score={score}
-                                        factorName={factor?.name || code}
+                                        factorName={tf(`factor.${code}.name`, factor?.name || code)}
                                         isInverted={isInverted}
                                         interpretation={interpretation}
                                     />

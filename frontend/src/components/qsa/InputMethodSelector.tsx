@@ -3,6 +3,7 @@
 import { FileText, Keyboard, ArrowRight, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
+import { useI18n } from '@/lib/i18n-context';
 
 interface InputMethodSelectorProps {
     onSelect: (method: 'manual' | 'upload') => void;
@@ -10,9 +11,10 @@ interface InputMethodSelectorProps {
 }
 
 export function InputMethodSelector({ onSelect, questionnaire }: InputMethodSelectorProps) {
+    const { t } = useI18n();
     const manualDescription = questionnaire
-        ? `Inserisci i punteggi del tuo questionario ${questionnaire.name} (${questionnaire.factors.map(f => f.code).join(', ')}) direttamente nel form.`
-        : 'Inserisci i punteggi del tuo questionario direttamente nel form.';
+        ? t('method.manual.descTpl', { name: questionnaire.name, codes: questionnaire.factors.map(f => f.code).join(', ') })
+        : t('method.manual.descNoQ');
 
     return (
         <div className="grid md:grid-cols-2 gap-6 w-full max-w-4xl mx-auto p-4">
@@ -27,7 +29,7 @@ export function InputMethodSelector({ onSelect, questionnaire }: InputMethodSele
                 <div className="mb-6 p-4 rounded-full bg-blue-50 border border-blue-100 group-hover:scale-110 transition-transform duration-300">
                     <Keyboard className="w-8 h-8 text-blue-600" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-slate-900">Inserimento Manuale</h3>
+                <h3 className="text-xl font-semibold mb-2 text-slate-900">{t('method.manual.title')}</h3>
                 <p className="text-sm text-center text-slate-600 px-4">
                     {manualDescription}
                 </p>
@@ -44,16 +46,16 @@ export function InputMethodSelector({ onSelect, questionnaire }: InputMethodSele
 
                 <div className="absolute top-4 left-4">
                     <span className="px-2 py-1 rounded text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
-                        AI Powered
+                        {t('method.upload.badge')}
                     </span>
                 </div>
 
                 <div className="mb-6 p-4 rounded-full bg-purple-50 border border-purple-100 group-hover:scale-110 transition-transform duration-300">
                     <Upload className="w-8 h-8 text-purple-600" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-slate-900">Carica PDF/Foto</h3>
+                <h3 className="text-xl font-semibold mb-2 text-slate-900">{t('method.upload.title')}</h3>
                 <p className="text-sm text-center text-slate-600 px-4">
-                    Carica una foto o un PDF del tuo profilo. L'AI estrarrà automaticamente i dati per te.
+                    {t('method.upload.desc')}
                 </p>
             </button>
         </div>

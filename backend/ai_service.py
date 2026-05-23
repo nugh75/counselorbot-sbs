@@ -1,8 +1,10 @@
 import os
 import logging
+import json
 
 import anthropic
 import google.generativeai as genai
+import httpx
 from mistralai.client import Mistral
 from openai import OpenAI
 from sqlalchemy.orm import Session
@@ -31,12 +33,34 @@ ENV_KEY_MAP = {
     'api_key_mistral': ('API_KEY_MISTRAL',),
     'api_key_openrouter': ('API_KEY_OPENROUTER', 'OPENROUTER_API_KEY'),
     'ollama_ip': ('OLLAMA_BASE_URL',),
+    'ollama_num_ctx': ('OLLAMA_NUM_CTX',),
+    'ollama_keep_alive': ('OLLAMA_KEEP_ALIVE',),
+    'ollama_preload': ('OLLAMA_PRELOAD',),
+    'llamacpp_url': ('LLAMACPP_BASE_URL',),
 }
 
 class AIService:
     def __init__(self, db: Session):
         self.db = db
         self.config = self._load_config()
+        # Modalità "no thinking": disattiva il reasoning sui modelli che lo supportano
+        self.disable_thinking = str(self.config.get('disable_thinking', 'false')).lower() == 'true'
+        self.ollama_num_ctx = self._int_config('ollama_num_ctx', 8192, 2048, 32768)
+        self.ollama_keep_alive = self.config.get('ollama_keep_alive', '5m') or '5m'
+        self.ollama_preload_enabled = str(self.config.get('ollama_preload', 'false')).lower() == 'true'
+
+    def _int_config(self, key: str, default: int, minimum: int, maximum: int) -> int:
+        try:
+            value = int(self.config.get(key, default))
+        except (TypeError, ValueError):
+            value = default
+        return max(minimum, min(value, maximum))
+
+    def _apply_no_think(self, system_prompt: str) -> str:
+        """Aggiunge la direttiva /no_think al system prompt (convenzione qwen3/llama.cpp/ollama)."""
+        if self.disable_thinking and "/no_think" not in system_prompt:
+            return f"{system_prompt}\n\n/no_think"
+        return system_prompt
 
     def _load_config(self):
         configs = self.db.query(models.Config).all()
@@ -55,7 +79,42 @@ class AIService:
     def _get_api_key(self, provider_key):
         return self.config.get(provider_key)
 
-    def get_response(self, user_message: str, system_prompt: str, mode: str, conversation_summary: str = ""):
+    def list_models(self, provider: str = None):
+        """Elenca i modelli realmente serviti dal provider (endpoint OpenAI-compatibile /v1/models).
+        Ritorna una lista di id stringa, vuota se il provider non è interrogabile o è irraggiungibile."""
+        import httpx
+        provider = provider or self.config.get('active_provider', 'openai')
+        timeout = httpx.Timeout(15.0, connect=5.0)
+        try:
+            if provider == 'openai':
+                client = OpenAI(api_key=self._get_api_key('api_key_openai'), timeout=timeout)
+            elif provider == 'openrouter':
+                client = OpenAI(base_url="https://openrouter.ai/api/v1",
+                                api_key=self._get_api_key('api_key_openrouter'), timeout=timeout)
+            elif provider == 'ollama':
+                base = (self._get_api_key('ollama_ip') or "http://localhost:11434").rstrip('/')
+                client = OpenAI(base_url=f"{base}/v1", api_key="ollama", timeout=timeout)
+            elif provider == 'llamacpp':
+                base = (self._get_api_key('llamacpp_url') or "http://localhost:8080").rstrip('/')
+                if not base.endswith('/v1'):
+                    base = f"{base}/v1"
+                client = OpenAI(base_url=base, api_key="llamacpp", timeout=timeout)
+            else:
+                # anthropic/gemini/mistral: nessun elenco dinamico, usa il fallback statico lato UI
+                return []
+            return sorted({m.id for m in client.models.list().data})
+        except Exception as e:
+            logger.warning(f"list_models fallito per {provider}: {e}")
+            return []
+
+    def get_response(
+        self,
+        user_message: str,
+        system_prompt: str,
+        mode: str,
+        conversation_summary: str = "",
+        max_tokens: int = None,
+    ):
         """
         Genera una risposta LLM.  Se conversation_summary è fornito, viene
         iniettato come contesto all'inizio del messaggio utente.
@@ -73,19 +132,21 @@ class AIService:
         
         try:
             if provider == 'openai':
-                return self._call_openai(user_message, system_prompt, model_name)
+                return self._call_openai(user_message, system_prompt, model_name, max_tokens=max_tokens)
             elif provider == 'anthropic':
-                return self._call_anthropic(user_message, system_prompt, model_name)
+                return self._call_anthropic(user_message, system_prompt, model_name, max_tokens=max_tokens or 4096)
             elif provider == 'openrouter':
-                return self._call_openrouter(user_message, system_prompt, model_name)
+                return self._call_openrouter(user_message, system_prompt, model_name, max_tokens=max_tokens)
             elif provider == 'gemini':
-                return self._call_gemini(user_message, system_prompt, model_name)
+                return self._call_gemini(user_message, system_prompt, model_name, max_tokens=max_tokens)
             elif provider == 'mistral':
-                return self._call_mistral(user_message, system_prompt, model_name)
+                return self._call_mistral(user_message, system_prompt, model_name, max_tokens=max_tokens)
             elif provider == 'ollama':
-                return self._call_ollama(user_message, system_prompt, model_name)
+                return self._call_ollama(user_message, system_prompt, model_name, max_tokens=max_tokens or 8000)
+            elif provider == 'llamacpp':
+                return self._call_llamacpp(user_message, system_prompt, model_name, max_tokens=max_tokens or 8000)
             else:
-                return self._call_openai(user_message, system_prompt, model_name)
+                return self._call_openai(user_message, system_prompt, model_name, max_tokens=max_tokens)
         except Exception as e:
             return f"AI Error ({provider}): {str(e)}"
 
@@ -138,6 +199,8 @@ class AIService:
                 return self._call_mistral(user_msg, SUMMARY_SYSTEM_PROMPT, summary_model, max_tokens=mt)
             elif provider == 'ollama':
                 return self._call_ollama(user_msg, SUMMARY_SYSTEM_PROMPT, summary_model, max_tokens=mt)
+            elif provider == 'llamacpp':
+                return self._call_llamacpp(user_msg, SUMMARY_SYSTEM_PROMPT, summary_model, max_tokens=mt)
             else:
                 return self._call_openai(user_msg, SUMMARY_SYSTEM_PROMPT, summary_model, max_tokens=mt)
         except Exception as e:
@@ -182,6 +245,9 @@ class AIService:
         )
         if max_tokens:
             kwargs["max_tokens"] = max_tokens
+        # OpenRouter: disattiva il reasoning a livello di richiesta
+        if self.disable_thinking:
+            kwargs["extra_body"] = {"reasoning": {"enabled": False}}
         response = client.chat.completions.create(**kwargs)
         return response.choices[0].message.content
 
@@ -234,26 +300,207 @@ class AIService:
         return response.choices[0].message.content
 
     def _call_ollama(self, user_message, system_prompt, model, max_tokens: int = 8000):
-        import httpx
-        base_url = self._get_api_key('ollama_ip') or "http://localhost:11434"
-
-        client = OpenAI(
-            base_url=f"{base_url}/v1",
-            api_key="ollama", # required but not used
+        base_url = (self._get_api_key('ollama_ip') or "http://localhost:11434").rstrip('/')
+        system_prompt = self._apply_no_think(system_prompt)
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message},
+            ],
+            "stream": False,
+            "keep_alive": self.ollama_keep_alive,
+            "options": {
+                "num_ctx": self.ollama_num_ctx,
+                "num_predict": max_tokens,
+            },
+        }
+        if self.disable_thinking:
+            payload["think"] = False
+        response = httpx.post(
+            f"{base_url}/api/chat",
+            json=payload,
             timeout=httpx.Timeout(600.0, connect=10.0),
         )
-        response = client.chat.completions.create(
-            model=model,
+        response.raise_for_status()
+        return response.json().get("message", {}).get("content", "")
+
+    def _call_llamacpp(self, user_message, system_prompt, model, max_tokens: int = 8000):
+        """llama.cpp / llama-server / llama-swap: endpoint OpenAI-compatibile su /v1."""
+        import httpx
+        base_url = self._get_api_key('llamacpp_url') or "http://localhost:8080"
+        base_url = base_url.rstrip('/')
+        # accetta sia l'host nudo sia un URL che termina già con /v1
+        if not base_url.endswith('/v1'):
+            base_url = f"{base_url}/v1"
+
+        client = OpenAI(
+            base_url=base_url,
+            api_key="llamacpp",  # richiesta dal client ma non usata dal server
+            timeout=httpx.Timeout(600.0, connect=10.0),
+        )
+        system_prompt = self._apply_no_think(system_prompt)
+        kwargs = dict(
+            model=model or "default",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_message}
             ],
-            max_tokens=max_tokens,
         )
+        if max_tokens:
+            kwargs["max_tokens"] = max_tokens
+        response = client.chat.completions.create(**kwargs)
         return response.choices[0].message.content
 
+    # ---------------------------------------------------------------------
+    # Streaming
+    # ---------------------------------------------------------------------
+    def stream_response(
+        self,
+        user_message: str,
+        system_prompt: str,
+        mode: str,
+        conversation_summary: str = "",
+        max_tokens: int = None,
+    ):
+        """
+        Generatore che produce la risposta LLM a pezzi (token/delta).
+        Stream incrementale per i provider OpenAI-compatibili e Anthropic;
+        per gli altri produce la risposta completa in un unico chunk.
+        """
+        provider = self.config.get('active_provider', 'openai')
+        model_name = self.config.get('model_name', 'gpt-4o')
+
+        if conversation_summary:
+            user_message = (
+                f"CONTESTO DELLE CONVERSAZIONI PRECEDENTI:\n{conversation_summary}\n\n"
+                f"---\n\n{user_message}"
+            )
+
+        try:
+            if provider == 'openai':
+                yield from self._stream_openai(user_message, system_prompt, model_name, max_tokens=max_tokens)
+            elif provider == 'openrouter':
+                yield from self._stream_openrouter(user_message, system_prompt, model_name, max_tokens=max_tokens)
+            elif provider == 'ollama':
+                yield from self._stream_ollama(user_message, system_prompt, model_name, max_tokens=max_tokens)
+            elif provider == 'llamacpp':
+                yield from self._stream_llamacpp(user_message, system_prompt, model_name, max_tokens=max_tokens)
+            elif provider == 'anthropic':
+                yield from self._stream_anthropic(user_message, system_prompt, model_name, max_tokens=max_tokens or 4096)
+            elif provider == 'gemini':
+                # nessuno stream incrementale: chunk unico
+                yield self._call_gemini(user_message, system_prompt, model_name, max_tokens=max_tokens)
+            elif provider == 'mistral':
+                yield self._call_mistral(user_message, system_prompt, model_name, max_tokens=max_tokens)
+            else:
+                yield self._call_openai(user_message, system_prompt, model_name, max_tokens=max_tokens)
+        except Exception as e:
+            raise RuntimeError(f"AI Error ({provider}): {str(e)}") from e
+
+    def _iter_chat_stream(self, client, model, system_prompt, user_message, extra_body=None, max_tokens: int = None):
+        """Itera lo stream di un client OpenAI-compatibile producendo i delta di testo."""
+        kwargs = dict(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message},
+            ],
+            stream=True,
+        )
+        if max_tokens:
+            kwargs["max_tokens"] = max_tokens
+        if extra_body:
+            kwargs["extra_body"] = extra_body
+        stream = client.chat.completions.create(**kwargs)
+        try:
+            for chunk in stream:
+                try:
+                    delta = chunk.choices[0].delta.content
+                except (IndexError, AttributeError):
+                    delta = None
+                if delta:
+                    yield delta
+        finally:
+            close = getattr(stream, "close", None)
+            if close:
+                close()
+
+    def _stream_openai(self, user_message, system_prompt, model, max_tokens: int = None):
+        api_key = self._get_api_key('api_key_openai')
+        if not api_key:
+            yield "Error: OpenAI API Key not configured."
+            return
+        client = OpenAI(api_key=api_key, timeout=600)
+        yield from self._iter_chat_stream(client, model, system_prompt, user_message, max_tokens=max_tokens)
+
+    def _stream_openrouter(self, user_message, system_prompt, model, max_tokens: int = None):
+        api_key = self._get_api_key('api_key_openrouter')
+        if not api_key:
+            yield "Error: OpenRouter API Key not configured."
+            return
+        client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key, timeout=600)
+        extra = {"reasoning": {"enabled": False}} if self.disable_thinking else None
+        yield from self._iter_chat_stream(client, model, system_prompt, user_message, extra_body=extra, max_tokens=max_tokens)
+
+    def _stream_ollama(self, user_message, system_prompt, model, max_tokens: int = None):
+        base_url = (self._get_api_key('ollama_ip') or "http://localhost:11434").rstrip('/')
+        system_prompt = self._apply_no_think(system_prompt)
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message},
+            ],
+            "stream": True,
+            "keep_alive": self.ollama_keep_alive,
+            "options": {
+                "num_ctx": self.ollama_num_ctx,
+                "num_predict": max_tokens or 800,
+            },
+        }
+        if self.disable_thinking:
+            payload["think"] = False
+        with httpx.Client(timeout=httpx.Timeout(600.0, connect=10.0)) as client:
+            with client.stream("POST", f"{base_url}/api/chat", json=payload) as response:
+                response.raise_for_status()
+                for line in response.iter_lines():
+                    if not line:
+                        continue
+                    event = json.loads(line)
+                    if event.get("error"):
+                        raise RuntimeError(event["error"])
+                    delta = event.get("message", {}).get("content")
+                    if delta:
+                        yield delta
+
+    def _stream_llamacpp(self, user_message, system_prompt, model, max_tokens: int = None):
+        import httpx
+        base_url = (self._get_api_key('llamacpp_url') or "http://localhost:8080").rstrip('/')
+        if not base_url.endswith('/v1'):
+            base_url = f"{base_url}/v1"
+        client = OpenAI(base_url=base_url, api_key="llamacpp", timeout=httpx.Timeout(600.0, connect=10.0))
+        system_prompt = self._apply_no_think(system_prompt)
+        yield from self._iter_chat_stream(client, model or "default", system_prompt, user_message, max_tokens=max_tokens)
+
+    def _stream_anthropic(self, user_message, system_prompt, model, max_tokens: int = 4096):
+        api_key = self._get_api_key('api_key_anthropic')
+        if not api_key:
+            yield "Error: Anthropic API Key not configured."
+            return
+        client = anthropic.Anthropic(api_key=api_key, timeout=600)
+        with client.messages.stream(
+            model=model,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_message}],
+            max_tokens=max_tokens,
+        ) as stream:
+            for text in stream.text_stream:
+                if text:
+                    yield text
+
     def preload_ollama_model(self):
-        """Carica il modello Ollama in memoria con keep_alive=-1 (non scaricare mai)."""
+        """Carica opzionalmente Ollama con contesto e durata di permanenza limitati."""
         import urllib.request, json as _json
         base_url = self._get_api_key('ollama_ip') or "http://localhost:11434"
         model = self.config.get('model_name', '')
@@ -262,9 +509,10 @@ class AIService:
         try:
             payload = _json.dumps({
                 "model": model,
-                "keep_alive": -1,
+                "keep_alive": self.ollama_keep_alive,
                 "messages": [{"role": "user", "content": "ok"}],
                 "stream": False,
+                "options": {"num_ctx": self.ollama_num_ctx, "num_predict": 1},
             }).encode()
             req = urllib.request.Request(
                 f"{base_url}/api/chat",
@@ -274,6 +522,9 @@ class AIService:
             )
             with urllib.request.urlopen(req, timeout=600) as r:
                 r.read()
-            logger.info(f"Ollama model '{model}' preloaded with keep_alive=-1")
+            logger.info(
+                f"Ollama model '{model}' preloaded with keep_alive={self.ollama_keep_alive} "
+                f"num_ctx={self.ollama_num_ctx}"
+            )
         except Exception as e:
             logger.warning(f"Ollama preload fallito (non bloccante): {e}")

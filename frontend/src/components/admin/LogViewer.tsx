@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { RefreshCw, MessageSquare, LogIn, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { useI18n } from '@/lib/i18n-context';
 
 interface LogEntry {
     id: number;
@@ -13,6 +14,7 @@ interface LogEntry {
 }
 
 export function LogViewer() {
+    const { t } = useI18n();
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedLog, setExpandedLog] = useState<number | null>(null);
@@ -20,17 +22,13 @@ export function LogViewer() {
     const fetchLogs = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`/api/admin/logs`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await fetch(`/api/admin/logs`);
             if (res.ok) {
                 const data = await res.json();
                 setLogs(data);
             } else {
                 if (res.status === 401 || res.status === 403) {
-                    localStorage.removeItem('token');
-                    window.location.href = '/login';
+                    window.location.href = '/';
                 }
                 console.error('Failed to fetch logs:', res.statusText);
             }
@@ -66,7 +64,7 @@ export function LogViewer() {
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-slate-800">Log Attività Recenti</h3>
+                <h3 className="text-lg font-semibold text-slate-800">{t('admin.logs.title')}</h3>
                 <button
                     onClick={fetchLogs}
                     className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-700 transition-colors"
@@ -80,10 +78,10 @@ export function LogViewer() {
                     <table className="w-full text-sm text-left">
                         <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
                             <tr>
-                                <th className="px-4 py-3 font-medium">Data</th>
-                                <th className="px-4 py-3 font-medium">Sessione</th>
-                                <th className="px-4 py-3 font-medium">Azione</th>
-                                <th className="px-4 py-3 font-medium">Dettagli</th>
+                                <th className="px-4 py-3 font-medium">{t('admin.logs.date')}</th>
+                                <th className="px-4 py-3 font-medium">{t('admin.logs.session')}</th>
+                                <th className="px-4 py-3 font-medium">{t('admin.logs.action')}</th>
+                                <th className="px-4 py-3 font-medium">{t('admin.logs.details')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -123,7 +121,7 @@ export function LogViewer() {
                             {logs.length === 0 && !loading && (
                                 <tr>
                                     <td colSpan={4} className="px-6 py-8 text-center text-slate-400">
-                                        Nessun log trovato.
+                                        {t('admin.logs.empty')}
                                     </td>
                                 </tr>
                             )}
@@ -140,7 +138,7 @@ export function LogViewer() {
             </div>
 
             <p className="text-xs text-slate-400 text-center">
-                Clicca su una riga per espandere i dettagli
+                {t('admin.logs.expandHint')}
             </p>
         </div>
     );

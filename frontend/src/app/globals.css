@@ -36,6 +36,13 @@
 }
 
 :root {
+  /* Shared minimal topbar palette from ai4educ-console. */
+  --console-topbar-surface: #ffffff;
+  --console-topbar-border: #e2e8f0;
+  --console-topbar-hover: #f8fafc;
+  --console-topbar-text: #64748b;
+  --console-topbar-text-hover: #0f172a;
+
   --background: 222.2 84% 4.9%;
   --foreground: 210 40% 98%;
 
@@ -92,6 +99,29 @@ body {
   /* Subtle professional background pattern */
   background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
   background-size: 24px 24px;
+}
+
+.console-topbar {
+  height: 2.75rem;
+  border-bottom: 1px solid var(--console-topbar-border);
+  background: var(--console-topbar-surface);
+}
+
+.console-topbar-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 0.5rem;
+  padding: 0.375rem 0.625rem;
+  color: var(--console-topbar-text);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.console-topbar-action:hover {
+  background: var(--console-topbar-hover);
+  color: var(--console-topbar-text-hover);
 }
 
 /* Prose styles for markdown content */

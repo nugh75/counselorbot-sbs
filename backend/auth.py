@@ -1,56 +1,80 @@
+"""
+Autenticazione tramite ai4auth (forward-auth).
+
+L'autenticazione vera e propria avviene al bordo: nginx esegue
+`auth_request` verso ai4auth e, se la sessione è valida, inietta nella
+richiesta gli header `Remote-User`, `Remote-Email`, `Remote-Groups`.
+Qui ci limitiamo a leggere quegli header e a derivare il ruolo admin
+dall'appartenenza a un gruppo (default: `admins`).
+"""
 import os
-from datetime import datetime, timedelta
-from typing import Optional
-from jose import JWTError, jwt
+import secrets
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
-from . import models, schemas, database
+from fastapi import Depends, HTTPException, Request, status
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "mysecretkey")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+# Gruppo ai4auth che abilita la dashboard admin
+ADMIN_GROUP = os.environ.get("ADMIN_GROUP", "admins")
+FORWARD_AUTH_SHARED_SECRET = os.environ.get("FORWARD_AUTH_SHARED_SECRET", "")
 
+# Mantenuto solo per il bootstrap dell'utente admin locale (seed) — non usato
+# per il login, che passa interamente da ai4auth.
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
+
 def get_password_hash(password):
     return pwd_context.hash(password)
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
+def _parse_groups(raw: str):
+    return [g.strip() for g in (raw or "").split(",") if g.strip()]
+
+
+def get_identity(request: Request) -> dict:
+    """Identità derivata dagli header forward-auth iniettati da nginx."""
+    supplied_secret = request.headers.get("X-Forwarded-Auth-Secret", "")
+    trusted = bool(FORWARD_AUTH_SHARED_SECRET) and secrets.compare_digest(
+        supplied_secret, FORWARD_AUTH_SHARED_SECRET
     )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-        token_data = schemas.TokenData(username=username)
-    except JWTError:
-        raise credentials_exception
-    user = db.query(models.User).filter(models.User.username == token_data.username).first()
-    if user is None:
-        raise credentials_exception
-    return user
+    if not trusted:
+        return {
+            "email": "",
+            "username": "",
+            "name": "",
+            "groups": [],
+            "is_admin": False,
+            "authenticated": False,
+        }
+    email = request.headers.get("Remote-Email", "") or ""
+    username = request.headers.get("Remote-User", "") or ""
+    name = request.headers.get("Remote-Name", "") or ""
+    groups = _parse_groups(request.headers.get("Remote-Groups", ""))
+    return {
+        "email": email,
+        "username": username or email,
+        "name": name,
+        "groups": groups,
+        "is_admin": ADMIN_GROUP in groups,
+        "authenticated": bool(username or email),
+    }
 
-async def get_current_active_admin(current_user: models.User = Depends(get_current_user)):
-    if not current_user.is_admin:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
+
+async def get_current_user(identity: dict = Depends(get_identity)) -> dict:
+    if not identity["authenticated"]:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Non autenticato",
+        )
+    return identity
+
+
+async def get_current_active_admin(identity: dict = Depends(get_current_user)) -> dict:
+    if not identity["is_admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accesso riservato agli amministratori",
+        )
+    return identity

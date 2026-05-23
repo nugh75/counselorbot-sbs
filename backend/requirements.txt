@@ -9,6 +9,7 @@ passlib[bcrypt]
 argon2-cffi
 edge-tts
 python-multipart
+httpx
 openai
 anthropic
 google-generativeai

@@ -15,6 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN mkdir backend
 COPY backend/*.py backend/
 COPY execution/ execution/
+COPY knowledge/ knowledge/
 
 # Create __init__.py to make it a proper package
 RUN touch backend/__init__.py
