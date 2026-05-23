@@ -402,9 +402,9 @@ export function ConfigForm() {
     return (
         <div className="space-y-8">
             {/* 1. Provider & Model Selection */}
-            <div className="glass-panel p-6 rounded-xl space-y-6">
+            <div className="glass-panel p-6 rounded-lg space-y-6">
                 <h3 className="text-lg font-medium text-slate-900 flex items-center gap-2">
-                    <Server className="w-5 h-5 text-blue-600" />
+                    <Server className="w-5 h-5 text-indigo-600" />
                     {t('admin.config.aiActive')}
                 </h3>
 
@@ -414,7 +414,7 @@ export function ConfigForm() {
                         <select
                             value={activeProvider}
                             onChange={(e) => handleProviderChange(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
                         >
                             {Object.entries(PROVIDERS).map(([key, data]) => (
                                 <option key={key} value={key}>{data.label}</option>
@@ -429,7 +429,7 @@ export function ConfigForm() {
                                 type="button"
                                 onClick={() => fetchModels(activeProvider)}
                                 disabled={modelsLoading}
-                                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 disabled:opacity-50"
+                                className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 disabled:opacity-50"
                                 title={t('admin.config.reloadTitle')}
                             >
                                 <RefreshCw className={`w-3 h-3 ${modelsLoading ? 'animate-spin' : ''}`} />
@@ -445,7 +445,7 @@ export function ConfigForm() {
                             <select
                                 value={activeModel}
                                 onChange={(e) => handleModelChange(e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 pl-10 text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 pl-10 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
                             >
                                 {modelOptions.map((model) => (
                                     <option key={model} value={model}>{model}</option>
@@ -493,7 +493,7 @@ export function ConfigForm() {
                         (activeProvider === 'llamacpp' && def.key === 'llamacpp_url');
 
                     return (
-                        <div key={def.key} className={`glass-panel p-4 rounded-xl flex items-center gap-4 transition-colors ${isActive ? 'bg-blue-50 border-blue-400 ring-1 ring-blue-400' : 'hover:border-slate-400'}`}>
+                        <div key={def.key} className={`glass-panel p-4 rounded-lg flex items-center gap-4 transition-colors ${isActive ? 'bg-indigo-50 border-indigo-300 ring-1 ring-indigo-300' : 'hover:border-slate-300'}`}>
                             <div className="flex-1">
                                 <label className="text-xs font-semibold text-slate-500 mb-1 flex items-center gap-2">
                                     {def.label}
@@ -519,7 +519,7 @@ export function ConfigForm() {
                             {!isEnvOverridden && (
                                 <button
                                     onClick={() => handleSaveConfig({ key: def.key, value: configs.find(c => c.key === def.key)?.value || '', description: def.label })}
-                                    className="p-2 hover:bg-slate-200 rounded-lg text-blue-600 transition-colors"
+                                    className="p-2 hover:bg-slate-100 rounded-md text-indigo-600 transition-colors"
                                 >
                                     <Save className="w-4 h-4" />
                                 </button>
@@ -568,12 +568,12 @@ export function ConfigForm() {
                             {q.systemPrompts.map((def) => {
                                 const currentVal = getConfigValue(def.key);
                                 return (
-                                    <div key={def.key} className="glass-panel p-5 rounded-xl space-y-3">
+                                    <div key={def.key} className="glass-panel p-5 rounded-lg space-y-3">
                                         <div className="flex justify-between items-start gap-3">
                                             <h3 className={`text-sm font-bold ${c.title}`}>{t(`admin.config.label.${def.key}`)}</h3>
                                             <button
                                                 onClick={() => saveConfigKey(def.key, def.label)}
-                                                className="p-2 hover:bg-slate-100 rounded-lg text-blue-600 transition-colors shrink-0"
+                                                className="p-2 hover:bg-slate-100 rounded-md text-indigo-600 transition-colors shrink-0"
                                             >
                                                 <Save className="w-4 h-4" />
                                             </button>
@@ -599,12 +599,12 @@ export function ConfigForm() {
                                 {q.texts.map((def) => {
                                     const currentVal = getConfigValue(def.key);
                                     return (
-                                        <div key={def.key} className="glass-panel p-5 rounded-xl space-y-3">
+                                        <div key={def.key} className="glass-panel p-5 rounded-lg space-y-3">
                                             <div className="flex justify-between items-start gap-3">
                                                 <h3 className={`text-sm font-bold ${c.title}`}>{t(`admin.config.label.${def.key}`)}</h3>
                                                 <button
                                                     onClick={() => saveConfigKey(def.key, def.label)}
-                                                    className="p-2 hover:bg-slate-100 rounded-lg text-blue-600 transition-colors shrink-0"
+                                                    className="p-2 hover:bg-slate-100 rounded-md text-indigo-600 transition-colors shrink-0"
                                                 >
                                                     <Save className="w-4 h-4" />
                                                 </button>
@@ -642,7 +642,7 @@ export function ConfigForm() {
                     </div>
                     <button
                         onClick={() => setShowNewStepForm(true)}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
+                        className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-md transition-colors shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
                         {t('admin.config.addStep')}
@@ -651,14 +651,14 @@ export function ConfigForm() {
 
                 {/* New Step Form */}
                 {showNewStepForm && (
-                    <div className="glass-panel p-6 rounded-xl space-y-4 border-2 border-dashed border-blue-300 bg-blue-50/30">
-                        <h3 className="text-sm font-bold text-blue-700">{t('admin.config.newStep')}</h3>
+                    <div className="glass-panel p-6 rounded-lg space-y-4 border-2 border-dashed border-indigo-300 bg-indigo-50/30">
+                        <h3 className="text-sm font-semibold text-indigo-700">{t('admin.config.newStep')}</h3>
 
                         <div className="grid md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepId')}</label>
                                 <input
-                                    className="w-full bg-white border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 font-mono"
+                                    className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 font-mono"
                                     placeholder={t('admin.config.placeholderStepId')}
                                     value={newStep.id}
                                     onChange={(e) => setNewStep(prev => ({ ...prev, id: e.target.value }))}
@@ -667,7 +667,7 @@ export function ConfigForm() {
                             <div className="space-y-2">
                                 <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepTitle')}</label>
                                 <input
-                                    className="w-full bg-white border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-900"
+                                    className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900"
                                     placeholder={t('admin.config.placeholderStepTitle')}
                                     value={newStep.label}
                                     onChange={(e) => setNewStep(prev => ({ ...prev, label: e.target.value }))}
@@ -679,7 +679,7 @@ export function ConfigForm() {
                             <div className="space-y-2">
                                 <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepSystemPrompt')}</label>
                                 <select
-                                    className="w-full bg-white border border-slate-300 rounded-lg p-3 text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
                                     value={newStep.system_prompt_mode}
                                     onChange={(e) => setNewStep(prev => ({ ...prev, system_prompt_mode: e.target.value }))}
                                 >
@@ -691,7 +691,7 @@ export function ConfigForm() {
                             <div className="space-y-2">
                                 <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepColor')}</label>
                                 <select
-                                    className="w-full bg-white border border-slate-300 rounded-lg p-3 text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
                                     value={newStep.color_theme}
                                     onChange={(e) => setNewStep(prev => ({ ...prev, color_theme: e.target.value }))}
                                 >
@@ -705,7 +705,7 @@ export function ConfigForm() {
                         <div className="space-y-2">
                             <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepPromptCreate')}</label>
                             <textarea
-                                className="w-full bg-white border border-slate-300 rounded-lg p-3 text-sm min-h-[100px] focus:ring-2 focus:ring-blue-500 outline-none font-mono text-slate-900"
+                                className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm min-h-[100px] focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-slate-900"
                                 placeholder={t('admin.config.placeholderStepPrompt')}
                                 value={newStep.prompt}
                                 onChange={(e) => setNewStep(prev => ({ ...prev, prompt: e.target.value }))}
@@ -735,12 +735,12 @@ export function ConfigForm() {
                     {guidedSteps.map((step, idx) => {
                         const colorDef = COLOR_THEMES.find(c => c.value === step.color_theme);
                         return (
-                            <div key={step.id} className="glass-panel p-6 rounded-xl space-y-4">
+                            <div key={step.id} className="glass-panel p-6 rounded-lg space-y-4">
                                 {/* Header with dynamic title */}
                                 <div className="flex justify-between items-start gap-3">
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-3 h-3 rounded-full ${colorDef?.dot || 'bg-blue-500'}`} />
-                                        <h3 className="text-sm font-bold text-blue-700">
+                                        <div className={`w-3 h-3 rounded-full ${colorDef?.dot || 'bg-indigo-500'}`} />
+                                        <h3 className="text-sm font-semibold text-slate-900">
                                             {step.label || step.id}
                                         </h3>
                                         <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
@@ -766,7 +766,7 @@ export function ConfigForm() {
                                         </button>
                                         <button
                                             onClick={() => handleSaveStep(step)}
-                                            className="p-1.5 hover:bg-slate-100 rounded-lg text-blue-600 transition-colors"
+                                            className="p-1.5 hover:bg-slate-100 rounded-md text-indigo-600 transition-colors"
                                             title={t('admin.config.save')}
                                         >
                                             <Save className="w-4 h-4" />
@@ -786,7 +786,7 @@ export function ConfigForm() {
                                     <div className="space-y-2">
                                         <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepTitle')}</label>
                                         <input
-                                            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-900"
+                                            className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900"
                                             value={step.label}
                                             onChange={(e) => updateStepField(step.id, 'label', e.target.value)}
                                         />
@@ -794,7 +794,7 @@ export function ConfigForm() {
                                     <div className="space-y-2">
                                         <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepSystemPrompt')}</label>
                                         <select
-                                            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                                            className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
                                             value={step.system_prompt_mode}
                                             onChange={(e) => updateStepField(step.id, 'system_prompt_mode', e.target.value)}
                                         >
@@ -808,7 +808,7 @@ export function ConfigForm() {
                                             <Palette className="w-3 h-3" /> {t('admin.config.stepColor')}
                                         </label>
                                         <select
-                                            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                                            className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
                                             value={step.color_theme}
                                             onChange={(e) => updateStepField(step.id, 'color_theme', e.target.value)}
                                         >
@@ -822,7 +822,7 @@ export function ConfigForm() {
                                 <div className="space-y-2">
                                     <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepPromptSend')}</label>
                                     <textarea
-                                        className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm min-h-[100px] focus:ring-2 focus:ring-blue-500 outline-none font-mono text-slate-900"
+                                        className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 text-sm min-h-[100px] focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-slate-900"
                                         value={step.prompt}
                                         onChange={(e) => updateStepField(step.id, 'prompt', e.target.value)}
                                     />

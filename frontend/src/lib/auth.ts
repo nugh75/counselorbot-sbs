@@ -20,6 +20,10 @@ export async function getIdentity(): Promise<Identity | null> {
     }
 }
 
+// Console ai4educ: portale per tutti gli utenti, manager per gli amministratori.
+export const AI4EDUC_PORTAL_URL = 'https://portal.ai4educ.org/';
+export const AI4EDUC_MANAGER_URL = 'https://manager.ai4educ.org';
+
 // Logout gestito da ai4auth (distrugge la sessione e il cookie di dominio)
 export const AI4AUTH_LOGOUT_URL = 'https://auth.ai4educ.org/logout';
 

@@ -16,8 +16,8 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
     return (
         <div className="space-y-6">
             <div className="text-center mb-8">
-                <div className="w-16 h-16 mx-auto rounded-full bg-blue-100 flex items-center justify-center mb-4">
-                    <ClipboardList className="w-8 h-8 text-blue-600" />
+                <div className="w-12 h-12 mx-auto rounded-md bg-indigo-50 flex items-center justify-center mb-4">
+                    <ClipboardList className="w-6 h-6 text-indigo-600" />
                 </div>
                 <h2 className="text-2xl font-bold text-slate-800">{t('selector.title')}</h2>
                 <p className="text-slate-500 mt-2">{t('selector.subtitle')}</p>
@@ -33,14 +33,13 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
                             key={q.id}
                             onClick={() => onSelect(q)}
                             className={cn(
-                                "group glass-panel glass-panel-hover p-5 rounded-xl text-left transition-all",
-                                "hover:shadow-lg hover:scale-[1.02]",
+                                "group glass-panel glass-panel-hover p-5 rounded-lg text-left transition-colors",
                                 !isActive && "opacity-70"
                             )}
                         >
                             <div className="flex items-start gap-4">
                                 <div className={cn(
-                                    "w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0",
+                                    "w-12 h-12 rounded-md flex items-center justify-center text-2xl shrink-0",
                                     q.color.replace('bg-', 'bg-opacity-20 bg-'),
                                 )}>
                                     {q.icon}
@@ -49,7 +48,7 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
                                     <div className="flex items-center gap-2">
                                         <h3 className="font-bold text-slate-800">{q.name}</h3>
                                         {isActive ? (
-                                            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">
+                                            <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded-full">
                                                 {t('selector.active')}
                                             </span>
                                         ) : (

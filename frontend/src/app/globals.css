@@ -28,35 +28,47 @@
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
 
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
 
   --animate-fade-in-up: fade-in-up 0.6s ease-out forwards;
 }
 
 :root {
-  /* Shared minimal topbar palette from ai4educ-console. */
-  --console-topbar-surface: #ffffff;
-  --console-topbar-border: #e2e8f0;
-  --console-topbar-hover: #f8fafc;
-  --console-topbar-text: #64748b;
-  --console-topbar-text-hover: #0f172a;
+  /* Raggio angoli globale: angoli tondi su tutta l'interfaccia (rounded-sm/md/lg/xl). */
+  --radius: 0.75rem;
 
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
+  /* UI palette shared with ai4educ-console. */
+  --console-bg: #f8fafc;
+  --console-surface: #ffffff;
+  --console-border: #e2e8f0;
+  --console-text-1: #0f172a;
+  --console-text-2: #64748b;
+  --console-primary: #4f46e5;
+  --console-primary-soft: #eef2ff;
+  --console-topbar-surface: var(--console-surface);
+  --console-topbar-border: var(--console-border);
+  --console-topbar-hover: var(--console-bg);
+  --console-topbar-text: var(--console-text-2);
+  --console-topbar-text-hover: var(--console-text-1);
 
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
+  --background: 210 40% 98%;
+  --foreground: 222.2 84% 4.9%;
 
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
 
-  --primary: 217.2 91.2% 59.8%;
-  --color-background: #f8fafc;
-  --color-foreground: #0f172a;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
 
-  --color-primary: #3b82f6;
+  --primary: 243.4 75.4% 58.6%;
+  --color-background: var(--console-bg);
+  --color-foreground: var(--console-text-1);
+
+  --color-primary: var(--console-primary);
   --color-primary-foreground: #ffffff;
 
   --color-muted: #f1f5f9;
@@ -67,51 +79,51 @@
 
   --animate-fade-in-up: fadeInUp 0.5s ease-out forwards;
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
 
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
 /* Custom Utilities */
 @utility glass-panel {
-  @apply bg-white border border-slate-200 shadow-sm transition-all duration-300;
+  @apply bg-white border border-slate-200 shadow-sm transition-colors duration-150;
 }
 
 @utility glass-panel-hover {
-  @apply hover:border-blue-300 hover:shadow-md hover:-translate-y-1;
+  @apply hover:border-indigo-200 hover:shadow-sm;
 }
 
 @utility text-gradient {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-700;
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-indigo-600;
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
-  /* Subtle professional background pattern */
-  background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-  background-size: 24px 24px;
+  @apply text-slate-900 antialiased;
+  background: var(--console-bg);
+  color: var(--console-text-1);
 }
 
-.console-topbar {
-  height: 2.75rem;
+.console-header {
+  height: 4rem;
   border-bottom: 1px solid var(--console-topbar-border);
   background: var(--console-topbar-surface);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.03);
 }
 
 .console-topbar-action {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
   padding: 0.375rem 0.625rem;
   color: var(--console-topbar-text);
   font-size: 0.875rem;
@@ -191,7 +203,7 @@ body {
 }
 
 .prose blockquote {
-  border-left: 3px solid #3b82f6;
+  border-left: 3px solid var(--console-primary);
   padding-left: 1em;
   margin-left: 0;
   color: #64748b;

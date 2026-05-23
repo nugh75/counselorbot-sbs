@@ -34,6 +34,7 @@ interface GuidedChatInterfaceProps {
 interface ChatMessage {
     role: string;
     content: string;
+    reasoning?: string;
     strategyIds?: string[];
     feedback?: boolean;
 }
@@ -187,7 +188,7 @@ const COLOR_THEMES: Record<string, { headerBg: string; iconBg: string }> = {
     rose:   { headerBg: 'bg-rose-50',   iconBg: 'bg-rose-500' },
 };
 
-const DEFAULT_COLOR = { headerBg: 'bg-blue-50', iconBg: 'bg-blue-500' };
+const DEFAULT_COLOR = { headerBg: 'bg-indigo-50', iconBg: 'bg-indigo-600' };
 const QUESTIONS_COLOR = { headerBg: 'bg-green-50', iconBg: 'bg-green-500' };
 const CONCLUSION_COLOR = { headerBg: 'bg-slate-50', iconBg: 'bg-slate-500' };
 
@@ -336,6 +337,13 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const [isAudioLoading, setIsAudioLoading] = useState(false);
     const [showAdvanceSuggestion, setShowAdvanceSuggestion] = useState(false);
     const [userMessagesInPhase, setUserMessagesInPhase] = useState(0);
+    // Indici dei messaggi con il box "Ragionamento" collassato (toggle per nasconderlo).
+    const [hiddenReasoning, setHiddenReasoning] = useState<Set<number>>(new Set());
+    const toggleReasoning = (idx: number) => setHiddenReasoning(prev => {
+        const next = new Set(prev);
+        if (next.has(idx)) next.delete(idx); else next.add(idx);
+        return next;
+    });
 
     // Fixed-phase configurable texts (default tradotti via i18n; override da DB solo in italiano)
     const [questionsLabel, setQuestionsLabel] = useState(() => t('guided.questionsLabel'));
@@ -590,11 +598,18 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     return copy;
                 });
             };
+            const updateReasoning = (reasoning: string) => {
+                setMessages(prev => {
+                    const copy = [...prev];
+                    copy[copy.length - 1] = { ...copy[copy.length - 1], role: 'assistant', reasoning };
+                    return copy;
+                });
+            };
             const dropLast = () => setMessages(prev => prev.slice(0, -1));
 
             setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
             try {
-                const result = await streamChat(buildPayload(false), (full) => updateLast(full), controller.signal);
+                const result = await streamChat(buildPayload(false), (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
                 responseText = result.response || '';
                 setLastStrategies(result.strategy_ids);
                 streamOk = true;
@@ -603,19 +618,24 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 dropLast();
             }
 
-            if (streamOk) {
+            if (streamOk && extractAdvanceSignal(responseText).cleanText) {
                 const { cleanText, shouldAdvance } = extractAdvanceSignal(responseText);
-                if (cleanText) {
-                    updateLast(cleanText);
-                } else {
-                    dropLast();
-                }
+                updateLast(cleanText);
                 setLastAnalysisFailed(false);
                 const allowAutoAdvanceOnGenerate =
                     questionnaireType !== 'SAVICKAS' || step.id === 'savickas-final';
                 if (shouldAdvance && allowAutoAdvanceOnGenerate) {
                     advancePhase();
                 }
+            } else if (streamOk) {
+                // Stream ok ma nessun testo di risposta (es. reasoning ha esaurito il budget):
+                // non lasciare il vuoto, segnala l'errore così l'utente può ripetere lo step.
+                dropLast();
+                setMessages(prev => [...prev, {
+                    role: 'assistant',
+                    content: t('guided.stepError')
+                }]);
+                setLastAnalysisFailed(true);
             } else {
                 setMessages(prev => [...prev, {
                     role: 'assistant',
@@ -640,7 +660,13 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
     const resolveInteractiveMode = (): string => {
         if (isAnalysisStep(currentPhase)) {
-            return getStepDef(currentPhase)?.system_prompt_mode || 'generic';
+            const stepMode = getStepDef(currentPhase)?.system_prompt_mode || 'generic';
+            // QSA: una domanda di approfondimento NON deve ri-generare l'analisi
+            // (tabella + tutti i fattori). Prompt discorsivo e mirato.
+            if (questionnaireType === 'QSA' && (stepMode === 'factor' || stepMode === 'second-level')) {
+                return 'factor-qa';
+            }
+            return stepMode;
         }
         if (questionnaireType === 'SAVICKAS') {
             return 'savickas-interview';
@@ -690,6 +716,13 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     return copy;
                 });
             };
+            const updateReasoning = (reasoning: string) => {
+                setMessages(prev => {
+                    const copy = [...prev];
+                    copy[copy.length - 1] = { ...copy[copy.length - 1], role: 'assistant', reasoning };
+                    return copy;
+                });
+            };
             const dropLast = () => setMessages(prev => prev.slice(0, -1));
 
             const result = await streamChat(
@@ -705,6 +738,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 },
                 (full) => updateLast(full),
                 controller.signal,
+                (r) => updateReasoning(r),
             );
             const { response } = result;
             setLastStrategies(result.strategy_ids);
@@ -803,7 +837,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         return (
             <div className="flex items-center justify-center h-[calc(100vh-140px)] min-h-[600px]">
                 <div className="text-center space-y-3">
-                    <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto" />
+                    <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
                     <p className="text-sm text-slate-500">{t('guided.loading')}</p>
                 </div>
             </div>
@@ -821,7 +855,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             {/* Left Sidebar */}
             <div className="lg:col-span-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
                 {/* Phase Progress */}
-                <div className="glass-panel p-4 rounded-xl space-y-3">
+                <div className="glass-panel p-4 rounded-lg space-y-3">
                     <div className="flex justify-between items-center">
                         <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">{t('guided.path')}</h3>
                         <span className="text-xs text-slate-500">{currentStepIndex}/{totalSteps}</span>
@@ -835,11 +869,11 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             return (
                                 <div key={phaseId} className={cn(
                                     "flex items-center gap-2 p-2 rounded-lg text-xs transition-colors",
-                                    isActive ? "bg-blue-50 text-blue-700 font-medium" : isDone ? "text-green-600" : "text-slate-400"
+                                    isActive ? "bg-indigo-50 text-indigo-700 font-medium" : isDone ? "text-green-600" : "text-slate-400"
                                 )}>
                                     <div className={cn(
                                         "w-4 h-4 rounded-full flex items-center justify-center text-[8px] border",
-                                        isActive ? "border-blue-500 bg-blue-500 text-white" :
+                                        isActive ? "border-indigo-500 bg-indigo-500 text-white" :
                                             isDone ? "border-green-500 bg-green-500 text-white" : "border-slate-300"
                                     )}>
                                         {isDone ? <CheckCircle2 className="w-2.5 h-2.5" /> : idx + 1}
@@ -854,7 +888,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         <button
                             onClick={advancePhase}
                             disabled={isLoading}
-                            className="w-full mt-2 py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1 disabled:opacity-50 shadow-sm"
+                            className="w-full mt-2 py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-md transition-colors flex items-center justify-center gap-1 disabled:opacity-50 shadow-sm"
                         >
                             {currentPhase === FIXED_QUESTIONS_ID ? t('guided.concludeSession') : t('guided.nextStep')}
                             <ChevronRight className="w-3 h-3" />
@@ -885,7 +919,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
                 {/* Scores Display */}
                 {hasScoreEntries && (
-                    <div className="glass-panel p-4 rounded-xl space-y-3">
+                    <div className="glass-panel p-4 rounded-lg space-y-3">
                         <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                             <BarChart3 className="w-4 h-4" />
                             {t('guided.scores')}
@@ -914,10 +948,10 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             </div>
 
             {/* Chat Area */}
-            <div className="lg:col-span-3 flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+            <div className="lg:col-span-3 flex flex-col h-full bg-white rounded-lg overflow-hidden border border-slate-200 shadow-sm">
                 {/* Header */}
                 <div className={cn("p-4 border-b border-slate-100 flex items-center gap-3", currentColors.headerBg)}>
-                    <div className={cn("w-10 h-10 rounded-full flex items-center justify-center shadow-sm", currentColors.iconBg)}>
+                    <div className={cn("w-10 h-10 rounded-md flex items-center justify-center shadow-sm", currentColors.iconBg)}>
                         <Bot className="w-6 h-6 text-white" />
                     </div>
                     <div>
@@ -938,24 +972,54 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             ) : (
                                 <div className={cn("flex flex-col gap-1 max-w-[90%]", msg.role === 'user' ? "items-end" : "items-start")}>
                                     <div className={cn(
-                                        "px-5 py-3.5 rounded-2xl text-sm leading-relaxed shadow-sm",
+                                        "px-5 py-3.5 rounded-lg text-sm leading-relaxed shadow-sm",
                                         msg.role === 'user'
-                                            ? 'bg-blue-600 text-white rounded-tr-sm'
+                                            ? 'bg-indigo-600 text-white rounded-tr-sm'
                                             : 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm'
                                     )}>
                                         {msg.role === 'assistant' ? (
-                                            <div className="overflow-x-auto rounded-lg border border-slate-200/80 bg-white">
-                                                <ReactMarkdown
-                                                    remarkPlugins={[remarkGfm]}
-                                                    components={markdownComponents}
-                                                >
-                                                    {msg.content}
-                                                </ReactMarkdown>
+                                            <div className="space-y-2">
+                                                {msg.reasoning && (
+                                                    <div className="rounded-md bg-slate-50 border border-slate-200 px-3 py-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggleReasoning(idx)}
+                                                            className="flex w-full items-center gap-1.5 text-[10px] uppercase tracking-wide text-slate-400 hover:text-slate-600 transition-colors"
+                                                        >
+                                                            {!msg.content.trim() && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                            <ChevronRight className={cn("w-3 h-3 transition-transform", !hiddenReasoning.has(idx) && "rotate-90")} />
+                                                            {t('guided.reasoning')}
+                                                            <span className="ml-auto normal-case tracking-normal text-slate-400/80">
+                                                                {hiddenReasoning.has(idx) ? t('guided.reasoningShow') : t('guided.reasoningHide')}
+                                                            </span>
+                                                        </button>
+                                                        {!hiddenReasoning.has(idx) && (
+                                                            <div className="mt-1 text-[11px] leading-snug text-slate-500 italic whitespace-pre-wrap max-h-40 overflow-y-auto">
+                                                                {msg.reasoning}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                {msg.content.trim() ? (
+                                                    <div className="overflow-x-auto rounded-lg border border-slate-200/80 bg-white">
+                                                        <ReactMarkdown
+                                                            remarkPlugins={[remarkGfm]}
+                                                            components={markdownComponents}
+                                                        >
+                                                            {msg.content}
+                                                        </ReactMarkdown>
+                                                    </div>
+                                                ) : !msg.reasoning ? (
+                                                    <span className="flex items-center gap-2 text-slate-400 italic">
+                                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                        {t('guided.thinking')}
+                                                    </span>
+                                                ) : null}
                                             </div>
                                         ) : msg.content}
                                     </div>
 
-                                    {msg.role === 'assistant' && (
+                                    {msg.role === 'assistant' && msg.content.trim() && (
                                         <div className="flex items-center gap-1">
                                             <button
                                                 onClick={() => handlePlayTTS(msg.content, idx)}
@@ -963,7 +1027,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                 className={cn(
                                                     "flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium transition-colors border",
                                                     playingMessageIdx === idx
-                                                        ? "bg-blue-50 text-blue-600 border-blue-200"
+                                                        ? "bg-indigo-50 text-indigo-600 border-indigo-200"
                                                         : "bg-transparent text-slate-400 border-transparent hover:bg-slate-50 hover:text-slate-600"
                                                 )}
                                             >
@@ -1009,10 +1073,10 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
                     {isLoading && (
                         <div className="flex justify-start">
-                            <div className="px-5 py-4 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center gap-3">
+                            <div className="px-5 py-4 rounded-lg bg-white border border-slate-100 shadow-sm flex items-center gap-3">
                                 <span className="relative flex h-3 w-3">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
                                 </span>
                                 <span className="text-xs font-medium text-slate-500">{t('guided.processing')}</span>
                             </div>
@@ -1026,7 +1090,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-center">
                         <button
                             onClick={() => window.location.href = '/'}
-                            className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-colors flex items-center gap-2 shadow-lg shadow-green-200"
+                            className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center gap-2"
                         >
                             <Home className="w-5 h-5" />
                             {t('guided.backHome')}
@@ -1041,12 +1105,12 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                 onChange={(e) => setInput(e.target.value)}
                                 placeholder={isLoading ? t('guided.input.waiting') : t('guided.input.placeholder')}
                                 disabled={isLoading}
-                                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 disabled:opacity-50"
+                                className="flex-1 bg-slate-50 border border-slate-200 rounded-md px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400 disabled:opacity-50"
                             />
                             <button
                                 type="submit"
                                 disabled={isLoading || !input.trim()}
-                                className="p-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 shadow-md shadow-blue-200"
+                                className="p-3 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-50"
                             >
                                 <Send className="w-5 h-5" />
                             </button>

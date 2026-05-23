@@ -12,6 +12,7 @@ export async function streamChat(
     payload: Record<string, any>,
     onDelta: (fullText: string) => void,
     signal?: AbortSignal,
+    onReasoning?: (fullReasoning: string) => void,
 ): Promise<ChatStreamResult> {
     const res = await fetch('/api/chat/stream', {
         method: 'POST',
@@ -28,6 +29,7 @@ export async function streamChat(
     const decoder = new TextDecoder();
     let buffer = '';
     let full = '';
+    let reasoning = '';
     let sessionId: string | undefined;
     let strategyIds: string[] | undefined;
 
@@ -45,7 +47,7 @@ export async function streamChat(
             const json = line.slice(5).trim();
             if (!json) continue;
 
-            let evt: { delta?: string; display?: string; done?: boolean; response?: string; session_id?: string; strategy_ids?: string[]; error?: string };
+            let evt: { delta?: string; display?: string; reasoning?: string; done?: boolean; response?: string; session_id?: string; strategy_ids?: string[]; error?: string };
             try {
                 evt = JSON.parse(json);
             } catch {
@@ -54,6 +56,10 @@ export async function streamChat(
 
             if (evt.error) {
                 throw new Error(evt.error);
+            }
+            if (typeof evt.reasoning === 'string') {
+                reasoning += evt.reasoning;
+                onReasoning?.(reasoning);
             }
             if (typeof evt.display === 'string') {
                 full = evt.display;

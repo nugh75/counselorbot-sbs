@@ -25,7 +25,7 @@ export function LanguageSwitcher() {
             <button
                 type="button"
                 onClick={() => setOpen(o => !o)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-sm"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-sm"
                 aria-label="Cambia lingua / Change language"
             >
                 <span className="text-lg leading-none">{current.flag}</span>
@@ -34,13 +34,13 @@ export function LanguageSwitcher() {
             </button>
 
             {open && (
-                <div className="absolute right-0 mt-1 w-44 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden z-[60]">
+                <div className="absolute right-0 mt-1 w-44 bg-white border border-slate-200 rounded-md shadow-lg overflow-hidden z-[60]">
                     {LANGUAGES.map(l => (
                         <button
                             key={l.code}
                             type="button"
                             onClick={() => { setLang(l.code); setOpen(false); }}
-                            className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors hover:bg-slate-50 ${l.code === lang ? 'bg-blue-50 text-blue-700 font-medium' : 'text-slate-700'}`}
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors hover:bg-slate-50 ${l.code === lang ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-slate-700'}`}
                         >
                             <span className="text-lg leading-none">{l.flag}</span>
                             <span>{l.label}</span>

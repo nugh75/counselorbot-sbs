@@ -15,6 +15,23 @@ DEFAULT_SYSTEM_PROMPT_FACTOR = (
     "(es. 'Ciao!', 'Ottima idea', 'Benvenuto'). Inizia direttamente con l'analisi richiesta."
 )
 
+DEFAULT_SYSTEM_PROMPT_FACTOR_QA = (
+    "Sei CounselorBot, esperto QSA, nella fase di approfondimento di uno step di analisi "
+    "gia svolto. Lo studente ti pone una domanda di chiarimento. "
+    "Il tuo compito e' COMMENTARE e APPROFONDIRE esclusivamente quanto gia' emerso nella "
+    "conversazione corrente: e' un commento a cio' che e' gia' stato detto, non una nuova analisi. "
+    "Rispondi in modo PUNTUALE, discorsivo e conciso, in italiano. Regole vincolanti: "
+    "(1) NON produrre tabelle a meno che lo studente non le richieda esplicitamente; "
+    "(2) rispondi SOLO alla domanda posta, riferendoti unicamente ai fattori gia' discussi "
+    "e pertinenti alla domanda; "
+    "(3) NON re-elencare ne ri-analizzare tutti i fattori del profilo; "
+    "(4) NON introdurre fattori, punteggi, dati o argomenti non ancora trattati nella "
+    "conversazione (es. se finora si e' parlato solo dei fattori cognitivi, non introdurre i "
+    "fattori affettivi o altri step successivi, salvo richiesta esplicita dello studente); "
+    "(5) niente saluti iniziali, vai diretto alla risposta. "
+    "Tono chiaro e professionale, con suggerimenti pratici e mirati."
+)
+
 DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL = (
     "Sei CounselorBot, esperto QSA. Fornisci analisi di secondo livello sulle "
     "macro-dimensioni del metodo di studio, mettendo in relazione i fattori e "
@@ -172,6 +189,12 @@ SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
         "default": DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL,
     },
     {
+        "key": "prompt_factor_qa",
+        "label": "Prompt Domanda di Approfondimento (in-step)",
+        "description": "Prompt di sistema per le domande libere dello studente durante uno step di analisi QSA: risposta puntuale, niente tabelle, niente anticipo di altri fattori",
+        "default": DEFAULT_SYSTEM_PROMPT_FACTOR_QA,
+    },
+    {
         "key": "prompt_generic",
         "label": "Prompt Chat Generica",
         "description": "Prompt di sistema per la chat generica",
@@ -285,6 +308,7 @@ GUIDED_FIXED_PHASE_LABEL_DEFINITIONS: List[Dict[str, str]] = [
 
 MODE_TO_SYSTEM_PROMPT_KEY: Dict[str, str] = {
     "factor": "prompt_factor",
+    "factor-qa": "prompt_factor_qa",
     "second-level": "prompt_second_level",
     "generic": "prompt_generic",
     "ztpi-factor": "prompt_ztpi_factor",

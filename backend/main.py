@@ -297,8 +297,8 @@ def startup_event():
 
 @app.get("/auth/me")
 async def read_me(request: Request):
-    """Identità dell'utente corrente dagli header forward-auth (ai4auth)."""
-    return auth.get_identity(request)
+    """Identità dell'utente corrente verificata tramite ai4auth."""
+    return await auth.get_identity(request)
 
 # --- Admin Config Endpoints ---
 
@@ -577,7 +577,21 @@ class ChatRequest(schemas.BaseModel):
 def _clamp_max_tokens(value: Optional[int], default: Optional[int] = None) -> Optional[int]:
     if value is None:
         return default
-    return max(128, min(int(value), 2000))
+    return max(128, min(int(value), 8192))
+
+
+# Con il thinking attivo il reasoning consuma il budget di output: serve headroom
+# extra perche' la risposta vera abbia spazio dopo il ragionamento.
+# I modelli reasoning (es. qwen3) producono ragionamenti lunghi: budget generoso.
+_THINKING_MIN_OUTPUT_TOKENS = 6000
+
+
+def _apply_thinking_token_headroom(max_tokens: Optional[int], ai_service: "AIService") -> Optional[int]:
+    if ai_service.disable_thinking:
+        return max_tokens
+    if max_tokens is None:
+        return _THINKING_MIN_OUTPUT_TOKENS
+    return max(max_tokens, _THINKING_MIN_OUTPUT_TOKENS)
 
 
 # Lingue supportate per la risposta dell'AI (codice -> nome inglese, nome nativo)
@@ -648,6 +662,11 @@ _QSA_FACTOR_NAMES = {
 }
 
 
+# Fattori QSA invertiti: punteggio basso (1-3) = Forza, alto (7-9) = Area di crescita.
+# Allineato a frontend questionnaires.ts -> QUESTIONNAIRES.QSA.invertedFactors.
+_QSA_INVERTED_CODES = ("C3", "C6", "A1", "A4", "A5", "A7")
+
+
 def _apply_language_directive(system_prompt: str, language: Optional[str]) -> str:
     """Aggiunge in coda al system prompt l'istruzione di rispondere nella lingua scelta.
     'it' (o lingua sconosciuta) = nessuna modifica: i prompt base sono in italiano."""
@@ -659,6 +678,7 @@ def _apply_language_directive(system_prompt: str, language: Optional[str]) -> st
         f"[LANGUAGE] You MUST write your ENTIRE response in {eng} ({native}), "
         f"regardless of the language of the instructions or scores above. "
         f"Translate any fixed phrases, headings and labels into {eng} as well. "
+        f"Also produce your internal reasoning/thinking in {eng} ({native}). "
         f"Do NOT mix languages."
     )
 
@@ -689,15 +709,26 @@ def _annotate_qsa_factor_codes(text: str, language: Optional[str], progressive: 
 def _apply_qsa_factor_directive(system_prompt: str, questionnaire_type: str, language: Optional[str]) -> str:
     if not _is_qsa(questionnaire_type):
         return system_prompt
-    examples = ", ".join(
-        f"{code} ({name})" for code, name in _qsa_factor_names(language).items()
+    names = _qsa_factor_names(language)
+    examples = ", ".join(f"{code} ({name})" for code, name in names.items())
+    inverted = ", ".join(
+        f"{code} ({names[code]})" for code in _QSA_INVERTED_CODES if code in names
     )
     return (
         f"{system_prompt}\n\n"
         "[FACTOR LABELS] In ogni risposta rivolta allo studente, non scrivere mai "
         "una sigla di fattore QSA isolata. Ogni sigla deve essere immediatamente "
         "accompagnata dal nome esteso, nella forma `C2 (Autoregolazione)`. "
-        f"Riferimento obbligatorio: {examples}."
+        f"Riferimento obbligatorio: {examples}.\n\n"
+        "[FATTORI INVERTITI] Scala 1-9. Per la maggioranza dei fattori vale: "
+        "1-3 = Area di crescita, 4-6 = Adeguato, 7-9 = Forza. "
+        f"MA i seguenti fattori sono INVERTITI: {inverted}. "
+        "Per QUESTI fattori la lettura si ribalta: 1-3 = Forza, 4-6 = Normale, "
+        "7-9 = Area di crescita (punteggio alto = problema da migliorare, NON un punto di forza). "
+        "Regola assoluta: non leggere mai 'alto = forza' in modo automatico; "
+        "applica sempre l'inversione ai fattori elencati. "
+        "Esempio: Disorientamento o Difficoltà di concentrazione a 7-9 è un'Area di crescita, "
+        "non un punto di forza."
     )
 
 
@@ -715,6 +746,10 @@ def _student_visible_response(
 
 
 _GUIDED_NO_GREETING_SUFFIX = " NON iniziare con saluti. Vai direttamente all'analisi."
+
+# Modalità discorsive: domande di approfondimento dello studente dentro uno step.
+# Devono usare il prompt mode-based anche se `phase` punta a uno step di analisi.
+_CONVERSATIONAL_MODES = {"factor-qa"}
 
 _ZTPI_FACTOR_NAME_BY_CODE = {
     "T1": "Passato Negativo",
@@ -809,6 +844,18 @@ def _resolve_system_prompt(ai_service: AIService, mode: str, phase: Optional[str
             guided_system.get("default", ai_service.config.get("prompt_generic", DEFAULT_SYSTEM_PROMPT_GENERIC)),
         )
 
+    # Follow-up Q&A durante uno step: prompt discorsivo, NON ri-genera l'analisi.
+    # Va onorato anche quando `phase` punta a uno step di analisi, altrimenti il
+    # ramo sottostante userebbe il prompt di analisi (tabella + tutti i fattori).
+    if mode in _CONVERSATIONAL_MODES:
+        prompt_key = MODE_TO_SYSTEM_PROMPT_KEY.get(mode, "prompt_generic")
+        base_prompt = ai_service.config.get(
+            prompt_key, SYSTEM_PROMPT_DEFAULTS.get(prompt_key, DEFAULT_SYSTEM_PROMPT_GENERIC)
+        )
+        if _GUIDED_NO_GREETING_SUFFIX.strip() not in base_prompt:
+            base_prompt = base_prompt + _GUIDED_NO_GREETING_SUFFIX
+        return prompt_key, base_prompt
+
     # For guided analysis steps, look up system_prompt_mode from the step
     if phase:
         step = db.query(models.GuidedStep).filter(models.GuidedStep.id == phase).first()
@@ -870,10 +917,14 @@ def _retrieved_context(
     questionnaire_type: str,
     query: str,
 ) -> tuple[str, List[str]]:
+    # Follow-up discorsivo: NON re-iniettare i punteggi completi dalla memoria,
+    # altrimenti il modello ri-analizza tutto il profilo (tabella + altri fattori).
+    # Il chiarimento deve commentare solo quanto già emerso nella conversazione.
+    include_scores = not bool(request.scores_context) and request.mode not in _CONVERSATIONAL_MODES
     memory = session_memory.get_relevant_context(
         session_id,
         query=query,
-        include_scores=not bool(request.scores_context),
+        include_scores=include_scores,
     )
     strategies = strategy_memory.retrieve(
         questionnaire_type=questionnaire_type,
@@ -892,7 +943,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
 
     # 1. Retrieve Configuration and System Prompt based on Mode
     ai_service = AIService(db)
-    max_tokens = _clamp_max_tokens(request.max_tokens)
+    max_tokens = _apply_thinking_token_headroom(_clamp_max_tokens(request.max_tokens), ai_service)
 
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
     system_prompt = _apply_language_directive(system_prompt, request.language)
@@ -1016,7 +1067,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db)):
 
     # Preparazione (usa la db della richiesta, ancora aperta qui)
     ai_service = AIService(db)
-    max_tokens = _clamp_max_tokens(request.max_tokens)
+    max_tokens = _apply_thinking_token_headroom(_clamp_max_tokens(request.max_tokens), ai_service)
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
     system_prompt = _apply_language_directive(system_prompt, request.language)
     effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)
@@ -1112,19 +1163,24 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db)):
     def event_gen():
         chunks = []
         try:
-            for delta in ai_service.stream_response(
+            for item in ai_service.stream_response(
                 full_message, system_prompt, request.mode,
                 conversation_summary=conversation_summary,
                 max_tokens=max_tokens,
             ):
-                if not delta:
+                text = item.get("text") if isinstance(item, dict) else item
+                if not text:
                     continue
-                chunks.append(delta)
+                # Reasoning / thinking: streammato a parte, NON entra nella risposta finale.
+                if isinstance(item, dict) and item.get("type") == "reasoning":
+                    yield f"data: {_json.dumps({'reasoning': text})}\n\n"
+                    continue
+                chunks.append(text)
                 raw_response = "".join(chunks)
                 display_response = _student_visible_response(
                     raw_response, questionnaire_type, request.language, sanitize
                 )
-                yield f"data: {_json.dumps({'delta': delta, 'display': display_response})}\n\n"
+                yield f"data: {_json.dumps({'delta': text, 'display': display_response})}\n\n"
 
             response_content = _student_visible_response(
                 "".join(chunks), questionnaire_type, request.language, sanitize

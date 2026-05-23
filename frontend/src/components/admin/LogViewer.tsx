@@ -73,7 +73,7 @@ export function LogViewer() {
                 </button>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">

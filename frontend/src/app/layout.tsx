@@ -17,11 +17,11 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="it" className="dark" suppressHydrationWarning>
-            <body className={`${inter.className} min-h-screen bg-gradient-to-br from-gray-900 to-black text-white selection:bg-blue-500/30`}>
+        <html lang="it" suppressHydrationWarning>
+            <body className={`${inter.className} min-h-screen bg-slate-50 text-slate-900 selection:bg-indigo-100 selection:text-indigo-900`}>
                 <I18nProvider>
                     <Header />
-                    <main className="pt-32 px-4 pb-12">
+                    <main className="pt-20 px-4 pb-12">
                         {children}
                     </main>
                 </I18nProvider>

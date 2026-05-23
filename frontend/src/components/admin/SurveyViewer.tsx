@@ -113,7 +113,7 @@ export function SurveyViewer() {
         ];
 
         const fieldMetadata: Record<string, { label: string; color: string; bg: string }> = {
-            'q_utile': { label: t('admin.surveys.m.utile'), color: '#3b82f6', bg: 'bg-blue-50' },
+            'q_utile': { label: t('admin.surveys.m.utile'), color: '#4f46e5', bg: 'bg-indigo-50' },
             'q_pertinente': { label: t('admin.surveys.m.pertinente'), color: '#6366f1', bg: 'bg-indigo-50' },
             'q_chiaro': { label: t('admin.surveys.m.chiaro'), color: '#0ea5e9', bg: 'bg-sky-50' },
             'q_dettaglio': { label: t('admin.surveys.m.dettaglio'), color: '#06b6d4', bg: 'bg-cyan-50' },
@@ -188,8 +188,8 @@ export function SurveyViewer() {
                 <div className="space-y-8 animate-fade-in-up">
                     {/* Key Metrics Cards */}
                     <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-                            <div className="p-3 bg-blue-100 text-blue-600 rounded-lg">
+                        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
+                            <div className="p-3 bg-indigo-50 text-indigo-600 rounded-md">
                                 <Users className="w-6 h-6" />
                             </div>
                             <div>
@@ -197,7 +197,7 @@ export function SurveyViewer() {
                                 <h4 className="text-2xl font-bold text-slate-800">{stats.keyMetrics.total}</h4>
                             </div>
                         </div>
-                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+                        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
                             <div className="p-3 bg-green-100 text-green-600 rounded-lg">
                                 <TrendingUp className="w-6 h-6" />
                             </div>
@@ -206,7 +206,7 @@ export function SurveyViewer() {
                                 <h4 className="text-2xl font-bold text-slate-800">{stats.keyMetrics.overallAvg}/5</h4>
                             </div>
                         </div>
-                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+                        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
                             <div className="p-3 bg-purple-100 text-purple-600 rounded-lg">
                                 <Activity className="w-6 h-6" />
                             </div>
@@ -225,7 +225,7 @@ export function SurveyViewer() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {stats.metrics.map((metric) => (
-                                <div key={metric.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                                <div key={metric.id} className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                                     <div className={`px-4 py-3 border-b border-slate-100 ${metric.bg} flex justify-between items-center`}>
                                         <h5 className="font-semibold text-slate-700">{metric.name}</h5>
                                         <div className="flex items-baseline gap-1">
@@ -275,7 +275,7 @@ export function SurveyViewer() {
                 </button>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
@@ -310,7 +310,7 @@ export function SurveyViewer() {
                                                 <div className="text-slate-400">{survey.istruzione || '-'}</div>
                                             </td>
                                             <td className="px-4 py-3">
-                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700`}>
+                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700`}>
                                                     {t('admin.surveys.rating')}: {avgRating}/5
                                                 </span>
                                             </td>

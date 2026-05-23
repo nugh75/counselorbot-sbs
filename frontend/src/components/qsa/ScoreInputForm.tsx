@@ -11,10 +11,10 @@ type FormData = { scores: Record<string, string | number> };
 
 // Color per prefix (label tradotta via i18n: score.prefix.<X>)
 const PREFIX_COLOR: Record<string, string> = {
-    C: 'text-blue-700',
-    A: 'text-purple-700',
-    T: 'text-amber-700',
-    P: 'text-green-700',
+    C: 'text-indigo-700',
+    A: 'text-indigo-700',
+    T: 'text-indigo-700',
+    P: 'text-indigo-700',
 };
 
 interface ScoreInputFormProps {
@@ -60,13 +60,13 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores }: Score
         };
 
         return (
-            <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-200 hover:border-blue-300 transition-colors">
-                <div className="flex-1">
+            <div className="flex items-center justify-between p-2 rounded-md bg-white border border-slate-200 hover:border-indigo-200 transition-colors">
+                <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                        <span className="font-mono text-blue-600 font-bold">{factor.code}</span>
-                        <span className="font-medium text-slate-700">{tf(`factor.${factor.code}.name`, factor.name)}</span>
+                        <span className="font-mono text-indigo-600 font-bold text-sm">{factor.code}</span>
+                        <span className="font-medium text-slate-700 text-sm">{tf(`factor.${factor.code}.name`, factor.name)}</span>
                     </div>
-                    <div className="text-xs text-slate-500 ml-8 flex items-center gap-1">
+                    <div className="text-[11px] leading-tight text-slate-500 ml-8 flex items-center gap-1">
                         {tf(`factor.${factor.code}.desc`, factor.description)}
                     </div>
                 </div>
@@ -79,7 +79,7 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores }: Score
                         onKeyDown={handleKeyDown}
                         onInput={handleInput}
                         className={cn(
-                            "w-16 h-10 bg-white border rounded-md text-center font-bold text-lg text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all",
+                            "w-14 h-9 bg-white border rounded-md text-center font-bold text-base text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none transition-all",
                             errors.scores?.[factor.code] ? "border-red-500" : "border-slate-300"
                         )}
                     />
@@ -91,15 +91,15 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores }: Score
     const gridCols = groupedFactors.length === 1 ? 'grid-cols-1 max-w-xl mx-auto' : 'md:grid-cols-2';
 
     return (
-        <form onSubmit={handleSubmit(onFormSubmit)} className="w-full max-w-4xl mx-auto space-y-8 animate-fade-in-up">
-            <div className={cn("grid gap-8", gridCols)}>
+        <form onSubmit={handleSubmit(onFormSubmit)} className="w-full max-w-4xl mx-auto space-y-4 animate-fade-in-up">
+            <div className={cn("grid gap-x-8 gap-y-3", gridCols)}>
                 {groupedFactors.map(({ prefix, factors }) => {
                     const colorClass = PREFIX_COLOR[prefix] || 'text-slate-700';
                     const label = PREFIX_COLOR[prefix] ? t(`score.prefix.${prefix}`) : `${prefix}`;
                     return (
-                        <div key={prefix} className="space-y-4">
-                            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-200">
-                                <h3 className={cn("text-xl font-bold", colorClass)}>{label}</h3>
+                        <div key={prefix} className="space-y-1.5">
+                            <div className="flex items-center gap-2 mb-2 pb-1 border-b border-slate-200">
+                                <h3 className={cn("text-lg font-bold", colorClass)}>{label}</h3>
                             </div>
                             {factors.map(f => <InputRow key={f.code} factor={f} />)}
                         </div>
@@ -107,10 +107,10 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores }: Score
                 })}
             </div>
 
-            <div className="flex justify-end pt-6">
+            <div className="flex justify-end pt-2">
                 <button
                     type="submit"
-                    className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg shadow-lg shadow-blue-500/20 transition-all hover:scale-105 active:scale-95"
+                    className="px-8 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors"
                 >
                     {t('score.submit')}
                 </button>

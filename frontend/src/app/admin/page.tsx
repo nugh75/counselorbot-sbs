@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Settings, FileText, ClipboardList, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, Settings, FileText, ClipboardList, ShieldAlert } from 'lucide-react';
 import { ConfigForm } from '@/components/admin/ConfigForm';
 import { LogViewer } from '@/components/admin/LogViewer';
 import { SurveyViewer } from '@/components/admin/SurveyViewer';
@@ -24,23 +25,23 @@ export default function AdminPage() {
     }, []);
 
     if (authState === 'loading') {
-        return <div className="min-h-screen flex items-center justify-center text-gray-400">{t('admin.verifying')}</div>;
+        return <div className="min-h-[60vh] flex items-center justify-center text-slate-500">{t('admin.verifying')}</div>;
     }
 
     if (authState === 'forbidden') {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-background p-4">
-                <div className="max-w-md w-full glass-panel p-8 rounded-2xl text-center space-y-4 border border-white/10">
-                    <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+            <div className="min-h-[60vh] flex items-center justify-center p-4">
+                <div className="max-w-md w-full bg-white border border-slate-200 p-8 rounded-lg text-center space-y-4 shadow-sm">
+                    <div className="mx-auto w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
                         <ShieldAlert className="w-6 h-6 text-red-600" />
                     </div>
                     <h2 className="text-xl font-bold text-gray-900">{t('admin.forbidden.title')}</h2>
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-slate-500 text-sm">
                         {t('admin.forbidden.body')}
                     </p>
                     <button
                         onClick={() => router.push('/')}
-                        className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                        className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-medium transition-colors"
                     >
                         {t('admin.forbidden.cta')}
                     </button>
@@ -50,23 +51,35 @@ export default function AdminPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-slate-50">
             <section className="max-w-7xl mx-auto px-4 py-8">
-                <div className="flex items-center gap-2 mb-8">
-                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <Settings className="w-5 h-5 text-white" />
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-indigo-600 rounded-md flex items-center justify-center">
+                            <Settings className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                            <h1 className="font-bold text-3xl text-slate-900">{t('admin.dashboard')}</h1>
+                            <p className="text-sm text-slate-500 mt-1">CounselorBot</p>
+                        </div>
                     </div>
-                    <h1 className="font-bold text-lg text-slate-900">{t('admin.dashboard')}</h1>
+                    <Link
+                        href="/"
+                        className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        {t('nav.home')}
+                    </Link>
                 </div>
                 {/* Tabs */}
-                <div className="flex gap-4 mb-8">
+                <div className="flex flex-wrap gap-3 mb-8">
                     <button
                         onClick={() => setActiveTab('config')}
                         className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border",
+                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
                             activeTab === 'config'
-                                ? "bg-blue-600/10 border-blue-600/20 text-blue-400"
-                                : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10"
+                                ? "bg-indigo-50 border-indigo-100 text-indigo-600"
+                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                         )}
                     >
                         <Settings className="w-4 h-4" />
@@ -75,10 +88,10 @@ export default function AdminPage() {
                     <button
                         onClick={() => setActiveTab('logs')}
                         className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border",
+                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
                             activeTab === 'logs'
-                                ? "bg-blue-600/10 border-blue-600/20 text-blue-400"
-                                : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10"
+                                ? "bg-indigo-50 border-indigo-100 text-indigo-600"
+                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                         )}
                     >
                         <FileText className="w-4 h-4" />
@@ -87,10 +100,10 @@ export default function AdminPage() {
                     <button
                         onClick={() => setActiveTab('surveys')}
                         className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border",
+                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
                             activeTab === 'surveys'
-                                ? "bg-blue-600/10 border-blue-600/20 text-blue-400"
-                                : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10"
+                                ? "bg-indigo-50 border-indigo-100 text-indigo-600"
+                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                         )}
                     >
                         <ClipboardList className="w-4 h-4" />

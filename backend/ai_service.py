@@ -45,7 +45,9 @@ class AIService:
         self.config = self._load_config()
         # Modalità "no thinking": disattiva il reasoning sui modelli che lo supportano
         self.disable_thinking = str(self.config.get('disable_thinking', 'false')).lower() == 'true'
-        self.ollama_num_ctx = self._int_config('ollama_num_ctx', 8192, 2048, 32768)
+        # Contesto ampio: con thinking attivo num_predict puo' essere alto e non deve
+        # essere strozzato dal contesto (prompt + reasoning + risposta).
+        self.ollama_num_ctx = self._int_config('ollama_num_ctx', 16384, 2048, 32768)
         self.ollama_keep_alive = self.config.get('ollama_keep_alive', '5m') or '5m'
         self.ollama_preload_enabled = str(self.config.get('ollama_preload', 'false')).lower() == 'true'
 
@@ -377,7 +379,7 @@ class AIService:
                 f"---\n\n{user_message}"
             )
 
-        try:
+        def _dispatch():
             if provider == 'openai':
                 yield from self._stream_openai(user_message, system_prompt, model_name, max_tokens=max_tokens)
             elif provider == 'openrouter':
@@ -395,6 +397,15 @@ class AIService:
                 yield self._call_mistral(user_message, system_prompt, model_name, max_tokens=max_tokens)
             else:
                 yield self._call_openai(user_message, system_prompt, model_name, max_tokens=max_tokens)
+
+        try:
+            # Normalizza: i provider possono produrre stringhe (solo testo) o dict
+            # {"type": "content"|"reasoning", "text": ...}. Esponi sempre dict.
+            for item in _dispatch():
+                if isinstance(item, dict):
+                    yield item
+                elif item:
+                    yield {"type": "content", "text": item}
         except Exception as e:
             raise RuntimeError(f"AI Error ({provider}): {str(e)}") from e
 
@@ -416,11 +427,16 @@ class AIService:
         try:
             for chunk in stream:
                 try:
-                    delta = chunk.choices[0].delta.content
+                    delta = chunk.choices[0].delta
                 except (IndexError, AttributeError):
-                    delta = None
-                if delta:
-                    yield delta
+                    continue
+                # Reasoning / thinking: OpenRouter usa `reasoning`, altri `reasoning_content`.
+                reasoning = getattr(delta, "reasoning", None) or getattr(delta, "reasoning_content", None)
+                if reasoning:
+                    yield {"type": "reasoning", "text": reasoning}
+                content = getattr(delta, "content", None)
+                if content:
+                    yield {"type": "content", "text": content}
         finally:
             close = getattr(stream, "close", None)
             if close:
@@ -440,7 +456,8 @@ class AIService:
             yield "Error: OpenRouter API Key not configured."
             return
         client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key, timeout=600)
-        extra = {"reasoning": {"enabled": False}} if self.disable_thinking else None
+        # Thinking attivo -> abilita il reasoning (verra' streammato come delta separati).
+        extra = {"reasoning": {"enabled": not self.disable_thinking}}
         yield from self._iter_chat_stream(client, model, system_prompt, user_message, extra_body=extra, max_tokens=max_tokens)
 
     def _stream_ollama(self, user_message, system_prompt, model, max_tokens: int = None):
@@ -459,8 +476,7 @@ class AIService:
                 "num_predict": max_tokens or 800,
             },
         }
-        if self.disable_thinking:
-            payload["think"] = False
+        payload["think"] = not self.disable_thinking
         with httpx.Client(timeout=httpx.Timeout(600.0, connect=10.0)) as client:
             with client.stream("POST", f"{base_url}/api/chat", json=payload) as response:
                 response.raise_for_status()
@@ -470,9 +486,13 @@ class AIService:
                     event = json.loads(line)
                     if event.get("error"):
                         raise RuntimeError(event["error"])
-                    delta = event.get("message", {}).get("content")
-                    if delta:
-                        yield delta
+                    msg = event.get("message", {})
+                    thinking = msg.get("thinking")
+                    if thinking:
+                        yield {"type": "reasoning", "text": thinking}
+                    content = msg.get("content")
+                    if content:
+                        yield {"type": "content", "text": content}
 
     def _stream_llamacpp(self, user_message, system_prompt, model, max_tokens: int = None):
         import httpx

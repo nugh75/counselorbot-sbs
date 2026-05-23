@@ -18,9 +18,9 @@ interface ProfileVisualizationProps {
 
 // Color per prefix (label tradotta via i18n: profile.section.<X>)
 const PREFIX_SECTION_COLOR: Record<string, string> = {
-    C: 'text-blue-700',
-    A: 'text-purple-700',
-    T: 'text-amber-700',
+    C: 'text-indigo-700',
+    A: 'text-indigo-700',
+    T: 'text-indigo-700',
 };
 
 type Translator = (key: string, vars?: Record<string, string | number>) => string;
@@ -104,13 +104,13 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
     const ztpiSegments = isZTPI ? makeZTPISegments(ztpiCode) : [];
 
     return (
-        <div className="flex items-center gap-3 py-2">
-            <div className="w-32 flex-shrink-0">
+        <div className="flex items-center gap-3 py-1">
+            <div className="w-44 flex-shrink-0">
                 <div className="flex items-center gap-2">
                     <span className="font-mono font-bold text-slate-700">{code}</span>
                     {isInverted && <span className="text-[10px] text-slate-400">↔</span>}
                 </div>
-                <div className="text-xs text-slate-500 truncate" title={factorName}>
+                <div className="text-xs text-slate-500 leading-tight break-words" title={factorName}>
                     {factorName}
                 </div>
             </div>
@@ -220,11 +220,11 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
     const gridCols = columns.length === 1 ? '' : 'md:grid-cols-2';
 
     return (
-        <div className="w-full glass-panel rounded-2xl p-6 space-y-6">
-            <h3 className="text-lg font-semibold text-center text-slate-800">{fullName}</h3>
+        <div className="w-full glass-panel rounded-lg p-4 space-y-3">
+            <h3 className="text-base font-semibold text-center text-slate-800">{fullName}</h3>
 
             {/* Legend */}
-            <div className="flex justify-center gap-6 text-xs flex-wrap">
+            <div className="flex justify-center gap-4 text-xs flex-wrap">
                 <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-green-500"></div>
                     <span className="text-slate-600">{positiveLegend}</span>
@@ -245,13 +245,13 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                 )}
             </div>
 
-            <div className={cn("grid gap-8", gridCols)}>
+            <div className={cn("grid gap-x-8 gap-y-2", gridCols)}>
                 {columns.map(({ prefix, entries }) => {
                     const sectionColor = PREFIX_SECTION_COLOR[prefix] || 'text-slate-700';
                     const sectionLabel = PREFIX_SECTION_COLOR[prefix] ? t(`profile.section.${prefix}`) : `${prefix}`;
                     return (
-                        <div key={prefix} className="space-y-1">
-                            <h4 className={cn("text-sm font-semibold mb-3 pb-2 border-b border-slate-200", sectionColor)}>
+                        <div key={prefix} className="space-y-0.5">
+                            <h4 className={cn("text-sm font-semibold mb-1 pb-1 border-b border-slate-200", sectionColor)}>
                                 {sectionLabel}
                             </h4>
                             {entries.map(([code, score]) => {

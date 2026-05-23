@@ -142,16 +142,16 @@ export function ChatInterface({ currentMode, onModeChange, scores }: ChatInterfa
     };
 
     return (
-        <div className="flex flex-col h-[600px] bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm relative">
+        <div className="flex flex-col h-[600px] bg-white rounded-lg overflow-hidden border border-slate-200 shadow-sm relative">
             {/* Header */}
             <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between z-20 relative">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-sm">
+                    <div className="w-8 h-8 rounded-md bg-indigo-600 flex items-center justify-center shadow-sm">
                         <Bot className="w-5 h-5 text-white" />
                     </div>
                     <div>
                         <h3 className="font-semibold text-sm text-slate-800">CounselorBot AI</h3>
-                        <p className="text-xs text-blue-600">{t('chat.online')}</p>
+                        <p className="text-xs text-indigo-600">{t('chat.online')}</p>
                     </div>
                 </div>
 
@@ -166,14 +166,14 @@ export function ChatInterface({ currentMode, onModeChange, scores }: ChatInterfa
                     </button>
 
                     {isMenuOpen && (
-                        <div className="absolute right-0 top-full mt-2 w-56 rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xl animate-fade-in-up z-50">
+                        <div className="absolute right-0 top-full mt-2 w-56 rounded-md bg-white border border-slate-200 overflow-hidden shadow-xl animate-fade-in-up z-50">
                             {modes.map((mode) => (
                                 <button
                                     key={mode.id}
                                     onClick={() => handleModeSwitch(mode.id)}
                                     className={cn(
                                         "w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors flex items-center gap-2",
-                                        currentMode === mode.id ? "bg-blue-50 text-blue-600 font-medium" : "text-slate-600"
+                                        currentMode === mode.id ? "bg-indigo-50 text-indigo-700 font-medium" : "text-slate-600"
                                     )}
                                 >
                                     {mode.label}
@@ -194,9 +194,9 @@ export function ChatInterface({ currentMode, onModeChange, scores }: ChatInterfa
                             </span>
                         ) : (
                             <div className={`
-                                max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm
+                                max-w-[80%] px-4 py-3 rounded-lg text-sm leading-relaxed shadow-sm
                                 ${msg.role === 'user'
-                                    ? 'bg-blue-600 text-white rounded-tr-sm'
+                                    ? 'bg-indigo-600 text-white rounded-tr-sm'
                                     : 'bg-white border border-slate-100 text-slate-800 rounded-tl-sm'}
                             `}>
                                 {msg.role === 'assistant' ? (
@@ -225,12 +225,12 @@ export function ChatInterface({ currentMode, onModeChange, scores }: ChatInterfa
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         placeholder={t('chat.placeholder')}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-full px-5 py-3 pr-12 text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none placeholder:text-slate-400"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-md px-4 py-3 pr-12 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none placeholder:text-slate-400"
                     />
                     <button
                         type="submit"
                         aria-label={t('chat.send')}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm"
                     >
                         <Send className="w-4 h-4" />
                     </button>

@@ -138,7 +138,7 @@ export default function QuestionarioPage() {
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="glass-panel p-8 rounded-2xl text-center space-y-6"
+                    className="glass-panel p-8 rounded-lg text-center space-y-6"
                 >
                     <div className="w-20 h-20 mx-auto rounded-full bg-green-100 flex items-center justify-center">
                         <CheckCircle className="w-10 h-10 text-green-600" />
@@ -149,7 +149,7 @@ export default function QuestionarioPage() {
                     </p>
                     <Link
                         href="/"
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md transition-colors"
                     >
                         <ArrowLeft className="w-4 h-4" />
                         {t('survey.backHome')}
@@ -168,8 +168,8 @@ export default function QuestionarioPage() {
             >
                 {/* Header */}
                 <div className="flex items-center gap-4">
-                    <Link href="/" className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                        <ArrowLeft className="w-6 h-6 text-slate-600" />
+                    <Link href="/" className="p-2 border border-transparent hover:border-slate-200 hover:bg-white rounded-md transition-colors">
+                        <ArrowLeft className="w-5 h-5 text-slate-600" />
                     </Link>
                     <div>
                         <h1 className="text-3xl font-bold text-slate-800">{t('survey.title')}</h1>
@@ -179,7 +179,7 @@ export default function QuestionarioPage() {
 
                 <form onSubmit={handleSubmit} className="space-y-8">
                     {/* Dati di base */}
-                    <div className="glass-panel p-6 rounded-2xl space-y-6">
+                    <div className="glass-panel p-6 rounded-lg space-y-6">
                         <h2 className="text-xl font-semibold text-slate-800">{t('survey.basic.title')}</h2>
                         <p className="text-sm text-slate-500">{t('survey.basic.sub')}</p>
 
@@ -238,7 +238,7 @@ export default function QuestionarioPage() {
                     </div>
 
                     {/* Valutazione quantitativa */}
-                    <div className="glass-panel p-6 rounded-2xl space-y-6">
+                    <div className="glass-panel p-6 rounded-lg space-y-6">
                         <h2 className="text-xl font-semibold text-slate-800">{t('survey.quant.title')}</h2>
                         <p className="text-sm text-slate-500">
                             {t('survey.quant.sub')}
@@ -257,13 +257,13 @@ export default function QuestionarioPage() {
                     </div>
 
                     {/* Consenso */}
-                    <div className="glass-panel p-6 rounded-2xl space-y-4">
+                    <div className="glass-panel p-6 rounded-lg space-y-4">
                         <label className="flex items-start gap-3 cursor-pointer">
                             <input
                                 type="checkbox"
                                 checked={consent}
                                 onChange={(e) => setConsent(e.target.checked)}
-                                className="mt-1 w-5 h-5 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                                className="mt-1 w-5 h-5 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
                             />
                             <span className="text-sm text-slate-600">
                                 {t('survey.consent')}
@@ -279,7 +279,7 @@ export default function QuestionarioPage() {
                     <button
                         type="submit"
                         disabled={isSubmitting || !consent}
-                        className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2"
+                        className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
                     >
                         {isSubmitting ? (
                             <>{t('survey.submitting')}</>
@@ -318,7 +318,7 @@ function SelectField({
             <select
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
                 <option value="">{placeholder}</option>
                 {options.map((opt) => (
@@ -349,8 +349,8 @@ function RatingField({
                         key={n}
                         type="button"
                         onClick={() => onChange(n)}
-                        className={`w-10 h-10 text-sm font-medium rounded-lg transition-colors ${value === n
-                            ? 'bg-blue-600 text-white'
+                        className={`w-10 h-10 text-sm font-medium rounded-md transition-colors ${value === n
+                            ? 'bg-indigo-600 text-white'
                             : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                             }`}
                     >

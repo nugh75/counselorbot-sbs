@@ -14,6 +14,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       - SESSION_MEMORY_DIR=/app/session_memory
+      - AI4AUTH_VERIFY_URL=${AI4AUTH_VERIFY_URL:-http://ai4auth:9091/api/verify}
     volumes:
       - ./session_memory:/app/session_memory
       - ./knowledge:/app/knowledge:ro
@@ -23,6 +24,7 @@ services:
     networks:
       - default
       - proxy-network
+      - auth-network
 
   postgres:
     image: postgres:15
@@ -58,3 +60,6 @@ networks:
   default:
   proxy-network:
     external: true
+  auth-network:
+    external: true
+    name: ai4educ-console_default

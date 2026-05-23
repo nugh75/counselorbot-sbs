@@ -10,7 +10,7 @@ import { ScoreInputForm } from '@/components/qsa/ScoreInputForm';
 import { PDFUploader } from '@/components/qsa/PDFUploader';
 import { ProfileVisualization } from '@/components/qsa/ProfileVisualization';
 import { GuidedChatInterface } from '@/components/qsa/GuidedChatInterface';
-import { ArrowLeft, MessageSquare, RotateCcw, LogOut } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ClipboardList, MessageSquare, RotateCcw, LogOut } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 
 type Step = 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed';
@@ -131,12 +131,12 @@ export default function Home() {
             {/* Header */}
             <div className="flex items-center gap-4 mb-8">
                 {step !== 'questionnaire-select' && step !== 'completed' && (
-                    <button onClick={goBack} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                        <ArrowLeft className="w-6 h-6 text-slate-600" />
+                    <button onClick={goBack} className="p-2 border border-transparent hover:border-slate-200 hover:bg-white rounded-md transition-colors">
+                        <ArrowLeft className="w-5 h-5 text-slate-600" />
                     </button>
                 )}
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-800">{getStepTitle()}</h1>
+                    <h1 className="text-3xl font-bold text-slate-900">{getStepTitle()}</h1>
                     <p className="text-slate-500">{getStepDescription()}</p>
                 </div>
 
@@ -158,11 +158,11 @@ export default function Home() {
                             <div className="flex justify-center pt-8 border-t border-slate-200/60 mt-8">
                                 <Link
                                     href="/questionario"
-                                    className="group flex items-center gap-3 px-6 py-3 bg-white hover:bg-slate-50 border border-slate-200 hover:border-blue-300 rounded-xl transition-all shadow-sm hover:shadow-md"
+                                    className="group flex items-center gap-3 px-6 py-3 bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-lg transition-colors shadow-sm"
                                 >
-                                    <span className="text-xl">📝</span>
+                                    <ClipboardList className="w-5 h-5 text-indigo-600" />
                                     <div className="text-left">
-                                        <div className="text-sm font-semibold text-slate-700 group-hover:text-blue-700 transition-colors">
+                                        <div className="text-sm font-semibold text-slate-700 group-hover:text-indigo-700 transition-colors">
                                             {t('feedback.cta.title')}
                                         </div>
                                         <div className="text-xs text-slate-500">
@@ -195,9 +195,9 @@ export default function Home() {
                             <ProfileVisualization scores={scores} questionnaire={selectedQuestionnaire} />
 
                             <div className="flex justify-center pt-8">
-                                <div className="glass-panel p-8 rounded-2xl text-center max-w-lg space-y-6">
-                                    <div className="w-16 h-16 mx-auto rounded-full bg-blue-100 flex items-center justify-center">
-                                        <MessageSquare className="w-8 h-8 text-blue-600" />
+                                <div className="glass-panel p-8 rounded-lg text-center max-w-lg space-y-6">
+                                    <div className="w-14 h-14 mx-auto rounded-md bg-indigo-50 flex items-center justify-center">
+                                        <MessageSquare className="w-7 h-7 text-indigo-600" />
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-semibold text-slate-800">{t('dashboard.ready.title')}</h3>
@@ -207,7 +207,7 @@ export default function Home() {
                                     </div>
                                     <button
                                         onClick={startInteraction}
-                                        className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+                                        className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
                                     >
                                         <MessageSquare className="w-5 h-5" />
                                         {t('dashboard.ready.btn')}
@@ -230,9 +230,9 @@ export default function Home() {
                     {/* Step: Completed - Ask for another analysis */}
                     {step === 'completed' && (
                         <div className="max-w-xl mx-auto">
-                            <div className="glass-panel p-8 rounded-2xl text-center space-y-6">
-                                <div className="w-20 h-20 mx-auto rounded-full bg-green-100 flex items-center justify-center">
-                                    <span className="text-4xl">🎉</span>
+                            <div className="glass-panel p-8 rounded-lg text-center space-y-6">
+                                <div className="w-14 h-14 mx-auto rounded-md bg-green-50 flex items-center justify-center">
+                                    <CheckCircle2 className="w-7 h-7 text-green-600" />
                                 </div>
                                 <div>
                                     <h2 className="text-2xl font-bold text-slate-800">{t('completed.title')}</h2>
@@ -246,14 +246,14 @@ export default function Home() {
                                 <div className="grid grid-cols-2 gap-4 pt-4">
                                     <button
                                         onClick={analyzeAnother}
-                                        className="py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+                                        className="py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
                                     >
                                         <RotateCcw className="w-5 h-5" />
                                         {t('completed.another')}
                                     </button>
                                     <button
                                         onClick={() => setStep('questionnaire-select')}
-                                        className="py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+                                        className="py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
                                     >
                                         <LogOut className="w-5 h-5" />
                                         {t('completed.end')}
