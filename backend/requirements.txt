@@ -12,7 +12,7 @@ python-multipart
 httpx
 openai
 anthropic
-google-generativeai
+google-genai
 mistralai
 requests
 pdf2image

@@ -130,6 +130,13 @@ export function ConfigForm() {
     const { t } = useI18n();
     const [configs, setConfigs] = useState<ConfigItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [section, setSection] = useState<string>('general');
+    const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+
+    const showToast = (type: 'success' | 'error', msg: string) => {
+        setToast({ type, msg });
+        window.setTimeout(() => setToast(null), 2500);
+    };
     const [activeProvider, setActiveProvider] = useState('openai');
     const [activeModel, setActiveModel] = useState('gpt-4o');
     const [envOverrides, setEnvOverrides] = useState<Record<string, boolean>>({});
@@ -205,15 +212,20 @@ export function ConfigForm() {
 
     // --- Config helpers ---
 
-    const handleSaveConfig = async (item: ConfigItem) => {
+    const handleSaveConfig = async (item: ConfigItem): Promise<boolean> => {
         try {
-            await fetch('/api/admin/config', {
+            const res = await fetch('/api/admin/config', {
                 method: 'POST',
                 headers: authJsonHeaders(),
                 body: JSON.stringify(item),
             });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            showToast('success', t('admin.config.saved'));
+            return true;
         } catch (error) {
             console.error('Failed to save config', error);
+            showToast('error', t('admin.config.saveError'));
+            return false;
         }
     };
 
@@ -259,9 +271,11 @@ export function ConfigForm() {
                     color_theme: step.color_theme,
                 }),
             });
-            if (!res.ok) console.error('Failed to save step');
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            showToast('success', t('admin.config.saved'));
         } catch (error) {
             console.error('Failed to save step', error);
+            showToast('error', t('admin.config.saveError'));
         }
     };
 
@@ -283,9 +297,13 @@ export function ConfigForm() {
                 setGuidedSteps(prev => [...prev, created]);
                 setNewStep({ id: '', sort_order: 0, label: '', prompt: '', system_prompt_mode: 'generic', color_theme: 'blue' });
                 setShowNewStepForm(false);
+                showToast('success', t('admin.config.saved'));
+            } else {
+                throw new Error(`HTTP ${res.status}`);
             }
         } catch (error) {
             console.error('Failed to create step', error);
+            showToast('error', t('admin.config.saveError'));
         }
     };
 
@@ -298,9 +316,13 @@ export function ConfigForm() {
             });
             if (res.ok) {
                 setGuidedSteps(prev => prev.filter(s => s.id !== stepId));
+                showToast('success', t('admin.config.deleted'));
+            } else {
+                throw new Error(`HTTP ${res.status}`);
             }
         } catch (error) {
             console.error('Failed to delete step', error);
+            showToast('error', t('admin.config.saveError'));
         }
     };
 
@@ -318,13 +340,16 @@ export function ConfigForm() {
         setGuidedSteps(newSteps);
 
         try {
-            await fetch('/api/admin/guided-steps/reorder', {
+            const res = await fetch('/api/admin/guided-steps/reorder', {
                 method: 'PATCH',
                 headers: authJsonHeaders(),
                 body: JSON.stringify(newSteps.map(s => ({ id: s.id, sort_order: s.sort_order }))),
             });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            showToast('success', t('admin.config.saved'));
         } catch (error) {
             console.error('Failed to reorder steps', error);
+            showToast('error', t('admin.config.saveError'));
         }
     };
 
@@ -399,8 +424,62 @@ export function ConfigForm() {
         amber: { border: 'border-amber-400', bg: 'bg-amber-50', title: 'text-amber-700', dot: 'bg-amber-500', ring: 'focus:ring-amber-500', subBg: 'bg-amber-100/50', subTitle: 'text-amber-600' },
     };
 
+    const questTabs = questionnaireConfigs.map((q) => ({
+        id: q.id,
+        label: q.title.split('—')[0].trim(),
+        color: q.color,
+    }));
+
     return (
         <div className="space-y-8">
+            {/* Toast feedback salvataggi */}
+            {toast && (
+                <div
+                    className={`fixed top-6 right-6 z-50 px-4 py-3 rounded-md shadow-lg text-sm font-medium border ${
+                        toast.type === 'success'
+                            ? 'bg-green-50 border-green-200 text-green-700'
+                            : 'bg-red-50 border-red-200 text-red-700'
+                    }`}
+                    role="status"
+                >
+                    {toast.msg}
+                </div>
+            )}
+
+            {/* Sub-tab nav per risorsa */}
+            <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
+                <button
+                    onClick={() => setSection('general')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
+                        section === 'general'
+                            ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                >
+                    <Server className="w-4 h-4" />
+                    {t('admin.config.section.general')}
+                </button>
+                {questTabs.map((tab) => {
+                    const c = colorMap[tab.color];
+                    return (
+                        <button
+                            key={tab.id}
+                            onClick={() => setSection(tab.id)}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
+                                section === tab.id
+                                    ? `${c.bg} ${c.border} ${c.title}`
+                                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                            }`}
+                        >
+                            <span className={`w-2.5 h-2.5 rounded-full ${c.dot}`} />
+                            {tab.label}
+                        </button>
+                    );
+                })}
+            </div>
+
+            {section === 'general' && (
+            <div className="space-y-8">
             {/* 1. Provider & Model Selection */}
             <div className="glass-panel p-6 rounded-lg space-y-6">
                 <h3 className="text-lg font-medium text-slate-900 flex items-center gap-2">
@@ -529,9 +608,11 @@ export function ConfigForm() {
                 })}
             </div>
 
-            {/* 3. Prompt e Testi — per Questionario */}
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">{t('admin.config.promptsTexts')}</h3>
-            {questionnaireConfigs.map((q) => {
+            </div>
+            )}
+
+            {/* 3. Prompt e Testi — solo questionario attivo */}
+            {questionnaireConfigs.filter((q) => q.id === section).map((q) => {
                 const c = colorMap[q.color];
                 const allKeys = [...q.systemPrompts.map(p => p.key), ...q.texts.map(t => t.key)];
                 return (
@@ -632,6 +713,7 @@ export function ConfigForm() {
             })}
 
             {/* 4. Dynamic Guided Steps */}
+            {section === 'general' && (
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
@@ -838,6 +920,7 @@ export function ConfigForm() {
                     )}
                 </div>
             </div>
+            )}
 
         </div>
     );

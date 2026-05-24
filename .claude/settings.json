@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm view *)",
+      "Bash(npm search *)",
+      "WebFetch(domain:github.com)",
+      "Bash(uv --version)",
+      "Bash(curl -LsSf https://astral.sh/uv/install.sh)",
+      "Bash(sh)",
+      "Bash(npx eslint *)",
+      "Bash(docker cp *)",
+      "Bash(grep -viE \"FutureWarning|google.generativeai|README|deprecated|warnings.warn|updates or bug|^https|^$\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:3000/admin)"
+    ]
+  }
+}

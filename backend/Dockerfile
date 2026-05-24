@@ -14,6 +14,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Create the backend package directory and copy files into it
 RUN mkdir backend
 COPY backend/*.py backend/
+COPY backend/routes/ backend/routes/
+COPY backend/tests/ backend/tests/
 COPY execution/ execution/
 COPY knowledge/ knowledge/
 

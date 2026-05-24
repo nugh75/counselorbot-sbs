@@ -3,7 +3,6 @@ import logging
 import json
 
 import anthropic
-import google.generativeai as genai
 import httpx
 from mistralai.client import Mistral
 from openai import OpenAI
@@ -12,6 +11,12 @@ from sqlalchemy.orm import Session
 from . import models
 
 logger = logging.getLogger(__name__)
+
+
+class AIError(Exception):
+    """Errore di configurazione o di chiamata al provider AI.
+    Sollevato invece di restituire stringhe d'errore come fossero risposte del bot."""
+
 
 # Prompt usato per aggiornare il riassunto rotante della sessione
 SUMMARY_SYSTEM_PROMPT = (
@@ -51,6 +56,25 @@ class AIService:
         self.ollama_keep_alive = self.config.get('ollama_keep_alive', '5m') or '5m'
         self.ollama_preload_enabled = str(self.config.get('ollama_preload', 'false')).lower() == 'true'
 
+        # Registro provider: un'unica fonte di verità per dispatch sync/stream.
+        # call_max  = default max_tokens per la chiamata bloccante (get_response)
+        # stream_max = default max_tokens per lo streaming
+        # stream    = None → il provider non ha stream incrementale (chunk unico via call)
+        # Aggiungere un provider = una voce qui + la coppia _call_/_stream_.
+        self._providers = {
+            'openai':     {'call': self._call_openai,     'stream': self._stream_openai,     'call_max': None, 'stream_max': None},
+            'anthropic':  {'call': self._call_anthropic,  'stream': self._stream_anthropic,  'call_max': 4096, 'stream_max': 4096},
+            'openrouter': {'call': self._call_openrouter, 'stream': self._stream_openrouter, 'call_max': None, 'stream_max': None},
+            'gemini':     {'call': self._call_gemini,     'stream': None,                    'call_max': None, 'stream_max': None},
+            'mistral':    {'call': self._call_mistral,    'stream': None,                    'call_max': None, 'stream_max': None},
+            'ollama':     {'call': self._call_ollama,     'stream': self._stream_ollama,     'call_max': 8000, 'stream_max': None},
+            'llamacpp':   {'call': self._call_llamacpp,   'stream': self._stream_llamacpp,   'call_max': 8000, 'stream_max': None},
+        }
+
+    def _provider(self, name: str) -> dict:
+        """Voce del registro per il provider; fallback a openai se sconosciuto."""
+        return self._providers.get(name, self._providers['openai'])
+
     def _int_config(self, key: str, default: int, minimum: int, maximum: int) -> int:
         try:
             value = int(self.config.get(key, default))
@@ -84,7 +108,6 @@ class AIService:
     def list_models(self, provider: str = None):
         """Elenca i modelli realmente serviti dal provider (endpoint OpenAI-compatibile /v1/models).
         Ritorna una lista di id stringa, vuota se il provider non è interrogabile o è irraggiungibile."""
-        import httpx
         provider = provider or self.config.get('active_provider', 'openai')
         timeout = httpx.Timeout(15.0, connect=5.0)
         try:
@@ -132,25 +155,15 @@ class AIService:
                 f"---\n\n{user_message}"
             )
         
+        entry = self._provider(provider)
+        mt = max_tokens or entry['call_max']
         try:
-            if provider == 'openai':
-                return self._call_openai(user_message, system_prompt, model_name, max_tokens=max_tokens)
-            elif provider == 'anthropic':
-                return self._call_anthropic(user_message, system_prompt, model_name, max_tokens=max_tokens or 4096)
-            elif provider == 'openrouter':
-                return self._call_openrouter(user_message, system_prompt, model_name, max_tokens=max_tokens)
-            elif provider == 'gemini':
-                return self._call_gemini(user_message, system_prompt, model_name, max_tokens=max_tokens)
-            elif provider == 'mistral':
-                return self._call_mistral(user_message, system_prompt, model_name, max_tokens=max_tokens)
-            elif provider == 'ollama':
-                return self._call_ollama(user_message, system_prompt, model_name, max_tokens=max_tokens or 8000)
-            elif provider == 'llamacpp':
-                return self._call_llamacpp(user_message, system_prompt, model_name, max_tokens=max_tokens or 8000)
-            else:
-                return self._call_openai(user_message, system_prompt, model_name, max_tokens=max_tokens)
+            return entry['call'](user_message, system_prompt, model_name, max_tokens=mt)
+        except AIError:
+            raise
         except Exception as e:
-            return f"AI Error ({provider}): {str(e)}"
+            logger.error(f"Errore chiamata AI ({provider}): {e}")
+            raise AIError(f"Errore AI ({provider}): {e}") from e
 
     # Token massimi per i riassunti (~80 parole → 120 token sono sufficienti)
     SUMMARY_MAX_TOKENS = 300
@@ -189,22 +202,7 @@ class AIService:
 
         mt = self.SUMMARY_MAX_TOKENS
         try:
-            if provider == 'openai':
-                return self._call_openai(user_msg, SUMMARY_SYSTEM_PROMPT, summary_model, max_tokens=mt)
-            elif provider == 'anthropic':
-                return self._call_anthropic(user_msg, SUMMARY_SYSTEM_PROMPT, summary_model, max_tokens=mt)
-            elif provider == 'openrouter':
-                return self._call_openrouter(user_msg, SUMMARY_SYSTEM_PROMPT, summary_model, max_tokens=mt)
-            elif provider == 'gemini':
-                return self._call_gemini(user_msg, SUMMARY_SYSTEM_PROMPT, summary_model, max_tokens=mt)
-            elif provider == 'mistral':
-                return self._call_mistral(user_msg, SUMMARY_SYSTEM_PROMPT, summary_model, max_tokens=mt)
-            elif provider == 'ollama':
-                return self._call_ollama(user_msg, SUMMARY_SYSTEM_PROMPT, summary_model, max_tokens=mt)
-            elif provider == 'llamacpp':
-                return self._call_llamacpp(user_msg, SUMMARY_SYSTEM_PROMPT, summary_model, max_tokens=mt)
-            else:
-                return self._call_openai(user_msg, SUMMARY_SYSTEM_PROMPT, summary_model, max_tokens=mt)
+            return self._provider(provider)['call'](user_msg, SUMMARY_SYSTEM_PROMPT, summary_model, max_tokens=mt)
         except Exception as e:
             logger.error(f"Errore nella generazione del riassunto: {e}")
             # Fallback: troncamento semplice
@@ -213,7 +211,7 @@ class AIService:
 
     def _call_openai(self, user_message, system_prompt, model, max_tokens: int = None):
         api_key = self._get_api_key('api_key_openai')
-        if not api_key: return "Error: OpenAI API Key not configured."
+        if not api_key: raise AIError("OpenAI API Key non configurata")
 
         client = OpenAI(api_key=api_key, timeout=600)
         kwargs = dict(
@@ -230,7 +228,7 @@ class AIService:
 
     def _call_openrouter(self, user_message, system_prompt, model, max_tokens: int = None):
         api_key = self._get_api_key('api_key_openrouter')
-        if not api_key: return "Error: OpenRouter API Key not configured."
+        if not api_key: raise AIError("OpenRouter API Key non configurata")
 
         # OpenRouter uses OpenAI Client structure with base_url
         client = OpenAI(
@@ -255,7 +253,7 @@ class AIService:
 
     def _call_anthropic(self, user_message, system_prompt, model, max_tokens: int = 4096):
         api_key = self._get_api_key('api_key_anthropic')
-        if not api_key: return "Error: Anthropic API Key not configured."
+        if not api_key: raise AIError("Anthropic API Key non configurata")
 
         client = anthropic.Anthropic(api_key=api_key, timeout=600)
         response = client.messages.create(
@@ -270,25 +268,26 @@ class AIService:
 
     def _call_gemini(self, user_message, system_prompt, model, max_tokens: int = None):
         api_key = self._get_api_key('api_key_gemini')
-        if not api_key: return "Error: Gemini API Key not configured."
+        if not api_key: raise AIError("Gemini API Key non configurata")
 
-        genai.configure(api_key=api_key)
-        gemini_model = genai.GenerativeModel(model)
+        # SDK google-genai: client per-istanza (niente stato globale come la vecchia
+        # genai.configure), timeout in millisecondi via HttpOptions.
+        from google import genai
+        from google.genai import types
 
+        client = genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=600_000))
         full_prompt = f"System: {system_prompt}\nUser: {user_message}"
-        gen_config = {}
-        if max_tokens:
-            gen_config["max_output_tokens"] = max_tokens
-        response = gemini_model.generate_content(
-            full_prompt,
-            generation_config=gen_config if gen_config else None,
-            request_options={"timeout": 600},
+        config = types.GenerateContentConfig(max_output_tokens=max_tokens) if max_tokens else None
+        response = client.models.generate_content(
+            model=model,
+            contents=full_prompt,
+            config=config,
         )
         return response.text
 
     def _call_mistral(self, user_message, system_prompt, model, max_tokens: int = None):
         api_key = self._get_api_key('api_key_mistral')
-        if not api_key: return "Error: Mistral API Key not configured."
+        if not api_key: raise AIError("Mistral API Key non configurata")
 
         client = Mistral(api_key=api_key)
         messages = [
@@ -329,7 +328,6 @@ class AIService:
 
     def _call_llamacpp(self, user_message, system_prompt, model, max_tokens: int = 8000):
         """llama.cpp / llama-server / llama-swap: endpoint OpenAI-compatibile su /v1."""
-        import httpx
         base_url = self._get_api_key('llamacpp_url') or "http://localhost:8080"
         base_url = base_url.rstrip('/')
         # accetta sia l'host nudo sia un URL che termina già con /v1
@@ -380,23 +378,14 @@ class AIService:
             )
 
         def _dispatch():
-            if provider == 'openai':
-                yield from self._stream_openai(user_message, system_prompt, model_name, max_tokens=max_tokens)
-            elif provider == 'openrouter':
-                yield from self._stream_openrouter(user_message, system_prompt, model_name, max_tokens=max_tokens)
-            elif provider == 'ollama':
-                yield from self._stream_ollama(user_message, system_prompt, model_name, max_tokens=max_tokens)
-            elif provider == 'llamacpp':
-                yield from self._stream_llamacpp(user_message, system_prompt, model_name, max_tokens=max_tokens)
-            elif provider == 'anthropic':
-                yield from self._stream_anthropic(user_message, system_prompt, model_name, max_tokens=max_tokens or 4096)
-            elif provider == 'gemini':
-                # nessuno stream incrementale: chunk unico
-                yield self._call_gemini(user_message, system_prompt, model_name, max_tokens=max_tokens)
-            elif provider == 'mistral':
-                yield self._call_mistral(user_message, system_prompt, model_name, max_tokens=max_tokens)
+            entry = self._provider(provider)
+            if entry['stream']:
+                smt = max_tokens or entry['stream_max']
+                yield from entry['stream'](user_message, system_prompt, model_name, max_tokens=smt)
             else:
-                yield self._call_openai(user_message, system_prompt, model_name, max_tokens=max_tokens)
+                # nessuno stream incrementale: chunk unico via call bloccante
+                cmt = max_tokens or entry['call_max']
+                yield entry['call'](user_message, system_prompt, model_name, max_tokens=cmt)
 
         try:
             # Normalizza: i provider possono produrre stringhe (solo testo) o dict
@@ -406,6 +395,8 @@ class AIService:
                     yield item
                 elif item:
                     yield {"type": "content", "text": item}
+        except AIError:
+            raise
         except Exception as e:
             raise RuntimeError(f"AI Error ({provider}): {str(e)}") from e
 
@@ -445,16 +436,14 @@ class AIService:
     def _stream_openai(self, user_message, system_prompt, model, max_tokens: int = None):
         api_key = self._get_api_key('api_key_openai')
         if not api_key:
-            yield "Error: OpenAI API Key not configured."
-            return
+            raise AIError("OpenAI API Key non configurata")
         client = OpenAI(api_key=api_key, timeout=600)
         yield from self._iter_chat_stream(client, model, system_prompt, user_message, max_tokens=max_tokens)
 
     def _stream_openrouter(self, user_message, system_prompt, model, max_tokens: int = None):
         api_key = self._get_api_key('api_key_openrouter')
         if not api_key:
-            yield "Error: OpenRouter API Key not configured."
-            return
+            raise AIError("OpenRouter API Key non configurata")
         client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key, timeout=600)
         # Thinking attivo -> abilita il reasoning (verra' streammato come delta separati).
         extra = {"reasoning": {"enabled": not self.disable_thinking}}
@@ -495,7 +484,6 @@ class AIService:
                         yield {"type": "content", "text": content}
 
     def _stream_llamacpp(self, user_message, system_prompt, model, max_tokens: int = None):
-        import httpx
         base_url = (self._get_api_key('llamacpp_url') or "http://localhost:8080").rstrip('/')
         if not base_url.endswith('/v1'):
             base_url = f"{base_url}/v1"
@@ -506,8 +494,7 @@ class AIService:
     def _stream_anthropic(self, user_message, system_prompt, model, max_tokens: int = 4096):
         api_key = self._get_api_key('api_key_anthropic')
         if not api_key:
-            yield "Error: Anthropic API Key not configured."
-            return
+            raise AIError("Anthropic API Key non configurata")
         client = anthropic.Anthropic(api_key=api_key, timeout=600)
         with client.messages.stream(
             model=model,
