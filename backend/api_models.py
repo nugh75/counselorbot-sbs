@@ -21,6 +21,17 @@ class ChatRequest(schemas.BaseModel):
 class QsaAuditRequest(schemas.BaseModel):
     scores: dict
     session_id: str
+    questionnaire_type: str = "QSA"
+
+
+class MemoryEventRequest(schemas.BaseModel):
+    session_id: str
+    questionnaire_type: str
+    language: Optional[str] = None
+    phase: str
+    step_label: Optional[str] = None
+    completed_step: bool = False
+    user_message: str = ""
 
 
 class TTSRequest(schemas.BaseModel):

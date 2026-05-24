@@ -127,3 +127,30 @@ class StrategyFeedbackCreate(BaseModel):
     phase: Optional[str] = None
     language: Optional[str] = None
     helpful: bool
+
+
+# QuestionnaireResult
+class QuestionnaireResultCreate(BaseModel):
+    session_id: str
+    questionnaire_type: str
+    scores: Optional[Dict[str, Any]] = None
+
+
+class QuestionnaireResultResponse(BaseModel):
+    id: int
+    session_id: str
+    questionnaire_type: str
+    scores: Optional[Union[Dict[str, Any], str]] = None
+    submitted_at: datetime
+
+    @validator('scores', pre=True)
+    def parse_scores(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except (ValueError, TypeError):
+                return {"raw": v}
+        return v
+
+    class Config:
+        from_attributes = True

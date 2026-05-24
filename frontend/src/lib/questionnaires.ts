@@ -42,6 +42,19 @@ const QSA_FACTOR_DEFINITIONS: FactorDefinition[] = [
     { code: 'A7', name: 'Interferenze emotive', description: 'Emozioni che disturbano', lowLabel: 'Forza', midLabel: 'Normale', highLabel: 'Area di crescita' },
 ];
 
+// QSAr codes carry an "r" suffix to avoid collisions with QSA factors
+// that use the same base code with a different construct or direction.
+const QSAR_FACTOR_DEFINITIONS: FactorDefinition[] = [
+    { code: 'C1r', name: 'Strategie elaborative per comprendere e ricordare', description: 'Elaborazione e collegamento delle informazioni', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+    { code: 'C2r', name: 'Strategie autoregolative', description: 'Organizzazione e controllo del proprio studio', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+    { code: 'C3r', name: 'Strategie grafiche e organizzatori semantici', description: 'Uso di schemi, mappe, grafici e sintesi visive', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+    { code: 'C4r', name: 'Carenza nel controllo dell\'attenzione', description: 'Distrazione e difficoltà a mantenere il focus', lowLabel: 'Forza', midLabel: 'Normale', highLabel: 'Area di crescita' },
+    { code: 'A1r', name: 'Ansietà e controllo delle emozioni', description: 'Interferenza dell\'ansia nelle prove scolastiche', lowLabel: 'Forza', midLabel: 'Normale', highLabel: 'Area di crescita' },
+    { code: 'A2r', name: 'Volizione', description: 'Impegno e perseveranza nello studio', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+    { code: 'A3r', name: 'Attribuzioni causali', description: 'Lettura delle cause di successo e insuccesso', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+    { code: 'A4r', name: 'Percezione di competenza', description: 'Fiducia nelle proprie capacità di riuscire', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+];
+
 // Placeholder factor definitions for other questionnaires
 const PLACEHOLDER_FACTORS: FactorDefinition[] = [
     { code: 'F1', name: 'Fattore 1', description: 'Da definire', lowLabel: 'Basso', midLabel: 'Medio', highLabel: 'Alto' },
@@ -77,8 +90,8 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         fullName: 'Questionario sulle Strategie di Apprendimento - Ridotto',
         description: 'Versione ridotta del QSA per valutazioni rapide',
         factorPrefix: ['C', 'A'],
-        factors: PLACEHOLDER_FACTORS,
-        invertedFactors: [],
+        factors: QSAR_FACTOR_DEFINITIONS,
+        invertedFactors: ['C4r', 'A1r'],
         color: 'bg-sky-500',
         icon: '📋',
     },

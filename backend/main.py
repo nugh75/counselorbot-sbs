@@ -16,6 +16,7 @@ from .prompt_config import (
     DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTERVIEW,
     DEFAULT_SYSTEM_PROMPT_SAVICKAS_SUMMARY,
     DEFAULT_GUIDED_STEPS,
+    DEFAULT_QSAR_GUIDED_STEPS,
     DEFAULT_ZTPI_GUIDED_STEPS,
     DEFAULT_SAVICKAS_GUIDED_STEPS,
 )
@@ -31,6 +32,7 @@ from .routes import memory as memory_routes
 from .ai_service import AIService, AIError  # noqa: F401
 from .chat_logic import (  # noqa: F401
     _is_qsa,
+    _is_strategy_questionnaire,
     _clamp_max_tokens,
     _should_sanitize_ztpi_text,
     strip_markdown,
@@ -155,6 +157,15 @@ def _seed_and_migrate():
         if qsa_count == 0:
             for step_def in DEFAULT_GUIDED_STEPS:
                 db.add(models.GuidedStep(**{**step_def, "questionnaire_type": "QSA"}))
+            db.commit()
+
+        # Seed QSAr guided steps if none exist for QSAr
+        qsar_count = db.query(models.GuidedStep).filter(
+            models.GuidedStep.questionnaire_type == "QSAr"
+        ).count()
+        if qsar_count == 0:
+            for step_def in DEFAULT_QSAR_GUIDED_STEPS:
+                db.add(models.GuidedStep(**step_def))
             db.commit()
 
         # Seed ZTPI guided steps if none exist for ZTPI

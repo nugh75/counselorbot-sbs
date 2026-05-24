@@ -58,6 +58,45 @@ DEFAULT_GUIDED_TEXT_CONCLUSION = (
     "Clicca sul pulsante in basso per tornare alla Home Page."
 )
 
+# --- QSAr System Prompts ---
+
+DEFAULT_SYSTEM_PROMPT_QSAR_FACTOR = (
+    "Sei CounselorBot, esperto QSAr (Questionario sulle Strategie di Apprendimento - Ridotto). "
+    "Analizza i risultati fattore per fattore, usa un tono chiaro e professionale, evita diagnosi "
+    "e fornisci osservazioni utili e concrete in italiano. "
+    "Sei in una sequenza di analisi strutturata gia avviata: NON usare saluti iniziali. "
+    "Inizia direttamente con l'analisi richiesta."
+)
+
+DEFAULT_SYSTEM_PROMPT_QSAR_FACTOR_QA = (
+    "Sei CounselorBot, esperto QSAr, nella fase di approfondimento di uno step di analisi gia svolto. "
+    "Rispondi alla domanda dello studente in modo puntuale e conciso, commentando soltanto i fattori "
+    "gia discussi e pertinenti alla domanda. Non produrre tabelle salvo richiesta esplicita, "
+    "non ri-analizzare l'intero profilo e non anticipare altri step. Non usare saluti iniziali."
+)
+
+DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL = (
+    "Sei CounselorBot, esperto QSAr. Fornisci un'analisi integrata dei fattori ridotti del metodo "
+    "di studio, collegando i risultati pertinenti e proponendo indicazioni pratiche in italiano. "
+    "Evita diagnosi e non usare saluti iniziali. Inizia direttamente con l'analisi richiesta."
+)
+
+DEFAULT_SYSTEM_PROMPT_QSAR_GENERIC = (
+    "Sei CounselorBot, assistente esperto nell'analisi del QSAr (Questionario sulle Strategie "
+    "di Apprendimento - Ridotto). Rispondi in italiano in modo chiaro, non diagnostico e "
+    "orientato a suggerimenti pratici, riferendoti al profilo QSAr fornito."
+)
+
+DEFAULT_GUIDED_TEXT_QSAR_QUESTIONS_INTRO = (
+    "Abbiamo completato l'analisi strutturata del tuo profilo QSAr. "
+    "Ora puoi farmi qualsiasi domanda libera sui risultati o chiedere consigli specifici."
+)
+
+DEFAULT_GUIDED_TEXT_QSAR_CONCLUSION = (
+    "Hai completato il percorso di analisi del QSAr. "
+    "Clicca sul pulsante in basso per tornare alla Home Page."
+)
+
 
 # --- ZTPI System Prompts ---
 
@@ -201,6 +240,30 @@ SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
         "default": DEFAULT_SYSTEM_PROMPT_GENERIC,
     },
     {
+        "key": "prompt_qsar_factor",
+        "label": "Prompt QSAr Analisi Fattori",
+        "description": "Prompt di sistema per l'analisi fattori QSAr",
+        "default": DEFAULT_SYSTEM_PROMPT_QSAR_FACTOR,
+    },
+    {
+        "key": "prompt_qsar_second_level",
+        "label": "Prompt QSAr Secondo Livello",
+        "description": "Prompt di sistema per l'analisi integrata QSAr",
+        "default": DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL,
+    },
+    {
+        "key": "prompt_qsar_factor_qa",
+        "label": "Prompt QSAr Domanda di Approfondimento",
+        "description": "Prompt per le domande in-step del percorso QSAr",
+        "default": DEFAULT_SYSTEM_PROMPT_QSAR_FACTOR_QA,
+    },
+    {
+        "key": "prompt_qsar_generic",
+        "label": "Prompt QSAr Chat Generica",
+        "description": "Prompt di sistema per le domande libere sul QSAr",
+        "default": DEFAULT_SYSTEM_PROMPT_QSAR_GENERIC,
+    },
+    {
         "key": "prompt_ztpi_factor",
         "label": "Prompt ZTPI Analisi Fattori",
         "description": "Prompt di sistema per l'analisi fattori ZTPI",
@@ -263,6 +326,18 @@ GUIDED_STATIC_TEXT_DEFINITIONS: List[Dict[str, str]] = [
         "default": DEFAULT_GUIDED_TEXT_CONCLUSION,
     },
     {
+        "key": "text_qsar_questions_intro",
+        "label": "QSAr - Messaggio intro fase Domande",
+        "description": "Messaggio introduttivo della fase domande per QSAr",
+        "default": DEFAULT_GUIDED_TEXT_QSAR_QUESTIONS_INTRO,
+    },
+    {
+        "key": "text_qsar_conclusion",
+        "label": "QSAr - Messaggio Conclusione",
+        "description": "Messaggio statico finale della guided chat QSAr",
+        "default": DEFAULT_GUIDED_TEXT_QSAR_CONCLUSION,
+    },
+    {
         "key": "text_ztpi_questions_intro",
         "label": "ZTPI - Messaggio intro fase Domande",
         "description": "Messaggio introduttivo della fase domande per ZTPI",
@@ -311,6 +386,10 @@ MODE_TO_SYSTEM_PROMPT_KEY: Dict[str, str] = {
     "factor-qa": "prompt_factor_qa",
     "second-level": "prompt_second_level",
     "generic": "prompt_generic",
+    "qsar-factor": "prompt_qsar_factor",
+    "qsar-factor-qa": "prompt_qsar_factor_qa",
+    "qsar-second-level": "prompt_qsar_second_level",
+    "qsar-generic": "prompt_qsar_generic",
     "ztpi-factor": "prompt_ztpi_factor",
     "ztpi-btp": "prompt_ztpi_btp",
     "savickas-interview": "prompt_savickas_interview",
@@ -433,6 +512,93 @@ DEFAULT_GUIDED_STEPS: List[Dict] = [
         ),
         "system_prompt_mode": "second-level",
         "color_theme": "teal",
+    },
+]
+
+DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
+    {
+        "id": "qsar-cognitive",
+        "sort_order": 1,
+        "label": "1. Fattori Cognitivi",
+        "prompt": (
+            "Analizza SOLO i fattori cognitivi del mio profilo QSAr: C1r, C2r, C3r e C4r. "
+            "Per ciascuno indica punteggio, interpretazione e breve commento pratico."
+        ),
+        "system_prompt_mode": "qsar-factor",
+        "color_theme": "blue",
+        "questionnaire_type": "QSAr",
+    },
+    {
+        "id": "qsar-affective",
+        "sort_order": 2,
+        "label": "2. Fattori Affettivi",
+        "prompt": (
+            "Analizza SOLO i fattori affettivi del mio profilo QSAr: A1r, A2r, A3r e A4r. "
+            "Per ciascuno indica punteggio, interpretazione e breve commento pratico."
+        ),
+        "system_prompt_mode": "qsar-factor",
+        "color_theme": "purple",
+        "questionnaire_type": "QSAr",
+    },
+    {
+        "id": "qsar-processing",
+        "sort_order": 3,
+        "label": "3. Elaborazione e Organizzazione",
+        "prompt": (
+            "Analizza insieme C1r (strategie elaborative) e C3r (strategie grafiche e "
+            "organizzatori semantici), valutando come lo studente comprende e ricorda."
+        ),
+        "system_prompt_mode": "qsar-second-level",
+        "color_theme": "indigo",
+        "questionnaire_type": "QSAr",
+    },
+    {
+        "id": "qsar-selfcontrol",
+        "sort_order": 4,
+        "label": "4. Autoregolazione e Attenzione",
+        "prompt": (
+            "Analizza insieme C2r (strategie autoregolative) e C4r (carenza nel controllo "
+            "dell'attenzione), rispettando la direzione inversa di C4r."
+        ),
+        "system_prompt_mode": "qsar-second-level",
+        "color_theme": "teal",
+        "questionnaire_type": "QSAr",
+    },
+    {
+        "id": "qsar-motivation",
+        "sort_order": 5,
+        "label": "5. Motivazione e Competenza",
+        "prompt": (
+            "Analizza insieme A2r (volizione) e A4r (percezione di competenza), "
+            "valutando impegno e fiducia nelle proprie capacita."
+        ),
+        "system_prompt_mode": "qsar-second-level",
+        "color_theme": "pink",
+        "questionnaire_type": "QSAr",
+    },
+    {
+        "id": "qsar-emotions",
+        "sort_order": 6,
+        "label": "6. Gestione Emotiva",
+        "prompt": (
+            "Analizza A1r (ansieta e controllo delle emozioni), rispettando la sua "
+            "direzione inversa e proponendo suggerimenti pratici non diagnostici."
+        ),
+        "system_prompt_mode": "qsar-second-level",
+        "color_theme": "rose",
+        "questionnaire_type": "QSAr",
+    },
+    {
+        "id": "qsar-attributions",
+        "sort_order": 7,
+        "label": "7. Attribuzioni Causali",
+        "prompt": (
+            "Analizza A3r (attribuzioni causali) e spiega in modo pratico come la lettura "
+            "di successi e difficolta puo sostenere lo studio."
+        ),
+        "system_prompt_mode": "qsar-second-level",
+        "color_theme": "orange",
+        "questionnaire_type": "QSAr",
     },
 ]
 

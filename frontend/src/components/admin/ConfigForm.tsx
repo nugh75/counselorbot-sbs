@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Save, Server, Cpu, Plus, Trash2, ChevronUp, ChevronDown, Palette, RefreshCw } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 
@@ -97,6 +98,9 @@ const SYSTEM_PROMPT_MODES = [
     { value: 'factor', label: 'Analisi Fattori' },
     { value: 'second-level', label: 'Secondo Livello' },
     { value: 'generic', label: 'Generica' },
+    { value: 'qsar-factor', label: 'QSAr Analisi Fattori' },
+    { value: 'qsar-second-level', label: 'QSAr Secondo Livello' },
+    { value: 'qsar-generic', label: 'QSAr Generica' },
 ];
 
 const COLOR_THEMES = [
@@ -402,6 +406,7 @@ export function ConfigForm() {
     const questionnaireConfigs = [
         {
             id: 'qsa',
+            questionnaireType: 'QSA',
             title: 'QSA — Questionario Strategie di Apprendimento',
             color: 'blue' as const,
             systemPrompts: [
@@ -419,7 +424,24 @@ export function ConfigForm() {
             ],
         },
         {
+            id: 'qsar',
+            questionnaireType: 'QSAr',
+            title: 'QSAr — Questionario Strategie di Apprendimento Ridotto',
+            color: 'sky' as const,
+            systemPrompts: [
+                { key: 'prompt_qsar_factor', label: 'Prompt Analisi Fattori' },
+                { key: 'prompt_qsar_second_level', label: 'Prompt Secondo Livello' },
+                { key: 'prompt_qsar_factor_qa', label: 'Prompt Approfondimento' },
+                { key: 'prompt_qsar_generic', label: 'Prompt Chat Generica' },
+            ],
+            texts: [
+                { key: 'text_qsar_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
+                { key: 'text_qsar_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
+            ],
+        },
+        {
             id: 'ztpi',
+            questionnaireType: 'ZTPI',
             title: 'ZTPI — Zimbardo Time Perspective Inventory',
             color: 'emerald' as const,
             systemPrompts: [
@@ -433,6 +455,7 @@ export function ConfigForm() {
         },
         {
             id: 'savickas',
+            questionnaireType: 'SAVICKAS',
             title: 'Savickas — Career Construction Interview',
             color: 'amber' as const,
             systemPrompts: [
@@ -448,6 +471,7 @@ export function ConfigForm() {
 
     const colorMap = {
         blue: { border: 'border-blue-400', bg: 'bg-blue-50', title: 'text-blue-700', dot: 'bg-blue-500', ring: 'focus:ring-blue-500', subBg: 'bg-blue-100/50', subTitle: 'text-blue-600' },
+        sky: { border: 'border-sky-400', bg: 'bg-sky-50', title: 'text-sky-700', dot: 'bg-sky-500', ring: 'focus:ring-sky-500', subBg: 'bg-sky-100/50', subTitle: 'text-sky-600' },
         emerald: { border: 'border-emerald-400', bg: 'bg-emerald-50', title: 'text-emerald-700', dot: 'bg-emerald-500', ring: 'focus:ring-emerald-500', subBg: 'bg-emerald-100/50', subTitle: 'text-emerald-600' },
         amber: { border: 'border-amber-400', bg: 'bg-amber-50', title: 'text-amber-700', dot: 'bg-amber-500', ring: 'focus:ring-amber-500', subBg: 'bg-amber-100/50', subTitle: 'text-amber-600' },
     };
@@ -460,10 +484,11 @@ export function ConfigForm() {
 
     return (
         <div className="space-y-8">
-            {/* Toast feedback salvataggi */}
-            {toast && (
+            {/* Toast feedback salvataggi — portal su body: evita l'antenato con transform
+                (animate-fade-in-up) che altrimenti intrappola il position:fixed. */}
+            {toast && typeof document !== 'undefined' && createPortal(
                 <div
-                    className={`fixed top-6 right-6 z-50 px-4 py-3 rounded-md shadow-lg text-sm font-medium border ${
+                    className={`fixed top-6 right-6 z-[100] px-4 py-3 rounded-md shadow-lg text-sm font-medium border ${
                         toast.type === 'success'
                             ? 'bg-green-50 border-green-200 text-green-700'
                             : 'bg-red-50 border-red-200 text-red-700'
@@ -471,7 +496,8 @@ export function ConfigForm() {
                     role="status"
                 >
                     {toast.msg}
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Sub-tab nav per risorsa */}
@@ -751,7 +777,7 @@ export function ConfigForm() {
 
             {/* 4. Dynamic Guided Steps — per questionario attivo */}
             {section !== 'general' && (() => {
-            const qType = section.toUpperCase();
+            const qType = questionnaireConfigs.find((q) => q.id === section)?.questionnaireType || section.toUpperCase();
             const sectionSteps = guidedSteps
                 .filter(s => s.questionnaire_type === qType)
                 .sort((a, b) => a.sort_order - b.sort_order);

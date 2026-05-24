@@ -3,8 +3,7 @@
 import { Send, Bot, ChevronRight, CheckCircle2, Loader2, BarChart3, Volume2, Square, Home, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { QSAFactorCode, QSA_FACTORS, analyzeScore } from '@/lib/qsa-model';
-import { ZTPIFactorCode, ZTPI_FACTORS, analyzeZTPIScore, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
+import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
 import { QUESTIONNAIRES } from '@/lib/questionnaires';
 import { streamChat } from '@/lib/chat-stream';
 import ReactMarkdown from 'react-markdown';
@@ -29,6 +28,7 @@ interface GuidedChatInterfaceProps {
     questionnaireType: string;
     onComplete: () => void;
     sessionId: string;
+    scoresContextOverride?: string;
 }
 
 interface ChatMessage {
@@ -229,19 +229,22 @@ function buildScoresFormatter(
         };
     }
 
-    // QSA: ogni codice arriva al modello gia accompagnato dal nome del fattore.
+    // QSA and QSAr: every code is paired with its instrument-specific factor name.
     return (scores: Record<string, number>): string => {
+        const config = QUESTIONNAIRES[questionnaireType as keyof typeof QUESTIONNAIRES];
+        const label = questionnaireType === 'QSAr' ? 'QSAr' : 'QSA';
+        const fallbackName = (code: string) => config?.factors.find((factor) => factor.code === code)?.name || code;
         const cog = Object.entries(scores)
             .filter(([k]) => k.startsWith('C'))
             .sort(([a], [b]) => a.localeCompare(b))
-            .map(([code, value]) => `- ${code} (${factorName(code, QSA_FACTORS[code as QSAFactorCode]?.name || code)}): ${value}/9`)
+            .map(([code, value]) => `- ${code} (${factorName(code, fallbackName(code))}): ${value}/9`)
             .join('\n');
         const aff = Object.entries(scores)
             .filter(([k]) => k.startsWith('A'))
             .sort(([a], [b]) => a.localeCompare(b))
-            .map(([code, value]) => `- ${code} (${factorName(code, QSA_FACTORS[code as QSAFactorCode]?.name || code)}): ${value}/9`)
+            .map(([code, value]) => `- ${code} (${factorName(code, fallbackName(code))}): ${value}/9`)
             .join('\n');
-        return `PROFILO QSA DELLO STUDENTE:\n\nFattori cognitivi:\n${cog}\n\nFattori affettivi:\n${aff}`;
+        return `PROFILO ${label} DELLO STUDENTE:\n\nFattori cognitivi:\n${cog}\n\nFattori affettivi:\n${aff}`;
     };
 }
 
@@ -322,7 +325,7 @@ const markdownComponents: Components = {
 
 // --- Main Component ---
 
-export function GuidedChatInterface({ scores, questionnaireType, onComplete, sessionId }: GuidedChatInterfaceProps) {
+export function GuidedChatInterface({ scores, questionnaireType, onComplete, sessionId, scoresContextOverride }: GuidedChatInterfaceProps) {
     const router = useRouter();
     const { t, tf, lang } = useI18n();
     const [steps, setSteps] = useState<StepDef[]>([]);
@@ -504,6 +507,27 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         return getStepDef(phaseId)?.label || phaseId;
     };
 
+    const recordMemoryEvent = async (phaseId: string, completedStep: boolean, userMessage = '') => {
+        if (!sessionId || !phaseId) return;
+        try {
+            await fetch('/api/memory/event', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    session_id: sessionId,
+                    questionnaire_type: questionnaireType,
+                    language: lang,
+                    phase: phaseId,
+                    step_label: getPhaseLabel(phaseId),
+                    completed_step: completedStep,
+                    user_message: userMessage,
+                }),
+            });
+        } catch {
+            // A memory update must not block the counseling workflow.
+        }
+    };
+
     const getPhaseColors = (phaseId: string) => {
         if (phaseId === FIXED_QUESTIONS_ID) return QUESTIONS_COLOR;
         if (phaseId === FIXED_CONCLUSION_ID) return CONCLUSION_COLOR;
@@ -531,15 +555,19 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
         if (currentPhase === FIXED_QUESTIONS_ID) {
             setLastAnalysisFailed(false);
-            setMessages(prev => [...prev, {
-                role: 'system',
-                content: questionsBanner,
-            }, {
-                role: 'assistant',
-                content: questionsIntro,
-            }]);
+            void recordMemoryEvent(currentPhase, false);
+            const phaseMessages: ChatMessage[] = [];
+            if (scoresContextOverride) {
+                phaseMessages.push({
+                    role: 'system',
+                    content: `CONTESTO PROFILI COMBINATI:\n${scoresContextOverride}`,
+                });
+            }
+            phaseMessages.push({ role: 'system', content: questionsBanner }, { role: 'assistant', content: questionsIntro });
+            setMessages(prev => [...prev, ...phaseMessages]);
         } else if (currentPhase === FIXED_CONCLUSION_ID) {
             setLastAnalysisFailed(false);
+            void recordMemoryEvent(currentPhase, true);
             setMessages(prev => [...prev, {
                 role: 'assistant',
                 content: conclusionText,
@@ -562,7 +590,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         }
 
         try {
-            const scoresContext = formatScoresForPrompt(scores);
+            const scoresContext = scoresContextOverride ?? formatScoresForPrompt(scores);
             const buildPayload = (forceInlinePrompt: boolean) => {
                 if (forceInlinePrompt && step.prompt) {
                     return {
@@ -625,7 +653,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 const allowAutoAdvanceOnGenerate =
                     questionnaireType !== 'SAVICKAS' || step.id === 'savickas-final';
                 if (shouldAdvance && allowAutoAdvanceOnGenerate) {
-                    advancePhase();
+                    await advancePhase();
                 }
             } else if (streamOk) {
                 // Stream ok ma nessun testo di risposta (es. reasoning ha esaurito il budget):
@@ -661,15 +689,21 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const resolveInteractiveMode = (): string => {
         if (isAnalysisStep(currentPhase)) {
             const stepMode = getStepDef(currentPhase)?.system_prompt_mode || 'generic';
-            // QSA: una domanda di approfondimento NON deve ri-generare l'analisi
+            // Strategy questionnaires: a follow-up should not re-generate the full analysis.
             // (tabella + tutti i fattori). Prompt discorsivo e mirato.
             if (questionnaireType === 'QSA' && (stepMode === 'factor' || stepMode === 'second-level')) {
                 return 'factor-qa';
+            }
+            if (questionnaireType === 'QSAr' && (stepMode === 'qsar-factor' || stepMode === 'qsar-second-level')) {
+                return 'qsar-factor-qa';
             }
             return stepMode;
         }
         if (questionnaireType === 'SAVICKAS') {
             return 'savickas-interview';
+        }
+        if (questionnaireType === 'QSAr') {
+            return 'qsar-generic';
         }
         return 'generic';
     };
@@ -693,7 +727,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 role: 'assistant',
                 content: t('guided.pattoAck'),
             }]);
-            advancePhase();
+            await advancePhase(userMessage);
             return;
         }
 
@@ -725,17 +759,21 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             };
             const dropLast = () => setMessages(prev => prev.slice(0, -1));
 
+            const chatPayload: Record<string, unknown> = {
+                message: effectiveMessage,
+                memory_message: userMessage,
+                mode: resolveInteractiveMode(),
+                phase: isAnalysisStep(currentPhase) ? currentPhase : undefined,
+                session_id: sessionId,
+                questionnaire_type: questionnaireType,
+                language: lang,
+                max_tokens: 900,
+            };
+            if (scoresContextOverride) {
+                chatPayload.scores_context = scoresContextOverride;
+            }
             const result = await streamChat(
-                {
-                    message: effectiveMessage,
-                    memory_message: userMessage,
-                    mode: resolveInteractiveMode(),
-                    phase: isAnalysisStep(currentPhase) ? currentPhase : undefined,
-                    session_id: sessionId,
-                    questionnaire_type: questionnaireType,
-                    language: lang,
-                    max_tokens: 900,
-                },
+                chatPayload,
                 (full) => updateLast(full),
                 controller.signal,
                 (r) => updateReasoning(r),
@@ -756,7 +794,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 if (questionnaireType === 'SAVICKAS' && currentPhase !== 'savickas-final') {
                     setShowAdvanceSuggestion(true);
                 } else {
-                    advancePhase();
+                    await advancePhase();
                 }
             }
         } catch {
@@ -770,8 +808,9 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         }
     };
 
-    const advancePhase = () => {
+    const advancePhase = async (userMessage = '') => {
         setShowAdvanceSuggestion(false);
+        await recordMemoryEvent(currentPhase, true, userMessage);
         const currentIndex = phases.indexOf(currentPhase);
         if (currentIndex < phases.length - 1) {
             setCurrentPhase(phases[currentIndex + 1]);
@@ -886,7 +925,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
                     {currentPhase !== FIXED_CONCLUSION_ID && questionnaireType !== 'SAVICKAS' && (
                         <button
-                            onClick={advancePhase}
+                            onClick={() => void advancePhase()}
                             disabled={isLoading}
                             className="w-full mt-2 py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-md transition-colors flex items-center justify-center gap-1 disabled:opacity-50 shadow-sm"
                         >
@@ -897,7 +936,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
                     {currentPhase !== FIXED_CONCLUSION_ID && questionnaireType === 'SAVICKAS' && (showAdvanceSuggestion || userMessagesInPhase >= 3) && (
                         <button
-                            onClick={advancePhase}
+                            onClick={() => void advancePhase()}
                             disabled={isLoading}
                             className="w-full mt-2 py-2.5 px-3 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1 disabled:opacity-50 shadow-sm"
                         >

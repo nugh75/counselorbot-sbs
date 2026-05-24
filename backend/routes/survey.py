@@ -1,11 +1,13 @@
 """Endpoint survey + feedback strategie (pubblici e admin)."""
-from typing import List
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from .. import models, schemas, auth, database
 from ..strategy_memory import strategy_memory
+from ..pdf_generator import generate_questionnaire_pdf
 
 router = APIRouter()
 get_db = database.get_db
@@ -67,3 +69,62 @@ async def strategy_feedback_summary(current_user: models.User = Depends(auth.get
         row = totals.setdefault(feedback.strategy_id, {"strategy_id": feedback.strategy_id, "positive": 0, "negative": 0})
         row["positive" if feedback.helpful else "negative"] += 1
     return sorted(totals.values(), key=lambda row: (row["positive"] - row["negative"]), reverse=True)
+
+
+@router.post("/questionnaire-result", response_model=schemas.QuestionnaireResultResponse)
+async def submit_questionnaire_result(
+    result: schemas.QuestionnaireResultCreate,
+    db: Session = Depends(get_db),
+):
+    """Salva i risultati di un questionario completato (endpoint pubblico)."""
+    db_result = models.QuestionnaireResult(**result.model_dump())
+    db.add(db_result)
+    db.commit()
+    db.refresh(db_result)
+    return db_result
+
+
+@router.get("/admin/questionnaire-results", response_model=List[schemas.QuestionnaireResultResponse])
+async def get_questionnaire_results(
+    skip: int = 0,
+    limit: int = 100,
+    questionnaire_type: Optional[str] = Query(None, description="Filtra per tipo (QSA, QSAr, ZTPI, SAVICKAS)"),
+    current_user: dict = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Recupera i risultati dei questionari (solo admin)."""
+    q = db.query(models.QuestionnaireResult)
+    if questionnaire_type:
+        q = q.filter(models.QuestionnaireResult.questionnaire_type == questionnaire_type)
+    results = q.order_by(models.QuestionnaireResult.submitted_at.desc()).offset(skip).limit(limit).all()
+    return results
+
+
+@router.get("/questionnaire-result/{session_id}/pdf")
+async def download_questionnaire_pdf(
+    session_id: str,
+    db: Session = Depends(get_db),
+):
+    """Scarica il PDF con i risultati del questionario per una sessione."""
+    result = db.query(models.QuestionnaireResult).filter(
+        models.QuestionnaireResult.session_id == session_id
+    ).first()
+    if not result:
+        raise HTTPException(status_code=404, detail="Risultato non trovato per questa sessione")
+
+    scores = result.scores if isinstance(result.scores, dict) else {}
+    submitted_str = str(result.submitted_at) if result.submitted_at else None
+
+    pdf_bytes = generate_questionnaire_pdf(
+        questionnaire_type=result.questionnaire_type,
+        scores=scores,
+        session_id=result.session_id,
+        submitted_at=submitted_str,
+    )
+
+    filename = f"counselorbot_{result.questionnaire_type}_{result.id}.pdf"
+    return Response(
+        content=pdf_bytes.read(),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

@@ -16,3 +16,4 @@ google-genai
 mistralai
 requests
 pdf2image
+fpdf2

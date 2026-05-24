@@ -206,7 +206,7 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
     const isZTPI = questionnaire.id === 'ZTPI';
     const positiveLegend = isZTPI ? t('profile.legend.ztpiPositive') : t('profile.strength');
     const midLegend = isZTPI ? t('profile.legend.ztpiMid') : t('profile.legend.midDefault');
-    const isActiveQ = ['QSA', 'ZTPI', 'SAVICKAS'].includes(questionnaire.id);
+    const isActiveQ = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS'].includes(questionnaire.id);
     const fullName = isActiveQ ? t(`q.${questionnaire.id}.fullName`) : questionnaire.fullName;
 
     // Group factors by prefix

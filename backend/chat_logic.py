@@ -18,6 +18,7 @@ from .api_models import ChatRequest
 from .prompt_config import (
     DEFAULT_SYSTEM_PROMPT_GENERIC,
     DEFAULT_GUIDED_STEPS,
+    DEFAULT_QSAR_GUIDED_STEPS,
     DEFAULT_ZTPI_GUIDED_STEPS,
     DEFAULT_SAVICKAS_GUIDED_STEPS,
     GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
@@ -41,6 +42,7 @@ def _ensure_questionnaire_guided_steps(db, questionnaire_type: str) -> None:
     """Ensure default guided steps exist for the requested questionnaire."""
     defaults_by_type = {
         "QSA": DEFAULT_GUIDED_STEPS,
+        "QSAr": DEFAULT_QSAR_GUIDED_STEPS,
         "ZTPI": DEFAULT_ZTPI_GUIDED_STEPS,
         "SAVICKAS": DEFAULT_SAVICKAS_GUIDED_STEPS,
     }
@@ -159,10 +161,74 @@ _QSA_FACTOR_NAMES = {
     },
 }
 
+_QSAR_FACTOR_NAMES = {
+    "it": {
+        "C1r": "Strategie elaborative per comprendere e ricordare",
+        "C2r": "Strategie autoregolative",
+        "C3r": "Strategie grafiche e organizzatori semantici",
+        "C4r": "Carenza nel controllo dell'attenzione",
+        "A1r": "Ansietà e controllo delle emozioni",
+        "A2r": "Volizione",
+        "A3r": "Attribuzioni causali",
+        "A4r": "Percezione di competenza",
+    },
+    "en": {
+        "C1r": "Elaborative strategies for understanding and remembering",
+        "C2r": "Self-regulated strategies",
+        "C3r": "Graphic strategies and semantic organisers",
+        "C4r": "Lack of attention control",
+        "A1r": "Anxiety and emotional control",
+        "A2r": "Volition",
+        "A3r": "Causal attributions",
+        "A4r": "Perceived competence",
+    },
+    "es": {
+        "C1r": "Estrategias elaborativas para comprender y recordar",
+        "C2r": "Estrategias autorregulativas",
+        "C3r": "Estrategias gráficas y organizadores semánticos",
+        "C4r": "Falta de control de la atención",
+        "A1r": "Ansiedad y control de las emociones",
+        "A2r": "Volición",
+        "A3r": "Atribuciones causales",
+        "A4r": "Percepción de competencia",
+    },
+    "fr": {
+        "C1r": "Stratégies élaboratives pour comprendre et mémoriser",
+        "C2r": "Stratégies autorégulées",
+        "C3r": "Stratégies graphiques et organisateurs sémantiques",
+        "C4r": "Manque de contrôle de l'attention",
+        "A1r": "Anxiété et contrôle des émotions",
+        "A2r": "Volition",
+        "A3r": "Attributions causales",
+        "A4r": "Perception de compétence",
+    },
+    "de": {
+        "C1r": "Elaborative Strategien zum Verstehen und Erinnern",
+        "C2r": "Selbstregulative Strategien",
+        "C3r": "Grafische Strategien und semantische Organisatoren",
+        "C4r": "Mangelnde Aufmerksamkeitssteuerung",
+        "A1r": "Angst und Emotionskontrolle",
+        "A2r": "Volition",
+        "A3r": "Kausale Attributionen",
+        "A4r": "Kompetenzwahrnehmung",
+    },
+    "sv": {
+        "C1r": "Bearbetningsstrategier för förståelse och minne",
+        "C2r": "Självreglerande strategier",
+        "C3r": "Grafiska strategier och semantiska organisatörer",
+        "C4r": "Bristande kontroll över uppmärksamheten",
+        "A1r": "Ångest och kontroll av känslor",
+        "A2r": "Vilja",
+        "A3r": "Orsaksförklaringar",
+        "A4r": "Upplevd kompetens",
+    },
+}
+
 
 # Fattori QSA invertiti: punteggio basso (1-3) = Forza, alto (7-9) = Area di crescita.
 # Allineato a frontend questionnaires.ts -> QUESTIONNAIRES.QSA.invertedFactors.
 _QSA_INVERTED_CODES = ("C3", "C6", "A1", "A4", "A5", "A7")
+_QSAR_INVERTED_CODES = ("C4r", "A1r")
 
 
 def _apply_language_directive(system_prompt: str, language: Optional[str]) -> str:
@@ -185,16 +251,23 @@ def _is_qsa(questionnaire_type: Optional[str]) -> bool:
     return (questionnaire_type or "").upper() == "QSA"
 
 
-def _qsa_factor_names(language: Optional[str]) -> dict[str, str]:
-    return _QSA_FACTOR_NAMES.get(language or "it", _QSA_FACTOR_NAMES["it"])
+def _is_strategy_questionnaire(questionnaire_type: Optional[str]) -> bool:
+    return (questionnaire_type or "").upper() in {"QSA", "QSAR"}
 
 
-def _annotate_qsa_factor_codes(text: str, language: Optional[str], progressive: bool = False) -> str:
-    """Impedisce di presentare codici QSA privi del relativo nome."""
+def _qsa_factor_names(language: Optional[str], questionnaire_type: str = "QSA") -> dict[str, str]:
+    dictionary = _QSAR_FACTOR_NAMES if (questionnaire_type or "").upper() == "QSAR" else _QSA_FACTOR_NAMES
+    return dictionary.get(language or "it", dictionary["it"])
+
+
+def _annotate_qsa_factor_codes(
+    text: str, language: Optional[str], progressive: bool = False, questionnaire_type: str = "QSA"
+) -> str:
+    """Impedisce di presentare codici QSA/QSAr privi del relativo nome."""
     if not text:
         return text
     annotated = text
-    for code, name in _qsa_factor_names(language).items():
+    for code, name in _qsa_factor_names(language, questionnaire_type).items():
         # Canonicalizza anche un nome gia prodotto dal modello.
         annotated = re.sub(rf"\b{code}\b\s*\([^)]*\)", f"{code} ({name})", annotated)
         if progressive:
@@ -206,17 +279,19 @@ def _annotate_qsa_factor_codes(text: str, language: Optional[str], progressive: 
 
 
 def _apply_qsa_factor_directive(system_prompt: str, questionnaire_type: str, language: Optional[str]) -> str:
-    if not _is_qsa(questionnaire_type):
+    if not _is_strategy_questionnaire(questionnaire_type):
         return system_prompt
-    names = _qsa_factor_names(language)
+    instrument = "QSAr" if (questionnaire_type or "").upper() == "QSAR" else "QSA"
+    names = _qsa_factor_names(language, questionnaire_type)
+    inverted_codes = _QSAR_INVERTED_CODES if instrument == "QSAr" else _QSA_INVERTED_CODES
     examples = ", ".join(f"{code} ({name})" for code, name in names.items())
     inverted = ", ".join(
-        f"{code} ({names[code]})" for code in _QSA_INVERTED_CODES if code in names
+        f"{code} ({names[code]})" for code in inverted_codes if code in names
     )
     return (
         f"{system_prompt}\n\n"
         "[FACTOR LABELS] In ogni risposta rivolta allo studente, non scrivere mai "
-        "una sigla di fattore QSA isolata. Ogni sigla deve essere immediatamente "
+        f"una sigla di fattore {instrument} isolata. Ogni sigla deve essere immediatamente "
         "accompagnata dal nome esteso, nella forma `C2 (Autoregolazione)`. "
         f"Riferimento obbligatorio: {examples}.\n\n"
         "[FATTORI INVERTITI] Scala 1-9. Per la maggioranza dei fattori vale: "
@@ -226,8 +301,7 @@ def _apply_qsa_factor_directive(system_prompt: str, questionnaire_type: str, lan
         "7-9 = Area di crescita (punteggio alto = problema da migliorare, NON un punto di forza). "
         "Regola assoluta: non leggere mai 'alto = forza' in modo automatico; "
         "applica sempre l'inversione ai fattori elencati. "
-        "Esempio: Disorientamento o Difficoltà di concentrazione a 7-9 è un'Area di crescita, "
-        "non un punto di forza."
+        f"Applica questa regola esclusivamente ai fattori inversi di {instrument} elencati sopra."
     )
 
 
@@ -239,8 +313,8 @@ def _student_visible_response(
 ) -> str:
     if sanitize_ztpi:
         return _sanitize_ztpi_user_text(text)
-    if _is_qsa(questionnaire_type):
-        return _annotate_qsa_factor_codes(text, language, progressive=True)
+    if _is_strategy_questionnaire(questionnaire_type):
+        return _annotate_qsa_factor_codes(text, language, progressive=True, questionnaire_type=questionnaire_type)
     return text
 
 
@@ -248,7 +322,7 @@ _GUIDED_NO_GREETING_SUFFIX = " NON iniziare con saluti. Vai direttamente all'ana
 
 # Modalità discorsive: domande di approfondimento dello studente dentro uno step.
 # Devono usare il prompt mode-based anche se `phase` punta a uno step di analisi.
-_CONVERSATIONAL_MODES = {"factor-qa"}
+_CONVERSATIONAL_MODES = {"factor-qa", "qsar-factor-qa"}
 
 _ZTPI_FACTOR_NAME_BY_CODE = {
     "T1": "Passato Negativo",
@@ -396,6 +470,8 @@ def _resolve_user_message_for_chat(ai_service: AIService, request: ChatRequest, 
 def _update_markdown_memory_background(
     session_id: str, effective_message: str, response_content: str,
     step_label: str, is_first_step: bool, previous_summary: str = "",
+    phase: str = "", scores_context: str = "", questionnaire_type: str = "",
+    language: str = "", completed_step: bool = False,
 ):
     """Compat legacy: aggiorna la memoria Markdown senza chiamare il modello."""
     try:
@@ -403,8 +479,12 @@ def _update_markdown_memory_background(
             session_id,
             user_message=effective_message,
             bot_response=response_content,
+            phase=phase,
             step_label=step_label,
-            completed_step=bool(step_label),
+            scores_context=scores_context,
+            questionnaire_type=questionnaire_type,
+            language=language,
+            completed_step=completed_step,
         )
         logger.info(f"Session {session_id}: memoria Markdown aggiornata")
     except Exception as e:

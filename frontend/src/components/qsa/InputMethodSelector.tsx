@@ -12,6 +12,7 @@ interface InputMethodSelectorProps {
 
 export function InputMethodSelector({ onSelect, questionnaire }: InputMethodSelectorProps) {
     const { t } = useI18n();
+    const supportsProfileUpload = questionnaire?.id === 'QSA';
     const manualDescription = questionnaire
         ? t('method.manual.descTpl', { name: questionnaire.name, codes: questionnaire.factors.map(f => f.code).join(', ') })
         : t('method.manual.descNoQ');
@@ -35,8 +36,8 @@ export function InputMethodSelector({ onSelect, questionnaire }: InputMethodSele
                 </p>
             </button>
 
-            {/* Upload/AI Entry Card */}
-            <button
+            {/* Upload/AI extraction currently supports the QSA profile layout only. */}
+            {supportsProfileUpload && <button
                 onClick={() => onSelect('upload')}
                 className="group relative flex flex-col items-center justify-center p-8 h-56 rounded-lg bg-white border border-slate-200 shadow-sm hover:border-indigo-200 transition-colors text-left"
             >
@@ -57,7 +58,7 @@ export function InputMethodSelector({ onSelect, questionnaire }: InputMethodSele
                 <p className="text-sm text-center text-slate-600 px-4">
                     {t('method.upload.desc')}
                 </p>
-            </button>
+            </button>}
         </div>
     );
 }

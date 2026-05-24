@@ -77,3 +77,15 @@ class StrategyFeedback(Base):
     language = Column(String, nullable=True)
     helpful = Column(Boolean, nullable=False)
     submitted_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class QuestionnaireResult(Base):
+    """Risultati di un questionario compilato (QSA, QSAr, ZTPI, Savickas)."""
+
+    __tablename__ = "questionnaire_results"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(String, index=True, nullable=False)
+    questionnaire_type = Column(String, nullable=False, index=True)
+    scores = Column(JSON, nullable=True)
+    submitted_at = Column(DateTime(timezone=True), server_default=func.now())

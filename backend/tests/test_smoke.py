@@ -23,6 +23,8 @@ from starlette.testclient import TestClient
 from backend import database, models, auth
 import backend.main as main
 import backend.routes.chat as chat_routes
+import backend.chat_logic as chat_logic
+from backend.memory_service import session_memory
 
 
 # --- DB Postgres dedicato ai test (stessa istanza, db separato) ---
@@ -123,9 +125,13 @@ EXPECTED_ROUTES = {
     ("POST", "/chat/message"),
     ("GET", "/memory/status/{session_id}"),
     ("DELETE", "/memory/{session_id}"),
+    ("POST", "/memory/event"),
     ("POST", "/qsa/audit"),
     ("POST", "/qsa/upload"),
     ("POST", "/tts"),
+    ("POST", "/questionnaire-result"),
+    ("GET", "/admin/questionnaire-results"),
+    ("GET", "/questionnaire-result/{session_id}/pdf"),
 }
 
 
@@ -174,6 +180,14 @@ def test_guided_ui_texts_public():
     assert r.status_code == 200, r.text
 
 
+def test_qsar_guided_ui_texts_public():
+    r = client.get("/qsa/guided-ui-texts?questionnaire_type=QSAr")
+    assert r.status_code == 200, r.text
+    step_ids = [step["id"] for step in r.json()["guided_steps"]]
+    assert "qsar-cognitive" in step_ids
+    assert "qsar-affective" in step_ids
+
+
 def test_survey_submit_public():
     r = client.post("/survey", json={
         "q_utile": 5, "q_pertinente": 5, "q_chiaro": 5,
@@ -185,6 +199,52 @@ def test_survey_submit_public():
 def test_memory_status():
     r = client.get("/memory/status/test-session-xyz")
     assert r.status_code == 200, r.text
+
+
+def test_memory_admin_routes_require_authentication():
+    admin_override = main.app.dependency_overrides.pop(auth.get_current_active_admin, None)
+    try:
+        r = client.get("/memory/status/private-session")
+        assert r.status_code == 401, r.text
+        r = client.delete("/memory/private-session")
+        assert r.status_code == 401, r.text
+    finally:
+        if admin_override:
+            main.app.dependency_overrides[auth.get_current_active_admin] = admin_override
+
+
+def test_stream_memory_contract_for_all_active_questionnaires():
+    for questionnaire_type in ("QSA", "QSAr", "ZTPI", "SAVICKAS"):
+        session_id = f"memory-contract-{questionnaire_type.lower()}"
+        session_memory.clear(session_id)
+        r = client.post("/chat/stream", json={
+            "message": "Vorrei migliorare il mio metodo di studio",
+            "mode": "generic",
+            "session_id": session_id,
+            "questionnaire_type": questionnaire_type,
+            "language": "it",
+            "scores_context": "" if questionnaire_type == "SAVICKAS" else "Profilo test: 5/9",
+        })
+        assert r.status_code == 200, r.text
+
+        memory = session_memory.get_summary(session_id)
+        assert f"- Questionario: {questionnaire_type}" in memory
+        assert "- Lingua: it" in memory
+        assert "Vorrei migliorare il mio metodo di studio" in memory
+
+        r = client.post("/memory/event", json={
+            "session_id": session_id,
+            "questionnaire_type": questionnaire_type,
+            "language": "it",
+            "phase": "conclusion",
+            "step_label": "Conclusione",
+            "completed_step": True,
+        })
+        assert r.status_code == 200, r.text
+        memory = session_memory.get_summary(session_id)
+        assert "- Step corrente: Conclusione" in memory
+        assert "- Step completati: Conclusione" in memory
+        session_memory.clear(session_id)
 
 
 def test_chat_smoke_mocked_ai():
@@ -202,6 +262,29 @@ def test_is_qsa():
     assert main._is_qsa(None) is False
 
 
+def test_qsar_factor_annotation_is_distinct_from_qsa():
+    assert main._is_strategy_questionnaire("QSAr") is True
+    text = chat_logic._annotate_qsa_factor_codes("C3r e A4r", "it", questionnaire_type="QSAr")
+    assert "C3r (Strategie grafiche e organizzatori semantici)" in text
+    assert "A4r (Percezione di competenza)" in text
+    assert "Disorientamento" not in text
+
+
+def test_qsar_audit_tracks_questionnaire_type():
+    r = client.post("/qsa/audit", json={
+        "session_id": "qsar-audit-test",
+        "questionnaire_type": "QSAr",
+        "scores": {"C1r": 5, "A4r": 7},
+    })
+    assert r.status_code == 200, r.text
+    db = _TestSession()
+    try:
+        entry = db.query(models.Log).filter(models.Log.session_id == "qsar-audit-test").one()
+        assert entry.details["questionnaire_type"] == "QSAr"
+    finally:
+        db.close()
+
+
 def test_clamp_max_tokens():
     assert main._clamp_max_tokens(None) is None
     # valore valido resta entro i limiti (non solleva)
@@ -211,6 +294,38 @@ def test_clamp_max_tokens():
 def test_should_sanitize_ztpi():
     # ZTPI guidato → sanitizza; QSA → no
     assert isinstance(main._should_sanitize_ztpi_text("guided", "ztpi-step"), bool)
+
+
+def test_questionnaire_result_submit_public():
+    r = client.post("/questionnaire-result", json={
+        "session_id": "test-session-123",
+        "questionnaire_type": "QSA",
+        "scores": {"C1": 7, "C2": 5, "C3": 3},
+    })
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert data["questionnaire_type"] == "QSA"
+    assert data["scores"]["C1"] == 7
+
+
+def test_questionnaire_results_admin_list():
+    r = client.get("/admin/questionnaire-results")
+    assert r.status_code == 200, r.text
+    assert isinstance(r.json(), list)
+
+
+def test_questionnaire_pdf_download():
+    """Crea un risultato e verifica che il PDF sia scaricabile."""
+    r = client.post("/questionnaire-result", json={
+        "session_id": "pdf-test-session",
+        "questionnaire_type": "QSA",
+        "scores": {"C1": 8, "C2": 5, "C3": 2},
+    })
+    assert r.status_code == 200, r.text
+    r = client.get("/questionnaire-result/pdf-test-session/pdf")
+    assert r.status_code == 200, r.text
+    assert r.headers["content-type"] == "application/pdf"
+    assert len(r.content) > 100
 
 
 def test_strip_markdown():

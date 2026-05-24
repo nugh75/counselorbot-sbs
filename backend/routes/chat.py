@@ -7,7 +7,6 @@ import os
 import shutil
 import subprocess
 import sys
-import threading
 import uuid
 
 import edge_tts
@@ -21,6 +20,8 @@ from ..api_models import ChatRequest, QsaAuditRequest, TTSRequest
 from ..memory_service import session_memory
 from ..prompt_config import (
     DEFAULT_SYSTEM_PROMPT_GENERIC,
+    DEFAULT_GUIDED_TEXT_QSAR_QUESTIONS_INTRO,
+    DEFAULT_GUIDED_TEXT_QSAR_CONCLUSION,
     DEFAULT_GUIDED_TEXT_ZTPI_QUESTIONS_INTRO,
     DEFAULT_GUIDED_TEXT_ZTPI_CONCLUSION,
     DEFAULT_GUIDED_TEXT_SAVICKAS_QUESTIONS_INTRO,
@@ -36,7 +37,7 @@ from ..chat_logic import (
     _apply_thinking_token_headroom,
     _clamp_max_tokens,
     _ensure_questionnaire_guided_steps,
-    _is_qsa,
+    _is_strategy_questionnaire,
     _resolve_system_prompt,
     _resolve_user_message_for_chat,
     _retrieved_context,
@@ -57,7 +58,7 @@ logger = logging.getLogger(__name__)
 async def get_guided_ui_texts(questionnaire_type: str = "QSA", db: Session = Depends(get_db)):
     """Public endpoint with guided-chat UI texts/labels and step definitions.
 
-    Pass ?questionnaire_type=ZTPI or SAVICKAS for dedicated guided paths.
+    Pass ?questionnaire_type=QSAr, ZTPI or SAVICKAS for dedicated guided paths.
     """
     ai_service = AIService(db)
     _ensure_questionnaire_guided_steps(db, questionnaire_type)
@@ -86,7 +87,16 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", db: Session = Dep
     ]
 
     # Override questions/conclusion texts for ZTPI
-    if questionnaire_type == "ZTPI":
+    if questionnaire_type == "QSAr":
+        result["label_guided_questions"] = "8. Domande e Approfondimenti"
+        result["text_guided_questions_phase_banner"] = "--- Fase 8: Domande e Approfondimenti ---"
+        result["text_guided_questions_intro"] = ai_service.config.get(
+            "text_qsar_questions_intro", DEFAULT_GUIDED_TEXT_QSAR_QUESTIONS_INTRO
+        )
+        result["text_guided_conclusion"] = ai_service.config.get(
+            "text_qsar_conclusion", DEFAULT_GUIDED_TEXT_QSAR_CONCLUSION
+        )
+    elif questionnaire_type == "ZTPI":
         result["text_guided_questions_intro"] = _sanitize_ztpi_user_text(
             ai_service.config.get(
                 "text_ztpi_questions_intro", DEFAULT_GUIDED_TEXT_ZTPI_QUESTIONS_INTRO
@@ -149,12 +159,12 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
 
     system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language)
     model_scores_context = (
-        _annotate_qsa_factor_codes(request.scores_context, request.language)
-        if _is_qsa(questionnaire_type) else request.scores_context
+        _annotate_qsa_factor_codes(request.scores_context, request.language, questionnaire_type=questionnaire_type)
+        if _is_strategy_questionnaire(questionnaire_type) else request.scores_context
     )
     model_message = (
-        _annotate_qsa_factor_codes(effective_message, request.language)
-        if _is_qsa(questionnaire_type) else effective_message
+        _annotate_qsa_factor_codes(effective_message, request.language, questionnaire_type=questionnaire_type)
+        if _is_strategy_questionnaire(questionnaire_type) else effective_message
     )
 
     session_memory.update_context(
@@ -192,16 +202,19 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         raise HTTPException(status_code=502, detail=str(e))
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         response_content = _sanitize_ztpi_user_text(response_content)
-    elif _is_qsa(questionnaire_type):
-        response_content = _annotate_qsa_factor_codes(response_content, request.language)
+    elif _is_strategy_questionnaire(questionnaire_type):
+        response_content = _annotate_qsa_factor_codes(
+            response_content, request.language, questionnaire_type=questionnaire_type
+        )
 
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         step_label = _sanitize_ztpi_step_label(step_label)
 
-    background_tasks.add_task(
-        _update_markdown_memory_background,
+    # Deterministic local write: complete it before the client can advance phase.
+    _update_markdown_memory_background(
         session_id, request.memory_message if request.memory_message is not None else request.message, response_content,
-        step_label, is_first_step, conversation_summary,
+        step_label, is_first_step, conversation_summary, request.phase or "", model_scores_context,
+        questionnaire_type, request.language or "", False,
     )
 
     # 6. Log Interaction
@@ -218,6 +231,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             "guided_phase_prompt_key": phase_prompt_key,
             "provider": ai_service.config.get('active_provider', 'unknown'),
             "model": ai_service.config.get('model_name', 'unknown'),
+            "questionnaire_type": questionnaire_type,
             "conversation_summary_length": len(conversation_summary),
         }
     )
@@ -274,12 +288,12 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db)):
 
     system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language)
     model_scores_context = (
-        _annotate_qsa_factor_codes(request.scores_context, request.language)
-        if _is_qsa(questionnaire_type) else request.scores_context
+        _annotate_qsa_factor_codes(request.scores_context, request.language, questionnaire_type=questionnaire_type)
+        if _is_strategy_questionnaire(questionnaire_type) else request.scores_context
     )
     model_message = (
-        _annotate_qsa_factor_codes(effective_message, request.language)
-        if _is_qsa(questionnaire_type) else effective_message
+        _annotate_qsa_factor_codes(effective_message, request.language, questionnaire_type=questionnaire_type)
+        if _is_strategy_questionnaire(questionnaire_type) else effective_message
     )
 
     if model_scores_context:
@@ -326,6 +340,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db)):
                     "guided_phase_prompt_key": phase_prompt_key,
                     "provider": provider,
                     "model": model,
+                    "questionnaire_type": questionnaire_type,
                     "conversation_summary_length": len(conversation_summary),
                     "streamed": True,
                 },
@@ -362,13 +377,20 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db)):
                 "".join(chunks), questionnaire_type, request.language, sanitize
             )
 
-            # Memoria Markdown in un thread separato: nessuna chiamata AI extra.
-            threading.Thread(
-                target=_update_markdown_memory_background,
-                args=(session_id, request.memory_message if request.memory_message is not None else request.message, response_content,
-                      step_label, is_first_step, conversation_summary),
-                daemon=True,
-            ).start()
+            # Complete the local memory write before the frontend records a phase transition.
+            _update_markdown_memory_background(
+                session_id,
+                request.memory_message if request.memory_message is not None else request.message,
+                response_content,
+                step_label,
+                is_first_step,
+                conversation_summary,
+                request.phase or "",
+                model_scores_context,
+                questionnaire_type,
+                request.language or "",
+                False,
+            )
 
             _log_stream(response_content)
 
@@ -389,7 +411,15 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/chat/message")
-async def chat_message(message: str, session_id: str, mode: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+async def chat_message(
+    message: str,
+    session_id: str,
+    mode: str,
+    background_tasks: BackgroundTasks,
+    questionnaire_type: str = "",
+    language: str = "",
+    db: Session = Depends(get_db),
+):
     # 1. Retrieve Configuration and System Prompt based on Mode
     ai_service = AIService(db)
 
@@ -397,6 +427,13 @@ async def chat_message(message: str, session_id: str, mode: str, background_task
     system_prompt = ai_service.config.get(
         prompt_key,
         SYSTEM_PROMPT_DEFAULTS.get(prompt_key, DEFAULT_SYSTEM_PROMPT_GENERIC),
+    )
+    system_prompt = _apply_language_directive(system_prompt, language)
+
+    session_memory.update_context(
+        session_id,
+        questionnaire_type=questionnaire_type,
+        language=language,
     )
 
     # 2. Recupera una porzione compatta e pertinente della memoria Markdown.
@@ -412,10 +449,10 @@ async def chat_message(message: str, session_id: str, mode: str, background_task
     if _should_sanitize_ztpi_text(mode, None):
         response_content = _sanitize_ztpi_user_text(response_content)
 
-    # 4. Aggiorna memoria Markdown in BACKGROUND (nessuna chiamata AI extra)
-    background_tasks.add_task(
-        _update_markdown_memory_background,
+    # 4. Aggiorna memoria Markdown prima di restituire la risposta.
+    _update_markdown_memory_background(
         session_id, message, response_content, "", False, conversation_summary,
+        "", "", questionnaire_type, language, False,
     )
 
     # 5. Log Interaction
@@ -428,6 +465,7 @@ async def chat_message(message: str, session_id: str, mode: str, background_task
             "bot_response": response_content,
             "provider": ai_service.config.get('active_provider', 'unknown'),
             "model": ai_service.config.get('model_name', 'unknown'),
+            "questionnaire_type": questionnaire_type,
             "conversation_summary_length": len(conversation_summary),
         }
     )
@@ -439,11 +477,11 @@ async def chat_message(message: str, session_id: str, mode: str, background_task
 
 @router.post("/qsa/audit")
 async def audit_qsa(request: QsaAuditRequest, db: Session = Depends(get_db)):
-    # Log QSA Completion
+    # Log completion for QSA-family profile analyses.
     log_entry = models.Log(
         session_id=request.session_id,
         action="qsa_completed",
-        details={"scores": request.scores}
+        details={"questionnaire_type": request.questionnaire_type, "scores": request.scores}
     )
     db.add(log_entry)
     db.commit()
