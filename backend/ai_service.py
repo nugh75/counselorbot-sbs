@@ -34,7 +34,7 @@ SUMMARY_SYSTEM_PROMPT = (
 ENV_KEY_MAP = {
     'api_key_openai': ('API_KEY_OPENAI',),
     'api_key_anthropic': ('API_KEY_ANTHROPIC',),
-    'api_key_gemini': ('API_KEY_GEMINI',),
+    'api_key_gemini': ('API_KEY_GEMINI', 'GEMINI_API_KEY', 'GOOGLE_API_KEY'),
     'api_key_mistral': ('API_KEY_MISTRAL',),
     'api_key_openrouter': ('API_KEY_OPENROUTER', 'OPENROUTER_API_KEY'),
     'ollama_ip': ('OLLAMA_BASE_URL',),
@@ -111,6 +111,18 @@ class AIService:
         provider = provider or self.config.get('active_provider', 'openai')
         timeout = httpx.Timeout(15.0, connect=5.0)
         try:
+            if provider == 'gemini':
+                api_key = self._get_api_key('api_key_gemini')
+                if not api_key:
+                    return []
+                from google import genai
+                client = genai.Client(api_key=api_key)
+                names = []
+                for m in client.models.list():
+                    actions = getattr(m, 'supported_actions', None) or []
+                    if 'generateContent' in actions:
+                        names.append((m.name or '').removeprefix('models/'))
+                return sorted(n for n in names if n)
             if provider == 'openai':
                 client = OpenAI(api_key=self._get_api_key('api_key_openai'), timeout=timeout)
             elif provider == 'openrouter':
