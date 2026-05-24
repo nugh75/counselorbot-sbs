@@ -19,6 +19,7 @@ interface GuidedStep {
     prompt: string;
     system_prompt_mode: string;
     color_theme: string;
+    questionnaire_type: string;
 }
 
 // --- Constants ---
@@ -150,7 +151,7 @@ export function ConfigForm() {
     const [showNewStepForm, setShowNewStepForm] = useState(false);
     const [newStep, setNewStep] = useState<GuidedStep>({
         id: '', sort_order: 0, label: '', prompt: '',
-        system_prompt_mode: 'generic', color_theme: 'blue',
+        system_prompt_mode: 'generic', color_theme: 'blue', questionnaire_type: 'QSA',
     });
 
     // --- Fetch all data ---
@@ -200,8 +201,24 @@ export function ConfigForm() {
         }
     };
 
+    // Provider che richiedono una API key (ollama/llamacpp usano un URL locale con default).
+    const PROVIDER_KEY_FIELD: Record<string, string> = {
+        openai: 'api_key_openai',
+        anthropic: 'api_key_anthropic',
+        gemini: 'api_key_gemini',
+        mistral: 'api_key_mistral',
+        openrouter: 'api_key_openrouter',
+    };
+    const activeKeyField = PROVIDER_KEY_FIELD[activeProvider];
+    const activeKeyMissing = !!activeKeyField
+        && !envOverrides[activeKeyField]
+        && !(configs.find(c => c.key === activeKeyField)?.value || '').trim();
+
     useEffect(() => { fetchConfigs(); }, []);
-    useEffect(() => { fetchModels(activeProvider); }, [activeProvider]);
+    useEffect(() => {
+        if (activeKeyMissing) { setLiveModels([]); return; }
+        fetchModels(activeProvider);
+    }, [activeProvider, activeKeyMissing]);
 
     // Opzioni della tendina: modelli live se disponibili, altrimenti fallback statico.
     // Il modello attivo viene sempre incluso così resta selezionato anche se non in elenco.
@@ -281,10 +298,11 @@ export function ConfigForm() {
 
     const handleCreateStep = async () => {
         if (!newStep.id.trim() || !newStep.label.trim()) return;
+        const sameType = guidedSteps.filter(s => s.questionnaire_type === newStep.questionnaire_type);
         const stepToCreate = {
             ...newStep,
             id: newStep.id.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
-            sort_order: guidedSteps.length > 0 ? Math.max(...guidedSteps.map(s => s.sort_order)) + 1 : 1,
+            sort_order: sameType.length > 0 ? Math.max(...sameType.map(s => s.sort_order)) + 1 : 1,
         };
         try {
             const res = await fetch('/api/admin/guided-steps', {
@@ -295,7 +313,7 @@ export function ConfigForm() {
             if (res.ok) {
                 const created = await res.json();
                 setGuidedSteps(prev => [...prev, created]);
-                setNewStep({ id: '', sort_order: 0, label: '', prompt: '', system_prompt_mode: 'generic', color_theme: 'blue' });
+                setNewStep({ id: '', sort_order: 0, label: '', prompt: '', system_prompt_mode: 'generic', color_theme: 'blue', questionnaire_type: newStep.questionnaire_type });
                 setShowNewStepForm(false);
                 showToast('success', t('admin.config.saved'));
             } else {
@@ -327,23 +345,33 @@ export function ConfigForm() {
     };
 
     const handleMoveStep = async (stepId: string, direction: 'up' | 'down') => {
-        const idx = guidedSteps.findIndex(s => s.id === stepId);
-        if (idx < 0) return;
+        const step = guidedSteps.find(s => s.id === stepId);
+        if (!step) return;
+        // Riordino ristretto agli step dello stesso questionario.
+        const siblings = guidedSteps
+            .filter(s => s.questionnaire_type === step.questionnaire_type)
+            .sort((a, b) => a.sort_order - b.sort_order);
+        const idx = siblings.findIndex(s => s.id === stepId);
         const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-        if (swapIdx < 0 || swapIdx >= guidedSteps.length) return;
+        if (swapIdx < 0 || swapIdx >= siblings.length) return;
 
-        const newSteps = [...guidedSteps];
-        const tempOrder = newSteps[idx].sort_order;
-        newSteps[idx] = { ...newSteps[idx], sort_order: newSteps[swapIdx].sort_order };
-        newSteps[swapIdx] = { ...newSteps[swapIdx], sort_order: tempOrder };
-        [newSteps[idx], newSteps[swapIdx]] = [newSteps[swapIdx], newSteps[idx]];
-        setGuidedSteps(newSteps);
+        const a = siblings[idx];
+        const b = siblings[swapIdx];
+        // Scambia i sort_order tra i due step adiacenti.
+        setGuidedSteps(prev => prev.map(s => {
+            if (s.id === a.id) return { ...s, sort_order: b.sort_order };
+            if (s.id === b.id) return { ...s, sort_order: a.sort_order };
+            return s;
+        }));
 
         try {
             const res = await fetch('/api/admin/guided-steps/reorder', {
                 method: 'PATCH',
                 headers: authJsonHeaders(),
-                body: JSON.stringify(newSteps.map(s => ({ id: s.id, sort_order: s.sort_order }))),
+                body: JSON.stringify([
+                    { id: a.id, sort_order: b.sort_order },
+                    { id: b.id, sort_order: a.sort_order },
+                ]),
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             showToast('success', t('admin.config.saved'));
@@ -507,7 +535,7 @@ export function ConfigForm() {
                             <button
                                 type="button"
                                 onClick={() => fetchModels(activeProvider)}
-                                disabled={modelsLoading}
+                                disabled={modelsLoading || activeKeyMissing}
                                 className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 disabled:opacity-50"
                                 title={t('admin.config.reloadTitle')}
                             >
@@ -522,17 +550,26 @@ export function ConfigForm() {
                         <div className="relative">
                             <Cpu className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
                             <select
-                                value={activeModel}
+                                value={activeKeyMissing ? '' : activeModel}
                                 onChange={(e) => handleModelChange(e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 pl-10 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                disabled={activeKeyMissing}
+                                className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 pl-10 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                             >
-                                {modelOptions.map((model) => (
-                                    <option key={model} value={model}>{model}</option>
-                                ))}
+                                {activeKeyMissing ? (
+                                    <option value="">{t('admin.config.modelNeedsKey')}</option>
+                                ) : (
+                                    modelOptions.map((model) => (
+                                        <option key={model} value={model}>{model}</option>
+                                    ))
+                                )}
                             </select>
                         </div>
-                        {liveModels.length === 0 && !modelsLoading && (
-                            <p className="text-xs text-amber-600">{t('admin.config.providerUnreachable')}</p>
+                        {activeKeyMissing ? (
+                            <p className="text-xs text-amber-600">{t('admin.config.modelNeedsKeyHint')}</p>
+                        ) : (
+                            liveModels.length === 0 && !modelsLoading && (
+                                <p className="text-xs text-amber-600">{t('admin.config.providerUnreachable')}</p>
+                            )
                         )}
                     </div>
 
@@ -712,8 +749,13 @@ export function ConfigForm() {
                 );
             })}
 
-            {/* 4. Dynamic Guided Steps */}
-            {section === 'general' && (
+            {/* 4. Dynamic Guided Steps — per questionario attivo */}
+            {section !== 'general' && (() => {
+            const qType = section.toUpperCase();
+            const sectionSteps = guidedSteps
+                .filter(s => s.questionnaire_type === qType)
+                .sort((a, b) => a.sort_order - b.sort_order);
+            return (
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
@@ -723,7 +765,7 @@ export function ConfigForm() {
                         </p>
                     </div>
                     <button
-                        onClick={() => setShowNewStepForm(true)}
+                        onClick={() => { setNewStep(prev => ({ ...prev, questionnaire_type: qType })); setShowNewStepForm(true); }}
                         className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-md transition-colors shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
@@ -814,7 +856,7 @@ export function ConfigForm() {
 
                 {/* Existing Steps */}
                 <div className="space-y-4">
-                    {guidedSteps.map((step, idx) => {
+                    {sectionSteps.map((step, idx) => {
                         const colorDef = COLOR_THEMES.find(c => c.value === step.color_theme);
                         return (
                             <div key={step.id} className="glass-panel p-6 rounded-lg space-y-4">
@@ -840,7 +882,7 @@ export function ConfigForm() {
                                         </button>
                                         <button
                                             onClick={() => handleMoveStep(step.id, 'down')}
-                                            disabled={idx === guidedSteps.length - 1}
+                                            disabled={idx === sectionSteps.length - 1}
                                             className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-30"
                                             title={t('admin.config.moveDown')}
                                         >
@@ -913,14 +955,15 @@ export function ConfigForm() {
                         );
                     })}
 
-                    {guidedSteps.length === 0 && !showNewStepForm && (
+                    {sectionSteps.length === 0 && !showNewStepForm && (
                         <div className="text-center py-8 text-slate-400 text-sm">
                             {t('admin.config.noSteps')}
                         </div>
                     )}
                 </div>
             </div>
-            )}
+            );
+            })()}
 
         </div>
     );
