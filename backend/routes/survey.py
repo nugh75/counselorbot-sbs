@@ -6,7 +6,7 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from .. import models, schemas, auth, database
-from ..strategy_memory import strategy_memory
+from ..strategy_memory import shared_response_memory, strategy_memory
 from ..pdf_generator import generate_questionnaire_pdf
 
 router = APIRouter()
@@ -25,11 +25,9 @@ async def submit_survey(survey: schemas.SurveyCreate, db: Session = Depends(get_
 
 @router.post("/strategy-feedback")
 async def submit_strategy_feedback(feedback: schemas.StrategyFeedbackCreate, db: Session = Depends(get_db)):
-    """Registra un voto anonimo solo per strategie editorialmente approvate."""
+    """Registra feedback anonimo e promuove risposte AI utili alla memoria condivisa."""
     valid_ids = strategy_memory.approved_ids()
     accepted = [strategy_id for strategy_id in feedback.strategy_ids if strategy_id in valid_ids]
-    if not accepted:
-        raise HTTPException(status_code=400, detail="No approved strategy identifiers supplied")
     for strategy_id in accepted:
         db.add(models.StrategyFeedback(
             strategy_id=strategy_id,
@@ -38,8 +36,14 @@ async def submit_strategy_feedback(feedback: schemas.StrategyFeedbackCreate, db:
             language=feedback.language,
             helpful=feedback.helpful,
         ))
+    response_recorded = bool(
+        feedback.response_id
+        and shared_response_memory.rate(db, feedback.response_id, feedback.helpful)
+    )
+    if not accepted and not response_recorded:
+        raise HTTPException(status_code=400, detail="No valid feedback target supplied")
     db.commit()
-    return {"status": "success", "recorded": len(accepted)}
+    return {"status": "success", "recorded": len(accepted) + int(response_recorded)}
 
 
 @router.get("/admin/surveys", response_model=List[schemas.SurveyResponseSchema])
@@ -74,14 +78,32 @@ async def strategy_feedback_summary(current_user: models.User = Depends(auth.get
 @router.post("/questionnaire-result", response_model=schemas.QuestionnaireResultResponse)
 async def submit_questionnaire_result(
     result: schemas.QuestionnaireResultCreate,
+    identity: dict = Depends(auth.get_identity),
     db: Session = Depends(get_db),
 ):
     """Salva i risultati di un questionario completato (endpoint pubblico)."""
-    db_result = models.QuestionnaireResult(**result.model_dump())
+    username = identity.get("username") if identity.get("authenticated") else None
+
+    data = result.model_dump()
+    data["username"] = username
+
+    db_result = models.QuestionnaireResult(**data)
     db.add(db_result)
     db.commit()
     db.refresh(db_result)
     return db_result
+
+
+@router.get("/user/questionnaire-results", response_model=List[schemas.QuestionnaireResultResponse])
+async def get_user_questionnaire_results(
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Recupera i risultati dei questionari salvati dall'utente corrente (autenticato)."""
+    results = db.query(models.QuestionnaireResult).filter(
+        models.QuestionnaireResult.username == current_user["username"]
+    ).order_by(models.QuestionnaireResult.submitted_at.desc()).all()
+    return results
 
 
 @router.get("/admin/questionnaire-results", response_model=List[schemas.QuestionnaireResultResponse])
@@ -100,9 +122,32 @@ async def get_questionnaire_results(
     return results
 
 
+@router.delete("/questionnaire-result/{session_id}")
+async def delete_questionnaire_result(
+    session_id: str,
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Elimina un risultato di questionario associato all'utente corrente."""
+    result = db.query(models.QuestionnaireResult).filter(
+        models.QuestionnaireResult.session_id == session_id
+    ).first()
+    if not result:
+        raise HTTPException(status_code=404, detail="Risultato non trovato")
+
+    # Check ownership: only the user who created it (or an admin) can delete it
+    if not current_user.get("is_admin") and result.username != current_user.get("username"):
+        raise HTTPException(status_code=403, detail="Azione non consentita")
+
+    db.delete(result)
+    db.commit()
+    return {"status": "success", "message": "Risultato eliminato con successo"}
+
+
 @router.get("/questionnaire-result/{session_id}/pdf")
 async def download_questionnaire_pdf(
     session_id: str,
+    lang: str = Query("it", description="Lingua del PDF (it, en, es, fr, de, sv)"),
     db: Session = Depends(get_db),
 ):
     """Scarica il PDF con i risultati del questionario per una sessione."""
@@ -120,6 +165,7 @@ async def download_questionnaire_pdf(
         scores=scores,
         session_id=result.session_id,
         submitted_at=submitted_str,
+        language=lang,
     )
 
     filename = f"counselorbot_{result.questionnaire_type}_{result.id}.pdf"

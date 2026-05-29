@@ -101,6 +101,19 @@ const SYSTEM_PROMPT_MODES = [
     { value: 'qsar-factor', label: 'QSAr Analisi Fattori' },
     { value: 'qsar-second-level', label: 'QSAr Secondo Livello' },
     { value: 'qsar-generic', label: 'QSAr Generica' },
+    { value: 'ztpi-factor', label: 'ZTPI Analisi Fattori' },
+    { value: 'ztpi-btp', label: 'ZTPI Profilo Temporale Bilanciato' },
+    { value: 'savickas-interview', label: 'Savickas Intervista' },
+    { value: 'savickas-summary', label: 'Savickas Sintesi' },
+    { value: 'qpcs-factor', label: 'QPCS Analisi Fattori' },
+    { value: 'qpcc-factor', label: 'QPCC Analisi Fattori' },
+    { value: 'qap-factor', label: 'QAP Analisi Risorse' },
+    { value: 'qpcs-interview', label: 'QPCS Percorso Guidato' },
+    { value: 'qpcs-summary', label: 'QPCS Sintesi' },
+    { value: 'qpcc-interview', label: 'QPCC Percorso Guidato' },
+    { value: 'qpcc-summary', label: 'QPCC Sintesi' },
+    { value: 'qap-interview', label: 'QAP Percorso Guidato' },
+    { value: 'qap-summary', label: 'QAP Sintesi' },
 ];
 
 const COLOR_THEMES = [
@@ -467,13 +480,73 @@ export function ConfigForm() {
                 { key: 'text_savickas_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
             ],
         },
+        {
+            id: 'qpcs',
+            questionnaireType: 'QPCS',
+            title: 'QPCS - Percezione delle Competenze Strategiche',
+            color: 'purple' as const,
+            systemPrompts: [
+                { key: 'prompt_qpcs_factor', label: 'Prompt Analisi Fattori' },
+                ...(configs.some(c => c.key === 'prompt_qpcs_interview')
+                    ? [{ key: 'prompt_qpcs_interview', label: 'Prompt Percorso Guidato' }]
+                    : []),
+                ...(configs.some(c => c.key === 'prompt_qpcs_summary')
+                    ? [{ key: 'prompt_qpcs_summary', label: 'Prompt Sintesi Finale' }]
+                    : []),
+            ],
+            texts: [
+                { key: 'text_qpcs_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
+                { key: 'text_qpcs_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
+            ],
+        },
+        {
+            id: 'qpcc',
+            questionnaireType: 'QPCC',
+            title: 'QPCC - Percezione delle Competenze e Convinzioni',
+            color: 'indigo' as const,
+            systemPrompts: [
+                { key: 'prompt_qpcc_factor', label: 'Prompt Analisi Fattori' },
+                ...(configs.some(c => c.key === 'prompt_qpcc_interview')
+                    ? [{ key: 'prompt_qpcc_interview', label: 'Prompt Percorso Guidato' }]
+                    : []),
+                ...(configs.some(c => c.key === 'prompt_qpcc_summary')
+                    ? [{ key: 'prompt_qpcc_summary', label: 'Prompt Sintesi Finale' }]
+                    : []),
+            ],
+            texts: [
+                { key: 'text_qpcc_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
+                { key: 'text_qpcc_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
+            ],
+        },
+        {
+            id: 'qap',
+            questionnaireType: 'QAP',
+            title: 'QAP - Adattabilita Professionale',
+            color: 'green' as const,
+            systemPrompts: [
+                { key: 'prompt_qap_factor', label: 'Prompt Analisi Risorse' },
+                ...(configs.some(c => c.key === 'prompt_qap_interview')
+                    ? [{ key: 'prompt_qap_interview', label: 'Prompt Percorso Guidato' }]
+                    : []),
+                ...(configs.some(c => c.key === 'prompt_qap_summary')
+                    ? [{ key: 'prompt_qap_summary', label: 'Prompt Sintesi Finale' }]
+                    : []),
+            ],
+            texts: [
+                { key: 'text_qap_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
+                { key: 'text_qap_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
+            ],
+        },
     ];
 
     const colorMap = {
         blue: { border: 'border-blue-400', bg: 'bg-blue-50', title: 'text-blue-700', dot: 'bg-blue-500', ring: 'focus:ring-blue-500', subBg: 'bg-blue-100/50', subTitle: 'text-blue-600' },
         sky: { border: 'border-sky-400', bg: 'bg-sky-50', title: 'text-sky-700', dot: 'bg-sky-500', ring: 'focus:ring-sky-500', subBg: 'bg-sky-100/50', subTitle: 'text-sky-600' },
+        purple: { border: 'border-purple-400', bg: 'bg-purple-50', title: 'text-purple-700', dot: 'bg-purple-500', ring: 'focus:ring-purple-500', subBg: 'bg-purple-100/50', subTitle: 'text-purple-600' },
+        indigo: { border: 'border-indigo-400', bg: 'bg-indigo-50', title: 'text-indigo-700', dot: 'bg-indigo-500', ring: 'focus:ring-indigo-500', subBg: 'bg-indigo-100/50', subTitle: 'text-indigo-600' },
         emerald: { border: 'border-emerald-400', bg: 'bg-emerald-50', title: 'text-emerald-700', dot: 'bg-emerald-500', ring: 'focus:ring-emerald-500', subBg: 'bg-emerald-100/50', subTitle: 'text-emerald-600' },
         amber: { border: 'border-amber-400', bg: 'bg-amber-50', title: 'text-amber-700', dot: 'bg-amber-500', ring: 'focus:ring-amber-500', subBg: 'bg-amber-100/50', subTitle: 'text-amber-600' },
+        green: { border: 'border-green-400', bg: 'bg-green-50', title: 'text-green-700', dot: 'bg-green-500', ring: 'focus:ring-green-500', subBg: 'bg-green-100/50', subTitle: 'text-green-600' },
     };
 
     const questTabs = questionnaireConfigs.map((q) => ({

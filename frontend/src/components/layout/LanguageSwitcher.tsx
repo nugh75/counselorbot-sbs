@@ -6,7 +6,7 @@ import { LANGUAGES } from '@/lib/i18n';
 import { useI18n } from '@/lib/i18n-context';
 
 export function LanguageSwitcher() {
-    const { lang, setLang } = useI18n();
+    const { lang, setLang, t } = useI18n();
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
 
@@ -26,7 +26,7 @@ export function LanguageSwitcher() {
                 type="button"
                 onClick={() => setOpen(o => !o)}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-sm"
-                aria-label="Cambia lingua / Change language"
+                aria-label={t('nav.language')}
             >
                 <span className="text-lg leading-none">{current.flag}</span>
                 <span className="hidden sm:inline text-slate-700 font-medium">{current.code.toUpperCase()}</span>

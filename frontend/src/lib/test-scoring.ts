@@ -1,12 +1,11 @@
 import { AdministrationInstrument, AdministrationLocale } from './test-administrations';
 
-export type ProfileDimension = 'cognitive' | 'affective';
-export type ProfileOrientation = 'resource' | 'difficulty';
+export type ProfileOrientation = 'resource' | 'difficulty' | 'neutral';
 export type FrequencyBand = 'lower' | 'moderate' | 'higher';
 
 interface FactorDefinition {
     code: string;
-    dimension: ProfileDimension;
+    dimension: string;
     orientation: ProfileOrientation;
     itemNumbers: number[];
     reverseItems?: number[];
@@ -16,7 +15,7 @@ interface FactorDefinition {
 export interface ExperimentalProfileResult {
     code: string;
     label: string;
-    dimension: ProfileDimension;
+    dimension: string;
     orientation: ProfileOrientation;
     average: number;
     percentage: number;
@@ -147,6 +146,128 @@ const QSAR_FACTORS: FactorDefinition[] = [
     },
 ];
 
+// ZTPI factor definitions (Zimbardo & Boyd, 1999)
+// 56 items, 5 factors. Factor assignment is experimental pending review.
+const ZTPI_FACTORS: FactorDefinition[] = [
+    {
+        code: 'T1', dimension: 'pn', orientation: 'neutral',
+        itemNumbers: [4, 16, 22, 25, 27, 33, 34, 36, 40, 45],
+        labels: { en: 'Past Negative', sv: 'Negativt förflutet' },
+    },
+    {
+        code: 'T2', dimension: 'pp', orientation: 'neutral',
+        itemNumbers: [2, 7, 11, 15, 20, 29, 41, 50],
+        labels: { en: 'Past Positive', sv: 'Positivt förflutet' },
+    },
+    {
+        code: 'T3', dimension: 'ph', orientation: 'neutral',
+        itemNumbers: [1, 8, 12, 17, 19, 23, 26, 28, 31, 32, 35, 42, 44, 51, 54, 55, 56],
+        labels: { en: 'Present Hedonistic', sv: 'Hedonistisk nutid' },
+    },
+    {
+        code: 'T4', dimension: 'pf', orientation: 'neutral',
+        itemNumbers: [3, 5, 9, 14, 24, 37, 38, 39],
+        labels: { en: 'Present Fatalistic', sv: 'Fatalistisk nutid' },
+    },
+    {
+        code: 'T5', dimension: 'f', orientation: 'neutral',
+        itemNumbers: [6, 10, 13, 18, 21, 30, 43, 46, 47, 48, 49, 52, 53],
+        labels: { en: 'Future', sv: 'Framtid' },
+    },
+];
+
+// QAP factor definitions (CAAS — Savickas & Porfeli, 2012)
+// 24 items, 4 factors. No reverse items.
+const QAP_FACTORS: FactorDefinition[] = [
+    {
+        code: 'AD1', dimension: 'concern', orientation: 'resource',
+        itemNumbers: [1, 2, 3, 4, 5, 6],
+        labels: { en: 'Concern', sv: 'Omsorg om framtiden' },
+    },
+    {
+        code: 'AD2', dimension: 'control', orientation: 'resource',
+        itemNumbers: [7, 8, 9, 10, 11, 12],
+        labels: { en: 'Control', sv: 'Kontroll' },
+    },
+    {
+        code: 'AD3', dimension: 'curiosity', orientation: 'resource',
+        itemNumbers: [13, 14, 15, 16, 17, 18],
+        labels: { en: 'Curiosity', sv: 'Nyfikenhet' },
+    },
+    {
+        code: 'AD4', dimension: 'confidence', orientation: 'resource',
+        itemNumbers: [19, 20, 21, 22, 23, 24],
+        labels: { en: 'Confidence', sv: 'Tilltro' },
+    },
+];
+
+// QPCS factor definitions — experimental mapping (25 items, 5 factors)
+const QPCS_FACTORS: FactorDefinition[] = [
+    {
+        code: 'S1', dimension: 'managing_emotions', orientation: 'resource',
+        itemNumbers: [1, 2, 3, 4, 5],
+        labels: { en: 'Managing emotions', sv: 'Hantera känslor' },
+    },
+    {
+        code: 'S2', dimension: 'communicative_competence', orientation: 'resource',
+        itemNumbers: [6, 7, 8, 9, 10],
+        labels: { en: 'Communicative competence', sv: 'Kommunikativ kompetens' },
+    },
+    {
+        code: 'S3', dimension: 'will_perseverance', orientation: 'resource',
+        itemNumbers: [11, 12, 13, 14, 15],
+        labels: { en: 'Will & perseverance', sv: 'Vilja & uthållighet' },
+    },
+    {
+        code: 'S4', dimension: 'strategies_collaboration', orientation: 'resource',
+        itemNumbers: [16, 17, 18, 19, 20],
+        labels: { en: 'Strategies & collaboration', sv: 'Strategier & samarbete' },
+    },
+    {
+        code: 'S5', dimension: 'confidence_life_project', orientation: 'resource',
+        itemNumbers: [21, 22, 23, 24, 25],
+        labels: { en: 'Confidence & life project', sv: 'Tilltro & livsprojekt' },
+    },
+];
+
+// QPCC factor definitions — experimental mapping (25 items, 5 factors)
+const QPCC_FACTORS: FactorDefinition[] = [
+    {
+        code: 'K1', dimension: 'public_speaking', orientation: 'resource',
+        itemNumbers: [1, 2, 3, 4, 5],
+        labels: { en: 'Public speaking', sv: 'Tala inför andra' },
+    },
+    {
+        code: 'K2', dimension: 'anxiety_responsibility', orientation: 'resource',
+        itemNumbers: [6, 7, 8, 9, 10],
+        labels: { en: 'Managing anxiety & responsibility', sv: 'Hantera ångest & ansvar' },
+    },
+    {
+        code: 'K3', dimension: 'volition_selfregulation', orientation: 'resource',
+        itemNumbers: [11, 12, 13, 14, 15],
+        labels: { en: 'Volition & self-regulation', sv: 'Vilja & självreglering' },
+    },
+    {
+        code: 'K4', dimension: 'elaboration_strategies', orientation: 'resource',
+        itemNumbers: [16, 17, 18, 19, 20],
+        labels: { en: 'Elaboration strategies', sv: 'Bearbetningsstrategier' },
+    },
+    {
+        code: 'K5', dimension: 'beliefs_about_self', orientation: 'resource',
+        itemNumbers: [21, 22, 23, 24, 25],
+        labels: { en: 'Beliefs about oneself', sv: 'Föreställningar om sig själv' },
+    },
+];
+
+const FACTOR_MAP: Record<AdministrationInstrument, FactorDefinition[]> = {
+    QSA: QSA_FACTORS,
+    QSAr: QSAR_FACTORS,
+    ZTPI: ZTPI_FACTORS,
+    QPCS: QPCS_FACTORS,
+    QPCC: QPCC_FACTORS,
+    QAP: QAP_FACTORS,
+};
+
 const TEXT = {
     en: {
         band: { lower: 'Lower frequency', moderate: 'Moderate frequency', higher: 'Higher frequency' },
@@ -159,6 +280,11 @@ const TEXT = {
             lower: 'Lower reported frequency of this difficulty.',
             moderate: 'Moderate reported frequency of this difficulty.',
             higher: 'Higher reported frequency of this difficulty.',
+        },
+        neutral: {
+            lower: 'Lower reported presence of this dimension.',
+            moderate: 'Moderate reported presence of this dimension.',
+            higher: 'Higher reported presence of this dimension.',
         },
     },
     sv: {
@@ -173,11 +299,17 @@ const TEXT = {
             moderate: 'Måttlig rapporterad frekvens av denna svårighet.',
             higher: 'Högre rapporterad frekvens av denna svårighet.',
         },
+        neutral: {
+            lower: 'Lägre rapporterad närvaro av denna dimension.',
+            moderate: 'Måttlig rapporterad närvaro av denna dimension.',
+            higher: 'Högre rapporterad närvaro av denna dimension.',
+        },
     },
 } satisfies Record<AdministrationLocale, {
     band: Record<FrequencyBand, string>;
     resource: Record<FrequencyBand, string>;
     difficulty: Record<FrequencyBand, string>;
+    neutral: Record<FrequencyBand, string>;
 }>;
 
 function getBand(average: number): FrequencyBand {
@@ -191,7 +323,8 @@ export function calculateExperimentalProfile(
     locale: AdministrationLocale,
     answers: Record<number, number>,
 ): ExperimentalProfileResult[] {
-    const factors = instrument === 'QSA' ? QSA_FACTORS : QSAR_FACTORS;
+    const factors = FACTOR_MAP[instrument];
+    if (!factors) throw new Error(`Unknown instrument: ${instrument}`);
     const copy = TEXT[locale];
 
     return factors.map((factor) => {

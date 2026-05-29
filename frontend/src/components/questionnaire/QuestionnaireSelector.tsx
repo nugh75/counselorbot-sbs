@@ -6,14 +6,14 @@ import { QUESTIONNAIRE_LIST, QuestionnaireType, QuestionnaireConfig } from '@/li
 import { AlertTriangle, ArrowRight, BookOpen, ClipboardList, MessageSquare } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 
-const ACTIVE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS'];
+const ACTIVE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
 
 interface QuestionnaireSelectorProps {
     onSelect: (questionnaire: QuestionnaireConfig) => void;
 }
 
 export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) {
-    const { t } = useI18n();
+    const { t, lang } = useI18n();
     const available = QUESTIONNAIRE_LIST.filter((q) => ACTIVE_QUESTIONNAIRES.includes(q.id));
     const upcoming = QUESTIONNAIRE_LIST.filter((q) => !ACTIVE_QUESTIONNAIRES.includes(q.id));
 
@@ -100,20 +100,22 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
                 </div>
             </section>
 
-            <section className="rounded-xl border-2 border-amber-300 bg-amber-50 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-                <AlertTriangle className="w-7 h-7 shrink-0 text-amber-700" />
-                <div className="flex-1">
-                    <h2 className="font-bold text-amber-950">{t('administration.entry.title')}</h2>
-                    <p className="mt-1 text-sm leading-relaxed text-amber-900">{t('administration.entry.body')}</p>
-                </div>
-                <Link
-                    href="/somministrazione"
-                    className="inline-flex shrink-0 items-center gap-2 rounded-md bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-800 transition-colors"
-                >
-                    {t('administration.entry.button')}
-                    <ArrowRight className="w-4 h-4" />
-                </Link>
-            </section>
+            {(lang === 'en' || lang === 'sv') && (
+                <section className="rounded-xl border-2 border-amber-300 bg-amber-50 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+                    <AlertTriangle className="w-7 h-7 shrink-0 text-amber-700" />
+                    <div className="flex-1">
+                        <h2 className="font-bold text-amber-950">{t('administration.entry.title')}</h2>
+                        <p className="mt-1 text-sm leading-relaxed text-amber-900">{t('administration.entry.body')}</p>
+                    </div>
+                    <Link
+                        href="/somministrazione"
+                        className="inline-flex shrink-0 items-center gap-2 rounded-md bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-800 transition-colors"
+                    >
+                        {t('administration.entry.button')}
+                        <ArrowRight className="w-4 h-4" />
+                    </Link>
+                </section>
+            )}
 
             <section className="rounded-xl border border-dashed border-slate-200 bg-white/60 px-5 py-4 flex flex-col lg:flex-row lg:items-center gap-4">
                 <div className="lg:w-52 shrink-0">

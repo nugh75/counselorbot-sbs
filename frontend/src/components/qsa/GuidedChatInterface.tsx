@@ -9,8 +9,8 @@ import { streamChat } from '@/lib/chat-stream';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useRouter } from 'next/navigation';
 import { useI18n } from '@/lib/i18n-context';
+import { stepLabel } from '@/lib/i18n-steps';
 
 // --- Types ---
 
@@ -36,6 +36,8 @@ interface ChatMessage {
     content: string;
     reasoning?: string;
     strategyIds?: string[];
+    responseId?: string;
+    feedbackPhase?: string;
     feedback?: boolean;
 }
 
@@ -152,10 +154,6 @@ const SAVICKAS_FALLBACK_STEPS: StepDef[] = [
     },
 ];
 
-function sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 function normalizeLoadedSteps(questionnaireType: string, loadedSteps: StepDef[]): StepDef[] {
     const ordered = [...loadedSteps].sort((a, b) => a.sort_order - b.sort_order);
     if (questionnaireType === 'ZTPI') {
@@ -204,6 +202,9 @@ const PREFIX_SIDEBAR: Record<string, { label: string; colorClass: string }> = {
     C: { label: 'Cognitive', colorClass: 'text-blue-600' },
     A: { label: 'Affettive', colorClass: 'text-purple-600' },
     T: { label: 'Prospettiva Temporale', colorClass: 'text-amber-600' },
+    S: { label: 'Competenze Strategiche', colorClass: 'text-purple-600' },
+    K: { label: 'Competenze e Convinzioni', colorClass: 'text-indigo-600' },
+    AD: { label: 'Adattabilità Professionale', colorClass: 'text-green-600' },
 };
 
 // --- Score formatters per questionnaire type ---
@@ -218,6 +219,14 @@ function buildScoresFormatter(
         };
     }
 
+    // Agent-led questionnaires (QPCS, QPCC, QAP): qualitative, no numeric factors.
+    const cfg = QUESTIONNAIRES[questionnaireType as keyof typeof QUESTIONNAIRES];
+    if (!cfg || cfg.factorPrefix.length === 0) {
+        return (): string => {
+            return 'CONTESTO: percorso riflessivo guidato dall’AI, qualitativo, senza punteggi numerici.';
+        };
+    }
+
     if (questionnaireType === 'ZTPI') {
         return (scores: Record<string, number>): string => {
             const parts = Object.entries(scores)
@@ -229,22 +238,21 @@ function buildScoresFormatter(
         };
     }
 
-    // QSA and QSAr: every code is paired with its instrument-specific factor name.
+    // Questionari basati su punteggi (QSA, QSAr, QPCS, QPCC, QAP): elenca i fattori
+    // raggruppati per prefisso, ciascuno con il nome localizzato.
     return (scores: Record<string, number>): string => {
-        const config = QUESTIONNAIRES[questionnaireType as keyof typeof QUESTIONNAIRES];
-        const label = questionnaireType === 'QSAr' ? 'QSAr' : 'QSA';
-        const fallbackName = (code: string) => config?.factors.find((factor) => factor.code === code)?.name || code;
-        const cog = Object.entries(scores)
-            .filter(([k]) => k.startsWith('C'))
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([code, value]) => `- ${code} (${factorName(code, fallbackName(code))}): ${value}/9`)
+        const fallbackName = (code: string) => cfg?.factors.find((factor) => factor.code === code)?.name || code;
+        const blocks = cfg.factorPrefix
+            .map((prefix) =>
+                Object.entries(scores)
+                    .filter(([k]) => k.startsWith(prefix))
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([code, value]) => `- ${code} (${factorName(code, fallbackName(code))}): ${value}/9`)
+                    .join('\n'),
+            )
+            .filter(Boolean)
             .join('\n');
-        const aff = Object.entries(scores)
-            .filter(([k]) => k.startsWith('A'))
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([code, value]) => `- ${code} (${factorName(code, fallbackName(code))}): ${value}/9`)
-            .join('\n');
-        return `PROFILO ${label} DELLO STUDENTE:\n\nFattori cognitivi:\n${cog}\n\nFattori affettivi:\n${aff}`;
+        return `PROFILO ${questionnaireType} DELLO STUDENTE:\n${blocks}`;
     };
 }
 
@@ -299,34 +307,39 @@ function CompactScoreBar({
 
 // --- Markdown ---
 
+function omitMarkdownNode<T extends { node?: unknown }>(props: T): Omit<T, 'node'> {
+    const { node, ...elementProps } = props;
+    void node;
+    return elementProps;
+}
+
 const markdownComponents: Components = {
-    table: ({ node, ...props }) => (
+    table: (props) => (
         <table
             className="w-full min-w-[760px] border-separate border-spacing-0 text-sm text-slate-800"
-            {...props}
+            {...omitMarkdownNode(props)}
         />
     ),
-    thead: ({ node, ...props }) => <thead className="bg-slate-50" {...props} />,
-    tbody: ({ node, ...props }) => <tbody className="[&_tr:nth-child(even)]:bg-slate-50/40" {...props} />,
-    tr: ({ node, ...props }) => <tr className="border-b border-slate-100" {...props} />,
-    th: ({ node, ...props }) => (
+    thead: (props) => <thead className="bg-slate-50" {...omitMarkdownNode(props)} />,
+    tbody: (props) => <tbody className="[&_tr:nth-child(even)]:bg-slate-50/40" {...omitMarkdownNode(props)} />,
+    tr: (props) => <tr className="border-b border-slate-100" {...omitMarkdownNode(props)} />,
+    th: (props) => (
         <th
             className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600 border-b border-slate-200"
-            {...props}
+            {...omitMarkdownNode(props)}
         />
     ),
-    td: ({ node, ...props }) => <td className="px-3 py-2 align-top leading-relaxed border-b border-slate-100" {...props} />,
-    p: ({ node, ...props }) => <p className="my-1.5 text-sm leading-relaxed" {...props} />,
-    ul: ({ node, ...props }) => <ul className="my-2 pl-5 list-disc space-y-1" {...props} />,
-    ol: ({ node, ...props }) => <ol className="my-2 pl-5 list-decimal space-y-1" {...props} />,
-    li: ({ node, ...props }) => <li className="leading-relaxed" {...props} />,
-    strong: ({ node, ...props }) => <strong className="font-semibold text-slate-900" {...props} />,
+    td: (props) => <td className="px-3 py-2 align-top leading-relaxed border-b border-slate-100" {...omitMarkdownNode(props)} />,
+    p: (props) => <p className="my-1.5 text-sm leading-relaxed" {...omitMarkdownNode(props)} />,
+    ul: (props) => <ul className="my-2 pl-5 list-disc space-y-1" {...omitMarkdownNode(props)} />,
+    ol: (props) => <ol className="my-2 pl-5 list-decimal space-y-1" {...omitMarkdownNode(props)} />,
+    li: (props) => <li className="leading-relaxed" {...omitMarkdownNode(props)} />,
+    strong: (props) => <strong className="font-semibold text-slate-900" {...omitMarkdownNode(props)} />,
 };
 
 // --- Main Component ---
 
 export function GuidedChatInterface({ scores, questionnaireType, onComplete, sessionId, scoresContextOverride }: GuidedChatInterfaceProps) {
-    const router = useRouter();
     const { t, tf, lang } = useI18n();
     const [steps, setSteps] = useState<StepDef[]>([]);
     const [phases, setPhases] = useState<string[]>([]);
@@ -359,6 +372,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const requestRef = useRef<AbortController | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const lastProcessedPhase = useRef<string | null>(null);
+    const loadedSessionScopeRef = useRef('');
 
     // Derived from questionnaire config
     const questionnaire = useMemo(() => QUESTIONNAIRES[questionnaireType as keyof typeof QUESTIONNAIRES], [questionnaireType]);
@@ -379,7 +393,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 .filter(([k]) => k.startsWith(prefix))
                 .sort(([a], [b]) => a.localeCompare(b)),
         }));
-    }, [scores, questionnaire]);
+    }, [scores, questionnaire, t]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -405,25 +419,31 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         return controller;
     };
 
-    const setLastStrategies = (strategyIds?: string[]) => {
-        if (!strategyIds?.length) return;
+    const setLastFeedbackTargets = (strategyIds?: string[], responseId?: string) => {
+        if (!strategyIds?.length && !responseId) return;
         setMessages(prev => {
             const copy = [...prev];
-            copy[copy.length - 1] = { ...copy[copy.length - 1], strategyIds };
+            copy[copy.length - 1] = {
+                ...copy[copy.length - 1],
+                strategyIds,
+                responseId,
+                feedbackPhase: currentPhase,
+            };
             return copy;
         });
     };
 
     const submitStrategyFeedback = async (messageIndex: number, helpful: boolean) => {
         const message = messages[messageIndex];
-        if (!message?.strategyIds?.length || message.feedback !== undefined) return;
+        if ((!message?.strategyIds?.length && !message?.responseId) || message.feedback !== undefined) return;
         const response = await fetch('/api/strategy-feedback', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                strategy_ids: message.strategyIds,
+                strategy_ids: message.strategyIds || [],
+                response_id: message.responseId,
                 questionnaire_type: questionnaireType,
-                phase: currentPhase,
+                phase: message.feedbackPhase || currentPhase,
                 language: lang,
                 helpful,
             }),
@@ -446,9 +466,10 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 const data = await res.json();
                 if (!isMounted) return;
 
-                // Dynamic steps
+                // Dynamic steps — localizza le etichette in EN/SV (fallback al testo DB)
                 const loadedSteps: StepDef[] = data.guided_steps || [];
-                const normalizedSteps = normalizeLoadedSteps(questionnaireType, loadedSteps);
+                const normalizedSteps = normalizeLoadedSteps(questionnaireType, loadedSteps)
+                    .map((s) => ({ ...s, label: stepLabel(lang, s.id, s.label) }));
                 setSteps(normalizedSteps);
 
                 const phaseOrder = questionnaireType === 'SAVICKAS'
@@ -462,11 +483,53 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         FIXED_CONCLUSION_ID,
                     ];
                 setPhases(phaseOrder);
+                const sessionScope = `${questionnaireType}:${sessionId}`;
+                const shouldRestoreSession = loadedSessionScopeRef.current !== sessionScope;
 
-                // Set first phase
-                if (phaseOrder.length > 0) {
-                    setCurrentPhase(phaseOrder[0]);
+                // Check if we can resume the session state from backend memory
+                try {
+                    const memRes = await fetch(`/api/memory/user/${sessionId}`);
+                    if (memRes.ok) {
+                        const memData = await memRes.json();
+                        const restoredPhase = memData.current_phase as string | undefined;
+                        if (restoredPhase && phaseOrder.includes(restoredPhase) && shouldRestoreSession) {
+                            const restoredQuestionsLabel = lang === 'it'
+                                ? data.label_guided_questions || t('guided.questionsLabel')
+                                : t('guided.questionsLabel');
+                            const restoredConclusionLabel = lang === 'it'
+                                ? data.label_guided_conclusion || t('guided.conclusionLabel')
+                                : t('guided.conclusionLabel');
+                            setCurrentPhase(restoredPhase);
+                            setMessages([
+                                {
+                                    role: 'system',
+                                    content: t('guided.resumed', { step:
+                                        restoredPhase === FIXED_QUESTIONS_ID
+                                            ? restoredQuestionsLabel
+                                            : restoredPhase === FIXED_CONCLUSION_ID
+                                            ? restoredConclusionLabel
+                                            : normalizedSteps.find((s: StepDef) => s.id === restoredPhase)?.label || restoredPhase
+                                    })
+                                }
+                            ]);
+                        } else if (phaseOrder.length > 0 && shouldRestoreSession) {
+                            setCurrentPhase(phaseOrder[0]);
+                        }
+                    } else if (phaseOrder.length > 0 && shouldRestoreSession) {
+                        setCurrentPhase(phaseOrder[0]);
+                    }
+                } catch {
+                    if (phaseOrder.length > 0 && shouldRestoreSession) {
+                        setCurrentPhase(phaseOrder[0]);
+                    }
                 }
+                loadedSessionScopeRef.current = sessionScope;
+
+                setQuestionsLabel(t('guided.questionsLabel'));
+                setConclusionLabel(t('guided.conclusionLabel'));
+                setQuestionsBanner(t('guided.questionsBanner'));
+                setQuestionsIntro(t('guided.questionsIntro'));
+                setConclusionText(t('guided.conclusionText'));
 
                 // Fixed-phase labels and texts: i testi configurati in admin sono in italiano,
                 // quindi li applichiamo solo per la lingua italiana; per le altre lingue
@@ -480,7 +543,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 }
             } catch {
                 if (questionnaireType === 'SAVICKAS') {
-                    setSteps(SAVICKAS_FALLBACK_STEPS);
+                    setSteps(SAVICKAS_FALLBACK_STEPS.map((s) => ({ ...s, label: stepLabel(lang, s.id, s.label) })));
                     const fallbackOrder = [...SAVICKAS_FALLBACK_STEPS.map((s) => s.id), FIXED_CONCLUSION_ID];
                     setPhases(fallbackOrder);
                     setCurrentPhase(fallbackOrder[0]);
@@ -496,7 +559,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
         loadData();
         return () => { isMounted = false; };
-    }, [questionnaireType]);
+    }, [questionnaireType, sessionId, lang, t]);
 
     // Helpers for current phase
     const getStepDef = (phaseId: string): StepDef | undefined => steps.find(s => s.id === phaseId);
@@ -579,6 +642,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 generateAnalysis(step);
             }
         }
+        // The phase guard above intentionally makes this effect run once per phase.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentPhase, initialLoading]);
 
     const generateAnalysis = async (step: StepDef) => {
@@ -639,7 +704,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             try {
                 const result = await streamChat(buildPayload(false), (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
                 responseText = result.response || '';
-                setLastStrategies(result.strategy_ids);
+                setLastFeedbackTargets(result.strategy_ids, result.response_id);
                 streamOk = true;
             } catch {
                 if (controller.signal.aborted) return;
@@ -779,7 +844,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 (r) => updateReasoning(r),
             );
             const { response } = result;
-            setLastStrategies(result.strategy_ids);
+            setLastFeedbackTargets(result.strategy_ids, result.response_id);
 
             // Sul testo completo applica il segnale di avanzamento
             const { cleanText, shouldAdvance } = extractAdvanceSignal(response || '');
@@ -1079,7 +1144,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                 )}
                                                 {playingMessageIdx === idx ? t('guided.stopListen') : t('guided.listen')}
                                             </button>
-                                            {!!msg.strategyIds?.length && (
+                                            {(!!msg.strategyIds?.length || !!msg.responseId) && (
                                                 <>
                                                     <button
                                                         type="button"
@@ -1128,7 +1193,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 {currentPhase === FIXED_CONCLUSION_ID ? (
                     <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-center">
                         <button
-                            onClick={() => window.location.href = '/'}
+                            onClick={onComplete}
                             className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center gap-2"
                         >
                             <Home className="w-5 h-5" />

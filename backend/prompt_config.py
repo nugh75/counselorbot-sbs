@@ -212,6 +212,80 @@ DEFAULT_GUIDED_TEXT_SAVICKAS_CONCLUSION = (
 )
 
 
+# --- Questionari basati su punteggi di fattore (QPCS, QPCC, QAP) ---
+# Come il QSA: lo studente inserisce i valori dei fattori (scala 1-9) e l'AI
+# produce un'analisi guidata. Tutti i fattori sono diretti (alto = forza).
+
+_FACTOR_TABLE_RULES = (
+    "Parla sempre in italiano semplice, diretto e incoraggiante, dando del tu. "
+    "Per ogni fattore richiesto restituisci SOLO: punteggio (x/9), interpretazione "
+    "(una sola etichetta) e breve commento pratico (max 2 frasi). "
+    "Regole di interpretazione (tutti i fattori sono diretti): "
+    "1-3 = Fattore su cui porre attenzione per migliorare; 4-6 = Buono; 7-9 = Tuo punto di forza. "
+    "Vincoli di output: usa SOLO queste 3 etichette esatte, senza sinonimi; "
+    "non usare mai i termini 'Debolezza', 'Adeguato', 'Forza'. "
+    "Produci una tabella Markdown valida GFM con colonne esatte: "
+    "Fattore | Punteggio | Interpretazione | Breve commento/consiglio. "
+    "Una sola riga per fattore, senza andare a capo dentro le celle. "
+    "Dopo la tabella aggiungi 3 sezioni brevi: Tuoi punti di forza; Aree buone; "
+    "Fattori su cui porre attenzione per migliorare. "
+    "Stile commenti: frase 1 = significato pratico del punteggio; frase 2 = una micro-azione "
+    "concreta (oggi o questa settimana). Tono non giudicante. NON usare saluti iniziali."
+)
+
+# QPCS — Percezione delle proprie Competenze Strategiche (Pellerey)
+DEFAULT_SYSTEM_PROMPT_QPCS_FACTOR = (
+    "Sei CounselorBot, tutor di studio esperto del Questionario di Percezione delle proprie "
+    "Competenze Strategiche (QPCS). Analizza il profilo per aree di competenza strategica: "
+    "S1 Gestione delle emozioni, S2 Competenza comunicativa, S3 Volonta' e perseveranza, "
+    "S4 Strategie e collaborazione, S5 Fiducia e progetto di vita. "
+    + _FACTOR_TABLE_RULES
+)
+
+# QPCC — Percezione delle proprie Competenze e Convinzioni (Pellerey-Orio)
+DEFAULT_SYSTEM_PROMPT_QPCC_FACTOR = (
+    "Sei CounselorBot, tutor di studio esperto del Questionario di Percezione delle proprie "
+    "Competenze e Convinzioni (QPCC). Analizza il profilo per aree: "
+    "K1 Comunicazione in pubblico, K2 Gestione di ansia e responsabilita', "
+    "K3 Volizione e autoregolazione, K4 Strategie di elaborazione, K5 Convinzioni su di se'. "
+    + _FACTOR_TABLE_RULES
+)
+
+# QAP — Adattabilita' Professionale (CAAS, Savickas-Porfeli)
+DEFAULT_SYSTEM_PROMPT_QAP_FACTOR = (
+    "Sei CounselorBot, counselor orientativo esperto del Questionario sull'Adattabilita' "
+    "Professionale (QAP, adattamento del CAAS). Analizza le 4 risorse dell'adattabilita': "
+    "AD1 Orientamento al futuro, AD2 Controllo e autonomia, AD3 Curiosita' ed esplorazione, "
+    "AD4 Fiducia e problem solving. "
+    + _FACTOR_TABLE_RULES
+)
+
+DEFAULT_GUIDED_TEXT_QPCS_QUESTIONS_INTRO = (
+    "Abbiamo analizzato il tuo profilo di competenze strategiche. "
+    "Ora puoi farmi qualsiasi domanda libera o chiedere consigli pratici."
+)
+DEFAULT_GUIDED_TEXT_QPCS_CONCLUSION = (
+    "Hai completato l'analisi delle tue competenze strategiche (QPCS). "
+    "Clicca sul pulsante in basso per tornare alla Home Page."
+)
+DEFAULT_GUIDED_TEXT_QPCC_QUESTIONS_INTRO = (
+    "Abbiamo analizzato il tuo profilo di competenze e convinzioni. "
+    "Ora puoi farmi qualsiasi domanda libera o chiedere consigli pratici."
+)
+DEFAULT_GUIDED_TEXT_QPCC_CONCLUSION = (
+    "Hai completato l'analisi di competenze e convinzioni (QPCC). "
+    "Clicca sul pulsante in basso per tornare alla Home Page."
+)
+DEFAULT_GUIDED_TEXT_QAP_QUESTIONS_INTRO = (
+    "Abbiamo analizzato il tuo profilo di adattabilita' professionale. "
+    "Ora puoi farmi qualsiasi domanda libera o chiedere consigli pratici."
+)
+DEFAULT_GUIDED_TEXT_QAP_CONCLUSION = (
+    "Hai completato l'analisi dell'adattabilita' professionale (QAP). "
+    "Clicca sul pulsante in basso per tornare alla Home Page."
+)
+
+
 # --- System prompt definitions (stored in configs table) ---
 
 SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
@@ -287,6 +361,24 @@ SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
         "description": "Prompt di sistema per la sintesi finale dell'intervista Savickas",
         "default": DEFAULT_SYSTEM_PROMPT_SAVICKAS_SUMMARY,
     },
+    {
+        "key": "prompt_qpcs_factor",
+        "label": "Prompt QPCS Analisi Fattori",
+        "description": "Prompt di sistema per l'analisi dei fattori QPCS (tabella, scala 1-9)",
+        "default": DEFAULT_SYSTEM_PROMPT_QPCS_FACTOR,
+    },
+    {
+        "key": "prompt_qpcc_factor",
+        "label": "Prompt QPCC Analisi Fattori",
+        "description": "Prompt di sistema per l'analisi dei fattori QPCC (tabella, scala 1-9)",
+        "default": DEFAULT_SYSTEM_PROMPT_QPCC_FACTOR,
+    },
+    {
+        "key": "prompt_qap_factor",
+        "label": "Prompt QAP Analisi Fattori",
+        "description": "Prompt di sistema per l'analisi delle 4 risorse QAP (tabella, scala 1-9)",
+        "default": DEFAULT_SYSTEM_PROMPT_QAP_FACTOR,
+    },
 ]
 
 SYSTEM_PROMPT_DEFAULTS: Dict[str, str] = {
@@ -361,6 +453,42 @@ GUIDED_STATIC_TEXT_DEFINITIONS: List[Dict[str, str]] = [
         "description": "Messaggio statico finale della guided chat Savickas",
         "default": DEFAULT_GUIDED_TEXT_SAVICKAS_CONCLUSION,
     },
+    {
+        "key": "text_qpcs_questions_intro",
+        "label": "QPCS - Messaggio intro fase Domande",
+        "description": "Messaggio introduttivo della fase domande per QPCS",
+        "default": DEFAULT_GUIDED_TEXT_QPCS_QUESTIONS_INTRO,
+    },
+    {
+        "key": "text_qpcs_conclusion",
+        "label": "QPCS - Messaggio Conclusione",
+        "description": "Messaggio statico finale della guided chat QPCS",
+        "default": DEFAULT_GUIDED_TEXT_QPCS_CONCLUSION,
+    },
+    {
+        "key": "text_qpcc_questions_intro",
+        "label": "QPCC - Messaggio intro fase Domande",
+        "description": "Messaggio introduttivo della fase domande per QPCC",
+        "default": DEFAULT_GUIDED_TEXT_QPCC_QUESTIONS_INTRO,
+    },
+    {
+        "key": "text_qpcc_conclusion",
+        "label": "QPCC - Messaggio Conclusione",
+        "description": "Messaggio statico finale della guided chat QPCC",
+        "default": DEFAULT_GUIDED_TEXT_QPCC_CONCLUSION,
+    },
+    {
+        "key": "text_qap_questions_intro",
+        "label": "QAP - Messaggio intro fase Domande",
+        "description": "Messaggio introduttivo della fase domande per QAP",
+        "default": DEFAULT_GUIDED_TEXT_QAP_QUESTIONS_INTRO,
+    },
+    {
+        "key": "text_qap_conclusion",
+        "label": "QAP - Messaggio Conclusione",
+        "description": "Messaggio statico finale della guided chat QAP",
+        "default": DEFAULT_GUIDED_TEXT_QAP_CONCLUSION,
+    },
 ]
 
 
@@ -394,6 +522,16 @@ MODE_TO_SYSTEM_PROMPT_KEY: Dict[str, str] = {
     "ztpi-btp": "prompt_ztpi_btp",
     "savickas-interview": "prompt_savickas_interview",
     "savickas-summary": "prompt_savickas_summary",
+    "qpcs-factor": "prompt_qpcs_factor",
+    "qpcc-factor": "prompt_qpcc_factor",
+    "qap-factor": "prompt_qap_factor",
+    # Keep compatibility with detailed guided paths already configured in existing databases.
+    "qpcs-interview": "prompt_qpcs_interview",
+    "qpcs-summary": "prompt_qpcs_summary",
+    "qpcc-interview": "prompt_qpcc_interview",
+    "qpcc-summary": "prompt_qpcc_summary",
+    "qap-interview": "prompt_qap_interview",
+    "qap-summary": "prompt_qap_summary",
 }
 
 
@@ -826,5 +964,65 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
         "system_prompt_mode": "savickas-summary",
         "color_theme": "purple",
         "questionnaire_type": "SAVICKAS",
+    },
+]
+
+
+# --- Default QPCS guided steps (analisi fattori su punteggi 1-9, come QSA) ---
+
+DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
+    {
+        "id": "qpcs-factors",
+        "sort_order": 1,
+        "label": "1. Analisi delle Competenze",
+        "prompt": (
+            "Analizza tutti i fattori del mio profilo QPCS: S1 (Gestione delle emozioni), "
+            "S2 (Competenza comunicativa), S3 (Volonta' e perseveranza), "
+            "S4 (Strategie e collaborazione), S5 (Fiducia e progetto di vita). "
+            "Per ciascuno dai punteggio, interpretazione e breve commento pratico."
+        ),
+        "system_prompt_mode": "qpcs-factor",
+        "color_theme": "blue",
+        "questionnaire_type": "QPCS",
+    },
+]
+
+
+# --- Default QPCC guided steps (analisi fattori su punteggi 1-9, come QSA) ---
+
+DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [
+    {
+        "id": "qpcc-factors",
+        "sort_order": 1,
+        "label": "1. Analisi di Competenze e Convinzioni",
+        "prompt": (
+            "Analizza tutti i fattori del mio profilo QPCC: K1 (Comunicazione in pubblico), "
+            "K2 (Gestione di ansia e responsabilita'), K3 (Volizione e autoregolazione), "
+            "K4 (Strategie di elaborazione), K5 (Convinzioni su di se'). "
+            "Per ciascuno dai punteggio, interpretazione e breve commento pratico."
+        ),
+        "system_prompt_mode": "qpcc-factor",
+        "color_theme": "indigo",
+        "questionnaire_type": "QPCC",
+    },
+]
+
+
+# --- Default QAP guided steps (CAAS: 4 risorse, analisi su punteggi 1-9) ---
+
+DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [
+    {
+        "id": "qap-factors",
+        "sort_order": 1,
+        "label": "1. Analisi delle Risorse",
+        "prompt": (
+            "Analizza le 4 risorse del mio profilo QAP: AD1 (Orientamento al futuro), "
+            "AD2 (Controllo e autonomia), AD3 (Curiosita' ed esplorazione), "
+            "AD4 (Fiducia e problem solving). "
+            "Per ciascuna dai punteggio, interpretazione e breve commento pratico."
+        ),
+        "system_prompt_mode": "qap-factor",
+        "color_theme": "green",
+        "questionnaire_type": "QAP",
     },
 ]

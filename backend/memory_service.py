@@ -100,6 +100,24 @@ class SessionMemory:
             if path.exists():
                 path.unlink()
 
+    def get_progress(self, session_id: str) -> Dict[str, object]:
+        """Restituisce lo stato necessario a ripristinare la UI guidata."""
+        with self._lock:
+            text = self._read(session_id)
+            if not text:
+                return {
+                    "questionnaire": "",
+                    "current_phase": "",
+                    "completed_phases": [],
+                }
+            self._touch(session_id)
+            data = self._parse(text)
+            return {
+                "questionnaire": data["questionnaire"],
+                "current_phase": data["current_phase"],
+                "completed_phases": data["completed_phases"],
+            }
+
     def cleanup_expired(self) -> int:
         """Rimuove file memoria scaduti."""
         now = time.time()
@@ -139,6 +157,7 @@ class SessionMemory:
             if language:
                 data["language"] = language
             if phase:
+                data["current_phase"] = phase
                 data["current_step"] = step_label or phase
             if scores_context and not data["scores"]:
                 data["scores"] = scores_context.strip()
@@ -168,8 +187,12 @@ class SessionMemory:
             if scores_context and not data["scores"]:
                 data["scores"] = scores_context.strip()
             if phase:
+                data["current_phase"] = phase
                 data["current_step"] = step_label or phase
                 if completed_step:
+                    data["completed_phases"] = self._merge_unique(
+                        data["completed_phases"], [phase], 40
+                    )
                     data["completed_steps"] = self._merge_unique(
                         data["completed_steps"], [step_label or phase], 40
                     )
@@ -199,7 +222,9 @@ class SessionMemory:
         return {
             "questionnaire": "",
             "language": "",
+            "current_phase": "",
             "current_step": "",
+            "completed_phases": [],
             "completed_steps": [],
             "scores": "",
             "facts": [],
@@ -217,7 +242,10 @@ class SessionMemory:
 
         data["questionnaire"] = self._field(text, "Questionario")
         data["language"] = self._field(text, "Lingua")
+        data["current_phase"] = self._field(text, "Fase corrente")
         data["current_step"] = self._field(text, "Step corrente")
+        completed_phases = self._field(text, "Fasi completate")
+        data["completed_phases"] = [s.strip() for s in completed_phases.split(",") if s.strip()]
         completed = self._field(text, "Step completati")
         data["completed_steps"] = [s.strip() for s in completed.split(",") if s.strip()]
         data["scores"] = self._section(text, "Punteggi").replace("```text", "").replace("```", "").strip()
@@ -230,6 +258,7 @@ class SessionMemory:
         return data
 
     def _render(self, data: Dict[str, object]) -> str:
+        completed_phases = ", ".join(data["completed_phases"]) if data["completed_phases"] else "-"
         completed = ", ".join(data["completed_steps"]) if data["completed_steps"] else "-"
         scores = str(data["scores"] or "").strip()
         parts = [
@@ -238,7 +267,9 @@ class SessionMemory:
             "## Contesto",
             f"- Questionario: {data['questionnaire'] or '-'}",
             f"- Lingua: {data['language'] or '-'}",
+            f"- Fase corrente: {data['current_phase'] or '-'}",
             f"- Step corrente: {data['current_step'] or '-'}",
+            f"- Fasi completate: {completed_phases}",
             f"- Step completati: {completed}",
             "",
             "## Punteggi",

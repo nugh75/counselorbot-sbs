@@ -1,5 +1,23 @@
-export type AdministrationInstrument = 'QSA' | 'QSAr';
+export type AdministrationInstrument = 'QSA' | 'QSAr' | 'ZTPI' | 'QPCS' | 'QPCC' | 'QAP';
 export type AdministrationLocale = 'en' | 'sv';
+
+export const INSTRUMENT_NAMES: Record<AdministrationInstrument, { en: string; sv: string }> = {
+    QSA: { en: 'Learning Strategies Questionnaire', sv: 'Frågeformulär om inlärningsstrategier' },
+    QSAr: { en: 'Learning Strategies Questionnaire - Short Form', sv: 'Frågeformulär om inlärningsstrategier - kortversion' },
+    ZTPI: { en: 'Zimbardo Time Perspective Inventory', sv: 'Zimbardos tidsperspektivinventarium' },
+    QPCS: { en: 'Perceived Strategic Competences Questionnaire', sv: 'Frågeformulär om upplevda strategiska kompetenser' },
+    QPCC: { en: 'Perceived Competences and Beliefs Questionnaire', sv: 'Frågeformulär om upplevda kompetenser och föreställningar' },
+    QAP: { en: 'Career Adapt-Abilities Scale', sv: 'Skala för anpassningsbarhet i karriären' },
+};
+
+export const INSTRUMENT_ITEM_COUNTS: Record<AdministrationInstrument, number> = {
+    QSA: 100,
+    QSAr: 46,
+    ZTPI: 56,
+    QPCS: 25,
+    QPCC: 25,
+    QAP: 24,
+};
 
 export interface AdministrationCopy {
     title: string;
@@ -17,11 +35,12 @@ export interface AdministrationCopy {
     submittedTitle: string;
     submittedBody: string;
     profileMethod: string;
-    cognitiveTitle: string;
-    affectiveTitle: string;
+    dimensionTitles: Record<string, string>;
     rawAverage: string;
     restart: string;
     back: string;
+    startChat: string;
+    stanineScore: string;
 }
 
 const QSA_EN: string[] = [
@@ -328,24 +347,316 @@ const QSAR_SV: string[] = [
     'När jag möter en svårighet anstränger jag mig mer för att övervinna den.',
 ];
 
+// ZTPI items (Zimbardo Time Perspective Inventory)
+// Sources: Zimbardo & Boyd (1999) J Pers Soc Psychol; Swedish adaptation by Carelli et al.
+const ZTPI_EN: string[] = [
+    'I believe that getting together with one\'s friends to party is one of life\'s important pleasures.',
+    'Familiar childhood sights, sounds and smells often bring back a flood of wonderful memories.',
+    'Fate determines much of my life.',
+    'I often think of what I should have done differently in my life.',
+    'My decisions are mostly influenced by the people and things around me.',
+    'I believe that a person\'s day should be planned ahead each morning.',
+    'It gives me pleasure to think about my past.',
+    'I act on the spur of the moment.',
+    'If things don\'t get done on time, I don\'t worry about it.',
+    'When I want to achieve something, I set goals and consider specific means for reaching those goals.',
+    'On balance, there is much more good to recall than bad in my past.',
+    'When listening to my favourite music, I often lose all track of time.',
+    'Meeting tomorrow\'s deadlines and doing other necessary work comes before tonight\'s fun.',
+    'Since whatever will be will be, it doesn\'t really matter what I do.',
+    'I enjoy stories about the past and how things were in the old days.',
+    'Painful past experiences keep being replayed in my mind.',
+    'I try to live my life as fully as possible, one day at a time.',
+    'It upsets me to be late for appointments.',
+    'Ideally, I would live each day as if it were my last.',
+    'Happy memories of good times spring readily to mind.',
+    'I meet my obligations to friends and authorities on time.',
+    'I\'ve taken my share of abuse and rejection in the past.',
+    'I make decisions on the spur of the moment.',
+    'I take each day as it is rather than try to plan it out.',
+    'The past has too many unpleasant memories that I prefer not to recall.',
+    'It is important to put excitement in my life.',
+    'I\'ve made mistakes in the past that I wish I could undo.',
+    'I feel that it\'s more important to enjoy what you\'re doing than to get the job done on time.',
+    'I get nostalgic about my childhood.',
+    'Before making a decision, I weigh the costs against the benefits.',
+    'Taking risks keeps my life from becoming boring.',
+    'It is more important for me to enjoy life\'s journey than to focus only on the destination.',
+    'Things rarely work out as I expected.',
+    'It\'s hard for me to forget unpleasant images of my youth.',
+    'It takes joy out of the process of my activities if I have to think about goals and outcomes.',
+    'Even when I am enjoying the present, I am drawn back to comparisons with similar past experiences.',
+    'You can\'t really plan for the future because things change so much.',
+    'My life path is controlled by forces I cannot influence.',
+    'I don\'t like to think about the past.',
+    'I think about the bad things that have happened to me in the past.',
+    'I believe that life today is too complicated; I would rather enjoy the simpler life of the past.',
+    'I prefer friends who are spontaneous rather than predictable.',
+    'I keep working at a difficult uninteresting task if it will help me get ahead.',
+    'Spending what I earn on pleasures today is better than saving for tomorrow\'s security.',
+    'Often I wish I could go back in time and change what I did.',
+    'I like to get my work done before playing.',
+    'I get irritated at people who keep me from being on time.',
+    'It is more important to save for the future than to buy what one wants today.',
+    'I complete projects on time by making steady progress.',
+    'I like to listen to elderly people talk about the old days.',
+    'I take risks to put excitement in my life.',
+    'I make lists of things to do.',
+    'I am able to resist temptations when there is work to be done.',
+    'I find myself getting swept up in the excitement of the moment.',
+    'I am impulsive.',
+    'I try to make my life spontaneous rather than planned.',
+];
+
+const ZTPI_SV: string[] = [
+    'Jag tror att att träffa vänner och festa är en av livets viktiga glädjeämnen.',
+    'Bekanta barndomssyner, ljud och dofter väcker ofta en rad underbara minnen till liv.',
+    'Ödet bestämmer mycket av mitt liv.',
+    'Jag tänker ofta på vad jag borde ha gjort annorlunda i mitt liv.',
+    'Mina beslut påverkas mest av människor och saker omkring mig.',
+    'Jag tror att en persons dag bör planeras i förväg varje morgon.',
+    'Det gläder mig att tänka på mitt förflutna.',
+    'Jag handlar impulsivt.',
+    'Om saker inte blir gjorda i tid oroar jag mig inte över det.',
+    'När jag vill uppnå något sätter jag upp mål och överväger specifika sätt att nå dem.',
+    'Sammantaget finns det mycket mer gott än ont att minnas från mitt förflutna.',
+    'När jag lyssnar på min favoritmusik tappar jag ofta helt bort tiden.',
+    'Morgondagens deadlines och annat nödvändigt arbete kommer före kvällens nöjen.',
+    'Eftersom det som sker ändå sker spelar det ingen roll vad jag gör.',
+    'Jag tycker om berättelser om det förflutna och hur saker var förr i tiden.',
+    'Smärtsamma tidigare erfarenheter spelas upp om och om igen i mitt huvud.',
+    'Jag försöker leva mitt liv så fullt ut som möjligt, en dag i taget.',
+    'Det gör mig upprörd att komma för sent till möten.',
+    'Helst skulle jag leva varje dag som om den vore min sista.',
+    'Glada minnen från goda stunder dyker lätt upp.',
+    'Jag uppfyller mina åtaganden gentemot vänner och auktoriteter i tid.',
+    'Jag har fått min del av övergrepp och avvisande i det förflutna.',
+    'Jag fattar beslut impulsivt.',
+    'Jag tar varje dag som den kommer istället för att planera den.',
+    'Det förflutna har alltför många obehagliga minnen som jag helst inte vill tänka på.',
+    'Det är viktigt att skapa spänning i mitt liv.',
+    'Jag har gjort misstag i det förflutna som jag önskar att jag kunde göra ogjorda.',
+    'Jag tycker att det är viktigare att njuta av det man gör än att bli klar i tid.',
+    'Jag blir nostalgisk över min barndom.',
+    'Innan jag fattar ett beslut väger jag kostnader mot fördelar.',
+    'Att ta risker förhindrar att mitt liv blir tråkigt.',
+    'Det är viktigare för mig att njuta av livets resa än att bara fokusera på målet.',
+    'Saker och ting blir sällan som jag förväntat mig.',
+    'Det är svårt för mig att glömma obehagliga bilder från min ungdom.',
+    'Om jag måste tänka på mål och resultat försvinner glädjen i det jag gör.',
+    'Även när jag njuter av nuet dras jag tillbaka till jämförelser med liknande tidigare erfarenheter.',
+    'Man kan egentligen inte planera för framtiden eftersom saker förändras så mycket.',
+    'Min livsväg styrs av krafter som jag inte kan påverka.',
+    'Jag tycker inte om att tänka på det förflutna.',
+    'Jag tänker på dåliga saker som hänt mig tidigare.',
+    'Jag tycker att livet idag är för komplicerat; jag skulle hellre njuta av det enklare livet förr.',
+    'Jag föredrar vänner som är spontana snarare än förutsägbara.',
+    'Jag fortsätter arbeta med en svår ointressant uppgift om det hjälper mig att komma framåt.',
+    'Det är bättre att spendera det jag tjänar på nöjen idag än att spara till morgondagens trygghet.',
+    'Ofta önskar jag att jag kunde gå tillbaka i tiden och förändra det jag gjorde.',
+    'Jag gör helst klart mitt arbete innan jag leker.',
+    'Jag blir irriterad på människor som hindrar mig från att vara i tid.',
+    'Det är viktigare att spara för framtiden än att köpa vad man vill ha idag.',
+    'Jag slutför projekt i tid genom att göra stadiga framsteg.',
+    'Jag tycker om att lyssna på äldre människor som berättar om förr i tiden.',
+    'Jag tar risker för att skapa spänning i mitt liv.',
+    'Jag gör listor över saker som måste göras.',
+    'Jag kan motstå frestelser när det finns arbete som måste göras.',
+    'Jag rycks ofta med av stundens spänning.',
+    'Jag är impulsiv.',
+    'Jag försöker göra mitt liv spontant snarare än planerat.',
+];
+
+// QAP items (Career Adapt-Abilities Scale / CAAS)
+// Source: Savickas & Porfeli (2012) J Vocat Behav
+const QAP_EN: string[] = [
+    'Thinking about what my future will be like.',
+    'Realising that today\'s choices shape my future.',
+    'Preparing for the future.',
+    'Becoming aware of the educational and career choices I have to make.',
+    'Planning how to achieve my goals.',
+    'Being concerned about my career.',
+    'Keeping upbeat.',
+    'Making decisions by myself.',
+    'Taking responsibility for my actions.',
+    'Sticking up for my beliefs.',
+    'Counting on myself.',
+    'Doing what is right for me.',
+    'Looking for opportunities to grow as a person.',
+    'Investigating options before making a choice.',
+    'Observing how different people do things.',
+    'Probing deeply into questions I have.',
+    'Becoming curious about new opportunities.',
+    'Exploring my surroundings.',
+    'Performing tasks efficiently.',
+    'Taking care to do things well.',
+    'Learning new skills.',
+    'Working up to my ability.',
+    'Overcoming obstacles.',
+    'Solving problems.',
+];
+
+const QAP_SV: string[] = [
+    'Tänka på hur min framtid kommer att se ut.',
+    'Inse att dagens val formar min framtid.',
+    'Förbereda mig för framtiden.',
+    'Bli medveten om de utbildnings- och karriärval jag måste göra.',
+    'Planera hur jag ska nå mina mål.',
+    'Vara engagerad i min karriär.',
+    'Hålla humöret uppe.',
+    'Fatta beslut på egen hand.',
+    'Ta ansvar för mina handlingar.',
+    'Stå upp för mina övertygelser.',
+    'Lita på mig själv.',
+    'Göra det som är rätt för mig.',
+    'Söka möjligheter att växa som person.',
+    'Undersöka alternativ innan jag fattar ett beslut.',
+    'Observera hur olika personer gör saker.',
+    'Fördjupa mig i frågor jag har.',
+    'Bli nyfiken på nya möjligheter.',
+    'Utforska min omgivning.',
+    'Utföra uppgifter effektivt.',
+    'Se till att göra saker bra.',
+    'Lära mig nya färdigheter.',
+    'Arbeta upp till min förmåga.',
+    'Övervinna hinder.',
+    'Lösa problem.',
+];
+
+// QPCS items — experimental EN/SV wording based on strategic competence areas (S1–S5)
+// Source: CNOS-FAP / Pellerey (constructs); EN/SV items are working translations.
+const QPCS_EN: string[] = [
+    'I feel calm and relaxed when I sit down to study.',
+    'I know how to handle my anxiety before an exam.',
+    'When I feel tense about schoolwork, I have ways to relax.',
+    'Worrying about tests rarely interferes with my performance.',
+    'I can stay calm even when the workload is heavy.',
+    'I express my ideas clearly when working in a group.',
+    'I find it easy to ask for help when I need it.',
+    'I feel comfortable explaining things to my classmates.',
+    'I listen carefully to others\' opinions during discussions.',
+    'I can adapt my communication style to different people.',
+    'When I decide to do something, I see it through to the end.',
+    'I keep working on a task even when it becomes difficult.',
+    'I do not give up easily on challenging assignments.',
+    'I manage my time well and meet deadlines.',
+    'I push myself to finish my work even when I feel tired.',
+    'I organise my study material in a way that helps me learn.',
+    'I use different learning strategies depending on the subject.',
+    'I review my notes regularly to reinforce my understanding.',
+    'I find it helpful to study together with classmates.',
+    'I contribute actively when working in a team.',
+    'I believe I have the ability to succeed in my studies.',
+    'I feel confident about making decisions for my future.',
+    'I can identify my strengths and areas for improvement.',
+    'I have a clear sense of direction for my career path.',
+    'I trust that my efforts will lead to good outcomes.',
+];
+
+const QPCS_SV: string[] = [
+    'Jag känner mig lugn och avslappnad när jag studerar.',
+    'Jag vet hur jag hanterar min oro inför ett prov.',
+    'När jag känner mig spänd över skolarbete har jag sätt att koppla av.',
+    'Oro inför prov påverkar sällan mina prestationer.',
+    'Jag kan hålla mig lugn även när arbetsbelastningen är tung.',
+    'Jag uttrycker mina idéer tydligt när jag arbetar i grupp.',
+    'Jag har lätt för att be om hjälp när jag behöver det.',
+    'Jag känner mig bekväm med att förklara saker för mina klasskamrater.',
+    'Jag lyssnar noga på andras åsikter under diskussioner.',
+    'Jag kan anpassa mitt sätt att kommunicera till olika personer.',
+    'När jag bestämmer mig för att göra något fullföljer jag det.',
+    'Jag fortsätter arbeta med en uppgift även när den blir svår.',
+    'Jag ger inte lätt upp vid utmanande uppgifter.',
+    'Jag planerar min tid väl och håller deadline.',
+    'Jag pressar mig själv att slutföra mitt arbete även när jag är trött.',
+    'Jag organiserar mitt studiematerial på ett sätt som hjälper mig att lära.',
+    'Jag använder olika inlärningsstrategier beroende på ämne.',
+    'Jag går igenom mina anteckningar regelbundet för att befästa min förståelse.',
+    'Jag tycker att det är hjälpsamt att studera tillsammans med klasskamrater.',
+    'Jag bidrar aktivt när jag arbetar i team.',
+    'Jag tror att jag har förmågan att lyckas i mina studier.',
+    'Jag känner mig trygg med att fatta beslut om min framtid.',
+    'Jag kan identifiera mina styrkor och områden att förbättra.',
+    'Jag har en tydlig riktning för min karriärväg.',
+    'Jag litar på att mina ansträngningar leder till goda resultat.',
+];
+
+// QPCC items — experimental EN/SV wording based on competence & belief areas (K1–K5)
+// Source: CNOS-FAP / Pellerey (constructs); EN/SV items are working translations.
+const QPCC_EN: string[] = [
+    'I feel confident when I have to speak in front of a group.',
+    'I can present my ideas clearly to an audience.',
+    'I enjoy participating in class presentations.',
+    'I am able to persuade others with my arguments.',
+    'I feel comfortable expressing my opinions in a meeting.',
+    'I can manage pressure when making important decisions.',
+    'I take responsibility for the consequences of my choices.',
+    'I stay calm when faced with unexpected challenges.',
+    'I am able to balance multiple responsibilities at the same time.',
+    'I handle stressful situations without losing focus.',
+    'I set clear goals for my studies and work.',
+    'I organise my tasks in order of priority.',
+    'I monitor my own progress towards my goals.',
+    'I adjust my plans when circumstances change.',
+    'I reflect on my actions to learn from experience.',
+    'I connect new information with what I already know.',
+    'I organise ideas in my mind to understand them better.',
+    'I apply what I learn in one subject to other areas.',
+    'I use examples and analogies to deepen my understanding.',
+    'I think critically about the information I receive.',
+    'I believe in my ability to learn new things.',
+    'I trust that my efforts will pay off in the long run.',
+    'I attribute my successes to my own skills and hard work.',
+    'I am optimistic about my ability to overcome difficulties.',
+    'I believe that I can improve through practice and dedication.',
+];
+
+const QPCC_SV: string[] = [
+    'Jag känner mig trygg när jag ska tala inför en grupp.',
+    'Jag kan presentera mina idéer tydligt inför en publik.',
+    'Jag tycker om att delta i klasspresentationer.',
+    'Jag kan övertyga andra med mina argument.',
+    'Jag känner mig bekväm med att uttrycka mina åsikter i ett möte.',
+    'Jag hanterar press när jag fattar viktiga beslut.',
+    'Jag tar ansvar för konsekvenserna av mina val.',
+    'Jag förblir lugn inför oväntade utmaningar.',
+    'Jag kan balansera flera ansvarsområden samtidigt.',
+    'Jag hanterar stressiga situationer utan att tappa fokus.',
+    'Jag sätter tydliga mål för mina studier och mitt arbete.',
+    'Jag organiserar mina uppgifter i prioritetsordning.',
+    'Jag följer mina egna framsteg mot mina mål.',
+    'Jag justerar mina planer när omständigheterna förändras.',
+    'Jag reflekterar över mina handlingar för att lära av erfarenhet.',
+    'Jag kopplar ny information till det jag redan vet.',
+    'Jag organiserar idéer i mitt huvud för att förstå dem bättre.',
+    'Jag tillämpar det jag lärt mig i ett ämne på andra områden.',
+    'Jag använder exempel och analogier för att fördjupa min förståelse.',
+    'Jag tänker kritiskt på den information jag får.',
+    'Jag tror på min förmåga att lära mig nya saker.',
+    'Jag litar på att mina ansträngningar lönar sig i längden.',
+    'Jag tillskriver mina framgångar mina egna färdigheter och hårda arbete.',
+    'Jag är optimistisk om min förmåga att övervinna svårigheter.',
+    'Jag tror att jag kan förbättras genom övning och hängivenhet.',
+];
+
 const EN_BASE = {
     testBadge: 'TEST VERSION',
     warningTitle: 'Administration for instrument testing only',
     warningBody: 'This English/Swedish version is being tested as an instrument adaptation. Any profile shown after submission is an experimental preview, not a validated assessment, and must not be used for individual educational, guidance or diagnostic decisions.',
     instructions: 'For each statement, select how often it usually describes what you do or feel. Answer according to what you actually do or feel, not what you would like to do.',
-    privacyNote: 'Responses are used only in this browser view to calculate the experimental profile preview below. They are not stored.',
+    privacyNote: 'Responses are saved to your profile history to let you review them and continue with the AI chatbot.',
     scale: ['Never or almost never', 'Sometimes', 'Often', 'Always or almost always'] as [string, string, string, string],
     progress: 'answered',
     missingAnswers: 'Answer every statement before submitting the test administration.',
     submit: 'Submit test administration',
     submittedTitle: 'Experimental factor profile',
-    submittedBody: 'This profile is a raw response-frequency preview for testing the adapted instrument. It is not a validated result, a normative stanine profile, or a basis for individual decisions. Your answers have not been stored.',
+    submittedBody: 'This profile is an experimental preview for testing the adapted instrument. It has been saved to your session history to support AI validation and PDF report generation.',
     profileMethod: 'Bars show the average selected frequency for the items assigned to each factor (1 to 4); oppositely worded items are reverse-coded within their factor. No English or Swedish norms have been applied, and the adapted factor configuration remains subject to scientific review.',
-    cognitiveTitle: 'Cognitive and metacognitive factors',
-    affectiveTitle: 'Affective and motivational factors',
     rawAverage: 'Raw frequency average',
     restart: 'Complete again',
     back: 'Back to test administrations',
+    startChat: 'Start AI Chat',
+    stanineScore: 'Stanine Score',
 };
 
 const SV_BASE = {
@@ -353,31 +664,105 @@ const SV_BASE = {
     warningTitle: 'Genomförandet används endast för att testa instrumentet',
     warningBody: 'Denna engelska/svenska version testas som en anpassning av instrumentet. Varje profil som visas efter inskickning är en experimentell förhandsvisning, inte en validerad bedömning, och får inte användas för individuella utbildnings-, väglednings- eller diagnostiska beslut.',
     instructions: 'För varje påstående väljer du hur ofta det vanligtvis beskriver vad du gör eller känner. Svara utifrån vad du faktiskt gör eller känner, inte vad du skulle vilja göra.',
-    privacyNote: 'Svaren används endast i denna webbläsarvy för att beräkna den experimentella profilförhandsvisningen nedan. De sparas inte.',
+    privacyNote: 'Svaren sparas i din profilhistorik så att du kan granska dem och fortsätta med AI-chatten.',
     scale: ['Aldrig eller nästan aldrig', 'Ibland', 'Ofta', 'Alltid eller nästan alltid'] as [string, string, string, string],
     progress: 'besvarade',
     missingAnswers: 'Besvara alla påståenden innan du skickar in testgenomförandet.',
     submit: 'Skicka in testgenomförande',
     submittedTitle: 'Experimentell faktorprofil',
-    submittedBody: 'Denna profil är en rå förhandsvisning av svarsfrekvenser för att testa det anpassade instrumentet. Den är inte ett validerat resultat, en normativ stanineprofil eller underlag för individuella beslut. Dina svar har inte sparats.',
+    submittedBody: 'Denna profil är en experimentell förhandsvisning för att testa det anpassade instrumentet. Den har sparats i din sessionshistorik för att stödja AI-validering och generering av PDF-rapport.',
     profileMethod: 'Staplarna visar den genomsnittliga valda frekvensen för de påståenden som hör till varje faktor (1 till 4); omvänt formulerade påståenden omkodas inom sin faktor. Inga engelska eller svenska normer har tillämpats, och den anpassade faktorkonfigurationen behöver fortfarande vetenskaplig granskning.',
-    cognitiveTitle: 'Kognitiva och metakognitiva faktorer',
-    affectiveTitle: 'Affektiva och motivationella faktorer',
     rawAverage: 'Rått frekvensmedelvärde',
     restart: 'Fyll i igen',
     back: 'Tillbaka till testgenomföranden',
+    startChat: 'Starta AI-chat',
+    stanineScore: 'Stanine-poäng',
+};
+
+const QSA_DIMENSIONS: Record<string, string> = {
+    cognitive: 'Cognitive and metacognitive factors',
+    affective: 'Affective and motivational factors',
+};
+
+const QSA_DIMENSIONS_SV: Record<string, string> = {
+    cognitive: 'Kognitiva och metakognitiva faktorer',
+    affective: 'Affektiva och motivationella faktorer',
+};
+
+const ZTPI_DIMENSIONS: Record<string, string> = {
+    pn: 'Past Negative',
+    pp: 'Past Positive',
+    ph: 'Present Hedonistic',
+    pf: 'Present Fatalistic',
+    f: 'Future',
+};
+
+const ZTPI_DIMENSIONS_SV: Record<string, string> = {
+    pn: 'Negativt förflutet',
+    pp: 'Positivt förflutet',
+    ph: 'Hedonistisk nutid',
+    pf: 'Fatalistisk nutid',
+    f: 'Framtid',
+};
+
+const QAP_DIMENSIONS: Record<string, string> = {
+    concern: 'Concern',
+    control: 'Control',
+    curiosity: 'Curiosity',
+    confidence: 'Confidence',
+};
+
+const QAP_DIMENSIONS_SV: Record<string, string> = {
+    concern: 'Omsorg om framtiden',
+    control: 'Kontroll',
+    curiosity: 'Nyfikenhet',
+    confidence: 'Tilltro',
+};
+
+const QPCS_DIMENSIONS: Record<string, string> = {
+    managing_emotions: 'Managing emotions',
+    communicative_competence: 'Communicative competence',
+    will_perseverance: 'Will & perseverance',
+    strategies_collaboration: 'Strategies & collaboration',
+    confidence_life_project: 'Confidence & life project',
+};
+
+const QPCS_DIMENSIONS_SV: Record<string, string> = {
+    managing_emotions: 'Hantera känslor',
+    communicative_competence: 'Kommunikativ kompetens',
+    will_perseverance: 'Vilja & uthållighet',
+    strategies_collaboration: 'Strategier & samarbete',
+    confidence_life_project: 'Tilltro & livsprojekt',
+};
+
+const QPCC_DIMENSIONS: Record<string, string> = {
+    public_speaking: 'Public speaking',
+    anxiety_responsibility: 'Managing anxiety & responsibility',
+    volition_selfregulation: 'Volition & self-regulation',
+    elaboration_strategies: 'Elaboration strategies',
+    beliefs_about_self: 'Beliefs about oneself',
+};
+
+const QPCC_DIMENSIONS_SV: Record<string, string> = {
+    public_speaking: 'Tala inför andra',
+    anxiety_responsibility: 'Hantera ångest & ansvar',
+    volition_selfregulation: 'Vilja & självreglering',
+    elaboration_strategies: 'Bearbetningsstrategier',
+    beliefs_about_self: 'Föreställningar om sig själv',
 };
 
 export const TEST_ADMINISTRATIONS: Record<AdministrationInstrument, Record<AdministrationLocale, AdministrationCopy>> = {
     QSA: {
         en: {
             ...EN_BASE,
+            dimensionTitles: QSA_DIMENSIONS,
             shortName: 'QSA',
             title: 'Learning Strategies Questionnaire (QSA)',
             items: QSA_EN,
         },
         sv: {
             ...SV_BASE,
+            dimensionTitles: QSA_DIMENSIONS_SV,
             shortName: 'QSA',
             title: 'Frågeformulär om inlärningsstrategier (QSA)',
             items: QSA_SV,
@@ -386,15 +771,83 @@ export const TEST_ADMINISTRATIONS: Record<AdministrationInstrument, Record<Admin
     QSAr: {
         en: {
             ...EN_BASE,
+            dimensionTitles: QSA_DIMENSIONS,
             shortName: 'QSAr',
             title: 'Learning Strategies Questionnaire - Short Form (QSAr)',
             items: QSAR_EN,
         },
         sv: {
             ...SV_BASE,
+            dimensionTitles: QSA_DIMENSIONS_SV,
             shortName: 'QSAr',
             title: 'Frågeformulär om inlärningsstrategier - kortversion (QSAr)',
             items: QSAR_SV,
+        },
+    },
+    ZTPI: {
+        en: {
+            ...EN_BASE,
+            dimensionTitles: ZTPI_DIMENSIONS,
+            shortName: 'ZTPI',
+            title: 'Zimbardo Time Perspective Inventory (ZTPI)',
+            items: ZTPI_EN,
+        },
+        sv: {
+            ...SV_BASE,
+            dimensionTitles: ZTPI_DIMENSIONS_SV,
+            shortName: 'ZTPI',
+            title: 'Zimbardos tidsperspektivinventarium (ZTPI)',
+            items: ZTPI_SV,
+        },
+    },
+    QPCS: {
+        en: {
+            ...EN_BASE,
+            dimensionTitles: QPCS_DIMENSIONS,
+            shortName: 'QPCS',
+            title: 'Perceived Strategic Competences Questionnaire (QPCS)',
+            items: QPCS_EN,
+        },
+        sv: {
+            ...SV_BASE,
+            dimensionTitles: QPCS_DIMENSIONS_SV,
+            shortName: 'QPCS',
+            title: 'Frågeformulär om upplevda strategiska kompetenser (QPCS)',
+            items: QPCS_SV,
+        },
+    },
+    QPCC: {
+        en: {
+            ...EN_BASE,
+            dimensionTitles: QPCC_DIMENSIONS,
+            shortName: 'QPCC',
+            title: 'Perceived Competences and Beliefs Questionnaire (QPCC)',
+            items: QPCC_EN,
+            scale: ['Strongly disagree', 'Partly agree', 'Fairly agree', 'Fully agree'] as [string, string, string, string],
+        },
+        sv: {
+            ...SV_BASE,
+            dimensionTitles: QPCC_DIMENSIONS_SV,
+            shortName: 'QPCC',
+            title: 'Frågeformulär om upplevda kompetenser och föreställningar (QPCC)',
+            items: QPCC_SV,
+            scale: ['Instämmer inte alls', 'Instämmer delvis', 'Instämmer ganska mycket', 'Instämmer helt'] as [string, string, string, string],
+        },
+    },
+    QAP: {
+        en: {
+            ...EN_BASE,
+            dimensionTitles: QAP_DIMENSIONS,
+            shortName: 'QAP',
+            title: 'Career Adapt-Abilities Scale (QAP/CAAS)',
+            items: QAP_EN,
+        },
+        sv: {
+            ...SV_BASE,
+            dimensionTitles: QAP_DIMENSIONS_SV,
+            shortName: 'QAP',
+            title: 'Skala för anpassningsbarhet i karriären (QAP/CAAS)',
+            items: QAP_SV,
         },
     },
 };
@@ -403,7 +856,8 @@ export function getTestAdministration(
     instrument: string,
     locale: string,
 ): AdministrationCopy | null {
-    if (instrument !== 'QSA' && instrument !== 'QSAr') return null;
+    const valid: AdministrationInstrument[] = ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP'];
+    if (!valid.includes(instrument as AdministrationInstrument)) return null;
     if (locale !== 'en' && locale !== 'sv') return null;
-    return TEST_ADMINISTRATIONS[instrument][locale];
+    return TEST_ADMINISTRATIONS[instrument as AdministrationInstrument][locale];
 }

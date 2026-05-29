@@ -13,6 +13,9 @@ export interface QuestionnaireConfig {
     invertedFactors: string[];
     color: string;
     icon: string;
+    // Agent-only questionnaires are conducted entirely by the AI in chat:
+    // no score-input form, no numeric factors (factors/factorPrefix empty).
+    agentOnly?: boolean;
 }
 
 export interface FactorDefinition {
@@ -55,11 +58,30 @@ const QSAR_FACTOR_DEFINITIONS: FactorDefinition[] = [
     { code: 'A4r', name: 'Percezione di competenza', description: 'Fiducia nelle proprie capacità di riuscire', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
 ];
 
-// Placeholder factor definitions for other questionnaires
-const PLACEHOLDER_FACTORS: FactorDefinition[] = [
-    { code: 'F1', name: 'Fattore 1', description: 'Da definire', lowLabel: 'Basso', midLabel: 'Medio', highLabel: 'Alto' },
-    { code: 'F2', name: 'Fattore 2', description: 'Da definire', lowLabel: 'Basso', midLabel: 'Medio', highLabel: 'Alto' },
-    { code: 'F3', name: 'Fattore 3', description: 'Da definire', lowLabel: 'Basso', midLabel: 'Medio', highLabel: 'Alto' },
+// QPCS factor definitions — aree di competenza strategica (scala 1-9, dirette)
+const QPCS_FACTOR_DEFINITIONS: FactorDefinition[] = [
+    { code: 'S1', name: 'Gestione delle emozioni', description: 'Gestire ansia e tensione nello studio', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+    { code: 'S2', name: 'Competenza comunicativa', description: 'Comunicare e relazionarsi con gli altri', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+    { code: 'S3', name: 'Volontà e perseveranza', description: 'Portare a termine con impegno', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+    { code: 'S4', name: 'Strategie e collaborazione', description: 'Strategie di apprendimento e lavoro con altri', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+    { code: 'S5', name: 'Fiducia e progetto di vita', description: 'Fiducia nelle competenze e senso di progetto', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+];
+
+// QPCC factor definitions — aree di competenze e convinzioni (scala 1-9, dirette)
+const QPCC_FACTOR_DEFINITIONS: FactorDefinition[] = [
+    { code: 'K1', name: 'Comunicazione in pubblico', description: 'Parlare e convincere davanti ad altri', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+    { code: 'K2', name: 'Gestione di ansia e responsabilità', description: 'Gestire pressione e responsabilità nelle decisioni', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+    { code: 'K3', name: 'Volizione e autoregolazione', description: 'Organizzare il lavoro e portarlo a termine', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+    { code: 'K4', name: 'Strategie di elaborazione', description: 'Collegare e applicare ciò che si apprende', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+    { code: 'K5', name: 'Convinzioni su di sé', description: 'Fiducia, attribuzioni e motivazione a riuscire', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+];
+
+// QAP factor definitions — 4 risorse dell'adattabilità professionale (CAAS, scala 1-9, dirette)
+const QAP_FACTOR_DEFINITIONS: FactorDefinition[] = [
+    { code: 'AD1', name: 'Orientamento al futuro', description: 'Pensare e prepararsi al proprio futuro', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+    { code: 'AD2', name: 'Controllo e autonomia', description: 'Decidere e assumersi la responsabilità delle scelte', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+    { code: 'AD3', name: 'Curiosità ed esplorazione', description: 'Esplorare opzioni e opportunità', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+    { code: 'AD4', name: 'Fiducia e problem solving', description: 'Affrontare e risolvere i problemi', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
 ];
 
 // ZTPI factor definitions (T1-T5, scala 1-9)
@@ -99,9 +121,9 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         id: 'QPCS',
         name: 'QPCS',
         fullName: 'Questionario sulla Percezione delle proprie Competenze Strategiche',
-        description: 'Valutazione della percezione delle competenze metacognitive',
-        factorPrefix: ['P'],
-        factors: PLACEHOLDER_FACTORS,
+        description: 'Inserisci i valori dei fattori e ottieni un’analisi guidata delle competenze strategiche',
+        factorPrefix: ['S'],
+        factors: QPCS_FACTOR_DEFINITIONS,
         invertedFactors: [],
         color: 'bg-purple-500',
         icon: '🎯',
@@ -110,9 +132,9 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         id: 'QPCC',
         name: 'QPCC',
         fullName: 'Questionario di Percezione delle proprie Competenze e Convinzioni',
-        description: 'Analisi delle competenze percepite e delle convinzioni personali',
-        factorPrefix: ['C'],
-        factors: PLACEHOLDER_FACTORS,
+        description: 'Inserisci i valori dei fattori e ottieni un’analisi guidata di competenze e convinzioni',
+        factorPrefix: ['K'],
+        factors: QPCC_FACTOR_DEFINITIONS,
         invertedFactors: [],
         color: 'bg-indigo-500',
         icon: '💡',
@@ -138,14 +160,15 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         invertedFactors: [],
         color: 'bg-emerald-500',
         icon: '🧭',
+        agentOnly: true,
     },
     QAP: {
         id: 'QAP',
         name: 'QAP',
-        fullName: 'Questionario di Adattabilità Professionale',
-        description: 'Valutazione delle capacità di adattamento al contesto lavorativo',
-        factorPrefix: ['A'],
-        factors: PLACEHOLDER_FACTORS,
+        fullName: 'Questionario sull’Adattabilità Professionale',
+        description: 'Inserisci i valori delle 4 risorse e ottieni un’analisi guidata dell’adattabilità professionale',
+        factorPrefix: ['AD'],
+        factors: QAP_FACTOR_DEFINITIONS,
         invertedFactors: [],
         color: 'bg-green-500',
         icon: '💼',

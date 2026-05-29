@@ -19,6 +19,9 @@ from .prompt_config import (
     DEFAULT_QSAR_GUIDED_STEPS,
     DEFAULT_ZTPI_GUIDED_STEPS,
     DEFAULT_SAVICKAS_GUIDED_STEPS,
+    DEFAULT_QPCS_GUIDED_STEPS,
+    DEFAULT_QPCC_GUIDED_STEPS,
+    DEFAULT_QAP_GUIDED_STEPS,
 )
 
 # Logica/helper estratti (vedi chat_logic.py); router in routes/.
@@ -103,14 +106,23 @@ def _seed_and_migrate():
     db = database.SessionLocal()
     try:
         # Raw SQL migration: add questionnaire_type column if not present (idempotent)
-        with database.engine.connect() as conn:
-            try:
+        try:
+            with database.engine.connect() as conn:
                 conn.execute(sa_text(
                     "ALTER TABLE guided_steps ADD COLUMN questionnaire_type VARCHAR NOT NULL DEFAULT 'QSA'"
                 ))
                 conn.commit()
-            except Exception:
-                pass  # Column already exists
+        except Exception as e:
+            logger.debug(f"guided_steps migration skipped/failed: {e}")
+
+        try:
+            with database.engine.connect() as conn:
+                conn.execute(sa_text(
+                    "ALTER TABLE questionnaire_results ADD COLUMN username VARCHAR"
+                ))
+                conn.commit()
+        except Exception as e:
+            logger.debug(f"questionnaire_results migration skipped/failed: {e}")
 
         # Create initial admin user if not exists
         user = db.query(models.User).filter(models.User.username == "admin").first()
@@ -185,6 +197,17 @@ def _seed_and_migrate():
             for step_def in DEFAULT_SAVICKAS_GUIDED_STEPS:
                 db.add(models.GuidedStep(**step_def))
             db.commit()
+
+        # Seed agent-led questionnaires (QPCS, QPCC, QAP) if none exist
+        for qtype, qsteps in (
+            ("QPCS", DEFAULT_QPCS_GUIDED_STEPS),
+            ("QPCC", DEFAULT_QPCC_GUIDED_STEPS),
+            ("QAP", DEFAULT_QAP_GUIDED_STEPS),
+        ):
+            if db.query(models.GuidedStep).filter(models.GuidedStep.questionnaire_type == qtype).count() == 0:
+                for step_def in qsteps:
+                    db.add(models.GuidedStep(**step_def))
+                db.commit()
 
         # Upgrade legacy ZTPI prompt ranges if they still match old defaults.
         legacy_changed = False

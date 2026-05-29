@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useCallback, useContext, useEffect, useSyncExternalStore } from 'react';
 import { Lang, DEFAULT_LANG, getStoredLang, setStoredLang, translate, translateFallback } from './i18n';
 
 interface I18nContextValue {
@@ -11,20 +11,27 @@ interface I18nContextValue {
 }
 
 const I18nContext = createContext<I18nContextValue | null>(null);
+const LANGUAGE_EVENT = 'counselorbot-language-change';
+
+function subscribeToLanguage(onStoreChange: () => void): () => void {
+    window.addEventListener('storage', onStoreChange);
+    window.addEventListener(LANGUAGE_EVENT, onStoreChange);
+    return () => {
+        window.removeEventListener('storage', onStoreChange);
+        window.removeEventListener(LANGUAGE_EVENT, onStoreChange);
+    };
+}
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-    const [lang, setLangState] = useState<Lang>(DEFAULT_LANG);
+    const lang = useSyncExternalStore(subscribeToLanguage, getStoredLang, () => DEFAULT_LANG);
 
-    // Allinea alla lingua salvata dopo il mount (evita mismatch SSR/CSR)
     useEffect(() => {
-        setLangState(getStoredLang());
-    }, []);
+        document.documentElement.lang = lang;
+    }, [lang]);
 
     const setLang = useCallback((next: Lang) => {
-        setLangState(next);
         setStoredLang(next);
-        // Aggiorna l'attributo lang del documento per accessibilità
-        if (typeof document !== 'undefined') document.documentElement.lang = next;
+        window.dispatchEvent(new Event(LANGUAGE_EVENT));
     }, []);
 
     const t = useCallback(

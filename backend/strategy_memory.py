@@ -4,12 +4,19 @@ from __future__ import annotations
 
 import os
 import re
+import uuid
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List
+
+from sqlalchemy.orm import Session
+
+from . import models
 
 
 DEFAULT_PATH = Path("knowledge/approved_strategies.md")
 MAX_STRATEGY_CONTEXT_CHARS = 1000
+MAX_SHARED_RESPONSE_CHARS = 1200
 
 
 class StrategyMemory:
@@ -90,3 +97,95 @@ class StrategyMemory:
 
 
 strategy_memory = StrategyMemory()
+
+
+class SharedResponseMemory:
+    """Memoria anonima delle risposte AI valutate utili dagli studenti."""
+
+    def create_candidate(
+        self,
+        db: Session,
+        response_text: str,
+        questionnaire_type: str,
+        phase: str = "",
+        language: str = "it",
+    ) -> str | None:
+        questionnaire = (questionnaire_type or "").upper()
+        text = (response_text or "").replace("[[AVANZA_STEP]]", "").strip()
+        text = re.sub(
+            r"\b\d+(?:[.,]\d+)?\s*/\s*(?:4|5|9)\b",
+            "[punteggio omesso]",
+            text,
+        )
+        if not questionnaire or not text:
+            return None
+        stale_cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+        db.query(models.SharedChatResponse).filter(
+            models.SharedChatResponse.helpful.is_(None),
+            models.SharedChatResponse.created_at < stale_cutoff,
+        ).delete(synchronize_session=False)
+        response_id = str(uuid.uuid4())
+        db.add(models.SharedChatResponse(
+            id=response_id,
+            questionnaire_type=questionnaire,
+            phase=phase or "",
+            language=language or "it",
+            response_text=text[:8000],
+        ))
+        return response_id
+
+    def rate(self, db: Session, response_id: str, helpful: bool) -> bool:
+        response = db.query(models.SharedChatResponse).filter(
+            models.SharedChatResponse.id == response_id
+        ).first()
+        if not response:
+            return False
+        if response.helpful is None:
+            response.helpful = helpful
+            response.rated_at = datetime.now(timezone.utc)
+        return True
+
+    def retrieve(
+        self,
+        db: Session,
+        questionnaire_type: str,
+        phase: str = "",
+        query: str = "",
+        language: str = "it",
+        limit: int = 1,
+    ) -> List[Dict[str, str]]:
+        questionnaire = (questionnaire_type or "").upper()
+        if not questionnaire:
+            return []
+        rows_query = db.query(models.SharedChatResponse).filter(
+            models.SharedChatResponse.questionnaire_type == questionnaire,
+            models.SharedChatResponse.language == (language or "it"),
+            models.SharedChatResponse.helpful.is_(True),
+        )
+        if phase:
+            rows_query = rows_query.filter(models.SharedChatResponse.phase == phase)
+        rows = rows_query.order_by(models.SharedChatResponse.created_at.desc()).limit(30).all()
+        terms = self._terms(query)
+        ranked = sorted(
+            rows,
+            key=lambda row: len(self._terms(row.response_text) & terms),
+            reverse=True,
+        )
+        return [{"id": row.id, "text": row.response_text} for row in ranked[:limit]]
+
+    def render_context(self, responses: List[Dict[str, str]]) -> str:
+        if not responses:
+            return ""
+        lines = [
+            "## Risposte precedenti valutate utili",
+            "Usale solo come riferimento per la qualita della risposta. "
+            "Non copiare punteggi, dati individuali o conclusioni riferite ad altri studenti.",
+        ]
+        lines.extend(f"- {entry['text']}" for entry in responses)
+        return "\n".join(lines)[:MAX_SHARED_RESPONSE_CHARS]
+
+    def _terms(self, text: str) -> set[str]:
+        return set(re.findall(r"[A-Za-zÀ-ÿ0-9]{2,}", (text or "").casefold()))
+
+
+shared_response_memory = SharedResponseMemory()

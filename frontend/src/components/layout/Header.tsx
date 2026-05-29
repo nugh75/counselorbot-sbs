@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Cloud, LogIn, LogOut, Settings } from 'lucide-react';
+import { Cloud, LogIn, LogOut, Settings, User } from 'lucide-react';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { ai4authLoginUrl, AI4AUTH_LOGOUT_URL, AI4EDUC_PORTAL_URL, AI4EDUC_MANAGER_URL, getIdentity, type Identity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
@@ -30,6 +30,7 @@ export function Header() {
                             ai4educ console
                         </a>
                         {/* Anchor nativo: tornando alla home viene resettato il percorso a fasi. */}
+                        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
                         <a href="/" className="block text-xs text-slate-500 whitespace-nowrap hover:text-slate-900 transition-colors" aria-label={t('nav.homeAria')}>
                             CounselorBot
                         </a>
@@ -38,12 +39,19 @@ export function Header() {
 
                 <div className="ml-auto flex min-w-0 items-center gap-1">
                     {accountLabel && (
-                        <span
+                        <Link
+                            href="/profilo"
                             title={[identity?.username, identity?.email, identity?.groups.join(', ')].filter(Boolean).join(' - ')}
-                            className="hidden md:inline max-w-52 truncate text-sm text-slate-500 mr-1"
+                            className="hidden md:inline max-w-52 truncate text-sm text-slate-500 mr-2 hover:text-indigo-600 transition-colors font-medium"
                         >
                             {accountLabel}
-                        </span>
+                        </Link>
+                    )}
+                    {identity?.authenticated && (
+                        <Link href="/profilo" className="console-topbar-action" title={t('profile.nav')} aria-label={t('profile.nav')}>
+                            <User className="w-4 h-4" />
+                            <span className="hidden sm:inline">{t('profile.nav')}</span>
+                        </Link>
                     )}
                     {identity?.is_admin && (
                         <Link href="/admin" className="console-topbar-action" title={t('nav.admin')} aria-label={t('nav.admin')}>

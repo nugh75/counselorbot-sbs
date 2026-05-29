@@ -4,12 +4,22 @@ import { BarChart, Layers, HelpCircle } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 
 interface AnalysisModeSelectorProps {
-    onSelect: (mode: 'factor' | 'second-level' | 'generic') => void;
+    onSelect: (mode: AnalysisMode) => void;
 }
+
+type AnalysisMode = 'factor' | 'second-level' | 'generic';
 
 export function AnalysisModeSelector({ onSelect }: AnalysisModeSelectorProps) {
     const { t } = useI18n();
-    const options = [
+    const options: Array<{
+        id: AnalysisMode;
+        title: string;
+        desc: string;
+        icon: typeof BarChart;
+        color: string;
+        bg: string;
+        border: string;
+    }> = [
         {
             id: 'factor',
             title: t('mode.factor.title'),
@@ -44,7 +54,7 @@ export function AnalysisModeSelector({ onSelect }: AnalysisModeSelectorProps) {
             {options.map((opt) => (
                 <button
                     key={opt.id}
-                    onClick={() => onSelect(opt.id as any)}
+                    onClick={() => onSelect(opt.id)}
                     className="flex flex-col items-center text-center p-6 rounded-lg bg-white border border-slate-200 shadow-sm hover:border-indigo-200 transition-colors"
                 >
                     <div className={`w-12 h-12 rounded-md border flex items-center justify-center mb-4 ${opt.bg} ${opt.border}`}>

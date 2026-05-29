@@ -1,0 +1,1150 @@
+{
+  "instrument": "QSA",
+  "source": "M. Pellerey — QSA, competenzestrategiche.it (CNOS-FAP)",
+  "license_note": "Proprietario. Item e chiave fattori da inserire solo se autorizzati (PROGETTO WP0/WP2).",
+  "n_items": 100,
+  "response_scale": {
+    "min": null,
+    "max": null,
+    "labels": {
+      "it": [],
+      "en": [],
+      "sv": []
+    }
+  },
+  "report_scale": {
+    "type": "stanine",
+    "min": 1,
+    "max": 9
+  },
+  "factors": [
+    {
+      "code": "C1",
+      "name": {
+        "it": "Strategie elaborative",
+        "en": "Elaborative strategies",
+        "sv": "Bearbetningsstrategier"
+      },
+      "direction": "direct"
+    },
+    {
+      "code": "C2",
+      "name": {
+        "it": "Autoregolazione",
+        "en": "Self-regulation",
+        "sv": "Självreglering"
+      },
+      "direction": "direct"
+    },
+    {
+      "code": "C3",
+      "name": {
+        "it": "Disorientamento",
+        "en": "Disorientation",
+        "sv": "Desorientering"
+      },
+      "direction": "inverse"
+    },
+    {
+      "code": "C4",
+      "name": {
+        "it": "Disponibilità alla collaborazione",
+        "en": "Willingness to collaborate",
+        "sv": "Samarbetsvilja"
+      },
+      "direction": "direct"
+    },
+    {
+      "code": "C5",
+      "name": {
+        "it": "Organizzatori semantici",
+        "en": "Semantic organisers",
+        "sv": "Semantiska organisatörer"
+      },
+      "direction": "direct"
+    },
+    {
+      "code": "C6",
+      "name": {
+        "it": "Difficoltà di concentrazione",
+        "en": "Concentration difficulties",
+        "sv": "Koncentrationssvårigheter"
+      },
+      "direction": "inverse"
+    },
+    {
+      "code": "C7",
+      "name": {
+        "it": "Autointerrogazione",
+        "en": "Self-questioning",
+        "sv": "Självfrågande"
+      },
+      "direction": "direct"
+    },
+    {
+      "code": "A1",
+      "name": {
+        "it": "Ansietà di base",
+        "en": "Baseline anxiety",
+        "sv": "Grundångest"
+      },
+      "direction": "inverse"
+    },
+    {
+      "code": "A2",
+      "name": {
+        "it": "Volizione",
+        "en": "Volition",
+        "sv": "Vilja"
+      },
+      "direction": "direct"
+    },
+    {
+      "code": "A3",
+      "name": {
+        "it": "Attribuzione a cause controllabili",
+        "en": "Attribution to controllable causes",
+        "sv": "Attribution till kontrollerbara orsaker"
+      },
+      "direction": "direct"
+    },
+    {
+      "code": "A4",
+      "name": {
+        "it": "Attribuzione a cause incontrollabili",
+        "en": "Attribution to uncontrollable causes",
+        "sv": "Attribution till okontrollerbara orsaker"
+      },
+      "direction": "inverse"
+    },
+    {
+      "code": "A5",
+      "name": {
+        "it": "Mancanza di perseveranza",
+        "en": "Lack of perseverance",
+        "sv": "Brist på uthållighet"
+      },
+      "direction": "inverse"
+    },
+    {
+      "code": "A6",
+      "name": {
+        "it": "Percezione di competenza",
+        "en": "Perceived competence",
+        "sv": "Upplevd kompetens"
+      },
+      "direction": "direct"
+    },
+    {
+      "code": "A7",
+      "name": {
+        "it": "Interferenze emotive",
+        "en": "Emotional interference",
+        "sv": "Emotionella störningar"
+      },
+      "direction": "inverse"
+    }
+  ],
+  "items": [
+    {
+      "id": "QSA-001",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-002",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-003",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-004",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-005",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-006",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-007",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-008",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-009",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-010",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-011",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-012",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-013",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-014",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-015",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-016",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-017",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-018",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-019",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-020",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-021",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-022",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-023",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-024",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-025",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-026",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-027",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-028",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-029",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-030",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-031",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-032",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-033",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-034",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-035",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-036",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-037",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-038",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-039",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-040",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-041",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-042",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-043",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-044",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-045",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-046",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-047",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-048",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-049",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-050",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-051",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-052",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-053",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-054",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-055",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-056",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-057",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-058",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-059",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-060",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-061",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-062",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-063",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-064",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-065",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-066",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-067",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-068",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-069",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-070",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-071",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-072",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-073",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-074",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-075",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-076",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-077",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-078",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-079",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-080",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-081",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-082",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-083",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-084",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-085",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-086",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-087",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-088",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-089",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-090",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-091",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-092",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-093",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-094",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-095",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-096",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-097",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-098",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-099",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSA-100",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    }
+  ]
+}

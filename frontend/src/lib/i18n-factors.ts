@@ -33,6 +33,23 @@ const it: Dict = {
     'factor.T3.name': 'Presente Edonistico', 'factor.T3.desc': "Capacità di vivere l'attimo (carpe diem), orientamento al piacere nel presente",
     'factor.T4.name': 'Presente Fatalistico', 'factor.T4.desc': 'Senso di impotenza e rassegnazione verso la vita',
     'factor.T5.name': 'Futuro', 'factor.T5.desc': 'Orientamento verso obiettivi, pianificazione e carriera',
+    // QPCS (aree)
+    'factor.S1.name': 'Gestione delle emozioni', 'factor.S1.desc': 'Gestire ansia e tensione nello studio',
+    'factor.S2.name': 'Competenza comunicativa', 'factor.S2.desc': 'Comunicare e relazionarsi con gli altri',
+    'factor.S3.name': 'Volontà e perseveranza', 'factor.S3.desc': 'Portare a termine con impegno',
+    'factor.S4.name': 'Strategie e collaborazione', 'factor.S4.desc': 'Strategie di apprendimento e lavoro con altri',
+    'factor.S5.name': 'Fiducia e progetto di vita', 'factor.S5.desc': 'Fiducia nelle competenze e senso di progetto',
+    // QPCC (aree)
+    'factor.K1.name': 'Comunicazione in pubblico', 'factor.K1.desc': 'Parlare e convincere davanti ad altri',
+    'factor.K2.name': 'Gestione di ansia e responsabilità', 'factor.K2.desc': 'Gestire pressione e responsabilità nelle decisioni',
+    'factor.K3.name': 'Volizione e autoregolazione', 'factor.K3.desc': 'Organizzare il lavoro e portarlo a termine',
+    'factor.K4.name': 'Strategie di elaborazione', 'factor.K4.desc': 'Collegare e applicare ciò che si apprende',
+    'factor.K5.name': 'Convinzioni su di sé', 'factor.K5.desc': 'Fiducia, attribuzioni e motivazione a riuscire',
+    // QAP (CAAS)
+    'factor.AD1.name': 'Orientamento al futuro', 'factor.AD1.desc': 'Pensare e prepararsi al proprio futuro',
+    'factor.AD2.name': 'Controllo e autonomia', 'factor.AD2.desc': 'Decidere e assumersi la responsabilità delle scelte',
+    'factor.AD3.name': 'Curiosità ed esplorazione', 'factor.AD3.desc': 'Esplorare opzioni e opportunità',
+    'factor.AD4.name': 'Fiducia e problem solving', 'factor.AD4.desc': 'Affrontare e risolvere i problemi',
 };
 
 const en: Dict = {
@@ -63,6 +80,23 @@ const en: Dict = {
     'factor.T3.name': 'Present Hedonistic', 'factor.T3.desc': 'Ability to live in the moment (carpe diem), orientation towards pleasure in the present',
     'factor.T4.name': 'Present Fatalistic', 'factor.T4.desc': 'Sense of helplessness and resignation towards life',
     'factor.T5.name': 'Future', 'factor.T5.desc': 'Orientation towards goals, planning and career',
+    // QPCS (areas)
+    'factor.S1.name': 'Managing emotions', 'factor.S1.desc': 'Handling anxiety and tension in study',
+    'factor.S2.name': 'Communicative competence', 'factor.S2.desc': 'Communicating and relating to others',
+    'factor.S3.name': 'Will & perseverance', 'factor.S3.desc': 'Following through with commitment',
+    'factor.S4.name': 'Strategies & collaboration', 'factor.S4.desc': 'Learning strategies and working with others',
+    'factor.S5.name': 'Confidence & life project', 'factor.S5.desc': "Confidence in one's skills and sense of purpose",
+    // QPCC (areas)
+    'factor.K1.name': 'Public speaking', 'factor.K1.desc': 'Speaking and persuading in front of others',
+    'factor.K2.name': 'Managing anxiety & responsibility', 'factor.K2.desc': 'Handling pressure and responsibility in decisions',
+    'factor.K3.name': 'Volition & self-regulation', 'factor.K3.desc': 'Organising work and seeing it through',
+    'factor.K4.name': 'Elaboration strategies', 'factor.K4.desc': 'Connecting and applying what one learns',
+    'factor.K5.name': 'Beliefs about oneself', 'factor.K5.desc': 'Confidence, attributions and motivation to succeed',
+    // QAP (CAAS)
+    'factor.AD1.name': 'Future orientation', 'factor.AD1.desc': "Thinking about and preparing for one's future",
+    'factor.AD2.name': 'Control & autonomy', 'factor.AD2.desc': 'Deciding and taking responsibility for choices',
+    'factor.AD3.name': 'Curiosity & exploration', 'factor.AD3.desc': 'Exploring options and opportunities',
+    'factor.AD4.name': 'Confidence & problem solving', 'factor.AD4.desc': 'Facing and solving problems',
 };
 
 const es: Dict = {
@@ -93,6 +127,23 @@ const es: Dict = {
     'factor.T3.name': 'Presente Hedonista', 'factor.T3.desc': 'Capacidad de vivir el momento (carpe diem), orientación al placer en el presente',
     'factor.T4.name': 'Presente Fatalista', 'factor.T4.desc': 'Sensación de impotencia y resignación ante la vida',
     'factor.T5.name': 'Futuro', 'factor.T5.desc': 'Orientación hacia objetivos, planificación y carrera',
+    // QPCS (áreas)
+    'factor.S1.name': 'Gestión de las emociones', 'factor.S1.desc': 'Gestionar la ansiedad y la tensión en el estudio',
+    'factor.S2.name': 'Competencia comunicativa', 'factor.S2.desc': 'Comunicarse y relacionarse con los demás',
+    'factor.S3.name': 'Voluntad y perseverancia', 'factor.S3.desc': 'Llevar las tareas a término con compromiso',
+    'factor.S4.name': 'Estrategias y colaboración', 'factor.S4.desc': 'Estrategias de aprendizaje y trabajo con los demás',
+    'factor.S5.name': 'Confianza y proyecto de vida', 'factor.S5.desc': 'Confianza en las propias competencias y sentido de proyecto',
+    // QPCC (áreas)
+    'factor.K1.name': 'Comunicación en público', 'factor.K1.desc': 'Hablar y convencer ante otras personas',
+    'factor.K2.name': 'Gestión de la ansiedad y la responsabilidad', 'factor.K2.desc': 'Gestionar la presión y la responsabilidad en las decisiones',
+    'factor.K3.name': 'Volición y autorregulación', 'factor.K3.desc': 'Organizar el trabajo y llevarlo a término',
+    'factor.K4.name': 'Estrategias de elaboración', 'factor.K4.desc': 'Relacionar y aplicar lo que se aprende',
+    'factor.K5.name': 'Creencias sobre uno mismo', 'factor.K5.desc': 'Confianza, atribuciones y motivación para tener éxito',
+    // QAP (CAAS)
+    'factor.AD1.name': 'Orientación al futuro', 'factor.AD1.desc': 'Pensar y prepararse para el propio futuro',
+    'factor.AD2.name': 'Control y autonomía', 'factor.AD2.desc': 'Decidir y asumir la responsabilidad de las decisiones',
+    'factor.AD3.name': 'Curiosidad y exploración', 'factor.AD3.desc': 'Explorar opciones y oportunidades',
+    'factor.AD4.name': 'Confianza y resolución de problemas', 'factor.AD4.desc': 'Afrontar y resolver problemas',
 };
 
 const fr: Dict = {
@@ -123,6 +174,23 @@ const fr: Dict = {
     'factor.T3.name': 'Présent Hédoniste', 'factor.T3.desc': "Capacité à vivre l'instant (carpe diem), orientation vers le plaisir au présent",
     'factor.T4.name': 'Présent Fataliste', 'factor.T4.desc': "Sentiment d'impuissance et de résignation face à la vie",
     'factor.T5.name': 'Futur', 'factor.T5.desc': 'Orientation vers les objectifs, la planification et la carrière',
+    // QPCS (domaines)
+    'factor.S1.name': 'Gestion des émotions', 'factor.S1.desc': "Gérer l'anxiété et la tension dans les études",
+    'factor.S2.name': 'Compétence communicationnelle', 'factor.S2.desc': 'Communiquer et entrer en relation avec les autres',
+    'factor.S3.name': 'Volonté et persévérance', 'factor.S3.desc': 'Mener les tâches à terme avec engagement',
+    'factor.S4.name': 'Stratégies et collaboration', 'factor.S4.desc': "Stratégies d'apprentissage et travail avec les autres",
+    'factor.S5.name': 'Confiance et projet de vie', 'factor.S5.desc': 'Confiance dans ses compétences et sens du projet',
+    // QPCC (domaines)
+    'factor.K1.name': 'Communication en public', 'factor.K1.desc': 'Parler et convaincre devant les autres',
+    'factor.K2.name': "Gestion de l'anxiété et de la responsabilité", 'factor.K2.desc': 'Gérer la pression et la responsabilité dans les décisions',
+    'factor.K3.name': 'Volition et autorégulation', 'factor.K3.desc': 'Organiser son travail et le mener à terme',
+    'factor.K4.name': "Stratégies d'élaboration", 'factor.K4.desc': "Mettre en relation et appliquer ce que l'on apprend",
+    'factor.K5.name': 'Croyances sur soi', 'factor.K5.desc': 'Confiance, attributions et motivation à réussir',
+    // QAP (CAAS)
+    'factor.AD1.name': "Orientation vers l'avenir", 'factor.AD1.desc': "Penser à son avenir et s'y préparer",
+    'factor.AD2.name': 'Contrôle et autonomie', 'factor.AD2.desc': 'Décider et assumer la responsabilité de ses choix',
+    'factor.AD3.name': 'Curiosité et exploration', 'factor.AD3.desc': 'Explorer les options et les opportunités',
+    'factor.AD4.name': 'Confiance et résolution de problèmes', 'factor.AD4.desc': 'Affronter et résoudre les problèmes',
 };
 
 const de: Dict = {
@@ -153,6 +221,23 @@ const de: Dict = {
     'factor.T3.name': 'Hedonistische Gegenwart', 'factor.T3.desc': 'Fähigkeit, den Moment zu leben (carpe diem), Orientierung am Genuss in der Gegenwart',
     'factor.T4.name': 'Fatalistische Gegenwart', 'factor.T4.desc': 'Gefühl der Hilflosigkeit und Resignation gegenüber dem Leben',
     'factor.T5.name': 'Zukunft', 'factor.T5.desc': 'Orientierung an Zielen, Planung und Karriere',
+    // QPCS (Bereiche)
+    'factor.S1.name': 'Emotionsmanagement', 'factor.S1.desc': 'Angst und Anspannung beim Lernen bewältigen',
+    'factor.S2.name': 'Kommunikative Kompetenz', 'factor.S2.desc': 'Mit anderen kommunizieren und Beziehungen gestalten',
+    'factor.S3.name': 'Wille und Ausdauer', 'factor.S3.desc': 'Aufgaben engagiert zu Ende führen',
+    'factor.S4.name': 'Strategien und Zusammenarbeit', 'factor.S4.desc': 'Lernstrategien und Zusammenarbeit mit anderen',
+    'factor.S5.name': 'Vertrauen und Lebensentwurf', 'factor.S5.desc': 'Vertrauen in die eigenen Kompetenzen und Sinn für Lebensplanung',
+    // QPCC (Bereiche)
+    'factor.K1.name': 'Sprechen vor Publikum', 'factor.K1.desc': 'Vor anderen sprechen und überzeugen',
+    'factor.K2.name': 'Umgang mit Angst und Verantwortung', 'factor.K2.desc': 'Druck und Verantwortung bei Entscheidungen bewältigen',
+    'factor.K3.name': 'Volition und Selbstregulation', 'factor.K3.desc': 'Arbeit organisieren und zu Ende führen',
+    'factor.K4.name': 'Elaborationsstrategien', 'factor.K4.desc': 'Gelerntes verknüpfen und anwenden',
+    'factor.K5.name': 'Überzeugungen über sich selbst', 'factor.K5.desc': 'Selbstvertrauen, Attributionen und Erfolgsmotivation',
+    // QAP (CAAS)
+    'factor.AD1.name': 'Zukunftsorientierung', 'factor.AD1.desc': 'An die eigene Zukunft denken und sich darauf vorbereiten',
+    'factor.AD2.name': 'Kontrolle und Autonomie', 'factor.AD2.desc': 'Entscheiden und Verantwortung für Entscheidungen übernehmen',
+    'factor.AD3.name': 'Neugier und Erkundung', 'factor.AD3.desc': 'Optionen und Möglichkeiten erkunden',
+    'factor.AD4.name': 'Vertrauen und Problemlösung', 'factor.AD4.desc': 'Probleme angehen und lösen',
 };
 
 const sv: Dict = {
@@ -183,6 +268,23 @@ const sv: Dict = {
     'factor.T3.name': 'Hedonistisk Nutid', 'factor.T3.desc': 'Förmåga att leva i nuet (carpe diem), inriktning på njutning i nuet',
     'factor.T4.name': 'Fatalistisk Nutid', 'factor.T4.desc': 'Känsla av maktlöshet och uppgivenhet inför livet',
     'factor.T5.name': 'Framtid', 'factor.T5.desc': 'Inriktning mot mål, planering och karriär',
+    // QPCS (områden)
+    'factor.S1.name': 'Hantera känslor', 'factor.S1.desc': 'Hantera ångest och spänning i studierna',
+    'factor.S2.name': 'Kommunikativ kompetens', 'factor.S2.desc': 'Kommunicera och relatera till andra',
+    'factor.S3.name': 'Vilja & uthållighet', 'factor.S3.desc': 'Slutföra med engagemang',
+    'factor.S4.name': 'Strategier & samarbete', 'factor.S4.desc': 'Inlärningsstrategier och samarbete med andra',
+    'factor.S5.name': 'Tilltro & livsprojekt', 'factor.S5.desc': 'Tilltro till sina förmågor och känsla av mål',
+    // QPCC (områden)
+    'factor.K1.name': 'Tala inför andra', 'factor.K1.desc': 'Tala och övertyga inför andra',
+    'factor.K2.name': 'Hantera ångest & ansvar', 'factor.K2.desc': 'Hantera press och ansvar i beslut',
+    'factor.K3.name': 'Vilja & självreglering', 'factor.K3.desc': 'Organisera arbetet och slutföra det',
+    'factor.K4.name': 'Bearbetningsstrategier', 'factor.K4.desc': 'Koppla samman och tillämpa det man lär sig',
+    'factor.K5.name': 'Föreställningar om sig själv', 'factor.K5.desc': 'Tilltro, attributioner och motivation att lyckas',
+    // QAP (CAAS)
+    'factor.AD1.name': 'Framtidsorientering', 'factor.AD1.desc': 'Tänka på och förbereda sin framtid',
+    'factor.AD2.name': 'Kontroll & självständighet', 'factor.AD2.desc': 'Besluta och ta ansvar för val',
+    'factor.AD3.name': 'Nyfikenhet & utforskande', 'factor.AD3.desc': 'Utforska alternativ och möjligheter',
+    'factor.AD4.name': 'Tilltro & problemlösning', 'factor.AD4.desc': 'Möta och lösa problem',
 };
 
 export const FACTOR_DICTS: Record<Lang, Dict> = { it, en, es, fr, de, sv };

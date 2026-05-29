@@ -1,4 +1,4 @@
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, Field, validator
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 import json
@@ -122,7 +122,8 @@ class SurveyResponseSchema(SurveyCreate):
 
 
 class StrategyFeedbackCreate(BaseModel):
-    strategy_ids: List[str]
+    strategy_ids: List[str] = Field(default_factory=list)
+    response_id: Optional[str] = None
     questionnaire_type: Optional[str] = None
     phase: Optional[str] = None
     language: Optional[str] = None
@@ -134,6 +135,7 @@ class QuestionnaireResultCreate(BaseModel):
     session_id: str
     questionnaire_type: str
     scores: Optional[Dict[str, Any]] = None
+    username: Optional[str] = None
 
 
 class QuestionnaireResultResponse(BaseModel):
@@ -141,6 +143,7 @@ class QuestionnaireResultResponse(BaseModel):
     session_id: str
     questionnaire_type: str
     scores: Optional[Union[Dict[str, Any], str]] = None
+    username: Optional[str] = None
     submitted_at: datetime
 
     @validator('scores', pre=True)

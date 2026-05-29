@@ -25,6 +25,9 @@ import backend.main as main
 import backend.routes.chat as chat_routes
 import backend.chat_logic as chat_logic
 from backend.memory_service import session_memory
+from backend.prompt_config import MODE_TO_SYSTEM_PROMPT_KEY
+from backend.qsa_extractor import _validate_scores
+from backend.strategy_memory import shared_response_memory
 
 
 # --- DB Postgres dedicato ai test (stessa istanza, db separato) ---
@@ -67,6 +70,17 @@ def _fake_admin():
     return models.User(id=1, username="admin", is_admin=True)
 
 
+def _fake_user_identity():
+    return {
+        "email": "student@example.test",
+        "username": "student",
+        "name": "Student",
+        "groups": [],
+        "is_admin": False,
+        "authenticated": True,
+    }
+
+
 class _FakeAIService:
     """Sostituisce AIService: nessuna rete."""
     def __init__(self, db=None):
@@ -95,6 +109,8 @@ main.app.dependency_overrides[database.get_db] = _override_get_db
 main.app.dependency_overrides[auth.get_current_active_admin] = _fake_admin
 # Gli endpoint vivono nei router: patch dell'AIService dove viene usato.
 chat_routes.AIService = _FakeAIService
+# Lo stream apre una sessione fresca dopo la risposta: isolala nel DB di test.
+chat_routes.database.SessionLocal = _TestSession
 
 client = TestClient(main.app)
 
@@ -126,11 +142,14 @@ EXPECTED_ROUTES = {
     ("GET", "/memory/status/{session_id}"),
     ("DELETE", "/memory/{session_id}"),
     ("POST", "/memory/event"),
+    ("GET", "/memory/user/{session_id}"),
     ("POST", "/qsa/audit"),
     ("POST", "/qsa/upload"),
     ("POST", "/tts"),
     ("POST", "/questionnaire-result"),
+    ("GET", "/user/questionnaire-results"),
     ("GET", "/admin/questionnaire-results"),
+    ("DELETE", "/questionnaire-result/{session_id}"),
     ("GET", "/questionnaire-result/{session_id}/pdf"),
 }
 
@@ -188,12 +207,115 @@ def test_qsar_guided_ui_texts_public():
     assert "qsar-affective" in step_ids
 
 
+def test_new_questionnaire_guided_ui_texts_public():
+    expected_steps = {
+        "QPCS": ("qpcs-factors", "qpcs-factor"),
+        "QPCC": ("qpcc-factors", "qpcc-factor"),
+        "QAP": ("qap-factors", "qap-factor"),
+    }
+    for questionnaire_type, (step_id, mode) in expected_steps.items():
+        r = client.get(f"/qsa/guided-ui-texts?questionnaire_type={questionnaire_type}")
+        assert r.status_code == 200, r.text
+        steps = r.json()["guided_steps"]
+        assert any(step["id"] == step_id and step["system_prompt_mode"] == mode for step in steps)
+
+
+def test_existing_extended_guided_modes_resolve_saved_prompt_keys():
+    assert MODE_TO_SYSTEM_PROMPT_KEY["qpcs-interview"] == "prompt_qpcs_interview"
+    assert MODE_TO_SYSTEM_PROMPT_KEY["qpcs-summary"] == "prompt_qpcs_summary"
+    assert MODE_TO_SYSTEM_PROMPT_KEY["qpcc-interview"] == "prompt_qpcc_interview"
+    assert MODE_TO_SYSTEM_PROMPT_KEY["qpcc-summary"] == "prompt_qpcc_summary"
+    assert MODE_TO_SYSTEM_PROMPT_KEY["qap-interview"] == "prompt_qap_interview"
+    assert MODE_TO_SYSTEM_PROMPT_KEY["qap-summary"] == "prompt_qap_summary"
+
+
 def test_survey_submit_public():
     r = client.post("/survey", json={
         "q_utile": 5, "q_pertinente": 5, "q_chiaro": 5,
         "q_dettaglio": 5, "q_facile": 5, "q_veloce": 5,
     })
     assert r.status_code == 200, r.text
+
+
+def test_helpful_chat_responses_are_shared_for_all_questionnaires():
+    questionnaire_types = ("QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP")
+    for questionnaire_type in questionnaire_types:
+        phase = f"shared-{questionnaire_type.lower()}"
+        r = client.post("/chat", json={
+            "message": f"Domanda privata {questionnaire_type}",
+            "mode": "generic",
+            "questionnaire_type": questionnaire_type,
+            "phase": phase,
+            "language": "it",
+        })
+        assert r.status_code == 200, r.text
+        response_id = r.json()["response_id"]
+        assert response_id
+
+        r = client.post("/strategy-feedback", json={
+            "response_id": response_id,
+            "questionnaire_type": questionnaire_type,
+            "phase": phase,
+            "language": "it",
+            "helpful": True,
+        })
+        assert r.status_code == 200, r.text
+
+        db = _TestSession()
+        try:
+            recovered = shared_response_memory.retrieve(
+                db, questionnaire_type, phase=phase, language="it"
+            )
+        finally:
+            db.close()
+        assert recovered and recovered[0]["id"] == response_id
+        assert recovered[0]["text"] == "RISPOSTA_TEST"
+
+
+def test_unhelpful_chat_response_is_not_shared():
+    r = client.post("/chat", json={
+        "message": "Domanda non riusabile",
+        "mode": "generic",
+        "questionnaire_type": "QAP",
+        "phase": "qap-negative",
+        "language": "it",
+    })
+    response_id = r.json()["response_id"]
+    r = client.post("/strategy-feedback", json={
+        "response_id": response_id,
+        "helpful": False,
+    })
+    assert r.status_code == 200, r.text
+
+    db = _TestSession()
+    try:
+        recovered = shared_response_memory.retrieve(db, "QAP", phase="qap-negative", language="it")
+    finally:
+        db.close()
+    assert recovered == []
+
+
+def test_shared_response_memory_removes_explicit_scores():
+    db = _TestSession()
+    try:
+        response_id = shared_response_memory.create_candidate(
+            db,
+            "Il valore 7/9 indica una risorsa; prova un passo concreto.",
+            "QPCS",
+            phase="qpcs-score-protection",
+            language="it",
+        )
+        assert response_id
+        db.flush()
+        assert shared_response_memory.rate(db, response_id, True)
+        db.commit()
+        recovered = shared_response_memory.retrieve(
+            db, "QPCS", phase="qpcs-score-protection", language="it"
+        )
+    finally:
+        db.close()
+    assert "7/9" not in recovered[0]["text"]
+    assert "[punteggio omesso]" in recovered[0]["text"]
 
 
 def test_memory_status():
@@ -214,7 +336,7 @@ def test_memory_admin_routes_require_authentication():
 
 
 def test_stream_memory_contract_for_all_active_questionnaires():
-    for questionnaire_type in ("QSA", "QSAr", "ZTPI", "SAVICKAS"):
+    for questionnaire_type in ("QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP"):
         session_id = f"memory-contract-{questionnaire_type.lower()}"
         session_memory.clear(session_id)
         r = client.post("/chat/stream", json={
@@ -244,6 +366,10 @@ def test_stream_memory_contract_for_all_active_questionnaires():
         memory = session_memory.get_summary(session_id)
         assert "- Step corrente: Conclusione" in memory
         assert "- Step completati: Conclusione" in memory
+        progress = client.get(f"/memory/user/{session_id}")
+        assert progress.status_code == 200, progress.text
+        assert progress.json()["current_phase"] == "conclusion"
+        assert progress.json()["completed_phases"] == ["conclusion"]
         session_memory.clear(session_id)
 
 
@@ -314,6 +440,27 @@ def test_questionnaire_results_admin_list():
     assert isinstance(r.json(), list)
 
 
+def test_questionnaire_result_user_history_and_delete():
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        r = client.post("/questionnaire-result", json={
+            "session_id": "student-owned-result",
+            "questionnaire_type": "QSA",
+            "scores": {"C1": 7},
+        })
+        assert r.status_code == 200, r.text
+        assert r.json()["username"] == "student"
+
+        r = client.get("/user/questionnaire-results")
+        assert r.status_code == 200, r.text
+        assert any(row["session_id"] == "student-owned-result" for row in r.json())
+
+        r = client.delete("/questionnaire-result/student-owned-result")
+        assert r.status_code == 200, r.text
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
 def test_questionnaire_pdf_download():
     """Crea un risultato e verifica che il PDF sia scaricabile."""
     r = client.post("/questionnaire-result", json={
@@ -326,6 +473,17 @@ def test_questionnaire_pdf_download():
     assert r.status_code == 200, r.text
     assert r.headers["content-type"] == "application/pdf"
     assert len(r.content) > 100
+
+
+def test_qsa_extractor_rejects_incomplete_scores():
+    valid = {f"C{index}": index for index in range(1, 8)}
+    valid.update({f"A{index}": index for index in range(1, 8)})
+    assert _validate_scores(valid) == valid
+    try:
+        _validate_scores({"C1": 7})
+    except ValueError:
+        return
+    raise AssertionError("An incomplete extraction must be rejected")
 
 
 def test_strip_markdown():

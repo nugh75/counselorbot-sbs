@@ -1,43 +1,59 @@
+"""Read-only check of PostgreSQL identity sequences used by CounselorBot."""
+
 import os
-from sqlalchemy import create_engine, text
+
 import dotenv
+from sqlalchemy import create_engine, text
+
+
 dotenv.load_dotenv()
 
 POSTGRES_USER = os.getenv("POSTGRES_USER", "counselorbot_user")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "")
 POSTGRES_DB = os.getenv("POSTGRES_DB", "counselorbot")
-POSTGRES_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:5432/{POSTGRES_DB}"
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
+POSTGRES_PORT = os.getenv("POSTGRES_HOST_PORT", "5435")
+POSTGRES_URL = os.getenv(
+    "DATABASE_URL_HOST",
+    f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}",
+)
 
-def check_sequences():
-    print("Checking sequences...")
+TABLES = (
+    "logs",
+    "questionnaire_results",
+    "strategy_feedback",
+    "survey_responses",
+    "users",
+)
+
+
+def check_sequences() -> int:
+    """Report tables whose next generated id could collide with existing data."""
+    print(f"Checking sequences at {POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}...")
+    issues = 0
     engine = create_engine(POSTGRES_URL)
     with engine.connect() as conn:
-        for table in ['logs', 'users', 'survey_responses']:
-            # Check max ID
-            max_id = conn.execute(text(f"SELECT MAX(id) FROM {table}")).scalar()
-            
-            # Check sequence last_value (this might require permissions or different query depending on PG version)
-            # Standard way since PG 10:
-            seq_name = f"{table}_id_seq"
-            try:
-                seq_val = conn.execute(text(f"SELECT last_value FROM {seq_name}")).scalar()
-                print(f"Table {table}: Max ID = {max_id}, Sequence {seq_name} = {seq_val}")
-                
-                # Try a test insert (rollback afterwards)
-                if table == 'logs':
-                    print("Attempting test insert into logs...")
-                    trans = conn.begin()
-                    try:
-                        conn.execute(text("INSERT INTO logs (session_id, action, details) VALUES ('test', 'test', '{}')"))
-                        print("Test insert SUCCESS.")
-                        trans.rollback()
-                        print("Test insert rolled back.")
-                    except Exception as e:
-                        print(f"Test insert FAILED: {e}")
-                        trans.rollback()
+        for table in TABLES:
+            sequence = conn.execute(
+                text("SELECT pg_get_serial_sequence(:table_name, 'id')"),
+                {"table_name": table},
+            ).scalar()
+            if not sequence:
+                print(f"{table}: no serial/identity sequence found")
+                continue
 
-            except Exception as e:
-                print(f"Error checking {table}: {e}")
+            max_id = conn.execute(text(f'SELECT COALESCE(MAX(id), 0) FROM "{table}"')).scalar_one()
+            last_value, is_called = conn.execute(
+                text(f"SELECT last_value, is_called FROM {sequence}")
+            ).one()
+            next_value = last_value + 1 if is_called else last_value
+            status = "OK" if next_value > max_id else "COLLISION RISK"
+            if status != "OK":
+                issues += 1
+            print(f"{table}: max_id={max_id}, next_id={next_value}, sequence={sequence} [{status}]")
+
+    return issues
+
 
 if __name__ == "__main__":
-    check_sequences()
+    raise SystemExit(1 if check_sequences() else 0)

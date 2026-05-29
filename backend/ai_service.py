@@ -289,13 +289,28 @@ class AIService:
 
         client = genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=600_000))
         full_prompt = f"System: {system_prompt}\nUser: {user_message}"
-        config = types.GenerateContentConfig(max_output_tokens=max_tokens) if max_tokens else None
+        # I modelli gemini 2.5/3 "thinking" consumano il budget di output sul
+        # ragionamento: con max_tokens piccoli response.text torna vuoto. Se il
+        # no-thinking è attivo azzera il budget di reasoning (thinking_budget=0).
+        config_kwargs = {}
+        if max_tokens:
+            config_kwargs["max_output_tokens"] = max_tokens
+        if self.disable_thinking:
+            config_kwargs["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
+        config = types.GenerateContentConfig(**config_kwargs) if config_kwargs else None
         response = client.models.generate_content(
             model=model,
             contents=full_prompt,
             config=config,
         )
-        return response.text
+        text = response.text
+        if not text:
+            # Risposta vuota: tipicamente il budget è stato esaurito dal reasoning.
+            raise AIError(
+                "Gemini ha restituito una risposta vuota "
+                "(possibile modello ritirato o budget token esaurito dal reasoning)."
+            )
+        return text
 
     def _call_mistral(self, user_message, system_prompt, model, max_tokens: int = None):
         api_key = self._get_api_key('api_key_mistral')

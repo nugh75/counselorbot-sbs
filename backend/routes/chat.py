@@ -1,23 +1,24 @@
 """Endpoint di chat e QSA: /chat, /chat/stream, /chat/message,
 /qsa/guided-ui-texts, /qsa/audit, /qsa/upload, /tts."""
 import io
-import json
 import logging
 import os
 import shutil
-import subprocess
-import sys
+import tempfile
 import uuid
 
 import edge_tts
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
 from .. import database, models
 from ..ai_service import AIService, AIError
 from ..api_models import ChatRequest, QsaAuditRequest, TTSRequest
 from ..memory_service import session_memory
+from ..strategy_memory import shared_response_memory
+from ..qsa_extractor import extract_qsa_data
 from ..prompt_config import (
     DEFAULT_SYSTEM_PROMPT_GENERIC,
     DEFAULT_GUIDED_TEXT_QSAR_QUESTIONS_INTRO,
@@ -26,6 +27,12 @@ from ..prompt_config import (
     DEFAULT_GUIDED_TEXT_ZTPI_CONCLUSION,
     DEFAULT_GUIDED_TEXT_SAVICKAS_QUESTIONS_INTRO,
     DEFAULT_GUIDED_TEXT_SAVICKAS_CONCLUSION,
+    DEFAULT_GUIDED_TEXT_QPCS_QUESTIONS_INTRO,
+    DEFAULT_GUIDED_TEXT_QPCS_CONCLUSION,
+    DEFAULT_GUIDED_TEXT_QPCC_QUESTIONS_INTRO,
+    DEFAULT_GUIDED_TEXT_QPCC_CONCLUSION,
+    DEFAULT_GUIDED_TEXT_QAP_QUESTIONS_INTRO,
+    DEFAULT_GUIDED_TEXT_QAP_CONCLUSION,
     GUIDED_PUBLIC_UI_CONFIG_DEFINITIONS,
     MODE_TO_SYSTEM_PROMPT_KEY,
     SYSTEM_PROMPT_DEFAULTS,
@@ -52,6 +59,17 @@ from ..chat_logic import (
 router = APIRouter()
 get_db = database.get_db
 logger = logging.getLogger(__name__)
+
+# Questionari condotti dall'agente AI: testi intro/conclusione per tipo
+# (chiave_intro, default_intro, chiave_conclusione, default_conclusione).
+_AGENT_GUIDED_TEXTS = {
+    "QPCS": ("text_qpcs_questions_intro", DEFAULT_GUIDED_TEXT_QPCS_QUESTIONS_INTRO,
+             "text_qpcs_conclusion", DEFAULT_GUIDED_TEXT_QPCS_CONCLUSION),
+    "QPCC": ("text_qpcc_questions_intro", DEFAULT_GUIDED_TEXT_QPCC_QUESTIONS_INTRO,
+             "text_qpcc_conclusion", DEFAULT_GUIDED_TEXT_QPCC_CONCLUSION),
+    "QAP": ("text_qap_questions_intro", DEFAULT_GUIDED_TEXT_QAP_QUESTIONS_INTRO,
+            "text_qap_conclusion", DEFAULT_GUIDED_TEXT_QAP_CONCLUSION),
+}
 
 
 @router.get("/qsa/guided-ui-texts")
@@ -116,6 +134,10 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", db: Session = Dep
         result["text_guided_conclusion"] = ai_service.config.get(
             "text_savickas_conclusion", DEFAULT_GUIDED_TEXT_SAVICKAS_CONCLUSION
         )
+    elif questionnaire_type in _AGENT_GUIDED_TEXTS:
+        intro_key, intro_default, concl_key, concl_default = _AGENT_GUIDED_TEXTS[questionnaire_type]
+        result["text_guided_questions_intro"] = ai_service.config.get(intro_key, intro_default)
+        result["text_guided_conclusion"] = ai_service.config.get(concl_key, concl_default)
 
     return result
 
@@ -185,7 +207,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     # 3. Recupera solo la memoria pertinente e le strategie collettive approvate.
     retrieval_query = f"{step_label} {model_message} {model_scores_context}".strip()
     conversation_summary, strategy_ids = _retrieved_context(
-        session_id, request, questionnaire_type, retrieval_query
+        db, session_id, request, questionnaire_type, retrieval_query
     )
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         conversation_summary = _sanitize_ztpi_user_text(conversation_summary)
@@ -236,9 +258,21 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         }
     )
     db.add(log_entry)
+    response_id = shared_response_memory.create_candidate(
+        db,
+        response_content,
+        questionnaire_type,
+        request.phase or "",
+        request.language or "it",
+    )
     db.commit()
 
-    return {"response": response_content, "session_id": session_id, "strategy_ids": strategy_ids}
+    return {
+        "response": response_content,
+        "session_id": session_id,
+        "strategy_ids": strategy_ids,
+        "response_id": response_id,
+    }
 
 
 @router.post("/chat/stream")
@@ -312,7 +346,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db)):
 
     retrieval_query = f"{step_label} {model_message} {model_scores_context}".strip()
     conversation_summary, strategy_ids = _retrieved_context(
-        session_id, request, questionnaire_type, retrieval_query
+        db, session_id, request, questionnaire_type, retrieval_query
     )
     sanitize = _should_sanitize_ztpi_text(request.mode, request.phase)
     if sanitize:
@@ -324,7 +358,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db)):
     provider = ai_service.config.get('active_provider', 'unknown')
     model = ai_service.config.get('model_name', 'unknown')
 
-    def _log_stream(response_content: str):
+    def _log_stream(response_content: str) -> str | None:
         log_db = database.SessionLocal()
         try:
             log_db.add(models.Log(
@@ -345,9 +379,19 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db)):
                     "streamed": True,
                 },
             ))
+            response_id = shared_response_memory.create_candidate(
+                log_db,
+                response_content,
+                questionnaire_type,
+                request.phase or "",
+                request.language or "it",
+            )
             log_db.commit()
+            return response_id
         except Exception as e:
             logger.error(f"Errore log stream session {session_id}: {e}")
+            log_db.rollback()
+            return None
         finally:
             log_db.close()
 
@@ -392,9 +436,9 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db)):
                 False,
             )
 
-            _log_stream(response_content)
+            response_id = _log_stream(response_content)
 
-            yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'strategy_ids': strategy_ids})}\n\n"
+            yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'strategy_ids': strategy_ids, 'response_id': response_id})}\n\n"
         except Exception as e:
             logger.error(f"Errore stream chat session {session_id}: {e}")
             yield f"data: {_json.dumps({'error': str(e)})}\n\n"
@@ -470,9 +514,12 @@ async def chat_message(
         }
     )
     db.add(log_entry)
+    response_id = shared_response_memory.create_candidate(
+        db, response_content, questionnaire_type, "", language or "it"
+    )
     db.commit()
 
-    return {"response": response_content}
+    return {"response": response_content, "response_id": response_id}
 
 
 @router.post("/qsa/audit")
@@ -489,44 +536,20 @@ async def audit_qsa(request: QsaAuditRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/qsa/upload")
-async def upload_qsa_document(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    # 1. Save file temporarily
+async def upload_qsa_document(file: UploadFile = File(...)):
     temp_dir = ".tmp"
     os.makedirs(temp_dir, exist_ok=True)
-    temp_file_path = os.path.join(temp_dir, f"upload_{uuid.uuid4()}_{file.filename}")
-
-    with open(temp_file_path, "wb") as buffer:
+    suffix = os.path.splitext(file.filename or "")[1].lower()
+    with tempfile.NamedTemporaryFile(dir=temp_dir, suffix=suffix, delete=False) as buffer:
+        temp_file_path = buffer.name
         shutil.copyfileobj(file.file, buffer)
 
     try:
-        # 2. Call execution script
-        script_path = "execution/extract_qsa_vision.py"
-
-        if not os.path.exists(script_path):
-             raise HTTPException(status_code=500, detail="Extraction script not found")
-
-        result = subprocess.run(
-            [sys.executable, script_path, temp_file_path],
-            capture_output=True,
-            text=True
-        )
-
-        if result.returncode != 0:
-             print(f"Script Error: {result.stderr}")
-             raise HTTPException(status_code=500, detail="Failed to process image")
-
-        # 3. Parse result
-        try:
-            extraction_data = json.loads(result.stdout)
-            if "error" in extraction_data:
-                 raise HTTPException(status_code=400, detail=extraction_data["error"])
-            return extraction_data
-        except json.JSONDecodeError:
-             print(f"JSON Error: {result.stdout}")
-             raise HTTPException(status_code=500, detail="Invalid response from AI extractor")
-
+        extraction_data = await run_in_threadpool(extract_qsa_data, temp_file_path)
+        if "error" in extraction_data:
+            raise HTTPException(status_code=400, detail=extraction_data["error"])
+        return extraction_data
     finally:
-        # 4. Clean up
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
 

@@ -1,7 +1,6 @@
 'use client';
 
-import { FileText, Keyboard, ArrowRight, Upload } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Keyboard, ArrowRight, Upload } from 'lucide-react';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 

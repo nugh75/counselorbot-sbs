@@ -10,7 +10,7 @@ from ..memory_service import session_memory
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-MEMORY_QUESTIONNAIRE_TYPES = {"QSA", "QSAr", "ZTPI", "SAVICKAS"}
+MEMORY_QUESTIONNAIRE_TYPES = {"QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP"}
 
 
 @router.get("/memory/status/{session_id}")
@@ -51,3 +51,9 @@ async def memory_event(request: MemoryEventRequest):
         completed_step=request.completed_step,
     )
     return {"status": "recorded"}
+
+
+@router.get("/memory/user/{session_id}")
+async def get_user_session_memory(session_id: str):
+    """Restituisce lo stato essenziale necessario a ripristinare la sessione guidata."""
+    return {"session_id": session_id, **session_memory.get_progress(session_id)}

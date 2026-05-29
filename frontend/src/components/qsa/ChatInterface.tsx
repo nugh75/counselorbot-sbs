@@ -12,28 +12,34 @@ import { useI18n } from '@/lib/i18n-context';
 
 type AnalysisMode = 'factor' | 'second-level' | 'generic';
 
+function omitMarkdownNode<T extends { node?: unknown }>(props: T): Omit<T, 'node'> {
+    const { node, ...elementProps } = props;
+    void node;
+    return elementProps;
+}
+
 const markdownComponents: Components = {
-    table: ({ node, ...props }) => (
+    table: (props) => (
         <table
             className="w-full min-w-[760px] border-separate border-spacing-0 text-sm text-slate-800"
-            {...props}
+            {...omitMarkdownNode(props)}
         />
     ),
-    thead: ({ node, ...props }) => <thead className="bg-slate-50" {...props} />,
-    tbody: ({ node, ...props }) => <tbody className="[&_tr:nth-child(even)]:bg-slate-50/40" {...props} />,
-    tr: ({ node, ...props }) => <tr className="border-b border-slate-100" {...props} />,
-    th: ({ node, ...props }) => (
+    thead: (props) => <thead className="bg-slate-50" {...omitMarkdownNode(props)} />,
+    tbody: (props) => <tbody className="[&_tr:nth-child(even)]:bg-slate-50/40" {...omitMarkdownNode(props)} />,
+    tr: (props) => <tr className="border-b border-slate-100" {...omitMarkdownNode(props)} />,
+    th: (props) => (
         <th
             className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600 border-b border-slate-200"
-            {...props}
+            {...omitMarkdownNode(props)}
         />
     ),
-    td: ({ node, ...props }) => <td className="px-3 py-2 align-top leading-relaxed border-b border-slate-100" {...props} />,
-    p: ({ node, ...props }) => <p className="my-1.5 text-sm leading-relaxed" {...props} />,
-    ul: ({ node, ...props }) => <ul className="my-2 pl-5 list-disc space-y-1" {...props} />,
-    ol: ({ node, ...props }) => <ol className="my-2 pl-5 list-decimal space-y-1" {...props} />,
-    li: ({ node, ...props }) => <li className="leading-relaxed" {...props} />,
-    strong: ({ node, ...props }) => <strong className="font-semibold text-slate-900" {...props} />,
+    td: (props) => <td className="px-3 py-2 align-top leading-relaxed border-b border-slate-100" {...omitMarkdownNode(props)} />,
+    p: (props) => <p className="my-1.5 text-sm leading-relaxed" {...omitMarkdownNode(props)} />,
+    ul: (props) => <ul className="my-2 pl-5 list-disc space-y-1" {...omitMarkdownNode(props)} />,
+    ol: (props) => <ol className="my-2 pl-5 list-decimal space-y-1" {...omitMarkdownNode(props)} />,
+    li: (props) => <li className="leading-relaxed" {...omitMarkdownNode(props)} />,
+    strong: (props) => <strong className="font-semibold text-slate-900" {...omitMarkdownNode(props)} />,
 };
 
 interface ChatInterfaceProps {
@@ -121,7 +127,7 @@ export function ChatInterface({ currentMode, onModeChange, scores }: ChatInterfa
                 controller.signal,
             );
             updateLast(response);
-        } catch (error) {
+        } catch {
             if (controller.signal.aborted) return;
             updateLast(t('chat.connectionError'));
         } finally {

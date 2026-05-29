@@ -3,7 +3,6 @@ FROM python:3.10-slim
 WORKDIR /app
 
 # Copy requirements first for caching
-# Copy requirements first for caching
 COPY backend/requirements.txt .
 
 RUN apt-get update && apt-get install -y poppler-utils && rm -rf /var/lib/apt/lists/*
@@ -11,12 +10,10 @@ RUN apt-get update && apt-get install -y poppler-utils && rm -rf /var/lib/apt/li
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Create the backend package directory and copy files into it
-# Create the backend package directory and copy files into it
 RUN mkdir backend
 COPY backend/*.py backend/
 COPY backend/routes/ backend/routes/
 COPY backend/tests/ backend/tests/
-COPY execution/ execution/
 COPY knowledge/ knowledge/
 
 # Create __init__.py to make it a proper package

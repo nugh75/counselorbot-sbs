@@ -37,20 +37,22 @@ interface TypeStats {
     factors: FactorStats[];
 }
 
-const QUESTIONNAIRE_TYPES = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS'];
+const QUESTIONNAIRE_TYPES = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
 
-function getFactorName(code: string, questionnaireType: string): string {
+type TranslateFallback = (key: string, fallback: string) => string;
+
+function getFactorName(code: string, questionnaireType: string, tf: TranslateFallback): string {
     const q = QUESTIONNAIRES[questionnaireType as QuestionnaireType];
     if (!q) return code;
     const factor = q.factors.find((f: FactorDefinition) => f.code === code);
-    return factor ? `${code} (${factor.name})` : code;
+    return factor ? `${code} (${tf(`factor.${code}.name`, factor.name)})` : code;
 }
 
-function getFactorDescription(code: string, questionnaireType: string): string {
+function getFactorDescription(code: string, questionnaireType: string, tf: TranslateFallback): string {
     const q = QUESTIONNAIRES[questionnaireType as QuestionnaireType];
     if (!q) return '';
     const factor = q.factors.find((f: FactorDefinition) => f.code === code);
-    return factor?.description || '';
+    return factor ? tf(`factor.${code}.desc`, factor.description) : '';
 }
 
 function isInverted(code: string, questionnaireType: string): boolean {
@@ -59,7 +61,7 @@ function isInverted(code: string, questionnaireType: string): boolean {
     return q.invertedFactors.includes(code);
 }
 
-function ScoreBadge({ value, code, questionnaireType }: { value: number; code: string; questionnaireType: string }) {
+function ScoreBadge({ value, code, questionnaireType, invertedTitle }: { value: number; code: string; questionnaireType: string; invertedTitle: string }) {
     const inverted = isInverted(code, questionnaireType);
     const isStrength = inverted ? value <= 3 : value >= 7;
     const isGrowth = inverted ? value >= 7 : value <= 3;
@@ -71,14 +73,14 @@ function ScoreBadge({ value, code, questionnaireType }: { value: number; code: s
 
     return (
         <span className={`inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-bold ${color}`}
-              title={inverted ? 'Fattore invertito' : ''}>
+              title={inverted ? invertedTitle : ''}>
             {value}
         </span>
     );
 }
 
 export function QuestionnaireResultsViewer() {
-    const { t } = useI18n();
+    const { t, tf } = useI18n();
     const [results, setResults] = useState<QuestionnaireResult[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -204,7 +206,7 @@ export function QuestionnaireResultsViewer() {
 
                 factors.push({
                     code,
-                    name: factorDef?.name || code,
+                    name: factorDef ? tf(`factor.${code}.name`, factorDef.name) : code,
                     mean: Math.round(mean * 100) / 100,
                     stdDev: Math.round(stdDev * 100) / 100,
                     min,
@@ -224,7 +226,7 @@ export function QuestionnaireResultsViewer() {
         }
 
         return result;
-    }, [results]);
+    }, [results, tf]);
 
     const totalResults = results.length;
     const typeCounts: Record<string, number> = {};
@@ -309,7 +311,7 @@ export function QuestionnaireResultsViewer() {
             {typeStatsList.map(({ type, factors }) => {
                 const chartData = factors.map(f => ({
                     factor: f.code,
-                    factorName: getFactorName(f.code, type),
+                    factorName: getFactorName(f.code, type, tf),
                     mean: f.mean,
                     stdDev: f.stdDev,
                     min: f.min,
@@ -384,7 +386,7 @@ export function QuestionnaireResultsViewer() {
                                         {factors.map(f => (
                                             <tr key={f.code} className="hover:bg-slate-50 transition-colors">
                                                 <td className="px-4 py-2.5 text-xs font-medium text-slate-700">
-                                                    {getFactorName(f.code, type)}
+                                                    {getFactorName(f.code, type, tf)}
                                                 </td>
                                                 <td className="px-4 py-2.5 text-xs text-slate-600">{f.count}</td>
                                                 <td className="px-4 py-2.5 text-xs text-slate-600">{f.mean.toFixed(2)}</td>
@@ -447,6 +449,7 @@ export function QuestionnaireResultsViewer() {
                                                                 code={key}
                                                                 value={result.scores![key]}
                                                                 questionnaireType={result.questionnaire_type}
+                                                                invertedTitle={t('profile.invertedScale')}
                                                             />
                                                         ))}
                                                         {scoreKeys.length > 6 && (
@@ -471,8 +474,8 @@ export function QuestionnaireResultsViewer() {
                                                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                                                                 {Object.entries(result.scores).map(([code, value]) => {
                                                                     const inverted = isInverted(code, result.questionnaire_type);
-                                                                    const name = getFactorName(code, result.questionnaire_type);
-                                                                    const desc = getFactorDescription(code, result.questionnaire_type);
+                                                                    const name = getFactorName(code, result.questionnaire_type, tf);
+                                                                    const desc = getFactorDescription(code, result.questionnaire_type, tf);
                                                                     const isStrength = inverted ? value <= 3 : value >= 7;
                                                                     const isGrowth = inverted ? value >= 7 : value <= 3;
                                                                     let badgeClass: string;

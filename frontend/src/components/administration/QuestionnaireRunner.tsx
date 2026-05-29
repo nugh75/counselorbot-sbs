@@ -4,7 +4,20 @@ import { FormEvent, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { AdministrationCopy, AdministrationInstrument } from '@/lib/test-administrations';
-import { calculateExperimentalProfile, ExperimentalProfileResult, ProfileDimension } from '@/lib/test-scoring';
+import { calculateExperimentalProfile, ExperimentalProfileResult } from '@/lib/test-scoring';
+import { addCompletedProfile } from '@/lib/profile-tracker';
+
+// Safe UUID generation
+function generateUUID() {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
 
 interface QuestionnaireRunnerProps {
     copy: AdministrationCopy;
@@ -16,6 +29,7 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
     const [answers, setAnswers] = useState<Record<number, number>>({});
     const [error, setError] = useState('');
     const [results, setResults] = useState<ExperimentalProfileResult[] | null>(null);
+    const [createdSessionId, setCreatedSessionId] = useState<string>('');
     const answered = Object.keys(answers).length;
     const completion = Math.round((answered / copy.items.length) * 100);
     const scaleLabels = useMemo(() => copy.scale.map((label, index) => ({
@@ -23,7 +37,7 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
         label,
     })), [copy.scale]);
 
-    const submit = (event: FormEvent<HTMLFormElement>) => {
+    const submit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (answered !== copy.items.length) {
             setError(copy.missingAnswers);
@@ -35,11 +49,40 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
             return;
         }
         setError('');
-        setResults(calculateExperimentalProfile(instrument, locale, answers));
+        const computed = calculateExperimentalProfile(instrument, locale, answers);
+        setResults(computed);
+
+        // Convert the 1-4 averages to 1-9 scale scores
+        const mappedScores: Record<string, number> = {};
+        for (const res of computed) {
+            mappedScores[res.code] = Math.round(1 + (res.average - 1) * (8 / 3));
+        }
+
+        const newSessionId = generateUUID();
+        setCreatedSessionId(newSessionId);
+
+        // Save to Database
+        try {
+            await fetch('/api/questionnaire-result', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    session_id: newSessionId,
+                    questionnaire_type: instrument,
+                    scores: mappedScores,
+                }),
+            });
+
+            // Save to local storage Completed Profiles
+            addCompletedProfile(instrument, newSessionId, mappedScores);
+        } catch (e) {
+            console.error("Failed to save experimental questionnaire result", e);
+        }
     };
 
     if (results) {
-        const renderResults = (dimension: ProfileDimension, title: string) => (
+        const dimensions = [...new Set(results.map((r) => r.dimension))];
+        const renderResults = (dimension: string, title: string) => (
             <section className="space-y-3">
                 <h2 className="text-xl font-bold text-slate-900">{title}</h2>
                 <div className="grid gap-3 md:grid-cols-2">
@@ -61,17 +104,20 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                                     </span>
                                 </div>
                                 <div>
-                                    <div className="mb-1 flex justify-between text-xs text-slate-600">
-                                        <span>{copy.rawAverage}</span>
-                                        <span className="font-semibold">{result.average.toFixed(2)} / 4</span>
+                                    <div className="mb-1 flex justify-between text-xs font-semibold text-slate-700">
+                                        <span>{copy.stanineScore}</span>
+                                        <span className="font-bold text-indigo-700">{Math.round(1 + (result.average - 1) * (8 / 3))} / 9</span>
                                     </div>
                                     <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
                                         <div
                                             className={`h-full rounded-full ${
                                                 result.orientation === 'difficulty' ? 'bg-amber-500' : 'bg-indigo-600'
                                             }`}
-                                            style={{ width: `${result.percentage}%` }}
+                                            style={{ width: `${((Math.round(1 + (result.average - 1) * (8 / 3)) - 1) / 8) * 100}%` }}
                                         />
+                                    </div>
+                                    <div className="mt-1.5 flex justify-between text-[10px] text-slate-400">
+                                        <span>{copy.rawAverage}: {result.average.toFixed(2)} / 4</span>
                                     </div>
                                 </div>
                                 <p className="text-xs leading-relaxed text-slate-600">{result.interpretation}</p>
@@ -102,8 +148,9 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                     </p>
                 </section>
 
-                {renderResults('cognitive', copy.cognitiveTitle)}
-                {renderResults('affective', copy.affectiveTitle)}
+                {dimensions.map((dim) => (
+                    renderResults(dim, copy.dimensionTitles[dim] ?? dim)
+                ))}
 
                 <div className="flex flex-col-reverse justify-between gap-3 sm:flex-row">
                     <Link
@@ -113,16 +160,24 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                         <ArrowLeft className="w-4 h-4" />
                         {copy.back}
                     </Link>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setAnswers({});
-                            setResults(null);
-                        }}
-                        className="rounded-md bg-indigo-600 px-5 py-2.5 font-semibold text-white hover:bg-indigo-700"
-                    >
-                        {copy.restart}
-                    </button>
+                    <div className="flex gap-2">
+                        <Link
+                            href={`/?session_id=${createdSessionId}&instrument=${instrument}`}
+                            className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-600 hover:bg-emerald-700 px-5 py-2.5 font-semibold text-white transition-colors"
+                        >
+                            {copy.startChat}
+                        </Link>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setAnswers({});
+                                setResults(null);
+                            }}
+                            className="rounded-md bg-indigo-600 px-5 py-2.5 font-semibold text-white hover:bg-indigo-700"
+                        >
+                            {copy.restart}
+                        </button>
+                    </div>
                 </div>
             </div>
         );

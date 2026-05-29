@@ -5,11 +5,11 @@ export interface ChatStreamResult {
     response: string;
     session_id?: string;
     strategy_ids?: string[];
+    response_id?: string;
 }
 
 export async function streamChat(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    payload: Record<string, any>,
+    payload: Record<string, unknown>,
     onDelta: (fullText: string) => void,
     signal?: AbortSignal,
     onReasoning?: (fullReasoning: string) => void,
@@ -32,6 +32,7 @@ export async function streamChat(
     let reasoning = '';
     let sessionId: string | undefined;
     let strategyIds: string[] | undefined;
+    let responseId: string | undefined;
 
     for (;;) {
         const { done, value } = await reader.read();
@@ -47,7 +48,7 @@ export async function streamChat(
             const json = line.slice(5).trim();
             if (!json) continue;
 
-            let evt: { delta?: string; display?: string; reasoning?: string; done?: boolean; response?: string; session_id?: string; strategy_ids?: string[]; error?: string };
+            let evt: { delta?: string; display?: string; reasoning?: string; done?: boolean; response?: string; session_id?: string; strategy_ids?: string[]; response_id?: string; error?: string };
             try {
                 evt = JSON.parse(json);
             } catch {
@@ -72,9 +73,10 @@ export async function streamChat(
                 if (typeof evt.response === 'string') full = evt.response;
                 sessionId = evt.session_id;
                 strategyIds = evt.strategy_ids;
+                responseId = evt.response_id;
             }
         }
     }
 
-    return { response: full, session_id: sessionId, strategy_ids: strategyIds };
+    return { response: full, session_id: sessionId, strategy_ids: strategyIds, response_id: responseId };
 }

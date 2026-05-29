@@ -13,9 +13,14 @@ import { ArrowLeft, CheckCircle2, MessageSquare, RotateCcw, LogOut, Download, La
 import { useI18n } from '@/lib/i18n-context';
 import { addCompletedProfile, hasCompletedAll, getCombinedScoresContext, clearCompletedProfiles, getCompletedProfiles } from '@/lib/profile-tracker';
 
+
 type Step = 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'combined-interaction';
 
-const STARTABLE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS'];
+const STARTABLE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
+
+// Agent-only questionnaires (Savickas + the perceived-competence/adaptability ones)
+// skip the score-input flow and go straight to the AI-led guided chat.
+const isAgentOnly = (q: QuestionnaireConfig | null) => q?.agentOnly === true;
 
 // Safe UUID generation that works in HTTP (non-secure) contexts
 function generateUUID() {
@@ -30,7 +35,7 @@ function generateUUID() {
 }
 
 export default function Home() {
-    const { t } = useI18n();
+    const { t, lang } = useI18n();
     const [step, setStep] = useState<Step>('questionnaire-select');
     const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<QuestionnaireConfig | null>(null);
     const [scores, setScores] = useState<Record<string, number> | null>(null);
@@ -39,16 +44,36 @@ export default function Home() {
     const [combinedContext, setCombinedContext] = useState<string>('');
 
     useEffect(() => {
-        const requestedId = new URLSearchParams(window.location.search).get('start') as QuestionnaireType | null;
+        const params = new URLSearchParams(window.location.search);
+
+        // Resume chat from a test administration: /?session_id=...&instrument=...
+        const resumeSession = params.get('session_id');
+        const resumeInstrument = params.get('instrument') as QuestionnaireType | null;
+        if (resumeSession && resumeInstrument && QUESTIONNAIRES[resumeInstrument]) {
+            const questionnaire = QUESTIONNAIRES[resumeInstrument];
+            const profiles = getCompletedProfiles();
+            const profile =
+                profiles.find((p) => p.questionnaireType === resumeInstrument && p.sessionId === resumeSession)
+                ?? profiles.find((p) => p.questionnaireType === resumeInstrument);
+            setSelectedQuestionnaire(questionnaire);
+            setSessionId(resumeSession);
+            setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
+            setStep('interaction');
+            window.history.replaceState(null, '', window.location.pathname);
+            return;
+        }
+
+        const requestedId = params.get('start') as QuestionnaireType | null;
         if (!requestedId || !STARTABLE_QUESTIONNAIRES.includes(requestedId)) return;
 
         const questionnaire = QUESTIONNAIRES[requestedId];
         // A details page can deep-link into the same existing workflow.
         setSelectedQuestionnaire(questionnaire);
-        if (questionnaire.id === 'SAVICKAS') {
+        if (isAgentOnly(questionnaire)) {
             const newSessionId = generateUUID();
             setSessionId(newSessionId);
-            addCompletedProfile('SAVICKAS', newSessionId, {});
+            setScores({});
+            addCompletedProfile(questionnaire.id, newSessionId, {});
             (async () => {
                 try {
                     await fetch('/api/questionnaire-result', {
@@ -56,7 +81,7 @@ export default function Home() {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             session_id: newSessionId,
-                            questionnaire_type: 'SAVICKAS',
+                            questionnaire_type: questionnaire.id,
                             scores: {},
                         }),
                     });
@@ -73,18 +98,19 @@ export default function Home() {
 
     const handleQuestionnaireSelect = async (questionnaire: QuestionnaireConfig) => {
         setSelectedQuestionnaire(questionnaire);
-        if (questionnaire.id === 'SAVICKAS') {
+        if (isAgentOnly(questionnaire)) {
             const newSessionId = generateUUID();
             setSessionId(newSessionId);
-            addCompletedProfile('SAVICKAS', newSessionId, {});
-            // Salva risultato Savickas (sessione senza punteggi)
+            setScores({});
+            addCompletedProfile(questionnaire.id, newSessionId, {});
+            // Questionari condotti dall'AI: sessione senza punteggi
             try {
                 await fetch('/api/questionnaire-result', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         session_id: newSessionId,
-                        questionnaire_type: 'SAVICKAS',
+                        questionnaire_type: questionnaire.id,
                         scores: {},
                     }),
                 });
@@ -204,7 +230,7 @@ export default function Home() {
         if (step === 'method-select') setStep('questionnaire-select');
         else if (step === 'manual-input' || step === 'upload-input') setStep('method-select');
         else if (step === 'dashboard') setStep('manual-input');
-        else if (step === 'interaction') setStep(selectedQuestionnaire?.id === 'SAVICKAS' ? 'questionnaire-select' : 'dashboard');
+        else if (step === 'interaction') setStep(isAgentOnly(selectedQuestionnaire) ? 'questionnaire-select' : 'dashboard');
         else if (step === 'completed') setStep('dashboard');
         else if (step === 'combined-interaction') setStep('completed');
     };
@@ -373,7 +399,7 @@ export default function Home() {
                                     <button
                                         onClick={async () => {
                                             try {
-                                                const res = await fetch(`/api/questionnaire-result/${sessionId}/pdf`);
+                                                const res = await fetch(`/api/questionnaire-result/${sessionId}/pdf?lang=${lang}`);
                                                 if (!res.ok) throw new Error('PDF download failed');
                                                 const blob = await res.blob();
                                                 const url = window.URL.createObjectURL(blob);

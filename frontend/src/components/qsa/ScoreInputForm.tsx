@@ -5,8 +5,6 @@ import { QuestionnaireConfig, FactorDefinition } from '@/lib/questionnaires';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
 
-const schema_placeholder = null; // validation handled inline
-
 type FormData = { scores: Record<string, string | number> };
 
 // Color per prefix (label tradotta via i18n: score.prefix.<X>)
@@ -35,8 +33,11 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores }: Score
         factors: questionnaire.factors.filter(f => f.code.startsWith(prefix)),
     }));
 
-    const onFormSubmit = (data: any) => {
-        onSubmit(data.scores);
+    const onFormSubmit = (data: FormData) => {
+        const scores = Object.fromEntries(
+            Object.entries(data.scores).map(([code, value]) => [code, Number(value)]),
+        );
+        onSubmit(scores);
     };
 
     const InputRow = ({ factor }: { factor: FactorDefinition }) => {
@@ -75,7 +76,7 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores }: Score
                         type="text"
                         inputMode="numeric"
                         maxLength={1}
-                        {...register(`scores.${factor.code}` as any, { required: true, min: 1, max: 9 })}
+                        {...register(`scores.${factor.code}`, { required: true, min: 1, max: 9 })}
                         onKeyDown={handleKeyDown}
                         onInput={handleInput}
                         className={cn(

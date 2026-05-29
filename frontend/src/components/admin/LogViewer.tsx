@@ -10,7 +10,11 @@ interface LogEntry {
     session_id: string;
     action: string;
     timestamp: string;
-    details: any;
+    details: {
+        mode?: string;
+        user_input?: string;
+        [key: string]: unknown;
+    };
 }
 
 export function LogViewer() {

@@ -1,0 +1,556 @@
+{
+  "instrument": "QSAr",
+  "source": "M. Pellerey — QSAr, competenzestrategiche.it (CNOS-FAP)",
+  "license_note": "Proprietario. Item e chiave fattori da inserire solo se autorizzati (PROGETTO WP0/WP2).",
+  "n_items": 46,
+  "response_scale": {
+    "min": null,
+    "max": null,
+    "labels": {
+      "it": [],
+      "en": [],
+      "sv": []
+    }
+  },
+  "report_scale": {
+    "type": "stanine",
+    "min": 1,
+    "max": 9
+  },
+  "factors": [
+    {
+      "code": "C1r",
+      "name": {
+        "it": "Strategie elaborative per comprendere e ricordare",
+        "en": "Elaborative strategies for understanding and remembering",
+        "sv": "Bearbetningsstrategier för förståelse och minne"
+      },
+      "direction": "direct"
+    },
+    {
+      "code": "C2r",
+      "name": {
+        "it": "Strategie autoregolative",
+        "en": "Self-regulated strategies",
+        "sv": "Självreglerande strategier"
+      },
+      "direction": "direct"
+    },
+    {
+      "code": "C3r",
+      "name": {
+        "it": "Strategie grafiche e organizzatori semantici",
+        "en": "Graphic strategies and semantic organisers",
+        "sv": "Grafiska strategier och semantiska organisatörer"
+      },
+      "direction": "direct"
+    },
+    {
+      "code": "C4r",
+      "name": {
+        "it": "Carenza nel controllo dell'attenzione",
+        "en": "Lack of attention control",
+        "sv": "Bristande kontroll över uppmärksamheten"
+      },
+      "direction": "inverse"
+    },
+    {
+      "code": "A1r",
+      "name": {
+        "it": "Ansietà e controllo delle emozioni",
+        "en": "Anxiety and emotional control",
+        "sv": "Ångest och kontroll av känslor"
+      },
+      "direction": "inverse"
+    },
+    {
+      "code": "A2r",
+      "name": {
+        "it": "Volizione",
+        "en": "Volition",
+        "sv": "Vilja"
+      },
+      "direction": "direct"
+    },
+    {
+      "code": "A3r",
+      "name": {
+        "it": "Attribuzioni causali",
+        "en": "Causal attributions",
+        "sv": "Orsaksförklaringar"
+      },
+      "direction": "direct"
+    },
+    {
+      "code": "A4r",
+      "name": {
+        "it": "Percezione di competenza",
+        "en": "Perceived competence",
+        "sv": "Upplevd kompetens"
+      },
+      "direction": "direct"
+    }
+  ],
+  "items": [
+    {
+      "id": "QSAR-001",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-002",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-003",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-004",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-005",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-006",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-007",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-008",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-009",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-010",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-011",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-012",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-013",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-014",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-015",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-016",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-017",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-018",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-019",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-020",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-021",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-022",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-023",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-024",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-025",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-026",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-027",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-028",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-029",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-030",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-031",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-032",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-033",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-034",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-035",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-036",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-037",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-038",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-039",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-040",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-041",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-042",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-043",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-044",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-045",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QSAR-046",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    }
+  ]
+}

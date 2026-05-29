@@ -79,6 +79,21 @@ class StrategyFeedback(Base):
     submitted_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class SharedChatResponse(Base):
+    """Risposta AI anonima recuperabile solo dopo una valutazione positiva."""
+
+    __tablename__ = "shared_chat_responses"
+
+    id = Column(String, primary_key=True)
+    questionnaire_type = Column(String, nullable=False, index=True)
+    phase = Column(String, nullable=True, index=True)
+    language = Column(String, nullable=False, default="it")
+    response_text = Column(Text, nullable=False)
+    helpful = Column(Boolean, nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    rated_at = Column(DateTime(timezone=True), nullable=True)
+
+
 class QuestionnaireResult(Base):
     """Risultati di un questionario compilato (QSA, QSAr, ZTPI, Savickas)."""
 
@@ -88,4 +103,5 @@ class QuestionnaireResult(Base):
     session_id = Column(String, index=True, nullable=False)
     questionnaire_type = Column(String, nullable=False, index=True)
     scores = Column(JSON, nullable=True)
+    username = Column(String, nullable=True, index=True)
     submitted_at = Column(DateTime(timezone=True), server_default=func.now())

@@ -13,7 +13,7 @@ from fastapi import HTTPException
 from . import models
 from .ai_service import AIService
 from .memory_service import session_memory
-from .strategy_memory import strategy_memory
+from .strategy_memory import shared_response_memory, strategy_memory
 from .api_models import ChatRequest
 from .prompt_config import (
     DEFAULT_SYSTEM_PROMPT_GENERIC,
@@ -21,6 +21,9 @@ from .prompt_config import (
     DEFAULT_QSAR_GUIDED_STEPS,
     DEFAULT_ZTPI_GUIDED_STEPS,
     DEFAULT_SAVICKAS_GUIDED_STEPS,
+    DEFAULT_QPCS_GUIDED_STEPS,
+    DEFAULT_QPCC_GUIDED_STEPS,
+    DEFAULT_QAP_GUIDED_STEPS,
     GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
     MODE_TO_SYSTEM_PROMPT_KEY,
     SYSTEM_PROMPT_DEFAULTS,
@@ -45,6 +48,9 @@ def _ensure_questionnaire_guided_steps(db, questionnaire_type: str) -> None:
         "QSAr": DEFAULT_QSAR_GUIDED_STEPS,
         "ZTPI": DEFAULT_ZTPI_GUIDED_STEPS,
         "SAVICKAS": DEFAULT_SAVICKAS_GUIDED_STEPS,
+        "QPCS": DEFAULT_QPCS_GUIDED_STEPS,
+        "QPCC": DEFAULT_QPCC_GUIDED_STEPS,
+        "QAP": DEFAULT_QAP_GUIDED_STEPS,
     }
 
     if questionnaire_type not in defaults_by_type:
@@ -492,6 +498,7 @@ def _update_markdown_memory_background(
 
 
 def _retrieved_context(
+    db,
     session_id: str,
     request: ChatRequest,
     questionnaire_type: str,
@@ -513,7 +520,15 @@ def _retrieved_context(
         language=request.language or "it",
     )
     strategy_context = strategy_memory.render_context(strategies)
-    sections = [section for section in (memory, strategy_context) if section]
+    learned_responses = shared_response_memory.retrieve(
+        db,
+        questionnaire_type=questionnaire_type,
+        phase=request.phase or "",
+        query=query,
+        language=request.language or "it",
+    )
+    learned_context = shared_response_memory.render_context(learned_responses)
+    sections = [section for section in (memory, strategy_context, learned_context) if section]
     return "\n\n".join(sections), [strategy["id"] for strategy in strategies]
 
 

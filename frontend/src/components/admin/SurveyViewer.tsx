@@ -1,28 +1,12 @@
 'use client';
 
 import { useState, useEffect, Fragment } from 'react';
-import { RefreshCw, Trash2, FileText, CheckCircle, BarChart3, TrendingUp, Users, Activity } from 'lucide-react';
+import { RefreshCw, Trash2, BarChart3, TrendingUp, Users, Activity } from 'lucide-react';
 import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { useI18n } from '@/lib/i18n-context';
-import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    Legend,
-    ResponsiveContainer,
-    RadarChart,
-    PolarGrid,
-    PolarAngleAxis,
-    PolarRadiusAxis,
-    Radar
-} from 'recharts';
-
 // Dynamically import Plotly for client-side rendering only
-const Plot = dynamic(() => import('react-plotly.js'), { ssr: false }) as any;
+const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
 interface SurveyResponse {
     id: number;

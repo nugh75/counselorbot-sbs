@@ -6,7 +6,12 @@ import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
 
 interface PDFUploaderProps {
-    onUploadComplete: (mockData: any) => void;
+    onUploadComplete: (scores: Record<string, number>) => void;
+}
+
+function isScoreMap(value: unknown): value is Record<string, number> {
+    return typeof value === 'object' && value !== null
+        && Object.values(value).every((score) => typeof score === 'number' && score >= 1 && score <= 9);
 }
 
 export function PDFUploader({ onUploadComplete }: PDFUploaderProps) {
@@ -63,11 +68,12 @@ export function PDFUploader({ onUploadComplete }: PDFUploaderProps) {
             });
             
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Upload failed');
+                const errorData = await response.json() as { detail?: string };
+                throw new Error(errorData.detail ?? 'Upload failed');
             }
             
-            const data = await response.json();
+            const data: unknown = await response.json();
+            if (!isScoreMap(data)) throw new Error('Invalid scores returned by extractor');
             onUploadComplete(data);
             
         } catch (error) {

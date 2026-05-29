@@ -1,80 +1,161 @@
+'use client';
+
 import Link from 'next/link';
 import { AlertTriangle, ArrowRight, Languages } from 'lucide-react';
+import { useI18n } from '@/lib/i18n-context';
+import type { Lang } from '@/lib/i18n';
+import { INSTRUMENT_NAMES, INSTRUMENT_ITEM_COUNTS, AdministrationInstrument } from '@/lib/test-administrations';
 
-const instruments = [
-    {
-        id: 'QSA',
-        titleEn: 'Learning Strategies Questionnaire',
-        titleSv: 'Frågeformulär om inlärningsstrategier',
-        itemCount: 100,
+const instruments: { id: AdministrationInstrument }[] = [
+    { id: 'QSA' },
+    { id: 'QSAr' },
+    { id: 'ZTPI' },
+    { id: 'QPCS' },
+    { id: 'QPCC' },
+    { id: 'QAP' },
+];
+
+const BLOCKED_COPY: Record<Lang, { title: string; body: string; back: string }> = {
+    it: {
+        title: 'Somministrazioni di test',
+        body: 'Questa pagina è disponibile solo con interfaccia in inglese o svedese. Seleziona English o Svenska dal menu della lingua.',
+        back: 'Torna a CounselorBot',
     },
-    {
-        id: 'QSAr',
-        titleEn: 'Learning Strategies Questionnaire - Short Form',
-        titleSv: 'Frågeformulär om inlärningsstrategier - kortversion',
-        itemCount: 46,
+    en: {
+        title: 'Test administrations',
+        body: 'This page is only available when using the English or Swedish interface. Select English or Svenska from the language menu.',
+        back: 'Back to CounselorBot',
     },
-] as const;
+    es: {
+        title: 'Administraciones de prueba',
+        body: 'Esta página solo está disponible con la interfaz en inglés o sueco. Selecciona English o Svenska en el menú de idioma.',
+        back: 'Volver a CounselorBot',
+    },
+    fr: {
+        title: 'Passations de test',
+        body: "Cette page est disponible uniquement avec l'interface en anglais ou en suédois. Sélectionnez English ou Svenska dans le menu de langue.",
+        back: 'Retour à CounselorBot',
+    },
+    de: {
+        title: 'Testdurchführungen',
+        body: 'Diese Seite ist nur mit englischer oder schwedischer Benutzeroberfläche verfügbar. Wählen Sie im Sprachmenü English oder Svenska.',
+        back: 'Zurück zu CounselorBot',
+    },
+    sv: {
+        title: 'Testgenomföranden',
+        body: 'Den här sidan är bara tillgänglig med engelskt eller svenskt gränssnitt. Välj English eller Svenska i språkmenyn.',
+        back: 'Tillbaka till CounselorBot',
+    },
+};
+
+const PAGE_COPY = {
+    en: {
+        badge: 'Test administrations',
+        title: 'English',
+        intro: 'Select an instrument to test its questionnaire administration interface.',
+        warningTitle: 'Important:',
+        warningBody: 'These administrations are provided only for testing instrument adaptations. The profile produced after submission is an experimental raw-frequency preview, not a validated or normative result.',
+        draft: 'Item wording and factor structures are provisional working drafts requiring scientific and linguistic review before any pilot or validation collection.',
+        items: 'items',
+        open: 'English test version',
+        back: 'Back to CounselorBot',
+    },
+    sv: {
+        badge: 'Testgenomföranden',
+        title: 'Svenska',
+        intro: 'Välj ett instrument för att testa dess gränssnitt för frågeformuläret.',
+        warningTitle: 'Viktigt:',
+        warningBody: 'Dessa genomföranden tillhandahålls endast för att testa instrumentanpassningar. Profilen som visas efter inskickning är en experimentell förhandsvisning av råa frekvenser, inte ett validerat eller normativt resultat.',
+        draft: 'Påståendenas formulering och faktorstrukturer är preliminära arbetsutkast som kräver vetenskaplig och språklig granskning före pilot- eller valideringsinsamling.',
+        items: 'påståenden',
+        open: 'Svensk testversion',
+        back: 'Tillbaka till CounselorBot',
+    },
+};
 
 export default function TestAdministrationsPage() {
+    const { lang } = useI18n();
+
+    if (lang !== 'en' && lang !== 'sv') {
+        const copy = BLOCKED_COPY[lang];
+        return (
+            <div className="max-w-4xl mx-auto space-y-6">
+                <header className="glass-panel rounded-xl p-6 sm:p-8 space-y-3">
+                    <h1 className="text-3xl font-bold text-slate-900">{copy.title}</h1>
+                    <p className="text-slate-600">{copy.body}</p>
+                </header>
+                <Link href="/" className="inline-flex text-sm font-semibold text-indigo-700 hover:text-indigo-900">
+                    {copy.back}
+                </Link>
+            </div>
+        );
+    }
+
+    const copy = PAGE_COPY[lang];
+
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <header className="glass-panel rounded-xl p-6 sm:p-8 space-y-3">
                 <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-indigo-700">
                     <Languages className="w-4 h-4" />
-                    Test administrations / Testgenomföranden
+                    {copy.badge}
                 </div>
-                <h1 className="text-3xl font-bold text-slate-900">QSA and QSAr - English / Svenska</h1>
-                <p className="text-slate-600">
-                    Select an instrument and a language to test its questionnaire administration interface.
-                </p>
+                <h1 className="text-3xl font-bold text-slate-900">{copy.title}</h1>
+                <p className="text-slate-600">{copy.intro}</p>
             </header>
 
             <section className="rounded-xl border-2 border-amber-300 bg-amber-50 p-5 flex gap-3">
                 <AlertTriangle className="w-6 h-6 shrink-0 text-amber-700" />
                 <div className="space-y-2 text-sm leading-relaxed text-amber-950">
-                    <p><strong>Important:</strong> these administrations are provided only for testing the English and Swedish adaptations. The profile produced after submission is an experimental raw-frequency preview, not a validated or normative result.</p>
-                    <p><strong>Viktigt:</strong> dessa genomföranden tillhandahålls endast för att testa de engelska och svenska anpassningarna. Profilen som visas efter inskickning är en experimentell förhandsvisning av råa frekvenser, inte ett validerat eller normativt resultat.</p>
+                    <p><strong>{copy.warningTitle}</strong> {copy.warningBody}</p>
                 </div>
             </section>
 
             <p className="rounded-lg border border-slate-200 bg-white p-4 text-sm leading-relaxed text-slate-600">
-                The candidate wording shown here was prepared from the available Italian source PDFs for interface testing. Wording and the provisional reduced-form factor mapping require scientific and linguistic review before any pilot or validation collection.
+                {copy.draft}
             </p>
 
             <div className="grid gap-4 sm:grid-cols-2">
-                {instruments.map((instrument) => (
-                    <section key={instrument.id} className="glass-panel rounded-xl p-5 space-y-4">
-                        <div>
-                            <h2 className="text-xl font-bold text-slate-900">{instrument.id}</h2>
-                            <p className="mt-1 text-sm text-slate-700">{instrument.titleEn}</p>
-                            <p className="text-sm text-slate-500">{instrument.titleSv}</p>
-                            <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                {instrument.itemCount} items
-                            </p>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <Link
-                                href={`/somministrazione/${instrument.id}/en`}
-                                className="inline-flex items-center justify-between rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
-                            >
-                                English test version
-                                <ArrowRight className="w-4 h-4" />
-                            </Link>
-                            <Link
-                                href={`/somministrazione/${instrument.id}/sv`}
-                                className="inline-flex items-center justify-between rounded-md border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-800 hover:bg-indigo-100"
-                            >
-                                Svensk testversion
-                                <ArrowRight className="w-4 h-4" />
-                            </Link>
-                        </div>
-                    </section>
-                ))}
+                {instruments.map(({ id }) => {
+                    const name = INSTRUMENT_NAMES[id];
+                    const itemCount = INSTRUMENT_ITEM_COUNTS[id];
+                    const title = lang === 'en' ? name.en : name.sv;
+                    return (
+                        <section key={id} className="glass-panel rounded-xl p-5 space-y-4">
+                            <div>
+                                <h2 className="text-xl font-bold text-slate-900">{id}</h2>
+                                <p className="mt-1 text-sm text-slate-700">{title}</p>
+                                <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                    {itemCount} {copy.items}
+                                </p>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                {lang === 'en' && (
+                                    <Link
+                                        href={`/somministrazione/${id}/en`}
+                                        className="inline-flex items-center justify-between rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
+                                    >
+                                        {copy.open}
+                                        <ArrowRight className="w-4 h-4" />
+                                    </Link>
+                                )}
+                                {lang === 'sv' && (
+                                    <Link
+                                        href={`/somministrazione/${id}/sv`}
+                                        className="inline-flex items-center justify-between rounded-md border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-800 hover:bg-indigo-100"
+                                    >
+                                        {copy.open}
+                                        <ArrowRight className="w-4 h-4" />
+                                    </Link>
+                                )}
+                            </div>
+                        </section>
+                    );
+                })}
             </div>
 
             <Link href="/" className="inline-flex text-sm font-semibold text-indigo-700 hover:text-indigo-900">
-                Back to CounselorBot / Tillbaka
+                {copy.back}
             </Link>
         </div>
     );
