@@ -114,3 +114,135 @@ async def admin_reorder_guided_steps(items: List[schemas.ReorderItem], current_u
             db_step.sort_order = item.sort_order
     db.commit()
     return {"status": "success"}
+
+
+# --- Admin Instruments / Factors / Items CRUD (catalogo editabile) ---
+
+@router.get("/admin/instruments", response_model=List[schemas.InstrumentResponse])
+async def admin_list_instruments(current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    return db.query(models.Instrument).order_by(models.Instrument.code).all()
+
+
+@router.post("/admin/instruments", response_model=schemas.InstrumentResponse)
+async def admin_create_instrument(instrument: schemas.InstrumentCreate, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    if db.query(models.Instrument).filter(models.Instrument.code == instrument.code).first():
+        raise HTTPException(status_code=400, detail=f"Instrument '{instrument.code}' already exists")
+    db_obj = models.Instrument(**instrument.model_dump())
+    db.add(db_obj)
+    db.commit()
+    db.refresh(db_obj)
+    return db_obj
+
+
+@router.put("/admin/instruments/{code}", response_model=schemas.InstrumentResponse)
+async def admin_update_instrument(code: str, update: schemas.InstrumentUpdate, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    db_obj = db.query(models.Instrument).filter(models.Instrument.code == code).first()
+    if not db_obj:
+        raise HTTPException(status_code=404, detail="Instrument not found")
+    for field, value in update.model_dump(exclude_unset=True).items():
+        setattr(db_obj, field, value)
+    db.commit()
+    db.refresh(db_obj)
+    return db_obj
+
+
+@router.get("/admin/instruments/{code}/factors", response_model=List[schemas.FactorResponse])
+async def admin_list_factors(code: str, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    return db.query(models.Factor).filter(models.Factor.instrument_code == code).order_by(models.Factor.sort_order).all()
+
+
+@router.post("/admin/instruments/{code}/factors", response_model=schemas.FactorResponse)
+async def admin_create_factor(code: str, factor: schemas.FactorCreate, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    data = factor.model_dump()
+    data["instrument_code"] = code
+    db_obj = models.Factor(**data)
+    db.add(db_obj)
+    db.commit()
+    db.refresh(db_obj)
+    return db_obj
+
+
+@router.put("/admin/factors/{factor_id}", response_model=schemas.FactorResponse)
+async def admin_update_factor(factor_id: int, update: schemas.FactorUpdate, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    db_obj = db.query(models.Factor).filter(models.Factor.id == factor_id).first()
+    if not db_obj:
+        raise HTTPException(status_code=404, detail="Factor not found")
+    for field, value in update.model_dump(exclude_unset=True).items():
+        setattr(db_obj, field, value)
+    db.commit()
+    db.refresh(db_obj)
+    return db_obj
+
+
+@router.delete("/admin/factors/{factor_id}")
+async def admin_delete_factor(factor_id: int, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    db_obj = db.query(models.Factor).filter(models.Factor.id == factor_id).first()
+    if not db_obj:
+        raise HTTPException(status_code=404, detail="Factor not found")
+    db.delete(db_obj)
+    db.commit()
+    return {"status": "success"}
+
+
+@router.get("/admin/instruments/{code}/items", response_model=List[schemas.ItemResponse])
+async def admin_list_items(code: str, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    return db.query(models.QuestionnaireItem).filter(models.QuestionnaireItem.instrument_code == code).order_by(models.QuestionnaireItem.sort_order).all()
+
+
+@router.post("/admin/instruments/{code}/items", response_model=schemas.ItemResponse)
+async def admin_create_item(code: str, item: schemas.ItemCreate, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    data = item.model_dump()
+    data["instrument_code"] = code
+    db_obj = models.QuestionnaireItem(**data)
+    db.add(db_obj)
+    db.commit()
+    db.refresh(db_obj)
+    return db_obj
+
+
+@router.put("/admin/items/{item_id}", response_model=schemas.ItemResponse)
+async def admin_update_item(item_id: int, update: schemas.ItemUpdate, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    db_obj = db.query(models.QuestionnaireItem).filter(models.QuestionnaireItem.id == item_id).first()
+    if not db_obj:
+        raise HTTPException(status_code=404, detail="Item not found")
+    for field, value in update.model_dump(exclude_unset=True).items():
+        setattr(db_obj, field, value)
+    db.commit()
+    db.refresh(db_obj)
+    return db_obj
+
+
+@router.delete("/admin/items/{item_id}")
+async def admin_delete_item(item_id: int, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    db_obj = db.query(models.QuestionnaireItem).filter(models.QuestionnaireItem.id == item_id).first()
+    if not db_obj:
+        raise HTTPException(status_code=404, detail="Item not found")
+    db.delete(db_obj)
+    db.commit()
+    return {"status": "success"}
+
+
+@router.get("/admin/instruments/{code}/norm-thresholds", response_model=List[schemas.NormThresholdResponse])
+async def admin_list_norm_thresholds(code: str, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    return db.query(models.NormThreshold).filter(models.NormThreshold.instrument_code == code).all()
+
+
+@router.post("/admin/instruments/{code}/norm-thresholds", response_model=schemas.NormThresholdResponse)
+async def admin_create_norm_threshold(code: str, threshold: schemas.NormThresholdCreate, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    data = threshold.model_dump()
+    data["instrument_code"] = code
+    db_obj = models.NormThreshold(**data)
+    db.add(db_obj)
+    db.commit()
+    db.refresh(db_obj)
+    return db_obj
+
+
+@router.delete("/admin/norm-thresholds/{threshold_id}")
+async def admin_delete_norm_threshold(threshold_id: int, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    db_obj = db.query(models.NormThreshold).filter(models.NormThreshold.id == threshold_id).first()
+    if not db_obj:
+        raise HTTPException(status_code=404, detail="Norm threshold not found")
+    db.delete(db_obj)
+    db.commit()
+    return {"status": "success"}

@@ -23,6 +23,7 @@ from .prompt_config import (
     DEFAULT_QPCC_GUIDED_STEPS,
     DEFAULT_QAP_GUIDED_STEPS,
 )
+from .questionnaire_catalog import INSTRUMENT_CATALOG_DEFAULTS
 
 # Logica/helper estratti (vedi chat_logic.py); router in routes/.
 from .chat_logic import _memory_cleanup_loop
@@ -329,8 +330,56 @@ def _seed_and_migrate():
 
         if legacy_changed:
             db.commit()
+
+        # Seed catalogo strumenti (item + regole di scala) se non già presente.
+        # Idempotente per strumento: salta quelli già seminati/editati.
+        _seed_instruments_catalog(db)
     finally:
         db.close()
+
+
+def _seed_instruments_catalog(db):
+    """Popola instruments/factors/questionnaire_items dallo stato corrente (TS portato).
+    Non sovrascrive strumenti già presenti: dopo il primo seed le modifiche sono via admin."""
+    seeded = False
+    for code, spec in INSTRUMENT_CATALOG_DEFAULTS.items():
+        if db.query(models.Instrument).filter(models.Instrument.code == code).first():
+            continue
+        db.add(models.Instrument(
+            code=code,
+            name_en=spec.get("name_en"),
+            name_sv=spec.get("name_sv"),
+            response_scale_min=spec.get("response_scale_min", 1),
+            response_scale_max=spec.get("response_scale_max", 4),
+            report_scale_type=spec.get("report_scale_type", "stanine"),
+            status="experimental",
+        ))
+        for order, f in enumerate(spec.get("factors", [])):
+            db.add(models.Factor(
+                instrument_code=code,
+                code=f["code"],
+                sort_order=order,
+                dimension=f.get("dimension"),
+                orientation=f.get("orientation", "resource"),
+                is_interpretation_inverted=(f.get("orientation") == "difficulty"),
+                label_en=f.get("label_en"),
+                label_sv=f.get("label_sv"),
+            ))
+        for order, it in enumerate(spec.get("items", [])):
+            db.add(models.QuestionnaireItem(
+                instrument_code=code,
+                item_number=it["item_number"],
+                sort_order=order,
+                factor_code=it.get("factor_code"),
+                reverse_scoring=bool(it.get("reverse_scoring")),
+                text_en=it.get("text_en"),
+                text_sv=it.get("text_sv"),
+                active=True,
+            ))
+        seeded = True
+        logger.info(f"Seeded instrument catalog: {code}")
+    if seeded:
+        db.commit()
         try:
             lock_conn.exec_driver_sql("SELECT pg_advisory_unlock(91234)")
         finally:

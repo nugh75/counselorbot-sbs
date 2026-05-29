@@ -105,3 +105,81 @@ class QuestionnaireResult(Base):
     scores = Column(JSON, nullable=True)
     username = Column(String, nullable=True, index=True)
     submitted_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+# --- Catalogo strumenti editabile da admin (item + regole di scala, DB-driven) ---
+# Vedi questionari/PROGETTO_VALIDAZIONE_E_SVILUPPO_QSA_QSAR_SV_EN.md §9.
+
+class Instrument(Base):
+    """Metadati e scala di risposta di uno strumento (QSA, QSAr, ZTPI, QPCS, QPCC, QAP)."""
+
+    __tablename__ = "instruments"
+
+    code = Column(String, primary_key=True, index=True)
+    name_it = Column(String, nullable=True)
+    name_en = Column(String, nullable=True)
+    name_sv = Column(String, nullable=True)
+    # Scala di RISPOSTA agli item (es. 1-4 frequenza, 1-5 Likert)
+    response_scale_min = Column(Integer, nullable=False, default=1)
+    response_scale_max = Column(Integer, nullable=False, default=4)
+    # Etichette della scala per locale: {"en": [...], "sv": [...]}
+    response_labels = Column(JSON, nullable=True)
+    # Scala del PROFILO restituito: "stanine" | "raw"
+    report_scale_type = Column(String, nullable=False, default="stanine")
+    # "experimental" finché non esistono norm_thresholds validate
+    status = Column(String, nullable=False, default="experimental")
+
+
+class Factor(Base):
+    """Fattore/scala di uno strumento. Direzione interpretativa != reverse-scoring."""
+
+    __tablename__ = "factors"
+
+    id = Column(Integer, primary_key=True, index=True)
+    instrument_code = Column(String, index=True, nullable=False)
+    code = Column(String, nullable=False)  # es. C1, A1, T1, AD1...
+    sort_order = Column(Integer, nullable=False, default=0)
+    dimension = Column(String, nullable=True)  # raggruppamento (cognitive/affective/pn...)
+    # Come si LEGGE il punteggio: resource | difficulty | neutral
+    orientation = Column(String, nullable=False, default="resource")
+    is_interpretation_inverted = Column(Boolean, nullable=False, default=False)
+    label_it = Column(String, nullable=True)
+    label_en = Column(String, nullable=True)
+    label_sv = Column(String, nullable=True)
+    description_it = Column(Text, nullable=True)
+    description_en = Column(Text, nullable=True)
+    description_sv = Column(Text, nullable=True)
+
+
+class QuestionnaireItem(Base):
+    """Singolo item di uno strumento, multilingue, con regola di reverse-scoring."""
+
+    __tablename__ = "questionnaire_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    instrument_code = Column(String, index=True, nullable=False)
+    item_number = Column(Integer, nullable=False)  # numero d'ordine 1-based (chiave scala)
+    sort_order = Column(Integer, nullable=False, default=0)
+    factor_code = Column(String, nullable=True, index=True)
+    reverse_scoring = Column(Boolean, nullable=False, default=False)
+    text_it = Column(Text, nullable=True)
+    text_en = Column(Text, nullable=True)
+    text_sv = Column(Text, nullable=True)
+    active = Column(Boolean, nullable=False, default=True)
+
+
+class NormThreshold(Base):
+    """Tabella normativa raw->stanine per strumento/lingua/fattore (post-validazione).
+    Finché vuota per uno strumento, lo scoring usa il fallback lineare sperimentale."""
+
+    __tablename__ = "norm_thresholds"
+
+    id = Column(Integer, primary_key=True, index=True)
+    instrument_code = Column(String, index=True, nullable=False)
+    locale = Column(String, nullable=False, default="en")
+    factor_code = Column(String, nullable=False, index=True)
+    raw_min = Column(Integer, nullable=False)
+    raw_max = Column(Integer, nullable=False)
+    stanine = Column(Integer, nullable=False)
+    norm_set_label = Column(String, nullable=True)
+    status = Column(String, nullable=False, default="provisional")

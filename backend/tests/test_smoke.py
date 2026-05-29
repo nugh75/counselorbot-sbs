@@ -151,6 +151,23 @@ EXPECTED_ROUTES = {
     ("GET", "/admin/questionnaire-results"),
     ("DELETE", "/questionnaire-result/{session_id}"),
     ("GET", "/questionnaire-result/{session_id}/pdf"),
+    # Catalogo strumenti editabile + scoring server-side
+    ("GET", "/admin/instruments"),
+    ("POST", "/admin/instruments"),
+    ("PUT", "/admin/instruments/{code}"),
+    ("GET", "/admin/instruments/{code}/factors"),
+    ("POST", "/admin/instruments/{code}/factors"),
+    ("PUT", "/admin/factors/{factor_id}"),
+    ("DELETE", "/admin/factors/{factor_id}"),
+    ("GET", "/admin/instruments/{code}/items"),
+    ("POST", "/admin/instruments/{code}/items"),
+    ("PUT", "/admin/items/{item_id}"),
+    ("DELETE", "/admin/items/{item_id}"),
+    ("GET", "/admin/instruments/{code}/norm-thresholds"),
+    ("POST", "/admin/instruments/{code}/norm-thresholds"),
+    ("DELETE", "/admin/norm-thresholds/{threshold_id}"),
+    ("GET", "/instruments/{code}/rules"),
+    ("POST", "/instruments/{code}/score"),
 }
 
 
@@ -489,6 +506,97 @@ def test_qsa_extractor_rejects_incomplete_scores():
 def test_strip_markdown():
     out = main.strip_markdown("**grassetto** e _corsivo_")
     assert "**" not in out and "grassetto" in out
+
+
+# --------------------------------------------------------------------------
+# Catalogo strumenti editabile + scoring server-side
+# --------------------------------------------------------------------------
+def test_instrument_catalog_crud_and_scoring():
+    # Crea uno strumento minimale con scala 1-5 (per esercitare reverse non-1-4).
+    r = client.post("/admin/instruments", json={
+        "code": "TST", "name_en": "Test", "response_scale_min": 1,
+        "response_scale_max": 5, "report_scale_type": "stanine", "status": "experimental",
+    })
+    assert r.status_code == 200, r.text
+
+    # Due fattori: F1 (resource), F2 (difficulty)
+    for code, orient in (("F1", "resource"), ("F2", "difficulty")):
+        rf = client.post("/admin/instruments/TST/factors", json={
+            "instrument_code": "TST", "code": code, "orientation": orient,
+            "label_en": code, "label_sv": code,
+        })
+        assert rf.status_code == 200, rf.text
+
+    # 4 item: 1,2 -> F1 (item2 reverse); 3,4 -> F2
+    items = [
+        (1, "F1", False), (2, "F1", True), (3, "F2", False), (4, "F2", False),
+    ]
+    for num, fac, rev in items:
+        ri = client.post("/admin/instruments/TST/items", json={
+            "instrument_code": "TST", "item_number": num, "sort_order": num,
+            "factor_code": fac, "reverse_scoring": rev, "text_en": f"item {num}", "text_sv": f"item {num}",
+        })
+        assert ri.status_code == 200, ri.text
+
+    # Rules: item_numbers e reverse esposti correttamente
+    rr = client.get("/instruments/TST/rules?locale=en")
+    assert rr.status_code == 200, rr.text
+    rules = rr.json()
+    f1 = next(f for f in rules["factors"] if f["code"] == "F1")
+    assert f1["item_numbers"] == [1, 2]
+    assert f1["reverse_item_numbers"] == [2]
+    assert rules["uses_validated_norms"] is False
+
+    # Scoring: risposte F1 = {1:5, 2:5} -> reverse item2 = (5+1)-5 = 1 ; media = (5+1)/2 = 3
+    #          F2 = {3:2, 4:2} -> media 2
+    rs = client.post("/instruments/TST/score", json={
+        "session_id": "score-test", "locale": "en",
+        "answers": {"1": 5, "2": 5, "3": 2, "4": 2}, "save": True,
+    })
+    assert rs.status_code == 200, rs.text
+    profile = rs.json()
+    by_code = {x["code"]: x for x in profile["results"]}
+    assert abs(by_code["F1"]["raw_average"] - 3.0) < 1e-6, by_code["F1"]
+    assert abs(by_code["F2"]["raw_average"] - 2.0) < 1e-6, by_code["F2"]
+    # Stanine sperimentale (nessuna norma): riscalatura lineare su scala 1-5 (span 4)
+    # F1: round(1 + (3-1)*8/4) = 5 ; F2: round(1 + (2-1)*8/4) = 3
+    assert by_code["F1"]["stanine"] == 5
+    assert by_code["F2"]["stanine"] == 3
+    assert by_code["F1"]["stanine_is_normed"] is False
+
+    # Risposta fuori scala -> 400
+    bad = client.post("/instruments/TST/score", json={
+        "session_id": "score-bad", "locale": "en",
+        "answers": {"1": 9, "2": 1, "3": 1, "4": 1}, "save": False,
+    })
+    assert bad.status_code == 400, bad.text
+
+
+def test_instrument_scoring_uses_validated_norms():
+    client.post("/admin/instruments", json={
+        "code": "TSN", "name_en": "TestNorm", "response_scale_min": 1,
+        "response_scale_max": 4, "status": "experimental",
+    })
+    client.post("/admin/instruments/TSN/factors", json={
+        "instrument_code": "TSN", "code": "G1", "orientation": "resource", "label_en": "G1",
+    })
+    for num in (1, 2):
+        client.post("/admin/instruments/TSN/items", json={
+            "instrument_code": "TSN", "item_number": num, "factor_code": "G1", "text_en": f"i{num}",
+        })
+    # Norma validata: raw total 4..6 -> stanine 7
+    rn = client.post("/admin/instruments/TSN/norm-thresholds", json={
+        "instrument_code": "TSN", "locale": "en", "factor_code": "G1",
+        "raw_min": 4, "raw_max": 6, "stanine": 7, "status": "validated",
+    })
+    assert rn.status_code == 200, rn.text
+    rs = client.post("/instruments/TSN/score", json={
+        "session_id": "norm-test", "locale": "en", "answers": {"1": 2, "2": 3}, "save": False,
+    })
+    assert rs.status_code == 200, rs.text
+    g1 = rs.json()["results"][0]
+    assert g1["stanine"] == 7
+    assert g1["stanine_is_normed"] is True
 
 
 # --------------------------------------------------------------------------

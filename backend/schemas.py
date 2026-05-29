@@ -157,3 +157,140 @@ class QuestionnaireResultResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# --- Catalogo strumenti (item + regole di scala) ---
+
+class InstrumentBase(BaseModel):
+    code: str
+    name_it: Optional[str] = None
+    name_en: Optional[str] = None
+    name_sv: Optional[str] = None
+    response_scale_min: int = 1
+    response_scale_max: int = 4
+    response_labels: Optional[Dict[str, Any]] = None
+    report_scale_type: str = "stanine"
+    status: str = "experimental"
+
+
+class InstrumentCreate(InstrumentBase):
+    pass
+
+
+class InstrumentUpdate(BaseModel):
+    name_it: Optional[str] = None
+    name_en: Optional[str] = None
+    name_sv: Optional[str] = None
+    response_scale_min: Optional[int] = None
+    response_scale_max: Optional[int] = None
+    response_labels: Optional[Dict[str, Any]] = None
+    report_scale_type: Optional[str] = None
+    status: Optional[str] = None
+
+
+class InstrumentResponse(InstrumentBase):
+    class Config:
+        from_attributes = True
+
+
+class FactorBase(BaseModel):
+    instrument_code: str
+    code: str
+    sort_order: int = 0
+    dimension: Optional[str] = None
+    orientation: str = "resource"
+    is_interpretation_inverted: bool = False
+    label_it: Optional[str] = None
+    label_en: Optional[str] = None
+    label_sv: Optional[str] = None
+    description_it: Optional[str] = None
+    description_en: Optional[str] = None
+    description_sv: Optional[str] = None
+
+
+class FactorCreate(FactorBase):
+    pass
+
+
+class FactorUpdate(BaseModel):
+    code: Optional[str] = None
+    sort_order: Optional[int] = None
+    dimension: Optional[str] = None
+    orientation: Optional[str] = None
+    is_interpretation_inverted: Optional[bool] = None
+    label_it: Optional[str] = None
+    label_en: Optional[str] = None
+    label_sv: Optional[str] = None
+    description_it: Optional[str] = None
+    description_en: Optional[str] = None
+    description_sv: Optional[str] = None
+
+
+class FactorResponse(FactorBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class ItemBase(BaseModel):
+    instrument_code: str
+    item_number: int
+    sort_order: int = 0
+    factor_code: Optional[str] = None
+    reverse_scoring: bool = False
+    text_it: Optional[str] = None
+    text_en: Optional[str] = None
+    text_sv: Optional[str] = None
+    active: bool = True
+
+
+class ItemCreate(ItemBase):
+    pass
+
+
+class ItemUpdate(BaseModel):
+    item_number: Optional[int] = None
+    sort_order: Optional[int] = None
+    factor_code: Optional[str] = None
+    reverse_scoring: Optional[bool] = None
+    text_it: Optional[str] = None
+    text_en: Optional[str] = None
+    text_sv: Optional[str] = None
+    active: Optional[bool] = None
+
+
+class ItemResponse(ItemBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class NormThresholdBase(BaseModel):
+    instrument_code: str
+    locale: str = "en"
+    factor_code: str
+    raw_min: int
+    raw_max: int
+    stanine: int
+    norm_set_label: Optional[str] = None
+    status: str = "provisional"
+
+
+class NormThresholdCreate(NormThresholdBase):
+    pass
+
+
+class NormThresholdResponse(NormThresholdBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class ScoreRequest(BaseModel):
+    session_id: str
+    locale: str
+    answers: Dict[int, int]
+    save: bool = True

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from .. import models, schemas, auth, database
 from ..strategy_memory import shared_response_memory, strategy_memory
 from ..pdf_generator import generate_questionnaire_pdf
+from .. import scoring_service
 
 router = APIRouter()
 get_db = database.get_db
@@ -92,6 +93,45 @@ async def submit_questionnaire_result(
     db.commit()
     db.refresh(db_result)
     return db_result
+
+
+@router.get("/instruments/{code}/rules")
+async def get_instrument_rules(code: str, locale: str = Query("en"), db: Session = Depends(get_db)):
+    """Regole di scala leggibili (item->fattore, reverse, scala, fattori) per la vista frontend."""
+    try:
+        return scoring_service.get_rules(db, code, locale)
+    except scoring_service.ScoringError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/instruments/{code}/score")
+async def score_instrument(
+    code: str,
+    payload: schemas.ScoreRequest,
+    identity: dict = Depends(auth.get_identity),
+    db: Session = Depends(get_db),
+):
+    """Calcola il profilo lato server dalle risposte item-level e (opzionale) lo salva.
+
+    Sostituisce il calcolo nel browser (PROGETTO §10.5). Ritorna il profilo completo;
+    se save=True salva uno QuestionnaireResult con i punteggi stanine mappati.
+    """
+    try:
+        profile = scoring_service.compute_profile(db, code, payload.locale, payload.answers)
+    except scoring_service.ScoringError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    if payload.save:
+        username = identity.get("username") if identity.get("authenticated") else None
+        db.add(models.QuestionnaireResult(
+            session_id=payload.session_id,
+            questionnaire_type=code,
+            scores=scoring_service.mapped_stanine_scores(profile),
+            username=username,
+        ))
+        db.commit()
+
+    return profile
 
 
 @router.get("/user/questionnaire-results", response_model=List[schemas.QuestionnaireResultResponse])
