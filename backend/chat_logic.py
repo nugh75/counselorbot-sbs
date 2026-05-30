@@ -239,8 +239,10 @@ _QSAR_INVERTED_CODES = ("C4r", "A1r")
 
 def _apply_language_directive(system_prompt: str, language: Optional[str]) -> str:
     """Aggiunge in coda al system prompt l'istruzione di rispondere nella lingua scelta.
-    'it' (o lingua sconosciuta) = nessuna modifica: i prompt base sono in italiano."""
-    if not language or language == "it" or language not in SUPPORTED_AI_LANGUAGES:
+    'en' (o lingua sconosciuta/assente) = nessuna modifica: i prompt base sono in inglese.
+    Per ogni altra lingua supportata (incluso 'it') viene aggiunta la direttiva [LANGUAGE]
+    che forza l'intera risposta in quella lingua, a prescindere dalla lingua delle istruzioni."""
+    if not language or language == "en" or language not in SUPPORTED_AI_LANGUAGES:
         return system_prompt
     eng, native = SUPPORTED_AI_LANGUAGES[language]
     return (
@@ -296,18 +298,18 @@ def _apply_qsa_factor_directive(system_prompt: str, questionnaire_type: str, lan
     )
     return (
         f"{system_prompt}\n\n"
-        "[FACTOR LABELS] In ogni risposta rivolta allo studente, non scrivere mai "
-        f"una sigla di fattore {instrument} isolata. Ogni sigla deve essere immediatamente "
-        "accompagnata dal nome esteso, nella forma `C2 (Autoregolazione)`. "
-        f"Riferimento obbligatorio: {examples}.\n\n"
-        "[FATTORI INVERTITI] Scala 1-9. Per la maggioranza dei fattori vale: "
-        "1-3 = Area di crescita, 4-6 = Adeguato, 7-9 = Forza. "
-        f"MA i seguenti fattori sono INVERTITI: {inverted}. "
-        "Per QUESTI fattori la lettura si ribalta: 1-3 = Forza, 4-6 = Normale, "
-        "7-9 = Area di crescita (punteggio alto = problema da migliorare, NON un punto di forza). "
-        "Regola assoluta: non leggere mai 'alto = forza' in modo automatico; "
-        "applica sempre l'inversione ai fattori elencati. "
-        f"Applica questa regola esclusivamente ai fattori inversi di {instrument} elencati sopra."
+        "[FACTOR LABELS] In every reply addressed to the student, never write "
+        f"an isolated {instrument} factor code. Each code must be immediately "
+        "accompanied by its full name, in the form `C2 (Self-regulation)`. "
+        f"Mandatory reference: {examples}.\n\n"
+        "[INVERTED FACTORS] Scale 1-9. For most factors: "
+        "1-3 = Area for growth, 4-6 = Adequate, 7-9 = Strength. "
+        f"BUT the following factors are INVERTED: {inverted}. "
+        "For THESE factors the reading flips: 1-3 = Strength, 4-6 = Normal, "
+        "7-9 = Area for growth (a high score = a problem to work on, NOT a strength). "
+        "Absolute rule: never read 'high = strength' automatically; "
+        "always apply the inversion to the listed factors. "
+        f"Apply this rule exclusively to the inverted {instrument} factors listed above."
     )
 
 
@@ -318,36 +320,63 @@ def _student_visible_response(
     sanitize_ztpi: bool,
 ) -> str:
     if sanitize_ztpi:
-        return _sanitize_ztpi_user_text(text)
+        return _sanitize_ztpi_user_text(text, language)
     if _is_strategy_questionnaire(questionnaire_type):
         return _annotate_qsa_factor_codes(text, language, progressive=True, questionnaire_type=questionnaire_type)
     return text
 
 
-_GUIDED_NO_GREETING_SUFFIX = " NON iniziare con saluti. Vai direttamente all'analisi."
+_GUIDED_NO_GREETING_SUFFIX = " Do NOT start with greetings. Go straight to the analysis."
 
 # Modalità discorsive: domande di approfondimento dello studente dentro uno step.
 # Devono usare il prompt mode-based anche se `phase` punta a uno step di analisi.
 _CONVERSATIONAL_MODES = {"factor-qa", "qsar-factor-qa"}
 
-_ZTPI_FACTOR_NAME_BY_CODE = {
-    "T1": "Passato Negativo",
-    "T2": "Passato Positivo",
-    "T3": "Presente Edonistico",
-    "T4": "Presente Fatalistico",
-    "T5": "Futuro",
+# Nomi estesi dei fattori ZTPI per lingua (codice -> nome leggibile).
+_ZTPI_FACTOR_NAMES = {
+    "it": {
+        "T1": "Passato Negativo",
+        "T2": "Passato Positivo",
+        "T3": "Presente Edonistico",
+        "T4": "Presente Fatalistico",
+        "T5": "Futuro",
+    },
+    "en": {
+        "T1": "Past Negative",
+        "T2": "Past Positive",
+        "T3": "Present Hedonistic",
+        "T4": "Present Fatalistic",
+        "T5": "Future",
+    },
 }
+# Frase estesa che sostituisce le sigle del profilo bilanciato (PTB/BTP), per lingua.
+_ZTPI_BALANCED_PHRASE = {
+    "it": "profilo temporale equilibrato",
+    "en": "balanced time perspective",
+}
+# Retro-compatibilità: alias usato altrove se serve la mappa italiana.
+_ZTPI_FACTOR_NAME_BY_CODE = _ZTPI_FACTOR_NAMES["it"]
 
 
-def _sanitize_ztpi_user_text(text: str) -> str:
-    """Rende il testo utente ZTPI privo di sigle tecniche."""
+def _ztpi_lang(language: Optional[str]) -> str:
+    """ZTPI sanitization usa l'italiano solo per 'it'; ogni altra lingua (default
+    inglese dopo la traduzione dei prompt) usa la variante inglese."""
+    return "it" if (language or "").lower().startswith("it") else "en"
+
+
+def _sanitize_ztpi_user_text(text: str, language: Optional[str] = None) -> str:
+    """Rende il testo ZTPI privo di sigle tecniche (ZTPI, PTB/BTP, DBTP, T1-T5),
+    espandendole nei nomi leggibili della lingua di output selezionata."""
     if not text:
         return text
 
+    lang = _ztpi_lang(language)
+    names = _ZTPI_FACTOR_NAMES[lang]
+    balanced = _ZTPI_BALANCED_PHRASE[lang]
     cleaned = text
 
     # Prima elimina forme duplicate tipo "T3 (Presente Edonistico)".
-    for code, name in _ZTPI_FACTOR_NAME_BY_CODE.items():
+    for code, name in names.items():
         cleaned = re.sub(
             rf"\b{code}\s*\(\s*{re.escape(name)}\s*\)",
             name,
@@ -356,29 +385,38 @@ def _sanitize_ztpi_user_text(text: str) -> str:
         )
 
     # Sostituisce i codici fattore con il nome completo.
-    for code, name in _ZTPI_FACTOR_NAME_BY_CODE.items():
+    for code, name in names.items():
         cleaned = re.sub(rf"\b{code}\b", name, cleaned)
 
     # Sostituisce sigle tecniche residue con formulazioni estese.
-    cleaned = re.sub(
-        r"\bZimbardo Time Perspective Inventory\s*\(\s*ZTPI\s*\)",
-        "prospettiva temporale di Zimbardo",
-        cleaned,
-        flags=re.IGNORECASE,
-    )
-    cleaned = re.sub(
-        r"\bProfilo Temporale Bilanciato\s*\(\s*PTB\s*\)",
-        "profilo temporale equilibrato",
-        cleaned,
-        flags=re.IGNORECASE,
-    )
-    cleaned = re.sub(r"\bprofilo temporale bilanciato\b", "profilo temporale equilibrato", cleaned, flags=re.IGNORECASE)
-    cleaned = re.sub(r"\bPTB\b", "profilo temporale equilibrato", cleaned, flags=re.IGNORECASE)
-    cleaned = re.sub(r"\bDBTP-r?\b", "distanza dal profilo temporale equilibrato", cleaned, flags=re.IGNORECASE)
-    cleaned = re.sub(r"\bZTPI\b", "prospettiva temporale", cleaned, flags=re.IGNORECASE)
+    if lang == "it":
+        cleaned = re.sub(
+            r"\bZimbardo Time Perspective Inventory\s*\(\s*ZTPI\s*\)",
+            "prospettiva temporale di Zimbardo", cleaned, flags=re.IGNORECASE,
+        )
+        cleaned = re.sub(
+            r"\bProfilo Temporale Bilanciato\s*\(\s*(?:PTB|BTP)\s*\)",
+            balanced, cleaned, flags=re.IGNORECASE,
+        )
+        cleaned = re.sub(r"\bprofilo temporale bilanciato\b", balanced, cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"\b(?:PTB|BTP)\b", balanced, cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"\bDBTP-r?\b", "distanza dal profilo temporale equilibrato", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"\bZTPI\b", "prospettiva temporale", cleaned, flags=re.IGNORECASE)
+    else:
+        cleaned = re.sub(
+            r"\bZimbardo Time Perspective Inventory\s*\(\s*ZTPI\s*\)",
+            "Zimbardo's time perspective", cleaned, flags=re.IGNORECASE,
+        )
+        cleaned = re.sub(
+            r"\bBalanced Time Perspective\s*\(\s*(?:BTP|PTB)\s*\)",
+            balanced, cleaned, flags=re.IGNORECASE,
+        )
+        cleaned = re.sub(r"\b(?:BTP|PTB)\b", balanced, cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"\bDBTP-r?\b", "distance from the balanced time perspective", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"\bZTPI\b", "time perspective", cleaned, flags=re.IGNORECASE)
 
     # Normalizza eventuali ripetizioni create dalle sostituzioni.
-    for name in _ZTPI_FACTOR_NAME_BY_CODE.values():
+    for name in names.values():
         cleaned = re.sub(
             rf"{re.escape(name)}\s*\(\s*{re.escape(name)}\s*\)",
             name,
@@ -386,21 +424,26 @@ def _sanitize_ztpi_user_text(text: str) -> str:
             flags=re.IGNORECASE,
         )
 
-    cleaned = re.sub(r"(profilo temporale equilibrato)\s*\([^)]*\)", r"\1", cleaned, flags=re.IGNORECASE)
-    cleaned = re.sub(r"\(\s*profilo temporale equilibrato\s*\)", "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(rf"({re.escape(balanced)})\s*\([^)]*\)", r"\1", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(rf"\(\s*{re.escape(balanced)}\s*\)", "", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"\s{2,}", " ", cleaned)
     cleaned = re.sub(r"\s+([,.;:])", r"\1", cleaned)
     return cleaned.strip()
 
 
-def _sanitize_ztpi_step_label(label: str) -> str:
-    """Pulisce le etichette step ZTPI rimuovendo prefissi con codici tecnici."""
+def _sanitize_ztpi_step_label(label: str, language: Optional[str] = None) -> str:
+    """Pulisce le etichette step ZTPI rimuovendo prefissi con codici tecnici.
+    Le etichette nel DB sono in italiano: default 'it'."""
     if not label:
         return label
+    lang = _ztpi_lang(language) if language else "it"
     cleaned = re.sub(r"\bT[1-5]\b\s*-\s*", "", label)
-    cleaned = re.sub(r"\bprofilo temporale bilanciato\b", "Profilo Temporale Equilibrato", cleaned, flags=re.IGNORECASE)
-    cleaned = _sanitize_ztpi_user_text(cleaned)
-    cleaned = re.sub(r"\bprofilo temporale equilibrato\b", "Profilo Temporale Equilibrato", cleaned, flags=re.IGNORECASE)
+    if lang == "it":
+        cleaned = re.sub(r"\bprofilo temporale bilanciato\b", "Profilo Temporale Equilibrato", cleaned, flags=re.IGNORECASE)
+        cleaned = _sanitize_ztpi_user_text(cleaned, "it")
+        cleaned = re.sub(r"\bprofilo temporale equilibrato\b", "Profilo Temporale Equilibrato", cleaned, flags=re.IGNORECASE)
+    else:
+        cleaned = _sanitize_ztpi_user_text(cleaned, lang)
     return cleaned
 
 

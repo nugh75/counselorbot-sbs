@@ -22,8 +22,11 @@ from .prompt_config import (
     DEFAULT_QPCS_GUIDED_STEPS,
     DEFAULT_QPCC_GUIDED_STEPS,
     DEFAULT_QAP_GUIDED_STEPS,
+    SYSTEM_PROMPT_DEFAULTS,
+    GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
 )
 from .questionnaire_catalog import INSTRUMENT_CATALOG_DEFAULTS
+from .guided_text_i18n import seed_definitions as guided_text_seed_definitions
 
 # Logica/helper estratti (vedi chat_logic.py); router in routes/.
 from .chat_logic import _memory_cleanup_loop
@@ -157,6 +160,19 @@ def _seed_and_migrate():
 
             if not existing.description:
                 existing.description = text_def["description"]
+                changed = True
+
+        # Seed per-language student-facing texts (suffixed keys, e.g. text_ztpi_conclusion__en).
+        # Idempotente: inserisce solo le chiavi mancanti, non sovrascrive le personalizzazioni.
+        for text_def in guided_text_seed_definitions():
+            if text_def["key"] not in existing_configs:
+                db.add(
+                    models.Config(
+                        key=text_def["key"],
+                        value=text_def["default"],
+                        description=text_def["description"],
+                    )
+                )
                 changed = True
 
         if changed:
@@ -331,11 +347,96 @@ def _seed_and_migrate():
         if legacy_changed:
             db.commit()
 
+        # One-off: flip the seeded Italian AI-facing prompts to the new English
+        # defaults. Idempotente e non distruttivo: sovrascrive solo le righe il cui
+        # valore corrente coincide ancora (normalizzato) con il vecchio default
+        # italiano, così le personalizzazioni fatte da admin restano intatte.
+        # I testi rivolti allo studente (intro/conclusione) e le etichette UI NON
+        # sono toccati: restano in italiano nel DB e il frontend serve le altre
+        # lingue via i18n. Vedi backend/legacy_italian_prompts.py.
+        _migrate_prompts_to_english(db)
+
         # Seed catalogo strumenti (item + regole di scala) se non già presente.
         # Idempotente per strumento: salta quelli già seminati/editati.
         _seed_instruments_catalog(db)
     finally:
         db.close()
+
+
+def _migrate_prompts_to_english(db):
+    """Flip the seeded Italian AI-facing prompts (system prompts + guided-step
+    prompts) to the current English defaults, without clobbering admin edits.
+
+    A row is overwritten only when its stored value still matches (whitespace-
+    normalised) the old Italian snapshot in `legacy_italian_prompts`. Rows that
+    differ from both the Italian snapshot and the new English default are treated
+    as admin-customised and left untouched (logged so they can be translated by
+    hand). Idempotent: after the flip the value equals the English default and no
+    longer matches the Italian snapshot."""
+    from .legacy_italian_prompts import (
+        LEGACY_IT_CONFIG_DEFAULTS,
+        LEGACY_IT_STEP_PROMPTS,
+        normalize_prompt,
+    )
+
+    # New English defaults keyed by config key (system prompts + guided-phase prompt).
+    new_config_defaults = dict(SYSTEM_PROMPT_DEFAULTS)
+    for gp in GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS.values():
+        new_config_defaults[gp["key"]] = gp["default"]
+
+    # New English step prompts keyed by step id.
+    new_step_prompts = {}
+    for steps in (
+        DEFAULT_GUIDED_STEPS,
+        DEFAULT_QSAR_GUIDED_STEPS,
+        DEFAULT_ZTPI_GUIDED_STEPS,
+        DEFAULT_SAVICKAS_GUIDED_STEPS,
+        DEFAULT_QPCS_GUIDED_STEPS,
+        DEFAULT_QPCC_GUIDED_STEPS,
+        DEFAULT_QAP_GUIDED_STEPS,
+    ):
+        for s in steps:
+            new_step_prompts[s["id"]] = s["prompt"]
+
+    changed = False
+    skipped_custom = []
+
+    for key, it_value in LEGACY_IT_CONFIG_DEFAULTS.items():
+        new_value = new_config_defaults.get(key)
+        if not new_value:
+            continue
+        cfg = db.query(models.Config).filter(models.Config.key == key).first()
+        if cfg is None:
+            continue
+        current = normalize_prompt(cfg.value)
+        if current == normalize_prompt(it_value):
+            cfg.value = new_value
+            changed = True
+        elif current != normalize_prompt(new_value):
+            skipped_custom.append(key)
+
+    for step_id, it_prompt in LEGACY_IT_STEP_PROMPTS.items():
+        new_prompt = new_step_prompts.get(step_id)
+        if not new_prompt:
+            continue
+        step = db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).first()
+        if step is None:
+            continue
+        current = normalize_prompt(step.prompt)
+        if current == normalize_prompt(it_prompt):
+            step.prompt = new_prompt
+            changed = True
+        elif current != normalize_prompt(new_prompt):
+            skipped_custom.append(f"step:{step_id}")
+
+    if changed:
+        db.commit()
+        logger.info("Prompt EN translation migration applied")
+    if skipped_custom:
+        logger.info(
+            "Prompt EN migration left customised rows untouched (translate by hand if wanted): %s",
+            skipped_custom,
+        )
 
 
 def _seed_instruments_catalog(db):

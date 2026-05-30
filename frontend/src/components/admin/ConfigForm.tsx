@@ -145,7 +145,7 @@ function authJsonHeaders(): Record<string, string> {
 // --- Component ---
 
 export function ConfigForm() {
-    const { t } = useI18n();
+    const { t, lang } = useI18n();
     const [configs, setConfigs] = useState<ConfigItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [section, setSection] = useState<string>('general');
@@ -264,6 +264,17 @@ export function ConfigForm() {
     };
 
     const getConfigValue = (key: string) => configs.find(c => c.key === key)?.value || '';
+
+    // Testi rivolti allo studente: salvati per-lingua con chiave suffissata (es. text_..._en).
+    // L'italiano usa la chiave base; le altre lingue la chiave suffissata (fallback all'italiano).
+    const isSecondaryLang = lang !== 'it';
+    const textConfigKey = (baseKey: string) => isSecondaryLang ? `${baseKey}__${lang}` : baseKey;
+    const getTextValue = (baseKey: string) => {
+        const k = textConfigKey(baseKey);
+        const found = configs.find(c => c.key === k)?.value;
+        if (found !== undefined && found !== '') return found;
+        return isSecondaryLang ? getConfigValue(baseKey) : '';
+    };
 
     const setConfigDraft = (key: string, value: string, description: string) => {
         setConfigs(prev => {
@@ -750,7 +761,7 @@ export function ConfigForm() {
             {/* 3. Prompt e Testi — solo questionario attivo */}
             {questionnaireConfigs.filter((q) => q.id === section).map((q) => {
                 const c = colorMap[q.color];
-                const allKeys = [...q.systemPrompts.map(p => p.key), ...q.texts.map(t => t.key)];
+                const allKeys = [...q.systemPrompts.map(p => p.key), ...q.texts.map(t => textConfigKey(t.key))];
                 return (
                     <div key={q.id} className={`space-y-4 border-l-4 ${c.border} pl-4`}>
                         {/* Header questionario */}
@@ -808,19 +819,23 @@ export function ConfigForm() {
                         {/* Sub: Testi e Messaggi */}
                         {q.texts.length > 0 && (
                             <div className="space-y-3">
-                                <div className={`${c.subBg} rounded px-3 py-1.5`}>
+                                <div className={`${c.subBg} rounded px-3 py-1.5 flex items-center justify-between`}>
                                     <h4 className={`text-xs font-bold ${c.subTitle} uppercase tracking-wider`}>
                                         {t('admin.config.textsMessages')}
                                     </h4>
+                                    <span className={`text-[10px] font-bold ${c.subTitle} bg-white/60 px-2 py-0.5 rounded uppercase`}>
+                                        {t('admin.config.editingLang')}: {lang.toUpperCase()}
+                                    </span>
                                 </div>
                                 {q.texts.map((def) => {
-                                    const currentVal = getConfigValue(def.key);
+                                    const localizedKey = textConfigKey(def.key);
+                                    const currentVal = getTextValue(def.key);
                                     return (
                                         <div key={def.key} className="glass-panel p-5 rounded-lg space-y-3">
                                             <div className="flex justify-between items-start gap-3">
                                                 <h3 className={`text-sm font-bold ${c.title}`}>{t(`admin.config.label.${def.key}`)}</h3>
                                                 <button
-                                                    onClick={() => saveConfigKey(def.key, def.label)}
+                                                    onClick={() => saveConfigKey(localizedKey, def.label)}
                                                     className="p-2 hover:bg-slate-100 rounded-md text-indigo-600 transition-colors shrink-0"
                                                 >
                                                     <Save className="w-4 h-4" />
@@ -830,13 +845,13 @@ export function ConfigForm() {
                                                 <input
                                                     className={`w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm ${c.ring} outline-none text-slate-900`}
                                                     value={currentVal}
-                                                    onChange={(e) => setConfigDraft(def.key, e.target.value, def.label)}
+                                                    onChange={(e) => setConfigDraft(localizedKey, e.target.value, def.label)}
                                                 />
                                             ) : (
                                                 <textarea
                                                     className={`w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm min-h-[80px] ${c.ring} outline-none font-mono text-slate-900`}
                                                     value={currentVal}
-                                                    onChange={(e) => setConfigDraft(def.key, e.target.value, def.label)}
+                                                    onChange={(e) => setConfigDraft(localizedKey, e.target.value, def.label)}
                                                 />
                                             )}
                                         </div>

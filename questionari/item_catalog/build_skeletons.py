@@ -3,7 +3,7 @@
 
 Emette SOLO struttura e metadati fattuali (conteggi, scale, fattori dove pubblici,
 mappa item->dimensione per il QAP/CAAS). Il TESTO degli item resta vuoto: va inserito
-da ricercatori autorizzati (vedi README.md e PROGETTO doc WP2). Non sovrascrive file
+da ricercatori autorizzati (vedi docs/questionari/item-catalog.md e PROGETTO doc WP2). Non sovrascrive file
 gia' compilati.
 """
 import json

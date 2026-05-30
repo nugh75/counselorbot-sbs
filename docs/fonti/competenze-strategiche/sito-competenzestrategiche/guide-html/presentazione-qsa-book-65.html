@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html  dir="ltr" lang="it" xml:lang="it">
+<head>
+    <title>La presentazione del QSA</title>
+    <link rel="shortcut icon" href="https://www.competenzestrategiche.it/theme/image.php/enlightlite/theme/1767962153/favicon" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="keywords" content="moodle, La presentazione del QSA" />
+<link rel="stylesheet" type="text/css" href="https://www.competenzestrategiche.it/theme/yui_combo.php?rollup/3.17.2/yui-moodlesimple-min.css" /><script id="firstthemesheet" type="text/css">/** Required in order to fix style inclusion problems in IE with YUI **/</script><link rel="stylesheet" type="text/css" href="https://www.competenzestrategiche.it/theme/styles.php/enlightlite/1767962153/all" />
+<link rel="stylesheet" type="text/css" href="https://www.competenzestrategiche.it/mod/book/tool/print/print.css" />
+<script type="text/javascript">
+//<![CDATA[
+var M = {}; M.yui = {};
+M.pageloadstarttime = new Date();
+M.cfg = {"wwwroot":"https:\/\/www.competenzestrategiche.it","sesskey":"cGurlEX7Wg","themerev":"1767962153","slasharguments":1,"theme":"enlightlite","iconsystemmodule":"core\/icon_system_fontawesome","jsrev":"1767962153","admin":"admin","svgicons":true,"usertimezone":"Europa\/Roma","contextid":1952};var yui1ConfigFn = function(me) {if(/-skin|reset|fonts|grids|base/.test(me.name)){me.type='css';me.path=me.path.replace(/\.js/,'.css');me.path=me.path.replace(/\/yui2-skin/,'/assets/skins/sam/yui2-skin')}};
+var yui2ConfigFn = function(me) {var parts=me.name.replace(/^moodle-/,'').split('-'),component=parts.shift(),module=parts[0],min='-min';if(/-(skin|core)$/.test(me.name)){parts.pop();me.type='css';min=''}
+if(module){var filename=parts.join('-');me.path=component+'/'+module+'/'+filename+min+'.'+me.type}else{me.path=component+'/'+component+'.'+me.type}};
+YUI_config = {"debug":false,"base":"https:\/\/www.competenzestrategiche.it\/lib\/yuilib\/3.17.2\/","comboBase":"https:\/\/www.competenzestrategiche.it\/theme\/yui_combo.php?","combine":true,"filter":null,"insertBefore":"firstthemesheet","groups":{"yui2":{"base":"https:\/\/www.competenzestrategiche.it\/lib\/yuilib\/2in3\/2.9.0\/build\/","comboBase":"https:\/\/www.competenzestrategiche.it\/theme\/yui_combo.php?","combine":true,"ext":false,"root":"2in3\/2.9.0\/build\/","patterns":{"yui2-":{"group":"yui2","configFn":yui1ConfigFn}}},"moodle":{"name":"moodle","base":"https:\/\/www.competenzestrategiche.it\/theme\/yui_combo.php?m\/1767962153\/","combine":true,"comboBase":"https:\/\/www.competenzestrategiche.it\/theme\/yui_combo.php?","ext":false,"root":"m\/1767962153\/","patterns":{"moodle-":{"group":"moodle","configFn":yui2ConfigFn}},"filter":null,"modules":{"moodle-core-chooserdialogue":{"requires":["base","panel","moodle-core-notification"]},"moodle-core-tooltip":{"requires":["base","node","io-base","moodle-core-notification-dialogue","json-parse","widget-position","widget-position-align","event-outside","cache-base"]},"moodle-core-popuphelp":{"requires":["moodle-core-tooltip"]},"moodle-core-blocks":{"requires":["base","node","io","dom","dd","dd-scroll","moodle-core-dragdrop","moodle-core-notification"]},"moodle-core-dock":{"requires":["base","node","event-custom","event-mouseenter","event-resize","escape","moodle-core-dock-loader","moodle-core-event"]},"moodle-core-dock-loader":{"requires":["escape"]},"moodle-core-dragdrop":{"requires":["base","node","io","dom","dd","event-key","event-focus","moodle-core-notification"]},"moodle-core-actionmenu":{"requires":["base","event","node-event-simulate"]},"moodle-core-lockscroll":{"requires":["plugin","base-build"]},"moodle-core-handlebars":{"condition":{"trigger":"handlebars","when":"after"}},"moodle-core-languninstallconfirm":{"requires":["base","node","moodle-core-notification-confirm","moodle-core-notification-alert"]},"moodle-core-formchangechecker":{"requires":["base","event-focus","moodle-core-event"]},"moodle-core-event":{"requires":["event-custom"]},"moodle-core-checknet":{"requires":["base-base","moodle-core-notification-alert","io-base"]},"moodle-core-notification":{"requires":["moodle-core-notification-dialogue","moodle-core-notification-alert","moodle-core-notification-confirm","moodle-core-notification-exception","moodle-core-notification-ajaxexception"]},"moodle-core-notification-dialogue":{"requires":["base","node","panel","escape","event-key","dd-plugin","moodle-core-widget-focusafterclose","moodle-core-lockscroll"]},"moodle-core-notification-alert":{"requires":["moodle-core-notification-dialogue"]},"moodle-core-notification-confirm":{"requires":["moodle-core-notification-dialogue"]},"moodle-core-notification-exception":{"requires":["moodle-core-notification-dialogue"]},"moodle-core-notification-ajaxexception":{"requires":["moodle-core-notification-dialogue"]},"moodle-core-maintenancemodetimer":{"requires":["base","node"]},"moodle-core_availability-form":{"requires":["base","node","event","event-delegate","panel","moodle-core-notification-dialogue","json"]},"moodle-backup-confirmcancel":{"requires":["node","node-event-simulate","moodle-core-notification-confirm"]},"moodle-backup-backupselectall":{"requires":["node","event","node-event-simulate","anim"]},"moodle-course-dragdrop":{"requires":["base","node","io","dom","dd","dd-scroll","moodle-core-dragdrop","moodle-core-notification","moodle-course-coursebase","moodle-course-util"]},"moodle-course-categoryexpander":{"requires":["node","event-key"]},"moodle-course-modchooser":{"requires":["moodle-core-chooserdialogue","moodle-course-coursebase"]},"moodle-course-formatchooser":{"requires":["base","node","node-event-simulate"]},"moodle-course-management":{"requires":["base","node","io-base","moodle-core-notification-exception","json-parse","dd-constrain","dd-proxy","dd-drop","dd-delegate","node-event-delegate"]},"moodle-course-util":{"requires":["node"],"use":["moodle-course-util-base"],"submodules":{"moodle-course-util-base":{},"moodle-course-util-section":{"requires":["node","moodle-course-util-base"]},"moodle-course-util-cm":{"requires":["node","moodle-course-util-base"]}}},"moodle-form-shortforms":{"requires":["node","base","selector-css3","moodle-core-event"]},"moodle-form-showadvanced":{"requires":["node","base","selector-css3"]},"moodle-form-passwordunmask":{"requires":[]},"moodle-form-dateselector":{"requires":["base","node","overlay","calendar"]},"moodle-question-chooser":{"requires":["moodle-core-chooserdialogue"]},"moodle-question-preview":{"requires":["base","dom","event-delegate","event-key","core_question_engine"]},"moodle-question-searchform":{"requires":["base","node"]},"moodle-question-qbankmanager":{"requires":["node","selector-css3"]},"moodle-availability_completion-form":{"requires":["base","node","event","moodle-core_availability-form"]},"moodle-availability_date-form":{"requires":["base","node","event","io","moodle-core_availability-form"]},"moodle-availability_grade-form":{"requires":["base","node","event","moodle-core_availability-form"]},"moodle-availability_group-form":{"requires":["base","node","event","moodle-core_availability-form"]},"moodle-availability_grouping-form":{"requires":["base","node","event","moodle-core_availability-form"]},"moodle-availability_profile-form":{"requires":["base","node","event","moodle-core_availability-form"]},"moodle-qtype_ddimageortext-dd":{"requires":["node","dd","dd-drop","dd-constrain"]},"moodle-qtype_ddimageortext-form":{"requires":["moodle-qtype_ddimageortext-dd","form_filepicker"]},"moodle-qtype_ddmarker-dd":{"requires":["node","event-resize","dd","dd-drop","dd-constrain","graphics"]},"moodle-qtype_ddmarker-form":{"requires":["moodle-qtype_ddmarker-dd","form_filepicker","graphics","escape"]},"moodle-qtype_ddwtos-dd":{"requires":["node","dd","dd-drop","dd-constrain"]},"moodle-mod_assign-history":{"requires":["node","transition"]},"moodle-mod_forum-subscriptiontoggle":{"requires":["base-base","io-base"]},"moodle-mod_quiz-autosave":{"requires":["base","node","event","event-valuechange","node-event-delegate","io-form"]},"moodle-mod_quiz-toolboxes":{"requires":["base","node","event","event-key","io","moodle-mod_quiz-quizbase","moodle-mod_quiz-util-slot","moodle-core-notification-ajaxexception"]},"moodle-mod_quiz-quizbase":{"requires":["base","node"]},"moodle-mod_quiz-modform":{"requires":["base","node","event"]},"moodle-mod_quiz-dragdrop":{"requires":["base","node","io","dom","dd","dd-scroll","moodle-core-dragdrop","moodle-core-notification","moodle-mod_quiz-quizbase","moodle-mod_quiz-util-base","moodle-mod_quiz-util-page","moodle-mod_quiz-util-slot","moodle-course-util"]},"moodle-mod_quiz-randomquestion":{"requires":["base","event","node","io","moodle-core-notification-dialogue"]},"moodle-mod_quiz-util":{"requires":["node","moodle-core-actionmenu"],"use":["moodle-mod_quiz-util-base"],"submodules":{"moodle-mod_quiz-util-base":{},"moodle-mod_quiz-util-slot":{"requires":["node","moodle-mod_quiz-util-base"]},"moodle-mod_quiz-util-page":{"requires":["node","moodle-mod_quiz-util-base"]}}},"moodle-mod_quiz-questionchooser":{"requires":["moodle-core-chooserdialogue","moodle-mod_quiz-util","querystring-parse"]},"moodle-mod_quiz-repaginate":{"requires":["base","event","node","io","moodle-core-notification-dialogue"]},"moodle-mod_quiz-quizquestionbank":{"requires":["base","event","node","io","io-form","yui-later","moodle-question-qbankmanager","moodle-core-notification-dialogue"]},"moodle-message_airnotifier-toolboxes":{"requires":["base","node","io"]},"moodle-filter_glossary-autolinker":{"requires":["base","node","io-base","json-parse","event-delegate","overlay","moodle-core-event","moodle-core-notification-alert","moodle-core-notification-exception","moodle-core-notification-ajaxexception"]},"moodle-filter_mathjaxloader-loader":{"requires":["moodle-core-event"]},"moodle-editor_atto-editor":{"requires":["node","transition","io","overlay","escape","event","event-simulate","event-custom","node-event-html5","node-event-simulate","yui-throttle","moodle-core-notification-dialogue","moodle-core-notification-confirm","moodle-editor_atto-rangy","handlebars","timers","querystring-stringify"]},"moodle-editor_atto-plugin":{"requires":["node","base","escape","event","event-outside","handlebars","event-custom","timers","moodle-editor_atto-menu"]},"moodle-editor_atto-menu":{"requires":["moodle-core-notification-dialogue","node","event","event-custom"]},"moodle-editor_atto-rangy":{"requires":[]},"moodle-report_eventlist-eventfilter":{"requires":["base","event","node","node-event-delegate","datatable","autocomplete","autocomplete-filters"]},"moodle-report_loglive-fetchlogs":{"requires":["base","event","node","io","node-event-delegate"]},"moodle-gradereport_grader-gradereporttable":{"requires":["base","node","event","handlebars","overlay","event-hover"]},"moodle-gradereport_history-userselector":{"requires":["escape","event-delegate","event-key","handlebars","io-base","json-parse","moodle-core-notification-dialogue"]},"moodle-tool_capability-search":{"requires":["base","node"]},"moodle-tool_lp-dragdrop-reorder":{"requires":["moodle-core-dragdrop"]},"moodle-tool_monitor-dropdown":{"requires":["base","event","node"]},"moodle-assignfeedback_editpdf-editor":{"requires":["base","event","node","io","graphics","json","event-move","event-resize","transition","querystring-stringify-simple","moodle-core-notification-dialog","moodle-core-notification-alert","moodle-core-notification-exception","moodle-core-notification-ajaxexception"]},"moodle-atto_accessibilitychecker-button":{"requires":["color-base","moodle-editor_atto-plugin"]},"moodle-atto_accessibilityhelper-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_align-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_bold-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_charmap-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_clear-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_collapse-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_emoticon-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_equation-button":{"requires":["moodle-editor_atto-plugin","moodle-core-event","io","event-valuechange","tabview","array-extras"]},"moodle-atto_html-button":{"requires":["moodle-editor_atto-plugin","event-valuechange"]},"moodle-atto_image-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_indent-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_italic-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_link-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_managefiles-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_managefiles-usedfiles":{"requires":["node","escape"]},"moodle-atto_media-button":{"requires":["moodle-editor_atto-plugin","moodle-form-shortforms"]},"moodle-atto_noautolink-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_orderedlist-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_rtl-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_strike-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_subscript-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_superscript-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_table-button":{"requires":["moodle-editor_atto-plugin","moodle-editor_atto-menu","event","event-valuechange"]},"moodle-atto_title-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_underline-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_undo-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_unorderedlist-button":{"requires":["moodle-editor_atto-plugin"]}}},"gallery":{"name":"gallery","base":"https:\/\/www.competenzestrategiche.it\/lib\/yuilib\/gallery\/","combine":true,"comboBase":"https:\/\/www.competenzestrategiche.it\/theme\/yui_combo.php?","ext":false,"root":"gallery\/1767962153\/","patterns":{"gallery-":{"group":"gallery"}}}},"modules":{"core_filepicker":{"name":"core_filepicker","fullpath":"https:\/\/www.competenzestrategiche.it\/lib\/javascript.php\/1767962153\/repository\/filepicker.js","requires":["base","node","node-event-simulate","json","async-queue","io-base","io-upload-iframe","io-form","yui2-treeview","panel","cookie","datatable","datatable-sort","resize-plugin","dd-plugin","escape","moodle-core_filepicker","moodle-core-notification-dialogue"]},"core_comment":{"name":"core_comment","fullpath":"https:\/\/www.competenzestrategiche.it\/lib\/javascript.php\/1767962153\/comment\/comment.js","requires":["base","io-base","node","json","yui2-animation","overlay","escape"]},"mathjax":{"name":"mathjax","fullpath":"https:\/\/cdnjs.cloudflare.com\/ajax\/libs\/mathjax\/2.7.1\/MathJax.js?delayStartupUntil=configured"}}};
+M.yui.loader = {modules: {}};
+
+//]]>
+</script>
+
+<link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=Arvo' rel='stylesheet' type='text/css'>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-91672150-1', 'auto');
+  ga('send', 'pageview');
+
+</script>    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body  id="page-mod-book-print" class="format-topics pattern-default  path-mod path-mod-book dir-ltr lang-it yui-skin-sam yui3-skin-sam www-competenzestrategiche-it pagelayout-embedded course-3 context-1952 cmid-65 category-1 ">
+<div>
+    <a class="sr-only sr-only-focusable" href="#maincontent">Vai al contenuto principale</a>
+</div><script type="text/javascript" src="https://www.competenzestrategiche.it/theme/yui_combo.php?rollup/3.17.2/yui-moodlesimple-min.js"></script><script type="text/javascript" src="https://www.competenzestrategiche.it/theme/jquery.php/core/jquery-3.1.0.min.js"></script>
+<script type="text/javascript" src="https://www.competenzestrategiche.it/lib/javascript.php/1767962153/lib/javascript-static.js"></script>
+<script type="text/javascript">
+//<![CDATA[
+document.body.className += ' jsenabled';
+//]]>
+</script>
+
+<div id="page">
+    <div id="page-content" class="clearfix">
+        <div role="main"><span id="maincontent"></span><a onclick="window.print();return false;" class="hidden-print" href="#"><img class="icon icon" alt="Stampa libro" title="Stampa libro" src="https://www.competenzestrategiche.it/theme/image.php/enlightlite/booktool_print/1767962153/book" />Stampa libro</a>    <a name="top"></a>
+    <h1>La presentazione del QSA</h1>    <p class="book_summary"></p>
+    <div class="book_info"><table>
+    <tr>
+    <td>Sito:</td>
+    <td><a href="https://www.competenzestrategiche.it">CompetenzeStrategiche.it</a></td>
+    </tr><tr>
+    <td>Corso:</td>
+    <td>Formazione</td>
+    </tr><tr>
+    <td>Libro:</td>
+    <td>La presentazione del QSA</td>
+    </tr><tr>
+    <td>Stampato da:</td>
+    <td>Utente ospite  </td>
+    </tr><tr>
+    <td>Data:</td>
+    <td>sabato, 30 maggio 2026, 19:45</td>
+    </tr>
+    </table></div>
+
+    <div class="book_toc_numbered"><a name="toc"></a><h2>Sommario</h2><ul><li><a title="1. IL QSA" href="#ch29">1. IL QSA</a></li><li><a title="2. I FATTORI COGNITIVI" href="#ch30">2. I FATTORI COGNITIVI</a><ul><li><a title="2.1. C1 | Strategie elaborative" href="#ch33">2.1. C1 | Strategie elaborative</a></li><li><a title="2.2. C5 | Organizzatori semantici" href="#ch34">2.2. C5 | Organizzatori semantici</a></li><li><a title="2.3. C7 | Autointerrogazione" href="#ch35">2.3. C7 | Autointerrogazione</a></li><li><a title="2.4. C2 | Autoregolazione" href="#ch36">2.4. C2 | Autoregolazione</a></li><li><a title="2.5. C3 | Disorientamento" href="#ch37">2.5. C3 | Disorientamento</a></li><li><a title="2.6. C6 | Difficoltà di concentrazione" href="#ch38">2.6. C6 | Difficoltà di concentrazione</a></li><li><a title="2.7. C4 | Collaborazione" href="#ch39">2.7. C4 | Collaborazione</a></li></ul></li><li><a title="3. I FATTORI AFFETTIVO-MOTIVAZIONALI" href="#ch31">3. I FATTORI AFFETTIVO-MOTIVAZIONALI</a><ul><li><a title="3.1. A1 | Ansietà di base" href="#ch40">3.1. A1 | Ansietà di base</a></li><li><a title="3.2. A7 | Interferenze emotive" href="#ch41">3.2. A7 | Interferenze emotive</a></li><li><a title="3.3. A2 | Volizione" href="#ch42">3.3. A2 | Volizione</a></li><li><a title="3.4. A5 | Mancanza di perseveranza" href="#ch43">3.4. A5 | Mancanza di perseveranza</a></li><li><a title="3.5. A3 | Attribuzione a fattori controllabili" href="#ch44">3.5. A3 | Attribuzione a fattori controllabili</a></li><li><a title="3.6. A4 | Attribuzione a fattori non controllabili" href="#ch45">3.6. A4 | Attribuzione a fattori non controllabili</a></li><li><a title="3.7. A6 | Percezione di competenza" href="#ch46">3.7. A6 | Percezione di competenza</a></li></ul></li><li><a title="4. I PERCORSI EDUCATIVI" href="#ch86">4. I PERCORSI EDUCATIVI</a><ul><li><a title="4.1. Tappe e strumenti" href="#ch88">4.1. Tappe e strumenti</a></li><li><a title="4.2. Libretto dello studente" href="#ch87">4.2. Libretto dello studente</a></li><li><a title="4.3. Attività per gli studenti" href="#ch32">4.3. Attività per gli studenti</a></li></ul></li></ul></div><div class="book_chapter"><a name="ch29"></a><h2>1. IL QSA</h2><p><span>I<span>l <b><i>Questionario sulle Strategie di Apprendimento</i> (<span class="nolink">QSA</span>)</b></span></span><span style="font-weight: 400;"> di M. Pellerey è rivolto in particolare a studenti che sono all'inizio del percorso della scuola secondaria di secondo grado e/o della formazione professionale. È uno strumento autovalutativo che consente di riflettere sull'immagine di sé in relazione ad alcune <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=5&amp;displayformat=dictionary" title="Glossario: competenze strategiche" class="glossary autolink concept glossaryid1">competenze strategiche</a> nello studio e nell'apprendimento. </span></p>
+<p><span><span style="font-weight: 400;">Le </span><b>dimensioni </b>dell'apprendimento<b> </b>che sono state prese in considerazione sono le seguenti:</span></p>
+<ul>
+<li>cognitiva e metacognitiva</li>
+<li>affettivo-motivazionale</li>
+</ul>
+<p><span><span style="font-weight: 400;">Ciascuna dimensione è articolata in </span><b>7 fattori</b> per un totale 14 fattori che sono esplorati attaverso 100 <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=66&amp;displayformat=dictionary" title="Glossario: item" class="glossary autolink concept glossaryid1">item</a>. </span>Gli <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=66&amp;displayformat=dictionary" title="Glossario: item" class="glossary autolink concept glossaryid1">item</a> descrivono uno stato d'animo, un modo di fare, un giudizio e stimolano lo studente a riflettere sul modo in cui è abituato a studiare e sui problemi che incontra nel lavoro scolastico.</p>
+<p>Il profilo finale che lo studente può visualizzare al termine della compilazione consente di cogliere come percepisce le proprie <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=5&amp;displayformat=dictionary" title="Glossario: competenze strategiche" class="glossary autolink concept glossaryid1">competenze strategiche</a> nello studio e nell’apprendimento.</p>
+<p><span>Il <span class="nolink">QSA </span>stato inizialmente validato da Pellerey su un campione di circa 10.000 studenti italiani.<sup>1</sup></span></p>
+<p><span>Del 2013 è stato crato un fattore aggiuntivo denominato "<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=32&amp;displayformat=dictionary" title="New">Dimensione di senso e prospettiva esisttenziale</a>". Il modulo è disponibile su richiesta.</span></p>
+<p><span style="color: #ffffff;"><span>. </span><br /></span><span><strong><span style="color: #39b3e6;"></span></strong></span></p>
+<p><span><strong><span style="color: #39b3e6;">Presentazione del <span class="nolink">QSA </span>e del progetto "Apprendo"</span></strong></span></p>
+<table border="0">
+<tbody>
+<tr>
+<td><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/29/Guarda%20il%20video.png" width="30" height="30" /></td>
+<td>Video per i docenti [durata 11 min.]</td>
+</tr>
+</tbody>
+</table>
+<p><div class="mediaplugin mediaplugin_videojs"><div style="max-width:400px;"><video data-setup-lazy="{&quot;techOrder&quot;: [&quot;youtube&quot;], &quot;sources&quot;: [{&quot;type&quot;: &quot;video/youtube&quot;, &quot;src&quot;:&quot;https://youtu.be/kgrk_g7KYxg&quot;}], &quot;language&quot;: &quot;it&quot;, &quot;fluid&quot;: true}" id="id_videojs_6a1b224819d50" class="video-js" preload="auto" controls="true" title="Presentazione del QSA"><a class="mediafallbacklink" href="https://youtu.be/kgrk_g7KYxg">Presentazione del QSA</a></video></div></div></p>
+<table border="0">
+<tbody>
+<tr>
+<td><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/29/Guarda%20il%20video.png" width="30" height="30" /></td>
+<td>Video per gli studenti [durata 6 min.]</td>
+</tr>
+</tbody>
+</table>
+<p><div class="mediaplugin mediaplugin_videojs"><div style="max-width:400px;"><video data-setup-lazy="{&quot;techOrder&quot;: [&quot;youtube&quot;], &quot;sources&quot;: [{&quot;type&quot;: &quot;video/youtube&quot;, &quot;src&quot;:&quot;https://youtu.be/IUdV633I_58&quot;}], &quot;language&quot;: &quot;it&quot;, &quot;fluid&quot;: true}" id="id_videojs_6a1b224819f1f" class="video-js" preload="auto" controls="true" title="Presentazione per gli studenti"><a class="mediafallbacklink" href="https://youtu.be/IUdV633I_58">Presentazione per gli studenti</a></video></div></div></p>
+<p></p>
+<p></p>
+<table><caption></caption>
+<thead>
+<tr><th scope="col"><span><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/29/Avanti%20%281%29.png" alt="Avanti" width="30" height="30" style="vertical-align: middle; margin: 0 .5em;" class="img-responsive" /></span></th><th scope="col"><span style="color: #333333; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: #ffffff; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; display: inline !important; float: none;">Accedi alle pagine successive per vedere la presentazione delle due dimensioni e dei singoli fattori.</span></th></tr>
+</thead>
+<tbody></tbody>
+</table>
+<p></p>
+<p><sup> </sup>Fonte: PELLEREY Michele, <i>Questionario sulle strategie di apprendimento (<span class="nolink">QSA</span>)</i>, Roma, LAS 1996.</p>
+<p> Si veda anche: OTTONE Enrica, <i id="yui_3_17_2_1_1673632212126_505">Apprendo. Strumenti e attività per promuovere l'apprendimento</i><span>, Roma Anicia 2014.</span></p>
+<p></p>
+<p></p></div><div class="book_chapter"><a name="ch30"></a><h2>2. I FATTORI COGNITIVI</h2><p>I 7 fattori cognitivi e metacognitivi del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> implicati nello studio e più in generale nell'apprendimento riguardano le strategie che lo studente mette in atto per</p>
+<ul>
+<li>comprendere e ricordare (C1, C5, C7)</li>
+<li>orientarsi e organizzarsi nei compiti di studio (C2, C3, C6 e C4).</li>
+</ul>
+<p></p>
+<table border="0"><caption style="caption-side: top;"></caption>
+<tbody>
+<tr><th scope="col"><b style="background-color: transparent;">Presentazione </b><b style="background-color: transparent;">dei fattori </b><b style="background-color: transparent;">per gli studenti </b><b style="background-color: transparent;">[durata 8 min.] </b></th><th scope="col"><div class="mediaplugin mediaplugin_videojs"><div style="max-width:400px;"><video data-setup-lazy="{&quot;techOrder&quot;: [&quot;youtube&quot;], &quot;sources&quot;: [{&quot;type&quot;: &quot;video/youtube&quot;, &quot;src&quot;:&quot;https://youtu.be/B1jxeyl5ok4&quot;}], &quot;language&quot;: &quot;it&quot;, &quot;fluid&quot;: true}" id="id_videojs_6a1b224820a77" class="video-js" preload="auto" controls="true" title="I fattori cognitivi del QSA"><a class="mediafallbacklink" href="https://youtu.be/B1jxeyl5ok4">I fattori cognitivi del QSA</a></video></div></div></th></tr>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p></p>
+<h4><span>Strumenti </span></h4>
+<p>Per approfondire la conoscenza dei fattori cognitivi del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> scarica il file</p>
+<p></p>
+<ul>
+<li><a href="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/30/Schede%20fattori%20QSA.pdf">Presentazione dei fattori del QSA</a></li>
+</ul>
+<p></p>
+<p>Per esercitarti in alcune strategie cognitive accedi alle schede delle attività</p>
+<p></p>
+<ul>
+<li>Organizzo il mio tempo di studio (n. 4)</li>
+<li>Organizzo il quaderno (n. 7)</li>
+<li>Alleno la concentrazione (n. 8)</li>
+<li><a href="https://www.competenzestrategiche.it/mod/lesson/view.php?id=50&amp;pageid=23">Prendo appunti (n. 10)</a></li>
+<li>Intervengo sul mio ciclo del pensiero (n. 16)</li>
+</ul>
+<p></p>
+<p><sub><b>Fonte: OTTONE Enrica,<i> Apprendo. Strumenti e attività per promuovere l'apprendimento</i>, Roma, Anicia 2014.</b></sub></p>
+<p><sub> </sub></p>
+<p></p></div><div class="book_chapter"><a name="ch33"></a><h3>2.1. C1 | Strategie elaborative</h3><p style="margin-left: 30px;"><span style="color: #0099ff;"><em><strong>Descrizione del fattore:</strong></em></span></p>
+<p style="margin-left: 30px;">Il fattore<b> C1 (<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=17&amp;displayformat=dictionary" title="Glossario: Strategie elaborative" class="glossary autolink concept glossaryid1">Strategie elaborative</a>)&nbsp;</b>del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> riguarda i processi e le strategie che usi per elaborare quanto studi. Se ottieni un punteggio alto significa che sai trovare relazioni significative tra i concetti e collegare quanto impari con schemi concettuali preesistenti integrando vecchie e nuove conoscenze allo scopo di comprendere e ricordare.</p>
+<p style="margin-left: 30px;"><span style="color: #0099ff;"><em><strong>Elenco degli <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=66&amp;displayformat=dictionary" title="Glossario: item" class="glossary autolink concept glossaryid1">item</a>:</strong></em></span></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Cerco di trovare i legami tra ciò che sto studiando e le mie esperienze (22)</li>
+<li>Quando imparo un nuovo concetto cerco di trovare un esempio a cui esso si possa applicare (36)</li>
+<li>Cerco di trovare le relazioni tra ciò che apprendo e ciò che già conosco (17)</li>
+<li>Quando imparo nuove parole o nuove idee cerco di immaginare una situazione a cui esse si possano applicare (7)</li>
+<li>Cerco di vedere come ciò che studio potrebbe applicarsi alla mia vita di tutti i giorni (26)</li>
+<li>Quando imparo un nuovo concetto mi domando se ci sono casi in cui esso non può essere applicato (41)</li>
+<li>Per ricordare meglio quanto studio cerco di collegare tra loro le varie idee (100)</li>
+<li>Cerco di stabilire collegamenti tra le diverse idee esposte nel testo che studio (31)</li>
+<li>Durante lo studio o l’ascolto di una lezione mi vengono in mente collegamenti con altri argomenti&nbsp;già studiati (48)</li>
+<li>Leggendo ricostruisco con la mia immaginazione le situazioni, i personaggi o le vicende narrate (85)</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><span style="color: #0099ff;"><em><strong>Griglie di osservazione:</strong></em></span></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><span style="font-size: 13.6px; line-height: 1.4;"><a href="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/33/C1_studente.jpg">Griglia per lo studente</a></span></li>
+<li>Griglia per l'insegnante</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><span style="color: #0099ff;"><em><strong>Schede per gli studenti:</strong></em></span></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Rifletto su come apprendere in modo significativo (n. 11, pag. 206);</li>
+<li>Costruisco mappe concettuali (n. 12, pag. 207);</li>
+<li>Esercito la memoria (n. 14, pag. 211).</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><em><span style="color: #0099ff;"><strong>Altre informazioni:&nbsp;</strong></span></em>OTTONE, <em>Apprendo</em> 84-87.&nbsp;</p>
+<p style="margin-left: 30px;"></p>
+<p style="margin-left: 30px;"><strong>Fig. 1: Presentazione del fattore del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> per lo studente</strong></p><p style="margin-left: 30px;"><strong><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/33/C1.PNG" alt="C1 Strategie elaborative" width="600" height="338" style="vertical-align:text-bottom; margin: 0 .5em;" class="img-responsive"><br></strong></p>
+<p style="margin-left: 30px;"><br></p></div><div class="book_chapter"><a name="ch34"></a><h3>2.2. C5 | Organizzatori semantici</h3><p style="margin-left: 30px;"><span style="color: #0099ff;"><em><strong>Descrizione del fattore:</strong></em></span></p>
+<p style="margin-left: 30px;">Il fattore&nbsp;<strong>C5 (Organizzatori sematici)</strong> del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> riguarda la capacità di utilizzare strategie e strumenti come schemi, disegni, grafici e tabelle. Se ottieni un punteggio alto significa che sai usare queste strategie e strumenti per organizzare in modo coerente e sistematico quanto studi e per comprendere e ricordare meglio.</p>
+<p style="margin-left: 30px;"><span style="color: #0099ff;"><em><strong>Elenco degli <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=66&amp;displayformat=dictionary" title="Glossario: item" class="glossary autolink concept glossaryid1">item</a>:</strong></em></span></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Ricordo meglio quanto studio se posso servirmi di schemi, grafici o tabelle (56)</li>
+<li>Mi costruisco schemi, grafici o tabelle riassuntive per sintetizzare ciò che studio (37)</li>
+<li>Gli schemi, i grafici o le tabelle riassuntive mi aiutano a capire meglio quanto esposto nel testo (18)</li>
+<li>Capisco meglio se l’insegnante nello spiegare usa schizzi e grafici fatti sulla lavagna (90)</li>
+<li>Faccio disegni o schizzi che mi aiutano a comprendere quello che sto studiando (44)</li>
+<li>Trovo poco utile nel ripassare le lezioni servirmi dei disegni, dei grafici o delle tabelle riassuntive contenute nel testo (71)</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><span style="color: #0099ff;"><em><strong>Griglie di osservazione:</strong></em></span></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><span style="font-size: 13.6px; line-height: 1.4;"><a href="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/34/C5_studente.jpg">Griglia per lo studente</a></span></li>
+<li>Griglia per l'insegnante</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><span style="color: #0099ff;"><em><strong>Schede per gli studenti:</strong></em></span></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Rifletto su come apprendere in modo significativo (n. 11, pag. 206)</li>
+<li>Prendo appunti e organizzo i contenuti (n. 10, pag. 203-205)</li>
+<li>Costruisco mappe concettuali (n. 12, pag. 207)</li>
+<li>Esercito la memoria (n. 14, pag. 211)</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><em><span style="color: #0099ff;"><strong>Altre informazioni:&nbsp;</strong></span></em>OTTONE, <em>Apprendo</em> 88-90.&nbsp;</p>
+<p style="margin-left: 30px;"></p>
+<p style="margin-left: 30px;"><strong>Fig. 1: Presentazione del fattore del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> per lo studente</strong></p><p style="margin-left: 30px;"><strong><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/34/C5.PNG" alt="C5 organizzatori semantici" width="800" height="450" style="vertical-align:text-bottom; margin: 0 .5em;" class="img-responsive"><br></strong></p></div><div class="book_chapter"><a name="ch35"></a><h3>2.3. C7 | Autointerrogazione</h3><p style="margin: 0px 0px 10px 30px; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><span data-mce-mark="1" style="color: rgb(0, 153, 255);"><em style="font-style: italic;"><strong style="font-weight: bold;">Descrizione del fattore:</strong></em></span></p><p style="margin: 0px 0px 10px 30px; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);">Il fattore&nbsp;<strong style="font-weight: bold;">C7 (<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=23&amp;displayformat=dictionary" title="Glossario: Autointerrogazione" class="glossary autolink concept glossaryid1">Autointerrogazione</a>)</strong>&nbsp;del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> riguarda la tendenza a farsi domande quando si studia, a fare domande all'insegnante e a riflettere sulle domande suggerite nel testo. Se ottieni un punteggio alto significa che usi questa strategia durante lo studio per controllare se hai capito ciò che hai ascoltato o letto e verificare se lo ricordi.</p><p style="margin: 0px 0px 10px 30px; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><em style="font-style: italic; color: rgb(0, 153, 255); font-size: 13.6px; line-height: 1.4;"><strong style="font-weight: bold;">Elenco degli <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=66&amp;displayformat=dictionary" title="Glossario: item" class="glossary autolink concept glossaryid1">item</a>:</strong></em></p><ul style="padding: 0px; margin: 0px 0px 10px 25px; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><li style="line-height: 20px; list-style-type: none;"><ul style="padding: 0px; margin: 0px 0px 0px 25px;"><li class="_mce_tagged_br" style="line-height: 20px;">Quando mi preparo per un esame o una interrogazione, penso alle domande che l’insegnante potrà farmi (6)</li><li class="_mce_tagged_br" style="line-height: 20px;">Quando ho finito di studiare, immagino le domande che potrà farmi l’insegnante e cerco di rispondervi&nbsp;(25)</li><li class="_mce_tagged_br" style="line-height: 20px;">Prima di studiare un argomento cerco di chiarire che cosa si aspetta da me l’insegnante (35)</li></ul></li></ul><p style="margin: 0px 0px 10px 30px; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><em style="color: rgb(0, 153, 255);"><strong>Schede per gli studenti:</strong></em><br></p><ul style="padding: 0px; margin: 0px 0px 10px 25px; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><li style="line-height: 20px; list-style-type: none;"><ul style="padding: 0px; margin: 0px 0px 0px 25px;"><li style="line-height: 20px;">Rifletto su come apprendere in modo significativo (n. 13, pag. 210)</li></ul></li></ul><p style="margin: 0px 0px 10px 30px; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><em style="font-style: italic;"><span style="color: rgb(0, 153, 255);"><strong style="font-weight: bold;">Altre informazioni:&nbsp;</strong></span></em>OTTONE,&nbsp;<em style="font-style: italic;">Apprendo</em>&nbsp;<span style="color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; display: inline !important; float: none; background-color: rgb(255, 255, 255);">91-92</span>.&nbsp;</p><p style="margin: 0px 0px 10px 30px; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"></p><p style="margin: 0px 0px 10px 30px; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><strong style="font-weight: bold;">Fig. 1: Presentazione del fattore del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> per lo studente</strong></p><p style="margin: 0px 0px 10px 30px; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><strong style="font-weight: bold;"><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/35/C7%20autointerrogazione.PNG" alt="C7 autointerrogazione" width="800" height="450" style="vertical-align:text-bottom; margin: 0 .5em;" class="img-responsive"><br></strong></p><p style="margin-left: 30px;"><br></p><p style="margin-left: 30px;"><br></p></div><div class="book_chapter"><a name="ch36"></a><h3>2.4. C2 | Autoregolazione</h3><p style="margin-left: 30px;"><span style="color: #0099ff;"><em><strong>Descrizione del fattore:</strong></em></span></p>
+<p style="margin-left: 30px;"><span data-mce-mark="1" style="color: #0099ff;"></span></p>
+<p style="margin-left: 30px;"><span style="float: none; display: inline !important;">Il fattore&nbsp;</span><strong>C2 (Capacità di autoregolarsi)</strong><span style="float: none; display: inline !important;">&nbsp;del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> riguarda la capacità di gestire in modo autonomo i compiti di apprendimento. Se ottieni un punteggio alto significa che ti consideri capace di gestire i tuoi impegni di studio con precisione, accuratezza, riflessività e sai scegliere strategie efficaci.</span></p>
+<p style="margin: 0px 0px 10px 30px; color: #333333; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: #ffffff;"><span data-mce-mark="1" style="color: #0099ff;"><em style="font-style: italic;"><strong style="font-weight: bold;">Elenco degli <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=66&amp;displayformat=dictionary" title="Glossario: item" class="glossary autolink concept glossaryid1">item</a>:</strong></em></span></p>
+<ul style="padding: 0px; margin: 0px 0px 10px 25px; color: #333333; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: #ffffff;">
+<li style="line-height: 20px; list-style-type: none;">
+<ul style="padding: 0px; margin: 0px 0px 0px 25px;">
+<li style="line-height: 20px;">All’inizio dello studio verifico quali sono le cose che devo fare (81)</li>
+<li style="line-height: 20px;">Porto a termine in tempo utile i compiti da fare a casa (65)</li>
+<li style="line-height: 20px;">Dopo una lezione rivedo con cura i miei appunti per approfondire e ricordare meglio le idee raccolte (1)</li>
+<li style="line-height: 20px;">Quando leggo rifletto sull’argomento e cerco di capire bene quello che è esposto nel testo (2)</li>
+<li style="line-height: 20px;">Quando leggo un testo segno sul testo le cose più importanti (27)</li>
+<li style="line-height: 20px;">Controllo se ho capito bene quello che l’insegnante ha detto durante la lezione (11)</li>
+<li style="line-height: 20px;">Per stare più attento, durante le lezioni prendo degli appunti (12)</li>
+<li style="line-height: 20px;">Se ho un insuccesso, mi sento portato a ritentare l’impresa (80)</li>
+<li style="line-height: 20px;">Quando eseguo un lavoro piuttosto noioso, penso ai suoi aspetti meno negativi e alla soddisfazione&nbsp;che proverò quando lo avrò finito (63)</li>
+<li style="line-height: 20px;">Organizzo il mio studio in base al tempo che ho a disposizione (34)</li>
+<li style="line-height: 20px;">Mentre studio mi pongo delle domande o faccio degli esercizi per verificare se ho capito bene (21)</li>
+</ul>
+</li>
+</ul>
+<p style="margin: 0px 0px 10px 30px; orphans: auto; text-align: left; text-indent: 0px; widows: 1; background-color: #ffffff;"><em style="color: #0099ff;"><strong>Griglie di osservazione:</strong></em></p>
+<ul style="padding: 0px; margin: 0px 0px 10px 25px; color: #333333; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: #ffffff;">
+<li style="line-height: 20px; list-style-type: none;">
+<ul style="padding: 0px; margin: 0px 0px 0px 25px;">
+<li style="line-height: 20px;"><span style="font-size: 13.6px; line-height: 1.4;"><a href="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/36/C2_studente.jpg">Griglia per lo studente</a></span></li>
+<li style="line-height: 20px;">Griglia per l'insegnante</li>
+</ul>
+</li>
+</ul>
+<p style="margin: 0px 0px 10px 30px; color: #333333; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: #ffffff;"><span style="color: #0099ff;"><em style="font-style: italic;"><strong style="font-weight: bold;"> Schede per gli studenti:</strong></em></span></p>
+<ul style="padding: 0px; margin: 0px 0px 10px 25px; color: #333333; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: #ffffff;">
+<li style="line-height: 20px; list-style-type: none;">
+<ul style="padding: 0px; margin: 0px 0px 0px 25px;">
+<li style="line-height: 20px;">Rifletto sui processi di apprendimento (n. 1, pag. 186)</li>
+<li style="line-height: 20px;">Organizzo il mio tempo di studio (n. 5, pag. 192)</li>
+<li style="line-height: 20px;">Organizzo il quaderno (n. 7, pag. 197)</li>
+<li style="line-height: 20px;">Prendo appunti e organizzo i contenuti (n. 10, pag. 203)</li>
+<li style="line-height: 20px;">Combatto la noia in classe (n. 29, pag. 242)</li>
+</ul>
+</li>
+</ul>
+<p style="margin: 0px 0px 10px 30px; color: #333333; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: #ffffff;"><em style="font-style: italic;"><span style="color: #0099ff;"><strong style="font-weight: bold;">Altre informazioni:&nbsp;</strong></span></em>OTTONE,&nbsp;<em style="font-style: italic;">Apprendo</em>&nbsp;93-95.&nbsp;</p>
+<p style="margin: 0px 0px 10px 30px; color: #333333; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: #ffffff;"></p>
+<p style="margin: 0px 0px 10px 30px; color: #333333; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: #ffffff;"><strong style="font-weight: bold;">Fig. 1: Presentazione del fattore del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> per lo studente</strong></p><p style="margin: 0px 0px 10px 30px; color: #333333; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: #ffffff;"><strong style="font-weight: bold;"><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/36/C2%20autoregolazione.PNG" alt="C2 Autoregolazione" width="800" height="450" style="vertical-align:text-bottom; margin: 0 .5em;" class="img-responsive"><br></strong></p>
+<ul>
+<li style="list-style-type: none;">
+<ul></ul>
+</li>
+</ul></div><div class="book_chapter"><a name="ch37"></a><h3>2.5. C3 | Disorientamento</h3><p style="margin-left: 30px;"><span style="color: #0099ff;"><em><strong>Descrizione del fattore:</strong></em></span></p>
+<p style="margin-left: 30px;">Il fattore <strong>C3 (Senso di disorientamento e difficoltà ad orientarsi nello studio)</strong> del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> si riferisce alla capacità di orientarsi e di organizzare lo studio e i materiali. Se ottieni un punteggio basso significa che non ti perdi di fronte agli impegni scolastici e sei capace di organizzarti nello studio e sai usare strategie efficaci.</p>
+
+<p style="margin-left: 30px;"><span style="color: #0099ff;"><em><strong>Elenco degli <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=66&amp;displayformat=dictionary" title="Glossario: item" class="glossary autolink concept glossaryid1">item</a>:</strong></em></span></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Ho difficoltà a riassumere quanto ho ascolto a scuola o letto in un libro (32)</li>
+<li>Capita che riesco male in un compito perché non riesco a capire che cosa esattamente devo fare (3)</li>
+<li>Quando studio mi perdo nei dettagli e non riesco a trovare le cose principali (8)</li>
+<li>Mentre mi interrogano capita di accorgermi che ho studiato l’argomento sbagliato (40)</li>
+<li>Imparo a memoria regole, termini tecnici o formule, anche senza comprenderli (43)</li>
+<li>Evito di fare domande, perché penso di dare fastidio all’insegnante (96)</li>
+<li>Non riesco a rimanere concentrato nel lavoro per più di un quarto d’ora (46)</li>
+<li>Trovo difficile capire se un concetto o un argomento mi risulta poco chiaro (98)</li>
+<li>Mi capita di trovare che un argomento di studio era più difficile di quanto mi fossi aspettato (52)</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><span style="color: #0099ff;"><em><strong>Griglie di osservazione:</strong></em></span></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><span style="font-size: 13.6px; line-height: 1.4;"><a href="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/37/C3_studente.jpg">Griglia per lo studente</a></span></li>
+<li>Griglia per l'insegnante</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><span style="color: #0099ff;"><em><strong>Schede per gli studenti:</strong></em></span></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Organizzo il mio tempo di studio (n. 5, pag. 192) </li>
+<li>Preparo e gestisco l’ambiente di studio (n. 6, pag. 196) </li>
+<li>Organizzo il quaderno (n. 7, pag. 197) </li>
+<li>Alleno la concentrazione (n. 8, pag. 198) </li>
+<li>Rifletto su come apprendere in modo significativo (n. 11, pag. 206) </li>
+<li>Uso la strategia dell’autointerrogazione (n. 13, pag. 210) </li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><em><span style="color: #0099ff;"><strong>Altre informazioni:&nbsp;</strong></span></em>OTTONE, <em>Apprendo</em> 96-98.&nbsp;</p>
+<p style="margin-left: 30px;"></p>
+<p style="margin-left: 30px;"><strong>Fig. 1: Presentazione del fattore del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> per lo studente</strong></p><p style="margin-left: 30px;"><strong><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/37/C3%20Disorientamento.PNG" alt="C3 disorientamento" width="800" height="450" style="vertical-align:text-bottom; margin: 0 .5em;" class="img-responsive"><br></strong></p></div><div class="book_chapter"><a name="ch38"></a><h3>2.6. C6 | Difficoltà di concentrazione</h3><p style="margin: 0px 0px 10px 30px; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><em style="font-style: italic; color: rgb(0, 153, 255);"><strong style="font-weight: bold;">Descrizione del fattore:</strong></em><br></p><p style="margin: 0px 0px 10px 30px; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);">Il fattore&nbsp;<strong style="font-weight: bold;">C6 (<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=22&amp;displayformat=dictionary" title="Glossario: Difficoltà di concentrazione" class="glossary autolink concept glossaryid1">Difficoltà di concentrazione</a>)</strong>&nbsp;del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> riguarda la difficoltà di concentrarsi. Se ottieni un punteggio basso significa che non fai fatica a focalizzare l'attenzione sul compito di apprendimento e sai organizzare e gestire efficacemente il tempo e l'ambiente di studio.</p><p style="margin: 0px 0px 10px 30px; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><em style="font-style: italic; color: rgb(0, 153, 255); font-size: 13.6px; line-height: 1.4;"><strong style="font-weight: bold;">Elenco degli <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=66&amp;displayformat=dictionary" title="Glossario: item" class="glossary autolink concept glossaryid1">item</a>:</strong></em></p><ul style="padding: 0px; margin: 0px 0px 10px 25px; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><li style="line-height: 20px; list-style-type: none;"><ul style="padding: 0px; margin: 0px 0px 0px 25px;"><li style="line-height: 20px;">Mentre studio mi distraggo facendo “sogni a occhi aperti”, progetti e programmi di ogni genere&nbsp;(89)</li><li style="line-height: 20px;">A casa studio le materie non in base a un piano preciso, ma secondo l’urgenza delle interrogazioni&nbsp;(69)</li><li style="line-height: 20px;">Quando il mio insegnante spiega, mi trovo a pensare ad altre cose e così non seguo quello che sta esponendo (84)</li><li style="line-height: 20px;">I problemi di casa o quelli posti dalle amicizie mi fanno trascurare l’impegno scolastico (79)</li><li style="line-height: 20px;">Quando mi accingo a studiare cerco di prevedere quanto tempo mi occorrerà per imparare un argomento (60)</li></ul></li></ul>
+<p style="margin-left: 30px;"><span style="color: #0099ff;"><em><strong>Griglie di osservazione:</strong></em></span></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><span style="font-size: 13.6px; line-height: 1.4;"><a href="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/38/C6%20Difficolt%C3%A0%20di%20concentrazione.PNG">Griglia per lo studente</a></span></li>
+<li>Griglia per l'insegnante</li>
+</ul>
+</li>
+</ul>
+
+<p style="margin: 0px 0px 10px 30px; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><em style="color: rgb(0, 153, 255); font-size: 13.6px; line-height: 1.4;"><strong>Schede studenti:</strong></em><br></p><ul style="padding: 0px; margin: 0px 0px 10px 25px; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);">
+<li style="line-height: 20px; list-style-type: none;"><ul style="padding: 0px; margin: 0px 0px 0px 25px;">
+
+<li style="line-height: 20px;">Organizzo il mio tempo di studio (n. 5, pag. 192) </li>
+<li style="line-height: 20px;">Preparo e gestisco l’ambiente di studio (n. 6, pag. 196) </li>
+<li style="line-height: 20px;">Alleno la concentrazione (n. 8, pag. 198) </li>
+<li style="line-height: 20px;">Coltivo l’attenzione (n. 9, pag. 202)</li>
+<li style="line-height: 20px;">Combatto la noia in classe (n. 29, pag. 242) </li>
+</ul></li></ul><p style="margin: 0px 0px 10px 30px; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><span data-mce-mark="1" style="color: rgb(0, 153, 255);"><em><strong>Altre informazioni:&nbsp;</strong></em></span>OTTONE,&nbsp;<em>Apprendo</em>&nbsp;99-101.&nbsp;<br></p><p style="margin: 0px 0px 10px 30px; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><strong style="font-weight: bold; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);">Fig. 1: Presentazione del fattore del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> per lo studente</strong></p><p style="margin: 0px 0px 10px 30px; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><strong style="font-weight: bold; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/38/C6.PNG" alt="C6 Difficoltà di concentrazione" width="800" height="450" style="vertical-align:text-bottom; margin: 0 .5em;" class="img-responsive"><br></strong></p></div><div class="book_chapter"><a name="ch39"></a><h3>2.7. C4 | Collaborazione</h3><p style="margin-left: 30px;"><span style="color: #0099ff;"><em><strong>Descrizione del fattore:</strong></em></span></p>
+<p style="margin-left: 30px;">Il fattore&nbsp;<strong>C4 (<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=20&amp;displayformat=dictionary" title="Glossario: Disponibilità alla collaborazione" class="glossary autolink concept glossaryid1">Disponibilità alla collaborazione</a>)</strong>&nbsp;del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> si riferisce alla presenza o meno della propensione a studiare con i compagni e della disposizione a collaborare.</p>
+<p style="margin-left: 30px;"><em style="color: #0099ff; font-size: 13.6px; line-height: 1.4;"><strong>Elenco degli <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=66&amp;displayformat=dictionary" title="Glossario: item" class="glossary autolink concept glossaryid1">item</a>:</strong></em></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><em style="color: #0099ff; font-size: 13.6px; line-height: 1.4;"><strong></strong></em>Quando partecipo a lavori di gruppo ho l’impressione di capire meglio le cose (50)</li>
+<li>Trovo che studiare con un compagno costituisca una perdita di tempo (13)</li>
+<li>Trovo utile e stimolante discutere o lavorare in gruppo (30)</li>
+<li>Quando partecipo a lavori di gruppo ho l’impressione di perdere il tempo (90)</li>
+<li>Penso che nello studio, come nel lavoro, è importante imparare a lavorare insieme (86)</li>
+<li>Preferisco studiare la lezione da solo piuttosto che con l’aiuto altrui (57)</li>
+<li>Mi sembra di imparare meglio quando posso confrontarmi con i compagni (74)</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><em style="font-size: 13.6px; line-height: 1.4; color: rgb(0, 153, 255);"><strong>Schede operative:</strong></em><br></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><em style="font-size: 13.6px; line-height: 1.4; color: #0099ff;"><strong></strong></em>Mi esercito a studiare con altri (n. 32, pag. 250)</li>
+<li>Alleno la capacità di ascoltare (n. 31, pag. 248)</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><em><strong></strong></em><em><strong><span style="color: #0099ff;">Altre informazioni:</span>&nbsp;</strong></em>OTTONE,&nbsp;<em style="font-size: 13.6px; line-height: 1.4;">Apprendo</em>&nbsp;102-103.&nbsp;</p><p style="margin-left: 30px;"><strong style="font-weight: bold; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);">Fig. 1: Presentazione del fattore del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> per lo studente</strong></p><p style="margin-left: 30px;"><strong style="font-weight: bold; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/39/C4.PNG" alt="C4 Collaborazione" width="800" height="450" style="vertical-align:text-bottom; margin: 0 .5em;" class="img-responsive"><br></strong></p></div><div class="book_chapter"><a name="ch31"></a><h2>3. I FATTORI AFFETTIVO-MOTIVAZIONALI</h2><p>I fattori affettivi e motivazionali del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> che sono implicati nello studio e più in generale nell'apprendimento riguardano le strategie che lo studente mette in atto per</p>
+<ul>
+<li>gestire le emozioni (A1, A7)</li>
+<li>regolare la volizione e la perseveranza (A2, A5)</li><li>regolare la percezione di sé e l'attribuzione dei successi/insuccessi (A3 e A4, A6).</li>
+</ul><p><br></p>
+<table border="0"><caption style="caption-side: top;"></caption>
+<tbody>
+<tr>
+<th scope="col"><p style="text-align: right;"><b style="background-color: transparent;">Presentazione&nbsp;</b></p><b><p style="text-align: right;"><b style="background-color: transparent;">dei fattori&nbsp;</b></p><p style="text-align: right;"><b style="background-color: transparent;">per gli studenti&nbsp;</b></p><p style="text-align: right;"><b style="background-color: transparent;">[durata 9 min.]&nbsp;</b></p></b></th>
+<th scope="col"><div class="mediaplugin mediaplugin_videojs"><div style="max-width:400px;"><video data-setup-lazy="{&quot;techOrder&quot;: [&quot;youtube&quot;], &quot;sources&quot;: [{&quot;type&quot;: &quot;video/youtube&quot;, &quot;src&quot;:&quot;https://youtu.be/lo10KHAcLys&quot;}], &quot;language&quot;: &quot;it&quot;, &quot;fluid&quot;: true}" id="id_videojs_6a1b2248421bb" class="video-js" preload="auto" controls="true" title="I fattori affettivo-motivazionali"><a class="mediafallbacklink" href="https://youtu.be/lo10KHAcLys">I fattori affettivo-motivazionali</a></video></div></div><br></th>
+</tr>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><br><h4>Strumenti&nbsp;</h4><p>Per approfondire la conoscenza dei fattori affettivo-motivazionali del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> scarica il file<br></p><p></p><ul><li><a href="https://www.competenzestrategiche.it/pluginfile.php/54/mod_book/chapter/6/02_Schede_fattori_QSA.pdf">Presentazione dei fattori del QSA</a></li></ul><p></p><p>Per riflettere sugli aspetti affettivo-motivazionali e sviluppare strategie efficaci accedi alle schede delle attività</p><p></p><ul></ul><ul><ul><li><span style="color: rgb(101, 101, 101);">Riconosco e regolo le mie emozioni (<a href="https://www.competenzestrategiche.it/mod/lesson/view.php?id=50&amp;pageid=12">n. 28</a>, pag. 239)</span></li><li><span style="color: rgb(101, 101, 101);">Regolo l’ansietà (<a href="https://www.competenzestrategiche.it/mod/lesson/view.php?id=50&amp;pageid=13" target="_blank">n. 30</a>, pag. 244)</span></li><li>Prendo coscienza dei processi motivazionali e volitivi (<a href="https://www.competenzestrategiche.it/mod/lesson/view.php?id=50&amp;pageid=20">n. 20</a>, pag. 223)</li><li>Rafforzo la volizione (n. 24, pag. 230)</li><li>Accresco la mia perseveranza (<a href="https://www.competenzestrategiche.it/mod/lesson/view.php?id=50&amp;pageid=14">n. 25</a>, pag. 234)</li><li>Regolo l’impulsività (n. 26, pag. 236)</li><li>Combatto la noia in classe (n. 29, pag. 242)</li></ul></ul><p><br></p><pre><sub><b>Fonte: OTTONE Enrica, Apprendo. Strumenti e attività per promuovere l'apprendimento, Roma, Anicia 2014.</b></sub></pre><p><sub><br></sub></p><p></p></div><div class="book_chapter"><a name="ch40"></a><h3>3.1. A1 | Ansietà di base</h3><p style="margin-left: 30px;"><span style="color: #0099ff;" data-mce-mark="1"><em><strong>Descrizione del fattore:</strong></em></span></p>
+<p style="margin-left: 30px;">Il fattore&nbsp;<strong>A1 (<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=24&amp;displayformat=dictionary" title="Glossario: Ansietà di base" class="glossary autolink concept glossaryid1">Ansietà di base</a>)</strong>&nbsp;del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> riguarda la capacità dello studente di controllare le proprie reazioni emotive, in particolare l'ansia, nelle situazioni di rendimento scolastico. Se ottieni un punteggio basso significa che non fai fatica a regolare l'ansia.</p>
+<p style="margin-left: 30px;"><em style="color: #0099ff; font-size: 13.6px; line-height: 1.4;"><strong>Elenco degli <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=66&amp;displayformat=dictionary" title="Glossario: item" class="glossary autolink concept glossaryid1">item</a>:</strong></em></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Quando devo affrontare un’interrogazione orale o un lavoro scritto sono così nervoso che non riesco a esprimermi al meglio delle mie possibilità (28) </li> 
+<li>Sono preso dal panico quando so che devo affrontare un esame scritto importante (23) </li> 
+<li>Mentre sto affrontando un’interrogazione la paura di sbagliare mi disturba e così vado peggio (19) </li>
+<li>Il cuore mi batte forte quando devo subire un esame o un’interrogazione importante (38) </li>
+<li>Mi sento molto a disagio durante un lavoro scritto o un’interrogazione anche quando sono ben preparato (9) </li>
+<li>Quando sono interrogato all’improvviso, mi blocco e non riesco più a parlare (97) </li>
+<li>Durante lo svolgimento di un compito in classe o durante un’interrogazione mi passano per la testa dubbi e incertezze sulla mia capacità di riuscire bene (33) </li>
+<li>Quando prendo un brutto voto sono preso dallo scoraggiamento (4) </li>
+<li>Divento subito nervoso di fronte a una domanda o a un problema che non comprendo immediatamente (45) 
+</li><li>Se mi accorgo di non avere più tempo per finire un lavoro, sono preso dal panico (77) </li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><em style="font-size: 13.6px; line-height: 1.4; color: #0099ff;"><strong>Griglie di osservazione:</strong></em></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><a href="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/40/A1%20Studente.jpg"><em style="font-size: 13.6px; line-height: 1.4; color: #0099ff;"><strong></strong></em>Griglia per lo studente</a></li>
+<li><a href="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/40/A1%20Docente.jpg">Griglia per l'insegnante</a></li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><em style="font-size: 13.6px; line-height: 1.4; color: #0099ff;"><strong>Schede operative:</strong></em></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Riconosco e regolo le mie emozioni (n. 28, pag. 239)<br></li>
+<li>Regolo l’ansietà (n. 30, pag. 244)</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><em><strong></strong></em><em><strong><span style="color: #0099ff;">Altre informazioni:</span>&nbsp;</strong></em>OTTONE,&nbsp;<em style="font-size: 13.6px; line-height: 1.4;">Apprendo</em>&nbsp;140-143.&nbsp;</p><p style="margin-left: 30px;"><strong style="font-weight: bold; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);">Fig. 1: Presentazione del fattore del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> per lo studente</strong></p><p style="margin-left: 30px;"><strong style="font-weight: bold; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/40/A1%20Ansiet%C3%A0%20di%20base.PNG" alt="A1 Ansietà di base" width="800" height="450" style="vertical-align:text-bottom; margin: 0 .5em;" class="img-responsive"><br></strong></p></div><div class="book_chapter"><a name="ch41"></a><h3>3.2. A7 | Interferenze emotive</h3><p style="margin-left: 30px;"><span style="color: #0099ff;" data-mce-mark="1"><em><strong>Descrizione del fattore:</strong></em></span></p>
+<p style="margin-left: 30px;">Il fattore&nbsp;<strong>A7 (<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=25&amp;displayformat=dictionary" title="Glossario: Interferenze emotive" class="glossary autolink concept glossaryid1">Interferenze emotive</a>)</strong>&nbsp;del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> riguarda la capacità o meno di gestire le occasionali reazioni emotive che possono interferire nel lavoro scolastico. Se ottieni un punteggio basso significa che non fai fatica a regolare le tue reazioni emotive.</p>
+<p style="margin-left: 30px;"><em style="color: #0099ff; font-size: 13.6px; line-height: 1.4;"><strong>Elenco degli <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=66&amp;displayformat=dictionary" title="Glossario: item" class="glossary autolink concept glossaryid1">item</a>:</strong></em></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Se per qualche motivo non riesco a preparare le lezioni, mi sento inquieto (55) </li>
+<li>Se sono di cattivo umore mi concentro nello studio con difficoltà (87) </li>
+<li>Se non riesco a prepararmi bene per la scuola, mi sento a disagio (66) </li>
+<li>Se ho qualche problema emotivo (causato da cattivi rapporti con gli altri o con i genitori), non riesco ad applicarmi nello studio (92)</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><em style="font-size: 13.6px; line-height: 1.4; color: rgb(0, 153, 255);"><strong>Schede operative:</strong></em><br></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Riconosco e regolo le mie emozioni (n. 28, pag. 239) (55) </li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><em><strong></strong></em><em><strong><span style="color: #0099ff;">Altre informazioni:</span>&nbsp;</strong></em>OTTONE,&nbsp;<em style="font-size: 13.6px; line-height: 1.4;">Apprendo</em>&nbsp;150-151.&nbsp;</p><p style="margin-left: 30px;"><strong style="font-weight: bold; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);">Fig. 1: Presentazione del fattore del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> per lo studente</strong></p><p style="margin-left: 30px;"><strong style="font-weight: bold; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/41/A7.PNG" alt="A7 Interferenze emotive" width="800" height="450" style="vertical-align:text-bottom; margin: 0 .5em;" class="img-responsive"><br></strong></p></div><div class="book_chapter"><a name="ch42"></a><h3>3.3. A2 | Volizione</h3><p style="margin-left: 30px;"><span style="color: #0099ff;" data-mce-mark="1"><em><strong>Descrizione del fattore:</strong></em></span></p>
+<p style="margin-left: 30px;">Il fattore&nbsp;<strong>A2 (<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=26&amp;displayformat=dictionary" title="Glossario: Volizione" class="glossary autolink concept glossaryid1">Volizione</a>)</strong>&nbsp;del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> riguarda la capacità di perseveranza nelle attività scolastiche che richiedono sforzo, impegno e concentrazione. Se ottieni un punteggio alto significa che riesci a controllare in maniera molto efficace l'azione di apprendimento in modo da portare a termine gli impegni e a raggiungere gli obiettivi che ti sei prefissato, proteggendo la motivazione.</p>
+<p style="margin-left: 30px;"><em style="color: #0099ff; font-size: 13.6px; line-height: 1.4;"><strong>Elenco degli <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=66&amp;displayformat=dictionary" title="Glossario: item" class="glossary autolink concept glossaryid1">item</a>:</strong></em></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Mi impegno seriamente per conseguire un buon voto anche quando la materia non mi piace (54)<br></li>
+<li>Anche se un compito è noioso, continuo a svolgerlo finché non l’ho terminato (67) </li>
+<li>Quando incontro una difficoltà cerco di superarla, aumentando il mio impegno e la mia concentrazione (95) </li>
+<li>Quando ho deciso di fare qualcosa, la porto a termine anche se costa fatica (70) </li>
+<li>Vado a scuola avendo fatto tutti i compiti e studiato le lezioni (49) </li>
+<li>Di fronte a un compito impegnativo, mi sento stimolato a sforzarmi di più (58) </li>
+<li>Quando per qualche ragione rimango indietro nel lavoro scolastico, cerco di colmare la lacuna senza che l’insegnante mi costringa a farlo (62) </li>
+<li>Mi capita sia in casa che fuori casa di parlare con piacere delle cose che faccio a scuola (91) </li>
+<li>Provo piacere quando devo svolgere un lavoro che mi impegna (42) </li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><em style="font-size: 13.6px; line-height: 1.4; color: #0099ff;"><strong>Griglie di osservazione:</strong></em></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><a href="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/42/A2-A5%20.jpg"><em style="font-size: 13.6px; line-height: 1.4; color: #0099ff;"><strong></strong></em>Griglia per lo studente</a></li>
+<li><a href="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/42/A2-A5%20Docente.jpg">Griglia per l'insegnante</a></li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><em style="font-size: 13.6px; line-height: 1.4; color: #0099ff;"><strong>Schede operative:</strong></em></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Prendo coscienza dei processi motivazionali e volitivi (n. 20, pag. 223)</li>
+<li>Rafforzo la volizione (n. 24, pag. 230)</li>
+<li>Accresco la mia perseveranza (n. 25, pag. 234)</li>
+<li>Regolo l’impulsività (n. 26, pag. 236)</li>
+<li>Combatto la noia in classe (n. 29, pag. 242)</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><em><strong></strong></em><em><strong><span style="color: #0099ff;">Altre informazioni:</span>&nbsp;</strong></em>OTTONE,&nbsp;<em style="font-size: 13.6px; line-height: 1.4;">Apprendo</em>&nbsp;106-118.&nbsp;</p><p style="margin-left: 30px;"><strong style="font-weight: bold; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);">Fig. 1: Presentazione del fattore del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> per lo studente</strong></p><p style="margin-left: 30px;"><strong style="font-weight: bold; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/42/A2%20Volizione.PNG" alt="A2 Volizione" width="800" height="450" style="vertical-align:text-bottom; margin: 0 .5em;" class="img-responsive"><br></strong></p></div><div class="book_chapter"><a name="ch43"></a><h3>3.4. A5 | Mancanza di perseveranza</h3><p style="margin-left: 30px;"><span style="color: #0099ff;" data-mce-mark="1"><em><strong>Descrizione del fattore:</strong></em></span></p>
+<p style="margin-left: 30px;">Il fattore&nbsp;<strong>A5 (<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=27&amp;displayformat=dictionary" title="Glossario: Mancanza di perseveranza" class="glossary autolink concept glossaryid1">Mancanza di perseveranza</a>)</strong>&nbsp;del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> riguarda la capacità di perserverare nel portare a termine gli impegni di studio. Se ottieni un punteggio basso significa che non fai fatica a portare a termine i compiti assegnati.</p>
+<p style="margin-left: 30px;"><em style="color: #0099ff; font-size: 13.6px; line-height: 1.4;"><strong>Elenco degli <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=66&amp;displayformat=dictionary" title="Glossario: item" class="glossary autolink concept glossaryid1">item</a>:</strong></em></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Non appena incontro le prime difficoltà, abbandono un lavoro anche appena iniziato (75)</li>
+<li>Se trovo che un argomento richiede tempo e fatica, non lo prendo neppure in considerazione (61)</li>
+<li>Quando non mi sento capace di completarlo, mi capita di lasciare a metà un lavoro già iniziato (53)</li>
+<li>Pensando alle cose che devo imparare mi capita di considerarle troppo difficili (82)</li>
+<li>Quando mi va male qualcosa penso che ciò dipende dalle circostanze esterne più che dalla mia incapacità o dal mio scarso impegno (76)</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"></p>
+<p style="margin: 0px 0px 10px 30px; color: #333333; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: #ffffff;"><em style="font-style: italic; font-size: 13.6px; line-height: 1.4; color: #0099ff;"><strong style="font-weight: bold;">Griglie di osservazione:</strong></em></p>
+<ul style="padding: 0px; margin: 0px 0px 10px 25px; color: #333333; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: #ffffff;">
+<li style="line-height: 20px; list-style-type: none;">
+<ul style="padding: 0px; margin: 0px 0px 0px 25px;">
+<li style="line-height: 20px;"><a href="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/43/A2-A5%20.jpg"><em style="color: rgb(0, 153, 255); text-decoration: none; font-style: italic; font-size: 13.6px; line-height: 1.4;"><strong style="font-weight: bold;"></strong></em><span style="text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial;">Griglia per lo studente</span></a></li>
+<li style="line-height: 20px;"><span style="text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial;"><a href="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/43/A2-A5%20Docente.jpg">Griglia per l'insegnante</a></span></li>
+</ul>
+</li>
+</ul>
+<p style="margin: 0px 0px 10px 30px; color: #333333; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: #ffffff;"><em style="font-style: italic; font-size: 13.6px; line-height: 1.4; color: #0099ff;"><strong style="font-weight: bold;">Schede operative:</strong></em></p>
+<ul style="padding: 0px; margin: 0px 0px 10px 25px; color: #333333; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: #ffffff;">
+<li style="line-height: 20px; list-style-type: none;">
+<ul style="padding: 0px; margin: 0px 0px 0px 25px;">
+<li style="line-height: 20px;">Prendo coscienza dei processi motivazionali e volitivi (n. 20, pag. 223)</li>
+<li style="line-height: 20px;">Rafforzo la volizione (n. 24, pag. 230)</li>
+<li style="line-height: 20px;">Accresco la mia perseveranza (n. 25, pag. 234)</li>
+<li style="line-height: 20px;">Regolo l’impulsività (n. 26, pag. 236)</li>
+<li style="line-height: 20px;">Combatto la noia in classe (n. 29, pag. 242)</li>
+</ul>
+</li>
+</ul>
+<p style="margin: 0px 0px 10px 30px; color: #333333; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: #ffffff;"><em style="font-style: italic;"><strong style="font-weight: bold;"></strong></em><em style="font-style: italic;"><strong style="font-weight: bold;"><span style="color: #0099ff;">Altre informazioni:</span>&nbsp;</strong></em>OTTONE,&nbsp;<em style="font-style: italic; font-size: 13.6px; line-height: 1.4;">Apprendo</em>&nbsp;106-118.&nbsp;</p>
+<p style="margin-left: 30px;"></p>
+<p style="margin-left: 30px;"><strong style="font-weight: bold; color: #333333; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: #ffffff;">Fig. 1: Presentazione del fattore del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> per lo studente</strong></p><p style="margin-left: 30px;"><strong style="font-weight: bold; color: #333333; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: #ffffff;"><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/43/A5.PNG" alt="A5 Mancanza di perseveranza" width="800" height="450" style="vertical-align:text-bottom; margin: 0 .5em;" class="img-responsive"><br></strong></p></div><div class="book_chapter"><a name="ch44"></a><h3>3.5. A3 | Attribuzione a fattori controllabili</h3><p style="margin-left: 30px;"><span style="color: #0099ff;" data-mce-mark="1"><em><strong>Descrizione del fattore:</strong></em></span></p>
+<p style="margin-left: 30px;">Il fattore&nbsp;<strong>A3 (Attribuzione a fattori controllabili)</strong>&nbsp;del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> si riferisce alle spiegazioni dei propri successi e i &nbsp;fallimenti conseguiti in ambito scolastico. &nbsp;Se ottieni un punteggio alto significa che tendi a riferirti a cause interne e personali, come l'impegno e lo sforzo.</p>
+<p style="margin-left: 30px;"><em style="color: #0099ff; font-size: 13.6px; line-height: 1.4;"><strong>Elenco degli <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=66&amp;displayformat=dictionary" title="Glossario: item" class="glossary autolink concept glossaryid1">item</a>:</strong></em></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Penso che l’intelligenza di una persona può migliorare nel tempo, se questi si impegna seriamente (73) </li>
+<li>Penso che la capacità di una persona dipende dalla costanza e dallo sforzo che mette nello studio (83) </li>
+<li>Penso che la capacità di riuscire a scuola dipende dall'impegno che ciascuno mette nello studiare con cura (68) </li>
+<li>Mi capita di pensare che se ci si impegna bene si può far crescere anche la propria intelligenza (94) </li>
+<li>Quando non riesco in un compito o in un’interrogazione penso che la ragione stia nel fatto che non ho studiato seriamente (15) </li>
+<li>Quando mi va bene un’interrogazione penso che ho fatto proprio bene a studiare con tanto impegno (29) </li>
+<li>Quando riesco a scuola, penso che ciò dipenda dall'aver studiato molto (5) </li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><em style="font-size: 13.6px; line-height: 1.4; color: #0099ff;"><strong>Griglie di osservazione:</strong></em></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><a href="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/44/A3-A4%20Studente.jpg"><em style="font-size: 13.6px; line-height: 1.4; color: #0099ff;"><strong></strong></em>Griglia per lo studente</a></li>
+<li>Griglia per l'insegnante</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><em style="font-size: 13.6px; line-height: 1.4; color: #0099ff;"><strong>Schede operative:</strong></em></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Rifletto sui miei successi/insuccessi (n. 17, pag. 217) </li>
+<li>Mi rendo consapevole del mio stile attributivo (n. 18, pag. 219) </li>
+<li>Regolo il mio stile attributivo (n. 19, pag. 221)</li>
+<li>Prendo coscienza della mia “teoria dell’intelligenza” (n. 15, pag. 213) </li>
+<li>Intervengo sul mio “ciclo del pensiero” (n. 16, pag. 215)</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><em><strong></strong></em><em><strong><span style="color: #0099ff;">Altre informazioni:</span>&nbsp;</strong></em>OTTONE,&nbsp;<em style="font-size: 13.6px; line-height: 1.4;">Apprendo</em>&nbsp;<span style="color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; display: inline !important; float: none; background-color: rgb(255, 255, 255);">119-134</span>.&nbsp;</p><p style="margin-left: 30px;"><strong style="font-weight: bold; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);">Fig. 1: Presentazione del fattore del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> per lo studente</strong></p><p style="margin-left: 30px;"><strong style="font-weight: bold; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/44/A3eA4.PNG" alt="A3 e A4 | Attribuzione a fattori controllabili " width="800" height="450" style="vertical-align:text-bottom; margin: 0 .5em;" class="img-responsive"><br></strong></p></div><div class="book_chapter"><a name="ch45"></a><h3>3.6. A4 | Attribuzione a fattori non controllabili</h3><p style="margin-left: 30px;"><span style="color: #0099ff;" data-mce-mark="1"><em><strong>Descrizione del fattore:</strong></em></span></p>
+<p style="margin-left: 30px;">Il fattore&nbsp;<strong>A4 (Attribuzione a fattori non controllabili)</strong>&nbsp;del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> <span style="color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; font-weight: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; display: inline !important; float: none; background-color: rgb(255, 255, 255);">&nbsp;si riferisce alle spiegazioni dei propri successi e i &nbsp;fallimenti conseguiti in ambito scolastico. &nbsp;Se ottieni un punteggio basso significa che non tendi a riferirti a cause incontrollabili, come la fortuna e non hai una concezione delle tue abilità come qualcosa di stabile non modificabile.</span></p>
+<p style="margin-left: 30px;"><em style="color: #0099ff; font-size: 13.6px; line-height: 1.4;"><strong>Elenco degli <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=66&amp;displayformat=dictionary" title="Glossario: item" class="glossary autolink concept glossaryid1">item</a>:</strong></em></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Mi capita di pensare che la capacità di riuscire a scuola dipenda dalle doti di intelligenza che uno ha (64) </li>
+<li>Mi capita di pensare che gli insuccessi scolastici dipendono fondamentalmente dall’incapacità delle persone (47) </li>
+<li>Mi capita di pensare che l’intelligenza di una persona è qualcosa che non può veramente cambiare: è un dono di natura (78) </li>
+<li>Anche se mi impegno molto, mi viene da pensare che comunque non posso diventare più intelligente (59) </li>
+<li>Quando riesco bene, penso che dipende dal fatto che il lavoro da svolgere era facile (51) </li>
+<li>Quando vado bene in un’interrogazione, penso che l’insegnante è stato comprensivo e mi ha fatto domande facili (88) </li>
+<li>Quando mi va bene un’interrogazione penso che per fortuna l’insegnante mi ha chiesto una cosa che sapevo (10) </li>
+<li>Quando non riesco in un compito o in un’interrogazione penso che mi è stato chiesto qualcosa di troppo difficile (24)</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><em style="font-size: 13.6px; line-height: 1.4; color: #0099ff;"><strong>Griglie di osservazione:</strong></em></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><a href="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/45/A3%20e%20A4.jpg" target="_blank"><em style="font-size: 13.6px; line-height: 1.4; color: #0099ff;"><strong></strong></em>Griglia per lo studente</a></li>
+<li>Griglia per l'insegnante</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><em style="font-size: 13.6px; line-height: 1.4; color: #0099ff;"><strong>Schede operative:</strong></em></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Rifletto sui miei successi/insuccessi (n. 17, pag. 217) </li>
+<li>Mi rendo consapevole del mio stile attributivo (n. 18, pag. 219) </li>
+<li>Regolo il mio stile attributivo (n. 19, pag. 221)</li>
+<li>Prendo coscienza della mia “teoria dell’intelligenza” (n. 15, pag. 213) </li>
+<li>Intervengo sul mio “ciclo del pensiero” (n. 16, pag. 215)</li>
+</ul>
+</li></ul>
+
+
+<p style="margin-left: 30px;"><em><strong></strong></em><em><strong><span style="color: #0099ff;">Altre informazioni:</span>&nbsp;</strong></em>OTTONE,&nbsp;<em style="font-size: 13.6px; line-height: 1.4;">Apprendo</em>&nbsp;119-134.&nbsp;</p><p style="margin-left: 30px;"><strong style="font-weight: bold; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);">Fig. 1: Presentazione del fattore del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> per lo studente</strong></p><p style="margin-left: 30px;"><strong style="font-weight: bold; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/45/A3%20eA4.PNG" alt="A4 | Attribuzione a fattori non controllabili" width="800" height="450" style="vertical-align:text-bottom; margin: 0 .5em;" class="img-responsive"><br></strong></p></div><div class="book_chapter"><a name="ch46"></a><h3>3.7. A6 | Percezione di competenza</h3><p style="margin-left: 30px;"><span style="color: #0099ff;" data-mce-mark="1"><em><strong>Descrizione del fattore:</strong></em></span></p>
+<p style="margin-left: 30px;">Il fattore&nbsp;<strong>A6 (<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=28&amp;displayformat=dictionary" title="Glossario: Percezione di competenza" class="glossary autolink concept glossaryid1">Percezione di competenza</a>)</strong>&nbsp;del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> riguarda la percezione che lo studente ha delle proprie capacità. Se ottieni un punteggio alto significa che percepisci di avere la capacità di riuscire nei compiti scolastici.</p>
+<p style="margin-left: 30px;"><em style="color: #0099ff; font-size: 13.6px; line-height: 1.4;"><strong>Elenco degli <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=66&amp;displayformat=dictionary" title="Glossario: item" class="glossary autolink concept glossaryid1">item</a>:</strong></em></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Quando riesco a scuola, penso che dipende dal fatto che sono una persona veramente capace (39) </li>
+<li>Quando mi va bene un’interrogazione, penso di essere proprio intelligente (20) </li>
+<li>Mi sento sicuro di riuscire ad ottenere buoni voti (72) </li>
+<li>Quando inizio a svolgere un compito in classe, sono convinto di poter far bene (14) </li>
+<li>Mi capita di pensare di essere capace di portare a termine con successo i miei impegni di studio (16) </li>
+<li>Se sono preparato sono sicuro di riuscire bene in un compito o in un’interrogazione (93)</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><em style="font-size: 13.6px; line-height: 1.4; color: rgb(0, 153, 255);"><strong>Schede operative:</strong></em><br></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Coltivo l'ottimismo (n. 27, pag. 238)</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><em><strong></strong></em><em><strong><span style="color: #0099ff;">Altre informazioni:</span>&nbsp;</strong></em>OTTONE,&nbsp;<em style="font-size: 13.6px; line-height: 1.4;">Apprendo</em>&nbsp;135-137.&nbsp;</p><p style="margin-left: 30px;"><strong style="font-weight: bold; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);">Fig. 1: Presentazione del fattore del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> per lo studente</strong></p><p style="margin-left: 30px;"><strong style="font-weight: bold; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-style: normal; font-variant: normal; letter-spacing: normal; line-height: 20px; orphans: auto; text-align: left; text-indent: 0px; text-transform: none; white-space: normal; widows: 1; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/46/A6.PNG" alt="A6 Percezione di competenza" width="800" height="450" style="vertical-align:text-bottom; margin: 0 .5em;" class="img-responsive"><br></strong></p></div><div class="book_chapter"><a name="ch86"></a><h2>4. I PERCORSI EDUCATIVI</h2><p><span style="color: #39b3e6;"><strong><i>Come guidare gli allievi in un percorso di conoscenza e di sviluppo delle proprie <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=5&amp;displayformat=dictionary" title="Glossario: competenze strategiche" class="glossary autolink concept glossaryid1">competenze strategiche</a> nello studio e nell’apprendimento? Come fornire loro gli stimoli e gli strumenti adeguati per imparare a dirigere il proprio apprendimento?</i></strong></span></p>
+<p><br />Questa sezione è rivolta agli insegnanti, agli educatori e ai formatori interessati ad attivare percorsi di promozione delle <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=5&amp;displayformat=dictionary" title="Glossario: competenze strategiche" class="glossary autolink concept glossaryid1">competenze strategiche</a> degli studenti nel dirigere se stessi nell’apprendimento. Contiene indicazioni, materiali e strumenti che possono servire per impostare percorsi di intervento con gli studenti dei primi anni della Scuola secondaria di secondo grado e dei Centri di formazione professionale. In un primo momento gli studenti, in modo autonomo o su consiglio del docente, possono scegliere di compilare un questionario, possono vedere i risultati e confrontarsi sul profilo ottenuto con i loro docenti. In un secondo momento uno o più insegnanti coinvolgono gli studenti in un percorso di sviluppo delle proprie <span class="nolink">competenze strategiche</span> attraverso un intervento individualizzato e di gruppo. Il livello di articolazione del percorso può variare a seconda delle risorse e del tempo che si stabilisce di dedicare al progetto.</p>
+<p style="text-align: center;"><span style="font-size: small;"><b>Fig. 1: Esempi di percorsi e attività in relazione al livello di articolazione del progetto</b></span></p>
+<table border="0" align="center">
+<tbody>
+<tr>
+<td style="background-color: #39b3e6; border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="background-color: #39b3e6; border-color: #c0c0c0; border-style: solid; border-width: 1px; text-align: center;" colspan="3"><span style="color: #ffffff;"><em><strong>Attività previste in relazione al livello di articolazione del progetto:</strong></em></span></td>
+</tr>
+<tr>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px; margin-left: 60px; text-align: right;"><em><strong>Livello:</strong></em></td>
+<td style="background-color: #f5f5f5; border-color: #c0c0c0; border-style: solid; border-width: 1px; text-align: center;"><span style="color: #ff6600;"><strong>basso*</strong></span></td>
+<td style="background-color: #f5f5f5; border-color: #c0c0c0; border-style: solid; border-width: 1px; text-align: center;"><span style="color: #ff6600;"><strong>medio**</strong></span></td>
+<td style="background-color: #f5f5f5; border-color: #c0c0c0; border-style: solid; border-width: 1px; text-align: center;"><span style="color: #ff6600;"><strong>alto***</strong></span></td>
+</tr>
+<tr>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px; text-align: right;"><em><strong>Durata</strong></em></td>
+<td style="background-color: #f5f5f5; border-color: #c0c0c0; border-style: solid; border-width: 1px; text-align: center;">alcune settimane</td>
+<td style="background-color: #f5f5f5; border-color: #c0c0c0; border-style: solid; border-width: 1px; text-align: center;">alcuni mesi</td>
+<td style="background-color: #f5f5f5; border-color: #c0c0c0; border-style: solid; border-width: 1px; text-align: center;">un anno scolastico</td>
+</tr>
+<tr>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;">
+<p><span style="color: #39b3e6;"><strong>Obiettivo</strong> 1:</span></p>
+<p>Promuovere la conoscenza delle proprie <span class="nolink">competenze strategiche</span> nello studio</p>
+</td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">
+<p>L'<strong>allievo</strong> compila<em> on line</em> il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> sulla piattaforma www.competenzestrategiche.it  e scarica/stampa il proprio profilo.</p>
+<p>Il <span style="color: #33cccc;"><strong>docente</strong> </span>presenta i fattori del <span class="nolink">QSA </span>e fornisce agli allievi indicazioni per l'analisi dei risultati (All. 1).</p>
+</td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">
+<p><span style="color: #999999;">(<em>in aggiunta alle attività del livello precedente</em>)</span></p>
+<p>Il <span style="color: #33cccc;"><strong>docente</strong></span> utilizza la griglia di osservazione (All. 2), riporta i risultati nel prospetto sintetico sul <em>Libretto</em> degli allievi (All. 1) che hanno maggiori difficoltà di apprendimento.</p>
+</td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">
+<p><span style="color: #999999;">(<em>in aggiunta alle attività dei livelli precedenti</em>)</span></p>
+<p>Il <span style="color: #33cccc;"><strong>docente</strong> </span>incontra l'allievo individualmente fuori dalla classe per commentare i risultati del <span class="nolink">QSA </span>e i dati dell'osservazione;</p>
+<p>aiuta l'allievo a riflettere sui propri punti di forza e di debolezza</p>
+</td>
+</tr>
+<tr>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;">
+<p><strong><span style="color: #39b3e6;">Obiettivo 2:</span></strong></p>
+<p>Favorire lo sviluppo di alcuni aspetti delle proprie <span class="nolink">competenze strategiche</span> nello studio</p>
+</td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">Il <span style="color: #33cccc;"><strong>docente</strong></span> suggerisce all'allievo alcune strategie per migliorare le proprie <span class="nolink">competenze strategiche</span> nello studio e nell'apprendimento (All. 3).</td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">
+<p><span style="color: #999999;">(<em>in aggiunta alle attività del livello precedente</em>)</span></p>
+<p>Il <span style="color: #33cccc;"><strong>docente</strong> </span>incontra gli allievi che hanno maggiori difficoltà, presenta loro il <em>Libretto dello studente</em> (All. 1) e li invita a compilarne alcune parti.</p>
+</td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">
+<p><span style="color: #999999;">(<em>in aggiunta alle attività dei livelli precedenti</em>)</span></p>
+<p>Il <span style="color: #33cccc;"><strong>docente</strong> </span>incontra l'allievo individualmente fuori dalla classe e lo supporta nella compilazione del <em>Libretto</em> (All. 1);</p>
+<p>propone agli allievi attività individuali e di gruppo servendosi delle schede (All. 4);</p>
+<p>stimola gli allievi a verificare il percorso sia <em>in itinere</em> sia al termine dell'anno (All. 5)</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p style="text-align: center;">(La descrizione dettagliata dei percorsi è pubblicata in: Ottone, <i>Apprendo</i> 41-60)</p>
+<p style="text-align: center;"></p>
+<h5><span style="color: #39b3e6;">Strumenti</span></h5>
+<ol>
+<li>Allegato 1: <a href="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/86/01_Libretto%20dello%20studente.docx">Libretto dello studente</a></li>
+<li>Allegato 2: <a href="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/86/02_Griglia_osservazione_docente.pdf">Griglia di osservazione per il docente</a></li>
+<li>Allegato 3: <a href="https://www.competenzestrategiche.it//pluginfile.php/1952/mod_book/chapter/30/Schede%20fattori%20QSA.pdf">Schede per gli studenti</a> (sui 14 fattori del <span class="nolink">QSA</span>)</li>
+<li>Allegato 4: <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=65&amp;chapterid=32">Schede sulle attività educative</a> (34 proposte)</li>
+<li>Allegato 5: Scheda di valutazione in itinere e <a href="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/86/01_Libretto%20dello%20studente.docx">finale</a> (ultima pagina dell'Allegato 1)</li>
+</ol></div><div class="book_chapter"><a name="ch88"></a><h3>4.1. Tappe e strumenti</h3><p> </p>
+<p>Questa parte contiene alcuni strumenti (Ottone, 2014) che sono stati pensati per essere usati in un intervento articolato che mira a promuovere negli studenti la competenza nel dirigere se stessi nell'apprendimento attraverso la conoscenza e lo sviluppo delle capacità di autodeterminazione e di autoregolazione nello studio. Le schede e le attività proposte possono favorire il consolidamento della capacità di scelta e di decisione e la regolazione della motivazione e della perseveranza, ma vanno inseriti in un quadro più ampio di azioni che gli insegnanti devono attuare nella prassi didattica quotidiana. </p>
+<p>Le schede sono organizzate in quattro sezioni che corrispondono a quattro tappe e aree di obiettivi. Possono essere usate per sostenere e accompagnare lo studente nelle seguenti fasi: </p>
+<ul>
+<li>la conoscenza delle proprie <span class="nolink">competenze strategiche</span>, </li>
+<li>la scelta di obiettivi e strategie per sviluppare le proprie <span class="nolink">competenze strategiche</span>, </li>
+<li>lo sviluppo di alcune <span class="nolink">competenze strategiche</span>, </li>
+<li>il monitoraggio e la valutazione del percorso.</li>
+</ul>
+<p>In ciascuna tappa è previsto l'utilizzo di alcuni strumenti e schede come sintetizzato nella figura 1 e 2.</p>
+<p></p>
+<p style="text-align: center;"><span style="font-size: small;"><strong>Fig. 1: Le tappe, gli obiettivi e gli strumenti del progetto <em>Apprendo</em></strong></span></p>
+<p><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/88/Tappe%20e%20strumenti.jpg" width="854" height="507" style="display: block; margin-left: auto; margin-right: auto;" /></p>
+<p style="text-align: center;"><span style="font-size: small;"><strong>Fig. 2: Il prospetto degli strumenti e la loro collocazione in relazione ai 4 obiettivi</strong></span></p>
+<table align="center" style="border-color: #c0c0c0; border-width: 1px; width: 700px; border-style: solid;">
+<tbody>
+<tr>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;"><strong>Obiettivi</strong></td>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;"><strong>Strumenti e materiali</strong></td>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;"><strong>Collocazione</strong></td>
+</tr>
+<tr>
+<td rowspan="5" style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">Conosco i miei processi e le mie strategie di apprendimento</td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">Questionario <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">www.competenzestrategiche/<span class="nolink">QSA</span></td>
+</tr>
+<tr>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">Schede per il docente sui fattori del <span class="nolink">QSA</span></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"><em>Apprendo</em>, p. 75-151</td>
+</tr>
+<tr>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">Schede per lo studente sui fattori del <span class="nolink">QSA</span></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"><em>Apprendo</em><span>, p. 157-172</span></td>
+</tr>
+<tr>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">
+<p>Griglie di osservazione dello studente</p>
+</td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"><em>Apprendo</em>, All. 2</td>
+</tr>
+<tr>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">
+<p>Griglie di auto-osservazione</p>
+</td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">Online</td>
+</tr>
+<tr>
+<td rowspan="2" style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">Programmo obiettivi e strategie</td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">
+<p>Schede con obiettivi e strategie</p>
+</td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"><em>Apprendo</em>, p. 173</td>
+</tr>
+<tr>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">Libretto dello studente</td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"><em>Apprendo</em>, All. 1</td>
+</tr>
+<tr>
+<td rowspan="2" style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">Sviluppo e accresco le mie <span class="nolink">competenze strategiche</span></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">Quadro e prospetto sintetico</td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"><em>Apprendo</em>, p. 184-185</td>
+</tr>
+<tr>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">Schede per il lavoro personale e di gruppo</td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"><em>Apprendo</em>, p. 186-251</td>
+</tr>
+<tr>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">Monitoro e valuto i miei progressi</td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;">Schede per la valutazione</td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"><em>Apprendo</em>, p. 257.266</td>
+</tr>
+</tbody>
+</table>
+<p><span> </span></p>
+<p><span><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/88/Approfondisci.png" width="30" height="30" style="vertical-align: middle;" />  Fonte: OTTONE Enrica, </span><span><i>Apprendo. Strumenti e attività per promuovere l'apprendimento,</i> Roma,</span><span> </span><span>Anicia 2014.</span></p></div><div class="book_chapter"><a name="ch87"></a><h3>4.2. Libretto dello studente</h3><p> </p>
+<p>Il <i><b>Libretto dello studente sulle <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=5&amp;displayformat=dictionary" title="Glossario: competenze strategiche" class="glossary autolink concept glossaryid1">competenze strategiche</a> nell’apprendimento</b></i> è stato predisposto per essere gestito autonomamente dall’allievo con la consulenza di un insegnante. L’uso del Libretto può favorire la realizzazione di un cammino personale orientato alla conoscenza e al miglioramento delle proprie strategie di apprendimento. Lo strumento può essere stampato e inserito in una cartellina contrassegnata dal nome e dalla classe dell’allievo nella quale raccogliere anche altri documenti, tra cui la stampa dei risultati del profilo dell’allievo nel <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a>. In alternativa, se si sceglie di non stampare il libretto, lo studente può compilare il file del Libretto direttamente online in uno spazio dedicato. </p>
+<p> Il <i><b>Libretto </b></i>si compone di </p>
+<ul>
+<li><i>Copertina </i>in cui figurano il logo dell’Istituto, il titolo del documento e una breve presentazione, uno spazio per inserire i dati personali dell’allievo;</li>
+<li><i>Prima Sezione</i>: “<b>Conosco le mie strategie di apprendimento</b>”, in cui è previsto uno spazio per</li>
+<ul>
+<li>inserire i risultati al <span class="nolink">QSA </span>e eventuali osservazioni dello studente e del docente; </li>
+<li>fare sintesi tra percezione dello studente e osservazione del docente e individuare un punto di forza da potenziare e un punto di debolezza da migliorare; </li>
+<li>riportare i risultati ottenuti in sede di scrutinio elencando le materie in cui ha ottenuto la sufficienza e quelle in cui non l’ha raggiunta. </li>
+</ul>
+<li><i>Seconda Sezione</i>: “<b>Miglioro le mie strategie di apprendimento</b>”, in cui l’allievo può scegliere obiettivi e strategie e, in seguito, verificare il raggiungimento degli obiettivi. </li>
+<li><i>Terza sezione</i>: “<b>Documento il mio percors</b>o”, in cui lo studente può annotare le sue scoperte e i suoi progressi.</li>
+<li><i>Quarta sezione</i>: “<b>Valuto il mio percorso</b>”, per la valutazione di fine percorso con alcune domande sia per l’allievo che per l’insegnante.</li>
+</ul>
+<p><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/87/Download.png" width="30" height="30" style="vertical-align: middle;" /><a href="https://www.competenzestrategiche.it/mod/resource/view.php?id=156"> Libretto dello studente</a></p></div><div class="book_chapter"><a name="ch32"></a><h3>4.3. Attività per gli studenti</h3><p>Nella tabella sottostante, in relazione alle dimensioni e ai fattori del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a>, sono elencate alcune schede di lavoro personale e di gruppo che possono essere usate dagli studenti per accrescere le proprie strategie di apprendimento. Le schede sono tratte e adattate dal volume <i>Apprendo </i>di E. Ottone (Anicia, 2014).</p>
+<p></p>
+<p></p>
+<table border="1" cellspacing="0" cellpadding="0" style="border-collapse: collapse; border: none; width: 908px; height: 752px;">
+<tbody>
+<tr style=";page-break-inside: avoid; height: 14.15pt;">
+<td width="27" valign="top" style="width: 20.45pt; border-top: none; border-left: none; border-bottom: double windowtext 1.5pt; border-right: solid #7F7F7F 1.0pt; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 14.15pt;">
+<p align="center" style="margin-bottom: .0001pt; text-align: center; line-height: normal;"><span style="font-variant-numeric: normal; font-variant-east-asian: normal;"> </span></p>
+</td>
+<td width="124" style="width: 92.95pt; border-top: solid #7F7F7F 1.0pt; border-left: none; border-bottom: double windowtext 1.5pt; border-right: solid #7F7F7F 1.0pt; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 14.15pt;">
+<p align="center" style="margin-bottom: .0001pt; text-align: center; line-height: normal;"><span style="font-variant-numeric: normal; font-variant-east-asian: normal;">NUCLEI DI COMPETENZE</span></p>
+</td>
+<td width="255" style="width: 191.4pt; border-top: solid #7F7F7F 1.0pt; border-left: none; border-bottom: double windowtext 1.5pt; border-right: solid #7F7F7F 1.0pt; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 14.15pt;">
+<p align="center" style="margin-bottom: .0001pt; text-align: center; line-height: normal;"><span style="font-variant-numeric: normal; font-variant-east-asian: normal;">SOTTOCOMPETENZE </span></p>
+<p align="center" style="margin-bottom: .0001pt; text-align: center; line-height: normal;"><span style="font-variant-numeric: normal; font-variant-east-asian: normal;">STRATEGICHE</span></p>
+</td>
+<td width="236" valign="top" style="width: 176.85pt; border-top: solid #7F7F7F 1.0pt; border-left: none; border-bottom: double windowtext 1.5pt; border-right: solid #7F7F7F 1.0pt; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 14.15pt;">
+<p align="center" style="margin-bottom: .0001pt; text-align: center; line-height: normal;"><span style="font-variant-numeric: normal; font-variant-east-asian: normal;">SCHEDE</span></p>
+<p align="center" style="margin-bottom: .0001pt; text-align: center; line-height: normal;"><span style="font-variant-numeric: normal; font-variant-east-asian: normal;">DI LAVORO</span></p>
+</td>
+</tr>
+<tr style=";height: 19.85pt;">
+<td width="27" rowspan="7" style="width: 20.45pt; border: solid #7F7F7F 1.0pt; border-top: none; background: #FFC000; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p align="center" style="margin-bottom: .0001pt; text-align: center; line-height: normal;"><b>COGNITIVA E METACOGNITIVA</b></p>
+</td>
+<td width="124" rowspan="2" style="width: 92.95pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-bottom: .0001pt; line-height: normal;">Conosco, gestisco e monitoro</p>
+<p style="margin-bottom: .0001pt; line-height: normal;">strategie e processi metacognitivi</p>
+</td>
+<td width="255" style="width: 191.4pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 6.25pt; text-indent: -6.25pt; line-height: normal;">- Conosco il processo dell’<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=12&amp;displayformat=dictionary" title="Glossario: autodirezione" class="glossary autolink concept glossaryid1">autodirezione</a> nell’apprendimento e le <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=5&amp;displayformat=dictionary" title="Glossario: competenze strategiche" class="glossary autolink concept glossaryid1">competenze strategiche</a> implicate in esso</p>
+</td>
+<td width="236" valign="top" style="width: 176.85pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>1.</strong></span> <a href="https://www.competenzestrategiche.it/mod/lesson/view.php?id=50&amp;pageid=15">Rifletto sui processi di apprendimento </a></p>
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>2.</strong></span> <a href="https://www.competenzestrategiche.it/mod/lesson/view.php?id=50&amp;pageid=17">Comprendo il mio profilo al QSA</a></p>
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>3.</strong></span> Imparo ad osservare le mie strategie</p>
+</td>
+</tr>
+<tr style=";height: 19.85pt;">
+<td width="255" style="width: 191.4pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 6.25pt; text-indent: -6.25pt; line-height: normal;">- Programmo, monitoro e valuto l’azione di studio e di apprendimento</p>
+</td>
+<td width="236" valign="top" style="width: 176.85pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>4.</strong></span> Programmo il compito di studio</p>
+</td>
+</tr>
+<tr style=";height: 19.85pt;">
+<td width="124" rowspan="2" style="width: 92.95pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-bottom: .0001pt; line-height: normal;">Mi oriento e mi organizzo</p>
+<p style="margin-bottom: .0001pt; line-height: normal;">nei compiti di studio</p>
+<p style="margin-bottom: .0001pt; line-height: normal;">e di apprendimento</p>
+<p style="margin-bottom: .0001pt; line-height: normal;">(<b>C2, C3, C6</b>)*</p>
+</td>
+<td width="255" style="width: 191.4pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 6.25pt; text-indent: -6.25pt; line-height: normal;">- Gestisco l’ambiente e il tempo di studio</p>
+</td>
+<td width="236" valign="top" style="width: 176.85pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>5.</strong></span> Organizzo il mio tempo di studio</p>
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>6.</strong></span> Preparo e gestisco l’ambiente</p>
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><strong><span style="color: #ae0212;">7.</span></strong> Organizzo il quaderno</p>
+</td>
+</tr>
+<tr style=";height: 19.85pt;">
+<td width="255" style="width: 191.4pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 6.25pt; text-indent: -6.25pt; line-height: normal;">- Oriento l’attenzione e la concentrazione</p>
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 6.25pt; text-indent: -6.25pt; line-height: normal;">- Svolgo il lavoro con accuratezza e precisione</p>
+</td>
+<td width="236" valign="top" style="width: 176.85pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>8.</strong></span> Alleno la concentrazione</p>
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>9.</strong></span> Coltivo l’attenzione</p>
+</td>
+</tr>
+<tr style=";height: 19.85pt;">
+<td width="124" rowspan="3" style="width: 92.95pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-bottom: .0001pt; line-height: normal;">Conosco e gestisco strategie</p>
+<p style="margin-bottom: .0001pt; line-height: normal;">per comprendere e ricordare</p>
+<p style="margin-bottom: .0001pt; line-height: normal;">(<b>C1, C5, C7</b>)*</p>
+</td>
+<td width="255" style="width: 191.4pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 6.25pt; text-indent: -6.25pt; line-height: normal;">- Raccolgo e organizzo i contenuti</p>
+</td>
+<td width="236" valign="top" style="width: 176.85pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><strong><span style="color: #ae0212;">10.</span></strong> <a href="https://www.competenzestrategiche.it/mod/lesson/view.php?id=50&amp;pageid=23">Prendo appunti e organizzo i contenuti</a></p>
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;">     Uso schemi, tabelle, grafici</p>
+</td>
+</tr>
+<tr style=";height: 19.85pt;">
+<td width="255" style="width: 191.4pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 6.25pt; text-indent: -6.25pt; line-height: normal;">- Metto in relazione i contenuti</p>
+</td>
+<td width="236" valign="top" style="width: 176.85pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>11.</strong></span> Rifletto sull’apprendimento significativo</p>
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><strong><span style="color: #ae0212;">12.</span></strong> Costruisco mappe concettuali</p>
+</td>
+</tr>
+<tr style=";page-break-inside: avoid; height: 19.85pt;">
+<td width="255" style="width: 191.4pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 6.25pt; text-indent: -6.25pt; line-height: normal;">- Controllo la comprensione e il ricordo dei contenuti</p>
+</td>
+<td width="236" valign="top" style="width: 176.85pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><strong><span style="color: #ae0212;">13.</span></strong> Uso la strategia dell’autointerrogazione</p>
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>14.</strong></span> Esercito la memoria</p>
+</td>
+</tr>
+<tr style=";page-break-inside: avoid; height: 19.85pt;">
+<td width="27" rowspan="8" style="width: 20.45pt; border-top: none; border-left: solid #7F7F7F 1.0pt; border-bottom: double windowtext 1.5pt; border-right: solid #7F7F7F 1.0pt; background: #92D050; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p align="center" style="margin-bottom: .0001pt; text-align: center; line-height: normal;"><b>MOTIVAZIONALE E VOLITIVA</b></p>
+</td>
+<td width="124" rowspan="2" style="width: 92.95pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-bottom: .0001pt; line-height: normal;">Riconosco le mie reali competenze e attribuisco i miei successi/insuccessi</p>
+<p style="margin-bottom: .0001pt; line-height: normal;">a fattori controllabili</p>
+<p style="margin-bottom: .0001pt; line-height: normal;">(<b>A3, A4, A6</b>)*</p>
+</td>
+<td width="255" style="width: 191.4pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 6.25pt; text-indent: -6.25pt; line-height: normal;">- Conosco e regolo la percezione di competenza</p>
+</td>
+<td width="236" valign="top" style="width: 176.85pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>15.</strong></span> Prendo coscienza della mia teoria dell’intelligenza</p>
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>16.</strong></span> Intervengo sul mio ciclo del pensiero</p>
+</td>
+</tr>
+<tr style=";page-break-inside: avoid; height: 19.85pt;">
+<td width="255" style="width: 191.4pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 6.25pt; text-indent: -6.25pt; line-height: normal;">- Conosco e regolo il mio stile attributivo</p>
+</td>
+<td width="236" valign="top" style="width: 176.85pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><strong><span style="color: #ae0212;">17.</span></strong> Rifletto sui miei successi/insuccessi</p>
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>18.</strong></span> Mi rendo consapevole del mio stile attributivo</p>
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>19.</strong></span> Regolo il mio stile attributivo</p>
+</td>
+</tr>
+<tr style=";height: 19.85pt;">
+<td width="124" rowspan="3" style="width: 92.95pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-bottom: .0001pt; line-height: normal;">Conosco, proteggo e regolo</p>
+<p style="margin-bottom: .0001pt; line-height: normal;">la motivazione</p>
+<p style="margin-bottom: .0001pt; line-height: normal;">e assegno senso e prospettiva esistenziale all’azione</p>
+<p style="margin-bottom: .0001pt; line-height: normal;">di apprendimento</p>
+</td>
+<td width="255" style="width: 191.4pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 6.25pt; text-indent: -6.25pt; line-height: normal;">- Conosco e regolo il processo motivazionale</p>
+</td>
+<td width="236" valign="top" style="width: 176.85pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>20.</strong></span> <a href="https://www.competenzestrategiche.it/mod/lesson/view.php?id=50&amp;pageid=20">Prendo coscienza dei processi motivazionali e volitivi</a></p>
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>21.</strong></span> <a href="https://www.competenzestrategiche.it/mod/lesson/view.php?id=50&amp;pageid=21">Seleziono e ordino le mie motivazioni</a></p>
+</td>
+</tr>
+<tr style=";page-break-inside: avoid; height: 25.5pt;">
+<td width="255" style="width: 191.4pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 25.5pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 6.25pt; text-indent: -6.25pt; line-height: normal;">- Formulo l’intenzione di agire e decido di intraprendere l’azione</p>
+</td>
+<td width="236" valign="top" style="width: 176.85pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 25.5pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>22.</strong></span> Prendo coscienza della mia motivazione</p>
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>23.</strong></span> Identifico il mio stile decisionale</p>
+</td>
+</tr>
+<tr style=";page-break-inside: avoid; height: 25.5pt;">
+<td width="255" style="width: 191.4pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 25.5pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 6.25pt; text-indent: -6.25pt; line-height: normal;">- Assegno senso e prospettiva esistenziale al compito di studio e di apprendimento</p>
+</td>
+<td width="236" valign="top" style="width: 176.85pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 25.5pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; line-height: normal;"><i>Nuovo fattore <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a></i></p>
+</td>
+</tr>
+<tr style=";page-break-inside: avoid; height: 19.85pt;">
+<td width="124" rowspan="3" style="width: 92.95pt; border-top: none; border-left: none; border-bottom: double windowtext 1.5pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-bottom: .0001pt; line-height: normal;">Conosco e regolo la volizione</p>
+<p style="margin-bottom: .0001pt; line-height: normal;">e la perseveranza</p>
+<p style="margin-bottom: .0001pt; line-height: normal;"> (<b>A2, A5</b>)*</p>
+</td>
+<td width="255" style="width: 191.4pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 6.25pt; text-indent: -6.25pt; line-height: normal;">- Conosco e regolo i processi volitivi</p>
+</td>
+<td width="236" valign="top" style="width: 176.85pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>24.</strong></span> Rafforzo la volizione</p>
+</td>
+</tr>
+<tr style=";height: 19.85pt;">
+<td width="255" style="width: 191.4pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 6.25pt; text-indent: -6.25pt; line-height: normal;">- Realizzo quanto deciso portandolo a termine con sistematicità e perseveranza</p>
+</td>
+<td width="236" valign="top" style="width: 176.85pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>25.</strong></span> <a href="https://www.competenzestrategiche.it/mod/lesson/view.php?id=50&amp;pageid=14">Accresco la perseveranza</a></p>
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>26.</strong></span> Regolo l’impulsività</p>
+</td>
+</tr>
+<tr style=";page-break-inside: avoid; height: 19.85pt;">
+<td width="255" style="width: 191.4pt; border-top: none; border-left: none; border-bottom: double windowtext 1.5pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 6.25pt; text-indent: -6.25pt; line-height: normal;">- Coltivo la speranza, l’ottimismo e la fiducia</p>
+</td>
+<td width="236" valign="top" style="width: 176.85pt; border-top: none; border-left: none; border-bottom: double windowtext 1.5pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 19.85pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>27.</strong></span> Coltivo l’ottimismo</p>
+</td>
+</tr>
+<tr style=";page-break-inside: avoid; height: 22.7pt;">
+<td width="27" rowspan="4" style="width: 20.45pt; border: solid #7F7F7F 1.0pt; border-top: none; background: #ED7D31; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 22.7pt;">
+<p align="center" style="margin-bottom: .0001pt; text-align: center; line-height: normal;"><b>AFFETTIVA E RELAZIONALE</b></p>
+</td>
+<td width="124" rowspan="2" style="width: 92.95pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 22.7pt;">
+<p style="margin-bottom: .0001pt; line-height: normal;">Conosco e regolo le emozioni,</p>
+<p style="margin-bottom: .0001pt; line-height: normal;">in particolare l’ansietà</p>
+<p style="margin-bottom: .0001pt; line-height: normal;">(<b>A1, A7</b>)*</p>
+<p style="margin-bottom: .0001pt; line-height: normal;"> </p>
+</td>
+<td width="255" style="width: 191.4pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 22.7pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 6.25pt; text-indent: -6.25pt; line-height: normal;">- Conosco le manifestazioni e le implicanze delle emozioni in situazioni di rendimento scolastico</p>
+</td>
+<td width="236" valign="top" style="width: 176.85pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 22.7pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>28.</strong></span> <a href="https://www.competenzestrategiche.it/mod/lesson/view.php?id=50&amp;pageid=12">Riconosco e regolo le mie emozioni</a></p>
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>29.</strong></span> Combatto la noia in classe</p>
+</td>
+</tr>
+<tr style=";page-break-inside: avoid; height: 22.7pt;">
+<td width="255" style="width: 191.4pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 22.7pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 6.25pt; text-indent: -6.25pt; line-height: normal;">- Regolo le emozioni, in particolare l’ansietà che si manifesta in situazioni di rendimento scolastico</p>
+</td>
+<td width="236" valign="top" style="width: 176.85pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: #F8F8F8; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 22.7pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>30.</strong></span> <a href="https://www.competenzestrategiche.it/mod/lesson/view.php?id=50&amp;pageid=13">Regolo l’ansietà</a></p>
+</td>
+</tr>
+<tr style=";page-break-inside: avoid; height: 22.7pt;">
+<td width="124" rowspan="2" style="width: 92.95pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 22.7pt;">
+<p style="margin-bottom: .0001pt; line-height: normal;">Collaboro con altri nello studio</p>
+<p style="margin-bottom: .0001pt; line-height: normal;">e nell’apprendimento</p>
+<p style="margin-bottom: .0001pt; line-height: normal;">(<b>C4</b>)*</p>
+</td>
+<td width="255" style="width: 191.4pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 22.7pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 6.25pt; text-indent: -6.25pt; line-height: normal;">- Interagisco con i compagni nel lavoro di gruppo</p>
+</td>
+<td width="236" valign="top" style="width: 176.85pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 22.7pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>31.</strong></span> Alleno la capacità di ascoltare</p>
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; line-height: normal;">Esprimo il mio parere argomentandolo</p>
+</td>
+</tr>
+<tr style=";page-break-inside: avoid; height: 22.7pt;">
+<td width="255" style="width: 191.4pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 22.7pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 6.25pt; text-indent: -6.25pt; line-height: normal;">- Collaboro con altri nello studio</p>
+</td>
+<td width="236" valign="top" style="width: 176.85pt; border-top: none; border-left: none; border-bottom: solid #7F7F7F 1.0pt; border-right: solid #7F7F7F 1.0pt; background: white; padding: 5.4pt 2.85pt 2.85pt 2.85pt; height: 22.7pt;">
+<p style="margin-top: 0cm; margin-right: 0cm; margin-bottom: .0001pt; margin-left: 14.15pt; text-indent: -14.75pt; line-height: normal;"><span style="color: #ae0212;"><strong>32.</strong></span> Mi esercito a studiare insieme ad altri</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>* Le sigle si riferiscono ai fattori del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a></p>
+<p> </p>
+<p><img src="https://www.competenzestrategiche.it/pluginfile.php/1952/mod_book/chapter/32/Approfondisci.png" width="30" height="30" style="vertical-align: middle;" />   Fonte: OTTONE Enrica, <em>Apprendo. Strumenti e attività per promuovere l'apprendimento</em>, Roma, Anicia 2014.</p>
+<p></p>
+<p></p>
+<p></p></div></div>    </div>
+</div>
+<script type="text/javascript">
+//<![CDATA[
+var require = {
+    baseUrl : 'https://www.competenzestrategiche.it/lib/requirejs.php/1767962153/',
+    // We only support AMD modules with an explicit define() statement.
+    enforceDefine: true,
+    skipDataMain: true,
+    waitSeconds : 0,
+
+    paths: {
+        jquery: 'https://www.competenzestrategiche.it/lib/javascript.php/1767962153/lib/jquery/jquery-3.1.0.min',
+        jqueryui: 'https://www.competenzestrategiche.it/lib/javascript.php/1767962153/lib/jquery/ui-1.12.1/jquery-ui.min',
+        jqueryprivate: 'https://www.competenzestrategiche.it/lib/javascript.php/1767962153/lib/requirejs/jquery-private'
+    },
+
+    // Custom jquery config map.
+    map: {
+      // '*' means all modules will get 'jqueryprivate'
+      // for their 'jquery' dependency.
+      '*': { jquery: 'jqueryprivate' },
+
+      // 'jquery-private' wants the real jQuery module
+      // though. If this line was not here, there would
+      // be an unresolvable cyclic dependency.
+      jqueryprivate: { jquery: 'jquery' }
+    }
+};
+
+//]]>
+</script>
+<script type="text/javascript" src="https://www.competenzestrategiche.it/lib/javascript.php/1767962153/lib/requirejs/require.min.js"></script>
+<script type="text/javascript">
+//<![CDATA[
+require(['core/first'], function() {
+;
+require(["media_videojs/loader"], function(loader) {
+    loader.setUp(function(videojs) {
+        videojs.options.flash.swf = "https://www.competenzestrategiche.it/media/player/videojs/videojs/video-js.swf";
+videojs.addLanguage("it",{
+ "Play": "Play",
+ "Pause": "Pausa",
+ "Current Time": "Orario attuale",
+ "Duration Time": "Durata",
+ "Remaining Time": "Tempo rimanente",
+ "Stream Type": "Tipo del Streaming",
+ "LIVE": "LIVE",
+ "Loaded": "Caricato",
+ "Progress": "Stato",
+ "Fullscreen": "Schermo intero",
+ "Non-Fullscreen": "Chiudi schermo intero",
+ "Mute": "Muto",
+ "Unmute": "Audio",
+ "Playback Rate": "Tasso di riproduzione",
+ "Subtitles": "Sottotitoli",
+ "subtitles off": "Senza sottotitoli",
+ "Captions": "Sottotitoli non udenti",
+ "captions off": "Senza sottotitoli non udenti",
+ "Chapters": "Capitolo",
+ "You aborted the media playback": "La riproduzione del filmato è stata interrotta.",
+ "A network error caused the media download to fail part-way.": "Il download del filmato è stato interrotto a causa di un problema rete.",
+ "The media could not be loaded, either because the server or network failed or because the format is not supported.": "Il filmato non può essere caricato a causa di un errore nel server o nella rete o perché il formato non viene supportato.",
+ "The media playback was aborted due to a corruption problem or because the media used features your browser did not support.": "La riproduzione del filmato è stata interrotta a causa di un file danneggiato o per l’utilizzo di impostazioni non supportate dal browser.",
+ "No compatible source was found for this media.": "Non ci sono fonti compatibili per questo filmato."
+});
+
+    });
+});;
+require(["core/notification"], function(amd) { amd.init(1952, []); });;
+require(["core/log"], function(amd) { amd.setConfig({"level":"warn"}); });
+});
+//]]>
+</script>
+<script type="text/javascript" src="https://www.competenzestrategiche.it/theme/javascript.php/enlightlite/1767962153/footer"></script>
+<script type="text/javascript">
+//<![CDATA[
+M.str = {"moodle":{"lastmodified":"Ultime modifiche","name":"Nome","error":"Errore","info":"Informazioni","yes":"S\u00ec","no":"No","ok":"OK","cancel":"Annulla","confirm":"Conferma","areyousure":"Sei sicuro?","closebuttontitle":"Chiudi","unknownerror":"Errore sconosciuto"},"repository":{"type":"Tipo","size":"Dimensione","invalidjson":"Stringa JSON non valida","nofilesattached":"Non sono presenti file allegati","filepicker":"File picker","logout":"Logout","nofilesavailable":"Non sono presenti file","norepositoriesavailable":"Spiacente, nessuno dei repostory disponibili pu\u00f2 restituire file nel formato richiesto.","fileexistsdialogheader":"Il file esiste gi\u00e0","fileexistsdialog_editor":"Un file con lo stesso nome \u00e8 gi\u00e0 stato allegato al testo che stai modificando.","fileexistsdialog_filemanager":"Un file con lo stesso nome \u00e8 gi\u00e0 stato allegato","renameto":"Rinomina in \"{$a}\"","referencesexist":"Sono presenti {$a} alias\/scorciatoie collegate a questo file","select":"Scegli"},"admin":{"confirmdeletecomments":"Stai per eliminare commenti, sei sicuro ?","confirmation":"Conferma"}};
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+(function() {Y.use("moodle-filter_mathjaxloader-loader",function() {M.filter_mathjaxloader.configure({"mathjaxconfig":"\n\nMathJax.Hub.Config({\n    config: [\"Accessible.js\", \"Safe.js\"],\n    errorSettings: { message: [\"!\"] },\n    skipStartupTypeset: true,\n    messageStyle: \"none\"\n});\n","lang":"it"});
+});
+Y.use("moodle-filter_glossary-autolinker",function() {M.filter_glossary.init_filter_autolinking({"courseid":0});
+});
+M.util.help_popups.setup(Y);
+ M.util.js_pending('random6a1b224816d782'); Y.on('domready', function() { M.util.js_complete("init");  M.util.js_complete('random6a1b224816d782'); });
+})();
+//]]>
+</script>
+</body>
+</html>

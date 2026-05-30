@@ -108,7 +108,7 @@ class QuestionnaireResult(Base):
 
 
 # --- Catalogo strumenti editabile da admin (item + regole di scala, DB-driven) ---
-# Vedi questionari/PROGETTO_VALIDAZIONE_E_SVILUPPO_QSA_QSAR_SV_EN.md §9.
+# Vedi docs/validazione/progetto-validazione-qsa-qsar-sv-en.md §9.
 
 class Instrument(Base):
     """Metadati e scala di risposta di uno strumento (QSA, QSAr, ZTPI, QPCS, QPCC, QAP)."""

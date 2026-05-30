@@ -19,6 +19,7 @@ from ..api_models import ChatRequest, QsaAuditRequest, TTSRequest
 from ..memory_service import session_memory
 from ..strategy_memory import shared_response_memory
 from ..qsa_extractor import extract_qsa_data
+from ..guided_text_i18n import resolve_text, QUESTIONS_LABEL, PHASE_WORD
 from ..prompt_config import (
     DEFAULT_SYSTEM_PROMPT_GENERIC,
     DEFAULT_GUIDED_TEXT_QSAR_QUESTIONS_INTRO,
@@ -73,18 +74,26 @@ _AGENT_GUIDED_TEXTS = {
 
 
 @router.get("/qsa/guided-ui-texts")
-async def get_guided_ui_texts(questionnaire_type: str = "QSA", db: Session = Depends(get_db)):
+async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it", db: Session = Depends(get_db)):
     """Public endpoint with guided-chat UI texts/labels and step definitions.
 
     Pass ?questionnaire_type=QSAr, ZTPI or SAVICKAS for dedicated guided paths.
+    Pass ?lang=en|es|fr|de|sv to get the student-facing texts in that language
+    (falls back to the Italian base value when a translation is missing).
     """
     ai_service = AIService(db)
     _ensure_questionnaire_guided_steps(db, questionnaire_type)
+    cfg_get = ai_service.config.get
+
+    # Localized "Questions" phase label/banner fragments (number set per questionnaire below).
+    qlabel = QUESTIONS_LABEL.get(lang, QUESTIONS_LABEL["it"])
+    phase_word = PHASE_WORD.get(lang, PHASE_WORD["it"])
 
     result: dict = {}
-    # Static config texts (questions labels, conclusion label, static messages)
+    # Static config texts (questions labels, conclusion label, static messages),
+    # resolved to the requested language (suffixed key -> base/Italian fallback).
     for ui_def in GUIDED_PUBLIC_UI_CONFIG_DEFINITIONS:
-        result[ui_def["key"]] = ai_service.config.get(ui_def["key"], ui_def["default"])
+        result[ui_def["key"]] = resolve_text(cfg_get, ui_def["key"], lang, ui_def["default"])
 
     # Dynamic steps filtered by questionnaire_type
     steps = (
@@ -97,47 +106,45 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", db: Session = Dep
         {
             "id": s.id,
             "sort_order": s.sort_order,
-            "label": _sanitize_ztpi_step_label(s.label) if questionnaire_type == "ZTPI" else s.label,
+            "label": _sanitize_ztpi_step_label(s.label, lang) if questionnaire_type == "ZTPI" else s.label,
             "system_prompt_mode": s.system_prompt_mode,
             "color_theme": s.color_theme,
         }
         for s in steps
     ]
 
-    # Override questions/conclusion texts for ZTPI
+    # Override questions/conclusion texts per questionnaire
     if questionnaire_type == "QSAr":
-        result["label_guided_questions"] = "8. Domande e Approfondimenti"
-        result["text_guided_questions_phase_banner"] = "--- Fase 8: Domande e Approfondimenti ---"
-        result["text_guided_questions_intro"] = ai_service.config.get(
-            "text_qsar_questions_intro", DEFAULT_GUIDED_TEXT_QSAR_QUESTIONS_INTRO
+        result["label_guided_questions"] = f"8. {qlabel}"
+        result["text_guided_questions_phase_banner"] = f"--- {phase_word} 8: {qlabel} ---"
+        result["text_guided_questions_intro"] = resolve_text(
+            cfg_get, "text_qsar_questions_intro", lang, DEFAULT_GUIDED_TEXT_QSAR_QUESTIONS_INTRO
         )
-        result["text_guided_conclusion"] = ai_service.config.get(
-            "text_qsar_conclusion", DEFAULT_GUIDED_TEXT_QSAR_CONCLUSION
+        result["text_guided_conclusion"] = resolve_text(
+            cfg_get, "text_qsar_conclusion", lang, DEFAULT_GUIDED_TEXT_QSAR_CONCLUSION
         )
     elif questionnaire_type == "ZTPI":
         result["text_guided_questions_intro"] = _sanitize_ztpi_user_text(
-            ai_service.config.get(
-                "text_ztpi_questions_intro", DEFAULT_GUIDED_TEXT_ZTPI_QUESTIONS_INTRO
-            )
+            resolve_text(cfg_get, "text_ztpi_questions_intro", lang, DEFAULT_GUIDED_TEXT_ZTPI_QUESTIONS_INTRO),
+            lang,
         )
         result["text_guided_conclusion"] = _sanitize_ztpi_user_text(
-            ai_service.config.get(
-                "text_ztpi_conclusion", DEFAULT_GUIDED_TEXT_ZTPI_CONCLUSION
-            )
+            resolve_text(cfg_get, "text_ztpi_conclusion", lang, DEFAULT_GUIDED_TEXT_ZTPI_CONCLUSION),
+            lang,
         )
     elif questionnaire_type == "SAVICKAS":
-        result["label_guided_questions"] = "7. Domande e Approfondimenti"
-        result["text_guided_questions_phase_banner"] = "--- Fase 7: Domande e Approfondimenti ---"
-        result["text_guided_questions_intro"] = ai_service.config.get(
-            "text_savickas_questions_intro", DEFAULT_GUIDED_TEXT_SAVICKAS_QUESTIONS_INTRO
+        result["label_guided_questions"] = f"7. {qlabel}"
+        result["text_guided_questions_phase_banner"] = f"--- {phase_word} 7: {qlabel} ---"
+        result["text_guided_questions_intro"] = resolve_text(
+            cfg_get, "text_savickas_questions_intro", lang, DEFAULT_GUIDED_TEXT_SAVICKAS_QUESTIONS_INTRO
         )
-        result["text_guided_conclusion"] = ai_service.config.get(
-            "text_savickas_conclusion", DEFAULT_GUIDED_TEXT_SAVICKAS_CONCLUSION
+        result["text_guided_conclusion"] = resolve_text(
+            cfg_get, "text_savickas_conclusion", lang, DEFAULT_GUIDED_TEXT_SAVICKAS_CONCLUSION
         )
     elif questionnaire_type in _AGENT_GUIDED_TEXTS:
         intro_key, intro_default, concl_key, concl_default = _AGENT_GUIDED_TEXTS[questionnaire_type]
-        result["text_guided_questions_intro"] = ai_service.config.get(intro_key, intro_default)
-        result["text_guided_conclusion"] = ai_service.config.get(concl_key, concl_default)
+        result["text_guided_questions_intro"] = resolve_text(cfg_get, intro_key, lang, intro_default)
+        result["text_guided_conclusion"] = resolve_text(cfg_get, concl_key, lang, concl_default)
 
     return result
 
@@ -210,7 +217,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         db, session_id, request, questionnaire_type, retrieval_query
     )
     if _should_sanitize_ztpi_text(request.mode, request.phase):
-        conversation_summary = _sanitize_ztpi_user_text(conversation_summary)
+        conversation_summary = _sanitize_ztpi_user_text(conversation_summary, request.language)
 
     # 4. Get AI Response (con contesto conversazionale)
     try:
@@ -223,7 +230,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         logger.error(f"Errore AI chat session {session_id}: {e}")
         raise HTTPException(status_code=502, detail=str(e))
     if _should_sanitize_ztpi_text(request.mode, request.phase):
-        response_content = _sanitize_ztpi_user_text(response_content)
+        response_content = _sanitize_ztpi_user_text(response_content, request.language)
     elif _is_strategy_questionnaire(questionnaire_type):
         response_content = _annotate_qsa_factor_codes(
             response_content, request.language, questionnaire_type=questionnaire_type
@@ -350,7 +357,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db)):
     )
     sanitize = _should_sanitize_ztpi_text(request.mode, request.phase)
     if sanitize:
-        conversation_summary = _sanitize_ztpi_user_text(conversation_summary)
+        conversation_summary = _sanitize_ztpi_user_text(conversation_summary, request.language)
 
     if sanitize:
         step_label = _sanitize_ztpi_step_label(step_label)
@@ -483,7 +490,7 @@ async def chat_message(
     # 2. Recupera una porzione compatta e pertinente della memoria Markdown.
     conversation_summary = session_memory.get_relevant_context(session_id, query=message)
     if _should_sanitize_ztpi_text(mode, None):
-        conversation_summary = _sanitize_ztpi_user_text(conversation_summary)
+        conversation_summary = _sanitize_ztpi_user_text(conversation_summary, language)
 
     # 3. Get AI Response (con contesto conversazionale)
     response_content = ai_service.get_response(
@@ -491,7 +498,7 @@ async def chat_message(
         conversation_summary=conversation_summary
     )
     if _should_sanitize_ztpi_text(mode, None):
-        response_content = _sanitize_ztpi_user_text(response_content)
+        response_content = _sanitize_ztpi_user_text(response_content, language)
 
     # 4. Aggiorna memoria Markdown prima di restituire la risposta.
     _update_markdown_memory_background(
