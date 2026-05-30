@@ -18,6 +18,14 @@ class ChatRequest(schemas.BaseModel):
     memory_message: Optional[str] = None  # Solo testo reale dell'utente, senza istruzioni interne
 
 
+class SiteChatRequest(schemas.BaseModel):
+    """Domanda al chatbot informativo del sito (RAG su docs/)."""
+    message: str = ""
+    audience: str = "studente"  # 'docente' | 'studente'
+    session_id: Optional[str] = None
+    max_tokens: Optional[int] = None
+
+
 class QsaAuditRequest(schemas.BaseModel):
     scores: dict
     session_id: str

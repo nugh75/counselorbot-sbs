@@ -5,7 +5,7 @@ import { RefreshCw, Plus, Trash2, Save, ListChecks, Sliders, FileText, Eye } fro
 import { useI18n } from '@/lib/i18n-context';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
-const LOCALES = ['it', 'en', 'sv'] as const;
+const LOCALES = ['it', 'en', 'es', 'sv'] as const;
 type Locale = typeof LOCALES[number];
 const ORIENTATIONS = ['resource', 'difficulty', 'neutral'] as const;
 
@@ -13,6 +13,7 @@ interface Instrument {
     code: string;
     name_it: string | null;
     name_en: string | null;
+    name_es: string | null;
     name_sv: string | null;
     response_scale_min: number;
     response_scale_max: number;
@@ -30,6 +31,7 @@ interface Factor {
     is_interpretation_inverted: boolean;
     label_it: string | null;
     label_en: string | null;
+    label_es: string | null;
     label_sv: string | null;
 }
 
@@ -42,6 +44,7 @@ interface Item {
     reverse_scoring: boolean;
     text_it: string | null;
     text_en: string | null;
+    text_es: string | null;
     text_sv: string | null;
     active: boolean;
 }
@@ -123,7 +126,7 @@ export function QuestionnaireEditor() {
         const res = await fetch(`/api/admin/instruments/${meta.code}`, {
             method: 'PUT', headers: JSON_HEADERS,
             body: JSON.stringify({
-                name_it: meta.name_it, name_en: meta.name_en, name_sv: meta.name_sv,
+                name_it: meta.name_it, name_en: meta.name_en, name_es: meta.name_es, name_sv: meta.name_sv,
                 response_scale_min: meta.response_scale_min, response_scale_max: meta.response_scale_max,
                 report_scale_type: meta.report_scale_type, status: meta.status,
             }),
@@ -137,7 +140,7 @@ export function QuestionnaireEditor() {
             body: JSON.stringify({
                 code: f.code, sort_order: f.sort_order, dimension: f.dimension,
                 orientation: f.orientation, is_interpretation_inverted: f.is_interpretation_inverted,
-                label_it: f.label_it, label_en: f.label_en, label_sv: f.label_sv,
+                label_it: f.label_it, label_en: f.label_en, label_es: f.label_es, label_sv: f.label_sv,
             }),
         });
         flash(res.ok ? t('admin.q.saved') : t('admin.q.saveError'));
@@ -166,7 +169,7 @@ export function QuestionnaireEditor() {
             body: JSON.stringify({
                 item_number: it.item_number, sort_order: it.sort_order, factor_code: it.factor_code,
                 reverse_scoring: it.reverse_scoring, active: it.active,
-                text_it: it.text_it, text_en: it.text_en, text_sv: it.text_sv,
+                text_it: it.text_it, text_en: it.text_en, text_es: it.text_es, text_sv: it.text_sv,
             }),
         });
         flash(res.ok ? t('admin.q.saved') : t('admin.q.saveError'));
@@ -303,7 +306,7 @@ export function QuestionnaireEditor() {
                                     <th className="py-2 pr-2">{t('admin.q.dimension')}</th>
                                     <th className="py-2 pr-2">{t('admin.q.orientation')}</th>
                                     <th className="py-2 pr-2">{t('admin.q.inverted')}</th>
-                                    <th className="py-2 pr-2">{t('admin.q.label')} (it/en/sv)</th>
+                                    <th className="py-2 pr-2">{t('admin.q.label')} (it/en/es/sv)</th>
                                     <th className="py-2"></th>
                                 </tr>
                             </thead>

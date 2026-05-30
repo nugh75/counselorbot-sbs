@@ -9,7 +9,7 @@ interface FactorDefinition {
     orientation: ProfileOrientation;
     itemNumbers: number[];
     reverseItems?: number[];
-    labels: Record<AdministrationLocale, string>;
+    labels: Partial<Record<AdministrationLocale, string>> & { en: string };
 }
 
 export interface ExperimentalProfileResult {
@@ -305,6 +305,24 @@ const TEXT = {
             higher: 'Högre rapporterad närvaro av denna dimension.',
         },
     },
+    es: {
+        band: { lower: 'Frecuencia mas baja', moderate: 'Frecuencia moderada', higher: 'Frecuencia mas alta' },
+        resource: {
+            lower: 'Uso declarado mas bajo de esta estrategia o recurso.',
+            moderate: 'Uso declarado moderado de esta estrategia o recurso.',
+            higher: 'Uso declarado mas alto de esta estrategia o recurso.',
+        },
+        difficulty: {
+            lower: 'Frecuencia declarada mas baja de esta dificultad.',
+            moderate: 'Frecuencia declarada moderada de esta dificultad.',
+            higher: 'Frecuencia declarada mas alta de esta dificultad.',
+        },
+        neutral: {
+            lower: 'Presencia declarada mas baja de esta dimension.',
+            moderate: 'Presencia declarada moderada de esta dimension.',
+            higher: 'Presencia declarada mas alta de esta dimension.',
+        },
+    },
 } satisfies Record<AdministrationLocale, {
     band: Record<FrequencyBand, string>;
     resource: Record<FrequencyBand, string>;
@@ -338,7 +356,7 @@ export function calculateExperimentalProfile(
 
         return {
             code: factor.code,
-            label: factor.labels[locale],
+            label: factor.labels[locale] ?? factor.labels.en,
             dimension: factor.dimension,
             orientation: factor.orientation,
             average,

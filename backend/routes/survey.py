@@ -6,6 +6,7 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from .. import models, schemas, auth, database
+from ..validation_export import build_validation_csv, validation_query, validation_summary
 from ..strategy_memory import shared_response_memory, strategy_memory
 from ..pdf_generator import generate_questionnaire_pdf
 from .. import scoring_service
@@ -123,15 +124,84 @@ async def score_instrument(
 
     if payload.save:
         username = identity.get("username") if identity.get("authenticated") else None
+        factor_scores = scoring_service.mapped_stanine_scores(profile)
         db.add(models.QuestionnaireResult(
             session_id=payload.session_id,
             questionnaire_type=code,
-            scores=scoring_service.mapped_stanine_scores(profile),
+            scores=factor_scores,
             username=username,
         ))
+        if payload.save_validation:
+            db.add(models.ValidationResponse(
+                session_id=payload.session_id,
+                instrument_code=code,
+                locale=payload.locale,
+                version_label=(payload.version_label or "draft").strip() or "draft",
+                answers={str(k): v for k, v in payload.answers.items()},
+                factor_scores=factor_scores,
+                response_metadata=payload.response_metadata or {},
+                username=username,
+                duration_seconds=payload.duration_seconds,
+            ))
         db.commit()
 
     return profile
+
+
+@router.get("/admin/validation/summary", response_model=schemas.ValidationSummaryResponse)
+async def get_validation_summary(
+    instrument_code: Optional[str] = Query(None),
+    locale: Optional[str] = Query(None),
+    version_label: Optional[str] = Query(None),
+    current_user: dict = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Statistiche rapide sul dataset grezzo disponibile per validazione."""
+    return validation_summary(db, instrument_code, locale, version_label)
+
+
+@router.get("/admin/validation/responses", response_model=List[schemas.ValidationResponseResponse])
+async def get_validation_responses(
+    instrument_code: Optional[str] = Query(None),
+    locale: Optional[str] = Query(None),
+    version_label: Optional[str] = Query(None),
+    skip: int = 0,
+    limit: int = 50,
+    current_user: dict = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Risposte grezze item-level per controllo admin."""
+    return (
+        validation_query(db, instrument_code, locale, version_label)
+        .order_by(models.ValidationResponse.submitted_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+
+@router.get("/admin/validation/export.csv")
+async def export_validation_csv(
+    instrument_code: Optional[str] = Query(None),
+    locale: Optional[str] = Query(None),
+    version_label: Optional[str] = Query(None),
+    current_user: dict = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Export CSV item-per-item per analisi in R/JASP/SPSS/Mplus."""
+    rows = (
+        validation_query(db, instrument_code, locale, version_label)
+        .order_by(models.ValidationResponse.submitted_at.asc())
+        .all()
+    )
+    csv_text = build_validation_csv(rows, db)
+    suffix = "-".join(part for part in [instrument_code, locale, version_label] if part)
+    filename = f"validation-responses{('-' + suffix) if suffix else ''}.csv"
+    return Response(
+        content=csv_text,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.get("/user/questionnaire-results", response_model=List[schemas.QuestionnaireResultResponse])

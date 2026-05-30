@@ -11,6 +11,9 @@ Questo file raccoglie la cronologia dettagliata delle attività svolte per il pr
 * **Nuova tassonomia**: Organizzati i materiali in `progetto/`, `validazione/`, `questionari/`, `prompting/`, `implementazione/` e `fonti/`.
 * **Proposta implementata**: Archiviata la proposta di migrazione in [`proposta-organizzazione-docs-implementata-2026-05-30.md`](organizzazione/proposta-organizzazione-docs-implementata-2026-05-30.md).
 * **Archivio competenzestrategiche.it**: Scaricate le risorse documentali pubbliche mancanti dal sito in [`sito-competenzestrategiche`](../fonti/competenze-strategiche/sito-competenzestrategiche/) e le fonti esterne collegate in [`fonti-esterne-collegate`](../fonti/competenze-strategiche/fonti-esterne-collegate/).
+* **Grafo Graphify**: Generato il grafo semantico della cartella `docs/` con `safishamsi/graphify`, archiviato in [`graphify-docs-2026-05-30`](organizzazione/graphify-docs-2026-05-30/).
+* **Contatto M. Begoña Alfageme González**: Preparata la bozza di risposta in spagnolo per proporre l'uso della piattaforma CounselorBot nella validazione della versione spagnola del QSA gia' revisionata, con dati operativi per creare un account di prova. Documento archiviato in [`contatto-begona-qsa-es-2026-05-30.md`](comunicazioni/contatto-begona-qsa-es-2026-05-30.md).
+* **Sezione admin Validazione**: Implementato il salvataggio delle risposte grezze item-per-item in `validation_responses`, un exporter CSV Python riusabile anche da CLI e un pannello admin per filtrare/esportare dataset per strumento, lingua e versione.
 
 ### 30 Maggio 2026 - Validazione Metodologica e Contatto KTH
 * **Dettagli Psicometrici**: Redatto il documento [dettagli-validazione-questionari.md](../validazione/dettagli-validazione-questionari.md) contenente le specifiche dei questionari QSA (100 item, 14 fattori), QSAr (46 item, 8 fattori), ZTPI, QPCS, QPCC e QAP.
@@ -46,6 +49,9 @@ Questo file raccoglie la cronologia dettagliata delle attività svolte per il pr
 * **New taxonomy**: Organized materials into `progetto/`, `validazione/`, `questionari/`, `prompting/`, `implementazione/`, and `fonti/`.
 * **Implemented proposal**: Archived the migration proposal in [`proposta-organizzazione-docs-implementata-2026-05-30.md`](organizzazione/proposta-organizzazione-docs-implementata-2026-05-30.md).
 * **competenzestrategiche.it archive**: Downloaded missing public documentation from the site into [`sito-competenzestrategiche`](../fonti/competenze-strategiche/sito-competenzestrategiche/) and linked external sources into [`fonti-esterne-collegate`](../fonti/competenze-strategiche/fonti-esterne-collegate/).
+* **Graphify graph**: Generated the semantic graph for `docs/` with `safishamsi/graphify`, archived in [`graphify-docs-2026-05-30`](organizzazione/graphify-docs-2026-05-30/).
+* **Contact with M. Begoña Alfageme González**: Prepared a Spanish reply proposing CounselorBot as a working platform for validating the already reviewed Spanish QSA version, including operational account-creation data. Archived in [`contatto-begona-qsa-es-2026-05-30.md`](comunicazioni/contatto-begona-qsa-es-2026-05-30.md).
+* **Validation admin section**: Implemented item-level raw response storage in `validation_responses`, a reusable Python CSV exporter also available from CLI, and an admin panel to filter/export datasets by instrument, language, and version.
 
 ### May 30, 2026 - Methodological Validation and KTH Contact
 * **Psychometric Details**: Drafted [dettagli-validazione-questionari.md](../validazione/dettagli-validazione-questionari.md) specifying details for QSA (100 items, 14 factors), QSAr (46 items, 8 factors), ZTPI, QPCS, QPCC, and QAP.

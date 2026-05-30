@@ -6,6 +6,7 @@ Questa cartella e' il punto unico di ingresso per la documentazione del progetto
 
 - [Organizzazione docs implementata](progetto/organizzazione/proposta-organizzazione-docs-implementata-2026-05-30.md): inventario, mappatura e decisioni della migrazione.
 - [Grafo della documentazione](progetto/organizzazione/grafo-docs-2026-05-30.md): vista Mermaid della struttura `docs/`.
+- [Grafo Graphify docs](progetto/organizzazione/graphify-docs-2026-05-30/README.md): output generato con `safishamsi/graphify`.
 - [Diario di bordo](progetto/diario.md): cronologia del progetto.
 - [Comunicazioni](progetto/comunicazioni/): bozze e testi di contatto.
 - [Validazione](validazione/): progetto scientifico, manuale operativo, dettagli psicometrici, diagnosi e stanine.

@@ -6,6 +6,7 @@ export interface ChatStreamResult {
     session_id?: string;
     strategy_ids?: string[];
     response_id?: string;
+    sources?: string[];
 }
 
 export async function streamChat(
@@ -13,8 +14,9 @@ export async function streamChat(
     onDelta: (fullText: string) => void,
     signal?: AbortSignal,
     onReasoning?: (fullReasoning: string) => void,
+    endpoint: string = '/api/chat/stream',
 ): Promise<ChatStreamResult> {
-    const res = await fetch('/api/chat/stream', {
+    const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -33,6 +35,7 @@ export async function streamChat(
     let sessionId: string | undefined;
     let strategyIds: string[] | undefined;
     let responseId: string | undefined;
+    let sources: string[] | undefined;
 
     for (;;) {
         const { done, value } = await reader.read();
@@ -48,7 +51,7 @@ export async function streamChat(
             const json = line.slice(5).trim();
             if (!json) continue;
 
-            let evt: { delta?: string; display?: string; reasoning?: string; done?: boolean; response?: string; session_id?: string; strategy_ids?: string[]; response_id?: string; error?: string };
+            let evt: { delta?: string; display?: string; reasoning?: string; done?: boolean; response?: string; session_id?: string; strategy_ids?: string[]; response_id?: string; sources?: string[]; error?: string };
             try {
                 evt = JSON.parse(json);
             } catch {
@@ -74,9 +77,10 @@ export async function streamChat(
                 sessionId = evt.session_id;
                 strategyIds = evt.strategy_ids;
                 responseId = evt.response_id;
+                sources = evt.sources;
             }
         }
     }
 
-    return { response: full, session_id: sessionId, strategy_ids: strategyIds, response_id: responseId };
+    return { response: full, session_id: sessionId, strategy_ids: strategyIds, response_id: responseId, sources };
 }

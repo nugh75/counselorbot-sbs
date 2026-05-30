@@ -34,6 +34,7 @@ from .routes import admin as admin_routes
 from .routes import survey as survey_routes
 from .routes import chat as chat_routes
 from .routes import memory as memory_routes
+from .routes import site_chat as site_chat_routes
 
 # Re-export per retro-compatibilità (es. smoke test che importa da backend.main)
 from .ai_service import AIService, AIError  # noqa: F401
@@ -75,6 +76,25 @@ async def lifespan(app: FastAPI):
             db.close()
 
     asyncio.create_task(_preload())
+
+    async def _build_rag():
+        # Pre-costruisce l'indice RAG del chatbot del sito (embeddings locali).
+        # Non bloccante: se Ollama/embedding non è pronto, la build avverrà alla
+        # prima richiesta. La build incrementale salta se il corpus non è cambiato.
+        try:
+            from .rag_index import site_rag_index
+            db = _SessionLocal()
+            svc = _AIService(db)
+            await asyncio.get_event_loop().run_in_executor(None, site_rag_index.ensure, svc)
+        except Exception as e:
+            logging.getLogger(__name__).warning(f"Build indice RAG site-chat differita: {e}")
+        finally:
+            try:
+                db.close()
+            except Exception:
+                pass
+
+    asyncio.create_task(_build_rag())
     yield
 
 
@@ -127,6 +147,26 @@ def _seed_and_migrate():
                 conn.commit()
         except Exception as e:
             logger.debug(f"questionnaire_results migration skipped/failed: {e}")
+
+        for table, columns in {
+            "instruments": [
+                "ADD COLUMN name_es VARCHAR",
+            ],
+            "factors": [
+                "ADD COLUMN label_es VARCHAR",
+                "ADD COLUMN description_es TEXT",
+            ],
+            "questionnaire_items": [
+                "ADD COLUMN text_es TEXT",
+            ],
+        }.items():
+            for clause in columns:
+                try:
+                    with database.engine.connect() as conn:
+                        conn.execute(sa_text(f"ALTER TABLE {table} {clause}"))
+                        conn.commit()
+                except Exception as e:
+                    logger.debug(f"{table} migration skipped/failed ({clause}): {e}")
 
         # Create initial admin user if not exists
         user = db.query(models.User).filter(models.User.username == "admin").first()
@@ -361,6 +401,10 @@ def _seed_and_migrate():
         _seed_instruments_catalog(db)
     finally:
         db.close()
+        try:
+            lock_conn.exec_driver_sql("SELECT pg_advisory_unlock(91234)")
+        finally:
+            lock_conn.close()
 
 
 def _migrate_prompts_to_english(db):
@@ -481,10 +525,6 @@ def _seed_instruments_catalog(db):
         logger.info(f"Seeded instrument catalog: {code}")
     if seeded:
         db.commit()
-        try:
-            lock_conn.exec_driver_sql("SELECT pg_advisory_unlock(91234)")
-        finally:
-            lock_conn.close()
 
 
 # --- Registrazione router ---
@@ -492,3 +532,4 @@ app.include_router(admin_routes.router)
 app.include_router(survey_routes.router)
 app.include_router(chat_routes.router)
 app.include_router(memory_routes.router)
+app.include_router(site_chat_routes.router)

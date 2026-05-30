@@ -1,13 +1,13 @@
 export type AdministrationInstrument = 'QSA' | 'QSAr' | 'ZTPI' | 'QPCS' | 'QPCC' | 'QAP';
-export type AdministrationLocale = 'en' | 'sv';
+export type AdministrationLocale = 'en' | 'es' | 'sv';
 
-export const INSTRUMENT_NAMES: Record<AdministrationInstrument, { en: string; sv: string }> = {
-    QSA: { en: 'Learning Strategies Questionnaire', sv: 'Frågeformulär om inlärningsstrategier' },
-    QSAr: { en: 'Learning Strategies Questionnaire - Short Form', sv: 'Frågeformulär om inlärningsstrategier - kortversion' },
-    ZTPI: { en: 'Zimbardo Time Perspective Inventory', sv: 'Zimbardos tidsperspektivinventarium' },
-    QPCS: { en: 'Perceived Strategic Competences Questionnaire', sv: 'Frågeformulär om upplevda strategiska kompetenser' },
-    QPCC: { en: 'Perceived Competences and Beliefs Questionnaire', sv: 'Frågeformulär om upplevda kompetenser och föreställningar' },
-    QAP: { en: 'Career Adapt-Abilities Scale', sv: 'Skala för anpassningsbarhet i karriären' },
+export const INSTRUMENT_NAMES: Record<AdministrationInstrument, { en: string; es: string; sv: string }> = {
+    QSA: { en: 'Learning Strategies Questionnaire', es: 'Cuestionario sobre Estrategias de Aprendizaje', sv: 'Frågeformulär om inlärningsstrategier' },
+    QSAr: { en: 'Learning Strategies Questionnaire - Short Form', es: 'Cuestionario sobre Estrategias de Aprendizaje - versión reducida', sv: 'Frågeformulär om inlärningsstrategier - kortversion' },
+    ZTPI: { en: 'Zimbardo Time Perspective Inventory', es: 'Inventario de Perspectiva Temporal de Zimbardo', sv: 'Zimbardos tidsperspektivinventarium' },
+    QPCS: { en: 'Perceived Strategic Competences Questionnaire', es: 'Cuestionario de Competencias Estratégicas Percibidas', sv: 'Frågeformulär om upplevda strategiska kompetenser' },
+    QPCC: { en: 'Perceived Competences and Beliefs Questionnaire', es: 'Cuestionario de Competencias y Creencias Percibidas', sv: 'Frågeformulär om upplevda kompetenser och föreställningar' },
+    QAP: { en: 'Career Adapt-Abilities Scale', es: 'Escala de Adaptabilidad de Carrera', sv: 'Skala för anpassningsbarhet i karriären' },
 };
 
 export const INSTRUMENT_ITEM_COUNTS: Record<AdministrationInstrument, number> = {
@@ -679,6 +679,26 @@ const SV_BASE = {
     stanineScore: 'Stanine-poäng',
 };
 
+const ES_BASE = {
+    testBadge: 'VERSION DE PRUEBA',
+    warningTitle: 'Administracion solo para probar el instrumento',
+    warningBody: 'Esta version espanola se esta usando para validar la adaptacion del instrumento. Cualquier perfil mostrado tras el envio es una vista experimental, no una evaluacion validada, y no debe usarse para decisiones educativas, orientadoras o diagnosticas individuales.',
+    instructions: 'Para cada afirmacion, selecciona con que frecuencia describe lo que haces o sientes habitualmente. Responde segun lo que realmente haces o sientes, no segun lo que te gustaria hacer.',
+    privacyNote: 'Las respuestas se guardan para construir el conjunto de datos de validacion y permitir controles posteriores.',
+    scale: ['Nunca o casi nunca', 'A veces', 'A menudo', 'Siempre o casi siempre'] as [string, string, string, string],
+    progress: 'respondidas',
+    missingAnswers: 'Responde a todas las afirmaciones antes de enviar la administracion.',
+    submit: 'Enviar administracion',
+    submittedTitle: 'Perfil factorial experimental',
+    submittedBody: 'Este perfil es una vista experimental para probar la version adaptada del instrumento. Las respuestas brutas se han guardado para la validacion psicometrica.',
+    profileMethod: 'Las barras muestran la frecuencia media seleccionada para los items asignados a cada factor (1 a 4); los items inversos se recodifican dentro de su factor. Las normas espanolas solo deben aplicarse despues de la validacion.',
+    rawAverage: 'Media bruta de frecuencia',
+    restart: 'Completar de nuevo',
+    back: 'Volver a las administraciones',
+    startChat: 'Iniciar chat AI',
+    stanineScore: 'Puntuacion stanine',
+};
+
 const QSA_DIMENSIONS: Record<string, string> = {
     cognitive: 'Cognitive and metacognitive factors',
     affective: 'Affective and motivational factors',
@@ -687,6 +707,11 @@ const QSA_DIMENSIONS: Record<string, string> = {
 const QSA_DIMENSIONS_SV: Record<string, string> = {
     cognitive: 'Kognitiva och metakognitiva faktorer',
     affective: 'Affektiva och motivationella faktorer',
+};
+
+const QSA_DIMENSIONS_ES: Record<string, string> = {
+    cognitive: 'Factores cognitivos y metacognitivos',
+    affective: 'Factores afectivos y motivacionales',
 };
 
 const ZTPI_DIMENSIONS: Record<string, string> = {
@@ -705,6 +730,14 @@ const ZTPI_DIMENSIONS_SV: Record<string, string> = {
     f: 'Framtid',
 };
 
+const ZTPI_DIMENSIONS_ES: Record<string, string> = {
+    pn: 'Pasado negativo',
+    pp: 'Pasado positivo',
+    ph: 'Presente hedonista',
+    pf: 'Presente fatalista',
+    f: 'Futuro',
+};
+
 const QAP_DIMENSIONS: Record<string, string> = {
     concern: 'Concern',
     control: 'Control',
@@ -717,6 +750,13 @@ const QAP_DIMENSIONS_SV: Record<string, string> = {
     control: 'Kontroll',
     curiosity: 'Nyfikenhet',
     confidence: 'Tilltro',
+};
+
+const QAP_DIMENSIONS_ES: Record<string, string> = {
+    concern: 'Preocupacion por el futuro',
+    control: 'Control',
+    curiosity: 'Curiosidad',
+    confidence: 'Confianza',
 };
 
 const QPCS_DIMENSIONS: Record<string, string> = {
@@ -735,6 +775,14 @@ const QPCS_DIMENSIONS_SV: Record<string, string> = {
     confidence_life_project: 'Tilltro & livsprojekt',
 };
 
+const QPCS_DIMENSIONS_ES: Record<string, string> = {
+    managing_emotions: 'Gestion de las emociones',
+    communicative_competence: 'Competencia comunicativa',
+    will_perseverance: 'Voluntad y perseverancia',
+    strategies_collaboration: 'Estrategias y colaboracion',
+    confidence_life_project: 'Confianza y proyecto de vida',
+};
+
 const QPCC_DIMENSIONS: Record<string, string> = {
     public_speaking: 'Public speaking',
     anxiety_responsibility: 'Managing anxiety & responsibility',
@@ -751,6 +799,14 @@ const QPCC_DIMENSIONS_SV: Record<string, string> = {
     beliefs_about_self: 'Föreställningar om sig själv',
 };
 
+const QPCC_DIMENSIONS_ES: Record<string, string> = {
+    public_speaking: 'Hablar en publico',
+    anxiety_responsibility: 'Gestion de ansiedad y responsabilidad',
+    volition_selfregulation: 'Volicion y autorregulacion',
+    elaboration_strategies: 'Estrategias de elaboracion',
+    beliefs_about_self: 'Creencias sobre uno mismo',
+};
+
 export const TEST_ADMINISTRATIONS: Record<AdministrationInstrument, Record<AdministrationLocale, AdministrationCopy>> = {
     QSA: {
         en: {
@@ -758,6 +814,13 @@ export const TEST_ADMINISTRATIONS: Record<AdministrationInstrument, Record<Admin
             dimensionTitles: QSA_DIMENSIONS,
             shortName: 'QSA',
             title: 'Learning Strategies Questionnaire (QSA)',
+            items: QSA_EN,
+        },
+        es: {
+            ...ES_BASE,
+            dimensionTitles: QSA_DIMENSIONS_ES,
+            shortName: 'QSA',
+            title: 'Cuestionario sobre Estrategias de Aprendizaje (QSA)',
             items: QSA_EN,
         },
         sv: {
@@ -776,6 +839,13 @@ export const TEST_ADMINISTRATIONS: Record<AdministrationInstrument, Record<Admin
             title: 'Learning Strategies Questionnaire - Short Form (QSAr)',
             items: QSAR_EN,
         },
+        es: {
+            ...ES_BASE,
+            dimensionTitles: QSA_DIMENSIONS_ES,
+            shortName: 'QSAr',
+            title: 'Cuestionario sobre Estrategias de Aprendizaje - version reducida (QSAr)',
+            items: QSAR_EN,
+        },
         sv: {
             ...SV_BASE,
             dimensionTitles: QSA_DIMENSIONS_SV,
@@ -792,6 +862,13 @@ export const TEST_ADMINISTRATIONS: Record<AdministrationInstrument, Record<Admin
             title: 'Zimbardo Time Perspective Inventory (ZTPI)',
             items: ZTPI_EN,
         },
+        es: {
+            ...ES_BASE,
+            dimensionTitles: ZTPI_DIMENSIONS_ES,
+            shortName: 'ZTPI',
+            title: 'Inventario de Perspectiva Temporal de Zimbardo (ZTPI)',
+            items: ZTPI_EN,
+        },
         sv: {
             ...SV_BASE,
             dimensionTitles: ZTPI_DIMENSIONS_SV,
@@ -806,6 +883,13 @@ export const TEST_ADMINISTRATIONS: Record<AdministrationInstrument, Record<Admin
             dimensionTitles: QPCS_DIMENSIONS,
             shortName: 'QPCS',
             title: 'Perceived Strategic Competences Questionnaire (QPCS)',
+            items: QPCS_EN,
+        },
+        es: {
+            ...ES_BASE,
+            dimensionTitles: QPCS_DIMENSIONS_ES,
+            shortName: 'QPCS',
+            title: 'Cuestionario de Competencias Estrategicas Percibidas (QPCS)',
             items: QPCS_EN,
         },
         sv: {
@@ -825,6 +909,14 @@ export const TEST_ADMINISTRATIONS: Record<AdministrationInstrument, Record<Admin
             items: QPCC_EN,
             scale: ['Strongly disagree', 'Partly agree', 'Fairly agree', 'Fully agree'] as [string, string, string, string],
         },
+        es: {
+            ...ES_BASE,
+            dimensionTitles: QPCC_DIMENSIONS_ES,
+            shortName: 'QPCC',
+            title: 'Cuestionario de Competencias y Creencias Percibidas (QPCC)',
+            items: QPCC_EN,
+            scale: ['Totalmente en desacuerdo', 'Parcialmente de acuerdo', 'Bastante de acuerdo', 'Totalmente de acuerdo'] as [string, string, string, string],
+        },
         sv: {
             ...SV_BASE,
             dimensionTitles: QPCC_DIMENSIONS_SV,
@@ -840,6 +932,13 @@ export const TEST_ADMINISTRATIONS: Record<AdministrationInstrument, Record<Admin
             dimensionTitles: QAP_DIMENSIONS,
             shortName: 'QAP',
             title: 'Career Adapt-Abilities Scale (QAP/CAAS)',
+            items: QAP_EN,
+        },
+        es: {
+            ...ES_BASE,
+            dimensionTitles: QAP_DIMENSIONS_ES,
+            shortName: 'QAP',
+            title: 'Escala de Adaptabilidad de Carrera (QAP/CAAS)',
             items: QAP_EN,
         },
         sv: {
@@ -858,6 +957,6 @@ export function getTestAdministration(
 ): AdministrationCopy | null {
     const valid: AdministrationInstrument[] = ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP'];
     if (!valid.includes(instrument as AdministrationInstrument)) return null;
-    if (locale !== 'en' && locale !== 'sv') return null;
+    if (locale !== 'en' && locale !== 'es' && locale !== 'sv') return null;
     return TEST_ADMINISTRATIONS[instrument as AdministrationInstrument][locale];
 }

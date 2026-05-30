@@ -107,6 +107,28 @@ class QuestionnaireResult(Base):
     submitted_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class ValidationResponse(Base):
+    """Dataset grezzo per validazione psicometrica.
+
+    Conserva risposte item-per-item e metadati di raccolta. I profili sintetici
+    restano in `questionnaire_results` per la UI ordinaria dello studente.
+    """
+
+    __tablename__ = "validation_responses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(String, index=True, nullable=False)
+    instrument_code = Column(String, index=True, nullable=False)
+    locale = Column(String, index=True, nullable=False)
+    version_label = Column(String, index=True, nullable=False, default="draft")
+    answers = Column(JSON, nullable=False)
+    factor_scores = Column(JSON, nullable=True)
+    response_metadata = Column(JSON, nullable=True)
+    username = Column(String, nullable=True, index=True)
+    duration_seconds = Column(Integer, nullable=True)
+    submitted_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 # --- Catalogo strumenti editabile da admin (item + regole di scala, DB-driven) ---
 # Vedi docs/validazione/progetto-validazione-qsa-qsar-sv-en.md §9.
 
@@ -118,6 +140,7 @@ class Instrument(Base):
     code = Column(String, primary_key=True, index=True)
     name_it = Column(String, nullable=True)
     name_en = Column(String, nullable=True)
+    name_es = Column(String, nullable=True)
     name_sv = Column(String, nullable=True)
     # Scala di RISPOSTA agli item (es. 1-4 frequenza, 1-5 Likert)
     response_scale_min = Column(Integer, nullable=False, default=1)
@@ -145,9 +168,11 @@ class Factor(Base):
     is_interpretation_inverted = Column(Boolean, nullable=False, default=False)
     label_it = Column(String, nullable=True)
     label_en = Column(String, nullable=True)
+    label_es = Column(String, nullable=True)
     label_sv = Column(String, nullable=True)
     description_it = Column(Text, nullable=True)
     description_en = Column(Text, nullable=True)
+    description_es = Column(Text, nullable=True)
     description_sv = Column(Text, nullable=True)
 
 
@@ -164,6 +189,7 @@ class QuestionnaireItem(Base):
     reverse_scoring = Column(Boolean, nullable=False, default=False)
     text_it = Column(Text, nullable=True)
     text_en = Column(Text, nullable=True)
+    text_es = Column(Text, nullable=True)
     text_sv = Column(Text, nullable=True)
     active = Column(Boolean, nullable=False, default=True)
 

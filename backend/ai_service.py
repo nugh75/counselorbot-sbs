@@ -55,6 +55,8 @@ class AIService:
         self.ollama_num_ctx = self._int_config('ollama_num_ctx', 16384, 2048, 32768)
         self.ollama_keep_alive = self.config.get('ollama_keep_alive', '5m') or '5m'
         self.ollama_preload_enabled = str(self.config.get('ollama_preload', 'false')).lower() == 'true'
+        # Modello di embedding locale (via Ollama) per il RAG del chatbot del sito.
+        self.embedding_model = (self.config.get('embedding_model') or 'qwen3-embedding:4b').strip()
 
         # Registro provider: un'unica fonte di verità per dispatch sync/stream.
         # call_max  = default max_tokens per la chiamata bloccante (get_response)
@@ -532,6 +534,53 @@ class AIService:
             for text in stream.text_stream:
                 if text:
                     yield text
+
+    # ---------------------------------------------------------------------
+    # Embeddings (locali, via Ollama) — usati dal RAG del chatbot del sito.
+    # ---------------------------------------------------------------------
+    def embed_texts(self, texts, model: str = None):
+        """Ritorna la lista di vettori di embedding per `texts` (lista di stringhe).
+
+        Usa l'endpoint Ollama /api/embed (batch). Il modello di default è
+        `embedding_model` (bge-m3). Solleva AIError su fallimento, coerente con
+        il resto del service (mai stringhe d'errore come risultato)."""
+        if not texts:
+            return []
+        base_url = (self._get_api_key('ollama_ip') or "http://localhost:11434").rstrip('/')
+        model = model or self.embedding_model
+        if not model:
+            raise AIError("Modello di embedding non configurato (embedding_model)")
+
+        vectors: list[list[float]] = []
+        # Batch contenuti per non superare i limiti di payload del server.
+        BATCH = 32
+        try:
+            with httpx.Client(timeout=httpx.Timeout(600.0, connect=10.0)) as client:
+                for start in range(0, len(texts), BATCH):
+                    batch = texts[start:start + BATCH]
+                    resp = client.post(
+                        f"{base_url}/api/embed",
+                        json={"model": model, "input": batch, "keep_alive": self.ollama_keep_alive},
+                    )
+                    resp.raise_for_status()
+                    data = resp.json()
+                    embeddings = data.get("embeddings")
+                    if not embeddings or len(embeddings) != len(batch):
+                        raise AIError(
+                            f"Risposta embeddings inattesa da Ollama (modello '{model}'): "
+                            f"attesi {len(batch)} vettori, ricevuti {len(embeddings or [])}"
+                        )
+                    vectors.extend(embeddings)
+        except AIError:
+            raise
+        except Exception as e:
+            raise AIError(f"Errore embeddings Ollama (modello '{model}'): {e}") from e
+        return vectors
+
+    def embed_query(self, text: str, model: str = None):
+        """Embedding di una singola stringa (comodità). Ritorna un vettore."""
+        vecs = self.embed_texts([text], model=model)
+        return vecs[0] if vecs else []
 
     def preload_ollama_model(self):
         """Carica opzionalmente Ollama con contesto e durata di permanenza limitati."""

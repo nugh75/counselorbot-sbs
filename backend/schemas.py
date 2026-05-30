@@ -159,12 +159,46 @@ class QuestionnaireResultResponse(BaseModel):
         from_attributes = True
 
 
+class ValidationResponseResponse(BaseModel):
+    id: int
+    session_id: str
+    instrument_code: str
+    locale: str
+    version_label: str
+    answers: Optional[Union[Dict[str, Any], str]] = None
+    factor_scores: Optional[Union[Dict[str, Any], str]] = None
+    response_metadata: Optional[Union[Dict[str, Any], str]] = None
+    username: Optional[str] = None
+    duration_seconds: Optional[int] = None
+    submitted_at: datetime
+
+    @validator('answers', 'factor_scores', 'response_metadata', pre=True)
+    def parse_json_fields(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except (ValueError, TypeError):
+                return {"raw": v}
+        return v
+
+    class Config:
+        from_attributes = True
+
+
+class ValidationSummaryResponse(BaseModel):
+    total: int
+    by_locale: Dict[str, int]
+    by_version: Dict[str, int]
+    latest_submitted_at: Optional[datetime] = None
+
+
 # --- Catalogo strumenti (item + regole di scala) ---
 
 class InstrumentBase(BaseModel):
     code: str
     name_it: Optional[str] = None
     name_en: Optional[str] = None
+    name_es: Optional[str] = None
     name_sv: Optional[str] = None
     response_scale_min: int = 1
     response_scale_max: int = 4
@@ -180,6 +214,7 @@ class InstrumentCreate(InstrumentBase):
 class InstrumentUpdate(BaseModel):
     name_it: Optional[str] = None
     name_en: Optional[str] = None
+    name_es: Optional[str] = None
     name_sv: Optional[str] = None
     response_scale_min: Optional[int] = None
     response_scale_max: Optional[int] = None
@@ -202,9 +237,11 @@ class FactorBase(BaseModel):
     is_interpretation_inverted: bool = False
     label_it: Optional[str] = None
     label_en: Optional[str] = None
+    label_es: Optional[str] = None
     label_sv: Optional[str] = None
     description_it: Optional[str] = None
     description_en: Optional[str] = None
+    description_es: Optional[str] = None
     description_sv: Optional[str] = None
 
 
@@ -220,9 +257,11 @@ class FactorUpdate(BaseModel):
     is_interpretation_inverted: Optional[bool] = None
     label_it: Optional[str] = None
     label_en: Optional[str] = None
+    label_es: Optional[str] = None
     label_sv: Optional[str] = None
     description_it: Optional[str] = None
     description_en: Optional[str] = None
+    description_es: Optional[str] = None
     description_sv: Optional[str] = None
 
 
@@ -241,6 +280,7 @@ class ItemBase(BaseModel):
     reverse_scoring: bool = False
     text_it: Optional[str] = None
     text_en: Optional[str] = None
+    text_es: Optional[str] = None
     text_sv: Optional[str] = None
     active: bool = True
 
@@ -256,6 +296,7 @@ class ItemUpdate(BaseModel):
     reverse_scoring: Optional[bool] = None
     text_it: Optional[str] = None
     text_en: Optional[str] = None
+    text_es: Optional[str] = None
     text_sv: Optional[str] = None
     active: Optional[bool] = None
 
@@ -294,3 +335,7 @@ class ScoreRequest(BaseModel):
     locale: str
     answers: Dict[int, int]
     save: bool = True
+    save_validation: bool = True
+    version_label: Optional[str] = "draft"
+    response_metadata: Optional[Dict[str, Any]] = None
+    duration_seconds: Optional[int] = None
