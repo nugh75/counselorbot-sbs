@@ -11,8 +11,13 @@ import httpx
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, Request, status
 
-# Gruppo ai4auth che abilita la dashboard admin
-ADMIN_GROUP = os.environ.get("ADMIN_GROUP", "admins")
+# Gruppi ai4auth che abilitano la dashboard admin (lista separata da virgole).
+# `admins` (superadmin globale) e' sempre incluso; aggiungi gruppi per-servizio
+# via env ADMIN_GROUPS, es. "admins,counselorbot-sbs-admin".
+# Retrocompatibile con la vecchia env single-group ADMIN_GROUP.
+_admin_groups_env = os.environ.get("ADMIN_GROUPS") or os.environ.get("ADMIN_GROUP", "admins")
+ADMIN_GROUPS = {g.strip() for g in _admin_groups_env.split(",") if g.strip()}
+ADMIN_GROUPS.add("admins")
 FORWARD_AUTH_SHARED_SECRET = os.environ.get("FORWARD_AUTH_SHARED_SECRET", "")
 AI4AUTH_VERIFY_URL = os.environ.get(
     "AI4AUTH_VERIFY_URL", "https://auth.ai4educ.org/api/verify"
@@ -56,7 +61,7 @@ def _identity_from_headers(headers) -> dict:
         "username": username or email,
         "name": name,
         "groups": groups,
-        "is_admin": ADMIN_GROUP in groups,
+        "is_admin": bool(ADMIN_GROUPS & set(groups)),
         "authenticated": bool(username or email),
     }
 
