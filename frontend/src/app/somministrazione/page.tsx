@@ -18,32 +18,32 @@ const instruments: { id: AdministrationInstrument }[] = [
 const BLOCKED_COPY: Record<Lang, { title: string; body: string; back: string }> = {
     it: {
         title: 'Somministrazioni di test',
-        body: 'Questa pagina è disponibile solo con interfaccia in inglese o svedese. Seleziona English o Svenska dal menu della lingua.',
+        body: 'Questa pagina è disponibile solo con interfaccia in inglese, spagnolo o svedese. Seleziona English, Español o Svenska dal menu della lingua.',
         back: 'Torna a CounselorBot',
     },
     en: {
         title: 'Test administrations',
-        body: 'This page is only available when using the English or Swedish interface. Select English or Svenska from the language menu.',
+        body: 'This page is only available when using the English, Spanish or Swedish interface. Select English, Español or Svenska from the language menu.',
         back: 'Back to CounselorBot',
     },
     es: {
         title: 'Administraciones de prueba',
-        body: 'Esta página solo está disponible con la interfaz en inglés o sueco. Selecciona English o Svenska en el menú de idioma.',
+        body: 'Esta página solo está disponible con la interfaz en inglés, español o sueco. Selecciona English, Español o Svenska en el menú de idioma.',
         back: 'Volver a CounselorBot',
     },
     fr: {
         title: 'Passations de test',
-        body: "Cette page est disponible uniquement avec l'interface en anglais ou en suédois. Sélectionnez English ou Svenska dans le menu de langue.",
+        body: "Cette page est disponible uniquement avec l'interface en anglais, espagnol ou suédois. Sélectionnez English, Español ou Svenska dans le menu de langue.",
         back: 'Retour à CounselorBot',
     },
     de: {
         title: 'Testdurchführungen',
-        body: 'Diese Seite ist nur mit englischer oder schwedischer Benutzeroberfläche verfügbar. Wählen Sie im Sprachmenü English oder Svenska.',
+        body: 'Diese Seite ist nur mit englischer, spanischer oder schwedischer Benutzeroberfläche verfügbar. Wählen Sie im Sprachmenü English, Español oder Svenska.',
         back: 'Zurück zu CounselorBot',
     },
     sv: {
         title: 'Testgenomföranden',
-        body: 'Den här sidan är bara tillgänglig med engelskt eller svenskt gränssnitt. Välj English eller Svenska i språkmenyn.',
+        body: 'Den här sidan är bara tillgänglig med engelskt, spanskt eller svenskt gränssnitt. Välj English, Español eller Svenska i språkmenyn.',
         back: 'Tillbaka till CounselorBot',
     },
 };
@@ -71,12 +71,23 @@ const PAGE_COPY = {
         open: 'Svensk testversion',
         back: 'Tillbaka till CounselorBot',
     },
+    es: {
+        badge: 'Administraciones de prueba',
+        title: 'Español',
+        intro: 'Selecciona un instrumento para probar su interfaz de administracion.',
+        warningTitle: 'Importante:',
+        warningBody: 'Estas administraciones sirven para probar adaptaciones de instrumentos. El perfil producido tras el envio es una vista experimental, no un resultado validado o normativo.',
+        draft: 'La redaccion de los items y las estructuras factoriales son versiones de trabajo que requieren revision cientifica y linguistica antes de cualquier recogida piloto o de validacion.',
+        items: 'items',
+        open: 'Version espanola de prueba',
+        back: 'Volver a CounselorBot',
+    },
 };
 
 export default function TestAdministrationsPage() {
     const { lang } = useI18n();
 
-    if (lang !== 'en' && lang !== 'sv') {
+    if (lang !== 'en' && lang !== 'es' && lang !== 'sv') {
         const copy = BLOCKED_COPY[lang];
         return (
             <div className="max-w-4xl mx-auto space-y-6">
@@ -119,7 +130,7 @@ export default function TestAdministrationsPage() {
                 {instruments.map(({ id }) => {
                     const name = INSTRUMENT_NAMES[id];
                     const itemCount = INSTRUMENT_ITEM_COUNTS[id];
-                    const title = lang === 'en' ? name.en : name.sv;
+                    const title = name[lang];
                     return (
                         <section key={id} className="glass-panel rounded-xl p-5 space-y-4">
                             <div>
@@ -133,6 +144,15 @@ export default function TestAdministrationsPage() {
                                 {lang === 'en' && (
                                     <Link
                                         href={`/somministrazione/${id}/en`}
+                                        className="inline-flex items-center justify-between rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
+                                    >
+                                        {copy.open}
+                                        <ArrowRight className="w-4 h-4" />
+                                    </Link>
+                                )}
+                                {lang === 'es' && (
+                                    <Link
+                                        href={`/somministrazione/${id}/es`}
                                         className="inline-flex items-center justify-between rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
                                     >
                                         {copy.open}

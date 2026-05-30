@@ -198,6 +198,7 @@ const it: Dict = {
     'admin.results.pctGrowth': '% Crescita',
     // QuestionnaireEditor
     'admin.tab.questionnaires': 'Questionari & Scale',
+    'admin.tab.validation': 'Validazione',
     'admin.q.disclaimer': 'Le scale qui modificabili sono sperimentali e non validate. I punteggi stanine sono una riscalatura lineare finché non vengono caricate tabelle normative validate (vedi PROGETTO_VALIDAZIONE).',
     'admin.q.loading': 'Caricamento strumenti…',
     'admin.q.loadError': 'Errore nel caricamento.',
@@ -424,6 +425,7 @@ const en: Dict = {
     'admin.results.pctGrowth': '% Growth',
     // QuestionnaireEditor
     'admin.tab.questionnaires': 'Questionnaires & Scales',
+    'admin.tab.validation': 'Validation',
     'admin.q.disclaimer': 'The scales editable here are experimental and not validated. Stanine scores are a linear rescaling until validated norm tables are loaded (see PROGETTO_VALIDAZIONE).',
     'admin.q.loading': 'Loading instruments…',
     'admin.q.loadError': 'Failed to load.',

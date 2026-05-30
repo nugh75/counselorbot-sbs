@@ -43,7 +43,7 @@ function generateUUID() {
 interface QuestionnaireRunnerProps {
     copy: AdministrationCopy;
     instrument: AdministrationInstrument;
-    locale: 'en' | 'sv';
+    locale: 'en' | 'es' | 'sv';
 }
 
 export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireRunnerProps) {
@@ -51,13 +51,17 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
     const [error, setError] = useState('');
     const [results, setResults] = useState<ScoreResult[] | null>(null);
     const [createdSessionId, setCreatedSessionId] = useState<string>('');
+    const [startedAt, setStartedAt] = useState(() => Date.now());
     // Testo item: dal backend (DB editabile) se disponibile, altrimenti fallback statico.
     const [backendItems, setBackendItems] = useState<string[] | null>(null);
+    const [backendItemsChecked, setBackendItemsChecked] = useState(false);
     const scaleMax = copy.scale.length;
 
     // Carica gli item dal catalogo DB-driven (le modifiche admin diventano visibili).
     useEffect(() => {
         let cancelled = false;
+        setBackendItems(null);
+        setBackendItemsChecked(false);
         fetch(`/api/instruments/${instrument}/rules?locale=${locale}`)
             .then((r) => (r.ok ? r.json() : null))
             .then((data) => {
@@ -68,7 +72,10 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                 const texts = ordered.map((it: { text: string | null }) => it.text ?? '');
                 if (texts.every((t: string) => t)) setBackendItems(texts);
             })
-            .catch(() => { /* fallback statico */ });
+            .catch(() => { /* fallback statico per EN/SV */ })
+            .finally(() => {
+                if (!cancelled) setBackendItemsChecked(true);
+            });
         return () => { cancelled = true; };
     }, [instrument, locale]);
 
@@ -79,6 +86,28 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
         value: index + 1,
         label,
     })), [copy.scale]);
+
+    if (locale === 'es' && !backendItemsChecked) {
+        return (
+            <div lang={locale} className="mx-auto max-w-2xl rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
+                Caricamento della versione spagnola...
+            </div>
+        );
+    }
+
+    if (locale === 'es' && backendItemsChecked && backendItems === null) {
+        return (
+            <div lang={locale} className="mx-auto max-w-2xl space-y-4 rounded-xl border border-amber-300 bg-amber-50 p-6 text-amber-950">
+                <h1 className="text-xl font-bold">Version espanola no configurada</h1>
+                <p className="text-sm leading-relaxed">
+                    La somministrazione in spagnolo richiede che tutti gli item siano compilati nel catalogo admin come <code>text_es</code>. Completa prima la versione spagnola in Admin → Questionari & Scale → Item.
+                </p>
+                <Link href="/somministrazione" className="inline-flex text-sm font-semibold text-amber-900 underline">
+                    {copy.back}
+                </Link>
+            </div>
+        );
+    }
 
     const submit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -95,13 +124,26 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
 
         const newSessionId = generateUUID();
         setCreatedSessionId(newSessionId);
+        const durationSeconds = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
 
         // Scoring lato server (le regole vivono nel DB) + salvataggio.
         try {
             const res = await fetch(`/api/instruments/${instrument}/score`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ session_id: newSessionId, locale, answers, save: true }),
+                body: JSON.stringify({
+                    session_id: newSessionId,
+                    locale,
+                    answers,
+                    save: true,
+                    save_validation: true,
+                    version_label: `${instrument}_${locale}_2026_v1`,
+                    response_metadata: {
+                        item_count: displayItems.length,
+                        source: 'somministrazione',
+                    },
+                    duration_seconds: durationSeconds,
+                }),
             });
             if (!res.ok) throw new Error(`score failed: ${res.status}`);
             const profile: ScoreResponse = await res.json();
@@ -210,6 +252,7 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                             onClick={() => {
                                 setAnswers({});
                                 setResults(null);
+                                setStartedAt(Date.now());
                             }}
                             className="rounded-md bg-indigo-600 px-5 py-2.5 font-semibold text-white hover:bg-indigo-700"
                         >

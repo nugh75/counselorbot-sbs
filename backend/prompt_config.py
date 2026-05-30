@@ -386,6 +386,79 @@ SYSTEM_PROMPT_DEFAULTS: Dict[str, str] = {
 }
 
 
+# --- Chatbot informativo sul sito competenzestrategiche.it (RAG) ---
+# Risponde a domande sul progetto/sito basandosi SOLO sui materiali in docs/
+# (recuperati via RAG e iniettati come blocchi [FONTE n]). Niente conoscenza
+# esterna: se la risposta non è nei materiali, lo dichiara.
+
+_SITE_CHAT_COMMON_RULES = (
+    "Rispondi SEMPRE in italiano.\n"
+    "Usa ESCLUSIVAMENTE le informazioni contenute nei MATERIALI forniti qui sotto.\n"
+    "NON usare conoscenze esterne o di cultura generale, nemmeno se conosci la risposta: "
+    "il tuo unico scopo è informare sui contenuti del sito competenzestrategiche.it.\n"
+    "Se la domanda non riguarda il progetto/sito, oppure la risposta non è nei materiali, "
+    "NON rispondere nel merito: dichiara semplicemente che l'informazione non è presente nei "
+    "materiali del sito che puoi consultare e riporta l'utente verso argomenti pertinenti "
+    "(i questionari, la metodologia, la somministrazione, le guide). Non tirare a indovinare, non inventare, "
+    "non fornire informazioni generali estranee al progetto.\n"
+    "Quando usi un'informazione, cita la fonte indicando il TITOLO del documento tra parentesi. "
+    "Non mostrare MAI etichette interne come \"[FONTE n]\" o nomi di file con estensione.\n"
+    "Non riportare i punteggi grezzi dei questionari né formule tecniche; spiega i concetti.\n"
+    "Sii conciso e diretto."
+)
+
+DEFAULT_SYSTEM_PROMPT_SITE_DOCENTE = (
+    "Sei l'assistente informativo del progetto e del sito competenzestrategiche.it, "
+    "rivolto a DOCENTI, formatori e operatori.\n"
+    "Fornisci risposte accurate e professionali su strumenti (QSA, QSAr, ZTPI, Savickas, "
+    "QPCS, QPCC, QAP), metodologia, fondamenti teorici, somministrazione e uso didattico.\n"
+    "Puoi usare la terminologia tecnica appropriata e rimandare ai materiali e alle guide.\n\n"
+    + _SITE_CHAT_COMMON_RULES
+)
+
+DEFAULT_SYSTEM_PROMPT_SITE_STUDENTE = (
+    "Sei l'assistente informativo del sito competenzestrategiche.it, rivolto a STUDENTI.\n"
+    "Spiega in modo semplice, incoraggiante e concreto che cosa sono i questionari, "
+    "a cosa servono, come si svolgono e come leggere i risultati.\n"
+    "Evita il gergo tecnico: usa parole comuni ed esempi. Tono amichevole e rassicurante.\n\n"
+    + _SITE_CHAT_COMMON_RULES
+)
+
+SITE_CHAT_CONFIG_DEFINITIONS: List[Dict[str, str]] = [
+    {
+        "key": "prompt_site_chat_docente",
+        "label": "Site Chat - Prompt Docente",
+        "description": "Prompt di sistema del chatbot informativo del sito, modalità docente (RAG, solo materiali)",
+        "default": DEFAULT_SYSTEM_PROMPT_SITE_DOCENTE,
+    },
+    {
+        "key": "prompt_site_chat_studente",
+        "label": "Site Chat - Prompt Studente",
+        "description": "Prompt di sistema del chatbot informativo del sito, modalità studente (RAG, solo materiali)",
+        "default": DEFAULT_SYSTEM_PROMPT_SITE_STUDENTE,
+    },
+    {
+        "key": "embedding_model",
+        "label": "Site Chat - Modello Embedding (Ollama)",
+        "description": "Modello di embedding locale (via Ollama) per il RAG del chatbot del sito. "
+                       "Default qwen3-embedding:4b (già installato, SOTA multilingue). "
+                       "Alternative: bge-m3 (richiede ollama pull), nomic-embed-text.",
+        "default": "qwen3-embedding:4b",
+    },
+    {
+        "key": "site_chat_top_k",
+        "label": "Site Chat - Numero passaggi recuperati (top-k)",
+        "description": "Quanti chunk recuperare dall'indice RAG per ogni domanda",
+        "default": "6",
+    },
+]
+
+SITE_CHAT_MODE_TO_PROMPT_KEY: Dict[str, str] = {
+    "docente": "prompt_site_chat_docente",
+    "studente": "prompt_site_chat_studente",
+}
+
+
 # Questions phase system prompt (stored in configs table)
 GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS: Dict[str, Dict[str, str]] = {
     "questions": {
@@ -541,6 +614,7 @@ ALL_CONFIG_TEXT_DEFINITIONS: List[Dict[str, str]] = (
     + list(GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS.values())
     + GUIDED_STATIC_TEXT_DEFINITIONS
     + GUIDED_FIXED_PHASE_LABEL_DEFINITIONS
+    + SITE_CHAT_CONFIG_DEFINITIONS
 )
 
 # Public UI config keys (returned by /qsa/guided-ui-texts)

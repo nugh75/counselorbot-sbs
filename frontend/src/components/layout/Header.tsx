@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Cloud, LogIn, LogOut, Settings, User } from 'lucide-react';
+import { Bot, Cloud, LogIn, LogOut, Settings, User } from 'lucide-react';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { ai4authLoginUrl, AI4AUTH_LOGOUT_URL, AI4EDUC_PORTAL_URL, AI4EDUC_MANAGER_URL, getIdentity, type Identity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
@@ -38,6 +38,10 @@ export function Header() {
                 </div>
 
                 <div className="ml-auto flex min-w-0 items-center gap-1">
+                    <Link href="/assistente" className="console-topbar-action" title="Assistente del sito" aria-label="Assistente del sito">
+                        <Bot className="w-4 h-4" />
+                        <span className="hidden sm:inline">Assistente</span>
+                    </Link>
                     {accountLabel && (
                         <Link
                             href="/profilo"

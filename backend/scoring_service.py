@@ -1,4 +1,4 @@
-"""Scoring server-side per gli strumenti EN/SV, basato sulle regole salvate nel DB.
+"""Scoring server-side per gli strumenti multilingue, basato sulle regole salvate nel DB.
 
 Porta lato backend la logica che prima girava nel browser
 (frontend/src/lib/test-scoring.ts:calculateExperimentalProfile), come richiesto dal
@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from . import models
 
-SUPPORTED_LOCALES = ("en", "sv")
+SUPPORTED_LOCALES = ("it", "en", "es", "sv")
 
 # Copy di banda/interpretazione (portata da test-scoring.ts TEXT). Testo generico,
 # non dato per-strumento: resta qui per rendere il backend autosufficiente.
@@ -54,6 +54,42 @@ _TEXT = {
             "lower": "Lägre rapporterad närvaro av denna dimension.",
             "moderate": "Måttlig rapporterad närvaro av denna dimension.",
             "higher": "Högre rapporterad närvaro av denna dimension.",
+        },
+    },
+    "it": {
+        "band": {"lower": "Frequenza più bassa", "moderate": "Frequenza moderata", "higher": "Frequenza più alta"},
+        "resource": {
+            "lower": "Uso dichiarato più basso di questa strategia o risorsa.",
+            "moderate": "Uso dichiarato moderato di questa strategia o risorsa.",
+            "higher": "Uso dichiarato più alto di questa strategia o risorsa.",
+        },
+        "difficulty": {
+            "lower": "Frequenza dichiarata più bassa di questa difficoltà.",
+            "moderate": "Frequenza dichiarata moderata di questa difficoltà.",
+            "higher": "Frequenza dichiarata più alta di questa difficoltà.",
+        },
+        "neutral": {
+            "lower": "Presenza dichiarata più bassa di questa dimensione.",
+            "moderate": "Presenza dichiarata moderata di questa dimensione.",
+            "higher": "Presenza dichiarata più alta di questa dimensione.",
+        },
+    },
+    "es": {
+        "band": {"lower": "Frecuencia más baja", "moderate": "Frecuencia moderada", "higher": "Frecuencia más alta"},
+        "resource": {
+            "lower": "Uso declarado más bajo de esta estrategia o recurso.",
+            "moderate": "Uso declarado moderado de esta estrategia o recurso.",
+            "higher": "Uso declarado más alto de esta estrategia o recurso.",
+        },
+        "difficulty": {
+            "lower": "Frecuencia declarada más baja de esta dificultad.",
+            "moderate": "Frecuencia declarada moderada de esta dificultad.",
+            "higher": "Frecuencia declarada más alta de esta dificultad.",
+        },
+        "neutral": {
+            "lower": "Presencia declarada más baja de esta dimensión.",
+            "moderate": "Presencia declarada moderada de esta dimensión.",
+            "higher": "Presencia declarada más alta de esta dimensión.",
         },
     },
 }

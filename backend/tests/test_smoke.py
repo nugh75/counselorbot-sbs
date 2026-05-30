@@ -90,6 +90,14 @@ class _FakeAIService:
             "disable_thinking": "false",
         }
         self.disable_thinking = False
+        self.embedding_model = "bge-m3"
+
+    def embed_texts(self, texts, model=None):
+        # Vettore deterministico fittizio per ogni testo (nessuna rete).
+        return [[float(len(t) % 7), 1.0, 0.5] for t in texts]
+
+    def embed_query(self, text, model=None):
+        return [float(len(text) % 7), 1.0, 0.5]
 
     def get_response(self, *a, **k):
         return "RISPOSTA_TEST"
@@ -111,6 +119,11 @@ main.app.dependency_overrides[auth.get_current_active_admin] = _fake_admin
 chat_routes.AIService = _FakeAIService
 # Lo stream apre una sessione fresca dopo la risposta: isolala nel DB di test.
 chat_routes.database.SessionLocal = _TestSession
+
+# Site-chat (RAG): stesso mock provider + sessione di log isolata.
+import backend.routes.site_chat as site_chat_routes
+site_chat_routes.AIService = _FakeAIService
+site_chat_routes.database.SessionLocal = _TestSession
 
 client = TestClient(main.app)
 
@@ -149,6 +162,9 @@ EXPECTED_ROUTES = {
     ("POST", "/questionnaire-result"),
     ("GET", "/user/questionnaire-results"),
     ("GET", "/admin/questionnaire-results"),
+    ("GET", "/admin/validation/summary"),
+    ("GET", "/admin/validation/responses"),
+    ("GET", "/admin/validation/export.csv"),
     ("DELETE", "/questionnaire-result/{session_id}"),
     ("GET", "/questionnaire-result/{session_id}/pdf"),
     # Catalogo strumenti editabile + scoring server-side
@@ -168,6 +184,10 @@ EXPECTED_ROUTES = {
     ("DELETE", "/admin/norm-thresholds/{threshold_id}"),
     ("GET", "/instruments/{code}/rules"),
     ("POST", "/instruments/{code}/score"),
+    # Chatbot informativo del sito (RAG)
+    ("GET", "/site-chat/status"),
+    ("POST", "/site-chat/reindex"),
+    ("POST", "/site-chat/stream"),
 }
 
 
@@ -396,6 +416,30 @@ def test_chat_smoke_mocked_ai():
     assert r.json()["response"] == "RISPOSTA_TEST"
 
 
+def test_site_chat_status_public():
+    r = client.get("/site-chat/status")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert "n_chunks" in body and "embedding_model" in body
+
+
+def test_site_chat_stream_grounded_mocked():
+    # Patcha la retrieval per non toccare embeddings/rete: contesto fittizio.
+    canned = [{"score": 0.9, "source": "fonti/x.md", "title": "Doc X", "text": "Contenuto di prova."}]
+    original_search = site_chat_routes.site_rag_index.search
+    site_chat_routes.site_rag_index.search = lambda svc, q, k: canned
+    try:
+        r = client.post("/site-chat/stream", json={
+            "message": "Cos'è il QSA?", "audience": "studente", "session_id": "site-chat-test",
+        })
+        assert r.status_code == 200, r.text
+        assert "RISPOSTA_TEST" in r.text
+        assert '"done": true' in r.text
+        assert "fonti/x.md" in r.text  # le fonti citate tornano nell'evento done
+    finally:
+        site_chat_routes.site_rag_index.search = original_search
+
+
 # --------------------------------------------------------------------------
 # 3. Helper puri: comportamento stabile attraverso il refactor
 # --------------------------------------------------------------------------
@@ -455,6 +499,60 @@ def test_questionnaire_results_admin_list():
     r = client.get("/admin/questionnaire-results")
     assert r.status_code == 200, r.text
     assert isinstance(r.json(), list)
+
+
+def test_validation_raw_response_export():
+    db = _TestSession()
+    try:
+        db.add(models.Instrument(
+            code="QSA",
+            name_en="QSA",
+            name_es="QSA ES",
+            response_scale_min=1,
+            response_scale_max=4,
+        ))
+        db.add(models.Factor(
+            instrument_code="QSA",
+            code="C1",
+            sort_order=1,
+            dimension="cognitive",
+            label_en="C1",
+            label_es="C1",
+        ))
+        db.add(models.QuestionnaireItem(
+            instrument_code="QSA",
+            item_number=1,
+            sort_order=1,
+            factor_code="C1",
+            text_en="Item 1",
+            text_es="Item 1 ES",
+            active=True,
+        ))
+        db.commit()
+    finally:
+        db.close()
+
+    r = client.post("/instruments/QSA/score", json={
+        "session_id": "validation-session-1",
+        "locale": "es",
+        "answers": {"1": 3},
+        "save": True,
+        "save_validation": True,
+        "version_label": "QSA_es_test",
+        "response_metadata": {"cohort": "pilot"},
+        "duration_seconds": 42,
+    })
+    assert r.status_code == 200, r.text
+
+    r = client.get("/admin/validation/summary?instrument_code=QSA&locale=es&version_label=QSA_es_test")
+    assert r.status_code == 200, r.text
+    assert r.json()["total"] == 1
+
+    r = client.get("/admin/validation/export.csv?instrument_code=QSA&locale=es&version_label=QSA_es_test")
+    assert r.status_code == 200, r.text
+    assert "item_001" in r.text
+    assert "metadata_cohort" in r.text
+    assert "validation-session-1" in r.text
 
 
 def test_questionnaire_result_user_history_and_delete():

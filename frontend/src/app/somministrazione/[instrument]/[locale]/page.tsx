@@ -8,12 +8,12 @@ import { QuestionnaireRunner } from '@/components/administration/QuestionnaireRu
 import { getTestAdministration, AdministrationInstrument } from '@/lib/test-administrations';
 
 const INVALID_COPY: Record<Lang, { title: string; body: string; back: string }> = {
-    it: { title: 'Somministrazione non disponibile', body: 'Scegli uno strumento valido in inglese o svedese.', back: 'Torna alle somministrazioni di test' },
-    en: { title: 'Test administration unavailable', body: 'Choose a valid instrument in English or Swedish.', back: 'Back to test administrations' },
-    es: { title: 'Administración no disponible', body: 'Elige un instrumento válido en inglés o sueco.', back: 'Volver a las administraciones de prueba' },
-    fr: { title: 'Passation indisponible', body: 'Choisissez un instrument valide en anglais ou en suédois.', back: 'Retour aux passations de test' },
-    de: { title: 'Testdurchführung nicht verfügbar', body: 'Wählen Sie ein gültiges Instrument auf Englisch oder Schwedisch.', back: 'Zurück zu den Testdurchführungen' },
-    sv: { title: 'Testgenomförande inte tillgängligt', body: 'Välj ett giltigt instrument på engelska eller svenska.', back: 'Tillbaka till testgenomföranden' },
+    it: { title: 'Somministrazione non disponibile', body: 'Scegli uno strumento valido in inglese, spagnolo o svedese.', back: 'Torna alle somministrazioni di test' },
+    en: { title: 'Test administration unavailable', body: 'Choose a valid instrument in English, Spanish or Swedish.', back: 'Back to test administrations' },
+    es: { title: 'Administración no disponible', body: 'Elige un instrumento válido en inglés, español o sueco.', back: 'Volver a las administraciones de prueba' },
+    fr: { title: 'Passation indisponible', body: 'Choisissez un instrument valide en anglais, espagnol ou suédois.', back: 'Retour aux passations de test' },
+    de: { title: 'Testdurchführung nicht verfügbar', body: 'Wählen Sie ein gültiges Instrument auf Englisch, Spanisch oder Schwedisch.', back: 'Zurück zu den Testdurchführungen' },
+    sv: { title: 'Testgenomförande inte tillgängligt', body: 'Välj ett giltigt instrument på engelska, spanska eller svenska.', back: 'Tillbaka till testgenomföranden' },
 };
 
 export default function AdministrationPage() {
@@ -25,7 +25,7 @@ export default function AdministrationPage() {
     if (
         !copy
         || !valid.includes(params.instrument as AdministrationInstrument)
-        || (params.locale !== 'en' && params.locale !== 'sv')
+        || (params.locale !== 'en' && params.locale !== 'es' && params.locale !== 'sv')
     ) {
         const text = INVALID_COPY[lang];
         return (
@@ -39,5 +39,5 @@ export default function AdministrationPage() {
         );
     }
 
-    return <QuestionnaireRunner copy={copy} instrument={params.instrument as AdministrationInstrument} locale={params.locale as 'en' | 'sv'} />;
+    return <QuestionnaireRunner copy={copy} instrument={params.instrument as AdministrationInstrument} locale={params.locale as 'en' | 'es' | 'sv'} />;
 }
