@@ -15,6 +15,7 @@ services:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       - SESSION_MEMORY_DIR=/app/session_memory
       - AI4AUTH_VERIFY_URL=${AI4AUTH_VERIFY_URL:-http://ai4auth:9091/api/verify}
+      - ADMIN_GROUPS=${ADMIN_GROUPS:-admins,counselorbot-sbs-admin}
     volumes:
       - ./session_memory:/app/session_memory
       - ./knowledge:/app/knowledge:ro
