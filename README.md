@@ -2,6 +2,10 @@
 
 CounselorBot è un'applicazione web AI-powered progettata per aiutare gli studenti ad analizzare le loro strategie di apprendimento (QSA).
 
+## Documentazione
+
+La documentazione stabile del progetto vive in [`docs/`](docs/). L'indice principale è [`docs/README.md`](docs/README.md).
+
 ## Prerequisiti
 
 *   **Python** 3.10 o superiore

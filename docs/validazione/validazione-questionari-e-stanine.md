@@ -4,7 +4,7 @@ Questo documento spiega (1) cosa sono le stanine "vere" e come ottenerle, e
 (2) la procedura scientifica per validare i questionari EN/SV
 (QSA, QSAr, ZTPI, QPCS, QPCC, QAP).
 
-> Riferimento completo: [`questionari/PROGETTO_VALIDAZIONE_E_SVILUPPO_QSA_QSAR_SV_EN.md`](../questionari/PROGETTO_VALIDAZIONE_E_SVILUPPO_QSA_QSAR_SV_EN.md).
+> Riferimento completo: [`progetto-validazione-qsa-qsar-sv-en.md`](progetto-validazione-qsa-qsar-sv-en.md).
 > Stato corrente: l'app calcola i punteggi lato backend dalle regole salvate nel DB
 > (editabili in admin → tab *Questionari & Scale*). Finché non esistono tabelle
 > normative validate, lo stanine mostrato è una **riscalatura lineare sperimentale**,
@@ -69,7 +69,7 @@ prima completare la validazione (sezione 2).
 - Inserire gli item ufficiali + la chiave `factor` / `reverse` di ciascun item.
 - Distinguere **reverse-scoring** (ricodifica della risposta) da **direzione
   interpretativa** (come si legge il fattore): sono due cose diverse.
-- Risolvere i nodi noti (vedi [`diagnosi-somministrazione-ensv.md`](../questionari/diagnosi-somministrazione-ensv.md)):
+- Risolvere i nodi noti (vedi [`diagnosi-somministrazione-ensv.md`](diagnosi-somministrazione-ensv.md)):
   codifica QSAr A4/A6; ZTPI item 47 fuori fattore + reverse mancanti; item QPCS/QPCC
   segnaposto da sostituire; scala 1–5 per ZTPI e QAP (oggi 1–4).
 - Tutto modificabile nell'editor admin (*Questionari & Scale*).

@@ -2,7 +2,7 @@
 
 Struttura dati per la **somministrazione item-level** e le versioni linguistiche dei
 questionari, predisposta per il progetto di adattamento SV/EN
-(vedi `../PROGETTO_VALIDAZIONE_E_SVILUPPO_QSA_QSAR_SV_EN.md`).
+(vedi [`progetto-validazione-qsa-qsar-sv-en.md`](../validazione/progetto-validazione-qsa-qsar-sv-en.md)).
 
 > ⚠️ **Proprietà intellettuale.** QSA, QSAr, QPCS, QPCC sono strumenti protetti
 > (M. Pellerey / CNOS-FAP, competenzestrategiche.it). Il **testo degli item** e le
@@ -52,7 +52,7 @@ questionari, predisposta per il progetto di adattamento SV/EN
 
 ## Workflow di compilazione (per ricercatore autorizzato)
 
-1. Inserire i testi **IT** degli item dalla fonte ufficiale (PDF in `../`).
+1. Inserire i testi **IT** degli item dalla fonte ufficiale (PDF in `strumenti/`).
 2. Tradurre EN e SV con **doppia traduzione indipendente + back-translation** (WP2).
 3. Inserire la mappa `factor` e `reverse` di ciascun item dalla chiave ufficiale.
 4. Validare contenuto (WP3) e interviste cognitive (WP4) prima del pilot.

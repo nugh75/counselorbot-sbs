@@ -52,7 +52,7 @@ out.push('"""Catalogo strumenti di default per il seed DB-driven (generato da _g
 out.push('');
 out.push('Fonte: stato attuale di frontend/src/lib/test-administrations.ts e test-scoring.ts.');
 out.push('NON modificare a mano: dopo il primo seed le modifiche avvengono via editor admin (DB).');
-out.push('Vedi questionari/PROGETTO_VALIDAZIONE_E_SVILUPPO_QSA_QSAR_SV_EN.md.');
+out.push('Vedi docs/validazione/progetto-validazione-qsa-qsar-sv-en.md.');
 out.push('"""');
 out.push('');
 out.push('INSTRUMENT_CATALOG_DEFAULTS = {');

@@ -2,7 +2,7 @@
 
 Fonte: stato attuale di frontend/src/lib/test-administrations.ts e test-scoring.ts.
 NON modificare a mano: dopo il primo seed le modifiche avvengono via editor admin (DB).
-Vedi questionari/PROGETTO_VALIDAZIONE_E_SVILUPPO_QSA_QSAR_SV_EN.md.
+Vedi docs/validazione/progetto-validazione-qsa-qsar-sv-en.md.
 """
 
 INSTRUMENT_CATALOG_DEFAULTS = {

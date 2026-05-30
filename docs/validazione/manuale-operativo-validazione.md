@@ -24,7 +24,7 @@ Prima di raccogliere qualsiasi risposta, devi definire la parte burocratica ed e
 ---
 
 ### Passo 2: Verifica Linguistica e Interviste Cognitive (Tempo stimato: 1 settimana)
-Sebbene i testi inglesi del QSAr siano già presenti nel database ([backend/questionnaire_catalog.py](file:///home/nugh75/counselorbot-sbs/backend/questionnaire_catalog.py#L134)), devi verificare se gli studenti svedesi li capiscono correttamente.
+Sebbene i testi inglesi del QSAr siano già presenti nel database ([backend/questionnaire_catalog.py](../../backend/questionnaire_catalog.py)), devi verificare se gli studenti svedesi li capiscono correttamente.
 
 *   **Azione**: Recluta **10-15 studenti** per fare delle brevi interviste individuali con la tecnica del *Think Aloud* (pensare ad alta voce).
 *   **Cosa fare**: Fai compilare il questionario stampato o a schermo in inglese davanti a te. Chiedi loro:
@@ -64,7 +64,7 @@ Con i dati estratti in formato CSV/Excel, si eseguono le analisi statistiche per
 ---
 
 ### Passo 6: Costruzione e Caricamento delle Norme Stanine
-Una volta confermata la validità scientifica, trasformi i punteggi grezzi dello studio in punteggi standardizzati **Stanine (1-9)** da inserire nella tabella [NormThreshold](file:///home/nugh75/counselorbot-sbs/backend/models.py#L171) del database dell'applicazione.
+Una volta confermata la validità scientifica, trasformi i punteggi grezzi dello studio in punteggi standardizzati **Stanine (1-9)** da inserire nella tabella `NormThreshold` del database dell'applicazione.
 
 #### Come si calcolano i range di Stanine per ciascun fattore:
 Per ognuno degli 8 fattori del QSAr (es. `A4r` - Percezione di competenza):

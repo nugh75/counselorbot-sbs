@@ -460,7 +460,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
         const loadData = async () => {
             try {
-                const res = await fetch(`/api/qsa/guided-ui-texts?questionnaire_type=${questionnaireType}`);
+                const res = await fetch(`/api/qsa/guided-ui-texts?questionnaire_type=${questionnaireType}&lang=${lang}`);
                 if (!res.ok) return;
 
                 const data = await res.json();
@@ -493,12 +493,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         const memData = await memRes.json();
                         const restoredPhase = memData.current_phase as string | undefined;
                         if (restoredPhase && phaseOrder.includes(restoredPhase) && shouldRestoreSession) {
-                            const restoredQuestionsLabel = lang === 'it'
-                                ? data.label_guided_questions || t('guided.questionsLabel')
-                                : t('guided.questionsLabel');
-                            const restoredConclusionLabel = lang === 'it'
-                                ? data.label_guided_conclusion || t('guided.conclusionLabel')
-                                : t('guided.conclusionLabel');
+                            const restoredQuestionsLabel = data.label_guided_questions || t('guided.questionsLabel');
+                            const restoredConclusionLabel = data.label_guided_conclusion || t('guided.conclusionLabel');
                             setCurrentPhase(restoredPhase);
                             setMessages([
                                 {
@@ -525,22 +521,13 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 }
                 loadedSessionScopeRef.current = sessionScope;
 
-                setQuestionsLabel(t('guided.questionsLabel'));
-                setConclusionLabel(t('guided.conclusionLabel'));
-                setQuestionsBanner(t('guided.questionsBanner'));
-                setQuestionsIntro(t('guided.questionsIntro'));
-                setConclusionText(t('guided.conclusionText'));
-
-                // Fixed-phase labels and texts: i testi configurati in admin sono in italiano,
-                // quindi li applichiamo solo per la lingua italiana; per le altre lingue
-                // restano i default tradotti via i18n.
-                if (lang === 'it') {
-                    if (data.label_guided_questions) setQuestionsLabel(data.label_guided_questions);
-                    if (data.label_guided_conclusion) setConclusionLabel(data.label_guided_conclusion);
-                    if (data.text_guided_questions_phase_banner) setQuestionsBanner(data.text_guided_questions_phase_banner);
-                    if (data.text_guided_questions_intro) setQuestionsIntro(data.text_guided_questions_intro);
-                    if (data.text_guided_conclusion) setConclusionText(data.text_guided_conclusion);
-                }
+                // Testi/etichette ora localizzati lato backend per la lingua richiesta
+                // (chiave per-lingua con fallback all'italiano): si applicano per ogni lingua.
+                setQuestionsLabel(data.label_guided_questions || t('guided.questionsLabel'));
+                setConclusionLabel(data.label_guided_conclusion || t('guided.conclusionLabel'));
+                setQuestionsBanner(data.text_guided_questions_phase_banner || t('guided.questionsBanner'));
+                setQuestionsIntro(data.text_guided_questions_intro || t('guided.questionsIntro'));
+                setConclusionText(data.text_guided_conclusion || t('guided.conclusionText'));
             } catch {
                 if (questionnaireType === 'SAVICKAS') {
                     setSteps(SAVICKAS_FALLBACK_STEPS.map((s) => ({ ...s, label: stepLabel(lang, s.id, s.label) })));
