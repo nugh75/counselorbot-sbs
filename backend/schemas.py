@@ -192,6 +192,63 @@ class ValidationSummaryResponse(BaseModel):
     latest_submitted_at: Optional[datetime] = None
 
 
+class TrainingExampleBase(BaseModel):
+    instrument_code: str = "QSA"
+    locale: str = "it"
+    phase: str
+    step_label: Optional[str] = None
+    scores: Optional[Dict[str, Any]] = None
+    scores_context: str
+    student_message: str
+    assistant_answer: str
+    status: str = "pending"
+    review_notes: Optional[str] = None
+    auto_score: Optional[Dict[str, Any]] = None
+    source: str = "manual"
+
+
+class TrainingExampleCreate(TrainingExampleBase):
+    pass
+
+
+class TrainingExampleUpdate(BaseModel):
+    assistant_answer: Optional[str] = None
+    status: Optional[str] = None
+    review_notes: Optional[str] = None
+
+
+class TrainingGenerateRequest(BaseModel):
+    instrument_code: str = "QSA"
+    locale: str = "it"
+    phase: str
+    count: int = Field(default=5, ge=1, le=50)
+
+
+class TrainingSummaryResponse(BaseModel):
+    total: int
+    by_status: Dict[str, int]
+    by_locale: Dict[str, int]
+    by_phase: Dict[str, int]
+
+
+class TrainingExampleResponse(TrainingExampleBase):
+    id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    @validator('scores', 'auto_score', pre=True)
+    def parse_training_json_fields(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except (ValueError, TypeError):
+                return {"raw": v}
+        return v
+
+    class Config:
+        from_attributes = True
+
+
 # --- Catalogo strumenti (item + regole di scala) ---
 
 class InstrumentBase(BaseModel):
