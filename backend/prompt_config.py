@@ -393,18 +393,48 @@ SYSTEM_PROMPT_DEFAULTS: Dict[str, str] = {
 
 _SITE_CHAT_COMMON_RULES = (
     "Rispondi SEMPRE in italiano.\n"
-    "Usa ESCLUSIVAMENTE le informazioni contenute nei MATERIALI forniti qui sotto.\n"
-    "NON usare conoscenze esterne o di cultura generale, nemmeno se conosci la risposta: "
-    "il tuo unico scopo è informare sui contenuti del sito competenzestrategiche.it.\n"
-    "Se la domanda non riguarda il progetto/sito, oppure la risposta non è nei materiali, "
-    "NON rispondere nel merito: dichiara semplicemente che l'informazione non è presente nei "
-    "materiali del sito che puoi consultare e riporta l'utente verso argomenti pertinenti "
-    "(i questionari, la metodologia, la somministrazione, le guide). Non tirare a indovinare, non inventare, "
-    "non fornire informazioni generali estranee al progetto.\n"
+    "Basati ESCLUSIVAMENTE sui MATERIALI forniti qui sotto: non aggiungere conoscenze esterne o "
+    "di cultura generale, non inventare dati, numeri o citazioni non presenti.\n"
+    "USA le informazioni PERTINENTI presenti nei materiali per rispondere, ANCHE se parziali o non "
+    "espresse come definizione formale: sintetizzale e spiegale. Non pretendere una corrispondenza "
+    "letterale di titoli o termini — se il concetto è trattato (anche solo descrittivamente), rispondi "
+    "nel merito invece di rifiutarti.\n"
+    "Dichiara che l'informazione non è presente SOLO quando nei materiali non c'è davvero nulla di "
+    "pertinente alla domanda; in quel caso riporta l'utente verso argomenti coperti (questionari, "
+    "metodologia, somministrazione, guide).\n"
     "Quando usi un'informazione, cita la fonte indicando il TITOLO del documento tra parentesi. "
     "Non mostrare MAI etichette interne come \"[FONTE n]\" o nomi di file con estensione.\n"
     "Non riportare i punteggi grezzi dei questionari né formule tecniche; spiega i concetti.\n"
+    "Rispondi in modo SPECIFICO e concreto: quando la domanda riguarda i fattori o le sigle di uno "
+    "strumento, ELENCALI con codice e nome ESATTI (usa la SCHEDA STRUMENTI qui sotto). Riporta numeri "
+    "(scala, numero di fattori, tempi) solo se presenti nei materiali o nella scheda; non inventarli e "
+    "non dare intervalli vaghi quando il dato è noto. Evita preamboli generici e ripetizioni: vai dritto al punto.\n"
     "Sii conciso e diretto."
+)
+
+# Scheda canonica degli strumenti (dati dall'app: sigle, nomi IT, fattori). Iniettata
+# nel prompt per garantire nomi/sigle/conteggi esatti, indipendentemente dal RAG.
+DEFAULT_SITE_CHAT_KNOWLEDGE_CARD = (
+    "SCHEDA STRUMENTI (dati canonici; usa nomi, sigle e numeri ESATTI da qui):\n"
+    "- QSA — Questionario sulle Strategie di Apprendimento (Pellerey, 100 item). 14 fattori, scala stanine 1-9.\n"
+    "  Cognitivi: C1 Strategie elaborative · C2 Autoregolazione · C3 Disorientamento · C4 Disponibilità alla "
+    "collaborazione · C5 Organizzatori semantici · C6 Difficoltà di concentrazione · C7 Autointerrogazione.\n"
+    "  Affettivi: A1 Ansietà di base · A2 Volizione · A3 Attribuzione a cause controllabili · A4 Attribuzione a "
+    "cause incontrollabili · A5 Mancanza di perseveranza · A6 Percezione di competenza · A7 Interferenze emotive.\n"
+    "  Fattori invertiti (punteggio alto = area di crescita, non forza): C3, C6, A1, A4, A5, A7.\n"
+    "- QSAr — QSA Ridotto. 8 fattori: C1r Strategie elaborative · C2r Strategie autoregolative · C3r Strategie "
+    "grafiche e organizzatori semantici · C4r Carenza nel controllo dell'attenzione (inv) · A1r Ansietà e controllo "
+    "delle emozioni (inv) · A2r Volizione · A3r Attribuzioni causali · A4r Percezione di competenza.\n"
+    "- ZTPI — Zimbardo Time Perspective Inventory (di Philip Zimbardo, integrato nel progetto). 5 prospettive: "
+    "T1 Passato Negativo (inv) · T2 Passato Positivo · T3 Presente Edonistico · T4 Presente Fatalistico (inv) · "
+    "T5 Futuro. Profilo ideale = «prospettiva temporale equilibrata» (Zimbardo), riadattata su campione italiano (Margottini).\n"
+    "- QPCS — Questionario sulla Percezione delle proprie Competenze Strategiche. 5 fattori: S1 Gestione delle "
+    "emozioni · S2 Competenza comunicativa · S3 Volontà e perseveranza · S4 Strategie e collaborazione · S5 Fiducia e progetto di vita.\n"
+    "- QPCC — Questionario di Percezione delle proprie Competenze e Convinzioni. 5 fattori: K1 Comunicazione in "
+    "pubblico · K2 Gestione di ansia e responsabilità · K3 Volizione e autoregolazione · K4 Strategie di elaborazione · K5 Convinzioni su di sé.\n"
+    "- QAP — Questionario di Adattabilità Professionale. 4 fattori: AD1 Orientamento al futuro · AD2 Controllo e "
+    "autonomia · AD3 Curiosità ed esplorazione · AD4 Fiducia e problem solving.\n"
+    "- Savickas — intervista narrativa di career construction (M. Savickas); risorsa di QUESTA piattaforma, non di competenzestrategiche.it."
 )
 
 DEFAULT_SYSTEM_PROMPT_SITE_DOCENTE = (
@@ -424,7 +454,35 @@ DEFAULT_SYSTEM_PROMPT_SITE_STUDENTE = (
     + _SITE_CHAT_COMMON_RULES
 )
 
+DEFAULT_SITE_CHAT_PLATFORM_CONTEXT = (
+    "CONTESTO PIATTAFORMA (informazione di base, sempre valida):\n"
+    "- Questa piattaforma (CounselorBot) ospita più strumenti: QSA, QSAr, ZTPI, Savickas, QPCS, QPCC, QAP.\n"
+    "- Il progetto/sito competenzestrategiche.it riguarda le COMPETENZE STRATEGICHE: comprende QSA e QSAr "
+    "e i costrutti collegati. NON include l'intervista di Savickas — Savickas è una risorsa di QUESTA "
+    "piattaforma, non di competenzestrategiche.it.\n"
+    "- ZTPI (Zimbardo Time Perspective Inventory) è opera di Philip Zimbardo: Zimbardo NON ha creato le "
+    "competenze strategiche; il suo strumento è stato ripreso e integrato in questo contesto.\n"
+    "- Vari costrutti/strumenti sono stati adattati dal lavoro di ALTRI autori: tali autori non hanno "
+    "costruito le competenze strategiche.\n"
+    "- Distingui SEMPRE ciò che appartiene a competenzestrategiche.it da ciò che è proprio di questa "
+    "piattaforma. Non attribuire a competenzestrategiche.it strumenti/autori esterni, né la paternità del "
+    "progetto ad autori i cui lavori sono solo stati integrati."
+)
+
 SITE_CHAT_CONFIG_DEFINITIONS: List[Dict[str, str]] = [
+    {
+        "key": "site_chat_knowledge_card",
+        "label": "Site Chat - Scheda strumenti (dati canonici)",
+        "description": "Sigle, nomi e fattori esatti degli strumenti, iniettati nel prompt per risposte accurate e non generiche",
+        "default": DEFAULT_SITE_CHAT_KNOWLEDGE_CARD,
+    },
+    {
+        "key": "site_chat_platform_context",
+        "label": "Site Chat - Contesto piattaforma (distinzioni/attribuzioni)",
+        "description": "Verità di base iniettata nel prompt: distingue questa piattaforma da competenzestrategiche.it, "
+                       "corregge attribuzioni (ZTPI/Zimbardo, Savickas solo-piattaforma, costrutti da altri autori)",
+        "default": DEFAULT_SITE_CHAT_PLATFORM_CONTEXT,
+    },
     {
         "key": "prompt_site_chat_docente",
         "label": "Site Chat - Prompt Docente",
@@ -449,7 +507,37 @@ SITE_CHAT_CONFIG_DEFINITIONS: List[Dict[str, str]] = [
         "key": "site_chat_top_k",
         "label": "Site Chat - Numero passaggi recuperati (top-k)",
         "description": "Quanti chunk recuperare dall'indice RAG per ogni domanda",
-        "default": "6",
+        "default": "10",
+    },
+    {
+        "key": "site_chat_category_weights",
+        "label": "Site Chat - Pesi per macro-categoria (JSON)",
+        "description": "Peso moltiplicativo per categoria nel ranking RAG (priorità contenuti core vs riferimenti esterni)",
+        "default": (
+            '{"strumenti": 1.0, "guide": 1.0, "validazione": 1.0, '
+            '"studi": 0.9, "convegni": 0.75, "approfondimenti": 0.5, "altro": 0.9}'
+        ),
+    },
+    {
+        "key": "site_chat_audience_weights",
+        "label": "Site Chat - Pesi per pubblico (JSON)",
+        "description": "Moltiplicatori categoria per pubblico (docente/studente); default 1.0 dove non specificato",
+        "default": (
+            '{"docente": {"studi": 1.2, "validazione": 1.2, "convegni": 1.1}, '
+            '"studente": {"guide": 1.2, "strumenti": 1.2}}'
+        ),
+    },
+    {
+        "key": "site_chat_max_per_source",
+        "label": "Site Chat - Max chunk per documento",
+        "description": "Tetto di chunk dallo stesso documento nei risultati (diversità, evita che un libro riempia tutto)",
+        "default": "3",
+    },
+    {
+        "key": "site_chat_min_score",
+        "label": "Site Chat - Soglia minima similarità",
+        "description": "Coseno minimo (0-1) perché un chunk sia considerato: scarta match deboli",
+        "default": "0.2",
     },
 ]
 

@@ -129,6 +129,28 @@ class ValidationResponse(Base):
     submitted_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class TrainingExample(Base):
+    """Esempio candidato per dataset SFT, revisionato da admin prima dell'export."""
+
+    __tablename__ = "training_examples"
+
+    id = Column(Integer, primary_key=True, index=True)
+    instrument_code = Column(String, index=True, nullable=False, default="QSA")
+    locale = Column(String, index=True, nullable=False, default="it")
+    phase = Column(String, index=True, nullable=False)
+    step_label = Column(String, nullable=True)
+    scores = Column(JSON, nullable=True)
+    scores_context = Column(Text, nullable=False)
+    student_message = Column(Text, nullable=False)
+    assistant_answer = Column(Text, nullable=False)
+    status = Column(String, index=True, nullable=False, default="pending")
+    review_notes = Column(Text, nullable=True)
+    auto_score = Column(JSON, nullable=True)
+    source = Column(String, nullable=False, default="synthetic-template-v1")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 # --- Catalogo strumenti editabile da admin (item + regole di scala, DB-driven) ---
 # Vedi docs/validazione/progetto-validazione-qsa-qsar-sv-en.md §9.
 

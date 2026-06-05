@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database } from 'lucide-react';
+import { ArrowLeft, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit } from 'lucide-react';
 import { ConfigForm } from '@/components/admin/ConfigForm';
 import { LogViewer } from '@/components/admin/LogViewer';
 import { SurveyViewer } from '@/components/admin/SurveyViewer';
 import { QuestionnaireResultsViewer } from '@/components/admin/QuestionnaireResultsViewer';
 import { QuestionnaireEditor } from '@/components/admin/QuestionnaireEditor';
 import { ValidationExportPanel } from '@/components/admin/ValidationExportPanel';
+import { TrainingDatasetPanel } from '@/components/admin/TrainingDatasetPanel';
 import { getIdentity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 
@@ -18,7 +19,7 @@ import { cn } from '@/lib/utils';
 export default function AdminPage() {
     const router = useRouter();
     const { t } = useI18n();
-    const [activeTab, setActiveTab] = useState<'config' | 'logs' | 'surveys' | 'results' | 'questionnaires' | 'validation'>('config');
+    const [activeTab, setActiveTab] = useState<'config' | 'logs' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'training'>('config');
     const [authState, setAuthState] = useState<'loading' | 'admin' | 'forbidden'>('loading');
 
     useEffect(() => {
@@ -137,6 +138,18 @@ export default function AdminPage() {
                         {t('admin.tab.questionnaires')}
                     </button>
                     <button
+                        onClick={() => setActiveTab('training')}
+                        className={cn(
+                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
+                            activeTab === 'training'
+                                ? "bg-indigo-50 border-indigo-100 text-indigo-600"
+                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                        )}
+                    >
+                        <BrainCircuit className="w-4 h-4" />
+                        {t('admin.tab.training')}
+                    </button>
+                    <button
                         onClick={() => setActiveTab('validation')}
                         className={cn(
                             "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
@@ -157,6 +170,7 @@ export default function AdminPage() {
                     {activeTab === 'surveys' && <SurveyViewer />}
                     {activeTab === 'results' && <QuestionnaireResultsViewer />}
                     {activeTab === 'questionnaires' && <QuestionnaireEditor />}
+                    {activeTab === 'training' && <TrainingDatasetPanel />}
                     {activeTab === 'validation' && <ValidationExportPanel />}
                 </div>
             </section>

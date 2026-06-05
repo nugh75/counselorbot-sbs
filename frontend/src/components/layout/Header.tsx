@@ -38,41 +38,36 @@ export function Header() {
                 </div>
 
                 <div className="ml-auto flex min-w-0 items-center gap-1">
-                    <Link href="/assistente" className="console-topbar-action" title="Assistente del sito" aria-label="Assistente del sito">
+                    <Link href="/assistente" className="console-topbar-icon" title="Assistente del sito" aria-label="Assistente del sito">
                         <Bot className="w-4 h-4" />
-                        <span className="hidden sm:inline">Assistente</span>
                     </Link>
                     {accountLabel && (
                         <Link
                             href="/profilo"
                             title={[identity?.username, identity?.email, identity?.groups.join(', ')].filter(Boolean).join(' - ')}
-                            className="hidden md:inline max-w-52 truncate text-sm text-slate-500 mr-2 hover:text-indigo-600 transition-colors font-medium"
+                            className="hidden sm:inline max-w-52 truncate px-2 text-sm text-slate-500 hover:text-indigo-600 transition-colors font-medium"
                         >
                             {accountLabel}
                         </Link>
                     )}
                     {identity?.authenticated && (
-                        <Link href="/profilo" className="console-topbar-action" title={t('profile.nav')} aria-label={t('profile.nav')}>
+                        <Link href="/profilo" className="console-topbar-icon" title={t('profile.nav')} aria-label={t('profile.nav')}>
                             <User className="w-4 h-4" />
-                            <span className="hidden sm:inline">{t('profile.nav')}</span>
                         </Link>
                     )}
                     {identity?.is_admin && (
-                        <Link href="/admin" className="console-topbar-action" title={t('nav.admin')} aria-label={t('nav.admin')}>
+                        <Link href="/admin" className="console-topbar-icon" title={t('nav.admin')} aria-label={t('nav.admin')}>
                             <Settings className="w-4 h-4" />
-                            <span className="hidden sm:inline">{t('nav.admin')}</span>
                         </Link>
                     )}
                     {identity !== undefined && !identity?.authenticated && (
-                        <a href={ai4authLoginUrl('/admin')} className="console-topbar-action" title={t('nav.adminLogin')} aria-label={t('nav.adminLogin')}>
+                        <a href={ai4authLoginUrl('/admin')} className="console-topbar-icon" title={t('nav.adminLogin')} aria-label={t('nav.adminLogin')}>
                             <LogIn className="w-4 h-4" />
-                            <span className="hidden sm:inline">{t('nav.adminLogin')}</span>
                         </a>
                     )}
                     {identity?.authenticated && (
-                        <a href={AI4AUTH_LOGOUT_URL} className="console-topbar-action" title={t('nav.logout')} aria-label={t('nav.logout')}>
+                        <a href={AI4AUTH_LOGOUT_URL} className="console-topbar-icon" title={t('nav.logout')} aria-label={t('nav.logout')}>
                             <LogOut className="w-4 h-4" />
-                            <span className="hidden sm:inline">{t('nav.logout')}</span>
                         </a>
                     )}
                     <LanguageSwitcher />

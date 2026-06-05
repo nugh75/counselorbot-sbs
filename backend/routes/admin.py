@@ -1,12 +1,21 @@
 """Endpoint admin + identità utente (/auth/me, /admin/*)."""
 import os
-from typing import List
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from .. import models, schemas, auth, database
 from ..ai_service import AIService
+from ..training_dataset import (
+    APPROVED_EXPORT_STATUSES,
+    VALID_REVIEW_STATUSES,
+    build_training_jsonl,
+    generate_qsa_examples,
+    training_query,
+    training_summary,
+)
 
 router = APIRouter()
 get_db = database.get_db
@@ -114,6 +123,130 @@ async def admin_reorder_guided_steps(items: List[schemas.ReorderItem], current_u
             db_step.sort_order = item.sort_order
     db.commit()
     return {"status": "success"}
+
+
+# --- Admin Training Dataset Review ---
+
+@router.get("/admin/training-dataset/summary", response_model=schemas.TrainingSummaryResponse)
+async def admin_training_summary(
+    instrument_code: Optional[str] = Query(None),
+    locale: Optional[str] = Query(None),
+    phase: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    return training_summary(db, instrument_code, locale, phase, status)
+
+
+@router.get("/admin/training-dataset/examples", response_model=List[schemas.TrainingExampleResponse])
+async def admin_training_examples(
+    instrument_code: Optional[str] = Query(None),
+    locale: Optional[str] = Query(None),
+    phase: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    skip: int = 0,
+    limit: int = 50,
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    return (
+        training_query(db, instrument_code, locale, phase, status)
+        .order_by(models.TrainingExample.created_at.desc(), models.TrainingExample.id.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+
+@router.post("/admin/training-dataset/examples", response_model=schemas.TrainingExampleResponse)
+async def admin_create_training_example(
+    example: schemas.TrainingExampleCreate,
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    data = example.model_dump()
+    if data.get("status") not in VALID_REVIEW_STATUSES:
+        raise HTTPException(status_code=400, detail="Invalid training example status")
+    db_obj = models.TrainingExample(**data)
+    db.add(db_obj)
+    db.commit()
+    db.refresh(db_obj)
+    return db_obj
+
+
+@router.post("/admin/training-dataset/generate", response_model=List[schemas.TrainingExampleResponse])
+async def admin_generate_training_examples(
+    payload: schemas.TrainingGenerateRequest,
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    if payload.instrument_code != "QSA":
+        raise HTTPException(status_code=400, detail="Only QSA synthetic generation is available")
+    return generate_qsa_examples(db, payload.locale, payload.phase, payload.count)
+
+
+@router.patch("/admin/training-dataset/examples/{example_id}", response_model=schemas.TrainingExampleResponse)
+async def admin_update_training_example(
+    example_id: int,
+    update: schemas.TrainingExampleUpdate,
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    db_obj = db.query(models.TrainingExample).filter(models.TrainingExample.id == example_id).first()
+    if not db_obj:
+        raise HTTPException(status_code=404, detail="Training example not found")
+    data = update.model_dump(exclude_unset=True)
+    if "status" in data and data["status"] not in VALID_REVIEW_STATUSES:
+        raise HTTPException(status_code=400, detail="Invalid training example status")
+    for field, value in data.items():
+        setattr(db_obj, field, value)
+    db.commit()
+    db.refresh(db_obj)
+    return db_obj
+
+
+@router.delete("/admin/training-dataset/examples/{example_id}")
+async def admin_delete_training_example(
+    example_id: int,
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    db_obj = db.query(models.TrainingExample).filter(models.TrainingExample.id == example_id).first()
+    if not db_obj:
+        raise HTTPException(status_code=404, detail="Training example not found")
+    db.delete(db_obj)
+    db.commit()
+    return {"status": "success"}
+
+
+@router.get("/admin/training-dataset/export.jsonl")
+async def admin_export_training_jsonl(
+    instrument_code: Optional[str] = Query(None),
+    locale: Optional[str] = Query(None),
+    phase: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    if status:
+        statuses = {status}
+    else:
+        statuses = APPROVED_EXPORT_STATUSES
+    rows = (
+        training_query(db, instrument_code, locale, phase)
+        .filter(models.TrainingExample.status.in_(statuses))
+        .order_by(models.TrainingExample.created_at.asc(), models.TrainingExample.id.asc())
+        .all()
+    )
+    jsonl_text = build_training_jsonl(rows)
+    suffix = "-".join(part for part in [instrument_code, locale, phase, status] if part)
+    filename = f"training-dataset{('-' + suffix) if suffix else ''}.jsonl"
+    return Response(
+        content=jsonl_text,
+        media_type="application/x-ndjson; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 # --- Admin Instruments / Factors / Items CRUD (catalogo editabile) ---

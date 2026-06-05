@@ -13,6 +13,7 @@ Con pytest (se installato):
     pytest backend/tests/test_smoke.py
 """
 import os
+import re
 from urllib.parse import urlsplit, urlunsplit
 
 import psycopg2
@@ -143,6 +144,13 @@ EXPECTED_ROUTES = {
     ("PUT", "/admin/guided-steps/{step_id}"),
     ("DELETE", "/admin/guided-steps/{step_id}"),
     ("PATCH", "/admin/guided-steps/reorder"),
+    ("GET", "/admin/training-dataset/summary"),
+    ("GET", "/admin/training-dataset/examples"),
+    ("POST", "/admin/training-dataset/examples"),
+    ("POST", "/admin/training-dataset/generate"),
+    ("PATCH", "/admin/training-dataset/examples/{example_id}"),
+    ("DELETE", "/admin/training-dataset/examples/{example_id}"),
+    ("GET", "/admin/training-dataset/export.jsonl"),
     ("POST", "/survey"),
     ("POST", "/strategy-feedback"),
     ("GET", "/admin/surveys"),
@@ -186,6 +194,7 @@ EXPECTED_ROUTES = {
     ("POST", "/instruments/{code}/score"),
     # Chatbot informativo del sito (RAG)
     ("GET", "/site-chat/status"),
+    ("GET", "/site-chat/document"),
     ("POST", "/site-chat/reindex"),
     ("POST", "/site-chat/stream"),
 }
@@ -234,6 +243,34 @@ def test_guided_steps_list():
 def test_guided_ui_texts_public():
     r = client.get("/qsa/guided-ui-texts?questionnaire_type=QSA")
     assert r.status_code == 200, r.text
+
+
+def test_training_dataset_review_flow():
+    r = client.post("/admin/training-dataset/generate", json={
+        "instrument_code": "QSA",
+        "locale": "it",
+        "phase": "sl-motivation",
+        "count": 2,
+    })
+    assert r.status_code == 200, r.text
+    rows = r.json()
+    assert len(rows) == 2
+    assert rows[0]["status"] == "pending"
+    assert rows[0]["phase"] == "sl-motivation"
+
+    example_id = rows[0]["id"]
+    r = client.patch(f"/admin/training-dataset/examples/{example_id}", json={
+        "assistant_answer": rows[0]["assistant_answer"] + "\nNota validata.",
+        "status": "edited",
+        "review_notes": "ok",
+    })
+    assert r.status_code == 200, r.text
+    assert r.json()["status"] == "edited"
+
+    r = client.get("/admin/training-dataset/export.jsonl?instrument_code=QSA&locale=it&phase=sl-motivation")
+    assert r.status_code == 200, r.text
+    assert '"messages"' in r.text
+    assert "Nota validata" in r.text
 
 
 def test_qsar_guided_ui_texts_public():
@@ -423,11 +460,17 @@ def test_site_chat_status_public():
     assert "n_chunks" in body and "embedding_model" in body
 
 
+def test_site_chat_document_rejects_unknown_source():
+    # Solo le sorgenti indicizzate sono anteprimabili (anti path-traversal).
+    r = client.get("/site-chat/document", params={"source": "../../etc/passwd"})
+    assert r.status_code == 404, r.text
+
+
 def test_site_chat_stream_grounded_mocked():
     # Patcha la retrieval per non toccare embeddings/rete: contesto fittizio.
     canned = [{"score": 0.9, "source": "fonti/x.md", "title": "Doc X", "text": "Contenuto di prova."}]
     original_search = site_chat_routes.site_rag_index.search
-    site_chat_routes.site_rag_index.search = lambda svc, q, k: canned
+    site_chat_routes.site_rag_index.search = lambda svc, q, k, *a, **kw: canned
     try:
         r = client.post("/site-chat/stream", json={
             "message": "Cos'è il QSA?", "audience": "studente", "session_id": "site-chat-test",
@@ -436,6 +479,15 @@ def test_site_chat_stream_grounded_mocked():
         assert "RISPOSTA_TEST" in r.text
         assert '"done": true' in r.text
         assert "fonti/x.md" in r.text  # le fonti citate tornano nell'evento done
+        # Il 'mi piace' riusa /strategy-feedback con il response_id emesso.
+        m = re.search(r'"response_id":\s*"([0-9a-f-]+)"', r.text)
+        assert m, f"response_id mancante nello stream: {r.text[-300:]}"
+        fb = client.post("/strategy-feedback", json={
+            "response_id": m.group(1), "strategy_ids": [],
+            "questionnaire_type": "SITE", "phase": "studente", "language": "it", "helpful": True,
+        })
+        assert fb.status_code == 200, fb.text
+        assert fb.json()["recorded"] >= 1
     finally:
         site_chat_routes.site_rag_index.search = original_search
 
@@ -604,6 +656,48 @@ def test_qsa_extractor_rejects_incomplete_scores():
 def test_strip_markdown():
     out = main.strip_markdown("**grassetto** e _corsivo_")
     assert "**" not in out and "grassetto" in out
+
+
+def test_normalize_markdown_reflows_tables_and_cleans():
+    from backend.rag_index import _normalize_markdown
+    raw = (
+        "<!-- converted from X.docx -->\n\n"
+        "firma …………………………\n\n"
+        "| * | Intestazione lunga che va a capo | punti\n"
+        "di forza |\n"
+        "| --- | --- | --- |\n"
+        "| C3 | Capacità | ok |\n"
+    )
+    out = _normalize_markdown(raw)
+    assert "<!--" not in out
+    assert "…………" not in out
+    # header ricucito su una riga, termina con '|'
+    header = next(ln for ln in out.splitlines() if "Intestazione" in ln)
+    assert header.rstrip().endswith("|")
+    assert "punti di forza" in header
+
+
+def test_site_chat_category_for():
+    from backend.rag_index import category_for
+    assert category_for("questionari/strumenti/QSA_it.pdf") == "strumenti"
+    assert category_for("validazione/formule/formule-validazione.pdf") == "validazione"
+    assert category_for("fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf") == "guide"
+    assert category_for("fonti/competenze-strategiche/sito-competenzestrategiche/studi/OTTONE_2023.pdf") == "studi"
+    assert category_for("fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Abstract_fascicolo.pdf") == "convegni"
+    # libri voluminosi → approfondimenti (peso basso), anche fuori da cnos-fap
+    assert category_for("fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/soft_skill.pdf") == "approfondimenti"
+    assert category_for("fonti/competenze-strategiche/Dirigere_se_stessi_2020.pdf") == "approfondimenti"
+
+
+def test_site_chat_strips_fonte_tokens():
+    from backend.routes.site_chat import _strip_fonte_tokens
+    out = _strip_fonte_tokens("Ci vogliono 5 minuti (FONTE 1), (FONTE 4), (FONTE 5).")
+    assert "FONTE" not in out
+    assert out == "Ci vogliono 5 minuti."
+    assert _strip_fonte_tokens("Vedi [FONTE 2] per dettagli") == "Vedi per dettagli"
+    # citazioni raggruppate: (Fonte 1; Fonte 4) / (Fonti 1, 2)
+    assert "Fonte" not in _strip_fonte_tokens("Lo dice Margottini (Fonte 1; Fonte 4).")
+    assert "Fonti" not in _strip_fonte_tokens("Vedi (Fonti 1, 2, 3) per i dettagli.")
 
 
 # --------------------------------------------------------------------------

@@ -136,6 +136,22 @@ body {
   color: var(--console-topbar-text-hover);
 }
 
+.console-topbar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  color: var(--console-topbar-text);
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.console-topbar-icon:hover {
+  background: var(--console-topbar-hover);
+  color: var(--console-topbar-text-hover);
+}
+
 /* Prose styles for markdown content */
 .prose {
   line-height: 1.6;

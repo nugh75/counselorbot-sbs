@@ -47,6 +47,8 @@ export function ValidationExportPanel() {
     const [instrument, setInstrument] = useState('QSA');
     const [locale, setLocale] = useState('es');
     const [version, setVersion] = useState('QSA_es_2026_v1');
+    const [cohort, setCohort] = useState('');
+    const [study, setStudy] = useState('QSA Spanish validation');
     const [summary, setSummary] = useState<ValidationSummary | null>(null);
     const [rows, setRows] = useState<ValidationResponse[]>([]);
     const [loading, setLoading] = useState(false);
@@ -92,6 +94,15 @@ export function ValidationExportPanel() {
     }, [instrument, locale, version]);
 
     const exportUrl = `/api/admin/validation/export.csv${queryString(filters)}`;
+    const collectionPath = useMemo(() => {
+        const params = new URLSearchParams();
+        if (version.trim()) params.set('version', version.trim());
+        if (cohort.trim()) params.set('cohort', cohort.trim());
+        if (study.trim()) params.set('study', study.trim());
+        const qs = params.toString();
+        return `/somministrazione/${instrument}/${locale || 'es'}${qs ? `?${qs}` : ''}`;
+    }, [instrument, locale, version, cohort, study]);
+    const collectionUrl = typeof window === 'undefined' ? collectionPath : `${window.location.origin}${collectionPath}`;
 
     return (
         <div className="space-y-5">
@@ -142,6 +153,23 @@ export function ValidationExportPanel() {
                             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                         />
                     </label>
+                    <label className="block md:col-span-2">
+                        <span className="text-xs font-semibold uppercase text-slate-500">Coorte / gruppo</span>
+                        <input
+                            value={cohort}
+                            onChange={(event) => setCohort(event.target.value)}
+                            placeholder="es. Murcia_pilot_2026"
+                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        />
+                    </label>
+                    <label className="block md:col-span-2">
+                        <span className="text-xs font-semibold uppercase text-slate-500">Studio</span>
+                        <input
+                            value={study}
+                            onChange={(event) => setStudy(event.target.value)}
+                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        />
+                    </label>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
                     <button
@@ -159,6 +187,23 @@ export function ValidationExportPanel() {
                         <Download className="h-4 w-4" />
                         Esporta CSV item-level
                     </a>
+                </div>
+                <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-xs font-semibold uppercase text-slate-500">Link raccolta dati</p>
+                    <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                        <input
+                            readOnly
+                            value={collectionUrl}
+                            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-700"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => navigator.clipboard?.writeText(collectionUrl)}
+                            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                        >
+                            Copia
+                        </button>
+                    </div>
                 </div>
                 {message && <p className="mt-3 text-sm text-red-600">{message}</p>}
             </section>

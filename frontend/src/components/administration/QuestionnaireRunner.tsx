@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { AlertTriangle, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { AdministrationCopy, AdministrationInstrument } from '@/lib/test-administrations';
 import { addCompletedProfile } from '@/lib/profile-tracker';
@@ -47,6 +48,7 @@ interface QuestionnaireRunnerProps {
 }
 
 export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireRunnerProps) {
+    const searchParams = useSearchParams();
     const [answers, setAnswers] = useState<Record<number, number>>({});
     const [error, setError] = useState('');
     const [results, setResults] = useState<ScoreResult[] | null>(null);
@@ -55,7 +57,17 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
     // Testo item: dal backend (DB editabile) se disponibile, altrimenti fallback statico.
     const [backendItems, setBackendItems] = useState<string[] | null>(null);
     const [backendItemsChecked, setBackendItemsChecked] = useState(false);
+    const [metadata, setMetadata] = useState({
+        participant_code: '',
+        age_range: '',
+        gender: '',
+        education_context: '',
+        cohort: searchParams.get('cohort') ?? '',
+        study: searchParams.get('study') ?? '',
+        consent: false,
+    });
     const scaleMax = copy.scale.length;
+    const versionLabel = searchParams.get('version') || `${instrument}_${locale}_2026_v1`;
 
     // Carica gli item dal catalogo DB-driven (le modifiche admin diventano visibili).
     useEffect(() => {
@@ -111,6 +123,12 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
 
     const submit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        if (!metadata.consent) {
+            setError(locale === 'es'
+                ? 'Debes aceptar las condiciones de participacion antes de enviar la administracion.'
+                : 'You must accept the participation conditions before submitting the administration.');
+            return;
+        }
         if (answered !== displayItems.length) {
             setError(copy.missingAnswers);
             const firstMissing = displayItems.findIndex((_, index) => !answers[index + 1]);
@@ -137,10 +155,17 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                     answers,
                     save: true,
                     save_validation: true,
-                    version_label: `${instrument}_${locale}_2026_v1`,
+                    version_label: versionLabel,
                     response_metadata: {
                         item_count: displayItems.length,
                         source: 'somministrazione',
+                        participant_code: metadata.participant_code.trim(),
+                        age_range: metadata.age_range,
+                        gender: metadata.gender,
+                        education_context: metadata.education_context.trim(),
+                        cohort: metadata.cohort.trim(),
+                        study: metadata.study.trim(),
+                        consent: metadata.consent,
                     },
                     duration_seconds: durationSeconds,
                 }),
@@ -253,6 +278,7 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                                 setAnswers({});
                                 setResults(null);
                                 setStartedAt(Date.now());
+                                setMetadata((previous) => ({ ...previous, consent: false }));
                             }}
                             className="rounded-md bg-indigo-600 px-5 py-2.5 font-semibold text-white hover:bg-indigo-700"
                         >
@@ -286,6 +312,105 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                 <p className="text-slate-700 leading-relaxed">{copy.instructions}</p>
                 <p className="rounded-md bg-slate-100 px-4 py-3 text-sm text-slate-700">{copy.privacyNote}</p>
             </header>
+
+            <section className="glass-panel rounded-xl p-5 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h2 className="text-lg font-bold text-slate-900">
+                            {locale === 'es' ? 'Datos de validacion' : 'Validation data'}
+                        </h2>
+                        <p className="mt-1 text-sm text-slate-600">
+                            {locale === 'es'
+                                ? 'Usa solo un codigo anonimo. No introduzcas nombres, apellidos ni correos personales.'
+                                : 'Use only an anonymous code. Do not enter names, surnames, or personal email addresses.'}
+                        </p>
+                    </div>
+                    <span className="rounded-md bg-slate-100 px-3 py-1.5 font-mono text-xs text-slate-600">
+                        {versionLabel}
+                    </span>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                    <label className="block">
+                        <span className="text-xs font-semibold uppercase text-slate-500">
+                            {locale === 'es' ? 'Codigo anonimo' : 'Anonymous code'}
+                        </span>
+                        <input
+                            value={metadata.participant_code}
+                            onChange={(event) => setMetadata((previous) => ({ ...previous, participant_code: event.target.value }))}
+                            placeholder="ES-001"
+                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        />
+                    </label>
+                    <label className="block">
+                        <span className="text-xs font-semibold uppercase text-slate-500">
+                            {locale === 'es' ? 'Grupo / cohorte' : 'Group / cohort'}
+                        </span>
+                        <input
+                            value={metadata.cohort}
+                            onChange={(event) => setMetadata((previous) => ({ ...previous, cohort: event.target.value }))}
+                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        />
+                    </label>
+                    <label className="block">
+                        <span className="text-xs font-semibold uppercase text-slate-500">
+                            {locale === 'es' ? 'Edad' : 'Age'}
+                        </span>
+                        <select
+                            value={metadata.age_range}
+                            onChange={(event) => setMetadata((previous) => ({ ...previous, age_range: event.target.value }))}
+                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        >
+                            <option value="">{locale === 'es' ? 'Prefiero no responder' : 'Prefer not to answer'}</option>
+                            <option value="under_18">{locale === 'es' ? 'Menos de 18' : 'Under 18'}</option>
+                            <option value="18_20">18-20</option>
+                            <option value="21_24">21-24</option>
+                            <option value="25_plus">25+</option>
+                        </select>
+                    </label>
+                    <label className="block">
+                        <span className="text-xs font-semibold uppercase text-slate-500">
+                            {locale === 'es' ? 'Genero' : 'Gender'}
+                        </span>
+                        <select
+                            value={metadata.gender}
+                            onChange={(event) => setMetadata((previous) => ({ ...previous, gender: event.target.value }))}
+                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        >
+                            <option value="">{locale === 'es' ? 'Prefiero no responder' : 'Prefer not to answer'}</option>
+                            <option value="female">{locale === 'es' ? 'Mujer' : 'Female'}</option>
+                            <option value="male">{locale === 'es' ? 'Hombre' : 'Male'}</option>
+                            <option value="other">{locale === 'es' ? 'Otro' : 'Other'}</option>
+                        </select>
+                    </label>
+                    <label className="block md:col-span-2">
+                        <span className="text-xs font-semibold uppercase text-slate-500">
+                            {locale === 'es' ? 'Contexto educativo' : 'Educational context'}
+                        </span>
+                        <input
+                            value={metadata.education_context}
+                            onChange={(event) => setMetadata((previous) => ({ ...previous, education_context: event.target.value }))}
+                            placeholder={locale === 'es' ? 'Universidad, curso, titulacion o grupo' : 'University, course, degree, or group'}
+                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        />
+                    </label>
+                </div>
+                <label className="flex items-start gap-3 rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-700">
+                    <input
+                        type="checkbox"
+                        checked={metadata.consent}
+                        onChange={(event) => {
+                            setMetadata((previous) => ({ ...previous, consent: event.target.checked }));
+                            setError('');
+                        }}
+                        className="mt-1 accent-indigo-600"
+                    />
+                    <span>
+                        {locale === 'es'
+                            ? 'Acepto participar en esta administracion de validacion y entiendo que los datos se trataran de forma anonima para analisis de investigacion.'
+                            : 'I agree to take part in this validation administration and understand that data will be handled anonymously for research analysis.'}
+                    </span>
+                </label>
+            </section>
 
             <div className="sticky top-16 z-10 rounded-lg border border-slate-200 bg-white/95 p-4 shadow-sm backdrop-blur">
                 <div className="flex justify-between text-sm font-semibold text-slate-700">
