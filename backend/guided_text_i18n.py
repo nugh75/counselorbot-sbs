@@ -34,6 +34,15 @@ PHASE_WORD = {
 # Per-language translations, keyed by base Config key. 'it' is the DB base value.
 GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
     "en": {
+        "pqbl_onboarding_text": (
+            "This path uses question-based learning: you learn by answering multiple-choice "
+            "questions and reading the feedback for each answer. The questions are NOT an exam: "
+            "they are the way you learn. Getting things wrong is part of the method: every answer, "
+            "right or wrong, gives you a useful explanation. This kind of study can feel demanding: "
+            "that's normal, and it's exactly that effort that helps you remember. If the session is "
+            "long, consider splitting it into several moments instead of doing it all at once. You "
+            "can also click the other options after finding the correct one, to read all the feedback."
+        ),
         "label_guided_questions": "4. Questions and Follow-up",
         "label_guided_conclusion": "Conclusion",
         "text_guided_questions_phase_banner": "--- Phase 4: Questions and Follow-up ---",
@@ -99,6 +108,16 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         ),
     },
     "es": {
+        "pqbl_onboarding_text": (
+            "Este recorrido usa el aprendizaje basado en preguntas (question-based learning): "
+            "aprenderás respondiendo preguntas de opción múltiple y leyendo el feedback de cada "
+            "respuesta. Las preguntas NO son un examen: son la forma en que se aprende. Equivocarse "
+            "forma parte del método: cada respuesta, correcta o incorrecta, te da una explicación "
+            "útil. Este tipo de estudio puede parecer cansado: es normal, y es justamente ese "
+            "esfuerzo el que ayuda a recordar. Si la sesión es larga, valora dividirla en varios "
+            "momentos en lugar de hacerla toda de una vez. También puedes hacer clic en las otras "
+            "opciones después de encontrar la correcta, para leer todos los feedback."
+        ),
         "label_guided_questions": "4. Preguntas y Profundización",
         "label_guided_conclusion": "Conclusión",
         "text_guided_questions_phase_banner": "--- Fase 4: Preguntas y Profundización ---",
@@ -164,6 +183,16 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         ),
     },
     "fr": {
+        "pqbl_onboarding_text": (
+            "Ce parcours utilise l'apprentissage basé sur les questions (question-based learning) : "
+            "tu apprendras en répondant à des questions à choix multiples et en lisant le feedback "
+            "de chaque réponse. Les questions NE sont PAS un examen : elles sont la façon dont on "
+            "apprend. Se tromper fait partie de la méthode : chaque réponse, juste ou fausse, te "
+            "donne une explication utile. Ce type d'étude peut sembler fatigant : c'est normal, et "
+            "c'est justement cet effort qui aide à mémoriser. Si la séance est longue, envisage de "
+            "la diviser en plusieurs moments plutôt que de tout faire d'un coup. Tu peux aussi "
+            "cliquer sur les autres options après avoir trouvé la bonne, pour lire tous les feedbacks."
+        ),
         "label_guided_questions": "4. Questions et Approfondissement",
         "label_guided_conclusion": "Conclusion",
         "text_guided_questions_phase_banner": "--- Phase 4 : Questions et Approfondissement ---",
@@ -229,6 +258,16 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         ),
     },
     "de": {
+        "pqbl_onboarding_text": (
+            "Dieser Weg nutzt fragenbasiertes Lernen (question-based learning): Du lernst, indem du "
+            "Multiple-Choice-Fragen beantwortest und das Feedback zu jeder Antwort liest. Die Fragen "
+            "sind KEINE Prüfung: Sie sind die Art, wie man lernt. Fehler zu machen gehört zur "
+            "Methode: Jede Antwort, richtig oder falsch, gibt dir eine nützliche Erklärung. Diese Art "
+            "zu lernen kann anstrengend wirken: Das ist normal, und genau diese Anstrengung hilft dir "
+            "beim Erinnern. Wenn die Sitzung lang ist, teile sie lieber in mehrere Abschnitte auf, "
+            "statt alles auf einmal zu machen. Du kannst nach der richtigen Option auch die anderen "
+            "anklicken, um alle Rückmeldungen zu lesen."
+        ),
         "label_guided_questions": "4. Fragen und Vertiefung",
         "label_guided_conclusion": "Abschluss",
         "text_guided_questions_phase_banner": "--- Phase 4: Fragen und Vertiefung ---",
@@ -294,6 +333,16 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         ),
     },
     "sv": {
+        "pqbl_onboarding_text": (
+            "Den här vägen använder frågebaserat lärande (question-based learning): du lär dig genom "
+            "att svara på flervalsfrågor och läsa återkopplingen för varje svar. Frågorna är INTE ett "
+            "prov: de är sättet man lär sig på. Att svara fel är en del av metoden: varje svar, rätt "
+            "eller fel, ger dig en användbar förklaring. Den här typen av studier kan kännas "
+            "ansträngande: det är normalt, och det är just den ansträngningen som hjälper dig att "
+            "minnas. Om sessionen är lång, överväg att dela upp den i flera tillfällen i stället för "
+            "att göra allt på en gång. Du kan också klicka på de andra alternativen efter att du "
+            "hittat det rätta, för att läsa all återkoppling."
+        ),
         "label_guided_questions": "4. Frågor och fördjupning",
         "label_guided_conclusion": "Avslutning",
         "text_guided_questions_phase_banner": "--- Fas 4: Frågor och fördjupning ---",

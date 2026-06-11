@@ -11,6 +11,7 @@ import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useI18n } from '@/lib/i18n-context';
 import { stepLabel } from '@/lib/i18n-steps';
+import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 
 // --- Types ---
 
@@ -1171,6 +1172,12 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                 </span>
                                 <span className="text-xs font-medium text-slate-500">{t('guided.processing')}</span>
                             </div>
+                        </div>
+                    )}
+                    {/* Fine sessione: invito a rivedere il profilo dopo la conversazione */}
+                    {currentPhase === FIXED_CONCLUSION_ID && (
+                        <div className="max-w-2xl">
+                            <LearnerProfileCard variant="update" sessionId={sessionId} />
                         </div>
                     )}
                     <div ref={messagesEndRef} />

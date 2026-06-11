@@ -27,7 +27,15 @@ import backend.routes.chat as chat_routes
 import backend.chat_logic as chat_logic
 from backend.memory_service import session_memory
 from backend.prompt_config import MODE_TO_SYSTEM_PROMPT_KEY
-from backend.qsa_extractor import _validate_scores
+from backend.qsa_extractor import (
+    DEFAULT_OCR_MODEL,
+    DEFAULT_PARSER_MODEL,
+    QUESTIONNAIRE_FACTORS,
+    SUPPORTED_QUESTIONNAIRES,
+    _questionnaire_factors,
+    _scores_schema,
+    _validate_scores,
+)
 from backend.strategy_memory import shared_response_memory
 
 
@@ -126,6 +134,11 @@ import backend.routes.site_chat as site_chat_routes
 site_chat_routes.AIService = _FakeAIService
 site_chat_routes.database.SessionLocal = _TestSession
 
+# pQBL: mock provider + sessione isolata per il task di generazione in background.
+import backend.routes.pqbl as pqbl_routes
+pqbl_routes.AIService = _FakeAIService
+pqbl_routes.database.SessionLocal = _TestSession
+
 client = TestClient(main.app)
 
 
@@ -169,6 +182,10 @@ EXPECTED_ROUTES = {
     ("POST", "/tts"),
     ("POST", "/questionnaire-result"),
     ("GET", "/user/questionnaire-results"),
+    ("GET", "/user/learner-profile"),
+    ("POST", "/user/learner-profile"),
+    ("GET", "/user/learner-profile/history"),
+    ("DELETE", "/user/learner-profile"),
     ("GET", "/admin/questionnaire-results"),
     ("GET", "/admin/validation/summary"),
     ("GET", "/admin/validation/responses"),
@@ -197,6 +214,20 @@ EXPECTED_ROUTES = {
     ("GET", "/site-chat/document"),
     ("POST", "/site-chat/reindex"),
     ("POST", "/site-chat/stream"),
+    # pQBL da PDF (pure Question-Based Learning)
+    ("POST", "/pqbl/upload"),
+    ("GET", "/pqbl/documents/{document_id}"),
+    ("POST", "/pqbl/sessions"),
+    ("GET", "/pqbl/sessions/{session_id}/questions"),
+    ("POST", "/pqbl/sessions/{session_id}/answer"),
+    ("POST", "/pqbl/sessions/{session_id}/final-test"),
+    ("GET", "/pqbl/sessions/{session_id}/summary"),
+    # pQBL admin (gestione documenti/domande + analitiche)
+    ("GET", "/admin/pqbl/documents"),
+    ("GET", "/admin/pqbl/documents/{document_id}/questions"),
+    ("PUT", "/admin/pqbl/questions/{question_id}"),
+    ("DELETE", "/admin/pqbl/documents/{document_id}"),
+    ("GET", "/admin/pqbl/analytics"),
 }
 
 
@@ -628,6 +659,57 @@ def test_questionnaire_result_user_history_and_delete():
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
+def test_learner_profile_revisions_and_history():
+    """Profilo del discente: salvataggio append-only, dedup, storico, delete."""
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        r = client.get("/user/learner-profile")
+        assert r.status_code == 200, r.text
+        assert r.json() is None
+
+        r = client.post("/user/learner-profile", json={
+            "goal": "Superare l'esame di analisi",
+            "main_difficulty": "Mi distraggo facilmente",
+            "source": "intake",
+            "session_id": "lp-session-1",
+        })
+        assert r.status_code == 200, r.text
+        first_id = r.json()["id"]
+        assert r.json()["data"]["goal"] == "Superare l'esame di analisi"
+
+        # Conferma senza modifiche -> nessuna nuova revisione
+        r = client.post("/user/learner-profile", json={
+            "goal": "Superare l'esame di analisi",
+            "main_difficulty": "Mi distraggo facilmente",
+            "source": "session_start",
+        })
+        assert r.json()["id"] == first_id
+
+        # Modifica -> nuova revisione, storico = 2
+        r = client.post("/user/learner-profile", json={
+            "goal": "Superare l'esame di analisi",
+            "main_difficulty": "Ansia prima dell'esame",
+            "source": "session_end",
+        })
+        assert r.json()["id"] != first_id
+        r = client.get("/user/learner-profile/history")
+        assert r.status_code == 200 and len(r.json()) == 2
+
+        # Il contesto chat include il profilo dichiarato
+        with _TestSession() as db:
+            section = chat_logic._learner_profile_context(db, "student")
+            assert "Profilo dichiarato dallo studente" in section
+            assert "Ansia prima dell'esame" in section
+            assert chat_logic._learner_profile_context(db, "") == ""
+
+        r = client.delete("/user/learner-profile")
+        assert r.status_code == 200 and r.json()["deleted_revisions"] == 2
+        r = client.get("/user/learner-profile")
+        assert r.json() is None
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
 def test_questionnaire_pdf_download():
     """Crea un risultato e verifica che il PDF sia scaricabile."""
     r = client.post("/questionnaire-result", json={
@@ -643,6 +725,8 @@ def test_questionnaire_pdf_download():
 
 
 def test_qsa_extractor_rejects_incomplete_scores():
+    assert DEFAULT_OCR_MODEL == "glm-ocr:latest"
+    assert DEFAULT_PARSER_MODEL == "gemma4:e2b"
     valid = {f"C{index}": index for index in range(1, 8)}
     valid.update({f"A{index}": index for index in range(1, 8)})
     assert _validate_scores(valid) == valid
@@ -651,6 +735,17 @@ def test_qsa_extractor_rejects_incomplete_scores():
     except ValueError:
         return
     raise AssertionError("An incomplete extraction must be rejected")
+
+
+def test_profile_extractor_supports_all_strategic_questionnaires():
+    assert SUPPORTED_QUESTIONNAIRES == ("QSA", "QSAr", "QPCS", "QPCC", "QAP")
+    for questionnaire_type, factors in QUESTIONNAIRE_FACTORS.items():
+        scores = {factor: (index % 9) + 1 for index, factor in enumerate(factors)}
+        assert _questionnaire_factors(questionnaire_type) == factors
+        assert _validate_scores(scores, factors) == scores
+        schema = _scores_schema(factors)
+        assert schema["required"] == list(factors)
+        assert set(schema["properties"]) == set(factors)
 
 
 def test_strip_markdown():
@@ -698,6 +793,274 @@ def test_site_chat_strips_fonte_tokens():
     # citazioni raggruppate: (Fonte 1; Fonte 4) / (Fonti 1, 2)
     assert "Fonte" not in _strip_fonte_tokens("Lo dice Margottini (Fonte 1; Fonte 4).")
     assert "Fonti" not in _strip_fonte_tokens("Vedi (Fonti 1, 2, 3) per i dettagli.")
+    # English source tags
+    assert _strip_fonte_tokens("See [SOURCE 2] for details") == "See for details"
+    assert "SOURCE" not in _strip_fonte_tokens("See (Sources 1, 2, 3) for details.")
+
+
+# --------------------------------------------------------------------------
+# pQBL da PDF: validatore puro + flusso endpoint con generazione mockata
+# --------------------------------------------------------------------------
+def _pqbl_option(key: str, correct: bool) -> dict:
+    return {
+        "key": key,
+        "text": f"Opzione {key} con un contenuto plausibile",
+        "correct": correct,
+        "feedback": (
+            "Esatto! Questa è la risposta giusta perché il materiale lo spiega in dettaglio."
+            if correct
+            else "Non è così: rileggi con attenzione questo aspetto del materiale e riprova."
+        ),
+    }
+
+
+def _pqbl_canned_bank(n_questions: int = 4) -> list:
+    """Bank valido per il validatore: 2 skill, chiave corretta = ABCD[posizione % 4]."""
+    bank = []
+    for i in range(n_questions):
+        skill = "saper riconoscere il concetto 1" if i < n_questions // 2 else "saper applicare il concetto 2"
+        correct_key = "ABCD"[i % 4]
+        bank.append({
+            "skill": skill,
+            "question": f"Domanda di prova numero {i + 1}?",
+            "options": [_pqbl_option(k, k == correct_key) for k in "ABCD"],
+        })
+    return bank
+
+
+def test_pqbl_validator_rules():
+    from backend.pqbl_generator import validate_mcq
+
+    valid = _pqbl_canned_bank(1)[0]
+    assert validate_mcq(valid) == []
+
+    # 0 o 2 opzioni corrette -> invalida
+    double = _pqbl_canned_bank(1)[0]
+    double["options"][1]["correct"] = True
+    double["options"][2]["correct"] = True
+    assert any("esattamente 1" in p for p in validate_mcq(double))
+
+    # feedback mancante -> invalida
+    nofb = _pqbl_canned_bank(1)[0]
+    nofb["options"][2]["feedback"] = ""
+    assert any("feedback vuoto" in p for p in validate_mcq(nofb))
+
+    # R2: il feedback del distrattore cita il testo della risposta corretta -> invalida
+    leak = _pqbl_canned_bank(1)[0]
+    correct_text = next(o["text"] for o in leak["options"] if o["correct"])
+    distractor = next(o for o in leak["options"] if not o["correct"])
+    distractor["feedback"] = f"Sbagliato, la risposta giusta è: {correct_text}."
+    assert any("rivela" in p for p in validate_mcq(leak))
+
+    # R2: il feedback dichiara la lettera corretta -> invalida
+    letter = _pqbl_canned_bank(1)[0]
+    correct_key = next(o["key"] for o in letter["options"] if o["correct"])
+    distractor = next(o for o in letter["options"] if not o["correct"])
+    distractor["feedback"] = f"No, la risposta corretta è {correct_key}."
+    assert any("lettera" in p for p in validate_mcq(letter))
+
+    # R3: ogni chunk produce ~4 domande per skill
+
+
+def test_pqbl_upload_and_learning_flow():
+    """Upload mockato -> bank pronto -> sessione learning -> answer -> summary
+    -> test finale. Verifica che il client non riceva MAI correct/feedback
+    prima della risposta."""
+    canned_text = "Testo estratto di prova, lungo a sufficienza per la pipeline pQBL. " * 10
+    original_total_pages = pqbl_routes.pdf_total_pages
+    original_extract_range = pqbl_routes.extract_pdf_text_range
+    original_generate = pqbl_routes.generate_batch_for_chunk
+    original_split = pqbl_routes.split_text_into_chunks
+    pqbl_routes.pdf_total_pages = lambda path: 3
+    pqbl_routes.extract_pdf_text_range = lambda path, start, end: canned_text
+    pqbl_routes.split_text_into_chunks = lambda text: [canned_text]
+    pqbl_routes.generate_batch_for_chunk = lambda ai, text, idx, lang, qp, provider=None: _pqbl_canned_bank(4)
+    try:
+        # dimensione non ammessa -> 400
+        r = client.post("/pqbl/upload", files={"file": ("dispensa.pdf", b"%PDF-1.4 x", "application/pdf")},
+                        data={"size": "15"})
+        assert r.status_code == 400, r.text
+
+        # estensione non pdf -> 400
+        r = client.post("/pqbl/upload", files={"file": ("foto.png", b"x", "image/png")},
+                        data={"size": "10"})
+        assert r.status_code == 400, r.text
+
+        r = client.post("/pqbl/upload", files={"file": ("dispensa.pdf", b"%PDF-1.4 x", "application/pdf")},
+                        data={"size": "10"})
+        assert r.status_code == 200, r.text
+        document_id = r.json()["document_id"]
+        assert r.json()["reused"] is False
+        # In TestClient i background task girano subito dopo la response,
+        # quindi al GET successivo il doc è già pronto.
+        assert r.json()["status"] in ("processing", "ready"), r.json()
+
+        r = client.get(f"/pqbl/documents/{document_id}")
+        assert r.status_code == 200, r.text
+        doc = r.json()
+        assert doc["status"] == "ready", doc
+        assert doc["n_questions"] == 4
+        assert len(doc["skills"]) == 2
+        assert doc["onboarding_text"]
+
+        # stesso testo + stesso provider -> riuso del bank
+        r = client.post("/pqbl/upload", files={"file": ("dispensa.pdf", b"%PDF-1.4 x", "application/pdf")},
+                        data={"size": "10"})
+        assert r.json()["reused"] is True
+        assert r.json()["document_id"] == document_id
+
+        # sessione learning
+        r = client.post("/pqbl/sessions", json={"document_id": document_id, "mode": "learning"})
+        assert r.status_code == 200, r.text
+        session_id = r.json()["session_id"]
+        assert r.json()["n_questions"] == 4
+
+        r = client.get(f"/pqbl/sessions/{session_id}/questions")
+        assert r.status_code == 200, r.text
+        questions = r.json()["questions"]
+        assert len(questions) == 4
+        for q in questions:
+            assert len(q["options"]) == 4
+            for o in q["options"]:
+                assert "correct" not in o, "il flag correct non deve mai raggiungere il client"
+                assert "feedback" not in o, "il feedback arriva solo dopo la risposta"
+
+        # domanda in posizione 0: corretta = A. Prima risposta sbagliata (B)...
+        q0 = next(q for q in questions if q["position"] == 0)
+        r = client.post(f"/pqbl/sessions/{session_id}/answer",
+                        json={"question_id": q0["id"], "option_key": "B"})
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["correct"] is False and body["first_try"] is True
+        assert body["feedback"]
+
+        # ...poi quella giusta (non più first_try): R5, tentativi multipli ammessi
+        r = client.post(f"/pqbl/sessions/{session_id}/answer",
+                        json={"question_id": q0["id"], "option_key": "A"})
+        assert r.json()["correct"] is True and r.json()["first_try"] is False
+
+        # le altre 3 domande: corrette al primo colpo (chiave = ABCD[posizione % 4])
+        for q in questions:
+            if q["position"] == 0:
+                continue
+            key = "ABCD"[q["position"] % 4]
+            r = client.post(f"/pqbl/sessions/{session_id}/answer",
+                            json={"question_id": q["id"], "option_key": key})
+            assert r.json()["correct"] is True and r.json()["first_try"] is True
+
+        r = client.get(f"/pqbl/sessions/{session_id}/summary")
+        assert r.status_code == 200, r.text
+        summary = r.json()
+        assert summary["total_questions"] == 4
+        assert summary["answered_questions"] == 4
+        assert summary["first_try_correct"] == 3  # la prima è stata sbagliata al primo colpo
+        assert summary["finished"] is True
+        assert len(summary["by_skill"]) == 2
+
+        # test finale (R7): 1 domanda per skill, submit unico, non ripetibile
+        r = client.post("/pqbl/sessions", json={"document_id": document_id, "mode": "final_test"})
+        final_session = r.json()["session_id"]
+        assert r.json()["n_questions"] == 2
+
+        r = client.get(f"/pqbl/sessions/{final_session}/questions")
+        final_questions = r.json()["questions"]
+        # in learning la answer singola è vietata per il test finale
+        r = client.post(f"/pqbl/sessions/{final_session}/answer",
+                        json={"question_id": final_questions[0]["id"], "option_key": "A"})
+        assert r.status_code == 400, r.text
+
+        answers = {str(q["id"]): "ABCD"[q["position"] % 4] for q in final_questions}
+        r = client.post(f"/pqbl/sessions/{final_session}/final-test", json={"answers": answers})
+        assert r.status_code == 200, r.text
+        result = r.json()
+        assert result["score"] == 2 and result["total"] == 2
+        assert all(row["feedback"] for row in result["results"])
+
+        # secondo submit -> 409
+        r = client.post(f"/pqbl/sessions/{final_session}/final-test", json={"answers": answers})
+        assert r.status_code == 409, r.text
+    finally:
+        pqbl_routes.pdf_total_pages = original_total_pages
+        pqbl_routes.extract_pdf_text_range = original_extract_range
+        pqbl_routes.generate_batch_for_chunk = original_generate
+        pqbl_routes.split_text_into_chunks = original_split
+
+
+def test_pqbl_early_break_aligns_chunks():
+    """Verifica che se la generazione dei chunk si interrompe in anticipo,
+    doc.chunks_total venga allineato a doc.chunks_done."""
+    canned_text = "Testo estratto di prova per early break " * 10
+    original_total_pages = pqbl_routes.pdf_total_pages
+    original_extract_range = pqbl_routes.extract_pdf_text_range
+    original_generate = pqbl_routes.generate_batch_for_chunk
+    original_split = pqbl_routes.split_text_into_chunks
+    pqbl_routes.pdf_total_pages = lambda path: 12  # 4 segmenti da 3 pag
+    pqbl_routes.extract_pdf_text_range = lambda path, start, end: canned_text
+    pqbl_routes.split_text_into_chunks = lambda text: [canned_text, canned_text]  # 2 chunk per segmento
+    pqbl_routes.generate_batch_for_chunk = lambda ai, text, idx, lang, qp, provider=None: _pqbl_canned_bank(4)
+    try:
+        r = client.post("/pqbl/upload", files={"file": ("dispensa_early.pdf", b"%PDF-1.4 early_break", "application/pdf")},
+                        data={"size": "10"})
+        assert r.status_code == 200, r.text
+        document_id = r.json()["document_id"]
+        
+        r = client.get(f"/pqbl/documents/{document_id}")
+        assert r.status_code == 200, r.text
+        doc = r.json()
+        
+        # Segmento 1 ha generato 8 domande (2 chunk). Segmento 2 ha generato 2 domande (1 chunk parziale).
+        # Il totale delle domande generate è 10. Al segmento 3 si interrompe perché 10 >= 10.
+        # chunks_done è 2. chunks_total deve essere aggiornato a 2.
+        assert doc["status"] == "ready", doc
+        assert doc["n_questions"] == 10
+        assert doc["chunks_done"] == 2
+        assert doc["chunks_total"] == 2
+    finally:
+        pqbl_routes.pdf_total_pages = original_total_pages
+        pqbl_routes.extract_pdf_text_range = original_extract_range
+        pqbl_routes.generate_batch_for_chunk = original_generate
+        pqbl_routes.split_text_into_chunks = original_split
+
+
+def test_pqbl_json_repair_and_question_salvaging():
+    """Verifica che se l'LLM risponde con un JSON troncato, il sistema lo ripari
+    e salvi solo le domande generate completamente e correttamente, scartando quella troncata."""
+    from backend.pqbl_generator import repair_truncated_json, generate_batch_for_chunk
+    
+    # 1. Test unitario repair_truncated_json
+    truncated_json = (
+        '{"questions": ['
+        '{"question": "Q1", "options": ['
+        '{"key": "A", "text": "Opt A", "correct": true, "feedback": "Fb A"}, '
+        '{"key": "B", "text": "Opt B", "correct": false, "feedback": "Fb B"}, '
+        '{"key": "C", "text": "Opt C", "correct": false, "feedback": "Fb C"}, '
+        '{"key": "D", "text": "Opt D", "correct": false, "feedback": "Fb D"}'
+        ']}, '
+        '{"question": "Q2", "options": ['
+        '{"key": "A", "text": "Opt A", "correct": true, "feedback": "'
+    )
+    repaired = repair_truncated_json(truncated_json)
+    import json
+    parsed = json.loads(repaired)
+    assert "questions" in parsed
+    assert len(parsed["questions"]) == 2
+    
+    # 2. Test integrazione salvataggio parziale in generate_batch_for_chunk
+    class MockAI:
+        def __init__(self):
+            self.config = {}
+        def get_response(self, user_msg, sys_prompt, mode, max_tokens, provider=None):
+            return truncated_json
+            
+    ai_mock = MockAI()
+    # Deve estrarre solo la prima domanda completa "Q1" e scartare la seconda "Q2" incompleta
+    res = generate_batch_for_chunk(
+        ai_mock, "Testo di prova", 0, "it", "Prompt di prova", provider=None
+    )
+    assert len(res) == 1
+    assert res[0]["question"] == "Q1"
+
+
 
 
 # --------------------------------------------------------------------------
@@ -803,6 +1166,8 @@ def _main():
             print(f"  PASS  {t.__name__}")
             passed += 1
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             print(f"  FAIL  {t.__name__}: {type(e).__name__}: {e}")
             failed += 1
     print(f"\n{passed} passed, {failed} failed")
@@ -812,3 +1177,4 @@ def _main():
 if __name__ == "__main__":
     import sys
     sys.exit(_main())
+

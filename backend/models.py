@@ -231,3 +231,85 @@ class NormThreshold(Base):
     stanine = Column(Integer, nullable=False)
     norm_set_label = Column(String, nullable=True)
     status = Column(String, nullable=False, default="provisional")
+
+
+# --- pQBL da PDF (pure Question-Based Learning, Jemstedt & Bälter 2025) ---
+
+class PqblDocument(Base):
+    """PDF caricato dallo studente da cui è generato un question bank pQBL."""
+
+    __tablename__ = "pqbl_documents"
+
+    id = Column(String, primary_key=True)
+    username = Column(String, nullable=True, index=True)
+    filename = Column(String, nullable=True)
+    text_hash = Column(String, index=True, nullable=False)
+    language = Column(String, nullable=False, default="it")
+    size = Column(Integer, nullable=False, default=10)  # 10 | 20 | 30 domande richieste
+    status = Column(String, nullable=False, default="processing")  # processing | ready | error
+    error_detail = Column(Text, nullable=True)
+    provider = Column(String, nullable=True)  # provider AI richiesto (None = active_provider)
+    file_path = Column(String, nullable=True)  # path al PDF salvato (pulito dopo la generazione)
+    chunks_total = Column(Integer, nullable=False, default=0)
+    chunks_done = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class PqblQuestion(Base):
+    """MCQ generata: 4 opzioni con feedback per opzione (mai esposte al client
+    con il flag `correct`: la verifica è solo server-side)."""
+
+    __tablename__ = "pqbl_questions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    document_id = Column(String, index=True, nullable=False)
+    skill = Column(String, nullable=False)
+    position = Column(Integer, nullable=False, default=0)
+    question_text = Column(Text, nullable=False)
+    options = Column(JSON, nullable=False)  # [{key, text, correct, feedback}]
+
+
+class PqblSession(Base):
+    """Sessione di apprendimento (learning) o test finale (final_test) su un documento."""
+
+    __tablename__ = "pqbl_sessions"
+
+    id = Column(String, primary_key=True)
+    document_id = Column(String, index=True, nullable=False)
+    username = Column(String, nullable=True, index=True)
+    mode = Column(String, nullable=False, default="learning")  # learning | final_test
+    started_at = Column(DateTime(timezone=True), server_default=func.now())
+    finished_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class PqblAttempt(Base):
+    """Singolo tentativo di risposta (R5: tentativi multipli ammessi in learning;
+    first_try alimenta la metrica '% corrette al primo tentativo' R8)."""
+
+    __tablename__ = "pqbl_attempts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(String, index=True, nullable=False)
+    question_id = Column(Integer, index=True, nullable=False)
+    selected_key = Column(String, nullable=False)
+    correct = Column(Boolean, nullable=False)
+    first_try = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class LearnerProfileRevision(Base):
+    """Modello del discente auto-dichiarato, append-only.
+
+    Ogni salvataggio crea una nuova revisione: il profilo corrente è la riga
+    più recente per username, lo storico del cambiamento sono le righe
+    precedenti. Cancellare il profilo = cancellare tutte le revisioni.
+    """
+
+    __tablename__ = "learner_profile_revisions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, nullable=False, index=True)
+    data = Column(JSON, nullable=False)
+    source = Column(String, nullable=False, default="manual")  # intake|session_start|session_end|manual
+    session_id = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

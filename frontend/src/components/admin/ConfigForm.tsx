@@ -45,15 +45,15 @@ const PROVIDERS: Record<string, { label: string; models: string[] }> = {
     openrouter: {
         label: 'OpenRouter',
         models: [
+            // Modelli :free per primi: il cambio provider seleziona il primo della lista
+            'meta-llama/llama-3.3-70b-instruct:free',
+            'qwen/qwen3-next-80b-a3b-instruct:free',
+            'qwen/qwen3-coder:free',
             'google/gemini-2.0-flash-001',
-            'deepseek/deepseek-r1',
             'deepseek/deepseek-chat',
             'anthropic/claude-3.7-sonnet',
-            'meta-llama/llama-3.3-70b-instruct',
-            'openai/gpt-4o',
             'openai/gpt-4o-mini',
             'mistralai/mistral-large-2411',
-            'nvidia/llama-3.1-nemotron-70b-instruct'
         ]
     },
     llamacpp: {
@@ -70,13 +70,13 @@ const PROVIDERS: Record<string, { label: string; models: string[] }> = {
     ollama: {
         label: 'Ollama (Local)',
         models: [
+            'qwen3.5:9b',
             'gemma4:e4b',
             'gemma4:e2b',
             'gemma4:31b',
             'gemma4:26b',
             'qwen3:32b',
             'qwen3:latest',
-            'qwen3.5:9b',
             'qwen3-coder-next:latest',
             'qwen2.5-coder:7b',
             'gemma3:27b',
@@ -494,7 +494,7 @@ export function ConfigForm() {
         {
             id: 'qpcs',
             questionnaireType: 'QPCS',
-            title: 'QPCS - Percezione delle Competenze Strategiche',
+            title: 'QPCS — Percezione delle Competenze Strategiche',
             color: 'purple' as const,
             systemPrompts: [
                 { key: 'prompt_qpcs_factor', label: 'Prompt Analisi Fattori' },
@@ -513,7 +513,7 @@ export function ConfigForm() {
         {
             id: 'qpcc',
             questionnaireType: 'QPCC',
-            title: 'QPCC - Percezione delle Competenze e Convinzioni',
+            title: 'QPCC — Percezione delle Competenze e Convinzioni',
             color: 'indigo' as const,
             systemPrompts: [
                 { key: 'prompt_qpcc_factor', label: 'Prompt Analisi Fattori' },
@@ -532,7 +532,7 @@ export function ConfigForm() {
         {
             id: 'qap',
             questionnaireType: 'QAP',
-            title: 'QAP - Adattabilita Professionale',
+            title: 'QAP — Adattabilità Professionale',
             color: 'green' as const,
             systemPrompts: [
                 { key: 'prompt_qap_factor', label: 'Prompt Analisi Risorse' },

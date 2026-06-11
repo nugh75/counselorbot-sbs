@@ -1,24 +1,28 @@
 """Endpoint di chat e QSA: /chat, /chat/stream, /chat/message,
 /qsa/guided-ui-texts, /qsa/audit, /qsa/upload, /tts."""
+import functools
 import io
 import logging
 import os
-import shutil
 import tempfile
 import uuid
 
 import edge_tts
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from .. import database, models
+from .. import auth, database, models
 from ..ai_service import AIService, AIError
 from ..api_models import ChatRequest, QsaAuditRequest, TTSRequest
 from ..memory_service import session_memory
 from ..strategy_memory import shared_response_memory
-from ..qsa_extractor import extract_qsa_data
+from ..qsa_extractor import (
+    DEFAULT_OCR_MODEL,
+    DEFAULT_PARSER_MODEL,
+    extract_questionnaire_data,
+)
 from ..guided_text_i18n import resolve_text, QUESTIONS_LABEL, PHASE_WORD
 from ..prompt_config import (
     DEFAULT_SYSTEM_PROMPT_GENERIC,
@@ -60,6 +64,8 @@ from ..chat_logic import (
 router = APIRouter()
 get_db = database.get_db
 logger = logging.getLogger(__name__)
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+ALLOWED_UPLOAD_SUFFIXES = {".pdf", ".jpg", ".jpeg", ".png"}
 
 # Questionari condotti dall'agente AI: testi intro/conclusione per tipo
 # (chiave_intro, default_intro, chiave_conclusione, default_conclusione).
@@ -150,7 +156,7 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
 
 
 @router.post("/chat")
-async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db), identity: dict = Depends(auth.get_identity)):
     session_id = request.session_id or str(uuid.uuid4())
 
     # 1. Retrieve Configuration and System Prompt based on Mode
@@ -214,7 +220,9 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     # 3. Recupera solo la memoria pertinente e le strategie collettive approvate.
     retrieval_query = f"{step_label} {model_message} {model_scores_context}".strip()
     conversation_summary, strategy_ids = _retrieved_context(
-        db, session_id, request, questionnaire_type, retrieval_query
+        db, session_id, request, questionnaire_type, retrieval_query,
+        ai_service=ai_service,
+        username=identity.get("username", ""),
     )
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         conversation_summary = _sanitize_ztpi_user_text(conversation_summary, request.language)
@@ -283,7 +291,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
 
 
 @router.post("/chat/stream")
-async def chat_stream(request: ChatRequest, db: Session = Depends(get_db)):
+async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), identity: dict = Depends(auth.get_identity)):
     """
     Variante streaming di /chat (Server-Sent Events).
     Eventi: {"delta": "..."} per ogni pezzo, poi {"done": true, "response": <full>, "session_id": ...}.
@@ -353,7 +361,9 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db)):
 
     retrieval_query = f"{step_label} {model_message} {model_scores_context}".strip()
     conversation_summary, strategy_ids = _retrieved_context(
-        db, session_id, request, questionnaire_type, retrieval_query
+        db, session_id, request, questionnaire_type, retrieval_query,
+        ai_service=ai_service,
+        username=identity.get("username", ""),
     )
     sanitize = _should_sanitize_ztpi_text(request.mode, request.phase)
     if sanitize:
@@ -543,16 +553,39 @@ async def audit_qsa(request: QsaAuditRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/qsa/upload")
-async def upload_qsa_document(file: UploadFile = File(...)):
+async def upload_qsa_document(
+    file: UploadFile = File(...),
+    questionnaire_type: str = Form("QSA"),
+    db: Session = Depends(get_db),
+):
     temp_dir = ".tmp"
     os.makedirs(temp_dir, exist_ok=True)
     suffix = os.path.splitext(file.filename or "")[1].lower()
+    if suffix not in ALLOWED_UPLOAD_SUFFIXES:
+        raise HTTPException(status_code=400, detail="Formato non supportato. Usa PDF, JPG o PNG.")
+
+    contents = await file.read(MAX_UPLOAD_BYTES + 1)
+    await file.close()
+    if not contents:
+        raise HTTPException(status_code=400, detail="Il file è vuoto.")
+    if len(contents) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="Il file supera la dimensione massima di 10 MB.")
+
     with tempfile.NamedTemporaryFile(dir=temp_dir, suffix=suffix, delete=False) as buffer:
         temp_file_path = buffer.name
-        shutil.copyfileobj(file.file, buffer)
+        buffer.write(contents)
 
     try:
-        extraction_data = await run_in_threadpool(extract_qsa_data, temp_file_path)
+        ai_service = AIService(db)
+        extractor = functools.partial(
+            extract_questionnaire_data,
+            temp_file_path,
+            questionnaire_type=questionnaire_type,
+            ollama_url=ai_service.config.get("ollama_ip"),
+            ocr_model=ai_service.config.get("qsa_ocr_model") or DEFAULT_OCR_MODEL,
+            parser_model=ai_service.config.get("qsa_parser_model") or DEFAULT_PARSER_MODEL,
+        )
+        extraction_data = await run_in_threadpool(extractor)
         if "error" in extraction_data:
             raise HTTPException(status_code=400, detail=extraction_data["error"])
         return extraction_data

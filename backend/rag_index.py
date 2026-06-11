@@ -896,7 +896,7 @@ def build_context(results: list[dict], max_chars: int = 10000) -> tuple[str, lis
     used = 0
     for i, r in enumerate(results, 1):
         snippet = r["text"].strip()
-        header = f"[FONTE {i}] {r['title']} ({r['source']})"
+        header = f"[SOURCE {i}] {r['title']} ({r['source']})"
         block = f"{header}\n{snippet}"
         if used + len(block) > max_chars and parts:
             break

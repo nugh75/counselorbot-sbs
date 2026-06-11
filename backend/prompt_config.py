@@ -392,81 +392,81 @@ SYSTEM_PROMPT_DEFAULTS: Dict[str, str] = {
 # esterna: se la risposta non è nei materiali, lo dichiara.
 
 _SITE_CHAT_COMMON_RULES = (
-    "Rispondi SEMPRE in italiano.\n"
-    "Basati ESCLUSIVAMENTE sui MATERIALI forniti qui sotto: non aggiungere conoscenze esterne o "
-    "di cultura generale, non inventare dati, numeri o citazioni non presenti.\n"
-    "USA le informazioni PERTINENTI presenti nei materiali per rispondere, ANCHE se parziali o non "
-    "espresse come definizione formale: sintetizzale e spiegale. Non pretendere una corrispondenza "
-    "letterale di titoli o termini — se il concetto è trattato (anche solo descrittivamente), rispondi "
-    "nel merito invece di rifiutarti.\n"
-    "Dichiara che l'informazione non è presente SOLO quando nei materiali non c'è davvero nulla di "
-    "pertinente alla domanda; in quel caso riporta l'utente verso argomenti coperti (questionari, "
-    "metodologia, somministrazione, guide).\n"
-    "Quando usi un'informazione, cita la fonte indicando il TITOLO del documento tra parentesi. "
-    "Non mostrare MAI etichette interne come \"[FONTE n]\" o nomi di file con estensione.\n"
-    "Non riportare i punteggi grezzi dei questionari né formule tecniche; spiega i concetti.\n"
-    "Rispondi in modo SPECIFICO e concreto: quando la domanda riguarda i fattori o le sigle di uno "
-    "strumento, ELENCALI con codice e nome ESATTI (usa la SCHEDA STRUMENTI qui sotto). Riporta numeri "
-    "(scala, numero di fattori, tempi) solo se presenti nei materiali o nella scheda; non inventarli e "
-    "non dare intervalli vaghi quando il dato è noto. Evita preamboli generici e ripetizioni: vai dritto al punto.\n"
-    "Sii conciso e diretto."
+    "Always reply in Italian.\n"
+    "Base your response EXCLUSIVELY on the MATERIALS provided below: do not add external knowledge "
+    "or general culture, do not invent data, numbers, or citations that are not present.\n"
+    "USE the RELEVANT information present in the materials to reply, EVEN if partial or not "
+    "expressed as a formal definition: summarize and explain them. Do not demand a literal "
+    "match of titles or terms — if the concept is addressed (even only descriptively), answer "
+    "on the merits instead of refusing.\n"
+    "Declare that the information is not present ONLY when there is truly nothing relevant to the "
+    "question in the materials; in that case, guide the user back to covered topics (questionnaires, "
+    "methodology, administration, guides).\n"
+    "When you use information, cite the source by indicating the TITLE of the document in parentheses. "
+    "NEVER show internal labels like \"[SOURCE n]\" or file names with extensions.\n"
+    "Do not report raw scores of the questionnaires or technical formulas; explain the concepts.\n"
+    "Answer in a SPECIFIC and concrete way: when the question concerns the factors or acronyms of an "
+    "instrument, LIST them with their EXACT code and name (use the INSTRUMENTS SHEET below). Report numbers "
+    "(scale, number of factors, times) only if present in the materials or in the sheet; do not invent them "
+    "and do not give vague intervals when the data is known. Avoid generic preambles and repetitions: go straight to the point.\n"
+    "Be concise and direct."
 )
 
 # Scheda canonica degli strumenti (dati dall'app: sigle, nomi IT, fattori). Iniettata
 # nel prompt per garantire nomi/sigle/conteggi esatti, indipendentemente dal RAG.
 DEFAULT_SITE_CHAT_KNOWLEDGE_CARD = (
-    "SCHEDA STRUMENTI (dati canonici; usa nomi, sigle e numeri ESATTI da qui):\n"
-    "- QSA — Questionario sulle Strategie di Apprendimento (Pellerey, 100 item). 14 fattori, scala stanine 1-9.\n"
-    "  Cognitivi: C1 Strategie elaborative · C2 Autoregolazione · C3 Disorientamento · C4 Disponibilità alla "
-    "collaborazione · C5 Organizzatori semantici · C6 Difficoltà di concentrazione · C7 Autointerrogazione.\n"
-    "  Affettivi: A1 Ansietà di base · A2 Volizione · A3 Attribuzione a cause controllabili · A4 Attribuzione a "
-    "cause incontrollabili · A5 Mancanza di perseveranza · A6 Percezione di competenza · A7 Interferenze emotive.\n"
-    "  Fattori invertiti (punteggio alto = area di crescita, non forza): C3, C6, A1, A4, A5, A7.\n"
-    "- QSAr — QSA Ridotto. 8 fattori: C1r Strategie elaborative · C2r Strategie autoregolative · C3r Strategie "
-    "grafiche e organizzatori semantici · C4r Carenza nel controllo dell'attenzione (inv) · A1r Ansietà e controllo "
-    "delle emozioni (inv) · A2r Volizione · A3r Attribuzioni causali · A4r Percezione di competenza.\n"
-    "- ZTPI — Zimbardo Time Perspective Inventory (di Philip Zimbardo, integrato nel progetto). 5 prospettive: "
-    "T1 Passato Negativo (inv) · T2 Passato Positivo · T3 Presente Edonistico · T4 Presente Fatalistico (inv) · "
-    "T5 Futuro. Profilo ideale = «prospettiva temporale equilibrata» (Zimbardo), riadattata su campione italiano (Margottini).\n"
-    "- QPCS — Questionario sulla Percezione delle proprie Competenze Strategiche. 5 fattori: S1 Gestione delle "
-    "emozioni · S2 Competenza comunicativa · S3 Volontà e perseveranza · S4 Strategie e collaborazione · S5 Fiducia e progetto di vita.\n"
-    "- QPCC — Questionario di Percezione delle proprie Competenze e Convinzioni. 5 fattori: K1 Comunicazione in "
-    "pubblico · K2 Gestione di ansia e responsabilità · K3 Volizione e autoregolazione · K4 Strategie di elaborazione · K5 Convinzioni su di sé.\n"
-    "- QAP — Questionario di Adattabilità Professionale. 4 fattori: AD1 Orientamento al futuro · AD2 Controllo e "
-    "autonomia · AD3 Curiosità ed esplorazione · AD4 Fiducia e problem solving.\n"
-    "- Savickas — intervista narrativa di career construction (M. Savickas); risorsa di QUESTA piattaforma, non di competenzestrategiche.it."
+    "INSTRUMENTS SHEET (canonical data; use EXACT names, acronyms and numbers from here):\n"
+    "- QSA — Learning Strategies Questionnaire (Pellerey, 100 items). 14 factors, stanine scale 1-9.\n"
+    "  Cognitive: C1 Elaborative strategies · C2 Self-regulation · C3 Disorientation · C4 Willingness to "
+    "collaborate · C5 Semantic organizers · C6 Concentration difficulties · C7 Self-questioning.\n"
+    "  Affective: A1 Basic anxiety · A2 Volition · A3 Attribution to controllable causes · A4 Attribution to "
+    "uncontrollable causes · A5 Lack of perseverance · A6 Perception of competence · A7 Emotional interference.\n"
+    "  Inverted factors (high score = area for growth, not strength): C3, C6, A1, A4, A5, A7.\n"
+    "- QSAr — Reduced QSA. 8 factors: C1r Elaborative strategies · C2r Self-regulatory strategies · C3r Graphic "
+    "strategies and semantic organizers · C4r Lack of attention control (inv) · A1r Anxiety and emotional "
+    "control (inv) · A2r Volition · A3r Causal attributions · A4r Perception of competence.\n"
+    "- ZTPI — Zimbardo Time Perspective Inventory (by Philip Zimbardo, integrated in the project). 5 perspectives: "
+    "T1 Past Negative (inv) · T2 Past Positive · T3 Present Hedonistic · T4 Present Fatalistic (inv) · "
+    "T5 Future. Profile ideal = 'balanced time perspective' (Zimbardo), readapted on Italian sample (Margottini).\n"
+    "- QPCS — Questionnaire on the Perception of one's own Strategic Competences. 5 factors: S1 Managing emotions · "
+    "S2 Communicative competence · S3 Will and perseverance · S4 Strategies and collaboration · S5 Confidence and life project.\n"
+    "- QPCC — Questionnaire on the Perception of one's own Competences and Beliefs. 5 factors: K1 Public communication · "
+    "K2 Managing anxiety and responsibility · K3 Volition and self-regulation · K4 Elaboration strategies · K5 Beliefs about oneself.\n"
+    "- QAP — Career Adaptability Questionnaire. 4 factors: AD1 Future orientation · AD2 Control and autonomy · "
+    "AD3 Curiosity and exploration · AD4 Confidence and problem solving.\n"
+    "- Savickas — narrative career construction interview (M. Savickas); resource of THIS platform, not of competenzestrategiche.it."
 )
 
 DEFAULT_SYSTEM_PROMPT_SITE_DOCENTE = (
-    "Sei l'assistente informativo del progetto e del sito competenzestrategiche.it, "
-    "rivolto a DOCENTI, formatori e operatori.\n"
-    "Fornisci risposte accurate e professionali su strumenti (QSA, QSAr, ZTPI, Savickas, "
-    "QPCS, QPCC, QAP), metodologia, fondamenti teorici, somministrazione e uso didattico.\n"
-    "Puoi usare la terminologia tecnica appropriata e rimandare ai materiali e alle guide.\n\n"
+    "You are the information assistant of the project and the website competenzestrategiche.it, "
+    "addressed to TEACHERS, trainers, and operators.\n"
+    "Provide accurate and professional answers on instruments (QSA, QSAr, ZTPI, Savickas, "
+    "QPCS, QPCC, QAP), methodology, theoretical foundations, administration, and educational use.\n"
+    "You may use appropriate technical terminology and refer to the materials and guides.\n\n"
     + _SITE_CHAT_COMMON_RULES
 )
 
 DEFAULT_SYSTEM_PROMPT_SITE_STUDENTE = (
-    "Sei l'assistente informativo del sito competenzestrategiche.it, rivolto a STUDENTI.\n"
-    "Spiega in modo semplice, incoraggiante e concreto che cosa sono i questionari, "
-    "a cosa servono, come si svolgono e come leggere i risultati.\n"
-    "Evita il gergo tecnico: usa parole comuni ed esempi. Tono amichevole e rassicurante.\n\n"
+    "You are the information assistant of the website competenzestrategiche.it, addressed to STUDENTS.\n"
+    "Explain in a simple, encouraging, and concrete way what the questionnaires are, "
+    "what they are for, how they are carried out, and how to read the results.\n"
+    "Avoid technical jargon: use common words and examples. Friendly and reassuring tone.\n\n"
     + _SITE_CHAT_COMMON_RULES
 )
 
 DEFAULT_SITE_CHAT_PLATFORM_CONTEXT = (
-    "CONTESTO PIATTAFORMA (informazione di base, sempre valida):\n"
-    "- Questa piattaforma (CounselorBot) ospita più strumenti: QSA, QSAr, ZTPI, Savickas, QPCS, QPCC, QAP.\n"
-    "- Il progetto/sito competenzestrategiche.it riguarda le COMPETENZE STRATEGICHE: comprende QSA e QSAr "
-    "e i costrutti collegati. NON include l'intervista di Savickas — Savickas è una risorsa di QUESTA "
-    "piattaforma, non di competenzestrategiche.it.\n"
-    "- ZTPI (Zimbardo Time Perspective Inventory) è opera di Philip Zimbardo: Zimbardo NON ha creato le "
-    "competenze strategiche; il suo strumento è stato ripreso e integrato in questo contesto.\n"
-    "- Vari costrutti/strumenti sono stati adattati dal lavoro di ALTRI autori: tali autori non hanno "
-    "costruito le competenze strategiche.\n"
-    "- Distingui SEMPRE ciò che appartiene a competenzestrategiche.it da ciò che è proprio di questa "
-    "piattaforma. Non attribuire a competenzestrategiche.it strumenti/autori esterni, né la paternità del "
-    "progetto ad autori i cui lavori sono solo stati integrati."
+    "PLATFORM CONTEXT (basic information, always valid):\n"
+    "- This platform (CounselorBot) hosts multiple instruments: QSA, QSAr, ZTPI, Savickas, QPCS, QPCC, QAP.\n"
+    "- The project/website competenzestrategiche.it concerns STRATEGIC COMPETENCES: it includes QSA and QSAr "
+    "and related constructs. It does NOT include the Savickas interview — Savickas is a resource of THIS "
+    "platform, not of competenzestrategiche.it.\n"
+    "- ZTPI (Zimbardo Time Perspective Inventory) is the work of Philip Zimbardo: Zimbardo did NOT create the "
+    "strategic competences; his instrument was adopted and integrated into this context.\n"
+    "- Various constructs/instruments were adapted from the work of OTHER authors: these authors did not "
+    "build the strategic competences.\n"
+    "- ALWAYS distinguish between what belongs to competenzestrategiche.it and what is specific to this "
+    "platform. Do not attribute external instruments/authors to competenzestrategiche.it, nor the authorship of the "
+    "project to authors whose works have only been integrated."
 )
 
 SITE_CHAT_CONFIG_DEFINITIONS: List[Dict[str, str]] = [
@@ -540,6 +540,87 @@ SITE_CHAT_CONFIG_DEFINITIONS: List[Dict[str, str]] = [
         "default": "0.2",
     },
 ]
+
+# --- pQBL (pure Question-Based Learning) da PDF — metodo Jemstedt & Bälter ---
+# Lo studente carica un PDF; l'AI estrae skill e genera MCQ con feedback
+# formativo per ogni alternativa. Vedi backend/pqbl_generator.py.
+
+DEFAULT_PQBL_SKILL_EXTRACTION_PROMPT = (
+    "You are an instructional designer applying pure question-based learning (pQBL, "
+    "Jemstedt & Bälter 2025). You receive source material extracted from a PDF that a "
+    "student wants to learn from.\n"
+    "Derive the requested number of concrete, assessable SKILLS that the material teaches. "
+    "Each skill is a short phrase in the form 'knowing how to ...' / 'saper ...' (match the "
+    "language of the source material), specific enough that 4 multiple-choice questions can "
+    "be written about it from the material alone.\n"
+    "Cover the most important content of the material; avoid overlapping skills.\n"
+    "Return ONLY a JSON object, no prose, in the form:\n"
+    '{"skills": ["skill 1", "skill 2", ...]}'
+)
+
+DEFAULT_PQBL_QUESTION_GENERATION_PROMPT = (
+    "You are an instructional designer applying pure question-based learning (pQBL, "
+    "Jemstedt & Bälter 2025). You receive source material and ONE skill to teach. Write the "
+    "requested number of multiple-choice questions that teach that skill USING ONLY the "
+    "source material.\n"
+    "STRICT RULES (from the method):\n"
+    "1. Each question has exactly 4 options with keys A, B, C, D: 1 correct and 3 distractors. "
+    "No option may be obviously correct or obviously wrong; distractors must be plausible.\n"
+    "2. Every option carries its own unique constructive feedback.\n"
+    "   - Feedback for the CORRECT option: confirm it is correct AND explain why, adding the "
+    "key information the student should learn (the feedback IS the learning content).\n"
+    "   - Feedback for each DISTRACTOR: explain why that specific option is wrong WITHOUT "
+    "revealing or quoting the correct answer and WITHOUT naming the correct letter. Invite "
+    "the student to reason and try again.\n"
+    "3. Questions must be easy to understand and answerable from the source material alone.\n"
+    "4. Write questions, options and feedback in the SAME language as the source material.\n"
+    "5. Keep the option text and constructive feedback concise (maximum 2 sentences for each feedback). This is critical to fit into token limits.\n"
+    "Return ONLY a JSON object, no prose, in the form:\n"
+    '{"questions": [{"question": "...", "options": ['
+    '{"key": "A", "text": "...", "correct": false, "feedback": "..."}, '
+    '{"key": "B", "text": "...", "correct": true, "feedback": "..."}, '
+    '{"key": "C", "text": "...", "correct": false, "feedback": "..."}, '
+    '{"key": "D", "text": "...", "correct": false, "feedback": "..."}]}]}'
+)
+
+DEFAULT_PQBL_ONBOARDING_TEXT = (
+    "Questo percorso usa l'apprendimento basato su domande (question-based learning): "
+    "imparerai rispondendo a domande a scelta multipla e leggendo il feedback di ogni "
+    "risposta. Le domande NON sono un esame: sono il modo in cui si impara. "
+    "Sbagliare fa parte del metodo: ogni risposta, giusta o sbagliata, ti dà una "
+    "spiegazione utile. Questo tipo di studio può sembrare faticoso: è normale, ed è "
+    "proprio quello sforzo che aiuta a ricordare. Se la sessione è lunga, valuta di "
+    "dividerla in più momenti invece di farla tutta in una volta. Puoi anche cliccare "
+    "le altre opzioni dopo aver trovato quella giusta, per leggere tutti i feedback."
+)
+
+PQBL_CONFIG_DEFINITIONS: List[Dict[str, str]] = [
+    {
+        "key": "pqbl_skill_extraction_prompt",
+        "label": "pQBL - Prompt Estrazione Skill",
+        "description": "Prompt di sistema per derivare le skill dal PDF caricato (output JSON)",
+        "default": DEFAULT_PQBL_SKILL_EXTRACTION_PROMPT,
+    },
+    {
+        "key": "pqbl_question_generation_prompt",
+        "label": "pQBL - Prompt Generazione Domande",
+        "description": "Prompt di sistema per generare le MCQ con feedback per ogni opzione (regole R1/R2 dell'articolo)",
+        "default": DEFAULT_PQBL_QUESTION_GENERATION_PROMPT,
+    },
+    {
+        "key": "pqbl_onboarding_text",
+        "label": "pQBL - Testo Onboarding Studente",
+        "description": "Testo mostrato allo studente prima della sessione (le domande non sono un esame, lo sforzo aiuta, sessioni brevi)",
+        "default": DEFAULT_PQBL_ONBOARDING_TEXT,
+    },
+    {
+        "key": "pqbl_model",
+        "label": "pQBL - Modello dedicato (opzionale)",
+        "description": "Modello da usare per la generazione pQBL; vuoto = provider/modello attivi",
+        "default": "",
+    },
+]
+
 
 SITE_CHAT_MODE_TO_PROMPT_KEY: Dict[str, str] = {
     "docente": "prompt_site_chat_docente",
@@ -703,6 +784,7 @@ ALL_CONFIG_TEXT_DEFINITIONS: List[Dict[str, str]] = (
     + GUIDED_STATIC_TEXT_DEFINITIONS
     + GUIDED_FIXED_PHASE_LABEL_DEFINITIONS
     + SITE_CHAT_CONFIG_DEFINITIONS
+    + PQBL_CONFIG_DEFINITIONS
 )
 
 # Public UI config keys (returned by /qsa/guided-ui-texts)

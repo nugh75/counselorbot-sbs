@@ -15,9 +15,12 @@ services:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       - SESSION_MEMORY_DIR=/app/session_memory
       - AI4AUTH_VERIFY_URL=${AI4AUTH_VERIFY_URL:-http://ai4auth:9091/api/verify}
+      - AI4AUTH_PUBLIC_HOST=${AI4AUTH_PUBLIC_HOST:-counselorbot-sbs.ai4educ.org}
       - ADMIN_GROUPS=${ADMIN_GROUPS:-admins,counselorbot-sbs-admin}
       - RAG_DOCS_DIR=/app/docs
       - RAG_INDEX_DIR=/app/rag_index
+      - QSA_OCR_MODEL=${QSA_OCR_MODEL:-glm-ocr:latest}
+      - QSA_PARSER_MODEL=${QSA_PARSER_MODEL:-gemma4:e2b}
     volumes:
       - ./session_memory:/app/session_memory
       - ./knowledge:/app/knowledge:ro

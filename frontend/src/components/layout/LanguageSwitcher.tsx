@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { LANGUAGES } from '@/lib/i18n';
 import { useI18n } from '@/lib/i18n-context';
+import { FlagIcon } from './FlagIcon';
 
 export function LanguageSwitcher() {
     const { lang, setLang, t } = useI18n();
@@ -29,12 +30,12 @@ export function LanguageSwitcher() {
                 aria-label={t('nav.language')}
                 title={t('nav.language')}
             >
-                <span className="text-lg leading-none">{current.flag}</span>
+                <FlagIcon code={current.code} className="h-4 w-6" />
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </button>
 
             {open && (
-                <div className="absolute right-0 mt-1 grid grid-cols-3 gap-1 rounded-md border border-slate-200 bg-white p-1 shadow-lg z-[60]">
+                <div className="absolute right-0 mt-1 grid grid-cols-[repeat(3,2.25rem)] justify-center gap-1 rounded-md border border-slate-200 bg-white p-1 shadow-lg z-[60]">
                     {LANGUAGES.map(l => (
                         <button
                             key={l.code}
@@ -42,9 +43,9 @@ export function LanguageSwitcher() {
                             onClick={() => { setLang(l.code); setOpen(false); }}
                             title={l.label}
                             aria-label={l.label}
-                            className={`flex h-9 w-9 items-center justify-center rounded-md text-lg leading-none transition-colors hover:bg-slate-50 ${l.code === lang ? 'bg-indigo-50 ring-1 ring-indigo-200' : ''}`}
+                            className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors hover:bg-slate-50 ${l.code === lang ? 'bg-indigo-50 ring-1 ring-indigo-200' : ''}`}
                         >
-                            <span>{l.flag}</span>
+                            <FlagIcon code={l.code} className="h-4 w-6" />
                         </button>
                     ))}
                 </div>

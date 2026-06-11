@@ -14,10 +14,13 @@ import time
 from pathlib import Path
 from typing import Dict, List
 
+from .memory_embeddings import memory_embedder
+
 
 DEFAULT_TTL_SECONDS = 7200
 MAX_MEMORY_CHARS = 4000
 MAX_INJECTED_MEMORY_CHARS = 1800
+MAX_SCORES_CHARS = 1500
 MAX_FACTS = 20
 MAX_GOALS = 10
 MAX_PREFERENCES = 10
@@ -48,7 +51,7 @@ class SessionMemory:
             self._touch(session_id)
             if not include_scores:
                 text = self._strip_section(text, "Punteggi")
-            return text[:MAX_MEMORY_CHARS]
+            return self._cut_at_line(text, MAX_MEMORY_CHARS)
 
     def get_relevant_context(
         self,
@@ -56,6 +59,7 @@ class SessionMemory:
         query: str = "",
         include_scores: bool = True,
         max_chars: int = MAX_INJECTED_MEMORY_CHARS,
+        ai_service=None,
     ) -> str:
         """Restituisce solo lo stato essenziale e gli episodi pertinenti alla richiesta."""
         with self._lock:
@@ -63,26 +67,28 @@ class SessionMemory:
             if not text:
                 return ""
             self._touch(session_id)
-            data = self._parse(text)
-            episodes = self._retrieve_episodes(data["episodes"], query, limit=4)
-            parts = [
-                "## Stato sessione",
-                f"- Questionario: {data['questionnaire'] or '-'}",
-                f"- Lingua: {data['language'] or '-'}",
-                f"- Step corrente: {data['current_step'] or '-'}",
-                f"- Step completati: {', '.join(data['completed_steps']) if data['completed_steps'] else '-'}",
-            ]
-            if include_scores and data["scores"]:
-                parts.extend(["", "## Punteggi", str(data["scores"])])
-            if data["goals"]:
-                parts.extend(["", "## Obiettivi dichiarati", self._render_list(data["goals"][-3:])])
-            if data["preferences"]:
-                parts.extend(["", "## Preferenze dichiarate", self._render_list(data["preferences"][-3:])])
-            if episodes:
-                parts.extend(["", "## Ricordi pertinenti dell'utente", self._render_list(episodes)])
-            if data["last_suggestion"] and (not query or episodes):
-                parts.extend(["", "## Suggerimento precedente", str(data["last_suggestion"])[:350]])
-            return "\n".join(parts)[:max_chars]
+        # Parsing e retrieval fuori dal lock: l'eventuale chiamata di embedding
+        # non deve serializzare le altre sessioni.
+        data = self._parse(text)
+        episodes = self._retrieve_episodes(data["episodes"], query, limit=4, ai_service=ai_service)
+        parts = [
+            "## Stato sessione",
+            f"- Questionario: {data['questionnaire'] or '-'}",
+            f"- Lingua: {data['language'] or '-'}",
+            f"- Step corrente: {data['current_step'] or '-'}",
+            f"- Step completati: {', '.join(data['completed_steps']) if data['completed_steps'] else '-'}",
+        ]
+        if include_scores and data["scores"]:
+            parts.extend(["", "## Punteggi", str(data["scores"])])
+        if data["goals"]:
+            parts.extend(["", "## Obiettivi dichiarati", self._render_list(data["goals"][-3:])])
+        if data["preferences"]:
+            parts.extend(["", "## Preferenze dichiarate", self._render_list(data["preferences"][-3:])])
+        if episodes:
+            parts.extend(["", "## Ricordi pertinenti dell'utente", self._render_list(episodes)])
+        if data["last_suggestion"] and (not query or episodes):
+            parts.extend(["", "## Suggerimento precedente", str(data["last_suggestion"])[:350]])
+        return self._cut_at_line("\n".join(parts), max_chars)
 
     def set_summary(self, session_id: str, new_summary: str) -> None:
         """Compatibilità legacy: salva testo grezzo come memoria importata."""
@@ -205,7 +211,7 @@ class SessionMemory:
             if user_text:
                 data["last_topic"] = user_text[:300]
                 data["episodes"] = self._merge_unique(data["episodes"], [user_text[:300]], MAX_EPISODES)
-                facts, goals, preferences = self._extract_user_memory(user_text)
+                facts, goals, preferences = self._extract_user_memory(user_text, str(data["language"] or ""))
                 data["facts"] = self._merge_unique(data["facts"], facts, MAX_FACTS)
                 data["goals"] = self._merge_unique(data["goals"], goals, MAX_GOALS)
                 data["preferences"] = self._merge_unique(data["preferences"], preferences, MAX_PREFERENCES)
@@ -258,9 +264,29 @@ class SessionMemory:
         return data
 
     def _render(self, data: Dict[str, object]) -> str:
+        rendered = self._render_full(data)
+        if len(rendered) <= MAX_MEMORY_CHARS:
+            return rendered
+        # Oltre il limite: scarta gli elementi più vecchi dalle liste più lunghe,
+        # mai un taglio a metà sezione (romperebbe il parse successivo).
+        trimmed = dict(data)
+        for key in ("episodes", "facts", "preferences", "goals"):
+            trimmed[key] = list(trimmed.get(key) or [])
+        while len(rendered) > MAX_MEMORY_CHARS:
+            key = max(("episodes", "facts", "preferences", "goals"), key=lambda k: len(trimmed[k]))
+            if trimmed[key]:
+                trimmed[key].pop(0)
+            elif trimmed.get("scores"):
+                trimmed["scores"] = ""
+            else:
+                return self._cut_at_line(rendered, MAX_MEMORY_CHARS)
+            rendered = self._render_full(trimmed)
+        return rendered
+
+    def _render_full(self, data: Dict[str, object]) -> str:
         completed_phases = ", ".join(data["completed_phases"]) if data["completed_phases"] else "-"
         completed = ", ".join(data["completed_steps"]) if data["completed_steps"] else "-"
-        scores = str(data["scores"] or "").strip()
+        scores = self._cut_at_line(str(data["scores"] or "").strip(), MAX_SCORES_CHARS)
         parts = [
             "# Memoria sessione",
             "",
@@ -296,8 +322,7 @@ class SessionMemory:
             str(data["last_suggestion"] or "-").strip(),
             "",
         ]
-        rendered = "\n".join(parts)
-        return rendered[:MAX_MEMORY_CHARS]
+        return "\n".join(parts)
 
     def _render_list(self, values: object) -> str:
         items = [str(v).strip() for v in (values or []) if str(v).strip()]
@@ -305,24 +330,73 @@ class SessionMemory:
 
     # --- Extraction heuristics ---
 
-    def _extract_user_memory(self, user_text: str) -> tuple[List[str], List[str], List[str]]:
+    # Pattern per lingua (it/en/es/fr/de/sv, allineate a frontend i18n.ts).
+    # Ogni voce è un frammento regex già ancorato dove serve: `\b` finale solo
+    # per parole complete, prefissi nudi per coprire flessioni e accenti
+    # ("difficolt" → difficoltà/difficolta, "ansios" → ansioso/ansiosa).
+    _EXTRACTION_PATTERNS: Dict[str, Dict[str, List[str]]] = {
+        "goals": {
+            "it": [r"voglio\b", r"vorrei\b", r"devo\b", r"dovrei\b", r"obiettiv", r"migliorare\b", r"preparar", r"superare\b", r"riuscire a\b"],
+            "en": [r"i want\b", r"i'd like\b", r"i would like\b", r"i need to\b", r"i have to\b", r"i should\b", r"my goal", r"improve\b", r"improving\b", r"prepare for\b", r"pass the\b", r"manage to\b", r"aim to\b"],
+            "es": [r"quiero\b", r"querr[íi]a\b", r"me gustar[íi]a\b", r"tengo que\b", r"debo\b", r"deber[íi]a\b", r"objetivo", r"mejorar\b", r"preparar", r"aprobar\b", r"lograr\b", r"conseguir\b"],
+            "fr": [r"je veux\b", r"je voudrais\b", r"j'aimerais\b", r"je dois\b", r"je devrais\b", r"objectif", r"am[ée]liorer\b", r"pr[ée]parer\b", r"r[ée]ussir\b", r"parvenir [àa]\b"],
+            "de": [r"ich will\b", r"ich m[öo]chte\b", r"ich muss\b", r"ich sollte\b", r"\bziel\b", r"verbessern\b", r"vorbereiten\b", r"bestehen\b", r"schaffen\b"],
+            "sv": [r"jag vill\b", r"jag skulle vilja\b", r"jag m[åa]ste\b", r"jag borde\b", r"\bm[åa]l\b", r"f[öo]rb[äa]ttra\b", r"f[öo]rbereda\b", r"klara\b"],
+        },
+        "preferences": {
+            "it": [r"preferisco\b", r"preferirei\b", r"mi trovo meglio\b", r"mi piace\b", r"non mi piace\b", r"consigli pratici\b", r"esempi concreti\b"],
+            "en": [r"i prefer\b", r"i'd prefer\b", r"i like\b", r"i don't like\b", r"i dislike\b", r"works better for me\b", r"practical tips\b", r"concrete examples\b"],
+            "es": [r"prefiero\b", r"preferir[íi]a\b", r"me gusta\b", r"no me gusta\b", r"me funciona mejor\b", r"consejos pr[áa]cticos\b", r"ejemplos concretos\b"],
+            "fr": [r"je pr[ée]f[èe]re\b", r"je pr[ée]f[ée]rerais\b", r"j'aime\b", r"je n'aime pas\b", r"[çc]a marche mieux\b", r"conseils pratiques\b", r"exemples concrets\b"],
+            "de": [r"ich bevorzuge\b", r"ich mag\b", r"ich mag nicht\b", r"mir gef[äa]llt\b", r"funktioniert besser\b", r"praktische tipps\b", r"konkrete beispiele\b"],
+            "sv": [r"jag f[öo]redrar\b", r"jag gillar\b", r"jag gillar inte\b", r"fungerar b[äa]ttre\b", r"praktiska tips\b", r"konkreta exempel\b"],
+        },
+        "facts": {
+            "it": [r"ho difficolt", r"faccio fatica\b", r"mi distraggo\b", r"non riesco\b", r"mi sento\b", r"sono ansios", r"studio\b", r"studiare\b", r"esam[ei]\b", r"interrogazion", r"matematica\b", r"universit", r"scuola\b"],
+            "en": [r"i struggle\b", r"i have trouble\b", r"i have difficulty\b", r"hard for me\b", r"i get distracted\b", r"i can'?t\b", r"i cannot\b", r"i feel\b", r"i'?m anxious\b", r"i am anxious\b", r"\bstudy", r"\bstudying\b", r"\bexams?\b", r"\btests?\b", r"\bmaths?\b", r"university\b", r"college\b", r"school\b"],
+            "es": [r"me cuesta\b", r"tengo dificultad", r"me distraigo\b", r"no puedo\b", r"no consigo\b", r"me siento\b", r"estoy ansios", r"estudi", r"\bex[áa]men", r"matem[áa]ticas\b", r"universidad\b", r"escuela\b", r"instituto\b"],
+            "fr": [r"j'ai du mal\b", r"j'ai des difficult[ée]s\b", r"je me distrais\b", r"je n'arrive pas\b", r"je me sens\b", r"je suis anxieu", r"[ée]tudi", r"\bexamen", r"contr[ôo]le\b", r"math[ée]matiques\b", r"universit[ée]\b", r"[ée]cole\b", r"lyc[ée]e\b"],
+            "de": [r"f[äa]llt mir schwer\b", r"ich habe schwierigkeiten\b", r"ich werde abgelenkt\b", r"lasse mich ablenken\b", r"ich kann nicht\b", r"ich f[üu]hle mich\b", r"ich bin [äa]ngstlich\b", r"nerv[öo]s\b", r"\blernen\b", r"studium\b", r"pr[üu]fung", r"klausur", r"\bmathe\b", r"universit[äa]t\b", r"schule\b"],
+            "sv": [r"jag har sv[åa]rt\b", r"sv[åa]rt f[öo]r mig\b", r"jag blir distraherad\b", r"jag kan inte\b", r"jag k[äa]nner mig\b", r"jag [äa]r orolig\b", r"nerv[öo]s\b", r"plugga\b", r"studera\b", r"tentamen\b", r"\bprov\b", r"\bmatte\b", r"universitet\b", r"skola", r"skolan\b"],
+        },
+    }
+
+    _compiled_extraction: Dict[str, tuple] = {}
+
+    @classmethod
+    def _extraction_regexes(cls, language: str) -> tuple:
+        """Regex compilate (goals, preferences, facts) per la lingua; lingua
+        sconosciuta o vuota → unione di tutte (non si perde nulla)."""
+        lang = (language or "").strip().lower()[:2]
+        if lang not in cls._EXTRACTION_PATTERNS["goals"]:
+            lang = "*"
+        cached = cls._compiled_extraction.get(lang)
+        if cached:
+            return cached
+        compiled = []
+        for category in ("goals", "preferences", "facts"):
+            table = cls._EXTRACTION_PATTERNS[category]
+            parts = table[lang] if lang != "*" else [p for items in table.values() for p in items]
+            compiled.append(re.compile(r"\b(?:" + "|".join(parts) + r")", flags=re.UNICODE))
+        cls._compiled_extraction[lang] = tuple(compiled)
+        return cls._compiled_extraction[lang]
+
+    def _extract_user_memory(self, user_text: str, language: str = "") -> tuple[List[str], List[str], List[str]]:
         sentences = [s.strip() for s in re.split(r"[\n.!?;]+", user_text) if 8 <= len(s.strip()) <= 260]
         facts: List[str] = []
         goals: List[str] = []
         preferences: List[str] = []
+        goal_re, pref_re, fact_re = self._extraction_regexes(language)
 
         for sentence in sentences[:6]:
             low = sentence.lower()
             normalized = sentence[0].upper() + sentence[1:] if sentence else sentence
 
-            if re.search(r"\b(voglio|vorrei|devo|dovrei|obiettivo|migliorare|preparare|superare|riuscire a)\b", low):
+            if goal_re.search(low):
                 goals.append(normalized)
-            if re.search(r"\b(preferisco|preferirei|mi trovo meglio|mi piace|non mi piace|consigli pratici|esempi concreti)\b", low):
+            if pref_re.search(low):
                 preferences.append(normalized)
-            if re.search(
-                r"\b(ho difficolt|faccio fatica|mi distraggo|non riesco|mi sento|sono ansios|studio|esame|interrogazione|matematica|universit|scuola)\b",
-                low,
-            ):
+            if fact_re.search(low):
                 facts.append(normalized)
 
         return facts[:3], goals[:3], preferences[:3]
@@ -334,13 +408,19 @@ class SessionMemory:
         text = re.sub(r"\s+", " ", text)
         return text[:600]
 
-    def _retrieve_episodes(self, episodes: object, query: str, limit: int) -> List[str]:
+    def _retrieve_episodes(self, episodes: object, query: str, limit: int, ai_service=None) -> List[str]:
         items = [str(value).strip() for value in (episodes or []) if str(value).strip()]
         if not items:
             return []
         query_terms = self._terms(query)
         if not query_terms:
             return items[-min(2, limit):]
+        # Ranking semantico (bge-m3 via Ollama) quando disponibile; None = fallback keyword.
+        ranked = memory_embedder.rank(ai_service, query, items, limit=limit)
+        if ranked is not None:
+            if not ranked:
+                return items[-1:]
+            return [items[index] for index in sorted(ranked)]
         scored = []
         for index, item in enumerate(items):
             overlap = len(query_terms & self._terms(item))
@@ -414,8 +494,15 @@ class SessionMemory:
             merged.append(cleaned)
         return merged[-limit:]
 
+    def _cut_at_line(self, text: str, limit: int) -> str:
+        if len(text) <= limit:
+            return text
+        cut = text[:limit]
+        return cut.rsplit("\n", 1)[0] if "\n" in cut else cut
+
     def _clean_text(self, text: str) -> str:
         text = re.sub(r"\[\[AVANZA_STEP\]\]", "", text or "")
+        text = text.replace("’", "'")  # apostrofo tipografico → ASCII (le regex usano ')
         text = re.sub(r"[#*_`>\[\]]", "", text)
         return re.sub(r"\s+", " ", text).strip()
 

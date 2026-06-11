@@ -396,3 +396,42 @@ class ScoreRequest(BaseModel):
     version_label: Optional[str] = "draft"
     response_metadata: Optional[Dict[str, Any]] = None
     duration_seconds: Optional[int] = None
+
+
+# --- Learner profile (modello del discente auto-dichiarato) ---
+
+LEARNER_PROFILE_FIELDS = ("context", "goal", "main_difficulty", "tried", "notes")
+LEARNER_PROFILE_MAX_FIELD_CHARS = 600
+
+
+class LearnerProfileSave(BaseModel):
+    """Salvataggio = nuova revisione. Solo i campi noti, ognuno con cap caratteri."""
+    context: Optional[str] = None
+    goal: Optional[str] = None
+    main_difficulty: Optional[str] = None
+    tried: Optional[str] = None
+    notes: Optional[str] = None
+    source: str = "manual"  # intake|session_start|session_end|manual
+    session_id: Optional[str] = None
+
+    @validator("context", "goal", "main_difficulty", "tried", "notes", pre=True)
+    def _trim_and_cap(cls, v):
+        if v is None:
+            return None
+        return str(v).strip()[:LEARNER_PROFILE_MAX_FIELD_CHARS]
+
+    @validator("source")
+    def _valid_source(cls, v):
+        allowed = {"intake", "session_start", "session_end", "manual"}
+        return v if v in allowed else "manual"
+
+
+class LearnerProfileResponse(BaseModel):
+    id: int
+    data: Dict[str, Any]
+    source: str
+    session_id: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

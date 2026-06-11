@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { QUESTIONNAIRE_LIST, QuestionnaireType, QuestionnaireConfig } from '@/lib/questionnaires';
-import { AlertTriangle, ArrowRight, BookOpen, ClipboardList, MessageSquare } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BookOpen, ClipboardList, FileQuestion, MessageSquare } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 
 const ACTIVE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
@@ -98,6 +98,29 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
                         </article>
                     ))}
                 </div>
+            </section>
+
+            {/* Strumento pQBL da PDF: percorso separato dai questionari */}
+            <section className="glass-panel rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 border border-emerald-100">
+                <div className="w-12 h-12 rounded-md bg-emerald-50 flex items-center justify-center shrink-0">
+                    <FileQuestion className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                        <h2 className="font-bold text-slate-800">{t('pqbl.card.title')}</h2>
+                        <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-full">
+                            {t('pqbl.card.badge')}
+                        </span>
+                    </div>
+                    <p className="text-sm text-slate-500 mt-1 leading-relaxed">{t('pqbl.card.desc')}</p>
+                </div>
+                <Link
+                    href="/pqbl"
+                    className="group inline-flex shrink-0 items-center gap-2 rounded-md bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+                >
+                    {t('pqbl.card.cta')}
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                </Link>
             </section>
 
             {(lang === 'en' || lang === 'sv') && (
