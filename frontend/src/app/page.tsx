@@ -10,7 +10,13 @@ import { PDFUploader } from '@/components/qsa/PDFUploader';
 import { ProfileVisualization } from '@/components/qsa/ProfileVisualization';
 import { GuidedChatInterface } from '@/components/qsa/GuidedChatInterface';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
-import { ArrowLeft, CheckCircle2, MessageSquare, RotateCcw, LogOut, Download, Layers } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+const OpenCodeExperience = dynamic(
+    () => import('@/components/qsa/OpenCodeExperience').then((mod) => mod.OpenCodeExperience),
+    { ssr: false }
+);
+import { ArrowLeft, CheckCircle2, MessageSquare, RotateCcw, LogOut, Download, Layers, Terminal } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { addCompletedProfile, hasCompletedAll, getCombinedScoresContext, clearCompletedProfiles, getCompletedProfiles } from '@/lib/profile-tracker';
 
@@ -19,8 +25,8 @@ type Step = 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-
 
 const STARTABLE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
 
-// Agent-only questionnaires (Savickas + the perceived-competence/adaptability ones)
-// skip the score-input flow and go straight to the AI-led guided chat.
+// Agent-only questionnaires skip the score-input flow and go straight to the AI-led
+// guided chat. Currently only Savickas is agent-only.
 const isAgentOnly = (q: QuestionnaireConfig | null) => q?.agentOnly === true;
 
 // Safe UUID generation that works in HTTP (non-secure) contexts
@@ -41,6 +47,8 @@ export default function Home() {
     const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<QuestionnaireConfig | null>(null);
     const [scores, setScores] = useState<Record<string, number> | null>(null);
     const [sessionId, setSessionId] = useState<string>('');
+    const [pdfToken, setPdfToken] = useState<string | undefined>(undefined);
+    const [experience, setExperience] = useState<'standard' | 'opencode' | null>(null);
     const [combinedScores, setCombinedScores] = useState<Record<string, number> | null>(null);
     const [combinedContext, setCombinedContext] = useState<string>('');
 
@@ -59,7 +67,7 @@ export default function Home() {
             setSelectedQuestionnaire(questionnaire);
             setSessionId(resumeSession);
             setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
-            setStep('interaction');
+            setStep(isAgentOnly(questionnaire) ? 'interaction' : 'dashboard');
             window.history.replaceState(null, '', window.location.pathname);
             return;
         }
@@ -133,9 +141,10 @@ export default function Home() {
         setStep('dashboard');
     };
 
-    const handleUploadComplete = (data: Record<string, number>) => {
+    const handleUploadComplete = (data: Record<string, number>, token?: string) => {
         setScores(data);
-        setStep('manual-input');
+        setPdfToken(token);
+        setStep('dashboard');
     };
 
     const startInteraction = async () => {
@@ -218,12 +227,16 @@ export default function Home() {
         setCombinedContext('');
         setScores(null);
         setSelectedQuestionnaire(null);
+        setPdfToken(undefined);
+        setExperience(null);
         setStep('questionnaire-select');
     };
 
     const analyzeAnother = () => {
         setScores(null);
         setSelectedQuestionnaire(null);
+        setPdfToken(undefined);
+        setExperience(null);
         setStep('questionnaire-select');
     };
 
@@ -347,12 +360,81 @@ export default function Home() {
                     {step === 'interaction' && scores && selectedQuestionnaire && (
                         <div className="space-y-6">
                             <LearnerProfileCard variant="review" sessionId={sessionId} />
-                            <GuidedChatInterface
-                                scores={scores}
-                                questionnaireType={selectedQuestionnaire.id}
-                                onComplete={handleInteractionComplete}
-                                sessionId={sessionId}
-                            />
+
+                            {experience === null ? (
+                                <div className="max-w-lg mx-auto space-y-4">
+                                    <div className="glass-panel p-8 rounded-lg text-center space-y-6">
+                                        <div className="w-14 h-14 mx-auto rounded-md bg-indigo-50 flex items-center justify-center">
+                                            <MessageSquare className="w-7 h-7 text-indigo-600" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-semibold text-slate-800">{t('experience.choose.title')}</h3>
+                                            <p className="text-slate-500 mt-2">{t('experience.choose.sub')}</p>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <button
+                                                onClick={() => setExperience('standard')}
+                                                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <MessageSquare className="w-5 h-5" />
+                                                {t('guided.mode.guided')}
+                                            </button>
+                                            <button
+                                                onClick={() => setExperience('opencode')}
+                                                className="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <Terminal className="w-5 h-5" />
+                                                {t('guided.mode.sandbox')}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Toggle Experience Selector */}
+                                    <div className="flex justify-center bg-slate-100 p-1 rounded-lg max-w-sm mx-auto border border-slate-200 shadow-sm">
+                                        <button
+                                            onClick={() => setExperience('standard')}
+                                            className={`flex-1 py-1.5 px-3 rounded-md font-semibold text-xs transition-all flex items-center justify-center gap-1.5 ${
+                                                experience === 'standard'
+                                                    ? 'bg-white text-indigo-700 shadow-sm border border-slate-200/55'
+                                                    : 'text-slate-500 hover:text-slate-800'
+                                            }`}
+                                        >
+                                            <MessageSquare className="w-3.5 h-3.5" />
+                                            {t('guided.mode.guided')}
+                                        </button>
+                                        <button
+                                            onClick={() => setExperience('opencode')}
+                                            className={`flex-1 py-1.5 px-3 rounded-md font-semibold text-xs transition-all flex items-center justify-center gap-1.5 ${
+                                                experience === 'opencode'
+                                                    ? 'bg-white text-indigo-700 shadow-sm border border-slate-200/55'
+                                                    : 'text-slate-500 hover:text-slate-800'
+                                            }`}
+                                        >
+                                            <Terminal className="w-3.5 h-3.5" />
+                                            {t('guided.mode.sandbox')}
+                                        </button>
+                                    </div>
+
+                                    {experience === 'standard' ? (
+                                        <GuidedChatInterface
+                                            scores={scores}
+                                            questionnaireType={selectedQuestionnaire.id}
+                                            onComplete={handleInteractionComplete}
+                                            sessionId={sessionId}
+                                        />
+                                    ) : (
+                                        <OpenCodeExperience
+                                            scores={scores}
+                                            questionnaire={selectedQuestionnaire}
+                                            pdfToken={pdfToken}
+                                            sessionId={sessionId}
+                                            locale={lang}
+                                        />
+                                    )}
+                                </>
+                            )}
                         </div>
                     )}
 

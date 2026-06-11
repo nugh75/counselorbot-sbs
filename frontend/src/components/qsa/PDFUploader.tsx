@@ -7,7 +7,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 
 interface PDFUploaderProps {
-    onUploadComplete: (scores: Record<string, number>) => void;
+    onUploadComplete: (scores: Record<string, number>, pdfToken?: string) => void;
     questionnaire: QuestionnaireConfig;
 }
 
@@ -76,8 +76,16 @@ export function PDFUploader({ onUploadComplete, questionnaire }: PDFUploaderProp
             }
             
             const data: unknown = await response.json();
-            if (!isScoreMap(data)) throw new Error('Invalid scores returned by extractor');
-            onUploadComplete(data);
+            if (data && typeof data === 'object') {
+                const { pdf_token, ...scores } = data as Record<string, unknown>;
+                if (isScoreMap(scores)) {
+                    onUploadComplete(scores, typeof pdf_token === 'string' ? pdf_token : undefined);
+                } else {
+                    throw new Error('Invalid scores returned by extractor');
+                }
+            } else {
+                throw new Error('Invalid scores returned by extractor');
+            }
             
         } catch (error) {
             console.error("Upload error:", error);
