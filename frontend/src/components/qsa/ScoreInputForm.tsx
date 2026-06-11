@@ -13,6 +13,9 @@ const PREFIX_COLOR: Record<string, string> = {
     A: 'text-indigo-700',
     T: 'text-indigo-700',
     P: 'text-indigo-700',
+    S: 'text-purple-700',
+    K: 'text-cyan-700',
+    AD: 'text-green-700',
 };
 
 interface ScoreInputFormProps {

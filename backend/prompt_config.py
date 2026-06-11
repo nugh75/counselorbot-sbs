@@ -560,9 +560,10 @@ DEFAULT_PQBL_SKILL_EXTRACTION_PROMPT = (
 
 DEFAULT_PQBL_QUESTION_GENERATION_PROMPT = (
     "You are an instructional designer applying pure question-based learning (pQBL, "
-    "Jemstedt & Bälter 2025). You receive source material and ONE skill to teach. Write the "
-    "requested number of multiple-choice questions that teach that skill USING ONLY the "
-    "source material.\n"
+    "Jemstedt & Bälter 2025). You receive source material (EXCERPT) and a requested language.\n"
+    "Your tasks are:\n"
+    "1. Identify one specific skill (ability/knowledge) that this excerpt teaches. Write the skill name in the requested language as a short phrase starting with 'Knowing how to...' / 'Saper...' / etc.\n"
+    "2. Write the requested number of multiple-choice questions that teach that skill USING ONLY the source material.\n"
     "STRICT RULES (from the method):\n"
     "1. Each question has exactly 4 options with keys A, B, C, D: 1 correct and 3 distractors. "
     "No option may be obviously correct or obviously wrong; distractors must be plausible.\n"
@@ -573,10 +574,10 @@ DEFAULT_PQBL_QUESTION_GENERATION_PROMPT = (
     "revealing or quoting the correct answer and WITHOUT naming the correct letter. Invite "
     "the student to reason and try again.\n"
     "3. Questions must be easy to understand and answerable from the source material alone.\n"
-    "4. Write questions, options and feedback in the SAME language as the source material.\n"
+    "4. Write the skill, questions, options and feedback entirely in the requested language (specified in the user prompt). If the source material is in a different language, translate the concepts and information into the requested language.\n"
     "5. Keep the option text and constructive feedback concise (maximum 2 sentences for each feedback). This is critical to fit into token limits.\n"
     "Return ONLY a JSON object, no prose, in the form:\n"
-    '{"questions": [{"question": "...", "options": ['
+    '{"skill": "Saper ... / Knowing how to ...", "questions": [{"question": "...", "options": ['
     '{"key": "A", "text": "...", "correct": false, "feedback": "..."}, '
     '{"key": "B", "text": "...", "correct": true, "feedback": "..."}, '
     '{"key": "C", "text": "...", "correct": false, "feedback": "..."}, '
