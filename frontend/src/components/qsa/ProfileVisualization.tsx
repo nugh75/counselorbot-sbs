@@ -21,6 +21,9 @@ const PREFIX_SECTION_COLOR: Record<string, string> = {
     C: 'text-indigo-700',
     A: 'text-indigo-700',
     T: 'text-indigo-700',
+    S: 'text-purple-700',
+    K: 'text-cyan-700',
+    AD: 'text-green-700',
 };
 
 type Translator = (key: string, vars?: Record<string, string | number>) => string;
