@@ -76,3 +76,9 @@ class OpencodeWorkspaceRequest(schemas.BaseModel):
     scores: dict
     pdf_token: Optional[str] = None
     locale: Optional[str] = "it"
+
+
+class OpencodeChatRequest(schemas.BaseModel):
+    session_id: str
+    message: str = ""
+    seed: bool = False

@@ -22,14 +22,17 @@ import json
 import logging
 import os
 import re
+import socket
+from typing import AsyncIterator
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models
 from ..ai_service import AIService
-from ..api_models import ChatRequest, OpencodeWorkspaceRequest
+from ..api_models import ChatRequest, OpencodeChatRequest, OpencodeWorkspaceRequest
 from ..chat_logic import (
     _apply_language_directive,
     _apply_qsa_factor_directive,
@@ -59,6 +62,12 @@ OPENCODE_WS_HOST_ROOT = os.environ.get(
     "OPENCODE_WORKSPACE_HOST_ROOT", "/home/nugh75/.cache/ai4educ-opencode"
 )
 AGENT_PTY_SOCKET = os.environ.get("AGENT_PTY_SOCKET", "/run/cloudflared-agent/pty.sock")
+AGENT_SOCKET = os.environ.get("AGENT_SOCKET", "/run/cloudflared-agent/agent.sock")
+OPENCODE_CHAT_MODEL = os.environ.get("OPENCODE_CHAT_MODEL", "gemma4:12b")
+OPENCODE_RUNTIME_DIR = os.environ.get(
+    "OPENCODE_RUNTIME_DIR",
+    os.path.join(os.environ.get("SESSION_MEMORY_DIR", "/tmp"), "opencode-runtime"),
+)
 # Dove /qsa/upload persiste i PDF caricati (relativo alla cwd: /app nel container).
 QSA_PDF_STORAGE_DIR = os.environ.get("QSA_PDF_STORAGE_DIR", "uploads/qsa")
 
@@ -67,6 +76,8 @@ QSA_PDF_STORAGE_DIR = os.environ.get("QSA_PDF_STORAGE_DIR", "uploads/qsa")
 _KEY_RE = re.compile(r"^cb-[a-f0-9]{8,40}$")
 _WORKSPACE_ID_RE = re.compile(r"^[a-zA-Z0-9-]{8,64}$")
 _PDF_TOKEN_RE = re.compile(r"^[a-f0-9]{32}$")
+_OPENCODE_SESSION_RE = re.compile(r"^ses_[a-zA-Z0-9]+$")
+_api_instances: dict[str, dict[str, str]] = {}
 
 # Direttiva lingua per AGENTS.md e seed prompt (default italiano).
 _LANG_DIRECTIVES = {
@@ -442,6 +453,176 @@ def _guided_prompt_markdown(
     return "\n".join(sections).strip() + "\n"
 
 
+def _agent_command_sync(action: str, args: list[str]) -> dict:
+    payload = (json.dumps({"action": action, "args": args}) + "\n").encode("utf-8")
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+        client.settimeout(90)
+        client.connect(AGENT_SOCKET)
+        client.sendall(payload)
+        data = b""
+        while b"\n" not in data:
+            chunk = client.recv(65536)
+            if not chunk:
+                break
+            data += chunk
+    if not data:
+        raise RuntimeError("host-agent non ha risposto")
+    response = json.loads(data.split(b"\n", 1)[0])
+    if not response.get("ok"):
+        raise RuntimeError(str(response.get("error") or "host-agent error"))
+    stdout = response.get("stdout") or "{}"
+    return json.loads(stdout)
+
+
+async def _start_opencode_api(key: str) -> dict[str, str]:
+    host_dir = f"{OPENCODE_WS_HOST_ROOT}/{key}"
+    instance = await asyncio.to_thread(
+        _agent_command_sync, "opencode-server-start", [host_dir]
+    )
+    config = {
+        "url": str(instance["url"]).rstrip("/"),
+        "username": str(instance.get("username") or "opencode"),
+        "password": str(instance["password"]),
+    }
+    _store_api_instance(key, config)
+    return config
+
+
+def _api_instance_path(key: str) -> str:
+    return os.path.join(OPENCODE_RUNTIME_DIR, f"{key}.json")
+
+
+def _store_api_instance(key: str, config: dict[str, str]) -> None:
+    os.makedirs(OPENCODE_RUNTIME_DIR, mode=0o700, exist_ok=True)
+    path = _api_instance_path(key)
+    tmp_path = f"{path}.{os.getpid()}.tmp"
+    with open(tmp_path, "w", encoding="utf-8") as fh:
+        json.dump(config, fh)
+    os.chmod(tmp_path, 0o600)
+    os.replace(tmp_path, path)
+    _api_instances[key] = config
+
+
+def _get_api_instance(key: str) -> dict[str, str] | None:
+    cached = _api_instances.get(key)
+    if cached:
+        return cached
+    try:
+        with open(_api_instance_path(key), encoding="utf-8") as fh:
+            config = json.load(fh)
+        if not all(config.get(field) for field in ("url", "username", "password")):
+            return None
+    except (OSError, ValueError, TypeError):
+        return None
+    normalized = {
+        "url": str(config["url"]).rstrip("/"),
+        "username": str(config["username"]),
+        "password": str(config["password"]),
+    }
+    _api_instances[key] = normalized
+    return normalized
+
+
+def _remove_api_instance(key: str) -> None:
+    _api_instances.pop(key, None)
+    try:
+        os.unlink(_api_instance_path(key))
+    except OSError:
+        pass
+
+
+def _api_auth(config: dict[str, str]) -> httpx.BasicAuth:
+    return httpx.BasicAuth(config["username"], config["password"])
+
+
+async def _api_json(
+    config: dict[str, str],
+    method: str,
+    path: str,
+    *,
+    json_body: dict | None = None,
+) -> object:
+    async with httpx.AsyncClient(
+        auth=_api_auth(config),
+        timeout=httpx.Timeout(90, connect=10),
+    ) as client:
+        response = await client.request(
+            method, f"{config['url']}{path}", json=json_body
+        )
+        response.raise_for_status()
+        if not response.content:
+            return {}
+        return response.json()
+
+
+def _message_text(parts: list[dict]) -> str:
+    return "".join(
+        str(part.get("text") or "")
+        for part in parts
+        if part.get("type") == "text"
+    ).strip()
+
+
+async def _ensure_opencode_session(
+    key: str, config: dict[str, str]
+) -> tuple[str, list[dict[str, str]], bool]:
+    ws_dir = os.path.join(OPENCODE_WS_ROOT, key)
+    session_path = os.path.join(ws_dir, ".opencode-session")
+    session_id = ""
+    try:
+        with open(session_path, encoding="utf-8") as fh:
+            candidate = fh.read(100).strip()
+        if _OPENCODE_SESSION_RE.match(candidate):
+            await _api_json(config, "GET", f"/session/{candidate}")
+            session_id = candidate
+    except (OSError, httpx.HTTPError):
+        session_id = ""
+
+    if not session_id:
+        created = await _api_json(
+            config,
+            "POST",
+            "/session?directory=%2Fwork",
+            json_body={"title": "CounselorBot OpenCode"},
+        )
+        if not isinstance(created, dict) or not _OPENCODE_SESSION_RE.match(
+            str(created.get("id") or "")
+        ):
+            raise RuntimeError("OpenCode non ha creato una sessione valida")
+        session_id = str(created["id"])
+        with open(session_path, "w", encoding="utf-8") as fh:
+            fh.write(session_id)
+        _chmod(session_path, 0o444)
+
+    raw_messages = await _api_json(
+        config, "GET", f"/session/{session_id}/message?directory=%2Fwork"
+    )
+    seed_prompt = ""
+    try:
+        with open(os.path.join(ws_dir, ".opencode-prompt"), encoding="utf-8") as fh:
+            seed_prompt = fh.read().strip()
+    except OSError:
+        pass
+
+    history: list[dict[str, str]] = []
+    has_assistant = False
+    if isinstance(raw_messages, list):
+        for item in raw_messages:
+            if not isinstance(item, dict):
+                continue
+            info = item.get("info") or {}
+            role = str(info.get("role") or "")
+            text = _message_text(item.get("parts") or [])
+            if not text or role not in ("user", "assistant"):
+                continue
+            if role == "user" and seed_prompt and text == seed_prompt:
+                continue
+            history.append({"role": role, "content": text})
+            if role == "assistant":
+                has_assistant = True
+    return session_id, history, not has_assistant
+
+
 @router.post("/opencode/workspace")
 async def create_opencode_workspace(
     request: OpencodeWorkspaceRequest,
@@ -612,7 +793,217 @@ async def create_opencode_workspace(
             _chmod(os.path.join(ws_dir, name), 0o444)
 
     await asyncio.to_thread(_write_workspace)
-    return {"ok": True, "key": key}
+    try:
+        api_config = await _start_opencode_api(key)
+        opencode_session_id, history, needs_seed = await _ensure_opencode_session(
+            key, api_config
+        )
+        return {
+            "ok": True,
+            "key": key,
+            "api_available": True,
+            "session_id": opencode_session_id,
+            "history": history,
+            "needs_seed": needs_seed,
+        }
+    except Exception as exc:
+        logger.warning("OpenCode headless unavailable for %s: %s", key, exc)
+        _remove_api_instance(key)
+        return {
+            "ok": True,
+            "key": key,
+            "api_available": False,
+            "api_error": str(exc),
+        }
+
+
+def _workspace_session_id(key: str) -> str:
+    path = os.path.join(OPENCODE_WS_ROOT, key, ".opencode-session")
+    try:
+        with open(path, encoding="utf-8") as fh:
+            session_id = fh.read(100).strip()
+    except OSError as exc:
+        raise HTTPException(status_code=404, detail="Sessione OpenCode non trovata") from exc
+    if not _OPENCODE_SESSION_RE.match(session_id):
+        raise HTTPException(status_code=500, detail="Sessione OpenCode non valida")
+    return session_id
+
+
+@router.post("/opencode/workspace/{key}/chat")
+async def chat_opencode(
+    key: str,
+    request: OpencodeChatRequest,
+    identity: dict = Depends(auth.get_current_user),
+):
+    if not _KEY_RE.match(key):
+        raise HTTPException(status_code=400, detail="Workspace key non valida")
+    config = _get_api_instance(key)
+    if not config:
+        raise HTTPException(status_code=503, detail="OpenCode grafico non disponibile")
+    expected_session_id = _workspace_session_id(key)
+    if request.session_id != expected_session_id:
+        raise HTTPException(status_code=400, detail="Sessione OpenCode non valida")
+
+    prompt = request.message.strip()
+    if request.seed:
+        try:
+            with open(
+                os.path.join(OPENCODE_WS_ROOT, key, ".opencode-prompt"),
+                encoding="utf-8",
+            ) as fh:
+                prompt = fh.read().strip()
+        except OSError as exc:
+            raise HTTPException(status_code=500, detail="Prompt iniziale non disponibile") from exc
+    if not prompt:
+        raise HTTPException(status_code=400, detail="Messaggio vuoto")
+    if len(prompt) > 12000:
+        raise HTTPException(status_code=400, detail="Messaggio troppo lungo")
+
+    async def stream() -> AsyncIterator[str]:
+        full_text = ""
+        current_part_id = ""
+        text_part_count = 0
+        completed = False
+        timeout = httpx.Timeout(30, read=None)
+        try:
+            async with httpx.AsyncClient(
+                auth=_api_auth(config), timeout=timeout
+            ) as client:
+                async with client.stream(
+                    "GET", f"{config['url']}/event?directory=%2Fwork"
+                ) as events:
+                    events.raise_for_status()
+                    body = {
+                        "model": {
+                            "providerID": "ollama",
+                            "modelID": OPENCODE_CHAT_MODEL,
+                        },
+                        "system": (
+                            "Do not expose internal reasoning or narrate tool calls. "
+                            "Return only the final student-facing answer in the required language."
+                        ),
+                        "parts": [{"type": "text", "text": prompt}],
+                    }
+                    response = await client.post(
+                        f"{config['url']}/session/{request.session_id}/prompt_async"
+                        "?directory=%2Fwork",
+                        json=body,
+                    )
+                    response.raise_for_status()
+
+                    async for line in events.aiter_lines():
+                        if not line.startswith("data:"):
+                            continue
+                        try:
+                            event = json.loads(line[5:].strip())
+                        except (ValueError, TypeError):
+                            continue
+                        properties = event.get("properties") or {}
+                        if properties.get("sessionID") != request.session_id:
+                            continue
+                        event_type = event.get("type")
+                        if event_type == "message.part.delta" and properties.get("field") == "text":
+                            delta = str(properties.get("delta") or "")
+                            if delta:
+                                part_id = str(properties.get("partID") or "")
+                                if part_id and part_id != current_part_id:
+                                    current_part_id = part_id
+                                    text_part_count += 1
+                                    full_text = ""
+                                full_text += delta
+                                if text_part_count > 1:
+                                    yield f"data: {json.dumps({'display': full_text})}\n\n"
+                        elif event_type == "session.error":
+                            error = properties.get("error") or "OpenCode error"
+                            yield f"data: {json.dumps({'error': str(error)})}\n\n"
+                            return
+                        elif event_type == "session.idle":
+                            completed = True
+                            if not full_text:
+                                messages = await client.get(
+                                    f"{config['url']}/session/{request.session_id}/message"
+                                    "?directory=%2Fwork"
+                                )
+                                messages.raise_for_status()
+                                items = messages.json()
+                                for item in reversed(items if isinstance(items, list) else []):
+                                    if (item.get("info") or {}).get("role") == "assistant":
+                                        full_text = _message_text(item.get("parts") or [])
+                                        break
+                            yield (
+                                "data: "
+                                + json.dumps({"done": True, "response": full_text})
+                                + "\n\n"
+                            )
+                            return
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            logger.warning("OpenCode chat stream failed for %s: %s", key, exc)
+            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+        finally:
+            if not completed:
+                try:
+                    await _api_json(
+                        config,
+                        "POST",
+                        f"/session/{request.session_id}/abort?directory=%2Fwork",
+                    )
+                except Exception:
+                    pass
+
+    return StreamingResponse(
+        stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@router.post("/opencode/workspace/{key}/abort")
+async def abort_opencode(
+    key: str,
+    identity: dict = Depends(auth.get_current_user),
+):
+    if not _KEY_RE.match(key):
+        raise HTTPException(status_code=400, detail="Workspace key non valida")
+    config = _get_api_instance(key)
+    if not config:
+        raise HTTPException(status_code=503, detail="OpenCode grafico non disponibile")
+    session_id = _workspace_session_id(key)
+    await _api_json(
+        config, "POST", f"/session/{session_id}/abort?directory=%2Fwork"
+    )
+    return {"ok": True}
+
+
+@router.post("/opencode/workspace/{key}/reset")
+async def reset_opencode(
+    key: str,
+    identity: dict = Depends(auth.get_current_user),
+):
+    if not _KEY_RE.match(key):
+        raise HTTPException(status_code=400, detail="Workspace key non valida")
+    config = _get_api_instance(key)
+    if not config:
+        raise HTTPException(status_code=503, detail="OpenCode grafico non disponibile")
+    created = await _api_json(
+        config,
+        "POST",
+        "/session?directory=%2Fwork",
+        json_body={"title": "CounselorBot OpenCode"},
+    )
+    session_id = str(created.get("id") if isinstance(created, dict) else "")
+    if not _OPENCODE_SESSION_RE.match(session_id):
+        raise HTTPException(status_code=502, detail="OpenCode non ha creato la sessione")
+    session_path = os.path.join(OPENCODE_WS_ROOT, key, ".opencode-session")
+    _chmod(session_path, 0o666)
+    with open(session_path, "w", encoding="utf-8") as fh:
+        fh.write(session_id)
+    _chmod(session_path, 0o444)
+    return {"ok": True, "session_id": session_id, "needs_seed": True}
 
 
 @router.post("/opencode/workspace/{key}/sync-memory")
