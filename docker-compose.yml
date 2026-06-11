@@ -7,6 +7,8 @@ services:
     container_name: counselorbot_backend
     expose:
       - "8000"
+    ports:
+      - "127.0.0.1:8088:8000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     env_file:
@@ -21,11 +23,18 @@ services:
       - RAG_INDEX_DIR=/app/rag_index
       - QSA_OCR_MODEL=${QSA_OCR_MODEL:-glm-ocr:latest}
       - QSA_PARSER_MODEL=${QSA_PARSER_MODEL:-gemma4:e2b}
+      - OPENCODE_WORKSPACE_ROOT=/opencode-workspaces
+      - OPENCODE_WORKSPACE_HOST_ROOT=${OPENCODE_WORKSPACE_HOST_ROOT:-/home/nugh75/.cache/ai4educ-opencode}
+      - AGENT_PTY_SOCKET=${AGENT_PTY_SOCKET:-/run/cloudflared-agent/pty.sock}
+      - QSA_PDF_STORAGE_DIR=/app/uploads/qsa
     volumes:
       - ./session_memory:/app/session_memory
       - ./knowledge:/app/knowledge:ro
       - ./docs:/app/docs:ro
       - rag_index:/app/rag_index
+      - ./uploads:/app/uploads
+      - /run/cloudflared-agent:/run/cloudflared-agent
+      - /home/nugh75/.cache/ai4educ-opencode:/opencode-workspaces
     depends_on:
       - postgres
     restart: unless-stopped
