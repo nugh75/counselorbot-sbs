@@ -22,6 +22,10 @@ FORWARD_AUTH_SHARED_SECRET = os.environ.get("FORWARD_AUTH_SHARED_SECRET", "")
 AI4AUTH_VERIFY_URL = os.environ.get(
     "AI4AUTH_VERIFY_URL", "https://auth.ai4educ.org/api/verify"
 ).strip()
+# Hostname pubblico del servizio: ai4auth autorizza per-hostname tramite la
+# access matrix, quindi la verifica diretta del cookie deve presentarsi con
+# l'host pubblico (non "ai4auth:9091", che non ha entry in matrice).
+AI4AUTH_PUBLIC_HOST = os.environ.get("AI4AUTH_PUBLIC_HOST", "").strip()
 
 # Mantenuto solo per il bootstrap dell'utente admin locale (seed) — non usato
 # per il login, che passa interamente da ai4auth.
@@ -79,9 +83,19 @@ async def get_identity(request: Request) -> dict:
     if not cookie or not AI4AUTH_VERIFY_URL:
         return _anonymous_identity()
 
+    public_host = (
+        AI4AUTH_PUBLIC_HOST
+        or request.headers.get("X-Forwarded-Host", "").split(",")[0].strip()
+        or request.headers.get("Host", "")
+    )
+    verify_headers = {"Cookie": cookie}
+    if public_host:
+        verify_headers["Host"] = public_host
+        verify_headers["X-Original-URL"] = f"https://{public_host}{request.url.path}"
+
     try:
         async with httpx.AsyncClient(timeout=4.0, follow_redirects=False) as client:
-            response = await client.get(AI4AUTH_VERIFY_URL, headers={"Cookie": cookie})
+            response = await client.get(AI4AUTH_VERIFY_URL, headers=verify_headers)
         if response.status_code == 200:
             return _identity_from_headers(response.headers)
     except httpx.HTTPError:

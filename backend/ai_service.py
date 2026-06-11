@@ -20,14 +20,14 @@ class AIError(Exception):
 
 # Prompt usato per aggiornare il riassunto rotante della sessione
 SUMMARY_SYSTEM_PROMPT = (
-    "Sei un assistente che mantiene un riassunto rotante della sessione di counseling. "
-    "Riceverai il riassunto precedente (se presente) e l'ultima interazione. "
-    "Produci UN UNICO riassunto aggiornato in MASSIMO 80 parole in italiano che integri "
-    "tutto il percorso fatto finora, includendo l'ultimo step. "
-    "Usa una lista puntata compatta. NON aggiungere introduzioni o conclusioni. "
-    "IMPORTANTE: NON includere punteggi numerici grezzi o tabelle di dati del questionario QSA. "
-    "Riporta solo le INTERPRETAZIONI e i CONSIGLI emersi dall'analisi. "
-    "Il risultato SOSTITUISCE il riassunto precedente — non aggiungere, riscrivi."
+    "You are an assistant that maintains a rolling summary of the counseling session. "
+    "You will receive the previous summary (if any) and the latest interaction. "
+    "Produce a SINGLE updated summary in MAXIMUM 80 words in Italian that integrates "
+    "the entire journey done so far, including the latest step. "
+    "Use a compact bulleted list. Do NOT add introductions or conclusions. "
+    "IMPORTANT: Do NOT include raw numerical scores or tables of data from the QSA questionnaire. "
+    "Report only the INTERPRETATIONS and ADVICE that emerged from the analysis. "
+    "The result REPLACES the previous summary — do not append, rewrite."
 )
 
 # Mappa chiavi DB -> variabili d'ambiente per i segreti
@@ -42,6 +42,8 @@ ENV_KEY_MAP = {
     'ollama_keep_alive': ('OLLAMA_KEEP_ALIVE',),
     'ollama_preload': ('OLLAMA_PRELOAD',),
     'llamacpp_url': ('LLAMACPP_BASE_URL',),
+    'qsa_ocr_model': ('QSA_OCR_MODEL',),
+    'qsa_parser_model': ('QSA_PARSER_MODEL',),
 }
 
 class AIService:
@@ -153,31 +155,50 @@ class AIService:
         mode: str,
         conversation_summary: str = "",
         max_tokens: int = None,
+        provider: str = None,
     ):
-        """
+        """                                                                  
         Genera una risposta LLM.  Se conversation_summary è fornito, viene
-        iniettato come contesto all'inizio del messaggio utente.
+        iniettato come contesto all'inizio del messaggio utente.           
+        `provider` opzionale: sovrascrive il provider attivo (es. "gemini", "openrouter").
         """
-        # Determine provider (default to openai if not set)
-        provider = self.config.get('active_provider', 'openai')
-        model_name = self.config.get('model_name', 'gpt-4o')
+        effective_provider = provider or self.config.get('active_provider', 'openai')
+        # Se l'utente sovrascrive il provider (es. gemini), usa un modello
+        # predefinito per quel provider, non il model_name generico che
+        # potrebbe essere un modello Ollama (es. qwen3.5:9b).
+        _PROVIDER_DEFAULT_MODELS = {
+            "openai": "gpt-4o",
+            "anthropic": "claude-sonnet-4-20250514",
+            "gemini": "gemini-2.0-flash",
+            "openrouter": "meta-llama/llama-3.3-70b-instruct:free",
+            "mistral": "mistral-small-latest",
+            "ollama": "qwen3.5:9b",
+            "llamacpp": "default",
+        }
+        if provider:
+            model_name = (
+                self.config.get(f'model_name_{provider}')
+                or _PROVIDER_DEFAULT_MODELS.get(provider, 'gpt-4o')
+            )
+        else:
+            model_name = self.config.get('model_name', 'gpt-4o')
 
         # Inietta il riassunto conversazionale come contesto
         if conversation_summary:
             user_message = (
-                f"CONTESTO DELLE CONVERSAZIONI PRECEDENTI:\n{conversation_summary}\n\n"
+                f"CONTEXT OF PREVIOUS CONVERSATIONS:\n{conversation_summary}\n\n"
                 f"---\n\n{user_message}"
             )
         
-        entry = self._provider(provider)
+        entry = self._provider(effective_provider)
         mt = max_tokens or entry['call_max']
         try:
             return entry['call'](user_message, system_prompt, model_name, max_tokens=mt)
         except AIError:
             raise
         except Exception as e:
-            logger.error(f"Errore chiamata AI ({provider}): {e}")
-            raise AIError(f"Errore AI ({provider}): {e}") from e
+            logger.error(f"Errore chiamata AI ({effective_provider}): {e}")
+            raise AIError(f"Errore AI ({effective_provider}): {e}") from e
 
     # Token massimi per i riassunti (~80 parole → 120 token sono sufficienti)
     SUMMARY_MAX_TOKENS = 300
@@ -259,11 +280,58 @@ class AIService:
         )
         if max_tokens:
             kwargs["max_tokens"] = max_tokens
-        # OpenRouter: disattiva il reasoning a livello di richiesta
         if self.disable_thinking:
             kwargs["extra_body"] = {"reasoning": {"enabled": False}}
-        response = client.chat.completions.create(**kwargs)
-        return response.choices[0].message.content
+        # Retry su rate-limit (429) con backoff esponenziale o Retry-After dai metadati/header
+        import time as _time
+        for attempt in range(6):
+            try:
+                response = client.chat.completions.create(**kwargs)
+                return response.choices[0].message.content
+            except Exception as e:
+                status = getattr(e, 'status_code', None)
+                resp = getattr(e, 'response', None)
+                if status is None and resp is not None:
+                    status = getattr(resp, 'status_code', None)
+
+                if status == 429 and attempt < 5:
+                    wait = None
+                    try:
+                        if resp is not None:
+                            # 1. Controlla gli header della response
+                            headers = getattr(resp, 'headers', None)
+                            if headers:
+                                h_wait = headers.get("Retry-After") or headers.get("retry-after")
+                                if h_wait:
+                                    wait = float(h_wait)
+                            
+                            # 2. Controlla il corpo JSON per metadata.retry_after_seconds
+                            if wait is None and hasattr(resp, 'json'):
+                                body = resp.json()
+                                if isinstance(body, dict):
+                                    err_info = body.get('error', {})
+                                    if isinstance(err_info, dict):
+                                        metadata = err_info.get('metadata', {})
+                                        if isinstance(metadata, dict):
+                                            wait = metadata.get('retry_after_seconds')
+                                            if wait is None:
+                                                raw_headers = metadata.get('headers', {})
+                                                if isinstance(raw_headers, dict):
+                                                    h_wait = raw_headers.get('Retry-After') or raw_headers.get('retry-after')
+                                                    if h_wait:
+                                                        wait = float(h_wait)
+                    except Exception as parse_ex:
+                        logger.warning(f"pQBL: errore parsing del retry status di OpenRouter: {parse_ex}")
+
+                    if wait is None or wait <= 0:
+                        wait = 2 ** (attempt + 2)  # 4s, 8s, 16s, 32s, 64s
+
+                    # Limitiamo l'attesa del singolo tentativo a max 90 secondi
+                    wait = min(max(wait, 1.0), 90.0)
+                    logger.warning(f"pQBL: OpenRouter rate-limit (tentativo {attempt + 1}/6), attesa di {wait:.1f}s prima del retry")
+                    _time.sleep(wait)
+                    continue
+                raise
 
     def _call_anthropic(self, user_message, system_prompt, model, max_tokens: int = 4096):
         api_key = self._get_api_key('api_key_anthropic')
@@ -347,6 +415,8 @@ class AIService:
         }
         if self.disable_thinking:
             payload["think"] = False
+        if "json" in system_prompt.lower() or "json" in user_message.lower():
+            payload["format"] = "json"
         response = httpx.post(
             f"{base_url}/api/chat",
             json=payload,

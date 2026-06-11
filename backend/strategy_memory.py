@@ -12,6 +12,7 @@ from typing import Dict, List
 from sqlalchemy.orm import Session
 
 from . import models
+from .memory_embeddings import memory_embedder
 
 
 DEFAULT_PATH = Path("knowledge/approved_strategies.md")
@@ -32,25 +33,45 @@ class StrategyMemory:
         query: str = "",
         language: str = "it",
         limit: int = 2,
+        ai_service=None,
     ) -> List[Dict[str, str]]:
-        candidates = []
         query_terms = self._terms(f"{phase} {query}")
         questionnaire = (questionnaire_type or "").upper()
+        eligible = []
         for strategy in self._load():
             if strategy.get("status", "").lower() != "approved":
                 continue
             accepted = {item.upper() for item in self._csv(strategy.get("questionnaires", ""))}
             if accepted and questionnaire and questionnaire not in accepted:
                 continue
-            keywords = self._terms(strategy.get("keywords", ""))
-            overlap = len(keywords & query_terms)
-            if query_terms and keywords and not overlap:
-                continue
-            strategy["_score"] = str(overlap)
-            candidates.append(strategy)
-        candidates.sort(key=lambda item: int(item.get("_score", "0")), reverse=True)
+            eligible.append(strategy)
+
+        selected = None
+        if query_terms:
+            # Ranking semantico su keyword + testo della strategia; None = fallback keyword.
+            documents = [
+                f"{strategy.get('keywords', '')} "
+                f"{strategy.get(f'text.{language}') or strategy.get('text.it') or ''}".strip()
+                for strategy in eligible
+            ]
+            ranked = memory_embedder.rank(ai_service, f"{phase} {query}".strip(), documents, limit=limit)
+            if ranked is not None:
+                selected = [eligible[index] for index in ranked]
+
+        if selected is None:
+            candidates = []
+            for strategy in eligible:
+                keywords = self._terms(strategy.get("keywords", ""))
+                overlap = len(keywords & query_terms)
+                if query_terms and keywords and not overlap:
+                    continue
+                strategy["_score"] = str(overlap)
+                candidates.append(strategy)
+            candidates.sort(key=lambda item: int(item.get("_score", "0")), reverse=True)
+            selected = candidates[:limit]
+
         result = []
-        for strategy in candidates[:limit]:
+        for strategy in selected:
             text = strategy.get(f"text.{language}") or strategy.get("text.it") or ""
             if text:
                 result.append({"id": strategy["id"], "text": text})

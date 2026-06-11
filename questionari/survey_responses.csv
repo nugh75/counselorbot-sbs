@@ -1,0 +1,8 @@
+id,submitted_at,eta,sesso,istruzione,tipo_istituto,provenienza,area_studio,q_utile,q_pertinente,q_chiaro,q_dettaglio,q_facile,q_veloce,q_fiducia,q_riflettere,q_coinvolgente,q_consiglierei
+1,2026-01-19 21:23:42+00,25-34,Maschio,,,,,5,5,5,5,5,5,5,5,5,5
+2,2026-01-19 21:23:49+00,14-16,Femmina,Scuola media,Altro,Centro Italia,Altro,1,3,3,4,3,4,3,2,3,4
+3,2026-01-19 21:31:11+00,17-18,Femmina,Diploma,Istituto tecnico,Nord Italia,Tecnico,2,4,3,2,4,3,2,3,3,2
+4,2026-03-30 13:49:39.093956+00,14-16,,,,,,4,4,4,4,4,4,4,4,4,4
+5,2026-03-30 13:53:34.510535+00,14-16,Maschio,Diploma,Liceo,Nord Italia,Liceale,4,4,4,4,4,4,4,4,4,4
+6,2026-03-30 14:06:40.381873+00,25-34,Femmina,Laurea magistrale,Università,Nord Italia,Universitario,4,5,5,5,5,4,5,5,4,4
+7,2026-03-30 14:07:48.963367+00,19-24,Femmina,Laurea magistrale,Università,Centro Italia,Universitario,4,5,5,3,5,4,5,5,4,5

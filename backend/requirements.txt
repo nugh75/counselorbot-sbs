@@ -16,5 +16,10 @@ google-genai
 mistralai
 requests
 pdf2image
+pillow
 fpdf2
 numpy
+pypdf
+pymupdf
+pymupdf4llm
+

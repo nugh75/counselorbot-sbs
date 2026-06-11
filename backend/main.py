@@ -3,6 +3,7 @@ load_dotenv()
 
 import asyncio
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -35,6 +36,8 @@ from .routes import survey as survey_routes
 from .routes import chat as chat_routes
 from .routes import memory as memory_routes
 from .routes import site_chat as site_chat_routes
+from .routes import learner_profile as learner_profile_routes
+from .routes import pqbl as pqbl_routes
 
 # Re-export per retro-compatibilità (es. smoke test che importa da backend.main)
 from .ai_service import AIService, AIError  # noqa: F401
@@ -76,6 +79,12 @@ async def lifespan(app: FastAPI):
             db.close()
 
     asyncio.create_task(_preload())
+
+    # Porta i log dei nostri moduli a INFO.
+    # Nota: uvicorn configura il root logger a WARNING dopo l'import ma prima
+    # del lifespan, quindi i nostri logger.info() non arrivano a schermo.
+    # Usiamo un middleware per assicurarci che i nostri logger abbiano un handler
+    # dopo che uvicorn ha finito la sua configurazione.
 
     async def _build_rag():
         # Pre-costruisce l'indice RAG del chatbot del sito (embeddings locali).
@@ -168,6 +177,20 @@ def _seed_and_migrate():
                 except Exception as e:
                     logger.debug(f"{table} migration skipped/failed ({clause}): {e}")
 
+        # Raw SQL migration: add provider/chunks columns to pqbl_documents (idempotent)
+        for clause in [
+            "ADD COLUMN provider VARCHAR",
+            "ADD COLUMN chunks_total INTEGER NOT NULL DEFAULT 0",
+            "ADD COLUMN chunks_done INTEGER NOT NULL DEFAULT 0",
+            "ADD COLUMN file_path VARCHAR",
+        ]:
+            try:
+                with database.engine.connect() as conn:
+                    conn.execute(sa_text(f"ALTER TABLE pqbl_documents {clause}"))
+                    conn.commit()
+            except Exception as e:
+                logger.debug(f"pqbl_documents migration skipped/failed ({clause}): {e}")
+
         # Create initial admin user if not exists
         user = db.query(models.User).filter(models.User.username == "admin").first()
         if not user:
@@ -218,6 +241,26 @@ def _seed_and_migrate():
         if changed:
             db.commit()
             logger.info("Config seeding committed")
+
+        # Sincronizza i segreti da .env nel DB: la variabile d'ambiente resta la
+        # fonte di verità a runtime (override in AIService), ma la riga Config
+        # viene allineata così l'admin panel non mostra mai valori stantii.
+        from .ai_service import ENV_KEY_MAP
+        env_synced = False
+        for db_key, env_vars in ENV_KEY_MAP.items():
+            env_value = next((os.environ.get(v) for v in env_vars if os.environ.get(v)), None)
+            if not env_value:
+                continue
+            row = db.query(models.Config).filter(models.Config.key == db_key).first()
+            if row is None:
+                db.add(models.Config(key=db_key, value=env_value, description=f"Sincronizzato da .env ({env_vars[0]})"))
+                env_synced = True
+            elif row.value != env_value:
+                row.value = env_value
+                env_synced = True
+        if env_synced:
+            db.commit()
+            logger.info("Config sincronizzata con le variabili d'ambiente (.env)")
 
         # Seed QSA guided steps if none exist for QSA
         qsa_count = db.query(models.GuidedStep).filter(
@@ -423,10 +466,8 @@ def _migrate_prompts_to_english(db):
         normalize_prompt,
     )
 
-    # New English defaults keyed by config key (system prompts + guided-phase prompt).
-    new_config_defaults = dict(SYSTEM_PROMPT_DEFAULTS)
-    for gp in GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS.values():
-        new_config_defaults[gp["key"]] = gp["default"]
+    # New English defaults keyed by config key (all database configuration defaults).
+    new_config_defaults = {item["key"]: item["default"] for item in ALL_CONFIG_TEXT_DEFINITIONS}
 
     # New English step prompts keyed by step id.
     new_step_prompts = {}
@@ -533,3 +574,5 @@ app.include_router(survey_routes.router)
 app.include_router(chat_routes.router)
 app.include_router(memory_routes.router)
 app.include_router(site_chat_routes.router)
+app.include_router(learner_profile_routes.router)
+app.include_router(pqbl_routes.router)

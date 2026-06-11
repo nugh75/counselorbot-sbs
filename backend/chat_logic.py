@@ -540,12 +540,56 @@ def _update_markdown_memory_background(
         logger.error(f"Errore aggiornamento memoria Markdown per session {session_id}: {e}")
 
 
+MAX_LEARNER_PROFILE_CHARS = 900
+
+_LEARNER_PROFILE_LABELS = {
+    "context": "Contesto di studio",
+    "goal": "Obiettivo attuale",
+    "main_difficulty": "Difficoltà principale percepita",
+    "tried": "Strategie già provate",
+    "notes": "Note",
+}
+
+
+def _learner_profile_context(db, username: str) -> str:
+    """Sezione 'modello del discente' dall'ultima revisione del profilo auto-dichiarato.
+
+    Va trattata come percezione soggettiva da confrontare con i punteggi,
+    mai come verità che li sovrascrive."""
+    if not username:
+        return ""
+    revision = (
+        db.query(models.LearnerProfileRevision)
+        .filter(models.LearnerProfileRevision.username == username)
+        .order_by(models.LearnerProfileRevision.created_at.desc(), models.LearnerProfileRevision.id.desc())
+        .first()
+    )
+    if revision is None or not revision.data:
+        return ""
+    lines = [
+        "## Profilo dichiarato dallo studente",
+        "Auto-descrizione dello studente: usala per contestualizzare e, quando utile, "
+        "confronta la sua percezione con i punteggi. Non sovrascrive i dati dei questionari.",
+    ]
+    for key, label in _LEARNER_PROFILE_LABELS.items():
+        value = str(revision.data.get(key) or "").strip()
+        if value:
+            lines.append(f"- {label}: {value}")
+    if len(lines) <= 2:
+        return ""
+    if revision.created_at:
+        lines.append(f"- Ultimo aggiornamento: {revision.created_at.date().isoformat()}")
+    return "\n".join(lines)[:MAX_LEARNER_PROFILE_CHARS]
+
+
 def _retrieved_context(
     db,
     session_id: str,
     request: ChatRequest,
     questionnaire_type: str,
     query: str,
+    ai_service=None,
+    username: str = "",
 ) -> tuple[str, List[str]]:
     # Follow-up discorsivo: NON re-iniettare i punteggi completi dalla memoria,
     # altrimenti il modello ri-analizza tutto il profilo (tabella + altri fattori).
@@ -555,12 +599,14 @@ def _retrieved_context(
         session_id,
         query=query,
         include_scores=include_scores,
+        ai_service=ai_service,
     )
     strategies = strategy_memory.retrieve(
         questionnaire_type=questionnaire_type,
         phase=request.phase or "",
         query=query,
         language=request.language or "it",
+        ai_service=ai_service,
     )
     strategy_context = strategy_memory.render_context(strategies)
     learned_responses = shared_response_memory.retrieve(
@@ -571,7 +617,8 @@ def _retrieved_context(
         language=request.language or "it",
     )
     learned_context = shared_response_memory.render_context(learned_responses)
-    sections = [section for section in (memory, strategy_context, learned_context) if section]
+    profile_context = _learner_profile_context(db, username)
+    sections = [section for section in (profile_context, memory, strategy_context, learned_context) if section]
     return "\n\n".join(sections), [strategy["id"] for strategy in strategies]
 
 

@@ -54,7 +54,7 @@ _SITE_QTYPE = "SITE"
 # Le fonti sono mostrate come chip nel frontend: rimuovi i marcatori "[FONTE n]"
 # / "(FONTE n)" che il modello a volte lascia inline nonostante il prompt.
 _FONTE_RE = re.compile(
-    r"\s*[\(\[]\s*font[ei]\s*\d+(?:\s*[;,e]+\s*(?:font[ei]\s*)?\d+)*\s*[\)\]]",
+    r"\s*[\(\[]\s*(?:font[ei]|source[s]?)\s*\d+(?:\s*[;,e]+\s*(?:(?:font[ei]|source[s]?)\s*)?\d+)*\s*[\)\]]",
     re.IGNORECASE,
 )
 
@@ -245,13 +245,13 @@ async def site_chat_stream(request: SiteChatRequest, db: Session = Depends(get_d
 
         context, sources = build_context(results)
         memory_block = (
-            f"CONVERSAZIONE PRECEDENTE (solo per continuità, NON è una fonte):\n{prior_memory}\n\n---\n\n"
+            f"PREVIOUS CONVERSATION (for continuity only, NOT a source):\n{prior_memory}\n\n---\n\n"
             if prior_memory else ""
         )
         full_message = (
             f"{memory_block}"
-            f"MATERIALI (estratti dai documenti del sito):\n\n{context}\n\n"
-            f"---\n\nDOMANDA:\n{question}"
+            f"MATERIALS (extracted from website documents):\n\n{context}\n\n"
+            f"---\n\nQUESTION:\n{question}"
         )
 
         chunks: list[str] = []

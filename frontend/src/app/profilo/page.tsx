@@ -6,6 +6,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { getIdentity, type Identity } from '@/lib/auth';
 import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
 import { addCompletedProfile, clearCompletedProfiles } from '@/lib/profile-tracker';
+import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import {
     ArrowLeft, User, FileText, Trash2, Download, MessageSquare, RefreshCw, Calendar, ChevronRight
 } from 'lucide-react';
@@ -228,6 +229,9 @@ export default function ProfilePage() {
                     </div>
                 </div>
             </section>
+
+            {/* Learner profile (modello del discente) */}
+            <LearnerProfileCard variant="edit" />
 
             {/* Main Layout Grid */}
             <div className="grid lg:grid-cols-3 gap-8">

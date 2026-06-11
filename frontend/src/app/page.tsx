@@ -9,6 +9,7 @@ import { ScoreInputForm } from '@/components/qsa/ScoreInputForm';
 import { PDFUploader } from '@/components/qsa/PDFUploader';
 import { ProfileVisualization } from '@/components/qsa/ProfileVisualization';
 import { GuidedChatInterface } from '@/components/qsa/GuidedChatInterface';
+import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { ArrowLeft, CheckCircle2, MessageSquare, RotateCcw, LogOut, Download, Layers } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { addCompletedProfile, hasCompletedAll, getCombinedScoresContext, clearCompletedProfiles, getCompletedProfiles } from '@/lib/profile-tracker';
@@ -307,8 +308,11 @@ export default function Home() {
                     )}
 
                     {/* Step: PDF Upload */}
-                    {step === 'upload-input' && (
-                        <PDFUploader onUploadComplete={handleUploadComplete} />
+                    {step === 'upload-input' && selectedQuestionnaire && (
+                        <PDFUploader
+                            questionnaire={selectedQuestionnaire}
+                            onUploadComplete={handleUploadComplete}
+                        />
                     )}
 
                     {/* Step: Dashboard with Profile */}
@@ -341,12 +345,15 @@ export default function Home() {
 
                     {/* Step: Guided Chat Interaction */}
                     {step === 'interaction' && scores && selectedQuestionnaire && (
-                        <GuidedChatInterface
-                            scores={scores}
-                            questionnaireType={selectedQuestionnaire.id}
-                            onComplete={handleInteractionComplete}
-                            sessionId={sessionId}
-                        />
+                        <div className="space-y-6">
+                            <LearnerProfileCard variant="review" sessionId={sessionId} />
+                            <GuidedChatInterface
+                                scores={scores}
+                                questionnaireType={selectedQuestionnaire.id}
+                                onComplete={handleInteractionComplete}
+                                sessionId={sessionId}
+                            />
+                        </div>
                     )}
 
                     {/* Step: Combined Profile Analysis */}

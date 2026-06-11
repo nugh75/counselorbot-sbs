@@ -4,9 +4,11 @@ import { UploadCloud, FileType } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
+import { QuestionnaireConfig } from '@/lib/questionnaires';
 
 interface PDFUploaderProps {
     onUploadComplete: (scores: Record<string, number>) => void;
+    questionnaire: QuestionnaireConfig;
 }
 
 function isScoreMap(value: unknown): value is Record<string, number> {
@@ -14,7 +16,7 @@ function isScoreMap(value: unknown): value is Record<string, number> {
         && Object.values(value).every((score) => typeof score === 'number' && score >= 1 && score <= 9);
 }
 
-export function PDFUploader({ onUploadComplete }: PDFUploaderProps) {
+export function PDFUploader({ onUploadComplete, questionnaire }: PDFUploaderProps) {
     const { t } = useI18n();
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -58,6 +60,7 @@ export function PDFUploader({ onUploadComplete }: PDFUploaderProps) {
         try {
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('questionnaire_type', questionnaire.id);
             
             // Adjust the URL if necessary based on your Next.js proxy or backend URL
             // Assuming Next.js rewrites /api -> Backend
@@ -78,7 +81,8 @@ export function PDFUploader({ onUploadComplete }: PDFUploaderProps) {
             
         } catch (error) {
             console.error("Upload error:", error);
-            alert(t('pdf.error'));
+            const errMsg = error instanceof Error ? error.message : String(error);
+            alert(`${t('pdf.error')}\n(${errMsg})`);
         } finally {
             setIsUploading(false);
         }
@@ -101,7 +105,9 @@ export function PDFUploader({ onUploadComplete }: PDFUploaderProps) {
                     <div className="flex flex-col items-center animate-pulse">
                         <UploadCloud className="w-12 h-12 text-indigo-500 mb-4 animate-bounce" />
                         <p className="text-lg font-medium text-slate-900">{t('pdf.analyzing.title')}</p>
-                        <p className="text-sm text-slate-500 mt-2">{t('pdf.analyzing.sub')}</p>
+                        <p className="text-sm text-slate-500 mt-2">
+                            {t('pdf.analyzing.sub')} ({questionnaire.factors.length})
+                        </p>
                     </div>
                 ) : (
                     <>
