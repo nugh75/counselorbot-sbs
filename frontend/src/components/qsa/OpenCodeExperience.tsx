@@ -14,6 +14,8 @@ import {
     Send,
     Square,
     Terminal,
+    ThumbsDown,
+    ThumbsUp,
     User,
 } from 'lucide-react';
 import { createTerminalSession, TerminalSession } from '@/lib/opencode-terminal';
@@ -33,6 +35,8 @@ interface OpenCodeExperienceProps {
 interface ChatMessage {
     role: 'user' | 'assistant';
     content: string;
+    responseId?: string;
+    feedback?: boolean;
 }
 
 type ViewMode = 'chat' | 'terminal';
@@ -162,6 +166,15 @@ export function OpenCodeExperience({
                 `/api/opencode/workspace/${encodeURIComponent(key)}/chat`,
             );
             updateLast(result.response);
+            if (result.response_id) {
+                setMessages(previous => {
+                    const next = [...previous];
+                    if (next.length > 0) {
+                        next[next.length - 1] = { ...next[next.length - 1], responseId: result.response_id };
+                    }
+                    return next;
+                });
+            }
         } catch (caught) {
             if (controller.signal.aborted) return;
             const detail = caught instanceof Error ? caught.message : t('opencode.connectionError');
@@ -295,6 +308,28 @@ export function OpenCodeExperience({
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    const submitFeedback = async (index: number, helpful: boolean) => {
+        const msg = messages[index];
+        if (!msg?.responseId || msg.feedback !== undefined) return;
+        setMessages(prev => prev.map((it, i) => (i === index ? { ...it, feedback: helpful } : it)));
+        try {
+            await fetch('/api/strategy-feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    response_id: msg.responseId,
+                    strategy_ids: [],
+                    questionnaire_type: questionnaire.id,
+                    phase: 'opencode',
+                    language: locale,
+                    helpful,
+                }),
+            });
+        } catch (e) {
+            console.error('OpenCode feedback non inviato', e);
+        }
+    };
 
     const switchView = () => {
         if (viewMode === 'chat') {
@@ -465,19 +500,48 @@ export function OpenCodeExperience({
                                             : 'bg-white border border-slate-200 text-slate-800 rounded-tl-md'
                                     }`}>
                                         {message.role === 'assistant' ? (
-                                            message.content ? (
-                                                <div className="prose prose-sm prose-slate max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2">
-                                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                                        {message.content}
-                                                    </ReactMarkdown>
-                                                </div>
-                                            ) : (
-                                                <div className="flex gap-1 py-1">
-                                                    <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" />
-                                                    <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:120ms]" />
-                                                    <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:240ms]" />
-                                                </div>
-                                            )
+                                            <>
+                                                {message.content ? (
+                                                    <div className="prose prose-sm prose-slate max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2">
+                                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                            {message.content}
+                                                        </ReactMarkdown>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex gap-1 py-1">
+                                                        <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" />
+                                                        <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:120ms]" />
+                                                        <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:240ms]" />
+                                                    </div>
+                                                )}
+                                                {message.responseId && (
+                                                    <div className="mt-2 flex items-center gap-1">
+                                                        <button
+                                                            onClick={() => submitFeedback(index, true)}
+                                                            disabled={message.feedback !== undefined}
+                                                            title={t('guided.feedback.helpful')}
+                                                            className={`p-1 rounded transition-colors disabled:cursor-default ${
+                                                                message.feedback === true ? 'text-green-600' : 'text-slate-400 hover:text-green-600'
+                                                            }`}
+                                                        >
+                                                            <ThumbsUp className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => submitFeedback(index, false)}
+                                                            disabled={message.feedback !== undefined}
+                                                            title={t('guided.feedback.notHelpful')}
+                                                            className={`p-1 rounded transition-colors disabled:cursor-default ${
+                                                                message.feedback === false ? 'text-red-600' : 'text-slate-400 hover:text-red-600'
+                                                            }`}
+                                                        >
+                                                            <ThumbsDown className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        {message.feedback !== undefined && (
+                                                            <span className="text-xs text-slate-400 ml-1">Grazie!</span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </>
                                         ) : message.content}
                                     </div>
                                     {message.role === 'user' && (

@@ -41,6 +41,7 @@ from ..chat_logic import (
     _retrieved_context,
 )
 from ..memory_service import session_memory
+from ..strategy_memory import shared_response_memory
 
 logger = logging.getLogger(__name__)
 
@@ -717,6 +718,10 @@ async def create_opencode_workspace(
             with open(appunti_path, "w", encoding="utf-8") as fh:
                 fh.write(f"# {copy['notes_title']}\n\n")
 
+        meta_path = os.path.join(ws_dir, ".opencode-meta")
+        with open(meta_path, "w", encoding="utf-8") as fh:
+            json.dump({"locale": locale, "questionnaire_type": request.questionnaire_type}, fh)
+
         agents = "\n".join([
             f"# {copy['instructions']}",
             "",
@@ -865,6 +870,18 @@ async def chat_opencode(
         text_part_count = 0
         completed = False
         timeout = httpx.Timeout(30, read=None)
+
+        # Read workspace meta for locale + questionnaire_type
+        meta = {}
+        try:
+            meta_path = os.path.join(OPENCODE_WS_ROOT, key, ".opencode-meta")
+            with open(meta_path, encoding="utf-8") as fh:
+                meta = json.load(fh)
+        except Exception:
+            pass
+        oc_locale = meta.get("locale", "it")
+        oc_qtype = meta.get("questionnaire_type", "OPENCODE")
+
         try:
             async with httpx.AsyncClient(
                 auth=_api_auth(config), timeout=timeout
@@ -930,9 +947,30 @@ async def chat_opencode(
                                     if (item.get("info") or {}).get("role") == "assistant":
                                         full_text = _message_text(item.get("parts") or [])
                                         break
+
+                            # Persist response as candidate for student feedback
+                            response_id = None
+                            try:
+                                def _save_candidate():
+                                    db = database.SessionLocal()
+                                    try:
+                                        rid = shared_response_memory.create_candidate(
+                                            db, full_text, oc_qtype, phase="opencode", language=oc_locale,
+                                        )
+                                        db.commit()
+                                        return rid
+                                    except Exception:
+                                        db.rollback()
+                                        return None
+                                    finally:
+                                        db.close()
+                                response_id = await asyncio.to_thread(_save_candidate)
+                            except Exception:
+                                pass
+
                             yield (
                                 "data: "
-                                + json.dumps({"done": True, "response": full_text})
+                                + json.dumps({"done": True, "response": full_text, "session_id": request.session_id, "response_id": response_id})
                                 + "\n\n"
                             )
                             return
