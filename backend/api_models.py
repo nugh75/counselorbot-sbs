@@ -68,3 +68,11 @@ class PqblQuestionUpdate(schemas.BaseModel):
     question_text: Optional[str] = None
     skill: Optional[str] = None
     options: Optional[list] = None  # [{key, text, correct, feedback}]
+
+
+class OpencodeWorkspaceRequest(schemas.BaseModel):
+    workspace_id: str
+    questionnaire_type: str
+    scores: dict
+    pdf_token: Optional[str] = None
+    locale: Optional[str] = "it"

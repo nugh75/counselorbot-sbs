@@ -25,6 +25,7 @@ MAX_FACTS = 20
 MAX_GOALS = 10
 MAX_PREFERENCES = 10
 MAX_EPISODES = 16
+MAX_EXTERNAL_NOTES_CHARS = 1200
 
 
 def _default_memory_dir() -> Path:
@@ -84,6 +85,8 @@ class SessionMemory:
             parts.extend(["", "## Obiettivi dichiarati", self._render_list(data["goals"][-3:])])
         if data["preferences"]:
             parts.extend(["", "## Preferenze dichiarate", self._render_list(data["preferences"][-3:])])
+        if data["external_notes"]:
+            parts.extend(["", "## Note condivise da OpenCode", str(data["external_notes"])])
         if episodes:
             parts.extend(["", "## Ricordi pertinenti dell'utente", self._render_list(episodes)])
         if data["last_suggestion"] and (not query or episodes):
@@ -105,6 +108,14 @@ class SessionMemory:
             path = self._path(session_id)
             if path.exists():
                 path.unlink()
+
+    def sync_external_notes(self, session_id: str, notes: str) -> None:
+        """Sincronizza le note persistenti prodotte da un'esperienza esterna."""
+        cleaned = self._clean_multiline_text(notes)[:MAX_EXTERNAL_NOTES_CHARS]
+        with self._lock:
+            data = self._parse(self._read(session_id))
+            data["external_notes"] = cleaned
+            self._write(session_id, self._render(data))
 
     def get_progress(self, session_id: str) -> Dict[str, object]:
         """Restituisce lo stato necessario a ripristinare la UI guidata."""
@@ -236,6 +247,7 @@ class SessionMemory:
             "facts": [],
             "goals": [],
             "preferences": [],
+            "external_notes": "",
             "episodes": [],
             "last_topic": "",
             "last_suggestion": "",
@@ -258,6 +270,7 @@ class SessionMemory:
         data["facts"] = self._list_section(text, "Fatti rilevanti detti dall'utente")
         data["goals"] = self._list_section(text, "Obiettivi")
         data["preferences"] = self._list_section(text, "Preferenze")
+        data["external_notes"] = self._section(text, "Note condivise da OpenCode").strip()
         data["episodes"] = self._list_section(text, "Episodi utente")
         data["last_topic"] = self._section(text, "Ultimo tema discusso").strip()
         data["last_suggestion"] = self._section(text, "Ultimo suggerimento dato").strip()
@@ -278,6 +291,9 @@ class SessionMemory:
                 trimmed[key].pop(0)
             elif trimmed.get("scores"):
                 trimmed["scores"] = ""
+            elif trimmed.get("external_notes"):
+                current = str(trimmed["external_notes"])
+                trimmed["external_notes"] = current[:600] if len(current) > 600 else ""
             else:
                 return self._cut_at_line(rendered, MAX_MEMORY_CHARS)
             rendered = self._render_full(trimmed)
@@ -311,6 +327,9 @@ class SessionMemory:
             "",
             "## Preferenze",
             self._render_list(data["preferences"]),
+            "",
+            "## Note condivise da OpenCode",
+            str(data["external_notes"] or "-").strip(),
             "",
             "## Episodi utente",
             self._render_list(data["episodes"]),
@@ -505,6 +524,15 @@ class SessionMemory:
         text = text.replace("’", "'")  # apostrofo tipografico → ASCII (le regex usano ')
         text = re.sub(r"[#*_`>\[\]]", "", text)
         return re.sub(r"\s+", " ", text).strip()
+
+    def _clean_multiline_text(self, text: str) -> str:
+        lines = []
+        for line in (text or "").splitlines():
+            cleaned = re.sub(r"\[\[AVANZA_STEP\]\]", "", line)
+            cleaned = re.sub(r"[`>\[\]]", "", cleaned).strip()
+            if cleaned:
+                lines.append(cleaned)
+        return "\n".join(lines)
 
 
 session_memory = SessionMemory()

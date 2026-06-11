@@ -139,6 +139,11 @@ import backend.routes.pqbl as pqbl_routes
 pqbl_routes.AIService = _FakeAIService
 pqbl_routes.database.SessionLocal = _TestSession
 
+# OpenCode: sessione isolata.
+import backend.routes.opencode as opencode_routes
+opencode_routes.database.SessionLocal = _TestSession
+opencode_routes.AIService = _FakeAIService
+
 client = TestClient(main.app)
 
 
@@ -222,6 +227,10 @@ EXPECTED_ROUTES = {
     ("POST", "/pqbl/sessions/{session_id}/answer"),
     ("POST", "/pqbl/sessions/{session_id}/final-test"),
     ("GET", "/pqbl/sessions/{session_id}/summary"),
+    # OpenCode sandbox
+    ("POST", "/opencode/workspace"),
+    ("POST", "/opencode/workspace/{key}/sync-memory"),
+    ("GET", "/opencode/pdf/{token}"),
     # pQBL admin (gestione documenti/domande + analitiche)
     ("GET", "/admin/pqbl/documents"),
     ("GET", "/admin/pqbl/documents/{document_id}/questions"),
@@ -247,6 +256,87 @@ def test_all_routes_registered():
     found = _registered_routes()
     missing = EXPECTED_ROUTES - found
     assert not missing, f"Route mancanti dopo lo split: {sorted(missing)}"
+
+
+def test_opencode_workspace_uses_requested_language():
+    import shutil
+    import tempfile
+
+    original_root = opencode_routes.OPENCODE_WS_ROOT
+    workspace_root = tempfile.mkdtemp(prefix="opencode-test-")
+    main.app.dependency_overrides[auth.get_current_user] = _fake_user_identity
+    opencode_routes.OPENCODE_WS_ROOT = workspace_root
+    session_memory.record_interaction(
+        "language-test-session",
+        user_message="I want to improve my study planning.",
+        questionnaire_type="QSA",
+        language="en",
+    )
+    try:
+        r = client.post("/opencode/workspace", json={
+            "workspace_id": "language-test-session",
+            "questionnaire_type": "QSA",
+            "scores": {"C1": 7},
+            "locale": "en",
+        })
+        assert r.status_code == 200, r.text
+
+        workspace = os.path.join(workspace_root, r.json()["key"])
+        with open(os.path.join(workspace, ".opencode-prompt"), encoding="utf-8") as fh:
+            prompt = fh.read()
+        with open(os.path.join(workspace, "AGENTS.md"), encoding="utf-8") as fh:
+            agents = fh.read()
+        with open(os.path.join(workspace, "documento.md"), encoding="utf-8") as fh:
+            document = fh.read()
+        with open(os.path.join(workspace, "guida-questionario.md"), encoding="utf-8") as fh:
+            guide = fh.read()
+        with open(os.path.join(workspace, "memoria.md"), encoding="utf-8") as fh:
+            memory = fh.read()
+
+        assert prompt.startswith("You are an educational counselor.")
+        assert "Always answer in English." in prompt
+        assert "read guida-questionario.md and memoria.md" in prompt
+        assert "# Instructions" in agents
+        assert "# Profile" in document
+        assert "Profile scores" in document
+        assert "System prompt key: `prompt_factor`" in guide
+        assert "Analyse ONLY the COGNITIVE factors" in guide
+        assert "I want to improve my study planning" in memory
+
+        with open(os.path.join(workspace, "appunti.md"), "w", encoding="utf-8") as fh:
+            fh.write("# Notes\n\n- The student prefers concrete weekly plans.\n")
+        sync = client.post(f"/opencode/workspace/{r.json()['key']}/sync-memory")
+        assert sync.status_code == 200, sync.text
+        shared_memory = session_memory.get_relevant_context("language-test-session")
+        assert "prefers concrete weekly plans" in shared_memory
+    finally:
+        session_memory.clear("language-test-session")
+        opencode_routes.OPENCODE_WS_ROOT = original_root
+        main.app.dependency_overrides.pop(auth.get_current_user, None)
+        shutil.rmtree(workspace_root)
+
+
+def test_opencode_pdf_is_served_inline():
+    import shutil
+    import tempfile
+
+    original_storage = opencode_routes.QSA_PDF_STORAGE_DIR
+    storage_dir = tempfile.mkdtemp(prefix="opencode-pdf-test-")
+    token = "a" * 32
+    with open(os.path.join(storage_dir, f"{token}.pdf"), "wb") as fh:
+        fh.write(b"%PDF-1.4\n%%EOF\n")
+
+    main.app.dependency_overrides[auth.get_current_user] = _fake_user_identity
+    opencode_routes.QSA_PDF_STORAGE_DIR = storage_dir
+    try:
+        r = client.get(f"/opencode/pdf/{token}")
+        assert r.status_code == 200, r.text
+        assert r.headers["content-type"] == "application/pdf"
+        assert r.headers["content-disposition"] == 'inline; filename="profilo.pdf"'
+    finally:
+        opencode_routes.QSA_PDF_STORAGE_DIR = original_storage
+        main.app.dependency_overrides.pop(auth.get_current_user, None)
+        shutil.rmtree(storage_dir)
 
 
 # --------------------------------------------------------------------------
@@ -1177,4 +1267,3 @@ def _main():
 if __name__ == "__main__":
     import sys
     sys.exit(_main())
-
