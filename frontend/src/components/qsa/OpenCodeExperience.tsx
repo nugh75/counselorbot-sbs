@@ -1,9 +1,24 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import {
+    AlertCircle,
+    BarChart3,
+    Bot,
+    Eye,
+    FileText,
+    Monitor,
+    RefreshCw,
+    Send,
+    Square,
+    Terminal,
+    User,
+} from 'lucide-react';
 import { createTerminalSession, TerminalSession } from '@/lib/opencode-terminal';
+import { streamChat } from '@/lib/chat-stream';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
-import { RefreshCw, Terminal, Eye, FileText, AlertCircle, BarChart3 } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import '@xterm/xterm/css/xterm.css';
 
@@ -15,6 +30,13 @@ interface OpenCodeExperienceProps {
     locale: string;
 }
 
+interface ChatMessage {
+    role: 'user' | 'assistant';
+    content: string;
+}
+
+type ViewMode = 'chat' | 'terminal';
+
 export function OpenCodeExperience({
     scores,
     questionnaire,
@@ -23,63 +45,148 @@ export function OpenCodeExperience({
     locale,
 }: OpenCodeExperienceProps) {
     const { t, tf } = useI18n();
-    const ocRef = useRef<TerminalSession | null>(null);
+    const terminalRef = useRef<TerminalSession | null>(null);
     const mountRef = useRef<HTMLDivElement | null>(null);
     const workspaceKeyRef = useRef('');
+    const sessionIdRef = useRef('');
+    const streamingRef = useRef(false);
+    const requestRef = useRef<AbortController | null>(null);
+    const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-    const [ocActive, setOcActive] = useState(false);
-    const [ocStatus, setOcStatus] = useState('');
-    const [ocBusy, setOcBusy] = useState(false);
-    const [ocError, setOcError] = useState('');
+    const [viewMode, setViewMode] = useState<ViewMode>('chat');
+    const [workspaceKey, setWorkspaceKey] = useState('');
+    const [openCodeSessionId, setOpenCodeSessionId] = useState('');
+    const [graphicalAvailable, setGraphicalAvailable] = useState(false);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [input, setInput] = useState('');
+    const [status, setStatus] = useState('');
+    const [busy, setBusy] = useState(false);
+    const [streaming, setStreaming] = useState(false);
+    const [error, setError] = useState('');
     const [showPdf, setShowPdf] = useState(!!pdfToken);
-    const invertedSet = useMemo(() => new Set(questionnaire.invertedFactors || []), [questionnaire]);
+
+    const invertedSet = useMemo(
+        () => new Set(questionnaire.invertedFactors || []),
+        [questionnaire],
+    );
     const factorNameMap = useMemo(() => {
         const map: Record<string, string> = {};
-        for (const f of questionnaire.factors) {
-            map[f.code] = tf(`factor.${f.code}.name`, f.name);
+        for (const factor of questionnaire.factors) {
+            map[factor.code] = tf(`factor.${factor.code}.name`, factor.name);
         }
         return map;
     }, [questionnaire, tf]);
-
-    const scoreGroups = useMemo(() => {
-        return questionnaire.factorPrefix
-            .filter(prefix => Object.keys(scores).some(k => k.startsWith(prefix)))
+    const scoreGroups = useMemo(
+        () => questionnaire.factorPrefix
+            .filter(prefix => Object.keys(scores).some(key => key.startsWith(prefix)))
             .map(prefix => ({
                 prefix,
                 entries: Object.entries(scores)
-                    .filter(([k]) => k.startsWith(prefix))
+                    .filter(([key]) => key.startsWith(prefix))
                     .sort(([a], [b]) => a.localeCompare(b)),
-            }));
-    }, [scores, questionnaire]);
+            })),
+        [scores, questionnaire],
+    );
 
-    function getBarColor(code: string, score: number): string {
-        const isInverted = invertedSet.has(code);
-        if (score <= 3) return isInverted ? 'bg-green-500' : 'bg-red-500';
+    const getBarColor = (code: string, score: number) => {
+        const inverted = invertedSet.has(code);
+        if (score <= 3) return inverted ? 'bg-green-500' : 'bg-red-500';
         if (score <= 6) return 'bg-yellow-500';
-        return isInverted ? 'bg-red-500' : 'bg-green-500';
-    }
-
-    const PREFIX_COLORS: Record<string, string> = {
-        C: 'text-blue-600', A: 'text-purple-600', T: 'text-amber-600',
-        S: 'text-purple-600', K: 'text-indigo-600', AD: 'text-green-600',
+        return inverted ? 'bg-red-500' : 'bg-green-500';
+    };
+    const prefixColors: Record<string, string> = {
+        C: 'text-blue-600',
+        A: 'text-purple-600',
+        T: 'text-amber-600',
+        S: 'text-purple-600',
+        K: 'text-indigo-600',
+        AD: 'text-green-600',
     };
 
-    const statusLabel = ocStatus ? t(`opencode.status.${ocStatus}`) : '';
+    const connectTerminal = useCallback((key: string) => {
+        terminalRef.current?.destroy();
+        const terminal = createTerminalSession();
+        terminalRef.current = terminal;
+        terminal.connect({ key, onStatus: setStatus });
+        setViewMode('terminal');
+    }, []);
+
+    const sendGraphicalMessage = useCallback(async (
+        message: string,
+        seed = false,
+        key = workspaceKeyRef.current,
+        targetSessionId = sessionIdRef.current,
+        initialMessages?: ChatMessage[],
+    ) => {
+        if (!key || !targetSessionId || streamingRef.current) return;
+        const userMessage = message.trim();
+        if (!seed && !userMessage) return;
+
+        const base = initialMessages;
+        const pending: ChatMessage[] = [
+            ...(base || []),
+            ...(!seed ? [{ role: 'user' as const, content: userMessage }] : []),
+            { role: 'assistant', content: '' },
+        ];
+        if (base) {
+            setMessages(pending);
+        } else {
+            setMessages(previous => [
+                ...previous,
+                ...(!seed ? [{ role: 'user' as const, content: userMessage }] : []),
+                { role: 'assistant', content: '' },
+            ]);
+        }
+        setInput('');
+        streamingRef.current = true;
+        setStreaming(true);
+        setError('');
+
+        requestRef.current?.abort();
+        const controller = new AbortController();
+        requestRef.current = controller;
+        const updateLast = (content: string) => {
+            setMessages(previous => {
+                const next = [...previous];
+                next[next.length - 1] = { role: 'assistant', content };
+                return next;
+            });
+        };
+
+        try {
+            const result = await streamChat(
+                { session_id: targetSessionId, message: userMessage, seed },
+                updateLast,
+                controller.signal,
+                undefined,
+                `/api/opencode/workspace/${encodeURIComponent(key)}/chat`,
+            );
+            updateLast(result.response);
+        } catch (caught) {
+            if (controller.signal.aborted) return;
+            const detail = caught instanceof Error ? caught.message : t('opencode.connectionError');
+            updateLast(detail);
+            setError(detail);
+        } finally {
+            if (requestRef.current === controller) requestRef.current = null;
+            streamingRef.current = false;
+            setStreaming(false);
+        }
+    }, [t]);
 
     const startOpenCode = useCallback(async () => {
-        setOcBusy(true);
-        setOcError('');
+        setBusy(true);
+        setError('');
         try {
-            // Prepara il workspace OpenCode isolato sul backend
             const response = await fetch('/api/opencode/workspace', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     workspace_id: sessionId,
                     questionnaire_type: questionnaire.id,
-                    scores: scores,
+                    scores,
                     pdf_token: pdfToken || null,
-                    locale: locale,
+                    locale,
                 }),
             });
             const data = await response.json();
@@ -87,26 +194,75 @@ export function OpenCodeExperience({
                 throw new Error(data.detail || t('opencode.httpError', { status: response.status }));
             }
             workspaceKeyRef.current = data.key;
+            setWorkspaceKey(data.key);
+            if (!data.api_available) {
+                setGraphicalAvailable(false);
+                setError(data.api_error || t('opencode.graphicalUnavailable'));
+                connectTerminal(data.key);
+                return;
+            }
 
-            // Distrugge sessioni xterm precedenti se attive
-            ocRef.current?.destroy();
-
-            // Crea una nuova sessione e la connette via WebSocket
-            const session = createTerminalSession();
-            ocRef.current = session;
-            session.connect({
-                key: data.key,
-                onStatus: setOcStatus,
-            });
-
-            setOcActive(true);
-        } catch (err: unknown) {
-            console.error("Failed to start OpenCode:", err);
-            setOcError(err instanceof Error ? err.message : t('opencode.connectionError'));
+            setGraphicalAvailable(true);
+            terminalRef.current?.destroy();
+            terminalRef.current = null;
+            const history = Array.isArray(data.history) ? data.history : [];
+            setViewMode('chat');
+            setStatus('connected');
+            sessionIdRef.current = data.session_id;
+            setOpenCodeSessionId(data.session_id);
+            setMessages(history);
+            if (data.needs_seed) {
+                await sendGraphicalMessage('', true, data.key, data.session_id, history);
+            }
+        } catch (caught) {
+            setError(caught instanceof Error ? caught.message : t('opencode.connectionError'));
         } finally {
-            setOcBusy(false);
+            setBusy(false);
         }
-    }, [locale, pdfToken, questionnaire.id, scores, sessionId, t]);
+    }, [
+        connectTerminal,
+        locale,
+        pdfToken,
+        questionnaire.id,
+        scores,
+        sendGraphicalMessage,
+        sessionId,
+        t,
+    ]);
+
+    const resetChat = useCallback(async () => {
+        if (!workspaceKey || busy || streaming) return;
+        setBusy(true);
+        setError('');
+        try {
+            const response = await fetch(
+                `/api/opencode/workspace/${encodeURIComponent(workspaceKey)}/reset`,
+                { method: 'POST' },
+            );
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.detail || t('opencode.connectionError'));
+            sessionIdRef.current = data.session_id;
+            setOpenCodeSessionId(data.session_id);
+            setMessages([]);
+            await sendGraphicalMessage('', true, workspaceKey, data.session_id, []);
+        } catch (caught) {
+            setError(caught instanceof Error ? caught.message : t('opencode.connectionError'));
+        } finally {
+            setBusy(false);
+        }
+    }, [busy, sendGraphicalMessage, streaming, t, workspaceKey]);
+
+    const stopGeneration = useCallback(() => {
+        requestRef.current?.abort();
+        requestRef.current = null;
+        streamingRef.current = false;
+        setStreaming(false);
+        if (workspaceKey) {
+            void fetch(`/api/opencode/workspace/${encodeURIComponent(workspaceKey)}/abort`, {
+                method: 'POST',
+            });
+        }
+    }, [workspaceKey]);
 
     const syncMemory = useCallback((keepalive = false) => {
         const key = workspaceKeyRef.current;
@@ -114,36 +270,57 @@ export function OpenCodeExperience({
         void fetch(`/api/opencode/workspace/${encodeURIComponent(key)}/sync-memory`, {
             method: 'POST',
             keepalive,
-        }).catch(() => {
-            // La prossima sincronizzazione periodica ritenterà automaticamente.
-        });
+        }).catch(() => {});
     }, []);
 
-    // Gestione attach/detach del terminale al DOM
-    useEffect(() => {
-        if (ocActive && mountRef.current && ocRef.current) {
-            ocRef.current.attach(mountRef.current);
-        }
-        return () => {
-            ocRef.current?.detach();
-        };
-    }, [ocActive]);
-
-    // Avvio automatico al montaggio del componente
     useEffect(() => {
         startOpenCode();
-        const memorySyncTimer = window.setInterval(() => syncMemory(), 5000);
+        const timer = window.setInterval(() => syncMemory(), 5000);
         return () => {
-            window.clearInterval(memorySyncTimer);
+            window.clearInterval(timer);
             syncMemory(true);
-            ocRef.current?.destroy();
-            ocRef.current = null;
+            requestRef.current?.abort();
+            terminalRef.current?.destroy();
+            terminalRef.current = null;
         };
     }, [startOpenCode, syncMemory]);
 
+    useEffect(() => {
+        if (viewMode === 'terminal' && mountRef.current && terminalRef.current) {
+            terminalRef.current.attach(mountRef.current);
+        }
+        return () => terminalRef.current?.detach();
+    }, [viewMode]);
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    const switchView = () => {
+        if (viewMode === 'chat') {
+            if (workspaceKey) connectTerminal(workspaceKey);
+        } else {
+            if (!graphicalAvailable) return;
+            terminalRef.current?.destroy();
+            terminalRef.current = null;
+            setViewMode('chat');
+            setStatus('connected');
+        }
+    };
+
+    const submit = (event: FormEvent) => {
+        event.preventDefault();
+        void sendGraphicalMessage(input);
+    };
+    const onInputKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            void sendGraphicalMessage(input);
+        }
+    };
+
     return (
         <div className="w-full flex flex-col xl:flex-row gap-6 h-[80vh] min-h-[600px]">
-            {/* Pannello di Sinistra: PDF o Punteggi compatti */}
             <div className="flex-1 flex flex-col bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm h-full">
                 <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
                     <span className="font-semibold text-slate-800 flex items-center gap-2">
@@ -152,11 +329,9 @@ export function OpenCodeExperience({
                     </span>
                     {pdfToken && (
                         <button
-                            onClick={() => setShowPdf(p => !p)}
+                            onClick={() => setShowPdf(current => !current)}
                             className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-                                showPdf
-                                    ? 'bg-indigo-100 text-indigo-700'
-                                    : 'text-slate-600 hover:text-slate-900'
+                                showPdf ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:text-slate-900'
                             }`}
                         >
                             {showPdf ? <Eye className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />}
@@ -164,7 +339,6 @@ export function OpenCodeExperience({
                         </button>
                     )}
                 </div>
-
                 <div className="flex-1 overflow-y-auto min-h-0 bg-slate-50/50 p-3 space-y-4">
                     {showPdf && pdfToken ? (
                         <iframe
@@ -172,88 +346,189 @@ export function OpenCodeExperience({
                             className="w-full h-full border border-slate-200 rounded-lg bg-white shadow-inner min-h-[450px]"
                             title={t('opencode.pdfTitle')}
                         />
-                    ) : (
-                        scoreGroups.length > 0 ? scoreGroups.map((group) => (
-                            <div key={group.prefix} className="bg-white rounded-lg border border-slate-200 shadow-sm p-3">
-                                <div className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${PREFIX_COLORS[group.prefix] || 'text-slate-600'}`}>
-                                    {t(`profile.section.${group.prefix}`)}
-                                </div>
-                                <div className="space-y-2">
-                                    {group.entries.map(([code, score]) => (
-                                        <div key={code} className="space-y-0.5">
-                                            <div className="flex items-center justify-between text-xs">
-                                                <span className="font-semibold text-slate-700">{code}</span>
-                                                <span className="text-slate-500 ml-1 truncate">{factorNameMap[code] || code}</span>
-                                                <span className="font-bold text-slate-700 ml-auto tabular-nums">{score}/9</span>
-                                            </div>
-                                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                                <div
-                                                    className={`h-full rounded-full transition-all ${getBarColor(code, score)}`}
-                                                    style={{ width: `${(score / 9) * 100}%` }}
-                                                />
-                                            </div>
+                    ) : scoreGroups.length > 0 ? scoreGroups.map(group => (
+                        <div key={group.prefix} className="bg-white rounded-lg border border-slate-200 shadow-sm p-3">
+                            <div className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${prefixColors[group.prefix] || 'text-slate-600'}`}>
+                                {t(`profile.section.${group.prefix}`)}
+                            </div>
+                            <div className="space-y-2">
+                                {group.entries.map(([code, score]) => (
+                                    <div key={code} className="space-y-0.5">
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="font-semibold text-slate-700">{code}</span>
+                                            <span className="text-slate-500 ml-1 truncate">{factorNameMap[code] || code}</span>
+                                            <span className="font-bold text-slate-700 ml-auto tabular-nums">{score}/9</span>
                                         </div>
-                                    ))}
-                                </div>
+                                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full rounded-full transition-all ${getBarColor(code, score)}`}
+                                                style={{ width: `${(score / 9) * 100}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                        )) : (
-                            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 text-center text-sm text-slate-400">
-                                {t('opencode.noScores')}
-                            </div>
-                        )
+                        </div>
+                    )) : (
+                        <div className="bg-white rounded-lg border border-slate-200 p-6 text-center text-sm text-slate-400">
+                            {t('opencode.noScores')}
+                        </div>
                     )}
                 </div>
             </div>
 
-            {/* Pannello di Destra: OpenCode Terminal */}
-            <div className="flex-1 flex flex-col bg-[#0b0f17] rounded-xl border border-slate-800 overflow-hidden shadow-md h-full">
-                <div className="px-4 py-3 bg-[#131924] border-b border-slate-800 flex items-center justify-between">
+            <div className={`flex-1 flex flex-col rounded-xl border overflow-hidden shadow-md h-full ${
+                viewMode === 'chat' ? 'bg-slate-50 border-slate-200' : 'bg-[#0b0f17] border-slate-800'
+            }`}>
+                <div className={`px-4 py-3 border-b flex items-center justify-between ${
+                    viewMode === 'chat' ? 'bg-white border-slate-200' : 'bg-[#131924] border-slate-800'
+                }`}>
                     <div className="flex items-center gap-2">
-                        <Terminal className="w-4 h-4 text-sky-400" />
-                        <span className="font-semibold text-slate-200 text-sm">{t('opencode.chatTitle')}</span>
-                        {ocStatus && (
+                        {viewMode === 'chat'
+                            ? <Bot className="w-4 h-4 text-indigo-600" />
+                            : <Terminal className="w-4 h-4 text-sky-400" />}
+                        <span className={`font-semibold text-sm ${viewMode === 'chat' ? 'text-slate-800' : 'text-slate-200'}`}>
+                            {t('opencode.chatTitle')}
+                        </span>
+                        {status && (
                             <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase ${
-                                ocStatus === 'connected'
-                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                    : ocStatus === 'connecting'
-                                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse'
-                                    : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                status === 'connected'
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : 'bg-amber-100 text-amber-700'
                             }`}>
-                                {statusLabel}
+                                {t(`opencode.status.${status}`)}
                             </span>
                         )}
                     </div>
-
-                    <button
-                        onClick={startOpenCode}
-                        disabled={ocBusy}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors disabled:opacity-50 flex items-center gap-1.5 text-xs"
-                        title={t('opencode.restartTitle')}
-                    >
-                        <RefreshCw className={`w-3.5 h-3.5 ${ocBusy ? 'animate-spin' : ''}`} />
-                        {ocBusy ? t('opencode.restarting') : t('opencode.restart')}
-                    </button>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={switchView}
+                            disabled={!workspaceKey || (viewMode === 'terminal' && !graphicalAvailable)}
+                            className={`p-1.5 rounded-lg transition-colors disabled:opacity-40 flex items-center gap-1.5 text-xs ${
+                                viewMode === 'chat'
+                                    ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                            }`}
+                            title={viewMode === 'chat' ? t('opencode.useTerminal') : t('opencode.useGraphical')}
+                        >
+                            {viewMode === 'chat' ? <Terminal className="w-3.5 h-3.5" /> : <Monitor className="w-3.5 h-3.5" />}
+                            {viewMode === 'chat' ? t('opencode.terminal') : t('opencode.graphical')}
+                        </button>
+                        <button
+                            onClick={viewMode === 'chat' ? resetChat : startOpenCode}
+                            disabled={busy || streaming}
+                            className={`p-1.5 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5 text-xs ${
+                                viewMode === 'chat'
+                                    ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                            }`}
+                            title={t('opencode.restartTitle')}
+                        >
+                            <RefreshCw className={`w-3.5 h-3.5 ${busy ? 'animate-spin' : ''}`} />
+                            {busy ? t('opencode.restarting') : t('opencode.restart')}
+                        </button>
+                    </div>
                 </div>
 
-                <div className="flex-1 p-2 min-h-0 relative flex flex-col">
-                    {ocError ? (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-slate-300">
-                            <AlertCircle className="w-12 h-12 text-rose-500 mb-3" />
-                            <p className="font-medium text-slate-200 mb-2">{ocError}</p>
-                            <button
-                                onClick={startOpenCode}
-                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition-colors"
-                            >
-                                {t('opencode.retry')}
-                            </button>
+                {viewMode === 'terminal' ? (
+                    <div className="flex-1 p-2 min-h-0 relative flex flex-col">
+                        <div ref={mountRef} className="flex-1 min-h-0 rounded-lg overflow-hidden bg-[#0b0f17] p-2" />
+                    </div>
+                ) : (
+                    <>
+                        <div className="flex-1 overflow-y-auto min-h-0 p-4 space-y-5">
+                            {busy && messages.length === 0 && (
+                                <div className="h-full flex items-center justify-center text-sm text-slate-500">
+                                    <RefreshCw className="w-4 h-4 mr-2 animate-spin text-indigo-600" />
+                                    {t('opencode.connecting')}
+                                </div>
+                            )}
+                            {error && messages.length === 0 && (
+                                <div className="h-full flex flex-col items-center justify-center text-center p-6">
+                                    <AlertCircle className="w-10 h-10 text-rose-500 mb-3" />
+                                    <p className="text-sm text-slate-700">{error}</p>
+                                    <button onClick={startOpenCode} className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm">
+                                        {t('opencode.retry')}
+                                    </button>
+                                </div>
+                            )}
+                            {messages.map((message, index) => (
+                                <div key={index} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                    {message.role === 'assistant' && (
+                                        <div className="w-8 h-8 shrink-0 rounded-full bg-indigo-100 flex items-center justify-center">
+                                            <Bot className="w-4 h-4 text-indigo-700" />
+                                        </div>
+                                    )}
+                                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm ${
+                                        message.role === 'user'
+                                            ? 'bg-indigo-600 text-white rounded-tr-md'
+                                            : 'bg-white border border-slate-200 text-slate-800 rounded-tl-md'
+                                    }`}>
+                                        {message.role === 'assistant' ? (
+                                            message.content ? (
+                                                <div className="prose prose-sm prose-slate max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2">
+                                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                        {message.content}
+                                                    </ReactMarkdown>
+                                                </div>
+                                            ) : (
+                                                <div className="flex gap-1 py-1">
+                                                    <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" />
+                                                    <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:120ms]" />
+                                                    <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:240ms]" />
+                                                </div>
+                                            )
+                                        ) : message.content}
+                                    </div>
+                                    {message.role === 'user' && (
+                                        <div className="w-8 h-8 shrink-0 rounded-full bg-slate-200 flex items-center justify-center">
+                                            <User className="w-4 h-4 text-slate-600" />
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                            <div ref={messagesEndRef} />
                         </div>
-                    ) : (
-                        <div
-                            ref={mountRef}
-                            className="flex-1 min-h-0 rounded-lg overflow-hidden bg-[#0b0f17] p-2"
-                        />
-                    )}
-                </div>
+                        <form onSubmit={submit} className="p-4 bg-white border-t border-slate-200">
+                            {error && messages.length > 0 && (
+                                <p className="text-xs text-rose-600 mb-2">{error}</p>
+                            )}
+                            <div className="flex items-end gap-2 rounded-xl border border-slate-300 bg-slate-50 p-2 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent">
+                                <textarea
+                                    value={input}
+                                    onChange={event => setInput(event.target.value)}
+                                    onKeyDown={onInputKeyDown}
+                                    disabled={busy || streaming || !openCodeSessionId}
+                                    rows={1}
+                                    placeholder={t('opencode.placeholder')}
+                                    className="flex-1 max-h-32 resize-none bg-transparent px-2 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 disabled:opacity-60"
+                                />
+                                {streaming ? (
+                                    <button
+                                        type="button"
+                                        onClick={stopGeneration}
+                                        className="p-2.5 rounded-lg bg-slate-800 text-white hover:bg-slate-900"
+                                        title={t('opencode.stop')}
+                                    >
+                                        <Square className="w-4 h-4 fill-current" />
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="submit"
+                                        disabled={!input.trim() || busy || !openCodeSessionId}
+                                        className="p-2.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40"
+                                        title={t('opencode.send')}
+                                    >
+                                        <Send className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
+                            <p className="mt-2 text-[11px] text-slate-400 text-center">
+                                {t('opencode.inputHint')}
+                            </p>
+                        </form>
+                    </>
+                )}
             </div>
         </div>
     );

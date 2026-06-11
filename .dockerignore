@@ -1,0 +1,7 @@
+.git
+.venv
+session_memory
+frontend
+uploads
+*.db
+*.pdf
