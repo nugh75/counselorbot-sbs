@@ -27,6 +27,8 @@ interface SurveyResponse {
     q_riflettere?: number;
     q_coinvolgente?: number;
     q_consiglierei?: number;
+    strumenti_utilizzati?: string[] | string;
+    feedback_aperto?: string;
 }
 
 export function SurveyViewer() {
@@ -83,6 +85,23 @@ export function SurveyViewer() {
                 }`}>
                 {value}
             </span>
+        );
+    };
+
+    const renderTools = (value?: string[] | string) => {
+        const tools = Array.isArray(value) ? value : value ? [value] : [];
+        if (tools.length === 0) return <span className="text-gray-300">-</span>;
+        return (
+            <div className="flex flex-wrap gap-2">
+                {tools.map((tool) => (
+                    <span
+                        key={tool}
+                        className="inline-flex px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium"
+                    >
+                        {t(`survey.tool.${tool}`)}
+                    </span>
+                ))}
+            </div>
         );
     };
 
@@ -267,6 +286,7 @@ export function SurveyViewer() {
                                 <th className="px-4 py-3 font-medium">{t('admin.surveys.col.date')}</th>
                                 <th className="px-4 py-3 font-medium">{t('admin.surveys.col.user')}</th>
                                 <th className="px-4 py-3 font-medium">{t('admin.surveys.col.avgRating')}</th>
+                                <th className="px-4 py-3 font-medium">{t('admin.surveys.det.openFeedback')}</th>
                                 <th className="px-4 py-3 font-medium text-right">{t('admin.surveys.col.actions')}</th>
                             </tr>
                         </thead>
@@ -298,6 +318,15 @@ export function SurveyViewer() {
                                                     {t('admin.surveys.rating')}: {avgRating}/5
                                                 </span>
                                             </td>
+                                            <td className="px-4 py-3 text-slate-600 text-xs max-w-md">
+                                                {survey.feedback_aperto ? (
+                                                    <span className="block whitespace-pre-wrap break-words text-slate-700">
+                                                        {survey.feedback_aperto}
+                                                    </span>
+                                                ) : (
+                                                    <span className="italic text-slate-400">{t('admin.surveys.det.noOpenFeedback')}</span>
+                                                )}
+                                            </td>
                                             <td className="px-4 py-3 text-right">
                                                 <button
                                                     onClick={(e) => handleDelete(survey.id, e)}
@@ -309,7 +338,7 @@ export function SurveyViewer() {
                                         </tr>
                                         {expandedSurvey === survey.id && (
                                             <tr className="bg-slate-50/50">
-                                                <td colSpan={4} className="px-4 py-4">
+                                                <td colSpan={5} className="px-4 py-4">
                                                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-xs">
                                                         <div><span className="text-slate-400 block mb-1">{t('admin.surveys.m.utile')}</span>{renderRating(survey.q_utile)}</div>
                                                         <div><span className="text-slate-400 block mb-1">{t('admin.surveys.m.pertinente')}</span>{renderRating(survey.q_pertinente)}</div>
@@ -338,6 +367,23 @@ export function SurveyViewer() {
                                                                 </div>
                                                             </div>
                                                         </div>
+
+                                                        <div className="col-span-2 md:col-span-5 mt-4 pt-4 border-t border-slate-200">
+                                                            <div className="grid md:grid-cols-2 gap-4">
+                                                                <div>
+                                                                    <span className="text-slate-400 block mb-1">{t('admin.surveys.det.tools')}</span>
+                                                                    {renderTools(survey.strumenti_utilizzati)}
+                                                                </div>
+                                                                <div>
+                                                                    <span className="text-slate-400 block mb-1">{t('admin.surveys.det.openFeedback')}</span>
+                                                                    {survey.feedback_aperto ? (
+                                                                        <p className="font-medium text-slate-700 whitespace-pre-wrap">{survey.feedback_aperto}</p>
+                                                                    ) : (
+                                                                        <span className="italic text-slate-400">{t('admin.surveys.det.noOpenFeedback')}</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -348,14 +394,14 @@ export function SurveyViewer() {
 
                             {surveys.length === 0 && !loading && (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-8 text-center text-slate-400">
+                                    <td colSpan={5} className="px-6 py-8 text-center text-slate-400">
                                         {t('admin.surveys.empty')}
                                     </td>
                                 </tr>
                             )}
                             {loading && (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-8 text-center text-slate-400">
+                                    <td colSpan={5} className="px-6 py-8 text-center text-slate-400">
                                         <RefreshCw className="w-5 h-5 animate-spin mx-auto" />
                                     </td>
                                 </tr>

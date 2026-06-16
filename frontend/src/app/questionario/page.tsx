@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, Send, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Send } from 'lucide-react';
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n-context';
 
@@ -14,6 +14,7 @@ const SESSO_OPTIONS = ['Maschio', 'Femmina', 'Altro', 'Preferisco non rispondere
 const ISTRUZIONE_OPTIONS = ['Scuola media', 'Diploma', 'Laurea triennale', 'Laurea magistrale', 'Dottorato', 'Altro'];
 const TIPO_ISTITUTO_OPTIONS = ['Liceo', 'Istituto tecnico', 'Istituto professionale', 'Università', 'Altro'];
 const PROVENIENZA_OPTIONS = ['Nord Italia', 'Centro Italia', 'Sud Italia', 'Isole', 'Estero'];
+const TOOL_OPTIONS = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
 
 const QUESTIONS = [
     { key: 'q_utile', label: 'Il chatbot mi è stato utile' },
@@ -28,6 +29,8 @@ const QUESTIONS = [
     { key: 'q_consiglierei', label: 'Lo riutilizzerei / consiglierei' },
 ];
 
+type FormValue = string | number | null | string[];
+
 type FormData = {
     eta: string;
     sesso: string;
@@ -35,7 +38,9 @@ type FormData = {
     tipo_istituto: string;
     provenienza: string;
     area_studio: string;
-    [key: string]: string | number | null;
+    strumenti_utilizzati: string[];
+    feedback_aperto: string;
+    [key: string]: FormValue;
 };
 
 export default function QuestionarioPage() {
@@ -57,6 +62,8 @@ export default function QuestionarioPage() {
         q_riflettere: null,
         q_coinvolgente: null,
         q_consiglierei: null,
+        strumenti_utilizzati: [],
+        feedback_aperto: '',
     });
 
     const [consent, setConsent] = useState(false);
@@ -90,6 +97,14 @@ export default function QuestionarioPage() {
         setFormData({ ...formData, [key]: value });
     };
 
+    const handleToolToggle = (tool: string) => {
+        const selected = formData.strumenti_utilizzati;
+        const next = selected.includes(tool)
+            ? selected.filter((item) => item !== tool)
+            : [...selected, tool];
+        setFormData({ ...formData, strumenti_utilizzati: next });
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!consent) {
@@ -109,9 +124,15 @@ export default function QuestionarioPage() {
 
         try {
             // Convert empty strings to null for backend
-            const payload: Record<string, string | number | null> = {};
+            const payload: Record<string, FormValue> = {};
             for (const [key, value] of Object.entries(formData)) {
-                payload[key] = value === '' ? null : value;
+                if (Array.isArray(value)) {
+                    payload[key] = value.length > 0 ? value : null;
+                } else if (typeof value === 'string') {
+                    payload[key] = value.trim() === '' ? null : value;
+                } else {
+                    payload[key] = value;
+                }
             }
 
             const response = await fetch(`${API_BASE}/survey`, {
@@ -237,6 +258,37 @@ export default function QuestionarioPage() {
                         </div>
                     </div>
 
+                    {/* Strumenti utilizzati */}
+                    <div className="glass-panel p-6 rounded-lg space-y-4">
+                        <div>
+                            <h2 className="text-xl font-semibold text-slate-800">{t('survey.tools.title')}</h2>
+                            <p className="text-sm text-slate-500 mt-1">{t('survey.tools.sub')}</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {TOOL_OPTIONS.map((tool) => {
+                                const checked = formData.strumenti_utilizzati.includes(tool);
+                                return (
+                                    <label
+                                        key={tool}
+                                        className={`flex items-center gap-3 rounded-md border px-3 py-3 cursor-pointer transition-colors ${checked
+                                            ? 'border-indigo-300 bg-indigo-50 text-indigo-900'
+                                            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                                            }`}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={checked}
+                                            onChange={() => handleToolToggle(tool)}
+                                            className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                                        />
+                                        <span className="text-sm font-medium">{tf(`survey.tool.${tool}`, tool)}</span>
+                                    </label>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     {/* Valutazione quantitativa */}
                     <div className="glass-panel p-6 rounded-lg space-y-6">
                         <h2 className="text-xl font-semibold text-slate-800">{t('survey.quant.title')}</h2>
@@ -254,6 +306,23 @@ export default function QuestionarioPage() {
                                 />
                             ))}
                         </div>
+                    </div>
+
+                    {/* Feedback aperto */}
+                    <div className="glass-panel p-6 rounded-lg space-y-4">
+                        <div>
+                            <h2 className="text-xl font-semibold text-slate-800">{t('survey.open.title')}</h2>
+                            <p className="text-sm text-slate-500 mt-1">{t('survey.open.sub')}</p>
+                        </div>
+                        <textarea
+                            value={formData.feedback_aperto}
+                            onChange={(e) => setFormData({ ...formData, feedback_aperto: e.target.value })}
+                            placeholder={t('survey.open.placeholder')}
+                            rows={5}
+                            maxLength={2000}
+                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-y"
+                        />
+                        <p className="text-xs text-slate-500">{t('survey.open.note')}</p>
                     </div>
 
                     {/* Consenso */}

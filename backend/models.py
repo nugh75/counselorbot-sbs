@@ -64,6 +64,10 @@ class SurveyResponse(Base):
     q_coinvolgente = Column(Integer, nullable=True)
     q_consiglierei = Column(Integer, nullable=True)
 
+    # Feedback qualitativo opzionale
+    strumenti_utilizzati = Column(JSON, nullable=True)
+    feedback_aperto = Column(Text, nullable=True)
+
 
 class StrategyFeedback(Base):
     """Valutazione anonima di una strategia condivisa gia approvata."""

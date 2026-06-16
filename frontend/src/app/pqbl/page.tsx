@@ -399,7 +399,7 @@ export default function PqblPage() {
                                             : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200',
                                     )}
                                 >
-                                    {p.label}
+                                    {p.value === '' ? t('pqbl.provider.default') : p.label}
                                 </button>
                             ))}
                         </div>

@@ -4,16 +4,33 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ArrowLeft, ArrowRight, ExternalLink } from 'lucide-react';
 import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
+import { getTestAdministration, AdministrationLocale } from '@/lib/test-administrations';
 import { useI18n } from '@/lib/i18n-context';
 
-const AVAILABLE_INSTRUMENTS: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS'];
+const AVAILABLE_INSTRUMENTS: QuestionnaireType[] = ['QSA', 'QSAr', 'QPCS', 'QPCC', 'ZTPI', 'QAP', 'SAVICKAS'];
+const STRATEGIC_COMPETENCES_URLS: Partial<Record<QuestionnaireType, string>> = {
+    QSA: 'https://www.competenzestrategiche.it/QSA/',
+    QSAr: 'https://www.competenzestrategiche.it/QSAr/',
+    QPCS: 'https://www.competenzestrategiche.it/QPCS/',
+    QPCC: 'https://www.competenzestrategiche.it/QPCC/',
+    ZTPI: 'https://www.competenzestrategiche.it/ZTPI/',
+    QAP: 'https://www.competenzestrategiche.it/QAP/',
+};
 
 export default function InstrumentDetailsPage() {
-    const { t } = useI18n();
+    const { t, lang } = useI18n();
     const params = useParams<{ id: string }>();
     const id = params.id as QuestionnaireType;
     const questionnaire = AVAILABLE_INSTRUMENTS.includes(id) ? QUESTIONNAIRES[id] : null;
-    const usesStrategicCompetencesPlatform = id === 'QSA' || id === 'QSAr';
+    const assessmentUrl = STRATEGIC_COMPETENCES_URLS[id];
+    // Surface the in-app questionnaire under validation alongside the external
+    // Competenze Strategiche platform. en/es/sv use their own locale; Italian
+    // shows the English version (default) for completeness.
+    const inAppLocale: AdministrationLocale | null =
+        lang === 'en' || lang === 'es' || lang === 'sv' ? lang
+            : lang === 'it' ? 'en'
+                : null;
+    const inAppAdministration = inAppLocale && getTestAdministration(id, inAppLocale) ? inAppLocale : null;
 
     if (!questionnaire) {
         return (
@@ -62,7 +79,23 @@ export default function InstrumentDetailsPage() {
                 ))}
             </div>
 
-            {usesStrategicCompetencesPlatform && (
+            {inAppAdministration && (
+                <section className="rounded-xl border-2 border-amber-300 bg-amber-50 p-5 flex flex-col md:flex-row md:items-center gap-5">
+                    <div className="flex-1">
+                        <h2 className="font-semibold text-amber-950">{t('detail.assessment.inapp.title')}</h2>
+                        <p className="text-sm text-amber-900 mt-1 leading-relaxed">{t('detail.assessment.inapp.body')}</p>
+                    </div>
+                    <Link
+                        href={`/somministrazione/${id}/${inAppAdministration}`}
+                        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-800 transition-colors"
+                    >
+                        {t('detail.assessment.inapp.link')}
+                        <ArrowRight className="w-4 h-4" />
+                    </Link>
+                </section>
+            )}
+
+            {assessmentUrl && (
                 <section className="rounded-xl border border-sky-200 bg-sky-50 p-5 flex flex-col md:flex-row md:items-center gap-5">
                     <div className="flex-1">
                         <h2 className="font-semibold text-slate-900">{t('detail.assessment.title')}</h2>
@@ -72,8 +105,11 @@ export default function InstrumentDetailsPage() {
                         <div className="rounded-md border border-sky-200 bg-white px-4 py-2 text-sm text-slate-700">
                             {t('detail.assessment.codeLabel')}: <strong className="text-lg text-slate-900">1087</strong>
                         </div>
+                        <div className="rounded-md border border-sky-200 bg-white px-4 py-2 text-sm text-slate-700">
+                            {t('detail.assessment.passwordLabel')}: <strong className="text-lg text-slate-900">counselor</strong>
+                        </div>
                         <a
-                            href="https://www.competenzestrategiche.it/"
+                            href={assessmentUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center justify-center gap-2 rounded-md border border-sky-300 bg-white px-4 py-2 text-sm font-semibold text-sky-800 hover:bg-sky-100 transition-colors"

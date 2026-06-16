@@ -428,8 +428,13 @@ def test_survey_submit_public():
     r = client.post("/survey", json={
         "q_utile": 5, "q_pertinente": 5, "q_chiaro": 5,
         "q_dettaglio": 5, "q_facile": 5, "q_veloce": 5,
+        "strumenti_utilizzati": ["QSA", "ZTPI"],
+        "feedback_aperto": "Feedback qualitativo di prova.",
     })
     assert r.status_code == 200, r.text
+    data = r.json()
+    assert data["strumenti_utilizzati"] == ["QSA", "ZTPI"]
+    assert data["feedback_aperto"] == "Feedback qualitativo di prova."
 
 
 def test_helpful_chat_responses_are_shared_for_all_questionnaires():

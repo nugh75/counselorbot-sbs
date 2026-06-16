@@ -41,6 +41,79 @@ function generateUUID() {
     });
 }
 
+// Demographic/validation form is not driven by AdministrationCopy, so localize it here per locale.
+interface MetaCopy {
+    sectionTitle: string;
+    anonHint: string;
+    codeLabel: string;
+    cohortLabel: string;
+    ageLabel: string;
+    genderLabel: string;
+    eduLabel: string;
+    eduPlaceholder: string;
+    consent: string;
+    consentError: string;
+    preferNot: string;
+    under18: string;
+    female: string;
+    male: string;
+    other: string;
+}
+
+const META_COPY: Record<'en' | 'es' | 'sv', MetaCopy> = {
+    en: {
+        sectionTitle: 'Validation data',
+        anonHint: 'Use only an anonymous code. Do not enter names, surnames, or personal email addresses.',
+        codeLabel: 'Anonymous code',
+        cohortLabel: 'Group / cohort',
+        ageLabel: 'Age',
+        genderLabel: 'Gender',
+        eduLabel: 'Educational context',
+        eduPlaceholder: 'University, course, degree, or group',
+        consent: 'I agree to take part in this validation administration and understand that data will be handled anonymously for research analysis.',
+        consentError: 'You must accept the participation conditions before submitting the administration.',
+        preferNot: 'Prefer not to answer',
+        under18: 'Under 18',
+        female: 'Female',
+        male: 'Male',
+        other: 'Other',
+    },
+    es: {
+        sectionTitle: 'Datos de validacion',
+        anonHint: 'Usa solo un codigo anonimo. No introduzcas nombres, apellidos ni correos personales.',
+        codeLabel: 'Codigo anonimo',
+        cohortLabel: 'Grupo / cohorte',
+        ageLabel: 'Edad',
+        genderLabel: 'Genero',
+        eduLabel: 'Contexto educativo',
+        eduPlaceholder: 'Universidad, curso, titulacion o grupo',
+        consent: 'Acepto participar en esta administracion de validacion y entiendo que los datos se trataran de forma anonima para analisis de investigacion.',
+        consentError: 'Debes aceptar las condiciones de participacion antes de enviar la administracion.',
+        preferNot: 'Prefiero no responder',
+        under18: 'Menos de 18',
+        female: 'Mujer',
+        male: 'Hombre',
+        other: 'Otro',
+    },
+    sv: {
+        sectionTitle: 'Valideringsdata',
+        anonHint: 'Använd endast en anonym kod. Ange inte namn, efternamn eller personliga e-postadresser.',
+        codeLabel: 'Anonym kod',
+        cohortLabel: 'Grupp / kohort',
+        ageLabel: 'Ålder',
+        genderLabel: 'Kön',
+        eduLabel: 'Utbildningskontext',
+        eduPlaceholder: 'Universitet, kurs, examen eller grupp',
+        consent: 'Jag samtycker till att delta i detta valideringsgenomförande och förstår att uppgifterna behandlas anonymt för forskningsanalys.',
+        consentError: 'Du måste godkänna villkoren för deltagande innan du skickar in genomförandet.',
+        preferNot: 'Vill inte svara',
+        under18: 'Under 18',
+        female: 'Kvinna',
+        male: 'Man',
+        other: 'Annat',
+    },
+};
+
 interface QuestionnaireRunnerProps {
     copy: AdministrationCopy;
     instrument: AdministrationInstrument;
@@ -67,6 +140,7 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
         consent: false,
     });
     const scaleMax = copy.scale.length;
+    const meta = META_COPY[locale];
     const versionLabel = searchParams.get('version') || `${instrument}_${locale}_2026_v1`;
 
     // Carica gli item dal catalogo DB-driven (le modifiche admin diventano visibili).
@@ -124,9 +198,7 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
     const submit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (!metadata.consent) {
-            setError(locale === 'es'
-                ? 'Debes aceptar las condiciones de participacion antes de enviar la administracion.'
-                : 'You must accept the participation conditions before submitting the administration.');
+            setError(meta.consentError);
             return;
         }
         if (answered !== displayItems.length) {
@@ -317,12 +389,10 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h2 className="text-lg font-bold text-slate-900">
-                            {locale === 'es' ? 'Datos de validacion' : 'Validation data'}
+                            {meta.sectionTitle}
                         </h2>
                         <p className="mt-1 text-sm text-slate-600">
-                            {locale === 'es'
-                                ? 'Usa solo un codigo anonimo. No introduzcas nombres, apellidos ni correos personales.'
-                                : 'Use only an anonymous code. Do not enter names, surnames, or personal email addresses.'}
+                            {meta.anonHint}
                         </p>
                     </div>
                     <span className="rounded-md bg-slate-100 px-3 py-1.5 font-mono text-xs text-slate-600">
@@ -332,7 +402,7 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                 <div className="grid gap-3 md:grid-cols-2">
                     <label className="block">
                         <span className="text-xs font-semibold uppercase text-slate-500">
-                            {locale === 'es' ? 'Codigo anonimo' : 'Anonymous code'}
+                            {meta.codeLabel}
                         </span>
                         <input
                             value={metadata.participant_code}
@@ -343,7 +413,7 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                     </label>
                     <label className="block">
                         <span className="text-xs font-semibold uppercase text-slate-500">
-                            {locale === 'es' ? 'Grupo / cohorte' : 'Group / cohort'}
+                            {meta.cohortLabel}
                         </span>
                         <input
                             value={metadata.cohort}
@@ -353,15 +423,15 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                     </label>
                     <label className="block">
                         <span className="text-xs font-semibold uppercase text-slate-500">
-                            {locale === 'es' ? 'Edad' : 'Age'}
+                            {meta.ageLabel}
                         </span>
                         <select
                             value={metadata.age_range}
                             onChange={(event) => setMetadata((previous) => ({ ...previous, age_range: event.target.value }))}
                             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                         >
-                            <option value="">{locale === 'es' ? 'Prefiero no responder' : 'Prefer not to answer'}</option>
-                            <option value="under_18">{locale === 'es' ? 'Menos de 18' : 'Under 18'}</option>
+                            <option value="">{meta.preferNot}</option>
+                            <option value="under_18">{meta.under18}</option>
                             <option value="18_20">18-20</option>
                             <option value="21_24">21-24</option>
                             <option value="25_plus">25+</option>
@@ -369,27 +439,27 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                     </label>
                     <label className="block">
                         <span className="text-xs font-semibold uppercase text-slate-500">
-                            {locale === 'es' ? 'Genero' : 'Gender'}
+                            {meta.genderLabel}
                         </span>
                         <select
                             value={metadata.gender}
                             onChange={(event) => setMetadata((previous) => ({ ...previous, gender: event.target.value }))}
                             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                         >
-                            <option value="">{locale === 'es' ? 'Prefiero no responder' : 'Prefer not to answer'}</option>
-                            <option value="female">{locale === 'es' ? 'Mujer' : 'Female'}</option>
-                            <option value="male">{locale === 'es' ? 'Hombre' : 'Male'}</option>
-                            <option value="other">{locale === 'es' ? 'Otro' : 'Other'}</option>
+                            <option value="">{meta.preferNot}</option>
+                            <option value="female">{meta.female}</option>
+                            <option value="male">{meta.male}</option>
+                            <option value="other">{meta.other}</option>
                         </select>
                     </label>
                     <label className="block md:col-span-2">
                         <span className="text-xs font-semibold uppercase text-slate-500">
-                            {locale === 'es' ? 'Contexto educativo' : 'Educational context'}
+                            {meta.eduLabel}
                         </span>
                         <input
                             value={metadata.education_context}
                             onChange={(event) => setMetadata((previous) => ({ ...previous, education_context: event.target.value }))}
-                            placeholder={locale === 'es' ? 'Universidad, curso, titulacion o grupo' : 'University, course, degree, or group'}
+                            placeholder={meta.eduPlaceholder}
                             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                         />
                     </label>
@@ -405,9 +475,7 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                         className="mt-1 accent-indigo-600"
                     />
                     <span>
-                        {locale === 'es'
-                            ? 'Acepto participar en esta administracion de validacion y entiendo que los datos se trataran de forma anonima para analisis de investigacion.'
-                            : 'I agree to take part in this validation administration and understand that data will be handled anonymously for research analysis.'}
+                        {meta.consent}
                     </span>
                 </label>
             </section>
