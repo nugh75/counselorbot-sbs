@@ -16,33 +16,73 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
     const { t, lang } = useI18n();
     const available = QUESTIONNAIRE_LIST.filter((q) => ACTIVE_QUESTIONNAIRES.includes(q.id));
     const upcoming = QUESTIONNAIRE_LIST.filter((q) => !ACTIVE_QUESTIONNAIRES.includes(q.id));
+    const explanationItems = [
+        {
+            icon: ClipboardList,
+            title: t('selector.explain.step1.title'),
+            body: t('selector.explain.step1.body'),
+        },
+        {
+            icon: BookOpen,
+            title: t('selector.explain.step2.title'),
+            body: t('selector.explain.step2.body'),
+        },
+        {
+            icon: MessageSquare,
+            title: t('selector.explain.step3.title'),
+            body: t('selector.explain.step3.body'),
+        },
+    ];
 
     return (
         <div className="space-y-6">
             <section className="glass-panel rounded-xl p-5 sm:p-6">
-                <div className="flex flex-col lg:flex-row lg:items-center gap-6">
-                    <div className="flex-1 max-w-3xl">
-                        <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-indigo-700 mb-3">
-                            <ClipboardList className="w-4 h-4" />
-                            {t('selector.kicker')}
-                        </div>
-                        <h1 className="text-2xl font-bold text-slate-900">{t('selector.title')}</h1>
-                        <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-                            {t('selector.intro')}
-                        </p>
-                    </div>
-                    <Link
-                        href="/questionario"
-                        className="group flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 hover:border-indigo-200 hover:bg-indigo-50 transition-colors lg:max-w-64"
-                    >
-                        <MessageSquare className="w-5 h-5 shrink-0 text-indigo-600" />
-                        <div>
-                            <div className="text-sm font-semibold text-slate-700 group-hover:text-indigo-700">
-                                {t('feedback.cta.title')}
+                <div className="space-y-6">
+                    <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+                        <div className="flex-1 max-w-3xl">
+                            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-indigo-700 mb-3">
+                                <ClipboardList className="w-4 h-4" />
+                                {t('selector.kicker')}
                             </div>
-                            <div className="text-xs text-slate-500">{t('feedback.cta.sub')}</div>
+                            <h1 className="text-2xl font-bold text-slate-900">{t('selector.title')}</h1>
+                            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+                                {t('selector.intro')}
+                            </p>
                         </div>
-                    </Link>
+                        <Link
+                            href="/questionario"
+                            className="group flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 hover:border-indigo-200 hover:bg-indigo-50 transition-colors lg:max-w-64"
+                        >
+                            <MessageSquare className="w-5 h-5 shrink-0 text-indigo-600" />
+                            <div>
+                                <div className="text-sm font-semibold text-slate-700 group-hover:text-indigo-700">
+                                    {t('feedback.cta.title')}
+                                </div>
+                                <div className="text-xs text-slate-500">{t('feedback.cta.sub')}</div>
+                            </div>
+                        </Link>
+                    </div>
+
+                    <div className="border-t border-slate-200 pt-5">
+                        <h2 className="text-lg font-semibold text-slate-900">{t('selector.explain.title')}</h2>
+                        <div className="mt-4 grid gap-5 md:grid-cols-3">
+                            {explanationItems.map((item) => {
+                                const Icon = item.icon;
+                                return (
+                                    <div key={item.title} className="flex gap-3">
+                                        <div className="w-9 h-9 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                                            <Icon className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-semibold text-slate-800">{item.title}</h3>
+                                            <p className="mt-1 text-sm text-slate-600 leading-relaxed">{item.body}</p>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <p className="mt-4 text-sm text-slate-500 leading-relaxed">{t('selector.explain.note')}</p>
+                    </div>
                 </div>
             </section>
 

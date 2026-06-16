@@ -113,6 +113,9 @@ class SurveyCreate(BaseModel):
     q_coinvolgente: Optional[int] = None
     q_consiglierei: Optional[int] = None
 
+    strumenti_utilizzati: Optional[List[str]] = None
+    feedback_aperto: Optional[str] = None
+
 class SurveyResponseSchema(SurveyCreate):
     id: int
     submitted_at: datetime

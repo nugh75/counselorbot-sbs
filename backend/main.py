@@ -135,8 +135,10 @@ def _seed_and_migrate():
     # i perdenti attendono, poi trovano tutto gia' seminato (nessuna INSERT) ed
     # evitano UniqueViolation sulle commit idempotenti. Tenuto su una connessione
     # separata aperta per tutta la funzione.
-    lock_conn = database.engine.connect()
-    lock_conn.exec_driver_sql("SELECT pg_advisory_lock(91234)")
+    lock_conn = None
+    if database.engine.dialect.name == "postgresql":
+        lock_conn = database.engine.connect()
+        lock_conn.exec_driver_sql("SELECT pg_advisory_lock(91234)")
 
     db = database.SessionLocal()
     try:
@@ -158,6 +160,17 @@ def _seed_and_migrate():
                 conn.commit()
         except Exception as e:
             logger.debug(f"questionnaire_results migration skipped/failed: {e}")
+
+        for clause in [
+            "ADD COLUMN strumenti_utilizzati JSON",
+            "ADD COLUMN feedback_aperto TEXT",
+        ]:
+            try:
+                with database.engine.connect() as conn:
+                    conn.execute(sa_text(f"ALTER TABLE survey_responses {clause}"))
+                    conn.commit()
+            except Exception as e:
+                logger.debug(f"survey_responses migration skipped/failed ({clause}): {e}")
 
         for table, columns in {
             "instruments": [
@@ -446,10 +459,11 @@ def _seed_and_migrate():
         _seed_instruments_catalog(db)
     finally:
         db.close()
-        try:
-            lock_conn.exec_driver_sql("SELECT pg_advisory_unlock(91234)")
-        finally:
-            lock_conn.close()
+        if lock_conn is not None:
+            try:
+                lock_conn.exec_driver_sql("SELECT pg_advisory_unlock(91234)")
+            finally:
+                lock_conn.close()
 
 
 def _migrate_prompts_to_english(db):
