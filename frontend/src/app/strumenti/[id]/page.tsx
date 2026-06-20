@@ -35,7 +35,7 @@ export default function InstrumentDetailsPage() {
 
     if (!questionnaire) {
         return (
-            <div className="max-w-xl mx-auto glass-panel rounded-xl p-8 text-center space-y-4">
+            <div className="max-w-xl mx-auto glass-panel p-8 text-center space-y-4">
                 <h1 className="text-xl font-bold text-slate-900">{t('detail.unavailable.title')}</h1>
                 <p className="text-slate-600">{t('detail.unavailable.body')}</p>
                 <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-700">
@@ -47,13 +47,13 @@ export default function InstrumentDetailsPage() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="page-narrow space-y-6">
             <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-indigo-700">
                 <ArrowLeft className="w-4 h-4" />
                 {t('detail.back')}
             </Link>
 
-            <section className="glass-panel rounded-xl p-6 sm:p-8">
+            <section className="glass-panel p-6 sm:p-8">
                 <div className="flex items-start gap-4">
                     <div className={`w-14 h-14 rounded-lg flex items-center justify-center text-slate-700 shrink-0 ${questionnaire.color.replace('bg-', 'bg-opacity-20 bg-')}`}>
                         <QuestionnaireIcon icon={questionnaire.icon} className="h-7 w-7" />
@@ -69,7 +69,7 @@ export default function InstrumentDetailsPage() {
 
             <div className="grid md:grid-cols-3 gap-4">
                 {(['focus', 'path', 'input'] as const).map((topic) => (
-                    <section key={topic} className="glass-panel rounded-xl p-5">
+                    <section key={topic} className="glass-panel p-5">
                         <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                             {t(`detail.${topic}.title`)}
                         </h2>

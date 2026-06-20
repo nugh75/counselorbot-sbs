@@ -355,7 +355,7 @@ export function OpenCodeExperience({
     };
 
     return (
-        <div className="w-full flex flex-col xl:flex-row gap-6 h-[80vh] min-h-[600px]">
+        <div className="w-full flex flex-col xl:flex-row gap-6 h-chat min-h-[600px]">
             <div className="flex-1 flex flex-col bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm h-full">
                 <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
                     <span className="font-semibold text-slate-800 flex items-center gap-2">

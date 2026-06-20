@@ -186,7 +186,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone }: Props) {
         : t('lp.title');
 
     return (
-        <div className="glass-panel p-5 rounded-lg space-y-4">
+        <div className="glass-panel p-5 space-y-4">
             <div className="flex items-center gap-2">
                 <UserCircle className="w-5 h-5 text-indigo-600" />
                 <h3 className="font-semibold text-slate-800">{title}</h3>

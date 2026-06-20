@@ -6,14 +6,15 @@
 // riepilogo → test finale opzionale (submit unico, feedback alla fine).
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import {
-    ArrowLeft, ArrowRight, BookOpen, CheckCircle2, FileType, Lightbulb,
+    ArrowRight, BookOpen, CheckCircle2, FileType, Lightbulb,
     ListChecks, Loader2, RotateCcw, Target, UploadCloud, XCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
 import { getSelectedCounselorId } from '@/lib/counselor';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Callout } from '@/components/ui/Callout';
 
 type Phase = 'setup' | 'generating' | 'onboarding' | 'quiz' | 'summary' | 'final' | 'finalResults';
 
@@ -339,27 +340,17 @@ export default function PqblPage() {
     const currentAnsweredCorrect = Object.values(optionResults).some((r) => r.correct);
 
     return (
-        <div className="max-w-3xl mx-auto space-y-6">
-            <div className="flex items-center gap-4">
-                <Link href="/" className="p-2 border border-transparent hover:border-slate-200 hover:bg-white rounded-md transition-colors">
-                    <ArrowLeft className="w-5 h-5 text-slate-600" />
-                </Link>
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900">{t('pqbl.title')}</h1>
-                    <p className="text-slate-500">{t('pqbl.subtitle')}</p>
-                </div>
-            </div>
+        <div className="page-narrow space-y-6">
+            <PageHeader title={t('pqbl.title')} subtitle={t('pqbl.subtitle')} backHref="/" />
 
             {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-                    <strong>{t('pqbl.error.title')}:</strong> {error}
-                </div>
+                <Callout variant="danger" title={`${t('pqbl.error.title')}:`}>{error}</Callout>
             )}
 
             {/* Setup: dimensione sessione + upload */}
             {phase === 'setup' && (
                 <div className="space-y-6">
-                    <div className="glass-panel rounded-xl p-6">
+                    <div className="glass-panel p-6">
                         <p className="text-sm font-semibold text-slate-700 mb-3">{t('pqbl.setup.sizeLabel')}</p>
                         <div className="grid grid-cols-3 gap-3">
                             {SESSION_SIZES.map((n) => (
@@ -428,7 +419,7 @@ export default function PqblPage() {
 
             {/* Generazione in corso */}
             {phase === 'generating' && (
-                <div className="glass-panel rounded-xl p-10 text-center space-y-5">
+                <div className="glass-panel p-10 text-center space-y-5">
                     <Loader2 className="w-10 h-10 mx-auto text-indigo-500 animate-spin" />
                     <h2 className="text-xl font-semibold text-slate-800">{t('pqbl.generating.title')}</h2>
                     {documentInfo && documentInfo.chunks_total > 0 && (
@@ -464,7 +455,7 @@ export default function PqblPage() {
             {/* Onboarding (R4): le domande non sono un esame */}
             {phase === 'onboarding' && documentInfo && (
                 <div className="space-y-4">
-                    <div className="glass-panel rounded-xl p-6 space-y-4">
+                    <div className="glass-panel p-6 space-y-4">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-md bg-amber-50 flex items-center justify-center">
                                 <Lightbulb className="w-5 h-5 text-amber-600" />
@@ -473,7 +464,7 @@ export default function PqblPage() {
                         </div>
                         <p className="text-slate-600 leading-relaxed">{documentInfo.onboarding_text}</p>
                     </div>
-                    <div className="glass-panel rounded-xl p-6">
+                    <div className="glass-panel p-6">
                         <div className="flex items-center gap-2 mb-3">
                             <Target className="w-4 h-4 text-indigo-600" />
                             <h3 className="text-sm font-semibold text-slate-700">{t('pqbl.onboarding.skills')}</h3>
@@ -522,7 +513,7 @@ export default function PqblPage() {
                         />
                     </div>
 
-                    <div className="glass-panel rounded-xl p-6 space-y-4">
+                    <div className="glass-panel p-6 space-y-4">
                         <h2 className="text-lg font-semibold text-slate-800">{currentQuestion.question}</h2>
                         <div className="space-y-3">
                             {currentQuestion.options.map((option) => {
@@ -582,7 +573,7 @@ export default function PqblPage() {
             {/* Riepilogo sessione (R8) */}
             {phase === 'summary' && summary && (
                 <div className="space-y-4">
-                    <div className="glass-panel rounded-xl p-6 space-y-5">
+                    <div className="glass-panel p-6 space-y-5">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-md bg-green-50 flex items-center justify-center">
                                 <ListChecks className="w-5 h-5 text-green-600" />
@@ -618,7 +609,7 @@ export default function PqblPage() {
                         </div>
                     </div>
 
-                    <div className="glass-panel rounded-xl p-6 space-y-3">
+                    <div className="glass-panel p-6 space-y-3">
                         <p className="text-sm text-slate-500">{t('pqbl.summary.finalDesc')}</p>
                         <div className="grid grid-cols-2 gap-3">
                             <button
@@ -642,12 +633,12 @@ export default function PqblPage() {
             {/* Test finale (R7): risposta unica per domanda, feedback alla fine */}
             {phase === 'final' && (
                 <div className="space-y-4">
-                    <div className="glass-panel rounded-xl p-6">
+                    <div className="glass-panel p-6">
                         <h2 className="text-xl font-semibold text-slate-800">{t('pqbl.final.title')}</h2>
                         <p className="text-sm text-slate-500 mt-1">{t('pqbl.final.desc')}</p>
                     </div>
                     {finalQuestions.map((q, idx) => (
-                        <div key={q.id} className="glass-panel rounded-xl p-6 space-y-3">
+                        <div key={q.id} className="glass-panel p-6 space-y-3">
                             <h3 className="font-semibold text-slate-800">
                                 {idx + 1}. {q.question}
                             </h3>
@@ -688,14 +679,14 @@ export default function PqblPage() {
             {/* Risultati test finale */}
             {phase === 'finalResults' && finalResult && (
                 <div className="space-y-4">
-                    <div className="glass-panel rounded-xl p-6 text-center space-y-2">
+                    <div className="glass-panel p-6 text-center space-y-2">
                         <h2 className="text-xl font-semibold text-slate-800">{t('pqbl.final.score')}</h2>
                         <div className="text-4xl font-bold text-indigo-700">
                             {finalResult.score}/{finalResult.total}
                         </div>
                     </div>
                     {finalResult.results.map((row, idx) => (
-                        <div key={row.question_id} className="glass-panel rounded-xl p-6 space-y-2">
+                        <div key={row.question_id} className="glass-panel p-6 space-y-2">
                             <h3 className="font-semibold text-slate-800">{idx + 1}. {row.question}</h3>
                             <div className="flex items-center gap-2 text-sm">
                                 {row.correct

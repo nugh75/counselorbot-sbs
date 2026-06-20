@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, CheckCircle, Send } from 'lucide-react';
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n-context';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 const API_BASE = '/api';
 
@@ -155,11 +156,11 @@ export default function QuestionarioPage() {
 
     if (isSubmitted) {
         return (
-            <div className="max-w-2xl mx-auto">
+            <div className="page-narrow">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="glass-panel p-8 rounded-lg text-center space-y-6"
+                    className="glass-panel p-8 text-center space-y-6"
                 >
                     <div className="w-20 h-20 mx-auto rounded-full bg-green-100 flex items-center justify-center">
                         <CheckCircle className="w-10 h-10 text-green-600" />
@@ -181,26 +182,17 @@ export default function QuestionarioPage() {
     }
 
     return (
-        <div className="max-w-3xl mx-auto">
+        <div className="page-narrow">
             <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-8"
             >
-                {/* Header */}
-                <div className="flex items-center gap-4">
-                    <Link href="/" className="p-2 border border-transparent hover:border-slate-200 hover:bg-white rounded-md transition-colors">
-                        <ArrowLeft className="w-5 h-5 text-slate-600" />
-                    </Link>
-                    <div>
-                        <h1 className="text-3xl font-bold text-slate-800">{t('survey.title')}</h1>
-                        <p className="text-slate-500">{t('survey.subtitle')}</p>
-                    </div>
-                </div>
+                <PageHeader title={t('survey.title')} subtitle={t('survey.subtitle')} backHref="/" />
 
                 <form onSubmit={handleSubmit} className="space-y-8">
                     {/* Dati di base */}
-                    <div className="glass-panel p-6 rounded-lg space-y-6">
+                    <div className="glass-panel p-6 space-y-6">
                         <h2 className="text-xl font-semibold text-slate-800">{t('survey.basic.title')}</h2>
                         <p className="text-sm text-slate-500">{t('survey.basic.sub')}</p>
 
@@ -259,7 +251,7 @@ export default function QuestionarioPage() {
                     </div>
 
                     {/* Strumenti utilizzati */}
-                    <div className="glass-panel p-6 rounded-lg space-y-4">
+                    <div className="glass-panel p-6 space-y-4">
                         <div>
                             <h2 className="text-xl font-semibold text-slate-800">{t('survey.tools.title')}</h2>
                             <p className="text-sm text-slate-500 mt-1">{t('survey.tools.sub')}</p>
@@ -290,7 +282,7 @@ export default function QuestionarioPage() {
                     </div>
 
                     {/* Valutazione quantitativa */}
-                    <div className="glass-panel p-6 rounded-lg space-y-6">
+                    <div className="glass-panel p-6 space-y-6">
                         <h2 className="text-xl font-semibold text-slate-800">{t('survey.quant.title')}</h2>
                         <p className="text-sm text-slate-500">
                             {t('survey.quant.sub')}
@@ -309,7 +301,7 @@ export default function QuestionarioPage() {
                     </div>
 
                     {/* Feedback aperto */}
-                    <div className="glass-panel p-6 rounded-lg space-y-4">
+                    <div className="glass-panel p-6 space-y-4">
                         <div>
                             <h2 className="text-xl font-semibold text-slate-800">{t('survey.open.title')}</h2>
                             <p className="text-sm text-slate-500 mt-1">{t('survey.open.sub')}</p>
@@ -326,7 +318,7 @@ export default function QuestionarioPage() {
                     </div>
 
                     {/* Consenso */}
-                    <div className="glass-panel p-6 rounded-lg space-y-4">
+                    <div className="glass-panel p-6 space-y-4">
                         <label className="flex items-start gap-3 cursor-pointer">
                             <input
                                 type="checkbox"

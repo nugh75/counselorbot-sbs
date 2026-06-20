@@ -41,6 +41,10 @@
   /* Raggio angoli globale: angoli tondi su tutta l'interfaccia (rounded-sm/md/lg/xl). */
   --radius: 0.75rem;
 
+  /* Altezza viewport condivisa per le superfici di chat (guided / assistente / opencode).
+     Unico token: ~header(4rem) + margini, niente piu' magic number duplicati. */
+  --chat-h: calc(100vh - 9rem);
+
   /* UI palette shared with ai4educ-console. */
   --console-bg: #f8fafc;
   --console-surface: #ffffff;
@@ -94,8 +98,25 @@
 }
 
 /* Custom Utilities */
+
+/* Larghezza contenuto: due soli token condivisi.
+   page-narrow = lettura/form (questionario, pqbl, somministrazione, strumenti);
+   page-wide   = chat/dashboard/admin (home, assistente, profilo, admin). */
+@utility page-narrow {
+  @apply max-w-4xl mx-auto;
+}
+@utility page-wide {
+  @apply max-w-6xl mx-auto;
+}
+
+/* Altezza standard delle superfici di chat. */
+@utility h-chat {
+  height: var(--chat-h);
+}
+
+/* Card: radius unico (rounded-xl) cotto nell'utility -> nessun rounded-* ai call-site. */
 @utility glass-panel {
-  @apply bg-white border border-slate-200 shadow-sm transition-colors duration-150;
+  @apply bg-white border border-slate-200 rounded-xl shadow-sm transition-colors duration-150;
 }
 
 @utility glass-panel-hover {

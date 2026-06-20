@@ -29,7 +29,7 @@ export default function AdministrationPage() {
     ) {
         const text = INVALID_COPY[lang];
         return (
-            <section className="glass-panel max-w-xl mx-auto rounded-xl p-8 text-center space-y-4">
+            <section className="glass-panel max-w-xl mx-auto p-8 text-center space-y-4">
                 <h1 className="text-2xl font-bold text-slate-900">{text.title}</h1>
                 <p className="text-slate-600">{text.body}</p>
                 <Link href="/somministrazione" className="font-semibold text-indigo-700 hover:text-indigo-900">
