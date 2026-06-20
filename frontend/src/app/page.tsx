@@ -18,6 +18,9 @@ const OpenCodeExperience = dynamic(
 );
 import { CheckCircle2, MessageSquare, RotateCcw, LogOut, Download, Layers, Terminal } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { StickyActions } from '@/components/ui/StickyActions';
+import { FlowStepper } from '@/components/ui/FlowStepper';
+import { toast } from '@/components/ui/Toast';
 import { useI18n } from '@/lib/i18n-context';
 import { addCompletedProfile, hasCompletedAll, getCombinedScoresContext, clearCompletedProfiles, getCompletedProfiles } from '@/lib/profile-tracker';
 
@@ -50,6 +53,9 @@ export default function Home() {
     const [sessionId, setSessionId] = useState<string>('');
     const [pdfToken, setPdfToken] = useState<string | undefined>(undefined);
     const [experience, setExperience] = useState<'standard' | 'opencode' | null>(null);
+    // Schermata profilo studente separata dalla scelta modalità: true = già rivisto,
+    // si passa alla scelta. Auto-skip se la card non ha nulla da mostrare.
+    const [profileReviewed, setProfileReviewed] = useState(false);
     const [combinedScores, setCombinedScores] = useState<Record<string, number> | null>(null);
     const [combinedContext, setCombinedContext] = useState<string>('');
 
@@ -68,6 +74,7 @@ export default function Home() {
             setSelectedQuestionnaire(questionnaire);
             setSessionId(resumeSession);
             setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
+            setProfileReviewed(false);
             setStep(isAgentOnly(questionnaire) ? 'interaction' : 'dashboard');
             window.history.replaceState(null, '', window.location.pathname);
             return;
@@ -99,6 +106,7 @@ export default function Home() {
                     console.error("Failed to save questionnaire result", e);
                 }
             })();
+            setProfileReviewed(false);
             setStep('interaction');
         } else {
             setStep('method-select');
@@ -127,6 +135,7 @@ export default function Home() {
             } catch (e) {
                 console.error("Failed to save questionnaire result", e);
             }
+            setProfileReviewed(false);
             setStep('interaction');
             return;
         }
@@ -184,6 +193,7 @@ export default function Home() {
             console.error("Failed to save questionnaire result", e);
         }
 
+        setProfileReviewed(false);
         setStep('interaction');
     };
 
@@ -281,8 +291,19 @@ export default function Home() {
         }
     };
 
+    // Orientamento percorso: mappa lo step interno alle 5 fasi visibili.
+    const flowStages = [t('flow.select'), t('flow.input'), t('flow.profile'), t('flow.chat'), t('flow.done')];
+    const stageIndex =
+        step === 'questionnaire-select' ? 0
+            : step === 'method-select' || step === 'manual-input' || step === 'upload-input' ? 1
+                : step === 'dashboard' ? 2
+                    : step === 'interaction' || step === 'combined-interaction' ? 3
+                        : 4;
+
     return (
         <div className="page-wide space-y-8">
+            <FlowStepper steps={flowStages} current={stageIndex} />
+
             {/* The selection screen owns its introduction to avoid repeating the page purpose. */}
             {step !== 'questionnaire-select' && (
                 <PageHeader
@@ -323,68 +344,81 @@ export default function Home() {
                         />
                     )}
 
-                    {/* Step: Dashboard with Profile */}
+                    {/* Step: Dashboard with Profile.
+                        CTA ancorata in fondo: il grafico (QSA = molti fattori) scorre sopra,
+                        il bottone "Inizia" resta sempre visibile senza scrollare. */}
                     {step === 'dashboard' && scores && selectedQuestionnaire && (
-                        <div className="space-y-8 animate-fade-in-up">
+                        <div className="space-y-4 animate-fade-in-up">
                             <ProfileVisualization scores={scores} questionnaire={selectedQuestionnaire} />
 
-                            <div className="flex justify-center pt-8">
-                                <div className="glass-panel p-8 text-center max-w-lg space-y-6">
-                                    <div className="w-14 h-14 mx-auto rounded-md bg-indigo-50 flex items-center justify-center">
-                                        <MessageSquare className="w-7 h-7 text-indigo-600" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xl font-semibold text-slate-800">{t('dashboard.ready.title')}</h3>
-                                        <p className="text-slate-500 mt-2">
-                                            {t('dashboard.ready.sub')}
-                                        </p>
+                            <StickyActions>
+                                <div className="glass-panel px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-3 shadow-md">
+                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                        <div className="w-10 h-10 shrink-0 rounded-md bg-indigo-50 flex items-center justify-center">
+                                            <MessageSquare className="w-5 h-5 text-indigo-600" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h3 className="text-sm font-semibold text-slate-800 truncate">{t('dashboard.ready.title')}</h3>
+                                            <p className="text-xs text-slate-500 truncate">{t('dashboard.ready.sub')}</p>
+                                        </div>
                                     </div>
                                     <button
                                         onClick={startInteraction}
-                                        className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
+                                        className="shrink-0 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
                                     >
                                         <MessageSquare className="w-5 h-5" />
                                         {t('dashboard.ready.btn')}
                                     </button>
                                 </div>
-                            </div>
+                            </StickyActions>
                         </div>
                     )}
 
                     {/* Step: Guided Chat Interaction */}
                     {step === 'interaction' && scores && selectedQuestionnaire && (
                         <div className="space-y-6">
-                            <LearnerProfileCard variant="review" sessionId={sessionId} />
-
-                            {experience === null ? (
-                                <div className="max-w-lg mx-auto space-y-4">
-                                    <div className="glass-panel p-8 text-center space-y-6">
-                                        <div className="w-14 h-14 mx-auto rounded-md bg-indigo-50 flex items-center justify-center">
-                                            <MessageSquare className="w-7 h-7 text-indigo-600" />
+                            {experience === null && !profileReviewed ? (
+                                /* Schermata 1: profilo studente, a sé. La card guida l'avanzamento
+                                   (Conferma/Salta) e si auto-salta se non c'è nulla / non autenticato. */
+                                <div className="max-w-2xl mx-auto">
+                                    <LearnerProfileCard
+                                        variant="review"
+                                        sessionId={sessionId}
+                                        onDone={() => setProfileReviewed(true)}
+                                        onUnavailable={() => setProfileReviewed(true)}
+                                    />
+                                </div>
+                            ) : experience === null ? (
+                                /* Schermata 2: scelta modalità, compatta (tasti piccoli, affiancati). */
+                                <div className="max-w-md mx-auto">
+                                    <div className="glass-panel p-6 text-center space-y-4">
+                                        <div className="w-11 h-11 mx-auto rounded-md bg-indigo-50 flex items-center justify-center">
+                                            <MessageSquare className="w-5 h-5 text-indigo-600" />
                                         </div>
                                         <div>
-                                            <h3 className="text-xl font-semibold text-slate-800">{t('experience.choose.title')}</h3>
-                                            <p className="text-slate-500 mt-2">{t('experience.choose.sub')}</p>
+                                            <h3 className="text-base font-semibold text-slate-800">{t('experience.choose.title')}</h3>
+                                            <p className="text-sm text-slate-500 mt-1">{t('experience.choose.sub')}</p>
                                         </div>
-                                        <div className="space-y-3">
+                                        <div className="grid sm:grid-cols-2 gap-2.5">
                                             <button
                                                 onClick={() => setExperience('standard')}
-                                                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
+                                                className="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
                                             >
-                                                <MessageSquare className="w-5 h-5" />
+                                                <MessageSquare className="w-4 h-4" />
                                                 {t('guided.mode.guided')}
                                             </button>
                                             <button
                                                 onClick={() => setExperience('opencode')}
-                                                className="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
+                                                className="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
                                             >
-                                                <Terminal className="w-5 h-5" />
+                                                <Terminal className="w-4 h-4" />
                                                 {t('guided.mode.sandbox')}
                                             </button>
                                         </div>
                                     </div>
                                 </div>
                             ) : (
+                                /* Schermata 3: chat (profilo già rivisto, non ripetuto qui). */
                                 <>
                                     {/* Toggle Experience Selector */}
                                     <div className="flex justify-center bg-slate-100 p-1 rounded-lg max-w-sm mx-auto border border-slate-200 shadow-sm">
@@ -496,6 +530,7 @@ export default function Home() {
                                                 window.URL.revokeObjectURL(url);
                                             } catch (e) {
                                                 console.error('Failed to download PDF', e);
+                                                toast.error(t('toast.error'));
                                             }
                                         }}
                                         className="py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"

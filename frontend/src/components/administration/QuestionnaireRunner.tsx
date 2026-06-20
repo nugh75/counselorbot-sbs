@@ -548,7 +548,7 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                 <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-bold tracking-wide text-amber-900">
                     {copy.testBadge}
                 </span>
-                <h1 className="text-3xl font-bold text-slate-900">{copy.title}</h1>
+                <h1 className="text-2xl font-bold text-slate-900">{copy.title}</h1>
                 <div className="rounded-lg border-2 border-amber-300 bg-amber-50 p-4 flex gap-3">
                     <AlertTriangle className="w-6 h-6 shrink-0 text-amber-700" />
                     <div>

@@ -15,6 +15,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { getSelectedCounselorId } from '@/lib/counselor';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Callout } from '@/components/ui/Callout';
+import { StickyActions } from '@/components/ui/StickyActions';
 
 type Phase = 'setup' | 'generating' | 'onboarding' | 'quiz' | 'summary' | 'final' | 'finalResults';
 
@@ -664,15 +665,17 @@ export default function PqblPage() {
                             </div>
                         </div>
                     ))}
-                    {finalWarning && (
-                        <p className="text-sm text-amber-700">{t('pqbl.final.unanswered')}</p>
-                    )}
-                    <button
-                        onClick={submitFinalTest}
-                        className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors"
-                    >
-                        {t('pqbl.final.submit')}
-                    </button>
+                    <StickyActions>
+                        {finalWarning && (
+                            <p className="text-sm text-amber-700 mb-2 text-center">{t('pqbl.final.unanswered')}</p>
+                        )}
+                        <button
+                            onClick={submitFinalTest}
+                            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors shadow-lg shadow-indigo-600/20"
+                        >
+                            {t('pqbl.final.submit')}
+                        </button>
+                    </StickyActions>
                 </div>
             )}
 

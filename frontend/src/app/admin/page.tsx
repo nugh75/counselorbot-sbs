@@ -68,7 +68,7 @@ export default function AdminPage() {
                             <Settings className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                            <h1 className="font-bold text-3xl text-slate-900">{t('admin.dashboard')}</h1>
+                            <h1 className="font-bold text-2xl text-slate-900">{t('admin.dashboard')}</h1>
                             <p className="text-sm text-slate-500 mt-1">CounselorBot</p>
                         </div>
                     </div>
