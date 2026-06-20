@@ -23,6 +23,7 @@ import logging
 import os
 import re
 import socket
+import time
 from typing import AsyncIterator
 
 import httpx
@@ -30,7 +31,8 @@ from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisco
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 
-from .. import auth, database, models
+from .. import auth, database, models, pii
+from ..anonymous_codes import code_for_identity
 from ..ai_service import AIService
 from ..api_models import ChatRequest, OpencodeChatRequest, OpencodeWorkspaceRequest
 from ..chat_logic import (
@@ -870,6 +872,7 @@ async def chat_opencode(
         text_part_count = 0
         completed = False
         timeout = httpx.Timeout(30, read=None)
+        started_at = time.monotonic()
 
         # Read workspace meta for locale + questionnaire_type
         meta = {}
@@ -937,16 +940,20 @@ async def chat_opencode(
                         elif event_type == "session.idle":
                             completed = True
                             if not full_text:
+                                message_count = None
                                 messages = await client.get(
                                     f"{config['url']}/session/{request.session_id}/message"
                                     "?directory=%2Fwork"
                                 )
                                 messages.raise_for_status()
                                 items = messages.json()
+                                message_count = len(items) if isinstance(items, list) else None
                                 for item in reversed(items if isinstance(items, list) else []):
                                     if (item.get("info") or {}).get("role") == "assistant":
                                         full_text = _message_text(item.get("parts") or [])
                                         break
+                            else:
+                                message_count = 2
 
                             # Persist response as candidate for student feedback
                             response_id = None
@@ -954,9 +961,39 @@ async def chat_opencode(
                                 def _save_candidate():
                                     db = database.SessionLocal()
                                     try:
-                                        rid = shared_response_memory.create_candidate(
-                                            db, full_text, oc_qtype, phase="opencode", language=oc_locale,
+                                        rid = None
+                                        try:
+                                            rid = shared_response_memory.create_candidate(
+                                                db, full_text, oc_qtype, phase="opencode", language=oc_locale,
+                                            )
+                                        except Exception:
+                                            rid = None
+                                        log_entry = models.Log(
+                                            session_id=request.session_id,
+                                            action="opencode_chat",
+                                            username=identity.get("username") or None,
+                                            email=identity.get("email") or None,
+                                            anonymous_research_code=code_for_identity(db, identity),
+                                            provider="opencode",
+                                            model_name=OPENCODE_CHAT_MODEL,
+                                            questionnaire_type=oc_qtype,
+                                            phase="opencode",
+                                            mode="opencode",
+                                            response_id=rid,
+                                            details=pii.redact_details({
+                                                "workspace_key": key,
+                                                "duration_ms": int((time.monotonic() - started_at) * 1000),
+                                                "message_count": message_count,
+                                                "seed": bool(request.seed),
+                                                "provider": "opencode",
+                                                "model": OPENCODE_CHAT_MODEL,
+                                                "questionnaire_type": oc_qtype,
+                                                "locale": oc_locale,
+                                                "user_input": prompt,
+                                                "bot_response": full_text,
+                                            }, "user_input", "bot_response"),
                                         )
+                                        db.add(log_entry)
                                         db.commit()
                                         return rid
                                     except Exception:

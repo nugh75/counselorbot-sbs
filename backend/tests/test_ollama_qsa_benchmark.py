@@ -818,7 +818,7 @@ def print_report(results: list[ModelResults]):
     print(f"{'=' * 78}\n")
 
     for mr in results:
-        print(f"📦 Modello: {mr.model}")
+        print(f"Modello: {mr.model}")
         print(f"   Step validi: {len(mr._valid_steps)}/{len(mr.steps)}  "
               f"Affidabilità: {mr.reliability:.0f}%")
         print(f"   Ø TTFT: {_fmt_ms(mr.avg_ttft)}  "
@@ -848,7 +848,7 @@ def print_report(results: list[ModelResults]):
 
         if mr.concurrency:
             c = mr.concurrency
-            print(f"   ⚡ Test concorrenza ({c.n_users} utenti simultanei, passo «{c.step_id}»):")
+            print(f"   Test concorrenza ({c.n_users} utenti simultanei, passo «{c.step_id}»):")
             print(f"      Parete: {_fmt_ms(c.total_wall_ms)}  "
                   f"Ø Latenza: {_fmt_ms(c.avg_latency_ms)}  "
                   f"P50: {_fmt_ms(c.p50_ms)}  P95: {_fmt_ms(c.p95_ms)}  "
@@ -902,7 +902,7 @@ def print_report(results: list[ModelResults]):
 
         for mr in sorted_results:
             if mr.reliability < 50:
-                print(f"  ⚠️  {mr.model}: affidabilità {mr.reliability:.0f}% — "
+                print(f"  ATTENZIONE {mr.model}: affidabilità {mr.reliability:.0f}% — "
                       f"SCONSIGLIATO per uso production")
     print(f"{'=' * 78}\n")
 
@@ -999,7 +999,7 @@ def _markdown_report(results: list[ModelResults]) -> str:
 
         for mr in sorted_results:
             if mr.reliability < 50:
-                lines.append(f"- ⚠️ **{mr.model}**: affidabilità {mr.reliability:.0f}% — SCONSIGLIATO")
+                lines.append(f"- ATTENZIONE **{mr.model}**: affidabilità {mr.reliability:.0f}% — SCONSIGLIATO")
 
     lines.append("")
     lines.append("---")

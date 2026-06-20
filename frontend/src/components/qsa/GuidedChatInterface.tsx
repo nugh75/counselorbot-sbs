@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
 import { QUESTIONNAIRES } from '@/lib/questionnaires';
 import { streamChat } from '@/lib/chat-stream';
+import { getSelectedCounselorId } from '@/lib/counselor';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -655,6 +656,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         questionnaire_type: questionnaireType,
                         language: lang,
                         max_tokens: 700,
+                        counselor_id: getSelectedCounselorId(),
                     };
                 }
                 return {
@@ -667,6 +669,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     questionnaire_type: questionnaireType,
                     language: lang,
                     max_tokens: 700,
+                    counselor_id: getSelectedCounselorId(),
                 };
             };
 
@@ -821,6 +824,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 questionnaire_type: questionnaireType,
                 language: lang,
                 max_tokens: 900,
+                counselor_id: getSelectedCounselorId(),
             };
             if (scoresContextOverride) {
                 chatPayload.scores_context = scoresContextOverride;

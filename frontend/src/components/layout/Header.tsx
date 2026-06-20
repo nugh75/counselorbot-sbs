@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Bot, Cloud, LogIn, LogOut, Settings, User } from 'lucide-react';
+import { Bot, LayoutGrid, LogIn, LogOut, Settings, User } from 'lucide-react';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { HeaderCounselor } from './HeaderCounselor';
 import { ai4authLoginUrl, AI4AUTH_LOGOUT_URL, AI4EDUC_PORTAL_URL, AI4EDUC_MANAGER_URL, getIdentity, type Identity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 
@@ -23,21 +24,21 @@ export function Header() {
         <header className="console-header fixed top-0 left-0 right-0 z-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 h-full flex items-center gap-4">
                 <div className="flex items-center gap-3 min-w-0">
-                    <Cloud className="w-7 h-7 shrink-0 text-indigo-600" strokeWidth={1.8} />
-                    <div className="min-w-0 leading-tight">
-                        {/* Console ai4educ: portale per utenti, manager per admin. */}
-                        <a href={consoleUrl} className="block font-bold text-sm sm:text-base text-slate-900 whitespace-nowrap hover:opacity-80 transition-opacity" aria-label="ai4educ console">
-                            ai4educ console
-                        </a>
-                        {/* Anchor nativo: tornando alla home viene resettato il percorso a fasi. */}
-                        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-                        <a href="/" className="block text-xs text-slate-500 whitespace-nowrap hover:text-slate-900 transition-colors" aria-label={t('nav.homeAria')}>
-                            CounselorBot
-                        </a>
-                    </div>
+                    <Bot className="w-8 h-8 shrink-0 text-indigo-600" strokeWidth={1.8} />
+                    {/* CounselorBot e' il brand principale: titolo grande -> home. */}
+                    {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+                    <a href="/" className="block text-lg sm:text-2xl font-bold text-slate-900 whitespace-nowrap hover:opacity-80 transition-opacity leading-none" aria-label={t('nav.homeAria')}>
+                        CounselorBot
+                    </a>
                 </div>
 
                 <div className="ml-auto flex min-w-0 items-center gap-1">
+                    {/* Counselor selezionato: chip compatto, cliccabile per cambiarlo. */}
+                    <HeaderCounselor />
+                    {/* Tastino verso tutti i servizi della piattaforma ai4educ (portale/manager). */}
+                    <a href={consoleUrl} className="console-topbar-icon" title="Servizi piattaforma ai4educ" aria-label="Servizi piattaforma ai4educ">
+                        <LayoutGrid className="w-4 h-4" />
+                    </a>
                     <Link href="/assistente" className="console-topbar-icon" title="Assistente del sito" aria-label="Assistente del sito">
                         <Bot className="w-4 h-4" />
                     </Link>

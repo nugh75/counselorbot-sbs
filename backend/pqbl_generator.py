@@ -517,6 +517,7 @@ def generate_batch_for_chunk(
     language: str,
     question_prompt: str,
     provider: Optional[str] = None,
+    model: Optional[str] = None,
 ) -> List[dict]:
     """Genera 4 MCQ per un singolo chunk di testo.
 
@@ -535,7 +536,7 @@ def generate_batch_for_chunk(
         )
         logger.info(f"pQBL: chiamata LLM per chunk {chunk_index} (tentativo {_attempt + 1}/3)")
         try:
-            raw = ai.get_response(user_message, question_prompt, mode="pqbl-chunk", max_tokens=6000, provider=provider)
+            raw = ai.get_response(user_message, question_prompt, mode="pqbl-chunk", max_tokens=6000, provider=provider, model=model)
             logger.info(f"pQBL: risposta LLM ricevuta per chunk {chunk_index} ({len(raw)} caratteri)")
             payload = _parse_json_payload(raw)
         except ValueError as parse_err:

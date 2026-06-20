@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { QSAFactorCode, QSA_FACTORS, analyzeScore } from '@/lib/qsa-model';
 import { streamChat } from '@/lib/chat-stream';
+import { getSelectedCounselorId } from '@/lib/counselor';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -122,7 +123,7 @@ export function ChatInterface({ currentMode, onModeChange, scores }: ChatInterfa
                 : '';
 
             const { response } = await streamChat(
-                { message: userMessage, mode: currentMode, scores_context: scoresContext, questionnaire_type: 'QSA', language: lang },
+                { message: userMessage, mode: currentMode, scores_context: scoresContext, questionnaire_type: 'QSA', language: lang, counselor_id: getSelectedCounselorId() },
                 (full) => updateLast(full),
                 controller.signal,
             );

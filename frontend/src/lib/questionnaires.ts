@@ -12,7 +12,7 @@ export interface QuestionnaireConfig {
     factors: FactorDefinition[];
     invertedFactors: string[];
     color: string;
-    icon: string;
+    icon: 'chart' | 'clipboard' | 'target' | 'lightbulb' | 'clock' | 'compass' | 'briefcase';
     // Agent-only questionnaires are conducted entirely by the AI in chat:
     // no score-input form, no numeric factors (factors/factorPrefix empty).
     agentOnly?: boolean;
@@ -104,7 +104,7 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         factors: QSA_FACTOR_DEFINITIONS,
         invertedFactors: ['C3', 'C6', 'A1', 'A4', 'A5', 'A7'],
         color: 'bg-blue-500',
-        icon: '📊',
+        icon: 'chart',
     },
     QSAr: {
         id: 'QSAr',
@@ -115,7 +115,7 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         factors: QSAR_FACTOR_DEFINITIONS,
         invertedFactors: ['C4r', 'A1r'],
         color: 'bg-sky-500',
-        icon: '📋',
+        icon: 'clipboard',
     },
     QPCS: {
         id: 'QPCS',
@@ -126,7 +126,7 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         factors: QPCS_FACTOR_DEFINITIONS,
         invertedFactors: [],
         color: 'bg-purple-500',
-        icon: '🎯',
+        icon: 'target',
     },
     QPCC: {
         id: 'QPCC',
@@ -137,7 +137,7 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         factors: QPCC_FACTOR_DEFINITIONS,
         invertedFactors: [],
         color: 'bg-indigo-500',
-        icon: '💡',
+        icon: 'lightbulb',
     },
     ZTPI: {
         id: 'ZTPI',
@@ -148,7 +148,7 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         factors: ZTPI_FACTOR_DEFINITIONS,
         invertedFactors: ['T1', 'T4'],
         color: 'bg-amber-500',
-        icon: '⏰',
+        icon: 'clock',
     },
     SAVICKAS: {
         id: 'SAVICKAS',
@@ -159,7 +159,7 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         factors: [],
         invertedFactors: [],
         color: 'bg-emerald-500',
-        icon: '🧭',
+        icon: 'compass',
         agentOnly: true,
     },
     QAP: {
@@ -171,7 +171,7 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         factors: QAP_FACTOR_DEFINITIONS,
         invertedFactors: [],
         color: 'bg-green-500',
-        icon: '💼',
+        icon: 'briefcase',
     },
 };
 

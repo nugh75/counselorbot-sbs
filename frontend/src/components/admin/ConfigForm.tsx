@@ -42,6 +42,30 @@ const PROVIDERS: Record<string, { label: string; models: string[] }> = {
         label: 'Mistral AI',
         models: ['mistral-large-latest', 'mistral-medium', 'mistral-small']
     },
+    groq: {
+        label: 'Groq (veloce)',
+        models: ['llama-3.3-70b-versatile', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3-32b', 'llama-3.1-8b-instant']
+    },
+    cerebras: {
+        label: 'Cerebras (veloce)',
+        models: ['llama-3.3-70b', 'qwen-3-32b', 'gpt-oss-120b', 'llama3.1-8b']
+    },
+    deepseek: {
+        label: 'DeepSeek (diretto)',
+        models: ['deepseek-v4-flash', 'deepseek-v4-pro', 'deepseek-chat', 'deepseek-reasoner']
+    },
+    together: {
+        label: 'Together AI',
+        models: ['meta-llama/Llama-3.3-70B-Instruct-Turbo', 'Qwen/Qwen2.5-72B-Instruct-Turbo', 'mistralai/Mixtral-8x7B-Instruct-v0.1']
+    },
+    fireworks: {
+        label: 'Fireworks AI',
+        models: ['accounts/fireworks/models/llama-v3p3-70b-instruct', 'accounts/fireworks/models/qwen2p5-72b-instruct']
+    },
+    deepinfra: {
+        label: 'DeepInfra',
+        models: ['meta-llama/Llama-3.3-70B-Instruct', 'Qwen/Qwen2.5-72B-Instruct', 'mistralai/Mistral-Small-24B-Instruct-2501']
+    },
     openrouter: {
         label: 'OpenRouter',
         models: [
@@ -225,6 +249,12 @@ export function ConfigForm() {
         gemini: 'api_key_gemini',
         mistral: 'api_key_mistral',
         openrouter: 'api_key_openrouter',
+        groq: 'api_key_groq',
+        cerebras: 'api_key_cerebras',
+        deepseek: 'api_key_deepseek',
+        together: 'api_key_together',
+        fireworks: 'api_key_fireworks',
+        deepinfra: 'api_key_deepinfra',
     };
     const activeKeyField = PROVIDER_KEY_FIELD[activeProvider];
     const activeKeyMissing = !!activeKeyField
@@ -423,6 +453,12 @@ export function ConfigForm() {
         { key: 'api_key_gemini', label: 'API Key Gemini' },
         { key: 'api_key_mistral', label: 'API Key Mistral' },
         { key: 'api_key_openrouter', label: 'API Key OpenRouter' },
+        { key: 'api_key_groq', label: 'API Key Groq' },
+        { key: 'api_key_cerebras', label: 'API Key Cerebras' },
+        { key: 'api_key_deepseek', label: 'API Key DeepSeek' },
+        { key: 'api_key_together', label: 'API Key Together' },
+        { key: 'api_key_fireworks', label: 'API Key Fireworks' },
+        { key: 'api_key_deepinfra', label: 'API Key DeepInfra' },
         { key: 'ollama_ip', label: 'Ollama IP Address' },
         { key: 'llamacpp_url', label: 'llama.cpp / llama-swap URL' },
     ];
@@ -710,11 +746,7 @@ export function ConfigForm() {
                     const currentVal = configs.find(c => c.key === def.key)?.value || '';
                     const isEnvOverridden = envOverrides[def.key] || false;
                     const isActive =
-                        (activeProvider === 'openai' && def.key === 'api_key_openai') ||
-                        (activeProvider === 'anthropic' && def.key === 'api_key_anthropic') ||
-                        (activeProvider === 'gemini' && def.key === 'api_key_gemini') ||
-                        (activeProvider === 'mistral' && def.key === 'api_key_mistral') ||
-                        (activeProvider === 'openrouter' && def.key === 'api_key_openrouter') ||
+                        (!!activeKeyField && def.key === activeKeyField) ||
                         (activeProvider === 'ollama' && def.key === 'ollama_ip') ||
                         (activeProvider === 'llamacpp' && def.key === 'llamacpp_url');
 

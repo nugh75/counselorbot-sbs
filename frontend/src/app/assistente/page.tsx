@@ -25,7 +25,7 @@ interface Msg {
     content: string;
     sources?: string[];
     responseId?: string;
-    feedback?: boolean;       // true=👍, false=👎, undefined=non votato
+    feedback?: boolean;       // true=positivo, false=negativo, undefined=non votato
     audience?: Audience;      // pubblico al momento della risposta
 }
 
@@ -108,7 +108,7 @@ export default function AssistentePage() {
             });
             if (result.session_id) setSessionId(result.session_id);
         } catch (e) {
-            updateLast(`⚠️ ${e instanceof Error ? e.message : 'Errore nella risposta.'}`);
+            updateLast(`Errore: ${e instanceof Error ? e.message : 'Errore nella risposta.'}`);
         } finally {
             setLoading(false);
         }
