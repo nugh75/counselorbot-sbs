@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { AlertTriangle, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { AdministrationCopy, AdministrationInstrument } from '@/lib/test-administrations';
 import { addCompletedProfile } from '@/lib/profile-tracker';
+import { ai4authLoginUrl } from '@/lib/auth';
 
 // Profilo calcolato lato server (POST /api/instruments/{code}/score).
 interface ScoreResult {
@@ -41,76 +42,210 @@ function generateUUID() {
     });
 }
 
+const ANONYMOUS_RESEARCH_CODE_STORAGE_KEY = 'counselorbot.anonymousResearchCode.v1';
+const ANONYMOUS_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+function randomIndex(max: number) {
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+        const bytes = new Uint32Array(1);
+        crypto.getRandomValues(bytes);
+        return bytes[0] % max;
+    }
+    return Math.floor(Math.random() * max);
+}
+
+function generateAnonymousResearchCode() {
+    const chars = Array.from({ length: 8 }, () => ANONYMOUS_CODE_ALPHABET[randomIndex(ANONYMOUS_CODE_ALPHABET.length)]).join('');
+    return `SBS-${chars.slice(0, 4)}-${chars.slice(4)}`;
+}
+
+function getOrCreateAnonymousResearchCode() {
+    if (typeof window === 'undefined') return generateAnonymousResearchCode();
+    try {
+        const existing = window.localStorage.getItem(ANONYMOUS_RESEARCH_CODE_STORAGE_KEY);
+        if (existing) return existing;
+        const generated = generateAnonymousResearchCode();
+        window.localStorage.setItem(ANONYMOUS_RESEARCH_CODE_STORAGE_KEY, generated);
+        return generated;
+    } catch {
+        return generateAnonymousResearchCode();
+    }
+}
+
+async function fetchAnonymousResearchCode(): Promise<{ code: string | null; authenticated: boolean }> {
+    try {
+        const res = await fetch('/api/user/anonymous-research-code');
+        if (res.status === 401) return { code: null, authenticated: false };
+        if (!res.ok) return { code: null, authenticated: true };
+        const data = await res.json();
+        return {
+            code: typeof data?.anonymous_research_code === 'string' ? data.anonymous_research_code : null,
+            authenticated: true,
+        };
+    } catch {
+        return { code: null, authenticated: true };
+    }
+}
+
+function rememberAnonymousResearchCode(code: string) {
+    if (typeof window === 'undefined') return;
+    try {
+        window.localStorage.setItem(ANONYMOUS_RESEARCH_CODE_STORAGE_KEY, code);
+    } catch {
+        // Il codice server resta quello autorevole anche se localStorage non e' disponibile.
+    }
+}
+
 // Demographic/validation form is not driven by AdministrationCopy, so localize it here per locale.
 interface MetaCopy {
     sectionTitle: string;
     anonHint: string;
-    codeLabel: string;
-    cohortLabel: string;
+    researchCodeLabel: string;
+    researchCodeHint: string;
+    participationContextLabel: string;
+    recruitmentSourceLabel: string;
+    studyCodeLabel: string;
+    studyCodePlaceholder: string;
     ageLabel: string;
     genderLabel: string;
     eduLabel: string;
     eduPlaceholder: string;
     consent: string;
     consentError: string;
+    loginRequired: string;
+    loginAction: string;
     preferNot: string;
     under18: string;
     female: string;
     male: string;
     other: string;
+    contextLesson: string;
+    contextLibrary: string;
+    contextHome: string;
+    contextLab: string;
+    contextRemote: string;
+    contextEvent: string;
+    contextOther: string;
+    sourceTeacher: string;
+    sourceResearcher: string;
+    sourceQr: string;
+    sourceClassActivity: string;
+    sourceWebsite: string;
+    sourcePeer: string;
+    sourceOther: string;
 }
 
 const META_COPY: Record<'en' | 'es' | 'sv', MetaCopy> = {
     en: {
         sectionTitle: 'Validation data',
-        anonHint: 'Use only an anonymous code. Do not enter names, surnames, or personal email addresses.',
-        codeLabel: 'Anonymous code',
-        cohortLabel: 'Group / cohort',
+        anonHint: 'The app generates an anonymous research code. Do not enter names, surnames, or personal email addresses in the optional fields.',
+        researchCodeLabel: 'Anonymous research code',
+        researchCodeHint: 'Generated automatically from your authenticated session and reused for later questionnaires.',
+        participationContextLabel: 'Where are you completing it?',
+        recruitmentSourceLabel: 'How were you invited?',
+        studyCodeLabel: 'Study code',
+        studyCodePlaceholder: 'Optional code provided by the researcher or teacher',
         ageLabel: 'Age',
         genderLabel: 'Gender',
         eduLabel: 'Educational context',
         eduPlaceholder: 'University, course, degree, or group',
         consent: 'I agree to take part in this validation administration and understand that data will be handled anonymously for research analysis.',
         consentError: 'You must accept the participation conditions before submitting the administration.',
+        loginRequired: 'Please sign in before completing the questionnaire, so your anonymous research code and results can be saved in the database.',
+        loginAction: 'Sign in',
         preferNot: 'Prefer not to answer',
         under18: 'Under 18',
         female: 'Female',
         male: 'Male',
         other: 'Other',
+        contextLesson: 'Lesson / classroom',
+        contextLibrary: 'Library / study room',
+        contextHome: 'Home',
+        contextLab: 'School or university lab',
+        contextRemote: 'Online / remote',
+        contextEvent: 'Workshop / event',
+        contextOther: 'Other context',
+        sourceTeacher: 'Teacher invitation',
+        sourceResearcher: 'Researcher invitation',
+        sourceQr: 'QR code / poster',
+        sourceClassActivity: 'Class activity',
+        sourceWebsite: 'Website or platform',
+        sourcePeer: 'Friend / peer',
+        sourceOther: 'Other invitation',
     },
     es: {
         sectionTitle: 'Datos de validacion',
-        anonHint: 'Usa solo un codigo anonimo. No introduzcas nombres, apellidos ni correos personales.',
-        codeLabel: 'Codigo anonimo',
-        cohortLabel: 'Grupo / cohorte',
+        anonHint: 'La aplicacion genera un codigo anonimo de investigacion. No introduzcas nombres, apellidos ni correos personales en los campos opcionales.',
+        researchCodeLabel: 'Codigo anonimo de investigacion',
+        researchCodeHint: 'Generado automaticamente a partir de tu sesion autenticada y reutilizado para cuestionarios posteriores.',
+        participationContextLabel: 'Donde estas completandolo?',
+        recruitmentSourceLabel: 'Como recibiste la invitacion?',
+        studyCodeLabel: 'Codigo del estudio',
+        studyCodePlaceholder: 'Codigo opcional proporcionado por el investigador o docente',
         ageLabel: 'Edad',
         genderLabel: 'Genero',
         eduLabel: 'Contexto educativo',
         eduPlaceholder: 'Universidad, curso, titulacion o grupo',
         consent: 'Acepto participar en esta administracion de validacion y entiendo que los datos se trataran de forma anonima para analisis de investigacion.',
         consentError: 'Debes aceptar las condiciones de participacion antes de enviar la administracion.',
+        loginRequired: 'Inicia sesion antes de completar el cuestionario, para que tu codigo anonimo y los resultados se guarden en la base de datos.',
+        loginAction: 'Iniciar sesion',
         preferNot: 'Prefiero no responder',
         under18: 'Menos de 18',
         female: 'Mujer',
         male: 'Hombre',
         other: 'Otro',
+        contextLesson: 'Clase / aula',
+        contextLibrary: 'Biblioteca / sala de estudio',
+        contextHome: 'Casa',
+        contextLab: 'Laboratorio escolar o universitario',
+        contextRemote: 'En linea / remoto',
+        contextEvent: 'Taller / evento',
+        contextOther: 'Otro contexto',
+        sourceTeacher: 'Invitacion de docente',
+        sourceResearcher: 'Invitacion de investigador',
+        sourceQr: 'Codigo QR / cartel',
+        sourceClassActivity: 'Actividad de clase',
+        sourceWebsite: 'Sitio web o plataforma',
+        sourcePeer: 'Amigo / companero',
+        sourceOther: 'Otra invitacion',
     },
     sv: {
         sectionTitle: 'Valideringsdata',
-        anonHint: 'Använd endast en anonym kod. Ange inte namn, efternamn eller personliga e-postadresser.',
-        codeLabel: 'Anonym kod',
-        cohortLabel: 'Grupp / kohort',
+        anonHint: 'Appen skapar en anonym forskningskod. Ange inte namn, efternamn eller personliga e-postadresser i valfria fält.',
+        researchCodeLabel: 'Anonym forskningskod',
+        researchCodeHint: 'Skapas automatiskt fran din inloggade session och ateranvands for senare formular.',
+        participationContextLabel: 'Var fyller du i formularet?',
+        recruitmentSourceLabel: 'Hur blev du inbjuden?',
+        studyCodeLabel: 'Studiekod',
+        studyCodePlaceholder: 'Valfri kod fran forskare eller larare',
         ageLabel: 'Ålder',
         genderLabel: 'Kön',
         eduLabel: 'Utbildningskontext',
         eduPlaceholder: 'Universitet, kurs, examen eller grupp',
         consent: 'Jag samtycker till att delta i detta valideringsgenomförande och förstår att uppgifterna behandlas anonymt för forskningsanalys.',
         consentError: 'Du måste godkänna villkoren för deltagande innan du skickar in genomförandet.',
+        loginRequired: 'Logga in innan du fyller i formularet, sa att din anonyma forskningskod och dina resultat kan sparas i databasen.',
+        loginAction: 'Logga in',
         preferNot: 'Vill inte svara',
         under18: 'Under 18',
         female: 'Kvinna',
         male: 'Man',
         other: 'Annat',
+        contextLesson: 'Lektion / klassrum',
+        contextLibrary: 'Bibliotek / studierum',
+        contextHome: 'Hemma',
+        contextLab: 'Skol- eller universitetslabb',
+        contextRemote: 'Online / distans',
+        contextEvent: 'Workshop / evenemang',
+        contextOther: 'Annan kontext',
+        sourceTeacher: 'Inbjudan fran larare',
+        sourceResearcher: 'Inbjudan fran forskare',
+        sourceQr: 'QR-kod / affisch',
+        sourceClassActivity: 'Klassaktivitet',
+        sourceWebsite: 'Webbplats eller plattform',
+        sourcePeer: 'Van / studiekamrat',
+        sourceOther: 'Annan inbjudan',
     },
 };
 
@@ -130,18 +265,41 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
     // Testo item: dal backend (DB editabile) se disponibile, altrimenti fallback statico.
     const [backendItems, setBackendItems] = useState<string[] | null>(null);
     const [backendItemsChecked, setBackendItemsChecked] = useState(false);
+    const [anonymousResearchCode, setAnonymousResearchCode] = useState('');
+    const [codeRequiresLogin, setCodeRequiresLogin] = useState(false);
+    const [loginHref, setLoginHref] = useState('/login');
     const [metadata, setMetadata] = useState({
-        participant_code: '',
         age_range: '',
         gender: '',
         education_context: '',
-        cohort: searchParams.get('cohort') ?? '',
-        study: searchParams.get('study') ?? '',
+        participation_context: searchParams.get('context') ?? '',
+        recruitment_source: searchParams.get('source') ?? '',
+        study: searchParams.get('study') ?? searchParams.get('cohort') ?? '',
         consent: false,
     });
     const scaleMax = copy.scale.length;
     const meta = META_COPY[locale];
     const versionLabel = searchParams.get('version') || `${instrument}_${locale}_2026_v1`;
+
+    useEffect(() => {
+        let cancelled = false;
+        setLoginHref(ai4authLoginUrl(`${window.location.pathname}${window.location.search}`));
+        fetchAnonymousResearchCode().then(({ code: serverCode, authenticated }) => {
+            if (cancelled) return;
+            setCodeRequiresLogin(!authenticated);
+            if (serverCode) {
+                rememberAnonymousResearchCode(serverCode);
+                setAnonymousResearchCode(serverCode);
+                return;
+            }
+            if (authenticated) {
+                const fallbackCode = getOrCreateAnonymousResearchCode();
+                rememberAnonymousResearchCode(fallbackCode);
+                setAnonymousResearchCode(fallbackCode);
+            }
+        });
+        return () => { cancelled = true; };
+    }, []);
 
     // Carica gli item dal catalogo DB-driven (le modifiche admin diventano visibili).
     useEffect(() => {
@@ -197,6 +355,10 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
 
     const submit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        if (codeRequiresLogin) {
+            setError(meta.loginRequired);
+            return;
+        }
         if (!metadata.consent) {
             setError(meta.consentError);
             return;
@@ -213,6 +375,8 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
         setError('');
 
         const newSessionId = generateUUID();
+        const researchCode = anonymousResearchCode || getOrCreateAnonymousResearchCode();
+        if (!anonymousResearchCode) setAnonymousResearchCode(researchCode);
         setCreatedSessionId(newSessionId);
         const durationSeconds = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
 
@@ -231,18 +395,29 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                     response_metadata: {
                         item_count: displayItems.length,
                         source: 'somministrazione',
-                        participant_code: metadata.participant_code.trim(),
+                        participant_code: researchCode,
+                        anonymous_research_code: researchCode,
+                        participant_code_source: 'auto_device',
                         age_range: metadata.age_range,
                         gender: metadata.gender,
                         education_context: metadata.education_context.trim(),
-                        cohort: metadata.cohort.trim(),
+                        participation_context: metadata.participation_context,
+                        recruitment_source: metadata.recruitment_source,
                         study: metadata.study.trim(),
+                        study_code: metadata.study.trim(),
                         consent: metadata.consent,
                     },
                     duration_seconds: durationSeconds,
                 }),
             });
-            if (!res.ok) throw new Error(`score failed: ${res.status}`);
+            if (!res.ok) {
+                if (res.status === 401) {
+                    setCodeRequiresLogin(true);
+                    setError(meta.loginRequired);
+                    return;
+                }
+                throw new Error(`score failed: ${res.status}`);
+            }
             const profile: ScoreResponse = await res.json();
             setResults(profile.results);
 
@@ -402,24 +577,73 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                 <div className="grid gap-3 md:grid-cols-2">
                     <label className="block">
                         <span className="text-xs font-semibold uppercase text-slate-500">
-                            {meta.codeLabel}
+                            {meta.researchCodeLabel}
                         </span>
                         <input
-                            value={metadata.participant_code}
-                            onChange={(event) => setMetadata((previous) => ({ ...previous, participant_code: event.target.value }))}
-                            placeholder="ES-001"
+                            readOnly
+                            value={anonymousResearchCode || '...'}
+                            className="mt-1 w-full rounded-md border border-slate-300 bg-slate-100 px-3 py-2 font-mono text-sm text-slate-700"
+                        />
+                        <span className="mt-1 block text-xs leading-relaxed text-slate-500">
+                            {meta.researchCodeHint}
+                        </span>
+                        {codeRequiresLogin && (
+                            <a
+                                href={loginHref}
+                                className="mt-2 inline-flex rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+                            >
+                                {meta.loginAction}
+                            </a>
+                        )}
+                    </label>
+                    <label className="block">
+                        <span className="text-xs font-semibold uppercase text-slate-500">
+                            {meta.studyCodeLabel}
+                        </span>
+                        <input
+                            value={metadata.study}
+                            onChange={(event) => setMetadata((previous) => ({ ...previous, study: event.target.value }))}
+                            placeholder={meta.studyCodePlaceholder}
                             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                         />
                     </label>
                     <label className="block">
                         <span className="text-xs font-semibold uppercase text-slate-500">
-                            {meta.cohortLabel}
+                            {meta.participationContextLabel}
                         </span>
-                        <input
-                            value={metadata.cohort}
-                            onChange={(event) => setMetadata((previous) => ({ ...previous, cohort: event.target.value }))}
+                        <select
+                            value={metadata.participation_context}
+                            onChange={(event) => setMetadata((previous) => ({ ...previous, participation_context: event.target.value }))}
                             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                        />
+                        >
+                            <option value="">{meta.preferNot}</option>
+                            <option value="lesson_classroom">{meta.contextLesson}</option>
+                            <option value="library_study_room">{meta.contextLibrary}</option>
+                            <option value="home">{meta.contextHome}</option>
+                            <option value="school_university_lab">{meta.contextLab}</option>
+                            <option value="online_remote">{meta.contextRemote}</option>
+                            <option value="workshop_event">{meta.contextEvent}</option>
+                            <option value="other">{meta.contextOther}</option>
+                        </select>
+                    </label>
+                    <label className="block">
+                        <span className="text-xs font-semibold uppercase text-slate-500">
+                            {meta.recruitmentSourceLabel}
+                        </span>
+                        <select
+                            value={metadata.recruitment_source}
+                            onChange={(event) => setMetadata((previous) => ({ ...previous, recruitment_source: event.target.value }))}
+                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        >
+                            <option value="">{meta.preferNot}</option>
+                            <option value="teacher_invitation">{meta.sourceTeacher}</option>
+                            <option value="researcher_invitation">{meta.sourceResearcher}</option>
+                            <option value="qr_poster">{meta.sourceQr}</option>
+                            <option value="class_activity">{meta.sourceClassActivity}</option>
+                            <option value="website_platform">{meta.sourceWebsite}</option>
+                            <option value="peer_invitation">{meta.sourcePeer}</option>
+                            <option value="other">{meta.sourceOther}</option>
+                        </select>
                     </label>
                     <label className="block">
                         <span className="text-xs font-semibold uppercase text-slate-500">

@@ -3,9 +3,13 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap } from 'lucide-react';
+import { ArrowLeft, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users } from 'lucide-react';
 import { ConfigForm } from '@/components/admin/ConfigForm';
 import { LogViewer } from '@/components/admin/LogViewer';
+import { CostStats } from '@/components/admin/CostStats';
+import { PresetsPanel } from '@/components/admin/PresetsPanel';
+import { BenchmarkPanel } from '@/components/admin/BenchmarkPanel';
+import { CounselorsPanel } from '@/components/admin/CounselorsPanel';
 import { SurveyViewer } from '@/components/admin/SurveyViewer';
 import { QuestionnaireResultsViewer } from '@/components/admin/QuestionnaireResultsViewer';
 import { QuestionnaireEditor } from '@/components/admin/QuestionnaireEditor';
@@ -20,7 +24,7 @@ import { cn } from '@/lib/utils';
 export default function AdminPage() {
     const router = useRouter();
     const { t } = useI18n();
-    const [activeTab, setActiveTab] = useState<'config' | 'logs' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'training' | 'pqbl'>('config');
+    const [activeTab, setActiveTab] = useState<'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'training' | 'pqbl'>('config');
     const [authState, setAuthState] = useState<'loading' | 'admin' | 'forbidden'>('loading');
 
     useEffect(() => {
@@ -103,6 +107,54 @@ export default function AdminPage() {
                         {t('admin.tab.logs')}
                     </button>
                     <button
+                        onClick={() => setActiveTab('costs')}
+                        className={cn(
+                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
+                            activeTab === 'costs'
+                                ? "bg-indigo-50 border-indigo-100 text-indigo-600"
+                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                        )}
+                    >
+                        <Coins className="w-4 h-4" />
+                        {t('admin.tab.costs')}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('presets')}
+                        className={cn(
+                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
+                            activeTab === 'presets'
+                                ? "bg-indigo-50 border-indigo-100 text-indigo-600"
+                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                        )}
+                    >
+                        <SlidersHorizontal className="w-4 h-4" />
+                        {t('admin.tab.presets')}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('benchmark')}
+                        className={cn(
+                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
+                            activeTab === 'benchmark'
+                                ? "bg-indigo-50 border-indigo-100 text-indigo-600"
+                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                        )}
+                    >
+                        <Gauge className="w-4 h-4" />
+                        {t('admin.tab.benchmark')}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('counselors')}
+                        className={cn(
+                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
+                            activeTab === 'counselors'
+                                ? "bg-indigo-50 border-indigo-100 text-indigo-600"
+                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                        )}
+                    >
+                        <Users className="w-4 h-4" />
+                        {t('admin.tab.counselors')}
+                    </button>
+                    <button
                         onClick={() => setActiveTab('surveys')}
                         className={cn(
                             "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
@@ -180,6 +232,10 @@ export default function AdminPage() {
                 <div className="animate-fade-in-up">
                     {activeTab === 'config' && <ConfigForm />}
                     {activeTab === 'logs' && <LogViewer />}
+                    {activeTab === 'costs' && <CostStats />}
+                    {activeTab === 'presets' && <PresetsPanel />}
+                    {activeTab === 'benchmark' && <BenchmarkPanel />}
+                    {activeTab === 'counselors' && <CounselorsPanel />}
                     {activeTab === 'surveys' && <SurveyViewer />}
                     {activeTab === 'results' && <QuestionnaireResultsViewer />}
                     {activeTab === 'questionnaires' && <QuestionnaireEditor />}

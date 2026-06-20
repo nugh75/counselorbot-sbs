@@ -11,6 +11,8 @@ from typing import List, Optional
 from fastapi import HTTPException
 
 from . import models
+from . import database
+from .anonymous_codes import code_for_identity
 from .ai_service import AIService
 from .memory_service import session_memory
 from .strategy_memory import shared_response_memory, strategy_memory
@@ -39,6 +41,83 @@ async def _memory_cleanup_loop(interval_seconds: int = 600):
         removed = session_memory.cleanup_expired()
         if removed:
             logger.info(f"Memory cleanup: rimosse {removed} sessioni scadute")
+
+
+def _get_int_config(db, key: str, default: int) -> int:
+    """Legge una config intera dalla tabella configs (fallback a default)."""
+    try:
+        row = db.query(models.Config).filter(models.Config.key == key).first()
+        if row and row.value not in (None, ""):
+            return int(row.value)
+    except (ValueError, TypeError):
+        pass
+    return default
+
+
+def log_error(db, session_id: str, error: str, *, identity: Optional[dict] = None,
+              action: str = "chat_error", questionnaire_type: Optional[str] = None,
+              mode: Optional[str] = None, phase: Optional[str] = None) -> None:
+    """Scrive un record di log per un errore di chat. Best-effort: non propaga
+    eccezioni (un fallimento di logging non deve peggiorare l'errore originale)."""
+    try:
+        ident = identity or {}
+        db.add(models.Log(
+            session_id=session_id,
+            action=action,
+            username=ident.get("username") or None,
+            email=ident.get("email") or None,
+            anonymous_research_code=code_for_identity(db, ident),
+            questionnaire_type=questionnaire_type,
+            mode=mode,
+            phase=phase,
+            details={"error": str(error)[:1000]},
+        ))
+        db.commit()
+    except Exception as e:  # pragma: no cover - difensivo
+        logger.warning(f"Scrittura log di errore fallita: {e}")
+        try:
+            db.rollback()
+        except Exception:
+            pass
+
+
+async def _log_retention_loop(interval_seconds: int = 3600):
+    """Background task: cancella i log più vecchi di `log_retention_days` (default 90).
+
+    Rispetta GDPR (diritto alla limitazione di conservazione) in un contesto di
+    counseling con studenti. Il job gira ogni ora; se la config è 0 o negativa,
+    la retention è disattivata (nessuna cancellazione).
+    """
+    from sqlalchemy import text as sa_text
+    from .database import SessionLocal as _SessionLocal
+    while True:
+        await asyncio.sleep(interval_seconds)
+        db = _SessionLocal()
+        try:
+            days = _get_int_config(db, "log_retention_days", 90)
+            if days <= 0:
+                continue
+            dialect = database.engine.dialect.name
+            if dialect == "postgresql":
+                stmt = sa_text(
+                    "DELETE FROM logs WHERE timestamp < now() - (:days || ' days')::interval"
+                )
+                result = db.execute(stmt, {"days": days})
+            else:
+                # SQLite fallback (local-dev): timestamp senza timezone.
+                import datetime as _dt
+                cutoff = _dt.datetime.utcnow() - _dt.timedelta(days=days)
+                stmt = sa_text("DELETE FROM logs WHERE timestamp < :cutoff")
+                result = db.execute(stmt, {"cutoff": cutoff})
+            db.commit()
+            deleted = getattr(result, "rowcount", 0) or 0
+            if deleted:
+                logger.info(f"Log retention: cancellati {deleted} record > {days}gg")
+        except Exception as e:
+            logger.warning(f"Log retention loop fallito: {e}")
+            db.rollback()
+        finally:
+            db.close()
 
 
 def _ensure_questionnaire_guided_steps(db, questionnaire_type: str) -> None:
@@ -84,20 +163,6 @@ def _clamp_max_tokens(value: Optional[int], default: Optional[int] = None) -> Op
     if value is None:
         return default
     return max(128, min(int(value), 8192))
-
-
-# Con il thinking attivo il reasoning consuma il budget di output: serve headroom
-# extra perche' la risposta vera abbia spazio dopo il ragionamento.
-# I modelli reasoning (es. qwen3) producono ragionamenti lunghi: budget generoso.
-_THINKING_MIN_OUTPUT_TOKENS = 6000
-
-
-def _apply_thinking_token_headroom(max_tokens: Optional[int], ai_service: "AIService") -> Optional[int]:
-    if ai_service.disable_thinking:
-        return max_tokens
-    if max_tokens is None:
-        return _THINKING_MIN_OUTPUT_TOKENS
-    return max(max_tokens, _THINKING_MIN_OUTPUT_TOKENS)
 
 
 # Lingue supportate per la risposta dell'AI (codice -> nome inglese, nome nativo)

@@ -13,8 +13,10 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from .. import auth, database, models
+from .. import auth, database, models, model_pricing
+from ..anonymous_codes import code_for_identity
 from ..ai_service import AIService, AIError
+from .. import pii
 from ..api_models import ChatRequest, QsaAuditRequest, TTSRequest
 from ..memory_service import session_memory
 from ..strategy_memory import shared_response_memory
@@ -46,7 +48,6 @@ from ..chat_logic import (
     _annotate_qsa_factor_codes,
     _apply_language_directive,
     _apply_qsa_factor_directive,
-    _apply_thinking_token_headroom,
     _clamp_max_tokens,
     _ensure_questionnaire_guided_steps,
     _is_strategy_questionnaire,
@@ -66,6 +67,66 @@ get_db = database.get_db
 logger = logging.getLogger(__name__)
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 ALLOWED_UPLOAD_SUFFIXES = {".pdf", ".jpg", ".jpeg", ".png"}
+
+
+def _usage_cost_usd(usage: dict | None, provider: str | None = None, model: str | None = None) -> float | None:
+    # 1. Costo esplicito nell'usage (OpenRouter lo restituisce).
+    if isinstance(usage, dict):
+        for key in ("cost", "cost_usd", "total_cost"):
+            value = usage.get(key)
+            if isinstance(value, (int, float)):
+                return float(value)
+            if isinstance(value, str):
+                try:
+                    return float(value)
+                except ValueError:
+                    continue
+    # 2. Stima dai token via tabella prezzi (provider diretti senza costo).
+    return model_pricing.estimate_cost_usd(provider, model, usage)
+
+
+def _resolve_counselor(db, counselor_id):
+    """(provider, model, persona, disable_thinking, reasoning_budget) dal counselor + preset.
+
+    provider/model None -> usa la config globale; persona None -> nessun prefisso
+    al system prompt; disable_thinking None -> usa la config globale;
+    reasoning_budget None -> usa il default della famiglia del modello.
+    """
+    if not counselor_id:
+        return None, None, None, None, None
+    counselor = (
+        db.query(models.Counselor)
+        .filter(models.Counselor.id == counselor_id, models.Counselor.is_active.is_(True))
+        .first()
+    )
+    if not counselor:
+        return None, None, None, None, None
+    provider = model = None
+    disable_thinking = None
+    reasoning_budget = None
+    if counselor.preset_id:
+        preset = (
+            db.query(models.ModelPreset)
+            .filter(models.ModelPreset.id == counselor.preset_id)
+            .first()
+        )
+        if preset:
+            provider, model = preset.provider, preset.model
+            disable_thinking = bool(preset.disable_thinking)
+            reasoning_budget = preset.reasoning_budget
+    return provider, model, counselor.persona, disable_thinking, reasoning_budget
+
+
+def _apply_counselor_overrides(
+    ai_service: AIService,
+    disable_thinking: bool | None,
+    reasoning_budget: int | None = None,
+) -> None:
+    if disable_thinking is not None:
+        ai_service.disable_thinking = bool(disable_thinking)
+        ai_service.config["disable_thinking"] = "true" if disable_thinking else "false"
+    if reasoning_budget is not None:
+        ai_service.reasoning_budget_override = reasoning_budget
 
 # Questionari condotti dall'agente AI: testi intro/conclusione per tipo
 # (chiave_intro, default_intro, chiave_conclusione, default_conclusione).
@@ -161,7 +222,10 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
 
     # 1. Retrieve Configuration and System Prompt based on Mode
     ai_service = AIService(db)
-    max_tokens = _apply_thinking_token_headroom(_clamp_max_tokens(request.max_tokens), ai_service)
+    c_provider, c_model, c_persona, c_disable_thinking, c_reasoning_budget = _resolve_counselor(db, request.counselor_id)
+    _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
+    # L'headroom per il reasoning e' applicato dinamicamente per-modello in AIService.
+    max_tokens = _clamp_max_tokens(request.max_tokens)
 
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
     system_prompt = _apply_language_directive(system_prompt, request.language)
@@ -228,14 +292,20 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         conversation_summary = _sanitize_ztpi_user_text(conversation_summary, request.language)
 
     # 4. Get AI Response (con contesto conversazionale)
+    if c_persona:
+        system_prompt = f"{c_persona.strip()}\n\n{system_prompt}"
     try:
         response_content = ai_service.get_response(
             full_message, system_prompt, request.mode,
             conversation_summary=conversation_summary,
             max_tokens=max_tokens,
+            provider=c_provider, model=c_model,
         )
     except AIError as e:
         logger.error(f"Errore AI chat session {session_id}: {e}")
+        from ..chat_logic import log_error as _log_error
+        _log_error(db, session_id, str(e), identity=identity, questionnaire_type=questionnaire_type,
+                   mode=request.mode, phase=request.phase)
         raise HTTPException(status_code=502, detail=str(e))
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         response_content = _sanitize_ztpi_user_text(response_content, request.language)
@@ -255,10 +325,23 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     )
 
     # 6. Log Interaction
+    _provider = c_provider or ai_service.config.get('active_provider', 'unknown')
+    _model = c_model or ai_service.config.get('model_name', 'unknown')
+    _usage = getattr(ai_service, "last_usage", None)
+    _cost_usd = _usage_cost_usd(_usage, _provider, _model)
     log_entry = models.Log(
         session_id=session_id,
         action="chat_message",
-        details={
+        username=identity.get("username") or None,
+        email=identity.get("email") or None,
+        anonymous_research_code=code_for_identity(db, identity),
+        provider=_provider,
+        model_name=_model,
+        cost_usd=_cost_usd,
+        questionnaire_type=questionnaire_type,
+        phase=request.phase or None,
+        mode=request.mode or None,
+        details=pii.redact_details({
             "mode": request.mode,
             "phase": request.phase,
             "user_input": request.message,
@@ -266,11 +349,13 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             "bot_response": response_content,
             "system_prompt_key": prompt_key,
             "guided_phase_prompt_key": phase_prompt_key,
-            "provider": ai_service.config.get('active_provider', 'unknown'),
-            "model": ai_service.config.get('model_name', 'unknown'),
+            "provider": _provider,
+            "model": _model,
             "questionnaire_type": questionnaire_type,
             "conversation_summary_length": len(conversation_summary),
-        }
+            "usage": _usage,
+            "cost_usd": _cost_usd,
+        }, "user_input", "effective_user_input", "bot_response"),
     )
     db.add(log_entry)
     response_id = shared_response_memory.create_candidate(
@@ -280,6 +365,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         request.phase or "",
         request.language or "it",
     )
+    if response_id:
+        log_entry.response_id = response_id
     db.commit()
 
     return {
@@ -306,7 +393,10 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
 
     # Preparazione (usa la db della richiesta, ancora aperta qui)
     ai_service = AIService(db)
-    max_tokens = _apply_thinking_token_headroom(_clamp_max_tokens(request.max_tokens), ai_service)
+    c_provider, c_model, c_persona, c_disable_thinking, c_reasoning_budget = _resolve_counselor(db, request.counselor_id)
+    _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
+    # L'headroom per il reasoning e' applicato dinamicamente per-modello in AIService.
+    max_tokens = _clamp_max_tokens(request.max_tokens)
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
     system_prompt = _apply_language_directive(system_prompt, request.language)
     effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)
@@ -372,16 +462,28 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     if sanitize:
         step_label = _sanitize_ztpi_step_label(step_label)
 
-    provider = ai_service.config.get('active_provider', 'unknown')
-    model = ai_service.config.get('model_name', 'unknown')
+    if c_persona:
+        system_prompt = f"{c_persona.strip()}\n\n{system_prompt}"
+    provider = c_provider or ai_service.config.get('active_provider', 'unknown')
+    model = c_model or ai_service.config.get('model_name', 'unknown')
 
-    def _log_stream(response_content: str) -> str | None:
+    def _log_stream(response_content: str, usage: dict | None = None) -> str | None:
         log_db = database.SessionLocal()
         try:
-            log_db.add(models.Log(
+            cost_usd = _usage_cost_usd(usage, provider, model)
+            log_entry = models.Log(
                 session_id=session_id,
                 action="chat_message",
-                details={
+                username=identity.get("username") or None,
+                email=identity.get("email") or None,
+                anonymous_research_code=code_for_identity(log_db, identity),
+                provider=provider,
+                model_name=model,
+                cost_usd=cost_usd,
+                questionnaire_type=questionnaire_type,
+                phase=request.phase or None,
+                mode=request.mode or None,
+                details=pii.redact_details({
                     "mode": request.mode,
                     "phase": request.phase,
                     "user_input": request.message,
@@ -394,8 +496,11 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     "questionnaire_type": questionnaire_type,
                     "conversation_summary_length": len(conversation_summary),
                     "streamed": True,
-                },
-            ))
+                    "usage": usage,
+                    "cost_usd": cost_usd,
+                }, "user_input", "effective_user_input", "bot_response"),
+            )
+            log_db.add(log_entry)
             response_id = shared_response_memory.create_candidate(
                 log_db,
                 response_content,
@@ -403,6 +508,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 request.phase or "",
                 request.language or "it",
             )
+            if response_id:
+                log_entry.response_id = response_id
             log_db.commit()
             return response_id
         except Exception as e:
@@ -414,12 +521,17 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
 
     def event_gen():
         chunks = []
+        usage_info = None
         try:
             for item in ai_service.stream_response(
                 full_message, system_prompt, request.mode,
                 conversation_summary=conversation_summary,
                 max_tokens=max_tokens,
+                provider=c_provider, model=c_model,
             ):
+                if isinstance(item, dict) and item.get("type") == "usage":
+                    usage_info = item.get("usage")
+                    continue
                 text = item.get("text") if isinstance(item, dict) else item
                 if not text:
                     continue
@@ -437,6 +549,12 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             response_content = _student_visible_response(
                 "".join(chunks), questionnaire_type, request.language, sanitize
             )
+            if not response_content.strip():
+                raise AIError(
+                    "Il provider AI ha terminato lo stream senza contenuto visibile. "
+                    "Se stai usando un modello reasoning, abilita 'No reasoning' nel preset "
+                    "del counselor o nella configurazione globale."
+                )
 
             # Complete the local memory write before the frontend records a phase transition.
             _update_markdown_memory_background(
@@ -453,11 +571,21 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 False,
             )
 
-            response_id = _log_stream(response_content)
+            response_id = _log_stream(response_content, usage_info)
 
             yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'strategy_ids': strategy_ids, 'response_id': response_id})}\n\n"
         except Exception as e:
             logger.error(f"Errore stream chat session {session_id}: {e}")
+            try:
+                from ..chat_logic import log_error as _log_error
+                _err_db = database.SessionLocal()
+                try:
+                    _log_error(_err_db, session_id, str(e), identity=identity,
+                               questionnaire_type=questionnaire_type, mode=request.mode, phase=request.phase)
+                finally:
+                    _err_db.close()
+            except Exception:
+                pass
             yield f"data: {_json.dumps({'error': str(e)})}\n\n"
 
     return StreamingResponse(
@@ -480,6 +608,7 @@ async def chat_message(
     questionnaire_type: str = "",
     language: str = "",
     db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity),
 ):
     # 1. Retrieve Configuration and System Prompt based on Mode
     ai_service = AIService(db)
@@ -517,35 +646,62 @@ async def chat_message(
     )
 
     # 5. Log Interaction
+    provider = ai_service.config.get('active_provider', 'unknown')
+    model = ai_service.config.get('model_name', 'unknown')
+    usage = getattr(ai_service, "last_usage", None)
+    cost_usd = _usage_cost_usd(usage, provider, model)
     log_entry = models.Log(
         session_id=session_id,
         action="chat_message",
-        details={
+        username=identity.get("username") or None,
+        email=identity.get("email") or None,
+        anonymous_research_code=code_for_identity(db, identity),
+        provider=provider,
+        model_name=model,
+        cost_usd=cost_usd,
+        questionnaire_type=questionnaire_type or None,
+        mode=mode or None,
+        details=pii.redact_details({
             "mode": mode,
             "user_input": message,
             "bot_response": response_content,
-            "provider": ai_service.config.get('active_provider', 'unknown'),
-            "model": ai_service.config.get('model_name', 'unknown'),
+            "provider": provider,
+            "model": model,
             "questionnaire_type": questionnaire_type,
             "conversation_summary_length": len(conversation_summary),
-        }
+            "usage": usage,
+            "cost_usd": cost_usd,
+        }, "user_input", "bot_response"),
     )
     db.add(log_entry)
     response_id = shared_response_memory.create_candidate(
         db, response_content, questionnaire_type, "", language or "it"
     )
+    if response_id:
+        log_entry.response_id = response_id
     db.commit()
 
     return {"response": response_content, "response_id": response_id}
 
 
 @router.post("/qsa/audit")
-async def audit_qsa(request: QsaAuditRequest, db: Session = Depends(get_db)):
+async def audit_qsa(
+    request: QsaAuditRequest,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity),
+):
     # Log completion for QSA-family profile analyses.
     log_entry = models.Log(
         session_id=request.session_id,
         action="qsa_completed",
-        details={"questionnaire_type": request.questionnaire_type, "scores": request.scores}
+        username=identity.get("username") or None,
+        email=identity.get("email") or None,
+        anonymous_research_code=code_for_identity(db, identity),
+        questionnaire_type=request.questionnaire_type,
+        details={
+            "questionnaire_type": request.questionnaire_type,
+            "scores": request.scores,
+        },
     )
     db.add(log_entry)
     db.commit()

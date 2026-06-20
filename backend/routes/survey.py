@@ -6,6 +6,7 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from .. import models, schemas, auth, database
+from ..anonymous_codes import get_or_create_anonymous_research_code
 from ..validation_export import build_validation_csv, validation_query, validation_summary
 from ..strategy_memory import shared_response_memory, strategy_memory
 from ..pdf_generator import generate_questionnaire_pdf
@@ -13,6 +14,16 @@ from .. import scoring_service
 
 router = APIRouter()
 get_db = database.get_db
+
+
+def _normalize_validation_metadata(metadata: Optional[dict], username: Optional[str], db: Session) -> dict:
+    normalized = dict(metadata or {})
+    if username:
+        code = get_or_create_anonymous_research_code(db, username)
+        normalized["participant_code"] = code
+        normalized["anonymous_research_code"] = code
+        normalized["participant_code_source"] = "server_db"
+    return normalized
 
 
 @router.post("/survey", response_model=schemas.SurveyResponseSchema)
@@ -96,6 +107,17 @@ async def submit_questionnaire_result(
     return db_result
 
 
+@router.get("/user/anonymous-research-code")
+async def get_anonymous_research_code(
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Restituisce il codice pseudonimo stabile per l'utente autenticato."""
+    code = get_or_create_anonymous_research_code(db, current_user["username"])
+    db.commit()
+    return {"anonymous_research_code": code}
+
+
 @router.get("/instruments/{code}/rules")
 async def get_instrument_rules(code: str, locale: str = Query("en"), db: Session = Depends(get_db)):
     """Regole di scala leggibili (item->fattore, reverse, scala, fattori) per la vista frontend."""
@@ -124,7 +146,13 @@ async def score_instrument(
 
     if payload.save:
         username = identity.get("username") if identity.get("authenticated") else None
+        if payload.save_validation and not username:
+            raise HTTPException(
+                status_code=401,
+                detail="Authentication required to save validation responses with an anonymous research code",
+            )
         factor_scores = scoring_service.mapped_stanine_scores(profile)
+        response_metadata = _normalize_validation_metadata(payload.response_metadata, username, db)
         db.add(models.QuestionnaireResult(
             session_id=payload.session_id,
             questionnaire_type=code,
@@ -139,7 +167,7 @@ async def score_instrument(
                 version_label=(payload.version_label or "draft").strip() or "draft",
                 answers={str(k): v for k, v in payload.answers.items()},
                 factor_scores=factor_scores,
-                response_metadata=payload.response_metadata or {},
+                response_metadata=response_metadata,
                 username=username,
                 duration_seconds=payload.duration_seconds,
             ))

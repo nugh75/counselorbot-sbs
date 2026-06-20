@@ -51,6 +51,17 @@ class LogResponse(LogBase):
     id: int
     timestamp: datetime
     user_id: Optional[int]
+    username: Optional[str] = None
+    email: Optional[str] = None
+    anonymous_research_code: Optional[str] = None
+    provider: Optional[str] = None
+    model_name: Optional[str] = None
+    questionnaire_type: Optional[str] = None
+    phase: Optional[str] = None
+    mode: Optional[str] = None
+    response_id: Optional[str] = None
+    cost_usd: Optional[float] = None
+    helpful: Optional[bool] = None
     details: Optional[Union[Dict[str, Any], str]] = None
 
     @validator('details', pre=True)
@@ -395,7 +406,7 @@ class ScoreRequest(BaseModel):
     locale: str
     answers: Dict[int, int]
     save: bool = True
-    save_validation: bool = True
+    save_validation: bool = False
     version_label: Optional[str] = "draft"
     response_metadata: Optional[Dict[str, Any]] = None
     duration_seconds: Optional[int] = None
@@ -435,6 +446,122 @@ class LearnerProfileResponse(BaseModel):
     source: str
     session_id: Optional[str] = None
     created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# --- Model presets (provider + modello + parametri riusabili) ---
+class ModelPresetBase(BaseModel):
+    name: str
+    provider: str
+    model: str
+    temperature: Optional[float] = None
+    max_tokens: Optional[int] = None
+    disable_thinking: bool = False
+    reasoning_budget: Optional[int] = None
+    notes: Optional[str] = None
+    is_active: bool = True
+
+
+class ModelPresetCreate(ModelPresetBase):
+    pass
+
+
+class ModelPresetUpdate(BaseModel):
+    name: Optional[str] = None
+    provider: Optional[str] = None
+    model: Optional[str] = None
+    temperature: Optional[float] = None
+    max_tokens: Optional[int] = None
+    disable_thinking: Optional[bool] = None
+    reasoning_budget: Optional[int] = None
+    notes: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class ModelPresetResponse(ModelPresetBase):
+    id: int
+    created_at: datetime
+    provider_configured: bool = False  # True se il provider ha una chiave attiva
+
+    class Config:
+        from_attributes = True
+
+
+# --- Benchmark in-app ---
+class BenchmarkStartRequest(BaseModel):
+    preset_ids: List[int] = Field(default_factory=list)
+    language: str = "it"
+
+
+class BenchmarkRunResponse(BaseModel):
+    id: int
+    run_id: str
+    status: str
+    language: str
+    created_by: Optional[str] = None
+    presets: Optional[List[Dict[str, Any]]] = None
+    summary: Optional[List[Dict[str, Any]]] = None
+    error: Optional[str] = None
+    created_at: datetime
+    finished_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+# --- Counselor (persona configurabile) ---
+class CounselorBase(BaseModel):
+    slug: str
+    name: str
+    description: Optional[str] = None
+    persona: Optional[str] = None
+    avatar: Optional[str] = None
+    preset_id: Optional[int] = None
+    questionnaire_types: Optional[List[str]] = None
+    language: str = "it"
+    sort_order: int = 0
+    is_active: bool = True
+
+
+class CounselorCreate(CounselorBase):
+    pass
+
+
+class CounselorUpdate(BaseModel):
+    slug: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    persona: Optional[str] = None
+    avatar: Optional[str] = None
+    preset_id: Optional[int] = None
+    questionnaire_types: Optional[List[str]] = None
+    language: Optional[str] = None
+    sort_order: Optional[int] = None
+    is_active: Optional[bool] = None
+
+
+class CounselorResponse(CounselorBase):
+    id: int
+    created_at: datetime
+    # info derivata dal preset (comodita' per la UI admin)
+    provider: Optional[str] = None
+    model: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class CounselorPublic(BaseModel):
+    """Vista pubblica lato utente: nessun dettaglio interno (preset/persona)."""
+    id: int
+    slug: str
+    name: str
+    description: Optional[str] = None
+    avatar: Optional[str] = None
+    questionnaire_types: Optional[List[str]] = None
+    language: str = "it"
 
     class Config:
         from_attributes = True

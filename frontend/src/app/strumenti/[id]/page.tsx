@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, ExternalLink } from 'lucide-react';
 import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
 import { getTestAdministration, AdministrationLocale } from '@/lib/test-administrations';
 import { useI18n } from '@/lib/i18n-context';
+import { QuestionnaireIcon } from '@/components/questionnaire/QuestionnaireIcon';
 
 const AVAILABLE_INSTRUMENTS: QuestionnaireType[] = ['QSA', 'QSAr', 'QPCS', 'QPCC', 'ZTPI', 'QAP', 'SAVICKAS'];
 const STRATEGIC_COMPETENCES_URLS: Partial<Record<QuestionnaireType, string>> = {
@@ -54,8 +55,8 @@ export default function InstrumentDetailsPage() {
 
             <section className="glass-panel rounded-xl p-6 sm:p-8">
                 <div className="flex items-start gap-4">
-                    <div className={`w-14 h-14 rounded-lg flex items-center justify-center text-3xl shrink-0 ${questionnaire.color.replace('bg-', 'bg-opacity-20 bg-')}`}>
-                        {questionnaire.icon}
+                    <div className={`w-14 h-14 rounded-lg flex items-center justify-center text-slate-700 shrink-0 ${questionnaire.color.replace('bg-', 'bg-opacity-20 bg-')}`}>
+                        <QuestionnaireIcon icon={questionnaire.icon} className="h-7 w-7" />
                     </div>
                     <div>
                         <span className="text-xs font-semibold uppercase tracking-wide text-indigo-700">{t('detail.kicker')}</span>

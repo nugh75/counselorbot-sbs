@@ -47,8 +47,7 @@ export function ValidationExportPanel() {
     const [instrument, setInstrument] = useState('QSA');
     const [locale, setLocale] = useState('es');
     const [version, setVersion] = useState('QSA_es_2026_v1');
-    const [cohort, setCohort] = useState('');
-    const [study, setStudy] = useState('QSA Spanish validation');
+    const [study, setStudy] = useState('QSA_es_2026_validation');
     const [summary, setSummary] = useState<ValidationSummary | null>(null);
     const [rows, setRows] = useState<ValidationResponse[]>([]);
     const [loading, setLoading] = useState(false);
@@ -97,11 +96,10 @@ export function ValidationExportPanel() {
     const collectionPath = useMemo(() => {
         const params = new URLSearchParams();
         if (version.trim()) params.set('version', version.trim());
-        if (cohort.trim()) params.set('cohort', cohort.trim());
         if (study.trim()) params.set('study', study.trim());
         const qs = params.toString();
         return `/somministrazione/${instrument}/${locale || 'es'}${qs ? `?${qs}` : ''}`;
-    }, [instrument, locale, version, cohort, study]);
+    }, [instrument, locale, version, study]);
     const collectionUrl = typeof window === 'undefined' ? collectionPath : `${window.location.origin}${collectionPath}`;
 
     return (
@@ -154,19 +152,11 @@ export function ValidationExportPanel() {
                         />
                     </label>
                     <label className="block md:col-span-2">
-                        <span className="text-xs font-semibold uppercase text-slate-500">Coorte / gruppo</span>
-                        <input
-                            value={cohort}
-                            onChange={(event) => setCohort(event.target.value)}
-                            placeholder="es. Murcia_pilot_2026"
-                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                        />
-                    </label>
-                    <label className="block md:col-span-2">
-                        <span className="text-xs font-semibold uppercase text-slate-500">Studio</span>
+                        <span className="text-xs font-semibold uppercase text-slate-500">Codice studio opzionale</span>
                         <input
                             value={study}
                             onChange={(event) => setStudy(event.target.value)}
+                            placeholder="es. QSA_es_2026_validation"
                             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                         />
                     </label>

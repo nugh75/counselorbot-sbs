@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
+import { getSelectedCounselorId } from '@/lib/counselor';
 
 type Phase = 'setup' | 'generating' | 'onboarding' | 'quiz' | 'summary' | 'final' | 'finalResults';
 
@@ -59,12 +60,6 @@ interface FinalResultRow {
 interface FinalResult { score: number; total: number; results: FinalResultRow[]; }
 
 const SESSION_SIZES = [10, 20, 30] as const;
-const PQBL_PROVIDERS = [
-    { value: '', label: 'Predefinito' },
-    { value: 'gemini', label: 'Gemini' },
-    { value: 'openrouter', label: 'OpenRouter' },
-    { value: 'openai', label: 'OpenAI' },
-] as const;
 const POLL_INTERVAL_MS = 4000;
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
@@ -80,7 +75,6 @@ export default function PqblPage() {
     const { t, lang } = useI18n();
     const [phase, setPhase] = useState<Phase>('setup');
     const [size, setSize] = useState<number>(10);
-    const [provider, setProvider] = useState<string>('');
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [error, setError] = useState<string>('');
@@ -145,7 +139,8 @@ export default function PqblPage() {
             formData.append('file', file);
             formData.append('size', String(size));
             formData.append('language', lang);
-            if (provider) formData.append('provider', provider);
+            const counselorId = getSelectedCounselorId();
+            if (counselorId) formData.append('counselor_id', String(counselorId));
             const data = await fetchJson<{ document_id: string; status: string }>(
                 '/api/pqbl/upload', { method: 'POST', body: formData },
             );
@@ -380,26 +375,6 @@ export default function PqblPage() {
                                 >
                                     <div className="text-2xl font-bold">{n}</div>
                                     <div className="text-xs">{t('pqbl.setup.questions')}</div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="glass-panel rounded-xl p-6">
-                        <p className="text-sm font-semibold text-slate-700 mb-3">{t('pqbl.setup.providerLabel')}</p>
-                        <div className="grid grid-cols-4 gap-2">
-                            {PQBL_PROVIDERS.map((p) => (
-                                <button
-                                    key={p.value}
-                                    onClick={() => setProvider(p.value)}
-                                    className={cn(
-                                        'rounded-lg border-2 py-3 px-2 text-center text-sm transition-colors',
-                                        provider === p.value
-                                            ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                                            : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200',
-                                    )}
-                                >
-                                    {p.value === '' ? t('pqbl.provider.default') : p.label}
                                 </button>
                             ))}
                         </div>

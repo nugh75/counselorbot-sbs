@@ -30,7 +30,7 @@ from .questionnaire_catalog import INSTRUMENT_CATALOG_DEFAULTS
 from .guided_text_i18n import seed_definitions as guided_text_seed_definitions
 
 # Logica/helper estratti (vedi chat_logic.py); router in routes/.
-from .chat_logic import _memory_cleanup_loop
+from .chat_logic import _memory_cleanup_loop, _log_retention_loop
 from .routes import admin as admin_routes
 from .routes import survey as survey_routes
 from .routes import chat as chat_routes
@@ -39,6 +39,9 @@ from .routes import site_chat as site_chat_routes
 from .routes import learner_profile as learner_profile_routes
 from .routes import pqbl as pqbl_routes
 from .routes import opencode as opencode_routes
+from .routes import presets as presets_routes
+from .routes import benchmark as benchmark_routes
+from .routes import counselors as counselors_routes
 
 
 # Re-export per retro-compatibilità (es. smoke test che importa da backend.main)
@@ -66,6 +69,20 @@ async def lifespan(app: FastAPI):
     # Seeding/migrazioni idempotenti + background task pulizia memoria
     _seed_and_migrate()
     asyncio.create_task(_memory_cleanup_loop())
+    asyncio.create_task(_log_retention_loop())
+    # Carica il flag di redazione PII dalla config (default attivo).
+    try:
+        from . import pii as _pii
+        from .database import SessionLocal as _cfg_session
+        _db = _cfg_session()
+        try:
+            _row = _db.query(models.Config).filter(models.Config.key == "log_pii_redact").first()
+            if _row and (_row.value or "").strip().lower() in ("0", "false", "no", "off"):
+                _pii.set_pii_redact_enabled(False)
+        finally:
+            _db.close()
+    except Exception as _e:
+        logging.getLogger(__name__).warning(f"Caricamento flag PII fallito (uso default): {_e}")
 
     async def _preload():
         try:
@@ -142,6 +159,44 @@ def _seed_and_migrate():
 
     db = database.SessionLocal()
     try:
+        # Tabella persistente per i codici anonimi di ricerca, usati negli export
+        # per incrociare piu' questionari senza mostrare l'identita' reale.
+        try:
+            with database.engine.connect() as conn:
+                if database.engine.dialect.name == "postgresql":
+                    conn.execute(sa_text(
+                        """
+                        CREATE TABLE IF NOT EXISTS anonymous_research_codes (
+                            id SERIAL PRIMARY KEY,
+                            username VARCHAR NOT NULL UNIQUE,
+                            code VARCHAR NOT NULL UNIQUE,
+                            created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+                            updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+                        )
+                        """
+                    ))
+                else:
+                    conn.execute(sa_text(
+                        """
+                        CREATE TABLE IF NOT EXISTS anonymous_research_codes (
+                            id INTEGER PRIMARY KEY,
+                            username VARCHAR NOT NULL UNIQUE,
+                            code VARCHAR NOT NULL UNIQUE,
+                            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                        )
+                        """
+                    ))
+                conn.execute(sa_text(
+                    "CREATE INDEX IF NOT EXISTS ix_anonymous_research_codes_username ON anonymous_research_codes (username)"
+                ))
+                conn.execute(sa_text(
+                    "CREATE INDEX IF NOT EXISTS ix_anonymous_research_codes_code ON anonymous_research_codes (code)"
+                ))
+                conn.commit()
+        except Exception as e:
+            logger.debug(f"anonymous_research_codes migration skipped/failed: {e}")
+
         # Raw SQL migration: add questionnaire_type column if not present (idempotent)
         try:
             with database.engine.connect() as conn:
@@ -206,6 +261,53 @@ def _seed_and_migrate():
             except Exception as e:
                 logger.debug(f"pqbl_documents migration skipped/failed ({clause}): {e}")
 
+        # Raw SQL migration: add denormalized/indexed columns + identity to logs (idempotent).
+        # Permette filtri rapidi e join feedback senza scansionare il JSON details.
+        for clause in [
+            "ADD COLUMN username VARCHAR",
+            "ADD COLUMN email VARCHAR",
+            "ADD COLUMN anonymous_research_code VARCHAR",
+            "ADD COLUMN provider VARCHAR",
+            "ADD COLUMN model_name VARCHAR",
+            "ADD COLUMN questionnaire_type VARCHAR",
+            "ADD COLUMN phase VARCHAR",
+            "ADD COLUMN mode VARCHAR",
+            "ADD COLUMN response_id VARCHAR",
+            "ADD COLUMN cost_usd DOUBLE PRECISION",
+        ]:
+            try:
+                with database.engine.connect() as conn:
+                    conn.execute(sa_text(f"ALTER TABLE logs {clause}"))
+                    conn.commit()
+            except Exception as e:
+                logger.debug(f"logs migration skipped/failed ({clause}): {e}")
+
+        # Indici secondari sulle nuove colonne filtrabili (idempotenti).
+        for idx_clause in [
+            "CREATE INDEX IF NOT EXISTS ix_logs_username ON logs (username)",
+            "CREATE INDEX IF NOT EXISTS ix_logs_anonymous_research_code ON logs (anonymous_research_code)",
+            "CREATE INDEX IF NOT EXISTS ix_logs_provider ON logs (provider)",
+            "CREATE INDEX IF NOT EXISTS ix_logs_questionnaire_type ON logs (questionnaire_type)",
+            "CREATE INDEX IF NOT EXISTS ix_logs_response_id ON logs (response_id)",
+        ]:
+            try:
+                with database.engine.connect() as conn:
+                    conn.execute(sa_text(idx_clause))
+                    conn.commit()
+            except Exception as e:
+                logger.debug(f"logs index skipped/failed ({idx_clause}): {e}")
+
+        # Raw SQL migration: override del budget di reasoning per-preset (idempotente).
+        for clause in [
+            "ADD COLUMN reasoning_budget INTEGER",
+        ]:
+            try:
+                with database.engine.connect() as conn:
+                    conn.execute(sa_text(f"ALTER TABLE model_presets {clause}"))
+                    conn.commit()
+            except Exception as e:
+                logger.debug(f"model_presets migration skipped/failed ({clause}): {e}")
+
         # Create initial admin user if not exists
         user = db.query(models.User).filter(models.User.username == "admin").first()
         if not user:
@@ -213,6 +315,19 @@ def _seed_and_migrate():
             db_user = models.User(username="admin", hashed_password=hashed_password, is_admin=True)
             db.add(db_user)
             db.commit()
+
+        # Config operative per il logging: redazione PII e retention giorni.
+        # Valore testuale coerente con il resto della tabella configs.
+        for key, default, descr in [
+            ("log_pii_redact", "true", "Redazione PII (email/telefono/cf) nei log conversazionali (true/false)."),
+            ("log_retention_days", "90", "Giorni di conservazione dei log; 0 disattiva la retention automatica."),
+            ("usd_eur_rate", "0.92", "Tasso di cambio USD->EUR per la conversione dei costi nel pannello admin."),
+            ("monthly_budget_usd", "0", "Budget mensile in USD; superato il limite si usano solo modelli Ollama locali (0 = nessun limite)."),
+            ("budget_fallback_model", "qwen3.5:9b", "Modello Ollama locale usato quando il budget mensile e' superato."),
+        ]:
+            if not db.query(models.Config).filter(models.Config.key == key).first():
+                db.add(models.Config(key=key, value=default, description=descr))
+                db.commit()
 
         # Seed text configs (system prompts + static messages) without overwriting
         existing_configs = {cfg.key: cfg for cfg in db.query(models.Config).all()}
@@ -593,3 +708,6 @@ app.include_router(site_chat_routes.router)
 app.include_router(learner_profile_routes.router)
 app.include_router(pqbl_routes.router)
 app.include_router(opencode_routes.router)
+app.include_router(presets_routes.router)
+app.include_router(benchmark_routes.router)
+app.include_router(counselors_routes.router)

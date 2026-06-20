@@ -9,7 +9,7 @@ type Props = {
 };
 
 /**
- * Inline SVG flags — render identically on every OS/browser (emoji flags are
+ * Inline SVG flags — render identically on every OS/browser (native flag glyphs are
  * unreliable: Windows shows two boxed letters and some fonts bleed adjacent
  * glyphs, which looked like overlapping flags in the language switcher).
  */

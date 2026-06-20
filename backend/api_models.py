@@ -16,6 +16,7 @@ class ChatRequest(schemas.BaseModel):
     language: Optional[str] = None  # 'it' (default), 'en', 'es', 'fr', 'de', 'sv'
     max_tokens: Optional[int] = None
     memory_message: Optional[str] = None  # Solo testo reale dell'utente, senza istruzioni interne
+    counselor_id: Optional[int] = None  # se valorizzato: persona + provider/model dal counselor
 
 
 class SiteChatRequest(schemas.BaseModel):

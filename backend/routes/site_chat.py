@@ -18,10 +18,11 @@ from fastapi.responses import FileResponse, StreamingResponse
 from starlette.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
-from .. import auth, database, models
+from .. import auth, database, models, model_pricing
 from ..ai_service import AIService, AIError
+from .. import pii
 from ..api_models import SiteChatRequest
-from ..chat_logic import _clamp_max_tokens
+from ..chat_logic import _clamp_max_tokens, log_error
 from ..memory_service import session_memory
 from ..strategy_memory import shared_response_memory
 from ..prompt_config import (
@@ -36,6 +37,21 @@ from ..rag_index import site_rag_index, build_context, get_document_preview, DEF
 router = APIRouter()
 get_db = database.get_db
 logger = logging.getLogger(__name__)
+
+
+def _usage_cost_usd(usage: dict | None, provider: str | None = None, model: str | None = None) -> float | None:
+    # 1. Costo esplicito (OpenRouter). 2. Stima da tabella prezzi (provider diretti).
+    if isinstance(usage, dict):
+        for key in ("cost", "cost_usd", "total_cost"):
+            value = usage.get(key)
+            if isinstance(value, (int, float)):
+                return float(value)
+            if isinstance(value, str):
+                try:
+                    return float(value)
+                except ValueError:
+                    continue
+    return model_pricing.estimate_cost_usd(provider, model, usage)
 
 _AUDIENCE_DEFAULT_PROMPT = {
     "docente": DEFAULT_SYSTEM_PROMPT_SITE_DOCENTE,
@@ -184,21 +200,30 @@ async def site_chat_stream(request: SiteChatRequest, db: Session = Depends(get_d
         )
     except AIError as e:
         logger.error("Site-chat retrieval AIError: %s", e)
+        log_error(db, session_id, str(e), action="chat_error", questionnaire_type=_SITE_QTYPE,
+                  mode="site_chat", phase=request.audience)
         results = None
         retrieval_error = str(e)
     else:
         retrieval_error = None
 
-    def _log_and_persist(answer: str, sources: list[str]) -> str | None:
+    def _log_and_persist(answer: str, sources: list[str], usage: dict | None = None) -> str | None:
         """Logga l'interazione, aggiorna la memoria conversazionale e crea il
         candidato per il 'mi piace'. Ritorna response_id (per l'evento done)."""
         log_db = database.SessionLocal()
         response_id = None
         try:
-            log_db.add(models.Log(
+            cost_usd = _usage_cost_usd(usage, provider, model)
+            log_entry = models.Log(
                 session_id=session_id,
                 action="site_chat",
-                details={
+                # Chat pubblica del sito: anonima per design (nessuna identita').
+                provider=provider,
+                model_name=model,
+                cost_usd=cost_usd,
+                questionnaire_type=_SITE_QTYPE,
+                phase=request.audience or None,
+                details=pii.redact_details({
                     "audience": request.audience,
                     "question": question,
                     "answer": answer,
@@ -206,11 +231,16 @@ async def site_chat_stream(request: SiteChatRequest, db: Session = Depends(get_d
                     "provider": provider,
                     "model": model,
                     "n_results": len(results) if results else 0,
-                },
-            ))
+                    "usage": usage,
+                    "cost_usd": cost_usd,
+                }, "question", "answer"),
+            )
+            log_db.add(log_entry)
             response_id = shared_response_memory.create_candidate(
                 log_db, answer, _SITE_QTYPE, phase=request.audience, language="it",
             )
+            if response_id:
+                log_entry.response_id = response_id
             log_db.commit()
         except Exception as e:
             logger.error("Site-chat log fallito: %s", e)
@@ -255,8 +285,12 @@ async def site_chat_stream(request: SiteChatRequest, db: Session = Depends(get_d
         )
 
         chunks: list[str] = []
+        usage_info = None
         try:
             for item in ai_service.stream_response(full_message, system_prompt, "site-chat", max_tokens=max_tokens):
+                if isinstance(item, dict) and item.get("type") == "usage":
+                    usage_info = item.get("usage")
+                    continue
                 text = item.get("text") if isinstance(item, dict) else item
                 if not text:
                     continue
@@ -267,10 +301,17 @@ async def site_chat_stream(request: SiteChatRequest, db: Session = Depends(get_d
                 yield f"data: {_json.dumps({'delta': text, 'display': _strip_fonte_tokens(''.join(chunks))})}\n\n"
 
             answer = _strip_fonte_tokens("".join(chunks))
-            response_id = _log_and_persist(answer, sources)
+            response_id = _log_and_persist(answer, sources, usage_info)
             yield f"data: {_json.dumps({'done': True, 'response': answer, 'session_id': session_id, 'sources': sources, 'response_id': response_id})}\n\n"
         except Exception as e:
             logger.error("Errore site-chat stream %s: %s", session_id, e)
+            if isinstance(e, AIError):
+                err_db = database.SessionLocal()
+                try:
+                    log_error(err_db, session_id, str(e), action="chat_error",
+                              questionnaire_type=_SITE_QTYPE, mode="site_chat", phase=request.audience)
+                finally:
+                    err_db.close()
             yield f"data: {_json.dumps({'error': str(e)})}\n\n"
 
     return StreamingResponse(

@@ -1,14 +1,18 @@
 import os
 import logging
 import json
+from datetime import datetime, timezone
+from functools import partial
 
 import anthropic
 import httpx
 from mistralai.client import Mistral
 from openai import OpenAI
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from . import models
+from .reasoning_profiles import DISABLED_PLAN, ReasoningPlan, resolve_plan
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +41,12 @@ ENV_KEY_MAP = {
     'api_key_gemini': ('API_KEY_GEMINI', 'GEMINI_API_KEY', 'GOOGLE_API_KEY'),
     'api_key_mistral': ('API_KEY_MISTRAL',),
     'api_key_openrouter': ('API_KEY_OPENROUTER', 'OPENROUTER_API_KEY'),
+    'api_key_groq': ('API_KEY_GROQ', 'GROQ_API_KEY'),
+    'api_key_cerebras': ('API_KEY_CEREBRAS', 'CEREBRAS_API_KEY'),
+    'api_key_deepseek': ('API_KEY_DEEPSEEK', 'DEEPSEEK_API_KEY'),
+    'api_key_together': ('API_KEY_TOGETHER', 'TOGETHER_API_KEY'),
+    'api_key_fireworks': ('API_KEY_FIREWORKS', 'FIREWORKS_API_KEY'),
+    'api_key_deepinfra': ('API_KEY_DEEPINFRA', 'DEEPINFRA_API_KEY'),
     'ollama_ip': ('OLLAMA_BASE_URL',),
     'ollama_num_ctx': ('OLLAMA_NUM_CTX',),
     'ollama_keep_alive': ('OLLAMA_KEEP_ALIVE',),
@@ -46,12 +56,40 @@ ENV_KEY_MAP = {
     'qsa_parser_model': ('QSA_PARSER_MODEL',),
 }
 
+# Provider con endpoint OpenAI-compatibile (chat/completions): si gestiscono
+# tutti con lo stesso client OpenAI cambiando solo base_url + chiave.
+# nome_provider -> base_url. La chiave DB e' sempre 'api_key_<nome>'.
+# Aggiungere un provider OpenAI-compatibile = una voce qui (+ ENV_KEY_MAP).
+OPENAI_COMPAT_PROVIDERS = {
+    'groq':      'https://api.groq.com/openai/v1',
+    'cerebras':  'https://api.cerebras.ai/v1',
+    'deepseek':  'https://api.deepseek.com/v1',
+    'together':  'https://api.together.xyz/v1',
+    'fireworks': 'https://api.fireworks.ai/inference/v1',
+    'deepinfra': 'https://api.deepinfra.com/v1/openai',
+}
+
 class AIService:
     def __init__(self, db: Session):
         self.db = db
         self.config = self._load_config()
+        self.last_usage = None
         # Modalità "no thinking": disattiva il reasoning sui modelli che lo supportano
         self.disable_thinking = str(self.config.get('disable_thinking', 'false')).lower() == 'true'
+        # Override opzionale del budget di ragionamento (es. dal preset del counselor).
+        # None = usa il default della famiglia del modello (reasoning_profiles).
+        self.reasoning_budget_override = None
+        # Piano di reasoning della chiamata corrente: risolto per (provider, model)
+        # prima del dispatch. Default neutro (spento) per chiamate dirette/riassunti.
+        self._reasoning_plan = DISABLED_PLAN
+        # Budget mensile: se >0 e la spesa del mese corrente lo supera, i modelli
+        # a pagamento vengono disattivati e si usa solo Ollama locale (fallback).
+        try:
+            self.monthly_budget_usd = float(self.config.get('monthly_budget_usd', 0) or 0)
+        except (TypeError, ValueError):
+            self.monthly_budget_usd = 0.0
+        self.budget_fallback_model = (self.config.get('budget_fallback_model') or 'qwen3.5:9b').strip()
+        self._budget_locked_cache = None  # calcolato pigramente una volta per istanza
         # Contesto ampio: con thinking attivo num_predict puo' essere alto e non deve
         # essere strozzato dal contesto (prompt + reasoning + risposta).
         self.ollama_num_ctx = self._int_config('ollama_num_ctx', 16384, 2048, 32768)
@@ -74,10 +112,114 @@ class AIService:
             'ollama':     {'call': self._call_ollama,     'stream': self._stream_ollama,     'call_max': 8000, 'stream_max': None},
             'llamacpp':   {'call': self._call_llamacpp,   'stream': self._stream_llamacpp,   'call_max': 8000, 'stream_max': None},
         }
+        # Provider OpenAI-compatibili (groq/cerebras/deepseek/together/fireworks/deepinfra):
+        # stesso path OpenAI, base_url diverso. Bind del nome via partial.
+        for _name in OPENAI_COMPAT_PROVIDERS:
+            self._providers[_name] = {
+                'call':   partial(self._call_openai_compatible, _name),
+                'stream': partial(self._stream_openai_compatible, _name),
+                'call_max': None, 'stream_max': None,
+            }
+
+    @staticmethod
+    def _usage_to_dict(usage):
+        if usage is None:
+            return None
+        if isinstance(usage, dict):
+            return usage
+        if hasattr(usage, "model_dump"):
+            return usage.model_dump()
+        if hasattr(usage, "dict"):
+            return usage.dict()
+        data = {}
+        for key in ("prompt_tokens", "completion_tokens", "total_tokens", "cost", "cost_usd", "total_cost"):
+            if hasattr(usage, key):
+                data[key] = getattr(usage, key)
+        return data or None
 
     def _provider(self, name: str) -> dict:
         """Voce del registro per il provider; fallback a openai se sconosciuto."""
         return self._providers.get(name, self._providers['openai'])
+
+    def _resolve_reasoning(self, model, requested_max_tokens, fallback_max_tokens) -> ReasoningPlan:
+        """Risolve e memorizza il piano di reasoning per (modello, flag, budget).
+
+        Restituisce il piano; `plan.max_tokens` e' il budget di output gia'
+        comprensivo dell'headroom per la risposta, da inviare al provider."""
+        plan = resolve_plan(
+            model,
+            disable_thinking=self.disable_thinking,
+            requested_max_tokens=requested_max_tokens,
+            fallback_max_tokens=fallback_max_tokens,
+            budget_override=self.reasoning_budget_override,
+        )
+        self._reasoning_plan = plan
+        return plan
+
+    def _plan(self) -> ReasoningPlan:
+        """Piano di reasoning corrente (default neutro se non risolto)."""
+        return getattr(self, "_reasoning_plan", None) or DISABLED_PLAN
+
+    def _budget_is_locked(self) -> bool:
+        """True se il budget mensile e' impostato (>0) e la spesa del mese
+        corrente (tutti i costi) lo ha raggiunto/superato. Cache per-istanza
+        (una sola query per richiesta)."""
+        if self.monthly_budget_usd <= 0:
+            return False
+        if self._budget_locked_cache is not None:
+            return self._budget_locked_cache
+        try:
+            month_start = datetime.now(timezone.utc).replace(
+                day=1, hour=0, minute=0, second=0, microsecond=0
+            )
+            spent = self.db.query(func.coalesce(func.sum(models.Log.cost_usd), 0.0)).filter(
+                models.Log.timestamp >= month_start,
+                models.Log.cost_usd.isnot(None),
+            ).scalar() or 0.0
+            self._budget_locked_cache = float(spent) >= self.monthly_budget_usd
+        except Exception as e:
+            logger.warning(f"Verifica budget fallita (non bloccante): {e}")
+            self._budget_locked_cache = False
+        return self._budget_locked_cache
+
+    def _apply_budget_lock(self, provider: str, model: str):
+        """Se il budget e' superato, forza Ollama locale + modello di fallback.
+        Lascia invariati i provider gia' locali. Non tocca il benchmark
+        (che usa call_model, percorso esplicito dell'admin)."""
+        if provider != 'ollama' and self._budget_is_locked():
+            fallback = self.budget_fallback_model or 'qwen3.5:9b'
+            logger.info(f"Budget mensile superato: fallback {provider}/{model} -> ollama/{fallback}")
+            return 'ollama', fallback
+        return provider, model
+
+    def _openrouter_reasoning(self) -> dict:
+        """Parametro `reasoning` per OpenRouter dal piano corrente.
+
+        Reasoning attivo -> abilitato con cap `max_tokens` (se noto), così il
+        ragionamento non sfora nel budget riservato alla risposta. Spento ->
+        `enabled: False` (alcuni modelli ragionano comunque, ma nessun budget)."""
+        plan = self._plan()
+        if not plan.enabled:
+            return {"enabled": False}
+        reasoning: dict = {"enabled": True}
+        if plan.reasoning_budget:
+            reasoning["max_tokens"] = int(plan.reasoning_budget)
+        return reasoning
+
+    def _anthropic_thinking(self, max_tokens: int | None) -> dict | None:
+        """Parametro `thinking` per Anthropic dal piano corrente, o None se spento.
+
+        Anthropic richiede budget_tokens >= 1024 e max_tokens > budget_tokens:
+        il budget viene clampato lasciando spazio alla risposta."""
+        plan = self._plan()
+        if not plan.enabled or not plan.reasoning_budget:
+            return None
+        budget = int(plan.reasoning_budget)
+        if max_tokens:
+            budget = min(budget, max(int(max_tokens) - 512, 0))
+        if budget < 1024:
+            return None
+        return {"type": "enabled", "budget_tokens": budget}
 
     def _int_config(self, key: str, default: int, minimum: int, maximum: int) -> int:
         try:
@@ -140,6 +282,11 @@ class AIService:
                 if not base.endswith('/v1'):
                     base = f"{base}/v1"
                 client = OpenAI(base_url=base, api_key="llamacpp", timeout=timeout)
+            elif provider in OPENAI_COMPAT_PROVIDERS:
+                api_key = self._get_api_key(f'api_key_{provider}')
+                if not api_key:
+                    return []
+                client = OpenAI(base_url=OPENAI_COMPAT_PROVIDERS[provider], api_key=api_key, timeout=timeout)
             else:
                 # anthropic/gemini/mistral: nessun elenco dinamico, usa il fallback statico lato UI
                 return []
@@ -156,11 +303,13 @@ class AIService:
         conversation_summary: str = "",
         max_tokens: int = None,
         provider: str = None,
+        model: str = None,
     ):
-        """                                                                  
+        """
         Genera una risposta LLM.  Se conversation_summary è fornito, viene
-        iniettato come contesto all'inizio del messaggio utente.           
+        iniettato come contesto all'inizio del messaggio utente.
         `provider` opzionale: sovrascrive il provider attivo (es. "gemini", "openrouter").
+        `model` opzionale: forza un modello specifico (usato dai counselor via preset).
         """
         effective_provider = provider or self.config.get('active_provider', 'openai')
         # Se l'utente sovrascrive il provider (es. gemini), usa un modello
@@ -174,8 +323,16 @@ class AIService:
             "mistral": "mistral-small-latest",
             "ollama": "qwen3.5:9b",
             "llamacpp": "default",
+            "groq": "llama-3.3-70b-versatile",
+            "cerebras": "llama-3.3-70b",
+            "deepseek": "deepseek-v4-flash",
+            "together": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+            "fireworks": "accounts/fireworks/models/llama-v3p3-70b-instruct",
+            "deepinfra": "meta-llama/Llama-3.3-70B-Instruct",
         }
-        if provider:
+        if model:
+            model_name = model
+        elif provider:
             model_name = (
                 self.config.get(f'model_name_{provider}')
                 or _PROVIDER_DEFAULT_MODELS.get(provider, 'gpt-4o')
@@ -190,8 +347,12 @@ class AIService:
                 f"---\n\n{user_message}"
             )
         
+        effective_provider, model_name = self._apply_budget_lock(effective_provider, model_name)
         entry = self._provider(effective_provider)
-        mt = max_tokens or entry['call_max']
+        plan = self._resolve_reasoning(model_name, requested_max_tokens=max_tokens,
+                                       fallback_max_tokens=entry['call_max'])
+        mt = plan.max_tokens
+        self.last_usage = None
         try:
             return entry['call'](user_message, system_prompt, model_name, max_tokens=mt)
         except AIError:
@@ -199,6 +360,23 @@ class AIService:
         except Exception as e:
             logger.error(f"Errore chiamata AI ({effective_provider}): {e}")
             raise AIError(f"Errore AI ({effective_provider}): {e}") from e
+
+    def call_model(self, provider: str, model: str, user_message: str, system_prompt: str, max_tokens: int = None):
+        """Chiamata bloccante a un (provider, model) ESPLICITO, bypassando la
+        config attiva. Usato dal benchmark per confrontare modelli/provider.
+        Popola self.last_usage (token/costo) quando il provider lo fornisce."""
+        entry = self._provider(provider)
+        plan = self._resolve_reasoning(model, requested_max_tokens=max_tokens,
+                                       fallback_max_tokens=entry['call_max'])
+        mt = plan.max_tokens
+        self.last_usage = None
+        try:
+            return entry['call'](user_message, system_prompt, model, max_tokens=mt)
+        except AIError:
+            raise
+        except Exception as e:
+            logger.error(f"Errore call_model ({provider}/{model}): {e}")
+            raise AIError(f"Errore AI ({provider}/{model}): {e}") from e
 
     # Token massimi per i riassunti (~80 parole → 120 token sono sufficienti)
     SUMMARY_MAX_TOKENS = 300
@@ -236,6 +414,9 @@ class AIService:
             )
 
         mt = self.SUMMARY_MAX_TOKENS
+        # Il riassunto e' un task breve: niente reasoning (consumerebbe il budget).
+        self._reasoning_plan = DISABLED_PLAN
+        provider, summary_model = self._apply_budget_lock(provider, summary_model)
         try:
             return self._provider(provider)['call'](user_msg, SUMMARY_SYSTEM_PROMPT, summary_model, max_tokens=mt)
         except Exception as e:
@@ -280,13 +461,14 @@ class AIService:
         )
         if max_tokens:
             kwargs["max_tokens"] = max_tokens
-        if self.disable_thinking:
-            kwargs["extra_body"] = {"reasoning": {"enabled": False}}
+        kwargs["extra_body"] = {"reasoning": self._openrouter_reasoning()}
         # Retry su rate-limit (429) con backoff esponenziale o Retry-After dai metadati/header
         import time as _time
         for attempt in range(6):
             try:
                 response = client.chat.completions.create(**kwargs)
+                usage = getattr(response, "usage", None)
+                self.last_usage = self._usage_to_dict(usage)
                 return response.choices[0].message.content
             except Exception as e:
                 status = getattr(e, 'status_code', None)
@@ -333,20 +515,51 @@ class AIService:
                     continue
                 raise
 
+    def _openai_compatible_client(self, provider: str, timeout=600):
+        """Client OpenAI puntato a un provider OpenAI-compatibile (base_url + chiave)."""
+        api_key = self._get_api_key(f'api_key_{provider}')
+        if not api_key:
+            raise AIError(f"{provider} API Key non configurata")
+        base_url = OPENAI_COMPAT_PROVIDERS[provider]
+        return OpenAI(base_url=base_url, api_key=api_key, timeout=timeout)
+
+    def _call_openai_compatible(self, provider, user_message, system_prompt, model, max_tokens: int = None):
+        client = self._openai_compatible_client(provider)
+        kwargs = dict(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message},
+            ],
+        )
+        if max_tokens:
+            kwargs["max_tokens"] = max_tokens
+        response = client.chat.completions.create(**kwargs)
+        self.last_usage = self._usage_to_dict(getattr(response, "usage", None))
+        return response.choices[0].message.content
+
     def _call_anthropic(self, user_message, system_prompt, model, max_tokens: int = 4096):
         api_key = self._get_api_key('api_key_anthropic')
         if not api_key: raise AIError("Anthropic API Key non configurata")
 
         client = anthropic.Anthropic(api_key=api_key, timeout=600)
-        response = client.messages.create(
+        kwargs = dict(
             model=model,
             system=system_prompt,
             messages=[
                 {"role": "user", "content": user_message}
             ],
-            max_tokens=max_tokens
+            max_tokens=max_tokens,
         )
-        return response.content[0].text
+        thinking = self._anthropic_thinking(max_tokens)
+        if thinking:
+            kwargs["thinking"] = thinking
+        response = client.messages.create(**kwargs)
+        # Con il thinking attivo il primo blocco e' di tipo "thinking": prendi il testo.
+        for block in response.content:
+            if getattr(block, "type", None) == "text" and getattr(block, "text", None):
+                return block.text
+        return getattr(response.content[0], "text", "")
 
     def _call_gemini(self, user_message, system_prompt, model, max_tokens: int = None):
         api_key = self._get_api_key('api_key_gemini')
@@ -365,8 +578,13 @@ class AIService:
         config_kwargs = {}
         if max_tokens:
             config_kwargs["max_output_tokens"] = max_tokens
-        if self.disable_thinking:
+        # thinking_budget bounded dal piano: spento -> 0; attivo -> cap esplicito
+        # (max_output_tokens include gia' l'headroom per la risposta).
+        plan = self._plan()
+        if not plan.enabled:
             config_kwargs["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
+        elif plan.reasoning_budget:
+            config_kwargs["thinking_config"] = types.ThinkingConfig(thinking_budget=int(plan.reasoning_budget))
         config = types.GenerateContentConfig(**config_kwargs) if config_kwargs else None
         response = client.models.generate_content(
             model=model,
@@ -415,6 +633,8 @@ class AIService:
         }
         if self.disable_thinking:
             payload["think"] = False
+        else:
+            payload["think"] = self._plan().enabled
         if "json" in system_prompt.lower() or "json" in user_message.lower():
             payload["format"] = "json"
         response = httpx.post(
@@ -461,14 +681,18 @@ class AIService:
         mode: str,
         conversation_summary: str = "",
         max_tokens: int = None,
+        provider: str = None,
+        model: str = None,
     ):
         """
         Generatore che produce la risposta LLM a pezzi (token/delta).
         Stream incrementale per i provider OpenAI-compatibili e Anthropic;
         per gli altri produce la risposta completa in un unico chunk.
+        `provider`/`model` opzionali: forzano provider+modello (counselor via preset).
         """
-        provider = self.config.get('active_provider', 'openai')
-        model_name = self.config.get('model_name', 'gpt-4o')
+        provider = provider or self.config.get('active_provider', 'openai')
+        model_name = model or self.config.get('model_name', 'gpt-4o')
+        provider, model_name = self._apply_budget_lock(provider, model_name)
 
         if conversation_summary:
             user_message = (
@@ -478,13 +702,16 @@ class AIService:
 
         def _dispatch():
             entry = self._provider(provider)
+            self.last_usage = None
             if entry['stream']:
-                smt = max_tokens or entry['stream_max']
-                yield from entry['stream'](user_message, system_prompt, model_name, max_tokens=smt)
+                plan = self._resolve_reasoning(model_name, requested_max_tokens=max_tokens,
+                                               fallback_max_tokens=entry['stream_max'])
+                yield from entry['stream'](user_message, system_prompt, model_name, max_tokens=plan.max_tokens)
             else:
                 # nessuno stream incrementale: chunk unico via call bloccante
-                cmt = max_tokens or entry['call_max']
-                yield entry['call'](user_message, system_prompt, model_name, max_tokens=cmt)
+                plan = self._resolve_reasoning(model_name, requested_max_tokens=max_tokens,
+                                               fallback_max_tokens=entry['call_max'])
+                yield entry['call'](user_message, system_prompt, model_name, max_tokens=plan.max_tokens)
 
         try:
             # Normalizza: i provider possono produrre stringhe (solo testo) o dict
@@ -499,7 +726,7 @@ class AIService:
         except Exception as e:
             raise RuntimeError(f"AI Error ({provider}): {str(e)}") from e
 
-    def _iter_chat_stream(self, client, model, system_prompt, user_message, extra_body=None, max_tokens: int = None):
+    def _iter_chat_stream(self, client, model, system_prompt, user_message, extra_body=None, max_tokens: int = None, stream_options=None):
         """Itera lo stream di un client OpenAI-compatibile producendo i delta di testo."""
         kwargs = dict(
             model=model,
@@ -513,9 +740,17 @@ class AIService:
             kwargs["max_tokens"] = max_tokens
         if extra_body:
             kwargs["extra_body"] = extra_body
+        if stream_options:
+            kwargs["stream_options"] = stream_options
         stream = client.chat.completions.create(**kwargs)
         try:
             for chunk in stream:
+                usage = getattr(chunk, "usage", None)
+                if usage is not None:
+                    usage_dict = self._usage_to_dict(usage)
+                    self.last_usage = usage_dict
+                    yield {"type": "usage", "usage": usage_dict}
+                    continue
                 try:
                     delta = chunk.choices[0].delta
                 except (IndexError, AttributeError):
@@ -544,9 +779,18 @@ class AIService:
         if not api_key:
             raise AIError("OpenRouter API Key non configurata")
         client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key, timeout=600)
-        # Thinking attivo -> abilita il reasoning (verra' streammato come delta separati).
-        extra = {"reasoning": {"enabled": not self.disable_thinking}}
-        yield from self._iter_chat_stream(client, model, system_prompt, user_message, extra_body=extra, max_tokens=max_tokens)
+        # Reasoning bounded: budget separato dai metadati, l'headroom della
+        # risposta e' gia' incluso in max_tokens (vedi reasoning_profiles).
+        extra = {"reasoning": self._openrouter_reasoning()}
+        yield from self._iter_chat_stream(
+            client,
+            model,
+            system_prompt,
+            user_message,
+            extra_body=extra,
+            max_tokens=max_tokens,
+            stream_options={"include_usage": True},
+        )
 
     def _stream_ollama(self, user_message, system_prompt, model, max_tokens: int = None):
         base_url = (self._get_api_key('ollama_ip') or "http://localhost:11434").rstrip('/')
@@ -564,7 +808,7 @@ class AIService:
                 "num_predict": max_tokens or 800,
             },
         }
-        payload["think"] = not self.disable_thinking
+        payload["think"] = (not self.disable_thinking) and self._plan().enabled
         with httpx.Client(timeout=httpx.Timeout(600.0, connect=10.0)) as client:
             with client.stream("POST", f"{base_url}/api/chat", json=payload) as response:
                 response.raise_for_status()
@@ -590,17 +834,34 @@ class AIService:
         system_prompt = self._apply_no_think(system_prompt)
         yield from self._iter_chat_stream(client, model or "default", system_prompt, user_message, max_tokens=max_tokens)
 
+    def _stream_openai_compatible(self, provider, user_message, system_prompt, model, max_tokens: int = None):
+        client = self._openai_compatible_client(provider)
+        # include_usage: la maggior parte dei provider OpenAI-compatibili manda
+        # i token nell'ultimo chunk (il costo NO: solo OpenRouter lo restituisce).
+        yield from self._iter_chat_stream(
+            client,
+            model,
+            system_prompt,
+            user_message,
+            max_tokens=max_tokens,
+            stream_options={"include_usage": True},
+        )
+
     def _stream_anthropic(self, user_message, system_prompt, model, max_tokens: int = 4096):
         api_key = self._get_api_key('api_key_anthropic')
         if not api_key:
             raise AIError("Anthropic API Key non configurata")
         client = anthropic.Anthropic(api_key=api_key, timeout=600)
-        with client.messages.stream(
+        kwargs = dict(
             model=model,
             system=system_prompt,
             messages=[{"role": "user", "content": user_message}],
             max_tokens=max_tokens,
-        ) as stream:
+        )
+        thinking = self._anthropic_thinking(max_tokens)
+        if thinking:
+            kwargs["thinking"] = thinking
+        with client.messages.stream(**kwargs) as stream:
             for text in stream.text_stream:
                 if text:
                     yield text

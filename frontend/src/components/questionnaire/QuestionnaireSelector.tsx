@@ -5,32 +5,39 @@ import { cn } from '@/lib/utils';
 import { QUESTIONNAIRE_LIST, QuestionnaireType, QuestionnaireConfig } from '@/lib/questionnaires';
 import { AlertTriangle, ArrowRight, BookOpen, ClipboardList, FileQuestion, MessageSquare } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { CounselorSelector } from './CounselorSelector';
+import { QuestionnaireIcon } from './QuestionnaireIcon';
 
 const ACTIVE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
+const ADMINISTRATION_LANGS = ['en', 'es', 'sv'] as const;
 
 interface QuestionnaireSelectorProps {
     onSelect: (questionnaire: QuestionnaireConfig) => void;
 }
 
 export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) {
-    const { t, lang } = useI18n();
+    const { t, lang, setLang } = useI18n();
     const available = QUESTIONNAIRE_LIST.filter((q) => ACTIVE_QUESTIONNAIRES.includes(q.id));
     const upcoming = QUESTIONNAIRE_LIST.filter((q) => !ACTIVE_QUESTIONNAIRES.includes(q.id));
+    const isItalian = lang === 'it';
+    const isAdministrationLang = ADMINISTRATION_LANGS.includes(lang as 'en' | 'es' | 'sv');
+    const isUnavailableQuestionnaireLang = lang === 'fr' || lang === 'de';
+    const pathPrefix = isItalian ? 'it' : isAdministrationLang ? 'administration' : 'unavailable';
     const explanationItems = [
         {
             icon: ClipboardList,
-            title: t('selector.explain.step1.title'),
-            body: t('selector.explain.step1.body'),
+            title: t(`selector.path.${pathPrefix}.step1.title`),
+            body: t(`selector.path.${pathPrefix}.step1.body`),
         },
         {
             icon: BookOpen,
-            title: t('selector.explain.step2.title'),
-            body: t('selector.explain.step2.body'),
+            title: t(`selector.path.${pathPrefix}.step2.title`),
+            body: t(`selector.path.${pathPrefix}.step2.body`),
         },
         {
             icon: MessageSquare,
-            title: t('selector.explain.step3.title'),
-            body: t('selector.explain.step3.body'),
+            title: t(`selector.path.${pathPrefix}.step3.title`),
+            body: t(`selector.path.${pathPrefix}.step3.body`),
         },
     ];
 
@@ -42,12 +49,17 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
                         <div className="flex-1 max-w-3xl">
                             <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-indigo-700 mb-3">
                                 <ClipboardList className="w-4 h-4" />
-                                {t('selector.kicker')}
+                                {t(`selector.home.${pathPrefix}.kicker`)}
                             </div>
-                            <h1 className="text-2xl font-bold text-slate-900">{t('selector.title')}</h1>
+                            <h1 className="text-2xl font-bold text-slate-900">{t(`selector.home.${pathPrefix}.title`)}</h1>
                             <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-                                {t('selector.intro')}
+                                {t(`selector.home.${pathPrefix}.body`)}
                             </p>
+                            {isAdministrationLang && (
+                                <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-relaxed text-amber-950">
+                                    {t('selector.experimentalNotice')}
+                                </p>
+                            )}
                         </div>
                         <Link
                             href="/questionario"
@@ -64,7 +76,7 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
                     </div>
 
                     <div className="border-t border-slate-200 pt-5">
-                        <h2 className="text-lg font-semibold text-slate-900">{t('selector.explain.title')}</h2>
+                        <h2 className="text-lg font-semibold text-slate-900">{t(`selector.path.${pathPrefix}.title`)}</h2>
                         <div className="mt-4 grid gap-5 md:grid-cols-3">
                             {explanationItems.map((item) => {
                                 const Icon = item.icon;
@@ -81,64 +93,112 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
                                 );
                             })}
                         </div>
-                        <p className="mt-4 text-sm text-slate-500 leading-relaxed">{t('selector.explain.note')}</p>
+                        <p className="mt-4 text-sm text-slate-500 leading-relaxed">{t(`selector.path.${pathPrefix}.note`)}</p>
                     </div>
                 </div>
             </section>
 
+            <CounselorSelector />
+
+            {isUnavailableQuestionnaireLang && (
+                <section className="rounded-xl border-2 border-amber-300 bg-amber-50 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+                    <AlertTriangle className="w-7 h-7 shrink-0 text-amber-700" />
+                    <div className="flex-1">
+                        <h2 className="font-bold text-amber-950">{t('selector.unavailable.title')}</h2>
+                        <p className="mt-1 text-sm leading-relaxed text-amber-900">{t('selector.unavailable.body')}</p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setLang('en')}
+                        className="inline-flex shrink-0 items-center gap-2 rounded-md bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-800 transition-colors"
+                    >
+                        {t('selector.unavailable.switchEnglish')}
+                        <ArrowRight className="w-4 h-4" />
+                    </button>
+                </section>
+            )}
+
+            {!isUnavailableQuestionnaireLang && (
             <section className="space-y-4">
                 <div>
                     <h2 className="text-xl font-bold text-slate-900">{t('selector.available.title')}</h2>
                     <p className="text-sm text-slate-500 mt-1">{t('selector.available.subtitle')}</p>
                 </div>
                 <div className="grid md:grid-cols-2 gap-3">
-                    {available.map((q) => (
-                        <article
-                            key={q.id}
-                            className="glass-panel rounded-xl p-4 flex flex-col gap-3"
-                        >
-                            <div className="flex items-start gap-4">
-                                <div className={cn(
-                                    "w-12 h-12 rounded-md flex items-center justify-center text-2xl shrink-0",
-                                    q.color.replace('bg-', 'bg-opacity-20 bg-'),
-                                )}>
-                                    {q.icon}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="font-bold text-slate-800">{q.name}</h3>
-                                        <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded-full">
-                                            {t('selector.active')}
-                                        </span>
+                    {available.map((q) => {
+                        const hasInAppAdministration = isAdministrationLang && !q.agentOnly;
+                        return (
+                            <article
+                                key={q.id}
+                                className="glass-panel rounded-xl p-4 flex flex-col gap-3"
+                            >
+                                <div className="flex items-start gap-4">
+                                    <div className={cn(
+                                        "w-12 h-12 rounded-md flex items-center justify-center text-slate-700 shrink-0",
+                                        q.color.replace('bg-', 'bg-opacity-20 bg-'),
+                                    )}>
+                                        <QuestionnaireIcon icon={q.icon} className="h-6 w-6" />
                                     </div>
-                                    <p className="text-sm font-medium text-slate-600 mt-1">
-                                        {t(`q.${q.id}.fullName`)}
-                                    </p>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <h3 className="font-bold text-slate-800">{q.name}</h3>
+                                            <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded-full">
+                                                {t('selector.active')}
+                                            </span>
+                                            {hasInAppAdministration && (
+                                                <span className="px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold rounded-full">
+                                                    {t('selector.experimentalBadge')}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-sm font-medium text-slate-600 mt-1">
+                                            {t(`q.${q.id}.fullName`)}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                            <p className="text-sm text-slate-500 leading-relaxed grow">
-                                {t(`q.${q.id}.description`)}
-                            </p>
-                            <div className="flex items-center gap-2 pt-1">
-                                <button
-                                    onClick={() => onSelect(q)}
-                                    className="group inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
-                                >
-                                    {t('selector.start')}
-                                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-                                </button>
-                                <Link
-                                    href={`/strumenti/${q.id}`}
-                                    className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-700 transition-colors"
-                                >
-                                    <BookOpen className="w-4 h-4" />
-                                    {t('selector.learn')}
-                                </Link>
-                            </div>
-                        </article>
-                    ))}
+                                <p className="text-sm text-slate-500 leading-relaxed grow">
+                                    {t(`q.${q.id}.description`)}
+                                </p>
+                                <div className="flex flex-wrap items-center gap-2 pt-1">
+                                    {hasInAppAdministration ? (
+                                        <Link
+                                            href={`/somministrazione/${q.id}/${lang}`}
+                                            className="group inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+                                        >
+                                            {t('selector.completeQuestionnaire')}
+                                            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                                        </Link>
+                                    ) : (
+                                        <button
+                                            onClick={() => onSelect(q)}
+                                            className="group inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+                                        >
+                                            {q.agentOnly ? t('selector.startInterview') : t('selector.enterResults')}
+                                            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                                        </button>
+                                    )}
+                                    {hasInAppAdministration && (
+                                        <button
+                                            onClick={() => onSelect(q)}
+                                            className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                                        >
+                                            {t('selector.haveResults')}
+                                        </button>
+                                    )}
+                                    <Link
+                                        href={`/strumenti/${q.id}`}
+                                        className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-700 transition-colors"
+                                    >
+                                        <BookOpen className="w-4 h-4" />
+                                        {t('selector.learn')}
+                                    </Link>
+                                </div>
+                            </article>
+                        );
+                    })}
                 </div>
             </section>
+            )}
 
             {/* Strumento pQBL da PDF: percorso separato dai questionari */}
             <section className="glass-panel rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 border border-emerald-100">
@@ -163,23 +223,7 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
                 </Link>
             </section>
 
-            {(lang === 'en' || lang === 'sv') && (
-                <section className="rounded-xl border-2 border-amber-300 bg-amber-50 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-                    <AlertTriangle className="w-7 h-7 shrink-0 text-amber-700" />
-                    <div className="flex-1">
-                        <h2 className="font-bold text-amber-950">{t('administration.entry.title')}</h2>
-                        <p className="mt-1 text-sm leading-relaxed text-amber-900">{t('administration.entry.body')}</p>
-                    </div>
-                    <Link
-                        href="/somministrazione"
-                        className="inline-flex shrink-0 items-center gap-2 rounded-md bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-800 transition-colors"
-                    >
-                        {t('administration.entry.button')}
-                        <ArrowRight className="w-4 h-4" />
-                    </Link>
-                </section>
-            )}
-
+            {!isUnavailableQuestionnaireLang && (
             <section className="rounded-xl border border-dashed border-slate-200 bg-white/60 px-5 py-4 flex flex-col lg:flex-row lg:items-center gap-4">
                 <div className="lg:w-52 shrink-0">
                     <h2 className="text-sm font-semibold text-slate-700">{t('selector.upcoming.title')}</h2>
@@ -196,6 +240,7 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
                     ))}
                 </div>
             </section>
+            )}
         </div>
     );
 }

@@ -29,6 +29,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models
+from ..anonymous_codes import code_for_identity, get_or_create_anonymous_research_code
 from ..ai_service import AIService, AIError
 from ..api_models import PqblAnswerRequest, PqblFinalTestRequest, PqblQuestionUpdate, PqblSessionCreate
 from ..pqbl_generator import (
@@ -72,9 +73,37 @@ def _config_value(db: Session, key: str, default: str) -> str:
 # ---------------------------------------------------------------------------
 # Provider richiesto per document_id (passato dall'upload al background task).
 _PENDING_PROVIDERS: dict = {}
+# Modello risolto dal preset del counselor scelto dallo studente.
+_PENDING_MODELS: dict = {}
 # Lingua scelta dall'utente (UI) per ciascun upload: le domande vengono
 # generate in questa lingua, indipendentemente dalla lingua del PDF.
 _PENDING_LANGUAGES: dict = {}
+
+
+def _resolve_counselor_preset(db: Session, counselor_id: int):
+    """(provider, model) dal preset del counselor scelto dallo studente.
+
+    Stessa logica usata dalla chat (_resolve_counselor): il counselor porta un
+    preset che definisce provider+modello. (None, None) se non risolvibile →
+    si usano provider/modello attivi della config.
+    """
+    if not counselor_id:
+        return None, None
+    counselor = (
+        db.query(models.Counselor)
+        .filter(models.Counselor.id == counselor_id, models.Counselor.is_active.is_(True))
+        .first()
+    )
+    if not counselor or not counselor.preset_id:
+        return None, None
+    preset = (
+        db.query(models.ModelPreset)
+        .filter(models.ModelPreset.id == counselor.preset_id)
+        .first()
+    )
+    if not preset:
+        return None, None
+    return preset.provider, preset.model
 
 
 def _append_questions(db: Session, document_id: str, batch: list[dict], start_position: int) -> int:
@@ -115,6 +144,7 @@ def _generate_all_chunks(document_id: str):
             return
 
         provider = _PENDING_PROVIDERS.pop(document_id, None)
+        preset_model = _PENDING_MODELS.pop(document_id, None)
         user_language = _PENDING_LANGUAGES.pop(document_id, None)
         total_pages = pdf_total_pages(file_path)
         n_segments = math.ceil(total_pages / PAGES_PER_SEGMENT)
@@ -140,7 +170,9 @@ def _generate_all_chunks(document_id: str):
         db.commit()
 
         ai = AIService(db)
-        dedicated_model = (ai.config.get("pqbl_model") or "").strip()
+        # Il modello del preset del counselor scelto dallo studente ha la
+        # precedenza; ripiego su pqbl_model (config) e infine sul modello attivo.
+        dedicated_model = (preset_model or ai.config.get("pqbl_model") or "").strip()
         if dedicated_model:
             ai.config["model_name"] = dedicated_model
         if provider:
@@ -176,7 +208,7 @@ def _generate_all_chunks(document_id: str):
                 def worker(c_idx, c_text):
                     batch = generate_batch_for_chunk(
                         ai, c_text, seg_idx * 100 + c_idx, doc.language,
-                        question_prompt, provider=provider,
+                        question_prompt, provider=provider, model=dedicated_model or None,
                     )
                     return c_idx, batch
                 
@@ -280,7 +312,7 @@ async def upload_pqbl_document(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     size: int = Form(10),
-    provider: str = Form(""),
+    counselor_id: int = Form(0),
     language: str = Form(""),
     db: Session = Depends(get_db),
     identity: dict = Depends(auth.get_identity),
@@ -296,9 +328,11 @@ async def upload_pqbl_document(
     if not contents:
         raise HTTPException(status_code=400, detail="Il file è vuoto.")
     if len(contents) > MAX_UPLOAD_BYTES:
-        raise HTTPException(status_code=413, detail="Il file supera la dimensione massima di 10 MB.")
+        raise HTTPException(status_code=413, detail="Il file supera la dimensione massima di 100 MB.")
 
-    provider_val = provider.strip() or None
+    # Provider+modello dal preset del counselor scelto nella schermata iniziale
+    # (stesso meccanismo degli altri strumenti, via counselor_id).
+    provider_val, model_val = _resolve_counselor_preset(db, counselor_id)
     language_val = language.strip().lower() if language.strip().lower() in ("it", "en") else None
     file_hash = hashlib.sha256(contents).hexdigest()
 
@@ -344,15 +378,18 @@ async def upload_pqbl_document(
     db.add(models.Log(
         session_id=doc.id,
         action="pqbl_upload",
+        username=identity.get("username") or None,
+        anonymous_research_code=code_for_identity(db, identity),
         details={
-            "filename": file.filename, "size": size, "provider": provider_val,
-            "language": language_val,
+            "filename": file.filename, "size": size, "counselor_id": counselor_id or None,
+            "provider": provider_val, "model": model_val, "language": language_val,
         },
     ))
     db.commit()
     logger.info(f"pQBL: upload completato per {doc.id} (PDF salvato)")
 
     _PENDING_PROVIDERS[doc.id] = provider_val
+    _PENDING_MODELS[doc.id] = model_val
     _PENDING_LANGUAGES[doc.id] = language_val
     background_tasks.add_task(_generate_all_chunks, doc.id)
 
@@ -574,6 +611,10 @@ async def submit_pqbl_final_test(
     db.add(models.Log(
         session_id=session.id,
         action="pqbl_final_test_completed",
+        username=session.username or None,
+        anonymous_research_code=(
+            get_or_create_anonymous_research_code(db, session.username) if session.username else None
+        ),
         details={"document_id": session.document_id, "score": n_correct, "total": len(questions)},
     ))
     db.commit()
@@ -630,6 +671,10 @@ async def get_pqbl_session_summary(session_id: str, db: Session = Depends(get_db
         db.add(models.Log(
             session_id=session.id,
             action="pqbl_session_completed",
+            username=session.username or None,
+            anonymous_research_code=(
+                get_or_create_anonymous_research_code(db, session.username) if session.username else None
+            ),
             details={
                 "document_id": session.document_id,
                 "first_try_correct": n_first_try_correct,

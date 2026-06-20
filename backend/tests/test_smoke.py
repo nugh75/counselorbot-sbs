@@ -92,6 +92,8 @@ def _fake_user_identity():
 
 class _FakeAIService:
     """Sostituisce AIService: nessuna rete."""
+    last_stream_args = {}
+
     def __init__(self, db=None):
         self.config = {
             "active_provider": "openai",
@@ -112,6 +114,12 @@ class _FakeAIService:
         return "RISPOSTA_TEST"
 
     def stream_response(self, *a, **k):
+        _FakeAIService.last_stream_args = {
+            "provider": k.get("provider"),
+            "model": k.get("model"),
+            "max_tokens": k.get("max_tokens"),
+            "disable_thinking": self.disable_thinking,
+        }
         yield {"type": "content", "text": "RISPOSTA_TEST"}
 
     def generate_summary(self, *a, **k):
@@ -356,6 +364,257 @@ def test_admin_config_upsert():
     assert r.json()["value"] == "openai"
 
 
+def test_admin_logs_options_has_new_filter_fields():
+    r = client.get("/admin/logs/options")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    for key in ("actions", "providers", "questionnaire_types", "models", "phases", "modes"):
+        assert key in body, f"options manca '{key}': {body}"
+        assert isinstance(body[key], list)
+
+
+def test_admin_cost_stats_shape():
+    r = client.get("/admin/cost-stats")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    for key in (
+        "total_cost", "paid_turns", "total_turns", "distinct_sessions",
+        "distinct_users", "avg_cost_per_turn", "avg_cost_per_session",
+        "avg_cost_per_user", "by_model", "by_user", "by_day", "split",
+        "by_week", "by_month", "by_year", "periods", "usd_eur_rate",
+    ):
+        assert key in body, f"cost-stats manca '{key}': {body}"
+    assert isinstance(body["by_model"], list)
+    assert set(body["split"].keys()) == {"production", "benchmark"}
+    # Aggregati di periodo + run-rate
+    for plist in ("by_week", "by_month", "by_year"):
+        assert isinstance(body[plist], list)
+    assert set(body["periods"].keys()) == {"week", "month", "year"}
+    for rr in body["periods"].values():
+        for k in ("cost_to_date", "projected_cost", "days_elapsed", "days_total", "period"):
+            assert k in rr, f"periods manca '{k}': {rr}"
+    assert isinstance(body["usd_eur_rate"], (int, float)) and body["usd_eur_rate"] > 0
+    # Budget mensile + medie derivate per la proiezione articolata
+    for key in (
+        "monthly_budget_usd", "month_to_date_cost", "budget_remaining",
+        "budget_exceeded", "budget_fallback_model", "budget_used_pct",
+        "avg_turns_per_user", "avg_turns_per_session", "avg_sessions_per_user",
+    ):
+        assert key in body, f"cost-stats manca '{key}': {body}"
+
+
+def test_budget_lock_forces_ollama():
+    """Con budget mensile superato, AIService instrada i modelli a pagamento su Ollama."""
+    from backend.ai_service import AIService
+    from backend.database import SessionLocal
+    db = SessionLocal()
+    try:
+        # Budget piccolo + un costo nel mese corrente che lo supera.
+        for key, value in (("monthly_budget_usd", "0.001"), ("budget_fallback_model", "qwen3.5:9b")):
+            row = db.query(models.Config).filter(models.Config.key == key).first()
+            if row:
+                row.value = value
+            else:
+                db.add(models.Config(key=key, value=value))
+        db.add(models.Log(session_id="budget-test", action="chat_message", cost_usd=0.05))
+        db.commit()
+
+        ai = AIService(db)
+        assert ai.monthly_budget_usd == 0.001
+        assert ai._budget_is_locked() is True
+        assert ai._apply_budget_lock("openrouter", "deepseek/deepseek-v4-flash") == ("ollama", "qwen3.5:9b")
+        # I provider gia' locali restano invariati.
+        assert ai._apply_budget_lock("ollama", "gemma4:12b") == ("ollama", "gemma4:12b")
+
+        # Budget azzerato -> nessun lock.
+        row = db.query(models.Config).filter(models.Config.key == "monthly_budget_usd").first()
+        row.value = "0"
+        db.commit()
+        ai2 = AIService(db)
+        assert ai2._budget_is_locked() is False
+        assert ai2._apply_budget_lock("openrouter", "x") == ("openrouter", "x")
+    finally:
+        # Pulizia: riporta il budget a 0 per non influenzare altri test.
+        row = db.query(models.Config).filter(models.Config.key == "monthly_budget_usd").first()
+        if row:
+            row.value = "0"
+        db.query(models.Log).filter(models.Log.session_id == "budget-test").delete(synchronize_session=False)
+        db.commit()
+        db.close()
+
+
+def test_admin_logs_paid_only_filter_ok():
+    # I filtri nuovi non devono rompere la query (smoke su DB vuoto/popolato).
+    r = client.get("/admin/logs?paid_only=true&feedback=unrated&has_pii=true&cost_min=0")
+    assert r.status_code == 200, r.text
+    assert isinstance(r.json(), list)
+
+
+def test_model_pricing_estimate_cost():
+    from backend import model_pricing
+    # provider diretto senza costo nell'usage -> stima dai token + tabella
+    usage = {"prompt_tokens": 1_000_000, "completion_tokens": 1_000_000}
+    cost = model_pricing.estimate_cost_usd("deepseek", "deepseek-chat", usage)
+    assert cost is not None and abs(cost - (0.27 + 1.10)) < 1e-6, cost
+    # token assenti -> None
+    assert model_pricing.estimate_cost_usd("deepseek", "deepseek-chat", {}) is None
+    # modello sconosciuto -> None
+    assert model_pricing.estimate_cost_usd("groq", "modello-inventato", usage) is None
+    # match per nome modello anche con provider sbagliato/None
+    assert model_pricing.estimate_cost_usd(None, "deepseek-chat", usage) is not None
+
+
+def test_usage_cost_prefers_explicit_then_estimates():
+    from backend.routes.chat import _usage_cost_usd
+    # OpenRouter: costo esplicito ha priorita'
+    assert _usage_cost_usd({"cost": 0.005}, "openrouter", "x") == 0.005
+    # provider diretto: nessun costo -> stima da token
+    est = _usage_cost_usd({"prompt_tokens": 1_000_000, "completion_tokens": 0}, "deepseek", "deepseek-chat")
+    assert est is not None and abs(est - 0.27) < 1e-6, est
+
+
+def test_model_presets_crud():
+    # create
+    r = client.post("/admin/presets", json={
+        "name": "DeepSeek Flash test", "provider": "deepseek", "model": "deepseek-v4-flash",
+    })
+    assert r.status_code == 200, r.text
+    pid = r.json()["id"]
+    assert r.json()["provider"] == "deepseek"
+    # list contiene il preset + flag provider_configured presente
+    r = client.get("/admin/presets")
+    assert r.status_code == 200, r.text
+    rows = r.json()
+    assert any(p["id"] == pid for p in rows)
+    assert all("provider_configured" in p for p in rows)
+    # update
+    r = client.put(f"/admin/presets/{pid}", json={"is_active": False, "max_tokens": 800})
+    assert r.status_code == 200, r.text
+    assert r.json()["is_active"] is False and r.json()["max_tokens"] == 800
+    # provider locale sempre configurato
+    r = client.post("/admin/presets", json={"name": "Local", "provider": "ollama", "model": "qwen3.5:9b"})
+    assert r.json()["provider_configured"] is True, r.text
+    # delete
+    r = client.delete(f"/admin/presets/{pid}")
+    assert r.status_code == 200, r.text
+
+
+def test_counselors_crud_and_public():
+    # crea un preset da assegnare
+    pr = client.post("/admin/presets", json={"name": "C-preset", "provider": "deepseek", "model": "deepseek-v4-flash"})
+    preset_id = pr.json()["id"]
+    # crea counselor
+    r = client.post("/admin/counselors", json={
+        "slug": "marco", "name": "Marco", "description": "Tutor calmo",
+        "persona": "Sei Marco, un counselor empatico.", "preset_id": preset_id,
+        "questionnaire_types": ["QSA", "ZTPI"], "is_active": True,
+    })
+    assert r.status_code == 200, r.text
+    cid = r.json()["id"]
+    assert r.json()["provider"] == "deepseek" and r.json()["model"] == "deepseek-v4-flash"
+    # slug duplicato -> 409
+    assert client.post("/admin/counselors", json={"slug": "marco", "name": "X"}).status_code == 409
+    # update
+    r = client.put(f"/admin/counselors/{cid}", json={"is_active": True, "name": "Marco T."})
+    assert r.status_code == 200 and r.json()["name"] == "Marco T."
+    # lista pubblica espone solo campi user-facing (no persona/preset)
+    r = client.get("/counselors")
+    assert r.status_code == 200, r.text
+    pub = next((c for c in r.json() if c["id"] == cid), None)
+    assert pub is not None
+    assert "persona" not in pub and "preset_id" not in pub
+    assert pub["name"] == "Marco T." and "QSA" in (pub["questionnaire_types"] or [])
+    # delete
+    assert client.delete(f"/admin/counselors/{cid}").status_code == 200
+
+
+def test_resolve_counselor_helper():
+    # helper di chat.py: counselor inesistente -> tutti None
+    from backend.routes.chat import _resolve_counselor
+    from backend.database import SessionLocal
+    db = SessionLocal()
+    try:
+        assert _resolve_counselor(db, None) == (None, None, None, None, None)
+        assert _resolve_counselor(db, 999999) == (None, None, None, None, None)
+
+        preset = models.ModelPreset(
+            name="No reasoning test",
+            provider="openrouter",
+            model="deepseek/deepseek-r1",
+            disable_thinking=True,
+            reasoning_budget=4096,
+        )
+        db.add(preset)
+        db.flush()
+        counselor = models.Counselor(
+            slug="no-reasoning-test",
+            name="No reasoning test",
+            persona="Persona test",
+            preset_id=preset.id,
+            is_active=True,
+        )
+        db.add(counselor)
+        db.commit()
+
+        assert _resolve_counselor(db, counselor.id) == (
+            "openrouter",
+            "deepseek/deepseek-r1",
+            "Persona test",
+            True,
+            4096,
+        )
+    finally:
+        db.close()
+
+
+def test_benchmark_scoring_pure():
+    from backend import benchmark_service
+    summary = [
+        {"quality": 0.9, "tok_s": 100.0, "reliability": 1.0},
+        {"quality": 0.45, "tok_s": 50.0, "reliability": 1.0},
+        {"provider": "x", "model": "y", "error": "boom"},
+    ]
+    benchmark_service._add_scores(summary)
+    assert abs(summary[0]["score"] - 1.0) < 1e-6, summary[0]
+    assert summary[1]["score"] < summary[0]["score"]
+    assert summary[2]["score"] == 0.0
+    assert len(benchmark_service._all_steps()) == 11
+
+
+def test_benchmark_run_endpoint_creates_run():
+    from backend import benchmark_service
+    orig = benchmark_service.start_benchmark_async
+    benchmark_service.start_benchmark_async = lambda *a, **k: None  # niente thread/rete nel test
+    try:
+        p = client.post("/admin/presets", json={"name": "bench", "provider": "ollama", "model": "qwen3.5:9b"})
+        pid = p.json()["id"]
+        r = client.post("/admin/benchmark/run", json={"preset_ids": [pid], "language": "it"})
+        assert r.status_code == 200, r.text
+        run_id = r.json()["run_id"]
+        assert r.json()["status"] in ("queued", "running")
+        lst = client.get("/admin/benchmark/runs")
+        assert lst.status_code == 200 and any(x["run_id"] == run_id for x in lst.json())
+        one = client.get(f"/admin/benchmark/runs/{run_id}")
+        assert one.status_code == 200 and one.json()["run_id"] == run_id
+        # run inesistente -> 400
+        assert client.post("/admin/benchmark/run", json={"preset_ids": []}).status_code == 400
+    finally:
+        benchmark_service.start_benchmark_async = orig
+
+
+def test_openai_compatible_providers_registered():
+    from backend.ai_service import OPENAI_COMPAT_PROVIDERS, AIService
+    assert set(OPENAI_COMPAT_PROVIDERS) == {
+        "groq", "cerebras", "deepseek", "together", "fireworks", "deepinfra",
+    }
+    assert hasattr(AIService, "_call_openai_compatible")
+    assert hasattr(AIService, "_stream_openai_compatible")
+    # ogni provider OpenAI-compatibile ha una chiave ENV mappata
+    from backend.ai_service import ENV_KEY_MAP
+    for p in OPENAI_COMPAT_PROVIDERS:
+        assert f"api_key_{p}" in ENV_KEY_MAP, f"manca ENV_KEY_MAP per {p}"
+
+
 def test_guided_steps_list():
     r = client.get("/admin/guided-steps")
     assert r.status_code == 200, r.text
@@ -573,6 +832,43 @@ def test_stream_memory_contract_for_all_active_questionnaires():
         session_memory.clear(session_id)
 
 
+def test_chat_stream_applies_counselor_no_reasoning_before_token_headroom():
+    pr = client.post("/admin/presets", json={
+        "name": "Reasoning off stream",
+        "provider": "openrouter",
+        "model": "deepseek/deepseek-r1",
+        "disable_thinking": True,
+    })
+    assert pr.status_code == 200, pr.text
+    preset_id = pr.json()["id"]
+    cr = client.post("/admin/counselors", json={
+        "slug": "stream-no-reasoning",
+        "name": "Stream no reasoning",
+        "preset_id": preset_id,
+        "is_active": True,
+    })
+    assert cr.status_code == 200, cr.text
+    counselor_id = cr.json()["id"]
+
+    r = client.post("/chat/stream", json={
+        "message": "Analizza questo profilo",
+        "mode": "generic",
+        "session_id": "stream-no-reasoning-contract",
+        "questionnaire_type": "QSA",
+        "language": "it",
+        "scores_context": "Profilo test: 5/9",
+        "max_tokens": 700,
+        "counselor_id": counselor_id,
+    })
+    assert r.status_code == 200, r.text
+    assert _FakeAIService.last_stream_args == {
+        "provider": "openrouter",
+        "model": "deepseek/deepseek-r1",
+        "max_tokens": 700,
+        "disable_thinking": True,
+    }
+
+
 def test_chat_smoke_mocked_ai():
     r = client.post("/chat", json={"message": "ciao", "mode": "generic"})
     assert r.status_code == 200, r.text
@@ -656,6 +952,43 @@ def test_clamp_max_tokens():
     assert isinstance(main._clamp_max_tokens(1000), int)
 
 
+def test_reasoning_resolve_plan():
+    from backend import reasoning_profiles as rp
+
+    # Modello reasoning noto + thinking attivo -> abilitato con budget + headroom.
+    plan = rp.resolve_plan("qwen3.5:9b", disable_thinking=False, requested_max_tokens=None)
+    assert plan.enabled is True
+    assert plan.reasoning_budget and plan.reasoning_budget > 0
+    assert plan.max_tokens >= plan.reasoning_budget
+
+    # disable_thinking -> spento, nessun gonfiaggio (passa il richiesto invariato).
+    plan = rp.resolve_plan("qwen3.5:9b", disable_thinking=True, requested_max_tokens=800)
+    assert plan.enabled is False
+    assert plan.max_tokens == 800
+
+    # Modello NON reasoning (gemma) + thinking attivo -> spento, nessun gonfiaggio.
+    plan = rp.resolve_plan("gemma4:12b", disable_thinking=False, requested_max_tokens=800)
+    assert plan.enabled is False
+    assert plan.max_tokens == 800
+
+    # Modello sconosciuto + thinking attivo -> prudenza: abilitato col budget legacy.
+    plan = rp.resolve_plan("acme/mistero-1", disable_thinking=False, requested_max_tokens=None)
+    assert plan.enabled is True
+    assert plan.reasoning_budget == rp.LEGACY_REASONING_BUDGET
+
+    # Override del budget (es. dal preset) ha precedenza sul default famiglia.
+    plan = rp.resolve_plan("deepseek/deepseek-r1", disable_thinking=False,
+                           requested_max_tokens=None, budget_override=3000)
+    assert plan.enabled is True and plan.reasoning_budget == 3000
+
+    # max_tokens richiesto piu' grande del calcolato -> viene mantenuto.
+    plan = rp.resolve_plan("deepseek-v4-flash", disable_thinking=False, requested_max_tokens=20000)
+    assert plan.max_tokens == 20000
+
+    assert rp.is_reasoning_model("qwen3.5:9b") is True
+    assert rp.is_reasoning_model("gemma4:12b") is False
+
+
 def test_should_sanitize_ztpi():
     # ZTPI guidato → sanitizza; QSA → no
     assert isinstance(main._should_sanitize_ztpi_text("guided", "ztpi-step"), bool)
@@ -682,44 +1015,57 @@ def test_questionnaire_results_admin_list():
 def test_validation_raw_response_export():
     db = _TestSession()
     try:
-        db.add(models.Instrument(
-            code="QSA",
-            name_en="QSA",
-            name_es="QSA ES",
-            response_scale_min=1,
-            response_scale_max=4,
-        ))
-        db.add(models.Factor(
-            instrument_code="QSA",
-            code="C1",
-            sort_order=1,
-            dimension="cognitive",
-            label_en="C1",
-            label_es="C1",
-        ))
-        db.add(models.QuestionnaireItem(
-            instrument_code="QSA",
-            item_number=1,
-            sort_order=1,
-            factor_code="C1",
-            text_en="Item 1",
-            text_es="Item 1 ES",
-            active=True,
-        ))
+        if not db.query(models.Instrument).filter(models.Instrument.code == "QSA").first():
+            db.add(models.Instrument(
+                code="QSA",
+                name_en="QSA",
+                name_es="QSA ES",
+                response_scale_min=1,
+                response_scale_max=4,
+            ))
+        if not db.query(models.Factor).filter(
+            models.Factor.instrument_code == "QSA",
+            models.Factor.code == "C1",
+        ).first():
+            db.add(models.Factor(
+                instrument_code="QSA",
+                code="C1",
+                sort_order=1,
+                dimension="cognitive",
+                label_en="C1",
+                label_es="C1",
+            ))
+        if not db.query(models.QuestionnaireItem).filter(
+            models.QuestionnaireItem.instrument_code == "QSA",
+            models.QuestionnaireItem.item_number == 1,
+        ).first():
+            db.add(models.QuestionnaireItem(
+                instrument_code="QSA",
+                item_number=1,
+                sort_order=1,
+                factor_code="C1",
+                text_en="Item 1",
+                text_es="Item 1 ES",
+                active=True,
+            ))
         db.commit()
     finally:
         db.close()
 
-    r = client.post("/instruments/QSA/score", json={
-        "session_id": "validation-session-1",
-        "locale": "es",
-        "answers": {"1": 3},
-        "save": True,
-        "save_validation": True,
-        "version_label": "QSA_es_test",
-        "response_metadata": {"cohort": "pilot"},
-        "duration_seconds": 42,
-    })
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        r = client.post("/instruments/QSA/score", json={
+            "session_id": "validation-session-1",
+            "locale": "es",
+            "answers": {"1": 3},
+            "save": True,
+            "save_validation": True,
+            "version_label": "QSA_es_test",
+            "response_metadata": {"cohort": "pilot"},
+            "duration_seconds": 42,
+        })
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
     assert r.status_code == 200, r.text
 
     r = client.get("/admin/validation/summary?instrument_code=QSA&locale=es&version_label=QSA_es_test")
@@ -731,6 +1077,96 @@ def test_validation_raw_response_export():
     assert "item_001" in r.text
     assert "metadata_cohort" in r.text
     assert "validation-session-1" in r.text
+
+
+def test_anonymous_research_code_is_persisted_and_forced_on_validation_save():
+    db = _TestSession()
+    try:
+        if not db.query(models.Instrument).filter(models.Instrument.code == "QSA").first():
+            db.add(models.Instrument(
+                code="QSA",
+                name_en="QSA",
+                name_es="QSA ES",
+                response_scale_min=1,
+                response_scale_max=4,
+            ))
+        if not db.query(models.Factor).filter(
+            models.Factor.instrument_code == "QSA",
+            models.Factor.code == "C1",
+        ).first():
+            db.add(models.Factor(
+                instrument_code="QSA",
+                code="C1",
+                sort_order=1,
+                dimension="cognitive",
+                label_en="C1",
+                label_es="C1",
+            ))
+        if not db.query(models.QuestionnaireItem).filter(
+            models.QuestionnaireItem.instrument_code == "QSA",
+            models.QuestionnaireItem.item_number == 1,
+        ).first():
+            db.add(models.QuestionnaireItem(
+                instrument_code="QSA",
+                item_number=1,
+                sort_order=1,
+                factor_code="C1",
+                text_en="Item 1",
+                text_es="Item 1 ES",
+                active=True,
+            ))
+        db.commit()
+    finally:
+        db.close()
+
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        r = client.get("/user/anonymous-research-code")
+        assert r.status_code == 200, r.text
+        code = r.json()["anonymous_research_code"]
+        assert re.match(r"^SBS-[A-Z2-9]{4}-[A-Z2-9]{4}$", code)
+
+        r = client.get("/user/anonymous-research-code")
+        assert r.status_code == 200, r.text
+        assert r.json()["anonymous_research_code"] == code
+
+        r = client.post("/instruments/QSA/score", json={
+            "session_id": "validation-session-auth-code",
+            "locale": "es",
+            "answers": {"1": 3},
+            "save": True,
+            "save_validation": True,
+            "version_label": "QSA_es_auth_code_test",
+            "response_metadata": {
+                "participant_code": "CLIENT-CODE",
+                "anonymous_research_code": "CLIENT-CODE",
+                "participation_context": "library_study_room",
+            },
+            "duration_seconds": 30,
+        })
+        assert r.status_code == 200, r.text
+
+        db = _TestSession()
+        try:
+            code_row = db.query(models.AnonymousResearchCode).filter(
+                models.AnonymousResearchCode.username == "student"
+            ).first()
+            assert code_row is not None
+            assert code_row.code == code
+
+            saved = db.query(models.ValidationResponse).filter(
+                models.ValidationResponse.session_id == "validation-session-auth-code"
+            ).first()
+            assert saved is not None
+            assert saved.username == "student"
+            assert saved.response_metadata["participant_code"] == code
+            assert saved.response_metadata["anonymous_research_code"] == code
+            assert saved.response_metadata["participant_code_source"] == "server_db"
+            assert saved.response_metadata["participation_context"] == "library_study_room"
+        finally:
+            db.close()
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
 def test_questionnaire_result_user_history_and_delete():
@@ -969,7 +1405,7 @@ def test_pqbl_upload_and_learning_flow():
     pqbl_routes.pdf_total_pages = lambda path: 3
     pqbl_routes.extract_pdf_text_range = lambda path, start, end: canned_text
     pqbl_routes.split_text_into_chunks = lambda text: [canned_text]
-    pqbl_routes.generate_batch_for_chunk = lambda ai, text, idx, lang, qp, provider=None: _pqbl_canned_bank(4)
+    pqbl_routes.generate_batch_for_chunk = lambda ai, text, idx, lang, qp, provider=None, model=None: _pqbl_canned_bank(4)
     try:
         # dimensione non ammessa -> 400
         r = client.post("/pqbl/upload", files={"file": ("dispensa.pdf", b"%PDF-1.4 x", "application/pdf")},
@@ -1092,7 +1528,7 @@ def test_pqbl_early_break_aligns_chunks():
     pqbl_routes.pdf_total_pages = lambda path: 12  # 4 segmenti da 3 pag
     pqbl_routes.extract_pdf_text_range = lambda path, start, end: canned_text
     pqbl_routes.split_text_into_chunks = lambda text: [canned_text, canned_text]  # 2 chunk per segmento
-    pqbl_routes.generate_batch_for_chunk = lambda ai, text, idx, lang, qp, provider=None: _pqbl_canned_bank(4)
+    pqbl_routes.generate_batch_for_chunk = lambda ai, text, idx, lang, qp, provider=None, model=None: _pqbl_canned_bank(4)
     try:
         r = client.post("/pqbl/upload", files={"file": ("dispensa_early.pdf", b"%PDF-1.4 early_break", "application/pdf")},
                         data={"size": "10"})
@@ -1144,7 +1580,7 @@ def test_pqbl_json_repair_and_question_salvaging():
     class MockAI:
         def __init__(self):
             self.config = {}
-        def get_response(self, user_msg, sys_prompt, mode, max_tokens, provider=None):
+        def get_response(self, user_msg, sys_prompt, mode, max_tokens, provider=None, model=None):
             return truncated_json
             
     ai_mock = MockAI()

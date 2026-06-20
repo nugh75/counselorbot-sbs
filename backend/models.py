@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Integer, String, Text, DateTime, JSON
+from sqlalchemy import Boolean, Column, Float, Integer, String, Text, DateTime, JSON
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -23,8 +23,21 @@ class Log(Base):
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(String, index=True)
     user_id = Column(Integer, nullable=True)
+    # Identita' testuale (ai4auth fornisce username/email, non un User.id integer).
+    username = Column(String, index=True, nullable=True)
+    email = Column(String, nullable=True)
+    anonymous_research_code = Column(String, index=True, nullable=True)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
     action = Column(String) # e.g., "login", "chat_message", "qsa_analysis"
+    # Campi chiave denormalizzati e indicizzati per filtri rapidi.
+    provider = Column(String, index=True, nullable=True)
+    model_name = Column(String, nullable=True)
+    questionnaire_type = Column(String, index=True, nullable=True)
+    phase = Column(String, nullable=True)
+    mode = Column(String, nullable=True)
+    # FK logica -> shared_chat_responses.id (per join feedback inline).
+    response_id = Column(String, index=True, nullable=True)
+    cost_usd = Column(Float, nullable=True)
     details = Column(JSON) # e.g., prompt used, score data, message content
 
 class GuidedStep(Base):
@@ -131,6 +144,18 @@ class ValidationResponse(Base):
     username = Column(String, nullable=True, index=True)
     duration_seconds = Column(Integer, nullable=True)
     submitted_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class AnonymousResearchCode(Base):
+    """Codice anonimo stabile usato per incrociare risultati senza esporre username."""
+
+    __tablename__ = "anonymous_research_codes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, nullable=False, unique=True, index=True)
+    code = Column(String, nullable=False, unique=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
 class TrainingExample(Base):
@@ -316,4 +341,75 @@ class LearnerProfileRevision(Base):
     data = Column(JSON, nullable=False)
     source = Column(String, nullable=False, default="manual")  # intake|session_start|session_end|manual
     session_id = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class ModelPreset(Base):
+    """Preset riusabile = bundle provider + modello + parametri.
+
+    Usato dal benchmark (cosa confrontare) e dai counselor (quale modello
+    risponde). Il provider deve essere uno del registry di AIService; il
+    preset e' selezionabile solo se quel provider ha una chiave configurata.
+    """
+
+    __tablename__ = "model_presets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    provider = Column(String, nullable=False)  # openai|anthropic|...|deepseek|groq...
+    model = Column(String, nullable=False)
+    temperature = Column(Float, nullable=True)
+    max_tokens = Column(Integer, nullable=True)
+    disable_thinking = Column(Boolean, nullable=False, default=False)
+    # Override del budget di ragionamento (token) per i modelli reasoning.
+    # None = usa il default della famiglia del modello (reasoning_profiles).
+    reasoning_budget = Column(Integer, nullable=True)
+    notes = Column(Text, nullable=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class BenchmarkRun(Base):
+    """Esecuzione di un benchmark QSA in-app su uno o piu' preset.
+
+    Il riepilogo aggregato (per-preset: qualita', tok/s, costo, score...) sta in
+    `summary`; il dettaglio per-step e' nei `logs` (action benchmark_inapp).
+    """
+
+    __tablename__ = "benchmark_runs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    run_id = Column(String, unique=True, index=True, nullable=False)
+    status = Column(String, nullable=False, default="queued")  # queued|running|done|error
+    language = Column(String, nullable=False, default="it")
+    created_by = Column(String, nullable=True)
+    presets = Column(JSON, nullable=True)   # [{provider, model, name}]
+    summary = Column(JSON, nullable=True)   # [{provider, model, quality, tok_s, ...}]
+    error = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    finished_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class Counselor(Base):
+    """Persona di counseling configurabile dall'admin e scelta dall'utente.
+
+    Ha un nome, una descrizione e una `persona` (la "storia"/carattere che viene
+    anteposta al system prompt), un modello (via preset_id) e l'elenco dei
+    questionari che gestisce. I campi user-facing (name, description, avatar)
+    sono pubblici; preset/persona restano interni.
+    """
+
+    __tablename__ = "counselors"
+
+    id = Column(Integer, primary_key=True, index=True)
+    slug = Column(String, unique=True, index=True, nullable=False)
+    name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)        # breve, mostrata all'utente
+    persona = Column(Text, nullable=True)            # prefisso al system prompt
+    avatar = Column(String, nullable=True)           # nome icona o url
+    preset_id = Column(Integer, nullable=True)       # -> model_presets.id (modello)
+    questionnaire_types = Column(JSON, nullable=True)  # ["QSA","ZTPI",...]
+    language = Column(String, nullable=False, default="it")
+    sort_order = Column(Integer, nullable=False, default=0)
+    is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
