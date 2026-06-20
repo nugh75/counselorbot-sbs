@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Bot, LayoutGrid, LogIn, LogOut, Settings, User } from 'lucide-react';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { HeaderCounselor } from './HeaderCounselor';
+import { ThemeToggle } from './ThemeToggle';
 import { ai4authLoginUrl, AI4AUTH_LOGOUT_URL, AI4EDUC_PORTAL_URL, AI4EDUC_MANAGER_URL, getIdentity, type Identity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 
@@ -71,6 +72,7 @@ export function Header() {
                             <LogOut className="w-4 h-4" />
                         </a>
                     )}
+                    <ThemeToggle />
                     <LanguageSwitcher />
                 </div>
             </div>

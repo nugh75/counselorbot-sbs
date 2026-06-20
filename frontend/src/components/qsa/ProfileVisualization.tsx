@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { TrendingUp, Sprout } from 'lucide-react';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 import {
     ZTPIFactorCode,
@@ -222,6 +223,59 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
 
     const gridCols = columns.length === 1 ? '' : 'md:grid-cols-2';
 
+    // Sintesi: classifica ogni fattore come forza / crescita e prende i primi 3.
+    // ZTPI usa la zona (ideal=forza, far=crescita); gli altri usano soglie 7/3,
+    // ribaltate per i fattori invertiti. rank = "quanto forte" per ordinare.
+    type Ranked = { code: string; name: string; score: number; rank: number };
+    const strengths: Ranked[] = [];
+    const growth: Ranked[] = [];
+    for (const [code, score] of Object.entries(scores)) {
+        const factor = questionnaire.factors.find((f) => f.code === code);
+        const name = tf(`factor.${code}.name`, factor?.name || code);
+        const inverted = invertedSet.has(code);
+        let isStrength: boolean;
+        let isGrowth: boolean;
+        let rank: number;
+        if (isZTPI && code.startsWith('T')) {
+            const zone = getInterpretation(code, score, invertedSet, questionnaire.id, t).zone;
+            isStrength = zone === 'high';
+            isGrowth = zone === 'low';
+            rank = score;
+        } else {
+            isStrength = inverted ? score <= 3 : score >= 7;
+            isGrowth = inverted ? score >= 7 : score <= 3;
+            rank = inverted ? 10 - score : score;
+        }
+        if (isStrength) strengths.push({ code, name, score, rank });
+        else if (isGrowth) growth.push({ code, name, score, rank });
+    }
+    strengths.sort((a, b) => b.rank - a.rank);
+    growth.sort((a, b) => a.rank - b.rank);
+    const topStrengths = strengths.slice(0, 3);
+    const topGrowth = growth.slice(0, 3);
+    const hasSummary = topStrengths.length > 0 || topGrowth.length > 0;
+
+    const renderChips = (items: Ranked[], tone: 'strength' | 'growth') => (
+        <div className="flex flex-wrap gap-1.5">
+            {items.map((it) => (
+                <span
+                    key={it.code}
+                    className={cn(
+                        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs',
+                        tone === 'strength'
+                            ? 'border-green-200 bg-green-50 text-green-800'
+                            : 'border-amber-200 bg-amber-50 text-amber-800',
+                    )}
+                    title={it.name}
+                >
+                    <span className="font-mono font-bold">{it.code}</span>
+                    <span className="max-w-[8.5rem] truncate font-medium">{it.name}</span>
+                    <span className="rounded-full bg-white/70 px-1.5 font-bold">{it.score}</span>
+                </span>
+            ))}
+        </div>
+    );
+
     return (
         <div className="w-full glass-panel p-4 space-y-3">
             <h3 className="text-base font-semibold text-center text-slate-800">{fullName}</h3>
@@ -247,6 +301,33 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                     </div>
                 )}
             </div>
+
+            {/* Sintesi: il messaggio in 3 secondi prima del dettaglio barre. */}
+            {hasSummary && (
+                <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 space-y-3 animate-fade-in-up">
+                    <div className="grid sm:grid-cols-2 gap-x-6 gap-y-3">
+                        <div className="space-y-1.5">
+                            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-green-700">
+                                <TrendingUp className="w-3.5 h-3.5" />
+                                {t('profile.summary.strengths')}
+                            </div>
+                            {topStrengths.length > 0
+                                ? renderChips(topStrengths, 'strength')
+                                : <p className="text-xs text-slate-400">{t('profile.summary.balanced')}</p>}
+                        </div>
+                        <div className="space-y-1.5">
+                            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-700">
+                                <Sprout className="w-3.5 h-3.5" />
+                                {t('profile.summary.growth')}
+                            </div>
+                            {topGrowth.length > 0
+                                ? renderChips(topGrowth, 'growth')
+                                : <p className="text-xs text-slate-400">{t('profile.summary.balanced')}</p>}
+                        </div>
+                    </div>
+                    <p className="text-[11px] text-slate-400 text-center pt-0.5">{t('profile.summary.note')}</p>
+                </div>
+            )}
 
             <div className={cn("grid gap-x-8 gap-y-2", gridCols)}>
                 {columns.map(({ prefix, entries }) => {

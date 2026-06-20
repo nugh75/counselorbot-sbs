@@ -333,6 +333,35 @@ def _qsa_factor_names(language: Optional[str], questionnaire_type: str = "QSA") 
     return dictionary.get(language or "it", dictionary["it"])
 
 
+# Etichette di interpretazione QSA per lingua. Servono nel system prompt: il
+# modello le copia testualmente nella colonna "Interpretazione" della tabella,
+# quindi devono essere già nella lingua dello studente (altrimenti escono in
+# inglese, es. "Area for growth", anche in una sessione italiana).
+_QSA_ASSESSMENT_LABELS: dict[str, dict[str, str]] = {
+    "en": {"growth": "Area for growth", "adequate": "Adequate", "strength": "Strength", "normal": "Normal"},
+    "it": {"growth": "Area di crescita", "adequate": "Adeguato", "strength": "Forza", "normal": "Normale"},
+    "es": {"growth": "Área de mejora", "adequate": "Adecuado", "strength": "Fortaleza", "normal": "Normal"},
+    "fr": {"growth": "Axe de progression", "adequate": "Adéquat", "strength": "Force", "normal": "Normal"},
+    "de": {"growth": "Wachstumsbereich", "adequate": "Angemessen", "strength": "Stärke", "normal": "Normal"},
+    "sv": {"growth": "Utvecklingsområde", "adequate": "Tillräcklig", "strength": "Styrka", "normal": "Normal"},
+}
+
+
+def _qsa_assessment_labels(language: Optional[str]) -> dict[str, str]:
+    return _QSA_ASSESSMENT_LABELS.get(language or "it", _QSA_ASSESSMENT_LABELS["it"])
+
+
+def _localize_assessment_labels(text: str, language: Optional[str]) -> str:
+    """Rete di sicurezza: se il modello scrive comunque 'Area for growth/improvement'
+    in inglese (frase distintiva, non confondibile con prosa), la riporta nella
+    lingua dello studente. 'Strength'/'Normal' NON vengono toccati per non
+    corrompere il testo libero."""
+    if not text or not language or language == "en":
+        return text
+    growth = _qsa_assessment_labels(language)["growth"]
+    return re.sub(r"\bareas?\s+for\s+(?:growth|improvement)\b", growth, text, flags=re.IGNORECASE)
+
+
 def _annotate_qsa_factor_codes(
     text: str, language: Optional[str], progressive: bool = False, questionnaire_type: str = "QSA"
 ) -> str:
@@ -348,7 +377,7 @@ def _annotate_qsa_factor_codes(
             # mostriamo subito l'etichetta completa senza esporre una sigla sola.
             annotated = re.sub(rf"\b{code}\b\s*\([^)]*$", f"{code} ({name})", annotated)
         annotated = re.sub(rf"\b{code}\b(?!\s*\()", f"{code} ({name})", annotated)
-    return annotated
+    return _localize_assessment_labels(annotated, language)
 
 
 def _apply_qsa_factor_directive(system_prompt: str, questionnaire_type: str, language: Optional[str]) -> str:
@@ -361,17 +390,21 @@ def _apply_qsa_factor_directive(system_prompt: str, questionnaire_type: str, lan
     inverted = ", ".join(
         f"{code} ({names[code]})" for code in inverted_codes if code in names
     )
+    # Label di interpretazione nella lingua dello studente: il modello le riusa
+    # tali e quali nella tabella, quindi non devono restare in inglese.
+    lbl = _qsa_assessment_labels(language)
     return (
         f"{system_prompt}\n\n"
         "[FACTOR LABELS] In every reply addressed to the student, never write "
         f"an isolated {instrument} factor code. Each code must be immediately "
         "accompanied by its full name, in the form `C2 (Self-regulation)`. "
         f"Mandatory reference: {examples}.\n\n"
-        "[INVERTED FACTORS] Scale 1-9. For most factors: "
-        "1-3 = Area for growth, 4-6 = Adequate, 7-9 = Strength. "
+        "[INVERTED FACTORS] Scale 1-9. Use EXACTLY these assessment labels "
+        "(already in the student's language) in the interpretation column, never their English form: "
+        f"1-3 = {lbl['growth']}, 4-6 = {lbl['adequate']}, 7-9 = {lbl['strength']}. "
         f"BUT the following factors are INVERTED: {inverted}. "
-        "For THESE factors the reading flips: 1-3 = Strength, 4-6 = Normal, "
-        "7-9 = Area for growth (a high score = a problem to work on, NOT a strength). "
+        f"For THESE factors the reading flips: 1-3 = {lbl['strength']}, 4-6 = {lbl['normal']}, "
+        f"7-9 = {lbl['growth']} (a high score = a problem to work on, NOT a strength). "
         "Absolute rule: never read 'high = strength' automatically; "
         "always apply the inversion to the listed factors. "
         f"Apply this rule exclusively to the inverted {instrument} factors listed above."

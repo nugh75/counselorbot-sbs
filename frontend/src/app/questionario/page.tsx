@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CheckCircle, Send } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Send } from 'lucide-react';
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n-context';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { StickyActions } from '@/components/ui/StickyActions';
 
 const API_BASE = '/api';
 
@@ -71,6 +72,10 @@ export default function QuestionarioPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    // Wizard: il form lungo è spezzato in 4 passi (anagrafica / strumenti /
+    // valutazioni / aperto+consenso). Meno scroll, più completamenti.
+    const [wizardStep, setWizardStep] = useState(0);
+    const TOTAL_STEPS = 4;
 
     // Compute area_studio based on tipo_istituto and istruzione
     const computeAreaStudio = (istruzione: string, tipo_istituto: string) => {
@@ -108,15 +113,16 @@ export default function QuestionarioPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!consent) {
-            setError(t('survey.err.consent'));
-            return;
-        }
-
-        // Check if all quantitative questions are answered
+        // Domande di valutazione (passo 3) mancanti: porta lì e segnala.
         const hasUnansweredQuestions = QUESTIONS.some(q => formData[q.key] === null);
         if (hasUnansweredQuestions) {
             setError(t('survey.err.unanswered'));
+            setWizardStep(2);
+            return;
+        }
+        if (!consent) {
+            setError(t('survey.err.consent'));
+            setWizardStep(3);
             return;
         }
 
@@ -186,12 +192,24 @@ export default function QuestionarioPage() {
             <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-8"
+                className="space-y-6"
             >
                 <PageHeader title={t('survey.title')} subtitle={t('survey.subtitle')} backHref="/" />
 
-                <form onSubmit={handleSubmit} className="space-y-8">
-                    {/* Dati di base */}
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Progresso wizard */}
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                            <span>{t('survey.wizard.step', { current: wizardStep + 1, total: TOTAL_STEPS })} · {[t('survey.basic.title'), t('survey.tools.title'), t('survey.quant.title'), t('survey.open.title')][wizardStep]}</span>
+                            <span>{Math.round(((wizardStep + 1) / TOTAL_STEPS) * 100)}%</span>
+                        </div>
+                        <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                            <div className="h-full bg-indigo-500 transition-all duration-300" style={{ width: `${((wizardStep + 1) / TOTAL_STEPS) * 100}%` }} />
+                        </div>
+                    </div>
+
+                    {/* Passo 1 — Dati di base */}
+                    {wizardStep === 0 && (
                     <div className="glass-panel p-6 space-y-6">
                         <h2 className="text-xl font-semibold text-slate-800">{t('survey.basic.title')}</h2>
                         <p className="text-sm text-slate-500">{t('survey.basic.sub')}</p>
@@ -249,8 +267,10 @@ export default function QuestionarioPage() {
                             </div>
                         </div>
                     </div>
+                    )}
 
-                    {/* Strumenti utilizzati */}
+                    {/* Passo 2 — Strumenti */}
+                    {wizardStep === 1 && (
                     <div className="glass-panel p-6 space-y-4">
                         <div>
                             <h2 className="text-xl font-semibold text-slate-800">{t('survey.tools.title')}</h2>
@@ -280,8 +300,10 @@ export default function QuestionarioPage() {
                             })}
                         </div>
                     </div>
+                    )}
 
-                    {/* Valutazione quantitativa */}
+                    {/* Passo 3 — Valutazione quantitativa */}
+                    {wizardStep === 2 && (
                     <div className="glass-panel p-6 space-y-6">
                         <h2 className="text-xl font-semibold text-slate-800">{t('survey.quant.title')}</h2>
                         <p className="text-sm text-slate-500">
@@ -299,8 +321,11 @@ export default function QuestionarioPage() {
                             ))}
                         </div>
                     </div>
+                    )}
 
-                    {/* Feedback aperto */}
+                    {/* Passo 4 — Feedback aperto + consenso */}
+                    {wizardStep === 3 && (
+                    <>
                     <div className="glass-panel p-6 space-y-4">
                         <div>
                             <h2 className="text-xl font-semibold text-slate-800">{t('survey.open.title')}</h2>
@@ -331,26 +356,42 @@ export default function QuestionarioPage() {
                             </span>
                         </label>
 
-                        {error && (
-                            <p className="text-red-600 text-sm">{error}</p>
-                        )}
                     </div>
+                    </>
+                    )}
 
-                    {/* Submit */}
-                    <button
-                        type="submit"
-                        disabled={isSubmitting || !consent}
-                        className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
-                    >
-                        {isSubmitting ? (
-                            <>{t('survey.submitting')}</>
-                        ) : (
-                            <>
-                                <Send className="w-5 h-5" />
-                                {t('survey.submit')}
-                            </>
-                        )}
-                    </button>
+                    {/* Navigazione wizard: Indietro / Avanti / Invia, ancorata in fondo */}
+                    <StickyActions>
+                        {error && <p className="text-red-600 text-sm mb-2 text-center">{error}</p>}
+                        <div className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={() => { setError(null); setWizardStep((s) => Math.max(0, s - 1)); }}
+                                disabled={wizardStep === 0}
+                                className="px-5 py-2.5 rounded-md border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            >
+                                {t('survey.wizard.back')}
+                            </button>
+                            {wizardStep < TOTAL_STEPS - 1 ? (
+                                <button
+                                    type="button"
+                                    onClick={() => { setError(null); setWizardStep((s) => Math.min(TOTAL_STEPS - 1, s + 1)); }}
+                                    className="ml-auto inline-flex items-center gap-2 px-6 py-2.5 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors shadow-md shadow-indigo-600/20"
+                                >
+                                    {t('survey.wizard.next')}
+                                    <ArrowRight className="w-4 h-4" />
+                                </button>
+                            ) : (
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting || !consent}
+                                    className="ml-auto inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-md transition-colors shadow-md shadow-indigo-600/20"
+                                >
+                                    {isSubmitting ? t('survey.submitting') : (<><Send className="w-4 h-4" /> {t('survey.submit')}</>)}
+                                </button>
+                            )}
+                        </div>
+                    </StickyActions>
                 </form>
             </motion.div>
         </div>

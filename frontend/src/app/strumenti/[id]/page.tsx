@@ -60,7 +60,7 @@ export default function InstrumentDetailsPage() {
                     </div>
                     <div>
                         <span className="text-xs font-semibold uppercase tracking-wide text-indigo-700">{t('detail.kicker')}</span>
-                        <h1 className="text-3xl font-bold text-slate-900 mt-1">{questionnaire.name}</h1>
+                        <h1 className="text-2xl font-bold text-slate-900 mt-1">{questionnaire.name}</h1>
                         <p className="text-lg text-slate-700 mt-1">{t(`q.${questionnaire.id}.fullName`)}</p>
                         <p className="text-slate-600 mt-3">{t(`q.${questionnaire.id}.description`)}</p>
                     </div>

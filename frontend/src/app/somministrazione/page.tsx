@@ -93,7 +93,7 @@ export default function TestAdministrationsPage() {
         return (
             <div className="page-narrow space-y-6">
                 <header className="glass-panel p-6 sm:p-8 space-y-3">
-                    <h1 className="text-3xl font-bold text-slate-900">{copy.title}</h1>
+                    <h1 className="text-2xl font-bold text-slate-900">{copy.title}</h1>
                     <p className="text-slate-600">{copy.body}</p>
                 </header>
                 <Link href="/" className="inline-flex text-sm font-semibold text-indigo-700 hover:text-indigo-900">
@@ -112,7 +112,7 @@ export default function TestAdministrationsPage() {
                     <Languages className="w-4 h-4" />
                     {copy.badge}
                 </div>
-                <h1 className="text-3xl font-bold text-slate-900">{copy.title}</h1>
+                <h1 className="text-2xl font-bold text-slate-900">{copy.title}</h1>
                 <p className="text-slate-600">{copy.intro}</p>
             </header>
 

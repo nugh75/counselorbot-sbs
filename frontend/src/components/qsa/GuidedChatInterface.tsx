@@ -764,11 +764,11 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         return 'generic';
     };
 
-    const handleSend = async (e: { preventDefault: () => void }) => {
+    const handleSend = async (e: { preventDefault: () => void }, overrideText?: string) => {
         e.preventDefault();
-        if (!input.trim() || isLoading) return;
+        const userMessage = (overrideText ?? input).trim();
+        if (!userMessage || isLoading) return;
 
-        const userMessage = input;
         setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
         setInput('');
         setUserMessagesInPhase(prev => prev + 1);
@@ -1200,6 +1200,21 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     </div>
                 ) : (
                     <form onSubmit={handleSend} className="p-4 border-t border-slate-100 bg-white">
+                        {/* Risposte rapide: accelerano l'interazione (utile da mobile). */}
+                        {!isLoading && messages.length > 0 && (
+                            <div className="mb-2 flex flex-wrap gap-1.5">
+                                {[t('guided.qr.example'), t('guided.qr.unsure'), t('guided.qr.more')].map((q) => (
+                                    <button
+                                        key={q}
+                                        type="button"
+                                        onClick={() => handleSend({ preventDefault() {} }, q)}
+                                        className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                                    >
+                                        {q}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                         <div className="relative flex items-center gap-2">
                             <input
                                 type="text"

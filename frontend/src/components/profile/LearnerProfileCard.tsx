@@ -38,9 +38,12 @@ interface Props {
     variant: Variant;
     sessionId?: string;
     onDone?: () => void;
+    // Chiamato quando la card non ha nulla da mostrare (non autenticato / errore /
+    // dismessa): permette al parent di saltare in automatico la schermata profilo.
+    onUnavailable?: () => void;
 }
 
-export function LearnerProfileCard({ variant, sessionId, onDone }: Props) {
+export function LearnerProfileCard({ variant, sessionId, onDone, onUnavailable }: Props) {
     const { t } = useI18n();
     const [hidden, setHidden] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -70,6 +73,11 @@ export function LearnerProfileCard({ variant, sessionId, onDone }: Props) {
     }, []);
 
     useEffect(() => { void load(); }, [load]);
+
+    // Avvisa il parent quando non c'è nulla da rivedere (così salta la schermata).
+    useEffect(() => {
+        if (hidden || dismissed) onUnavailable?.();
+    }, [hidden, dismissed, onUnavailable]);
 
     const save = async (source: string) => {
         setSaving(true);

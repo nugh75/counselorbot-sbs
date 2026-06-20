@@ -162,7 +162,7 @@ export default function AssistentePage() {
     return (
         <div className="page-wide space-y-6">
             <div>
-                <h1 className="text-3xl font-bold text-slate-900">Assistente del sito</h1>
+                <h1 className="text-2xl font-bold text-slate-900">Assistente del sito</h1>
                 <p className="text-slate-500 mt-1">
                     Domande su competenzestrategiche.it. Le risposte si basano solo sui materiali del progetto.
                 </p>

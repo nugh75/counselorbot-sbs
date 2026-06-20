@@ -4,11 +4,14 @@ import { useCallback, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n-context';
 import { getIdentity, type Identity } from '@/lib/auth';
+import { useDarkMode } from '@/lib/use-dark-mode';
+import { toast } from '@/components/ui/Toast';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
 import { addCompletedProfile, clearCompletedProfiles } from '@/lib/profile-tracker';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import {
-    ArrowLeft, User, FileText, Trash2, Download, MessageSquare, RefreshCw, Calendar, ChevronRight
+    ArrowLeft, User, FileText, Trash2, Download, MessageSquare, Calendar, ChevronRight
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList,
@@ -25,6 +28,7 @@ interface QuestionnaireResult {
 
 export default function ProfilePage() {
     const { t, tf, lang } = useI18n();
+    const isDark = useDarkMode();
     const [identity, setIdentity] = useState<Identity | null>(null);
     const [sessions, setSessions] = useState<QuestionnaireResult[]>([]);
     const [selectedSession, setSelectedSession] = useState<QuestionnaireResult | null>(null);
@@ -89,11 +93,14 @@ export default function ProfilePage() {
                 }
                 setShowDeleteConfirm(null);
                 await loadData();
+                toast.success(t('toast.deleted'));
             } else {
                 console.error("Failed to delete session:", res.statusText);
+                toast.error(t('toast.error'));
             }
         } catch (e) {
             console.error("Error deleting session", e);
+            toast.error(t('toast.error'));
         } finally {
             setActionLoading(null);
         }
@@ -114,6 +121,7 @@ export default function ProfilePage() {
             window.URL.revokeObjectURL(url);
         } catch (e) {
             console.error('Failed to download PDF', e);
+            toast.error(t('toast.error'));
         }
     };
 
@@ -156,9 +164,19 @@ export default function ProfilePage() {
 
     if (loading) {
         return (
-            <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4">
-                <RefreshCw className="w-8 h-8 text-indigo-600 animate-spin" />
-                <span className="text-slate-500 font-medium">{t('profile.loading')}</span>
+            <div className="page-wide px-4 py-8 space-y-8">
+                <Skeleton className="h-9 w-64" />
+                <Skeleton className="h-24 w-full" />
+                <div className="grid lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-1 space-y-3">
+                        <Skeleton className="h-20 w-full" />
+                        <Skeleton className="h-20 w-full" />
+                        <Skeleton className="h-20 w-full" />
+                    </div>
+                    <div className="lg:col-span-2">
+                        <Skeleton className="h-96 w-full" />
+                    </div>
+                </div>
             </div>
         );
     }
@@ -192,7 +210,7 @@ export default function ProfilePage() {
                         <User className="w-5 h-5" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-900">{t('profile.title')}</h1>
+                        <h1 className="text-2xl font-bold text-slate-900">{t('profile.title')}</h1>
                         <p className="text-sm text-slate-500 mt-1">{t('profile.subtitle')}</p>
                     </div>
                 </div>
@@ -277,9 +295,17 @@ export default function ProfilePage() {
                         ))}
 
                         {sessions.length === 0 && (
-                            <div className="text-center py-12 px-4 border border-dashed border-slate-200 rounded-xl bg-white space-y-3">
-                                <FileText className="w-8 h-8 text-slate-300 mx-auto" />
-                                <p className="text-sm text-slate-400">{t('profile.noSessions')}</p>
+                            <div className="text-center py-12 px-4 border border-dashed border-slate-200 rounded-xl bg-white space-y-4 animate-fade-in-up">
+                                <div className="w-12 h-12 mx-auto rounded-full bg-indigo-50 flex items-center justify-center">
+                                    <FileText className="w-6 h-6 text-indigo-400" />
+                                </div>
+                                <p className="text-sm text-slate-500 max-w-xs mx-auto">{t('profile.noSessions')}</p>
+                                <Link
+                                    href="/"
+                                    className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+                                >
+                                    {t('selector.start')}
+                                </Link>
                             </div>
                         )}
                     </div>
@@ -351,9 +377,9 @@ export default function ProfilePage() {
                                     <div className="h-64">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                                <XAxis dataKey="code" tick={{ fontSize: 11 }} />
-                                                <YAxis domain={[0, 9]} ticks={[1, 3, 5, 7, 9]} tick={{ fontSize: 11 }} />
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#e2e8f0'} />
+                                                <XAxis dataKey="code" tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} />
+                                                <YAxis domain={[0, 9]} ticks={[1, 3, 5, 7, 9]} tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} />
                                                 <Tooltip content={(p: TooltipContentProps<number, string>) => {
                                                     if (!p.active || !p.payload?.length) return null;
                                                     const d = p.payload[0].payload;
@@ -368,7 +394,7 @@ export default function ProfilePage() {
                                                     {chartData.map((entry, index) => (
                                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                                     ))}
-                                                    <LabelList dataKey="value" position="top" style={{ fontSize: '10px', fill: '#475569', fontWeight: 'bold' }} />
+                                                    <LabelList dataKey="value" position="top" style={{ fontSize: '10px', fill: isDark ? '#cbd5e1' : '#475569', fontWeight: 'bold' }} />
                                                 </Bar>
                                             </BarChart>
                                         </ResponsiveContainer>
@@ -437,11 +463,12 @@ export default function ProfilePage() {
                                 </div>
                             ) : null}
 
-                            {/* Call to Actions */}
-                            <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4">
+                            {/* Call to Action: ancorata in fondo alla card, sempre raggiungibile
+                                senza scrollare tutta la scheda fattori. */}
+                            <div className="sticky bottom-0 -mx-6 -mb-6 mt-2 px-6 pt-3 pb-6 bg-gradient-to-t from-[var(--console-surface)] via-[var(--console-surface)] to-transparent rounded-b-xl">
                                 <Link
                                     href={`/?session_id=${selectedSession.session_id}&instrument=${selectedSession.questionnaire_type}`}
-                                    className="flex-1 min-w-[200px] py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-sm text-center shadow transition-colors flex items-center justify-center gap-2"
+                                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-md text-sm text-center shadow-lg shadow-indigo-600/20 transition-colors flex items-center justify-center gap-2"
                                 >
                                     <MessageSquare className="w-4 h-4" />
                                     {t('history.resume')}
