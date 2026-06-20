@@ -184,7 +184,7 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+        <div className="page-wide px-4 py-8 space-y-8">
             {/* Header */}
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
@@ -206,7 +206,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Account Info Details Card */}
-            <section className="glass-panel p-6 rounded-xl flex flex-wrap items-center justify-between gap-6">
+            <section className="glass-panel p-6 flex flex-wrap items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-lg">
                         {identity.username?.slice(0, 2).toUpperCase() || 'U'}
@@ -242,7 +242,7 @@ export default function ProfilePage() {
                         {t('profile.myCompilations')}
                     </h2>
                     
-                    <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+                    <div className="space-y-3 pr-1">
                         {sessions.map((session) => (
                             <button
                                 key={session.id}
@@ -288,7 +288,7 @@ export default function ProfilePage() {
                 {/* Right Column: Selected Session Detail */}
                 <div className="lg:col-span-2 space-y-6">
                     {selectedSession ? (
-                        <div className="glass-panel p-6 rounded-xl space-y-6">
+                        <div className="glass-panel p-6 space-y-6">
                             {/* Session Detail Header */}
                             <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-4">
                                 <div className="space-y-1">
@@ -449,7 +449,7 @@ export default function ProfilePage() {
                             </div>
                         </div>
                     ) : (
-                        <div className="glass-panel p-12 rounded-xl text-center space-y-4 text-slate-400">
+                        <div className="glass-panel p-12 text-center space-y-4 text-slate-400">
                             <FileText className="w-12 h-12 mx-auto text-slate-200" />
                             <p className="font-medium">{t('profile.selectSession')}</p>
                         </div>

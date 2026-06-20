@@ -655,7 +655,7 @@ export function ConfigForm() {
             {section === 'general' && (
             <div className="space-y-8">
             {/* 1. Provider & Model Selection */}
-            <div className="glass-panel p-6 rounded-lg space-y-6">
+            <div className="glass-panel p-6 space-y-6">
                 <h3 className="text-lg font-medium text-slate-900 flex items-center gap-2">
                     <Server className="w-5 h-5 text-indigo-600" />
                     {t('admin.config.aiActive')}
@@ -751,7 +751,7 @@ export function ConfigForm() {
                         (activeProvider === 'llamacpp' && def.key === 'llamacpp_url');
 
                     return (
-                        <div key={def.key} className={`glass-panel p-4 rounded-lg flex items-center gap-4 transition-colors ${isActive ? 'bg-indigo-50 border-indigo-300 ring-1 ring-indigo-300' : 'hover:border-slate-300'}`}>
+                        <div key={def.key} className={`glass-panel p-4 flex items-center gap-4 transition-colors ${isActive ? 'bg-indigo-50 border-indigo-300 ring-1 ring-indigo-300' : 'hover:border-slate-300'}`}>
                             <div className="flex-1">
                                 <label className="text-xs font-semibold text-slate-500 mb-1 flex items-center gap-2">
                                     {def.label}
@@ -828,7 +828,7 @@ export function ConfigForm() {
                             {q.systemPrompts.map((def) => {
                                 const currentVal = getConfigValue(def.key);
                                 return (
-                                    <div key={def.key} className="glass-panel p-5 rounded-lg space-y-3">
+                                    <div key={def.key} className="glass-panel p-5 space-y-3">
                                         <div className="flex justify-between items-start gap-3">
                                             <h3 className={`text-sm font-bold ${c.title}`}>{t(`admin.config.label.${def.key}`)}</h3>
                                             <button
@@ -863,7 +863,7 @@ export function ConfigForm() {
                                     const localizedKey = textConfigKey(def.key);
                                     const currentVal = getTextValue(def.key);
                                     return (
-                                        <div key={def.key} className="glass-panel p-5 rounded-lg space-y-3">
+                                        <div key={def.key} className="glass-panel p-5 space-y-3">
                                             <div className="flex justify-between items-start gap-3">
                                                 <h3 className={`text-sm font-bold ${c.title}`}>{t(`admin.config.label.${def.key}`)}</h3>
                                                 <button
@@ -921,7 +921,7 @@ export function ConfigForm() {
 
                 {/* New Step Form */}
                 {showNewStepForm && (
-                    <div className="glass-panel p-6 rounded-lg space-y-4 border-2 border-dashed border-indigo-300 bg-indigo-50/30">
+                    <div className="glass-panel p-6 space-y-4 border-2 border-dashed border-indigo-300 bg-indigo-50/30">
                         <h3 className="text-sm font-semibold text-indigo-700">{t('admin.config.newStep')}</h3>
 
                         <div className="grid md:grid-cols-2 gap-4">
@@ -1005,7 +1005,7 @@ export function ConfigForm() {
                     {sectionSteps.map((step, idx) => {
                         const colorDef = COLOR_THEMES.find(c => c.value === step.color_theme);
                         return (
-                            <div key={step.id} className="glass-panel p-6 rounded-lg space-y-4">
+                            <div key={step.id} className="glass-panel p-6 space-y-4">
                                 {/* Header with dynamic title */}
                                 <div className="flex justify-between items-start gap-3">
                                     <div className="flex items-center gap-3">

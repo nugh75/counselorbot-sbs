@@ -931,7 +931,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     // Loading state
     if (initialLoading) {
         return (
-            <div className="flex items-center justify-center h-[calc(100vh-140px)] min-h-[600px]">
+            <div className="flex items-center justify-center h-chat min-h-[600px]">
                 <div className="text-center space-y-3">
                     <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
                     <p className="text-sm text-slate-500">{t('guided.loading')}</p>
@@ -947,11 +947,11 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const hasScoreEntries = scoreGroups.some(group => group.entries.length > 0);
 
     return (
-        <div className="grid lg:grid-cols-4 gap-6 h-[calc(100vh-140px)] min-h-[600px]">
+        <div className="grid lg:grid-cols-4 gap-6 h-chat min-h-[600px]">
             {/* Left Sidebar */}
             <div className="lg:col-span-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
                 {/* Phase Progress */}
-                <div className="glass-panel p-4 rounded-lg space-y-3">
+                <div className="glass-panel p-4 space-y-3">
                     <div className="flex justify-between items-center">
                         <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">{t('guided.path')}</h3>
                         <span className="text-xs text-slate-500">{currentStepIndex}/{totalSteps}</span>
@@ -1015,7 +1015,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
                 {/* Scores Display */}
                 {hasScoreEntries && (
-                    <div className="glass-panel p-4 rounded-lg space-y-3">
+                    <div className="glass-panel p-4 space-y-3">
                         <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                             <BarChart3 className="w-4 h-4" />
                             {t('guided.scores')}

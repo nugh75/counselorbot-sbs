@@ -16,7 +16,8 @@ const OpenCodeExperience = dynamic(
     () => import('@/components/qsa/OpenCodeExperience').then((mod) => mod.OpenCodeExperience),
     { ssr: false }
 );
-import { ArrowLeft, CheckCircle2, MessageSquare, RotateCcw, LogOut, Download, Layers, Terminal } from 'lucide-react';
+import { CheckCircle2, MessageSquare, RotateCcw, LogOut, Download, Layers, Terminal } from 'lucide-react';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { useI18n } from '@/lib/i18n-context';
 import { addCompletedProfile, hasCompletedAll, getCombinedScoresContext, clearCompletedProfiles, getCompletedProfiles } from '@/lib/profile-tracker';
 
@@ -281,20 +282,14 @@ export default function Home() {
     };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8">
+        <div className="page-wide space-y-8">
             {/* The selection screen owns its introduction to avoid repeating the page purpose. */}
             {step !== 'questionnaire-select' && (
-            <div className="flex items-center gap-4 mb-8">
-                {step !== 'completed' && (
-                    <button onClick={goBack} className="p-2 border border-transparent hover:border-slate-200 hover:bg-white rounded-md transition-colors">
-                        <ArrowLeft className="w-5 h-5 text-slate-600" />
-                    </button>
-                )}
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900">{getStepTitle()}</h1>
-                    <p className="text-slate-500">{getStepDescription()}</p>
-                </div>
-            </div>
+                <PageHeader
+                    title={getStepTitle()}
+                    subtitle={getStepDescription()}
+                    onBack={step !== 'completed' ? goBack : undefined}
+                />
             )}
 
             <AnimatePresence mode="wait">
@@ -334,7 +329,7 @@ export default function Home() {
                             <ProfileVisualization scores={scores} questionnaire={selectedQuestionnaire} />
 
                             <div className="flex justify-center pt-8">
-                                <div className="glass-panel p-8 rounded-lg text-center max-w-lg space-y-6">
+                                <div className="glass-panel p-8 text-center max-w-lg space-y-6">
                                     <div className="w-14 h-14 mx-auto rounded-md bg-indigo-50 flex items-center justify-center">
                                         <MessageSquare className="w-7 h-7 text-indigo-600" />
                                     </div>
@@ -363,7 +358,7 @@ export default function Home() {
 
                             {experience === null ? (
                                 <div className="max-w-lg mx-auto space-y-4">
-                                    <div className="glass-panel p-8 rounded-lg text-center space-y-6">
+                                    <div className="glass-panel p-8 text-center space-y-6">
                                         <div className="w-14 h-14 mx-auto rounded-md bg-indigo-50 flex items-center justify-center">
                                             <MessageSquare className="w-7 h-7 text-indigo-600" />
                                         </div>
@@ -452,7 +447,7 @@ export default function Home() {
                     {/* Step: Completed - Ask for another analysis */}
                     {step === 'completed' && (
                         <div className="max-w-xl mx-auto">
-                            <div className="glass-panel p-8 rounded-lg text-center space-y-6">
+                            <div className="glass-panel p-8 text-center space-y-6">
                                 <div className="w-14 h-14 mx-auto rounded-md bg-green-50 flex items-center justify-center">
                                     <CheckCircle2 className="w-7 h-7 text-green-600" />
                                 </div>

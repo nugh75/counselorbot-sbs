@@ -160,7 +160,7 @@ export default function AssistentePage() {
     };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-6">
+        <div className="page-wide space-y-6">
             <div>
                 <h1 className="text-3xl font-bold text-slate-900">Assistente del sito</h1>
                 <p className="text-slate-500 mt-1">
@@ -190,8 +190,8 @@ export default function AssistentePage() {
 
             <div className="flex flex-col lg:flex-row gap-6 items-stretch">
                 {/* Colonna chat */}
-                <div className="flex-1 min-w-0 space-y-4">
-                    <div ref={scrollRef} className="glass-panel rounded-lg p-4 h-[55vh] overflow-y-auto space-y-4">
+                <div className={`flex-1 min-w-0 space-y-4 ${preview ? '' : 'w-full lg:max-w-3xl lg:mx-auto'}`}>
+                    <div ref={scrollRef} className="glass-panel p-4 h-chat overflow-y-auto space-y-4">
                         {messages.length === 0 && (
                             <div className="flex items-start gap-3 text-slate-600">
                                 <div className="w-8 h-8 rounded-md bg-indigo-50 flex items-center justify-center shrink-0">
@@ -297,7 +297,7 @@ export default function AssistentePage() {
 
                 {/* Pannello anteprima documento */}
                 {preview && (
-                    <aside className="w-full lg:w-[460px] shrink-0 glass-panel rounded-lg flex flex-col h-[calc(55vh+4.5rem)]">
+                    <aside className="w-full lg:w-[460px] shrink-0 glass-panel flex flex-col h-[calc(var(--chat-h)+4.5rem)]">
                         <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200">
                             <FileText className="w-4 h-4 text-indigo-600 shrink-0" />
                             <span className="text-sm font-semibold text-slate-800 truncate flex-1" title={preview.title}>

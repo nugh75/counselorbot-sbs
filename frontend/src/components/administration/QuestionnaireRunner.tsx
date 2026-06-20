@@ -481,7 +481,7 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
 
         return (
             <div lang={locale} className="max-w-5xl mx-auto space-y-6">
-                <section className="glass-panel rounded-xl p-6 sm:p-8 space-y-5">
+                <section className="glass-panel p-6 sm:p-8 space-y-5">
                     <div className="flex items-center gap-3">
                         <CheckCircle2 className="w-10 h-10 shrink-0 text-green-600" />
                         <div>
@@ -544,7 +544,7 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                 {copy.back}
             </Link>
 
-            <header className="glass-panel rounded-xl p-6 space-y-4">
+            <header className="glass-panel p-6 space-y-4">
                 <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-bold tracking-wide text-amber-900">
                     {copy.testBadge}
                 </span>
@@ -560,7 +560,7 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                 <p className="rounded-md bg-slate-100 px-4 py-3 text-sm text-slate-700">{copy.privacyNote}</p>
             </header>
 
-            <section className="glass-panel rounded-xl p-5 space-y-4">
+            <section className="glass-panel p-5 space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h2 className="text-lg font-bold text-slate-900">
@@ -721,7 +721,7 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                         <fieldset
                             key={itemNumber}
                             id={`item-${itemNumber}`}
-                            className="glass-panel scroll-mt-36 rounded-lg p-4 sm:p-5"
+                            className="glass-panel scroll-mt-36 p-4 sm:p-5"
                         >
                             <legend className="sr-only">{itemNumber}. {item}</legend>
                             <p className="text-sm sm:text-base leading-relaxed text-slate-800">

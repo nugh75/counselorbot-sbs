@@ -43,7 +43,7 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
 
     return (
         <div className="space-y-6">
-            <section className="glass-panel rounded-xl p-5 sm:p-6">
+            <section className="glass-panel p-5 sm:p-6">
                 <div className="space-y-6">
                     <div className="flex flex-col lg:flex-row lg:items-center gap-6">
                         <div className="flex-1 max-w-3xl">
@@ -130,7 +130,7 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
                         return (
                             <article
                                 key={q.id}
-                                className="glass-panel rounded-xl p-4 flex flex-col gap-3"
+                                className="glass-panel p-4 flex flex-col gap-3"
                             >
                                 <div className="flex items-start gap-4">
                                     <div className={cn(
@@ -201,7 +201,7 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
             )}
 
             {/* Strumento pQBL da PDF: percorso separato dai questionari */}
-            <section className="glass-panel rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 border border-emerald-100">
+            <section className="glass-panel p-5 flex flex-col sm:flex-row sm:items-center gap-4 border border-emerald-100">
                 <div className="w-12 h-12 rounded-md bg-emerald-50 flex items-center justify-center shrink-0">
                     <FileQuestion className="w-6 h-6 text-emerald-600" />
                 </div>
