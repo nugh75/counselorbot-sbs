@@ -320,6 +320,89 @@ def _apply_language_directive(system_prompt: str, language: Optional[str]) -> st
     )
 
 
+def _apply_register_directive(system_prompt: str, language: Optional[str]) -> str:
+    """Forza un registro informale e coerente (dare del 'tu') in tutta la chat,
+    a prescindere da quale prompt di step/follow-up è attivo. Risolve la deriva
+    tu→lei tra l'analisi (che dà del tu) e le domande di approfondimento o i
+    riassunti (i cui prompt spesso non specificano il registro)."""
+    return (
+        f"{system_prompt}\n\n"
+        "[REGISTER] Always address the student informally, using the informal "
+        "second-person form of the chosen language (Italian 'tu' not 'Lei', "
+        "Spanish 'tú', German and Swedish 'du', French 'tu'). Keep this informal "
+        "register consistent across the ENTIRE conversation, including follow-up "
+        "answers and summaries. Never switch to the formal form."
+    )
+
+
+# Etichetta del blocco punteggi di riferimento, per lingua dello studente.
+_SCORES_REFERENCE_LABELS = {
+    "it": "PROFILO DELLO STUDENTE (punteggi di riferimento, validi per tutta la sessione)",
+    "en": "STUDENT PROFILE (reference scores, valid for the whole session)",
+    "es": "PERFIL DEL ESTUDIANTE (puntuaciones de referencia, válidas durante toda la sesión)",
+    "fr": "PROFIL DE L'ÉTUDIANT (scores de référence, valables pendant toute la session)",
+    "de": "PROFIL DES STUDIERENDEN (Referenzwerte, für die gesamte Sitzung gültig)",
+    "sv": "STUDENTENS PROFIL (referenspoäng, giltiga under hela sessionen)",
+}
+
+
+def _apply_scores_reference(system_prompt: str, scores: str, language: Optional[str]) -> str:
+    """Pinna i punteggi del profilo nel system prompt come riferimento permanente.
+
+    Garantisce che il modello abbia SEMPRE i punteggi presenti, anche nei turni
+    di follow-up discorsivo (dove il frontend non rimanda `scores_context`),
+    senza però indurlo a ri-emettere l'intera tabella a ogni messaggio."""
+    scores = (scores or "").strip()
+    if not scores:
+        return system_prompt
+    label = _SCORES_REFERENCE_LABELS.get(language or "it", _SCORES_REFERENCE_LABELS["it"])
+    return (
+        f"{system_prompt}\n\n"
+        f"[STUDENT PROFILE] {label}:\n{scores}\n"
+        "Keep these scores in mind throughout the whole conversation and refer to "
+        "them when relevant. Do NOT re-list the full table unless the student "
+        "explicitly asks again for the complete overview."
+    )
+
+
+# Codici fattore (QSA/QSAr C1, A7, C1r; ZTPI T1-T5) e range tipo "C1-C7".
+_FACTOR_CODE_RE = re.compile(r"\b([CA]\d{1,2}r?|T[1-5])\b", re.IGNORECASE)
+_FACTOR_RANGE_RE = re.compile(r"\b([CA])(\d)\s*[-–]\s*[CA]?(\d)\b", re.IGNORECASE)
+
+
+def _phase_factor_codes(db, phase: Optional[str]) -> set[str]:
+    """Codici fattore della sezione corrente, ricavati dal prompt dello step guidato.
+    Espande i range (es. C1-C7). Set vuoto se sconosciuto → nessuno scoping (fallback)."""
+    if not phase:
+        return set()
+    step = db.query(models.GuidedStep).filter(models.GuidedStep.id == phase).first()
+    if not step or not step.prompt:
+        return set()
+    text = step.prompt
+    codes = {m.group(1).upper() for m in _FACTOR_CODE_RE.finditer(text)}
+    for m in _FACTOR_RANGE_RE.finditer(text):
+        letter, a, b = m.group(1).upper(), int(m.group(2)), int(m.group(3))
+        for n in range(min(a, b), max(a, b) + 1):
+            codes.add(f"{letter}{n}")
+    return codes
+
+
+def _scope_scores_to_codes(scores: str, codes: set[str]) -> str:
+    """Tiene l'header e solo le righe '- <codice> (...)' i cui codici sono nella sezione.
+    `codes` vuoto → ritorna i punteggi intatti (fallback: profilo intero)."""
+    if not scores or not codes:
+        return scores
+    out = []
+    for line in scores.splitlines():
+        m = re.match(r"\s*-\s*([CA]\d{1,2}r?|T[1-5])\b", line, re.IGNORECASE)
+        if m:
+            if m.group(1).upper() in codes:
+                out.append(line)
+        else:
+            out.append(line)  # header e righe non-fattore restano
+    return "\n".join(out)
+
+
 def _is_qsa(questionnaire_type: Optional[str]) -> bool:
     return (questionnaire_type or "").upper() == "QSA"
 
@@ -689,14 +772,13 @@ def _retrieved_context(
     ai_service=None,
     username: str = "",
 ) -> tuple[str, List[str]]:
-    # Follow-up discorsivo: NON re-iniettare i punteggi completi dalla memoria,
-    # altrimenti il modello ri-analizza tutto il profilo (tabella + altri fattori).
-    # Il chiarimento deve commentare solo quanto già emerso nella conversazione.
-    include_scores = not bool(request.scores_context) and request.mode not in _CONVERSATIONAL_MODES
+    # I punteggi NON passano più dalla memoria recuperata: sono iniettati una sola
+    # volta come blocco [STUDENT PROFILE] nel system prompt (_apply_scores_reference),
+    # così restano sempre presenti senza far ri-analizzare l'intero profilo a ogni turno.
     memory = session_memory.get_relevant_context(
         session_id,
         query=query,
-        include_scores=include_scores,
+        include_scores=False,
         ai_service=ai_service,
     )
     strategies = strategy_memory.retrieve(

@@ -48,10 +48,14 @@ from ..chat_logic import (
     _annotate_qsa_factor_codes,
     _apply_language_directive,
     _apply_qsa_factor_directive,
+    _apply_register_directive,
+    _apply_scores_reference,
     _clamp_max_tokens,
     _ensure_questionnaire_guided_steps,
     _is_strategy_questionnaire,
+    _phase_factor_codes,
     _resolve_system_prompt,
+    _scope_scores_to_codes,
     _resolve_user_message_for_chat,
     _retrieved_context,
     _sanitize_ztpi_step_label,
@@ -240,6 +244,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
 
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
     system_prompt = _apply_language_directive(system_prompt, request.language)
+    system_prompt = _apply_register_directive(system_prompt, request.language)
     effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)
 
     # 1b. Reset memoria se inizia una nuova analisi guidata (primo step)
@@ -286,9 +291,23 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         step_label=step_label,
     )
 
+    # Punteggi sempre presenti come riferimento nel system prompt. Nel turno di
+    # analisi i punteggi arrivano già nel messaggio utente (scores_context); nei
+    # follow-up senza scores_context li recuperiamo da quelli persistiti in sessione.
+    persisted_scores = "" if model_scores_context else session_memory.get_scores(session_id)
+    if persisted_scores:
+        scoped_scores = _scope_scores_to_codes(persisted_scores, _phase_factor_codes(db, request.phase))
+        system_prompt = _apply_scores_reference(system_prompt, scoped_scores, request.language)
+
     # 2. Build the full message including student's QSA profile
-    if model_scores_context:
-        full_message = f"{model_scores_context}\n\nDOMANDA DELLO STUDENTE:\n{model_message}"
+    # Punteggi nel messaggio scope-ati alla sezione corrente: il modello analizza
+    # solo i fattori del suo step, non quelli di altre sezioni. Il profilo intero
+    # resta persistito (update_context) per i follow-up cross-sezione.
+    message_scores_context = _scope_scores_to_codes(
+        model_scores_context, _phase_factor_codes(db, request.phase)
+    )
+    if message_scores_context:
+        full_message = f"{message_scores_context}\n\nDOMANDA DELLO STUDENTE:\n{model_message}"
     else:
         full_message = model_message
 
@@ -411,6 +430,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     max_tokens = _clamp_max_tokens(request.max_tokens)
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
     system_prompt = _apply_language_directive(system_prompt, request.language)
+    system_prompt = _apply_register_directive(system_prompt, request.language)
     effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)
 
     is_first_step = False
@@ -447,8 +467,14 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         if _is_strategy_questionnaire(questionnaire_type) else effective_message
     )
 
-    if model_scores_context:
-        full_message = f"{model_scores_context}\n\nDOMANDA DELLO STUDENTE:\n{model_message}"
+    # Punteggi nel messaggio scope-ati alla sezione corrente: il modello analizza
+    # solo i fattori del suo step, non quelli di altre sezioni. Il profilo intero
+    # resta persistito (update_context) per i follow-up cross-sezione.
+    message_scores_context = _scope_scores_to_codes(
+        model_scores_context, _phase_factor_codes(db, request.phase)
+    )
+    if message_scores_context:
+        full_message = f"{message_scores_context}\n\nDOMANDA DELLO STUDENTE:\n{model_message}"
     else:
         full_message = model_message
 
@@ -460,6 +486,12 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         phase=request.phase or "",
         step_label=step_label,
     )
+
+    # Punteggi sempre presenti come riferimento nel system prompt (vedi /chat).
+    persisted_scores = "" if model_scores_context else session_memory.get_scores(session_id)
+    if persisted_scores:
+        scoped_scores = _scope_scores_to_codes(persisted_scores, _phase_factor_codes(db, request.phase))
+        system_prompt = _apply_scores_reference(system_prompt, scoped_scores, request.language)
 
     retrieval_query = f"{step_label} {model_message} {model_scores_context}".strip()
     conversation_summary, strategy_ids = _retrieved_context(
