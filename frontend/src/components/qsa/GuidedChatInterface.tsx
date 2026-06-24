@@ -12,6 +12,7 @@ import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useI18n } from '@/lib/i18n-context';
 import { stepLabel } from '@/lib/i18n-steps';
+import type { Lang } from '@/lib/i18n';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 
 // --- Types ---
@@ -30,6 +31,7 @@ interface GuidedChatInterfaceProps {
     questionnaireType: string;
     onComplete: () => void;
     sessionId: string;
+    locale?: string;
     scoresContextOverride?: string;
 }
 
@@ -43,8 +45,37 @@ interface ChatMessage {
     feedback?: boolean;
 }
 
+type QuickReply = {
+    label: string;
+    action: 'send' | 'advance';
+    emphasis?: boolean;
+};
+
 const ZTPI_REQUIRED_STEP_IDS = ['ztpi-t1', 'ztpi-t2', 'ztpi-t3', 'ztpi-t4', 'ztpi-t5', 'ztpi-btp'];
 const SAVICKAS_REQUIRED_STEP_IDS = ['savickas-patto', 'savickas-q1', 'savickas-q2', 'savickas-q3', 'savickas-q4', 'savickas-q5', 'savickas-final'];
+const SUPPORTED_LOCALES = new Set<Lang>(['it', 'en', 'es', 'fr', 'de', 'sv']);
+// edge-tts voice per language (matches backend TTSRequest)
+const TTS_VOICE_BY_LOCALE: Record<Lang, string> = {
+    it: 'it-IT-IsabellaNeural',
+    en: 'en-US-AriaNeural',
+    es: 'es-ES-ElviraNeural',
+    fr: 'fr-FR-DeniseNeural',
+    de: 'de-DE-KatjaNeural',
+    sv: 'sv-SE-SofieNeural',
+};
+const SAVICKAS_ACCEPT_PATTERNS: Record<string, RegExp> = {
+    it: /\baccetto\b/i,
+    en: /\b(?:i\s+accept|accept|i\s+agree|agree)\b/i,
+    es: /\b(?:acepto|estoy\s+de\s+acuerdo|de\s+acuerdo)\b/i,
+    fr: /\b(?:j['’]\s*accepte|accepte|d['’]\s*accord)\b/i,
+    de: /\b(?:ich\s+akzeptiere|akzeptiere|einverstanden)\b/i,
+    sv: /\b(?:jag\s+accepterar|accepterar|godk[aä]nner)\b/i,
+};
+
+function normalizeLocale(value?: string): Lang {
+    const primary = (value || 'it').toLowerCase().replace('_', '-').split('-')[0] as Lang;
+    return SUPPORTED_LOCALES.has(primary) ? primary : 'it';
+}
 
 const ZTPI_FALLBACK_STEPS: StepDef[] = [
     {
@@ -341,8 +372,9 @@ const markdownComponents: Components = {
 
 // --- Main Component ---
 
-export function GuidedChatInterface({ scores, questionnaireType, onComplete, sessionId, scoresContextOverride }: GuidedChatInterfaceProps) {
-    const { t, tf, lang } = useI18n();
+export function GuidedChatInterface({ scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride }: GuidedChatInterfaceProps) {
+    const { t, tf, lang: contextLang } = useI18n();
+    const activeLocale = normalizeLocale(locale || contextLang);
     const [steps, setSteps] = useState<StepDef[]>([]);
     const [phases, setPhases] = useState<string[]>([]);
     const [currentPhase, setCurrentPhase] = useState<string>('');
@@ -446,7 +478,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 response_id: message.responseId,
                 questionnaire_type: questionnaireType,
                 phase: message.feedbackPhase || currentPhase,
-                language: lang,
+                language: activeLocale,
                 helpful,
             }),
         });
@@ -462,7 +494,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
         const loadData = async () => {
             try {
-                const res = await fetch(`/api/qsa/guided-ui-texts?questionnaire_type=${questionnaireType}&lang=${lang}`);
+                const res = await fetch(`/api/qsa/guided-ui-texts?questionnaire_type=${questionnaireType}&lang=${activeLocale}`);
                 if (!res.ok) return;
 
                 const data = await res.json();
@@ -471,7 +503,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 // Dynamic steps — localizza le etichette in EN/SV (fallback al testo DB)
                 const loadedSteps: StepDef[] = data.guided_steps || [];
                 const normalizedSteps = normalizeLoadedSteps(questionnaireType, loadedSteps)
-                    .map((s) => ({ ...s, label: stepLabel(lang, s.id, s.label) }));
+                    .map((s) => ({ ...s, label: stepLabel(activeLocale, s.id, s.label) }));
                 setSteps(normalizedSteps);
 
                 const phaseOrder = questionnaireType === 'SAVICKAS'
@@ -532,7 +564,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 setConclusionText(data.text_guided_conclusion || t('guided.conclusionText'));
             } catch {
                 if (questionnaireType === 'SAVICKAS') {
-                    setSteps(SAVICKAS_FALLBACK_STEPS.map((s) => ({ ...s, label: stepLabel(lang, s.id, s.label) })));
+                    setSteps(SAVICKAS_FALLBACK_STEPS.map((s) => ({ ...s, label: stepLabel(activeLocale, s.id, s.label) })));
                     const fallbackOrder = [...SAVICKAS_FALLBACK_STEPS.map((s) => s.id), FIXED_CONCLUSION_ID];
                     setPhases(fallbackOrder);
                     setCurrentPhase(fallbackOrder[0]);
@@ -548,7 +580,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
         loadData();
         return () => { isMounted = false; };
-    }, [questionnaireType, sessionId, lang, t]);
+    }, [questionnaireType, sessionId, activeLocale, t]);
 
     // Helpers for current phase
     const getStepDef = (phaseId: string): StepDef | undefined => steps.find(s => s.id === phaseId);
@@ -568,7 +600,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 body: JSON.stringify({
                     session_id: sessionId,
                     questionnaire_type: questionnaireType,
-                    language: lang,
+                    language: activeLocale,
                     phase: phaseId,
                     step_label: getPhaseLabel(phaseId),
                     completed_step: completedStep,
@@ -654,7 +686,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         scores_context: scoresContext,
                         session_id: sessionId,
                         questionnaire_type: questionnaireType,
-                        language: lang,
+                        language: activeLocale,
                         max_tokens: 700,
                         counselor_id: getSelectedCounselorId(),
                     };
@@ -667,7 +699,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     scores_context: scoresContext,
                     session_id: sessionId,
                     questionnaire_type: questionnaireType,
-                    language: lang,
+                    language: activeLocale,
                     max_tokens: 700,
                     counselor_id: getSelectedCounselorId(),
                 };
@@ -773,11 +805,11 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         setInput('');
         setUserMessagesInPhase(prev => prev + 1);
 
-        // Patto Savickas: "accetto" → ack statico e avanza senza chiamare l'AI
+        // Patto Savickas: l'accettazione localizzata avanza senza chiamare l'AI.
         const isPattoAck =
             questionnaireType === 'SAVICKAS'
             && currentPhase === 'savickas-patto'
-            && /\baccetto\b/i.test(userMessage);
+            && (SAVICKAS_ACCEPT_PATTERNS[activeLocale] || SAVICKAS_ACCEPT_PATTERNS.it).test(userMessage);
         if (isPattoAck) {
             setMessages(prev => [...prev, {
                 role: 'assistant',
@@ -794,7 +826,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         try {
             const currentStep = isAnalysisStep(currentPhase) ? getStepDef(currentPhase) : undefined;
             const effectiveMessage = (questionnaireType === 'SAVICKAS' && currentStep?.prompt)
-                ? `ISTRUZIONI STEP CORRENTE (INTERNE): ${currentStep.prompt}\n\nRISPOSTA STUDENTE:\n${userMessage}`
+                ? `CURRENT STEP INTERNAL INSTRUCTIONS (use them only as guidance; answer the student in language "${activeLocale}"):\n${currentStep.prompt}\n\nSTUDENT ANSWER:\n${userMessage}`
                 : userMessage;
 
             // Placeholder dell'assistente, riempito in streaming
@@ -822,7 +854,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 phase: isAnalysisStep(currentPhase) ? currentPhase : undefined,
                 session_id: sessionId,
                 questionnaire_type: questionnaireType,
-                language: lang,
+                language: activeLocale,
                 max_tokens: 900,
                 counselor_id: getSelectedCounselorId(),
             };
@@ -900,7 +932,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             const response = await fetch('/api/tts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text }),
+                body: JSON.stringify({ text, voice: TTS_VOICE_BY_LOCALE[activeLocale] }),
             });
 
             if (!response.ok) throw new Error('TTS failed');
@@ -945,6 +977,41 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const totalSteps = phases.length;
     const sidebarPhases = phases.filter(p => p !== FIXED_CONCLUSION_ID);
     const hasScoreEntries = scoreGroups.some(group => group.entries.length > 0);
+    const isSavickasAgreement = questionnaireType === 'SAVICKAS' && currentPhase === 'savickas-patto';
+    const quickReplies: QuickReply[] = (() => {
+        if (questionnaireType === 'SAVICKAS') {
+            if (isSavickasAgreement) {
+                return [{ label: t('guided.qr.accept'), action: 'send', emphasis: true }];
+            }
+            if (isAnalysisStep(currentPhase)) {
+                const replies: QuickReply[] = [
+                    { label: t('guided.qr.rephrase'), action: 'send' },
+                    { label: t('guided.qr.reflect'), action: 'send' },
+                ];
+                if (showAdvanceSuggestion || userMessagesInPhase > 0) {
+                    replies.push({ label: t('guided.qr.readyNext'), action: 'advance' });
+                }
+                return replies;
+            }
+        }
+        return [
+            { label: t('guided.qr.example'), action: 'send' },
+            { label: t('guided.qr.unsure'), action: 'send' },
+            { label: t('guided.qr.more'), action: 'send' },
+        ];
+    })();
+    const inputPlaceholder = isLoading
+        ? t('guided.input.waiting')
+        : isSavickasAgreement
+            ? t('guided.input.pattoPlaceholder')
+            : t('guided.input.placeholder');
+    const inputHint = isSavickasAgreement
+        ? t('guided.hint.savickasPatto')
+        : isAnalysisStep(currentPhase)
+            ? questionnaireType === 'SAVICKAS'
+                ? t('guided.hint.savickas')
+                : t('guided.hint.analysis')
+            : t('guided.hint.free');
 
     return (
         <div className="grid lg:grid-cols-4 gap-6 h-chat min-h-[600px]">
@@ -991,7 +1058,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         </button>
                     )}
 
-                    {currentPhase !== FIXED_CONCLUSION_ID && questionnaireType === 'SAVICKAS' && (showAdvanceSuggestion || userMessagesInPhase >= 3) && (
+                    {currentPhase !== FIXED_CONCLUSION_ID && questionnaireType === 'SAVICKAS' && currentPhase !== 'savickas-patto' && (showAdvanceSuggestion || userMessagesInPhase >= 3) && (
                         <button
                             onClick={() => void advancePhase()}
                             disabled={isLoading}
@@ -1201,16 +1268,27 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 ) : (
                     <form onSubmit={handleSend} className="p-4 border-t border-slate-100 bg-white">
                         {/* Risposte rapide: accelerano l'interazione (utile da mobile). */}
-                        {!isLoading && messages.length > 0 && (
+                        {!isLoading && messages.length > 0 && quickReplies.length > 0 && (
                             <div className="mb-2 flex flex-wrap gap-1.5">
-                                {[t('guided.qr.example'), t('guided.qr.unsure'), t('guided.qr.more')].map((q) => (
+                                {quickReplies.map((reply) => (
                                     <button
-                                        key={q}
+                                        key={reply.label}
                                         type="button"
-                                        onClick={() => handleSend({ preventDefault() {} }, q)}
-                                        className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                                        onClick={() => {
+                                            if (reply.action === 'advance') {
+                                                void advancePhase();
+                                                return;
+                                            }
+                                            void handleSend({ preventDefault() {} }, reply.label);
+                                        }}
+                                        className={cn(
+                                            "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                                            reply.emphasis
+                                                ? "border-indigo-200 bg-indigo-50 text-indigo-700 hover:border-indigo-300 hover:bg-indigo-100"
+                                                : "border-slate-200 bg-white text-slate-600 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+                                        )}
                                     >
-                                        {q}
+                                        {reply.label}
                                     </button>
                                 ))}
                             </div>
@@ -1220,7 +1298,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                 type="text"
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                placeholder={isLoading ? t('guided.input.waiting') : t('guided.input.placeholder')}
+                                placeholder={inputPlaceholder}
                                 disabled={isLoading}
                                 className="flex-1 bg-slate-50 border border-slate-200 rounded-md px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400 disabled:opacity-50"
                             />
@@ -1234,11 +1312,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         </div>
                         <div className="mt-2 text-center">
                             <p className="text-[10px] text-slate-400">
-                                {isAnalysisStep(currentPhase)
-                                    ? questionnaireType === 'SAVICKAS'
-                                        ? t('guided.hint.savickas')
-                                        : t('guided.hint.analysis')
-                                    : t('guided.hint.free')}
+                                {inputHint}
                             </p>
                         </div>
                     </form>

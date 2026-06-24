@@ -16,6 +16,12 @@ import os
 import re
 from urllib.parse import urlsplit, urlunsplit
 
+# Disabilita la traduzione async dei counselor durante i test: usa una propria
+# sessione DB (engine di prod) e non deve mai toccare il DB di produzione.
+os.environ.setdefault("COUNSELOR_TRANSLATE_DISABLED", "1")
+# Idem per la sync admin->contatti ricercatori (chiama ai4auth + scrive su DB).
+os.environ.setdefault("ADMIN_SYNC_DISABLED", "1")
+
 import psycopg2
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -250,6 +256,18 @@ EXPECTED_ROUTES = {
     ("POST", "/admin/research-contacts"),
     ("PUT", "/admin/research-contacts/{contact_id}"),
     ("DELETE", "/admin/research-contacts/{contact_id}"),
+    # Catalogo strategie certificate
+    ("GET", "/admin/certified-strategies"),
+    ("POST", "/admin/certified-strategies"),
+    ("PUT", "/admin/certified-strategies/{strategy_id}"),
+    ("DELETE", "/admin/certified-strategies/{strategy_id}"),
+    ("POST", "/admin/certified-strategies/{strategy_id}/translate"),
+    # Domande suggerite dell'assistente docenti
+    ("GET", "/assistant-questions"),
+    ("GET", "/admin/assistant-questions"),
+    ("POST", "/admin/assistant-questions"),
+    ("PUT", "/admin/assistant-questions/{question_id}"),
+    ("DELETE", "/admin/assistant-questions/{question_id}"),
 }
 
 
@@ -508,9 +526,10 @@ def test_counselors_crud_and_public():
     # crea un preset da assegnare
     pr = client.post("/admin/presets", json={"name": "C-preset", "provider": "deepseek", "model": "deepseek-v4-flash"})
     preset_id = pr.json()["id"]
-    # crea counselor
+    # crea counselor (con traduzioni esplicite: la traduzione automatica e' disabilitata nei test)
     r = client.post("/admin/counselors", json={
         "slug": "marco", "name": "Marco", "description": "Tutor calmo",
+        "description_i18n": {"en": "Calm tutor", "es": "Tutor tranquilo"},
         "persona": "Sei Marco, un counselor empatico.", "preset_id": preset_id,
         "questionnaire_types": ["QSA", "ZTPI"], "is_active": True,
     })
@@ -529,8 +548,100 @@ def test_counselors_crud_and_public():
     assert pub is not None
     assert "persona" not in pub and "preset_id" not in pub
     assert pub["name"] == "Marco T." and "QSA" in (pub["questionnaire_types"] or [])
+    # badge origine modello: deepseek e' un'API esterna
+    assert pub["model_origin"] == "external"
+    # descrizione localizzata via ?lang (fallback all'italiano se manca la lingua)
+    pub_en = next(c for c in client.get("/counselors?lang=en").json() if c["id"] == cid)
+    assert pub_en["description"] == "Calm tutor"
+    pub_fr = next(c for c in client.get("/counselors?lang=fr").json() if c["id"] == cid)
+    assert pub_fr["description"] == "Tutor calmo"
+    pub_it = next(c for c in client.get("/counselors?lang=it").json() if c["id"] == cid)
+    assert pub_it["description"] == "Tutor calmo"
     # delete
     assert client.delete(f"/admin/counselors/{cid}").status_code == 200
+
+
+def test_certified_strategies_crud_and_retrieve():
+    from backend.certified_strategy_service import certified_strategy_memory
+
+    # create
+    r = client.post("/admin/certified-strategies", json={
+        "slug": "focus-c6", "name_it": "Studio a blocchi brevi",
+        "recommended_when_it": "Concentrazione difficile in presenza di distrazioni",
+        "description_it": "Proporre intervalli brevi di studio e un cambiamento ambientale verificabile.",
+        "factor_codes": ["C6"], "match_mode": "all", "questionnaire_types": ["QSA"],
+        "keywords": "concentrazione distrazione ambiente", "status": "certified",
+    })
+    assert r.status_code == 200, r.text
+    sid = r.json()["id"]
+    # slug duplicato -> 409
+    assert client.post("/admin/certified-strategies", json={"slug": "focus-c6"}).status_code == 409
+    # update
+    r = client.put(f"/admin/certified-strategies/{sid}", json={"sort_order": 5})
+    assert r.status_code == 200 and r.json()["sort_order"] == 5
+    assert any(s["id"] == sid for s in client.get("/admin/certified-strategies").json())
+
+    # retrieve: la strategia (match_mode=all su C6) riemerge solo se C6 e' saliente
+    db = _TestSession()
+    try:
+        hit = certified_strategy_memory.retrieve(
+            db, questionnaire_type="QSA", scores_context="Fattore C6 (Attenzione): 8/9", query="non riesco a concentrarmi",
+        )
+        assert any(s["id"] == "focus-c6" for s in hit)
+        miss = certified_strategy_memory.retrieve(
+            db, questionnaire_type="QSA", scores_context="Fattore A2: 3/9", query="organizzazione",
+        )
+        assert not any(s["id"] == "focus-c6" for s in miss)
+        # scope questionario diverso -> esclusa
+        wrong_scope = certified_strategy_memory.retrieve(
+            db, questionnaire_type="ZTPI", scores_context="C6 alto", query="concentrazione",
+        )
+        assert not any(s["id"] == "focus-c6" for s in wrong_scope)
+    finally:
+        db.close()
+
+    # bozza (status != certified) non viene mai iniettata
+    client.put(f"/admin/certified-strategies/{sid}", json={"status": "draft"})
+    db = _TestSession()
+    try:
+        drafted = certified_strategy_memory.retrieve(
+            db, questionnaire_type="QSA", scores_context="C6 alto", query="concentrazione",
+        )
+        assert not any(s["id"] == "focus-c6" for s in drafted)
+    finally:
+        db.close()
+
+    # delete
+    assert client.delete(f"/admin/certified-strategies/{sid}").status_code == 200
+
+
+def test_admin_sync_upsert_and_deactivate():
+    import backend.admin_sync as admin_sync
+    original = admin_sync.fetch_service_admins
+    db = _TestSession()
+    try:
+        admins = [
+            {"username": "Olle", "email": "balter@kth.se", "displayname": "Olle Bälter", "groups": ["counselorbot-sbs-admin"]},
+            {"username": "admin", "email": "daniele@example.test", "displayname": "Daniele Dragoni", "groups": ["admins"]},
+        ]
+        admin_sync.fetch_service_admins = lambda: admins
+        admin_sync.sync_admins_sync(db)
+        rows = db.query(models.ResearchContact).filter(models.ResearchContact.source == "admin-sync").all()
+        assert {r.ext_username for r in rows} == {"Olle", "admin"}
+        assert all(r.is_active for r in rows)
+        olle = next(r for r in rows if r.ext_username == "Olle")
+        assert olle.email == "balter@kth.se" and olle.code.startswith("RC-") and olle.name == "Olle Bälter"
+        # re-sync senza Olle -> deattivato, non eliminato; nessun duplicato
+        admin_sync.fetch_service_admins = lambda: [admins[1]]
+        admin_sync.sync_admins_sync(db)
+        synced = db.query(models.ResearchContact).filter(models.ResearchContact.source == "admin-sync").all()
+        assert len(synced) == 2  # niente duplicati
+        olle = next(r for r in synced if r.ext_username == "Olle")
+        assert olle.is_active is False
+        assert next(r for r in synced if r.ext_username == "admin").is_active is True
+    finally:
+        admin_sync.fetch_service_admins = original
+        db.close()
 
 
 def test_research_contacts_crud():
@@ -561,6 +672,43 @@ def test_research_contacts_crud():
     assert r.json()["is_active"] is False
 
     assert client.delete(f"/admin/research-contacts/{cid}").status_code == 200
+
+
+def test_assistant_questions_seed_and_crud():
+    # Lo startup (seeding) non gira nei test: semino esplicitamente come a runtime.
+    from backend.assistant_questions_seed import seed_assistant_questions
+    _db = _TestSession()
+    try:
+        seed_assistant_questions(_db, models)
+    finally:
+        _db.close()
+
+    # Le domande di default (it) sono seminate per i 4 topic.
+    grouped = client.get("/assistant-questions?lang=it").json()
+    assert {"questionari", "validazione", "didattica", "fonti"} <= set(grouped)
+    assert all(len(qs) >= 20 for qs in grouped.values())
+
+    # Create
+    r = client.post("/admin/assistant-questions", json={
+        "topic": "questionari", "language": "it",
+        "text": "Domanda di test inserita da admin?", "sort_order": 99,
+    })
+    assert r.status_code == 200, r.text
+    qid = r.json()["id"]
+    assert r.json()["text"] == "Domanda di test inserita da admin?"
+
+    # Compare pubblica
+    assert "Domanda di test inserita da admin?" in client.get("/assistant-questions?lang=it").json()["questionari"]
+
+    # Update -> disattiva: sparisce dalla GET pubblica
+    assert client.put(f"/admin/assistant-questions/{qid}", json={"is_active": False}).status_code == 200
+    assert "Domanda di test inserita da admin?" not in client.get("/assistant-questions?lang=it").json().get("questionari", [])
+
+    # Lingua senza righe -> topic omesso (fallback i18n nel frontend)
+    assert client.get("/assistant-questions?lang=de").json() == {}
+
+    # Delete
+    assert client.delete(f"/admin/assistant-questions/{qid}").status_code == 200
 
 
 def test_resolve_counselor_helper():
@@ -723,11 +871,13 @@ def test_survey_submit_public():
         "q_utile": 5, "q_pertinente": 5, "q_chiaro": 5,
         "q_dettaglio": 5, "q_facile": 5, "q_veloce": 5,
         "strumenti_utilizzati": ["QSA", "ZTPI"],
+        "counselor_utilizzato": "Marco",
         "feedback_aperto": "Feedback qualitativo di prova.",
     })
     assert r.status_code == 200, r.text
     data = r.json()
     assert data["strumenti_utilizzati"] == ["QSA", "ZTPI"]
+    assert data["counselor_utilizzato"] == "Marco"
     assert data["feedback_aperto"] == "Feedback qualitativo di prova."
 
 

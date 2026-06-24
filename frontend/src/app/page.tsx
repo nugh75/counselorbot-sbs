@@ -17,7 +17,7 @@ const OpenCodeExperience = dynamic(
     () => import('@/components/qsa/OpenCodeExperience').then((mod) => mod.OpenCodeExperience),
     { ssr: false }
 );
-import { CheckCircle2, MessageSquare, RotateCcw, LogOut, Download, Layers, Terminal, LogIn, ShieldCheck } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ClipboardList, Compass, FileQuestion, MessageSquare, RotateCcw, LogOut, Download, Layers, Terminal, LogIn, ShieldCheck } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StickyActions } from '@/components/ui/StickyActions';
 import { FlowStepper } from '@/components/ui/FlowStepper';
@@ -28,7 +28,7 @@ import { ai4authLoginUrl, getIdentity, type Identity } from '@/lib/auth';
 import { getSelectedCounselorId, setSelectedCounselorId } from '@/lib/counselor';
 
 
-type Step = 'counselor-select' | 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'combined-interaction';
+type Step = 'intro' | 'counselor-select' | 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'combined-interaction';
 
 const STARTABLE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
 
@@ -48,10 +48,136 @@ function generateUUID() {
     });
 }
 
+function IntroScreen({ onStart }: { onStart: () => void }) {
+    const { t, lang } = useI18n();
+    const isItalian = lang === 'it';
+    const isAdministrationLang = lang === 'en' || lang === 'es' || lang === 'sv';
+    const pathPrefix = isItalian ? 'it' : isAdministrationLang ? 'administration' : 'unavailable';
+    const overviewItems = [
+        {
+            icon: ClipboardList,
+            title: t('app.overview.questionnaires.title'),
+            body: t('app.overview.questionnaires.body'),
+        },
+        {
+            icon: Compass,
+            title: t('app.overview.savickas.title'),
+            body: t('app.overview.savickas.body'),
+        },
+        {
+            icon: FileQuestion,
+            title: t('app.overview.pqbl.title'),
+            body: t('app.overview.pqbl.body'),
+        },
+    ];
+    const nextSteps = [
+        {
+            icon: ClipboardList,
+            title: t(`selector.path.${pathPrefix}.step1.title`),
+            body: t(`selector.path.${pathPrefix}.step1.body`),
+        },
+        {
+            icon: Compass,
+            title: t('counselor.title'),
+            body: t('counselor.explain.body'),
+        },
+        {
+            icon: MessageSquare,
+            title: t(`selector.path.${pathPrefix}.step3.title`),
+            body: t(`selector.path.${pathPrefix}.step3.body`),
+        },
+    ];
+
+    return (
+        <div className="space-y-6">
+            <section className="glass-panel p-6 sm:p-8">
+                <div className="max-w-4xl">
+                    <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                        <ClipboardList className="h-4 w-4" />
+                        {t('app.overview.kicker')}
+                    </div>
+                    <h1 className="mt-2 text-3xl font-bold text-slate-900">CounselorBot</h1>
+                    <p className="mt-3 text-base leading-relaxed text-slate-600">
+                        {t('app.overview.body')}
+                    </p>
+                </div>
+            </section>
+
+            <section className="space-y-3">
+                <h2 className="text-xl font-bold text-slate-900">{t('app.home.contains')}</h2>
+                <div className="grid gap-3 md:grid-cols-3">
+                    {overviewItems.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                            <article key={item.title} className="glass-panel p-5">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-indigo-50 text-indigo-600">
+                                    <Icon className="h-5 w-5" />
+                                </div>
+                                <h3 className="mt-4 text-base font-bold text-slate-900">{item.title}</h3>
+                                <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.body}</p>
+                            </article>
+                        );
+                    })}
+                </div>
+            </section>
+
+            <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                <div className="glass-panel p-5">
+                    <h2 className="text-lg font-bold text-slate-900">{t(`selector.home.${pathPrefix}.title`)}</h2>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                        {t(`selector.home.${pathPrefix}.body`)}
+                    </p>
+                    {isItalian && (
+                        <p className="mt-3 rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm leading-relaxed text-sky-950">
+                            {t('selector.italianNotice')}
+                        </p>
+                    )}
+                    {isAdministrationLang && (
+                        <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-relaxed text-amber-950">
+                            {t('selector.experimentalNotice')}
+                        </p>
+                    )}
+                </div>
+
+                <div className="glass-panel p-5">
+                    <h2 className="text-lg font-bold text-slate-900">{t('app.home.next')}</h2>
+                    <div className="mt-4 space-y-4">
+                        {nextSteps.map((item) => {
+                            const Icon = item.icon;
+                            return (
+                                <div key={item.title} className="flex gap-3">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-600">
+                                        <Icon className="h-4 w-4" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-slate-900">{item.title}</h3>
+                                        <p className="mt-1 text-sm leading-relaxed text-slate-600">{item.body}</p>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </section>
+
+            <div className="flex justify-end">
+                <button
+                    type="button"
+                    onClick={onStart}
+                    className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+                >
+                    {t('app.home.cta')}
+                    <ArrowRight className="h-4 w-4" />
+                </button>
+            </div>
+        </div>
+    );
+}
+
 export default function Home() {
     const { t, lang } = useI18n();
     const [identity, setIdentity] = useState<Identity | null | undefined>(undefined);
-    const [step, setStep] = useState<Step>('counselor-select');
+    const [step, setStep] = useState<Step>('intro');
     const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<QuestionnaireConfig | null>(null);
     const [scores, setScores] = useState<Record<string, number> | null>(null);
     const [sessionId, setSessionId] = useState<string>('');
@@ -62,7 +188,6 @@ export default function Home() {
     const [profileReviewed, setProfileReviewed] = useState(false);
     const [combinedScores, setCombinedScores] = useState<Record<string, number> | null>(null);
     const [combinedContext, setCombinedContext] = useState<string>('');
-    const [pendingStart, setPendingStart] = useState<QuestionnaireType | null>(null);
 
     useEffect(() => {
         getIdentity().then(setIdentity);
@@ -72,6 +197,18 @@ export default function Home() {
         if (identity === undefined || !identity?.authenticated) return;
 
         const params = new URLSearchParams(window.location.search);
+
+        if (params.get('view') === 'questionnaires') {
+            setSelectedQuestionnaire(null);
+            setScores(null);
+            setPdfToken(undefined);
+            setSessionId('');
+            setExperience(null);
+            setProfileReviewed(false);
+            setStep('questionnaire-select');
+            window.history.replaceState(null, '', window.location.pathname);
+            return;
+        }
 
         // Resume chat from a test administration: /?session_id=...&instrument=...
         const resumeSession = params.get('session_id');
@@ -86,7 +223,8 @@ export default function Home() {
             setSessionId(resumeSession);
             setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
             setProfileReviewed(false);
-            setStep(isAgentOnly(questionnaire) ? 'interaction' : 'dashboard');
+            setExperience(null);
+            setStep('counselor-select');
             window.history.replaceState(null, '', window.location.pathname);
             return;
         }
@@ -94,52 +232,25 @@ export default function Home() {
         const requestedId = params.get('start') as QuestionnaireType | null;
         if (!requestedId || !STARTABLE_QUESTIONNAIRES.includes(requestedId)) return;
 
-        if (!getSelectedCounselorId()) {
-            setPendingStart(requestedId);
-            setStep('counselor-select');
-            window.history.replaceState(null, '', window.location.pathname);
-            return;
-        }
-
         const questionnaire = QUESTIONNAIRES[requestedId];
-        // A details page can deep-link into the same existing workflow.
         setSelectedQuestionnaire(questionnaire);
-        if (isAgentOnly(questionnaire)) {
-            const newSessionId = generateUUID();
-            setSessionId(newSessionId);
-            setScores({});
-            addCompletedProfile(questionnaire.id, newSessionId, {});
-            (async () => {
-                try {
-                    await fetch('/api/questionnaire-result', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            session_id: newSessionId,
-                            questionnaire_type: questionnaire.id,
-                            scores: {},
-                        }),
-                    });
-                } catch (e) {
-                    console.error("Failed to save questionnaire result", e);
-                }
-            })();
-            setProfileReviewed(false);
-            setStep('interaction');
-        } else {
-            setStep('method-select');
-        }
+        setScores(null);
+        setPdfToken(undefined);
+        setSessionId('');
+        setExperience(null);
+        setProfileReviewed(false);
+        setStep('counselor-select');
         window.history.replaceState(null, '', window.location.pathname);
     }, [identity]);
 
-    const handleQuestionnaireSelect = async (questionnaire: QuestionnaireConfig) => {
-        setSelectedQuestionnaire(questionnaire);
-        if (isAgentOnly(questionnaire)) {
-            const newSessionId = generateUUID();
-            setSessionId(newSessionId);
-            setScores({});
+    const startAgentOnlyQuestionnaire = async (questionnaire: QuestionnaireConfig) => {
+        const existingSessionId = sessionId;
+        const newSessionId = existingSessionId || generateUUID();
+        setSessionId(newSessionId);
+        setScores({});
+
+        if (!existingSessionId) {
             addCompletedProfile(questionnaire.id, newSessionId, {});
-            // Questionari condotti dall'AI: sessione senza punteggi
             try {
                 await fetch('/api/questionnaire-result', {
                     method: 'POST',
@@ -153,11 +264,33 @@ export default function Home() {
             } catch (e) {
                 console.error("Failed to save questionnaire result", e);
             }
-            setProfileReviewed(false);
-            setStep('interaction');
+        }
+
+        setProfileReviewed(false);
+        setExperience(null);
+        setStep('interaction');
+    };
+
+    const handleQuestionnaireSelect = (questionnaire: QuestionnaireConfig) => {
+        setSelectedQuestionnaire(questionnaire);
+        setScores(null);
+        setPdfToken(undefined);
+        setSessionId('');
+        setExperience(null);
+        setProfileReviewed(false);
+        setStep('counselor-select');
+    };
+
+    const continueAfterCounselorSelection = async () => {
+        if (!selectedQuestionnaire) {
+            setStep('questionnaire-select');
             return;
         }
-        setStep('method-select');
+        if (isAgentOnly(selectedQuestionnaire)) {
+            await startAgentOnlyQuestionnaire(selectedQuestionnaire);
+            return;
+        }
+        setStep(scores !== null ? 'dashboard' : 'method-select');
     };
 
     const handleMethodSelect = (method: 'manual' | 'upload') => {
@@ -264,7 +397,7 @@ export default function Home() {
         setPdfToken(undefined);
         setExperience(null);
         setSelectedCounselorId(null);
-        setStep('counselor-select');
+        setStep('intro');
     };
 
     const analyzeAnother = () => {
@@ -273,21 +406,23 @@ export default function Home() {
         setPdfToken(undefined);
         setExperience(null);
         setSelectedCounselorId(null);
-        setStep('counselor-select');
+        setStep('intro');
     };
 
     const goBack = () => {
-        if (step === 'questionnaire-select') setStep('counselor-select');
-        else if (step === 'method-select') setStep('questionnaire-select');
+        if (step === 'questionnaire-select') setStep('intro');
+        else if (step === 'counselor-select') setStep('questionnaire-select');
+        else if (step === 'method-select') setStep('counselor-select');
         else if (step === 'manual-input' || step === 'upload-input') setStep('method-select');
         else if (step === 'dashboard') setStep('manual-input');
-        else if (step === 'interaction') setStep(isAgentOnly(selectedQuestionnaire) ? 'questionnaire-select' : 'dashboard');
+        else if (step === 'interaction') setStep(isAgentOnly(selectedQuestionnaire) ? 'counselor-select' : 'dashboard');
         else if (step === 'completed') setStep('dashboard');
         else if (step === 'combined-interaction') setStep('completed');
     };
 
     const getStepTitle = () => {
         switch (step) {
+            case 'intro': return 'CounselorBot';
             case 'counselor-select': return 'Scegli il counselor';
             case 'questionnaire-select': return 'CounselorBot';
             case 'method-select': return `${selectedQuestionnaire?.name} — ${t('step.methodSelect.titleSuffix')}`;
@@ -303,7 +438,7 @@ export default function Home() {
 
     const getStepDescription = () => {
         switch (step) {
-            case 'counselor-select': return 'Prima scegli l’approccio con cui vuoi affrontare il percorso.';
+            case 'counselor-select': return 'Dopo lo strumento, scegli l’approccio con cui vuoi affrontare il percorso.';
             case 'questionnaire-select': return t('step.questionnaireSelect.desc');
             case 'method-select': return t('step.methodSelect.desc');
             case 'manual-input': return t('step.manualInput.desc');
@@ -355,21 +490,22 @@ export default function Home() {
     }
 
     // Orientamento percorso: mappa lo step interno alle fasi visibili.
-    const flowStages = ['Counselor', t('flow.select'), t('flow.input'), t('flow.profile'), t('flow.chat'), t('flow.done')];
+    const flowStages = ['CounselorBot', t('flow.select'), 'Counselor', t('flow.input'), t('flow.profile'), t('flow.chat'), t('flow.done')];
     const stageIndex =
-        step === 'counselor-select' ? 0
+        step === 'intro' ? 0
             : step === 'questionnaire-select' ? 1
-                : step === 'method-select' || step === 'manual-input' || step === 'upload-input' ? 2
-                    : step === 'dashboard' ? 3
-                        : step === 'interaction' || step === 'combined-interaction' ? 4
-                            : 5;
+                : step === 'counselor-select' ? 2
+                    : step === 'method-select' || step === 'manual-input' || step === 'upload-input' ? 3
+                        : step === 'dashboard' ? 4
+                            : step === 'interaction' || step === 'combined-interaction' ? 5
+                                : 6;
 
     return (
         <div className="page-wide space-y-8">
             <FlowStepper steps={flowStages} current={stageIndex} />
 
             {/* The selection screen owns its introduction to avoid repeating the page purpose. */}
-            {step !== 'questionnaire-select' && step !== 'counselor-select' && (
+            {step !== 'intro' && step !== 'questionnaire-select' && step !== 'counselor-select' && (
                 <PageHeader
                     title={getStepTitle()}
                     subtitle={getStepDescription()}
@@ -385,24 +521,25 @@ export default function Home() {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.3 }}
                 >
+                    {/* Step: Intro */}
+                    {step === 'intro' && (
+                        <IntroScreen onStart={() => setStep('questionnaire-select')} />
+                    )}
+
                     {/* Step: Counselor Selection */}
                     {step === 'counselor-select' && (
                         <CounselorSelector
+                            questionnaireName={selectedQuestionnaire?.name}
+                            onBack={goBack}
                             onContinue={() => {
-                                if (pendingStart && QUESTIONNAIRES[pendingStart]) {
-                                    const questionnaire = QUESTIONNAIRES[pendingStart];
-                                    setPendingStart(null);
-                                    void handleQuestionnaireSelect(questionnaire);
-                                    return;
-                                }
-                                setStep('questionnaire-select');
+                                void continueAfterCounselorSelection();
                             }}
                         />
                     )}
 
                     {/* Step: Questionnaire Selection */}
                     {step === 'questionnaire-select' && (
-                        <QuestionnaireSelector onSelect={handleQuestionnaireSelect} />
+                        <QuestionnaireSelector onSelect={handleQuestionnaireSelect} onBack={goBack} />
                     )}
 
                     {/* Step: Input Method Selection */}
@@ -532,6 +669,7 @@ export default function Home() {
                                             questionnaireType={selectedQuestionnaire.id}
                                             onComplete={handleInteractionComplete}
                                             sessionId={sessionId}
+                                            locale={lang}
                                         />
                                     ) : (
                                         <OpenCodeExperience
@@ -554,6 +692,7 @@ export default function Home() {
                             questionnaireType={'QSA'}
                             onComplete={handleCombinedComplete}
                             sessionId={sessionId}
+                            locale={lang}
                             scoresContextOverride={combinedContext}
                         />
                     )}
@@ -621,7 +760,7 @@ export default function Home() {
                                     <button
                                         onClick={() => {
                                             setSelectedCounselorId(null);
-                                            setStep('counselor-select');
+                                            setStep('intro');
                                         }}
                                         className="py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
                                     >

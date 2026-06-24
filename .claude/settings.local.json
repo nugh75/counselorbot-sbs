@@ -45,7 +45,9 @@
       "Bash(chmod +x /home/nugh75/Counselorbot-10-step/fix_nginx_api_timeout.sh)",
       "WebFetch(domain:www.academia.edu)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://127.0.0.1:8000/counselors)",
-      "Bash(curl -s --max-time 20 https://openrouter.ai/api/v1/models)"
+      "Bash(curl -s --max-time 20 https://openrouter.ai/api/v1/models)",
+      "Bash(python -m py_compile backend/models.py backend/schemas.py backend/certified_strategy_service.py backend/routes/certified_strategies.py backend/chat_logic.py backend/main.py backend/tests/test_smoke.py)",
+      "Bash(command -v python3)"
     ]
   }
 }

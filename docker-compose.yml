@@ -21,6 +21,7 @@ services:
       - ADMIN_GROUPS=${ADMIN_GROUPS:-admins,counselorbot-sbs-admin}
       - RAG_DOCS_DIR=/app/docs
       - RAG_INDEX_DIR=/app/rag_index
+      - COUNSELORBOT_DOCS_DIR=/app/docs-counselorbot
       - QSA_OCR_MODEL=${QSA_OCR_MODEL:-glm-ocr:latest}
       - QSA_PARSER_MODEL=${QSA_PARSER_MODEL:-gemma4:e2b}
       - OPENCODE_WORKSPACE_ROOT=/opencode-workspaces
@@ -33,6 +34,7 @@ services:
       - ./session_memory:/app/session_memory
       - ./knowledge:/app/knowledge:ro
       - ./docs:/app/docs:ro
+      - ./docs-counselorbot:/app/docs-counselorbot:ro
       - rag_index:/app/rag_index
       - ./uploads:/app/uploads
       - /run/cloudflared-agent:/run/cloudflared-agent

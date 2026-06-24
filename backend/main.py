@@ -42,7 +42,9 @@ from .routes import opencode as opencode_routes
 from .routes import presets as presets_routes
 from .routes import benchmark as benchmark_routes
 from .routes import counselors as counselors_routes
+from .routes import certified_strategies as certified_strategies_routes
 from .routes import research_contacts as research_contacts_routes
+from .routes import assistant_questions as assistant_questions_routes
 
 
 # Re-export per retro-compatibilità (es. smoke test che importa da backend.main)
@@ -219,6 +221,7 @@ def _seed_and_migrate():
 
         for clause in [
             "ADD COLUMN strumenti_utilizzati JSON",
+            "ADD COLUMN counselor_utilizzato VARCHAR",
             "ADD COLUMN feedback_aperto TEXT",
         ]:
             try:
@@ -238,6 +241,13 @@ def _seed_and_migrate():
             ],
             "questionnaire_items": [
                 "ADD COLUMN text_es TEXT",
+            ],
+            "counselors": [
+                "ADD COLUMN description_i18n JSON",
+            ],
+            "research_contacts": [
+                "ADD COLUMN source VARCHAR NOT NULL DEFAULT 'manual'",
+                "ADD COLUMN ext_username VARCHAR",
             ],
         }.items():
             for clause in columns:
@@ -573,8 +583,29 @@ def _seed_and_migrate():
         # Seed catalogo strumenti (item + regole di scala) se non già presente.
         # Idempotente per strumento: salta quelli già seminati/editati.
         _seed_instruments_catalog(db)
+
+        # Seed domande suggerite dell'assistente docenti (it). Idempotente:
+        # salta se la tabella contiene già righe.
+        from .assistant_questions_seed import seed_assistant_questions
+        seed_assistant_questions(db, models)
     finally:
         db.close()
+
+    # Backfill traduzioni descrizioni counselor (background, best-effort: non blocca
+    # lo startup e fallisce in silenzio se Ollama non e' raggiungibile).
+    try:
+        from .counselor_i18n import backfill_async
+        backfill_async()
+    except Exception as e:  # noqa: BLE001
+        logger.debug(f"counselor translation backfill not started: {e}")
+
+    # Sincronizza gli admin del servizio (da access matrix ai4auth) come contatti
+    # ricercatori (background, best-effort: non blocca lo startup).
+    try:
+        from .admin_sync import sync_admins_async
+        sync_admins_async()
+    except Exception as e:  # noqa: BLE001
+        logger.debug(f"admin sync not started: {e}")
         if lock_conn is not None:
             try:
                 lock_conn.exec_driver_sql("SELECT pg_advisory_unlock(91234)")
@@ -712,4 +743,6 @@ app.include_router(opencode_routes.router)
 app.include_router(presets_routes.router)
 app.include_router(benchmark_routes.router)
 app.include_router(counselors_routes.router)
+app.include_router(certified_strategies_routes.router)
 app.include_router(research_contacts_routes.router)
+app.include_router(assistant_questions_routes.router)

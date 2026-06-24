@@ -25,6 +25,8 @@ class SiteChatRequest(schemas.BaseModel):
     audience: str = "studente"  # 'docente' | 'studente'
     session_id: Optional[str] = None
     max_tokens: Optional[int] = None
+    language: Optional[str] = "it"  # lingua della risposta (it|en|es|fr|de|sv)
+    collection: str = "competenzestrategiche"  # base di conoscenza: 'competenzestrategiche' | 'counselorbot'
 
 
 class QsaAuditRequest(schemas.BaseModel):

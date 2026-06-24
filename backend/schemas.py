@@ -125,6 +125,7 @@ class SurveyCreate(BaseModel):
     q_consiglierei: Optional[int] = None
 
     strumenti_utilizzati: Optional[List[str]] = None
+    counselor_utilizzato: Optional[str] = None
     feedback_aperto: Optional[str] = None
 
 class SurveyResponseSchema(SurveyCreate):
@@ -291,6 +292,39 @@ class ResearchContactUpdate(BaseModel):
 class ResearchContactResponse(ResearchContactBase):
     id: int
     code: str
+    source: str = "manual"
+    ext_username: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+# --- Domande suggerite dell'assistente docenti ---
+
+class AssistantQuestionBase(BaseModel):
+    topic: str
+    language: str = "it"
+    text: str
+    sort_order: int = 0
+    is_active: bool = True
+
+
+class AssistantQuestionCreate(AssistantQuestionBase):
+    pass
+
+
+class AssistantQuestionUpdate(BaseModel):
+    topic: Optional[str] = None
+    language: Optional[str] = None
+    text: Optional[str] = None
+    sort_order: Optional[int] = None
+    is_active: Optional[bool] = None
+
+
+class AssistantQuestionResponse(AssistantQuestionBase):
+    id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
 
@@ -551,6 +585,7 @@ class CounselorBase(BaseModel):
     slug: str
     name: str
     description: Optional[str] = None
+    description_i18n: Optional[dict] = None
     persona: Optional[str] = None
     avatar: Optional[str] = None
     preset_id: Optional[int] = None
@@ -568,6 +603,7 @@ class CounselorUpdate(BaseModel):
     slug: Optional[str] = None
     name: Optional[str] = None
     description: Optional[str] = None
+    description_i18n: Optional[dict] = None
     persona: Optional[str] = None
     avatar: Optional[str] = None
     preset_id: Optional[int] = None
@@ -598,6 +634,71 @@ class CounselorPublic(BaseModel):
     questionnaire_types: Optional[List[str]] = None
     language: str = "it"
     is_active: bool = True
+    # "local" (Ollama/llama.cpp) | "external" (API a pagamento). Derivato dal preset.
+    model_origin: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+# --- Catalogo strategie certificate (admin) ---
+class CertifiedStrategyBase(BaseModel):
+    slug: str
+    name_it: Optional[str] = None
+    name_en: Optional[str] = None
+    name_es: Optional[str] = None
+    name_sv: Optional[str] = None
+    recommended_when_it: Optional[str] = None
+    recommended_when_en: Optional[str] = None
+    recommended_when_es: Optional[str] = None
+    recommended_when_sv: Optional[str] = None
+    description_it: Optional[str] = None
+    description_en: Optional[str] = None
+    description_es: Optional[str] = None
+    description_sv: Optional[str] = None
+    factor_codes: Optional[List[str]] = None
+    match_mode: str = "any"  # any | all
+    questionnaire_types: Optional[List[str]] = None
+    keywords: Optional[str] = None
+    status: str = "draft"  # draft | certified
+    certified_by: Optional[str] = None
+    source_reference: Optional[str] = None
+    sort_order: int = 0
+    is_active: bool = True
+
+
+class CertifiedStrategyCreate(CertifiedStrategyBase):
+    pass
+
+
+class CertifiedStrategyUpdate(BaseModel):
+    slug: Optional[str] = None
+    name_it: Optional[str] = None
+    name_en: Optional[str] = None
+    name_es: Optional[str] = None
+    name_sv: Optional[str] = None
+    recommended_when_it: Optional[str] = None
+    recommended_when_en: Optional[str] = None
+    recommended_when_es: Optional[str] = None
+    recommended_when_sv: Optional[str] = None
+    description_it: Optional[str] = None
+    description_en: Optional[str] = None
+    description_es: Optional[str] = None
+    description_sv: Optional[str] = None
+    factor_codes: Optional[List[str]] = None
+    match_mode: Optional[str] = None
+    questionnaire_types: Optional[List[str]] = None
+    keywords: Optional[str] = None
+    status: Optional[str] = None
+    certified_by: Optional[str] = None
+    source_reference: Optional[str] = None
+    sort_order: Optional[int] = None
+    is_active: Optional[bool] = None
+
+
+class CertifiedStrategyResponse(CertifiedStrategyBase):
+    id: int
+    created_at: datetime
 
     class Config:
         from_attributes = True

@@ -8,6 +8,8 @@ import { AdministrationCopy, AdministrationInstrument } from '@/lib/test-adminis
 import { addCompletedProfile } from '@/lib/profile-tracker';
 import { ai4authLoginUrl } from '@/lib/auth';
 
+const QUESTIONNAIRE_SELECTION_HREF = '/?view=questionnaires';
+
 // Profilo calcolato lato server (POST /api/instruments/{code}/score).
 interface ScoreResult {
     code: string;
@@ -346,7 +348,7 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                 <p className="text-sm leading-relaxed">
                     La somministrazione in spagnolo richiede che tutti gli item siano compilati nel catalogo admin come <code>text_es</code>. Completa prima la versione spagnola in Admin → Questionari & Scale → Item.
                 </p>
-                <Link href="/somministrazione" className="inline-flex text-sm font-semibold text-amber-900 underline">
+                <Link href={QUESTIONNAIRE_SELECTION_HREF} className="inline-flex text-sm font-semibold text-amber-900 underline">
                     {copy.back}
                 </Link>
             </div>
@@ -506,7 +508,7 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
 
                 <div className="flex flex-col-reverse justify-between gap-3 sm:flex-row">
                     <Link
-                        href="/somministrazione"
+                        href={QUESTIONNAIRE_SELECTION_HREF}
                         className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-5 py-2.5 font-semibold text-slate-700 hover:bg-slate-50"
                     >
                         <ArrowLeft className="w-4 h-4" />
@@ -539,7 +541,7 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
 
     return (
         <div lang={locale} className="max-w-5xl mx-auto space-y-6">
-            <Link href="/somministrazione" className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-indigo-700">
+            <Link href={QUESTIONNAIRE_SELECTION_HREF} className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-indigo-700">
                 <ArrowLeft className="w-4 h-4" />
                 {copy.back}
             </Link>

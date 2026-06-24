@@ -6,13 +6,28 @@ user-facing dei counselor attivi (per il selettore lato studente).
 """
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from .. import models, schemas, auth, database
+from ..counselor_i18n import localized_description, translate_counselor_async
 
 router = APIRouter()
 get_db = database.get_db
+
+# Provider che girano in locale; tutto il resto e' API esterna a pagamento.
+_LOCAL_PROVIDERS = {"ollama", "llamacpp"}
+
+
+def _provider_origin(provider: Optional[str]) -> Optional[str]:
+    if not provider:
+        return None
+    return "local" if provider in _LOCAL_PROVIDERS else "external"
+
+
+def _active_provider(db: Session) -> Optional[str]:
+    row = db.query(models.Config).filter(models.Config.key == "active_provider").first()
+    return (row.value if row else None) or "openai"
 
 
 def _preset_map(db: Session) -> dict:
@@ -30,13 +45,26 @@ def _serialize(counselor: models.Counselor, presets: dict) -> schemas.CounselorR
 
 # --- Pubblico (lato utente) ------------------------------------------------
 @router.get("/counselors", response_model=List[schemas.CounselorPublic])
-async def list_public_counselors(db: Session = Depends(get_db)):
+async def list_public_counselors(
+    lang: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+):
     rows = (
         db.query(models.Counselor)
         .order_by(models.Counselor.sort_order.asc(), models.Counselor.id.asc())
         .all()
     )
-    return rows
+    presets = _preset_map(db)
+    active = _active_provider(db)
+    out = []
+    for r in rows:
+        pub = schemas.CounselorPublic.model_validate(r)
+        pub.description = localized_description(r, lang)
+        preset = presets.get(r.preset_id) if r.preset_id else None
+        provider = preset.provider if preset else active
+        pub.model_origin = _provider_origin(provider)
+        out.append(pub)
+    return out
 
 
 # --- Admin -----------------------------------------------------------------
@@ -70,6 +98,7 @@ async def create_counselor(
         slug=slug,
         name=name,
         description=payload.description,
+        description_i18n=payload.description_i18n,
         persona=payload.persona,
         avatar=payload.avatar,
         preset_id=payload.preset_id,
@@ -81,6 +110,8 @@ async def create_counselor(
     db.add(counselor)
     db.commit()
     db.refresh(counselor)
+    if (counselor.description or "").strip():
+        translate_counselor_async(counselor.id)
     return _serialize(counselor, _preset_map(db))
 
 
@@ -107,10 +138,16 @@ async def update_counselor(
         if clash:
             raise HTTPException(status_code=409, detail="slug gia' esistente")
         updates["slug"] = new_slug
+    desc_changed = "description" in updates and (updates["description"] or "") != (counselor.description or "")
     for field, value in updates.items():
         setattr(counselor, field, value)
+    # se la descrizione cambia e l'admin non ha fornito traduzioni esplicite, rigenerale
+    if desc_changed and "description_i18n" not in updates:
+        counselor.description_i18n = None
     db.commit()
     db.refresh(counselor)
+    if desc_changed and "description_i18n" not in updates and (counselor.description or "").strip():
+        translate_counselor_async(counselor.id, force=True)
     return _serialize(counselor, _preset_map(db))
 
 

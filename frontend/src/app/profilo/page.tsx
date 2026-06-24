@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n-context';
 import { getIdentity, type Identity } from '@/lib/auth';
+import { canUsePersonalPage } from '@/lib/roles';
 import { useDarkMode } from '@/lib/use-dark-mode';
 import { toast } from '@/components/ui/Toast';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -11,7 +12,7 @@ import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
 import { addCompletedProfile, clearCompletedProfiles } from '@/lib/profile-tracker';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import {
-    ArrowLeft, User, FileText, Trash2, Download, MessageSquare, Calendar, ChevronRight
+    ArrowLeft, User, FileText, Trash2, Download, MessageSquare, Calendar, ChevronRight, ShieldAlert
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList,
@@ -191,6 +192,26 @@ export default function ProfilePage() {
                 <p className="text-slate-500 text-sm">
                     {t('profile.loginRequiredDesc')}
                 </p>
+                <button
+                    onClick={() => window.location.href = '/'}
+                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold transition-colors"
+                >
+                    {t('profile.backToHomeToLogin')}
+                </button>
+            </div>
+        );
+    }
+
+    // Account studente/anonimo: nessuna pagina personale. Possono solo usare gli
+    // strumenti e compilare i questionari (home), non lo storico/profilo.
+    if (!canUsePersonalPage(identity)) {
+        return (
+            <div className="max-w-md mx-auto my-12 p-8 bg-white border border-slate-200 rounded-xl text-center space-y-6 shadow-sm">
+                <div className="mx-auto w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center">
+                    <ShieldAlert className="w-6 h-6 text-amber-600" />
+                </div>
+                <h1 className="text-2xl font-bold text-slate-900">{t('profile.restrictedTitle')}</h1>
+                <p className="text-slate-500 text-sm">{t('profile.restrictedDesc')}</p>
                 <button
                     onClick={() => window.location.href = '/'}
                     className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold transition-colors"

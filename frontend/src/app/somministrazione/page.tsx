@@ -15,6 +15,7 @@ const instruments: { id: AdministrationInstrument }[] = [
     { id: 'QPCC' },
     { id: 'QAP' },
 ];
+const QUESTIONNAIRE_SELECTION_HREF = '/?view=questionnaires';
 
 const BLOCKED_COPY: Record<Lang, { title: string; body: string; back: string }> = {
     it: {
@@ -96,7 +97,7 @@ export default function TestAdministrationsPage() {
                     <h1 className="text-2xl font-bold text-slate-900">{copy.title}</h1>
                     <p className="text-slate-600">{copy.body}</p>
                 </header>
-                <Link href="/" className="inline-flex text-sm font-semibold text-indigo-700 hover:text-indigo-900">
+                <Link href={QUESTIONNAIRE_SELECTION_HREF} className="inline-flex text-sm font-semibold text-indigo-700 hover:text-indigo-900">
                     {copy.back}
                 </Link>
             </div>
@@ -170,7 +171,7 @@ export default function TestAdministrationsPage() {
                 })}
             </div>
 
-            <Link href="/" className="inline-flex text-sm font-semibold text-indigo-700 hover:text-indigo-900">
+            <Link href={QUESTIONNAIRE_SELECTION_HREF} className="inline-flex text-sm font-semibold text-indigo-700 hover:text-indigo-900">
                 {copy.back}
             </Link>
         </div>

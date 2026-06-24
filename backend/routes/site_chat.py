@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 
 from .. import auth, database, models, model_pricing
 from ..ai_service import AIService, AIError
+from ..chat_logic import _apply_language_directive
 from .. import pii
 from ..api_models import SiteChatRequest
 from ..chat_logic import _clamp_max_tokens, log_error
@@ -27,12 +28,24 @@ from ..memory_service import session_memory
 from ..strategy_memory import shared_response_memory
 from ..prompt_config import (
     SITE_CHAT_MODE_TO_PROMPT_KEY,
+    COUNSELORBOT_CHAT_MODE_TO_PROMPT_KEY,
     DEFAULT_SYSTEM_PROMPT_SITE_STUDENTE,
     DEFAULT_SYSTEM_PROMPT_SITE_DOCENTE,
+    DEFAULT_SYSTEM_PROMPT_COUNSELORBOT_STUDENTE,
+    DEFAULT_SYSTEM_PROMPT_COUNSELORBOT_DOCENTE,
     DEFAULT_SITE_CHAT_PLATFORM_CONTEXT,
     DEFAULT_SITE_CHAT_KNOWLEDGE_CARD,
+    DEFAULT_COUNSELORBOT_CHAT_CONTEXT,
 )
-from ..rag_index import site_rag_index, build_context, get_document_preview, DEFAULT_TOP_K
+from ..rag_index import (
+    site_rag_index,
+    get_index,
+    build_context,
+    get_document_preview,
+    DEFAULT_TOP_K,
+    COLLECTION_COMPETENZE,
+    COLLECTION_COUNSELORBOT,
+)
 
 router = APIRouter()
 get_db = database.get_db
@@ -76,10 +89,33 @@ _AUDIENCE_DEFAULT_PROMPT = {
     "studente": DEFAULT_SYSTEM_PROMPT_SITE_STUDENTE,
 }
 
-_NO_MATERIAL_MESSAGE = (
-    "Al momento non ho materiali del sito da consultare per rispondere. "
-    "Riprova più tardi o contatta un amministratore."
-)
+_AUDIENCE_DEFAULT_PROMPT_COUNSELORBOT = {
+    "docente": DEFAULT_SYSTEM_PROMPT_COUNSELORBOT_DOCENTE,
+    "studente": DEFAULT_SYSTEM_PROMPT_COUNSELORBOT_STUDENTE,
+}
+
+
+def _normalize_collection(collection: str | None) -> str:
+    return COLLECTION_COUNSELORBOT if collection == COLLECTION_COUNSELORBOT else COLLECTION_COMPETENZE
+
+_NO_MATERIAL_MESSAGE_BY_LANG = {
+    "it": "Al momento non ho materiali del sito da consultare per rispondere. "
+          "Riprova più tardi o contatta un amministratore.",
+    "en": "I currently have no website materials to draw on to answer. "
+          "Please try again later or contact an administrator.",
+    "es": "Por el momento no tengo materiales del sitio para responder. "
+          "Inténtalo de nuevo más tarde o contacta con un administrador.",
+    "fr": "Je n'ai pour l'instant aucun matériel du site à consulter pour répondre. "
+          "Réessaie plus tard ou contacte un administrateur.",
+    "de": "Mir liegen derzeit keine Website-Materialien vor, um zu antworten. "
+          "Bitte versuche es später erneut oder wende dich an einen Administrator.",
+    "sv": "Jag har för närvarande inget webbplatsmaterial att utgå från för att svara. "
+          "Försök igen senare eller kontakta en administratör.",
+}
+
+
+def _no_material_message(language: str | None) -> str:
+    return _NO_MATERIAL_MESSAGE_BY_LANG.get(language or "it", _NO_MATERIAL_MESSAGE_BY_LANG["it"])
 
 # Etichetta interna per separare i like del site-chat nella memoria condivisa
 # e nella vista admin (riusa il sistema feedback degli altri strumenti).
@@ -104,12 +140,18 @@ def _strip_fonte_tokens(text: str) -> str:
     return t
 
 
-def _resolve_site_prompt(ai_service: AIService, audience: str) -> str:
+def _resolve_site_prompt(ai_service: AIService, audience: str, collection: str = COLLECTION_COMPETENZE) -> str:
     audience = audience if audience in SITE_CHAT_MODE_TO_PROMPT_KEY else "studente"
-    key = SITE_CHAT_MODE_TO_PROMPT_KEY[audience]
-    prompt = ai_service.config.get(key, _AUDIENCE_DEFAULT_PROMPT[audience])
-    # Verità di base + scheda strumenti canonica, in testa al prompt (indipendenti dal RAG).
-    ctx = ai_service.config.get("site_chat_platform_context", DEFAULT_SITE_CHAT_PLATFORM_CONTEXT)
+    if collection == COLLECTION_COUNSELORBOT:
+        key = COUNSELORBOT_CHAT_MODE_TO_PROMPT_KEY[audience]
+        prompt = ai_service.config.get(key, _AUDIENCE_DEFAULT_PROMPT_COUNSELORBOT[audience])
+        # Per CounselorBot: contesto base della piattaforma + scheda strumenti canonica.
+        ctx = ai_service.config.get("counselorbot_chat_context", DEFAULT_COUNSELORBOT_CHAT_CONTEXT)
+    else:
+        key = SITE_CHAT_MODE_TO_PROMPT_KEY[audience]
+        prompt = ai_service.config.get(key, _AUDIENCE_DEFAULT_PROMPT[audience])
+        # Verità di base + scheda strumenti canonica, in testa al prompt (indipendenti dal RAG).
+        ctx = ai_service.config.get("site_chat_platform_context", DEFAULT_SITE_CHAT_PLATFORM_CONTEXT)
     card = ai_service.config.get("site_chat_knowledge_card", DEFAULT_SITE_CHAT_KNOWLEDGE_CARD)
     preamble = "\n\n".join(p.strip() for p in (ctx, card) if p and p.strip())
     if preamble:
@@ -148,30 +190,37 @@ def _retrieval_params(ai_service: AIService):
 
 @router.get("/site-chat/status")
 async def site_chat_status(
+    collection: str = Query(COLLECTION_COMPETENZE),
     current_user: dict = Depends(_require_site_chat_user),
     db: Session = Depends(get_db),
 ):
-    """Stato dell'indice RAG (pubblico, sola lettura). Carica da disco se questo
-    worker non ha ancora l'indice in memoria (senza ricostruire)."""
-    if not site_rag_index._loaded:
-        site_rag_index._load_from_disk()
-    return site_rag_index.stats()
+    """Stato dell'indice RAG della collezione (sola lettura). Carica da disco se
+    questo worker non ha ancora l'indice in memoria (senza ricostruire)."""
+    index = get_index(_normalize_collection(collection))
+    if not index._loaded:
+        index._load_from_disk()
+    return index.stats()
 
 
 @router.get("/site-chat/document")
 async def site_chat_document(
     source: str = Query(...),
+    collection: str = Query(COLLECTION_COMPETENZE),
     current_user: dict = Depends(_require_site_chat_user),
 ):
-    """Anteprima di un documento citato (pubblico, sola lettura).
+    """Anteprima di un documento citato (sola lettura), nella collezione indicata.
 
     Consente solo le sorgenti effettivamente indicizzate (no path arbitrari).
     Restituisce il PDF originale (application/pdf) o il markdown convertito (JSON).
     """
-    valid_sources = {c["source"] for c in site_rag_index.chunks}
+    coll = _normalize_collection(collection)
+    index = get_index(coll)
+    if not index._loaded:
+        index._load_from_disk()
+    valid_sources = {c["source"] for c in index.chunks}
     if source not in valid_sources:
         raise HTTPException(status_code=404, detail="Documento non disponibile")
-    preview = get_document_preview(source)
+    preview = get_document_preview(source, coll)
     if not preview:
         raise HTTPException(status_code=404, detail="Anteprima non disponibile per questo documento")
     if preview[0] == "pdf":
@@ -182,13 +231,15 @@ async def site_chat_document(
 
 @router.post("/site-chat/reindex")
 async def site_chat_reindex(
+    collection: str = Query(COLLECTION_COMPETENZE),
     current_user: dict = Depends(auth.get_current_active_admin),
     db: Session = Depends(get_db),
 ):
-    """Ricostruisce l'indice RAG da zero (solo admin)."""
+    """Ricostruisce da zero l'indice RAG della collezione (solo admin)."""
     ai_service = AIService(db)
-    await run_in_threadpool(site_rag_index.build, ai_service)
-    return {"status": "ok", "stats": site_rag_index.stats()}
+    index = get_index(_normalize_collection(collection))
+    await run_in_threadpool(index.build, ai_service)
+    return {"status": "ok", "stats": index.stats()}
 
 
 @router.post("/site-chat/stream")
@@ -204,8 +255,12 @@ async def site_chat_stream(
     "sources": [...]}. Errori: {"error": "..."}.
     """
     session_id = request.session_id or str(uuid.uuid4())
+    collection = _normalize_collection(request.collection)
+    index = get_index(collection)
     ai_service = AIService(db)
-    system_prompt = _resolve_site_prompt(ai_service, request.audience)
+    system_prompt = _apply_language_directive(
+        _resolve_site_prompt(ai_service, request.audience, collection), request.language
+    )
     max_tokens = _clamp_max_tokens(request.max_tokens)
     top_k = _top_k(ai_service)
     question = (request.message or "").strip()
@@ -223,7 +278,7 @@ async def site_chat_stream(
     # Retrieval (embeddings/IO bloccanti) fuori dall'event loop.
     try:
         results = await run_in_threadpool(
-            site_rag_index.search, ai_service, question, top_k,
+            index.search, ai_service, question, top_k,
             request.audience, cat_weights, aud_weights, max_per_source, min_score,
         )
     except AIError as e:
@@ -266,7 +321,7 @@ async def site_chat_stream(
             )
             log_db.add(log_entry)
             response_id = shared_response_memory.create_candidate(
-                log_db, answer, _SITE_QTYPE, phase=request.audience, language="it",
+                log_db, answer, _SITE_QTYPE, phase=request.audience, language=request.language or "it",
             )
             if response_id:
                 log_entry.response_id = response_id
@@ -285,7 +340,7 @@ async def site_chat_stream(
                 bot_response=answer,
                 questionnaire_type=_SITE_QTYPE,
                 phase=request.audience,
-                language="it",
+                language=request.language or "it",
             )
         except Exception as e:
             logger.error("Site-chat memoria fallita: %s", e)
@@ -298,8 +353,9 @@ async def site_chat_stream(
             return
         # Nessun materiale indicizzato (stato di errore infra): non persiste.
         if not results:
-            yield f"data: {_json.dumps({'delta': _NO_MATERIAL_MESSAGE, 'display': _NO_MATERIAL_MESSAGE})}\n\n"
-            yield f"data: {_json.dumps({'done': True, 'response': _NO_MATERIAL_MESSAGE, 'session_id': session_id, 'sources': []})}\n\n"
+            no_material = _no_material_message(request.language)
+            yield f"data: {_json.dumps({'delta': no_material, 'display': no_material})}\n\n"
+            yield f"data: {_json.dumps({'done': True, 'response': no_material, 'session_id': session_id, 'sources': []})}\n\n"
             return
 
         context, sources = build_context(results)

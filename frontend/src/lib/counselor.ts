@@ -10,6 +10,7 @@ export interface PublicCounselor {
     questionnaire_types?: string[] | null;
     language: string;
     is_active?: boolean;
+    model_origin?: 'local' | 'external' | null;
 }
 
 const KEY = 'counselorbot_selected_counselor';
@@ -40,9 +41,10 @@ export function subscribeToCounselor(onChange: () => void): () => void {
     };
 }
 
-export async function fetchCounselors(): Promise<PublicCounselor[]> {
+export async function fetchCounselors(lang?: string): Promise<PublicCounselor[]> {
     try {
-        const res = await fetch('/api/counselors');
+        const url = lang ? `/api/counselors?lang=${encodeURIComponent(lang)}` : '/api/counselors';
+        const res = await fetch(url);
         if (!res.ok) return [];
         const data = await res.json();
         return Array.isArray(data) ? data : [];

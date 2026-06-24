@@ -16,6 +16,7 @@ from .anonymous_codes import code_for_identity
 from .ai_service import AIService
 from .memory_service import session_memory
 from .strategy_memory import shared_response_memory, strategy_memory
+from .certified_strategy_service import certified_strategy_memory
 from .api_models import ChatRequest
 from .prompt_config import (
     DEFAULT_SYSTEM_PROMPT_GENERIC,
@@ -304,10 +305,9 @@ _QSAR_INVERTED_CODES = ("C4r", "A1r")
 
 def _apply_language_directive(system_prompt: str, language: Optional[str]) -> str:
     """Aggiunge in coda al system prompt l'istruzione di rispondere nella lingua scelta.
-    'en' (o lingua sconosciuta/assente) = nessuna modifica: i prompt base sono in inglese.
-    Per ogni altra lingua supportata (incluso 'it') viene aggiunta la direttiva [LANGUAGE]
-    che forza l'intera risposta in quella lingua, a prescindere dalla lingua delle istruzioni."""
-    if not language or language == "en" or language not in SUPPORTED_AI_LANGUAGES:
+    Per ogni lingua supportata viene aggiunta la direttiva [LANGUAGE] che forza
+    l'intera risposta in quella lingua, a prescindere dalla lingua delle istruzioni."""
+    if not language or language not in SUPPORTED_AI_LANGUAGES:
         return system_prompt
     eng, native = SUPPORTED_AI_LANGUAGES[language]
     return (
@@ -707,6 +707,15 @@ def _retrieved_context(
         ai_service=ai_service,
     )
     strategy_context = strategy_memory.render_context(strategies)
+    certified = certified_strategy_memory.retrieve(
+        db,
+        questionnaire_type=questionnaire_type,
+        scores_context=request.scores_context or "",
+        query=query,
+        language=request.language or "it",
+        ai_service=ai_service,
+    )
+    certified_context = certified_strategy_memory.render_context(certified, request.language or "it")
     learned_responses = shared_response_memory.retrieve(
         db,
         questionnaire_type=questionnaire_type,
@@ -716,7 +725,11 @@ def _retrieved_context(
     )
     learned_context = shared_response_memory.render_context(learned_responses)
     profile_context = _learner_profile_context(db, username)
-    sections = [section for section in (profile_context, memory, strategy_context, learned_context) if section]
+    sections = [
+        section
+        for section in (profile_context, memory, strategy_context, certified_context, learned_context)
+        if section
+    ]
     return "\n\n".join(sections), [strategy["id"] for strategy in strategies]
 
 

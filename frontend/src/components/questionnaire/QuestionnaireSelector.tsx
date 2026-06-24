@@ -4,18 +4,27 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { QUESTIONNAIRE_LIST, QuestionnaireType, QuestionnaireConfig } from '@/lib/questionnaires';
-import { AlertTriangle, ArrowRight, BookOpen, ChevronDown, ClipboardList, FileQuestion, MessageSquare } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, ChevronDown, ExternalLink, FileQuestion } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { QuestionnaireIcon } from './QuestionnaireIcon';
 
 const ACTIVE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
 const ADMINISTRATION_LANGS = ['en', 'es', 'sv'] as const;
+const STRATEGIC_COMPETENCES_URLS: Partial<Record<QuestionnaireType, string>> = {
+    QSA: 'https://www.competenzestrategiche.it/QSA/',
+    QSAr: 'https://www.competenzestrategiche.it/QSAr/',
+    QPCS: 'https://www.competenzestrategiche.it/QPCS/',
+    QPCC: 'https://www.competenzestrategiche.it/QPCC/',
+    ZTPI: 'https://www.competenzestrategiche.it/ZTPI/',
+    QAP: 'https://www.competenzestrategiche.it/QAP/',
+};
 
 interface QuestionnaireSelectorProps {
     onSelect: (questionnaire: QuestionnaireConfig) => void;
+    onBack?: () => void;
 }
 
-export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) {
+export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelectorProps) {
     const { t, lang, setLang } = useI18n();
     const [expanded, setExpanded] = useState<string | null>(null);
     const available = QUESTIONNAIRE_LIST.filter((q) => ACTIVE_QUESTIONNAIRES.includes(q.id));
@@ -23,79 +32,22 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
     const isItalian = lang === 'it';
     const isAdministrationLang = ADMINISTRATION_LANGS.includes(lang as 'en' | 'es' | 'sv');
     const isUnavailableQuestionnaireLang = lang === 'fr' || lang === 'de';
-    const pathPrefix = isItalian ? 'it' : isAdministrationLang ? 'administration' : 'unavailable';
-    const explanationItems = [
-        {
-            icon: ClipboardList,
-            title: t(`selector.path.${pathPrefix}.step1.title`),
-            body: t(`selector.path.${pathPrefix}.step1.body`),
-        },
-        {
-            icon: BookOpen,
-            title: t(`selector.path.${pathPrefix}.step2.title`),
-            body: t(`selector.path.${pathPrefix}.step2.body`),
-        },
-        {
-            icon: MessageSquare,
-            title: t(`selector.path.${pathPrefix}.step3.title`),
-            body: t(`selector.path.${pathPrefix}.step3.body`),
-        },
-    ];
 
     return (
         <div className="space-y-6">
-            <section className="glass-panel p-5 sm:p-6">
-                <div className="space-y-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center gap-6">
-                        <div className="flex-1 max-w-3xl">
-                            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-indigo-700 mb-3">
-                                <ClipboardList className="w-4 h-4" />
-                                {t(`selector.home.${pathPrefix}.kicker`)}
-                            </div>
-                            <h1 className="text-2xl font-bold text-slate-900">{t(`selector.home.${pathPrefix}.title`)}</h1>
-                            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-                                {t(`selector.home.${pathPrefix}.body`)}
-                            </p>
-                            {isAdministrationLang && (
-                                <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-relaxed text-amber-950">
-                                    {t('selector.experimentalNotice')}
-                                </p>
-                            )}
-                        </div>
-                        <Link
-                            href="/questionario"
-                            className="group flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 hover:border-indigo-200 hover:bg-indigo-50 transition-colors lg:max-w-64"
-                        >
-                            <MessageSquare className="w-5 h-5 shrink-0 text-indigo-600" />
-                            <div>
-                                <div className="text-sm font-semibold text-slate-700 group-hover:text-indigo-700">
-                                    {t('feedback.cta.title')}
-                                </div>
-                                <div className="text-xs text-slate-500">{t('feedback.cta.sub')}</div>
-                            </div>
-                        </Link>
-                    </div>
-
-                    <div className="border-t border-slate-200 pt-5">
-                        <h2 className="text-lg font-semibold text-slate-900">{t(`selector.path.${pathPrefix}.title`)}</h2>
-                        <div className="mt-4 grid gap-5 md:grid-cols-3">
-                            {explanationItems.map((item) => {
-                                const Icon = item.icon;
-                                return (
-                                    <div key={item.title} className="flex gap-3">
-                                        <div className="w-9 h-9 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                                            <Icon className="w-4 h-4" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-sm font-semibold text-slate-800">{item.title}</h3>
-                                            <p className="mt-1 text-sm text-slate-600 leading-relaxed">{item.body}</p>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        <p className="mt-4 text-sm text-slate-500 leading-relaxed">{t(`selector.path.${pathPrefix}.note`)}</p>
-                    </div>
+            <section className="flex flex-wrap items-center gap-4">
+                {onBack && (
+                    <button
+                        type="button"
+                        onClick={onBack}
+                        className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-indigo-700"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                        {t('nav.back')}
+                    </button>
+                )}
+                <div className="min-w-0">
+                    <h1 className="text-2xl font-bold text-slate-900">{t('selector.title')}</h1>
                 </div>
             </section>
 
@@ -126,12 +78,16 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
                 <div className="grid md:grid-cols-2 gap-3">
                     {available.map((q) => {
                         const hasInAppAdministration = isAdministrationLang && !q.agentOnly;
+                        const externalAssessmentUrl = isItalian && !q.agentOnly ? STRATEGIC_COMPETENCES_URLS[q.id] : undefined;
+                        const hasExternalAssessment = Boolean(externalAssessmentUrl);
                         const isExpanded = expanded === q.id;
                         const primaryBadge = hasInAppAdministration
-                            ? 'Compilazione in app'
-                            : q.agentOnly
-                                ? 'Intervista guidata'
-                                : 'Risultati richiesti';
+                            ? t('selector.badge.inApp')
+                            : hasExternalAssessment
+                                ? t('selector.badge.external')
+                                : q.agentOnly
+                                    ? t('selector.badge.agent')
+                                    : t('selector.badge.results');
                         return (
                             <article
                                 key={q.id}
@@ -167,6 +123,11 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
                                 <p className="text-sm text-slate-500 leading-relaxed grow">
                                     {t(`q.${q.id}.description`)}
                                 </p>
+                                {hasExternalAssessment && (
+                                    <p className="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-900">
+                                        {t('selector.externalCredentials')}
+                                    </p>
+                                )}
                                 {isExpanded && (
                                     <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 text-sm text-slate-600 space-y-2">
                                         <div>
@@ -192,6 +153,16 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
                                             {t('selector.completeQuestionnaire')}
                                             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                                         </Link>
+                                    ) : hasExternalAssessment ? (
+                                        <a
+                                            href={externalAssessmentUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="group inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+                                        >
+                                            {t('selector.openStrategic')}
+                                            <ExternalLink className="w-4 h-4" />
+                                        </a>
                                     ) : (
                                         <button
                                             onClick={() => onSelect(q)}
@@ -202,6 +173,14 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
                                         </button>
                                     )}
                                     {hasInAppAdministration && (
+                                        <button
+                                            onClick={() => onSelect(q)}
+                                            className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                                        >
+                                            {t('selector.haveResults')}
+                                        </button>
+                                    )}
+                                    {hasExternalAssessment && (
                                         <button
                                             onClick={() => onSelect(q)}
                                             className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
@@ -222,7 +201,7 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
                                         className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-700 transition-colors"
                                     >
                                         <ChevronDown className={cn('w-4 h-4 transition-transform', isExpanded && 'rotate-180')} />
-                                        {isExpanded ? 'Nascondi' : 'Espandi'}
+                                        {isExpanded ? t('selector.hide') : t('selector.expand')}
                                     </button>
                                 </div>
                             </article>

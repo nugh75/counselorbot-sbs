@@ -26,3 +26,10 @@ export function canUseTeacherAssistant(identity: Identity | null | undefined): b
 export function canUseResearchConsole(identity: Identity | null | undefined): boolean {
     return Boolean(identity?.authenticated && (identity.is_admin || isResearcher(identity)));
 }
+
+// Pagina personale (/profilo): riservata a docenti, ricercatori e admin. Gli
+// account studente/anonimo possono solo usare gli strumenti e compilare i
+// questionari nella loro lingua — niente storico/profilo personale.
+export function canUsePersonalPage(identity: Identity | null | undefined): boolean {
+    return Boolean(identity?.authenticated && (identity.is_admin || isTeacher(identity) || isResearcher(identity)));
+}
