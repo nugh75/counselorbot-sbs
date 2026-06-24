@@ -54,6 +54,19 @@ class SessionMemory:
                 text = self._strip_section(text, "Punteggi")
             return self._cut_at_line(text, MAX_MEMORY_CHARS)
 
+    def get_scores(self, session_id: str) -> str:
+        """Punteggi del profilo persistiti per la sessione (stringa grezza).
+
+        Servono a iniettare i punteggi come riferimento permanente nel system
+        prompt a ogni turno, anche nei follow-up dove il frontend non rimanda
+        `scores_context`."""
+        with self._lock:
+            text = self._read(session_id)
+            if not text:
+                return ""
+            self._touch(session_id)
+        return str(self._parse(text).get("scores") or "")
+
     def get_relevant_context(
         self,
         session_id: str,
