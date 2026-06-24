@@ -273,7 +273,17 @@ EXPECTED_ROUTES = {
 
 def _registered_routes():
     found = set()
+    # FastAPI >= 0.138 wraps included routers in `_IncludedRouter` (lazy), senza
+    # path/methods propri: bisogna espandere `.original_router.routes`.
     for r in main.app.routes:
+        if hasattr(r, "original_router"):
+            for sub in getattr(r.original_router, "routes", []):
+                methods = getattr(sub, "methods", None)
+                path = getattr(sub, "path", None)
+                if methods and path:
+                    for m in methods:
+                        found.add((m, path))
+            continue
         methods = getattr(r, "methods", None)
         path = getattr(r, "path", None)
         if not methods or not path:
@@ -1868,6 +1878,89 @@ def test_instrument_scoring_uses_validated_norms():
     g1 = rs.json()["results"][0]
     assert g1["stanine"] == 7
     assert g1["stanine_is_normed"] is True
+
+
+def test_session_memory_transcript_role_array():
+    """Fase 2: il transcript verbatim role-tagged ruota e si legge come array."""
+    from backend.memory_service import session_memory
+    sid = "transcript-test"
+    session_memory.clear(sid)
+    session_memory.record_interaction(
+        sid, user_message="x", transcript_user="Ciao",
+        bot_response="Risposta", language="it",
+    )
+    turns = session_memory.get_transcript(sid)
+    assert turns == [
+        {"role": "user", "content": "Ciao"},
+        {"role": "assistant", "content": "Risposta"},
+    ], turns
+    # Cap FIFO: 7 interazioni = 14 turni -> significare SOLO gli ultimi 12.
+    for i in range(7):
+        session_memory.record_interaction(
+            sid, user_message=f"u{i}", transcript_user=f"u{i}",
+            bot_response=f"a{i}", language="it",
+        )
+    turns = session_memory.get_transcript(sid)
+    assert len(turns) <= 12, len(turns)
+    assert turns[0]["role"] in ("user", "assistant")
+    assert turns[-1]["content"] == "a6"
+    session_memory.clear(sid)
+
+
+def test_normalize_history_purifies_roles_and_content():
+    """Fase 3: _normalize_history tiene solo role user/assistant con content."""
+    from backend.ai_service import AIService
+    norm = AIService._normalize_history
+    healthy = [
+        {"role": "user", "content": "x"},
+        {"role": "assistant", "content": "y"},
+        {"role": "system", "content": "z"},  # filtrato via
+    ]
+    assert norm(healthy) == [
+        {"role": "user", "content": "x"},
+        {"role": "assistant", "content": "y"},
+    ]
+    # Robustezza agli input malformati: niente crash, ritorna [].
+    assert norm(None) == []
+    assert norm([]) == []
+    assert norm([None, "str", {}, {"role": "user"}, {"role": "assistant", "content": ""}]) == []
+
+
+def test_build_context_envelope_canonical_blocks():
+    """Fase 5: l'envelope assembla [PERSONA] [SECTION] [STUDENT] [PROFILE]
+    [KNOWLEDGE] nel system e history verbatim + user nei messages."""
+    from backend.ai_service import AIService as _FakeAIWrapper
+    from backend.api_models import ChatRequest
+    from backend.chat_logic import build_context_envelope
+    sid = "envelope-test"
+    session_memory.clear(sid)
+    session_memory.record_interaction(
+        sid, user_message="x", transcript_user="primo turno",
+        bot_response="prima risposta", language="it",
+        questionnaire_type="QSA", step_label="Step 1",
+    )
+
+    db = next(_override_get_db())
+    ai = _FakeAIService(db)
+    request = ChatRequest(message="domanda", questionnaire_type="QSA", language="it")
+    identity = {"username": "student"}
+
+    system_final, full_message, history = build_context_envelope(
+        db, ai, request, sid, identity,
+        c_persona="", system_prompt="SYS",
+        step_label="Step 1", questionnaire_type="QSA",
+        effective_message="domanda", model_scores_context="",
+        message_scores_context="", knowledge_context="KNOWLEDGE_BLOCK",
+    )
+
+    assert "SYS" in system_final
+    assert "[STUDENT]" in system_final
+    assert "[KNOWLEDGE]" in system_final
+    assert "KNOWLEDGE_BLOCK" in system_final
+    assert "domanda" in full_message
+    assert isinstance(history, list) and history, history
+    assert history[-1]["role"] == "assistant"
+    session_memory.clear(sid)
 
 
 # --------------------------------------------------------------------------
