@@ -654,7 +654,7 @@ const EN_BASE = {
     profileMethod: 'Bars show the average selected frequency for the items assigned to each factor (1 to 4); oppositely worded items are reverse-coded within their factor. No English or Swedish norms have been applied, and the adapted factor configuration remains subject to scientific review.',
     rawAverage: 'Raw frequency average',
     restart: 'Complete again',
-    back: 'Back to test administrations',
+    back: 'Back to questionnaires',
     startChat: 'Start AI Chat',
     stanineScore: 'Stanine Score',
 };
@@ -674,7 +674,7 @@ const SV_BASE = {
     profileMethod: 'Staplarna visar den genomsnittliga valda frekvensen för de påståenden som hör till varje faktor (1 till 4); omvänt formulerade påståenden omkodas inom sin faktor. Inga engelska eller svenska normer har tillämpats, och den anpassade faktorkonfigurationen behöver fortfarande vetenskaplig granskning.',
     rawAverage: 'Rått frekvensmedelvärde',
     restart: 'Fyll i igen',
-    back: 'Tillbaka till testgenomföranden',
+    back: 'Tillbaka till frågeformulären',
     startChat: 'Starta AI-chat',
     stanineScore: 'Stanine-poäng',
 };
@@ -694,7 +694,7 @@ const ES_BASE = {
     profileMethod: 'Las barras muestran la frecuencia media seleccionada para los items asignados a cada factor (1 a 4); los items inversos se recodifican dentro de su factor. Las normas espanolas solo deben aplicarse despues de la validacion.',
     rawAverage: 'Media bruta de frecuencia',
     restart: 'Completar de nuevo',
-    back: 'Volver a las administraciones',
+    back: 'Volver a los cuestionarios',
     startChat: 'Iniciar chat AI',
     stanineScore: 'Puntuacion stanine',
 };

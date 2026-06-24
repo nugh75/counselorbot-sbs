@@ -79,6 +79,7 @@ class SurveyResponse(Base):
 
     # Feedback qualitativo opzionale
     strumenti_utilizzati = Column(JSON, nullable=True)
+    counselor_utilizzato = Column(String, nullable=True)
     feedback_aperto = Column(Text, nullable=True)
 
 
@@ -171,6 +172,30 @@ class ResearchContact(Base):
     institution = Column(String, nullable=True)
     role = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+    # 'manual' (creato da admin) o 'admin-sync' (sincronizzato dalla access matrix ai4auth)
+    source = Column(String, nullable=False, default="manual")
+    # username ai4auth per i contatti sincronizzati (chiave di idempotenza)
+    ext_username = Column(String, nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class AssistantQuestion(Base):
+    """Domanda suggerita dell'assistente docenti, per topic e lingua.
+
+    Alimenta il pulsante "Prepara domanda": ogni topic ha piu' varianti, ruotate
+    nella UI. Modificabile da admin; le lingue prive di righe ricadono sulle
+    varianti i18n del frontend.
+    """
+
+    __tablename__ = "assistant_questions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    topic = Column(String, nullable=False, index=True)
+    language = Column(String, nullable=False, default="it", index=True)
+    text = Column(Text, nullable=False)
+    sort_order = Column(Integer, nullable=False, default=0)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
@@ -422,12 +447,55 @@ class Counselor(Base):
     id = Column(Integer, primary_key=True, index=True)
     slug = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
-    description = Column(Text, nullable=True)        # breve, mostrata all'utente
+    description = Column(Text, nullable=True)        # breve, mostrata all'utente (sorgente: italiano)
+    description_i18n = Column(JSON, nullable=True)   # traduzioni {lang: testo}, generate via Ollama
     persona = Column(Text, nullable=True)            # prefisso al system prompt
     avatar = Column(String, nullable=True)           # nome icona o url
     preset_id = Column(Integer, nullable=True)       # -> model_presets.id (modello)
     questionnaire_types = Column(JSON, nullable=True)  # ["QSA","ZTPI",...]
     language = Column(String, nullable=False, default="it")
+    sort_order = Column(Integer, nullable=False, default=0)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class CertifiedStrategy(Base):
+    """Catalogo di strategie di apprendimento certificate, curato dall'admin.
+
+    Distinto dalla knowledge base file-based (`strategy_memory`): qui ogni voce e'
+    strutturata (nome, fattori collegati, quando raccomandarla) ed editabile via UI.
+    Solo le voci con `status == "certified"` e `is_active` entrano nel contesto della
+    chat, quando i `factor_codes` collegati risultano salienti nel profilo dello
+    studente (gating `match_mode`). I testi sono multilingua (sorgente IT) con le
+    altre lingue generabili via Ollama e poi revisionabili dall'admin.
+    """
+
+    __tablename__ = "certified_strategies"
+
+    id = Column(Integer, primary_key=True, index=True)
+    slug = Column(String, unique=True, index=True, nullable=False)  # id stabile per il contesto chat
+    name_it = Column(String, nullable=True)
+    name_en = Column(String, nullable=True)
+    name_es = Column(String, nullable=True)
+    name_sv = Column(String, nullable=True)
+    # In quali casi e' raccomandata
+    recommended_when_it = Column(Text, nullable=True)
+    recommended_when_en = Column(Text, nullable=True)
+    recommended_when_es = Column(Text, nullable=True)
+    recommended_when_sv = Column(Text, nullable=True)
+    # La strategia: cosa fare
+    description_it = Column(Text, nullable=True)
+    description_en = Column(Text, nullable=True)
+    description_es = Column(Text, nullable=True)
+    description_sv = Column(Text, nullable=True)
+    factor_codes = Column(JSON, nullable=True)        # ["C6","A2",...]
+    # any = saliente almeno un fattore; all = combinazione (tutti salienti insieme)
+    match_mode = Column(String, nullable=False, default="any")
+    questionnaire_types = Column(JSON, nullable=True)  # ["QSA",...] scope chat, derivato dai fattori
+    keywords = Column(String, nullable=True)           # ranking semantico/keyword
+    status = Column(String, nullable=False, default="draft")  # draft | certified
+    certified_by = Column(String, nullable=True)       # provenienza certificazione
+    source_reference = Column(Text, nullable=True)
     sort_order = Column(Integer, nullable=False, default=0)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

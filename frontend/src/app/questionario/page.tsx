@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, CheckCircle, Send } from 'lucide-react';
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n-context';
+import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StickyActions } from '@/components/ui/StickyActions';
 
@@ -41,12 +42,14 @@ type FormData = {
     provenienza: string;
     area_studio: string;
     strumenti_utilizzati: string[];
+    counselor_utilizzato: string;
     feedback_aperto: string;
     [key: string]: FormValue;
 };
 
 export default function QuestionarioPage() {
-    const { t, tf } = useI18n();
+    const { t, tf, lang } = useI18n();
+    const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
     const [formData, setFormData] = useState<FormData>({
         eta: '',
         sesso: '',
@@ -65,8 +68,13 @@ export default function QuestionarioPage() {
         q_coinvolgente: null,
         q_consiglierei: null,
         strumenti_utilizzati: [],
+        counselor_utilizzato: '',
         feedback_aperto: '',
     });
+
+    useEffect(() => {
+        fetchCounselors(lang).then((list) => setCounselors(list.filter((c) => c.is_active !== false)));
+    }, [lang]);
 
     const [consent, setConsent] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -299,6 +307,20 @@ export default function QuestionarioPage() {
                                 );
                             })}
                         </div>
+
+                        {counselors.length > 0 && (
+                            <div className="pt-4 border-t border-slate-100">
+                                <h3 className="text-base font-semibold text-slate-800">{t('survey.counselor.title')}</h3>
+                                <p className="text-sm text-slate-500 mt-1 mb-3">{t('survey.counselor.sub')}</p>
+                                <SelectField
+                                    label={t('survey.counselor.label')}
+                                    placeholder={t('survey.counselor.placeholder')}
+                                    value={formData.counselor_utilizzato}
+                                    options={counselors.map((c) => c.name)}
+                                    onChange={(v) => setFormData({ ...formData, counselor_utilizzato: v })}
+                                />
+                            </div>
+                        )}
                     </div>
                     )}
 

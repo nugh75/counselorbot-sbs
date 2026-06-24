@@ -469,6 +469,41 @@ DEFAULT_SITE_CHAT_PLATFORM_CONTEXT = (
     "project to authors whose works have only been integrated."
 )
 
+# --- Collezione separata: CounselorBot (la piattaforma), distinta dai contenuti
+# teorici di competenzestrategiche.it. Testo base sempre iniettato + prompt audience. ---
+DEFAULT_COUNSELORBOT_CHAT_CONTEXT = (
+    "COUNSELORBOT PLATFORM (basic information, always valid):\n"
+    "- CounselorBot is the AI web platform of THIS service: it guides students through a self-analysis "
+    "of their learning and career profile via a guided chat over the questionnaires it hosts "
+    "(QSA, QSAr, ZTPI, QPCS, QPCC, QAP, Savickas).\n"
+    "- It is DISTINCT from the competenzestrategiche.it project: competenzestrategiche.it is the "
+    "research/content project on STRATEGIC COMPETENCES (theory, QSA/QSAr and related constructs); "
+    "CounselorBot is the SOFTWARE PLATFORM that administers the questionnaires, runs the AI counselor "
+    "chat, builds the student profile (open learner model) and provides the admin/research console.\n"
+    "- Answer about HOW THE PLATFORM WORKS: starting and taking a questionnaire, the guided AI chat, "
+    "the AI counselors, the profile/learner model, supported languages, roles (student/teacher/"
+    "researcher/admin), how data is handled.\n"
+    "- Do NOT confuse platform features with the theoretical contents of competenzestrategiche.it. "
+    "If the question is about strategic-competences theory or project materials, say it belongs to "
+    "the 'Competenze strategiche' knowledge base and answer only on what the materials here cover."
+)
+
+DEFAULT_SYSTEM_PROMPT_COUNSELORBOT_DOCENTE = (
+    "You are the assistant of the CounselorBot platform, addressed to TEACHERS, trainers and operators.\n"
+    "Answer about how the platform works: administering the questionnaires, the guided AI chat, the AI "
+    "counselors, the student profile (open learner model), roles, supported languages, and data handling.\n"
+    "Stay on the PLATFORM: do not explain the strategic-competences theory of competenzestrategiche.it.\n\n"
+    + _SITE_CHAT_COMMON_RULES
+)
+
+DEFAULT_SYSTEM_PROMPT_COUNSELORBOT_STUDENTE = (
+    "You are the assistant of the CounselorBot platform, addressed to STUDENTS.\n"
+    "Explain in a simple and reassuring way HOW TO USE CounselorBot: how to start, how the guided chat "
+    "works, how to answer the questionnaires, and how to read your own profile.\n"
+    "Avoid technical jargon: use common words and examples. Friendly and encouraging tone.\n\n"
+    + _SITE_CHAT_COMMON_RULES
+)
+
 SITE_CHAT_CONFIG_DEFINITIONS: List[Dict[str, str]] = [
     {
         "key": "site_chat_knowledge_card",
@@ -538,6 +573,30 @@ SITE_CHAT_CONFIG_DEFINITIONS: List[Dict[str, str]] = [
         "label": "Site Chat - Soglia minima similarità",
         "description": "Coseno minimo (0-1) perché un chunk sia considerato: scarta match deboli",
         "default": "0.2",
+    },
+]
+
+# Collezione separata CounselorBot: testo base sempre iniettato + prompt audience.
+# (La cartella RAG è docs-counselorbot/, indicizzata a parte; vedi rag_index.py.)
+COUNSELORBOT_CHAT_CONFIG_DEFINITIONS: List[Dict[str, str]] = [
+    {
+        "key": "counselorbot_chat_context",
+        "label": "CounselorBot Chat - Contesto piattaforma (base, sempre iniettato)",
+        "description": "Verità di base sulla piattaforma CounselorBot, distinta da competenzestrategiche.it; "
+                       "iniettata in testa al prompt quando si sceglie la base 'CounselorBot'",
+        "default": DEFAULT_COUNSELORBOT_CHAT_CONTEXT,
+    },
+    {
+        "key": "prompt_counselorbot_chat_docente",
+        "label": "CounselorBot Chat - Prompt Docente",
+        "description": "Prompt di sistema dell'assistente per la base CounselorBot, modalità docente (RAG su docs-counselorbot)",
+        "default": DEFAULT_SYSTEM_PROMPT_COUNSELORBOT_DOCENTE,
+    },
+    {
+        "key": "prompt_counselorbot_chat_studente",
+        "label": "CounselorBot Chat - Prompt Studente",
+        "description": "Prompt di sistema dell'assistente per la base CounselorBot, modalità studente (RAG su docs-counselorbot)",
+        "default": DEFAULT_SYSTEM_PROMPT_COUNSELORBOT_STUDENTE,
     },
 ]
 
@@ -626,6 +685,11 @@ PQBL_CONFIG_DEFINITIONS: List[Dict[str, str]] = [
 SITE_CHAT_MODE_TO_PROMPT_KEY: Dict[str, str] = {
     "docente": "prompt_site_chat_docente",
     "studente": "prompt_site_chat_studente",
+}
+
+COUNSELORBOT_CHAT_MODE_TO_PROMPT_KEY: Dict[str, str] = {
+    "docente": "prompt_counselorbot_chat_docente",
+    "studente": "prompt_counselorbot_chat_studente",
 }
 
 
@@ -785,6 +849,7 @@ ALL_CONFIG_TEXT_DEFINITIONS: List[Dict[str, str]] = (
     + GUIDED_STATIC_TEXT_DEFINITIONS
     + GUIDED_FIXED_PHASE_LABEL_DEFINITIONS
     + SITE_CHAT_CONFIG_DEFINITIONS
+    + COUNSELORBOT_CHAT_CONFIG_DEFINITIONS
     + PQBL_CONFIG_DEFINITIONS
 )
 

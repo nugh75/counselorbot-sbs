@@ -28,6 +28,7 @@ interface SurveyResponse {
     q_coinvolgente?: number;
     q_consiglierei?: number;
     strumenti_utilizzati?: string[] | string;
+    counselor_utilizzato?: string;
     feedback_aperto?: string;
 }
 
@@ -373,6 +374,14 @@ export function SurveyViewer() {
                                                                 <div>
                                                                     <span className="text-slate-400 block mb-1">{t('admin.surveys.det.tools')}</span>
                                                                     {renderTools(survey.strumenti_utilizzati)}
+                                                                    <span className="text-slate-400 block mb-1 mt-3">{t('admin.surveys.det.counselor')}</span>
+                                                                    {survey.counselor_utilizzato ? (
+                                                                        <span className="inline-flex px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 text-xs font-medium">
+                                                                            {survey.counselor_utilizzato}
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="text-gray-300">-</span>
+                                                                    )}
                                                                 </div>
                                                                 <div>
                                                                     <span className="text-slate-400 block mb-1">{t('admin.surveys.det.openFeedback')}</span>

@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Bot, LayoutGrid, LogIn, LogOut, Settings, User } from 'lucide-react';
+import { Bot, ClipboardList, LayoutGrid, LogIn, LogOut, Settings, User } from 'lucide-react';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { HeaderCounselor } from './HeaderCounselor';
 import { ThemeToggle } from './ThemeToggle';
 import { ai4authLoginUrl, AI4AUTH_LOGOUT_URL, AI4EDUC_PORTAL_URL, AI4EDUC_MANAGER_URL, getIdentity, type Identity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
-import { canUseResearchConsole, canUseTeacherAssistant } from '@/lib/roles';
+import { canUsePersonalPage, canUseResearchConsole, canUseTeacherAssistant } from '@/lib/roles';
 
 export function Header() {
     const { t } = useI18n();
@@ -23,6 +23,7 @@ export function Header() {
     const consoleUrl = identity?.is_admin ? AI4EDUC_MANAGER_URL : AI4EDUC_PORTAL_URL;
     const canOpenTeacherAssistant = canUseTeacherAssistant(identity);
     const canOpenResearchConsole = canUseResearchConsole(identity);
+    const canOpenPersonalPage = canUsePersonalPage(identity);
 
     return (
         <header className="console-header fixed top-0 left-0 right-0 z-50">
@@ -49,7 +50,7 @@ export function Header() {
                             <Bot className="w-4 h-4" />
                         </Link>
                     )}
-                    {accountLabel && (
+                    {accountLabel && canOpenPersonalPage && (
                         <Link
                             href="/profilo"
                             title={[identity?.username, identity?.email, identity?.groups.join(', ')].filter(Boolean).join(' - ')}
@@ -58,7 +59,15 @@ export function Header() {
                             {accountLabel}
                         </Link>
                     )}
-                    {identity?.authenticated && (
+                    {accountLabel && !canOpenPersonalPage && (
+                        <span
+                            title={[identity?.username, identity?.email, identity?.groups.join(', ')].filter(Boolean).join(' - ')}
+                            className="hidden sm:inline max-w-52 truncate px-2 text-sm text-slate-500 font-medium"
+                        >
+                            {accountLabel}
+                        </span>
+                    )}
+                    {canOpenPersonalPage && (
                         <Link href="/profilo" className="console-topbar-icon" title={t('profile.nav')} aria-label={t('profile.nav')}>
                             <User className="w-4 h-4" />
                         </Link>
@@ -78,6 +87,10 @@ export function Header() {
                             <LogOut className="w-4 h-4" />
                         </a>
                     )}
+                    {/* Questionario di gradimento: accessibile da ogni pagina. */}
+                    <Link href="/questionario" className="console-topbar-icon" title={t('nav.feedback')} aria-label={t('nav.feedback')}>
+                        <ClipboardList className="w-4 h-4" />
+                    </Link>
                     <ThemeToggle />
                     <LanguageSwitcher />
                 </div>

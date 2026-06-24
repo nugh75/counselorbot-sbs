@@ -17,6 +17,7 @@ const STRATEGIC_COMPETENCES_URLS: Partial<Record<QuestionnaireType, string>> = {
     ZTPI: 'https://www.competenzestrategiche.it/ZTPI/',
     QAP: 'https://www.competenzestrategiche.it/QAP/',
 };
+const QUESTIONNAIRE_SELECTION_HREF = '/?view=questionnaires';
 
 export default function InstrumentDetailsPage() {
     const { t, lang } = useI18n();
@@ -32,13 +33,14 @@ export default function InstrumentDetailsPage() {
             : lang === 'it' ? 'en'
                 : null;
     const inAppAdministration = inAppLocale && getTestAdministration(id, inAppLocale) ? inAppLocale : null;
+    const isEnglishFallback = lang === 'it' && inAppAdministration === 'en';
 
     if (!questionnaire) {
         return (
             <div className="max-w-xl mx-auto glass-panel p-8 text-center space-y-4">
                 <h1 className="text-xl font-bold text-slate-900">{t('detail.unavailable.title')}</h1>
                 <p className="text-slate-600">{t('detail.unavailable.body')}</p>
-                <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-700">
+                <Link href={QUESTIONNAIRE_SELECTION_HREF} className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-700">
                     <ArrowLeft className="w-4 h-4" />
                     {t('detail.back')}
                 </Link>
@@ -48,7 +50,7 @@ export default function InstrumentDetailsPage() {
 
     return (
         <div className="page-narrow space-y-6">
-            <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-indigo-700">
+            <Link href={QUESTIONNAIRE_SELECTION_HREF} className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-indigo-700">
                 <ArrowLeft className="w-4 h-4" />
                 {t('detail.back')}
             </Link>
@@ -83,14 +85,18 @@ export default function InstrumentDetailsPage() {
             {inAppAdministration && (
                 <section className="rounded-xl border-2 border-amber-300 bg-amber-50 p-5 flex flex-col md:flex-row md:items-center gap-5">
                     <div className="flex-1">
-                        <h2 className="font-semibold text-amber-950">{t('detail.assessment.inapp.title')}</h2>
-                        <p className="text-sm text-amber-900 mt-1 leading-relaxed">{t('detail.assessment.inapp.body')}</p>
+                        <h2 className="font-semibold text-amber-950">
+                            {t(isEnglishFallback ? 'detail.assessment.inapp.englishTitle' : 'detail.assessment.inapp.title')}
+                        </h2>
+                        <p className="text-sm text-amber-900 mt-1 leading-relaxed">
+                            {t(isEnglishFallback ? 'detail.assessment.inapp.englishBody' : 'detail.assessment.inapp.body')}
+                        </p>
                     </div>
                     <Link
                         href={`/somministrazione/${id}/${inAppAdministration}`}
                         className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-800 transition-colors"
                     >
-                        {t('detail.assessment.inapp.link')}
+                        {t(isEnglishFallback ? 'detail.assessment.inapp.englishLink' : 'detail.assessment.inapp.link')}
                         <ArrowRight className="w-4 h-4" />
                     </Link>
                 </section>

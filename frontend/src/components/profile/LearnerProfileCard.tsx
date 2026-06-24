@@ -213,7 +213,9 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                 <UserCircle className="w-5 h-5 text-indigo-600" />
                 <h3 className="font-semibold text-slate-800">{title}</h3>
             </div>
-            {isIntake && <p className="text-sm text-slate-500">{t('lp.intro')}</p>}
+            <p className="text-sm leading-relaxed text-slate-500">
+                {isIntake ? t('lp.intro') : t('lp.reviewIntro')}
+            </p>
 
             {variant === 'review' && !isIntake && !editing ? (
                 <div className="space-y-3">

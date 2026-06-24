@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { ArrowLeft, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, Award, MessageCircleQuestion, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { ConfigForm } from '@/components/admin/ConfigForm';
 import { LogViewer } from '@/components/admin/LogViewer';
 import { CostStats } from '@/components/admin/CostStats';
 import { PresetsPanel } from '@/components/admin/PresetsPanel';
 import { BenchmarkPanel } from '@/components/admin/BenchmarkPanel';
 import { CounselorsPanel } from '@/components/admin/CounselorsPanel';
+import { CertifiedStrategiesPanel } from '@/components/admin/CertifiedStrategiesPanel';
 import { SurveyViewer } from '@/components/admin/SurveyViewer';
 import { QuestionnaireResultsViewer } from '@/components/admin/QuestionnaireResultsViewer';
 import { QuestionnaireEditor } from '@/components/admin/QuestionnaireEditor';
@@ -17,13 +18,14 @@ import { ValidationExportPanel } from '@/components/admin/ValidationExportPanel'
 import { TrainingDatasetPanel } from '@/components/admin/TrainingDatasetPanel';
 import { PqblAdminPanel } from '@/components/admin/PqblAdminPanel';
 import { ResearchContactsPanel } from '@/components/admin/ResearchContactsPanel';
+import { AssistantQuestionsPanel } from '@/components/admin/AssistantQuestionsPanel';
 import { getIdentity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { canUseResearchConsole } from '@/lib/roles';
 
 import { cn } from '@/lib/utils';
 
-type AdminTab = 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'training' | 'pqbl';
+type AdminTab = 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'certifiedStrategies' | 'assistantQuestions' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'training' | 'pqbl';
 
 export default function AdminPage() {
     const router = useRouter();
@@ -41,12 +43,19 @@ export default function AdminPage() {
                 { id: 'config', label: t('admin.tab.config'), icon: Settings },
                 { id: 'presets', label: t('admin.tab.presets'), icon: SlidersHorizontal },
                 { id: 'counselors', label: t('admin.tab.counselors'), icon: Users },
+                { id: 'certifiedStrategies', label: t('admin.tab.certified'), icon: Award },
+                { id: 'assistantQuestions', label: t('admin.tab.assistantQuestions'), icon: MessageCircleQuestion },
+            ],
+        },
+        {
+            title: 'Questionari di gradimento',
+            items: [
+                { id: 'surveys', label: t('admin.tab.surveys'), icon: ClipboardList },
             ],
         },
         {
             title: 'Ricerca',
             items: [
-                { id: 'surveys', label: t('admin.tab.surveys'), icon: ClipboardList },
                 { id: 'results', label: t('admin.tab.results'), icon: BarChart3 },
                 { id: 'questionnaires', label: t('admin.tab.questionnaires'), icon: ListChecks },
                 { id: 'validation', label: t('admin.tab.validation'), icon: Database },
@@ -192,6 +201,8 @@ export default function AdminPage() {
                         {activeTab === 'presets' && <PresetsPanel />}
                         {activeTab === 'benchmark' && <BenchmarkPanel />}
                         {activeTab === 'counselors' && <CounselorsPanel />}
+                        {activeTab === 'certifiedStrategies' && <CertifiedStrategiesPanel />}
+                        {activeTab === 'assistantQuestions' && <AssistantQuestionsPanel />}
                         {activeTab === 'surveys' && <SurveyViewer />}
                         {activeTab === 'results' && <QuestionnaireResultsViewer />}
                         {activeTab === 'questionnaires' && <QuestionnaireEditor />}

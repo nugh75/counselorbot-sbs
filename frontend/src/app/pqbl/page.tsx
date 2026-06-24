@@ -176,15 +176,6 @@ export default function PqblPage() {
         if (file) startUpload(file);
     };
 
-    const pollNewQuestions = useCallback(async (sid: string, docId: string) => {
-        try {
-            const doc = await fetchJson<PqblDocumentInfo>(`/api/pqbl/documents/${docId}?lang=${lang}`);
-            if (doc.n_questions > 0) {
-                setDocumentInfo(doc);
-            }
-        } catch { /* transitorio */ }
-    }, [lang]);
-
     const startLearningSession = async () => {
         if (!documentInfo) return;
         setError('');

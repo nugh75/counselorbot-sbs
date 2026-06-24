@@ -25,7 +25,7 @@ from ..qsa_extractor import (
     DEFAULT_PARSER_MODEL,
     extract_questionnaire_data,
 )
-from ..guided_text_i18n import resolve_text, QUESTIONS_LABEL, PHASE_WORD
+from ..guided_text_i18n import SECONDARY_LANGS, resolve_text, QUESTIONS_LABEL, PHASE_WORD
 from ..prompt_config import (
     DEFAULT_SYSTEM_PROMPT_GENERIC,
     DEFAULT_GUIDED_TEXT_QSAR_QUESTIONS_INTRO,
@@ -67,6 +67,15 @@ get_db = database.get_db
 logger = logging.getLogger(__name__)
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 ALLOWED_UPLOAD_SUFFIXES = {".pdf", ".jpg", ".jpeg", ".png"}
+SUPPORTED_CHAT_LANGUAGES = {"it", *SECONDARY_LANGS}
+
+
+def _normalize_language(language: str | None) -> str:
+    raw = (language or "it").strip().lower()
+    if not raw:
+        return "it"
+    primary = raw.replace("_", "-").split("-", 1)[0]
+    return primary if primary in SUPPORTED_CHAT_LANGUAGES else "it"
 
 
 def _usage_cost_usd(usage: dict | None, provider: str | None = None, model: str | None = None) -> float | None:
@@ -148,6 +157,7 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
     Pass ?lang=en|es|fr|de|sv to get the student-facing texts in that language
     (falls back to the Italian base value when a translation is missing).
     """
+    lang = _normalize_language(lang)
     ai_service = AIService(db)
     _ensure_questionnaire_guided_steps(db, questionnaire_type)
     cfg_get = ai_service.config.get
@@ -156,7 +166,7 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
     qlabel = QUESTIONS_LABEL.get(lang, QUESTIONS_LABEL["it"])
     phase_word = PHASE_WORD.get(lang, PHASE_WORD["it"])
 
-    result: dict = {}
+    result: dict = {"language": lang}
     # Static config texts (questions labels, conclusion label, static messages),
     # resolved to the requested language (suffixed key -> base/Italian fallback).
     for ui_def in GUIDED_PUBLIC_UI_CONFIG_DEFINITIONS:
@@ -219,6 +229,7 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
 @router.post("/chat")
 async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db), identity: dict = Depends(auth.get_identity)):
     session_id = request.session_id or str(uuid.uuid4())
+    request.language = _normalize_language(request.language)
 
     # 1. Retrieve Configuration and System Prompt based on Mode
     ai_service = AIService(db)
@@ -315,7 +326,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         )
 
     if _should_sanitize_ztpi_text(request.mode, request.phase):
-        step_label = _sanitize_ztpi_step_label(step_label)
+        step_label = _sanitize_ztpi_step_label(step_label, request.language)
 
     # Deterministic local write: complete it before the client can advance phase.
     _update_markdown_memory_background(
@@ -390,6 +401,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     import json as _json
 
     session_id = request.session_id or str(uuid.uuid4())
+    request.language = _normalize_language(request.language)
 
     # Preparazione (usa la db della richiesta, ancora aperta qui)
     ai_service = AIService(db)
@@ -460,7 +472,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         conversation_summary = _sanitize_ztpi_user_text(conversation_summary, request.language)
 
     if sanitize:
-        step_label = _sanitize_ztpi_step_label(step_label)
+        step_label = _sanitize_ztpi_step_label(step_label, request.language)
 
     if c_persona:
         system_prompt = f"{c_persona.strip()}\n\n{system_prompt}"
@@ -610,6 +622,7 @@ async def chat_message(
     db: Session = Depends(get_db),
     identity: dict = Depends(auth.get_identity),
 ):
+    language = _normalize_language(language)
     # 1. Retrieve Configuration and System Prompt based on Mode
     ai_service = AIService(db)
 

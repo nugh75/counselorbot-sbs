@@ -47,6 +47,22 @@ EMB_PATH = os.path.join(INDEX_DIR, "site_rag_embeddings.npy")     # matrice embe
 CACHE_PATH = os.path.join(INDEX_DIR, "site_embed_cache.npz")      # cache hash→vettore
 LOCK_PATH = os.path.join(INDEX_DIR, ".build.lock")                # lock cross-worker
 
+# --- Collezione separata: documenti specifici di CounselorBot (la piattaforma) ---
+# Cartella semplice di markdown/PDF (niente pipeline graphify, niente grafo): è una
+# base di conoscenza distinta da competenzestrategiche.it, selezionabile a parte
+# nell'assistente. Indice persistito in file dedicati nella stessa INDEX_DIR.
+COUNSELORBOT_DOCS_DIR = os.environ.get(
+    "COUNSELORBOT_DOCS_DIR", os.path.join(_REPO_ROOT, "docs-counselorbot")
+)
+COUNSELORBOT_INDEX_PATH = os.path.join(INDEX_DIR, "counselorbot_rag_index.json")
+COUNSELORBOT_EMB_PATH = os.path.join(INDEX_DIR, "counselorbot_embeddings.npy")
+COUNSELORBOT_CACHE_PATH = os.path.join(INDEX_DIR, "counselorbot_embed_cache.npz")
+COUNSELORBOT_LOCK_PATH = os.path.join(INDEX_DIR, ".counselorbot.build.lock")
+
+# Nomi pubblici delle collezioni (combaciano col toggle del frontend).
+COLLECTION_COMPETENZE = "competenzestrategiche"
+COLLECTION_COUNSELORBOT = "counselorbot"
+
 # Sorgenti escluse dal corpus (relative a docs/): materiali interni/di sviluppo,
 # non contenuti del sito. Le mail organizzative (es. mail-olle) restano fuori.
 EXCLUDED_PREFIXES = (
@@ -495,6 +511,80 @@ def _corpus_signature() -> dict[str, str]:
     return sig
 
 
+# ---------------------------------------------------------------------------
+# Collezione "plain" (cartella semplice di .md/.pdf, senza graphify né grafo)
+# ---------------------------------------------------------------------------
+def _empty_graph():
+    """Grafo vuoto: le collezioni plain non hanno espansione via grafo."""
+    return {}, {}, {}
+
+
+def _collect_plain_corpus(docs_dir: str) -> tuple[list[dict], dict[str, str]]:
+    """Ingerisce tutti i .md e .pdf sotto docs_dir direttamente (niente graphify).
+
+    Ritorna (chunks, signature). La firma usa size/mtime dei file: deve combaciare
+    con _plain_signature per non innescare rebuild perpetui."""
+    chunks: list[dict] = []
+    signature: dict[str, str] = {}
+    if not os.path.isdir(docs_dir):
+        logger.warning("Cartella collezione plain assente: %s", docs_dir)
+        signature["__normalizer_version__"] = str(_NORMALIZER_VERSION)
+        return chunks, signature
+    for root, _dirs, files in os.walk(docs_dir):
+        for fn in sorted(files):
+            low = fn.lower()
+            abspath = os.path.join(root, fn)
+            relpath = os.path.relpath(abspath, docs_dir).replace("\\", "/")
+            if low.endswith(".md"):
+                try:
+                    with open(abspath, encoding="utf-8") as f:
+                        text = _normalize_markdown(f.read())
+                except Exception as e:
+                    logger.warning("Impossibile leggere %s: %s", abspath, e)
+                    continue
+                try:
+                    signature[relpath] = str(int(os.path.getmtime(abspath)))
+                except OSError:
+                    signature[relpath] = "md"
+            elif low.endswith(".pdf"):
+                try:
+                    st = os.stat(abspath)
+                    signature[relpath] = f"{st.st_size}:{int(st.st_mtime)}"
+                except OSError:
+                    signature[relpath] = "pdf"
+                raw = _extract_pdf_text(abspath)
+                if not raw.strip():
+                    logger.info("PDF senza testo estraibile (saltato): %s", relpath)
+                    continue
+                text = _normalize_markdown(raw)
+            else:
+                continue
+            title = _first_heading(text) or os.path.splitext(fn)[0].replace("_", " ")
+            for i, chunk_text in enumerate(_chunk_markdown(text)):
+                chunks.append({"id": f"{relpath}#{i}", "source": relpath, "title": title, "text": chunk_text})
+    signature["__normalizer_version__"] = str(_NORMALIZER_VERSION)
+    return chunks, signature
+
+
+def _plain_signature(docs_dir: str) -> dict[str, str]:
+    """Firma metadati-only (nomi + size/mtime) per una collezione plain."""
+    sig: dict[str, str] = {}
+    if os.path.isdir(docs_dir):
+        for root, _dirs, files in os.walk(docs_dir):
+            for fn in sorted(files):
+                low = fn.lower()
+                if not (low.endswith(".md") or low.endswith(".pdf")):
+                    continue
+                relpath = os.path.relpath(os.path.join(root, fn), docs_dir).replace("\\", "/")
+                try:
+                    st = os.stat(os.path.join(root, fn))
+                    sig[relpath] = f"{st.st_size}:{int(st.st_mtime)}" if low.endswith(".pdf") else str(int(st.st_mtime))
+                except OSError:
+                    sig[relpath] = "f"
+    sig["__normalizer_version__"] = str(_NORMALIZER_VERSION)
+    return sig
+
+
 class _EmbeddingCache:
     """Cache hash(testo+modello)→vettore, persistita su .npz. Evita di ri-embeddare
     i chunk invariati a ogni rebuild (con migliaia di chunk fa la differenza)."""
@@ -544,8 +634,20 @@ class _EmbeddingCache:
 class SiteRagIndex:
     """Indice in-memory persistito su disco. Thread-safe per build/reload."""
 
-    def __init__(self):
+    def __init__(self, *, docs_dir: str, index_path: str, emb_path: str,
+                 cache_path: str, lock_path: str, collector, graph_loader,
+                 signature_fn, mode: str = "graphify"):
         self._lock = threading.Lock()
+        # Config della collezione (paths + funzioni di raccolta/grafo/firma).
+        self.docs_dir = docs_dir
+        self.index_path = index_path
+        self.emb_path = emb_path
+        self.cache_path = cache_path
+        self.lock_path = lock_path
+        self._collector = collector
+        self._graph_loader = graph_loader
+        self._signature_fn = signature_fn
+        self.mode = mode
         self.chunks: list[dict] = []
         self.categories: list[str] = []            # macro-categoria per chunk (allineata a chunks)
         self.matrix: np.ndarray | None = None     # (n, d) float32
@@ -560,12 +662,12 @@ class SiteRagIndex:
 
     # --- persistenza (meta in JSON, vettori in .npy) ---
     def _load_from_disk(self) -> bool:
-        if not os.path.exists(INDEX_PATH) or not os.path.exists(EMB_PATH):
+        if not os.path.exists(self.index_path) or not os.path.exists(self.emb_path):
             return False
         try:
-            with open(INDEX_PATH, encoding="utf-8") as f:
+            with open(self.index_path, encoding="utf-8") as f:
                 data = json.load(f)
-            matrix = np.load(EMB_PATH)
+            matrix = np.load(self.emb_path)
         except Exception as e:
             logger.warning("Indice RAG non leggibile: %s", e)
             return False
@@ -584,7 +686,7 @@ class SiteRagIndex:
 
     def _save_to_disk(self):
         os.makedirs(INDEX_DIR, exist_ok=True)
-        tmp_json = INDEX_PATH + ".tmp"
+        tmp_json = self.index_path + ".tmp"
         payload = {
             "embedding_model": self.embedding_model,
             "built_at": self.built_at,
@@ -596,8 +698,8 @@ class SiteRagIndex:
         }
         with open(tmp_json, "w", encoding="utf-8") as f:
             json.dump(payload, f, ensure_ascii=False)
-        np.save(EMB_PATH, self.matrix if self.matrix is not None else np.zeros((0, 1), dtype=np.float32))
-        os.replace(tmp_json, INDEX_PATH)
+        np.save(self.emb_path, self.matrix if self.matrix is not None else np.zeros((0, 1), dtype=np.float32))
+        os.replace(tmp_json, self.index_path)
 
     # --- build / ensure ---
     def _is_current(self, ai_service) -> bool:
@@ -606,7 +708,7 @@ class SiteRagIndex:
             return False
         if self.embedding_model != (ai_service.embedding_model or "qwen3-embedding:4b"):
             return False
-        return _corpus_signature() == self.signature
+        return self._signature_fn() == self.signature
 
     def needs_rebuild(self, ai_service) -> bool:
         if not self._loaded and not self._load_from_disk():
@@ -619,7 +721,7 @@ class SiteRagIndex:
         ricarica da disco il risultato dell'altro."""
         with self._lock:
             os.makedirs(INDEX_DIR, exist_ok=True)
-            with open(LOCK_PATH, "w") as lockf:
+            with open(self.lock_path, "w") as lockf:
                 try:
                     fcntl.flock(lockf, fcntl.LOCK_EX)
                 except OSError:
@@ -632,8 +734,8 @@ class SiteRagIndex:
 
     def _do_build(self, ai_service):
         model = ai_service.embedding_model or "qwen3-embedding:4b"
-        chunks, signature = _collect_corpus()
-        self.adjacency, self.relpath_to_node, self.node_to_relpath = _load_graph()
+        chunks, signature = self._collector()
+        self.adjacency, self.relpath_to_node, self.node_to_relpath = self._graph_loader()
         self.chunks = chunks
         self.categories = [category_for(c["source"]) for c in chunks]
         self.signature = signature
@@ -649,7 +751,7 @@ class SiteRagIndex:
             return
 
         texts = [c["text"] for c in chunks]
-        cache = _EmbeddingCache(CACHE_PATH)
+        cache = _EmbeddingCache(self.cache_path)
         cache.load(model)
         keys = [_EmbeddingCache.key(model, t) for t in texts]
         vectors: list = [None] * len(texts)
@@ -807,23 +909,50 @@ class SiteRagIndex:
     def stats(self) -> dict:
         return {
             "loaded": self._loaded,
+            "collection": self.mode,
             "n_chunks": len(self.chunks),
             "n_sources": len({c["source"] for c in self.chunks}),
             "n_graph_nodes": len(self.node_to_relpath),
             "embedding_model": self.embedding_model,
             "built_at": self.built_at,
-            "docs_dir": DOCS_DIR,
-            "index_path": INDEX_PATH,
+            "docs_dir": self.docs_dir,
+            "index_path": self.index_path,
         }
 
 
-# Istanza singola condivisa dal router.
-site_rag_index = SiteRagIndex()
+# Collezione di default: documenti di competenzestrategiche.it (pipeline graphify + grafo).
+site_rag_index = SiteRagIndex(
+    docs_dir=DOCS_DIR, index_path=INDEX_PATH, emb_path=EMB_PATH,
+    cache_path=CACHE_PATH, lock_path=LOCK_PATH,
+    collector=_collect_corpus, graph_loader=_load_graph,
+    signature_fn=_corpus_signature, mode="graphify",
+)
+
+# Collezione separata: documenti specifici di CounselorBot (cartella plain, niente grafo).
+counselorbot_rag_index = SiteRagIndex(
+    docs_dir=COUNSELORBOT_DOCS_DIR, index_path=COUNSELORBOT_INDEX_PATH,
+    emb_path=COUNSELORBOT_EMB_PATH, cache_path=COUNSELORBOT_CACHE_PATH,
+    lock_path=COUNSELORBOT_LOCK_PATH,
+    collector=lambda: _collect_plain_corpus(COUNSELORBOT_DOCS_DIR),
+    graph_loader=_empty_graph,
+    signature_fn=lambda: _plain_signature(COUNSELORBOT_DOCS_DIR),
+    mode="plain",
+)
+
+RAG_COLLECTIONS = {
+    COLLECTION_COMPETENZE: site_rag_index,
+    COLLECTION_COUNSELORBOT: counselorbot_rag_index,
+}
 
 
-def _safe_doc_abspath(relpath: str) -> str | None:
-    """Path assoluto dentro DOCS_DIR, o None se esce dalla cartella (anti path-traversal)."""
-    docs_root = os.path.abspath(DOCS_DIR)
+def get_index(collection: str | None) -> "SiteRagIndex":
+    """Indice della collezione richiesta (default: competenzestrategiche)."""
+    return RAG_COLLECTIONS.get(collection or COLLECTION_COMPETENZE, site_rag_index)
+
+
+def _safe_doc_abspath(relpath: str, docs_dir: str = DOCS_DIR) -> str | None:
+    """Path assoluto dentro docs_dir, o None se esce dalla cartella (anti path-traversal)."""
+    docs_root = os.path.abspath(docs_dir)
     p = os.path.normpath(os.path.join(docs_root, relpath))
     if p == docs_root or p.startswith(docs_root + os.sep):
         return p
@@ -856,8 +985,24 @@ def _source_to_converted_map() -> dict[str, str]:
     return out
 
 
-def get_document_preview(source: str):
-    """Risolve l'anteprima per una sorgente citata.
+def _plain_document_preview(source: str, docs_dir: str):
+    """Anteprima per una collezione plain: PDF originale o markdown del file."""
+    low = source.lower()
+    p = _safe_doc_abspath(source, docs_dir)
+    if not p or not os.path.isfile(p):
+        return None
+    if low.endswith(".pdf"):
+        return ("pdf", p)
+    if low.endswith(".md"):
+        with open(p, encoding="utf-8") as f:
+            text = _normalize_markdown(f.read())
+        title = _first_heading(text) or os.path.splitext(os.path.basename(source))[0].replace("_", " ")
+        return ("markdown", text, title)
+    return None
+
+
+def get_document_preview(source: str, collection: str = COLLECTION_COMPETENZE):
+    """Risolve l'anteprima per una sorgente citata, nella collezione indicata.
 
     Ritorna:
     - ("pdf", abspath)              se l'originale è un PDF leggibile;
@@ -865,6 +1010,8 @@ def get_document_preview(source: str):
                                     stesso se è già .md);
     - None                          se non anteprimabile.
     """
+    if collection == COLLECTION_COUNSELORBOT:
+        return _plain_document_preview(source, COUNSELORBOT_DOCS_DIR)
     low = source.lower()
     # PDF originale → anteprima diretta
     if low.endswith(".pdf"):
