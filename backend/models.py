@@ -158,6 +158,24 @@ class AnonymousResearchCode(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class ResearchContact(Base):
+    """Referente di ricerca autorizzato a somministrare questionari sperimentali."""
+
+    __tablename__ = "research_contacts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String, nullable=False, unique=True, index=True)
+    name = Column(String, nullable=False)
+    email = Column(String, nullable=True)
+    phone = Column(String, nullable=True)
+    institution = Column(String, nullable=True)
+    role = Column(String, nullable=True)
+    notes = Column(Text, nullable=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class TrainingExample(Base):
     """Esempio candidato per dataset SFT, revisionato da admin prima dell'export."""
 

@@ -7,6 +7,7 @@ export interface Identity {
     name: string;
     groups: string[];
     is_admin: boolean;
+    is_researcher?: boolean;
     authenticated: boolean;
 }
 

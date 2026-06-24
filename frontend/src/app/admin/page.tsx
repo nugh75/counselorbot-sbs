@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users } from 'lucide-react';
+import { ArrowLeft, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { ConfigForm } from '@/components/admin/ConfigForm';
 import { LogViewer } from '@/components/admin/LogViewer';
 import { CostStats } from '@/components/admin/CostStats';
@@ -16,20 +16,69 @@ import { QuestionnaireEditor } from '@/components/admin/QuestionnaireEditor';
 import { ValidationExportPanel } from '@/components/admin/ValidationExportPanel';
 import { TrainingDatasetPanel } from '@/components/admin/TrainingDatasetPanel';
 import { PqblAdminPanel } from '@/components/admin/PqblAdminPanel';
+import { ResearchContactsPanel } from '@/components/admin/ResearchContactsPanel';
 import { getIdentity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
+import { canUseResearchConsole } from '@/lib/roles';
 
 import { cn } from '@/lib/utils';
+
+type AdminTab = 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'training' | 'pqbl';
 
 export default function AdminPage() {
     const router = useRouter();
     const { t } = useI18n();
-    const [activeTab, setActiveTab] = useState<'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'training' | 'pqbl'>('config');
+    const [activeTab, setActiveTab] = useState<AdminTab>('config');
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [authState, setAuthState] = useState<'loading' | 'admin' | 'forbidden'>('loading');
+    const navGroups: {
+        title: string;
+        items: { id: AdminTab; label: string; icon: typeof Settings }[];
+    }[] = [
+        {
+            title: 'Configurazione AI',
+            items: [
+                { id: 'config', label: t('admin.tab.config'), icon: Settings },
+                { id: 'presets', label: t('admin.tab.presets'), icon: SlidersHorizontal },
+                { id: 'counselors', label: t('admin.tab.counselors'), icon: Users },
+            ],
+        },
+        {
+            title: 'Ricerca',
+            items: [
+                { id: 'surveys', label: t('admin.tab.surveys'), icon: ClipboardList },
+                { id: 'results', label: t('admin.tab.results'), icon: BarChart3 },
+                { id: 'questionnaires', label: t('admin.tab.questionnaires'), icon: ListChecks },
+                { id: 'validation', label: t('admin.tab.validation'), icon: Database },
+                { id: 'researchContacts', label: t('admin.tab.researchContacts'), icon: Users },
+            ],
+        },
+        {
+            title: 'Training dataset',
+            items: [
+                { id: 'training', label: t('admin.tab.training'), icon: BrainCircuit },
+            ],
+        },
+        {
+            title: 'Monitoraggio e costi',
+            items: [
+                { id: 'logs', label: t('admin.tab.logs'), icon: FileText },
+                { id: 'costs', label: t('admin.tab.costs'), icon: Coins },
+                { id: 'benchmark', label: t('admin.tab.benchmark'), icon: Gauge },
+            ],
+        },
+        {
+            title: 'pQBL',
+            items: [
+                { id: 'pqbl', label: t('admin.tab.pqbl'), icon: GraduationCap },
+            ],
+        },
+    ];
+    const activeItem = navGroups.flatMap((group) => group.items).find((item) => item.id === activeTab);
 
     useEffect(() => {
         getIdentity().then((id) => {
-            setAuthState(id?.is_admin ? 'admin' : 'forbidden');
+            setAuthState(canUseResearchConsole(id) ? 'admin' : 'forbidden');
         });
     }, []);
 
@@ -68,8 +117,8 @@ export default function AdminPage() {
                             <Settings className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                            <h1 className="font-bold text-2xl text-slate-900">{t('admin.dashboard')}</h1>
-                            <p className="text-sm text-slate-500 mt-1">CounselorBot</p>
+                            <h1 className="font-bold text-2xl text-slate-900">Ricerca</h1>
+                            <p className="text-sm text-slate-500 mt-1">CounselorBot · {activeItem?.label}</p>
                         </div>
                     </div>
                     <Link
@@ -80,168 +129,77 @@ export default function AdminPage() {
                         {t('nav.home')}
                     </Link>
                 </div>
-                {/* Tabs */}
-                <div className="flex flex-wrap gap-3 mb-8">
-                    <button
-                        onClick={() => setActiveTab('config')}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
-                            activeTab === 'config'
-                                ? "bg-indigo-50 border-indigo-100 text-indigo-600"
-                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                        )}
-                    >
-                        <Settings className="w-4 h-4" />
-                        {t('admin.tab.config')}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('logs')}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
-                            activeTab === 'logs'
-                                ? "bg-indigo-50 border-indigo-100 text-indigo-600"
-                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                        )}
-                    >
-                        <FileText className="w-4 h-4" />
-                        {t('admin.tab.logs')}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('costs')}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
-                            activeTab === 'costs'
-                                ? "bg-indigo-50 border-indigo-100 text-indigo-600"
-                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                        )}
-                    >
-                        <Coins className="w-4 h-4" />
-                        {t('admin.tab.costs')}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('presets')}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
-                            activeTab === 'presets'
-                                ? "bg-indigo-50 border-indigo-100 text-indigo-600"
-                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                        )}
-                    >
-                        <SlidersHorizontal className="w-4 h-4" />
-                        {t('admin.tab.presets')}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('benchmark')}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
-                            activeTab === 'benchmark'
-                                ? "bg-indigo-50 border-indigo-100 text-indigo-600"
-                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                        )}
-                    >
-                        <Gauge className="w-4 h-4" />
-                        {t('admin.tab.benchmark')}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('counselors')}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
-                            activeTab === 'counselors'
-                                ? "bg-indigo-50 border-indigo-100 text-indigo-600"
-                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                        )}
-                    >
-                        <Users className="w-4 h-4" />
-                        {t('admin.tab.counselors')}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('surveys')}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
-                            activeTab === 'surveys'
-                                ? "bg-indigo-50 border-indigo-100 text-indigo-600"
-                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                        )}
-                    >
-                        <ClipboardList className="w-4 h-4" />
-                        {t('admin.tab.surveys')}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('results')}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
-                            activeTab === 'results'
-                                ? "bg-indigo-50 border-indigo-100 text-indigo-600"
-                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                        )}
-                    >
-                        <BarChart3 className="w-4 h-4" />
-                        {t('admin.tab.results')}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('questionnaires')}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
-                            activeTab === 'questionnaires'
-                                ? "bg-indigo-50 border-indigo-100 text-indigo-600"
-                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                        )}
-                    >
-                        <ListChecks className="w-4 h-4" />
-                        {t('admin.tab.questionnaires')}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('training')}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
-                            activeTab === 'training'
-                                ? "bg-indigo-50 border-indigo-100 text-indigo-600"
-                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                        )}
-                    >
-                        <BrainCircuit className="w-4 h-4" />
-                        {t('admin.tab.training')}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('pqbl')}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
-                            activeTab === 'pqbl'
-                                ? "bg-indigo-50 border-indigo-100 text-indigo-600"
-                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                        )}
-                    >
-                        <GraduationCap className="w-4 h-4" />
-                        {t('admin.tab.pqbl')}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('validation')}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border",
-                            activeTab === 'validation'
-                                ? "bg-indigo-50 border-indigo-100 text-indigo-600"
-                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                        )}
-                    >
-                        <Database className="w-4 h-4" />
-                        {t('admin.tab.validation')}
-                    </button>
-                </div>
+                <div className={cn('grid gap-6', sidebarCollapsed ? 'lg:grid-cols-[4.5rem_1fr]' : 'lg:grid-cols-[17rem_1fr]')}>
+                    <aside className="glass-panel p-3 lg:sticky lg:top-24 lg:self-start">
+                        <div className={cn('mb-3 flex items-center', sidebarCollapsed ? 'justify-center' : 'justify-between')}>
+                            {!sidebarCollapsed && (
+                                <div>
+                                    <h2 className="text-sm font-bold text-slate-900">Ricerca</h2>
+                                    <p className="text-xs text-slate-500">Strumenti amministrativi</p>
+                                </div>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => setSidebarCollapsed((value) => !value)}
+                                title={sidebarCollapsed ? 'Espandi sidebar' : 'Collassa sidebar'}
+                                aria-label={sidebarCollapsed ? 'Espandi sidebar' : 'Collassa sidebar'}
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                            >
+                                {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+                            </button>
+                        </div>
+                        <nav className="space-y-4">
+                            {navGroups.map((group) => (
+                                <div key={group.title}>
+                                    {!sidebarCollapsed && (
+                                    <h3 className="px-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                                        {group.title}
+                                    </h3>
+                                    )}
+                                    <div className="mt-1 space-y-1">
+                                        {group.items.map((item) => {
+                                            const Icon = item.icon;
+                                            const active = activeTab === item.id;
+                                            return (
+                                                <button
+                                                    key={item.id}
+                                                    type="button"
+                                                    onClick={() => setActiveTab(item.id)}
+                                                    title={sidebarCollapsed ? item.label : undefined}
+                                                    className={cn(
+                                                        'flex w-full items-center rounded-md text-left text-sm font-medium transition-colors',
+                                                        sidebarCollapsed ? 'h-10 justify-center px-0' : 'gap-2 px-3 py-2',
+                                                        active
+                                                            ? 'bg-indigo-50 text-indigo-700'
+                                                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
+                                                    )}
+                                                >
+                                                    <Icon className="h-4 w-4 shrink-0" />
+                                                    {!sidebarCollapsed && <span className="min-w-0 truncate">{item.label}</span>}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
+                        </nav>
+                    </aside>
 
-                {/* Content */}
-                <div className="animate-fade-in-up">
-                    {activeTab === 'config' && <ConfigForm />}
-                    {activeTab === 'logs' && <LogViewer />}
-                    {activeTab === 'costs' && <CostStats />}
-                    {activeTab === 'presets' && <PresetsPanel />}
-                    {activeTab === 'benchmark' && <BenchmarkPanel />}
-                    {activeTab === 'counselors' && <CounselorsPanel />}
-                    {activeTab === 'surveys' && <SurveyViewer />}
-                    {activeTab === 'results' && <QuestionnaireResultsViewer />}
-                    {activeTab === 'questionnaires' && <QuestionnaireEditor />}
-                    {activeTab === 'training' && <TrainingDatasetPanel />}
-                    {activeTab === 'pqbl' && <PqblAdminPanel />}
-                    {activeTab === 'validation' && <ValidationExportPanel />}
+                    <div className="min-w-0 animate-fade-in-up">
+                        {activeTab === 'config' && <ConfigForm />}
+                        {activeTab === 'logs' && <LogViewer />}
+                        {activeTab === 'costs' && <CostStats />}
+                        {activeTab === 'presets' && <PresetsPanel />}
+                        {activeTab === 'benchmark' && <BenchmarkPanel />}
+                        {activeTab === 'counselors' && <CounselorsPanel />}
+                        {activeTab === 'surveys' && <SurveyViewer />}
+                        {activeTab === 'results' && <QuestionnaireResultsViewer />}
+                        {activeTab === 'questionnaires' && <QuestionnaireEditor />}
+                        {activeTab === 'researchContacts' && <ResearchContactsPanel />}
+                        {activeTab === 'training' && <TrainingDatasetPanel />}
+                        {activeTab === 'pqbl' && <PqblAdminPanel />}
+                        {activeTab === 'validation' && <ValidationExportPanel />}
+                    </div>
                 </div>
             </section>
         </div>

@@ -9,6 +9,7 @@ export interface PublicCounselor {
     avatar?: string | null;
     questionnaire_types?: string[] | null;
     language: string;
+    is_active?: boolean;
 }
 
 const KEY = 'counselorbot_selected_counselor';

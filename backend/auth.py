@@ -18,6 +18,7 @@ from fastapi import Depends, HTTPException, Request, status
 _admin_groups_env = os.environ.get("ADMIN_GROUPS") or os.environ.get("ADMIN_GROUP", "admins")
 ADMIN_GROUPS = {g.strip() for g in _admin_groups_env.split(",") if g.strip()}
 ADMIN_GROUPS.add("admins")
+RESEARCH_GROUP_MARKERS = ("ricerc", "research", "researcher")
 FORWARD_AUTH_SHARED_SECRET = os.environ.get("FORWARD_AUTH_SHARED_SECRET", "")
 AI4AUTH_VERIFY_URL = os.environ.get(
     "AI4AUTH_VERIFY_URL", "https://auth.ai4educ.org/api/verify"
@@ -44,6 +45,11 @@ def _parse_groups(raw: str):
     return [g.strip() for g in (raw or "").split(",") if g.strip()]
 
 
+def _is_researcher(groups) -> bool:
+    lowered = [str(g).lower() for g in groups or []]
+    return any(marker in group for group in lowered for marker in RESEARCH_GROUP_MARKERS)
+
+
 def _anonymous_identity() -> dict:
     return {
         "email": "",
@@ -51,6 +57,7 @@ def _anonymous_identity() -> dict:
         "name": "",
         "groups": [],
         "is_admin": False,
+        "is_researcher": False,
         "authenticated": False,
     }
 
@@ -66,6 +73,7 @@ def _identity_from_headers(headers) -> dict:
         "name": name,
         "groups": groups,
         "is_admin": bool(ADMIN_GROUPS & set(groups)),
+        "is_researcher": _is_researcher(groups),
         "authenticated": bool(username or email),
     }
 
@@ -114,9 +122,9 @@ async def get_current_user(identity: dict = Depends(get_identity)) -> dict:
 
 
 async def get_current_active_admin(identity: dict = Depends(get_current_user)) -> dict:
-    if not identity["is_admin"]:
+    if not identity["is_admin"] and not identity.get("is_researcher"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Accesso riservato agli amministratori",
+            detail="Accesso riservato ad amministratori e ricercatori",
         )
     return identity

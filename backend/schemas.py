@@ -263,6 +263,41 @@ class TrainingExampleResponse(TrainingExampleBase):
         from_attributes = True
 
 
+class ResearchContactBase(BaseModel):
+    name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    institution: Optional[str] = None
+    role: Optional[str] = None
+    notes: Optional[str] = None
+    is_active: bool = True
+
+
+class ResearchContactCreate(ResearchContactBase):
+    code: Optional[str] = None
+
+
+class ResearchContactUpdate(BaseModel):
+    code: Optional[str] = None
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    institution: Optional[str] = None
+    role: Optional[str] = None
+    notes: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class ResearchContactResponse(ResearchContactBase):
+    id: int
+    code: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
 # --- Catalogo strumenti (item + regole di scala) ---
 
 class InstrumentBase(BaseModel):
@@ -562,6 +597,7 @@ class CounselorPublic(BaseModel):
     avatar: Optional[str] = None
     questionnaire_types: Optional[List[str]] = None
     language: str = "it"
+    is_active: bool = True
 
     class Config:
         from_attributes = True

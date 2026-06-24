@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QUESTIONNAIRES, QuestionnaireConfig, QuestionnaireType } from '@/lib/questionnaires';
 import { QuestionnaireSelector } from '@/components/questionnaire/QuestionnaireSelector';
+import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
 import { InputMethodSelector } from '@/components/qsa/InputMethodSelector';
 import { ScoreInputForm } from '@/components/qsa/ScoreInputForm';
 import { PDFUploader } from '@/components/qsa/PDFUploader';
@@ -16,16 +17,18 @@ const OpenCodeExperience = dynamic(
     () => import('@/components/qsa/OpenCodeExperience').then((mod) => mod.OpenCodeExperience),
     { ssr: false }
 );
-import { CheckCircle2, MessageSquare, RotateCcw, LogOut, Download, Layers, Terminal } from 'lucide-react';
+import { CheckCircle2, MessageSquare, RotateCcw, LogOut, Download, Layers, Terminal, LogIn, ShieldCheck } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StickyActions } from '@/components/ui/StickyActions';
 import { FlowStepper } from '@/components/ui/FlowStepper';
 import { toast } from '@/components/ui/Toast';
 import { useI18n } from '@/lib/i18n-context';
 import { addCompletedProfile, hasCompletedAll, getCombinedScoresContext, clearCompletedProfiles, getCompletedProfiles } from '@/lib/profile-tracker';
+import { ai4authLoginUrl, getIdentity, type Identity } from '@/lib/auth';
+import { getSelectedCounselorId, setSelectedCounselorId } from '@/lib/counselor';
 
 
-type Step = 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'combined-interaction';
+type Step = 'counselor-select' | 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'combined-interaction';
 
 const STARTABLE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
 
@@ -47,7 +50,8 @@ function generateUUID() {
 
 export default function Home() {
     const { t, lang } = useI18n();
-    const [step, setStep] = useState<Step>('questionnaire-select');
+    const [identity, setIdentity] = useState<Identity | null | undefined>(undefined);
+    const [step, setStep] = useState<Step>('counselor-select');
     const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<QuestionnaireConfig | null>(null);
     const [scores, setScores] = useState<Record<string, number> | null>(null);
     const [sessionId, setSessionId] = useState<string>('');
@@ -58,8 +62,15 @@ export default function Home() {
     const [profileReviewed, setProfileReviewed] = useState(false);
     const [combinedScores, setCombinedScores] = useState<Record<string, number> | null>(null);
     const [combinedContext, setCombinedContext] = useState<string>('');
+    const [pendingStart, setPendingStart] = useState<QuestionnaireType | null>(null);
 
     useEffect(() => {
+        getIdentity().then(setIdentity);
+    }, []);
+
+    useEffect(() => {
+        if (identity === undefined || !identity?.authenticated) return;
+
         const params = new URLSearchParams(window.location.search);
 
         // Resume chat from a test administration: /?session_id=...&instrument=...
@@ -82,6 +93,13 @@ export default function Home() {
 
         const requestedId = params.get('start') as QuestionnaireType | null;
         if (!requestedId || !STARTABLE_QUESTIONNAIRES.includes(requestedId)) return;
+
+        if (!getSelectedCounselorId()) {
+            setPendingStart(requestedId);
+            setStep('counselor-select');
+            window.history.replaceState(null, '', window.location.pathname);
+            return;
+        }
 
         const questionnaire = QUESTIONNAIRES[requestedId];
         // A details page can deep-link into the same existing workflow.
@@ -112,7 +130,7 @@ export default function Home() {
             setStep('method-select');
         }
         window.history.replaceState(null, '', window.location.pathname);
-    }, []);
+    }, [identity]);
 
     const handleQuestionnaireSelect = async (questionnaire: QuestionnaireConfig) => {
         setSelectedQuestionnaire(questionnaire);
@@ -158,6 +176,11 @@ export default function Home() {
     };
 
     const startInteraction = async () => {
+        if (!getSelectedCounselorId()) {
+            toast.info('Scegli un counselor prima di iniziare il percorso.');
+            setStep('counselor-select');
+            return;
+        }
         const newSessionId = generateUUID();
         setSessionId(newSessionId);
         const qType = selectedQuestionnaire?.id || 'QSA';
@@ -240,7 +263,8 @@ export default function Home() {
         setSelectedQuestionnaire(null);
         setPdfToken(undefined);
         setExperience(null);
-        setStep('questionnaire-select');
+        setSelectedCounselorId(null);
+        setStep('counselor-select');
     };
 
     const analyzeAnother = () => {
@@ -248,11 +272,13 @@ export default function Home() {
         setSelectedQuestionnaire(null);
         setPdfToken(undefined);
         setExperience(null);
-        setStep('questionnaire-select');
+        setSelectedCounselorId(null);
+        setStep('counselor-select');
     };
 
     const goBack = () => {
-        if (step === 'method-select') setStep('questionnaire-select');
+        if (step === 'questionnaire-select') setStep('counselor-select');
+        else if (step === 'method-select') setStep('questionnaire-select');
         else if (step === 'manual-input' || step === 'upload-input') setStep('method-select');
         else if (step === 'dashboard') setStep('manual-input');
         else if (step === 'interaction') setStep(isAgentOnly(selectedQuestionnaire) ? 'questionnaire-select' : 'dashboard');
@@ -262,6 +288,7 @@ export default function Home() {
 
     const getStepTitle = () => {
         switch (step) {
+            case 'counselor-select': return 'Scegli il counselor';
             case 'questionnaire-select': return 'CounselorBot';
             case 'method-select': return `${selectedQuestionnaire?.name} — ${t('step.methodSelect.titleSuffix')}`;
             case 'manual-input': return t('step.manualInput.title');
@@ -276,6 +303,7 @@ export default function Home() {
 
     const getStepDescription = () => {
         switch (step) {
+            case 'counselor-select': return 'Prima scegli l’approccio con cui vuoi affrontare il percorso.';
             case 'questionnaire-select': return t('step.questionnaireSelect.desc');
             case 'method-select': return t('step.methodSelect.desc');
             case 'manual-input': return t('step.manualInput.desc');
@@ -291,21 +319,57 @@ export default function Home() {
         }
     };
 
-    // Orientamento percorso: mappa lo step interno alle 5 fasi visibili.
-    const flowStages = [t('flow.select'), t('flow.input'), t('flow.profile'), t('flow.chat'), t('flow.done')];
+    if (identity === undefined) {
+        return (
+            <div className="page-narrow">
+                <div className="glass-panel p-8 text-center text-sm text-slate-500">
+                    Caricamento accesso...
+                </div>
+            </div>
+        );
+    }
+
+    if (!identity?.authenticated) {
+        return (
+            <div className="page-narrow">
+                <div className="glass-panel p-8 text-center space-y-5">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-indigo-50 text-indigo-600">
+                        <ShieldCheck className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900">Accesso richiesto</h1>
+                        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                            Accedi con il tuo account per usare CounselorBot, scegliere un counselor e salvare il percorso.
+                        </p>
+                    </div>
+                    <a
+                        href={ai4authLoginUrl('/')}
+                        className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700"
+                    >
+                        <LogIn className="h-4 w-4" />
+                        Accedi a CounselorBot
+                    </a>
+                </div>
+            </div>
+        );
+    }
+
+    // Orientamento percorso: mappa lo step interno alle fasi visibili.
+    const flowStages = ['Counselor', t('flow.select'), t('flow.input'), t('flow.profile'), t('flow.chat'), t('flow.done')];
     const stageIndex =
-        step === 'questionnaire-select' ? 0
-            : step === 'method-select' || step === 'manual-input' || step === 'upload-input' ? 1
-                : step === 'dashboard' ? 2
-                    : step === 'interaction' || step === 'combined-interaction' ? 3
-                        : 4;
+        step === 'counselor-select' ? 0
+            : step === 'questionnaire-select' ? 1
+                : step === 'method-select' || step === 'manual-input' || step === 'upload-input' ? 2
+                    : step === 'dashboard' ? 3
+                        : step === 'interaction' || step === 'combined-interaction' ? 4
+                            : 5;
 
     return (
         <div className="page-wide space-y-8">
             <FlowStepper steps={flowStages} current={stageIndex} />
 
             {/* The selection screen owns its introduction to avoid repeating the page purpose. */}
-            {step !== 'questionnaire-select' && (
+            {step !== 'questionnaire-select' && step !== 'counselor-select' && (
                 <PageHeader
                     title={getStepTitle()}
                     subtitle={getStepDescription()}
@@ -321,6 +385,21 @@ export default function Home() {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.3 }}
                 >
+                    {/* Step: Counselor Selection */}
+                    {step === 'counselor-select' && (
+                        <CounselorSelector
+                            onContinue={() => {
+                                if (pendingStart && QUESTIONNAIRES[pendingStart]) {
+                                    const questionnaire = QUESTIONNAIRES[pendingStart];
+                                    setPendingStart(null);
+                                    void handleQuestionnaireSelect(questionnaire);
+                                    return;
+                                }
+                                setStep('questionnaire-select');
+                            }}
+                        />
+                    )}
+
                     {/* Step: Questionnaire Selection */}
                     {step === 'questionnaire-select' && (
                         <QuestionnaireSelector onSelect={handleQuestionnaireSelect} />
@@ -384,6 +463,7 @@ export default function Home() {
                                     <LearnerProfileCard
                                         variant="review"
                                         sessionId={sessionId}
+                                        requireInitial
                                         onDone={() => setProfileReviewed(true)}
                                         onUnavailable={() => setProfileReviewed(true)}
                                     />
@@ -539,7 +619,10 @@ export default function Home() {
                                         {t('completed.downloadPdf')}
                                     </button>
                                     <button
-                                        onClick={() => setStep('questionnaire-select')}
+                                        onClick={() => {
+                                            setSelectedCounselorId(null);
+                                            setStep('counselor-select');
+                                        }}
                                         className="py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
                                     >
                                         <LogOut className="w-5 h-5" />
