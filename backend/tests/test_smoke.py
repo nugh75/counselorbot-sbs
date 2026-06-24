@@ -245,6 +245,11 @@ EXPECTED_ROUTES = {
     ("PUT", "/admin/pqbl/questions/{question_id}"),
     ("DELETE", "/admin/pqbl/documents/{document_id}"),
     ("GET", "/admin/pqbl/analytics"),
+    # Contatti ricercatori + codici somministrazione
+    ("GET", "/admin/research-contacts"),
+    ("POST", "/admin/research-contacts"),
+    ("PUT", "/admin/research-contacts/{contact_id}"),
+    ("DELETE", "/admin/research-contacts/{contact_id}"),
 }
 
 
@@ -526,6 +531,36 @@ def test_counselors_crud_and_public():
     assert pub["name"] == "Marco T." and "QSA" in (pub["questionnaire_types"] or [])
     # delete
     assert client.delete(f"/admin/counselors/{cid}").status_code == 200
+
+
+def test_research_contacts_crud():
+    r = client.post("/admin/research-contacts", json={
+        "name": "Maria Rossi",
+        "email": "maria.rossi@example.test",
+        "phone": "+39 000 000000",
+        "institution": "Universita Test",
+        "role": "Ricercatrice",
+        "notes": "Somministrazione pilota",
+    })
+    assert r.status_code == 200, r.text
+    data = r.json()
+    cid = data["id"]
+    code = data["code"]
+    assert code.startswith("RC-")
+    assert data["name"] == "Maria Rossi"
+
+    r = client.get("/admin/research-contacts")
+    assert r.status_code == 200, r.text
+    assert any(contact["id"] == cid and contact["code"] == code for contact in r.json())
+
+    assert client.post("/admin/research-contacts", json={"name": "Duplicato", "code": code}).status_code == 409
+
+    r = client.put(f"/admin/research-contacts/{cid}", json={"name": "Maria R.", "is_active": False})
+    assert r.status_code == 200, r.text
+    assert r.json()["name"] == "Maria R."
+    assert r.json()["is_active"] is False
+
+    assert client.delete(f"/admin/research-contacts/{cid}").status_code == 200
 
 
 def test_resolve_counselor_helper():

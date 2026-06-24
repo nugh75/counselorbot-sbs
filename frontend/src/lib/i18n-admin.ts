@@ -16,6 +16,7 @@ const it: Dict = {
     'admin.tab.logs': 'Log Conversazioni',
     'admin.tab.costs': 'Costi',
     'admin.tab.presets': 'Preset Modelli',
+    'admin.tab.researchContacts': 'Contatti ricercatori',
     // Presets
     'admin.presets.title': 'Preset modelli',
     'admin.presets.subtitle': 'Bundle provider + modello riusabili da benchmark e counselor',
@@ -453,6 +454,7 @@ const en: Dict = {
     'admin.tab.logs': 'Conversation Logs',
     'admin.tab.costs': 'Costs',
     'admin.tab.presets': 'Model Presets',
+    'admin.tab.researchContacts': 'Research contacts',
     // Presets
     'admin.presets.title': 'Model presets',
     'admin.presets.subtitle': 'Reusable provider + model bundles for benchmark and counselors',

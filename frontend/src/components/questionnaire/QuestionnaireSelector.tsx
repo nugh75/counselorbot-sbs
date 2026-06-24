@@ -1,11 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { QUESTIONNAIRE_LIST, QuestionnaireType, QuestionnaireConfig } from '@/lib/questionnaires';
-import { AlertTriangle, ArrowRight, BookOpen, ClipboardList, FileQuestion, MessageSquare } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BookOpen, ChevronDown, ClipboardList, FileQuestion, MessageSquare } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
-import { CounselorSelector } from './CounselorSelector';
 import { QuestionnaireIcon } from './QuestionnaireIcon';
 
 const ACTIVE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
@@ -17,6 +17,7 @@ interface QuestionnaireSelectorProps {
 
 export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) {
     const { t, lang, setLang } = useI18n();
+    const [expanded, setExpanded] = useState<string | null>(null);
     const available = QUESTIONNAIRE_LIST.filter((q) => ACTIVE_QUESTIONNAIRES.includes(q.id));
     const upcoming = QUESTIONNAIRE_LIST.filter((q) => !ACTIVE_QUESTIONNAIRES.includes(q.id));
     const isItalian = lang === 'it';
@@ -98,8 +99,6 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
                 </div>
             </section>
 
-            <CounselorSelector />
-
             {isUnavailableQuestionnaireLang && (
                 <section className="rounded-xl border-2 border-amber-300 bg-amber-50 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
                     <AlertTriangle className="w-7 h-7 shrink-0 text-amber-700" />
@@ -127,6 +126,12 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
                 <div className="grid md:grid-cols-2 gap-3">
                     {available.map((q) => {
                         const hasInAppAdministration = isAdministrationLang && !q.agentOnly;
+                        const isExpanded = expanded === q.id;
+                        const primaryBadge = hasInAppAdministration
+                            ? 'Compilazione in app'
+                            : q.agentOnly
+                                ? 'Intervista guidata'
+                                : 'Risultati richiesti';
                         return (
                             <article
                                 key={q.id}
@@ -145,6 +150,9 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
                                             <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded-full">
                                                 {t('selector.active')}
                                             </span>
+                                            <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-full">
+                                                {primaryBadge}
+                                            </span>
                                             {hasInAppAdministration && (
                                                 <span className="px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold rounded-full">
                                                     {t('selector.experimentalBadge')}
@@ -159,6 +167,22 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
                                 <p className="text-sm text-slate-500 leading-relaxed grow">
                                     {t(`q.${q.id}.description`)}
                                 </p>
+                                {isExpanded && (
+                                    <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 text-sm text-slate-600 space-y-2">
+                                        <div>
+                                            <span className="font-semibold text-slate-800">{t('detail.focus.title')}: </span>
+                                            {t(`detail.${q.id}.focus`)}
+                                        </div>
+                                        <div>
+                                            <span className="font-semibold text-slate-800">{t('detail.input.title')}: </span>
+                                            {t(`detail.${q.id}.input`)}
+                                        </div>
+                                        <div>
+                                            <span className="font-semibold text-slate-800">{t('detail.path.title')}: </span>
+                                            {t(`detail.${q.id}.path`)}
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="flex flex-wrap items-center gap-2 pt-1">
                                     {hasInAppAdministration ? (
                                         <Link
@@ -192,6 +216,14 @@ export function QuestionnaireSelector({ onSelect }: QuestionnaireSelectorProps) 
                                         <BookOpen className="w-4 h-4" />
                                         {t('selector.learn')}
                                     </Link>
+                                    <button
+                                        type="button"
+                                        onClick={() => setExpanded(isExpanded ? null : q.id)}
+                                        className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-700 transition-colors"
+                                    >
+                                        <ChevronDown className={cn('w-4 h-4 transition-transform', isExpanded && 'rotate-180')} />
+                                        {isExpanded ? 'Nascondi' : 'Espandi'}
+                                    </button>
                                 </div>
                             </article>
                         );

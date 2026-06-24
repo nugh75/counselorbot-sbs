@@ -38,6 +38,24 @@ router = APIRouter()
 get_db = database.get_db
 logger = logging.getLogger(__name__)
 
+_SITE_CHAT_GROUP_MARKERS = (
+    "docente", "teacher", "educator", "professor", "faculty", "staff",
+    "ricerc", "research", "researcher",
+)
+
+
+def _can_use_site_chat(identity: dict) -> bool:
+    if identity.get("is_admin"):
+        return True
+    groups = [str(g).lower() for g in identity.get("groups") or []]
+    return any(marker in group for group in groups for marker in _SITE_CHAT_GROUP_MARKERS)
+
+
+async def _require_site_chat_user(identity: dict = Depends(auth.get_current_user)) -> dict:
+    if not _can_use_site_chat(identity):
+        raise HTTPException(status_code=403, detail="Assistente riservato a docenti, ricercatori e amministratori")
+    return identity
+
 
 def _usage_cost_usd(usage: dict | None, provider: str | None = None, model: str | None = None) -> float | None:
     # 1. Costo esplicito (OpenRouter). 2. Stima da tabella prezzi (provider diretti).
@@ -129,7 +147,10 @@ def _retrieval_params(ai_service: AIService):
 
 
 @router.get("/site-chat/status")
-async def site_chat_status(db: Session = Depends(get_db)):
+async def site_chat_status(
+    current_user: dict = Depends(_require_site_chat_user),
+    db: Session = Depends(get_db),
+):
     """Stato dell'indice RAG (pubblico, sola lettura). Carica da disco se questo
     worker non ha ancora l'indice in memoria (senza ricostruire)."""
     if not site_rag_index._loaded:
@@ -138,7 +159,10 @@ async def site_chat_status(db: Session = Depends(get_db)):
 
 
 @router.get("/site-chat/document")
-async def site_chat_document(source: str = Query(...)):
+async def site_chat_document(
+    source: str = Query(...),
+    current_user: dict = Depends(_require_site_chat_user),
+):
     """Anteprima di un documento citato (pubblico, sola lettura).
 
     Consente solo le sorgenti effettivamente indicizzate (no path arbitrari).
@@ -168,7 +192,11 @@ async def site_chat_reindex(
 
 
 @router.post("/site-chat/stream")
-async def site_chat_stream(request: SiteChatRequest, db: Session = Depends(get_db)):
+async def site_chat_stream(
+    request: SiteChatRequest,
+    current_user: dict = Depends(_require_site_chat_user),
+    db: Session = Depends(get_db),
+):
     """Risposta in streaming alla domanda sul sito, ancorata ai materiali.
 
     Eventi SSE: {"delta": "..."} per ogni pezzo, {"reasoning": "..."} per il
@@ -217,7 +245,8 @@ async def site_chat_stream(request: SiteChatRequest, db: Session = Depends(get_d
             log_entry = models.Log(
                 session_id=session_id,
                 action="site_chat",
-                # Chat pubblica del sito: anonima per design (nessuna identita').
+                username=current_user.get("username") or None,
+                email=current_user.get("email") or None,
                 provider=provider,
                 model_name=model,
                 cost_usd=cost_usd,

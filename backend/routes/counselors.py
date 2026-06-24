@@ -33,7 +33,6 @@ def _serialize(counselor: models.Counselor, presets: dict) -> schemas.CounselorR
 async def list_public_counselors(db: Session = Depends(get_db)):
     rows = (
         db.query(models.Counselor)
-        .filter(models.Counselor.is_active.is_(True))
         .order_by(models.Counselor.sort_order.asc(), models.Counselor.id.asc())
         .all()
     )

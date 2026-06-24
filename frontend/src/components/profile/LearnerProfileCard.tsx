@@ -38,12 +38,13 @@ interface Props {
     variant: Variant;
     sessionId?: string;
     onDone?: () => void;
+    requireInitial?: boolean;
     // Chiamato quando la card non ha nulla da mostrare (non autenticato / errore /
     // dismessa): permette al parent di saltare in automatico la schermata profilo.
     onUnavailable?: () => void;
 }
 
-export function LearnerProfileCard({ variant, sessionId, onDone, onUnavailable }: Props) {
+export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial = false, onUnavailable }: Props) {
     const { t } = useI18n();
     const [hidden, setHidden] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -56,6 +57,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, onUnavailable }
     const [history, setHistory] = useState<Revision[] | null>(null);
     const [showHistory, setShowHistory] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
+    const [validationError, setValidationError] = useState('');
 
     const load = useCallback(async () => {
         try {
@@ -80,6 +82,11 @@ export function LearnerProfileCard({ variant, sessionId, onDone, onUnavailable }
     }, [hidden, dismissed, onUnavailable]);
 
     const save = async (source: string) => {
+        if (requireInitial && !profile && !Object.values(form).some((value) => (value || '').trim())) {
+            setValidationError(t('lp.required'));
+            return;
+        }
+        setValidationError('');
         setSaving(true);
         try {
             const res = await fetch('/api/user/learner-profile', {
@@ -144,7 +151,10 @@ export function LearnerProfileCard({ variant, sessionId, onDone, onUnavailable }
                             value={form[f.key] || ''}
                             maxLength={600}
                             rows={2}
-                            onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                            onChange={(e) => {
+                                setValidationError('');
+                                setForm((prev) => ({ ...prev, [f.key]: e.target.value }));
+                            }}
                             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                         />
                     ) : (
@@ -152,7 +162,10 @@ export function LearnerProfileCard({ variant, sessionId, onDone, onUnavailable }
                             type="text"
                             value={form[f.key] || ''}
                             maxLength={600}
-                            onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                            onChange={(e) => {
+                                setValidationError('');
+                                setForm((prev) => ({ ...prev, [f.key]: e.target.value }));
+                            }}
                             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                         />
                     )}
@@ -166,7 +179,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, onUnavailable }
                 >
                     {t('lp.save')}
                 </button>
-                {variant !== 'edit' && (
+                {variant !== 'edit' && !(requireInitial && isIntake) && (
                     <button onClick={() => setDismissed(true)} className="px-3 py-2 text-sm text-slate-500 hover:text-slate-700">
                         {t('lp.skip')}
                     </button>
@@ -178,6 +191,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, onUnavailable }
                 )}
                 {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
             </div>
+            {validationError && <p className="text-sm text-red-600">{validationError}</p>}
         </div>
     );
 

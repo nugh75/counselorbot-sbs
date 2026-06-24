@@ -1,11 +1,13 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Send, GraduationCap, BookOpen, Bot, User, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink } from 'lucide-react';
+import { Send, GraduationCap, BookOpen, Bot, User, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search } from 'lucide-react';
 import { streamChat } from '@/lib/chat-stream';
+import { ai4authLoginUrl, getIdentity, type Identity } from '@/lib/auth';
+import { canUseTeacherAssistant } from '@/lib/roles';
 
 // Tabelle con bordi + scroll orizzontale per una lettura pulita dei documenti.
 const mdComponents: Components = {
@@ -47,6 +49,37 @@ const WELCOME: Record<Audience, string> = {
         + "Posso fornire informazioni su strumenti, metodologia e uso didattico, basandomi sui materiali del progetto.",
 };
 
+const TOPICS = [
+    {
+        id: 'questionari',
+        title: 'Questionari',
+        icon: ClipboardList,
+        body: 'Panoramica di QSA, QSAr, ZTPI, QPCS, QPCC, QAP e Savickas: scopo, destinatari, risultati e uso nel percorso.',
+        prompt: 'Spiegami quali questionari sono disponibili e quando usarli con uno studente.',
+    },
+    {
+        id: 'validazione',
+        title: 'Validazione',
+        icon: Search,
+        body: 'Materiali su adattamento linguistico, raccolta dati, norme, stanine e separazione tra ricerca e counseling.',
+        prompt: 'Riassumi lo stato della validazione degli strumenti e cosa significa profilo sperimentale.',
+    },
+    {
+        id: 'didattica',
+        title: 'Uso didattico',
+        icon: GraduationCap,
+        body: 'Indicazioni per docenti e formatori: come presentare gli strumenti, leggere i profili e integrare la riflessione in classe.',
+        prompt: 'Come può un docente usare CounselorBot e i questionari in un percorso didattico?',
+    },
+    {
+        id: 'fonti',
+        title: 'Fonti e materiali',
+        icon: Library,
+        body: 'Accesso guidato ai materiali del progetto competenzestrategiche.it, guide, studi, convegni e documenti operativi.',
+        prompt: 'Quali fonti del progetto posso consultare per approfondire competenze strategiche e QSA?',
+    },
+];
+
 // Mostra solo il nome leggibile del file citato.
 function sourceLabel(src: string): string {
     const base = src.split('/').pop() || src;
@@ -56,13 +89,22 @@ function sourceLabel(src: string): string {
 const docUrl = (source: string) => `/api/site-chat/document?source=${encodeURIComponent(source)}`;
 
 export default function AssistentePage() {
+    const [identity, setIdentity] = useState<Identity | null | undefined>(undefined);
     const [audience, setAudience] = useState<Audience>('studente');
     const [messages, setMessages] = useState<Msg[]>([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const [sessionId, setSessionId] = useState<string | undefined>(undefined);
     const [preview, setPreview] = useState<PreviewState | null>(null);
+    const [selectedTopic, setSelectedTopic] = useState(TOPICS[0]);
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        getIdentity().then((id) => {
+            setIdentity(id);
+            setAudience('docente');
+        });
+    }, []);
 
     const scrollToBottom = () => {
         requestAnimationFrame(() => {
@@ -151,40 +193,99 @@ export default function AssistentePage() {
         }
     };
 
-    const switchAudience = (a: Audience) => {
-        if (a === audience) return;
-        setAudience(a);
+    const chooseTopic = (topic: typeof TOPICS[number]) => {
+        setSelectedTopic(topic);
+        setAudience('docente');
         setMessages([]);
         setSessionId(undefined);
         setPreview(null);
     };
 
+    if (identity === undefined) {
+        return (
+            <div className="page-narrow">
+                <div className="glass-panel p-8 text-center text-sm text-slate-500">Caricamento accesso...</div>
+            </div>
+        );
+    }
+
+    if (!identity?.authenticated) {
+        return (
+            <div className="page-narrow">
+                <div className="glass-panel p-8 text-center space-y-5">
+                    <ShieldAlert className="mx-auto h-10 w-10 text-indigo-600" />
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900">Accesso richiesto</h1>
+                        <p className="mt-2 text-sm text-slate-600">L’assistente docente è disponibile solo con account autorizzato.</p>
+                    </div>
+                    <a href={ai4authLoginUrl('/assistente')} className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700">
+                        <LogIn className="h-4 w-4" />
+                        Accedi
+                    </a>
+                </div>
+            </div>
+        );
+    }
+
+    if (!canUseTeacherAssistant(identity)) {
+        return (
+            <div className="page-narrow">
+                <div className="glass-panel p-8 text-center space-y-4">
+                    <ShieldAlert className="mx-auto h-10 w-10 text-amber-600" />
+                    <h1 className="text-2xl font-bold text-slate-900">Assistente non disponibile per questo account</h1>
+                    <p className="text-sm text-slate-600">Questa area è riservata a docenti, ricercatori e amministratori.</p>
+                </div>
+            </div>
+        );
+    }
+
+    const SelectedTopicIcon = selectedTopic.icon;
+
     return (
         <div className="page-wide space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-slate-900">Assistente del sito</h1>
+                <h1 className="text-2xl font-bold text-slate-900">Assistente docente</h1>
                 <p className="text-slate-500 mt-1">
-                    Domande su competenzestrategiche.it. Le risposte si basano solo sui materiali del progetto.
+                    Pannelli tematici e chat contestuale sui materiali di competenzestrategiche.it.
                 </p>
             </div>
 
-            {/* Selettore pubblico */}
-            <div className="inline-flex rounded-lg border border-slate-200 bg-white p-1">
+            <div className="grid gap-3 md:grid-cols-4">
+                {TOPICS.map((topic) => {
+                    const Icon = topic.icon;
+                    const active = selectedTopic.id === topic.id;
+                    return (
+                        <button
+                            key={topic.id}
+                            type="button"
+                            onClick={() => chooseTopic(topic)}
+                            className={`rounded-lg border p-4 text-left transition-colors ${
+                                active ? 'border-indigo-300 bg-indigo-50 ring-1 ring-indigo-200' : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50'
+                            }`}
+                        >
+                            <Icon className={`h-5 w-5 ${active ? 'text-indigo-700' : 'text-slate-500'}`} />
+                            <h2 className="mt-3 text-sm font-bold text-slate-900">{topic.title}</h2>
+                            <p className="mt-1 text-xs leading-relaxed text-slate-500">{topic.body}</p>
+                        </button>
+                    );
+                })}
+            </div>
+
+            <div className="glass-panel p-5 flex flex-col gap-4 md:flex-row md:items-center">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-indigo-50 text-indigo-600">
+                    <SelectedTopicIcon className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                    <h2 className="font-bold text-slate-900">{selectedTopic.title}</h2>
+                    <p className="mt-1 text-sm leading-relaxed text-slate-600">{selectedTopic.body}</p>
+                </div>
                 <button
-                    onClick={() => switchAudience('studente')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                        audience === 'studente' ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-50'
-                    }`}
+                    type="button"
+                    onClick={() => setInput(selectedTopic.prompt)}
+                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                 >
-                    <BookOpen className="w-4 h-4" /> Studente
-                </button>
-                <button
-                    onClick={() => switchAudience('docente')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                        audience === 'docente' ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-50'
-                    }`}
-                >
-                    <GraduationCap className="w-4 h-4" /> Docente
+                    <BookOpen className="h-4 w-4" />
+                    Prepara domanda
                 </button>
             </div>
 

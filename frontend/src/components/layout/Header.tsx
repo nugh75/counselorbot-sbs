@@ -8,6 +8,7 @@ import { HeaderCounselor } from './HeaderCounselor';
 import { ThemeToggle } from './ThemeToggle';
 import { ai4authLoginUrl, AI4AUTH_LOGOUT_URL, AI4EDUC_PORTAL_URL, AI4EDUC_MANAGER_URL, getIdentity, type Identity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
+import { canUseResearchConsole, canUseTeacherAssistant } from '@/lib/roles';
 
 export function Header() {
     const { t } = useI18n();
@@ -20,6 +21,8 @@ export function Header() {
     const accountLabel = identity?.name || identity?.email || identity?.username;
     // Console ai4educ: admin -> manager, tutti gli altri (incl. caricamento) -> portale.
     const consoleUrl = identity?.is_admin ? AI4EDUC_MANAGER_URL : AI4EDUC_PORTAL_URL;
+    const canOpenTeacherAssistant = canUseTeacherAssistant(identity);
+    const canOpenResearchConsole = canUseResearchConsole(identity);
 
     return (
         <header className="console-header fixed top-0 left-0 right-0 z-50">
@@ -36,13 +39,16 @@ export function Header() {
                 <div className="ml-auto flex min-w-0 items-center gap-1">
                     {/* Counselor selezionato: chip compatto, cliccabile per cambiarlo. */}
                     <HeaderCounselor />
-                    {/* Tastino verso tutti i servizi della piattaforma ai4educ (portale/manager). */}
-                    <a href={consoleUrl} className="console-topbar-icon" title="Servizi piattaforma ai4educ" aria-label="Servizi piattaforma ai4educ">
-                        <LayoutGrid className="w-4 h-4" />
-                    </a>
-                    <Link href="/assistente" className="console-topbar-icon" title="Assistente del sito" aria-label="Assistente del sito">
-                        <Bot className="w-4 h-4" />
-                    </Link>
+                    {identity?.authenticated && (canOpenTeacherAssistant || canOpenResearchConsole) && (
+                        <a href={consoleUrl} className="console-topbar-icon" title="Servizi piattaforma ai4educ" aria-label="Servizi piattaforma ai4educ">
+                            <LayoutGrid className="w-4 h-4" />
+                        </a>
+                    )}
+                    {canOpenTeacherAssistant && (
+                        <Link href="/assistente" className="console-topbar-icon" title="Assistente docente" aria-label="Assistente docente">
+                            <Bot className="w-4 h-4" />
+                        </Link>
+                    )}
                     {accountLabel && (
                         <Link
                             href="/profilo"
@@ -57,7 +63,7 @@ export function Header() {
                             <User className="w-4 h-4" />
                         </Link>
                     )}
-                    {identity?.is_admin && (
+                    {canOpenResearchConsole && (
                         <Link href="/admin" className="console-topbar-icon" title={t('nav.admin')} aria-label={t('nav.admin')}>
                             <Settings className="w-4 h-4" />
                         </Link>
