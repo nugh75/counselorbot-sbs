@@ -17,6 +17,7 @@ from .ai_service import AIService
 from .memory_service import session_memory
 from .strategy_memory import shared_response_memory, strategy_memory
 from .certified_strategy_service import certified_strategy_memory
+from .rag_index import site_rag_index, build_context as rag_build_context
 from .api_models import ChatRequest
 from .prompt_config import (
     DEFAULT_SYSTEM_PROMPT_GENERIC,
@@ -702,12 +703,14 @@ def _update_markdown_memory_background(
     step_label: str, is_first_step: bool, previous_summary: str = "",
     phase: str = "", scores_context: str = "", questionnaire_type: str = "",
     language: str = "", completed_step: bool = False,
+    transcript_user: str | None = None,
 ):
     """Compat legacy: aggiorna la memoria Markdown senza chiamare il modello."""
     try:
         session_memory.record_interaction(
             session_id,
             user_message=effective_message,
+            transcript_user=transcript_user,
             bot_response=response_content,
             phase=phase,
             step_label=step_label,
@@ -770,17 +773,13 @@ def _retrieved_context(
     questionnaire_type: str,
     query: str,
     ai_service=None,
-    username: str = "",
 ) -> tuple[str, List[str]]:
-    # I punteggi NON passano più dalla memoria recuperata: sono iniettati una sola
-    # volta come blocco [STUDENT PROFILE] nel system prompt (_apply_scores_reference),
-    # così restano sempre presenti senza far ri-analizzare l'intero profilo a ogni turno.
-    memory = session_memory.get_relevant_context(
-        session_id,
-        query=query,
-        include_scores=False,
-        ai_service=ai_service,
-    )
+    """Fonti KNOWLEDGE per l'envelope: grafo competenzestrategiche + strategie
+    approvate + certificate per-fattore + risposte votate.
+
+    I dati studente (profilo dichiarato, punteggi, stato sessione, goals/...
+    episodi) NON vivono più qui: sono assemblati in `build_context_envelope`
+    nei blocchi [STUDENT] e [PROFILE] del system prompt."""
     strategies = strategy_memory.retrieve(
         questionnaire_type=questionnaire_type,
         phase=request.phase or "",
@@ -806,13 +805,125 @@ def _retrieved_context(
         language=request.language or "it",
     )
     learned_context = shared_response_memory.render_context(learned_responses)
-    profile_context = _learner_profile_context(db, username)
+
+    # Grafo di conoscenza competenzestrategiche (l'unica collezione con grafo
+    # graphify): retrieval ibrido con espansione via grafo, riuso di
+    # SiteRagIndex.search. Tollerante: se Ollama/embedding non disponibili il
+    # counselor continua senza questa fonte (non degrada l'esperienza).
+    graph_context = ""
+    try:
+        if query:
+            rag_results = site_rag_index.search(
+                ai_service, query,
+                top_k=6, audience="studente",
+                max_per_source=2, min_score=0.25,
+            )
+            if rag_results:
+                graph_context = rag_build_context(rag_results, max_chars=3500)[0]
+    except Exception as e:
+        logger.warning(f"RAG competenzestrategiche non disponibile: {e}")
+        graph_context = ""
+
     sections = [
         section
-        for section in (profile_context, memory, strategy_context, certified_context, learned_context)
+        for section in (graph_context, strategy_context, certified_context, learned_context)
         if section
     ]
     return "\n\n".join(sections), [strategy["id"] for strategy in strategies]
+
+
+def build_context_envelope(
+    db,
+    ai_service,
+    request: ChatRequest,
+    session_id: str,
+    identity: dict,
+    *,
+    c_persona: str,
+    system_prompt: str,
+    step_label: str,
+    questionnaire_type: str,
+    effective_message: str,
+    model_scores_context: str,
+    message_scores_context: str,
+    knowledge_context: str,
+) -> tuple[str, str, list]:
+    """Assembla l'envelope canonico della chat counselor (Fase 5):
+    SYSTEM = [PERSONA] [SECTION] [STUDENT] [PROFILE] [KNOWLEDGE]
+    MESSAGES = history (verbatim, Fase 3) + user corrente (scores scope-ati + msg).
+
+    Unifica /chat e /chat/stream in un unico builder d'ordine fisso, valido per
+    tutti e 7 gli strumenti. Risolve la sovrapposizione episodes/history/summary:
+    la continuity è nella history, KNOWLEDGE è nel system, niente più prepend
+    "CONTEXT OF PREVIOUS CONVERSATIONS" sul messaggio utente.
+
+    Ritorna (system_prompt_final, full_message, history)."""
+    language = request.language or "it"
+
+    # --- [SECTION] (già risolto e direttivato dal router) ---
+    parts_system = [system_prompt] if system_prompt else []
+
+    # --- [STUDENT] dati studente da identity + stato sessione distillato ---
+    student_lines: list[str] = []
+    anon_code = code_for_identity(db, identity or {})
+    if anon_code:
+        student_lines.append(f"- Codice ricerca anonimo: {anon_code}")
+    if language:
+        student_lines.append(f"- Lingua: {language}")
+    if questionnaire_type:
+        student_lines.append(f"- Questionario: {questionnaire_type}")
+    if step_label:
+        student_lines.append(f"- Step corrente: {step_label}")
+    state = session_memory.get_student_state(session_id)
+    if state:
+        completed = state.get("completed_steps") or []
+        if completed:
+            student_lines.append(f"- Step completati: {', '.join(completed)}")
+        goals = state.get("goals") or []
+        if goals:
+            student_lines.append(f"- Obiettivi dichiarati: {'; '.join(goals)}")
+        prefs = state.get("preferences") or []
+        if prefs:
+            student_lines.append(f"- Preferenze: {'; '.join(prefs)}")
+        notes = str(state.get("external_notes") or "").strip()
+        if notes:
+            student_lines.append(f"- Note condivise: {notes}")
+    if student_lines:
+        parts_system.append("[STUDENT]\n" + "\n".join(student_lines))
+
+    # --- [PROFILE] modello discente (auto-dichiarato) + PUNTEGGI (riferimento) ---
+    profile_context = _learner_profile_context(db, identity.get("username", "") if identity else "")
+    # Punteggi: nel turno di analisi arrivano nel messaggio utente, nei follow-up
+    # si recuperano da quelli persistiti e si scope-ano alla sezione corrente.
+    persisted_scores = "" if model_scores_context else session_memory.get_scores(session_id)
+    if persisted_scores:
+        scoped_scores = _scope_scores_to_codes(persisted_scores, _phase_factor_codes(db, request.phase))
+        if scoped_scores:
+            system_prompt_scores = _apply_scores_reference("", scoped_scores, language)
+        else:
+            system_prompt_scores = ""
+    else:
+        system_prompt_scores = ""
+    profile_block = "\n\n".join(s for s in (profile_context, system_prompt_scores) if s)
+    if profile_block:
+        parts_system.append("[PROFILE]\n" + profile_block)
+
+    # --- [KNOWLEDGE] grafo + strategie + certificate + votate (da _retrieved_context) ---
+    if knowledge_context:
+        parts_system.append("[KNOWLEDGE]\n" + knowledge_context)
+
+    system_prompt_final = "\n\n".join(parts_system)
+    if c_persona:
+        system_prompt_final = f"{c_persona.strip()}\n\n{system_prompt_final}"
+
+    # --- MESSAGES: history verbatim + user corrente (scores scope-ati + msg) ---
+    history = session_memory.get_transcript(session_id)
+    if message_scores_context:
+        full_message = f"{message_scores_context}\n\nDOMANDA DELLO STUDENTE:\n{effective_message}"
+    else:
+        full_message = effective_message
+
+    return system_prompt_final, full_message, history
 
 
 def strip_markdown(text: str) -> str:

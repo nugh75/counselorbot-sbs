@@ -141,6 +141,23 @@ class AIService:
         """Voce del registro per il provider; fallback a openai se sconosciuto."""
         return self._providers.get(name, self._providers['openai'])
 
+    @staticmethod
+    def _normalize_history(history) -> list:
+        """Normalizza lo storico role-tagged ({role,content}) in una lista di
+        messaggi user/assistant puliti, in ordine cronologico. Torna [] se vuoto
+        o malformato. I provider accettano sempre una lista (anche vuota)."""
+        if not history:
+            return []
+        out = []
+        for item in history:
+            if not isinstance(item, dict):
+                continue
+            role = str(item.get("role") or "").strip().lower()
+            content = str(item.get("content") or "").strip()
+            if role in ("user", "assistant") and content:
+                out.append({"role": role, "content": content})
+        return out
+
     def _resolve_reasoning(self, model, requested_max_tokens, fallback_max_tokens) -> ReasoningPlan:
         """Risolve e memorizza il piano di reasoning per (modello, flag, budget).
 
@@ -304,14 +321,17 @@ class AIService:
         max_tokens: int = None,
         provider: str = None,
         model: str = None,
+        history: list = None,
     ):
         """
         Genera una risposta LLM.  Se conversation_summary è fornito, viene
         iniettato come contesto all'inizio del messaggio utente.
-        `provider` opzionale: sovrascrive il provider attivo (es. "gemini", "openrouter").
-        `model` opzionale: forza un modello specifico (usato dai counselor via preset).
+        `history` (opzionale): storico role-tagged [{role,content}] dei turni
+        precedenti, iniettato come messaggi nativi ⟨user,assistant⟩ prima del
+        messaggio utente corrente. `provider`/`model` opzionali come sopra.
         """
         effective_provider = provider or self.config.get('active_provider', 'openai')
+        history = self._normalize_history(history)
         # Se l'utente sovrascrive il provider (es. gemini), usa un modello
         # predefinito per quel provider, non il model_name generico che
         # potrebbe essere un modello Ollama (es. qwen3.5:9b).
@@ -354,7 +374,7 @@ class AIService:
         mt = plan.max_tokens
         self.last_usage = None
         try:
-            return entry['call'](user_message, system_prompt, model_name, max_tokens=mt)
+            return entry['call'](user_message, system_prompt, model_name, max_tokens=mt, history=history)
         except AIError:
             raise
         except Exception as e:
@@ -425,24 +445,25 @@ class AIService:
             truncated = bot_response[:300].rsplit(' ', 1)[0]
             return f"{prefix}{truncated}..."
 
-    def _call_openai(self, user_message, system_prompt, model, max_tokens: int = None):
+    def _call_openai(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
         api_key = self._get_api_key('api_key_openai')
         if not api_key: raise AIError("OpenAI API Key non configurata")
 
         client = OpenAI(api_key=api_key, timeout=600)
+        nak = self._normalize_history(history)
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.extend(nak)
+        messages.append({"role": "user", "content": user_message})
         kwargs = dict(
             model=model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message}
-            ]
+            messages=messages,
         )
         if max_tokens:
             kwargs["max_tokens"] = max_tokens
         response = client.chat.completions.create(**kwargs)
         return response.choices[0].message.content
 
-    def _call_openrouter(self, user_message, system_prompt, model, max_tokens: int = None):
+    def _call_openrouter(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
         api_key = self._get_api_key('api_key_openrouter')
         if not api_key: raise AIError("OpenRouter API Key non configurata")
 
@@ -452,12 +473,13 @@ class AIService:
             api_key=api_key,
             timeout=600,
         )
+        nak = self._normalize_history(history)
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.extend(nak)
+        messages.append({"role": "user", "content": user_message})
         kwargs = dict(
             model=model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message}
-            ]
+            messages=messages,
         )
         if max_tokens:
             kwargs["max_tokens"] = max_tokens
@@ -523,14 +545,15 @@ class AIService:
         base_url = OPENAI_COMPAT_PROVIDERS[provider]
         return OpenAI(base_url=base_url, api_key=api_key, timeout=timeout)
 
-    def _call_openai_compatible(self, provider, user_message, system_prompt, model, max_tokens: int = None):
+    def _call_openai_compatible(self, provider, user_message, system_prompt, model, max_tokens: int = None, history=None):
         client = self._openai_compatible_client(provider)
+        nak = self._normalize_history(history)
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.extend(nak)
+        messages.append({"role": "user", "content": user_message})
         kwargs = dict(
             model=model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message},
-            ],
+            messages=messages,
         )
         if max_tokens:
             kwargs["max_tokens"] = max_tokens
@@ -538,17 +561,18 @@ class AIService:
         self.last_usage = self._usage_to_dict(getattr(response, "usage", None))
         return response.choices[0].message.content
 
-    def _call_anthropic(self, user_message, system_prompt, model, max_tokens: int = 4096):
+    def _call_anthropic(self, user_message, system_prompt, model, max_tokens: int = 4096, history=None):
         api_key = self._get_api_key('api_key_anthropic')
         if not api_key: raise AIError("Anthropic API Key non configurata")
 
         client = anthropic.Anthropic(api_key=api_key, timeout=600)
+        nak = self._normalize_history(history)
+        messages = list(nak)
+        messages.append({"role": "user", "content": user_message})
         kwargs = dict(
             model=model,
             system=system_prompt,
-            messages=[
-                {"role": "user", "content": user_message}
-            ],
+            messages=messages,
             max_tokens=max_tokens,
         )
         thinking = self._anthropic_thinking(max_tokens)
@@ -561,7 +585,7 @@ class AIService:
                 return block.text
         return getattr(response.content[0], "text", "")
 
-    def _call_gemini(self, user_message, system_prompt, model, max_tokens: int = None):
+    def _call_gemini(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
         api_key = self._get_api_key('api_key_gemini')
         if not api_key: raise AIError("Gemini API Key non configurata")
 
@@ -571,7 +595,15 @@ class AIService:
         from google.genai import types
 
         client = genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=600_000))
-        full_prompt = f"System: {system_prompt}\nUser: {user_message}"
+        # Gemini non ha messages array: lo storico viene inlined come testo
+        # role-tagged prima dell'ultimo user turn (System -> turni -> User).
+        nak = self._normalize_history(history)
+        parts = [f"System: {system_prompt}"]
+        for turn in nak:
+            tag = "User" if turn["role"] == "user" else "Assistant"
+            parts.append(f"{tag}: {turn['content']}")
+        parts.append(f"User: {user_message}")
+        full_prompt = "\n".join(parts)
         # I modelli gemini 2.5/3 "thinking" consumano il budget di output sul
         # ragionamento: con max_tokens piccoli response.text torna vuoto. Se il
         # no-thinking è attivo azzera il budget di reasoning (thinking_budget=0).
@@ -600,30 +632,30 @@ class AIService:
             )
         return text
 
-    def _call_mistral(self, user_message, system_prompt, model, max_tokens: int = None):
+    def _call_mistral(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
         api_key = self._get_api_key('api_key_mistral')
         if not api_key: raise AIError("Mistral API Key non configurata")
 
         client = Mistral(api_key=api_key)
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message},
-        ]
+        nak = self._normalize_history(history)
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.extend(nak)
+        messages.append({"role": "user", "content": user_message})
         kwargs = dict(model=model, messages=messages)
         if max_tokens:
             kwargs["max_tokens"] = max_tokens
         response = client.chat.complete(**kwargs)
         return response.choices[0].message.content
 
-    def _call_ollama(self, user_message, system_prompt, model, max_tokens: int = 8000):
+    def _call_ollama(self, user_message, system_prompt, model, max_tokens: int = 8000, history=None):
         base_url = (self._get_api_key('ollama_ip') or "http://localhost:11434").rstrip('/')
         system_prompt = self._apply_no_think(system_prompt)
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.extend(self._normalize_history(history))
+        messages.append({"role": "user", "content": user_message})
         payload = {
             "model": model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message},
-            ],
+            "messages": messages,
             "stream": False,
             "keep_alive": self.ollama_keep_alive,
             "options": {
@@ -645,7 +677,7 @@ class AIService:
         response.raise_for_status()
         return response.json().get("message", {}).get("content", "")
 
-    def _call_llamacpp(self, user_message, system_prompt, model, max_tokens: int = 8000):
+    def _call_llamacpp(self, user_message, system_prompt, model, max_tokens: int = 8000, history=None):
         """llama.cpp / llama-server / llama-swap: endpoint OpenAI-compatibile su /v1."""
         base_url = self._get_api_key('llamacpp_url') or "http://localhost:8080"
         base_url = base_url.rstrip('/')
@@ -659,12 +691,13 @@ class AIService:
             timeout=httpx.Timeout(600.0, connect=10.0),
         )
         system_prompt = self._apply_no_think(system_prompt)
+        nak = self._normalize_history(history)
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.extend(nak)
+        messages.append({"role": "user", "content": user_message})
         kwargs = dict(
             model=model or "default",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message}
-            ],
+            messages=messages,
         )
         if max_tokens:
             kwargs["max_tokens"] = max_tokens
@@ -683,16 +716,19 @@ class AIService:
         max_tokens: int = None,
         provider: str = None,
         model: str = None,
+        history: list = None,
     ):
         """
         Generatore che produce la risposta LLM a pezzi (token/delta).
         Stream incrementale per i provider OpenAI-compatibili e Anthropic;
         per gli altri produce la risposta completa in un unico chunk.
+        `history` (opzionale): storico role-tagged iniettato come messaggi nativi.
         `provider`/`model` opzionali: forzano provider+modello (counselor via preset).
         """
         provider = provider or self.config.get('active_provider', 'openai')
         model_name = model or self.config.get('model_name', 'gpt-4o')
         provider, model_name = self._apply_budget_lock(provider, model_name)
+        history = self._normalize_history(history)
 
         if conversation_summary:
             user_message = (
@@ -706,12 +742,12 @@ class AIService:
             if entry['stream']:
                 plan = self._resolve_reasoning(model_name, requested_max_tokens=max_tokens,
                                                fallback_max_tokens=entry['stream_max'])
-                yield from entry['stream'](user_message, system_prompt, model_name, max_tokens=plan.max_tokens)
+                yield from entry['stream'](user_message, system_prompt, model_name, max_tokens=plan.max_tokens, history=history)
             else:
                 # nessuno stream incrementale: chunk unico via call bloccante
                 plan = self._resolve_reasoning(model_name, requested_max_tokens=max_tokens,
                                                fallback_max_tokens=entry['call_max'])
-                yield entry['call'](user_message, system_prompt, model_name, max_tokens=plan.max_tokens)
+                yield entry['call'](user_message, system_prompt, model_name, max_tokens=plan.max_tokens, history=history)
 
         try:
             # Normalizza: i provider possono produrre stringhe (solo testo) o dict
@@ -726,14 +762,15 @@ class AIService:
         except Exception as e:
             raise RuntimeError(f"AI Error ({provider}): {str(e)}") from e
 
-    def _iter_chat_stream(self, client, model, system_prompt, user_message, extra_body=None, max_tokens: int = None, stream_options=None):
+    def _iter_chat_stream(self, client, model, system_prompt, user_message, extra_body=None, max_tokens: int = None, stream_options=None, history=None):
         """Itera lo stream di un client OpenAI-compatibile producendo i delta di testo."""
+        nak = self._normalize_history(history)
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.extend(nak)
+        messages.append({"role": "user", "content": user_message})
         kwargs = dict(
             model=model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message},
-            ],
+            messages=messages,
             stream=True,
         )
         if max_tokens:
@@ -767,14 +804,14 @@ class AIService:
             if close:
                 close()
 
-    def _stream_openai(self, user_message, system_prompt, model, max_tokens: int = None):
+    def _stream_openai(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
         api_key = self._get_api_key('api_key_openai')
         if not api_key:
             raise AIError("OpenAI API Key non configurata")
         client = OpenAI(api_key=api_key, timeout=600)
-        yield from self._iter_chat_stream(client, model, system_prompt, user_message, max_tokens=max_tokens)
+        yield from self._iter_chat_stream(client, model, system_prompt, user_message, max_tokens=max_tokens, history=history)
 
-    def _stream_openrouter(self, user_message, system_prompt, model, max_tokens: int = None):
+    def _stream_openrouter(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
         api_key = self._get_api_key('api_key_openrouter')
         if not api_key:
             raise AIError("OpenRouter API Key non configurata")
@@ -790,17 +827,18 @@ class AIService:
             extra_body=extra,
             max_tokens=max_tokens,
             stream_options={"include_usage": True},
+            history=history,
         )
 
-    def _stream_ollama(self, user_message, system_prompt, model, max_tokens: int = None):
+    def _stream_ollama(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
         base_url = (self._get_api_key('ollama_ip') or "http://localhost:11434").rstrip('/')
         system_prompt = self._apply_no_think(system_prompt)
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.extend(self._normalize_history(history))
+        messages.append({"role": "user", "content": user_message})
         payload = {
             "model": model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message},
-            ],
+            "messages": messages,
             "stream": True,
             "keep_alive": self.ollama_keep_alive,
             "options": {
@@ -826,15 +864,15 @@ class AIService:
                     if content:
                         yield {"type": "content", "text": content}
 
-    def _stream_llamacpp(self, user_message, system_prompt, model, max_tokens: int = None):
+    def _stream_llamacpp(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
         base_url = (self._get_api_key('llamacpp_url') or "http://localhost:8080").rstrip('/')
         if not base_url.endswith('/v1'):
             base_url = f"{base_url}/v1"
         client = OpenAI(base_url=base_url, api_key="llamacpp", timeout=httpx.Timeout(600.0, connect=10.0))
         system_prompt = self._apply_no_think(system_prompt)
-        yield from self._iter_chat_stream(client, model or "default", system_prompt, user_message, max_tokens=max_tokens)
+        yield from self._iter_chat_stream(client, model or "default", system_prompt, user_message, max_tokens=max_tokens, history=history)
 
-    def _stream_openai_compatible(self, provider, user_message, system_prompt, model, max_tokens: int = None):
+    def _stream_openai_compatible(self, provider, user_message, system_prompt, model, max_tokens: int = None, history=None):
         client = self._openai_compatible_client(provider)
         # include_usage: la maggior parte dei provider OpenAI-compatibili manda
         # i token nell'ultimo chunk (il costo NO: solo OpenRouter lo restituisce).
@@ -845,17 +883,21 @@ class AIService:
             user_message,
             max_tokens=max_tokens,
             stream_options={"include_usage": True},
+            history=history,
         )
 
-    def _stream_anthropic(self, user_message, system_prompt, model, max_tokens: int = 4096):
+    def _stream_anthropic(self, user_message, system_prompt, model, max_tokens: int = 4096, history=None):
         api_key = self._get_api_key('api_key_anthropic')
         if not api_key:
             raise AIError("Anthropic API Key non configurata")
         client = anthropic.Anthropic(api_key=api_key, timeout=600)
+        nak = self._normalize_history(history)
+        messages = list(nak)
+        messages.append({"role": "user", "content": user_message})
         kwargs = dict(
             model=model,
             system=system_prompt,
-            messages=[{"role": "user", "content": user_message}],
+            messages=messages,
             max_tokens=max_tokens,
         )
         thinking = self._anthropic_thinking(max_tokens)

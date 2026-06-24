@@ -49,7 +49,6 @@ from ..chat_logic import (
     _apply_language_directive,
     _apply_qsa_factor_directive,
     _apply_register_directive,
-    _apply_scores_reference,
     _clamp_max_tokens,
     _ensure_questionnaire_guided_steps,
     _is_strategy_questionnaire,
@@ -63,6 +62,7 @@ from ..chat_logic import (
     _should_sanitize_ztpi_text,
     _student_visible_response,
     _update_markdown_memory_background,
+    build_context_envelope,
     strip_markdown,
 )
 
@@ -291,45 +291,40 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         step_label=step_label,
     )
 
-    # Punteggi sempre presenti come riferimento nel system prompt. Nel turno di
-    # analisi i punteggi arrivano già nel messaggio utente (scores_context); nei
-    # follow-up senza scores_context li recuperiamo da quelli persistiti in sessione.
-    persisted_scores = "" if model_scores_context else session_memory.get_scores(session_id)
-    if persisted_scores:
-        scoped_scores = _scope_scores_to_codes(persisted_scores, _phase_factor_codes(db, request.phase))
-        system_prompt = _apply_scores_reference(system_prompt, scoped_scores, request.language)
+    # 2. Recupera le fonti KNOWLEDGE (grafo + strategie + certificate + votate).
+    retrieval_query = f"{step_label} {model_message} {model_scores_context}".strip()
+    knowledge_context, strategy_ids = _retrieved_context(
+        db, session_id, request, questionnaire_type, retrieval_query,
+        ai_service=ai_service,
+    )
+    if _should_sanitize_ztpi_text(request.mode, request.phase):
+        knowledge_context = _sanitize_ztpi_user_text(knowledge_context, request.language)
 
-    # 2. Build the full message including student's QSA profile
+    # 3. Assembla l'envelope canonico (Fase 5):
+    #    SYSTEM = [PERSONA] [SECTION] [STUDENT] [PROFILE] [KNOWLEDGE]
+    #    MESSAGES = history verbatim + user (scores scope-ati + msg)
     # Punteggi nel messaggio scope-ati alla sezione corrente: il modello analizza
     # solo i fattori del suo step, non quelli di altre sezioni. Il profilo intero
     # resta persistito (update_context) per i follow-up cross-sezione.
     message_scores_context = _scope_scores_to_codes(
         model_scores_context, _phase_factor_codes(db, request.phase)
     )
-    if message_scores_context:
-        full_message = f"{message_scores_context}\n\nDOMANDA DELLO STUDENTE:\n{model_message}"
-    else:
-        full_message = model_message
-
-    # 3. Recupera solo la memoria pertinente e le strategie collettive approvate.
-    retrieval_query = f"{step_label} {model_message} {model_scores_context}".strip()
-    conversation_summary, strategy_ids = _retrieved_context(
-        db, session_id, request, questionnaire_type, retrieval_query,
-        ai_service=ai_service,
-        username=identity.get("username", ""),
+    system_prompt_final, full_message, history = build_context_envelope(
+        db, ai_service, request, session_id, identity,
+        c_persona=c_persona, system_prompt=system_prompt, step_label=step_label,
+        questionnaire_type=questionnaire_type, effective_message=model_message,
+        model_scores_context=model_scores_context, message_scores_context=message_scores_context,
+        knowledge_context=knowledge_context,
     )
-    if _should_sanitize_ztpi_text(request.mode, request.phase):
-        conversation_summary = _sanitize_ztpi_user_text(conversation_summary, request.language)
 
-    # 4. Get AI Response (con contesto conversazionale)
-    if c_persona:
-        system_prompt = f"{c_persona.strip()}\n\n{system_prompt}"
+    # 4. Get AI Response (KNOWLEDGE nel system, continuity nella history -> no summary).
     try:
         response_content = ai_service.get_response(
-            full_message, system_prompt, request.mode,
-            conversation_summary=conversation_summary,
+            full_message, system_prompt_final, request.mode,
+            conversation_summary="",
             max_tokens=max_tokens,
             provider=c_provider, model=c_model,
+            history=history,
         )
     except AIError as e:
         logger.error(f"Errore AI chat session {session_id}: {e}")
@@ -347,11 +342,20 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         step_label = _sanitize_ztpi_step_label(step_label, request.language)
 
+    # Transcript verbatim role-tagged per la sessione (Fase 2).
+    if request.memory_message is not None:
+        _transcript_user = request.memory_message
+    elif step_label:
+        _transcript_user = f"[Avvio analisi: {step_label}]"
+    else:
+        _transcript_user = request.message
+
     # Deterministic local write: complete it before the client can advance phase.
     _update_markdown_memory_background(
         session_id, request.memory_message if request.memory_message is not None else request.message, response_content,
-        step_label, is_first_step, conversation_summary, request.phase or "", model_scores_context,
+        step_label, is_first_step, knowledge_context, request.phase or "", model_scores_context,
         questionnaire_type, request.language or "", False,
+        transcript_user=_transcript_user,
     )
 
     # 6. Log Interaction
@@ -382,7 +386,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             "provider": _provider,
             "model": _model,
             "questionnaire_type": questionnaire_type,
-            "conversation_summary_length": len(conversation_summary),
+            "knowledge_context_length": len(knowledge_context),
             "usage": _usage,
             "cost_usd": _cost_usd,
         }, "user_input", "effective_user_input", "bot_response"),
@@ -473,10 +477,6 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     message_scores_context = _scope_scores_to_codes(
         model_scores_context, _phase_factor_codes(db, request.phase)
     )
-    if message_scores_context:
-        full_message = f"{message_scores_context}\n\nDOMANDA DELLO STUDENTE:\n{model_message}"
-    else:
-        full_message = model_message
 
     session_memory.update_context(
         session_id,
@@ -487,27 +487,30 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         step_label=step_label,
     )
 
-    # Punteggi sempre presenti come riferimento nel system prompt (vedi /chat).
-    persisted_scores = "" if model_scores_context else session_memory.get_scores(session_id)
-    if persisted_scores:
-        scoped_scores = _scope_scores_to_codes(persisted_scores, _phase_factor_codes(db, request.phase))
-        system_prompt = _apply_scores_reference(system_prompt, scoped_scores, request.language)
-
+    # Recupera le fonti KNOWLEDGE (grafo + strategie + certificate + votate).
     retrieval_query = f"{step_label} {model_message} {model_scores_context}".strip()
-    conversation_summary, strategy_ids = _retrieved_context(
+    knowledge_context, strategy_ids = _retrieved_context(
         db, session_id, request, questionnaire_type, retrieval_query,
         ai_service=ai_service,
-        username=identity.get("username", ""),
     )
     sanitize = _should_sanitize_ztpi_text(request.mode, request.phase)
     if sanitize:
-        conversation_summary = _sanitize_ztpi_user_text(conversation_summary, request.language)
+        knowledge_context = _sanitize_ztpi_user_text(knowledge_context, request.language)
 
     if sanitize:
         step_label = _sanitize_ztpi_step_label(step_label, request.language)
 
-    if c_persona:
-        system_prompt = f"{c_persona.strip()}\n\n{system_prompt}"
+    # Assembla l'envelope canonico (Fase 5):
+    #   SYSTEM = [PERSONA] [SECTION] [STUDENT] [PROFILE] [KNOWLEDGE]
+    #   MESSAGES = history verbatim + user (scores scope-ati + msg)
+    system_prompt_final, full_message, history = build_context_envelope(
+        db, ai_service, request, session_id, identity,
+        c_persona=c_persona, system_prompt=system_prompt, step_label=step_label,
+        questionnaire_type=questionnaire_type, effective_message=model_message,
+        model_scores_context=model_scores_context, message_scores_context=message_scores_context,
+        knowledge_context=knowledge_context,
+    )
+
     provider = c_provider or ai_service.config.get('active_provider', 'unknown')
     model = c_model or ai_service.config.get('model_name', 'unknown')
 
@@ -538,7 +541,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     "provider": provider,
                     "model": model,
                     "questionnaire_type": questionnaire_type,
-                    "conversation_summary_length": len(conversation_summary),
+                    "knowledge_context_length": len(knowledge_context),
                     "streamed": True,
                     "usage": usage,
                     "cost_usd": cost_usd,
@@ -568,10 +571,11 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         usage_info = None
         try:
             for item in ai_service.stream_response(
-                full_message, system_prompt, request.mode,
-                conversation_summary=conversation_summary,
+                full_message, system_prompt_final, request.mode,
+                conversation_summary="",
                 max_tokens=max_tokens,
                 provider=c_provider, model=c_model,
+                history=history,
             ):
                 if isinstance(item, dict) and item.get("type") == "usage":
                     usage_info = item.get("usage")
@@ -600,6 +604,14 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     "del counselor o nella configurazione globale."
                 )
 
+            # Transcript verbatim role-tagged per la sessione (Fase 2).
+            if request.memory_message is not None:
+                _transcript_user = request.memory_message
+            elif step_label:
+                _transcript_user = f"[Avvio analisi: {step_label}]"
+            else:
+                _transcript_user = request.message
+
             # Complete the local memory write before the frontend records a phase transition.
             _update_markdown_memory_background(
                 session_id,
@@ -607,12 +619,13 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 response_content,
                 step_label,
                 is_first_step,
-                conversation_summary,
+                knowledge_context,
                 request.phase or "",
                 model_scores_context,
                 questionnaire_type,
                 request.language or "",
                 False,
+                transcript_user=_transcript_user,
             )
 
             response_id = _log_stream(response_content, usage_info)
@@ -679,7 +692,8 @@ async def chat_message(
     # 3. Get AI Response (con contesto conversazionale)
     response_content = ai_service.get_response(
         message, system_prompt, mode,
-        conversation_summary=conversation_summary
+        conversation_summary=conversation_summary,
+        history=session_memory.get_transcript(session_id),
     )
     if _should_sanitize_ztpi_text(mode, None):
         response_content = _sanitize_ztpi_user_text(response_content, language)
@@ -688,6 +702,7 @@ async def chat_message(
     _update_markdown_memory_background(
         session_id, message, response_content, "", False, conversation_summary,
         "", "", questionnaire_type, language, False,
+        transcript_user=message,
     )
 
     # 5. Log Interaction

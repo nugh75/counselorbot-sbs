@@ -682,8 +682,18 @@ async def create_opencode_workspace(
         request.questionnaire_type,
         f"{request.questionnaire_type} profile counseling",
         ai_service=ai_service,
-        username=identity.get("username", ""),
     )
+    # La memory_context (strategie+certificate+grafo) viene arricchita con lo
+    # stato/episodi della sessione (per il workspace OpenCode, non counselor):
+    # in Fase 5 _retrieved_context smise di restituire memory, ma il workspace
+    # `memoria.md` deve ancora mostrare il profilo conversazionale dello studente.
+    session_mem = session_memory.get_relevant_context(
+        request.workspace_id,
+        query=f"{request.questionnaire_type} profile counseling",
+        include_scores=False,
+    )
+    if session_mem:
+        memory_context = f"{session_mem}\n\n---\n\n{memory_context}" if memory_context else session_mem
     guided_prompts = _guided_prompt_markdown(
         db, ai_service, request.questionnaire_type, locale
     )

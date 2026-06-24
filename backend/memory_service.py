@@ -7,6 +7,7 @@ session_id con stato, punteggi e pochi fatti rilevanti estratti con regole.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import threading
@@ -26,6 +27,8 @@ MAX_GOALS = 10
 MAX_PREFERENCES = 10
 MAX_EPISODES = 16
 MAX_EXTERNAL_NOTES_CHARS = 1200
+MAX_TRANSCRIPT_TURNS = 12
+MAX_TRANSCRIPT_CHARS = 6000
 
 
 def _default_memory_dir() -> Path:
@@ -52,6 +55,9 @@ class SessionMemory:
             self._touch(session_id)
             if not include_scores:
                 text = self._strip_section(text, "Punteggi")
+            # Il transcript verbatim vive a parte (lo legge get_transcript);
+            # non entra nel riepilogo iniettato/classico.
+            text = self._strip_section(text, "Transcript")
             return self._cut_at_line(text, MAX_MEMORY_CHARS)
 
     def get_scores(self, session_id: str) -> str:
@@ -66,6 +72,19 @@ class SessionMemory:
                 return ""
             self._touch(session_id)
         return str(self._parse(text).get("scores") or "")
+
+    def get_transcript(self, session_id: str) -> List[Dict[str, str]]:
+        """Storico verbatim role-tagged dei turni reali della sessione.
+
+        Lista di `{"role": "user"|"assistant", "content": str}` in ordine
+        cronologico, da passare ai provider come thread `history` (Fase 3).
+        Non include il turno corrente: viene scritto a fine giro AI."""
+        with self._lock:
+            text = self._read(session_id)
+            if not text:
+                return []
+            self._touch(session_id)
+        return self._parse_transcript(text)
 
     def get_relevant_context(
         self,
@@ -198,6 +217,7 @@ class SessionMemory:
         session_id: str,
         *,
         user_message: str = "",
+        transcript_user: str | None = None,
         bot_response: str = "",
         phase: str = "",
         step_label: str = "",
@@ -244,6 +264,18 @@ class SessionMemory:
             if suggestion:
                 data["last_suggestion"] = suggestion
 
+            # Storico verbatim role-tagged: solo per turni di chat reali (con
+            # risposta del bot), non per gli eventi di transizione UI.
+            if transcript_user is not None and bot_response and bot_response.strip():
+                turns = list(data["transcript"])
+                user_turn = self._clean_transcript_text(transcript_user)
+                if user_turn:
+                    turns.append({"role": "user", "content": user_turn})
+                assistant_turn = self._clean_transcript_text(bot_response)
+                if assistant_turn:
+                    turns.append({"role": "assistant", "content": assistant_turn})
+                data["transcript"] = self._trim_transcript(turns)
+
             self._write(session_id, self._render(data))
 
     # --- Parsing/rendering Markdown ---
@@ -264,6 +296,7 @@ class SessionMemory:
             "episodes": [],
             "last_topic": "",
             "last_suggestion": "",
+            "transcript": [],
         }
 
     def _parse(self, text: str) -> Dict[str, object]:
@@ -287,9 +320,15 @@ class SessionMemory:
         data["episodes"] = self._list_section(text, "Episodi utente")
         data["last_topic"] = self._section(text, "Ultimo tema discusso").strip()
         data["last_suggestion"] = self._section(text, "Ultimo suggerimento dato").strip()
+        data["transcript"] = self._parse_transcript(text)
         return data
 
     def _render(self, data: Dict[str, object]) -> str:
+        classic = self._render_classic(data)
+        transcript = self._render_transcript(data.get("transcript") or [])
+        return f"{classic}\n{transcript}" if transcript else classic
+
+    def _render_classic(self, data: Dict[str, object]) -> str:
         rendered = self._render_full(data)
         if len(rendered) <= MAX_MEMORY_CHARS:
             return rendered
@@ -359,6 +398,48 @@ class SessionMemory:
     def _render_list(self, values: object) -> str:
         items = [str(v).strip() for v in (values or []) if str(v).strip()]
         return "\n".join(f"- {item}" for item in items) if items else "-"
+
+    # --- Transcript verbatim (Fase 2) ---
+
+    def _render_transcript(self, turns: object) -> str:
+        items = [t for t in (turns or []) if isinstance(t, dict) and t.get("content")]
+        if not items:
+            return ""
+        payload = [
+            {"role": str(t.get("role") or "user"), "content": str(t.get("content"))}
+            for t in items
+        ]
+        return "## Transcript\n```json\n" + json.dumps(payload, ensure_ascii=False) + "\n```\n"
+
+    def _parse_transcript(self, text: str) -> List[Dict[str, str]]:
+        section = self._section(text, "Transcript")
+        if not section:
+            return []
+        raw = section.replace("```json", "").replace("```", "").strip()
+        if not raw:
+            return []
+        try:
+            data = json.loads(raw)
+        except (ValueError, TypeError):
+            return []
+        if not isinstance(data, list):
+            return []
+        turns: List[Dict[str, str]] = []
+        for item in data:
+            if isinstance(item, dict) and item.get("content"):
+                turns.append({
+                    "role": str(item.get("role") or "user"),
+                    "content": str(item.get("content")),
+                })
+        return turns
+
+    def _trim_transcript(self, turns: List[Dict[str, str]]) -> List[Dict[str, str]]:
+        turns = [t for t in turns if t.get("content")]
+        if len(turns) > MAX_TRANSCRIPT_TURNS:
+            turns = turns[-MAX_TRANSCRIPT_TURNS:]
+        while turns and sum(len(str(t["content"])) for t in turns) > MAX_TRANSCRIPT_CHARS:
+            turns.pop(0)
+        return turns
 
     # --- Extraction heuristics ---
 
@@ -511,6 +592,28 @@ class SessionMemory:
         section = self._section(text, title)
         return [line[2:].strip() for line in section.splitlines() if line.startswith("- ") and line[2:].strip() != "-"]
 
+    def get_student_state(self, session_id: str) -> Dict[str, object]:
+        """Stato studente distillato per il blocco [STUDENT] dell'envelope: solo
+        dati stabili della sessione (questionario, lingua, fase, step, goals,
+        preferences, note esterne). Niente episodi, niente punteggi, niente
+        storico verbatim (questi ultimi vivono nella history role-array)."""
+        with self._lock:
+            text = self._read(session_id)
+            if not text:
+                return {}
+            self._touch(session_id)
+        data = self._parse(text)
+        return {
+            "questionnaire": data["questionnaire"],
+            "language": data["language"],
+            "current_phase": data["current_phase"],
+            "current_step": data["current_step"],
+            "completed_steps": list(data["completed_steps"]),
+            "goals": list(data["goals"])[-5:],
+            "preferences": list(data["preferences"])[-5:],
+            "external_notes": str(data["external_notes"] or "").strip(),
+        }
+
     def _strip_section(self, text: str, title: str) -> str:
         return re.sub(rf"\n## {re.escape(title)}\n.*?(?=\n## |\Z)", "", text, flags=re.DOTALL).strip()
 
@@ -537,6 +640,16 @@ class SessionMemory:
         text = text.replace("’", "'")  # apostrofo tipografico → ASCII (le regex usano ')
         text = re.sub(r"[#*_`>\[\]]", "", text)
         return re.sub(r"\s+", " ", text).strip()
+
+    def _clean_transcript_text(self, text: str) -> str:
+        # Verbatim: conserva markdown e parentesi (il marker sintetico
+        # `[Avvio analisi: ...]` deve restare intatto), normalizza solo gli
+        # spazi e il marker di avanzamento step.
+        text = re.sub(r"\[\[AVANZA_STEP\]\]", "", text or "")
+        text = text.replace("’", "'")
+        text = re.sub(r"[ \t]+", " ", text)
+        text = re.sub(r"\n{3,}", "\n\n", text)
+        return text.strip()
 
     def _clean_multiline_text(self, text: str) -> str:
         lines = []
