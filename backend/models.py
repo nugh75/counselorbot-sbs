@@ -64,6 +64,7 @@ class SurveyResponse(Base):
     tipo_istituto = Column(String, nullable=True)
     provenienza = Column(String, nullable=True)
     area_studio = Column(String, nullable=True)
+    paese = Column(String, nullable=True)
     
     # Valutazioni quantitative (nullable = può essere NR)
     q_utile = Column(Integer, nullable=True)

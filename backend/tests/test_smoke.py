@@ -883,6 +883,7 @@ def test_survey_submit_public():
         "strumenti_utilizzati": ["QSA", "ZTPI"],
         "counselor_utilizzato": "Marco",
         "feedback_aperto": "Feedback qualitativo di prova.",
+        "paese": "Italia",
     })
     assert r.status_code == 200, r.text
     data = r.json()

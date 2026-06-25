@@ -231,6 +231,13 @@ def _seed_and_migrate():
             except Exception as e:
                 logger.debug(f"survey_responses migration skipped/failed ({clause}): {e}")
 
+        try:
+            with database.engine.connect() as conn:
+                conn.execute(sa_text("ALTER TABLE survey_responses ADD COLUMN paese VARCHAR"))
+                conn.commit()
+        except Exception as e:
+            logger.debug(f"survey_responses migration skipped/failed (paese): {e}")
+
         for table, columns in {
             "instruments": [
                 "ADD COLUMN name_es VARCHAR",

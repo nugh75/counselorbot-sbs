@@ -14,9 +14,38 @@ const API_BASE = '/api';
 // Options for demographics
 const ETA_OPTIONS = ['< 14', '14-16', '17-18', '19-24', '25-34', '35-44', '45-54', '55+'];
 const SESSO_OPTIONS = ['Maschio', 'Femmina', 'Altro', 'Preferisco non rispondere'];
-const ISTRUZIONE_OPTIONS = ['Scuola media', 'Diploma', 'Laurea triennale', 'Laurea magistrale', 'Dottorato', 'Altro'];
-const TIPO_ISTITUTO_OPTIONS = ['Liceo', 'Istituto tecnico', 'Istituto professionale', 'Università', 'Altro'];
-const PROVENIENZA_OPTIONS = ['Nord Italia', 'Centro Italia', 'Sud Italia', 'Isole', 'Estero'];
+
+const PAESE_OPTIONS = ['Italia', 'Svezia', 'Regno Unito (Inghilterra)', 'Spagna', 'Francia', 'Germania', 'Altro'];
+
+const ISTRUZIONE_MAP: Record<string, string[]> = {
+    'Italia': ['Scuola media', 'Diploma', 'Laurea triennale', 'Laurea magistrale', 'Dottorato', 'Altro'],
+    'Svezia': ['Grundskola (år 7–9)', 'Gymnasium (nationellt program)', 'Kandidatexamen', 'Masterexamen', 'Doktorsexamen', 'Annat'],
+    'Regno Unito (Inghilterra)': ['Secondary school (KS3–KS4, GCSE)', 'Sixth Form (A-level / T-level)', "Bachelor's degree", "Master's degree", 'PhD', 'Other'],
+    'Spagna': ['ESO', 'Bachillerato / CFGM', 'Grado', 'Máster', 'Doctorado', 'Otro'],
+    'Francia': ['Collège', 'Lycée (Bac)', 'Licence', 'Master', 'Doctorat', 'Autre'],
+    'Germania': ['Sekundarstufe I (Haupt-/Realschule)', 'Gymnasium (Abitur) / Berufsschule', 'Bachelor', 'Master', 'Promotion', 'Sonstiges'],
+    'Altro': ['Lower secondary', 'Upper secondary', "Bachelor's degree", "Master's degree", 'PhD', 'Other'],
+};
+
+const TIPO_ISTITUTO_MAP: Record<string, string[]> = {
+    'Italia': ['Liceo', 'Istituto tecnico', 'Istituto professionale', 'Università', 'Altro'],
+    'Svezia': ['Högskoleförberedande (gymnasieprogram)', 'Yrkesförberedande (gymnasieprogram)', 'Komvux / folkhögskola', 'Universitet / högskola', 'Annat'],
+    'Regno Unito (Inghilterra)': ['Secondary school (comprehensive/grammar)', 'Sixth Form / FE college', 'University', 'Apprenticeship', 'Other'],
+    'Spagna': ['Instituto de secundaria (IES)', 'Centro de FP', 'Universidad', 'Otro'],
+    'Francia': ['Collège', 'Lycée général/technologique', 'Lycée professionnel', 'Université', 'Autre'],
+    'Germania': ['Haupt-/Realschule', 'Gymnasium', 'Berufsschule / Fachschule', 'Universität / Hochschule', 'Sonstiges'],
+    'Altro': ['General secondary', 'Vocational secondary', 'Higher education institution', 'Other'],
+};
+
+const PROVENIENZA_MAP: Record<string, string[]> = {
+    'Italia': ['Nord Italia', 'Centro Italia', 'Sud Italia', 'Isole', 'Estero'],
+    'Svezia': ['Östra Sverige', 'Södra Sverige', 'Norra Sverige', 'Utomlands'],
+    'Regno Unito (Inghilterra)': ['North England', 'Midlands & East', 'South England', 'London', 'Wales', 'Scotland', 'Northern Ireland', 'Abroad'],
+    'Spagna': ['Noroeste', 'Noreste', 'Comunidad de Madrid', 'Este', 'Sur', 'Canarias', 'Extranjero'],
+    'Francia': ['Île-de-France', 'Nord-Ouest', 'Nord-Est', 'Sud-Ouest', 'Sud-Est', 'Outre-mer', 'Étranger'],
+    'Germania': ['Nord', 'West', 'Süd', 'Ost', 'Ausland'],
+    'Altro': ['Northern region', 'Central region', 'Southern region', 'Abroad'],
+};
 const TOOL_OPTIONS = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
 
 const QUESTIONS = [
@@ -35,6 +64,7 @@ const QUESTIONS = [
 type FormValue = string | number | null | string[];
 
 type FormData = {
+    paese: string;
     eta: string;
     sesso: string;
     istruzione: string;
@@ -51,6 +81,7 @@ export default function QuestionarioPage() {
     const { t, tf, lang } = useI18n();
     const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
     const [formData, setFormData] = useState<FormData>({
+        paese: '',
         eta: '',
         sesso: '',
         istruzione: '',
@@ -85,24 +116,78 @@ export default function QuestionarioPage() {
     const [wizardStep, setWizardStep] = useState(0);
     const TOTAL_STEPS = 4;
 
-    // Compute area_studio based on tipo_istituto and istruzione
-    const computeAreaStudio = (istruzione: string, tipo_istituto: string) => {
-        if (tipo_istituto === 'Università') return 'Universitario';
-        if (tipo_istituto === 'Liceo') return 'Liceale';
-        if (tipo_istituto === 'Istituto tecnico') return 'Tecnico';
-        if (tipo_istituto === 'Istituto professionale') return 'Professionale';
-        if (istruzione === 'Dottorato') return 'Post-laurea';
+    const computeAreaStudio = (paese: string, istruzione: string, tipo_istituto: string) => {
+        const doctorates: Record<string, string[]> = {
+            'Italia': ['Dottorato'],
+            'Svezia': ['Doktorsexamen'],
+            'Regno Unito (Inghilterra)': ['PhD'],
+            'Spagna': ['Doctorado'],
+            'Francia': ['Doctorat'],
+            'Germania': ['Promotion'],
+            'Altro': ['PhD'],
+        };
+        if (doctorates[paese]?.includes(istruzione)) return 'Post-laurea';
+
+        const universities: Record<string, string[]> = {
+            'Italia': ['Università'],
+            'Svezia': ['Universitet / högskola'],
+            'Regno Unito (Inghilterra)': ['University'],
+            'Spagna': ['Universidad'],
+            'Francia': ['Université'],
+            'Germania': ['Universität / Hochschule'],
+            'Altro': ['Higher education institution'],
+        };
+        if (universities[paese]?.includes(tipo_istituto)) return 'Universitario';
+
+        const academics: Record<string, string[]> = {
+            'Italia': ['Liceo'],
+            'Svezia': ['Högskoleförberedande (gymnasieprogram)'],
+            'Regno Unito (Inghilterra)': ['Secondary school (comprehensive/grammar)', 'Sixth Form / FE college'],
+            'Spagna': ['Instituto de secundaria (IES)'],
+            'Francia': ['Lycée général/technologique', 'Collège'],
+            'Germania': ['Gymnasium'],
+            'Altro': ['General secondary'],
+        };
+        if (academics[paese]?.includes(tipo_istituto)) return 'Liceale';
+
+        const technicals: Record<string, string[]> = {
+            'Italia': ['Istituto tecnico'],
+            'Svezia': ['Komvux / folkhögskola'],
+            'Regno Unito (Inghilterra)': ['Apprenticeship'],
+            'Spagna': [],
+            'Francia': [],
+            'Germania': ['Haupt-/Realschule'],
+            'Altro': [],
+        };
+        if (technicals[paese]?.includes(tipo_istituto)) return 'Tecnico';
+
+        const vocationals: Record<string, string[]> = {
+            'Italia': ['Istituto professionale'],
+            'Svezia': ['Yrkesförberedande (gymnasieprogram)'],
+            'Regno Unito (Inghilterra)': [],
+            'Spagna': ['Centro de FP'],
+            'Francia': ['Lycée professionnel'],
+            'Germania': ['Berufsschule / Fachschule'],
+            'Altro': ['Vocational secondary'],
+        };
+        if (vocationals[paese]?.includes(tipo_istituto)) return 'Professionale';
+
         return 'Altro';
     };
 
     const handleDemographicChange = (field: string, value: string) => {
         const updated = { ...formData, [field]: value };
-        // Auto-compute area_studio
-        if (field === 'istruzione' || field === 'tipo_istituto') {
-            updated.area_studio = computeAreaStudio(
-                field === 'istruzione' ? value : formData.istruzione,
-                field === 'tipo_istituto' ? value : formData.tipo_istituto
-            );
+        if (field === 'paese') {
+            updated.istruzione = '';
+            updated.tipo_istituto = '';
+            updated.provenienza = '';
+            updated.area_studio = '';
+        }
+        if (field === 'istruzione' || field === 'tipo_istituto' || field === 'paese') {
+            const istruzione = field === 'istruzione' ? value : updated.istruzione;
+            const tipo_istituto = field === 'tipo_istituto' ? value : updated.tipo_istituto;
+            const paese = field === 'paese' ? value : updated.paese;
+            updated.area_studio = computeAreaStudio(paese, istruzione, tipo_istituto);
         }
         setFormData(updated);
     };
@@ -224,6 +309,14 @@ export default function QuestionarioPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <SelectField
+                                label={t('survey.field.paese')}
+                                placeholder={t('survey.select.placeholder')}
+                                value={formData.paese}
+                                options={PAESE_OPTIONS}
+                                optionLabel={(v) => tf(`survey.paese.${v}`, v)}
+                                onChange={(v) => handleDemographicChange('paese', v)}
+                            />
+                            <SelectField
                                 label={t('survey.field.eta')}
                                 placeholder={t('survey.select.placeholder')}
                                 value={formData.eta}
@@ -238,41 +331,42 @@ export default function QuestionarioPage() {
                                 optionLabel={(v) => tf(`survey.opt.${v}`, v)}
                                 onChange={(v) => handleDemographicChange('sesso', v)}
                             />
-                            <SelectField
-                                label={t('survey.field.istruzione')}
-                                placeholder={t('survey.select.placeholder')}
-                                value={formData.istruzione}
-                                options={ISTRUZIONE_OPTIONS}
-                                optionLabel={(v) => tf(`survey.opt.${v}`, v)}
-                                onChange={(v) => handleDemographicChange('istruzione', v)}
-                            />
-                            <SelectField
-                                label={t('survey.field.tipoIstituto')}
-                                placeholder={t('survey.select.placeholder')}
-                                value={formData.tipo_istituto}
-                                options={TIPO_ISTITUTO_OPTIONS}
-                                optionLabel={(v) => tf(`survey.opt.${v}`, v)}
-                                onChange={(v) => handleDemographicChange('tipo_istituto', v)}
-                            />
-                            <SelectField
-                                label={t('survey.field.provenienza')}
-                                placeholder={t('survey.select.placeholder')}
-                                value={formData.provenienza}
-                                options={PROVENIENZA_OPTIONS}
-                                optionLabel={(v) => tf(`survey.opt.${v}`, v)}
-                                onChange={(v) => handleDemographicChange('provenienza', v)}
-                            />
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    {t('survey.field.area')}
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.area_studio}
-                                    readOnly
-                                    className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg text-slate-600"
+                            {formData.paese && (
+                                <>
+                                <SelectField
+                                    label={t('survey.field.istruzione')}
+                                    placeholder={t('survey.select.placeholder')}
+                                    value={formData.istruzione}
+                                    options={ISTRUZIONE_MAP[formData.paese] || []}
+                                    onChange={(v) => handleDemographicChange('istruzione', v)}
                                 />
-                            </div>
+                                <SelectField
+                                    label={t('survey.field.tipoIstituto')}
+                                    placeholder={t('survey.select.placeholder')}
+                                    value={formData.tipo_istituto}
+                                    options={TIPO_ISTITUTO_MAP[formData.paese] || []}
+                                    onChange={(v) => handleDemographicChange('tipo_istituto', v)}
+                                />
+                                <SelectField
+                                    label={t('survey.field.provenienza')}
+                                    placeholder={t('survey.select.placeholder')}
+                                    value={formData.provenienza}
+                                    options={PROVENIENZA_MAP[formData.paese] || []}
+                                    onChange={(v) => handleDemographicChange('provenienza', v)}
+                                />
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                        {t('survey.field.area')}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.area_studio}
+                                        readOnly
+                                        className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg text-slate-600"
+                                    />
+                                </div>
+                                </>
+                            )}
                         </div>
                     </div>
                     )}
