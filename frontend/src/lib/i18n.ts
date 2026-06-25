@@ -512,6 +512,15 @@ const it: Dict = {
     'pqbl.final.unanswered': 'Rispondi a tutte le domande prima di inviare.',
     'pqbl.final.score': 'Punteggio del test finale',
     'pqbl.final.yourAnswer': 'La tua risposta',
+    // header bar (tooltip / etichette)
+    'header.services': 'Servizi piattaforma ai4educ',
+    'header.counselorChosen': 'Counselor scelto: {name}',
+    'header.counselorLabel': 'Counselor',
+    'header.menu': 'Menu',
+    'theme.toLight': 'Tema chiaro',
+    'theme.toDark': 'Tema scuro',
+    'theme.switchToLight': 'Passa al tema chiaro',
+    'theme.switchToDark': 'Passa al tema scuro',
 };
 
 const en: Dict = {
@@ -986,6 +995,15 @@ const en: Dict = {
     'pqbl.final.unanswered': 'Answer all the questions before submitting.',
     'pqbl.final.score': 'Final test score',
     'pqbl.final.yourAnswer': 'Your answer',
+    // header bar (tooltips / labels)
+    'header.services': 'ai4educ platform services',
+    'header.counselorChosen': 'Selected counselor: {name}',
+    'header.counselorLabel': 'Counselor',
+    'header.menu': 'Menu',
+    'theme.toLight': 'Light theme',
+    'theme.toDark': 'Dark theme',
+    'theme.switchToLight': 'Switch to light theme',
+    'theme.switchToDark': 'Switch to dark theme',
 };
 
 const es: Dict = {
@@ -1459,6 +1477,15 @@ const es: Dict = {
     'profile.invertedShort': '(invertida)',
     'profile.selectSession': 'Seleccione una sesión para ver los detalles.',
     'profile.stanineScoreLabel': 'Puntuación Stanine:',
+    // header bar (tooltips / etiquetas)
+    'header.services': 'Servicios de la plataforma ai4educ',
+    'header.counselorChosen': 'Counselor elegido: {name}',
+    'header.counselorLabel': 'Counselor',
+    'header.menu': 'Menú',
+    'theme.toLight': 'Tema claro',
+    'theme.toDark': 'Tema oscuro',
+    'theme.switchToLight': 'Cambiar al tema claro',
+    'theme.switchToDark': 'Cambiar al tema oscuro',
 };
 
 const fr: Dict = {
@@ -1932,6 +1959,15 @@ const fr: Dict = {
     'profile.invertedShort': '(inversé)',
     'profile.selectSession': 'Sélectionnez une session pour voir les détails.',
     'profile.stanineScoreLabel': 'Score Stanine :',
+    // header bar (info-bulles / libellés)
+    'header.services': 'Services de la plateforme ai4educ',
+    'header.counselorChosen': 'Counselor choisi : {name}',
+    'header.counselorLabel': 'Counselor',
+    'header.menu': 'Menu',
+    'theme.toLight': 'Thème clair',
+    'theme.toDark': 'Thème sombre',
+    'theme.switchToLight': 'Passer au thème clair',
+    'theme.switchToDark': 'Passer au thème sombre',
 };
 
 const de: Dict = {
@@ -2405,6 +2441,15 @@ const de: Dict = {
     'profile.invertedShort': '(invertiert)',
     'profile.selectSession': 'Wählen Sie eine Sitzung aus, um Details anzuzeigen.',
     'profile.stanineScoreLabel': 'Stanine-Wert:',
+    // header bar (Tooltips / Beschriftungen)
+    'header.services': 'ai4educ-Plattformdienste',
+    'header.counselorChosen': 'Gewählter Counselor: {name}',
+    'header.counselorLabel': 'Counselor',
+    'header.menu': 'Menü',
+    'theme.toLight': 'Helles Design',
+    'theme.toDark': 'Dunkles Design',
+    'theme.switchToLight': 'Zum hellen Design wechseln',
+    'theme.switchToDark': 'Zum dunklen Design wechseln',
 };
 
 const sv: Dict = {
@@ -2878,6 +2923,15 @@ const sv: Dict = {
     'profile.invertedShort': '(inverterad)',
     'profile.selectSession': 'Välj en session för att visa detaljer.',
     'profile.stanineScoreLabel': 'Staninepoäng:',
+    // header bar (verktygstips / etiketter)
+    'header.services': 'ai4educ-plattformstjänster',
+    'header.counselorChosen': 'Vald counselor: {name}',
+    'header.counselorLabel': 'Counselor',
+    'header.menu': 'Meny',
+    'theme.toLight': 'Ljust tema',
+    'theme.toDark': 'Mörkt tema',
+    'theme.switchToLight': 'Byt till ljust tema',
+    'theme.switchToDark': 'Byt till mörkt tema',
 };
 
 import { FACTOR_DICTS } from './i18n-factors';
