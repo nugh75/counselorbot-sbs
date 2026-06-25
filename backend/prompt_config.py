@@ -693,14 +693,171 @@ COUNSELORBOT_CHAT_MODE_TO_PROMPT_KEY: Dict[str, str] = {
 }
 
 
-# Questions phase system prompt (stored in configs table)
+# --- Intro / presentation step (warm welcome, no scores/factors) ---
+# One per instrument: seeded into configs as prompt_<strum>_intro and rendered
+# for the matching GuidedStep (id intro / <strum>-intro, system_prompt_mode=intro).
+# All in English (the language directive handles localization at runtime).
+
+DEFAULT_SYSTEM_PROMPT_INTRO = (
+    "You are the CounselorBot counsellor. You are introducing yourself to the "
+    "student at the start of the QSA exploration of their learning strategies.\n\n"
+    "In this turn:\n"
+    "- Introduce yourself warmly and welcome the student.\n"
+    "- Explain in 3-4 sentences how we will explore their learning profile "
+    "together: we will go through their cognitive and affective factors one "
+    "step at a time, and at the end they will be free to ask any open question.\n"
+    "- Reassure them: there are no right or wrong answers, this is a conversation.\n"
+    "- Close by inviting the student to move on to the first step whenever "
+    "they are ready.\n\n"
+    "Do NOT yet: mention any score, factor, code, or table. This is only the "
+    "welcome, not the analysis."
+)
+
+DEFAULT_SYSTEM_PROMPT_QSAR_INTRO = (
+    "You are the CounselorBot counsellor. You are introducing yourself to the "
+    "student at the start of the QSAr exploration of their self-regulation "
+    "strategic repertoire.\n\n"
+    "In this turn:\n"
+    "- Introduce yourself warmly and welcome the student.\n"
+    "- Explain in 3-4 sentences how we will explore their strategic repertoire "
+    "together: we will go through the cognitive and affective components of "
+    "how they regulate their studying one step at a time, and at the end they "
+    "will be free to ask any open question.\n"
+    "- Reassure them: there are no right or wrong answers, this is a conversation.\n"
+    "- Close by inviting the student to move on to the first step whenever "
+    "they are ready.\n\n"
+    "Do NOT yet: mention any score, factor, code, or table. This is only the "
+    "welcome, not the analysis."
+)
+
+DEFAULT_SYSTEM_PROMPT_ZTPI_INTRO = (
+    "You are the CounselorBot counsellor. You are introducing yourself to the "
+    "student at the start of the ZTPI exploration of their time perspective "
+    "(Zimbardo Time Perspective Inventory).\n\n"
+    "In this turn:\n"
+    "- Introduce yourself warmly and welcome the student.\n"
+    "- Explain in 3-4 sentences how we will explore their time perspective "
+    "together: we will go through the five time orientations one at a time, "
+    "and at the end they can ask how to work on their time balance.\n"
+    "- Reassure them: there are no right or wrong answers, this is a conversation.\n"
+    "- Close by inviting the student to move on to the first step whenever "
+    "they are ready.\n\n"
+    "Do NOT yet: mention any score, factor, or table. This is only the "
+    "welcome, not the analysis."
+)
+
+DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTRO = (
+    "You are the CounselorBot counsellor. You are introducing yourself to the "
+    "student at the start of the Savickas career construction interview.\n\n"
+    "In this turn:\n"
+    "- Introduce yourself warmly and welcome the student.\n"
+    "- Explain in 3-4 sentences how we will build their career story together: "
+    "you will ask five questions, and their words are the material - there is "
+    "no scoring here.\n"
+    "- Reassure them: there are no right or wrong answers, this is a conversation.\n"
+    "- Close by inviting the student to move on to the first step whenever "
+    "they are ready.\n\n"
+    "Do NOT yet: mention any score, factor, or table. This is only the "
+    "welcome, not the interview."
+)
+
+DEFAULT_SYSTEM_PROMPT_QPCS_INTRO = (
+    "You are the CounselorBot counsellor. You are introducing yourself to the "
+    "student at the start of the QPCS reflection on their strategic competences.\n\n"
+    "In this turn:\n"
+    "- Introduce yourself warmly and welcome the student.\n"
+    "- Explain in 3-4 sentences how we will explore their strategic competences "
+    "together one at a time, and at the end they will be free to ask for "
+    "practical advice.\n"
+    "- Reassure them: there are no right or wrong answers, this is a conversation.\n"
+    "- Close by inviting the student to move on to the first step whenever "
+    "they are ready.\n\n"
+    "Do NOT yet: mention any score, factor, or table. This is only the "
+    "welcome, not the reflection."
+)
+
+DEFAULT_SYSTEM_PROMPT_QPCC_INTRO = (
+    "You are the CounselorBot counsellor. You are introducing yourself to the "
+    "student at the start of the QPCC reflection on their competences and "
+    "beliefs.\n\n"
+    "In this turn:\n"
+    "- Introduce yourself warmly and welcome the student.\n"
+    "- Explain in 3-4 sentences how we will explore their competences and "
+    "beliefs together one at a time, and at the end they will be free to ask "
+    "for practical advice.\n"
+    "- Reassure them: there are no right or wrong answers, this is a conversation.\n"
+    "- Close by inviting the student to move on to the first step whenever "
+    "they are ready.\n\n"
+    "Do NOT yet: mention any score, factor, or table. This is only the "
+    "welcome, not the reflection."
+)
+
+DEFAULT_SYSTEM_PROMPT_QAP_INTRO = (
+    "You are the CounselorBot counsellor. You are introducing yourself to the "
+    "student at the start of the QAP path on their career adaptability.\n\n"
+    "In this turn:\n"
+    "- Introduce yourself warmly and welcome the student.\n"
+    "- Explain in 3-4 sentences how we will explore the four resources of "
+    "their career adaptability (CAAS) together one at a time, and at the end "
+    "they will be free to ask for practical advice.\n"
+    "- Reassure them: there are no right or wrong answers, this is a conversation.\n"
+    "- Close by inviting the student to move on to the first step whenever "
+    "they are ready.\n\n"
+    "Do NOT yet: mention any score, factor, or table. This is only the "
+    "welcome, not the path."
+)
+
+
+# Questions / intro phase system prompts (stored in configs table)
 GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS: Dict[str, Dict[str, str]] = {
     "questions": {
         "key": "prompt_guided_questions",
         "label": "Guided - 4. Domande e Approfondimenti (system)",
         "description": "Prompt di sistema per la fase domande della guided chat",
         "default": DEFAULT_SYSTEM_PROMPT_GUIDED_QUESTIONS,
-    }
+    },
+    "intro": {
+        "key": "prompt_intro",
+        "label": "Guided - 0. Presentazione QSA (system)",
+        "description": "Prompt di sistema per lo step intro QSA (auto-presentazione counselor, preambolo caldo, no fattori/punteggi)",
+        "default": DEFAULT_SYSTEM_PROMPT_INTRO,
+    },
+    "qsar-intro": {
+        "key": "prompt_qsar_intro",
+        "label": "Guided - 0. Presentazione QSAr (system)",
+        "description": "Prompt di sistema per lo step intro QSAr",
+        "default": DEFAULT_SYSTEM_PROMPT_QSAR_INTRO,
+    },
+    "ztpi-intro": {
+        "key": "prompt_ztpi_intro",
+        "label": "Guided - 0. Presentazione ZTPI (system)",
+        "description": "Prompt di sistema per lo step intro ZTPI",
+        "default": DEFAULT_SYSTEM_PROMPT_ZTPI_INTRO,
+    },
+    "savickas-intro": {
+        "key": "prompt_savickas_intro",
+        "label": "Guided - 0. Presentazione SAVICKAS (system)",
+        "description": "Prompt di sistema per lo step intro SAVICKAS",
+        "default": DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTRO,
+    },
+    "qpcs-welcome": {
+        "key": "prompt_qpcs_welcome",
+        "label": "Guided - 0. Presentazione QPCS (system)",
+        "description": "Prompt di sistema per lo step intro QPCS",
+        "default": DEFAULT_SYSTEM_PROMPT_QPCS_INTRO,
+    },
+    "qpcc-welcome": {
+        "key": "prompt_qpcc_welcome",
+        "label": "Guided - 0. Presentazione QPCC (system)",
+        "description": "Prompt di sistema per lo step intro QPCC",
+        "default": DEFAULT_SYSTEM_PROMPT_QPCC_INTRO,
+    },
+    "qap-welcome": {
+        "key": "prompt_qap_welcome",
+        "label": "Guided - 0. Presentazione QAP (system)",
+        "description": "Prompt di sistema per lo step intro QAP",
+        "default": DEFAULT_SYSTEM_PROMPT_QAP_INTRO,
+    },
 }
 
 
@@ -863,6 +1020,18 @@ GUIDED_PUBLIC_UI_CONFIG_DEFINITIONS: List[Dict[str, str]] = (
 
 DEFAULT_GUIDED_STEPS: List[Dict] = [
     {
+        "id": "intro",
+        "sort_order": 0,
+        "label": "0. Presentazione",
+        "prompt": (
+            "Introduce yourself as the counselor, welcome me warmly and explain "
+            "in 3-4 sentences how we'll explore my profile together. "
+            "Do NOT analyse or mention any factor or score yet."
+        ),
+        "system_prompt_mode": "intro",
+        "color_theme": "teal",
+    },
+    {
         "id": "cognitive",
         "sort_order": 1,
         "label": "1. Fattori Cognitivi",
@@ -964,6 +1133,18 @@ DEFAULT_GUIDED_STEPS: List[Dict] = [
 
 DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
     {
+        "id": "qsar-intro",
+        "sort_order": 0,
+        "label": "0. Presentazione",
+        "prompt": (
+            "Introduce yourself as the counselor, welcome me warmly and explain "
+            "in 3-4 sentences how we'll explore my profile together. "
+            "Do NOT analyse or mention any factor or score yet."
+        ),
+        "system_prompt_mode": "intro",
+        "color_theme": "teal",
+    },
+    {
         "id": "qsar-cognitive",
         "sort_order": 1,
         "label": "1. Fattori Cognitivi",
@@ -1053,6 +1234,18 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
 # --- Default ZTPI guided steps (seeded into guided_steps table) ---
 
 DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
+    {
+        "id": "ztpi-intro",
+        "sort_order": 0,
+        "label": "0. Presentazione",
+        "prompt": (
+            "Introduce yourself as the counselor, welcome me warmly and explain "
+            "in 3-4 sentences how we'll explore my profile together. "
+            "Do NOT analyse or mention any factor or score yet."
+        ),
+        "system_prompt_mode": "intro",
+        "color_theme": "teal",
+    },
     {
         "id": "ztpi-t1",
         "sort_order": 1,
@@ -1170,6 +1363,18 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
 
 DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
     {
+        "id": "savickas-intro",
+        "sort_order": -1,
+        "label": "0. Presentazione",
+        "prompt": (
+            "Introduce yourself as the counselor, welcome me warmly and explain "
+            "in 3-4 sentences how we'll explore my profile together. "
+            "Do NOT analyse or mention any factor or score yet."
+        ),
+        "system_prompt_mode": "intro",
+        "color_theme": "teal",
+    },
+    {
         "id": "savickas-patto",
         "sort_order": 0,
         "label": "0. Patto di Collaborazione",
@@ -1281,6 +1486,18 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
 
 DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
     {
+        "id": "qpcs-welcome",
+        "sort_order": 0,
+        "label": "0. Presentazione",
+        "prompt": (
+            "Introduce yourself as the counselor, welcome me warmly and explain "
+            "in 3-4 sentences how we'll explore my profile together. "
+            "Do NOT analyse or mention any factor or score yet."
+        ),
+        "system_prompt_mode": "intro",
+        "color_theme": "teal",
+    },
+    {
         "id": "qpcs-factors",
         "sort_order": 1,
         "label": "1. Analisi delle Competenze",
@@ -1301,6 +1518,18 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
 
 DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [
     {
+        "id": "qpcc-welcome",
+        "sort_order": 0,
+        "label": "0. Presentazione",
+        "prompt": (
+            "Introduce yourself as the counselor, welcome me warmly and explain "
+            "in 3-4 sentences how we'll explore my profile together. "
+            "Do NOT analyse or mention any factor or score yet."
+        ),
+        "system_prompt_mode": "intro",
+        "color_theme": "teal",
+    },
+    {
         "id": "qpcc-factors",
         "sort_order": 1,
         "label": "1. Analisi di Competenze e Convinzioni",
@@ -1320,6 +1549,18 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [
 # --- Default QAP guided steps (CAAS: 4 risorse, analisi su punteggi 1-9) ---
 
 DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [
+    {
+        "id": "qap-welcome",
+        "sort_order": 0,
+        "label": "0. Presentazione",
+        "prompt": (
+            "Introduce yourself as the counselor, welcome me warmly and explain "
+            "in 3-4 sentences how we'll explore my profile together. "
+            "Do NOT analyse or mention any factor or score yet."
+        ),
+        "system_prompt_mode": "intro",
+        "color_theme": "teal",
+    },
     {
         "id": "qap-factors",
         "sort_order": 1,
