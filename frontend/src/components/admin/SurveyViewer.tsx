@@ -17,6 +17,7 @@ interface SurveyResponse {
     tipo_istituto?: string;
     provenienza?: string;
     area_studio?: string;
+    paese?: string;
     q_utile?: number;
     q_pertinente?: number;
     q_chiaro?: number;
@@ -367,6 +368,14 @@ export function SurveyViewer() {
                                                                     <span className="font-medium text-slate-700">{survey.area_studio || '-'}</span>
                                                                 </div>
                                                             </div>
+                                                            {survey.paese && (
+                                                                <div className="mt-4 grid md:grid-cols-3 gap-4">
+                                                                    <div>
+                                                                        <span className="text-slate-400 block mb-1">{t('admin.surveys.det.paese')}</span>
+                                                                        <span className="font-medium text-slate-700">{survey.paese}</span>
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
 
                                                         <div className="col-span-2 md:col-span-5 mt-4 pt-4 border-t border-slate-200">

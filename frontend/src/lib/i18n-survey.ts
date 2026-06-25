@@ -26,6 +26,7 @@ const it: Dict = {
     'survey.field.istruzione': 'Istruzione',
     'survey.field.tipoIstituto': 'Tipo istituto',
     'survey.field.provenienza': 'Provenienza',
+    'survey.field.paese': 'Paese',
     'survey.field.area': 'Area di studio (automatica)',
     'survey.select.placeholder': '-- Seleziona --',
     'survey.tools.title': 'Strumenti utilizzati',
@@ -79,6 +80,10 @@ const it: Dict = {
     'survey.opt.Istituto professionale': 'Istituto professionale', 'survey.opt.Università': 'Università',
     'survey.opt.Nord Italia': 'Nord Italia', 'survey.opt.Centro Italia': 'Centro Italia',
     'survey.opt.Sud Italia': 'Sud Italia', 'survey.opt.Isole': 'Isole', 'survey.opt.Estero': 'Estero',
+    'survey.paese.Italia': 'Italia', 'survey.paese.Svezia': 'Svezia',
+    'survey.paese.Regno Unito (Inghilterra)': 'Regno Unito (Inghilterra)',
+    'survey.paese.Spagna': 'Spagna', 'survey.paese.Francia': 'Francia',
+    'survey.paese.Germania': 'Germania', 'survey.paese.Altro': 'Altro',
 };
 
 const en: Dict = {
@@ -101,6 +106,7 @@ const en: Dict = {
     'survey.field.istruzione': 'Education',
     'survey.field.tipoIstituto': 'Type of institution',
     'survey.field.provenienza': 'Origin',
+    'survey.field.paese': 'Country',
     'survey.field.area': 'Field of study (automatic)',
     'survey.select.placeholder': '-- Select --',
     'survey.tools.title': 'Tools used',
@@ -154,6 +160,10 @@ const en: Dict = {
     'survey.opt.Istituto professionale': 'Vocational institute', 'survey.opt.Università': 'University',
     'survey.opt.Nord Italia': 'Northern Italy', 'survey.opt.Centro Italia': 'Central Italy',
     'survey.opt.Sud Italia': 'Southern Italy', 'survey.opt.Isole': 'Islands', 'survey.opt.Estero': 'Abroad',
+    'survey.paese.Italia': 'Italy', 'survey.paese.Svezia': 'Sweden',
+    'survey.paese.Regno Unito (Inghilterra)': 'United Kingdom (England)',
+    'survey.paese.Spagna': 'Spain', 'survey.paese.Francia': 'France',
+    'survey.paese.Germania': 'Germany', 'survey.paese.Altro': 'Other',
 };
 
 const es: Dict = {
@@ -176,6 +186,7 @@ const es: Dict = {
     'survey.field.istruzione': 'Educación',
     'survey.field.tipoIstituto': 'Tipo de centro',
     'survey.field.provenienza': 'Procedencia',
+    'survey.field.paese': 'País',
     'survey.field.area': 'Área de estudio (automática)',
     'survey.select.placeholder': '-- Seleccionar --',
     'survey.tools.title': 'Herramientas utilizadas',
@@ -229,6 +240,10 @@ const es: Dict = {
     'survey.opt.Istituto professionale': 'Instituto profesional', 'survey.opt.Università': 'Universidad',
     'survey.opt.Nord Italia': 'Norte de Italia', 'survey.opt.Centro Italia': 'Centro de Italia',
     'survey.opt.Sud Italia': 'Sur de Italia', 'survey.opt.Isole': 'Islas', 'survey.opt.Estero': 'Extranjero',
+    'survey.paese.Italia': 'Italia', 'survey.paese.Svezia': 'Suecia',
+    'survey.paese.Regno Unito (Inghilterra)': 'Reino Unido (Inglaterra)',
+    'survey.paese.Spagna': 'España', 'survey.paese.Francia': 'Francia',
+    'survey.paese.Germania': 'Alemania', 'survey.paese.Altro': 'Otro',
 };
 
 const fr: Dict = {
@@ -251,6 +266,7 @@ const fr: Dict = {
     'survey.field.istruzione': 'Éducation',
     'survey.field.tipoIstituto': "Type d'établissement",
     'survey.field.provenienza': 'Provenance',
+    'survey.field.paese': 'Pays',
     'survey.field.area': "Domaine d'études (automatique)",
     'survey.select.placeholder': '-- Sélectionner --',
     'survey.tools.title': 'Outils utilisés',
@@ -304,6 +320,10 @@ const fr: Dict = {
     'survey.opt.Istituto professionale': 'Institut professionnel', 'survey.opt.Università': 'Université',
     'survey.opt.Nord Italia': 'Italie du Nord', 'survey.opt.Centro Italia': 'Italie centrale',
     'survey.opt.Sud Italia': 'Italie du Sud', 'survey.opt.Isole': 'Îles', 'survey.opt.Estero': 'Étranger',
+    'survey.paese.Italia': 'Italie', 'survey.paese.Svezia': 'Suède',
+    'survey.paese.Regno Unito (Inghilterra)': 'Royaume-Uni (Angleterre)',
+    'survey.paese.Spagna': 'Espagne', 'survey.paese.Francia': 'France',
+    'survey.paese.Germania': 'Allemagne', 'survey.paese.Altro': 'Autre',
 };
 
 const de: Dict = {
@@ -326,6 +346,7 @@ const de: Dict = {
     'survey.field.istruzione': 'Bildung',
     'survey.field.tipoIstituto': 'Art der Einrichtung',
     'survey.field.provenienza': 'Herkunft',
+    'survey.field.paese': 'Land',
     'survey.field.area': 'Studienbereich (automatisch)',
     'survey.select.placeholder': '-- Auswählen --',
     'survey.tools.title': 'Verwendete Werkzeuge',
@@ -379,6 +400,10 @@ const de: Dict = {
     'survey.opt.Istituto professionale': 'Berufsschule', 'survey.opt.Università': 'Universität',
     'survey.opt.Nord Italia': 'Norditalien', 'survey.opt.Centro Italia': 'Mittelitalien',
     'survey.opt.Sud Italia': 'Süditalien', 'survey.opt.Isole': 'Inseln', 'survey.opt.Estero': 'Ausland',
+    'survey.paese.Italia': 'Italien', 'survey.paese.Svezia': 'Schweden',
+    'survey.paese.Regno Unito (Inghilterra)': 'Vereinigtes Königreich (England)',
+    'survey.paese.Spagna': 'Spanien', 'survey.paese.Francia': 'Frankreich',
+    'survey.paese.Germania': 'Deutschland', 'survey.paese.Altro': 'Sonstiges',
 };
 
 const sv: Dict = {
@@ -401,6 +426,7 @@ const sv: Dict = {
     'survey.field.istruzione': 'Utbildning',
     'survey.field.tipoIstituto': 'Typ av läroanstalt',
     'survey.field.provenienza': 'Härkomst',
+    'survey.field.paese': 'Land',
     'survey.field.area': 'Studieområde (automatiskt)',
     'survey.select.placeholder': '-- Välj --',
     'survey.tools.title': 'Använda verktyg',
@@ -454,6 +480,10 @@ const sv: Dict = {
     'survey.opt.Istituto professionale': 'Yrkesskola', 'survey.opt.Università': 'Universitet',
     'survey.opt.Nord Italia': 'Norra Italien', 'survey.opt.Centro Italia': 'Centrala Italien',
     'survey.opt.Sud Italia': 'Södra Italien', 'survey.opt.Isole': 'Öarna', 'survey.opt.Estero': 'Utomlands',
+    'survey.paese.Italia': 'Italien', 'survey.paese.Svezia': 'Sverige',
+    'survey.paese.Regno Unito (Inghilterra)': 'Storbritannien (England)',
+    'survey.paese.Spagna': 'Spanien', 'survey.paese.Francia': 'Frankrike',
+    'survey.paese.Germania': 'Tyskland', 'survey.paese.Altro': 'Annat',
 };
 
 export const SURVEY_DICTS: Record<Lang, Dict> = { it, en, es, fr, de, sv };

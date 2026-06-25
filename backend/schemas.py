@@ -112,6 +112,7 @@ class SurveyCreate(BaseModel):
     tipo_istituto: Optional[str] = None
     provenienza: Optional[str] = None
     area_studio: Optional[str] = None
+    paese: Optional[str] = None
     
     q_utile: Optional[int] = None
     q_pertinente: Optional[int] = None
