@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { LANGUAGES } from '@/lib/i18n';
 import { useI18n } from '@/lib/i18n-context';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { FlagIcon } from './FlagIcon';
 
 export function LanguageSwitcher() {
@@ -23,16 +24,17 @@ export function LanguageSwitcher() {
 
     return (
         <div className="relative" ref={ref}>
-            <button
-                type="button"
-                onClick={() => setOpen(o => !o)}
-                className="flex h-8 items-center gap-1 rounded-md border border-slate-200 bg-white px-2 hover:bg-slate-50 transition-colors"
-                aria-label={t('nav.language')}
-                title={t('nav.language')}
-            >
-                <FlagIcon code={current.code} className="h-4 w-6" />
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-            </button>
+            <Tooltip content={t('nav.language')}>
+                <button
+                    type="button"
+                    onClick={() => setOpen(o => !o)}
+                    className="flex h-8 items-center gap-1 rounded-md border border-slate-200 bg-white px-2 hover:bg-slate-50 transition-colors"
+                    aria-label={t('nav.language')}
+                >
+                    <FlagIcon code={current.code} className="h-4 w-6" />
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                </button>
+            </Tooltip>
 
             {open && (
                 <div className="absolute right-0 mt-1 grid grid-cols-[repeat(3,2.25rem)] justify-center gap-1 rounded-md border border-slate-200 bg-white p-1 shadow-lg z-[60]">
