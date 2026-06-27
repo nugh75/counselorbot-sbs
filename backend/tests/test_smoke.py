@@ -740,6 +740,58 @@ def test_certified_strategies_qsar_r_suffixed_factor_gating():
     assert client.delete(f"/admin/certified-strategies/{sid}").status_code == 200
 
 
+def test_certified_strategy_seed_is_idempotent_and_retrievable():
+    from backend.certified_strategy_seed import DEFAULT_CERTIFIED_STRATEGIES, seed_certified_strategies
+    from backend.certified_strategy_service import certified_strategy_memory
+
+    expected_slugs = {item["slug"] for item in DEFAULT_CERTIFIED_STRATEGIES}
+    db = _TestSession()
+    try:
+        before_slugs = {row.slug for row in db.query(models.CertifiedStrategy).all()}
+        before_count = db.query(models.CertifiedStrategy).count()
+
+        inserted = seed_certified_strategies(db, models)
+        assert inserted == len(expected_slugs - before_slugs)
+        assert db.query(models.CertifiedStrategy).count() == before_count + inserted
+        assert seed_certified_strategies(db, models) == 0
+
+        after_slugs = {row.slug for row in db.query(models.CertifiedStrategy).all()}
+        assert expected_slugs.issubset(after_slugs)
+        for slug in {
+            "qsa-active-preview-predict",
+            "qsa-focused-wide-reading",
+            "qsa-multimodal-dual-coding",
+            "qsa-interleaved-practice",
+            "qsa-self-explanation-teach-back",
+            "qsa-concrete-examples-nonexamples",
+            "qsa-memory-map-check",
+            "qsa-error-log-control",
+        }:
+            row = db.query(models.CertifiedStrategy).filter(models.CertifiedStrategy.slug == slug).one()
+            assert row.status == "certified"
+            assert row.is_active is True
+
+        preview_hits = certified_strategy_memory.retrieve(
+            db,
+            questionnaire_type="QSA",
+            scores_context="- C5: 2/9",
+            query="prima leggo titoli parole in grassetto e faccio ipotesi",
+            limit=3,
+        )
+        assert any(item["id"] == "qsa-active-preview-predict" for item in preview_hits)
+
+        multimodal_hits = certified_strategy_memory.retrieve(
+            db,
+            questionnaire_type="QSAr",
+            scores_context="- C3r: 2/9",
+            query="uso video audio immagini e poi faccio uno schema",
+            limit=3,
+        )
+        assert any(item["id"] == "qsa-multimodal-dual-coding" for item in multimodal_hits)
+    finally:
+        db.close()
+
+
 def test_admin_sync_upsert_and_deactivate():
     import backend.admin_sync as admin_sync
     original = admin_sync.fetch_service_admins

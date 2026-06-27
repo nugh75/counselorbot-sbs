@@ -636,6 +636,12 @@ def _seed_and_migrate():
         # Idempotente per strumento: salta quelli già seminati/editati.
         _seed_instruments_catalog(db)
 
+        # Seed catalogo strategie certificate. Non sovrascrive le righe già
+        # presenti, perché il catalogo è curato e modificabile dagli admin.
+        from .certified_strategy_seed import seed_certified_strategies
+        if seed_certified_strategies(db, models):
+            logger.info("Seeded certified strategies catalog")
+
         # Seed domande suggerite dell'assistente docenti (it). Idempotente:
         # salta se la tabella contiene già righe.
         from .assistant_questions_seed import seed_assistant_questions
