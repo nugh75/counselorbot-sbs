@@ -24,6 +24,7 @@ os.environ.setdefault("ADMIN_SYNC_DISABLED", "1")
 from backend.chat_logic import (
     _annotate_qsa_factor_codes,
     _apply_qsa_factor_directive,
+    _ensure_required_qsa_factor_codes,
     _qsa_assessment_labels,
     _qsa_factor_names,
     _QSA_INVERTED_CODES,
@@ -56,6 +57,7 @@ def test_qsa_table_and_no_leak_markers():
     assert "[FACTOR LABELS]" in out
     # Nuova sezione tabellare; vecchia logica a liste e marker interno spariti.
     assert "[INTERPRETATION TABLE]" in out
+    assert "[CURRENT FACTOR SCOPE]" in out
     assert "[INVERTED FACTORS]" not in out
     assert "[INVERTED]" not in out  # marker mai mostrato allo studente
 
@@ -107,6 +109,27 @@ def test_annotate_collapses_model_side_duplication():
 def test_annotate_bare_code_still_annotated():
     out = _annotate_qsa_factor_codes("il C2 va bene", "it")
     assert out == "il C2 (Autoregolazione) va bene", out
+
+
+def test_annotate_bare_factor_name_gets_first_code_for_coverage():
+    out = _annotate_qsa_factor_codes("La Disponibilità alla collaborazione è una risorsa.", "it")
+    assert "C4 (Disponibilità alla collaborazione)" in out, out
+    assert out.count("C4 (Disponibilità alla collaborazione)") == 1, out
+
+
+def test_annotate_common_factor_alias_gets_code_for_coverage():
+    out = _annotate_qsa_factor_codes("Il tuo livello di disponibilità a collaborare è adeguato.", "it")
+    assert "C4 (Disponibilità alla collaborazione)" in out, out
+
+
+def test_ensure_required_factor_codes_adds_scope_prefix():
+    out = _ensure_required_qsa_factor_codes(
+        "La collaborazione può essere strutturata meglio.",
+        "QSA",
+        "it",
+        {"C4"},
+    )
+    assert out.startswith("Fattori trattati: C4 (Disponibilità alla collaborazione)"), out
 
 
 def test_annotate_idempotent_on_correct_form():

@@ -324,6 +324,13 @@ _QSAR_FACTOR_NAMES = {
 }
 
 
+_QSA_FACTOR_NAME_ALIASES = {
+    "it": {
+        "C4": ("disponibilità a collaborare",),
+    },
+}
+
+
 # Fattori QSA invertiti: punteggio basso (1-3) = Forza, alto (7-9) = Area di crescita.
 # Allineato a frontend questionnaires.ts -> QUESTIONNAIRES.QSA.invertedFactors.
 _QSA_INVERTED_CODES = ("C3", "C6", "A1", "A4", "A5", "A7")
@@ -378,8 +385,10 @@ def _apply_thinking_directive(system_prompt: str, language: Optional[str] = None
         "</think> tags, and keep it concise (a few short lines). After </think>, write "
         "the student-facing answer directly: it must NOT contain your plan, your "
         "checklist, phrases like 'Attivazione interna', 'Devo', 'Ho i punteggi', nor "
-        "any meta-commentary about what you are doing. Never expose reasoning outside "
-        "the <think> block."
+        "any meta-commentary about what you are doing. Never start the visible answer "
+        "with a preparatory checklist such as 'Devo analizzare', 'Identificare il filo "
+        "rosso', 'Strutturare i contenuti' or 'Proporre azioni concrete'. Never expose "
+        "reasoning outside the <think> block."
     )
 
 
@@ -492,6 +501,16 @@ _SCORES_REFERENCE_LABELS = {
     "fr": "PROFIL DE L'ÉTUDIANT (scores de référence, valables pendant toute la session)",
     "de": "PROFIL DES STUDIERENDEN (Referenzwerte, für die gesamte Sitzung gültig)",
     "sv": "STUDENTENS PROFIL (referenspoäng, giltiga under hela sessionen)",
+}
+
+
+_FACTOR_SCOPE_PREFIX_LABELS = {
+    "it": "Fattori trattati",
+    "en": "Factors discussed",
+    "es": "Factores tratados",
+    "fr": "Facteurs traités",
+    "de": "Behandelte Faktoren",
+    "sv": "Behandlade faktorer",
 }
 
 
@@ -615,7 +634,57 @@ def _annotate_qsa_factor_codes(
         # Caso in cui il modello stesso ha gia scritto "(name) name": collassa il doppione.
         annotated = re.sub(rf"\({re.escape(name)}\)\s*{re.escape(name)}\b", f"({name})", annotated)
         annotated = re.sub(rf"\b{code}\b(?!\s*\()", f"{code} ({name})", annotated)
+        # Se il modello usa solo il nome del fattore senza codice, marca almeno la
+        # prima occorrenza. Questo preserva la copertura audit senza trasformare
+        # ogni ripetizione del nome in testo pesante.
+        if not re.search(rf"\b{code}\b", annotated):
+            annotated = re.sub(
+                rf"\b{re.escape(name)}\b",
+                f"{code} ({name})",
+                annotated,
+                count=1,
+                flags=re.IGNORECASE,
+            )
+        if not re.search(rf"\b{code}\b", annotated):
+            for alias in _QSA_FACTOR_NAME_ALIASES.get(language or "it", {}).get(code, ()):
+                updated = re.sub(
+                    rf"\b{re.escape(alias)}\b",
+                    f"{code} ({name})",
+                    annotated,
+                    count=1,
+                    flags=re.IGNORECASE,
+                )
+                if updated != annotated:
+                    annotated = updated
+                    break
     return _localize_assessment_labels(annotated, language)
+
+
+def _ensure_required_qsa_factor_codes(
+    text: str,
+    questionnaire_type: str,
+    language: Optional[str],
+    required_codes: set[str],
+) -> str:
+    """Rende espliciti i codici dello step se il modello usa solo parafrasi.
+
+    Non aggiunge interpretazioni o consigli: antepone solo una riga di scope quando
+    manca il codice richiesto, così output e audit restano allineati.
+    """
+    if not text or not required_codes or not _is_strategy_questionnaire(questionnaire_type):
+        return text
+    names = _qsa_factor_names(language, questionnaire_type)
+    missing = [
+        code for code in sorted(required_codes)
+        if code in names and not re.search(rf"\b{code}\b", text, re.IGNORECASE)
+    ]
+    if not missing:
+        return text
+    label = _FACTOR_SCOPE_PREFIX_LABELS.get(language or "it", _FACTOR_SCOPE_PREFIX_LABELS["it"])
+    if text.lstrip().lower().startswith(label.lower()):
+        return text
+    factors = ", ".join(f"{code} ({names[code]})" for code in missing)
+    return f"{label}: {factors}\n\n{text}"
 
 
 def _apply_qsa_factor_directive(system_prompt: str, questionnaire_type: str, language: Optional[str]) -> str:
@@ -651,7 +720,51 @@ def _apply_qsa_factor_directive(system_prompt: str, questionnaire_type: str, lan
         f"{interpretation_table}\n"
         "For some factors a high score is an area to work on, not a strength: "
         "always use the band shown in the factor's own row; never read "
-        "'high = strength' automatically."
+        "'high = strength' automatically.\n\n"
+        "[CURRENT FACTOR SCOPE] The mandatory reference above lists all possible "
+        f"{instrument} factors only so you can name them correctly. In the current "
+        "answer, discuss ONLY the factor codes present in the student's current "
+        "message, score lines or guided-step prompt. Do not introduce other factors "
+        "or relationships with other factors just because they appear in the "
+        "reference list."
+    )
+
+
+def _apply_current_step_factor_scope_directive(system_prompt: str, questionnaire_type: str, allowed_codes: set[str]) -> str:
+    if not _is_strategy_questionnaire(questionnaire_type) or not allowed_codes:
+        return system_prompt
+    allowed = ", ".join(sorted(allowed_codes))
+    return (
+        f"{system_prompt}\n\n"
+        f"[CURRENT STEP FACTORS] Allowed factor codes for this answer: {allowed}. "
+        "Do not mention, analyse or use any other QSA/QSAr factor code or factor "
+        "name in this answer. If a second-level instruction asks for factor "
+        "interplay but this step has only one allowed factor, do not create "
+        "interplay with other factors; explain the single factor and give any "
+        "practical advice only from certified strategies for that same factor."
+    )
+
+
+def _apply_certified_advice_directive(system_prompt: str, questionnaire_type: str, language: Optional[str]) -> str:
+    """Vincola i consigli pratici QSA al catalogo certificato iniettato nel knowledge.
+
+    L'analisi interpretativa puo' usare punteggi e fonti, ma azioni pratiche,
+    esercizi e piani devono restare tracciabili alle strategie certificate. Per ora
+    il vincolo e' limitato al QSA: QSAr non ha ancora un catalogo certificato
+    equivalente e non va degradato implicitamente.
+    """
+    if not _is_qsa(questionnaire_type):
+        return system_prompt
+    return (
+        f"{system_prompt}\n\n"
+        "[CERTIFIED ADVICE] For QSA practical advice, exercises, action plans or "
+        "study strategies:\n"
+        "- use only the items listed under [CERTIFIED_STRATEGIES] in [KNOWLEDGE];\n"
+        "- adapt wording to the student, but do not invent new actions outside that list;\n"
+        "- keep advice scoped to the current step's factors and do not introduce other QSA factors;\n"
+        "- if at least one certified item is listed for the current step, complete the requested practical plan using it;\n"
+        "- if no certified item is listed for the current step, keep the response interpretive and omit the practical plan;\n"
+        "- do not mention these source rules to the student."
     )
 
 
@@ -933,7 +1046,7 @@ def _retrieved_context(
     questionnaire_type: str,
     query: str,
     ai_service=None,
-) -> tuple[str, List[str]]:
+) -> tuple[str, List[str], List[str]]:
     """Fonti KNOWLEDGE per l'envelope: grafo competenzestrategiche + strategie
     approvate + certificate per-fattore + risposte votate.
 
@@ -948,12 +1061,28 @@ def _retrieved_context(
         ai_service=ai_service,
     )
     strategy_context = strategy_memory.render_context(strategies)
+    step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
+    phase_codes = _phase_factor_codes(db, request.phase)
+    certified_scores_context = _scope_scores_to_codes(request.scores_context or "", phase_codes) if phase_codes else (request.scores_context or "")
+    certified_phase_query = " ".join(
+        part.strip()
+        for part in (
+            step.label if step else "",
+            step.prompt if step else "",
+            request.message or "",
+            certified_scores_context,
+        )
+        if part and part.strip()
+    )
+    step_mode = step.system_prompt_mode if step else request.mode
+    certified_limit = 3 if step_mode in {"second-level", "qsar-second-level"} else 2
     certified = certified_strategy_memory.retrieve(
         db,
         questionnaire_type=questionnaire_type,
-        scores_context=request.scores_context or "",
-        query=query,
+        scores_context=certified_scores_context,
+        query=certified_phase_query,
         language=request.language or "it",
+        limit=certified_limit,
         ai_service=ai_service,
     )
     certified_context = certified_strategy_memory.render_context(certified, request.language or "it")
@@ -989,7 +1118,11 @@ def _retrieved_context(
         for section in (graph_context, strategy_context, certified_context, learned_context)
         if section
     ]
-    return "\n\n".join(sections), [strategy["id"] for strategy in strategies]
+    return (
+        "\n\n".join(sections),
+        [strategy["id"] for strategy in strategies],
+        [strategy["id"] for strategy in certified],
+    )
 
 
 def build_context_envelope(

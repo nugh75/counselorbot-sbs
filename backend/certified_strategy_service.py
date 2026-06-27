@@ -103,9 +103,11 @@ class CertifiedStrategyMemory:
         if not strategies:
             return ""
         lines = [
+            "[CERTIFIED_STRATEGIES]",
             "## Strategie di apprendimento certificate",
-            "Strategie validate, da proporre solo se pertinenti al profilo e alla "
-            "conversazione; adattale alla situazione e non citarne l'identificatore.",
+            "Fonte autorizzata per consigli pratici, esercizi, piani d'azione e "
+            "strategie di studio. Proponi solo queste strategie quando sono "
+            "pertinenti; adattale alla situazione e non citarne l'identificatore.",
         ]
         for entry in strategies:
             parts = [f"- {entry['name'] or entry['id']}"]
