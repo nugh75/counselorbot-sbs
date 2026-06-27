@@ -1002,11 +1002,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 return replies;
             }
         }
-        return [
-            { label: t('guided.qr.example'), action: 'send' },
-            { label: t('guided.qr.unsure'), action: 'send' },
-            { label: t('guided.qr.more'), action: 'send' },
-        ];
+        return [];
     })();
     const inputPlaceholder = isLoading
         ? t('guided.input.waiting')
@@ -1290,7 +1286,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                 ))}
                             </div>
                         )}
-                        {/* Risposte rapide: accelerano l'interazione (utile da mobile). */}
+                        {/* Risposte rapide ancora necessarie per il flusso Savickas. */}
                         {!isLoading && messages.length > 0 && quickReplies.length > 0 && (
                             <div className="mb-2 flex flex-wrap gap-1.5">
                                 {quickReplies.map((reply) => (
