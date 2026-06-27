@@ -1,105 +1,221 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LogOut, Settings, FileText, ClipboardList } from 'lucide-react';
+import { ArrowLeft, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, Award, MessageCircleQuestion, PanelLeftClose, PanelLeftOpen, CalendarDays } from 'lucide-react';
 import { ConfigForm } from '@/components/admin/ConfigForm';
 import { LogViewer } from '@/components/admin/LogViewer';
+import { CostStats } from '@/components/admin/CostStats';
+import { PresetsPanel } from '@/components/admin/PresetsPanel';
+import { BenchmarkPanel } from '@/components/admin/BenchmarkPanel';
+import { CounselorsPanel } from '@/components/admin/CounselorsPanel';
+import { CertifiedStrategiesPanel } from '@/components/admin/CertifiedStrategiesPanel';
 import { SurveyViewer } from '@/components/admin/SurveyViewer';
+import { QuestionnaireResultsViewer } from '@/components/admin/QuestionnaireResultsViewer';
+import { QuestionnaireEditor } from '@/components/admin/QuestionnaireEditor';
+import { ValidationExportPanel } from '@/components/admin/ValidationExportPanel';
+import { TrainingDatasetPanel } from '@/components/admin/TrainingDatasetPanel';
+import { PqblAdminPanel } from '@/components/admin/PqblAdminPanel';
+import { ResearchContactsPanel } from '@/components/admin/ResearchContactsPanel';
+import { AdministrationPlansPanel } from '@/components/admin/AdministrationPlansPanel';
+import { AssistantQuestionsPanel } from '@/components/admin/AssistantQuestionsPanel';
+import { getIdentity } from '@/lib/auth';
+import { useI18n } from '@/lib/i18n-context';
+import { canUseResearchConsole } from '@/lib/roles';
 
 import { cn } from '@/lib/utils';
 
+type AdminTab = 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'certifiedStrategies' | 'assistantQuestions' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'training' | 'pqbl';
+
 export default function AdminPage() {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<'config' | 'logs' | 'surveys'>('config');
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const { t } = useI18n();
+    const [activeTab, setActiveTab] = useState<AdminTab>('config');
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [authState, setAuthState] = useState<'loading' | 'admin' | 'forbidden'>('loading');
+    const navGroups: {
+        title: string;
+        items: { id: AdminTab; label: string; icon: typeof Settings }[];
+    }[] = [
+        {
+            title: 'Configurazione AI',
+            items: [
+                { id: 'config', label: t('admin.tab.config'), icon: Settings },
+                { id: 'presets', label: t('admin.tab.presets'), icon: SlidersHorizontal },
+                { id: 'counselors', label: t('admin.tab.counselors'), icon: Users },
+                { id: 'certifiedStrategies', label: t('admin.tab.certified'), icon: Award },
+                { id: 'assistantQuestions', label: t('admin.tab.assistantQuestions'), icon: MessageCircleQuestion },
+            ],
+        },
+        {
+            title: 'Questionari di gradimento',
+            items: [
+                { id: 'surveys', label: t('admin.tab.surveys'), icon: ClipboardList },
+            ],
+        },
+        {
+            title: 'Ricerca',
+            items: [
+                { id: 'results', label: t('admin.tab.results'), icon: BarChart3 },
+                { id: 'questionnaires', label: t('admin.tab.questionnaires'), icon: ListChecks },
+                { id: 'validation', label: t('admin.tab.validation'), icon: Database },
+                { id: 'researchContacts', label: t('admin.tab.researchContacts'), icon: Users },
+                { id: 'administrationPlans', label: t('admin.tab.administrationPlans'), icon: CalendarDays },
+            ],
+        },
+        {
+            title: 'Training dataset',
+            items: [
+                { id: 'training', label: t('admin.tab.training'), icon: BrainCircuit },
+            ],
+        },
+        {
+            title: 'Monitoraggio e costi',
+            items: [
+                { id: 'logs', label: t('admin.tab.logs'), icon: FileText },
+                { id: 'costs', label: t('admin.tab.costs'), icon: Coins },
+                { id: 'benchmark', label: t('admin.tab.benchmark'), icon: Gauge },
+            ],
+        },
+        {
+            title: 'pQBL',
+            items: [
+                { id: 'pqbl', label: t('admin.tab.pqbl'), icon: GraduationCap },
+            ],
+        },
+    ];
+    const activeItem = navGroups.flatMap((group) => group.items).find((item) => item.id === activeTab);
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            router.push('/login');
-        } else {
-            setIsAuthenticated(true);
-        }
-    }, [router]);
+        getIdentity().then((id) => {
+            setAuthState(canUseResearchConsole(id) ? 'admin' : 'forbidden');
+        });
+    }, []);
 
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        router.push('/login');
-    };
+    if (authState === 'loading') {
+        return <div className="min-h-[60vh] flex items-center justify-center text-slate-500">{t('admin.verifying')}</div>;
+    }
 
-    if (!isAuthenticated) return null;
+    if (authState === 'forbidden') {
+        return (
+            <div className="min-h-[60vh] flex items-center justify-center p-4">
+                <div className="max-w-md w-full bg-white border border-slate-200 p-8 rounded-lg text-center space-y-4 shadow-sm">
+                    <div className="mx-auto w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
+                        <ShieldAlert className="w-6 h-6 text-red-600" />
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900">{t('admin.forbidden.title')}</h2>
+                    <p className="text-slate-500 text-sm">
+                        {t('admin.forbidden.body')}
+                    </p>
+                    <button
+                        onClick={() => router.push('/')}
+                        className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-medium transition-colors"
+                    >
+                        {t('admin.forbidden.cta')}
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-background">
-            {/* Header */}
-            <header className="border-b border-white/10 bg-black/20 backdrop-blur-md sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="min-h-screen bg-slate-50">
+            <section className="page-wide px-4 py-8">
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <div className="w-8 h-8 bg-indigo-600 rounded-md flex items-center justify-center">
                             <Settings className="w-5 h-5 text-white" />
                         </div>
-                        <h1 className="font-bold text-lg text-white">Admin Dashboard</h1>
+                        <div>
+                            <h1 className="font-bold text-2xl text-slate-900">Ricerca</h1>
+                            <p className="text-sm text-slate-500 mt-1">CounselorBot · {activeItem?.label}</p>
+                        </div>
                     </div>
-
-                    <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors shadow-sm"
+                    <Link
+                        href="/"
+                        className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
                     >
-                        <LogOut className="w-4 h-4" />
-                        Logout
-                    </button>
+                        <ArrowLeft className="w-4 h-4" />
+                        {t('nav.home')}
+                    </Link>
                 </div>
-            </header>
+                <div className={cn('grid gap-6', sidebarCollapsed ? 'lg:grid-cols-[4.5rem_1fr]' : 'lg:grid-cols-[17rem_1fr]')}>
+                    <aside className="glass-panel p-3 lg:sticky lg:top-24 lg:self-start">
+                        <div className={cn('mb-3 flex items-center', sidebarCollapsed ? 'justify-center' : 'justify-between')}>
+                            {!sidebarCollapsed && (
+                                <div>
+                                    <h2 className="text-sm font-bold text-slate-900">Ricerca</h2>
+                                    <p className="text-xs text-slate-500">Strumenti amministrativi</p>
+                                </div>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => setSidebarCollapsed((value) => !value)}
+                                title={sidebarCollapsed ? 'Espandi sidebar' : 'Collassa sidebar'}
+                                aria-label={sidebarCollapsed ? 'Espandi sidebar' : 'Collassa sidebar'}
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                            >
+                                {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+                            </button>
+                        </div>
+                        <nav className="space-y-4">
+                            {navGroups.map((group) => (
+                                <div key={group.title}>
+                                    {!sidebarCollapsed && (
+                                    <h3 className="px-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                                        {group.title}
+                                    </h3>
+                                    )}
+                                    <div className="mt-1 space-y-1">
+                                        {group.items.map((item) => {
+                                            const Icon = item.icon;
+                                            const active = activeTab === item.id;
+                                            return (
+                                                <button
+                                                    key={item.id}
+                                                    type="button"
+                                                    onClick={() => setActiveTab(item.id)}
+                                                    title={sidebarCollapsed ? item.label : undefined}
+                                                    className={cn(
+                                                        'flex w-full items-center rounded-md text-left text-sm font-medium transition-colors',
+                                                        sidebarCollapsed ? 'h-10 justify-center px-0' : 'gap-2 px-3 py-2',
+                                                        active
+                                                            ? 'bg-indigo-50 text-indigo-700'
+                                                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
+                                                    )}
+                                                >
+                                                    <Icon className="h-4 w-4 shrink-0" />
+                                                    {!sidebarCollapsed && <span className="min-w-0 truncate">{item.label}</span>}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
+                        </nav>
+                    </aside>
 
-            <main className="max-w-7xl mx-auto px-4 py-8">
-                {/* Tabs */}
-                <div className="flex gap-4 mb-8">
-                    <button
-                        onClick={() => setActiveTab('config')}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border",
-                            activeTab === 'config'
-                                ? "bg-blue-600/10 border-blue-600/20 text-blue-400"
-                                : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10"
-                        )}
-                    >
-                        <Settings className="w-4 h-4" />
-                        Configurazione & Prompt
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('logs')}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border",
-                            activeTab === 'logs'
-                                ? "bg-blue-600/10 border-blue-600/20 text-blue-400"
-                                : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10"
-                        )}
-                    >
-                        <FileText className="w-4 h-4" />
-                        Log Conversazioni
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('surveys')}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border",
-                            activeTab === 'surveys'
-                                ? "bg-blue-600/10 border-blue-600/20 text-blue-400"
-                                : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10"
-                        )}
-                    >
-                        <ClipboardList className="w-4 h-4" />
-                        Questionari
-                    </button>
+                    <div className="min-w-0 animate-fade-in-up">
+                        {activeTab === 'config' && <ConfigForm />}
+                        {activeTab === 'logs' && <LogViewer />}
+                        {activeTab === 'costs' && <CostStats />}
+                        {activeTab === 'presets' && <PresetsPanel />}
+                        {activeTab === 'benchmark' && <BenchmarkPanel />}
+                        {activeTab === 'counselors' && <CounselorsPanel />}
+                        {activeTab === 'certifiedStrategies' && <CertifiedStrategiesPanel />}
+                        {activeTab === 'assistantQuestions' && <AssistantQuestionsPanel />}
+                        {activeTab === 'surveys' && <SurveyViewer />}
+                        {activeTab === 'results' && <QuestionnaireResultsViewer />}
+                        {activeTab === 'questionnaires' && <QuestionnaireEditor />}
+                        {activeTab === 'researchContacts' && <ResearchContactsPanel />}
+                        {activeTab === 'administrationPlans' && <AdministrationPlansPanel />}
+                        {activeTab === 'training' && <TrainingDatasetPanel />}
+                        {activeTab === 'pqbl' && <PqblAdminPanel />}
+                        {activeTab === 'validation' && <ValidationExportPanel />}
+                    </div>
                 </div>
-
-                {/* Content */}
-                <div className="animate-fade-in-up">
-                    {activeTab === 'config' && <ConfigForm />}
-                    {activeTab === 'logs' && <LogViewer />}
-                    {activeTab === 'surveys' && <SurveyViewer />}
-                </div>
-            </main>
+            </section>
         </div>
     );
 }

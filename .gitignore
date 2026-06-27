@@ -24,6 +24,7 @@ counselorbot.db
 # Runtime data with student PII — never commit
 uploads/
 backend/graphify-out/
+graphify-out/
 
 # session_memory is tracked, except the root-only runtime subdir
 session_memory/opencode-runtime/

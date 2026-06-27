@@ -2,6 +2,10 @@
 
 CounselorBot è un'applicazione web AI-powered progettata per aiutare gli studenti ad analizzare le loro strategie di apprendimento (QSA).
 
+## Documentazione
+
+La documentazione stabile del progetto vive in [`docs/`](docs/). L'indice principale è [`docs/README.md`](docs/README.md).
+
 ## Prerequisiti
 
 *   **Python** 3.10 o superiore
@@ -64,12 +68,9 @@ Il progetto è diviso in due parti: **Backend** (FastAPI) e **Frontend** (Next.j
 *   **Login**: [http://localhost:3000/login](http://localhost:3000/login)
 *   **Admin Dashboard**: [http://localhost:3000/admin](http://localhost:3000/admin)
 
-### Credenziali di Test (Sviluppo)
-Se hai popolato il database con script di test o registrato un utente:
-*   **Username**: `admin` (o quello registrato)
-*   **Password**: `admin123` (o quella registrata)
+### Autenticazione
 
-> **Nota**: Puoi registrare un nuovo account amministratore direttamente dalla pagina di Login cliccando su "Registra un nuovo account".
+In produzione l'identita' viene fornita da **ai4auth** tramite il reverse proxy. In sviluppo locale, senza gli header forward-auth o una sessione ai4auth verificabile, l'applicazione opera come utente anonimo e le funzioni amministrative non sono disponibili.
 
 ## Funzionalità Principali
 
@@ -95,17 +96,17 @@ docker compose up --build
 Questo comando:
 1. Costruisce le immagini per frontend e backend
 2. Avvia entrambi i servizi
-3. Monta il database SQLite per la persistenza dei dati
+3. Avvia PostgreSQL e conserva i dati nel volume `postgres_data`
+
+Il compose di produzione collega inoltre frontend e backend alle reti Docker esterne `proxy-network` e `ai4educ-console_default`, necessarie per proxy e autenticazione.
 
 ### Accesso
 - **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000/docs
+- **PostgreSQL**: localhost:5435
 
 ### Configurazione API Keys
 Le chiavi API si configurano dal pannello admin:
-1. Vai su http://localhost:3000/login
-2. Accedi con `admin` / `admin123`
-3. Configura provider e API Key nella sezione Configurazione
+Le chiavi si configurano dal pannello admin dopo autenticazione ai4auth, oppure tramite le variabili in `.env` (che hanno precedenza sulla configurazione salvata nel database).
 
 ### Comandi Utili
 
@@ -123,6 +124,27 @@ docker compose up --build
 docker compose logs -f
 ```
 
+### Utility Operative
+
+```bash
+# Controllo read-only delle sequence PostgreSQL
+python check_sequences.py
+
+# Verifica dell'import legacy SQLite -> PostgreSQL senza scritture
+python migrate_data.py --dry-run
+
+# Import legacy effettivo, dopo aver verificato il dry-run
+python migrate_data.py
+
+# Reinstalla soltanto la configurazione Nginx Proxy Manager
+./update_nginx.sh
+
+# Build, avvio Compose e aggiornamento Nginx
+./deploy.sh
+```
+
+Le utility database leggono `POSTGRES_HOST_PORT` da `.env`; con il compose fornito il valore host e' `5435`.
+
 ### Note
-- Il database `counselorbot.db` viene montato come volume per persistere i dati
-- Assicurati che le porte 3000 e 8000 siano libere prima di avviare
+- Nel compose il database applicativo e' PostgreSQL; `counselorbot.db` resta il fallback SQLite per l'avvio locale senza `DATABASE_URL` e per eventuali migrazioni legacy.
+- Il frontend espone `127.0.0.1:3000`; il backend resta accessibile all'interno delle reti Docker e tramite proxy.

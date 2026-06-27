@@ -1,0 +1,588 @@
+{
+  "instrument": "QPCS",
+  "source": "M. Pellerey — QPCS, competenzestrategiche.it (CNOS-FAP)",
+  "license_note": "Proprietario. Item e chiave fattori da inserire solo se autorizzati.",
+  "n_items": 55,
+  "response_scale": {
+    "min": 1,
+    "max": 4,
+    "labels": {
+      "it": [
+        "1 = Mai o quasi mai",
+        "2 = Qualche volta",
+        "3 = Spesso",
+        "4 = Sempre o quasi sempre"
+      ],
+      "en": [
+        "1 = Never/almost never",
+        "2 = Sometimes",
+        "3 = Often",
+        "4 = Always/almost always"
+      ],
+      "sv": [
+        "1 = Aldrig/nästan aldrig",
+        "2 = Ibland",
+        "3 = Ofta",
+        "4 = Alltid/nästan alltid"
+      ]
+    }
+  },
+  "report_scale": {
+    "type": "to_define",
+    "min": null,
+    "max": null
+  },
+  "factors": [],
+  "items": [
+    {
+      "id": "QPCS-001",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-002",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-003",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-004",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-005",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-006",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-007",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-008",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-009",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-010",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-011",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-012",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-013",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-014",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-015",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-016",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-017",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-018",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-019",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-020",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-021",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-022",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-023",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-024",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-025",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-026",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-027",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-028",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-029",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-030",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-031",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-032",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-033",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-034",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-035",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-036",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-037",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-038",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-039",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-040",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-041",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-042",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-043",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-044",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-045",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-046",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-047",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-048",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-049",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-050",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-051",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-052",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-053",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-054",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCS-055",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    }
+  ]
+}

@@ -1,0 +1,318 @@
+{
+  "instrument": "QAP",
+  "source": "CAAS (Savickas & Porfeli, 2012), adatt. it. Pellerey-Margottini-Leproni. Testo item: fonte CAAS ufficiale (vocopher.com).",
+  "license_note": "CAAS: uso per ricerca secondo i termini degli autori. Inserire il testo item dalla versione ufficiale EN e dalla versione SV validata.",
+  "n_items": 24,
+  "response_scale": {
+    "min": 1,
+    "max": 5,
+    "labels": {
+      "it": [
+        "1 = Pochissimo",
+        "2 = Poco",
+        "3 = Abbastanza",
+        "4 = Molto",
+        "5 = Moltissimo"
+      ],
+      "en": [
+        "1 = Not strong",
+        "2 = Somewhat strong",
+        "3 = Strong",
+        "4 = Stronger",
+        "5 = Strongest"
+      ],
+      "sv": [
+        "1 = Mycket svag",
+        "2 = Ganska svag",
+        "3 = Stark",
+        "4 = Starkare",
+        "5 = Starkast"
+      ]
+    }
+  },
+  "report_scale": {
+    "type": "sum_by_dimension",
+    "min": null,
+    "max": null
+  },
+  "factors": [
+    {
+      "code": "CONCERN",
+      "name": {
+        "it": "Preoccupazione (Futuro)",
+        "en": "Concern",
+        "sv": "Oro (framtid)"
+      },
+      "direction": "direct"
+    },
+    {
+      "code": "CONTROL",
+      "name": {
+        "it": "Controllo",
+        "en": "Control",
+        "sv": "Kontroll"
+      },
+      "direction": "direct"
+    },
+    {
+      "code": "CURIOSITY",
+      "name": {
+        "it": "Curiosità",
+        "en": "Curiosity",
+        "sv": "Nyfikenhet"
+      },
+      "direction": "direct"
+    },
+    {
+      "code": "CONFIDENCE",
+      "name": {
+        "it": "Fiducia",
+        "en": "Confidence",
+        "sv": "Tillit"
+      },
+      "direction": "direct"
+    }
+  ],
+  "items": [
+    {
+      "id": "QAP-001",
+      "factor": "CONCERN",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-002",
+      "factor": "CONCERN",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-003",
+      "factor": "CONCERN",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-004",
+      "factor": "CONCERN",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-005",
+      "factor": "CONCERN",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-006",
+      "factor": "CONCERN",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-007",
+      "factor": "CONTROL",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-008",
+      "factor": "CONTROL",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-009",
+      "factor": "CONTROL",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-010",
+      "factor": "CONTROL",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-011",
+      "factor": "CONTROL",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-012",
+      "factor": "CONTROL",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-013",
+      "factor": "CURIOSITY",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-014",
+      "factor": "CURIOSITY",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-015",
+      "factor": "CURIOSITY",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-016",
+      "factor": "CURIOSITY",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-017",
+      "factor": "CURIOSITY",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-018",
+      "factor": "CURIOSITY",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-019",
+      "factor": "CONFIDENCE",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-020",
+      "factor": "CONFIDENCE",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-021",
+      "factor": "CONFIDENCE",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-022",
+      "factor": "CONFIDENCE",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-023",
+      "factor": "CONFIDENCE",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QAP-024",
+      "factor": "CONFIDENCE",
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    }
+  ]
+}
