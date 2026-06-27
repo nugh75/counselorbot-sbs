@@ -1318,6 +1318,110 @@ def test_chat_smoke_mocked_ai():
     assert r.json()["response"] == "RISPOSTA_TEST"
 
 
+def _latest_log_details(session_id: str) -> dict:
+    db = _TestSession()
+    try:
+        entry = (
+            db.query(models.Log)
+            .filter(models.Log.session_id == session_id, models.Log.action == "chat_message")
+            .order_by(models.Log.timestamp.desc(), models.Log.id.desc())
+            .first()
+        )
+        assert entry is not None, f"nessun log chat_message per {session_id}"
+        return entry.details
+    finally:
+        db.close()
+
+
+def _set_config(key: str, value: str) -> None:
+    db = _TestSession()
+    try:
+        row = db.query(models.Config).filter(models.Config.key == key).first()
+        if row:
+            row.value = value
+        else:
+            db.add(models.Config(key=key, value=value))
+        db.commit()
+    finally:
+        db.close()
+
+
+def test_chat_log_persists_prompt_envelope():
+    session_id = "envelope-log-chat"
+    r = client.post("/chat", json={
+        "message": "Come posso migliorare il metodo di studio?",
+        "mode": "generic",
+        "session_id": session_id,
+        "questionnaire_type": "QSA",
+        "language": "it",
+        "scores_context": "Profilo test: 5/9",
+    })
+    assert r.status_code == 200, r.text
+    envelope = _latest_log_details(session_id).get("envelope")
+    assert envelope, "details.envelope mancante nel log /chat"
+    assert envelope["system_prompt_final"], "system_prompt_final vuoto"
+    assert "Come posso migliorare il metodo di studio?" in envelope["full_message"]
+    assert isinstance(envelope["history"], list)
+
+
+def test_chat_stream_log_persists_prompt_envelope():
+    session_id = "envelope-log-stream"
+    session_memory.clear(session_id)
+    r = client.post("/chat/stream", json={
+        "message": "Analizza il mio profilo di studio",
+        "mode": "generic",
+        "session_id": session_id,
+        "questionnaire_type": "QSA",
+        "language": "it",
+        "scores_context": "Profilo test: 5/9",
+    })
+    assert r.status_code == 200, r.text
+    envelope = _latest_log_details(session_id).get("envelope")
+    assert envelope, "details.envelope mancante nel log /chat/stream"
+    assert envelope["system_prompt_final"]
+    assert "Analizza il mio profilo di studio" in envelope["full_message"]
+    assert isinstance(envelope["history"], list)
+    session_memory.clear(session_id)
+
+
+def test_chat_log_envelope_redacts_pii():
+    from backend import pii
+    previous = pii.is_pii_redact_enabled()
+    pii.set_pii_redact_enabled(True)
+    session_id = "envelope-log-pii"
+    try:
+        r = client.post("/chat", json={
+            "message": "Scrivimi a mario.rossi@example.com per i risultati",
+            "mode": "generic",
+            "session_id": session_id,
+            "questionnaire_type": "QSA",
+            "language": "it",
+        })
+        assert r.status_code == 200, r.text
+        envelope = _latest_log_details(session_id)["envelope"]
+        assert "[email]" in envelope["full_message"]
+        assert "mario.rossi@example.com" not in envelope["full_message"]
+    finally:
+        pii.set_pii_redact_enabled(previous)
+
+
+def test_log_full_prompt_toggle_off():
+    _set_config("log_full_prompt", "false")
+    session_id = "envelope-log-off"
+    try:
+        r = client.post("/chat", json={
+            "message": "Domanda senza envelope",
+            "mode": "generic",
+            "session_id": session_id,
+            "questionnaire_type": "QSA",
+            "language": "it",
+        })
+        assert r.status_code == 200, r.text
+        assert "envelope" not in _latest_log_details(session_id)
+    finally:
+        _set_config("log_full_prompt", "true")
+
+
 def test_site_chat_status_public():
     r = client.get("/site-chat/status")
     assert r.status_code == 200, r.text

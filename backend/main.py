@@ -339,6 +339,7 @@ def _seed_and_migrate():
         # Valore testuale coerente con il resto della tabella configs.
         for key, default, descr in [
             ("log_pii_redact", "true", "Redazione PII (email/telefono/cf) nei log conversazionali (true/false)."),
+            ("log_full_prompt", "true", "Salva nei log il prompt finale completo e l'envelope dei messaggi (true/false)."),
             ("log_retention_days", "90", "Giorni di conservazione dei log; 0 disattiva la retention automatica."),
             ("usd_eur_rate", "0.92", "Tasso di cambio USD->EUR per la conversione dei costi nel pannello admin."),
             ("monthly_budget_usd", "0", "Budget mensile in USD; superato il limite si usano solo modelli Ollama locali (0 = nessun limite)."),

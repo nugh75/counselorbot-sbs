@@ -29,4 +29,8 @@ curl -sS http://127.0.0.1:8088/admin/prompt-audit/dry-run \
 
 ## Garanzie
 
-Gli endpoint non scrivono su `session_memory`, non creano righe `Log`, non generano `SharedChatResponse` e non modificano la memoria conversazionale. La modifica separata per salvare nei log di produzione il prompt finale completo e l'envelope dei messaggi resta fuori da questa iterazione.
+Gli endpoint non scrivono su `session_memory`, non creano righe `Log`, non generano `SharedChatResponse` e non modificano la memoria conversazionale.
+
+## Persistenza in produzione
+
+I log conversazionali (`action="chat_message"` da `/chat`, `/chat/stream` e `/chat/message`) salvano ora in `details.envelope` lo stesso envelope del dry-run (`system_prompt_final`, `full_message`, `history`), così audit e produzione sono confrontabili. La persistenza è controllata dalla config DB `log_full_prompt` (default `true`, editabile live nella admin Config UI) e rispetta la redazione PII (`log_pii_redact`) come gli altri campi testuali. Gli endpoint `prompt-audit` restano read-only.

@@ -56,6 +56,32 @@ def _get_int_config(db, key: str, default: int) -> int:
     return default
 
 
+def full_prompt_logging_enabled(db, default: bool = True) -> bool:
+    """True se i log devono salvare il prompt finale completo + envelope messaggi.
+
+    Controllato dalla config DB `log_full_prompt` (default attiva). Letto per-richiesta
+    dalla sessione disponibile a ogni punto di log, quindi editabile live in admin
+    senza wiring di startup/global (a differenza di `log_pii_redact`)."""
+    try:
+        row = db.query(models.Config).filter(models.Config.key == "log_full_prompt").first()
+        if row and row.value not in (None, ""):
+            return str(row.value).strip().lower() not in ("0", "false", "no", "off")
+    except Exception:
+        pass
+    return default
+
+
+def build_log_envelope(system_prompt_final: str, full_message: str, history) -> dict:
+    """Envelope da persistere nei log: stessa forma del prompt-audit dry-run
+    (`{system_prompt_final, full_message, history}`), così audit e produzione sono
+    confrontabili. La redazione PII e' applicata a parte (`pii.redact_envelope`)."""
+    return {
+        "system_prompt_final": system_prompt_final,
+        "full_message": full_message,
+        "history": list(history or []),
+    }
+
+
 def log_error(db, session_id: str, error: str, *, identity: Optional[dict] = None,
               action: str = "chat_error", questionnaire_type: Optional[str] = None,
               mode: Optional[str] = None, phase: Optional[str] = None) -> None:

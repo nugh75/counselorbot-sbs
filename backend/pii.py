@@ -114,6 +114,31 @@ def redact_details(details: dict, *fields: str) -> dict:
     return details
 
 
+def redact_envelope(envelope: dict) -> dict:
+    """Redige PII in un envelope di log `{system_prompt_final, full_message, history}`.
+
+    Ritorna una **copia nuova**: la `history` proviene da
+    ``session_memory.get_transcript()`` e i suoi dict sono condivisi con la memoria di
+    sessione, quindi non vanno mutati in place. Rispetta il flag `_pii_redact_enabled`
+    (se off, ritorna comunque una copia non redatta)."""
+    if not isinstance(envelope, dict):
+        return envelope
+    history_out = []
+    for item in envelope.get("history") or []:
+        if isinstance(item, dict):
+            new_item = dict(item)
+            if isinstance(new_item.get("content"), str):
+                new_item["content"] = redact(new_item["content"])
+            history_out.append(new_item)
+        else:
+            history_out.append(item)
+    return {
+        "system_prompt_final": redact(envelope.get("system_prompt_final")),
+        "full_message": redact(envelope.get("full_message")),
+        "history": history_out,
+    }
+
+
 def detect_pii_types(text: Optional[str]) -> set[str]:
     """Ritorna i tipi PII rilevati nel testo, senza esporre i valori trovati."""
     if not text or not isinstance(text, str):
