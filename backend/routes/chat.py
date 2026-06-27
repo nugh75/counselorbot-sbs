@@ -49,6 +49,7 @@ from ..chat_logic import (
     _apply_language_directive,
     _apply_certified_advice_directive,
     _apply_current_step_factor_scope_directive,
+    _apply_current_step_score_profile_directive,
     _apply_qsa_factor_directive,
     _apply_register_directive,
     _apply_thinking_directive,
@@ -278,16 +279,18 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             step_label = step.label
             questionnaire_type = step.questionnaire_type
 
+    phase_codes = _phase_factor_codes(db, request.phase)
     system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language)
-    system_prompt = _apply_current_step_factor_scope_directive(
-        system_prompt, questionnaire_type, _phase_factor_codes(db, request.phase)
-    )
-    system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type, request.language)
-    system_prompt = _apply_thinking_directive(system_prompt, request.language)
+    system_prompt = _apply_current_step_factor_scope_directive(system_prompt, questionnaire_type, phase_codes)
     model_scores_context = (
         _annotate_qsa_factor_codes(request.scores_context, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else request.scores_context
     )
+    system_prompt = _apply_current_step_score_profile_directive(
+        system_prompt, questionnaire_type, request.language, model_scores_context, phase_codes
+    )
+    system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type, request.language)
+    system_prompt = _apply_thinking_directive(system_prompt, request.language)
     model_message = (
         _annotate_qsa_factor_codes(effective_message, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else effective_message
@@ -317,9 +320,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     # Punteggi nel messaggio scope-ati alla sezione corrente: il modello analizza
     # solo i fattori del suo step, non quelli di altre sezioni. Il profilo intero
     # resta persistito (update_context) per i follow-up cross-sezione.
-    message_scores_context = _scope_scores_to_codes(
-        model_scores_context, _phase_factor_codes(db, request.phase)
-    )
+    message_scores_context = _scope_scores_to_codes(model_scores_context, phase_codes)
     system_prompt_final, full_message, history = build_context_envelope(
         db, ai_service, request, session_id, identity,
         c_persona=c_persona, system_prompt=system_prompt, step_label=step_label,
@@ -483,16 +484,18 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             step_label = step.label
             questionnaire_type = step.questionnaire_type
 
+    phase_codes = _phase_factor_codes(db, request.phase)
     system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language)
-    system_prompt = _apply_current_step_factor_scope_directive(
-        system_prompt, questionnaire_type, _phase_factor_codes(db, request.phase)
-    )
-    system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type, request.language)
-    system_prompt = _apply_thinking_directive(system_prompt, request.language)
+    system_prompt = _apply_current_step_factor_scope_directive(system_prompt, questionnaire_type, phase_codes)
     model_scores_context = (
         _annotate_qsa_factor_codes(request.scores_context, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else request.scores_context
     )
+    system_prompt = _apply_current_step_score_profile_directive(
+        system_prompt, questionnaire_type, request.language, model_scores_context, phase_codes
+    )
+    system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type, request.language)
+    system_prompt = _apply_thinking_directive(system_prompt, request.language)
     model_message = (
         _annotate_qsa_factor_codes(effective_message, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else effective_message
@@ -501,9 +504,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     # Punteggi nel messaggio scope-ati alla sezione corrente: il modello analizza
     # solo i fattori del suo step, non quelli di altre sezioni. Il profilo intero
     # resta persistito (update_context) per i follow-up cross-sezione.
-    message_scores_context = _scope_scores_to_codes(
-        model_scores_context, _phase_factor_codes(db, request.phase)
-    )
+    message_scores_context = _scope_scores_to_codes(model_scores_context, phase_codes)
 
     session_memory.update_context(
         session_id,

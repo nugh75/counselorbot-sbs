@@ -1184,17 +1184,17 @@ def test_prompt_audit_scopes_certified_strategies_to_qsa_second_level_step():
     _ensure_guided_steps("QSA")
     db = _TestSession()
     try:
-        for slug, factors, sort_order in (
-            ("test-certified-c1-out-of-step", ["C1"], 0),
-            ("test-certified-a4-out-of-step", ["A4"], 1),
-            ("test-certified-a6-in-step", ["A6"], 2),
-            ("test-certified-a5-in-step", ["A5"], 3),
+        for slug, factors, sort_order, recommended_when in (
+            ("test-certified-c1-out-of-step", ["C1"], 0, "Quando il fattore collegato e' saliente."),
+            ("test-certified-a4-out-of-step", ["A4"], 1, "Quando il fattore collegato e' saliente."),
+            ("test-certified-a6-in-step", ["A6"], 2, "Quando A6 e' un'area di crescita."),
+            ("test-certified-a5-in-step", ["A5"], 3, "Quando A5 e' un'area di crescita."),
         ):
             db.query(models.CertifiedStrategy).filter(models.CertifiedStrategy.slug == slug).delete()
             db.add(models.CertifiedStrategy(
                 slug=slug,
                 name_it=slug,
-                recommended_when_it="Quando il fattore collegato e' saliente.",
+                recommended_when_it=recommended_when,
                 description_it=f"Strategia certificata per {', '.join(factors)}.",
                 factor_codes=factors,
                 match_mode="any",
@@ -1231,12 +1231,18 @@ def test_prompt_audit_scopes_certified_strategies_to_qsa_second_level_step():
     body = r.json()
     certified_ids = body["knowledge"]["certified_strategy_ids"]
     assert "test-certified-a6-in-step" in certified_ids
-    assert "test-certified-a5-in-step" in certified_ids
+    # A5=3 e' una forza nel QSA: una strategia dichiarata per A5 area di
+    # crescita non deve entrare come intervento pratico.
+    assert "test-certified-a5-in-step" not in certified_ids
     assert "test-certified-c1-out-of-step" not in certified_ids
     assert "test-certified-a4-out-of-step" not in certified_ids
     assert "[CERTIFIED_STRATEGIES]" in body["knowledge"]["context"]
+    assert "Ruolo: intervento principale" in body["knowledge"]["context"]
     assert "[CERTIFIED ADVICE]" in body["envelope"]["system_prompt_final"]
     assert "[CURRENT STEP FACTORS] Allowed factor codes for this answer: A2, A5, A6" in body["envelope"]["system_prompt_final"]
+    assert "[CURRENT STEP SCORE PROFILE]" in body["envelope"]["system_prompt_final"]
+    assert "A5 (Mancanza di perseveranza): 3/9 = Forza" in body["envelope"]["system_prompt_final"]
+    assert "Primary improvement targets: A6 (Percezione di competenza)" in body["envelope"]["system_prompt_final"]
 
 
 def test_prompt_audit_api_token_allows_qsa_dry_run_without_ai4auth():

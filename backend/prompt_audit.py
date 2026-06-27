@@ -20,6 +20,7 @@ from .chat_logic import (
     _annotate_qsa_factor_codes,
     _apply_certified_advice_directive,
     _apply_current_step_factor_scope_directive,
+    _apply_current_step_score_profile_directive,
     _apply_language_directive,
     _apply_qsa_factor_directive,
     _apply_register_directive,
@@ -28,6 +29,7 @@ from .chat_logic import (
     _ensure_required_qsa_factor_codes,
     _is_strategy_questionnaire,
     _phase_factor_codes,
+    _qsa_step_score_profile,
     _resolve_system_prompt,
     _retrieved_context,
     _sanitize_ztpi_step_label,
@@ -241,22 +243,23 @@ def build_prompt_audit(
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
     system_prompt = _apply_language_directive(system_prompt, request.language)
     system_prompt = _apply_register_directive(system_prompt, request.language)
+    required_codes = _phase_factor_codes(db, request.phase)
     system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language)
-    system_prompt = _apply_current_step_factor_scope_directive(
-        system_prompt, questionnaire_type, _phase_factor_codes(db, request.phase)
-    )
-    system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type, request.language)
-    system_prompt = _apply_thinking_directive(system_prompt, request.language)
+    system_prompt = _apply_current_step_factor_scope_directive(system_prompt, questionnaire_type, required_codes)
 
     model_scores_context = (
         _annotate_qsa_factor_codes(request.scores_context, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else request.scores_context
     )
+    system_prompt = _apply_current_step_score_profile_directive(
+        system_prompt, questionnaire_type, request.language, model_scores_context, required_codes
+    )
+    system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type, request.language)
+    system_prompt = _apply_thinking_directive(system_prompt, request.language)
     model_message = (
         _annotate_qsa_factor_codes(effective_message, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else effective_message
     )
-    required_codes = _phase_factor_codes(db, request.phase)
     message_scores_context = _scope_scores_to_codes(model_scores_context, required_codes)
 
     knowledge_context = ""
@@ -402,6 +405,34 @@ def _factor_scope_check(text: str, required_codes: set[str]) -> dict[str, Any]:
     return {"applicable": True, "ok": not unexpected, "unexpected": unexpected}
 
 
+_A5_STRENGTH_PROBLEM_RE = re.compile(
+    r"(mancanza\s+di\s+perseveranza\s+(?:è|e')\s+una\s+forza|"
+    r"(?<!mancanza di )perseveranza[^.\n]{0,60}\b(?:bassa|debole|ancora bassa)\b|"
+    r"\blavor\w+\s+su\s+A5\b|"
+    r"\bA5\b[^.\n]{0,90}\b(?:migliorare|da migliorare)\b)",
+    re.IGNORECASE,
+)
+
+
+def _inverted_resource_wording_check(result: dict[str, Any], text: str) -> dict[str, Any]:
+    questionnaire_type = result.get("_questionnaire_type") or ""
+    if questionnaire_type != "QSA":
+        return {"applicable": False, "ok": None, "matches": []}
+    language = result["resolved"].get("language") or "it"
+    required_codes = _phase_factor_codes_in_scoped_context(result["inputs"].get("scoped_scores_context") or "")
+    profile = _qsa_step_score_profile(
+        result["inputs"].get("scoped_scores_context") or "",
+        questionnaire_type,
+        language,
+        required_codes,
+    )
+    a5_is_strength = any(item["code"] == "A5" and item["band"] == "strength" for item in profile)
+    if not a5_is_strength:
+        return {"applicable": False, "ok": None, "matches": []}
+    matches = sorted(set(match.group(0).strip() for match in _A5_STRENGTH_PROBLEM_RE.finditer(text or "")))
+    return {"applicable": True, "ok": not matches, "matches": matches}
+
+
 def response_checks(result: dict[str, Any], response_text: str) -> dict[str, Any]:
     language = result["resolved"].get("language") or "it"
     questionnaire_type = result.get("_questionnaire_type") or ""
@@ -413,6 +444,7 @@ def response_checks(result: dict[str, Any], response_text: str) -> dict[str, Any
         "factor_code_format": _factor_code_format_check(response_text, questionnaire_type),
         "factor_coverage": _factor_coverage_check(response_text, required_codes),
         "factor_scope": _factor_scope_check(response_text, required_codes),
+        "inverted_resource_wording": _inverted_resource_wording_check(result, response_text),
         "refusal": {"ok": not bool(_REFUSAL_RE.search(response_text or ""))},
         "reasoning_leak": {"ok": not bool(_REASONING_LEAK_RE.search(response_text or ""))},
         "ztpi_technical_leakage": {

@@ -571,6 +571,9 @@ def _scope_scores_to_codes(scores: str, codes: set[str]) -> str:
     return "\n".join(out)
 
 
+_QSA_SCORE_RE = re.compile(r"\b([CA]\d{1,2})\b[^\n\r0-9]{0,80}?([1-9])\s*/\s*9\b", re.IGNORECASE)
+
+
 def _is_qsa(questionnaire_type: Optional[str]) -> bool:
     return (questionnaire_type or "").upper() == "QSA"
 
@@ -602,6 +605,49 @@ def _qsa_assessment_labels(language: Optional[str]) -> dict[str, str]:
     return _QSA_ASSESSMENT_LABELS.get(language or "it", _QSA_ASSESSMENT_LABELS["it"])
 
 
+def _qsa_band_for_score(code: str, score: int, questionnaire_type: str = "QSA") -> str:
+    inverted_codes = _QSAR_INVERTED_CODES if (questionnaire_type or "").upper() == "QSAR" else _QSA_INVERTED_CODES
+    if code.upper() in inverted_codes:
+        if score <= 3:
+            return "strength"
+        if score <= 6:
+            return "normal"
+        return "growth"
+    if score <= 3:
+        return "growth"
+    if score <= 6:
+        return "adequate"
+    return "strength"
+
+
+def _qsa_step_score_profile(
+    scores_context: str,
+    questionnaire_type: str,
+    language: Optional[str],
+    allowed_codes: set[str],
+) -> list[dict[str, str]]:
+    if not scores_context or not allowed_codes or not _is_strategy_questionnaire(questionnaire_type):
+        return []
+    labels = _qsa_assessment_labels(language)
+    names = _qsa_factor_names(language, questionnaire_type)
+    rows = []
+    for code, raw_score in _QSA_SCORE_RE.findall(scores_context):
+        code = code.upper()
+        if code not in allowed_codes or code not in names:
+            continue
+        score = int(raw_score)
+        band = _qsa_band_for_score(code, score, questionnaire_type)
+        rows.append({
+            "code": code,
+            "name": names[code],
+            "score": str(score),
+            "band": band,
+            "label": labels[band],
+        })
+    rows.sort(key=lambda item: item["code"])
+    return rows
+
+
 def _localize_assessment_labels(text: str, language: Optional[str]) -> str:
     """Rete di sicurezza: se il modello scrive comunque 'Area for growth/improvement'
     in inglese (frase distintiva, non confondibile con prosa), la riporta nella
@@ -611,6 +657,37 @@ def _localize_assessment_labels(text: str, language: Optional[str]) -> str:
         return text
     growth = _qsa_assessment_labels(language)["growth"]
     return re.sub(r"\bareas?\s+for\s+(?:growth|improvement)\b", growth, text, flags=re.IGNORECASE)
+
+
+def _sanitize_qsa_inverted_wording(text: str, language: Optional[str], questionnaire_type: str = "QSA") -> str:
+    """Corregge formulazioni formalmente vere ma pedagogicamente brutte sugli invertiti.
+
+    Esempio: "la mancanza di perseveranza e' una forza" e' tecnicamente una
+    lettura di A5 basso, ma suona male allo studente. Meglio esplicitare che e'
+    il basso livello del problema a indicare una risorsa.
+    """
+    if not text or (language or "it") != "it" or not _is_qsa(questionnaire_type):
+        return text
+    cleaned = text
+    cleaned = re.sub(
+        r"\b(?:la\s+tua\s+)?mancanza\s+di\s+perseveranza\s+(?:è|e')\s+una\s+forza\b",
+        "il basso livello di mancanza di perseveranza indica una buona tenuta",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(
+        r"\bA5\s*\(Mancanza di perseveranza\)\s+(?:è|e')\s+una\s+forza\b",
+        "A5 (Mancanza di perseveranza) a basso punteggio indica una buona tenuta",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(
+        r"\b(?:la\s+)?mancanza\s+di\s+perseveranza\s+(?:è|e')\s+bassa\b",
+        "il basso livello di mancanza di perseveranza indica una buona tenuta",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    return cleaned
 
 
 def _annotate_qsa_factor_codes(
@@ -657,7 +734,8 @@ def _annotate_qsa_factor_codes(
                 if updated != annotated:
                     annotated = updated
                     break
-    return _localize_assessment_labels(annotated, language)
+    annotated = _localize_assessment_labels(annotated, language)
+    return _sanitize_qsa_inverted_wording(annotated, language, questionnaire_type)
 
 
 def _ensure_required_qsa_factor_codes(
@@ -745,6 +823,51 @@ def _apply_current_step_factor_scope_directive(system_prompt: str, questionnaire
     )
 
 
+def _apply_current_step_score_profile_directive(
+    system_prompt: str,
+    questionnaire_type: str,
+    language: Optional[str],
+    scores_context: str,
+    allowed_codes: set[str],
+) -> str:
+    profile = _qsa_step_score_profile(scores_context, questionnaire_type, language, allowed_codes)
+    if not profile:
+        return system_prompt
+
+    lines = []
+    targets = []
+    resources = []
+    for item in profile:
+        line = f"- {item['code']} ({item['name']}): {item['score']}/9 = {item['label']}"
+        lines.append(line)
+        if item["band"] == "growth":
+            targets.append(f"{item['code']} ({item['name']})")
+        elif item["band"] == "strength":
+            resources.append(f"{item['code']} ({item['name']})")
+
+    target_text = ", ".join(targets) if targets else "none"
+    resource_text = ", ".join(resources) if resources else "none"
+    heading_rule = ""
+    if (language or "it") == "it":
+        heading_rule = (
+            " Use Italian headings exactly: 'Azione da fare oggi' and "
+            "'Azione da fare questa settimana'; never leave these headings in English."
+        )
+    return (
+        f"{system_prompt}\n\n"
+        "[CURRENT STEP SCORE PROFILE]\n"
+        + "\n".join(lines)
+        + "\n"
+        f"Primary improvement targets: {target_text}. Strength/resource factors: {resource_text}. "
+        "Practical advice must focus primarily on improvement targets. Strength/resource factors "
+        "may support the plan but must not be described as problems to fix. For inverted factors, "
+        "phrase the meaning in plain language: if a low score is a strength, say that the low level "
+        "of the difficulty indicates a resource; do not write awkward phrases such as 'lack of "
+        "perseverance is a strength'."
+        f"{heading_rule}"
+    )
+
+
 def _apply_certified_advice_directive(system_prompt: str, questionnaire_type: str, language: Optional[str]) -> str:
     """Vincola i consigli pratici QSA al catalogo certificato iniettato nel knowledge.
 
@@ -755,6 +878,9 @@ def _apply_certified_advice_directive(system_prompt: str, questionnaire_type: st
     """
     if not _is_qsa(questionnaire_type):
         return system_prompt
+    heading_rule = ""
+    if (language or "it") == "it":
+        heading_rule = "\n- write plan headings in Italian, not English: 'Azione da fare oggi' and 'Azione da fare questa settimana';"
     return (
         f"{system_prompt}\n\n"
         "[CERTIFIED ADVICE] For QSA practical advice, exercises, action plans or "
@@ -765,6 +891,7 @@ def _apply_certified_advice_directive(system_prompt: str, questionnaire_type: st
         "- if at least one certified item is listed for the current step, complete the requested practical plan using it;\n"
         "- if no certified item is listed for the current step, keep the response interpretive and omit the practical plan;\n"
         "- do not mention these source rules to the student."
+        f"{heading_rule}"
     )
 
 
