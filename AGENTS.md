@@ -47,3 +47,22 @@ Before finishing:
 4. Push the branch to GitHub.
 5. Provide a short summary of changed files, checks run, Docker rebuild status, commits created, branch used, and any remaining issues.
 <!-- ai4educ:shared-rules:end -->
+
+## Project Notes
+
+CounselorBot supports seven student-facing instruments:
+
+- `QSA` — learning strategies, full profile with cognitive and affective factors.
+- `QSAr` — reduced QSA for quicker learning-strategy analysis.
+- `ZTPI` — Zimbardo time perspective profile.
+- `SAVICKAS` — narrative career construction interview.
+- `QPCS` — perceived strategic competences.
+- `QPCC` — perceived competences and beliefs.
+- `QAP` — career adaptability resources.
+
+Guided paths are database-driven. `GuidedStep` rows define the ordered steps per
+`questionnaire_type`; `GuidedStepQuestion` rows define the suggested student
+questions shown at the base of each guided-chat step. The Italian default
+questions are seeded from `backend/guided_step_questions_seed.py`; the frontend
+receives them from `/qsa/guided-ui-texts` as `suggested_questions` for each step
+and `fixed_phase_questions` for the fixed "Domande e Approfondimenti" phase.
