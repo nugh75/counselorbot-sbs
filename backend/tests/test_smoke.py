@@ -162,6 +162,7 @@ opencode_routes.AIService = _FakeAIService
 # Prompt audit: stesso mock provider, nessuna rete.
 import backend.routes.prompt_audit as prompt_audit_routes
 prompt_audit_routes.AIService = _FakeAIService
+main.app.dependency_overrides[prompt_audit_routes.require_prompt_audit_access] = _fake_admin
 
 client = TestClient(main.app)
 
@@ -958,6 +959,47 @@ def test_prompt_audit_dry_run_builds_qsa_envelope_without_side_effects():
     finally:
         db.close()
     assert session_memory.get_summary(session_id) == ""
+
+
+def test_prompt_audit_api_token_allows_qsa_dry_run_without_ai4auth():
+    _ensure_guided_steps("QSA")
+    audit_override = main.app.dependency_overrides.pop(
+        prompt_audit_routes.require_prompt_audit_access,
+        None,
+    )
+    previous_token = os.environ.get("PROMPT_AUDIT_API_TOKEN")
+    os.environ["PROMPT_AUDIT_API_TOKEN"] = "unit-test-prompt-audit-token"
+    payload = {
+        "questionnaire_type": "QSA",
+        "language": "it",
+        "phase": "cognitive",
+        "mode": "factor",
+        "use_phase_prompt": True,
+        "scores_context": "PROFILO QSA DELLO STUDENTE:\n- C1: 7/9\n- C2: 6/9\n- C3: 8/9\n- C4: 5/9\n- C5: 4/9\n- C6: 2/9\n- C7: 6/9",
+        "include_knowledge": False,
+    }
+    try:
+        r = client.post(
+            "/admin/prompt-audit/dry-run",
+            headers={"X-Prompt-Audit-Token": "unit-test-prompt-audit-token"},
+            json=payload,
+        )
+        assert r.status_code == 200, r.text
+        assert r.json()["resolved"]["prompt_key"] == "prompt_factor"
+
+        bad = client.post(
+            "/admin/prompt-audit/dry-run",
+            headers={"X-Prompt-Audit-Token": "wrong-token"},
+            json=payload,
+        )
+        assert bad.status_code == 401
+    finally:
+        if previous_token is None:
+            os.environ.pop("PROMPT_AUDIT_API_TOKEN", None)
+        else:
+            os.environ["PROMPT_AUDIT_API_TOKEN"] = previous_token
+        if audit_override is not None:
+            main.app.dependency_overrides[prompt_audit_routes.require_prompt_audit_access] = audit_override
 
 
 def test_prompt_audit_live_returns_mocked_response_without_logging():
