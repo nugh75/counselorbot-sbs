@@ -26,5 +26,5 @@ uploads/
 backend/graphify-out/
 graphify-out/
 
-# session_memory is tracked, except the root-only runtime subdir
-session_memory/opencode-runtime/
+# Runtime session data (root-owned, session/PII) — never commit
+session_memory/
