@@ -32,12 +32,39 @@ DEFAULT_SYSTEM_PROMPT_FACTOR_QA = (
     "Clear and professional tone, with practical, targeted suggestions."
 )
 
+# Direttiva di sintesi per il secondo livello: i counselor tendono a elencare i
+# fattori del gruppo invece di metterli in relazione. Questo blocco (additivo,
+# riusato anche nell'upgrade DB in main.startup_event) impone almeno una frase
+# esplicita sull'interazione tra fattori. La sentinella serve all'idempotenza.
+FACTOR_INTERPLAY_SENTINEL = "[FACTOR INTERPLAY]"
+
+DEFAULT_FACTOR_INTERPLAY_QSA = (
+    "\n\n[FACTOR INTERPLAY] Required: never analyse the factors of a group one by one "
+    "in isolation. In every grouping include at least one explicit sentence on HOW the "
+    "factors influence each other — they reinforce, compensate or hinder one another — "
+    "naming them (e.g. \"low A6 (Perceived competence) holds back A2 (Volition)\"; "
+    "\"high A1 (Baseline anxiety) amplifies A7 (Emotional interference)\"; \"strong "
+    "C1 (Elaborative strategies) compensates for weak C5\"). This integrated reading of "
+    "the relationships between factors is the goal of the second-level step; a plain list "
+    "of single factors is not acceptable."
+)
+
+DEFAULT_FACTOR_INTERPLAY_QSAR = (
+    "\n\n[FACTOR INTERPLAY] Required: do not analyse the short-form factors one by one in "
+    "isolation. Include at least one explicit sentence on HOW they influence each other — "
+    "reinforce, compensate or hinder — naming them (e.g. \"low A4r (Perceived competence) "
+    "holds back A2r (Volition)\"; \"weak C4r (attention control) undermines C2r "
+    "(Self-regulated strategies)\"). The integrated reading of these relationships is the "
+    "goal of this step; a plain list of single factors is not acceptable."
+)
+
 DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL = (
     "You are CounselorBot, a QSA expert. Provide second-level analysis of the "
     "macro-dimensions of the study method, relating the factors to one another and "
     "proposing practical guidance in English. "
     "You are inside an already-started structured analysis sequence: do NOT use opening greetings "
     "(e.g. 'Hi!', 'Great idea', 'Welcome'). Start directly with the requested analysis."
+    + DEFAULT_FACTOR_INTERPLAY_QSA
 )
 
 DEFAULT_SYSTEM_PROMPT_GUIDED_QUESTIONS = (
@@ -79,6 +106,7 @@ DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL = (
     "You are CounselorBot, a QSAr expert. Provide an integrated analysis of the short-form factors "
     "of the study method, connecting the relevant results and proposing practical guidance in English. "
     "Avoid diagnoses and do not use opening greetings. Start directly with the requested analysis."
+    + DEFAULT_FACTOR_INTERPLAY_QSAR
 )
 
 DEFAULT_SYSTEM_PROMPT_QSAR_GENERIC = (
@@ -418,7 +446,7 @@ DEFAULT_SITE_CHAT_KNOWLEDGE_CARD = (
     "INSTRUMENTS SHEET (canonical data; use EXACT names, acronyms and numbers from here):\n"
     "- QSA — Learning Strategies Questionnaire (Pellerey, 100 items). 14 factors, stanine scale 1-9.\n"
     "  Cognitive: C1 Elaborative strategies · C2 Self-regulation · C3 Disorientation · C4 Willingness to "
-    "collaborate · C5 Semantic organizers · C6 Concentration difficulties · C7 Self-questioning.\n"
+    "collaborate · C5 Use of semantic organisers · C6 Concentration difficulties · C7 Self-questioning.\n"
     "  Affective: A1 Basic anxiety · A2 Volition · A3 Attribution to controllable causes · A4 Attribution to "
     "uncontrollable causes · A5 Lack of perseverance · A6 Perception of competence · A7 Emotional interference.\n"
     "  Inverted factors (high score = area for growth, not strength): C3, C6, A1, A4, A5, A7.\n"
@@ -1060,7 +1088,7 @@ DEFAULT_GUIDED_STEPS: List[Dict] = [
         "prompt": (
             "Second-Level Analysis - Part 1: ELABORATION AND ORGANISATION. "
             "Analyse together the factors: C1 (Elaborative strategies), "
-            "C5 (Semantic organisers), C7 (Self-questioning). "
+            "C5 (Use of semantic organisers), C7 (Self-questioning). "
             "Assess how the student processes and structures information."
         ),
         "system_prompt_mode": "second-level",

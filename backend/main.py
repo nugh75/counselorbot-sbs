@@ -16,6 +16,9 @@ from .prompt_config import (
     DEFAULT_SYSTEM_PROMPT_ZTPI_BTP,
     DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTERVIEW,
     DEFAULT_SYSTEM_PROMPT_SAVICKAS_SUMMARY,
+    FACTOR_INTERPLAY_SENTINEL,
+    DEFAULT_FACTOR_INTERPLAY_QSA,
+    DEFAULT_FACTOR_INTERPLAY_QSAR,
     DEFAULT_GUIDED_STEPS,
     DEFAULT_QSAR_GUIDED_STEPS,
     DEFAULT_ZTPI_GUIDED_STEPS,
@@ -602,6 +605,20 @@ def _seed_and_migrate():
                 if new_prompt and step.prompt != new_prompt:
                     step.prompt = new_prompt
                     legacy_changed = True
+
+        # One-off: i prompt di secondo livello chiedevano di "collegare i punti ai
+        # fattori" ma non di spiegare come i fattori si influenzano a vicenda, così i
+        # counselor li trattavano come elenchi. Appende (idempotente via sentinella,
+        # non distruttivo: preserva le personalizzazioni admin) la direttiva
+        # [FACTOR INTERPLAY] alle righe DB di secondo livello QSA/QSAr.
+        for interplay_key, interplay_block in (
+            ("prompt_second_level", DEFAULT_FACTOR_INTERPLAY_QSA),
+            ("prompt_qsar_second_level", DEFAULT_FACTOR_INTERPLAY_QSAR),
+        ):
+            cfg_sl = db.query(models.Config).filter(models.Config.key == interplay_key).first()
+            if cfg_sl and FACTOR_INTERPLAY_SENTINEL not in (cfg_sl.value or ""):
+                cfg_sl.value = (cfg_sl.value or "").rstrip() + interplay_block
+                legacy_changed = True
 
         if legacy_changed:
             db.commit()

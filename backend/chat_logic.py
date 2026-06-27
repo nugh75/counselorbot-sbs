@@ -206,7 +206,7 @@ SUPPORTED_AI_LANGUAGES = {
 _QSA_FACTOR_NAMES = {
     "it": {
         "C1": "Strategie elaborative", "C2": "Autoregolazione", "C3": "Disorientamento",
-        "C4": "Disponibilità alla collaborazione", "C5": "Organizzatori semantici",
+        "C4": "Disponibilità alla collaborazione", "C5": "Uso di organizzatori semantici",
         "C6": "Difficoltà di concentrazione", "C7": "Autointerrogazione",
         "A1": "Ansietà di base", "A2": "Volizione",
         "A3": "Attribuzione a cause controllabili", "A4": "Attribuzione a cause incontrollabili",
@@ -215,7 +215,7 @@ _QSA_FACTOR_NAMES = {
     },
     "en": {
         "C1": "Elaborative strategies", "C2": "Self-regulation", "C3": "Disorientation",
-        "C4": "Willingness to collaborate", "C5": "Semantic organisers",
+        "C4": "Willingness to collaborate", "C5": "Use of semantic organisers",
         "C6": "Concentration difficulties", "C7": "Self-questioning",
         "A1": "Baseline anxiety", "A2": "Volition",
         "A3": "Attribution to controllable causes", "A4": "Attribution to uncontrollable causes",
@@ -224,7 +224,7 @@ _QSA_FACTOR_NAMES = {
     },
     "es": {
         "C1": "Estrategias elaborativas", "C2": "Autorregulación", "C3": "Desorientación",
-        "C4": "Disposición a colaborar", "C5": "Organizadores semánticos",
+        "C4": "Disposición a colaborar", "C5": "Uso de organizadores semánticos",
         "C6": "Dificultades de concentración", "C7": "Autointerrogación",
         "A1": "Ansiedad de base", "A2": "Volición",
         "A3": "Atribución a causas controlables", "A4": "Atribución a causas incontrolables",
@@ -233,7 +233,7 @@ _QSA_FACTOR_NAMES = {
     },
     "fr": {
         "C1": "Stratégies d'élaboration", "C2": "Autorégulation", "C3": "Désorientation",
-        "C4": "Disposition à collaborer", "C5": "Organisateurs sémantiques",
+        "C4": "Disposition à collaborer", "C5": "Usage d'organisateurs sémantiques",
         "C6": "Difficultés de concentration", "C7": "Auto-questionnement",
         "A1": "Anxiété de base", "A2": "Volition",
         "A3": "Attribution à des causes contrôlables", "A4": "Attribution à des causes incontrôlables",
@@ -242,7 +242,7 @@ _QSA_FACTOR_NAMES = {
     },
     "de": {
         "C1": "Elaborationsstrategien", "C2": "Selbstregulation", "C3": "Desorientierung",
-        "C4": "Kooperationsbereitschaft", "C5": "Semantische Organisatoren",
+        "C4": "Kooperationsbereitschaft", "C5": "Verwendung semantischer Organisatoren",
         "C6": "Konzentrationsschwierigkeiten", "C7": "Selbstbefragung",
         "A1": "Grundangst", "A2": "Volition",
         "A3": "Attribution auf kontrollierbare Ursachen", "A4": "Attribution auf unkontrollierbare Ursachen",
@@ -251,7 +251,7 @@ _QSA_FACTOR_NAMES = {
     },
     "sv": {
         "C1": "Bearbetningsstrategier", "C2": "Självreglering", "C3": "Desorientering",
-        "C4": "Samarbetsvilja", "C5": "Semantiska organisatörer",
+        "C4": "Samarbetsvilja", "C5": "Användning av semantiska organisatörer",
         "C6": "Koncentrationssvårigheter", "C7": "Självfrågande",
         "A1": "Grundångest", "A2": "Vilja",
         "A3": "Attribution till kontrollerbara orsaker", "A4": "Attribution till okontrollerbara orsaker",
@@ -608,6 +608,12 @@ def _annotate_qsa_factor_codes(
             # Durante lo stream la parentesi puo essere ancora incompleta:
             # mostriamo subito l'etichetta completa senza esporre una sigla sola.
             annotated = re.sub(rf"\b{code}\b\s*\([^)]*$", f"{code} ({name})", annotated)
+        # Codice gia seguito dal proprio nome SENZA parentesi (es. "C1 Strategie
+        # elaborative", "A6: Percezione di competenza"): avvolgilo una volta sola,
+        # senza ripetere il nome (era la causa di "A6 (...) Percezione di competenza").
+        annotated = re.sub(rf"\b{code}\b\s*[:\-–]?\s*{re.escape(name)}", f"{code} ({name})", annotated)
+        # Caso in cui il modello stesso ha gia scritto "(name) name": collassa il doppione.
+        annotated = re.sub(rf"\({re.escape(name)}\)\s*{re.escape(name)}\b", f"({name})", annotated)
         annotated = re.sub(rf"\b{code}\b(?!\s*\()", f"{code} ({name})", annotated)
     return _localize_assessment_labels(annotated, language)
 
