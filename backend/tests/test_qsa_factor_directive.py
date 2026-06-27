@@ -23,7 +23,10 @@ os.environ.setdefault("ADMIN_SYNC_DISABLED", "1")
 
 from backend.chat_logic import (
     _annotate_qsa_factor_codes,
+    _apply_current_step_score_profile_directive,
     _apply_qsa_factor_directive,
+    _ensure_required_qsa_factor_codes,
+    _sanitize_qsa_inverted_wording,
     _qsa_assessment_labels,
     _qsa_factor_names,
     _QSA_INVERTED_CODES,
@@ -56,6 +59,7 @@ def test_qsa_table_and_no_leak_markers():
     assert "[FACTOR LABELS]" in out
     # Nuova sezione tabellare; vecchia logica a liste e marker interno spariti.
     assert "[INTERPRETATION TABLE]" in out
+    assert "[CURRENT FACTOR SCOPE]" in out
     assert "[INVERTED FACTORS]" not in out
     assert "[INVERTED]" not in out  # marker mai mostrato allo studente
 
@@ -74,6 +78,22 @@ def test_qsa_a5_is_growth_at_high_score():
     out = _apply_qsa_factor_directive("BASE", "QSA", "it")
     assert "- A5 (Mancanza di perseveranza): 1-3 = Forza · 4-6 = Normale · 7-9 = Area di crescita" in out
     assert "A5 (Mancanza di perseveranza): 1-3 = Area di crescita" not in out
+
+
+def test_current_step_score_profile_marks_targets_and_resources():
+    scores = "\n".join([
+        "PROFILO QSA DELLO STUDENTE:",
+        "- A2: 6/9",
+        "- A5: 3/9",
+        "- A6: 3/9",
+    ])
+    out = _apply_current_step_score_profile_directive("BASE", "QSA", "it", scores, {"A2", "A5", "A6"})
+    assert "[CURRENT STEP SCORE PROFILE]" in out
+    assert "A5 (Mancanza di perseveranza): 3/9 = Forza" in out
+    assert "A6 (Percezione di competenza): 3/9 = Area di crescita" in out
+    assert "Primary improvement targets: A6 (Percezione di competenza)" in out
+    assert "Strength/resource factors: A5 (Mancanza di perseveranza)" in out
+    assert "Azione da fare oggi" in out
 
 
 def test_qsar_inverted_codes_use_inverted_bands():
@@ -107,6 +127,35 @@ def test_annotate_collapses_model_side_duplication():
 def test_annotate_bare_code_still_annotated():
     out = _annotate_qsa_factor_codes("il C2 va bene", "it")
     assert out == "il C2 (Autoregolazione) va bene", out
+
+
+def test_annotate_bare_factor_name_gets_first_code_for_coverage():
+    out = _annotate_qsa_factor_codes("La Disponibilità alla collaborazione è una risorsa.", "it")
+    assert "C4 (Disponibilità alla collaborazione)" in out, out
+    assert out.count("C4 (Disponibilità alla collaborazione)") == 1, out
+
+
+def test_annotate_common_factor_alias_gets_code_for_coverage():
+    out = _annotate_qsa_factor_codes("Il tuo livello di disponibilità a collaborare è adeguato.", "it")
+    assert "C4 (Disponibilità alla collaborazione)" in out, out
+
+
+def test_sanitize_inverted_wording_for_a5_strength_phrase():
+    out = _sanitize_qsa_inverted_wording("La tua mancanza di perseveranza è una forza.", "it", "QSA")
+    assert "buona tenuta" in out, out
+    assert "mancanza di perseveranza è una forza" not in out.lower(), out
+    out = _sanitize_qsa_inverted_wording("La mancanza di perseveranza è bassa.", "it", "QSA")
+    assert "basso livello di mancanza di perseveranza indica una buona tenuta" in out, out
+
+
+def test_ensure_required_factor_codes_adds_scope_prefix():
+    out = _ensure_required_qsa_factor_codes(
+        "La collaborazione può essere strutturata meglio.",
+        "QSA",
+        "it",
+        {"C4"},
+    )
+    assert out.startswith("Fattori trattati: C4 (Disponibilità alla collaborazione)"), out
 
 
 def test_annotate_idempotent_on_correct_form():

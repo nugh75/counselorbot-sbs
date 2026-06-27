@@ -18,13 +18,18 @@ from .anonymous_codes import code_for_identity
 from .api_models import ChatRequest
 from .chat_logic import (
     _annotate_qsa_factor_codes,
+    _apply_certified_advice_directive,
+    _apply_current_step_factor_scope_directive,
+    _apply_current_step_score_profile_directive,
     _apply_language_directive,
     _apply_qsa_factor_directive,
     _apply_register_directive,
     _apply_thinking_directive,
     _clamp_max_tokens,
+    _ensure_required_qsa_factor_codes,
     _is_strategy_questionnaire,
     _phase_factor_codes,
+    _qsa_step_score_profile,
     _resolve_system_prompt,
     _retrieved_context,
     _sanitize_ztpi_step_label,
@@ -58,6 +63,8 @@ _ZTPI_TECHNICAL_RE = re.compile(r"\b(?:ZTPI|PTB|BTP|DBTP-r?|T[1-5])\b", re.IGNOR
 # «sto pensando»/<think>, non nella risposta allo studente).
 _REASONING_LEAK_RE = re.compile(
     r"(attivazione interna|ho i punteggi|devo (?:mantenere|ricordare|usare|suddividere|rispettare)|"
+    r"devo analizzare|identificare il filo rosso|strutturare i contenuti|"
+    r"questo (?:e|è) il cuore della risposta|proporre azioni concrete basate|"
     r"<\s*think|internal reasoning|chain[- ]of[- ]thought|come da istruzioni)",
     re.IGNORECASE,
 )
@@ -236,25 +243,31 @@ def build_prompt_audit(
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
     system_prompt = _apply_language_directive(system_prompt, request.language)
     system_prompt = _apply_register_directive(system_prompt, request.language)
+    required_codes = _phase_factor_codes(db, request.phase)
     system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language)
-    system_prompt = _apply_thinking_directive(system_prompt, request.language)
+    system_prompt = _apply_current_step_factor_scope_directive(system_prompt, questionnaire_type, required_codes)
 
     model_scores_context = (
         _annotate_qsa_factor_codes(request.scores_context, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else request.scores_context
     )
+    system_prompt = _apply_current_step_score_profile_directive(
+        system_prompt, questionnaire_type, request.language, model_scores_context, required_codes
+    )
+    system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type, request.language)
+    system_prompt = _apply_thinking_directive(system_prompt, request.language)
     model_message = (
         _annotate_qsa_factor_codes(effective_message, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else effective_message
     )
-    required_codes = _phase_factor_codes(db, request.phase)
     message_scores_context = _scope_scores_to_codes(model_scores_context, required_codes)
 
     knowledge_context = ""
     strategy_ids: list[str] = []
+    certified_strategy_ids: list[str] = []
     if bool(getattr(payload, "include_knowledge", True)):
         retrieval_query = f"{step_label} {model_message} {model_scores_context}".strip()
-        knowledge_context, strategy_ids = _retrieved_context(
+        knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
             db, session_id, request, questionnaire_type, retrieval_query, ai_service=ai_service
         )
 
@@ -340,6 +353,7 @@ def build_prompt_audit(
             "included": bool(getattr(payload, "include_knowledge", True)),
             "context_length": len(knowledge_context),
             "strategy_ids": strategy_ids,
+            "certified_strategy_ids": certified_strategy_ids,
             "context": knowledge_context,
         },
         "warnings": warnings,
@@ -383,6 +397,42 @@ def _factor_coverage_check(text: str, required_codes: set[str]) -> dict[str, Any
     return {"applicable": True, "ok": not missing, "covered": covered, "missing": missing}
 
 
+def _factor_scope_check(text: str, required_codes: set[str]) -> dict[str, Any]:
+    if not required_codes:
+        return {"applicable": False, "ok": None, "unexpected": []}
+    present = _factor_codes_in(text)
+    unexpected = sorted(code for code in present if code not in required_codes)
+    return {"applicable": True, "ok": not unexpected, "unexpected": unexpected}
+
+
+_A5_STRENGTH_PROBLEM_RE = re.compile(
+    r"(mancanza\s+di\s+perseveranza\s+(?:è|e')\s+una\s+forza|"
+    r"(?<!mancanza di )perseveranza[^.\n]{0,60}\b(?:bassa|debole|ancora bassa)\b|"
+    r"\blavor\w+\s+su\s+A5\b|"
+    r"\bA5\b[^.\n]{0,90}\b(?:migliorare|da migliorare)\b)",
+    re.IGNORECASE,
+)
+
+
+def _inverted_resource_wording_check(result: dict[str, Any], text: str) -> dict[str, Any]:
+    questionnaire_type = result.get("_questionnaire_type") or ""
+    if questionnaire_type != "QSA":
+        return {"applicable": False, "ok": None, "matches": []}
+    language = result["resolved"].get("language") or "it"
+    required_codes = _phase_factor_codes_in_scoped_context(result["inputs"].get("scoped_scores_context") or "")
+    profile = _qsa_step_score_profile(
+        result["inputs"].get("scoped_scores_context") or "",
+        questionnaire_type,
+        language,
+        required_codes,
+    )
+    a5_is_strength = any(item["code"] == "A5" and item["band"] == "strength" for item in profile)
+    if not a5_is_strength:
+        return {"applicable": False, "ok": None, "matches": []}
+    matches = sorted(set(match.group(0).strip() for match in _A5_STRENGTH_PROBLEM_RE.finditer(text or "")))
+    return {"applicable": True, "ok": not matches, "matches": matches}
+
+
 def response_checks(result: dict[str, Any], response_text: str) -> dict[str, Any]:
     language = result["resolved"].get("language") or "it"
     questionnaire_type = result.get("_questionnaire_type") or ""
@@ -393,6 +443,8 @@ def response_checks(result: dict[str, Any], response_text: str) -> dict[str, Any
         "no_greeting": {"ok": not bool(_GREETING_RE.search(response_text or ""))},
         "factor_code_format": _factor_code_format_check(response_text, questionnaire_type),
         "factor_coverage": _factor_coverage_check(response_text, required_codes),
+        "factor_scope": _factor_scope_check(response_text, required_codes),
+        "inverted_resource_wording": _inverted_resource_wording_check(result, response_text),
         "refusal": {"ok": not bool(_REFUSAL_RE.search(response_text or ""))},
         "reasoning_leak": {"ok": not bool(_REASONING_LEAK_RE.search(response_text or ""))},
         "ztpi_technical_leakage": {
@@ -442,6 +494,8 @@ def _log_prompt_audit_live(db: Session, payload, result: dict[str, Any], public:
             "cost_usd": public.get("cost_usd"),
             "duration_ms": public.get("duration_ms"),
             "knowledge_context_length": public.get("knowledge", {}).get("context_length"),
+            "strategy_ids": public.get("knowledge", {}).get("strategy_ids"),
+            "certified_strategy_ids": public.get("knowledge", {}).get("certified_strategy_ids"),
         }, "scores_context", "bot_response", "reasoning")
         if full_prompt_logging_enabled(db):
             details["envelope"] = pii.redact_envelope(result.get("envelope", {}))
@@ -507,6 +561,12 @@ def run_prompt_audit_live(
     elif _is_strategy_questionnaire(questionnaire_type):
         response_visible = _annotate_qsa_factor_codes(
             response_raw, payload.language, questionnaire_type=questionnaire_type
+        )
+        response_visible = _ensure_required_qsa_factor_codes(
+            response_visible,
+            questionnaire_type,
+            payload.language,
+            _phase_factor_codes(db, payload.phase),
         )
     else:
         response_visible = response_raw
