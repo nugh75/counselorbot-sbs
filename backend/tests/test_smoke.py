@@ -1180,6 +1180,65 @@ def test_prompt_audit_dry_run_builds_qsa_envelope_without_side_effects():
     assert session_memory.get_summary(session_id) == ""
 
 
+def test_prompt_audit_scopes_certified_strategies_to_qsa_second_level_step():
+    _ensure_guided_steps("QSA")
+    db = _TestSession()
+    try:
+        for slug, factors, sort_order in (
+            ("test-certified-c1-out-of-step", ["C1"], 0),
+            ("test-certified-a4-out-of-step", ["A4"], 1),
+            ("test-certified-a6-in-step", ["A6"], 2),
+            ("test-certified-a5-in-step", ["A5"], 3),
+        ):
+            db.query(models.CertifiedStrategy).filter(models.CertifiedStrategy.slug == slug).delete()
+            db.add(models.CertifiedStrategy(
+                slug=slug,
+                name_it=slug,
+                recommended_when_it="Quando il fattore collegato e' saliente.",
+                description_it=f"Strategia certificata per {', '.join(factors)}.",
+                factor_codes=factors,
+                match_mode="any",
+                questionnaire_types=["QSA"],
+                keywords=" ".join(factors),
+                status="certified",
+                sort_order=sort_order,
+                is_active=True,
+            ))
+        db.commit()
+    finally:
+        db.close()
+
+    scores_context = "\n".join([
+        "PROFILO QSA DELLO STUDENTE:",
+        "- C1: 7/9", "- C2: 5/9", "- C3: 3/9", "- C4: 6/9",
+        "- C5: 4/9", "- C6: 7/9", "- C7: 5/9",
+        "- A1: 8/9", "- A2: 6/9", "- A3: 5/9", "- A4: 8/9",
+        "- A5: 3/9", "- A6: 3/9", "- A7: 7/9",
+    ])
+    r = client.post("/admin/prompt-audit/dry-run", json={
+        "questionnaire_type": "QSA",
+        "language": "it",
+        "phase": "sl-motivation",
+        "mode": "second-level",
+        "use_phase_prompt": True,
+        "scores_context": scores_context,
+        "session_id": "prompt-audit-certified-scoped",
+        "max_tokens": 700,
+        "include_knowledge": True,
+        "include_history": False,
+    })
+    assert r.status_code == 200, r.text
+    body = r.json()
+    certified_ids = body["knowledge"]["certified_strategy_ids"]
+    assert "test-certified-a6-in-step" in certified_ids
+    assert "test-certified-a5-in-step" in certified_ids
+    assert "test-certified-c1-out-of-step" not in certified_ids
+    assert "test-certified-a4-out-of-step" not in certified_ids
+    assert "[CERTIFIED_STRATEGIES]" in body["knowledge"]["context"]
+    assert "[CERTIFIED ADVICE]" in body["envelope"]["system_prompt_final"]
+    assert "[CURRENT STEP FACTORS] Allowed factor codes for this answer: A2, A5, A6" in body["envelope"]["system_prompt_final"]
+
+
 def test_prompt_audit_api_token_allows_qsa_dry_run_without_ai4auth():
     _ensure_guided_steps("QSA")
     audit_override = main.app.dependency_overrides.pop(
