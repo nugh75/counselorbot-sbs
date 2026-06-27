@@ -26,6 +26,7 @@ from ..qsa_extractor import (
     extract_questionnaire_data,
 )
 from ..guided_text_i18n import SECONDARY_LANGS, resolve_text, QUESTIONS_LABEL, PHASE_WORD
+from ..guided_step_questions_seed import FIXED_QUESTIONS_STEP_ID
 from ..prompt_config import (
     DEFAULT_SYSTEM_PROMPT_GENERIC,
     DEFAULT_GUIDED_TEXT_QSAR_QUESTIONS_INTRO,
@@ -190,6 +191,20 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
         .order_by(models.GuidedStep.sort_order)
         .all()
     )
+    question_rows = (
+        db.query(models.GuidedStepQuestion)
+        .filter(
+            models.GuidedStepQuestion.questionnaire_type == questionnaire_type,
+            models.GuidedStepQuestion.language == lang,
+            models.GuidedStepQuestion.is_active.is_(True),
+        )
+        .order_by(models.GuidedStepQuestion.step_id, models.GuidedStepQuestion.sort_order)
+        .all()
+    )
+    questions_by_step: dict[str, list[str]] = {}
+    for row in question_rows:
+        questions_by_step.setdefault(row.step_id, []).append(row.text)
+
     result["guided_steps"] = [
         {
             "id": s.id,
@@ -197,9 +212,11 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
             "label": _sanitize_ztpi_step_label(s.label, lang) if questionnaire_type == "ZTPI" else s.label,
             "system_prompt_mode": s.system_prompt_mode,
             "color_theme": s.color_theme,
+            "suggested_questions": questions_by_step.get(s.id, []),
         }
         for s in steps
     ]
+    result["fixed_phase_questions"] = questions_by_step.get(FIXED_QUESTIONS_STEP_ID, [])
 
     # Override questions/conclusion texts per questionnaire
     if questionnaire_type == "QSAr":
