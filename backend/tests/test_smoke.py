@@ -117,6 +117,7 @@ class _FakeAIService:
         return [float(len(text) % 7), 1.0, 0.5]
 
     def get_response(self, *a, **k):
+        self.last_usage = {"prompt_tokens": 12, "completion_tokens": 3, "total_tokens": 15}
         return "RISPOSTA_TEST"
 
     def stream_response(self, *a, **k):
@@ -158,7 +159,19 @@ import backend.routes.opencode as opencode_routes
 opencode_routes.database.SessionLocal = _TestSession
 opencode_routes.AIService = _FakeAIService
 
+# Prompt audit: stesso mock provider, nessuna rete.
+import backend.routes.prompt_audit as prompt_audit_routes
+prompt_audit_routes.AIService = _FakeAIService
+
 client = TestClient(main.app)
+
+
+def _ensure_guided_steps(questionnaire_type: str = "QSA"):
+    db = _TestSession()
+    try:
+        chat_logic._ensure_questionnaire_guided_steps(db, questionnaire_type)
+    finally:
+        db.close()
 
 
 # --------------------------------------------------------------------------
@@ -251,6 +264,10 @@ EXPECTED_ROUTES = {
     ("PUT", "/admin/pqbl/questions/{question_id}"),
     ("DELETE", "/admin/pqbl/documents/{document_id}"),
     ("GET", "/admin/pqbl/analytics"),
+    # Prompt audit admin-only
+    ("POST", "/admin/prompt-audit/dry-run"),
+    ("POST", "/admin/prompt-audit/live"),
+    ("POST", "/admin/prompt-audit/matrix"),
     # Contatti ricercatori + codici somministrazione
     ("GET", "/admin/research-contacts"),
     ("POST", "/admin/research-contacts"),
@@ -874,6 +891,194 @@ def test_existing_extended_guided_modes_resolve_saved_prompt_keys():
     assert MODE_TO_SYSTEM_PROMPT_KEY["qpcc-summary"] == "prompt_qpcc_summary"
     assert MODE_TO_SYSTEM_PROMPT_KEY["qap-interview"] == "prompt_qap_interview"
     assert MODE_TO_SYSTEM_PROMPT_KEY["qap-summary"] == "prompt_qap_summary"
+
+
+def test_prompt_audit_dry_run_builds_qsa_envelope_without_side_effects():
+    _ensure_guided_steps("QSA")
+    session_id = "prompt-audit-dry-run"
+    session_memory.clear(session_id)
+
+    preset = client.post("/admin/presets", json={
+        "name": "Prompt audit preset",
+        "provider": "openrouter",
+        "model": "deepseek/deepseek-v4-flash",
+        "disable_thinking": True,
+    })
+    assert preset.status_code == 200, preset.text
+    counselor = client.post("/admin/counselors", json={
+        "slug": "prompt-audit-qsa",
+        "name": "Prompt Audit QSA",
+        "persona": "You are a concise test counselor.",
+        "preset_id": preset.json()["id"],
+        "questionnaire_types": ["QSA"],
+        "is_active": True,
+    })
+    assert counselor.status_code == 200, counselor.text
+    counselor_id = counselor.json()["id"]
+
+    scores_context = "\n".join([
+        "PROFILO QSA DELLO STUDENTE:",
+        "- C1: 7/9", "- C2: 6/9", "- C3: 8/9", "- C4: 5/9",
+        "- C5: 4/9", "- C6: 2/9", "- C7: 6/9", "- A1: 9/9",
+    ])
+    db = _TestSession()
+    try:
+        before_logs = db.query(models.Log).count()
+    finally:
+        db.close()
+
+    r = client.post("/admin/prompt-audit/dry-run", json={
+        "questionnaire_type": "QSA",
+        "language": "it",
+        "phase": "cognitive",
+        "mode": "factor",
+        "use_phase_prompt": True,
+        "scores_context": scores_context,
+        "session_id": session_id,
+        "counselor_id": counselor_id,
+        "max_tokens": 700,
+        "include_knowledge": False,
+        "include_history": False,
+    })
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["resolved"]["prompt_key"] == "prompt_factor"
+    assert body["resolved"]["provider"] == "openrouter"
+    assert body["resolved"]["model"] == "deepseek/deepseek-v4-flash"
+    assert body["resolved"]["counselor"]["id"] == counselor_id
+    assert "Analyse ONLY the COGNITIVE factors" in body["inputs"]["effective_user_message"]
+    assert "- C1" in body["inputs"]["scoped_scores_context"]
+    assert "- A1" not in body["inputs"]["scoped_scores_context"]
+    assert body["envelope"]["history"] == []
+    assert body["knowledge"]["included"] is False
+
+    db = _TestSession()
+    try:
+        assert db.query(models.Log).count() == before_logs
+    finally:
+        db.close()
+    assert session_memory.get_summary(session_id) == ""
+
+
+def test_prompt_audit_live_returns_mocked_response_without_logging():
+    _ensure_guided_steps("QSA")
+    session_id = "prompt-audit-live"
+    db = _TestSession()
+    try:
+        before_logs = db.query(models.Log).count()
+    finally:
+        db.close()
+
+    r = client.post("/admin/prompt-audit/live", json={
+        "questionnaire_type": "QSA",
+        "language": "it",
+        "phase": "cognitive",
+        "mode": "factor",
+        "use_phase_prompt": True,
+        "scores_context": "PROFILO QSA DELLO STUDENTE:\n- C1: 7/9\n- C2: 6/9\n- C3: 8/9\n- C4: 5/9\n- C5: 4/9\n- C6: 2/9\n- C7: 6/9",
+        "session_id": session_id,
+        "include_knowledge": False,
+    })
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["response_raw"] == "RISPOSTA_TEST"
+    assert body["response_visible"] == "RISPOSTA_TEST"
+    assert body["usage"]["prompt_tokens"] == 12
+    assert isinstance(body["duration_ms"], int)
+    assert "checks" in body
+
+    db = _TestSession()
+    try:
+        assert db.query(models.Log).count() == before_logs
+    finally:
+        db.close()
+
+
+def test_prompt_audit_matrix_covers_all_qsa_steps_for_selected_counselor():
+    _ensure_guided_steps("QSA")
+    counselor = client.post("/admin/counselors", json={
+        "slug": "prompt-audit-matrix",
+        "name": "Prompt Audit Matrix",
+        "questionnaire_types": ["QSA"],
+        "is_active": True,
+    })
+    assert counselor.status_code == 200, counselor.text
+    counselor_id = counselor.json()["id"]
+
+    r = client.post("/admin/prompt-audit/matrix", json={
+        "questionnaire_type": "QSA",
+        "language": "it",
+        "counselor_ids": [counselor_id],
+        "scores_context": "PROFILO QSA DELLO STUDENTE:\n- C1: 7/9\n- C2: 6/9\n- C3: 8/9\n- C4: 5/9\n- C5: 4/9\n- C6: 2/9\n- C7: 6/9\n- A1: 9/9\n- A2: 5/9\n- A3: 4/9\n- A4: 8/9\n- A5: 7/9\n- A6: 3/9\n- A7: 8/9",
+        "include_knowledge": False,
+    })
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["steps_count"] >= 9
+    assert body["counselors_count"] == 1
+    assert len(body["rows"]) == body["steps_count"]
+    assert any(row["step_id"] == "cognitive" and row["prompt_key"] == "prompt_factor" for row in body["rows"])
+    assert all(row["counselor_id"] == counselor_id for row in body["rows"])
+
+
+def test_prompt_audit_warnings_for_incoherent_configuration():
+    inactive = client.post("/admin/counselors", json={
+        "slug": "prompt-audit-inactive",
+        "name": "Prompt Audit Inactive",
+        "is_active": False,
+    })
+    assert inactive.status_code == 200, inactive.text
+    inactive_id = inactive.json()["id"]
+
+    r = client.post("/admin/prompt-audit/dry-run", json={
+        "questionnaire_type": "QSA",
+        "language": "it",
+        "phase": "missing-audit-step",
+        "mode": "unknown-mode",
+        "use_phase_prompt": True,
+        "counselor_id": inactive_id,
+        "include_knowledge": False,
+    })
+    assert r.status_code == 200, r.text
+    codes = {item["code"] for item in r.json()["warnings"]}
+    assert {"counselor_inactive", "missing_step"}.issubset(codes)
+
+    db = _TestSession()
+    try:
+        db.add(models.GuidedStep(
+            id="audit-unknown-step-mode",
+            sort_order=999,
+            label="Audit Unknown Mode",
+            prompt="Audit prompt",
+            system_prompt_mode="unknown-step-mode",
+            color_theme="slate",
+            questionnaire_type="AUDIT",
+        ))
+        db.commit()
+    finally:
+        db.close()
+    try:
+        r = client.post("/admin/prompt-audit/dry-run", json={
+            "questionnaire_type": "QSA",
+            "language": "it",
+            "phase": "audit-unknown-step-mode",
+            "mode": "generic",
+            "use_phase_prompt": True,
+            "include_knowledge": False,
+        })
+        assert r.status_code == 200, r.text
+        codes = {item["code"] for item in r.json()["warnings"]}
+        assert "unknown_step_mode" in codes
+        assert "step_instrument_mismatch" in codes
+    finally:
+        db = _TestSession()
+        try:
+            row = db.query(models.GuidedStep).filter_by(id="audit-unknown-step-mode").first()
+            if row:
+                db.delete(row)
+                db.commit()
+        finally:
+            db.close()
 
 
 def test_survey_submit_public():

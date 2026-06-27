@@ -847,6 +847,9 @@ def build_context_envelope(
     model_scores_context: str,
     message_scores_context: str,
     knowledge_context: str,
+    include_history: bool = True,
+    include_session_memory: bool = True,
+    create_anonymous_code: bool = True,
 ) -> tuple[str, str, list]:
     """Assembla l'envelope canonico della chat counselor (Fase 5):
     SYSTEM = [PERSONA] [SECTION] [STUDENT] [PROFILE] [KNOWLEDGE]
@@ -865,7 +868,18 @@ def build_context_envelope(
 
     # --- [STUDENT] dati studente da identity + stato sessione distillato ---
     student_lines: list[str] = []
-    anon_code = code_for_identity(db, identity or {})
+    anon_code = None
+    if create_anonymous_code:
+        anon_code = code_for_identity(db, identity or {})
+    else:
+        username = ((identity or {}).get("username") or "").strip().lower()
+        if username:
+            existing_code = (
+                db.query(models.AnonymousResearchCode.code)
+                .filter(models.AnonymousResearchCode.username == username)
+                .first()
+            )
+            anon_code = existing_code[0] if existing_code else None
     if anon_code:
         student_lines.append(f"- Codice ricerca anonimo: {anon_code}")
     if language:
@@ -874,7 +888,7 @@ def build_context_envelope(
         student_lines.append(f"- Questionario: {questionnaire_type}")
     if step_label:
         student_lines.append(f"- Step corrente: {step_label}")
-    state = session_memory.get_student_state(session_id)
+    state = session_memory.get_student_state(session_id) if include_session_memory else {}
     if state:
         completed = state.get("completed_steps") or []
         if completed:
@@ -895,7 +909,7 @@ def build_context_envelope(
     profile_context = _learner_profile_context(db, identity.get("username", "") if identity else "")
     # Punteggi: nel turno di analisi arrivano nel messaggio utente, nei follow-up
     # si recuperano da quelli persistiti e si scope-ano alla sezione corrente.
-    persisted_scores = "" if model_scores_context else session_memory.get_scores(session_id)
+    persisted_scores = "" if model_scores_context or not include_session_memory else session_memory.get_scores(session_id)
     if persisted_scores:
         scoped_scores = _scope_scores_to_codes(persisted_scores, _phase_factor_codes(db, request.phase))
         if scoped_scores:
@@ -917,7 +931,7 @@ def build_context_envelope(
         system_prompt_final = f"{c_persona.strip()}\n\n{system_prompt_final}"
 
     # --- MESSAGES: history verbatim + user corrente (scores scope-ati + msg) ---
-    history = session_memory.get_transcript(session_id)
+    history = session_memory.get_transcript(session_id) if include_history and include_session_memory else []
     if message_scores_context:
         full_message = f"{message_scores_context}\n\nDOMANDA DELLO STUDENTE:\n{effective_message}"
     else:
