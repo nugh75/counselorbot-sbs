@@ -63,6 +63,8 @@ from ..chat_logic import (
     _student_visible_response,
     _update_markdown_memory_background,
     build_context_envelope,
+    build_log_envelope,
+    full_prompt_logging_enabled,
     strip_markdown,
 )
 
@@ -363,6 +365,25 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     _model = c_model or ai_service.config.get('model_name', 'unknown')
     _usage = getattr(ai_service, "last_usage", None)
     _cost_usd = _usage_cost_usd(_usage, _provider, _model)
+    _details = pii.redact_details({
+        "mode": request.mode,
+        "phase": request.phase,
+        "user_input": request.message,
+        "effective_user_input": effective_message,
+        "bot_response": response_content,
+        "system_prompt_key": prompt_key,
+        "guided_phase_prompt_key": phase_prompt_key,
+        "provider": _provider,
+        "model": _model,
+        "questionnaire_type": questionnaire_type,
+        "knowledge_context_length": len(knowledge_context),
+        "usage": _usage,
+        "cost_usd": _cost_usd,
+    }, "user_input", "effective_user_input", "bot_response")
+    if full_prompt_logging_enabled(db):
+        _details["envelope"] = pii.redact_envelope(
+            build_log_envelope(system_prompt_final, full_message, history)
+        )
     log_entry = models.Log(
         session_id=session_id,
         action="chat_message",
@@ -375,21 +396,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         questionnaire_type=questionnaire_type,
         phase=request.phase or None,
         mode=request.mode or None,
-        details=pii.redact_details({
-            "mode": request.mode,
-            "phase": request.phase,
-            "user_input": request.message,
-            "effective_user_input": effective_message,
-            "bot_response": response_content,
-            "system_prompt_key": prompt_key,
-            "guided_phase_prompt_key": phase_prompt_key,
-            "provider": _provider,
-            "model": _model,
-            "questionnaire_type": questionnaire_type,
-            "knowledge_context_length": len(knowledge_context),
-            "usage": _usage,
-            "cost_usd": _cost_usd,
-        }, "user_input", "effective_user_input", "bot_response"),
+        details=_details,
     )
     db.add(log_entry)
     response_id = shared_response_memory.create_candidate(
@@ -518,6 +525,26 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         log_db = database.SessionLocal()
         try:
             cost_usd = _usage_cost_usd(usage, provider, model)
+            _details = pii.redact_details({
+                "mode": request.mode,
+                "phase": request.phase,
+                "user_input": request.message,
+                "effective_user_input": effective_message,
+                "bot_response": response_content,
+                "system_prompt_key": prompt_key,
+                "guided_phase_prompt_key": phase_prompt_key,
+                "provider": provider,
+                "model": model,
+                "questionnaire_type": questionnaire_type,
+                "knowledge_context_length": len(knowledge_context),
+                "streamed": True,
+                "usage": usage,
+                "cost_usd": cost_usd,
+            }, "user_input", "effective_user_input", "bot_response")
+            if full_prompt_logging_enabled(log_db):
+                _details["envelope"] = pii.redact_envelope(
+                    build_log_envelope(system_prompt_final, full_message, history)
+                )
             log_entry = models.Log(
                 session_id=session_id,
                 action="chat_message",
@@ -530,22 +557,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 questionnaire_type=questionnaire_type,
                 phase=request.phase or None,
                 mode=request.mode or None,
-                details=pii.redact_details({
-                    "mode": request.mode,
-                    "phase": request.phase,
-                    "user_input": request.message,
-                    "effective_user_input": effective_message,
-                    "bot_response": response_content,
-                    "system_prompt_key": prompt_key,
-                    "guided_phase_prompt_key": phase_prompt_key,
-                    "provider": provider,
-                    "model": model,
-                    "questionnaire_type": questionnaire_type,
-                    "knowledge_context_length": len(knowledge_context),
-                    "streamed": True,
-                    "usage": usage,
-                    "cost_usd": cost_usd,
-                }, "user_input", "effective_user_input", "bot_response"),
+                details=_details,
             )
             log_db.add(log_entry)
             response_id = shared_response_memory.create_candidate(
@@ -690,10 +702,11 @@ async def chat_message(
         conversation_summary = _sanitize_ztpi_user_text(conversation_summary, language)
 
     # 3. Get AI Response (con contesto conversazionale)
+    history = session_memory.get_transcript(session_id)
     response_content = ai_service.get_response(
         message, system_prompt, mode,
         conversation_summary=conversation_summary,
-        history=session_memory.get_transcript(session_id),
+        history=history,
     )
     if _should_sanitize_ztpi_text(mode, None):
         response_content = _sanitize_ztpi_user_text(response_content, language)
@@ -710,6 +723,21 @@ async def chat_message(
     model = ai_service.config.get('model_name', 'unknown')
     usage = getattr(ai_service, "last_usage", None)
     cost_usd = _usage_cost_usd(usage, provider, model)
+    _details = pii.redact_details({
+        "mode": mode,
+        "user_input": message,
+        "bot_response": response_content,
+        "provider": provider,
+        "model": model,
+        "questionnaire_type": questionnaire_type,
+        "conversation_summary_length": len(conversation_summary),
+        "usage": usage,
+        "cost_usd": cost_usd,
+    }, "user_input", "bot_response")
+    if full_prompt_logging_enabled(db):
+        _details["envelope"] = pii.redact_envelope(
+            build_log_envelope(system_prompt, message, history)
+        )
     log_entry = models.Log(
         session_id=session_id,
         action="chat_message",
@@ -721,17 +749,7 @@ async def chat_message(
         cost_usd=cost_usd,
         questionnaire_type=questionnaire_type or None,
         mode=mode or None,
-        details=pii.redact_details({
-            "mode": mode,
-            "user_input": message,
-            "bot_response": response_content,
-            "provider": provider,
-            "model": model,
-            "questionnaire_type": questionnaire_type,
-            "conversation_summary_length": len(conversation_summary),
-            "usage": usage,
-            "cost_usd": cost_usd,
-        }, "user_input", "bot_response"),
+        details=_details,
     )
     db.add(log_entry)
     response_id = shared_response_memory.create_candidate(
