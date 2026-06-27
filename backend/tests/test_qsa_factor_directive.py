@@ -29,6 +29,11 @@ from backend.chat_logic import (
     _QSA_INVERTED_CODES,
     _QSAR_INVERTED_CODES,
 )
+from backend.prompt_config import (
+    DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL,
+    DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL,
+    FACTOR_INTERPLAY_SENTINEL,
+)
 
 
 def _row(code: str, name: str, lbl: dict, inverted: bool) -> str:
@@ -113,6 +118,14 @@ def test_annotate_idempotent_on_correct_form():
 def test_annotate_c5_canonical_name():
     out = _annotate_qsa_factor_codes("C5 7/9", "it")
     assert "C5 (Uso di organizzatori semantici)" in out, out
+
+
+def test_second_level_defaults_require_factor_interplay():
+    # I default di secondo livello devono imporre la sintesi tra fattori, non solo
+    # l'analisi uno-per-uno (flag poca-connessione della batteria).
+    for prompt in (DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL, DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL):
+        assert FACTOR_INTERPLAY_SENTINEL in prompt, prompt
+        assert "influence each other" in prompt, prompt
 
 
 def test_localization_uses_target_language_labels():
