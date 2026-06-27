@@ -1,0 +1,191 @@
+{
+  "communities": {
+    "0": [
+      "apprendimento_permanente",
+      "autodeterminazione",
+      "emad_samir_anis_matta",
+      "giuseppe_crea",
+      "hard_skills",
+      "life_design",
+      "mark_savickas",
+      "michele_pellerey",
+      "orientamento_professionale",
+      "sergio_melogno",
+      "soft_skill",
+      "soft_skill_document",
+      "soft_skill_scheda_document",
+      "strumenti_e_metodologie_document"
+    ],
+    "1": [
+      "autovalutazione",
+      "centro_ricerca_formazione_distanza",
+      "character_skills",
+      "competenze_strategiche",
+      "epifani_filippo",
+      "margottini_massimo",
+      "piattaforma_comp_strategiche_document",
+      "piattaforma_comp_strategiche_margottini_epifani_document",
+      "qap",
+      "qpcs",
+      "qsa",
+      "qsar",
+      "universita_roma_tre",
+      "ztpi"
+    ],
+    "2": [
+      "abiti",
+      "autodirezione",
+      "autoregolazione",
+      "carattere",
+      "cognitive_skills",
+      "general_educational_development",
+      "heckman_james",
+      "imparare_a_dirigere_se_stessi_document",
+      "metacognizione",
+      "motivazione",
+      "non_cognitive_skills",
+      "promuovere_la_crescita_nelle_competenze_strategiche_document",
+      "vittadini_giorgio"
+    ],
+    "3": [
+      "ciofs_fp",
+      "dariusz_grzadziel",
+      "enrica_ottone",
+      "filippo_epifani",
+      "identita_professionale",
+      "mahara",
+      "massimo_margottini",
+      "portfolio_digitale",
+      "portfolio_digitale_document",
+      "qpcc",
+      "riflessivita"
+    ],
+    "4": [
+      "cnos_fap",
+      "dimensioni_morali",
+      "dimensioni_spirituali",
+      "marco_bay",
+      "promuovere_la_crescita_document"
+    ]
+  },
+  "cohesion": {
+    "0": 0.23076923076923078,
+    "1": 0.24175824175824176,
+    "2": 0.19230769230769232,
+    "3": 0.34545454545454546,
+    "4": 0.4
+  },
+  "gods": [
+    {
+      "id": "imparare_a_dirigere_se_stessi_document",
+      "label": "Imparare a dirigere se stessi",
+      "degree": 24
+    },
+    {
+      "id": "strumenti_e_metodologie_document",
+      "label": "Strumenti e metodologie di orientamento formativo e professionale nel quadro dei processi di apprendimento permanente",
+      "degree": 24
+    },
+    {
+      "id": "competenze_strategiche",
+      "label": "Competenze strategiche",
+      "degree": 19
+    },
+    {
+      "id": "portfolio_digitale",
+      "label": "Portfolio digitale",
+      "degree": 14
+    },
+    {
+      "id": "piattaforma_comp_strategiche_document",
+      "label": "Promuovere l'autovalutazione di competenze strategiche. Aggiornamenti e sviluppi della piattaforma competenzestrategiche.it",
+      "degree": 13
+    },
+    {
+      "id": "portfolio_digitale_document",
+      "label": "Progetto di ricerca-intervento sul ruolo del portfolio digitale: strumento di Formazione Professionale iniziale e continua dei docenti del secondo ciclo del sistema istruttivo e formativo, in particolare dell'IeFP. Verifica della possibilit\u00e0 di estensione al caso degli allievi",
+      "degree": 13
+    },
+    {
+      "id": "soft_skill_document",
+      "label": "Soft skill e orientamento professionale",
+      "degree": 10
+    },
+    {
+      "id": "autovalutazione",
+      "label": "Autovalutazione",
+      "degree": 8
+    },
+    {
+      "id": "promuovere_la_crescita_document",
+      "label": "Promuovere la crescita nelle competenze strategiche che hanno le loro radici nelle dimensioni morali e spirituali della persona. Rapporto di ricerca",
+      "degree": 8
+    },
+    {
+      "id": "piattaforma_comp_strategiche_margottini_epifani_document",
+      "label": "Promuovere l'autovalutazione di competenze strategiche. Aggiornamenti e sviluppi della piattaforma competenzestrategiche.it",
+      "degree": 4
+    }
+  ],
+  "surprises": [
+    {
+      "source": "Progetto di ricerca-intervento sul ruolo del portfolio digitale: strumento di Formazione Professionale iniziale e continua dei docenti del secondo ciclo del sistema istruttivo e formativo, in particolare dell'IeFP. Verifica della possibilit\u00e0 di estensione al caso degli allievi",
+      "target": "Competenze strategiche",
+      "source_files": [
+        "schede-bibliografiche/portfolio_digitale.md",
+        "Imparare_a_dirigere_se_stessi.pdf"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "conceptually_related_to",
+      "why": "crosses file types (paper \u2194 doc); connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "Promuovere la crescita nelle competenze strategiche che hanno le loro radici nelle dimensioni morali e spirituali della persona. Rapporto di ricerca",
+      "target": "Competenze strategiche",
+      "source_files": [
+        "schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+        "Imparare_a_dirigere_se_stessi.pdf"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "conceptually_related_to",
+      "why": "crosses file types (paper \u2194 doc); connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "Promuovere la crescita nelle competenze strategiche che hanno le loro radici nelle dimensioni morali e spirituali della persona. Rapporto di ricerca",
+      "target": "Autovalutazione",
+      "source_files": [
+        "schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+        "piattaforma_comp._strategiche_-_margottini_epifani.pdf"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "conceptually_related_to",
+      "why": "crosses file types (paper \u2194 doc); connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "Strumenti e metodologie di orientamento formativo e professionale nel quadro dei processi di apprendimento permanente",
+      "target": "Imparare a dirigere se stessi",
+      "source_files": [
+        "strumenti_e_metodologie.pdf",
+        "Imparare_a_dirigere_se_stessi.pdf"
+      ],
+      "confidence": "INFERRED",
+      "relation": "cites",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "Promuovere la crescita nelle competenze strategiche",
+      "target": "Competenze strategiche",
+      "source_files": [
+        "promuovere_la_crescita_nelle_competenze_strategiche.PDF",
+        "Imparare_a_dirigere_se_stessi.pdf"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "cites",
+      "why": "connects across different repos/directories; bridges separate communities; peripheral node `Promuovere la crescita nelle competenze strategiche` unexpectedly reaches hub `Competenze strategiche`"
+    }
+  ],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}

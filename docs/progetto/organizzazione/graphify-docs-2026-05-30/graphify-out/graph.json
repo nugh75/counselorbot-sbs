@@ -1,0 +1,2156 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "label": "Documentazione CounselorBot",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "readme_counselorbot",
+      "community": 5,
+      "norm_label": "documentazione counselorbot"
+    },
+    {
+      "label": "Organizzazione docs implementata",
+      "file_type": "document",
+      "source_file": "progetto/organizzazione/proposta-organizzazione-docs-implementata-2026-05-30.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "readme_organizzazione",
+      "community": 5,
+      "norm_label": "organizzazione docs implementata"
+    },
+    {
+      "label": "Grafo della documentazione",
+      "file_type": "document",
+      "source_file": "progetto/organizzazione/grafo-docs-2026-05-30.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "readme_grafo",
+      "community": 5,
+      "norm_label": "grafo della documentazione"
+    },
+    {
+      "label": "Diario di bordo",
+      "file_type": "document",
+      "source_file": "progetto/diario.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "readme_diario",
+      "community": 5,
+      "norm_label": "diario di bordo"
+    },
+    {
+      "label": "Validazione",
+      "file_type": "document",
+      "source_file": "validazione/",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "readme_validazione",
+      "community": 5,
+      "norm_label": "validazione"
+    },
+    {
+      "label": "Questionari",
+      "file_type": "document",
+      "source_file": "questionari/",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "readme_questionari",
+      "community": 5,
+      "norm_label": "questionari"
+    },
+    {
+      "label": "Prompting",
+      "file_type": "document",
+      "source_file": "prompting/",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "readme_prompting",
+      "community": 5,
+      "norm_label": "prompting"
+    },
+    {
+      "label": "Implementazione",
+      "file_type": "document",
+      "source_file": "implementazione/",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "readme_implementazione",
+      "community": 5,
+      "norm_label": "implementazione"
+    },
+    {
+      "label": "Fonti",
+      "file_type": "document",
+      "source_file": "fonti/",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "readme_fonti",
+      "community": 4,
+      "norm_label": "fonti"
+    },
+    {
+      "label": "Guida 2023",
+      "file_type": "paper",
+      "source_file": "fonti/competenze-strategiche/Guida_2023.pdf",
+      "source_location": null,
+      "source_url": "https://www.competenzestrategiche.it/test_update/mod/book/tool/print/index.php?id=69",
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "guida_2023_pdf",
+      "community": 4,
+      "norm_label": "guida 2023"
+    },
+    {
+      "label": "Guida 2019",
+      "file_type": "paper",
+      "source_file": "fonti/competenze-strategiche/Guida_2019.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "guida_2019_pdf",
+      "community": 4,
+      "norm_label": "guida 2019"
+    },
+    {
+      "label": "Grzadziel Convegno 2019",
+      "file_type": "paper",
+      "source_file": "fonti/competenze-strategiche/Grzadziel_Convegno_2019.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "Grzadziel",
+      "contributor": null,
+      "id": "grzadziel_convegno_2019_pdf",
+      "community": 4,
+      "norm_label": "grzadziel convegno 2019"
+    },
+    {
+      "label": "Margottini Convegno 2019",
+      "file_type": "paper",
+      "source_file": "fonti/competenze-strategiche/Margottini_Convegno_2019.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "Margottini",
+      "contributor": null,
+      "id": "margottini_convegno_2019_pdf",
+      "community": 4,
+      "norm_label": "margottini convegno 2019"
+    },
+    {
+      "label": "Competenze Strategiche",
+      "file_type": "concept",
+      "source_file": null,
+      "source_location": null,
+      "source_url": "https://www.competenzestrategiche.it",
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "concept_competenze_strategiche",
+      "community": 4,
+      "norm_label": "competenze strategiche"
+    },
+    {
+      "label": "Dirigere se stessi (2020)",
+      "file_type": "paper",
+      "source_file": "fonti/competenze-strategiche/Dirigere_se_stessi_2020.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "dirigere_se_stessi_2020_document",
+      "community": 11,
+      "norm_label": "dirigere se stessi (2020)"
+    },
+    {
+      "label": "Introduzione Volume (2020)",
+      "file_type": "paper",
+      "source_file": "fonti/competenze-strategiche/Introduzione_Volume_2020.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "introduzione_volume_2020_document",
+      "community": 11,
+      "norm_label": "introduzione volume (2020)"
+    },
+    {
+      "label": "Pellerey Convegno (2019)",
+      "file_type": "paper",
+      "source_file": "fonti/competenze-strategiche/Pellerey_Convegno_2019.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "Michele Pellerey",
+      "contributor": null,
+      "id": "pellerey_convegno_2019_document",
+      "community": 4,
+      "norm_label": "pellerey convegno (2019)"
+    },
+    {
+      "label": "README Fonti Esterne",
+      "file_type": "document",
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": "2026-05-30",
+      "author": null,
+      "contributor": null,
+      "id": "readme_external_sources",
+      "community": 4,
+      "norm_label": "readme fonti esterne"
+    },
+    {
+      "label": "CNOS-FAP",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "cnos_fap_entity",
+      "community": 4,
+      "norm_label": "cnos-fap"
+    },
+    {
+      "label": "Roma TrE-Press",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "roma_tre_press_entity",
+      "community": 4,
+      "norm_label": "roma tre-press"
+    },
+    {
+      "label": "Imparare a dirigere se stessi",
+      "file_type": "document",
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/Imparare_a_dirigere_se_stessi.pdf",
+      "id": "imparare_a_dirigere_se_stessi_document",
+      "community": 1,
+      "norm_label": "imparare a dirigere se stessi"
+    },
+    {
+      "label": "Promuovere l'autovalutazione di competenze strategiche. Aggiornamenti e sviluppi della piattaforma competenzestrategiche.it",
+      "file_type": "paper",
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/piattaforma_comp._strategiche_-_margottini_epifani.pdf",
+      "author": "Massimo Margottini, Filippo Epifani",
+      "id": "margottini_epifani_paper",
+      "community": 1,
+      "norm_label": "promuovere l'autovalutazione di competenze strategiche. aggiornamenti e sviluppi della piattaforma competenzestrategiche.it"
+    },
+    {
+      "label": "Promuovere la crescita nelle competenze strategiche",
+      "file_type": "document",
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/promuovere_la_crescita_nelle_competenze_strategiche.PDF",
+      "id": "promuovere_la_crescita_document",
+      "community": 1,
+      "norm_label": "promuovere la crescita nelle competenze strategiche"
+    },
+    {
+      "label": "Strumenti e metodologie di orientamento formativo e professionale nel quadro dei processi di apprendimento permanente",
+      "file_type": "document",
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/strumenti_e_metodologie.pdf",
+      "author": "Michele Pellerey",
+      "id": "strumenti_e_metodologie_report",
+      "community": 1,
+      "norm_label": "strumenti e metodologie di orientamento formativo e professionale nel quadro dei processi di apprendimento permanente"
+    },
+    {
+      "label": "CNOS-FAP (Centro Nazionale Opere Salesiane - Formazione Aggiornamento Professionale)",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/strumenti_e_metodologie.pdf",
+      "id": "cnos_fap_organization",
+      "community": 1,
+      "norm_label": "cnos-fap (centro nazionale opere salesiane - formazione aggiornamento professionale)"
+    },
+    {
+      "label": "Piattaforma competenzestrategiche.it",
+      "file_type": "code",
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/piattaforma_comp._strategiche_-_margottini_epifani.pdf",
+      "id": "competenzestrategiche_it_platform",
+      "community": 1,
+      "norm_label": "piattaforma competenzestrategiche.it"
+    },
+    {
+      "label": "Michele Pellerey",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/strumenti_e_metodologie.pdf",
+      "id": "pellerey_michele",
+      "community": 1,
+      "norm_label": "michele pellerey"
+    },
+    {
+      "label": "Massimo Margottini",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/piattaforma_comp._strategiche_-_margottini_epifani.pdf",
+      "id": "margottini_massimo",
+      "community": 13,
+      "norm_label": "massimo margottini"
+    },
+    {
+      "label": "Filippo Epifani",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/piattaforma_comp._strategiche_-_margottini_epifani.pdf",
+      "id": "epifani_filippo",
+      "community": 14,
+      "norm_label": "filippo epifani"
+    },
+    {
+      "label": "Competenze Strategiche",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/piattaforma_comp._strategiche_-_margottini_epifani.pdf",
+      "id": "competenze_strategiche_concept",
+      "community": 1,
+      "norm_label": "competenze strategiche"
+    },
+    {
+      "label": "Mahara Digital Portfolio",
+      "file_type": "code",
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/strumenti_e_metodologie.pdf",
+      "id": "mahara_portfolio",
+      "community": 1,
+      "norm_label": "mahara digital portfolio"
+    },
+    {
+      "label": "Portfolio Digitale",
+      "file_type": "document",
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/portfolio_digitale.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "portfolio_digitale_portfolio_digitale",
+      "community": 1,
+      "norm_label": "portfolio digitale"
+    },
+    {
+      "label": "Soft Skill e Orientamento Professionale",
+      "file_type": "document",
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/soft_skill.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": "2017-06-16",
+      "author": "michele_pellerey",
+      "contributor": "filippo_epifani, massimo_margottini, enrica_ottone",
+      "id": "soft_skill_soft_skill_e_orientamento",
+      "community": 1,
+      "norm_label": "soft skill e orientamento professionale"
+    },
+    {
+      "label": "Contributo di G. Marrone e L. Romano",
+      "file_type": "paper",
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/roma-tre-press/12.G.-Marrone-L.-Romano.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "g_marrone, l_romano",
+      "contributor": null,
+      "id": "12_g_marrone_l_romano_marrone_romano_contribution",
+      "community": 1,
+      "norm_label": "contributo di g. marrone e l. romano"
+    },
+    {
+      "label": "Contributo di D.M. Ardito",
+      "file_type": "paper",
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/roma-tre-press/11.D.M.-Ardito.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "d_m_ardito",
+      "contributor": null,
+      "id": "11_d_m_ardito_ardito_contribution",
+      "community": 15,
+      "norm_label": "contributo di d.m. ardito"
+    },
+    {
+      "label": "Archivio sito competenzestrategiche.it",
+      "file_type": "rationale",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/README.md",
+      "source_location": null,
+      "source_url": "https://www.competenzestrategiche.it/",
+      "captured_at": "2026-05-30",
+      "author": null,
+      "contributor": null,
+      "id": "readme_competenzestrategiche_archive",
+      "community": 1,
+      "norm_label": "archivio sito competenzestrategiche.it"
+    },
+    {
+      "label": "Chatbot per l'orientamento e il supporto agli studenti",
+      "file_type": "document",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Presentazione_Chatbot_convegnisti_02.pdf",
+      "id": "presentazione_chatbot_convegnisti_02_chatbot",
+      "community": 7,
+      "norm_label": "chatbot per l'orientamento e il supporto agli studenti"
+    },
+    {
+      "label": "Convegno: Le competenze strategiche che aiutano a studiare e a riuscire",
+      "file_type": "document",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_13_settembre_2019.pdf",
+      "author": "Universit\u00e0 degli Studi di Roma Tre",
+      "id": "programma_convegno_13_settembre_2019_convegno",
+      "community": 7,
+      "norm_label": "convegno: le competenze strategiche che aiutano a studiare e a riuscire"
+    },
+    {
+      "label": "Michele Pellerey",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_13_settembre_2019.pdf",
+      "id": "programma_convegno_13_settembre_2019_michele_pellerey",
+      "community": 7,
+      "norm_label": "michele pellerey"
+    },
+    {
+      "label": "Giuseppe Spadafora",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_13_settembre_2019.pdf",
+      "id": "programma_convegno_13_settembre_2019_giuseppe_spadafora",
+      "community": 7,
+      "norm_label": "giuseppe spadafora"
+    },
+    {
+      "label": "Massimiliano Fiorucci",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_13_settembre_2019.pdf",
+      "id": "programma_convegno_13_settembre_2019_massimiliano_fiorucci",
+      "community": 7,
+      "norm_label": "massimiliano fiorucci"
+    },
+    {
+      "label": "Gaetano Domenici",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_13_settembre_2019.pdf",
+      "id": "programma_convegno_13_settembre_2019_gaetano_domenici",
+      "community": 7,
+      "norm_label": "gaetano domenici"
+    },
+    {
+      "label": "Presentazione DIDACTA 2023",
+      "file_type": "document",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Presentazione_DIDACTA_2023.pdf",
+      "id": "presentazione_didacta_2023_convegno",
+      "community": 8,
+      "norm_label": "presentazione didacta 2023"
+    },
+    {
+      "label": "Programma Convegno 24 Gennaio 2025",
+      "file_type": "document",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_24Gennaio2025_dettagliato.pdf",
+      "id": "programma_convegno_24gennaio2025_programma",
+      "community": 12,
+      "norm_label": "programma convegno 24 gennaio 2025"
+    },
+    {
+      "label": "Abstract Fascicolo",
+      "file_type": "document",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Abstract_fascicolo.pdf",
+      "id": "abstract_fascicolo_abstract",
+      "community": 8,
+      "norm_label": "abstract fascicolo"
+    },
+    {
+      "label": "QSA-r Presentazione",
+      "file_type": "document",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/QSA-r_Presentazione.pdf",
+      "id": "qsa_r_presentazione_guida",
+      "community": 8,
+      "norm_label": "qsa-r presentazione"
+    },
+    {
+      "label": "Progetto Competenze Strategiche",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Presentazione_DIDACTA_2023.pdf",
+      "id": "competenze_strategiche_progetto",
+      "community": 8,
+      "norm_label": "progetto competenze strategiche"
+    },
+    {
+      "label": "Fiera Didacta Italia",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Presentazione_DIDACTA_2023.pdf",
+      "id": "didacta_evento",
+      "community": 8,
+      "norm_label": "fiera didacta italia"
+    },
+    {
+      "label": "Universit\u00e0 degli Studi Roma Tre",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_24Gennaio2025_dettagliato.pdf",
+      "id": "universita_roma_tre",
+      "community": 12,
+      "norm_label": "universita degli studi roma tre"
+    },
+    {
+      "label": "C1 | Strategie elaborative",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "schede_fattori_qsa_c1",
+      "community": 0,
+      "norm_label": "c1 | strategie elaborative"
+    },
+    {
+      "label": "C5 | Organizzatori semantici",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "schede_fattori_qsa_c5",
+      "community": 0,
+      "norm_label": "c5 | organizzatori semantici"
+    },
+    {
+      "label": "C7 | Autointerrogazione",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "schede_fattori_qsa_c7",
+      "community": 0,
+      "norm_label": "c7 | autointerrogazione"
+    },
+    {
+      "label": "C2 | Autoregolazione",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "schede_fattori_qsa_c2",
+      "community": 0,
+      "norm_label": "c2 | autoregolazione"
+    },
+    {
+      "label": "C3 | Disorientamento",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "schede_fattori_qsa_c3",
+      "community": 0,
+      "norm_label": "c3 | disorientamento"
+    },
+    {
+      "label": "C6 | Difficolt\u00e0 di concentrazione",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "schede_fattori_qsa_c6",
+      "community": 0,
+      "norm_label": "c6 | difficolta di concentrazione"
+    },
+    {
+      "label": "C4 | Collaborazione",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "schede_fattori_qsa_c4",
+      "community": 0,
+      "norm_label": "c4 | collaborazione"
+    },
+    {
+      "label": "A1 | Ansiet\u00e0 di base",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "schede_fattori_qsa_a1",
+      "community": 0,
+      "norm_label": "a1 | ansieta di base"
+    },
+    {
+      "label": "A7 | Interferenze emotive",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "schede_fattori_qsa_a7",
+      "community": 0,
+      "norm_label": "a7 | interferenze emotive"
+    },
+    {
+      "label": "A2 | Volizione",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "schede_fattori_qsa_a2",
+      "community": 0,
+      "norm_label": "a2 | volizione"
+    },
+    {
+      "label": "A5 | Mancanza di perseveranza",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "schede_fattori_qsa_a5",
+      "community": 0,
+      "norm_label": "a5 | mancanza di perseveranza"
+    },
+    {
+      "label": "A3 | Attribuzione a fattori controllabili",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "schede_fattori_qsa_a3",
+      "community": 0,
+      "norm_label": "a3 | attribuzione a fattori controllabili"
+    },
+    {
+      "label": "A4 | Attribuzione a fattori non controllabili",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "schede_fattori_qsa_a4",
+      "community": 0,
+      "norm_label": "a4 | attribuzione a fattori non controllabili"
+    },
+    {
+      "label": "A6 | Percezione di competenza",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "schede_fattori_qsa_a6",
+      "community": 0,
+      "norm_label": "a6 | percezione di competenza"
+    },
+    {
+      "label": "Guida all'uso della piattaforma www.competenzestrategiche.it",
+      "file_type": "document",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide-html/guida-piattaforma-book-69.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "Epifani Filippo, Margottini Massimo, Ottone Enrica",
+      "contributor": null,
+      "id": "guida_piattaforma_book_69_guida",
+      "community": 0,
+      "norm_label": "guida all'uso della piattaforma www.competenzestrategiche.it"
+    },
+    {
+      "label": "Griglia di osservazione del docente",
+      "file_type": "document",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/02_Griglia_osservazione_docente.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "02_griglia_osservazione_docente_griglia",
+      "community": 0,
+      "norm_label": "griglia di osservazione del docente"
+    },
+    {
+      "label": "Questionario sulle Strategie d'Apprendimento (QSA)",
+      "file_type": "document",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/strumenti/QSA_Questionario.pdf",
+      "id": "qsa_questionario_qsa",
+      "community": 9,
+      "norm_label": "questionario sulle strategie d'apprendimento (qsa)"
+    },
+    {
+      "label": "Questionario sull'Approccio allo Studio (QAP)",
+      "file_type": "document",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/strumenti/QAP.pdf",
+      "id": "qap_questionario",
+      "community": 9,
+      "norm_label": "questionario sull'approccio allo studio (qap)"
+    },
+    {
+      "label": "Profilo di competenze strategiche in studenti universitari con DSA",
+      "file_type": "paper",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/MELOGNO_2018.pdf",
+      "author": "Melogno et al.",
+      "id": "melogno_2018_paper",
+      "community": 9,
+      "norm_label": "profilo di competenze strategiche in studenti universitari con dsa"
+    },
+    {
+      "label": "Disturbi Specifici dell'Apprendimento (DSA)",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/MELOGNO_2018.pdf",
+      "id": "melogno_2018_dsa",
+      "community": 9,
+      "norm_label": "disturbi specifici dell'apprendimento (dsa)"
+    },
+    {
+      "label": "Competenze Strategiche",
+      "file_type": "concept",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/MELOGNO_2018.pdf",
+      "id": "melogno_2018_competenze_strategiche",
+      "community": 9,
+      "norm_label": "competenze strategiche"
+    },
+    {
+      "label": "Ottone 2023 - Studio Competenze Strategiche",
+      "file_type": "paper",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/OTTONE_2023.pdf",
+      "id": "ottone_2023_paper",
+      "community": 16,
+      "norm_label": "ottone 2023 - studio competenze strategiche"
+    },
+    {
+      "label": "Margottini & Rossi 2019 - Studio Competenze Strategiche",
+      "file_type": "paper",
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/MARGOTTINI-ROSSI_2019.pdf",
+      "id": "margottini_rossi_2019_paper",
+      "community": 17,
+      "norm_label": "margottini & rossi 2019 - studio competenze strategiche"
+    },
+    {
+      "label": "Verifica Implementazione CounselorBot",
+      "file_type": "document",
+      "source_file": "implementazione/verifica-implementazione.md",
+      "id": "verifica_implementazione_doc",
+      "community": 2,
+      "norm_label": "verifica implementazione counselorbot"
+    },
+    {
+      "label": "Diario di Bordo / Project Journal",
+      "file_type": "document",
+      "source_file": "progetto/diario.md",
+      "id": "diario_progetto",
+      "community": 2,
+      "norm_label": "diario di bordo / project journal"
+    },
+    {
+      "label": "Mail a Olle (KTH) - Versione Italiana",
+      "file_type": "document",
+      "source_file": "progetto/comunicazioni/mail-olle.md",
+      "id": "mail_olle_it",
+      "community": 2,
+      "norm_label": "mail a olle (kth) - versione italiana"
+    },
+    {
+      "label": "Email to Olle (KTH) - English Version",
+      "file_type": "document",
+      "source_file": "progetto/comunicazioni/mail-olle-en.md",
+      "id": "mail_olle_en",
+      "community": 2,
+      "norm_label": "email to olle (kth) - english version"
+    },
+    {
+      "label": "Grafo della documentazione 2026-05-30",
+      "file_type": "document",
+      "source_file": "progetto/organizzazione/grafo-docs-2026-05-30.md",
+      "id": "grafo_docs_doc",
+      "community": 2,
+      "norm_label": "grafo della documentazione 2026-05-30"
+    },
+    {
+      "label": "Organizzazione documentazione implementata - 2026-05-30",
+      "file_type": "document",
+      "source_file": "progetto/organizzazione/proposta-organizzazione-docs-implementata-2026-05-30.md",
+      "id": "proposta_organizzazione_doc",
+      "community": 2,
+      "norm_label": "organizzazione documentazione implementata - 2026-05-30"
+    },
+    {
+      "label": "Live DB prompt translation review (IT -> EN)",
+      "file_type": "document",
+      "source_file": "prompting/live-db-prompt-translation-review.md",
+      "id": "live_db_prompt_review",
+      "community": 2,
+      "norm_label": "live db prompt translation review (it -> en)"
+    },
+    {
+      "label": "Prompt translation review (IT -> EN) - General",
+      "file_type": "document",
+      "source_file": "prompting/prompt-translations-review.md",
+      "id": "prompt_translations_review_doc",
+      "community": 2,
+      "norm_label": "prompt translation review (it -> en) - general"
+    },
+    {
+      "label": "Catalogo item \u2014 scaffolding multilingue",
+      "file_type": "document",
+      "source_file": "questionari/item-catalog.md",
+      "id": "item_catalog_doc",
+      "community": 2,
+      "norm_label": "catalogo item \u2014 scaffolding multilingue"
+    },
+    {
+      "label": "CounselorBot Application",
+      "file_type": "code",
+      "source_file": "implementazione/verifica-implementazione.md",
+      "id": "counselorbot_app",
+      "community": 2,
+      "norm_label": "counselorbot application"
+    },
+    {
+      "label": "Questionario sulle Strategie di Apprendimento (QSA)",
+      "file_type": "concept",
+      "source_file": "progetto/comunicazioni/mail-olle.md",
+      "id": "qsa_questionnaire",
+      "community": 2,
+      "norm_label": "questionario sulle strategie di apprendimento (qsa)"
+    },
+    {
+      "label": "Zimbardo Time Perspective Inventory (ZTPI)",
+      "file_type": "concept",
+      "source_file": "prompting/prompt-translations-review.md",
+      "id": "ztpi_questionnaire",
+      "community": 2,
+      "norm_label": "zimbardo time perspective inventory (ztpi)"
+    },
+    {
+      "label": "Savickas Career Construction Interview",
+      "file_type": "concept",
+      "source_file": "implementazione/verifica-implementazione.md",
+      "id": "savickas_interview",
+      "community": 2,
+      "norm_label": "savickas career construction interview"
+    },
+    {
+      "label": "Questionario di Autovalutazione dei Processi (QAP)",
+      "file_type": "document",
+      "source_file": "questionari/strumenti/QAP_it.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "qap_it_qap",
+      "community": 10,
+      "norm_label": "questionario di autovalutazione dei processi (qap)"
+    },
+    {
+      "label": "Questionario sui Processi Cognitivi e di Controllo (QPCC)",
+      "file_type": "document",
+      "source_file": "questionari/strumenti/QPCC_it.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "qpcc_it_qpcc",
+      "community": 10,
+      "norm_label": "questionario sui processi cognitivi e di controllo (qpcc)"
+    },
+    {
+      "label": "Questionario sulle Strategie di Apprendimento (QSA)",
+      "file_type": "document",
+      "source_file": "questionari/strumenti/QSA_it.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "qsa_it_qsa",
+      "community": 10,
+      "norm_label": "questionario sulle strategie di apprendimento (qsa)"
+    },
+    {
+      "label": "Metacognition and Learning Strategies",
+      "file_type": "concept",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "concept_metacognition",
+      "community": 10,
+      "norm_label": "metacognition and learning strategies"
+    },
+    {
+      "label": "Questionario di Percezione delle Competenze Strategiche (QPCS)",
+      "file_type": "document",
+      "source_file": "questionari/strumenti/QPCS_it.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "Michele Pellerey",
+      "id": "qpcs_it_qpcs",
+      "community": 6,
+      "norm_label": "questionario di percezione delle competenze strategiche (qpcs)"
+    },
+    {
+      "label": "Zimbardo Time Perspective Inventory (ZTPI)",
+      "file_type": "document",
+      "source_file": "questionari/strumenti/ZTPI_it.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "Philip Zimbardo",
+      "id": "ztpi_it_ztpi",
+      "community": 6,
+      "norm_label": "zimbardo time perspective inventory (ztpi)"
+    },
+    {
+      "label": "Diagnosi: somministrazioni EN/SV",
+      "file_type": "rationale",
+      "source_file": "validazione/diagnosi-somministrazione-ensv.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "id": "diagnosi_somministrazione_ensv_diagnosi",
+      "community": 6,
+      "norm_label": "diagnosi: somministrazioni en/sv"
+    },
+    {
+      "label": "Validazione dei questionari e costruzione delle stanine",
+      "file_type": "rationale",
+      "source_file": "validazione/validazione-questionari-e-stanine.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "id": "validazione_questionari_e_stanine_validazione",
+      "community": 0,
+      "norm_label": "validazione dei questionari e costruzione delle stanine"
+    },
+    {
+      "label": "Dettagli di Validazione e Struttura dei Questionari",
+      "file_type": "rationale",
+      "source_file": "validazione/dettagli-validazione-questionari.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "id": "dettagli_validazione_questionari_specifiche",
+      "community": 6,
+      "norm_label": "dettagli di validazione e struttura dei questionari"
+    },
+    {
+      "label": "Progetto di adattamento e validazione QSA/QSAr (SV/EN)",
+      "file_type": "rationale",
+      "source_file": "validazione/progetto-validazione-qsa-qsar-sv-en.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "id": "progetto_validazione_qsa_qsar_sv_en_progetto",
+      "community": 0,
+      "norm_label": "progetto di adattamento e validazione qsa/qsar (sv/en)"
+    },
+    {
+      "label": "Questionario sulle Strategie di Apprendimento (QSA)",
+      "file_type": "concept",
+      "source_file": "validazione/dettagli-validazione-questionari.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "Michele Pellerey",
+      "id": "qsa_qsa",
+      "community": 0,
+      "norm_label": "questionario sulle strategie di apprendimento (qsa)"
+    },
+    {
+      "label": "Questionario di Percezione delle Competenze di Cittadinanza (QPCC)",
+      "file_type": "concept",
+      "source_file": "validazione/dettagli-validazione-questionari.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "Michele Pellerey",
+      "id": "qpcc_qpcc",
+      "community": 6,
+      "norm_label": "questionario di percezione delle competenze di cittadinanza (qpcc)"
+    },
+    {
+      "label": "Questionario sull'Autovalutazione Professionale (QAP)",
+      "file_type": "concept",
+      "source_file": "validazione/dettagli-validazione-questionari.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "id": "qap_qap",
+      "community": 6,
+      "norm_label": "questionario sull'autovalutazione professionale (qap)"
+    },
+    {
+      "label": "Manuale Operativo per la Validazione del QSAr",
+      "file_type": "document",
+      "source_file": "validazione/manuale-operativo-validazione.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "manuale_operativo_validazione_qsar",
+      "community": 3,
+      "norm_label": "manuale operativo per la validazione del qsar"
+    },
+    {
+      "label": "QSAr English Validation (Sweden)",
+      "file_type": "concept",
+      "source_file": "validazione/manuale-operativo-validazione.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "manuale_operativo_validazione_qsar_en",
+      "community": 3,
+      "norm_label": "qsar english validation (sweden)"
+    },
+    {
+      "label": "backend/questionnaire_catalog.py",
+      "file_type": "code",
+      "source_file": "backend/questionnaire_catalog.py",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "questionnaire_catalog_py",
+      "community": 3,
+      "norm_label": "backend/questionnaire_catalog.py"
+    },
+    {
+      "label": "Passo 1: Preparazione e Consenso",
+      "file_type": "rationale",
+      "source_file": "validazione/manuale-operativo-validazione.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "manuale_operativo_validazione_step1",
+      "community": 3,
+      "norm_label": "passo 1: preparazione e consenso"
+    },
+    {
+      "label": "Passo 2: Verifica Linguistica e Interviste Cognitive",
+      "file_type": "rationale",
+      "source_file": "validazione/manuale-operativo-validazione.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "manuale_operativo_validazione_step2",
+      "community": 3,
+      "norm_label": "passo 2: verifica linguistica e interviste cognitive"
+    },
+    {
+      "label": "Passo 3: Studio Pilota",
+      "file_type": "rationale",
+      "source_file": "validazione/manuale-operativo-validazione.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "manuale_operativo_validazione_step3",
+      "community": 3,
+      "norm_label": "passo 3: studio pilota"
+    },
+    {
+      "label": "Passo 4: La Raccolta Dati Principale",
+      "file_type": "rationale",
+      "source_file": "validazione/manuale-operativo-validazione.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "manuale_operativo_validazione_step4",
+      "community": 3,
+      "norm_label": "passo 4: la raccolta dati principale"
+    },
+    {
+      "label": "Passo 5: Analisi Psicometriche",
+      "file_type": "rationale",
+      "source_file": "validazione/manuale-operativo-validazione.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "manuale_operativo_validazione_step5",
+      "community": 3,
+      "norm_label": "passo 5: analisi psicometriche"
+    },
+    {
+      "label": "Passo 6: Costruzione e Caricamento delle Norme Stanine",
+      "file_type": "rationale",
+      "source_file": "validazione/manuale-operativo-validazione.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "manuale_operativo_validazione_step6",
+      "community": 3,
+      "norm_label": "passo 6: costruzione e caricamento delle norme stanine"
+    },
+    {
+      "label": "norm_thresholds database table",
+      "file_type": "concept",
+      "source_file": "validazione/manuale-operativo-validazione.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "norm_thresholds_table",
+      "community": 3,
+      "norm_label": "norm_thresholds database table"
+    },
+    {
+      "label": "formule-validazione.pdf",
+      "file_type": "document",
+      "source_file": "validazione/formule/formule-validazione.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "formule_validazione_pdf",
+      "community": 3,
+      "norm_label": "formule-validazione.pdf"
+    },
+    {
+      "label": "sorgenti-latex/formule-validazione.pdf",
+      "file_type": "document",
+      "source_file": "validazione/formule/sorgenti-latex/formule-validazione.pdf",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "sorgenti_latex_formule_validazione_pdf",
+      "community": 3,
+      "norm_label": "sorgenti-latex/formule-validazione.pdf"
+    }
+  ],
+  "links": [
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_counselorbot",
+      "target": "readme_diario"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_counselorbot",
+      "target": "readme_fonti"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_counselorbot",
+      "target": "readme_grafo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_counselorbot",
+      "target": "readme_implementazione"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_counselorbot",
+      "target": "readme_organizzazione"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_counselorbot",
+      "target": "readme_prompting"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_counselorbot",
+      "target": "readme_questionari"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_counselorbot",
+      "target": "readme_validazione"
+    },
+    {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_fonti",
+      "target": "guida_2023_pdf"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/Guida_2023.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "guida_2023_pdf",
+      "target": "concept_competenze_strategiche"
+    },
+    {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "fonti/competenze-strategiche/Guida_2019.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "guida_2019_pdf",
+      "target": "concept_competenze_strategiche"
+    },
+    {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "fonti/competenze-strategiche/Grzadziel_Convegno_2019.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "grzadziel_convegno_2019_pdf",
+      "target": "concept_competenze_strategiche"
+    },
+    {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "fonti/competenze-strategiche/Margottini_Convegno_2019.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "margottini_convegno_2019_pdf",
+      "target": "concept_competenze_strategiche"
+    },
+    {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "fonti/competenze-strategiche/Pellerey_Convegno_2019.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "pellerey_convegno_2019_document",
+      "target": "concept_competenze_strategiche"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_external_sources",
+      "target": "concept_competenze_strategiche"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "fonti/competenze-strategiche/Dirigere_se_stessi_2020.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "dirigere_se_stessi_2020_document",
+      "target": "introduzione_volume_2020_document"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_external_sources",
+      "target": "cnos_fap_entity"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_external_sources",
+      "target": "roma_tre_press_entity"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/Imparare_a_dirigere_se_stessi.pdf",
+      "source": "imparare_a_dirigere_se_stessi_document",
+      "target": "competenze_strategiche_concept"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/piattaforma_comp._strategiche_-_margottini_epifani.pdf",
+      "source": "margottini_epifani_paper",
+      "target": "competenze_strategiche_concept"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/piattaforma_comp._strategiche_-_margottini_epifani.pdf",
+      "source": "margottini_epifani_paper",
+      "target": "competenzestrategiche_it_platform"
+    },
+    {
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/piattaforma_comp._strategiche_-_margottini_epifani.pdf",
+      "source": "margottini_epifani_paper",
+      "target": "pellerey_michele"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/promuovere_la_crescita_nelle_competenze_strategiche.PDF",
+      "source": "promuovere_la_crescita_document",
+      "target": "competenze_strategiche_concept"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/strumenti_e_metodologie.pdf",
+      "source": "strumenti_e_metodologie_report",
+      "target": "cnos_fap_organization"
+    },
+    {
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/strumenti_e_metodologie.pdf",
+      "source": "strumenti_e_metodologie_report",
+      "target": "mahara_portfolio"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/strumenti_e_metodologie.pdf",
+      "source": "strumenti_e_metodologie_report",
+      "target": "pellerey_michele"
+    },
+    {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/portfolio_digitale.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "portfolio_digitale_portfolio_digitale",
+      "target": "cnos_fap_organization"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/soft_skill.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "soft_skill_soft_skill_e_orientamento",
+      "target": "cnos_fap_organization"
+    },
+    {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_competenzestrategiche_archive",
+      "target": "soft_skill_soft_skill_e_orientamento"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.7,
+      "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/soft_skill.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "soft_skill_soft_skill_e_orientamento",
+      "target": "12_g_marrone_l_romano_marrone_romano_contribution"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_13_settembre_2019.pdf",
+      "source": "presentazione_chatbot_convegnisti_02_chatbot",
+      "target": "qsa_qsa"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_13_settembre_2019.pdf",
+      "source": "programma_convegno_13_settembre_2019_convegno",
+      "target": "presentazione_chatbot_convegnisti_02_chatbot"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_13_settembre_2019.pdf",
+      "source": "programma_convegno_13_settembre_2019_convegno",
+      "target": "programma_convegno_13_settembre_2019_gaetano_domenici"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_13_settembre_2019.pdf",
+      "source": "programma_convegno_13_settembre_2019_convegno",
+      "target": "programma_convegno_13_settembre_2019_giuseppe_spadafora"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_13_settembre_2019.pdf",
+      "source": "programma_convegno_13_settembre_2019_convegno",
+      "target": "programma_convegno_13_settembre_2019_massimiliano_fiorucci"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_13_settembre_2019.pdf",
+      "source": "programma_convegno_13_settembre_2019_convegno",
+      "target": "programma_convegno_13_settembre_2019_michele_pellerey"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_13_settembre_2019.pdf",
+      "source": "programma_convegno_13_settembre_2019_convegno",
+      "target": "qsa_qsa"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Presentazione_DIDACTA_2023.pdf",
+      "source": "presentazione_didacta_2023_convegno",
+      "target": "competenze_strategiche_progetto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Presentazione_DIDACTA_2023.pdf",
+      "source": "presentazione_didacta_2023_convegno",
+      "target": "didacta_evento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_24Gennaio2025_dettagliato.pdf",
+      "source": "programma_convegno_24gennaio2025_programma",
+      "target": "universita_roma_tre"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Abstract_fascicolo.pdf",
+      "source": "abstract_fascicolo_abstract",
+      "target": "competenze_strategiche_progetto"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/QSA-r_Presentazione.pdf",
+      "source": "qsa_r_presentazione_guida",
+      "target": "competenze_strategiche_progetto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/QSA-r_Presentazione.pdf",
+      "source": "qsa_r_presentazione_guida",
+      "target": "qsa_qsa"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "qsa_qsa",
+      "target": "schede_fattori_qsa_c1"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "qsa_qsa",
+      "target": "schede_fattori_qsa_c5"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "qsa_qsa",
+      "target": "schede_fattori_qsa_c7"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "qsa_qsa",
+      "target": "schede_fattori_qsa_c2"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "qsa_qsa",
+      "target": "schede_fattori_qsa_c3"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "qsa_qsa",
+      "target": "schede_fattori_qsa_c6"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "qsa_qsa",
+      "target": "schede_fattori_qsa_c4"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "qsa_qsa",
+      "target": "schede_fattori_qsa_a1"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "qsa_qsa",
+      "target": "schede_fattori_qsa_a7"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "qsa_qsa",
+      "target": "schede_fattori_qsa_a2"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "qsa_qsa",
+      "target": "schede_fattori_qsa_a5"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "qsa_qsa",
+      "target": "schede_fattori_qsa_a3"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "qsa_qsa",
+      "target": "schede_fattori_qsa_a4"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "qsa_qsa",
+      "target": "schede_fattori_qsa_a6"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide-html/guida-piattaforma-book-69.html",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "guida_piattaforma_book_69_guida",
+      "target": "qsa_qsa"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/02_Griglia_osservazione_docente.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "02_griglia_osservazione_docente_griglia",
+      "target": "qsa_qsa"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/MELOGNO_2018.pdf",
+      "source": "melogno_2018_paper",
+      "target": "qsa_questionario_qsa"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/MELOGNO_2018.pdf",
+      "source": "qsa_questionario_qsa",
+      "target": "qap_questionario"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/MELOGNO_2018.pdf",
+      "source": "melogno_2018_paper",
+      "target": "qap_questionario"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/MELOGNO_2018.pdf",
+      "source": "melogno_2018_paper",
+      "target": "melogno_2018_competenze_strategiche"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/MELOGNO_2018.pdf",
+      "source": "melogno_2018_paper",
+      "target": "melogno_2018_dsa"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "implementazione/verifica-implementazione.md",
+      "source": "verifica_implementazione_doc",
+      "target": "counselorbot_app"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "implementazione/verifica-implementazione.md",
+      "source": "verifica_implementazione_doc",
+      "target": "qsa_questionnaire"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "implementazione/verifica-implementazione.md",
+      "source": "verifica_implementazione_doc",
+      "target": "savickas_interview"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "implementazione/verifica-implementazione.md",
+      "source": "verifica_implementazione_doc",
+      "target": "ztpi_questionnaire"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "progetto/diario.md",
+      "source": "diario_progetto",
+      "target": "mail_olle_it"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "progetto/diario.md",
+      "source": "diario_progetto",
+      "target": "proposta_organizzazione_doc"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "progetto/comunicazioni/mail-olle-en.md",
+      "source": "mail_olle_en",
+      "target": "mail_olle_it"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "progetto/comunicazioni/mail-olle.md",
+      "source": "mail_olle_it",
+      "target": "counselorbot_app"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "progetto/comunicazioni/mail-olle.md",
+      "source": "mail_olle_it",
+      "target": "qsa_questionnaire"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "progetto/organizzazione/proposta-organizzazione-docs-implementata-2026-05-30.md",
+      "source": "proposta_organizzazione_doc",
+      "target": "grafo_docs_doc"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "prompting/live-db-prompt-translation-review.md",
+      "source": "live_db_prompt_review",
+      "target": "qsa_questionnaire"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "prompting/prompt-translations-review.md",
+      "source": "prompt_translations_review_doc",
+      "target": "ztpi_questionnaire"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "questionari/item-catalog.md",
+      "source": "item_catalog_doc",
+      "target": "qsa_qsa"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "questionari/item-catalog.md",
+      "source": "item_catalog_doc",
+      "target": "qsa_questionnaire"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "questionari/strumenti/QAP_it.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "qap_it_qap",
+      "target": "concept_metacognition"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": null,
+      "source_location": null,
+      "weight": 1.0,
+      "source": "qap_it_qap",
+      "target": "qsa_it_qsa"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "questionari/strumenti/QPCC_it.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "qpcc_it_qpcc",
+      "target": "concept_metacognition"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": null,
+      "source_location": null,
+      "weight": 1.0,
+      "source": "qpcc_it_qpcc",
+      "target": "qsa_it_qsa"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "questionari/strumenti/QSA_it.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "qsa_it_qsa",
+      "target": "concept_metacognition"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "validazione/diagnosi-somministrazione-ensv.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "diagnosi_somministrazione_ensv_diagnosi",
+      "target": "qpcs_it_qpcs"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "validazione/dettagli-validazione-questionari.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "dettagli_validazione_questionari_specifiche",
+      "target": "ztpi_it_ztpi"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "validazione/diagnosi-somministrazione-ensv.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "diagnosi_somministrazione_ensv_diagnosi",
+      "target": "ztpi_it_ztpi"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "validazione/diagnosi-somministrazione-ensv.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "diagnosi_somministrazione_ensv_diagnosi",
+      "target": "qap_qap"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "validazione/diagnosi-somministrazione-ensv.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "diagnosi_somministrazione_ensv_diagnosi",
+      "target": "qpcc_qpcc"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "validazione/validazione-questionari-e-stanine.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "validazione_questionari_e_stanine_validazione",
+      "target": "progetto_validazione_qsa_qsar_sv_en_progetto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "validazione/dettagli-validazione-questionari.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "dettagli_validazione_questionari_specifiche",
+      "target": "qsa_qsa"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "validazione/progetto-validazione-qsa-qsar-sv-en.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "progetto_validazione_qsa_qsar_sv_en_progetto",
+      "target": "qsa_qsa"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "validazione/manuale-operativo-validazione.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "manuale_operativo_validazione_qsar",
+      "target": "manuale_operativo_validazione_qsar_en"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "validazione/manuale-operativo-validazione.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "manuale_operativo_validazione_qsar",
+      "target": "manuale_operativo_validazione_step1"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "validazione/manuale-operativo-validazione.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "manuale_operativo_validazione_qsar",
+      "target": "manuale_operativo_validazione_step2"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "validazione/manuale-operativo-validazione.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "manuale_operativo_validazione_qsar",
+      "target": "manuale_operativo_validazione_step3"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "validazione/manuale-operativo-validazione.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "manuale_operativo_validazione_qsar",
+      "target": "manuale_operativo_validazione_step4"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "validazione/manuale-operativo-validazione.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "manuale_operativo_validazione_qsar",
+      "target": "manuale_operativo_validazione_step5"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "validazione/manuale-operativo-validazione.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "manuale_operativo_validazione_qsar",
+      "target": "manuale_operativo_validazione_step6"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "validazione/manuale-operativo-validazione.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "manuale_operativo_validazione_qsar",
+      "target": "questionnaire_catalog_py"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "validazione/formule/formule-validazione.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "formule_validazione_pdf",
+      "target": "manuale_operativo_validazione_step5"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "validazione/manuale-operativo-validazione.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "manuale_operativo_validazione_step6",
+      "target": "norm_thresholds_table"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "validazione/formule/sorgenti-latex/formule-validazione.pdf",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "sorgenti_latex_formule_validazione_pdf",
+      "target": "formule_validazione_pdf"
+    }
+  ],
+  "hyperedges": [],
+  "built_at_commit": "767a55e284f1ba4751d89ca01239b48c44b00d5a"
+}
