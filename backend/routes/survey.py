@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from .. import models, schemas, auth, database
@@ -24,6 +25,80 @@ def _normalize_validation_metadata(metadata: Optional[dict], username: Optional[
         normalized["anonymous_research_code"] = code
         normalized["participant_code_source"] = "server_db"
     return normalized
+
+
+def _metadata_study_code(metadata: dict) -> Optional[str]:
+    for key in ("study_code", "study"):
+        value = metadata.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip().upper()
+    return None
+
+
+def _plan_researcher_names(db: Session, plan_id: int) -> list[str]:
+    links = (
+        db.query(models.AdministrationPlanResearcher)
+        .filter(models.AdministrationPlanResearcher.plan_id == plan_id)
+        .order_by(models.AdministrationPlanResearcher.id.asc())
+        .all()
+    )
+    contact_ids = [link.research_contact_id for link in links if link.research_contact_id]
+    contacts = {
+        contact.id: contact
+        for contact in db.query(models.ResearchContact)
+        .filter(models.ResearchContact.id.in_(contact_ids))
+        .all()
+    } if contact_ids else {}
+    names = []
+    for link in links:
+        if link.research_contact_id and link.research_contact_id in contacts:
+            names.append(contacts[link.research_contact_id].name)
+        elif link.external_name:
+            names.append(link.external_name)
+    return names
+
+
+def _resolve_administration_context(db: Session, metadata: dict) -> tuple[Optional[int], Optional[int]]:
+    study_code = _metadata_study_code(metadata)
+    if not study_code:
+        return None, None
+
+    plan = (
+        db.query(models.AdministrationPlan)
+        .filter(func.upper(models.AdministrationPlan.code) == study_code)
+        .first()
+    )
+    if plan:
+        researcher_names = _plan_researcher_names(db, plan.id)
+        metadata.update({
+            "administration_plan_id": plan.id,
+            "administration_plan_code": plan.code,
+            "administration_plan_title": plan.title,
+            "administration_plan_instrument_code": plan.instrument_code,
+            "administration_plan_locale": plan.locale,
+            "administration_plan_scheduled_at": plan.scheduled_at.isoformat() if plan.scheduled_at else "",
+            "administration_plan_location": plan.location or "",
+            "administration_plan_notes": plan.notes or "",
+            "administration_plan_researchers": "; ".join(researcher_names),
+        })
+        return plan.id, None
+
+    contact = (
+        db.query(models.ResearchContact)
+        .filter(func.upper(models.ResearchContact.code) == study_code)
+        .first()
+    )
+    if contact:
+        metadata.update({
+            "research_contact_id": contact.id,
+            "research_contact_code": contact.code,
+            "research_contact_name": contact.name,
+            "research_contact_email": contact.email or "",
+            "research_contact_institution": contact.institution or "",
+        })
+        return None, contact.id
+
+    return None, None
 
 
 @router.post("/survey", response_model=schemas.SurveyResponseSchema)
@@ -153,11 +228,14 @@ async def score_instrument(
             )
         factor_scores = scoring_service.mapped_stanine_scores(profile)
         response_metadata = _normalize_validation_metadata(payload.response_metadata, username, db)
+        administration_plan_id, research_contact_id = _resolve_administration_context(db, response_metadata)
         db.add(models.QuestionnaireResult(
             session_id=payload.session_id,
             questionnaire_type=code,
             scores=factor_scores,
             username=username,
+            administration_plan_id=administration_plan_id,
+            research_contact_id=research_contact_id,
         ))
         if payload.save_validation:
             db.add(models.ValidationResponse(
@@ -169,6 +247,8 @@ async def score_instrument(
                 factor_scores=factor_scores,
                 response_metadata=response_metadata,
                 username=username,
+                administration_plan_id=administration_plan_id,
+                research_contact_id=research_contact_id,
                 duration_seconds=payload.duration_seconds,
             ))
         db.commit()
