@@ -47,11 +47,15 @@ from ..prompt_config import (
 from ..chat_logic import (
     _annotate_qsa_factor_codes,
     _apply_language_directive,
+    _apply_certified_advice_directive,
+    _apply_current_step_factor_scope_directive,
+    _apply_current_step_score_profile_directive,
     _apply_qsa_factor_directive,
     _apply_register_directive,
     _apply_thinking_directive,
     _clamp_max_tokens,
     _ensure_questionnaire_guided_steps,
+    _ensure_required_qsa_factor_codes,
     _is_strategy_questionnaire,
     _phase_factor_codes,
     _resolve_system_prompt,
@@ -275,12 +279,18 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             step_label = step.label
             questionnaire_type = step.questionnaire_type
 
+    phase_codes = _phase_factor_codes(db, request.phase)
     system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language)
-    system_prompt = _apply_thinking_directive(system_prompt, request.language)
+    system_prompt = _apply_current_step_factor_scope_directive(system_prompt, questionnaire_type, phase_codes)
     model_scores_context = (
         _annotate_qsa_factor_codes(request.scores_context, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else request.scores_context
     )
+    system_prompt = _apply_current_step_score_profile_directive(
+        system_prompt, questionnaire_type, request.language, model_scores_context, phase_codes
+    )
+    system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type, request.language)
+    system_prompt = _apply_thinking_directive(system_prompt, request.language)
     model_message = (
         _annotate_qsa_factor_codes(effective_message, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else effective_message
@@ -297,7 +307,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
 
     # 2. Recupera le fonti KNOWLEDGE (grafo + strategie + certificate + votate).
     retrieval_query = f"{step_label} {model_message} {model_scores_context}".strip()
-    knowledge_context, strategy_ids = _retrieved_context(
+    knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
         db, session_id, request, questionnaire_type, retrieval_query,
         ai_service=ai_service,
     )
@@ -310,9 +320,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     # Punteggi nel messaggio scope-ati alla sezione corrente: il modello analizza
     # solo i fattori del suo step, non quelli di altre sezioni. Il profilo intero
     # resta persistito (update_context) per i follow-up cross-sezione.
-    message_scores_context = _scope_scores_to_codes(
-        model_scores_context, _phase_factor_codes(db, request.phase)
-    )
+    message_scores_context = _scope_scores_to_codes(model_scores_context, phase_codes)
     system_prompt_final, full_message, history = build_context_envelope(
         db, ai_service, request, session_id, identity,
         c_persona=c_persona, system_prompt=system_prompt, step_label=step_label,
@@ -341,6 +349,9 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     elif _is_strategy_questionnaire(questionnaire_type):
         response_content = _annotate_qsa_factor_codes(
             response_content, request.language, questionnaire_type=questionnaire_type
+        )
+        response_content = _ensure_required_qsa_factor_codes(
+            response_content, questionnaire_type, request.language, _phase_factor_codes(db, request.phase)
         )
 
     if _should_sanitize_ztpi_text(request.mode, request.phase):
@@ -379,6 +390,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         "model": _model,
         "questionnaire_type": questionnaire_type,
         "knowledge_context_length": len(knowledge_context),
+        "strategy_ids": strategy_ids,
+        "certified_strategy_ids": certified_strategy_ids,
         "usage": _usage,
         "cost_usd": _cost_usd,
     }, "user_input", "effective_user_input", "bot_response")
@@ -416,6 +429,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         "response": response_content,
         "session_id": session_id,
         "strategy_ids": strategy_ids,
+        "certified_strategy_ids": certified_strategy_ids,
         "response_id": response_id,
     }
 
@@ -470,12 +484,18 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             step_label = step.label
             questionnaire_type = step.questionnaire_type
 
+    phase_codes = _phase_factor_codes(db, request.phase)
     system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language)
-    system_prompt = _apply_thinking_directive(system_prompt, request.language)
+    system_prompt = _apply_current_step_factor_scope_directive(system_prompt, questionnaire_type, phase_codes)
     model_scores_context = (
         _annotate_qsa_factor_codes(request.scores_context, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else request.scores_context
     )
+    system_prompt = _apply_current_step_score_profile_directive(
+        system_prompt, questionnaire_type, request.language, model_scores_context, phase_codes
+    )
+    system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type, request.language)
+    system_prompt = _apply_thinking_directive(system_prompt, request.language)
     model_message = (
         _annotate_qsa_factor_codes(effective_message, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else effective_message
@@ -484,9 +504,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     # Punteggi nel messaggio scope-ati alla sezione corrente: il modello analizza
     # solo i fattori del suo step, non quelli di altre sezioni. Il profilo intero
     # resta persistito (update_context) per i follow-up cross-sezione.
-    message_scores_context = _scope_scores_to_codes(
-        model_scores_context, _phase_factor_codes(db, request.phase)
-    )
+    message_scores_context = _scope_scores_to_codes(model_scores_context, phase_codes)
 
     session_memory.update_context(
         session_id,
@@ -499,7 +517,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
 
     # Recupera le fonti KNOWLEDGE (grafo + strategie + certificate + votate).
     retrieval_query = f"{step_label} {model_message} {model_scores_context}".strip()
-    knowledge_context, strategy_ids = _retrieved_context(
+    knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
         db, session_id, request, questionnaire_type, retrieval_query,
         ai_service=ai_service,
     )
@@ -540,6 +558,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 "model": model,
                 "questionnaire_type": questionnaire_type,
                 "knowledge_context_length": len(knowledge_context),
+                "strategy_ids": strategy_ids,
+                "certified_strategy_ids": certified_strategy_ids,
                 "streamed": True,
                 "usage": usage,
                 "cost_usd": cost_usd,
@@ -612,6 +632,9 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             response_content = _student_visible_response(
                 "".join(chunks), questionnaire_type, request.language, sanitize
             )
+            response_content = _ensure_required_qsa_factor_codes(
+                response_content, questionnaire_type, request.language, _phase_factor_codes(db, request.phase)
+            )
             if not response_content.strip():
                 raise AIError(
                     "Il provider AI ha terminato lo stream senza contenuto visibile. "
@@ -645,7 +668,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
 
             response_id = _log_stream(response_content, usage_info)
 
-            yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'strategy_ids': strategy_ids, 'response_id': response_id})}\n\n"
+            yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': certified_strategy_ids, 'response_id': response_id})}\n\n"
         except Exception as e:
             logger.error(f"Errore stream chat session {session_id}: {e}")
             try:

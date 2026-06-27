@@ -675,7 +675,7 @@ async def create_opencode_workspace(
         questionnaire_type=request.questionnaire_type,
         language=locale,
     )
-    memory_context, strategy_ids = _retrieved_context(
+    memory_context, strategy_ids, _certified_strategy_ids = _retrieved_context(
         db,
         request.workspace_id,
         memory_request,

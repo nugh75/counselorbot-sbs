@@ -701,6 +701,45 @@ def test_certified_strategies_crud_and_retrieve():
     assert client.delete(f"/admin/certified-strategies/{sid}").status_code == 200
 
 
+def test_certified_strategies_qsar_r_suffixed_factor_gating():
+    """Il gating score-aware deve riconoscere i codici QSAr con suffisso 'r'
+    (costrutto/direzione diversi dal QSA), incluse le inversioni C4r/A1r."""
+    from backend.certified_strategy_service import certified_strategy_memory as csm
+
+    # I codici 'r' devono essere estratti come token di fattore.
+    assert "C4R" in csm._factor_tokens("Profilo QSAr: C4r 8/9, A2r 5/9")
+    # Inversioni QSAr: C4r (carenza attenzione) e A1r (ansieta') sono invertiti;
+    # A2r (volizione) no.
+    assert csm._band_for_qsa_score("C4r", 8) == "growth"
+    assert csm._band_for_qsa_score("C4r", 3) == "strength"
+    assert csm._band_for_qsa_score("A1r", 7) == "growth"
+    assert csm._band_for_qsa_score("A2r", 3) == "growth"
+
+    r = client.post("/admin/certified-strategies", json={
+        "slug": "qsar-c4r-test", "name_it": "Controllo dell'attenzione (QSAr)",
+        "recommended_when_it": "Quando C4r e' un'area di crescita.",
+        "description_it": "Ridurre le distrazioni e pianificare il tempo.",
+        "factor_codes": ["C4r"], "match_mode": "any", "questionnaire_types": ["QSAr"],
+        "status": "certified",
+    })
+    assert r.status_code == 200, r.text
+    sid = r.json()["id"]
+    db = _TestSession()
+    try:
+        hit = csm.retrieve(
+            db, questionnaire_type="QSAr", scores_context="- C4r: 8/9", query="concentrazione",
+        )
+        assert any(s["id"] == "qsar-c4r-test" for s in hit)
+        # fattore non saliente -> esclusa
+        miss = csm.retrieve(
+            db, questionnaire_type="QSAr", scores_context="- A2r: 5/9", query="volizione",
+        )
+        assert not any(s["id"] == "qsar-c4r-test" for s in miss)
+    finally:
+        db.close()
+    assert client.delete(f"/admin/certified-strategies/{sid}").status_code == 200
+
+
 def test_admin_sync_upsert_and_deactivate():
     import backend.admin_sync as admin_sync
     original = admin_sync.fetch_service_admins
@@ -1178,6 +1217,71 @@ def test_prompt_audit_dry_run_builds_qsa_envelope_without_side_effects():
     finally:
         db.close()
     assert session_memory.get_summary(session_id) == ""
+
+
+def test_prompt_audit_scopes_certified_strategies_to_qsa_second_level_step():
+    _ensure_guided_steps("QSA")
+    db = _TestSession()
+    try:
+        for slug, factors, sort_order, recommended_when in (
+            ("test-certified-c1-out-of-step", ["C1"], 0, "Quando il fattore collegato e' saliente."),
+            ("test-certified-a4-out-of-step", ["A4"], 1, "Quando il fattore collegato e' saliente."),
+            ("test-certified-a6-in-step", ["A6"], 2, "Quando A6 e' un'area di crescita."),
+            ("test-certified-a5-in-step", ["A5"], 3, "Quando A5 e' un'area di crescita."),
+        ):
+            db.query(models.CertifiedStrategy).filter(models.CertifiedStrategy.slug == slug).delete()
+            db.add(models.CertifiedStrategy(
+                slug=slug,
+                name_it=slug,
+                recommended_when_it=recommended_when,
+                description_it=f"Strategia certificata per {', '.join(factors)}.",
+                factor_codes=factors,
+                match_mode="any",
+                questionnaire_types=["QSA"],
+                keywords=" ".join(factors),
+                status="certified",
+                sort_order=sort_order,
+                is_active=True,
+            ))
+        db.commit()
+    finally:
+        db.close()
+
+    scores_context = "\n".join([
+        "PROFILO QSA DELLO STUDENTE:",
+        "- C1: 7/9", "- C2: 5/9", "- C3: 3/9", "- C4: 6/9",
+        "- C5: 4/9", "- C6: 7/9", "- C7: 5/9",
+        "- A1: 8/9", "- A2: 6/9", "- A3: 5/9", "- A4: 8/9",
+        "- A5: 3/9", "- A6: 3/9", "- A7: 7/9",
+    ])
+    r = client.post("/admin/prompt-audit/dry-run", json={
+        "questionnaire_type": "QSA",
+        "language": "it",
+        "phase": "sl-motivation",
+        "mode": "second-level",
+        "use_phase_prompt": True,
+        "scores_context": scores_context,
+        "session_id": "prompt-audit-certified-scoped",
+        "max_tokens": 700,
+        "include_knowledge": True,
+        "include_history": False,
+    })
+    assert r.status_code == 200, r.text
+    body = r.json()
+    certified_ids = body["knowledge"]["certified_strategy_ids"]
+    assert "test-certified-a6-in-step" in certified_ids
+    # A5=3 e' una forza nel QSA: una strategia dichiarata per A5 area di
+    # crescita non deve entrare come intervento pratico.
+    assert "test-certified-a5-in-step" not in certified_ids
+    assert "test-certified-c1-out-of-step" not in certified_ids
+    assert "test-certified-a4-out-of-step" not in certified_ids
+    assert "[CERTIFIED_STRATEGIES]" in body["knowledge"]["context"]
+    assert "Ruolo: intervento principale" in body["knowledge"]["context"]
+    assert "[CERTIFIED ADVICE]" in body["envelope"]["system_prompt_final"]
+    assert "[CURRENT STEP FACTORS] Allowed factor codes for this answer: A2, A5, A6" in body["envelope"]["system_prompt_final"]
+    assert "[CURRENT STEP SCORE PROFILE]" in body["envelope"]["system_prompt_final"]
+    assert "A5 (Mancanza di perseveranza): 3/9 = Forza" in body["envelope"]["system_prompt_final"]
+    assert "Primary improvement targets: A6 (Percezione di competenza)" in body["envelope"]["system_prompt_final"]
 
 
 def test_prompt_audit_api_token_allows_qsa_dry_run_without_ai4auth():
