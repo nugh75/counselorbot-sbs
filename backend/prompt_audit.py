@@ -1,16 +1,20 @@
 """Read-only prompt envelope audit for guided CounselorBot chats."""
 from __future__ import annotations
 
+import logging
 import re
 import time
 import uuid
 from typing import Any, Callable
 
+logger = logging.getLogger(__name__)
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from . import models, model_pricing
+from . import models, model_pricing, pii
 from .ai_service import AIError, AIService
+from .anonymous_codes import code_for_identity
 from .api_models import ChatRequest
 from .chat_logic import (
     _annotate_qsa_factor_codes,
@@ -28,6 +32,7 @@ from .chat_logic import (
     _scope_scores_to_codes,
     _should_sanitize_ztpi_text,
     build_context_envelope,
+    full_prompt_logging_enabled,
     split_thinking,
 )
 from .guided_text_i18n import SECONDARY_LANGS
@@ -406,9 +411,67 @@ def _phase_factor_codes_in_scoped_context(scoped_scores_context: str) -> set[str
     return _factor_codes_in(scoped_scores_context)
 
 
+def _log_prompt_audit_live(db: Session, payload, result: dict[str, Any], public: dict[str, Any], identity: dict | None) -> None:
+    """Persiste il run di prompt-audit /live nella tabella `logs` (action
+    `prompt_audit_live`), così le prove sui counselor compaiono nel visualizzatore
+    log dell'app. Best-effort: un fallimento di logging non deve rompere l'audit.
+
+    Ricalca il logging di /chat: redazione PII su scores/risposta/reasoning e, se
+    `log_full_prompt` e' attivo, envelope completo (system prompt + messaggio +
+    history) redatto."""
+    try:
+        resolved = public.get("resolved", {})
+        ident = identity or {}
+        session_id = (getattr(payload, "session_id", None) or f"prompt-audit-live-{uuid.uuid4()}")
+        details = pii.redact_details({
+            "audit": True,
+            "source": "prompt-audit-live",
+            "mode": payload.mode,
+            "phase": payload.phase,
+            "counselor_id": getattr(payload, "counselor_id", None),
+            "counselor": resolved.get("counselor"),
+            "step": resolved.get("step"),
+            "prompt_key": resolved.get("prompt_key"),
+            "language": resolved.get("language"),
+            "scores_context": public.get("inputs", {}).get("full_scores_context"),
+            "bot_response": public.get("response_visible"),
+            "reasoning": public.get("reasoning"),
+            "checks": public.get("checks"),
+            "warnings": public.get("warnings"),
+            "usage": public.get("usage"),
+            "cost_usd": public.get("cost_usd"),
+            "duration_ms": public.get("duration_ms"),
+            "knowledge_context_length": public.get("knowledge", {}).get("context_length"),
+        }, "scores_context", "bot_response", "reasoning")
+        if full_prompt_logging_enabled(db):
+            details["envelope"] = pii.redact_envelope(result.get("envelope", {}))
+        db.add(models.Log(
+            session_id=session_id,
+            action="prompt_audit_live",
+            username=ident.get("username") or None,
+            email=ident.get("email") or None,
+            anonymous_research_code=(code_for_identity(db, ident) if ident.get("username") else None),
+            provider=resolved.get("provider"),
+            model_name=resolved.get("model"),
+            cost_usd=public.get("cost_usd"),
+            questionnaire_type=result.get("_questionnaire_type") or getattr(payload, "questionnaire_type", None),
+            phase=payload.phase or None,
+            mode=payload.mode or None,
+            details=details,
+        ))
+        db.commit()
+    except Exception as e:  # pragma: no cover - difensivo
+        logger.warning(f"Logging prompt_audit_live fallito: {e}")
+        try:
+            db.rollback()
+        except Exception:
+            pass
+
+
 def run_prompt_audit_live(
     db: Session,
     payload,
+    identity: dict | None = None,
     *,
     ai_service_cls: Callable[[Session], AIService] = AIService,
 ) -> dict[str, Any]:
@@ -461,6 +524,7 @@ def run_prompt_audit_live(
         "duration_ms": duration_ms,
         "checks": response_checks(result, response_visible),
     })
+    _log_prompt_audit_live(db, payload, result, public, identity)
     return public
 
 
