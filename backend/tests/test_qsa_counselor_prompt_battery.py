@@ -80,19 +80,20 @@ CANONICAL_PROFILE: dict[str, int] = {
 # ---------------------------------------------------------------------------
 QSA_INVERTED = ("C3", "C6", "A1", "A4", "A5", "A7")
 
-# Nomi fattori come da frontend/src/lib/qsa-model.ts (fallback IT inviato all'app).
+# Nomi fattori CANONICI (PDF Pellerey). Dopo l'allineamento, frontend (i18n-factors
+# + questionnaires), backend (_qsa_factor_names) e questo file usano gli stessi nomi.
 QSA_FACTOR_IT: dict[str, str] = {
     "C1": "Strategie elaborative", "C2": "Autoregolazione", "C3": "Disorientamento",
-    "C4": "Collaborazione", "C5": "Organizzatori semantici",
-    "C6": "Difficoltà concentrazione", "C7": "Autointerrogazione",
+    "C4": "Disponibilità alla collaborazione", "C5": "Uso di organizzatori semantici",
+    "C6": "Difficoltà di concentrazione", "C7": "Autointerrogazione",
     "A1": "Ansietà di base", "A2": "Volizione",
-    "A3": "Attribuzione controllabile", "A4": "Attribuzione incontrollabile",
-    "A5": "Mancanza perseveranza", "A6": "Percezione competenza",
+    "A3": "Attribuzione a cause controllabili", "A4": "Attribuzione a cause incontrollabili",
+    "A5": "Mancanza di perseveranza", "A6": "Percezione di competenza",
     "A7": "Interferenze emotive",
 }
 QSA_FACTOR_EN: dict[str, str] = {
     "C1": "Elaborative strategies", "C2": "Self-regulation", "C3": "Disorientation",
-    "C4": "Willingness to collaborate", "C5": "Semantic organisers",
+    "C4": "Willingness to collaborate", "C5": "Use of semantic organisers",
     "C6": "Concentration difficulties", "C7": "Self-questioning",
     "A1": "Baseline anxiety", "A2": "Volition",
     "A3": "Attribution to controllable causes", "A4": "Attribution to uncontrollable causes",
@@ -100,23 +101,13 @@ QSA_FACTOR_EN: dict[str, str] = {
     "A7": "Emotional interference",
 }
 
-# Nomi *canonici lato backend* (backend/chat_logic.py _qsa_factor_names IT). Le
-# risposte vengono riscritte su QUESTI nomi da `_annotate_qsa_factor_codes`,
-# quindi il matching delle frasi nella risposta deve usarli (diversi da quelli
-# frontend per C4/C6/A3/A4/A5/A6 — vedi suggerimenti).
-QSA_FACTOR_IT_BACKEND: dict[str, str] = {
-    "C1": "Strategie elaborative", "C2": "Autoregolazione", "C3": "Disorientamento",
-    "C4": "Disponibilità alla collaborazione", "C5": "Organizzatori semantici",
-    "C6": "Difficoltà di concentrazione", "C7": "Autointerrogazione",
-    "A1": "Ansietà di base", "A2": "Volizione",
-    "A3": "Attribuzione a cause controllabili", "A4": "Attribuzione a cause incontrollabili",
-    "A5": "Mancanza di perseveranza", "A6": "Percezione di competenza",
-    "A7": "Interferenze emotive",
-}
+# Le risposte vengono riscritte su questi nomi da `_annotate_qsa_factor_codes`:
+# ora coincidono coi nomi frontend, quindi l'alias punta alla stessa mappa.
+QSA_FACTOR_IT_BACKEND = QSA_FACTOR_IT
 
 
 def _response_names(lang: str) -> dict[str, str]:
-    """Nomi attesi NEL TESTO della risposta (post-annotazione). IT = nomi backend."""
+    """Nomi attesi NEL TESTO della risposta (post-annotazione)."""
     return QSA_FACTOR_IT_BACKEND if lang == "it" else QSA_FACTOR_EN
 
 # Lessici (sentiment) — da test_ollama_qsa_benchmark.py.
