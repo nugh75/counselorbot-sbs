@@ -1,22 +1,27 @@
 """Read-only prompt envelope audit for guided CounselorBot chats."""
 from __future__ import annotations
 
+import logging
 import re
 import time
 import uuid
 from typing import Any, Callable
 
+logger = logging.getLogger(__name__)
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from . import models, model_pricing
+from . import models, model_pricing, pii
 from .ai_service import AIError, AIService
+from .anonymous_codes import code_for_identity
 from .api_models import ChatRequest
 from .chat_logic import (
     _annotate_qsa_factor_codes,
     _apply_language_directive,
     _apply_qsa_factor_directive,
     _apply_register_directive,
+    _apply_thinking_directive,
     _clamp_max_tokens,
     _is_strategy_questionnaire,
     _phase_factor_codes,
@@ -27,6 +32,8 @@ from .chat_logic import (
     _scope_scores_to_codes,
     _should_sanitize_ztpi_text,
     build_context_envelope,
+    full_prompt_logging_enabled,
+    split_thinking,
 )
 from .guided_text_i18n import SECONDARY_LANGS
 from .prompt_config import (
@@ -47,6 +54,13 @@ _REFUSAL_RE = re.compile(
     re.IGNORECASE,
 )
 _ZTPI_TECHNICAL_RE = re.compile(r"\b(?:ZTPI|PTB|BTP|DBTP-r?|T[1-5])\b", re.IGNORECASE)
+# Marcatori di ragionamento trapelato nel testo visibile (deve restare nel canale
+# «sto pensando»/<think>, non nella risposta allo studente).
+_REASONING_LEAK_RE = re.compile(
+    r"(attivazione interna|ho i punteggi|devo (?:mantenere|ricordare|usare|suddividere|rispettare)|"
+    r"<\s*think|internal reasoning|chain[- ]of[- ]thought|come da istruzioni)",
+    re.IGNORECASE,
+)
 _RISKY_PATTERNS = (
     ("legacy_ztpi_high_strength", re.compile(r"punteggio alto\s*\(7-9\)\s*(?:e|è)\s+una\s+forza", re.IGNORECASE)),
     ("legacy_source_reading_visible", re.compile(r"indicazion[ei]\s+di\s+lettura\s+da\s+fonte", re.IGNORECASE)),
@@ -223,6 +237,7 @@ def build_prompt_audit(
     system_prompt = _apply_language_directive(system_prompt, request.language)
     system_prompt = _apply_register_directive(system_prompt, request.language)
     system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language)
+    system_prompt = _apply_thinking_directive(system_prompt, request.language)
 
     model_scores_context = (
         _annotate_qsa_factor_codes(request.scores_context, request.language, questionnaire_type=questionnaire_type)
@@ -379,6 +394,7 @@ def response_checks(result: dict[str, Any], response_text: str) -> dict[str, Any
         "factor_code_format": _factor_code_format_check(response_text, questionnaire_type),
         "factor_coverage": _factor_coverage_check(response_text, required_codes),
         "refusal": {"ok": not bool(_REFUSAL_RE.search(response_text or ""))},
+        "reasoning_leak": {"ok": not bool(_REASONING_LEAK_RE.search(response_text or ""))},
         "ztpi_technical_leakage": {
             "applicable": questionnaire_type == "ZTPI",
             "ok": None if questionnaire_type != "ZTPI" else not bool(_ZTPI_TECHNICAL_RE.search(response_text or "")),
@@ -395,9 +411,67 @@ def _phase_factor_codes_in_scoped_context(scoped_scores_context: str) -> set[str
     return _factor_codes_in(scoped_scores_context)
 
 
+def _log_prompt_audit_live(db: Session, payload, result: dict[str, Any], public: dict[str, Any], identity: dict | None) -> None:
+    """Persiste il run di prompt-audit /live nella tabella `logs` (action
+    `prompt_audit_live`), così le prove sui counselor compaiono nel visualizzatore
+    log dell'app. Best-effort: un fallimento di logging non deve rompere l'audit.
+
+    Ricalca il logging di /chat: redazione PII su scores/risposta/reasoning e, se
+    `log_full_prompt` e' attivo, envelope completo (system prompt + messaggio +
+    history) redatto."""
+    try:
+        resolved = public.get("resolved", {})
+        ident = identity or {}
+        session_id = (getattr(payload, "session_id", None) or f"prompt-audit-live-{uuid.uuid4()}")
+        details = pii.redact_details({
+            "audit": True,
+            "source": "prompt-audit-live",
+            "mode": payload.mode,
+            "phase": payload.phase,
+            "counselor_id": getattr(payload, "counselor_id", None),
+            "counselor": resolved.get("counselor"),
+            "step": resolved.get("step"),
+            "prompt_key": resolved.get("prompt_key"),
+            "language": resolved.get("language"),
+            "scores_context": public.get("inputs", {}).get("full_scores_context"),
+            "bot_response": public.get("response_visible"),
+            "reasoning": public.get("reasoning"),
+            "checks": public.get("checks"),
+            "warnings": public.get("warnings"),
+            "usage": public.get("usage"),
+            "cost_usd": public.get("cost_usd"),
+            "duration_ms": public.get("duration_ms"),
+            "knowledge_context_length": public.get("knowledge", {}).get("context_length"),
+        }, "scores_context", "bot_response", "reasoning")
+        if full_prompt_logging_enabled(db):
+            details["envelope"] = pii.redact_envelope(result.get("envelope", {}))
+        db.add(models.Log(
+            session_id=session_id,
+            action="prompt_audit_live",
+            username=ident.get("username") or None,
+            email=ident.get("email") or None,
+            anonymous_research_code=(code_for_identity(db, ident) if ident.get("username") else None),
+            provider=resolved.get("provider"),
+            model_name=resolved.get("model"),
+            cost_usd=public.get("cost_usd"),
+            questionnaire_type=result.get("_questionnaire_type") or getattr(payload, "questionnaire_type", None),
+            phase=payload.phase or None,
+            mode=payload.mode or None,
+            details=details,
+        ))
+        db.commit()
+    except Exception as e:  # pragma: no cover - difensivo
+        logger.warning(f"Logging prompt_audit_live fallito: {e}")
+        try:
+            db.rollback()
+        except Exception:
+            pass
+
+
 def run_prompt_audit_live(
     db: Session,
     payload,
+    identity: dict | None = None,
     *,
     ai_service_cls: Callable[[Session], AIService] = AIService,
 ) -> dict[str, Any]:
@@ -421,6 +495,12 @@ def run_prompt_audit_live(
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     duration_ms = int((time.monotonic() - t0) * 1000)
 
+    # «sto pensando» confinato: preferisci il thinking nativo (Ollama), poi estrai
+    # eventuali tag <think> inlineati nel testo. Il visibile prosegue ripulito.
+    reasoning_native = getattr(ai_service, "last_thinking", None)
+    reasoning_tagged, response_raw = split_thinking(response_raw)
+    reasoning = (reasoning_native or reasoning_tagged) or None
+
     questionnaire_type = result["_questionnaire_type"]
     if result["_sanitize_ztpi"]:
         response_visible = _sanitize_ztpi_user_text(response_raw, payload.language)
@@ -438,11 +518,13 @@ def run_prompt_audit_live(
     public.update({
         "response_raw": response_raw,
         "response_visible": response_visible,
+        "reasoning": reasoning,
         "usage": usage,
         "cost_usd": _usage_cost_usd(usage, provider, model),
         "duration_ms": duration_ms,
         "checks": response_checks(result, response_visible),
     })
+    _log_prompt_audit_live(db, payload, result, public, identity)
     return public
 
 
