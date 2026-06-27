@@ -16,3 +16,7 @@ dist/
 .DS_Store
 /directives
 /execution
+
+# Legacy SQLite dev DB (prod uses Postgres)
+counselorbot.db
+*.db
