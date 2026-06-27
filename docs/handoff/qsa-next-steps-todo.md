@@ -19,30 +19,28 @@ Codice: `backend/certified_strategy_service.py`, `backend/chat_logic.py`,
 
 ---
 
-## DA FARE — in ordine di priorità
+## AGGIORNAMENTO 2026-06-27 (sera) — punti 1-2 fatti, deploy live
 
-### 1. Colmare i buchi di copertura delle strategie certificate (BLOCCANTE per la UX)
-16 strategie certificate attive. Fattori QSA **coperti**: C1, C3, C4, C5, C7, A1, A3, A4, A5, A6.
-**Mancano**: **C2 (Autoregolazione), C6 (Difficoltà di concentrazione), A2 (Volizione)**.
-Inoltre **3 voci hanno `factor_codes` vuoto** `[]` → da rivedere (generiche o malconfigurate?).
+- **Punto 1 FATTO**: create le 3 strategie mancanti **C2, C6, A2**; copertura ora **14/14 QSA**.
+  Le 3 voci `factor_codes=[]` erano le **Savickas** (scope `["SAVICKAS"]`, niente codici fattore):
+  **corrette, non malconfigurate** → non toccate.
+- **Ingest fonte**: scaricate e trascritte le schede Ottone (testo integrale) da
+  competenzestrategiche.it → `docs/.../03_Schede_fattori_QSA_testo_integrale.md` (commit `0d463db`).
+  Le 14 descrizioni certificate sono state **allineate verbatim** a Ottone + `source_reference`.
+- **+2 strategie evidence-based**: `qsa-retrieval-practice`, `qsa-spaced-practice`
+  (Dunlosky et al.; The Learning Scientists). Totale **15 righe QSA-domain**.
+- **QSAr** ora coperto: gli 8 fattori `r`-suffixed (C1r..A4r) mappati per costrutto alle
+  strategie QSA + `questionnaire_types` esteso a `["QSA","QSAr"]`. Patch gating in
+  `certified_strategy_service.py` per riconoscere i codici `r` (commit `74141b5`, con test).
+- **Punto 2 FATTO**: `docker compose build backend && up -d backend` eseguito, container healthy.
+  Smoke **77 pass / 4 fail** (3 `site_chat` auth + 1 `prompt_audit_live` assert stantia, **tutti
+  preesistenti**); `test_qsa_factor_directive` 17/17.
+- Branch pushato. **Caveat**: le `certified_strategies` sono **solo-DB** (nessun seed in codice):
+  un DB nuovo nasce vuoto.
 
-Impatto concreto: nello step **sl-selfcontrol** (C2, C3, C6) il target di crescita è **C6=7**,
-che **non ha** strategia certificata → il piano pratico viene **omesso** proprio sull'area
-principale dello studente. Stesso rischio ovunque il target cada su C2/C6/A2.
+### ~~1. Colmare i buchi di copertura~~ ✅ FATTO (vedi sopra)
 
-Azione: creare strategie certificate per **C2, C6, A2** via admin
-(`POST /admin/certified-strategies`, poi `status=certified`, `is_active=true`, `factor_codes`,
-`match_mode`, testi `*_it/en/es/sv`). Rivedere/riassegnare le 3 voci con `factor_codes=[]`.
-(ZTPI: manca solo T2 — fuori scope QSA, segnalato.)
-
-### 2. Deploy del branch + verifica (il codice non è ancora live)
-Il backend in esecuzione gira l'immagine di `main` (senza il codice certified-advice). Serve:
-```bash
-docker compose build backend && docker compose up -d backend
-docker compose run --rm --no-deps -T backend python -m backend.tests.test_smoke
-docker compose run --rm --no-deps -T backend python -m backend.tests.test_qsa_factor_directive
-```
-Atteso smoke: 76 pass + i 3 fallimenti **preesistenti** `site_chat`/"Non autenticato" (non legati).
+### ~~2. Deploy del branch + verifica~~ ✅ FATTO (vedi sopra)
 
 ### 3. Ri-eseguire la batteria completa con il certified-advice attivo
 ```bash
