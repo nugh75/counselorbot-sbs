@@ -1,0 +1,969 @@
+[
+  {
+    "step": "sl-elaboration",
+    "without": {
+      "words": 401,
+      "advice_hits": 9,
+      "advice_words": [
+        "azione",
+        "esercizio",
+        "cerca di",
+        "puoi",
+        "oggi",
+        "usa",
+        "piano",
+        "potresti",
+        "settimana"
+      ],
+      "certified_ids": [],
+      "aligned": [],
+      "duration_ms": 11677,
+      "cost_usd": null,
+      "provider": "ollama",
+      "model": "gemma4:e4b",
+      "excerpts": [
+        "L'organizzazione del materiale con strumenti strutturati, come gli schemi semantici, può consolidare ulteriormente questo processo, rendendolo più incisivo ed efficace.",
+        "Cosa funziona già bene La tua forza risiede nelle Strategie elaborative (C1 (Strategie elaborative)).",
+        "Questa abitudine si sposa anche bene con l’Autointerrogazione (C7 (Autointerrogazione)); il fatto che tu ti ponga domande in modo strutturato mentre studi dimostra che stai non solo ricevendo informazioni, ma attivamente costruendole, trasformando così la forza elaborativa in un processo di verifica costante.",
+        "Cosa puoi migliorare Un elemento su cui lavorare è l'uso sistematico degli organizzatori semantici (C5 (Uso di organizzatori semantici))."
+      ],
+      "response": "Il modo in cui elabori le informazioni e organizzi i tuoi pensieri mostra risorse ben definite. La tua capacità di approfondire un argomento è forte e costituisce la base su cui costruire il tuo apprendimento. L'organizzazione del materiale con strumenti strutturati, come gli schemi semantici, può consolidare ulteriormente questo processo, rendendolo più incisivo ed efficace.\n\nCosa funziona già bene\nLa tua forza risiede nelle Strategie elaborative (C1 (Strategie elaborative)). Quando ti impegni in uno studio approfondito e sei capace di analizzare un testo da più angolazioni, usi queste risorse molto bene: c'è una capacità naturale di andare oltre la semplice lettura e di creare collegamenti significativi tra concetti diversi. Questa abitudine si sposa anche bene con l’Autointerrogazione (C7 (Autointerrogazione)); il fatto che tu ti ponga domande in modo strutturato mentre studi dimostra che stai non solo ricevendo informazioni, ma attivamente costruendole, trasformando così la forza elaborativa in un processo di verifica costante.\n\nCosa puoi migliorare\nUn elemento su cui lavorare è l'uso sistematico degli organizzatori semantici (C5 (Uso di organizzatori semantici)). Attualmente il tuo utilizzo di questi strumenti è adeguato, ma se sapessi applicare le tecniche di analisi approfondita che usi con C1 (Strategie elaborative) e C7 (Autointerrogazione) all'atto della struttura fisica delle informazioni, potresti creare mappe concettuali o schemi ancora più ricchi. L’obiettivo non è solo elaborare i dati, ma anche \"incastonarli\" in una struttura visiva solida. Potresti vedere così la tua forza di analisi (C1 (Strategie elaborative)) supportata da un supporto strutturale (C5 (Uso di organizzatori semantici)), rendendo il tutto meno disorganizzato e più compatto.\n\nPiano pratico\n**Azione per oggi (10-20 minuti):** Rivedi un argomento che hai studiato recentemente applicando lo schema del riassunto ad anello. Invece di scrivere punti elenco, cerca di disegnare una mappa concettuale semplice: posiziona il concetto principale al centro e usa i collegamenti tra i rami per illustrare le relazioni di causa-effetto o di supporto tra i vari elementi. Questo esercizio ti aiuta a unire la profondità analitica (C1 (Strategie elaborative)) con lo schema organizzativo (C5 (Uso di organizzatori semantici)).\n\n**Azione per questa settimana:** Quando studi un capitolo, prima di riassumerlo, prenditi cinque minuti solo per identificare tre parole chiave e disegnare una relazione tra loro. Non devi usare tutto il materiale; basta che tu crei uno scheletro semantico preliminare. Questo ti allena a strutturare mentalmente l'informazione *prima* di elaborarla profondamente, rafforzando la connessione tra C5 (Uso di organizzatori semantici) e C1 (Strategie elaborative).",
+      "checks": {
+        "language": {
+          "expected": "it",
+          "ok": true,
+          "matches": 7
+        },
+        "no_greeting": {
+          "ok": true
+        },
+        "factor_code_format": {
+          "applicable": true,
+          "ok": true,
+          "isolated_codes": []
+        },
+        "factor_coverage": {
+          "applicable": true,
+          "ok": true,
+          "covered": [
+            "C1",
+            "C5",
+            "C7"
+          ],
+          "missing": []
+        },
+        "factor_scope": {
+          "applicable": true,
+          "ok": true,
+          "unexpected": []
+        },
+        "refusal": {
+          "ok": true
+        },
+        "reasoning_leak": {
+          "ok": true
+        },
+        "ztpi_technical_leakage": {
+          "applicable": false,
+          "ok": null
+        },
+        "savickas_advance_marker": {
+          "applicable": false,
+          "present": null,
+          "phase": "sl-elaboration"
+        }
+      }
+    },
+    "with": {
+      "words": 357,
+      "advice_hits": 11,
+      "advice_words": [
+        "azione",
+        "prova a",
+        "fai",
+        "puoi",
+        "passo",
+        "oggi",
+        "piano",
+        "prova",
+        "potresti",
+        "settimana",
+        "scegli"
+      ],
+      "certified_ids": [
+        "qsa-elaborative-links",
+        "qsa-self-questioning",
+        "qsa-semantic-organizers"
+      ],
+      "aligned": [
+        [
+          "qsa-elaborative-links",
+          [
+            "collegamento",
+            "esperienza"
+          ]
+        ],
+        [
+          "qsa-self-questioning",
+          [
+            "domande",
+            "autointerrogazione"
+          ]
+        ],
+        [
+          "qsa-semantic-organizers",
+          [
+            "schema",
+            "schemi",
+            "mappa"
+          ]
+        ]
+      ],
+      "duration_ms": 12968,
+      "cost_usd": null,
+      "provider": "ollama",
+      "model": "gemma4:e4b",
+      "excerpts": [
+        "Quando guardiamo insieme il modo in cui elabori e organizzi le informazioni, emerge un quadro chiaro di risorse che puoi usare a tuo favore.",
+        "Hai già una capacità forte nel creare collegamenti tra ciò che studi e la tua esperienza personale (C1 (Strategie elaborative)).",
+        "Questa forza ti aiuta tantissimo quando usi l'autointerrogazione (C7 (Autointerrogazione)), perché riesci non solo a ricordare, ma anche a formulare domande efficaci su un argomento complesso.",
+        "Il prossimo passo è potenziare ancora di più l’uso di schemi e mappe concettuali (C5 (Uso di organizzatori semantici)) per rendere queste strutture ancora più automatiche durante lo studio."
+      ],
+      "response": "Quando guardiamo insieme il modo in cui elabori e organizzi le informazioni, emerge un quadro chiaro di risorse che puoi usare a tuo favore. Hai già una capacità forte nel creare collegamenti tra ciò che studi e la tua esperienza personale (C1 (Strategie elaborative)). Questa forza ti aiuta tantissimo quando usi l'autointerrogazione (C7 (Autointerrogazione)), perché riesci non solo a ricordare, ma anche a formulare domande efficaci su un argomento complesso. Il prossimo passo è potenziare ancora di più l’uso di schemi e mappe concettuali (C5 (Uso di organizzatori semantici)) per rendere queste strutture ancora più automatiche durante lo studio.\n\n**Cosa funziona già bene**\nLa tua capacità di elaborazione personale è la risorsa più forte: sei capace di creare collegamenti tra nuovi concetti e esperienze passate, trasformando l’apprendimento in qualcosa di significativo per te stesso (C1 (Strategie elaborative)). Inoltre, il tuo livello di autointerrogazione (C7 (Autointerrogazione)) ti permette già di costruire un buon dialogo con i materiali di studio, anticipandoti su cosa potresti non capire. Queste abilità lavorative rappresentano una solida base da cui partire.\n\n**Cosa puoi migliorare**\nPer raggiungere un livello superiore nella tua organizzazione dello studio, puoi lavorare per rendere la creazione e l'uso degli schemi concettuali (C5 (Uso di organizzatori semantici)) più rapido e meno \"di sforzo\". Anche se lo usi già in modo adeguato, trasformare questo strumento da qualcosa che fai *quando devi ripassare* a un elemento *costante durante la fase di studio* ti darà maggiore sicurezza.\n\n**Piano pratico**\nPer supportarti nell'utilizzo della tua forte capacità di elaborazione e organizzazione:\n\n*   **Azione per oggi (10-20 minuti):** Mentre studi il prossimo argomento, prova a fermarti con calma e a pensare ad un solo collegamento concreto tra ciò che stai imparando e qualcosa che hai già vissuto nella vita. Non deve essere perfetto, l'obiettivo è allenare quel \"salto\" di pensiero tra materia e esperienza personale (C1 (Strategie elaborative)).\n*   **Azione per questa settimana:** Scegli un argomento che hai studiato la scorsa settimana e prova a riassumerlo interamente in una singola mappa concettuale o tabella schematica. Questo ti aiuterà ad automatizzare l'uso degli organizzatori semantici (C5 (Uso di organizzatori semantici)) e a verificarne subito l’utilità nel ripasso.",
+      "checks": {
+        "language": {
+          "expected": "it",
+          "ok": true,
+          "matches": 7
+        },
+        "no_greeting": {
+          "ok": true
+        },
+        "factor_code_format": {
+          "applicable": true,
+          "ok": true,
+          "isolated_codes": []
+        },
+        "factor_coverage": {
+          "applicable": true,
+          "ok": true,
+          "covered": [
+            "C1",
+            "C5",
+            "C7"
+          ],
+          "missing": []
+        },
+        "factor_scope": {
+          "applicable": true,
+          "ok": true,
+          "unexpected": []
+        },
+        "refusal": {
+          "ok": true
+        },
+        "reasoning_leak": {
+          "ok": true
+        },
+        "ztpi_technical_leakage": {
+          "applicable": false,
+          "ok": null
+        },
+        "savickas_advance_marker": {
+          "applicable": false,
+          "present": null,
+          "phase": "sl-elaboration"
+        }
+      }
+    }
+  },
+  {
+    "step": "sl-selfcontrol",
+    "without": {
+      "words": 442,
+      "advice_hits": 8,
+      "advice_words": [
+        "azione",
+        "prova a",
+        "fai",
+        "puoi",
+        "oggi",
+        "piano",
+        "prova",
+        "settimana"
+      ],
+      "certified_ids": [],
+      "aligned": [],
+      "duration_ms": 14931,
+      "cost_usd": null,
+      "provider": "ollama",
+      "model": "gemma4:e4b",
+      "excerpts": [
+        "**Cosa emerge nel complesso** Emergono tre aspetti chiave: hai un buon potenziale nell'organizzare i tuoi studi (C2 (Autoregolazione)), ma ci sono due elementi che ostacolano questo processo.",
+        "La difficoltà a mantenere lo schema del pensiero (C3 (Disorientamento)) e le fluttuazioni di attenzione (C6 (Difficoltà di concentrazione)) rendono difficile per la tua Autoregolazione far da \"colla\" costante durante lo studio.",
+        "**Ciò che già funziona** Il tuo livello di Autoregolazione (C2 (Autoregolazione)) risulta adeguato.",
+        "Questo significa che hai sviluppato delle strategie operative e meccanismi interni per strutturare il tuo impegno quando ne senti la necessità."
+      ],
+      "response": "È chiaro che la tua attenzione e il tuo metodo sono aree in movimento; stai cercando di capire come gestire l'energia mentale per studiare.\n\n**Cosa emerge nel complesso**\nEmergono tre aspetti chiave: hai un buon potenziale nell'organizzare i tuoi studi (C2 (Autoregolazione)), ma ci sono due elementi che ostacolano questo processo. La difficoltà a mantenere lo schema del pensiero (C3 (Disorientamento)) e le fluttuazioni di attenzione (C6 (Difficoltà di concentrazione)) rendono difficile per la tua Autoregolazione far da \"colla\" costante durante lo studio. In sostanza, c'è un ottimo motore che viene periodicamente rallentato dal divagare mentale e dalla perdita di filo.\n\n**Ciò che già funziona**\nIl tuo livello di Autoregolazione (C2 (Autoregolazione)) risulta adeguato. Questo significa che hai sviluppato delle strategie operative e meccanismi interni per strutturare il tuo impegno quando ne senti la necessità. Hai le risorse cognitive base necessarie per stabilire un metodo, anche se è facile perdere contatto con esso.\n\n**Ciò che puoi migliorare**\nL'interazione tra i fattori suggerisce un ciclo che può essere migliorato. La forte tendenza al Disorientamento (C3 (Disorientamento)) e la Debolezza nella Concentrazione (C6 (Difficoltà di concentrazione)) agiscono insieme: quando l'attenzione cala, è più facile per il pensiero vagare o \"perdersi\" in pensieri non correlati allo studio. Questo rende difficile mantenere un flusso costante che l'Autoregolazione (C2 (Autoregolazione)) vorrebbe stabilire.\n\n**Piano pratico**\nPer ora, lavoriamo su quanto emerso dall’analisi dei fattori: focalizzarsi sulla gestione del divagare mentale e sull'attenzione è la priorità. Non c'è bisogno di rivedere l'intero metodo; devi prima assicurarti che il tuo livello di concentrazione sia più stabile per dare forza alla tua Autoregolazione.\n\n*   **Azione da fare oggi (10-20 minuti):**\n    Non focalizzarti sul completare un compito, ma solo sulla gestione del tempo. Prova una sessione di studio brevissima (massimo 15 minuti) usando la tecnica del \"blocco consapevole\": stabilisci che durante questi 15 minuti puoi *solo* scrivere o leggere ciò che ti è stato chiesto e che ogni volta che senti il pensiero divagare, fai un breve segno sul quaderno (\"Deviazione\") e riporti l'attenzione al testo senza giudicarti. L'obiettivo qui non è la quantità, ma \"accatturare\" attivamente le deviazioni per allenare C3 (Disorientamento).\n\n*   **Azione da fare questa settimana:**\n    Invece di lunghe sessioni di studio, prova a spezzettarle in intervalli più brevi e molto specifici. Ad esempio: 25 minuti su un argomento X; pausa attiva di 10 minuti che preveda movimento fisico o un cambio totale di ambiente (non controllare i social); poi altri 25 minuti su un argomento Y. Questo aiuta ad allenare C6 (Difficoltà di concentrazione) insegnando al tuo cervello a \"ricaricarsi\" attivamente e non solo mentalmente tra un compito e l'altro, supportando così meglio la tua Autoregolazione (C2 (Autoregolazione)).",
+      "checks": {
+        "language": {
+          "expected": "it",
+          "ok": true,
+          "matches": 7
+        },
+        "no_greeting": {
+          "ok": true
+        },
+        "factor_code_format": {
+          "applicable": true,
+          "ok": true,
+          "isolated_codes": []
+        },
+        "factor_coverage": {
+          "applicable": true,
+          "ok": true,
+          "covered": [
+            "C2",
+            "C3",
+            "C6"
+          ],
+          "missing": []
+        },
+        "factor_scope": {
+          "applicable": true,
+          "ok": true,
+          "unexpected": []
+        },
+        "refusal": {
+          "ok": true
+        },
+        "reasoning_leak": {
+          "ok": true
+        },
+        "ztpi_technical_leakage": {
+          "applicable": false,
+          "ok": null
+        },
+        "savickas_advance_marker": {
+          "applicable": false,
+          "present": null,
+          "phase": "sl-selfcontrol"
+        }
+      }
+    },
+    "with": {
+      "words": 383,
+      "advice_hits": 8,
+      "advice_words": [
+        "azione",
+        "esercizio",
+        "fai",
+        "provare",
+        "oggi",
+        "piano",
+        "potresti",
+        "settimana"
+      ],
+      "certified_ids": [
+        "qsa-disorientation-structure"
+      ],
+      "aligned": [
+        [
+          "qsa-disorientation-structure",
+          [
+            "struttura",
+            "ordine"
+          ]
+        ]
+      ],
+      "duration_ms": 13695,
+      "cost_usd": null,
+      "provider": "ollama",
+      "model": "gemma4:e4b",
+      "excerpts": [
+        "**Cosa emerge** Si osserva un rapporto delicato tra disorientamento e attenzione: quando ti senti smarrito su cosa fare dopo (come si manifesta con il Disorientamento, C3 (Disorientamento)), è molto più facile che la concentrazione diventi difficile a lungo termine (Difficoltà di concentrazione, C6 (Difficoltà di concentrazione)).",
+        "Questi due aspetti faticano ad appoggiare l'Autoregolazione (C2 (Autoregolazione)).",
+        "Questa combinazione non indica un deficit nella tua intelligenza o nello sforzo, ma piuttosto una necessità di supportare il tuo metodo e le pause attentive.",
+        "**Ciò che già funziona** Hai una base adeguata di Autoregolazione (C2 (Autoregolazione)); significa che sai cosa devi fare per iniziare lo studio e sei capace di mantenere un ritmo quando ti senti orientato."
+      ],
+      "response": "Il tuo modo di gestire attenzione e metodo mostra che sei capace di autoregolarti quando ritagli insiemi i tuoi sforzi; tuttavia, la gestione del materiale o degli obiettivi rende difficile mantenere il filo del discorso e focalizzare l'attenzione per lunghi periodi.\n\n**Cosa emerge**\nSi osserva un rapporto delicato tra disorientamento e attenzione: quando ti senti smarrito su cosa fare dopo (come si manifesta con il Disorientamento, C3 (Disorientamento)), è molto più facile che la concentrazione diventi difficile a lungo termine (Difficoltà di concentrazione, C6 (Difficoltà di concentrazione)). Questi due aspetti faticano ad appoggiare l'Autoregolazione (C2 (Autoregolazione)). Questa combinazione non indica un deficit nella tua intelligenza o nello sforzo, ma piuttosto una necessità di supportare il tuo metodo e le pause attentive.\n\n**Ciò che già funziona**\nHai una base adeguata di Autoregolazione (C2 (Autoregolazione)); significa che sai cosa devi fare per iniziare lo studio e sei capace di mantenere un ritmo quando ti senti orientato. Questa consapevolezza è la risorsa principale su cui puntare.\n\n**Ciò che potresti migliorare**\nIl punto chiave è rompere il circolo vizioso tra \"sentirmi sopraffatto\" e \"perdere l'attenzione\". Per rinforzare l'Autoregolazione (C2 (Autoregolazione)), devi prima stabilizzare lo studio attraverso la creazione di una struttura chiara per blocchi brevi. In questo modo, riduci lo sforzo mentale richiesto dal Disorientamento (C3 (Disorientamento)) e ottimizzi le risorse che usi per mantenere l'attenzione su compiti più gestibili.\n\n**Piano pratico:**\nPer affrontare insieme queste sfide, è utile operare sul metodo e sulle pause attentive.\n\n*   **Azione da fare oggi (10-20 minuti):** Non provare a studiare un argomento intero. Decidi di lavorare solo sulla preparazione del materiale: prendi i tuoi appunti o libri e, prima di leggere qualsiasi cosa, dedica questi 15 minuti a strutturare visivamente l'intero capitolo che devi affrontare (titoli, sottotitoli, schemi). Questo esercizio è mirato ad aiutare a stabilire un ordine chiaro e riduce lo sforzo richiesto dal Disorientamento.\n*   **Azione da fare questa settimana:** Pianifica i tuoi blocchi di studio non come ore consecutive, ma in intervalli che alternano attività focalizzate ad interruzioni brevi di movimento o riorganizzazione ambientale. Non appena senti salire la sensazione di smarrimento o difficoltà nel mantenerti concentrato, fermati immediatamente e dedicati a un rapido cambio d'ambiente (ad esempio, bevi un bicchiere d'acqua o fai cinque passi). Questo allenamento ti aiuterà ad accorciare il tempo necessario per ritrovarti.",
+      "checks": {
+        "language": {
+          "expected": "it",
+          "ok": true,
+          "matches": 6
+        },
+        "no_greeting": {
+          "ok": true
+        },
+        "factor_code_format": {
+          "applicable": true,
+          "ok": true,
+          "isolated_codes": []
+        },
+        "factor_coverage": {
+          "applicable": true,
+          "ok": true,
+          "covered": [
+            "C2",
+            "C3",
+            "C6"
+          ],
+          "missing": []
+        },
+        "factor_scope": {
+          "applicable": true,
+          "ok": true,
+          "unexpected": []
+        },
+        "refusal": {
+          "ok": true
+        },
+        "reasoning_leak": {
+          "ok": true
+        },
+        "ztpi_technical_leakage": {
+          "applicable": false,
+          "ok": null
+        },
+        "savickas_advance_marker": {
+          "applicable": false,
+          "present": null,
+          "phase": "sl-selfcontrol"
+        }
+      }
+    }
+  },
+  {
+    "step": "sl-motivation",
+    "without": {
+      "words": 325,
+      "advice_hits": 8,
+      "advice_words": [
+        "azione",
+        "scrivi",
+        "esercizio",
+        "puoi",
+        "oggi",
+        "piano",
+        "prova",
+        "settimana"
+      ],
+      "certified_ids": [],
+      "aligned": [],
+      "duration_ms": 10826,
+      "cost_usd": null,
+      "provider": "ollama",
+      "model": "gemma4:e4b",
+      "excerpts": [
+        "**Cosa emerge in breve** È evidente che la tua motivazione è alimentata da una volontà di fondo (A2 (Volizione)), ma questa viene messa a dura prova dalla percezione che hai delle tue capacità attuali (A6 (Percezione di competenza)).",
+        "Quando senti che i tuoi sforzi sono troppo grandi rispetto alle competenze che ritieni di avere, questo può indebolire la tua determinazione e aumentare il rischio di perdere la costanza nel tempo (A5 (Mancanza di perseveranza)).",
+        "Questa spinta interna è la base su cui puoi costruire, non devi rinunciare al fatto che questa energia c’è e ti supporta finora.",
+        "**Cosa puoi migliorare** Devi lavorare per rafforzare la Percezione di competenza (A6 (Percezione di competenza))."
+      ],
+      "response": "**Cosa emerge in breve**\nÈ evidente che la tua motivazione è alimentata da una volontà di fondo (A2 (Volizione)), ma questa viene messa a dura prova dalla percezione che hai delle tue capacità attuali (A6 (Percezione di competenza)). Quando senti che i tuoi sforzi sono troppo grandi rispetto alle competenze che ritieni di avere, questo può indebolire la tua determinazione e aumentare il rischio di perdere la costanza nel tempo (A5 (Mancanza di perseveranza)). Il punto centrale è costruire una fiducia più solida in ciò che sai fare per rendere sostenibile l'impegno.\n\n**Ciò che già funziona**\nHai un livello adeguato di Volizione (A2 (Volizione)), il che significa che hai interiorizzato la volontà di continuare a impegnarti anche quando è difficile. Questa spinta interna è la base su cui puoi costruire, non devi rinunciare al fatto che questa energia c’è e ti supporta finora.\n\n**Cosa puoi migliorare**\nDevi lavorare per rafforzare la Percezione di competenza (A6 (Percezione di competenza)). Spesso, quando ci si sente meno competenti, il livello di volontà cala velocemente e diventa più difficile mantenere la perseveranza (A5 (Mancanza di perseveranza)). Il miglioramento non sta solo nell'impegno in sé, ma nel sentirsi gradualmente più sicuri di poter raggiungere un piccolo obiettivo alla volta.\n\n**Piano pratico:**\n\n*   **Azione da fare oggi (10-20 minuti):** Dedica 10-20 minuti a una sessione di \"micro-sviluppo\" su un argomento molto specifico e limitato. Non devi coprire grandi aree, ma focalizzarti così tanto da riuscire a chiudere quel piccolo capitolo o problema sentendoti in grado di dirlo ad alta voce: questo aiuta immediatamente la Percezione di competenza (A6 (Percezione di competenza)).\n*   **Azione da fare questa settimana:** Crea un diario dei successi. Ogni sera per sette giorni, scrivi tre cose specifiche che hai imparato o completato quella giornata, indipendentemente da quanto sembrano piccole. Questo esercizio ti aiuterà a riconoscere e valorizzare progressivamente le tue competenze (A6 (Percezione di competenza)), trasformando i piccoli risultati in motori di perseveranza per la settimana successiva.",
+      "checks": {
+        "language": {
+          "expected": "it",
+          "ok": true,
+          "matches": 7
+        },
+        "no_greeting": {
+          "ok": true
+        },
+        "factor_code_format": {
+          "applicable": true,
+          "ok": true,
+          "isolated_codes": []
+        },
+        "factor_coverage": {
+          "applicable": true,
+          "ok": true,
+          "covered": [
+            "A2",
+            "A5",
+            "A6"
+          ],
+          "missing": []
+        },
+        "factor_scope": {
+          "applicable": true,
+          "ok": true,
+          "unexpected": []
+        },
+        "refusal": {
+          "ok": true
+        },
+        "reasoning_leak": {
+          "ok": true
+        },
+        "ztpi_technical_leakage": {
+          "applicable": false,
+          "ok": null
+        },
+        "savickas_advance_marker": {
+          "applicable": false,
+          "present": null,
+          "phase": "sl-motivation"
+        }
+      }
+    },
+    "with": {
+      "words": 277,
+      "advice_hits": 5,
+      "advice_words": [
+        "scrivi",
+        "passo",
+        "oggi",
+        "piano",
+        "settimana"
+      ],
+      "certified_ids": [
+        "qsa-perseverance-small-goals",
+        "qsa-perceived-competence"
+      ],
+      "aligned": [
+        [
+          "qsa-perseverance-small-goals",
+          [
+            "piccolo",
+            "passo"
+          ]
+        ],
+        [
+          "qsa-perceived-competence",
+          [
+            "competenza"
+          ]
+        ]
+      ],
+      "duration_ms": 9515,
+      "cost_usd": null,
+      "provider": "ollama",
+      "model": "gemma4:e4b",
+      "excerpts": [
+        "Il tuo motore motivazionale è dipendente dalla sensazione di riuscire a fare le cose.",
+        "Se ritieni di avere abbastanza risorse e capacità per affrontare un compito, la tua volontà funziona bene; al contrario, se invece senti che non ci arrivi, diventa molto difficile anche solo riprovare dopo una difficoltà.",
+        "Tuttavia, questa spinta iniziale viene rallentata da due elementi: quando ti senti insicuro delle tue capacità (A6 (Percezione di competenza)) e dalle volte in cui rinunci prima di aver davvero provato con determinazione (A5 (Mancanza di perseveranza)).",
+        "La difficoltà principale sta proprio nel circolo che si chiude così: minore è la sensazione di fiducia, più è facile arrendersi al primo ostacolo."
+      ],
+      "response": "Il tuo motore motivazionale è dipendente dalla sensazione di riuscire a fare le cose. Se ritieni di avere abbastanza risorse e capacità per affrontare un compito, la tua volontà funziona bene; al contrario, se invece senti che non ci arrivi, diventa molto difficile anche solo riprovare dopo una difficoltà.\n\nCiò che già ti sostiene è la voglia o l’intenzione (A2 (Volizione)): hai una buona base per voler raggiungere i tuoi obiettivi. Tuttavia, questa spinta iniziale viene rallentata da due elementi: quando ti senti insicuro delle tue capacità (A6 (Percezione di competenza)) e dalle volte in cui rinunci prima di aver davvero provato con determinazione (A5 (Mancanza di perseveranza)). La difficoltà principale sta proprio nel circolo che si chiude così: minore è la sensazione di fiducia, più è facile arrendersi al primo ostacolo.\n\nPer migliorare, devi trovare modi per costruire lentamente una consapevolezza dei tuoi risultati passati e imparare a suddividere i compiti in passi davvero minimi. Non devi affrontare subito l'obiettivo finale; concentrati solo sul completamento del piccolo passo che ti sta davanti.\n\n**Piano pratico:**\n\n*   **Cosa fare oggi (10-20 minuti):** Raccogli e scrivi tre piccoli risultati che hai raggiunto di recente, anche se sembrano insignificanti (ad esempio: \"Ho capito il concetto X dopo aver riletto la pagina Y\" o \"Sono riuscito a studiare per 30 minuti senza distrazioni\"). Non devi analizzarli; l'obiettivo è solo riconoscerli.\n*   **Cosa fare questa settimana:** Quando ti prepari ad affrontare uno studio difficile, suddividi il compito totale in tre parti così piccole da non sembrare nemmeno un obiettivo. Concentra tutta la tua attenzione sul completamento di quella prima micro-parte e festeggia mentalmente quel successo per rinforzare la fiducia nelle tue capacità.",
+      "checks": {
+        "language": {
+          "expected": "it",
+          "ok": true,
+          "matches": 6
+        },
+        "no_greeting": {
+          "ok": true
+        },
+        "factor_code_format": {
+          "applicable": true,
+          "ok": true,
+          "isolated_codes": []
+        },
+        "factor_coverage": {
+          "applicable": true,
+          "ok": true,
+          "covered": [
+            "A2",
+            "A5",
+            "A6"
+          ],
+          "missing": []
+        },
+        "factor_scope": {
+          "applicable": true,
+          "ok": true,
+          "unexpected": []
+        },
+        "refusal": {
+          "ok": true
+        },
+        "reasoning_leak": {
+          "ok": true
+        },
+        "ztpi_technical_leakage": {
+          "applicable": false,
+          "ok": null
+        },
+        "savickas_advance_marker": {
+          "applicable": false,
+          "present": null,
+          "phase": "sl-motivation"
+        }
+      }
+    }
+  },
+  {
+    "step": "sl-emotions",
+    "without": {
+      "words": 341,
+      "advice_hits": 9,
+      "advice_words": [
+        "azione",
+        "scrivi",
+        "esercizio",
+        "puoi",
+        "passo",
+        "oggi",
+        "piano",
+        "prova",
+        "settimana"
+      ],
+      "certified_ids": [],
+      "aligned": [],
+      "duration_ms": 10714,
+      "cost_usd": null,
+      "provider": "ollama",
+      "model": "gemma4:e4b",
+      "excerpts": [
+        "Questa area mostra una relazione stretta tra sé stessa: un'elevata ansia di fondo (A1 (Ansietà di base)) tende a rendere più difficili gli sforzi di concentrazione, lasciando spazio alle emozioni che si infiltrano nel processo di apprendimento (A7 (Interferenze emotive)).",
+        "Cosa sta già funzionando: Il fatto stesso che tu stia analizzando questa relazione dimostra una grande consapevolezza.",
+        "Riconoscere come lo stress interno influenza l'apprendimento è il primo passo fondamentale per poter intervenire e cambiare qualcosa.",
+        "Cosa puoi migliorare: L’obiettivo non è eliminare le emozioni o l’ansia, ma imparare a gestire l'interazione tra loro e lo studio."
+      ],
+      "response": "È evidente che l'aspetto emotivo e lo stress sono i punti su cui è necessario concentrarsi per migliorare il rendimento nello studio.\n\nCosa emerge:\nHai identificato che l’ansia di base (A1 (Ansietà di base)) e le interferenze emotive (A7 (Interferenze emotive)) rappresentano delle sfide significative quando devi studiare. Questa area mostra una relazione stretta tra sé stessa: un'elevata ansia di fondo (A1 (Ansietà di base)) tende a rendere più difficili gli sforzi di concentrazione, lasciando spazio alle emozioni che si infiltrano nel processo di apprendimento (A7 (Interferenze emotive)). Più l'ansia è presente all'inizio della sessione, più queste interferenze emotive possono sabotare la tua capacità di rimanere focalizzato sul materiale.\n\nCosa sta già funzionando:\nIl fatto stesso che tu stia analizzando questa relazione dimostra una grande consapevolezza. Riconoscere come lo stress interno influenza l'apprendimento è il primo passo fondamentale per poter intervenire e cambiare qualcosa. Hai la capacità di osservare queste dinamiche, e questa è una risorsa potentissima.\n\nCosa puoi migliorare:\nL’obiettivo non è eliminare le emozioni o l’ansia, ma imparare a gestire l'interazione tra loro e lo studio. Serve sviluppare strategie che possano interrompere quel ciclo negativo: ansia porta a interferenze; interferenze portano a sensazione di fallimento; questa sensazione peggiora l'ansia.\n\nPiano pratico:\nPer affrontare questo nodo, è utile lavorare sulla gestione emotiva con piccoli esercizi mirati.\n\nAzione da fare oggi (10-20 minuti):\nProva la respirazione diaframmatica per dieci minuti prima di iniziare a studiare un argomento particolarmente difficile. Questo ti aiuta ad attivare una risposta fisica che calma il sistema nervoso e riduce l'ansia momentanea, creando uno spazio tra lo stimolo emotivo e la tua capacità di apprendere (intervieni direttamente sull’A1 (Ansietà di base)).\n\nAzione da fare questa settimana:\nQuando senti che l'attenzione si disperde o ti blocchi su un concetto perché sei troppo concentrata sulle emozioni negative legate allo studio, fermati. Scrivi velocemente per tre minuti tutto ciò che provi in quel momento (senza giudizio), e solo dopo riprendere lo studio. Questo esercizio aiuta a riconoscere ed esternalizzare le interferenze emotive (A7 (Interferenze emotive)) prima che prendano il sopravvento.",
+      "checks": {
+        "language": {
+          "expected": "it",
+          "ok": true,
+          "matches": 7
+        },
+        "no_greeting": {
+          "ok": true
+        },
+        "factor_code_format": {
+          "applicable": true,
+          "ok": true,
+          "isolated_codes": []
+        },
+        "factor_coverage": {
+          "applicable": true,
+          "ok": true,
+          "covered": [
+            "A1",
+            "A7"
+          ],
+          "missing": []
+        },
+        "factor_scope": {
+          "applicable": true,
+          "ok": true,
+          "unexpected": []
+        },
+        "refusal": {
+          "ok": true
+        },
+        "reasoning_leak": {
+          "ok": true
+        },
+        "ztpi_technical_leakage": {
+          "applicable": false,
+          "ok": null
+        },
+        "savickas_advance_marker": {
+          "applicable": false,
+          "present": null,
+          "phase": "sl-emotions"
+        }
+      }
+    },
+    "with": {
+      "words": 425,
+      "advice_hits": 7,
+      "advice_words": [
+        "azione",
+        "puoi",
+        "passo",
+        "oggi",
+        "piano",
+        "prova",
+        "settimana"
+      ],
+      "certified_ids": [
+        "qsa-emotional-interference",
+        "qsa-anxiety-regulation"
+      ],
+      "aligned": [
+        [
+          "qsa-emotional-interference",
+          [
+            "interferenze",
+            "emotive",
+            "emozione"
+          ]
+        ],
+        [
+          "qsa-anxiety-regulation",
+          [
+            "ansia",
+            "pensieri"
+          ]
+        ]
+      ],
+      "duration_ms": 12315,
+      "cost_usd": null,
+      "provider": "ollama",
+      "model": "gemma4:e4b",
+      "excerpts": [
+        "Entrambi sono aree su cui puoi lavorare per stare meglio nello studio.",
+        "Questa consapevolezza è il primo passo fondamentale per fare cambiamenti duraturi.",
+        "**Cosa puoi migliorare** Il lavoro principale deve concentrarsi sulla gestione di questi due aspetti: apprendere a navigare i pensieri d'ansia (A1 (Ansietà di base)) e sviluppare tecniche per \"mettere da parte\" momentaneamente le emozioni forti (A7 (Interferenze emotive)), in modo che non interrompano il processo di studio.",
+        "**Piano pratico:** Questi piccoli passi sono pensati per aiutarti a creare una \"distanza\" tra la tua emozione e lo studio, rendendo le sensazioni meno opprimenti nel momento della lettura o del ripasso."
+      ],
+      "response": "Lavorare sulla gestione emotiva significa capire che le emozioni non sono semplici rumori di fondo, ma forze attive che influenzano il modo in cui elabori e ritieni le informazioni. Quando sei sotto stress o provi ansia, la tua attenzione si sposta dal \"cosa devo studiare\" al \"come mi sento rispetto a quello che studio\".\n\n**Cosa emerge in breve**\nÈ chiaro come ci sia una connessione forte tra i tuoi livelli di Ansietà di base (A1 (Ansietà di base)) e le Interferenze emotive (A7 (Interferenze emotive)). Entrambi sono aree su cui puoi lavorare per stare meglio nello studio. L'ansia tende a farti concentrare troppo sui potenziali errori o sulle aspettative esterne, mentre le interferenze emotive possono interrompere il flusso di lavoro nel momento in cui ti senti turbato. Il tuo obiettivo è imparare a riconoscere queste onde emotive e a separarle dal tempo che dedichi all’apprendimento vero e proprio.\n\n**Cosa funziona già**\nHai la capacità di porsi questa domanda, ovvero l'attenzione su come le emozioni influenzano lo studio. Questa consapevolezza è il primo passo fondamentale per fare cambiamenti duraturi. Riconoscere che questo legame esiste ti dà già molta forza per affrontarlo.\n\n**Cosa puoi migliorare**\nIl lavoro principale deve concentrarsi sulla gestione di questi due aspetti: apprendere a navigare i pensieri d'ansia (A1 (Ansietà di base)) e sviluppare tecniche per \"mettere da parte\" momentaneamente le emozioni forti (A7 (Interferenze emotive)), in modo che non interrompano il processo di studio. L'obiettivo non è *eliminare* l'emozione, ma imparare a darle un momento dedicato prima di tornare al compito.\n\n**Piano pratico:**\nQuesti piccoli passi sono pensati per aiutarti a creare una \"distanza\" tra la tua emozione e lo studio, rendendo le sensazioni meno opprimenti nel momento della lettura o del ripasso.\n\n*   **Azione da fare oggi (10-20 minuti):** Prova ad applicare un piccolo rituale di separazione mentale. Quando senti che l'ansia sale o che ti turbi una situazione emotiva, fermati fisicamente per due minuti: chiudi gli occhi e respira profondamente. Riconosci semplicemente \"adesso mi sento preoccupato/a\" senza giudicarti. Poi, apri gli occhi e di' a te stesso/a: \"Ora è il momento dello studio.\" Questo aiuta a separare la gestione emotiva dal compito accademico.\n\n*   **Azione da fare questa settimana:** Identifica un momento della giornata in cui ti senti più teso/a o sopraffatto/a (ad esempio, prima di iniziare una sessione lunga). Invece di studiare immediatamente, dedica 5 minuti a scrivere su un foglio tutte le cose che ti preoccupano e perché. Questo piccolo gesto aiuta a scaricare la pressione emotiva su carta, permettendoti poi di affrontare lo studio con più calma.",
+      "checks": {
+        "language": {
+          "expected": "it",
+          "ok": true,
+          "matches": 7
+        },
+        "no_greeting": {
+          "ok": true
+        },
+        "factor_code_format": {
+          "applicable": true,
+          "ok": true,
+          "isolated_codes": []
+        },
+        "factor_coverage": {
+          "applicable": true,
+          "ok": true,
+          "covered": [
+            "A1",
+            "A7"
+          ],
+          "missing": []
+        },
+        "factor_scope": {
+          "applicable": true,
+          "ok": true,
+          "unexpected": []
+        },
+        "refusal": {
+          "ok": true
+        },
+        "reasoning_leak": {
+          "ok": true
+        },
+        "ztpi_technical_leakage": {
+          "applicable": false,
+          "ok": null
+        },
+        "savickas_advance_marker": {
+          "applicable": false,
+          "present": null,
+          "phase": "sl-emotions"
+        }
+      }
+    }
+  },
+  {
+    "step": "sl-attribution",
+    "without": {
+      "words": 446,
+      "advice_hits": 5,
+      "advice_words": [
+        "scrivi",
+        "puoi",
+        "oggi",
+        "piano",
+        "settimana"
+      ],
+      "certified_ids": [],
+      "aligned": [],
+      "duration_ms": 13297,
+      "cost_usd": null,
+      "provider": "ollama",
+      "model": "gemma4:e4b",
+      "excerpts": [
+        "Sei bravo a riconoscere che il tuo impegno e le tue strategie lavorative fanno la differenza tra successo o difficoltà, un aspetto positivo dato dal tuo buon punteggio in A3 (Attribuzione a cause controllabili).",
+        "Cosa funziona già La tua forza risiede nella capacità di guardare al processo e all'impegno che puoi modificare.",
+        "Cosa puoi migliorare L'obiettivo non è negare l’esistenza di fattori esterni – ce ne sono molti nella vita e nello studio – ma imparare a gestirne il peso.",
+        "Piano pratico: Attività da fare oggi (10-20 minuti): Prendi un fallimento recente nello studio o in un compito e scrivi tre colonne."
+      ],
+      "response": "Cosa emerge nel tuo stile attributivo\nIl tuo modo di interpretare i risultati è generalmente ben orientato alla responsabilità personale. Sei bravo a riconoscere che il tuo impegno e le tue strategie lavorative fanno la differenza tra successo o difficoltà, un aspetto positivo dato dal tuo buon punteggio in A3 (Attribuzione a cause controllabili). La sfida principale sta nel distinguere ciò che dipende davvero da te e ciò che è puramente esterno. È qui che si manifesta una debolezza in A4 (Attribuzione a cause incontrollabili): tendi ad attribuire il fallimento o la difficoltà anche a fattori esterni, senza riuscire sempre a metterli in prospettiva adeguata.\n\nCosa funziona già\nLa tua forza risiede nella capacità di guardare al processo e all'impegno che puoi modificare. Il fatto che tu sia consapevole che i tuoi sforzi contano (A3 (Attribuzione a cause controllabili)) è un punto di partenza potentissimo per lo studio. Quando analizzi una difficoltà, la tua attenzione va spesso sul \"come posso fare meglio\" invece che sul \"perché mi è successo\".\n\nCosa puoi migliorare\nL'obiettivo non è negare l’esistenza di fattori esterni – ce ne sono molti nella vita e nello studio – ma imparare a gestirne il peso. A volte una difficoltà può essere causata da un esame difficile o dalla stanchezza, elementi che non hai controllato. È fondamentale rafforzare la distanza emotiva tra la tua persona e il risultato ottenuto: se qualcosa va storto, ricordati di dare credito al tuo sforzo (A3 (Attribuzione a cause controllabili)) e di accettare con relativa calma ciò che è semplicemente fuori dal tuo controllo (A4 (Attribuzione a cause incontrollabili)).\n\nPiano pratico:\nAttività da fare oggi (10-20 minuti):\nPrendi un fallimento recente nello studio o in un compito e scrivi tre colonne. Nella prima, elenca cosa hai controllato (es. ore di studio, tecnica usata). Nella seconda, elenca ciò che non potevi controllare quel giorno (es. la difficoltà del test, il sonno notturno). Nella terza colonna, scrivi: \"Anche se [Fattore incontrollabile], ho imparato che potrei migliorare [Azionabile su di me]\". Questo ti aiuta a focalizzare lo sforzo sui tuoi attuabili cambiamenti, rinforzando l'uso corretto di A3 (Attribuzione a cause controllabili) e mitigando la trappola emotiva di A4 (Attribuzione a cause incontrollabili).\n\nAttività da fare questa settimana:\nQuando senti una grande frustrazione per un risultato negativo, fermati un momento prima di reagire ed esercitati a rinegoziare il successo fallito. Non pensare semplicemente al voto che hai preso, ma pensa all'energia e alle strategie che *hai* usato durante lo studio. Concentrati solo su quei punti positivi sul tuo percorso (i tuoi sforzi) per richiamare l'attenzione sulla tua autonomia ed efficacia personale, rafforzando così la capacità di attribuzione controllabile in A3 (Attribuzione a cause controllabili).",
+      "checks": {
+        "language": {
+          "expected": "it",
+          "ok": true,
+          "matches": 7
+        },
+        "no_greeting": {
+          "ok": true
+        },
+        "factor_code_format": {
+          "applicable": true,
+          "ok": true,
+          "isolated_codes": []
+        },
+        "factor_coverage": {
+          "applicable": true,
+          "ok": true,
+          "covered": [
+            "A3",
+            "A4"
+          ],
+          "missing": []
+        },
+        "factor_scope": {
+          "applicable": true,
+          "ok": true,
+          "unexpected": []
+        },
+        "refusal": {
+          "ok": true
+        },
+        "reasoning_leak": {
+          "ok": true
+        },
+        "ztpi_technical_leakage": {
+          "applicable": false,
+          "ok": null
+        },
+        "savickas_advance_marker": {
+          "applicable": false,
+          "present": null,
+          "phase": "sl-attribution"
+        }
+      }
+    },
+    "with": {
+      "words": 354,
+      "advice_hits": 9,
+      "advice_words": [
+        "azione",
+        "scrivi",
+        "esercizio",
+        "fai",
+        "oggi",
+        "piano",
+        "prova",
+        "potresti",
+        "settimana"
+      ],
+      "certified_ids": [
+        "qsa-growth-mindset-attribution"
+      ],
+      "aligned": [
+        [
+          "qsa-growth-mindset-attribution",
+          [
+            "cause",
+            "controllabili"
+          ]
+        ]
+      ],
+      "duration_ms": 10905,
+      "cost_usd": null,
+      "provider": "ollama",
+      "model": "gemma4:e4b",
+      "excerpts": [
+        "**Cosa emerge brevemente** Il tuo stile attributivo mostra una buona base per capire che il successo è legato al tuo impegno e alle tue strategie (A3 (Attribuzione a cause controllabili)).",
+        "**Cosa funziona già bene** Hai sviluppato una buona capacità nell'identificare che i tuoi sforzi e le strategie sono fondamentali per ottenere risultati positivi.",
+        "**Cosa potresti migliorare** La sfida principale risiede nella gestione delle difficoltà.",
+        "Per rendere questo stile più utile, è necessario spostare il focus: quando le cose vanno male, devi esercitare consapevolmente guardando cosa potevi controllare *anche* in quel momento e da dove potresti imparare."
+      ],
+      "response": "**Cosa emerge brevemente**\n\nIl tuo stile attributivo mostra una buona base per capire che il successo è legato al tuo impegno e alle tue strategie (A3 (Attribuzione a cause controllabili)). Tuttavia, c'è un punto su cui lavorare molto: quando qualcosa non va come previsto, tende ad attribuire le difficoltà a fattori esterni o in tuoi confronti non controllabili (A4 (Attribuzione a cause incontrollabili)). Questo schema ti aiuta nel vedere la possibilità di migliorare i risultati, ma devi imparare a rielaborare il fallimento guardando anche alle tue azioni.\n\n**Cosa funziona già bene**\n\nHai sviluppato una buona capacità nell'identificare che i tuoi sforzi e le strategie sono fondamentali per ottenere risultati positivi. Questo è un punto di forza grande, perché significa che credi nel tuo ruolo attivo nello studio. Quando riesci a collegare il successo al \"fare\" o all'impegno personale, stai costruendo una visione molto utile del processo di apprendimento.\n\n**Cosa potresti migliorare**\n\nLa sfida principale risiede nella gestione delle difficoltà. Se un esame non va come speravi o se commetti un errore, c'è la tendenza a pensare che il risultato sia dovuto a qualcosa fuori dal tuo controllo (come l’umore altrui o lo stato d'animo generale). Per rendere questo stile più utile, è necessario spostare il focus: quando le cose vanno male, devi esercitare consapevolmente guardando cosa potevi controllare *anche* in quel momento e da dove potresti imparare.\n\n**Piano pratico:**\n\n*   **Azione da fare oggi (10-20 minuti):** Prendi un piccolo fallimento o difficoltà recente che hai riscontrato, non accademico va bene, potrebbe essere anche qualcosa di quotidiano. Poi scrivi due colonne: nella prima scrivi \"Cose fuori dal mio controllo\" e nella seconda scrivi \"Cosa potevo controllare (il mio approccio, la mia preparazione)\". Questo esercizio aiuta a riportare l'attenzione su ciò che è realmente tuo.\n*   **Azione da fare questa settimana:** Prova ad adottare una lettura dinamica per i tuoi studi. Quando ottieni buoni risultati o anche quando fai degli errori, ripetiti: \"Le mie capacità e la mia comprensione non sono fisse; migliorano attraverso il mio impegno ed esercizio continuo\". Questo rinforza l'idea che lo sforzo sia sempre un fattore chiave (A3 (Attribuzione a cause controllabili)).",
+      "checks": {
+        "language": {
+          "expected": "it",
+          "ok": true,
+          "matches": 6
+        },
+        "no_greeting": {
+          "ok": true
+        },
+        "factor_code_format": {
+          "applicable": true,
+          "ok": true,
+          "isolated_codes": []
+        },
+        "factor_coverage": {
+          "applicable": true,
+          "ok": true,
+          "covered": [
+            "A3",
+            "A4"
+          ],
+          "missing": []
+        },
+        "factor_scope": {
+          "applicable": true,
+          "ok": true,
+          "unexpected": []
+        },
+        "refusal": {
+          "ok": true
+        },
+        "reasoning_leak": {
+          "ok": true
+        },
+        "ztpi_technical_leakage": {
+          "applicable": false,
+          "ok": null
+        },
+        "savickas_advance_marker": {
+          "applicable": false,
+          "present": null,
+          "phase": "sl-attribution"
+        }
+      }
+    }
+  },
+  {
+    "step": "sl-social",
+    "without": {
+      "words": 244,
+      "advice_hits": 8,
+      "advice_words": [
+        "azione",
+        "prova a",
+        "puoi",
+        "oggi",
+        "piano",
+        "prova",
+        "potresti",
+        "settimana"
+      ],
+      "certified_ids": [],
+      "aligned": [],
+      "duration_ms": 8558,
+      "cost_usd": null,
+      "provider": "ollama",
+      "model": "gemma4:e4b",
+      "excerpts": [
+        "Lavorare insieme agli altri per lo studio è un punto di forza che puoi sviluppare ulteriormente.",
+        "Hai già dimostrato un buon livello di C4 (Disponibilità alla collaborazione), un punto di partenza solido per lo studio.",
+        "Per migliorare, potresti concentrarti sul passare dal semplice partecipare al \"guidare\" la discussione.",
+        "**Piano pratico:** * **Azione da fare oggi (10-20 minuti):** Rivedi un argomento che hai studiato e, invece di rileggere passivamente gli appunti, prova a spiegarlo ad alta voce, immaginando di doverlo insegnare a qualcuno."
+      ],
+      "response": "Lavorare insieme agli altri per lo studio è un punto di forza che puoi sviluppare ulteriormente. Questo ti permette non solo di ricevere nuove prospettive, ma anche di rafforzare i tuoi concetti spiegandoli e discutendone con gli altri. È un meccanismo potente che trasforma il processo di apprendimento da un'attività individuale a una condivisione attiva.\n\nHai già dimostrato un buon livello di C4 (Disponibilità alla collaborazione), un punto di partenza solido per lo studio. Sei in grado di coinvolgere gli altri e di sfruttare l'energia del gruppo quando serve.\n\nPer migliorare, potresti concentrarti sul passare dal semplice partecipare al \"guidare\" la discussione. Non si tratta solo di intervenire, ma di organizzare il confronto: magari chiedendo agli altri di approfondire un punto che tu pensavi fosse minore o riassumendo per conto del gruppo cosa è stato deciso dopo una lunga discussione. Questo ti renderà ancora più efficace nel contesto collaborativo.\n\n**Piano pratico:**\n\n*   **Azione da fare oggi (10-20 minuti):** Rivedi un argomento che hai studiato e, invece di rileggere passivamente gli appunti, prova a spiegarlo ad alta voce, immaginando di doverlo insegnare a qualcuno. Puoi anche usare lo specchio per aiutarti a mantenere un tono chiaro.\n*   **Azione da fare questa settimana:** Organizza con un compagno una sessione studio in cui stabilite chiaramente chi farà il punto iniziale su ogni argomento e poi cambiate ruolo, assicurandoti di dare l'input \"di coordinamento\" (riassumere ciò che è stato detto o porre la domanda successiva) almeno due volte.",
+      "checks": {
+        "language": {
+          "expected": "it",
+          "ok": true,
+          "matches": 7
+        },
+        "no_greeting": {
+          "ok": true
+        },
+        "factor_code_format": {
+          "applicable": true,
+          "ok": true,
+          "isolated_codes": []
+        },
+        "factor_coverage": {
+          "applicable": true,
+          "ok": true,
+          "covered": [
+            "C4"
+          ],
+          "missing": []
+        },
+        "factor_scope": {
+          "applicable": true,
+          "ok": true,
+          "unexpected": []
+        },
+        "refusal": {
+          "ok": true
+        },
+        "reasoning_leak": {
+          "ok": true
+        },
+        "ztpi_technical_leakage": {
+          "applicable": false,
+          "ok": null
+        },
+        "savickas_advance_marker": {
+          "applicable": false,
+          "present": null,
+          "phase": "sl-social"
+        }
+      }
+    },
+    "with": {
+      "words": 299,
+      "advice_hits": 9,
+      "advice_words": [
+        "azione",
+        "esercizio",
+        "prova a",
+        "puoi",
+        "oggi",
+        "piano",
+        "prova",
+        "potresti",
+        "settimana"
+      ],
+      "certified_ids": [
+        "qsa-collaboration-openness"
+      ],
+      "aligned": [
+        [
+          "qsa-collaboration-openness",
+          [
+            "altri",
+            "collabor"
+          ]
+        ]
+      ],
+      "duration_ms": 9039,
+      "cost_usd": null,
+      "provider": "ollama",
+      "model": "gemma4:e4b",
+      "excerpts": [
+        "**Cosa sta già funzionando bene** Il fatto che tu sia già strutturato per la collaborazione è un grande punto di forza (C4 (Disponibilità alla collaborazione)).",
+        "Questa necessità di rendere comprensibili concetti che pensi di conoscere è un esercizio potente che solidifica la tua preparazione.",
+        "**Cosa potresti potenziare** Il punto su cui puoi lavorare per ottimizzare questo strumento è imparare a usare la collaborazione non solo come luogo di scambio, ma anche come banco di prova attivo del tuo apprendimento.",
+        "Invece di limitarti ad ascoltare o confrontare idee già mature, puoi orientare attivamente lo studio sugli altri in modo da scoprire angoli ciechi nel tuo percorso personale."
+      ],
+      "response": "Il tuo modo di affrontare lo studio con un elemento relazionale è già uno strumento prezioso. Hai una buona predisposizione per usare gli altri nello studio; questo ti permette non solo di ricevere informazioni, ma anche di vedere come riorganizzare concetti che magari non avevi ben chiari prima. Questo meccanismo ti aiuta a \"vedere la materia da più angolazioni\", rafforzando così il tuo apprendimento in modo meno lineare e più completo.\n\n**Cosa sta già funzionando bene**\nIl fatto che tu sia già strutturato per la collaborazione è un grande punto di forza (C4 (Disponibilità alla collaborazione)). Quando studi con altri, non stai solo ascoltando i loro spunti: ti alleni anche a esporre il tuo pensiero in modo chiaro e strutturato. Questa necessità di rendere comprensibili concetti che pensi di conoscere è un esercizio potente che solidifica la tua preparazione.\n\n**Cosa potresti potenziare**\nIl punto su cui puoi lavorare per ottimizzare questo strumento è imparare a usare la collaborazione non solo come luogo di scambio, ma anche come banco di prova attivo del tuo apprendimento. Invece di limitarti ad ascoltare o confrontare idee già mature, puoi orientare attivamente lo studio sugli altri in modo da scoprire angoli ciechi nel tuo percorso personale.\n\n**Piano pratico**\n*   **Azione per oggi (10-20 minuti):** Prova a far emergere un possibile vantaggio dello studiare con qualcun altro: invece di chiedere solo \"cosa ne pensi?\", prova a formulare una domanda che costringa l'altro/a a spiegarti un passaggio concettuale in modo diverso. Concentrati sul processo della *spiegazione*, non sulla risposta finale, per arricchire la tua comprensione.\n*   **Azione per questa settimana:** Organizza uno studio collaborativo con un amico o una persona che affronta argomenti simili e stabilite insieme l'obiettivo di \"insegnarvi a vicenda\" almeno due concetti diversi, in modo da rendere il processo più attivo e bilanciato.",
+      "checks": {
+        "language": {
+          "expected": "it",
+          "ok": true,
+          "matches": 7
+        },
+        "no_greeting": {
+          "ok": true
+        },
+        "factor_code_format": {
+          "applicable": true,
+          "ok": true,
+          "isolated_codes": []
+        },
+        "factor_coverage": {
+          "applicable": true,
+          "ok": true,
+          "covered": [
+            "C4"
+          ],
+          "missing": []
+        },
+        "factor_scope": {
+          "applicable": true,
+          "ok": true,
+          "unexpected": []
+        },
+        "refusal": {
+          "ok": true
+        },
+        "reasoning_leak": {
+          "ok": true
+        },
+        "ztpi_technical_leakage": {
+          "applicable": false,
+          "ok": null
+        },
+        "savickas_advance_marker": {
+          "applicable": false,
+          "present": null,
+          "phase": "sl-social"
+        }
+      }
+    }
+  }
+]
