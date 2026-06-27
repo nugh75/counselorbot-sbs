@@ -1,0 +1,19 @@
+# Prompt Audit API
+
+Gli endpoint `prompt-audit` sono strumenti admin-only per verificare i prompt guidati di CounselorBot senza passare dalla UI.
+
+## Endpoint
+
+- `POST /admin/prompt-audit/dry-run`: risolve counselor, preset, step guidato, prompt finale, messaggio effettivo, history opzionale, contesto knowledge opzionale e warning. Non chiama il modello.
+- `POST /admin/prompt-audit/live`: usa lo stesso envelope del dry-run, chiama il provider/modello risolto dal counselor o dal preset e restituisce risposta, usage, costo stimato, durata e controlli euristici.
+- `POST /admin/prompt-audit/matrix`: produce un riepilogo dry-run per ogni step guidato dello strumento e per i counselor selezionati.
+
+## Campi principali
+
+`PromptAuditRequest` accetta `questionnaire_type`, `language`, `phase`, `mode`, `use_phase_prompt`, `message`, `scores_context`, `session_id`, `counselor_id`, `max_tokens`, `include_knowledge` e `include_history`.
+
+`PromptAuditMatrixRequest` accetta `questionnaire_type`, `language`, `counselor_ids`, `scores_context`, `include_knowledge` e `max_tokens`.
+
+## Garanzie
+
+Gli endpoint non scrivono su `session_memory`, non creano righe `Log`, non generano `SharedChatResponse` e non modificano la memoria conversazionale. La modifica separata per salvare nei log di produzione il prompt finale completo e l'envelope dei messaggi resta fuori da questa iterazione.

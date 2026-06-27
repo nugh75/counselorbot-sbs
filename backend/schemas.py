@@ -76,6 +76,30 @@ class LogResponse(LogBase):
     class Config:
         from_attributes = True
 
+
+class PromptAuditRequest(BaseModel):
+    questionnaire_type: Optional[str] = None
+    language: Optional[str] = "it"
+    phase: Optional[str] = None
+    mode: str = "generic"
+    use_phase_prompt: bool = False
+    message: str = ""
+    scores_context: str = ""
+    session_id: Optional[str] = None
+    counselor_id: Optional[int] = None
+    max_tokens: Optional[int] = None
+    include_knowledge: bool = True
+    include_history: bool = False
+
+
+class PromptAuditMatrixRequest(BaseModel):
+    questionnaire_type: str = "QSA"
+    language: Optional[str] = "it"
+    counselor_ids: Optional[List[int]] = None
+    scores_context: str = ""
+    include_knowledge: bool = False
+    max_tokens: Optional[int] = 700
+
 # Survey
 # GuidedStep
 class GuidedStepBase(BaseModel):

@@ -41,6 +41,7 @@ from .routes import pqbl as pqbl_routes
 from .routes import opencode as opencode_routes
 from .routes import presets as presets_routes
 from .routes import benchmark as benchmark_routes
+from .routes import prompt_audit as prompt_audit_routes
 from .routes import counselors as counselors_routes
 from .routes import certified_strategies as certified_strategies_routes
 from .routes import research_contacts as research_contacts_routes
@@ -749,6 +750,7 @@ app.include_router(pqbl_routes.router)
 app.include_router(opencode_routes.router)
 app.include_router(presets_routes.router)
 app.include_router(benchmark_routes.router)
+app.include_router(prompt_audit_routes.router)
 app.include_router(counselors_routes.router)
 app.include_router(certified_strategies_routes.router)
 app.include_router(research_contacts_routes.router)
