@@ -55,8 +55,7 @@ async def prompt_audit_live(
     current_user: dict = Depends(require_prompt_audit_access),
     db: Session = Depends(get_db),
 ):
-    del current_user
-    return run_prompt_audit_live(db, payload, ai_service_cls=AIService)
+    return run_prompt_audit_live(db, payload, identity=current_user, ai_service_cls=AIService)
 
 
 @router.post("/admin/prompt-audit/matrix")
