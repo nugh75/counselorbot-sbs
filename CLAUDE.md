@@ -54,7 +54,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-CounselorBot is an AI-powered web app that helps students analyze learning/career profiles through guided chat over three questionnaires: **QSA** (learning strategies), **ZTPI** (Zimbardo time perspective), and **Savickas** (career construction interview). UI and content are primarily Italian.
+CounselorBot is an AI-powered web app that helps students analyze learning/career profiles through guided chat over seven instruments: **QSA** (learning strategies), **QSAr** (short QSA), **ZTPI** (Zimbardo time perspective), **Savickas** (career construction interview), **QPCS** (perceived strategic competences), **QPCC** (perceived competences and beliefs), and **QAP** (career adaptability). UI and content are primarily Italian.
 
 Stack: Next.js (App Router) frontend + FastAPI backend + PostgreSQL, deployed with Docker Compose.
 
@@ -109,7 +109,7 @@ Prompts, UI texts, active provider/model, and API keys are rows in the `Config` 
 **Error contract:** config/provider failures raise `AIError` — never return/yield error strings as chat content (they would be shown to the student and saved into memory). The SSE path in `routes/chat.py` catches exceptions and emits a `{error}` event; the non-streaming `/chat` maps `AIError` to HTTP 502; the frontend consumer (`frontend/src/lib/chat-stream.ts`) throws on `{error}` events.
 
 ### Guided chat flow
-Each questionnaire has ordered `GuidedStep` rows (per `questionnaire_type`), seeded at startup and editable in admin. A step carries a `prompt` and a `system_prompt_mode`. Chat requests resolve the effective system prompt and user message in `chat_logic._resolve_system_prompt` / `_resolve_user_message_for_chat` (guided-phase overrides, conversational follow-up modes, anti-greeting suffix).
+Each questionnaire has ordered `GuidedStep` rows (per `questionnaire_type`), seeded at startup and editable in admin. A step carries a `prompt` and a `system_prompt_mode`. Student-facing suggested questions for the base of each step live in `GuidedStepQuestion` rows, seeded from `backend/guided_step_questions_seed.py` and returned by `/qsa/guided-ui-texts` as `suggested_questions`; the fixed `questions` phase uses `fixed_phase_questions`. Chat requests resolve the effective system prompt and user message in `chat_logic._resolve_system_prompt` / `_resolve_user_message_for_chat` (guided-phase overrides, conversational follow-up modes, anti-greeting suffix).
 
 ### Memory
 Two separate stores: `memory_service.session_memory` is per-session rolling **Markdown conversational memory** on disk (`SESSION_MEMORY_DIR`, file-backed, thread-safe, expired-session cleanup loop); `strategy_memory.strategy_memory` is a read-only collective **knowledge base of editorially-approved strategies** loaded from `knowledge/approved_strategies.md`. Retrieval for a chat turn is combined in `chat_logic._retrieved_context`.
