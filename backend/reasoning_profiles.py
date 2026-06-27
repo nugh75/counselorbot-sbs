@@ -62,6 +62,13 @@ _PATTERNS: list[tuple[re.Pattern, ReasoningProfile]] = [
     #     falsi positivi dei substring piu' generici sotto). ---
     (re.compile(r"gemini-2\.0|gemini-1\.5|gemini-flash-lite"),
      ReasoningProfile("gemini-classic", False, True, 0, DEFAULT_ANSWER_HEADROOM)),
+    # Gemma 4: reasoning attivabile (Ollama `think`) per il «sto pensando» didattico.
+    # Ollama NON separa i token thinking/risposta (un solo `num_predict`): il pensiero
+    # nativo di Gemma e' verboso, quindi serve un answer_headroom ampio per garantire
+    # sempre spazio alla risposta visibile ed evitare output vuoti. Deve precedere la
+    # riga generica `gemma` non-reasoning (gemma4 e' un sottoinsieme: primo match vince).
+    (re.compile(r"gemma-?4"),
+     ReasoningProfile("gemma4-thinking", True, True, 1500, 2000)),
     (re.compile(r"gemma|mistral-small|mistral-large|mistral-7|mistral-medium|mixtral|ministral"),
      ReasoningProfile("non-reasoning", False, True, 0, DEFAULT_ANSWER_HEADROOM)),
     (re.compile(r"llama|gpt-4o|gpt-4\.1|gpt-3\.5|phi-3|phi-4|command-r|nova-(micro|lite|pro)"),
