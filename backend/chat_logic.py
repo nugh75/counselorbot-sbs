@@ -497,27 +497,33 @@ def _apply_qsa_factor_directive(system_prompt: str, questionnaire_type: str, lan
     names = _qsa_factor_names(language, questionnaire_type)
     inverted_codes = _QSAR_INVERTED_CODES if instrument == "QSAr" else _QSA_INVERTED_CODES
     examples = ", ".join(f"{code} ({name})" for code, name in names.items())
-    inverted = ", ".join(
-        f"{code} ({names[code]})" for code in inverted_codes if code in names
-    )
     # Label di interpretazione nella lingua dello studente: il modello le riusa
     # tali e quali nella tabella, quindi non devono restare in inglese.
     lbl = _qsa_assessment_labels(language)
+    # Inversione pre-risolta per fattore: ogni riga porta gia le bande corrette,
+    # cosi un modello piccolo non deve piu decidere se un codice e invertito (era
+    # la causa di errori tipo A5=9 letto come "Forza"). Legge la riga e basta.
+    direct_bands = f"1-3 = {lbl['growth']} · 4-6 = {lbl['adequate']} · 7-9 = {lbl['strength']}"
+    inverted_bands = f"1-3 = {lbl['strength']} · 4-6 = {lbl['normal']} · 7-9 = {lbl['growth']}"
+    rows = [
+        f"- {code} ({name}): {inverted_bands if code in inverted_codes else direct_bands}"
+        for code, name in names.items()
+    ]
+    interpretation_table = "\n".join(rows)
     return (
         f"{system_prompt}\n\n"
         "[FACTOR LABELS] In every reply addressed to the student, never write "
         f"an isolated {instrument} factor code. Each code must be immediately "
         "accompanied by its full name, in the form `C2 (Self-regulation)`. "
         f"Mandatory reference: {examples}.\n\n"
-        "[INVERTED FACTORS] Scale 1-9. Use EXACTLY these assessment labels "
-        "(already in the student's language) in the interpretation column, never their English form: "
-        f"1-3 = {lbl['growth']}, 4-6 = {lbl['adequate']}, 7-9 = {lbl['strength']}. "
-        f"BUT the following factors are INVERTED: {inverted}. "
-        f"For THESE factors the reading flips: 1-3 = {lbl['strength']}, 4-6 = {lbl['normal']}, "
-        f"7-9 = {lbl['growth']} (a high score = a problem to work on, NOT a strength). "
-        "Absolute rule: never read 'high = strength' automatically; "
-        "always apply the inversion to the listed factors. "
-        f"Apply this rule exclusively to the inverted {instrument} factors listed above."
+        "[INTERPRETATION TABLE] Scale 1-9. Assign each factor the label of its "
+        "score band by reading ITS OWN row below; the labels are already in the "
+        "student's language. The inversion is already resolved per factor: do NOT "
+        "decide the inversion yourself, just read the row.\n"
+        f"{interpretation_table}\n"
+        "For some factors a high score is an area to work on, not a strength: "
+        "always use the band shown in the factor's own row; never read "
+        "'high = strength' automatically."
     )
 
 
