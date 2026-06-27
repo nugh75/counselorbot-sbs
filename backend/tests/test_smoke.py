@@ -1737,10 +1737,16 @@ def test_reasoning_resolve_plan():
     assert plan.enabled is False
     assert plan.max_tokens == 800
 
-    # Gemma 4: reasoning attivabile, ma con budget PICCOLO (pensiero didattico conciso).
+    # Gemma 4 e4b: reasoning attivabile, budget contenuto (pensiero didattico).
     plan = rp.resolve_plan("gemma4:e4b", disable_thinking=False, requested_max_tokens=None)
     assert plan.enabled is True
     assert plan.reasoning_budget == 1500
+    assert plan.max_tokens == 3500  # 1500 budget + 2000 headroom
+    # Gemma 4 12b: ragiona molto di piu' -> headroom AMPIO per non starvare la risposta.
+    plan = rp.resolve_plan("gemma4:12b", disable_thinking=False, requested_max_tokens=None)
+    assert plan.enabled is True
+    assert plan.reasoning_budget == 2000
+    assert plan.max_tokens == 6000  # 2000 budget + 4000 headroom
     # disable_thinking ha priorita': spegne anche gemma4.
     plan = rp.resolve_plan("gemma4:e4b", disable_thinking=True, requested_max_tokens=700)
     assert plan.enabled is False and plan.max_tokens == 700

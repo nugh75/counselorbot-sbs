@@ -65,8 +65,12 @@ _PATTERNS: list[tuple[re.Pattern, ReasoningProfile]] = [
     # Gemma 4: reasoning attivabile (Ollama `think`) per il «sto pensando» didattico.
     # Ollama NON separa i token thinking/risposta (un solo `num_predict`): il pensiero
     # nativo di Gemma e' verboso, quindi serve un answer_headroom ampio per garantire
-    # sempre spazio alla risposta visibile ed evitare output vuoti. Deve precedere la
+    # sempre spazio alla risposta visibile ed evitare output vuoti. Devono precedere la
     # riga generica `gemma` non-reasoning (gemma4 e' un sottoinsieme: primo match vince).
+    # Il 12B ragiona MOLTO di piu' dell'e4b (osservato ~3-4k token di pensiero): totale
+    # ~6000 per non far mai starvare la risposta. Pattern 12b PRIMA del gemma4 generico.
+    (re.compile(r"gemma-?4.*12b"),
+     ReasoningProfile("gemma4-12b-thinking", True, True, 2000, 4000)),
     (re.compile(r"gemma-?4"),
      ReasoningProfile("gemma4-thinking", True, True, 1500, 2000)),
     (re.compile(r"gemma|mistral-small|mistral-large|mistral-7|mistral-medium|mixtral|ministral"),
