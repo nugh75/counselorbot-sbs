@@ -20,6 +20,9 @@ from .memory_embeddings import memory_embedder
 MAX_CERTIFIED_CONTEXT_CHARS = 1400
 
 _QSA_INVERTED_CODES = {"C3", "C6", "A1", "A4", "A5", "A7"}
+# QSAr usa codici con suffisso "r" (costrutto/direzione diversi dal QSA): solo
+# C4r (carenza nel controllo dell'attenzione) e A1r (ansieta') sono invertiti.
+_QSAR_INVERTED_CODES = {"C4R", "A1R"}
 
 _BAND_LABELS = {
     "it": {
@@ -45,7 +48,7 @@ _TARGET_BAND_PATTERNS = {
     "adequate": re.compile(r"(adeguat|normal|normale|adequate)", re.IGNORECASE),
 }
 
-_SCORE_RE = re.compile(r"\b([CA]\d{1,2})\b[^\n\r0-9]{0,80}?([1-9])\s*/\s*9\b", re.IGNORECASE)
+_SCORE_RE = re.compile(r"\b([CA]\d{1,2}[A-Za-z]?)\b[^\n\r0-9]{0,80}?([1-9])\s*/\s*9\b", re.IGNORECASE)
 
 
 class CertifiedStrategyMemory:
@@ -182,11 +185,12 @@ class CertifiedStrategyMemory:
         return bool(codes & salient)
 
     def _factor_tokens(self, text: str) -> set[str]:
-        # Codici fattore: lettera/e + cifre (C6, A2, T1, AD1...). Match come token isolato.
-        return {token.upper() for token in re.findall(r"\b[A-Za-z]{1,3}\d{1,2}\b", text or "")}
+        # Codici fattore: lettera/e + cifre + suffisso opzionale (C6, A2, T1, AD1,
+        # C1r, A4r...). Match come token isolato; upper-case per confronto stabile.
+        return {token.upper() for token in re.findall(r"\b[A-Za-z]{1,3}\d{1,2}[A-Za-z]?\b", text or "")}
 
     def _score_bands(self, questionnaire: str, scores_context: str) -> dict[str, dict[str, str]]:
-        if questionnaire != "QSA" or not scores_context:
+        if questionnaire not in ("QSA", "QSAR") or not scores_context:
             return {}
         out: dict[str, dict[str, str]] = {}
         for code, raw_score in _SCORE_RE.findall(scores_context):
@@ -197,7 +201,9 @@ class CertifiedStrategyMemory:
         return out
 
     def _band_for_qsa_score(self, code: str, score: int) -> str:
-        if code.upper() in _QSA_INVERTED_CODES:
+        code_u = code.upper()
+        inverted = _QSAR_INVERTED_CODES if code_u.endswith("R") else _QSA_INVERTED_CODES
+        if code_u in inverted:
             if score <= 3:
                 return "strength"
             if score <= 6:
@@ -221,7 +227,7 @@ class CertifiedStrategyMemory:
         language: str,
     ) -> dict[str, str]:
         codes = [str(code).upper() for code in (row.factor_codes or []) if str(code).strip()]
-        if questionnaire != "QSA" or not codes or not score_bands:
+        if questionnaire not in ("QSA", "QSAR") or not codes or not score_bands:
             return {"role": "primary", "note": ""}
 
         code_bands = {code: score_bands[code] for code in codes if code in score_bands}
