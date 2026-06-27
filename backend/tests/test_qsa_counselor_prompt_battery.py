@@ -133,11 +133,22 @@ _PRACTICAL_ADVICE_WORDS = {
            "you can", "you could", "recommend", "advice", "use", "start by",
            "consider", "attempt", "implement", "adopt"},
 }
+# Lessico della CONNESSIONE tra fattori: include sia i termini generici di relazione
+# sia i VERBI CAUSALI di interazione (rinforza/compensa/frena…) richiesti dalla
+# direttiva [FACTOR INTERPLAY] del prompt di secondo livello — altrimenti la metrica
+# non vedrebbe frasi corrette come "A6 frena A2 / A2 è sostenuta da A6".
 _CONNECTION_WORDS = {
     "it": {"insieme", "relazione", "collegamento", "correlato", "interazione",
-           "connesso", "influenza", "impatto", "combina", "combinazione"},
+           "connesso", "influenza", "impatto", "combina", "combinazione",
+           "rinforza", "rinforzano", "compensa", "frena", "frenano", "ostacola",
+           "ostacolata", "amplifica", "sostiene", "sostenuta", "indebolisce",
+           "indebolita", "alimenta", "favorisce", "aggrava", "a vicenda",
+           "si influenzano", "vicenda"},
     "en": {"together", "relationship", "connection", "correlated", "interaction",
-           "linked", "influences", "impact", "combines", "combination"},
+           "linked", "influences", "impact", "combines", "combination",
+           "reinforce", "reinforces", "compensate", "compensates", "hinder",
+           "hinders", "amplifies", "supports", "weakens", "undermines", "fuels",
+           "holds back", "each other"},
 }
 
 # Etichette di interpretazione (frontend analyzeScore) → usate nel scores_context.
