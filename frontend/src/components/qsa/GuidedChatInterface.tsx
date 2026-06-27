@@ -24,6 +24,7 @@ interface StepDef {
     system_prompt_mode: string;
     color_theme: string;
     prompt?: string;
+    suggested_questions?: string[];
 }
 
 interface GuidedChatInterfaceProps {
@@ -401,6 +402,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const [questionsBanner, setQuestionsBanner] = useState(() => t('guided.questionsBanner'));
     const [questionsIntro, setQuestionsIntro] = useState(() => t('guided.questionsIntro'));
     const [conclusionText, setConclusionText] = useState(() => t('guided.conclusionText'));
+    const [fixedPhaseQuestions, setFixedPhaseQuestions] = useState<string[]>([]);
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const requestRef = useRef<AbortController | null>(null);
@@ -494,6 +496,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
         const loadData = async () => {
             try {
+                setFixedPhaseQuestions([]);
                 const res = await fetch(`/api/qsa/guided-ui-texts?questionnaire_type=${questionnaireType}&lang=${activeLocale}`);
                 if (!res.ok) return;
 
@@ -562,7 +565,9 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 setQuestionsBanner(data.text_guided_questions_phase_banner || t('guided.questionsBanner'));
                 setQuestionsIntro(data.text_guided_questions_intro || t('guided.questionsIntro'));
                 setConclusionText(data.text_guided_conclusion || t('guided.conclusionText'));
+                setFixedPhaseQuestions(Array.isArray(data.fixed_phase_questions) ? data.fixed_phase_questions : []);
             } catch {
+                setFixedPhaseQuestions([]);
                 if (questionnaireType === 'SAVICKAS') {
                     setSteps(SAVICKAS_FALLBACK_STEPS.map((s) => ({ ...s, label: stepLabel(activeLocale, s.id, s.label) })));
                     const fallbackOrder = [...SAVICKAS_FALLBACK_STEPS.map((s) => s.id), FIXED_CONCLUSION_ID];
@@ -978,6 +983,9 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const sidebarPhases = phases.filter(p => p !== FIXED_CONCLUSION_ID);
     const hasScoreEntries = scoreGroups.some(group => group.entries.length > 0);
     const isSavickasAgreement = questionnaireType === 'SAVICKAS' && currentPhase === 'savickas-patto';
+    const suggestedQuestions = currentPhase === FIXED_QUESTIONS_ID
+        ? fixedPhaseQuestions
+        : getStepDef(currentPhase)?.suggested_questions || [];
     const quickReplies: QuickReply[] = (() => {
         if (questionnaireType === 'SAVICKAS') {
             if (isSavickasAgreement) {
@@ -1267,6 +1275,21 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     </div>
                 ) : (
                     <form onSubmit={handleSend} className="p-4 border-t border-slate-100 bg-white">
+                        {/* Domande suggerite per lo step corrente: compilano l'input per permettere modifica prima dell'invio. */}
+                        {!isLoading && suggestedQuestions.length > 0 && (
+                            <div className="mb-2 flex flex-wrap gap-1.5">
+                                {suggestedQuestions.map((question) => (
+                                    <button
+                                        key={question}
+                                        type="button"
+                                        onClick={() => setInput(question)}
+                                        className="max-w-full rounded-md border border-indigo-100 bg-indigo-50 px-3 py-1.5 text-left text-xs font-medium leading-snug text-indigo-700 transition-colors hover:border-indigo-200 hover:bg-indigo-100"
+                                    >
+                                        {question}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                         {/* Risposte rapide: accelerano l'interazione (utile da mobile). */}
                         {!isLoading && messages.length > 0 && quickReplies.length > 0 && (
                             <div className="mb-2 flex flex-wrap gap-1.5">

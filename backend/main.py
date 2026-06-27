@@ -646,6 +646,11 @@ def _seed_and_migrate():
         # salta se la tabella contiene già righe.
         from .assistant_questions_seed import seed_assistant_questions
         seed_assistant_questions(db, models)
+
+        # Seed domande suggerite per gli step della chat guidata (it).
+        # Idempotente per questionario/step/lingua: non sovrascrive modifiche.
+        from .guided_step_questions_seed import seed_guided_step_questions
+        seed_guided_step_questions(db, models)
     finally:
         db.close()
 

@@ -1049,6 +1049,39 @@ def test_assistant_questions_seed_and_crud():
     assert client.delete(f"/admin/assistant-questions/{qid}").status_code == 200
 
 
+def test_guided_step_questions_seed_and_public_payload():
+    from backend.guided_step_questions_seed import seed_guided_step_questions
+
+    _db = _TestSession()
+    try:
+        seed_guided_step_questions(_db, models)
+    finally:
+        _db.close()
+
+    expected = {
+        "QSA": "cognitive",
+        "QSAr": "qsar-cognitive",
+        "ZTPI": "ztpi-t1",
+        "SAVICKAS": "savickas-q1",
+        "QPCS": "qpcs-factors",
+        "QPCC": "qpcc-factors",
+        "QAP": "qap-factors",
+    }
+    for questionnaire_type, step_id in expected.items():
+        r = client.get(f"/qsa/guided-ui-texts?questionnaire_type={questionnaire_type}&lang=it")
+        assert r.status_code == 200, r.text
+        step = next((s for s in r.json()["guided_steps"] if s["id"] == step_id), None)
+        assert step is not None, f"missing {step_id} for {questionnaire_type}"
+        assert len(step["suggested_questions"]) >= 3
+
+    qsa_payload = client.get("/qsa/guided-ui-texts?questionnaire_type=QSA&lang=it").json()
+    assert len(qsa_payload["fixed_phase_questions"]) >= 3
+
+    en_payload = client.get("/qsa/guided-ui-texts?questionnaire_type=QSA&lang=en").json()
+    cognitive = next(s for s in en_payload["guided_steps"] if s["id"] == "cognitive")
+    assert cognitive["suggested_questions"] == []
+
+
 def test_resolve_counselor_helper():
     # helper di chat.py: counselor inesistente -> tutti None
     from backend.routes.chat import _resolve_counselor

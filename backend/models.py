@@ -51,6 +51,22 @@ class GuidedStep(Base):
     color_theme = Column(String, nullable=False, default="blue")
     questionnaire_type = Column(String, nullable=False, default="QSA")
 
+
+class GuidedStepQuestion(Base):
+    """Domanda suggerita nella chat guidata, legata a questionario e step."""
+
+    __tablename__ = "guided_step_questions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    questionnaire_type = Column(String, nullable=False, index=True)
+    step_id = Column(String, nullable=False, index=True)
+    language = Column(String, nullable=False, default="it", index=True)
+    text = Column(Text, nullable=False)
+    sort_order = Column(Integer, nullable=False, default=0)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
 class SurveyResponse(Base):
     __tablename__ = "survey_responses"
     
