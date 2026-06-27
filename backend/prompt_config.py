@@ -418,7 +418,7 @@ DEFAULT_SITE_CHAT_KNOWLEDGE_CARD = (
     "INSTRUMENTS SHEET (canonical data; use EXACT names, acronyms and numbers from here):\n"
     "- QSA — Learning Strategies Questionnaire (Pellerey, 100 items). 14 factors, stanine scale 1-9.\n"
     "  Cognitive: C1 Elaborative strategies · C2 Self-regulation · C3 Disorientation · C4 Willingness to "
-    "collaborate · C5 Semantic organizers · C6 Concentration difficulties · C7 Self-questioning.\n"
+    "collaborate · C5 Use of semantic organisers · C6 Concentration difficulties · C7 Self-questioning.\n"
     "  Affective: A1 Basic anxiety · A2 Volition · A3 Attribution to controllable causes · A4 Attribution to "
     "uncontrollable causes · A5 Lack of perseverance · A6 Perception of competence · A7 Emotional interference.\n"
     "  Inverted factors (high score = area for growth, not strength): C3, C6, A1, A4, A5, A7.\n"
@@ -1060,7 +1060,7 @@ DEFAULT_GUIDED_STEPS: List[Dict] = [
         "prompt": (
             "Second-Level Analysis - Part 1: ELABORATION AND ORGANISATION. "
             "Analyse together the factors: C1 (Elaborative strategies), "
-            "C5 (Semantic organisers), C7 (Self-questioning). "
+            "C5 (Use of semantic organisers), C7 (Self-questioning). "
             "Assess how the student processes and structures information."
         ),
         "system_prompt_mode": "second-level",
