@@ -701,6 +701,45 @@ def test_certified_strategies_crud_and_retrieve():
     assert client.delete(f"/admin/certified-strategies/{sid}").status_code == 200
 
 
+def test_certified_strategies_qsar_r_suffixed_factor_gating():
+    """Il gating score-aware deve riconoscere i codici QSAr con suffisso 'r'
+    (costrutto/direzione diversi dal QSA), incluse le inversioni C4r/A1r."""
+    from backend.certified_strategy_service import certified_strategy_memory as csm
+
+    # I codici 'r' devono essere estratti come token di fattore.
+    assert "C4R" in csm._factor_tokens("Profilo QSAr: C4r 8/9, A2r 5/9")
+    # Inversioni QSAr: C4r (carenza attenzione) e A1r (ansieta') sono invertiti;
+    # A2r (volizione) no.
+    assert csm._band_for_qsa_score("C4r", 8) == "growth"
+    assert csm._band_for_qsa_score("C4r", 3) == "strength"
+    assert csm._band_for_qsa_score("A1r", 7) == "growth"
+    assert csm._band_for_qsa_score("A2r", 3) == "growth"
+
+    r = client.post("/admin/certified-strategies", json={
+        "slug": "qsar-c4r-test", "name_it": "Controllo dell'attenzione (QSAr)",
+        "recommended_when_it": "Quando C4r e' un'area di crescita.",
+        "description_it": "Ridurre le distrazioni e pianificare il tempo.",
+        "factor_codes": ["C4r"], "match_mode": "any", "questionnaire_types": ["QSAr"],
+        "status": "certified",
+    })
+    assert r.status_code == 200, r.text
+    sid = r.json()["id"]
+    db = _TestSession()
+    try:
+        hit = csm.retrieve(
+            db, questionnaire_type="QSAr", scores_context="- C4r: 8/9", query="concentrazione",
+        )
+        assert any(s["id"] == "qsar-c4r-test" for s in hit)
+        # fattore non saliente -> esclusa
+        miss = csm.retrieve(
+            db, questionnaire_type="QSAr", scores_context="- A2r: 5/9", query="volizione",
+        )
+        assert not any(s["id"] == "qsar-c4r-test" for s in miss)
+    finally:
+        db.close()
+    assert client.delete(f"/admin/certified-strategies/{sid}").status_code == 200
+
+
 def test_admin_sync_upsert_and_deactivate():
     import backend.admin_sync as admin_sync
     original = admin_sync.fetch_service_admins
