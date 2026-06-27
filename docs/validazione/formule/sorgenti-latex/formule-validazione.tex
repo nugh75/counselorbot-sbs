@@ -1,0 +1,111 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\geometry{margin=1in}
+
+\title{\textbf{Formulario per la Validazione e lo Scoring dei Questionari}}
+\author{Progetto CounselorBot / CompetenzeStrategiche.it}
+\date{30 Maggio 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduzione}
+Questo documento raccoglie in modo ordinato e formalizzato le formule matematiche e statistiche utilizzate durante lo scoring provvisorio (fase sperimentale) e la validazione psicometrica definitiva della versione in svedese e inglese dei questionari (QSA, QSAr, ZTPI).
+
+\section{Elaborazione delle Risposte (Scoring)}
+
+\subsection{Inversione delle Risposte (Reverse Scoring)}
+Alcuni item sono formulati in direzione contraria rispetto al costrutto misurato. Prima di calcolare la media o la somma del fattore, tali risposte vanno invertite.
+\\
+Dati:
+\begin{itemize}
+    \item $val$: Risposta data dal soggetto.
+    \item $scale\_min$: Valore minimo della scala Likert (es. 1).
+    \item $scale\_max$: Valore massimo della scala Likert (es. 4).
+\end{itemize}
+La formula di inversione è:
+\begin{equation}
+val_{\text{invertito}} = (scale\_max + scale\_min) - val
+\end{equation}
+
+\subsection{Formula di Conversione Lineare Sperimentale (Fallback)}
+In assenza di tabelle normative basate su campioni reali, il sistema mappa linearmente la media dei punteggi (nell'intervallo $[scale\_min, scale\_max]$) sulla scala Stanine (da 1 a 9).
+\\
+Sia $average$ la media delle risposte agli item del fattore (dopo l'inversione degli item contrari):
+\begin{equation}
+\text{Stanine}_{\text{sperimentale}} = \text{round}\left( 1 + (average - scale\_min) \times \frac{8}{scale\_max - scale\_min} \right)
+\end{equation}
+Dove la funzione $\text{round}(x)$ indica l'arrotondamento all'intero più vicino:
+\begin{itemize}
+    \item Se la parte decimale di $x$ è inferiore a $0.5$, si arrotonda per difetto (es. $6.33 \rightarrow 6$).
+    \item Se la parte decimale di $x$ è pari o superiore a $0.5$, si arrotonda per eccesso (es. $6.50 \rightarrow 7$).
+\end{itemize}
+
+\section{Analisi Psicometriche di Affidabilità}
+
+\subsection{Alpha di Cronbach ($\alpha$)}
+Valuta la coerenza interna di una scala sotto l'ipotesi che gli item abbiano lo stesso peso e la stessa varianza di errore (modello tau-equivalente).
+\begin{equation}
+\alpha = \frac{K}{K - 1} \left( 1 - \frac{\sum_{i=1}^K \sigma^2_i}{\sigma^2_X} \right)
+\end{equation}
+Dove:
+\begin{itemize}
+    \item $K$: Numero di item della scala.
+    \item $\sigma^2_i$: Varianza dell'item $i$-esimo.
+    \item $\sigma^2_X$: Varianza del punteggio totale della scala (somma di tutti gli item).
+\end{itemize}
+\textbf{Nota sulla Varianza ($\sigma^2$) e sulla Deviazione Standard ($\sigma$):} La deviazione standard ($\sigma$) rappresenta la misura di quanto i punteggi singoli si disperdono (ovvero si allontanano) in media dal valore medio del gruppo. La varianza ($\sigma^2$) è semplicemente il quadrato della deviazione standard.
+
+\subsection{Omega di McDonald ($\omega$)}
+Calcola la coerenza interna basandosi sui pesi fattoriali derivati dall'analisi fattoriale confirmatoria. È più appropriato per variabili ordinali o con pesi differenti.
+\begin{equation}
+\omega = \frac{\left( \sum_{i=1}^K \lambda_i \right)^2}{\left( \sum_{i=1}^K \lambda_i \right)^2 + \sum_{i=1}^K \theta_i}
+\end{equation}
+Dove:
+\begin{itemize}
+    \item $\lambda_i$: Carico fattoriale (\textit{factor loading}) dell'item $i$-esimo sul fattore latente.
+    \item $\theta_i$: Varianza residua (errore di misurazione) dell'item $i$-esimo.
+\end{itemize}
+\textbf{Nota sul Carico Fattoriale ($\lambda_i$):} Il carico fattoriale indica la forza della relazione tra la singola domanda e il fattore psicologico latente (solitamente varia tra $-1$ e $+1$). Più il valore è vicino a $1$ o $-1$, più la domanda è un indicatore affidabile del fattore (valori $> 0.50$ sono accettabili, $> 0.70$ ottimi). \textbf{Non si calcola a mano}, ma viene estratto automaticamente tramite software statistici (come R con la libreria \texttt{lavaan}) eseguendo l'analisi fattoriale confirmatoria.
+
+\section{Analisi Fattoriale Confirmatoria (CFA)}
+
+L'analisi fattoriale confirmatoria verifica se la struttura dei fattori ipotizzata trovi riscontro nei dati empirici raccolti. A tal fine si confronta la matrice dei dati reali con quella teorica attraverso indici di bontà di adattamento (\textit{fit indices}).
+
+\subsection{Root Mean Square Error of Approximation (RMSEA)}
+Indice di discrepanza che misura quanto il modello teorico si discosta dai dati per grado di libertà.
+\begin{equation}
+\text{RMSEA} = \sqrt{\max\left(0, \frac{\chi^2 - df}{df \times (N - 1)}\right)}
+\end{equation}
+Dove:
+\begin{itemize}
+    \item $\chi^2$: Statistica del Chi-quadro del modello (misura la discrepanza totale tra modello e realtà).
+    \item $df$: Gradi di libertà (indicano la complessità e i vincoli del modello).
+    \item $N$: Numerosità del campione.
+\end{itemize}
+\textbf{Nota sul Chi-quadro ($\chi^2$):} Misura lo ``sbandamento'' totale tra ciò che prevede la teoria dei fattori e ciò che accade nelle risposte reali degli studenti. Se la teoria descrivesse perfettamente i dati reali senza alcun errore, il Chi-quadro sarebbe pari a $0$. Più i dati reali sono distanti dalla teoria, più il Chi-quadro cresce.
+\\
+\textbf{Nota sui Gradi di Libertà ($df$):} Rappresentano il numero di informazioni indipendenti rimaste libere di variare dopo aver applicato i vincoli del nostro modello (cioè l'aver deciso quali domande appartengono a quali fattori). Più un modello è semplice e vincolato, più alti saranno i gradi di libertà, permettendoci di verificare se il modello è solido o se si adatta ai dati solo per puro caso.
+\\
+\textbf{Nota sull'RMSEA:} Questo indice misura l'errore commesso se usiamo il modello a fattori per descrivere i dati reali. Poiché misura l'errore, \textbf{più è basso, meglio è}. Un valore inferiore a $0.05$ indica che il modello teorico descrive i dati quasi alla perfezione.
+
+\subsection{Comparative Fit Index (CFI)}
+Indice di fit relativo che confronta il modello ipotizzato con un modello di indipendenza (nullo).
+\begin{equation}
+\text{CFI} = 1 - \frac{\max(0, \chi^2_{\text{modello}} - df_{\text{modello}})}{\max(0, \chi^2_{\text{nullo}} - df_{\text{nullo}})}
+\end{equation}
+Soglie di accettazione: $\text{CFI} > 0.90$ (accettabile), $\text{CFI} > 0.95$ (ottimo).
+\\
+\textbf{Nota sul CFI:} Questo indice confronta la bontà del nostro modello a fattori con un modello "peggiore possibile" in cui si assume che le risposte alle domande siano slegate tra loro. Un valore di $0.95$ indica che il nostro modello riduce l'errore e cattura le relazioni reali al $95\%$ rispetto a una struttura casuale. \textbf{Più è alto (fino a $1.00$), meglio è}.
+
+\end{document}

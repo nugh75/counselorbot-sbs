@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html  dir="ltr" lang="it" xml:lang="it">
+<head>
+    <title>Guida</title>
+    <link rel="shortcut icon" href="https://www.competenzestrategiche.it/theme/image.php/enlightlite/theme/1767962153/favicon" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="keywords" content="moodle, Guida" />
+<link rel="stylesheet" type="text/css" href="https://www.competenzestrategiche.it/theme/yui_combo.php?rollup/3.17.2/yui-moodlesimple-min.css" /><script id="firstthemesheet" type="text/css">/** Required in order to fix style inclusion problems in IE with YUI **/</script><link rel="stylesheet" type="text/css" href="https://www.competenzestrategiche.it/theme/styles.php/enlightlite/1767962153/all" />
+<link rel="stylesheet" type="text/css" href="https://www.competenzestrategiche.it/mod/book/tool/print/print.css" />
+<script type="text/javascript">
+//<![CDATA[
+var M = {}; M.yui = {};
+M.pageloadstarttime = new Date();
+M.cfg = {"wwwroot":"https:\/\/www.competenzestrategiche.it","sesskey":"96YF4C0dIp","themerev":"1767962153","slasharguments":1,"theme":"enlightlite","iconsystemmodule":"core\/icon_system_fontawesome","jsrev":"1767962153","admin":"admin","svgicons":true,"usertimezone":"Europa\/Roma","contextid":2048};var yui1ConfigFn = function(me) {if(/-skin|reset|fonts|grids|base/.test(me.name)){me.type='css';me.path=me.path.replace(/\.js/,'.css');me.path=me.path.replace(/\/yui2-skin/,'/assets/skins/sam/yui2-skin')}};
+var yui2ConfigFn = function(me) {var parts=me.name.replace(/^moodle-/,'').split('-'),component=parts.shift(),module=parts[0],min='-min';if(/-(skin|core)$/.test(me.name)){parts.pop();me.type='css';min=''}
+if(module){var filename=parts.join('-');me.path=component+'/'+module+'/'+filename+min+'.'+me.type}else{me.path=component+'/'+component+'.'+me.type}};
+YUI_config = {"debug":false,"base":"https:\/\/www.competenzestrategiche.it\/lib\/yuilib\/3.17.2\/","comboBase":"https:\/\/www.competenzestrategiche.it\/theme\/yui_combo.php?","combine":true,"filter":null,"insertBefore":"firstthemesheet","groups":{"yui2":{"base":"https:\/\/www.competenzestrategiche.it\/lib\/yuilib\/2in3\/2.9.0\/build\/","comboBase":"https:\/\/www.competenzestrategiche.it\/theme\/yui_combo.php?","combine":true,"ext":false,"root":"2in3\/2.9.0\/build\/","patterns":{"yui2-":{"group":"yui2","configFn":yui1ConfigFn}}},"moodle":{"name":"moodle","base":"https:\/\/www.competenzestrategiche.it\/theme\/yui_combo.php?m\/1767962153\/","combine":true,"comboBase":"https:\/\/www.competenzestrategiche.it\/theme\/yui_combo.php?","ext":false,"root":"m\/1767962153\/","patterns":{"moodle-":{"group":"moodle","configFn":yui2ConfigFn}},"filter":null,"modules":{"moodle-core-chooserdialogue":{"requires":["base","panel","moodle-core-notification"]},"moodle-core-tooltip":{"requires":["base","node","io-base","moodle-core-notification-dialogue","json-parse","widget-position","widget-position-align","event-outside","cache-base"]},"moodle-core-popuphelp":{"requires":["moodle-core-tooltip"]},"moodle-core-blocks":{"requires":["base","node","io","dom","dd","dd-scroll","moodle-core-dragdrop","moodle-core-notification"]},"moodle-core-dock":{"requires":["base","node","event-custom","event-mouseenter","event-resize","escape","moodle-core-dock-loader","moodle-core-event"]},"moodle-core-dock-loader":{"requires":["escape"]},"moodle-core-dragdrop":{"requires":["base","node","io","dom","dd","event-key","event-focus","moodle-core-notification"]},"moodle-core-actionmenu":{"requires":["base","event","node-event-simulate"]},"moodle-core-lockscroll":{"requires":["plugin","base-build"]},"moodle-core-handlebars":{"condition":{"trigger":"handlebars","when":"after"}},"moodle-core-languninstallconfirm":{"requires":["base","node","moodle-core-notification-confirm","moodle-core-notification-alert"]},"moodle-core-formchangechecker":{"requires":["base","event-focus","moodle-core-event"]},"moodle-core-event":{"requires":["event-custom"]},"moodle-core-checknet":{"requires":["base-base","moodle-core-notification-alert","io-base"]},"moodle-core-notification":{"requires":["moodle-core-notification-dialogue","moodle-core-notification-alert","moodle-core-notification-confirm","moodle-core-notification-exception","moodle-core-notification-ajaxexception"]},"moodle-core-notification-dialogue":{"requires":["base","node","panel","escape","event-key","dd-plugin","moodle-core-widget-focusafterclose","moodle-core-lockscroll"]},"moodle-core-notification-alert":{"requires":["moodle-core-notification-dialogue"]},"moodle-core-notification-confirm":{"requires":["moodle-core-notification-dialogue"]},"moodle-core-notification-exception":{"requires":["moodle-core-notification-dialogue"]},"moodle-core-notification-ajaxexception":{"requires":["moodle-core-notification-dialogue"]},"moodle-core-maintenancemodetimer":{"requires":["base","node"]},"moodle-core_availability-form":{"requires":["base","node","event","event-delegate","panel","moodle-core-notification-dialogue","json"]},"moodle-backup-confirmcancel":{"requires":["node","node-event-simulate","moodle-core-notification-confirm"]},"moodle-backup-backupselectall":{"requires":["node","event","node-event-simulate","anim"]},"moodle-course-dragdrop":{"requires":["base","node","io","dom","dd","dd-scroll","moodle-core-dragdrop","moodle-core-notification","moodle-course-coursebase","moodle-course-util"]},"moodle-course-categoryexpander":{"requires":["node","event-key"]},"moodle-course-modchooser":{"requires":["moodle-core-chooserdialogue","moodle-course-coursebase"]},"moodle-course-formatchooser":{"requires":["base","node","node-event-simulate"]},"moodle-course-management":{"requires":["base","node","io-base","moodle-core-notification-exception","json-parse","dd-constrain","dd-proxy","dd-drop","dd-delegate","node-event-delegate"]},"moodle-course-util":{"requires":["node"],"use":["moodle-course-util-base"],"submodules":{"moodle-course-util-base":{},"moodle-course-util-section":{"requires":["node","moodle-course-util-base"]},"moodle-course-util-cm":{"requires":["node","moodle-course-util-base"]}}},"moodle-form-shortforms":{"requires":["node","base","selector-css3","moodle-core-event"]},"moodle-form-showadvanced":{"requires":["node","base","selector-css3"]},"moodle-form-passwordunmask":{"requires":[]},"moodle-form-dateselector":{"requires":["base","node","overlay","calendar"]},"moodle-question-chooser":{"requires":["moodle-core-chooserdialogue"]},"moodle-question-preview":{"requires":["base","dom","event-delegate","event-key","core_question_engine"]},"moodle-question-searchform":{"requires":["base","node"]},"moodle-question-qbankmanager":{"requires":["node","selector-css3"]},"moodle-availability_completion-form":{"requires":["base","node","event","moodle-core_availability-form"]},"moodle-availability_date-form":{"requires":["base","node","event","io","moodle-core_availability-form"]},"moodle-availability_grade-form":{"requires":["base","node","event","moodle-core_availability-form"]},"moodle-availability_group-form":{"requires":["base","node","event","moodle-core_availability-form"]},"moodle-availability_grouping-form":{"requires":["base","node","event","moodle-core_availability-form"]},"moodle-availability_profile-form":{"requires":["base","node","event","moodle-core_availability-form"]},"moodle-qtype_ddimageortext-dd":{"requires":["node","dd","dd-drop","dd-constrain"]},"moodle-qtype_ddimageortext-form":{"requires":["moodle-qtype_ddimageortext-dd","form_filepicker"]},"moodle-qtype_ddmarker-dd":{"requires":["node","event-resize","dd","dd-drop","dd-constrain","graphics"]},"moodle-qtype_ddmarker-form":{"requires":["moodle-qtype_ddmarker-dd","form_filepicker","graphics","escape"]},"moodle-qtype_ddwtos-dd":{"requires":["node","dd","dd-drop","dd-constrain"]},"moodle-mod_assign-history":{"requires":["node","transition"]},"moodle-mod_forum-subscriptiontoggle":{"requires":["base-base","io-base"]},"moodle-mod_quiz-autosave":{"requires":["base","node","event","event-valuechange","node-event-delegate","io-form"]},"moodle-mod_quiz-toolboxes":{"requires":["base","node","event","event-key","io","moodle-mod_quiz-quizbase","moodle-mod_quiz-util-slot","moodle-core-notification-ajaxexception"]},"moodle-mod_quiz-quizbase":{"requires":["base","node"]},"moodle-mod_quiz-modform":{"requires":["base","node","event"]},"moodle-mod_quiz-dragdrop":{"requires":["base","node","io","dom","dd","dd-scroll","moodle-core-dragdrop","moodle-core-notification","moodle-mod_quiz-quizbase","moodle-mod_quiz-util-base","moodle-mod_quiz-util-page","moodle-mod_quiz-util-slot","moodle-course-util"]},"moodle-mod_quiz-randomquestion":{"requires":["base","event","node","io","moodle-core-notification-dialogue"]},"moodle-mod_quiz-util":{"requires":["node","moodle-core-actionmenu"],"use":["moodle-mod_quiz-util-base"],"submodules":{"moodle-mod_quiz-util-base":{},"moodle-mod_quiz-util-slot":{"requires":["node","moodle-mod_quiz-util-base"]},"moodle-mod_quiz-util-page":{"requires":["node","moodle-mod_quiz-util-base"]}}},"moodle-mod_quiz-questionchooser":{"requires":["moodle-core-chooserdialogue","moodle-mod_quiz-util","querystring-parse"]},"moodle-mod_quiz-repaginate":{"requires":["base","event","node","io","moodle-core-notification-dialogue"]},"moodle-mod_quiz-quizquestionbank":{"requires":["base","event","node","io","io-form","yui-later","moodle-question-qbankmanager","moodle-core-notification-dialogue"]},"moodle-message_airnotifier-toolboxes":{"requires":["base","node","io"]},"moodle-filter_glossary-autolinker":{"requires":["base","node","io-base","json-parse","event-delegate","overlay","moodle-core-event","moodle-core-notification-alert","moodle-core-notification-exception","moodle-core-notification-ajaxexception"]},"moodle-filter_mathjaxloader-loader":{"requires":["moodle-core-event"]},"moodle-editor_atto-editor":{"requires":["node","transition","io","overlay","escape","event","event-simulate","event-custom","node-event-html5","node-event-simulate","yui-throttle","moodle-core-notification-dialogue","moodle-core-notification-confirm","moodle-editor_atto-rangy","handlebars","timers","querystring-stringify"]},"moodle-editor_atto-plugin":{"requires":["node","base","escape","event","event-outside","handlebars","event-custom","timers","moodle-editor_atto-menu"]},"moodle-editor_atto-menu":{"requires":["moodle-core-notification-dialogue","node","event","event-custom"]},"moodle-editor_atto-rangy":{"requires":[]},"moodle-report_eventlist-eventfilter":{"requires":["base","event","node","node-event-delegate","datatable","autocomplete","autocomplete-filters"]},"moodle-report_loglive-fetchlogs":{"requires":["base","event","node","io","node-event-delegate"]},"moodle-gradereport_grader-gradereporttable":{"requires":["base","node","event","handlebars","overlay","event-hover"]},"moodle-gradereport_history-userselector":{"requires":["escape","event-delegate","event-key","handlebars","io-base","json-parse","moodle-core-notification-dialogue"]},"moodle-tool_capability-search":{"requires":["base","node"]},"moodle-tool_lp-dragdrop-reorder":{"requires":["moodle-core-dragdrop"]},"moodle-tool_monitor-dropdown":{"requires":["base","event","node"]},"moodle-assignfeedback_editpdf-editor":{"requires":["base","event","node","io","graphics","json","event-move","event-resize","transition","querystring-stringify-simple","moodle-core-notification-dialog","moodle-core-notification-alert","moodle-core-notification-exception","moodle-core-notification-ajaxexception"]},"moodle-atto_accessibilitychecker-button":{"requires":["color-base","moodle-editor_atto-plugin"]},"moodle-atto_accessibilityhelper-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_align-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_bold-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_charmap-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_clear-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_collapse-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_emoticon-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_equation-button":{"requires":["moodle-editor_atto-plugin","moodle-core-event","io","event-valuechange","tabview","array-extras"]},"moodle-atto_html-button":{"requires":["moodle-editor_atto-plugin","event-valuechange"]},"moodle-atto_image-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_indent-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_italic-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_link-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_managefiles-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_managefiles-usedfiles":{"requires":["node","escape"]},"moodle-atto_media-button":{"requires":["moodle-editor_atto-plugin","moodle-form-shortforms"]},"moodle-atto_noautolink-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_orderedlist-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_rtl-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_strike-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_subscript-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_superscript-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_table-button":{"requires":["moodle-editor_atto-plugin","moodle-editor_atto-menu","event","event-valuechange"]},"moodle-atto_title-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_underline-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_undo-button":{"requires":["moodle-editor_atto-plugin"]},"moodle-atto_unorderedlist-button":{"requires":["moodle-editor_atto-plugin"]}}},"gallery":{"name":"gallery","base":"https:\/\/www.competenzestrategiche.it\/lib\/yuilib\/gallery\/","combine":true,"comboBase":"https:\/\/www.competenzestrategiche.it\/theme\/yui_combo.php?","ext":false,"root":"gallery\/1767962153\/","patterns":{"gallery-":{"group":"gallery"}}}},"modules":{"core_filepicker":{"name":"core_filepicker","fullpath":"https:\/\/www.competenzestrategiche.it\/lib\/javascript.php\/1767962153\/repository\/filepicker.js","requires":["base","node","node-event-simulate","json","async-queue","io-base","io-upload-iframe","io-form","yui2-treeview","panel","cookie","datatable","datatable-sort","resize-plugin","dd-plugin","escape","moodle-core_filepicker","moodle-core-notification-dialogue"]},"core_comment":{"name":"core_comment","fullpath":"https:\/\/www.competenzestrategiche.it\/lib\/javascript.php\/1767962153\/comment\/comment.js","requires":["base","io-base","node","json","yui2-animation","overlay","escape"]},"mathjax":{"name":"mathjax","fullpath":"https:\/\/cdnjs.cloudflare.com\/ajax\/libs\/mathjax\/2.7.1\/MathJax.js?delayStartupUntil=configured"}}};
+M.yui.loader = {modules: {}};
+
+//]]>
+</script>
+
+<link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=Arvo' rel='stylesheet' type='text/css'>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-91672150-1', 'auto');
+  ga('send', 'pageview');
+
+</script>    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body  id="page-mod-book-print" class="format-topics pattern-default  path-mod path-mod-book dir-ltr lang-it yui-skin-sam yui3-skin-sam www-competenzestrategiche-it pagelayout-embedded course-3 context-2048 cmid-69 category-1 ">
+<div>
+    <a class="sr-only sr-only-focusable" href="#maincontent">Vai al contenuto principale</a>
+</div><script type="text/javascript" src="https://www.competenzestrategiche.it/theme/yui_combo.php?rollup/3.17.2/yui-moodlesimple-min.js"></script><script type="text/javascript" src="https://www.competenzestrategiche.it/theme/jquery.php/core/jquery-3.1.0.min.js"></script>
+<script type="text/javascript" src="https://www.competenzestrategiche.it/lib/javascript.php/1767962153/lib/javascript-static.js"></script>
+<script type="text/javascript">
+//<![CDATA[
+document.body.className += ' jsenabled';
+//]]>
+</script>
+
+<div id="page">
+    <div id="page-content" class="clearfix">
+        <div role="main"><span id="maincontent"></span><a onclick="window.print();return false;" class="hidden-print" href="#"><img class="icon icon" alt="Stampa libro" title="Stampa libro" src="https://www.competenzestrategiche.it/theme/image.php/enlightlite/booktool_print/1767962153/book" />Stampa libro</a>    <a name="top"></a>
+    <h1>Guida</h1>    <p class="book_summary"><p>EPIFANI Filippo - MARGOTTINI Massimo - OTTONE Enrica (a cura di), <i>Guida all'uso della piattaforma www.competenzestrategiche.it. Terza edizione</i>, Roma, CNOS-FAP 2023.</p></p>
+    <div class="book_info"><table>
+    <tr>
+    <td>Sito:</td>
+    <td><a href="https://www.competenzestrategiche.it">CompetenzeStrategiche.it</a></td>
+    </tr><tr>
+    <td>Corso:</td>
+    <td>Formazione</td>
+    </tr><tr>
+    <td>Libro:</td>
+    <td>Guida</td>
+    </tr><tr>
+    <td>Stampato da:</td>
+    <td>Utente ospite  </td>
+    </tr><tr>
+    <td>Data:</td>
+    <td>sabato, 30 maggio 2026, 19:45</td>
+    </tr>
+    </table></div>
+
+    <div class="book_toc_numbered"><a name="toc"></a><h2>Sommario</h2><ul><li><a title="1. Introduzione" href="#ch81">1. Introduzione</a></li><li><a title="2. La piattaforma" href="#ch47">2. La piattaforma</a><ul><li><a title="2.1. La navigazione" href="#ch63">2.1. La navigazione</a></li><li><a title="2.2. La registrazione" href="#ch64">2.2. La registrazione</a></li></ul></li><li><a title="3. I questionari" href="#ch48">3. I questionari</a><ul><li><a title="3.1. La somministrazione" href="#ch51">3.1. La somministrazione</a></li><li><a title="3.2. L&#039;area di prova" href="#ch54">3.2. L'area di prova</a></li></ul></li><li><a title="4. L&#039;interpretazione dei dati" href="#ch52">4. L'interpretazione dei dati</a></li><li><a title="5. La ricerca" href="#ch62">5. La ricerca</a><ul><li><a title="5.1. I convegni" href="#ch90">5.1. I convegni</a></li><li><a title="5.2. Le pubblicazioni" href="#ch83">5.2. Le pubblicazioni</a></li><li><a title="5.3. Lo sviluppo" href="#ch82">5.3. Lo sviluppo</a></li></ul></li><li><a title="6. La formazione" href="#ch53">6. La formazione</a><ul><li><a title="6.1. Alcune esperienze" href="#ch84">6.1. Alcune esperienze</a></li><li><a title="6.2. Le risorse per un uso educativo degli strumenti" href="#ch85">6.2. Le risorse per un uso educativo degli strumenti</a></li><li><a title="6.3. Il libretto dello studente e l&#039;ePortfolio su Mahara" href="#ch89">6.3. Il libretto dello studente e l'ePortfolio su Mahara</a></li></ul></li></ul></div><div class="book_chapter"><a name="ch81"></a><h2>1. Introduzione</h2><p> </p>
+<p>La  <strong><em>Guida all’uso della piattaforma</em> www.c<em>ompetenzestrategiche.it</em> (2023)</strong> è stata predisposta per facilitare il primo contatto degli utenti con la <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=47">piattaforma</a> e può essere consultata online seguendo le voci del sommario o scaricata in formato <a href="https://www.competenzestrategiche.it/pluginfile.php/2095/mod_folder/content/0/Guida.pdf?forcedownload=1"></a><span class="nolink"><a href="https://www.competenzestrategiche.it/pluginfile.php/2095/mod_folder/content/0/Guida.pdf?forcedownload=1">PDF</a> </span><a href="https://www.competenzestrategiche.it/pluginfile.php/2095/mod_folder/content/0/Guida.pdf?forcedownload=1"></a>all’indirizzo Internet http://www.competenzestrategiche.it/Guida.pdf.</p>
+<p> <br />La <em>Guida</em> contiene le <strong>istruzioni</strong> necessarie per</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><em>conoscere e provare</em> autonomamente i <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=48">questionari</a> come ospite (<a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=54">area di prova</a>),</li>
+<li><em>richiedere</em> la <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=64">registrazione</a> ed ottenere un <em>account</em> gratuito come Istituto/Altro accreditato,</li>
+<li><em>reperire</em> le principali indicazioni di carattere tecnico e procedurale per utilizzare tutte le funzionalità dell’ambiente online.</li>
+</ul>
+</li>
+</ul>
+<p>In particolare, illustra</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>le diverse operazioni da compiere per la <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=51">somministrazione</a> online dei questionari;</li>
+<li>le modalità per ottenere tutte le forme di <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=52">elaborazione</a> previste a livello di Istituto/Altro accreditato, di classe/gruppo e i proﬁli individuali degli studenti/utenti;</li>
+<li>le indicazioni generali per la lettura e l'<a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=52">interpretazione dei proﬁli</a> graﬁci e testuali.</li>
+</ul>
+</li>
+</ul>
+<p>Inoltre, contiene rimandi</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>alle definizioni del <a href="https://www.competenzestrategiche.it//mod/glossary/view.php?id=70">glossario</a>;</li>
+<li>alle risorse disponibili nell'area <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=53">Formazione</a> della piattaforma in cui sono fornite indicazioni specifiche per l'interpretazione dei proﬁli <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=52"></a>graﬁci e testuali dei singoli questionari, materiali e suggerimenti di carattere didattico che possono essere utili per sviluppare percorsi educativi e formativi.</li>
+</ul>
+</li>
+</ul>
+<p>Infine, fornisce</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>la documentazione della <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=62">ricerca</a> e l'accesso alle numerose pubblicazioni;</li>
+<li>i dati aggiornati sullo <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=82">sviluppo</a> della piattaforma e sull'utilizzo degli strumenti.</li>
+</ul>
+</li>
+</ul>
+<p></p>
+<p>La <em><span style="background-color: #ffffff;"><a href="https://www.competenzestrategiche.it/pluginfile.php/2095/mod_folder/content/0/Guida.pdf?forcedownload=1"><span style="background-color: #ffffff;"><span class="nolink">Guida 2023</span></span> </a>(</span></em><span style="background-color: #ffffff;">disponibile in entrambe le versioni online e PDF) </span>è <strong>un aggiornamento</strong> della <em><a href="https://www.cnos-fap.it/sites/default/files/pubblicazioni/guida_alluso_2ed_pubblicato.pdf">Guida 2019</a></em> che era stata pubblicata come estratto dalla <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=62">ricerca</a> <em>Strumenti e metodologie di orientamento formativo e professionale nel quadro dei processi di apprendimento permanente</em> promossa dal <a href="https://www.cnos-fap.it/page/federazione-cnos-fap">CNOS-FAP</a> e coordinata dal prof. Michele Pellerey. L’estratto e la presente versione online della <em>Guida</em> sono a cura di Filippo Epifani, Massimo Margottini, Enrica Ottone.</p>
+<p><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/81/Guida.png" width="636" height="455" style="display: block; margin-left: auto; margin-right: auto;" /></p>
+<p><span style="font-variant: small-caps;"><a href="https://www.competenzestrategiche.it//pluginfile.php/2095/mod_folder/content/0/guida.pdf?forcedownload=1" title="Guida 2023"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/81/Download.png" width="30" height="30" alt="Download" style="vertical-align: middle;" /></a> Epifani</span> Filippo - <span style="font-variant: small-caps;">Margottini</span> Massimo - <span style="font-variant: small-caps;">Ottone</span> Enrica, <em>Guida all'uso della piattaforma www.competenzestrategiche.it.</em> Terza edizione, Roma, CNOS-FAP 2023. <a href="https://www.competenzestrategiche.it//pluginfile.php/2095/mod_folder/content/0/Guida.pdf?forcedownload=1" title="Guida 2023">Download</a></p>
+<p></p></div><div class="book_chapter"><a name="ch47"></a><h2>2. La piattaforma</h2><p> </p>
+<p>La piattaforma<em> Competenzestrategiche.it  </em>è un ambiente online progettato per favorire forme di autovalutazione e valutazione delle <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=5&amp;displayformat=dictionary" title="Glossario: competenze strategiche" class="glossary autolink concept glossaryid1">competenze strategiche</a>, che sono alla base della capacità di dirigere se stessi nello studio e nel lavoro.</p>
+<p>È progettata e realizzata per consentire l’accesso libero a quattro strumenti di autovalutazione sviluppati a partire dagli anni Novanta del secolo scorso da Michele Pellerey e collaboratori e ad altri strumenti correlati con l’intento di</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><span style="color: #000000;"><i>promuovere</i> la con</span>oscenza e lo sviluppo delle proprie <span class="nolink">competenze strategiche</span> nello studio e nel lavoro;</li>
+<li><span style="color: #000000;"><i>fornire</i> </span>un supporto all’azione educativa e didattica all’inizio e al termine del secondo ciclo di istruzione e formazione (<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=2&amp;displayformat=dictionary" title="Glossario: QSAr" class="glossary autolink concept glossaryid1">QSAr</a>, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a>, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=3&amp;displayformat=dictionary" title="Glossario: QPCS" class="glossary autolink concept glossaryid1">QPCS</a>) e all’avvio degli studi universitari (<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a>, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=3&amp;displayformat=dictionary" title="Glossario: QPCS" class="glossary autolink concept glossaryid1">QPCS</a>, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=6&amp;displayformat=dictionary" title="Glossario: ZTPI" class="glossary autolink concept glossaryid1">ZTPI</a>);</li>
+<li><span style="color: #000000;"><i>favorire</i> </span>l’analisi dei fabbisogni formativi e lo sviluppo professionale di giovani o adulti (<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=3&amp;displayformat=dictionary" title="Glossario: QPCS" class="glossary autolink concept glossaryid1">QPCS</a>, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=4&amp;displayformat=dictionary" title="Glossario: QPCC" class="glossary autolink concept glossaryid1">QPCC</a>, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=6&amp;displayformat=dictionary" title="Glossario: ZTPI" class="glossary autolink concept glossaryid1">ZTPI</a>, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=7&amp;displayformat=dictionary" title="Glossario: QAP" class="glossary autolink concept glossaryid1">QAP</a>);</li>
+<li><span style="color: #000000;"><i>predisporre</i> </span>un ambiente di comunicazione per favorire l'interazione tra docenti, studenti ed esperti e la ricerca.</li>
+</ul>
+</li>
+</ul>
+<p>La piattaforma al momento comprende:</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><em>sei questionari</em> per l’autovalutazione di alcune <span class="nolink">competenze strategiche</span>, rivolti a studenti e giovani adulti;</li>
+<li><em>la guida</em> alla compilazione dei questionari e all'interpretazione degli esiti;</li>
+<li><em>una sezione</em> <em>per la formazione</em> contenente materiali didattici con suggerimenti e proposte di utilizzazione dei dati raccolti e attività per gli studenti;</li>
+<li><em>uno spazio</em> di comunicazione e interazione tra docenti, studenti ed esperti.</li>
+</ul>
+</li>
+</ul>
+<p>Dal 2011 ad oggi sono aumentate le risorse disponibili, sono stati pubblicati nuovi rapporti di ricerca e altri studi e c'è stata una crescita costante degli utilizzatori.</p>
+<p><a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=82"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/47/Approfondisci.png" width="30" height="30" style="vertical-align: middle;" /></a> <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=82"><span style="color: #39b3e6;"><strong>Per approfondire</strong></span></a></p>
+<p><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/47/Piattaforma.png" width="641" height="252" style="display: block; margin-left: auto; margin-right: auto;" /></p>
+<h5><span style="color: #39b3e6;">  </span></h5>
+<h5><span style="color: #39b3e6;">Il quadro teorico</span></h5>
+<p>Gli strumenti resi disponibili sulla piattaforma si propongono di sostenere, anche attraverso spazi di confronto, l’azione di docenti, educatori, formatori, orientatori nello sviluppo di attività utili a riconoscere, valutare e sviluppare <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=5&amp;displayformat=dictionary" title="Glossario: competenze strategiche" class="glossary autolink concept glossaryid1">competenze strategiche</a> e convinzioni che possono essere considerate come fondanti della capacità di <span style="color: #000000;"><strong>dirigere se stessi nello studio e nel lavoro </strong>(<strong><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=12&amp;displayformat=dictionary" title="Glossario: autodirezione" class="glossary autolink concept glossaryid1">autodirezione</a></strong>)</span>, dando senso e prospettiva alla propria esistenza umana e professionale.</p>
+<p>Si tratta di promuovere nei ragazzi una serie di processi di costruzione del sé attraverso un’analisi riflessiva delle proprie azioni e convinzioni, dapprima come studenti, con i loro impegni di apprendimento e di relazioni all’interno di un contesto scolastico e formativo e quindi, nel tempo, riflettendo su dimensioni utili a dare senso e prospettiva alle proprie esperienze e sviluppando una logica di costruzione del proprio futuro, del proprio progetto di vita e professionale (<a href="http://www.cnos-fap.it/sites/default/files/pubblicazioni/strumenti_e_metodologie.pdf" target="_blank">Pellerey, 2018</a>).</p>
+<p>I 4 <span style="color: #000000;"><strong>questionari</strong> </span>di autovalutazione <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a>, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=2&amp;displayformat=dictionary" title="Glossario: QSAr" class="glossary autolink concept glossaryid1">QSAr</a>, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=3&amp;displayformat=dictionary" title="Glossario: QPCS" class="glossary autolink concept glossaryid1">QPCS</a> e <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=4&amp;displayformat=dictionary" title="Glossario: QPCC" class="glossary autolink concept glossaryid1">QPCC</a> sono stati ideati e validati da Michele Pellerey e collaboratori. L’autore studiando le dimensioni fondamentali dell’agire umano nell’attività di studio e di lavoro ha individuato alcuni fattori che fanno riferimento alle seguenti <span style="color: #000000;"><strong>dimensioni interrelate</strong></span>:</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>cognitiva e metacognitiva,</li>
+<li>motivazionale e volitiva,</li>
+<li>affettiva e relazionale,</li>
+</ul>
+</li>
+</ul>
+<p>che sono alla base della capacità di <a href="https://www.competenzestrategiche.it//mod/glossary/showentry.php?eid=12&amp;displayformat=dictionary">dirigere se stessi</a> (autoregolarsi e autodeterminarsi)  nelle situazioni di studio e di lavoro.<br /><br /><span>Gli altri strumenti, a partire da approcci teorici diversi, consentono di esplorare i seguenti aspetti: </span></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><span>l</span>o <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=6&amp;displayformat=dictionary" title="Glossario: ZTPI" class="glossary autolink concept glossaryid1">ZTPI</a>, uno strumento costruito da Philip Zimbardo, misura la <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=10&amp;displayformat=dictionary" title="Glossario: prospettiva temporale" class="glossary autolink concept glossaryid1">prospettiva temporale</a>;</li>
+<li>il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=7&amp;displayformat=dictionary" title="Glossario: QAP" class="glossary autolink concept glossaryid1">QAP</a>, uno strumento ideato da <span>Mark L</span><span>. </span><span>Savickas</span><span> and Erik J. </span><span>Porfeli, </span>rileva alcuni aspetti dell'<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=11&amp;displayformat=dictionary" title="Glossario: adattabilità professionale" class="glossary autolink concept glossaryid1">adattabilità professionale</a>.</li>
+</ul>
+</li>
+</ul>
+<p><a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=83"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/47/Approfondisci.png" width="30" height="30" style="vertical-align: middle;" /></a> <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=83"><strong><span style="color: #39b3e6;">Le pubblicazioni</span></strong></a></p>
+<h5><span style="color: #39b3e6;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/47/Quadro%20teorico.png" width="662" height="404" alt="Quadro teorico" style="display: block; margin-left: auto; margin-right: auto;" /></span></h5>
+<p> </p></div><div class="book_chapter"><a name="ch63"></a><h3>2.1. La navigazione</h3><p style="text-align: center;"> </p>
+<p>Per accedere all’ambiente online è necessario essere collegati a Internet e disporre di un <em>browser</em> di navigazione (Firefox, Google Chrome, Edge) digitare quindi l’indirizzo Internet <span style="font-style: italic;">https://www.competenzestrategiche.it.</span></p>
+<p><span style="font-style: italic;"> </span></p>
+<h6><span style="color: #39b3e6;">La barra dei menù</span></h6>
+<p>La <em>home page</em> presenta, nella parte superiore su sfondo nero, una barra dei menù per l’accesso diretto alle principali funzioni. La barra è sempre disponibile, anche dalle pagine interne e ha <strong>tre voci o pulsanti </strong>che consentono l'accesso diretto a 3 menù, come evidenziato nel riquadro <span style="background-color: #ffffff; color: #99cc00;"><strong>verde</strong> </span>(Fig. 1):</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><span style="font-variant: small-caps;">utente registrato</span></li>
+<li><span style="font-variant: small-caps;">ospite</span></li>
+<li><span style="font-variant: small-caps;">documentazione</span>.</li>
+</ul>
+</li>
+</ul>
+<p style="text-align: center;"> <span style="font-size: small;"><strong>Fig. 1: La barra dei menù</strong></span></p>
+<p style="background-color: #eeeeee; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/63/men%C3%B9.png" width="657" height="153" /></p>
+<p></p>
+<p>Il pulsante per ritornare all'<em>home page</em> dalle pagine interne è sempre disponibile cliccando sul logo<strong> </strong>che si trova nella barra azzurra e nella funzione <em>breadcrumb</em> <em>trail</em> (in italiano: <em>sentiero di briciole di pane</em>). La funzione che si trova sotto il logo (evidenziata in <span style="color: #ff0000;"><strong>rosso</strong></span>) consente sempre di vedere in quale punto del sito ci si trova e di accedere facilmente alle aree sovraordinate.</p>
+<p>Inoltre, nel menù in alto, cliccando sul pulsante evidenziato in <span style="background-color: #ffffff; color: #ff6600;"><span style="color: #ff9900;"><strong>arancione</strong></span><span style="color: #000000;"><span style="color: #ff9900;"> </span></span></span>si <span style="color: #000000;">apre</span> un menù laterale che consente di navigare nelle sezioni interne della piattaforma. Per nasconderlo è sufficiente cliccare sull'icona X che appare quando il menù laterale è aperto.</p>
+<p>Infine, il pulsante <strong><span style="font-variant: small-caps;">Risorse </span></strong>evidenziato in <span style="color: #ffcc00;"><strong>giallo</strong></span> consente di accedere alle sezioni <i>Formazione</i> (aperta a tutti) e <em>Amministrazione</em> (accessibile solo agli utenti registrati, dopo aver eseguito il <em>login</em>) (Fig. 1).</p>
+<p>  </p>
+<h6><span style="color: #39b3e6;">Il menù «Utente registrato»</span></h6>
+<p>Il primo pulsante apre l’accesso al menù dedicato all’<b>utente registrato</b>, cioè al referente di un Istituto/Altro accreditato o al singolo professionista che ha fatto <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=64">richiesta di un <i>account</i></a><i>,</i> ha ottenuto le credenziali e effettua il <a href="https://www.competenzestrategiche.it//login/index.php"><i>login</i></a><i>.</i></p>
+<p>L'utente registrato dopo il <em>login</em> può</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><em>entrare</em> nella <a href="https://www.competenzestrategiche.it//course/view.php?id=2">Pagina di amministrazione</a> e reperire le chiavi di accesso da assegnare agli studenti/utenti per compilare i questionari,</li>
+<li><em>accedere</em> all'<a href="https://www.competenzestrategiche.it//mod/url/view.php?id=8">Elaborazione dati</a> e consultare tutti i risultati individuali, di Istituto e di classe/gruppo.  </li>
+</ul>
+</li>
+</ul>
+<p>Gli <span style="color: #000000;">studenti </span>o i membri di un Istituto/Altro accreditato che compilano gli strumenti su suggerimento del referente (un docente o un professionista) possono accedere ai questionari utilizzando le <strong>chiavi di accesso</strong> fornite dal referente che ha creato l'<em>account</em>. Essi trovano il <em>link</em> agli strumenti sia nel menù <span style="font-variant: small-caps;">utente registrato</span> sia nella parte inferiore della<em> home page </em>evidenziata dal riquadro <strong><span style="background-color: #99cc00; color: #99cc00;"><span style="background-color: #ffffff;">verde </span></span></strong>(Fig. 2).</p>
+<p style="text-align: center;"><span style="font-size: small;"> <strong>Fig. 2: L'area di accesso ai questionari nella <em>home page</em></strong></span></p>
+<p style="background-color: #eeeeee;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/63/HomePage_2.png" width="676" height="412" alt="Home Page 2" style="display: block; margin-left: auto; margin-right: auto;" /></p>
+<p>  </p>
+<p>Nella parte inferiore dell'<em>home page</em>, rappresentata nella figura 2, si può trovare il <em>link</em> per <strong>richiedere un account</strong> sulla piattaforma (riquadro <strong><span style="background-color: #ffffff; color: #ff6600;">arancione</span></strong>) come descritto nella sezione <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=64">La registrazione</a> della presente <em>Guida</em>.</p>
+<p>  </p>
+<h6><span style="color: #39b3e6;">Il menù «Ospite»</span></h6>
+<p>All'<strong>utente</strong> <span><strong>ospite </strong></span>che accede autonomamente alla piattaforma per conoscere e provare i questionari non è richiesta la registrazione. In genere l'ospite non è collegato a un Istituto/Altro accreditato registrato e non è quindi in possesso delle chiavi di accesso fornite dal referente, ma intende solo provare uno o più strumenti.</p>
+<p>Il menù che si apre con il tasto <strong><span style="font-variant: small-caps;">Ospite</span> </strong>consente di</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><em>accedere</em> alla pagina di presentazione del servizio <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=54">Prova i questionari</a>,</li>
+<li><em>selezionare</em> direttamente il questionario che si vuole provare.</li>
+</ul>
+</li>
+</ul>
+<p>Al termine della compilazione l'ospite può scaricare il risultato individuale ottenuto sul proprio dispositivo, ma non potrà recuperarlo in un secondo momento sulla piattaforma perché il risultato non sarà più accessibile.</p>
+<p>L'utente che vuole solo provare gli strumenti può accedere ai questionari di prova anche dal pulsante collocato al fondo dell'<em>home page</em> (Fig. 3).</p>
+<p style="text-align: center;"> <span style="font-size: small;"><strong>Fig. 3: L'area di accesso ai questionari di prova sulla <em>home page</em></strong></span></p>
+<p style="background-color: #eeeeee; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/63/Prova.png" width="667" height="52" alt="Prova" style="display: block; margin-left: auto; margin-right: auto;" /></p>
+<h5><span>  </span></h5>
+<h6><span style="color: #39b3e6;">Il menù «Documentazione»</span></h6>
+<p>Il menù che si apre con il tasto <strong><span style="font-variant: small-caps;">Documentazione</span></strong> indirizza ad alcune pagine che forniscono informazioni essenziali per conoscere il servizio e accedere alle risorse per l'uso della piattaforma e degli strumenti, tra cui la <em><a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69">Guida</a> </em>e l'area dedicata alla <a href="https://www.competenzestrategiche.it//mod/page/view.php?id=76">Formazione</a>.</p>
+<p><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/63/Risorse%20interne.jpg" width="657" height="469" alt="Risorse interne" style="display: block; margin-left: auto; margin-right: auto;" /></p></div><div class="book_chapter"><a name="ch64"></a><h3>2.2. La registrazione</h3><p> </p>
+<p id="yui_3_17_2_1_1669121743583_40">La piattaforma, come già presentato,<em> </em>fornisce gratuitamente la possibilità di compilare gli strumenti secondo due modalità: Utente registrato e Ospite.</p>
+<p>Possono registrarsi sulla piattaforma <em>Competenzestrategiche.it</em> e fare richiesta di un <em>account</em></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><strong>le Istituzioni</strong>: Scuole di ogni ordine e grado, Enti e Centri di istruzione e formazione professionale (IeFP), Università, Centri di orientamento che intendono stabilire i livelli di competenza posseduti dagli studenti in ingresso e offrire risultati utili anche ad orientare la propria scelta formativa;</li>
+<li><strong>i professionisti accreditati</strong>: psicologi, orientatori, formatori, educatori, ricercatori che hanno intenzione di utilizzare la piattaforma per scopi valutativi e orientativi per erogare formazione o a fini di ricerca. </li>
+</ul>
+</li>
+</ul>
+<p>Per registrarsi alla piattaforma il <strong>referente </strong>di un Istituto/Altro accreditato o il singolo professionista<strong> </strong>accede al <a href="http://www.competenzestrategiche.it/register/index.php"><strong>modulo di richiesta di <em>account</em></strong></a><em> </em>che si trova al fondo della <em>home page</em> (Fig. 4) e fornisce i dati indicati per ottenere le proprie <span style="background-color: #ffffff;"><em><span style="color: #000000;">credenziali di accesso </span></em><span style="color: #000000;">come amministratore</span></span>.</p>
+<p style="text-align: center;"><span style="font-size: small;"><strong>Fig. 4: Il modulo di richiesta di un <em>account</em></strong></span></p>
+<p style="background-color: #eeeeee;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/64/Richiesta%20account.png" width="503" height="342" alt="Richiesta account" style="display: block; margin-left: auto; margin-right: auto;" /></p>
+<p style="margin-left: 30px;"></p>
+<p>Compilato il modulo, il richiedente riceverà le <strong>credenziali</strong> (il proprio <em>username</em> e la <em>password</em> come amministratore), di norma entro le 24 ore, sulla casella di posta elettronica indicata. </p>
+<p>Le credenziali sono riservate al solo referente che dopo il <em>login</em> può accedere alla <a href="https://www.competenzestrategiche.it//course/view.php?id=2">Pagina di amministrazione</a> dove potrà reperire le <strong>chiavi di accesso ai questionari</strong> (il <em>codice</em> Istituto/Ente e la <em>password</em> del questionario) da comunicare agli studenti per la compilazione di uno o più strumenti.</p>
+<p><a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=51"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/64/Approfondisci.png" width="30" height="30" style="vertical-align: middle;" /></a> <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=51"><strong>La procedura di somministrazione</strong></a></p>
+<p> </p>
+<h5><span style="color: #39b3e6;">I servizi per gli utenti registrati</span></h5>
+<p>La piattaforma fornisce agli utenti registrati (e in parte anche agli utenti ospiti) vari servizi, strumenti e materiali a supporto dell'attività educativa, formativa e valutativa e di orientamento scolastico e professionale.</p>
+<p>Il percorso di fruizione del servizio da parte dell'utente registrato e i servizi erogati attraverso la piattaforma sono descritti nella figura 5.</p>
+<p style="text-align: center;"><span style="font-size: small;"><strong>Fig. 5: Il <em>flowchart</em> del servizio</strong></span></p>
+<p style="background-color: #eeeeee;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/64/Flow%20chart.png" width="709" height="340" style="display: block; margin-left: auto; margin-right: auto;" /></p>
+<p></p>
+<p>Nel corso degli anni il gruppo di ricerca che ha realizzato e tiene aggiornata la piattaforma ha lavorato per fornire – principalmente ai docenti e ai formatori – non solo dei questionari di autovalutazione, ma soprattutto un ambiente online che diventasse spazio di comunicazione, di interazione e di ricerca-azione-formazione. La pubblicazione del volume contenente gli atti del convegno svoltosi nel 2019 rende visibile la varietà di percorsi realizzati in vari luoghi d’Italia e in differenti contesti (scolastico, della formazione professionale, universitario, di orientamento e dei servizi al lavoro). </p>
+<p><a href="https://www.competenzestrategiche.it//mod/book/edit.php?cmid=69&amp;id=62"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/64/Approfondisci.png" width="30" height="30" style="vertical-align: middle;" /></a>  <strong><a href="https://www.competenzestrategiche.it//mod/book/edit.php?cmid=69&amp;id=62">La ricerca</a></strong></p>
+<p></p></div><div class="book_chapter"><a name="ch48"></a><h2>3. I questionari</h2><p> </p>
+<p>I questionari disponibili sulla piattaforma <em>Competenzestrategiche.it</em> consentono di riflettere sulle proprie <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=5&amp;displayformat=dictionary" title="Glossario: competenze strategiche" class="glossary autolink concept glossaryid1">competenze strategiche</a> e restituiscono l'esito dell'autopercezione. Gli strumenti attualmente disponibili sono pensati per</p>
+<ul type="disc">
+<li style="list-style-type: none;">
+<ul>
+<li><span><b>giovani</b> </span>in transizione verso l’istruzione secondaria di primo e di secondo grado, l’Università o verso il mondo del lavoro (<span class="nolink">QSA</span>, <span class="nolink">QSAr</span>, <span class="nolink">QPCS, ZTPI, QAP</span>);</li>
+<li><span><b>adulti</b> </span>che desiderano rientrare in formazione o che vogliono dimostrare le loro attuali competenze lavorative (<span class="nolink">QPCS, QPCC, ZTPI, QAP</span>).</li>
+</ul>
+</li>
+</ul>
+<p></p>
+<p>I primi quattro questionari sono stati costruiti e validati da Michele Pellerey e collaboratori e prendono in esame alcune competenze generali personali (<span class="nolink">strategie elaborative</span> e autoregolative, disposizione ad impegnarsi con atteggiamento volitivo, percezione di competenza, convinzioni di efficacia, <em>locus of control</em>, capacità di gestire le emozioni, disposizione a collaborare e comunicare, capacità di dare senso e prospettiva esistenziale alla propria esperienza di studio e di lavoro).</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><span style="color: #39b3e6;"><b><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=2&amp;displayformat=dictionary" title="Glossario: QSAr" class="glossary autolink concept glossaryid1">QSAr</a> </b></span>(<i>Questionario ridotto sulle Strategie di Apprendimento</i>) [<a href="https://www.competenzestrategiche.it//mod/page/view.php?id=54">Approfondisci</a>];</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><span style="color: #39b3e6;"><b><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a></b> </span>(<i>Questionario sulle Strategie di Apprendimento</i>) [<a href="https://www.competenzestrategiche.it//mod/book/view.php?id=65">Approfondisci</a><a href="https://www.competenzestrategiche.it//mod/book/view.php?id=65"></a>];</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><span style="color: #39b3e6;"><b><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=3&amp;displayformat=dictionary" title="Glossario: QPCS" class="glossary autolink concept glossaryid1">QPCS</a></b> </span>(<i>Questionario sulla percezione delle proprie C<span class="nolink">ompetenze Strategiche</span></i>) [<a href="https://www.competenzestrategiche.it//mod/page/view.php?id=96">Approfondisci</a>];</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><span style="color: #39b3e6;"><b><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=4&amp;displayformat=dictionary" title="Glossario: QPCC" class="glossary autolink concept glossaryid1">QPCC</a></b> </span>(<i>Questionario di Percezione delle proprie Competenze e Convinzioni</i>) [<a href="https://www.competenzestrategiche.it//mod/page/view.php?id=89">Approfondisci</a>].</li>
+</ul>
+</li>
+</ul>
+<p> </p>
+<p>Gli altri due questionari si incentrano su dimensioni più ampie e di natura prospettica, ossia la <em><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=10&amp;displayformat=dictionary" title="Glossario: prospettiva temporale" class="glossary autolink concept glossaryid1">prospettiva temporale</a></em> e l’<em><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=11&amp;displayformat=dictionary" title="Glossario: adattabilità professionale" class="glossary autolink concept glossaryid1">adattabilità professionale</a></em>, quest’ultima intesa come capacità adattiva utile a costruire una propria identità professionale e far fronte alle transizioni.</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><span style="color: #39b3e6;"><b><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=6&amp;displayformat=dictionary" title="Glossario: ZTPI" class="glossary autolink concept glossaryid1">ZTPI</a></b> </span>(<i>Zimbardo Time Perspective Inventory</i>) costruito da P. Zimbardo e J. Boyd (1999, 2008) sulla <span class="nolink">prospettiva temporale</span> [<a href="https://www.competenzestrategiche.it//mod/page/view.php?id=91">Approfondisci</a>];</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><span style="color: #39b3e6;"><b><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=7&amp;displayformat=dictionary" title="Glossario: QAP" class="glossary autolink concept glossaryid1">QAP</a></b> </span>(<i>Questionario sull'<span class="nolink">adattabilità professionale</span></i>) realizzato da M. Savickas e E. Porfeli (2011) e proposto in italiano nella traduzione di M. Pellerey, M. Margottini e R. Leproni (2017) [<a href="https://www.competenzestrategiche.it//mod/page/view.php?id=90">Approfondisci</a>].</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/48/Approfondisci.png" width="30" height="30" style="vertical-align: middle;" /> <a href="https://www.competenzestrategiche.it//mod/page/view.php?id=119"><span style="color: #39b3e6;"><strong>Prospetto sintetico dei questionari</strong></span></a></p>
+<p><span style="color: #ffffff; font-size: 0.83em;">. </span></p>
+<p><span style="color: #ffffff; font-size: 0.83em;"> </span></p>
+<h5><span style="color: #39b3e6;">I Profili individuali e i prospetti di classe e di Istituto</span></h5>
+<p>Al termine della compilazione la piattaforma elabora i dati e restituisce immediatamente il profilo individuale che può essere consultato direttamente e scaricato in versione PDF.</p>
+<p>Inoltre, possono essere scaricati e stampati anche prospetti di classe/gruppo e di Istituto/altro accreditato. Le indicazioni per la lettura e l'<a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=51">interpretazione</a> dei profili e dei prospetti è fornita nel punto 4 di questa Guida.</p>
+<p>Nella <em><a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69">Guida</a> </em>e nella sezione <a href="https://www.competenzestrategiche.it//course/view.php?id=3">Formazione</a> si possono trovare informazioni aggiuntive sui questionari, risorse per l'aggiornamento di docenti e educatori e alcuni strumenti e attività online da proporre agli studenti.</p>
+<p><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/48/Risultati.jpg" width="689" height="393" alt="Risultati" style="display: block; margin-left: auto; margin-right: auto;" /></p></div><div class="book_chapter"><a name="ch51"></a><h3>3.1. La somministrazione</h3><p> </p>
+<p>Tutti i questionari disponibili sulla piattaforma possono essere compilati direttamente al computer in modalità online collegandosi all'indirizzo Internet <a href="https://www.competenzestrategiche.it/" style="font-style: italic;">https://www.competenzestrategiche.it/</a> o su carta, dopo aver scaricato il file dalla <a href="https://www.competenzestrategiche.it//course/view.php?id=2">Pagina di amministrazione</a> della piattaforma.</p>
+<p>Mentre la compilazione dei questionari su carta, per ottenere l’elaborazione degli esiti, necessita di un ulteriore lavoro di inserimento delle risposte, la compilazione direttamente al computer consente di ottenere in tempo reale i punteggi elaborati e un proﬁlo graﬁco di immediata lettura che può essere salvato e stampato dallo studente/utente.</p>
+<h5><span style="color: #39b3e6;"> </span></h5>
+<h5><span style="color: #39b3e6;">La procedura di compilazione online per gli utenti registrati</span></h5>
+<p>Lo studente/utente che è in possesso delle istruzioni e delle chiavi di accesso fornite dal referente di un Istituto/Altro accreditato accede alla compilazione online degli strumenti attraverso i rispettivi <em>link</em> che si trovano</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>nel sottomenù <span style="font-variant: small-caps;">Utente registrato</span>,</li>
+<li>al fondo della <em>home page </em>(fig. 6).</li>
+</ul>
+</li>
+</ul>
+<p style="text-align: center;"><span style="font-size: xx-small;"><strong> </strong></span><span style="font-size: small;"><strong>Fig. 6: I <em>link</em> per la compilazione dei questionari (con chiavi di accesso)</strong></span></p>
+<p style="background-color: #eeeeee;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/51/homepage%202%20taglio.png" width="664" height="347" alt="Compilazione questionari" style="display: block; margin-left: auto; margin-right: auto;" /></p>
+<p> </p>
+<p>Se uno studente/utente di un Istituto/Altro accreditato per errore o per scelta compila i questionari di prova forniti nel sottomenù <span style="font-variant: small-caps;">Ospite</span> e nell'area di prova in questo caso il profilo individuale può essere scaricato terminata l'autosomministrazione ma non sarà più reperibile in seguito dalla pagina di amministrazione perché i dati risulteranno anonimi e non collegati a un Istituto/Altro accreditato.</p>
+<p> <span color="#39b3e6" style="color: #39b3e6;"><span style="font-size: 10px;"> </span></span></p>
+<h5><span id="docs-internal-guid-53fa5d7f-7fff-77c8-ab37-9dac97815a23" style="color: #39b3e6;">Le chiavi di accesso per la compilazione</span></h5>
+<p><span id="docs-internal-guid-53fa5d7f-7fff-77c8-ab37-9dac97815a23">Il referente di un Istituto/Altro accreditato o il professionista che ha già completato la procedura di registrazione di un <em>account</em> e ha ottenuto le credenziali attraverso <em>e-mail</em> dopo aver fatto <em>login</em> </span><span id="docs-internal-guid-53fa5d7f-7fff-77c8-ab37-9dac97815a23"><span id="docs-internal-guid-53fa5d7f-7fff-77c8-ab37-9dac97815a23">trova le informazioni </span><span id="docs-internal-guid-53fa5d7f-7fff-77c8-ab37-9dac97815a23">necessarie da assegnare a coloro che compileranno i questionari <span id="docs-internal-guid-53fa5d7f-7fff-77c8-ab37-9dac97815a23">nella</span><span id="docs-internal-guid-53fa5d7f-7fff-77c8-ab37-9dac97815a23"> <a href="https://www.competenzestrategiche.it//Nella%20pagina%20di%20amministrazione%20con%20le%20credenziali%20(username%20e%20password%20dell'Istituto/Ente)%20forniti%20dall’amministratore%20di%20sistema.%20" title="Pagina di amministrazione">Pagina di amministrazione</a></span>. </span></span></p>
+<p><span id="docs-internal-guid-53fa5d7f-7fff-77c8-ab37-9dac97815a23"><span id="docs-internal-guid-53fa5d7f-7fff-77c8-ab37-9dac97815a23"></span></span><span id="docs-internal-guid-53fa5d7f-7fff-77c8-ab37-9dac97815a23">I passaggi della procedura qui descritta sono indicati nella figura sotto.</span></p>
+<p style="text-align: center;"><span style="font-size: small;"><strong>Fig. 7: La procedura: dall'attivazione di un <em>account</em> all'elaborazione dei risultati</strong></span></p>
+<table border="0" align="center">
+<tbody>
+<tr>
+<td><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/51/Procedura%201.png" width="150" height="348" /></td>
+<td><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/51/Procedura%202.png" width="150" height="348" /></td>
+<td><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/51/Procedura%203.png" width="150" height="348" /></td>
+<td><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/51/Procedura%204.png" width="150" height="348" /></td>
+</tr>
+</tbody>
+</table>
+<p style="background-color: #eeeeee;">                                  </p>
+<p> </p>
+<p>1) Per fare <em>Login</em> un referente di un Istituto, Ente o singolo operatore accreditato deve essere in possesso delle proprie credenziali di accesso, costituite da uno <em>username</em> e da una <em>password</em>, ottenute nel momento della <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=64">registrazione</a>.</p>
+<p>2) Sulla <em>home page</em> e in ogni pagina del sito cliccando sulla voce <span style="font-variant: small-caps;">Utente registrato</span> del <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=63">menù</a> in alto il referente può accedere alla propria <a href="https://www.competenzestrategiche.it//course/view.php?id=2" title="Pagina di amministrazione">pagina di amministrazione</a> dove ci sono le informazioni per la somministrazione dei questionari:</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>il <strong>codice identificativo</strong> dell'Istituto/Altro accreditato che coincide con il rispettivo numero visualizzato nel riquadro azzurro chiaro nella figura sotto (nell'esempio è il n. 4);</li>
+<li>la <strong>password</strong> del questionario che può essere recuperata e/o modificata dal referente cliccando su: <em>Profilo</em> e poi su <em>Modifica  </em>(Fig. 8).</li>
+</ul>
+</li>
+</ul>
+<p style="text-align: center;"> <span style="font-size: small;"><strong>Fig. 8: Le informazioni sull'utente nella pagina di amministrazione</strong></span></p>
+<p style="background-color: #eeeeee;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/51/Chiavi%20di%20accesso.png" width="628" height="206" alt="Chiavi di accesso" style="display: block; margin-left: auto; margin-right: auto;" /></p>
+<p> </p>
+<p>3) Nell'Istituto/Altro accreditato dove ad occuparsi della somministrazione dei questionari sono più persone, ad esempio uno o più docenti, è utile che il referente prepari un foglio di istruzioni (cf modello <em>facsimile </em><a href="https://www.competenzestrategiche.it/pluginfile.php/2095/mod_folder/content/0/03_Altri%20file/01_Istruzioni%20per%20compilare%20i%20questionari.docx?forcedownload=1?forcedownload=1">allegato</a>).</p>
+<p> </p>
+<p>4) Al termine della somministrazione i dati sui questionari compilati sono accessibili cliccando sulla voce <a href="https://www.competenzestrategiche.it//mod/url/view.php?id=8">Elaborazione dati</a> del menù <span style="font-variant: small-caps;">Utente registrato</span>. Le informazioni su questa fase di lettura dei profili sono consultabili nella pagina <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=52">L'interpretazione dei dati</a>.</p>
+<p><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/51/Somministrazione.jpg" width="723" height="273" alt="Somministrazione" style="display: block; margin-left: auto; margin-right: auto;" /></p>
+<p> </p>
+<p> </p>
+<p></p></div><div class="book_chapter"><a name="ch54"></a><h3>3.2. L'area di prova</h3><p> </p>
+<p>Nell'area di prova dei questionari l'<strong>utente ospite</strong> accede in modo autonomo agli strumenti senza creare un <em>account</em> (cioè senza registrazione) e può</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><em>provare</em> uno o più strumenti per verificarne il funzionamento,</li>
+<li><em>scaricare</em> e <em>stampare</em> in PDF l'esito individuale senza salvarlo sulla piattaforma.</li>
+</ul>
+</li>
+</ul>
+<p>Si accede all'area di prova dei questionari dal pulsante <span style="font-variant: small-caps;">Ospite</span> che si trova nella barra in alto: il menù che si apre oltre a dare accesso alla pagina di presentazione dell'area di prova consente di selezionare subito lo strumento d’interesse e di accedere così direttamente alla compilazione dei questionari in modalità 'prova'. I <em>link</em> ai questionari in questa modalità sono forniti anche in questa pagina.</p>
+<p>Il servizio è gratuito sia per chi non effettua accesso sia per chi richiede un <em>account</em>. Di seguito è suggerita la procedura per la compilazione dei questionari di prova.</p>
+<p> </p>
+<p style="background-color: #eeeeee;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/54/Ospite.png" width="144" height="143" alt="Ospite" style="display: block; margin-left: auto; margin-right: auto;" /></p>
+<h6><span style="color: #39b3e6;">L'accesso ai questionari di prova come ospite</span></h6>
+<p><i>Se vuoi solo provare i questionari autonomamente (senza usare le chiavi di accesso di un Istituto/Altro accreditato) non devi fare login né creare un tuo account. Puoi procedere nel modo seguente: </i><i>seleziona lo strumento che ti interessa, leggi alcune informazioni sullo strumento, poi torna in questa pagina o accedi al menù <span style="font-variant: small-caps;">Ospite</span> per compilare uno o più questionari di autovalutazione. Segui le istruzioni:</i></p>
+<p style="margin-left: 30px;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/54/Pulsante.png" width="20" height="21" /> <span color="#39b3e6" style="color: #39b3e6;"><b>Leggi e scegli </b><span style="color: #000000;">il questionario </span></span>più adeguato alle tue esigenze: <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a>, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=2&amp;displayformat=dictionary" title="Glossario: QSAr" class="glossary autolink concept glossaryid1">QSAr</a>, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=3&amp;displayformat=dictionary" title="Glossario: QPCS" class="glossary autolink concept glossaryid1">QPCS</a>, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=4&amp;displayformat=dictionary" title="Glossario: QPCC" class="glossary autolink concept glossaryid1">QPCC</a>, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=6&amp;displayformat=dictionary" title="Glossario: ZTPI" class="glossary autolink concept glossaryid1">ZTPI</a>, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=7&amp;displayformat=dictionary" title="Glossario: QAP" class="glossary autolink concept glossaryid1">QAP</a>. <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=48">Approfondisci</a></p>
+<p></p>
+<p style="margin-left: 30px;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/54/Pulsante.png" width="20" height="21" /> <strong><span style="color: #39b3e6;">Accedi</span> </strong>alla compilazione dei <strong>questionari di prova</strong> cliccando sui link sotto o su quelli che trovi nel sottomenù del pulsante <span style="font-variant: small-caps;">Ospite:</span></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><b><a href="https://www.competenzestrategiche.it/quest/index.php/87646/istituto/0" target="_blank">QSAr</a></b>   (studenti della scuola secondaria di primo grado e dell'ultimo anno della scuola primaria)</li>
+<li><b><a href="https://www.competenzestrategiche.it/quest/index.php/85374/istituto/0" target="_blank">QSA</a></b>    (studenti del biennio della scuola secondaria di secondo grado e della formazione professionale)</li>
+<li><b><a href="https://www.competenzestrategiche.it/quest/index.php/67267/istituto/0" target="_blank">QPCS</a></b>  (studenti che terminano gli studi secondari di secondo grado e in ingresso nell’Università)</li>
+<li><b><a href="https://www.competenzestrategiche.it/quest/index.php/22376/istituto/0" target="_blank">QPCC</a></b>  (insegnanti e altri professionisti che operano in contesti professionali di tipo relazionale)</li>
+<li><b><a href="https://www.competenzestrategiche.it/quest/index.php/748264/Istituto/0" target="_blank">ZTPI</a></b>   (studenti che si trovano al termine degli studi secondari di secondo grado e in ingresso nell’Università, adulti)</li>
+<li><b><a href="https://www.competenzestrategiche.it/quest/index.php/664393/istituto/0" target="_blank">QAP</a></b>    (studenti di scuola secondaria, università e giovani adulti)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p></p>
+<p style="margin-left: 30px;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/54/Pulsante.png" width="20" height="21" /> <span style="color: #39b3e6;"><strong>Scarica e leggi</strong></span> attentamente il profilo risultante al termine della compilazione. Ricorda che l'esito che otterrai è solo indicativo di una autovalutazione. Ti suggeriamo di utilizzare anche altre fonti informative che ti aiutino a conoscerti anche da altri punti di vista. Ad esempio, se sei uno studente puoi confrontarti con un tuo docente sui risultati ottenuti.</p>
+<p style="margin-left: 30px;"> </p>
+<p style="background-color: #eeeeee;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/54/Utente%20registrato.png" width="144" height="143" style="display: block; margin-left: auto; margin-right: auto;" /></p>
+<h6><span style="color: #39b3e6;">L'accesso ai questionari di prova per gli Utenti registrati</span></h6>
+<p>L'area di prova può essere utilizzata dal referente o da un docente per testare il questionario prima di farlo compilare agli studenti, oppure può essere usata da singoli utenti che fossero interessati ad autosomministrarsi gli strumenti senza salvarli sull'<em>account</em> istituzionale. La compilazione dà luogo alla sola restituzione del proﬁlo individuale.</p>
+<p><em>Si suggerisce ai referenti di Istituto/Altro accreditato e ai professionisti che accedono con account di servirsi dei link che si trovano in questa pagina nel caso si voglia compilare un questionario di prova.</em></p>
+<h5><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/54/Prova.jpg" width="604" height="378" alt="Prova" style="font-size: 10px; display: block; margin-left: auto; margin-right: auto;" /></h5>
+<p> </p></div><div class="book_chapter"><a name="ch52"></a><h2>4. L'interpretazione dei dati</h2><p> </p>
+<p>Gli esiti della compilazione di tutti i questionari sono forniti immediatamente a tutti gli utenti attraverso un proﬁlo individuale che riporta in forma graﬁca, integrata da un commento testuale, l’elaborazione dei punteggi. Gli utenti registrati possono accedere all'elaborazione dei dati oltre che a livello individuale, anche a livello di classe/gruppo e a livello di Istituto/Altro accreditato.  </p>
+<p style="text-align: center;"><span style="font-size: small;"><strong>Tab. 9: Il prospetto dei tipi di esiti e il link alle indicazioni per l'interpretazione </strong></span></p>
+<table border="1" style="border-color: #c0c0c0; border-width: 1px; margin-left: auto; margin-right: auto;">
+<tbody>
+<tr>
+<td style="background-color: #f0f8ff; border-color: #c0c0c0; border-style: solid; border-width: 1px;">
+<p><span style="color: #000000;"><strong>Tipo di esiti</strong></span></p>
+</td>
+<td style="width: 70px; border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;">
+<p style="text-align: center;"><span style="color: #000000;"><strong><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a></strong></span></p>
+</td>
+<td style="width: 70px; border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px; text-align: center;">
+<p><span style="color: #000000;"><strong><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=2&amp;displayformat=dictionary" title="Glossario: QSAr" class="glossary autolink concept glossaryid1">QSAr</a></strong></span></p>
+</td>
+<td style="width: 70px; border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px; text-align: center;">
+<p><span style="color: #000000;"><strong><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=3&amp;displayformat=dictionary" title="Glossario: QPCS" class="glossary autolink concept glossaryid1">QPCS</a></strong></span></p>
+</td>
+<td style="width: 70px; border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px; text-align: center;">
+<p><span style="color: #000000;"><strong><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=4&amp;displayformat=dictionary" title="Glossario: QPCC" class="glossary autolink concept glossaryid1">QPCC</a></strong></span></p>
+</td>
+<td style="width: 70px; border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px; text-align: center;">
+<p><span style="color: #000000;"><strong><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=6&amp;displayformat=dictionary" title="Glossario: ZTPI" class="glossary autolink concept glossaryid1">ZTPI</a></strong></span></p>
+</td>
+<td style="width: 70px; border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;">
+<p style="text-align: center;"><span style="color: #000000;"><strong><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=7&amp;displayformat=dictionary" title="Glossario: QAP" class="glossary autolink concept glossaryid1">QAP</a></strong></span></p>
+</td>
+</tr>
+<tr>
+<td><em>Prospetto di Istituto/Altro accreditato</em></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+</tr>
+<tr>
+<td><em>Prospetto di classe/gruppo</em></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+<td style="width: 70px; text-align: center;"></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+</tr>
+<tr>
+<td><em>Profilo individuale (rappresentazione grafica)     </em></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+</tr>
+<tr>
+<td><em>Profilo individuale (commento testuale)</em></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+<td style="width: 70px; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Pulsante.png" width="20" height="21" /></td>
+</tr>
+<tr>
+<td style="text-align: right;"><span style="background-color: #f0f8ff;"><em style="text-align: -webkit-center;"><strong>Indicazioni per l'interpretazione --&gt;</strong></em></span></td>
+<td style="width: 70px; height: 36px;" align="center" valign="middle"><a href="https://www.competenzestrategiche.it//mod/page/view.php?id=94"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Approfondisci.png" width="30" height="30" style="vertical-align: middle;" /></a></td>
+<td style="width: 70px; height: 36px;" align="center" valign="middle"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Approfondisci.png" width="30" height="30" /></td>
+<td style="width: 70px; height: 36px;" align="center" valign="middle"><a href="https://www.competenzestrategiche.it//mod/page/view.php?id=114"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Approfondisci.png" width="30" height="30" /></a></td>
+<td style="width: 70px; height: 36px;" align="center" valign="middle"><a href="https://www.competenzestrategiche.it//mod/page/view.php?id=113"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Approfondisci.png" width="30" height="30" /></a></td>
+<td style="width: 70px; height: 36px;" align="center" valign="middle"><a href="https://www.competenzestrategiche.it//mod/page/view.php?id=112"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Approfondisci.png" width="30" height="30" /></a></td>
+<td style="width: 70px; height: 36px;" align="center" valign="middle"><a href="https://www.competenzestrategiche.it//mod/page/view.php?id=111"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Approfondisci.png" width="30" height="30" style="vertical-align: middle;" /></a></td>
+</tr>
+</tbody>
+</table>
+<p> </p>
+<p>Le modalità con le quali i dati possono essere letti, interpretati e utilizzati sono ovviamente molte. Suggeriamo di seguito alcuni spunti generali che possono essere usati per una prima analisi dei profili individuali e dei prospetti di Istituto/Altro accreditato e di classe/gruppo. Per un approfondimento specifico sui singoli questionari si rimanda ai rispettivi <em>link</em> a cui si accede cliccando sui pulsanti <span style="font-variant: small-caps;">Indicazioni per l'interpretazione</span> che si trovano nell'ultima riga della tabella sopra.</p>
+<p> </p>
+<h5><span style="color: #39b3e6;">L'accesso al menù di elaborazione</span></h5>
+<p>Il referente di un Istituto/Altro accreditato, dopo aver fatto <em>login</em> accede ai <em>report</em> dei risultati dal menù principale <span style="font-variant: small-caps;">utente registrato</span><span style="font-variant: small-caps;">,</span><strong><span style="font-variant: small-caps;"> </span></strong>selezionando il tasto <span style="font-variant: small-caps;">elaborazione dati</span><span style="font-variant: small-caps;">.</span> Dalla schermata che si apre può vedere un prospetto riassuntivo dei questionari compilati. Nella figura seguente è fornito un esempio. </p>
+<p style="text-align: center;"><span style="font-size: small;"><strong>Fig. 10a: Report dei questionari compilati da un Isituto/Altro accreditato</strong></span></p>
+<p style="background-color: #eeeeee;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Prospetto_Questionari_compilati.png" width="600" height="376" style="display: block; margin-left: auto; margin-right: auto;" /></p>
+<p></p>
+<p>Per accedere ai prospetti degli esiti di gruppo e individuali occorre selezionare il questionario e, dal menù che appare, scegliere l’anno scolastico e il periodo in cui lo strumento è stato somministrato agli allievi/utenti del proprio Istituto/Altro accreditato (Fig. 10b).</p>
+<p style="text-align: center;"><span style="font-size: small;"><strong>Fig. 10b: Il menù per l'accesso alle elaborazioni</strong></span></p>
+<p style="background-color: #eeeeee;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/elaborazione.png" width="401" height="143" alt="Elaborazione" style="display: block; margin-left: auto; margin-right: auto;" /></p>
+<p> </p>
+<p>Dopo aver scelto i valori e aver confermato con il pulsante <strong><span style="font-variant: small-caps;">ok</span></strong> il referente ha accesso ai prospetti degli esiti.</p>
+<p>  </p>
+<h5><span style="color: #39b3e6;">Il prospetto di Istituto</span></h5>
+<p>Il sistema restituisce come primo <em>report</em> una tabella che presenta l’insieme dei dati raggruppati per Istituto/Altro accreditato suddivisi per classe e sezione. Nella prima colonna, in ogni riga, tra parentesi, è indicato il numero dei questionari compilati per classe/gruppo; nelle colonne successive, in relazione a ciascun fattore, sono fornite le medie dei risultati per classe e sezione e nell'ultima riga la media di Istituto/Altro accreditato.</p>
+<p>Tale prospetto può essere utile per considerare eventuali scostamenti di un gruppo/classe dalla media di Istituto in relazione a uno o più fattori e per individuare gli eventuali aspetti che richiedono una attenzione da parte dei docenti e dei formatori.</p>
+<p>Un <em>facsimile</em> della struttura del prospetto di Istituto/Altro accreditato è fornito nella figura sotto.</p>
+<p style="text-align: center;"> <span style="font-size: small;"><strong>Fig. 11: La struttura del prospetto di Istituto</strong></span></p>
+<table border="1" cellpadding="0" cellspacing="0" align="center" id="yui_3_17_2_1_1670857064976_321">
+<tbody id="yui_3_17_2_1_1670857064976_320">
+<tr align="center" valign="middle" id="yui_3_17_2_1_1670857064976_319">
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;">
+<p id="yui_3_17_2_1_1670857064976_335"><strong>Classe e Sezione</strong></p>
+</td>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;">
+<p id="yui_3_17_2_1_1670857064976_326"><strong><span id="yui_3_17_2_1_1670857064976_325"><span id="yui_3_17_2_1_1670857064976_324"> C1 </span></span></strong></p>
+</td>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;">
+<p id="yui_3_17_2_1_1670857064976_331"><strong><span id="yui_3_17_2_1_1670857064976_330"><span id="yui_3_17_2_1_1670857064976_329"> C2 </span></span></strong></p>
+</td>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;">
+<p><strong> C3 </strong></p>
+</td>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;">
+<p><strong> C4 </strong></p>
+</td>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;">
+<p><strong> C5 </strong></p>
+</td>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;">
+<p><strong> C6 </strong></p>
+</td>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;">
+<p><strong> C7 </strong></p>
+</td>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;">
+<p><strong> A1 </strong></p>
+</td>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;">
+<p><strong> A2 </strong></p>
+</td>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;">
+<p><strong> A3 </strong></p>
+</td>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;">
+<p><strong> A4 </strong></p>
+</td>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;">
+<p><strong> A5 </strong></p>
+</td>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;">
+<p><strong> A6 </strong></p>
+</td>
+<td style="border-color: #c0c0c0; background-color: #f0f8ff; border-style: solid; border-width: 1px;">
+<p><strong> A7 </strong></p>
+</td>
+</tr>
+<tr align="center" valign="middle">
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"><span>  Classe - Sezione  (...)  </span></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+</tr>
+<tr align="center" valign="middle">
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"><span>Classe - Sezione (...)</span></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+</tr>
+<tr align="center" valign="middle">
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"><span><span>Classe - Sezione (...)</span><br /></span></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+</tr>
+<tr align="center" valign="middle">
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"><span><span>Classe - Sezione (...)</span></span></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+</tr>
+<tr align="center" valign="middle">
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"><span><span>Classe - Sezione  (...)</span></span></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td background-color:="" ffa500="" style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td background-color:="" ffa500="" style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+</tr>
+<tr align="center" valign="middle">
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"> ...</td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+</tr>
+<tr align="center" valign="middle">
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"> <strong><em>Media</em></strong></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+<td style="border-color: #c0c0c0; border-style: solid; border-width: 1px;"></td>
+</tr>
+</tbody>
+</table>
+<p style="background-color: #eeeeee;"></p>
+<p>Il prospetto di Istituto/Altro accreditato può essere scaricato in PDF e stampato con gli appositi comandi che si trovano sotto la tabella. Inoltre, se necessario, il referente può intervenire per modificare i dati. Di seguito si fornisce un esempio.</p>
+<h6>La modifica dei dati</h6>
+<p>Nella figura sotto, nella prima riga dell'elenco delle classi prime c'è un errore: il nome della sezione (BSA) è preceduto dal numero 1 e la classe 1BAS ha un solo studente (cerchio giallo). Modificando la sezione da '1BSA' a 'BSA', nella successiva elaborazione la studentessa risulterà inserita nel gruppo classe/sezione corretto. </p>
+<p style="text-align: center;"><span style="font-size: small;"><strong>Fig. 12: Gli strumenti per la modifica o l'eliminazione di un <em>record</em></strong></span></p>
+<p style="background-color: #eeeeee;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/QSA_modifica%20errore.png" width="567" height="190" alt="Modifica errore" style="display: block; margin-left: auto; margin-right: auto;" /></p>
+<p>Gli strumenti per la modifica dell'errore sono posti accanto al nome di ciascuno studente. Come raffigurato sopra (riquadro con sfondo giallo), accanto al nome della studentessa appaiono il simbolo di una <strong><span style="font-variant: small-caps;">matita</span> </strong>e una <strong>x:</strong> con la x si può cancellare il questionario, mentre con la matita si accederà a una tabella dalla quale si potranno correggere eventuali errori relativi a: nome, cognome, anno scolastico, periodo di riferimento, classe e sezione.</p>
+<p>  </p>
+<h5><span style="color: #39b3e6;">Il prospetto di una classe/gruppo</span></h5>
+<p>Il secondo livello di elaborazione si ottiene accedendo alla classe e sezione attraverso il <em>link</em> automatico posto sui nomi delle classi/gruppi contenuti nella prima colonna dalla tabella <em>Prospetto di Istituto</em>. Il prospetto di una classe/gruppo è costituito dalla lista nominativa degli studenti e dalla tavola dei punteggi per ciascuno dei fattori del questionario. Quello che segue è un esempio di prospetto di classe.</p>
+<p style="text-align: center;"> <span style="font-size: small;"><strong>Fig. 13: Il prospetto dei risultati di una classe al <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a></strong></span></p>
+<table border="1" cellpadding="0" cellspacing="0" align="center" style="border-color: #c0c0c0; border-width: 1px; border-style: solid;">
+<tbody>
+<tr align="center" valign="middle">
+<td style="background-color: #f0f8ff;">
+<p><span style="color: #39b3e6;"><strong> Cognome Nome</strong></span></p>
+</td>
+<td style="background-color: #f0f8ff;">
+<p><span style="color: #39b3e6;"><strong> C1 </strong></span></p>
+</td>
+<td style="background-color: #f0f8ff;">
+<p><span style="color: #39b3e6;"><strong> C2 </strong></span></p>
+</td>
+<td style="background-color: #f0f8ff;">
+<p><span style="color: #39b3e6;"><strong> C3 </strong></span></p>
+</td>
+<td style="background-color: #f0f8ff;">
+<p><span style="color: #39b3e6;"><strong> C4 </strong></span></p>
+</td>
+<td style="background-color: #f0f8ff;">
+<p><span style="color: #39b3e6;"><strong> C5 </strong></span></p>
+</td>
+<td style="background-color: #f0f8ff;">
+<p><span style="color: #39b3e6;"><strong> C6 </strong></span></p>
+</td>
+<td style="background-color: #f0f8ff;">
+<p><span style="color: #39b3e6;"><strong> C7 </strong></span></p>
+</td>
+<td style="background-color: #f0f8ff;">
+<p><span style="color: #39b3e6;"><strong> A1 </strong></span></p>
+</td>
+<td style="background-color: #f0f8ff;">
+<p><span style="color: #39b3e6;"><strong> A2 </strong></span></p>
+</td>
+<td style="background-color: #f0f8ff;">
+<p><span style="color: #39b3e6;"><strong> A3 </strong></span></p>
+</td>
+<td style="background-color: #f0f8ff;">
+<p><span style="color: #39b3e6;"><strong> A4 </strong></span></p>
+</td>
+<td style="background-color: #f0f8ff;">
+<p><span style="color: #39b3e6;"><strong> A5 </strong></span></p>
+</td>
+<td style="background-color: #f0f8ff;">
+<p><span style="color: #39b3e6;"><strong> A6 </strong></span></p>
+</td>
+<td style="background-color: #f0f8ff;">
+<p><span style="color: #39b3e6;"><strong> A7 </strong></span></p>
+</td>
+</tr>
+<tr align="center" valign="middle">
+<td><span> Cognome Nome 1 <img src="https://www.competenzestrategiche.it//pluginfile.php/2080/mod_page/content/42/Modifica.png" width="16" height="16" alt="Modifica" /> <img src="https://www.competenzestrategiche.it//pluginfile.php/2080/mod_page/content/42/Elimina.png" width="16" height="16" alt="Elimina" /> </span></td>
+<td align="center" valign="middle" scope="row">9</td>
+<td align="center" valign="middle" scope="row">8</td>
+<td align="center" valign="middle" scope="row">6</td>
+<td align="center" valign="middle" scope="row">5</td>
+<td align="center" valign="middle" scope="row">8</td>
+<td style="background-color: #ffa500;">7</td>
+<td style="background-color: #ffa500;">7</td>
+<td align="center" valign="middle" scope="row">4</td>
+<td align="center" valign="middle" scope="row">8</td>
+<td align="center" valign="middle" scope="row">8</td>
+<td align="center" valign="middle" scope="row">4</td>
+<td align="center" valign="middle" scope="row">5</td>
+<td align="center" valign="middle" scope="row">8</td>
+<td align="center" valign="middle" scope="row">3</td>
+</tr>
+<tr align="center" valign="middle">
+<td><span> Cognome Nome 2 <img src="https://www.competenzestrategiche.it//pluginfile.php/2080/mod_page/content/42/Modifica.png" width="16" height="16" alt="Modifica" /> <img src="https://www.competenzestrategiche.it//pluginfile.php/2080/mod_page/content/42/Elimina.png" width="16" height="16" alt="Elimina" /></span></td>
+<td align="center" valign="middle" scope="row">4</td>
+<td align="center" valign="middle" scope="row">9</td>
+<td align="center" valign="middle" scope="row">3</td>
+<td align="center" valign="middle" scope="row">5</td>
+<td align="center" valign="middle" scope="row">7</td>
+<td align="center" valign="middle" scope="row">2</td>
+<td align="center" valign="middle" scope="row" style="background-color: #ffa500;">9</td>
+<td align="center" valign="middle" scope="row">4</td>
+<td align="center" valign="middle" scope="row">9</td>
+<td align="center" valign="middle" scope="row">7</td>
+<td align="center" valign="middle" scope="row">3</td>
+<td align="center" valign="middle" scope="row">3</td>
+<td align="center" valign="middle" scope="row">6</td>
+<td align="center" valign="middle" scope="row">6</td>
+</tr>
+<tr align="center" valign="middle">
+<td><span> Cognome Nome 3 <img src="https://www.competenzestrategiche.it//pluginfile.php/2080/mod_page/content/42/Modifica.png" width="16" height="16" alt="Modifica" /> <img src="https://www.competenzestrategiche.it//pluginfile.php/2080/mod_page/content/42/Elimina.png" width="16" height="16" alt="Elimina" /></span></td>
+<td align="center" valign="middle" scope="row">5</td>
+<td align="center" valign="middle" scope="row">4</td>
+<td align="center" valign="middle" scope="row">5</td>
+<td align="center" valign="middle" scope="row">8</td>
+<td align="center" valign="middle" scope="row">4</td>
+<td style="background-color: #ffa500;">9</td>
+<td align="center" valign="middle" scope="row">6</td>
+<td align="center" valign="middle" scope="row">3</td>
+<td style="background-color: #ffa500;">1</td>
+<td style="background-color: #ffa500;">2</td>
+<td style="background-color: #ffa500;">7</td>
+<td align="center" valign="middle" scope="row">6</td>
+<td align="center" valign="middle" scope="row">5</td>
+<td align="center" valign="middle" scope="row">5</td>
+</tr>
+<tr align="center" valign="middle">
+<td><span> Cognome Nome 4 <img src="https://www.competenzestrategiche.it//pluginfile.php/2080/mod_page/content/42/Modifica.png" width="16" height="16" alt="Modifica" /> <img src="https://www.competenzestrategiche.it//pluginfile.php/2080/mod_page/content/42/Elimina.png" width="16" height="16" alt="Elimina" /></span></td>
+<td align="center" valign="middle" scope="row">4</td>
+<td style="background-color: #ffa500;">1</td>
+<td style="background-color: #ffa500;">7</td>
+<td align="center" valign="middle" scope="row">4</td>
+<td style="background-color: #ffa500;">3</td>
+<td style="background-color: #ffa500;">7</td>
+<td align="center" valign="middle" scope="row">5</td>
+<td align="center" valign="middle" scope="row">2</td>
+<td style="background-color: #ffa500;">2</td>
+<td style="background-color: #ffa500;">2</td>
+<td align="center" valign="middle" scope="row">6</td>
+<td align="center" valign="middle" scope="row" style="background-color: #ffa500;">9</td>
+<td align="center" valign="middle" scope="row">4</td>
+<td align="center" valign="middle" scope="row">2</td>
+</tr>
+<tr align="center" valign="middle">
+<td><span> Cognome Nome 5 <img src="https://www.competenzestrategiche.it//pluginfile.php/2080/mod_page/content/42/Modifica.png" width="16" height="16" alt="Modifica" /> <img src="https://www.competenzestrategiche.it//pluginfile.php/2080/mod_page/content/42/Elimina.png" width="16" height="16" alt="Elimina" /></span></td>
+<td align="center" valign="middle" scope="row">9</td>
+<td align="center" valign="middle" scope="row">6</td>
+<td align="center" valign="middle" scope="row">4</td>
+<td align="center" valign="middle" scope="row">6</td>
+<td style="background-color: #ffa500;">2</td>
+<td align="center" valign="middle" scope="row">6</td>
+<td align="center" valign="middle" scope="row">4</td>
+<td background-color:="" ffa500="" style="background-color: #ffa500;">7</td>
+<td background-color:="" ffa500="">9</td>
+<td align="center" valign="middle" scope="row">4</td>
+<td align="center" valign="middle" scope="row">3</td>
+<td align="center" valign="middle" scope="row">3</td>
+<td style="background-color: #ffa500;">3</td>
+<td style="background-color: #ffa500;">7</td>
+</tr>
+<tr align="center" valign="middle">
+<td> ...</td>
+<td align="center" valign="middle" scope="row"></td>
+<td align="center" valign="middle" scope="row"></td>
+<td align="center" valign="middle" scope="row"></td>
+<td align="center" valign="middle" scope="row"></td>
+<td align="center" valign="middle" scope="row"></td>
+<td align="center" valign="middle" scope="row"></td>
+<td align="center" valign="middle" scope="row"></td>
+<td align="center" valign="middle" scope="row"></td>
+<td align="center" valign="middle" scope="row"></td>
+<td align="center" valign="middle" scope="row"></td>
+<td align="center" valign="middle" scope="row"></td>
+<td align="center" valign="middle" scope="row"></td>
+<td align="center" valign="middle" scope="row"></td>
+<td align="center" valign="middle" scope="row"></td>
+</tr>
+<tr align="center" valign="middle">
+<td> <strong><em>Media</em></strong></td>
+<td align="center" valign="middle" scope="row">6,2</td>
+<td align="center" valign="middle" scope="row">5,6</td>
+<td align="center" valign="middle" scope="row">5,0</td>
+<td align="center" valign="middle" scope="row">5,6</td>
+<td align="center" valign="middle" scope="row">4,8</td>
+<td align="center" valign="middle" scope="row">6,2</td>
+<td align="center" valign="middle" scope="row">6,2</td>
+<td align="center" valign="middle" scope="row">4,0</td>
+<td align="center" valign="middle" scope="row">5,8</td>
+<td align="center" valign="middle" scope="row">4,6</td>
+<td align="center" valign="middle" scope="row">4,6</td>
+<td align="center" valign="middle" scope="row">5,2</td>
+<td align="center" valign="middle" scope="row">5,2</td>
+<td align="center" valign="middle" scope="row">4,6</td>
+</tr>
+</tbody>
+</table>
+<p style="text-align: center;">LEGENDA: <img src="https://www.competenzestrategiche.it//pluginfile.php/2080/mod_page/content/42/Punteggio%20arancione.gif" width="25" height="12" alt="Punteggio arancione" /> = sotto/sopra la media (<em>punto di debolezza</em>)</p>
+<p style="background-color: #eeeeee;"></p>
+<p>Tale prospetto può essere salvato in PDF e stampato attraverso il pulsante posto sotto la tabella. Oltre al prospetto sintetico della classe da questa pagina è possibile salvare, e quindi stampare, un unico ﬁle contenente tutti i proﬁli individuali degli allievi.</p>
+<p>Le celle evidenziate in arancione evidenziano i punteggi che risultano sopra/sotto la media in negativo (punti deboli). Le indicazioni per la lettura e il possibile utilizzo formativo di questo prospetto per i diversi questionari sono fornite nella sezione <a href="https://www.competenzestrategiche.it//course/view.php?id=3">Formazione</a>.</p>
+<p>  </p>
+<h5><span style="color: #39b3e6;">Il profilo individuale</span></h5>
+<p>Il terzo <em>report</em> è il profilo individuale a cui si accede dal <em>link</em> posto sul cognome e nome del rispettivo studente. Il proﬁlo dell'esito individuale fornito per tutti i questionari è composto da due parti, una grafica e l'altra testuale.</p>
+<p>1) Un <strong>profilo grafico</strong> consente di valutare a colpo d’occhio la distribuzione dei punteggi (esito) per ciascun fattore e di veriﬁcarne il posizionamento nella media oppure sopra o sotto di essa.</p>
+<p>Quello che segue è un esempio di proﬁlo graﬁco individuale ottenuto al termine della compilazione del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a>. Cliccando sopra la voce sintetica di ciascuno dei fattori, è possibile avere una descrizione più dettagliata del fattore stesso e delle sue implicazioni rispetto alle strategie di apprendimento. Nella figura sotto, ad esempio, è stata attivata la voce '<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=26&amp;displayformat=dictionary" title="Glossario: Volizione" class="glossary autolink concept glossaryid1">Volizione</a>'.</p>
+<p style="text-align: center;"> <span style="font-size: small;"><strong>Fig. 14: Un esempio di profilo individuale del <span class="nolink">QSA</span></strong></span></p>
+<p style="background-color: #eeeeee;"><span style="font-size: small;"><strong><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Profilo%20individuale.png" width="523" height="272" style="display: block; margin-left: auto; margin-right: auto;" /></strong></span></p>
+<p style="margin-left: 60px; text-align: center;"><span>Cf.  </span><a href="https://www.competenzestrategiche.it//mod/page/view.php?id=94">Interpretazione profilo individuale del QSA</a> </p>
+<p><span>Nel <span class="nolink">QSA </span>il punteggio è indicato su <strong><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=62&amp;displayformat=dictionary" title="Glossario: scala stanine" class="glossary autolink concept glossaryid1">scala stanine</a> da 1 a 9</strong> (il tratteggio verticale al centro della colonna 'Esito' segna la posizione del valore centrale pari a 5). Per ciascun fattore sulla barra grigia è posizionato un rettangolo con il punteggio ottenuto evidenziato da uno sfondo colorato</span>. Se il rettangolo si colloca a destra del tratto centrale il valore è superiore alla media, se invece si colloca a sinistra è inferiore. Tuttavia ai ﬁni dell'interpretazione dei risultati, in particolare nella deﬁnizione del proﬁlo testuale, vengono considerati</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><span>nella <em>media</em> i punteggi che oscillano <strong>da 4 a 6</strong>,</span></li>
+<li><span><em>inferiori</em> alla media i punteggi <strong>da 1 a 3</strong> e</span></li>
+<li><span><em>superiori</em> alla media i punteggi compresi <strong>tra 7 e 9</strong>.</span></li>
+</ul>
+</li>
+</ul>
+<p><span>Si ricorda che non per tutti i fattori un punteggio superiore alla media è da considerarsi come un dato positivo in quanto alcune scale risultano invertite. Per facilitare la lettura dei risultati, i fattori sui quali porre attenzione, quali possibili indicatori di criticità, sono evidenziati con il colore arancione. Al contrario, i fattori che indicano possibili punti di forza sono evidenziati in verde, mentre i fattori che risultano nella media sono in giallo.</span></p>
+<p><span style="color: #000000; font-size: 0.83em;"> </span></p>
+<p>2) Nei profili individuali, per favorire un riscontro immediato da parte dello stesso studente, la rappresentazione grafica è completata da un<strong> commento di tipo testuale</strong> degli esiti. Per ciascuno dei fattori, il commento restituisce il posizionamento rispetto alla scala e fornisce una interpretazione del suo signiﬁcato con eventuali suggerimenti di carattere compensativo, qualora il punteggio fosse espressione di criticità.</p>
+<p style="text-align: center;"><span style="font-size: small;"><strong>Fig. 15: Un esempio di commento testuale</strong></span></p>
+<p style="background-color: #eeeeee; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Commento%20testuale.png" width="600" height="190" /></p>
+<p></p>
+<p>Il proﬁlo ottenuto, può essere stampato direttamente dallo studente al termine della compilazione oppure inviato ad un indirizzo e-mail o salvato in formato PDF. Per l’invio tramite e-mail è necessario inserire nell’apposito spazio posto in fondo al proﬁlo l’indirizzo e-mail al quale si desidera inviare la pagina e premere il tasto <span style="font-variant: small-caps;">Invia</span>, oppure cliccare su <span style="font-variant: small-caps;">Scarica PDF</span> e salvare il ﬁle. Si consiglia di fare entrambe le cose (ﬁgura sotto). </p>
+<p style="text-align: center;"><span style="font-size: small;"><strong>Fig. 16: I suggerimenti finali per l'interpretazione e la stampa</strong></span></p>
+<p style="background-color: #eeeeee;"><strong><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/QSA_stampa%20profilo.png" width="441" height="115" alt="QSA_stampa profilo" style="display: block; margin-left: auto; margin-right: auto;" /></strong></p>
+<p>Un messaggio avviserà dell’avvenuto invio del proﬁlo all’indirizzo indicato.</p>
+<p>Per la compilazione e l’elaborazione di tutti i questionari si procede nello stesso modo indicato per il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> e anche la restituzione del proﬁlo e la stampa avviene con le stesse modalità.</p>
+<p><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/52/Interpretazione.jpg" width="596" height="397" alt="Interpretazione" style="display: block; margin-left: auto; margin-right: auto;" /></p></div><div class="book_chapter"><a name="ch62"></a><h2>5. La ricerca</h2><p> </p>
+<p>La piattaforma è l'esito di una ricerca commissionata dal CNOS-FAP e realizzata da un gruppo di studiosi coordinati da Michele Pellerey. Le numerose pubblicazioni scientifiche si incentrano sia sulla presentazione degli strumenti autovalutativi e sulla loro validazione sia sulla documentazione di esperienze di utilizzo educativo e formativo di tali strumenti. Nel 2019 c'è stato anche un Convegno internazionale di cui sono stati pubblicati gli Atti nel 2020.</p>
+<p>Alcune tappe significative dello sviluppo della ricerca sono indicate nella figura sottostante.</p>
+<ul>
+<li>Il lavoro di Michele Pellerey, a partire dagli anni Ottanta, la pubblicazione del volume sul <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> nel 1996 e del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=4&amp;displayformat=dictionary" title="Glossario: QPCC" class="glossary autolink concept glossaryid1">QPCC</a> nel 2001 e del volume <em>Dirigere il proprio apprendimento: Autodeterminazione e autoregolazione nei processi di apprendimento</em> (La Scuola, Brescia) nel 2006, sono all'origine della ricerca.</li>
+<li>Nel 2011 è stata attivata la piattaforma<em> Competenzestrategiche.it</em> (in seguito rivista e aggiornata nel 2016, nel 2018-2019 e nel 2022).</li>
+<li>Nel corso degli anni, come si può vedere di seguito, sono state numerose le pubblicazioni (rapporti di ricerca e altri volumi sugli strumenti autovalutativi e su percorsi e strumenti di supporto alle attività didattiche, educative e formative).</li>
+</ul>
+<p style="text-align: center;"> <strong><span style="font-size: small;">Fig. 17: Alcune tappe dello sviluppo della ricerca (1996-2025)</span></strong></p>
+<p style="background-color: #eeeeee; text-align: center;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/62/Sviluppo%20storico.png" width="821" height="426" style="display: block; margin-left: auto; margin-right: auto;" /></p>
+<p><span style="color: #ffffff;">.</span> </p>
+<p><strong><a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=83"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/62/Approfondisci.png" width="30" height="30" style="vertical-align: middle;" /></a> <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=83"><span style="color: #39b3e6;">Le pubblicazioni</span></a></strong></p>
+<p style="margin-left: 30px;"></p>
+<p><span style="color: #000000;">Nel corso degli anni è cresciuto il numero delle pubblicazioni e degli utenti della piattaforma <em>Competenzestrategiche.it</em>. Scuole e istituti dei diversi ordini e gradi, centri per la formazione professionale e l’orientamento, università e ricercatori, consulenti ed esperti di orientamento hanno utilizzato i questionari proposti in <em>Competenzestrategiche.it</em> in diverse attività didattiche, di ricerca e consulenza orientativa. </span></p>
+<p><span style="color: #000000;">Nel 2019 si è realizzato un convegno internazionale che ha messo a confronto esperienze di ricerca e applicazione degli strumenti della piattaforma nei diversi contesti scolastici, formativi e professionali.</span></p>
+<p><span style="color: #000000;"> </span></p>
+<h5><span style="color: #39b3e6;">Il Convegno internazionale (2019)</span></h5>
+<p>Nel 2020 più di quaranta studiosi, tra docenti, ricercatori e formatori, appartenenti a numerosi atenei e istituti di ricerca, scuole primarie e secondarie, e centri per l’orientamento, la formazione e il lavoro hanno contribuito alla realizzazione del volume <em>Dirigere se stessi nello studio e nel lavoro. Competenzestrategiche.it: strumenti e applicazioni</em> curato da Michele Pellerey, Massimo Margottini e Enrica Ottone, pubblicato nel dicembre 2020 da Roma TrE-Press. L’opera raccoglie i contributi presentati al Convegno internazionale – da cui il libro ha preso il titolo - tenuto il 13 Settembre 2019 presso il Dipartimento di Scienze della Formazione dell’Università degli Studi Roma Tre, in collaborazione con l’Università Pontificia Salesiana, la Pontificia Facoltà di Scienze dell’Educazione Auxilium e il CNOS-FAP Centro Nazionale Opere Salesiane-Formazione e Aggiornamento Professionale.<br />Così come si evince dalla <a href="https://romatrepress.uniroma3.it/wp-content/uploads/2020/12/0.Introduzione.pdf" target="_blank">presentazione del testo</a>, l’obiettivo è raccogliere una sintesi del lavoro di ricerca realizzato dal <em>network</em> spontaneo che si è sviluppato in un decennio intorno all’uso degli strumenti implementati sulla piattaforma <em>Competenzestrategiche.it</em>.</p>
+<p>L'intero volume è disponibile in formato <em>e-book</em> e può essere scaricato al seguente <a href="https://romatrepress.uniroma3.it/wp-content/uploads/2020/12/diri-pmmo.pdf" target="_blank" style="font-style: italic;">link</a>.</p>
+<table border="0" style="margin-left: 30px; width: 795px; height: 242px;">
+<tbody>
+<tr>
+<td><a href="https://romatrepress.uniroma3.it/wp-content/uploads/2020/12/diri-pmmo.pdf"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/62/Copertina.jpg" width="164" height="232" alt="Copertina" /></a></td>
+<td>
+<p style="margin-left: 30px;">Le presentazioni dei membri dell'équipe di ricerca al Convegno sono disponibili ai seguenti <em>link</em>:</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>M. Pellerery: "Dirigere se stessi nello studio e nel lavoro" (<a href="https://www.competenzestrategiche.it/download/Pellerey_Convegno_13_settembre_2019.pdf" target="_blank">download</a>)</li>
+<li>D. Grzadziel: "Riflessione nei processi di apprendimento" (<a href="https://www.competenzestrategiche.it/download/Grzadziel_13_settembre_2019.pdf" target="_blank">download</a>)</li>
+<li>E. Ottone: "Competenzestrategiche.it: una risorsa per i docenti" (<a href="https://www.competenzestrategiche.it/download/Ottone_13_settembre_2019.ppsx" target="_blank">download</a>)</li>
+<li>M. Margottini: "La piattaforma competenzestrategiche.it: Applicazioni, ricerche, sviluppi" (<a href="https://www.competenzestrategiche.it/download/margottini_13_settembre.pdf" target="_blank">download</a>)</li>
+<li>F. Epifani: "Competenzestrategiche.it: statistiche di utilizzo e sviluppi della piattaforma" (<a href="https://www.competenzestrategiche.it/download/Epifani_13_settembre_2019.ppsx" target="_blank">download</a>)</li>
+</ul>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Sono disponibili anche le registrazioni video degli interventi al convegno e altra documentazione</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Il video del convegno </li>
+</ul>
+</li>
+</ul>
+<p><div class="mediaplugin mediaplugin_videojs"><div style="max-width:400px;"><video data-setup-lazy="{&quot;techOrder&quot;: [&quot;youtube&quot;], &quot;sources&quot;: [{&quot;type&quot;: &quot;video/youtube&quot;, &quot;src&quot;:&quot;https://youtu.be/TmQZhTdq8yg?t=1&quot;}], &quot;language&quot;: &quot;it&quot;, &quot;fluid&quot;: true}" id="id_videojs_6a1b22478f74b" class="video-js" preload="auto" controls="true" title="video"><a class="mediafallbacklink" href="https://youtu.be/TmQZhTdq8yg?t=1">video</a></video></div></div></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><a href="https://www.competenzestrategiche.it/pluginfile.php/74/block_html/content/Programma_Convegno_13_settembre_2019.pdf">Il programma del convegno</a></li>
+<li><a href="https://www.competenzestrategiche.it/pluginfile.php/74/block_html/content/Abstract_fascicolo.pdf" target="_blank">Gli abstract del convegno</a></li>
+</ul>
+</li>
+</ul>
+<p>  </p>
+<p>Il Comitato scientifico del convegno era formato da: Michele Pellerey, Darius Grzadziel, Massimo Margottini, Enrica Ottone, Mario Tonini.</p>
+<p>Il Comitato tecnico-organizzativo era composto da: Francesca Rossi, Tiziana Fasoli, Federica De Carlo, Carla Consoni.</p>
+<p> </p>
+<p><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/62/Ricerca.jpg" width="576" height="360" style="display: block; margin-left: auto; margin-right: auto;" /></p></div><div class="book_chapter"><a name="ch90"></a><h3>5.1. I convegni</h3><p><span style="color: #ffffff;">.</span></p>
+<p>Nel 2019 e nel 2025 insegnanti, formatori, ricercatori provenienti da varie parti d'Italia si sono ritrovati a Roma per condividere le esperienze di ricerca e le buone pratiche di utilizzo degli strumenti della piattaforma. La documentazione dei due eventi e delle pubblicazioni che sono state realizzate sono presentate in questa pagina.  </p>
+<p><span style="color: #ffffff;">.</span></p>
+<h5><strong><span style="color: #39b3e6;">Il Convegno del 2025</span></strong></h5>
+<p><span style="color: #ffffff;">.</span></p>
+<p>Il 24 gennaio 2025 a Roma nell'Aula Volpi dell'Univ. Roma Tre si è tenuto il secondo convegno internazionale dal titolo <em>Dirigere se stessi nello studio e nel lavoro. Competenzestrategiche.it: Strumenti e applicazioni </em>organizzato dall’équipe scientifica che ha sviluppato la piattaforma <i>Competenzestrategiche.it</i> e promosso dalla Fondazione CNOS-FAP ETS.</p>
+<p>Durante l’evento sono state presentate e<span>sperienze e progetti di valorizzazione degli strumenti della piattaforma realizzati nelle scuole, nei centri di formazione e in altri contesti formativi formali e non formali. Una ventina di relatori, docenti, formatori, ricercatori provenienti da tutta Italia hanno presentato:</span></p>
+<ul>
+<li><b>Buone pratiche</b>: approcci e percorsi efficaci per favorire l'autovalutazione, l'orientamento e la crescita personale di studenti e professionisti.</li>
+<li><b>Dati aggiornati sulla piattaforma e sull'uso degli strumenti</b>: una panoramica delle principali risorse e funzionalità della piattaforma <i>Competenzestrategiche.it</i>, con focus sui questionari, sull'<span class="nolink">ePortfolio</span>.</li>
+<li><b>Progetti innovativi</b>: la sperimentazione di assistenti digitali come supporto nell’interpretazione e nell’utilizzo educativo degli strumenti.</li>
+</ul>
+<p>Il convegno si è sviluppato in due sessioni:</p>
+<ul>
+<li><em>mattina</em>: presentazione di esperienze concrete di utilizzo della piattaforma nelle scuole, con testimonianze dirette di docenti e risultati ottenuti. E' stata una preziosa occasione di confronto con esperienze consolidate di applicazione degli strumenti della piattaforma nei contesti educativi, formativi e di orientamento;</li>
+</ul>
+<ul>
+<li><em>pomeriggio</em>: l'équipe di ricerca ha presentato le novità e gli sviluppi futuri della piattaforma, con particolare attenzione a nuovi strumenti e percorsi di formazione e orientamento, pensati per potenziare ulteriormente l’utilizzo della piattaforma CompetenzeStrategiche.it.</li>
+</ul>
+<p><span style="color: #ffffff;">..</span></p>
+<p><strong style="font-size: 10px;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/90/Download.png" width="30" height="30" style="vertical-align: middle;" /> </strong><strong><a href="https://www.competenzestrategiche.it/mod/resource/view.php?id=163" title="Programma dettagliato"><span class="nolink">Scarica il Programma dettagliato del Convegno</span></a></strong></p>
+<p></p>
+<p><strong><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/90/Download.png" width="30" height="30" /> </strong> <strong><a href="https://drive.google.com/file/d/1G1_ooIPkdPxC91G_GMX7Ksvl67bVfCZX/view?usp=sharing">Scarica la presentazione della piattaforma </a></strong>(24 gennaio 2025)</p>
+<p><span style="color: #ffffff;">.</span></p>
+<p>Nel pomeriggio sono stati mostrati due progetti di introduzione dell'Intelligenza Artificiale generativa conversazionale a supporto della piattaforma <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=5&amp;displayformat=dictionary" title="Glossario: competenze strategiche" class="glossary autolink concept glossaryid1">competenze strategiche</a>. I partecipanti al convegno hanno potuto sperimentare in anteprima una funzione implementata sulla piattaforma AskLea.ai.</p>
+<p><span style="background-color: #ffff99;"><a href="https://www.competenzestrategiche.it/mod/page/view.php?id=162" title="Asssitente IA"><span style="background-color: #ffff99;"><strong><strong><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/90/Download.png" width="30" height="30" />  </strong>Sperimentazione dell'Assistente IA per i docenti</strong></span></a></span></p>
+<p></p>
+<p><i> </i></p>
+<p>Il comitato scientifico organizzatore dei convegni era formato da: Michele Pellerey, Dariusz Grządziel, Massimo Margottini, Enrica Ottone, Mario Tonini.</p>
+<p><span style="color: #ffffff;">.</span></p>
+<h5><span style="color: #39b3e6;">Il Convegno del 2019</span></h5>
+<p><span style="color: #ffffff;">.</span></p>
+<p>Nel 2020 più di quaranta studiosi, tra docenti, ricercatori e formatori, appartenenti a numerosi atenei e istituti di ricerca, scuole primarie e secondarie, e centri per l’orientamento, la formazione e il lavoro hanno contribuito alla realizzazione del volume <em>Dirigere se stessi nello studio e nel lavoro. Competenzestrategiche.it: strumenti e applicazioni</em> curato da Michele Pellerey, Massimo Margottini e Enrica Ottone, pubblicato nel dicembre 2020 da Roma TrE-Press. L’opera raccoglie i contributi presentati al Convegno internazionale – da cui il libro ha preso il titolo - tenuto il 13 Settembre 2019 presso il Dipartimento di Scienze della Formazione dell’Università degli Studi Roma Tre, in collaborazione con l’Università Pontificia Salesiana, la Pontificia Facoltà di Scienze dell’Educazione Auxilium e il CNOS-FAP Centro Nazionale Opere Salesiane-Formazione e Aggiornamento Professionale.<br />Così come si evince dalla <a href="https://romatrepress.uniroma3.it/wp-content/uploads/2020/12/0.Introduzione.pdf" target="_blank">presentazione del testo</a>, l’obiettivo è raccogliere una sintesi del lavoro di ricerca realizzato dal <em>network</em> spontaneo che si è sviluppato in un decennio intorno all’uso degli strumenti implementati sulla piattaforma <em>Competenzestrategiche.it</em>.</p>
+<p>L'intero volume è disponibile in formato <em>e-book</em> e può essere scaricato al seguente <a href="https://romatrepress.uniroma3.it/wp-content/uploads/2020/12/diri-pmmo.pdf" target="_blank" style="font-style: italic;">link</a>.</p>
+<table border="0" style="margin-left: 30px; width: 795px; height: 242px;">
+<tbody>
+<tr>
+<td><a href="https://romatrepress.uniroma3.it/wp-content/uploads/2020/12/diri-pmmo.pdf"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/90/Copertina.jpg" width="164" height="232" alt="Copertina" /></a></td>
+<td>
+<p style="margin-left: 30px;">Le presentazioni dei membri dell'équipe di ricerca al Convegno sono disponibili ai seguenti <em>link</em>:</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>M. Pellerery: "Dirigere se stessi nello studio e nel lavoro" (<a href="https://www.competenzestrategiche.it/download/Pellerey_Convegno_13_settembre_2019.pdf" target="_blank">download</a>)</li>
+<li>D. Grzadziel: "Riflessione nei processi di apprendimento" (<a href="https://www.competenzestrategiche.it/download/Grzadziel_13_settembre_2019.pdf" target="_blank">download</a>)</li>
+<li>E. Ottone: "Competenzestrategiche.it: una risorsa per i docenti" (<a href="https://www.competenzestrategiche.it/download/Ottone_13_settembre_2019.ppsx" target="_blank">download</a>)</li>
+<li>M. Margottini: "La piattaforma competenzestrategiche.it: Applicazioni, ricerche, sviluppi" (<a href="https://www.competenzestrategiche.it/download/margottini_13_settembre.pdf" target="_blank">download</a>)</li>
+<li>F. Epifani: "Competenzestrategiche.it: statistiche di utilizzo e sviluppi della piattaforma" (<a href="https://www.competenzestrategiche.it/download/Epifani_13_settembre_2019.ppsx" target="_blank">download</a>)</li>
+</ul>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Sono disponibili anche le registrazioni video degli interventi al convegno e altra documentazione</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>Il video del convegno </li>
+</ul>
+</li>
+</ul>
+<p><div class="mediaplugin mediaplugin_videojs"><div style="max-width:400px;"><video data-setup-lazy="{&quot;techOrder&quot;: [&quot;youtube&quot;], &quot;sources&quot;: [{&quot;type&quot;: &quot;video/youtube&quot;, &quot;src&quot;:&quot;https://youtu.be/TmQZhTdq8yg?t=1&quot;}], &quot;language&quot;: &quot;it&quot;, &quot;fluid&quot;: true}" id="id_videojs_6a1b224799a00" class="video-js" preload="auto" controls="true" title="video"><a class="mediafallbacklink" href="https://youtu.be/TmQZhTdq8yg?t=1">video</a></video></div></div></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><a href="https://www.competenzestrategiche.it/pluginfile.php/74/block_html/content/Programma_Convegno_13_settembre_2019.pdf">Il programma del convegno</a></li>
+<li><a href="https://www.competenzestrategiche.it/pluginfile.php/74/block_html/content/Abstract_fascicolo.pdf" target="_blank">Gli abstract del convegno</a></li>
+</ul>
+</li>
+</ul>
+<p>  </p>
+<p>Il Comitato scientifico del convegno era formato da: Michele Pellerey, Darius Grzadziel, Massimo Margottini, Enrica Ottone, Mario Tonini.</p>
+<p>Il Comitato tecnico-organizzativo era composto da: Francesca Rossi, Tiziana Fasoli, Federica De Carlo, Carla Consoni.</p>
+<p><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/90/Save%20the%20date.png" width="600" height="313" /></p></div><div class="book_chapter"><a name="ch83"></a><h3>5.2. Le pubblicazioni</h3><p> </p>
+<p>Nel corso degli anni, come si può vedere nell'elenco sottostante, sono state numerose le pubblicazioni scientifiche. Le principali sono state organizzate intorno ad alcune categorie: volumi e articoli sugli strumenti autovalutativi e su percorsi e strumenti per attività didattiche ed educative; rapporti di ricerca; altri articoli e contributi.</p>
+<p><strong><span style="color: #39b3e6; font-size: medium;">- Volumi e articoli sugli strumenti autovalutativi</span></strong></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><span style="font-variant: small-caps;">Pellerey</span> Michele, <i>Questionario sulle strategie di apprendimento (<span class="nolink">QSA</span>)</i>, Roma, LAS 1996. [<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a>]</li>
+<li><span style="font-variant: small-caps;">Pellerey</span> Michele – <span style="font-variant: small-caps;">Orio</span> Francesco, <i>Il questionario di percezione delle proprie competenze e convinzioni (<span class="nolink">QPCC</span>)</i>, Roma, Edizioni Lavoro 2001. [<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=4&amp;displayformat=dictionary" title="Glossario: QPCC" class="glossary autolink concept glossaryid1">QPCC</a>]</li>
+<li><span style="font-variant: small-caps;">Bay</span> Marco – <span style="font-variant: small-caps;">Grządziel</span> Darius – <span style="font-variant: small-caps;">Pellerey</span> Michele, <i>Promuovere la crescita nelle <span class="nolink">competenze strategiche</span> che hanno le loro radici nelle dimensioni morali e spirituali della persona</i>. Rapporto di ricerca, Roma, CNOS-FAP 2010. <a href="https://www.cnos-fap.it/sites/default/files/pubblicazioni/promuovere%20la%20crescita%20nelle%20competenze%20strategiche.PDF" target="_blank">Download</a> [<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=3&amp;displayformat=dictionary" title="Glossario: QPCS" class="glossary autolink concept glossaryid1">QPCS</a>]</li>
+<li><span style="font-variant: small-caps;">Zimbardo</span> Philip G. - <span style="font-variant: small-caps;">Boyd</span> John N., <em>The time paradox: The New Psychology of Time That Will Change Your Life</em>, New York, Simon and Schuster 2008. Trad. it. <i>Il paradosso del tempo. La nuova psicologia del tempo che cambierà la tua vita</i>, Milano, Mondadori 2009. [<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=6&amp;displayformat=dictionary" title="Glossario: ZTPI" class="glossary autolink concept glossaryid1">ZTPI</a>]</li>
+<li><span style="background-color: #ffffff;"><span style="font-variant: small-caps;">Savickas</span> Mark L. - <span style="font-variant: small-caps;">Porfeli</span> Erik J., <em>Career Adapt-Abilities Scale:</em><em> Construction, reliability, and measurement equivalence across 13 countries,</em> in <em>Journal of Vocational Behavior</em> 80(2012)3, 661-673. [<a href="https://www.sciencedirect.com/science/article/abs/pii/S0001879112000139">Download</a>] Traduzione italiana dello strumento a cura di M. Pellerey, M. Margottini, R. Leproni. [<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=7&amp;displayformat=dictionary" title="Glossario: QAP" class="glossary autolink concept glossaryid1">QAP</a>]</span></li>
+<li><span style="font-variant: small-caps;">Margottini</span> Massimo, <i>Validazione del <span class="nolink">QSA </span>ridotto</i>, in <span style="font-variant: small-caps;">Pellerey</span> Michele et Alii (a cura di), <i>Strumenti e metodologie di orientamento formativo e professionale nel quadro dei processi di apprendimento permanente</i>, Roma, CNOS-FAP 2018, 257-304 <a href="http://www.cnos-fap.it/sites/default/files/pubblicazioni/strumenti_e_metodologie.pdf">Download</a> [<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=2&amp;displayformat=dictionary" title="Glossario: QSAr" class="glossary autolink concept glossaryid1">QSAr</a>]</li>
+</ul>
+</li>
+</ul>
+<p><strong><span style="color: #39b3e6; font-size: medium;">- Rapporti di ricerca</span></strong></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><span style="font-variant: small-caps;">Bay</span> Marco – <span style="font-variant: small-caps;">Grządziel</span> Darius – <span style="font-variant: small-caps;">Pellerey</span> Michele, <i>Promuovere la crescita nelle <span class="nolink">competenze strategiche</span> che hanno le loro radici nelle dimensioni morali e spirituali della persona</i>. Rapporto di ricerca, Roma, Ministero del Lavoro e delle Politiche Sociali/CNOS-FAP 2010. <a href="http://www.cnos-fap.it/sites/default/files/pubblicazioni/promuovere%20la%20crescita%20nelle%20competenze%20%20strategiche.pdf" target="_blank">Download</a></li>
+<li><span style="font-variant: small-caps;">Pellerey</span> Michele – <span style="font-variant: small-caps;">Grządziel</span> Darius – <span style="font-variant: small-caps;">Margottini</span> Massimo – <span style="font-variant: small-caps;">Epifani</span> Filippo – <span style="font-variant: small-caps;">Ottone</span> Enrica (a cura di), <i>Imparare a dirigere se stessi. Progettazione e realizzazione di una guida e di uno strumento informativo per favorire l’autovalutazione e lo sviluppo delle proprie <span class="nolink">competenze strategiche</span> nello studio e nel lavoro. Rapporto di ricerca,</i> Roma, finanziato dal Ministero del Lavoro e delle Politiche Sociali/CNOS-FAP 2013. <a href="http://www.cnos-fap.it/sites/default/files/pubblicazioni/Imparare%20a%20dirigere%20se%20stessi.pdf" target="_blank">Download</a></li>
+<li><span style="font-variant: small-caps;">Margottini</span> Massimo, <i><span class="nolink">Competenze strategiche </span>a scuola e all'Università. Esiti d'indagini empiriche e interventi formativi</i>, Milano, LED 2017. <a href="https://www.ledonline.it/ECPs-Journal/allegati/ECPS-s-842-competenze-strategiche-scuola.pdf" target="_blank">Download</a></li>
+<li><span style="font-variant: small-caps;">Pellerey</span> Michele, <i>Soft skill e orientamento professionale</i>, Roma, CNOS-FAP 2017. <a href="http://www.cnos-fap.it/sites/default/files/pubblicazioni/soft_skill.pdf" target="_blank">Download</a></li>
+<li><span style="font-variant: small-caps;">Pellerey</span> Michele (a cura di), <i>Strumenti e metodologie di orientamento formativo e professionale nel quadro dei processi di apprendimento permanente</i>, Roma, CNOS-FAP 2018. <a href="https://www.cnos-fap.it/sites/default/files/pubblicazioni/strumenti_e_metodologie.pdf">Download</a></li>
+<li><span style="font-variant: small-caps;">Pellerey</span> Michele et alii, <em>Progetto di ricerca-intervento sul ruolo del portfolio digitale. Strumento di Formazione Professionale iniziale e continua dei docenti del secondo ciclo del sistema istruttivo e formativo, in particolare della IeFP. Verifica della possibilità di estensione al caso degli allievi. </em>Rapporto finale, Roma, CNOS-FAP 2019. <a href="https://www.cnos-fap.it/sites/default/files/pubblicazioni/portfolio_digitale.pdf">Download</a></li>
+</ul>
+</li>
+</ul>
+<p><strong> <span style="color: #39b3e6; font-size: medium;">- Percorsi, strumenti e attività educative</span></strong></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><span style="font-variant: small-caps;">Ottone</span> Enrica, <i>Apprendo. Strumenti e attività per promuovere l’apprendimento</i>, Roma, Anicia 2014. <a href="http://www.edizionianicia.it/store/programmazione-e-valutazione/269-apprendo-strumenti-e-attivita-per-promuovere-l-apprendimento-9788867091690.html" target="_blank">Presentazione</a></li>
+<li><span style="font-variant: small-caps;">Epifani</span> Filippo - <span style="font-variant: small-caps;">Margottini</span> Massimo - <span style="font-variant: small-caps;">Ottone</span> Enrica, <em>Guida all'uso della piattaforma www.competenzestrategiche.it.</em> Seconda edizione, Roma, CNOS-FAP 2019. <a href="http://www.competenzestrategiche.it/guida.pdf">Download</a></li>
+<li><span style="font-variant: small-caps;">Epifani</span> Filippo - <span style="font-variant: small-caps;">Margottini</span> Massimo - <span style="font-variant: small-caps;">Ottone</span> Enrica, <em>Guida all'uso della piattaforma www.competenzestrategiche.it.</em> Terza edizione, Roma, CNOS-FAP 2023. <a href="https://www.competenzestrategiche.it//pluginfile.php/2095/mod_folder/content/0/guida.pdf?forcedownload=1" title="Guida 2023">Download</a></li>
+<li><span style="font-variant: small-caps;">Pellerey</span> Michele - <span style="font-variant: small-caps;">Margottini</span> Massimo - <span style="font-variant: small-caps;">Ottone</span> Enrica (a cura di), <i>Dirigere se stessi nello studio e nel lavoro. Competenzestrategiche.it: strumenti e applicazioni</i>, Roma, Roma TrE-Press 2020. <a href="https://romatrepress.uniroma3.it/wp-content/uploads/2020/12/diri-pmmo.pdf" target="_blank">Download</a></li>
+<li><span style="font-variant: small-caps;">Ottone</span> Enrica, <em>Formazione all’uso educativo degli strumenti della piattaforma Competenzestrategiche.it</em>, in http://www.competenzestrategiche.it (versione pubblicata a dicembre 2022) [<a href="https://www.competenzestrategiche.it//course/view.php?id=3">Accedi</a>]</li>
+</ul>
+</li>
+</ul>
+<p><strong><span style="color: #39b3e6; font-size: medium;">- Altre pubblicazioni</span></strong></p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li><span style="font-variant: small-caps;">Margottini</span> Massimo - <span style="font-variant: small-caps;">La Rocca</span> Concetta - <span style="font-variant: small-caps;">Capobianco</span> Rosa, <i>Ambienti digitali per lo Sviluppo delle competenze trasversali nella didattica universitaria</i>, in <i>Journal of Educational, Cultural and Psychological Studies (ECPS)</i> 10(2014), 245-283. <a href="http://www.ledonline.it/index.php/ECPS-Journal/article/download/767/632" target="_blank">Download</a></li>
+<li><span style="font-variant: small-caps;">Margottini</span> Massimo, <em>Applicazione di strumenti per l’autovalutazione di strategie di apprendimento e <span class="nolink">prospettiva temporale</span> in ambito universitario</em>, in <i>Journal of Educational, Cultural and Psychological Studies</i> 15(2017), 229-251. <a href="https://www.ledonline.it/index.php/ECPS-Journal/article/download/1189/902">Download</a></li>
+<li><span style="font-variant: small-caps;">Margottini</span> Massimo - <span style="font-variant: small-caps;">La Rocca</span> Concetta - <span style="font-variant: small-caps;">Rossi</span> Francesca, <em><span class="nolink">Competenze strategiche</span>, <span class="nolink">prospettiva temporale</span> e dimensione narrativa nell’orientament</em>o, in <em>Giornale Italiano della Ricerca Educativa</em> 10(2017), 43-61. <a href="https://core.ac.uk/download/pdf/322531384.pdf">Download</a></li>
+<li><span style="font-variant: small-caps;">Margottini</span> Massimo - <span style="font-variant: small-caps;">Rossi</span> Francesca, <em>Il ruolo delle dinamiche cognitive, motivazionali e temporali nei processi di apprendimento</em>, in <em>Formazione &amp; Insegnamento</em>, 15(2017)2, 499-512. <a href="https://ojs.pensamultimedia.it/index.php/siref/article/viewFile/2374/2133">Download</a></li>
+<li><span style="font-variant: small-caps;">Pellerey</span> Michele, <em>Le competenze nel pensare. Una rilettura in ambito educativo delle virtù diano-etiche</em>, in <em>Scuola democratica</em> (2019)1, 183-194. <a href="https://www.rivisteweb.it/doi/10.12828/93400">Download</a><br /><a href="https://www.rivisteweb.it/doi/10.12828/93400"></a></li>
+<li><span style="font-variant: small-caps;">Margottini</span> Massimo, <em>Autovalutazione e promozione di <span class="nolink">competenze strategiche</span> per la scuola e per il lavoro</em>, in <em>Formazione &amp; Insegnamento</em> 17(2019)1,  309-322. <a href="https://ojs.pensamultimedia.it/index.php/siref/article/download/3434/3278/13062">Download</a></li>
+<li><span style="font-variant: small-caps;">Margottini</span> Massimo – <span style="font-variant: small-caps;">Epifani</span> Filippo, <em>Promuovere l’autovalutazione di <span class="nolink">competenze strategiche</span>. Aggiornamenti e sviluppi della piattaforma competenzestrategiche.it</em>, in <em>Rassegna CNOS</em> 35(2019)2, 101-114. <a href="https://www.cnos-fap.it/sites/default/files/articoli_rassegna/piattaforma_comp._strategiche_-_margottini_epifani.pdf">Download</a></li>
+<li><span style="font-variant: small-caps;">Margottini</span> Massimo - <span style="font-variant: small-caps;">Rossi</span> Francesca, <i>Strumenti per l’autovalutazione di <span class="nolink">competenze strategiche</span> per lo studio e il lavoro</i>, in <em>Giornale italiano della ricerca educativa</em> (2019), 177-194. <a href="https://ojs.pensamultimedia.it/index.php/sird/article/download/3278/3137/12502">Download</a></li>
+<li><span style="font-variant: small-caps;">Margottini</span> Massimo - <span style="font-variant: small-caps;">Rossi</span> Francesca, <em><span class="nolink">Adattabilità professional</span>e e <span class="nolink">competenze strategiche</span> nella scuola e all’università</em>, in (a cura di), <em>Training actions and evaluation processes</em>. Atti del Convegno Internazionale SIRD, Lecce, Pensa MultiMedia 2019, 537-547. <a href="https://www.competenzestrategiche.it//pluginfile.php/2095/mod_folder/content/0/MARGOTTINI-ROSSI_2019.pdf?forcedownload=1">Download</a></li>
+<li><span style="font-variant: small-caps;">Pellerey</span> Michele - <span style="font-variant: small-caps;">Margottini</span> Massimo, <em><span class="nolink">Competenze strategiche</span> per orientarsi nello studio e nel lavoro</em>, in<em> Rivista Lasalliana </em>(2020), 357-370.</li>
+<li><span style="font-variant: small-caps;">Marsano</span> Martina - <span style="font-variant: small-caps;">Rossi</span> Francesca, <em>Potenziare le <span class="nolink">competenze strategiche</span> in ambito universitario tramite un modello ludiforme</em>, in <em>Formazione &amp; Insegnamento </em>18(2020)1, 618-633. <a href="https://ojs.pensamultimedia.it/index.php/siref/article/download/4163/3783/15519">Download</a></li>
+<li><span style="font-variant: small-caps;">Margottini</span> Massimo, <em>Competenzestrategiche.it: un ambiente on line per orientare e orientarsi</em>, in <em>Rassegna CNOS</em> 38(2022)3, 135-148. <a href="https://www.cnos-fap.it/page/rassegna-cnos">Download</a></li>
+<li><span style="font-variant: small-caps;">Ottone</span> Enrica, <i>Competenzestrategiche.it: un cantiere aperto di ricerca, azione, formazione</i>, in <i>Rassegna CNOS</i> 39(2023)1, 103-116. (<a href="https://www.competenzestrategiche.it/pluginfile.php/2095/mod_folder/content/0/02_Studi%20%28Articoli%20e%20contributi%29/OTTONE_2023.pdf?forcedownload=1">Download</a>)</li>
+</ul>
+</li>
+</ul>
+<p style="margin-left: 30px;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/83/Pubblicazioni.jpg" width="800" height="500" style="display: block; margin-left: auto; margin-right: auto;" /></p></div><div class="book_chapter"><a name="ch82"></a><h3>5.3. Lo sviluppo</h3><h5></h5>
+<p>La piattaforma <em>Competenzestrategiche.it</em> è stata attivata nel 2011. Negli anni successivi sono state apportate modifiche e continui aggiornamenti. A gennaio 2023 è stata messa online l'attuale versione della piattaforma che è stata integralmente revisionata, aggiornata e ampliata nei contenuti e nel servizio. </p>
+<p>Le principali novità della piattaforma aggiornata sono le seguenti:</p>
+<ul>
+<li><i>impostazione</i> di un nuovo tema grafico;</li>
+<li><em>riorganizzazione e incremento</em> dei contenuti e degli strumenti di navigazione;</li>
+<li><em>migliorie</em> nei prospetti grafici di presentazione degli esiti per una maggiore leggibilità;</li>
+<li><em>implementazione</em> della versione online della nuova <em>Guida</em> aggiornata e del <em>Glossario</em>;</li>
+<li><i>ampliamento </i>della sezione contenente materiali e strumenti per l’autoformazione e l’utilizzo educativo degli strumenti;</li>
+<li><i>attivazione </i>di una sezione informativa sulla sperimentazione di <a href="https://mahara.org/" target="_blank">Mahara</a> per la creazione dell'<a href="https://www.competenzestrategiche.it/mahara/view/view.php?t=NYpkdysWxzPBiaUc1LgE"><span class="nolink">e-Portfolio</span></a> dello studente.</li>
+</ul>
+<p>  </p>
+<p>La piattaforma è stata sviluppata da un gruppo di ricercatori con il sostegno del Centro Nazionale Opere Salesiane / Formazione Aggiornamento Professionale - CNOS-FAP di Roma. Ha preso l'avvio con il progetto di ricerca dal titolo <i><a href="http://www.cnos-fap.it/sites/default/files/pubblicazioni/Imparare%20a%20dirigere%20se%20stessi.pdf">Progettazione e realizzazione di una guida e di uno strumento informatico per favorire l’autovalutazione e lo sviluppo delle proprie competenze strategiche nello studio e nel lavoro</a></i>, commissionato dal CNOS-FAP negli anni 2010 e 2011.</p>
+<p> </p>
+<h5><span style="color: #39b3e6;">Il gruppo di ricerca</span></h5>
+<p>ll gruppo di ricerca che ha progettato e realizzato la piattaforma è composto da quattro docenti universitari e da un esperto informatico che fanno capo a tre istituzioni universitarie con sede a Roma. Il gruppo è coordinato dal professore Michele Pellerey che è anche autore di alcuni degli strumenti resi disponibili sulla piattaforma.</p>
+<ul>
+<li><b>Michele PELLEREY</b> (coordinatore della ricerca) - <i>Università Pontificia Salesiana di Roma</i></li>
+<li><b>Dariusz GRZADZIEL</b> - <i>Università Pontificia Salesiana di Roma</i></li>
+<li><b>Massimo MARGOTTINI</b> - <i>Università degli Studi Roma Tre</i></li>
+<li><b>Enrica OTTONE</b> - <i>Pontificia Facoltà di Scienze dell’Educazione Auxilium di Roma</i></li>
+<li><b>Filippo EPIFANI</b> -<i> C.Ri.S.F@D (Centro di Ricerca e Servizi per la Formazione a Distanza del Dipartimento di Scienze della Formazione di Roma Tre)</i><i> che ha fornito il supporto alla realizzazione della piattaforma</i></li>
+</ul>
+<p>Il <a href="http://www.cnos-fap.it/">CNOS-FAP</a> è una associazione di fatto, costituita nel 1977, promossa dal CNOS, ente con personalità giuridica civilmente riconosciuta. Rappresenta e riunisce le Istituzioni salesiane e le Federazioni locali e regionali CNOS-FAP che promuovono iniziative e azioni di orientamento e di formazione professionale, soprattutto attraverso i Centri di Formazione Professionale (CFP) polifunzionali. È presente in 16 regioni e dispone di circa 60 sedi operative (CFP) coordinate dalla Sede Nazionale.</p>
+<p> </p>
+<h5><span style="color: #39b3e6;">I dati di utilizzo</span></h5>
+<p>L'analisi dei seguenti dati quantitativi relativi all'utilizzo della piattaforma si riferisce al periodo compreso dalla data di attivazione del servizio a ottobre 2011 fino al 31 gennaio 2024.</p>
+<p>Nel decennio trascorso la piattaforma <em>Competenzestrategiche.it</em> ha avuto un’ampia diffusione su tutto il territorio italiano con alcune utenze attive anche in altri Paesi. La prima versione della piattaforma, infatti, è stata predisposta in lingua italiana e polacca. Attualmente è disponibile solo la versione in lingua italiana della piattaforma ma alcuni questionari sono disponibili anche in altre lingue oltre all'italiano.</p>
+<p><span style="color: #39b3e6; font-size: 0.83em;">  </span></p>
+<h5><span style="color: #39b3e6;">Gli utenti registrati </span></h5>
+<p>Gli utenti (Istituti/Enti o professionisti accreditati) che si sono registrati alla piattaforma sono più di 800<b> </b>provenienti da tutte le regioni d'Italia; il Lazio è la regione italiana maggiormente rappresentata. Ci sono anche alcuni utenti di altri Paesi (Polonia e Colombia). Gli utenti istituzionali si possono raggruppare intorno alle seguenti categorie principali:</p>
+<ul type="disc">
+<li>Istituti Comprensivi e Istituti Secondari di primo grado,</li>
+<li>Istituti Secondari di secondo grado,</li>
+<li>Centri di Istruzione e Formazione Professionale,</li>
+<li>Centri di Orientamento e Centri Psico-pedagogici,</li>
+<li>Università e Collegi universitari.</li>
+</ul>
+<p>Oltre alle tipologie elencate sono registrati anche altri tipi di Enti e Associazioni non profit, ma anche singoli ricercatori, docenti e professionisti che hanno richiesto accesso a titolo personale per motivi di studio e di lavoro.</p>
+<p style="text-align: center;"><span style="font-size: small;"><strong>Fig. 18: Gli account istituzionali per tipo di Istituto/Altro accreditato</strong></span></p>
+<p style="background-color: #eeeeee; text-align: center;" text-align:="" center=""><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/82/Utenti%20per%20tipo.png" width="512" height="267" /></p>
+<p></p>
+<p>Oltre alle tipologie elencate sopra sono registrati anche altri tipi di Enti e Associazioni non profit, ma anche singoli ricercatori, insegnanti, professionisti (in particolare psicologi e orientatori) che hanno richiesto accesso alla piattaforma a titolo personale per motivi di studio e di lavoro.</p>
+<p>Sono 200 gli account che hanno compilato più di 3 questionari e quasi 90 quelli che hanno somministrato più di 100 questionari. Alcune Università e Scuole secondarie di secondo grado utilizzano in modo sistematico gli strumenti della piattaforma dal 2013. <span>È </span>in crescita negli ultimi anni il numero degli Istituti comprensivi che utilizzano in particolare il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=2&amp;displayformat=dictionary" title="Glossario: QSAr" class="glossary autolink concept glossaryid1">QSAr</a>.</p>
+<p> </p>
+<h5><span style="color: #39b3e6;">I dati sui questionari compilati</span></h5>
+<p>È in costante crescita anche il numero dei questionari compilati, nel 2018 ne erano stati raccolti più di 30.000. Nella rilevazione di fine dicembre 2024 in totale i questionari compilati sono 94.640.</p>
+<p>La figura 19 mostra il numero di questionari compilati per anno nell’arco di 12 anni. Dopo una fase di avvio (2011-2012) si nota una crescita costante dell’utilizzo con un primo picco di 8.511 questionari completati nel 2018 che è attribuibile sia all’incremento degli strumenti disponibili sia alla somministrazione a gruppi di studenti nelle fasi di validazione dei questionari. Negli anni successivi, in particolare nel periodo della pandemia da Covid-19 (2020-2021), si assiste a una discreta riduzione del numero di somministrazioni. Nel 2022 tuttavia c’è un’inversione di tendenza: il numero di questionari compilati torna a crescere: nel 2023 sale a  11.684 e nel 2024 ha un'impennata superando le 21.000 somministrazioni all'anno.</p>
+<p style="text-align: center;"><span style="font-size: small;"><b><sub>Fig. 19: Numero di questionari compilati per anno (2011-2024)</sub></b></span></p>
+<p style="background-color: #eeeeee; text-align: center;" text-align:="" center=""><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/82/Questionari%20per%20anno.png" width="600" height="302" /></p>
+<p></p>
+<p>La figura 20 mostra il numero di questionari compilati per anno e per tipo e descrive l’aumento dell’offerta di strumenti e l’andamento dei volumi di utilizzo. Il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> e il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=3&amp;displayformat=dictionary" title="Glossario: QPCS" class="glossary autolink concept glossaryid1">QPCS</a> sono stati attivati per primi nel 2011, lo <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=6&amp;displayformat=dictionary" title="Glossario: ZTPI" class="glossary autolink concept glossaryid1">ZTPI</a> e il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=2&amp;displayformat=dictionary" title="Glossario: QSAr" class="glossary autolink concept glossaryid1">QSAr</a> nel 2015, il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=4&amp;displayformat=dictionary" title="Glossario: QPCC" class="glossary autolink concept glossaryid1">QPCC</a> e il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=7&amp;displayformat=dictionary" title="Glossario: QAP" class="glossary autolink concept glossaryid1">QAP</a> nel 2017.</p>
+<p>Nel 2024 il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> si attesta su 7.822 somministrazioni. Sono in forte crescita anche il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=3&amp;displayformat=dictionary" title="Glossario: QPCS" class="glossary autolink concept glossaryid1">QPCS</a> e il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=2&amp;displayformat=dictionary" title="Glossario: QSAr" class="glossary autolink concept glossaryid1">QSAr</a> che si avvicinano a 4.000. In lieve crescita sono anche gli altri strumenti tra cui il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=4&amp;displayformat=dictionary" title="Glossario: QPCC" class="glossary autolink concept glossaryid1">QPCC</a> (Fig. 20).</p>
+<p style="text-align: center;"><span style="font-size: small;"><b><sub>Fig. 20: Numero di questionari compilati per anno e per tipo (2011-2024)</sub></b></span></p>
+<p style="background-color: #eeeeee; text-align: center;" text-align:="" center=""><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/82/Questionari%20per%20anno%20e%20tipo.png" width="600" height="328" /></p>
+<p>Analizzando nel dettaglio il numero di somministrazioni in relazione al tipo di questionari appare evidente che il 49% del totale dei 94.640 questionari compilati tra il 2011 e il 2024 si riferisce al <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> (32.065); al secondo posto si colloca il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> ridotto (13.904); a seguire gli altri.</p>
+<p>L’analisi della distribuzione degli strumenti per fasce di età consente di evidenziare alcune tendenze.</p>
+<ul>
+<li>Il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> è lo strumento maggiormente compilato nelle fasce più basse, ad esclusione della prima, ma è presente in % significative anche nelle fasce più alte. Il maggior utilizzo è nella fascia 14 ai 16.</li>
+<li>Il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> ridotto è compilato da studenti delle fasce più basse.</li>
+<li>Il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=4&amp;displayformat=dictionary" title="Glossario: QPCC" class="glossary autolink concept glossaryid1">QPCC</a> è lo strumento più usato dagli utenti adulti e ottiene il maggior numero di compilazioni nelle fasce tra i 30 e i 60 anni.</li>
+<li>Per numero di questionari compilati la fascia 10-20 è la più attiva; per tipo di strumenti lo <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=6&amp;displayformat=dictionary" title="Glossario: ZTPI" class="glossary autolink concept glossaryid1">ZTPI</a>, il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=7&amp;displayformat=dictionary" title="Glossario: QAP" class="glossary autolink concept glossaryid1">QAP</a> e il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=4&amp;displayformat=dictionary" title="Glossario: QPCC" class="glossary autolink concept glossaryid1">QPCC</a> sono i più usati nella fascia 20-30 (Ottone, 2023).</li>
+</ul>
+<p>Se si osserva la distribuzione sul territorio italiano per numero di questionari compilati la regione Lazio è predominante rispetto alle altre e da sola raggiunge il 50% del totale delle somministrazioni. Nelle restanti regioni il colore più scuro indica una maggior concentrazione. È apprezzabile una presenza distribuita praticamente in tutte le regioni, incluse quelle insulari; mentre è solo la Valle d’Aosta che non ha per il momento utenti registrati né somministrazioni registrate.</p>
+<p style="text-align: center;"><span style="font-size: small;"><b><sub>Fig. 20: Numero di questionari compilati per regione (2011-2024)</sub></b></span></p>
+<p style="background-color: #eeeeee; text-align: center;" text-align:="" center=""><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/82/Questionari%20Regione.png" width="400" height="401" /></p>
+<p style="text-align: center;">(I grafici riportano le statistiche di utilizzo della piattaforma da febbraio 2011 al 31 dicembre 2024)</p>
+<p><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/82/Sviluppo.jpg" width="608" height="380" style="display: block; margin-left: auto; margin-right: auto;" /></p>
+<p><span style="color: #ffffff;">.</span></p></div><div class="book_chapter"><a name="ch53"></a><h2>6. La formazione</h2><p></p>
+<p> </p>
+<p>Dai primi mesi del 2022 entrando anche senza <em>login</em> nell'area <a href="https://www.competenzestrategiche.it//course/view.php?id=3" title="Area formazione">Formazione</a> tutti gli utenti accedono liberamente a varie risorse educative aperte</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>materiali per l'autoformazione indirizzati a insegnanti, formatori, educatori;</li>
+<li>indicazioni e strumenti per un uso educativo dei dati raccolti attraverso i questionari, allo scopo di favorire la progettazione di percorsi individuali e di gruppo orientati a consolidare o a promuovere le competenze che risultassero meno sviluppate;</li>
+<li>alcuni strumenti e attività interattive online per gli studenti.</li>
+</ul>
+</li>
+</ul>
+<p>Inoltre è disponibile, su richiesta, una piattaforma in ambiente <a href="https://www.competenzestrategiche.it/mahara/view/view.php?id=127" target="_blank">Mahara</a>, una guida e un modello per la costruzione dell'e-portfolio dello studente con funzione orientativa in relazione ai Percorsi per le Competenze Trasversali e per l'Orientamento (PCTO). </p>
+<p> </p>
+<h5><span style="color: #39b3e6;">La formazione dei docenti</span></h5>
+<p>Molte scuole e alcuni centri di IeFP, nell’ambito dei propri piani di formazione, hanno richiesto ai membri del gruppo di ricerca che ha realizzato la piattaforma interventi di formazione dei docenti e di supporto per l’applicazione dei questionari in una varietà di progetti educativi: dall’orientamento, allo sviluppo di strategie di apprendimento e di <span class="nolink">competenze strategiche</span> essenziali, all'autovalutazione di competenze con giovani universitari, adulti e professionisti in vari contesti.</p>
+<p><br />I percorsi di formazione e di autoformazione di docenti e operatori sono finalizzati al raggiungimento dei seguenti risultati attesi:</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>conoscere il quadro teorico di riferimento degli strumenti (<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=12&amp;displayformat=dictionary" title="Glossario: autodirezione" class="glossary autolink concept glossaryid1">autodirezione</a> nell'apprendimento, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=5&amp;displayformat=dictionary" title="Glossario: competenze strategiche" class="glossary autolink concept glossaryid1">competenze strategiche</a>, dimensioni cognitive, metacognitive, affettive, motivazionali che dovrebbero caratterizzare un soggetto che sia in grado di gestire se stesso nello studio e nel lavoro); </li>
+<li>conoscere e saper utilizzare in modo efficace uno o più questionari;</li>
+<li>conoscere e saper applicare strumenti e strategie per promuovere lo sviluppo di <span class="nolink">competenze strategiche</span>.</li>
+</ul>
+</li>
+</ul>
+<p></p>
+<p>Per abilitarsi all'utilizzo dei questionari in modo autonomo si consiglia di esplorare le seguenti risorse che si trovano nella sezione formazione e nella guida e si suggerisce un possibile percorso.</p>
+<ol>
+<li>Leggere la <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=48">presentazione</a> del questionario (o dei questionari) e dei rispettivi fattori.</li>
+<li>Accedere all'<a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=54">area di prova</a>, provare il questionario e scaricare il profilo.</li>
+<li>Consultare le indicazioni per l'<a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=52">interpretazione</a> degli esiti (profili individuali e di gruppo).</li>
+<li>Leggere le informazioni sulla procedura per la <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=51">somministrazione</a> e alcuni esempi di <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=84">esperienze</a> realizzate e in corso.</li>
+<li>Integrare con ulteriori elementi informativi e formativi (<a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=83">pubblicazioni</a>).</li>
+</ol>
+<p>  </p>
+<h5><span style="color: #39b3e6;" 39b3e6="">L'intervento con gli studenti</span></h5>
+<p>La sezione dell'area <a href="https://www.competenzestrategiche.it//course/view.php?id=3">Formazione</a> della piattaforma contiene alcune risorse utili per impostare l'intervento con gli studenti di tutti i gradi scolastici e dell'università. </p>
+<p>In generale il protocollo operativo minimo da seguire potrebbe essere il seguente:</p>
+<ol>
+<li><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/53/Pulsante.png" width="20" height="21" style="vertical-align: middle;" /> <a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=51"><em>Somministrare</em> </a>il questionario (o i questionari) agli studenti nella prima parte dell’anno scolastico.</li>
+<li><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/53/Pulsante.png" width="20" height="21" style="vertical-align: middle;" /> <em><a href="https://www.competenzestrategiche.it//mod/book/view.php?id=69&amp;chapterid=52">Analizzare</a> e commentare</em> collettivamente i profili ottenuti.</li>
+<li><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/53/Pulsante.png" width="20" height="21" style="vertical-align: middle;" /> <em>Sollecitare</em> gli alunni a riflettere sugli esiti individuali ottenuti.</li>
+<li><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/53/Pulsante.png" width="20" height="21" style="vertical-align: middle;" /> <em>Integrare</em> i profili ottenuti con ulteriori elementi informativi e formativi.</li>
+</ol>
+<p> </p>
+<h5><span style="color: #39b3e6;">Un esempio: il progetto <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a></span></h5>
+<p>La sezione inerente il <em>Questionario sulle strategie di apprendimento</em> (<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a>) è corredata di numerose indicazioni metodologiche e di alcuni strumenti per progettare e realizzare un percorso di accompagnamento di gruppo e personalizzato degli studenti. La guida all’uso educativo attinge ai contenuti dal volume <em>Apprendo</em> di Enrica Ottone ed è organizzata in due sezioni.</p>
+<ul>
+<li style="list-style-type: none;">
+<ul>
+<li>La prima, denominata <em>Conosco e accresco le mie competenze</em>, contiene indicazioni per approfondire la conoscenza dei processi e delle strategie di apprendimento in relazione ai fattori del <span class="nolink">QSA </span>e suggerisce attività per lavorare individualmente e in gruppo sullo sviluppo delle proprie <span class="nolink">competenze strategiche</span>.</li>
+<li>La seconda sezione, dal titolo <em>Programmo, monitoro e valuto il mio percorso</em>, contiene alcune indicazioni e strumenti utili per individuare obiettivi e strategie di miglioramento delle proprie <span class="nolink">competenze strategiche</span> e per monitorare e valutare il percorso (Ottone, 2014).</li>
+</ul>
+</li>
+</ul>
+<ul></ul>
+<p> </p>
+<p><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/53/Approfondisci.png" width="30" height="30" style="vertical-align: middle;" />  <a href="https://www.competenzestrategiche.it//mod/page/view.php?id=122">Una esperienza nel biennio della scuola secondaria di II grado</a></p>
+<p> </p>
+<p>Fonte: <span style="font-variant: small-caps;">Ottone</span> Enrica, <em>Apprendo. Strumenti e attività per promuovere l’apprendimento</em>, Roma, Anicia 2014.</p>
+<p><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/53/Risorse%20formazione.jpg" width="702" height="468" style="display: block; margin-left: auto; margin-right: auto;" /></p></div><div class="book_chapter"><a name="ch84"></a><h3>6.1. Alcune esperienze</h3><p><em>Le esperienze di utilizzo degli strumenti e delle risorse della piattaforma sono numerose. Il convegno internazionale svoltosi nel 2019 ha permesso di raccogliere e documentare numerosi progetti. Ne abbiamo selezionati alcuni che potrebbero essere utili a chi volesse avviare un intervento o confrontare il proprio modello. </em></p>
+<p align="center"><span style="font-size: small;"><b>Fig. 22: Alcuni esempi di esperienze di utilizzo della piattaforma</b></span></p>
+<table border="1" style="border-color: #c0c0c0; border-width: 1px; border-style: solid;" align="center">
+<tbody>
+<tr>
+<td style="background-color: #f0f8ff;">
+<h6><strong>Contesto</strong></h6>
+</td>
+<td style="background-color: #f0f8ff;">
+<h6><strong>Strumenti</strong></h6>
+</td>
+<td style="background-color: #f0f8ff;">
+<h6><strong>Tipo di intervento</strong></h6>
+</td>
+<td style="background-color: #f0f8ff;">
+<h6><strong>Documentazione</strong></h6>
+</td>
+</tr>
+<tr>
+<td><strong><em>IISS</em></strong></td>
+<td><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a>, <a href="https://www.competenzestrategiche.it/mod/resource/view.php?id=156">Libretto dell'allievo</a>     </td>
+<td>individualizzato, di classe </td>
+<td><a href="https://romatrepress.uniroma3.it/wp-content/uploads/2020/12/11.D.M.-Ardito.pdf">Ardito 2020</a></td>
+</tr>
+<tr>
+<td><strong><em>IISS</em></strong></td>
+<td>
+<p><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=3&amp;displayformat=dictionary" title="Glossario: QPCS" class="glossary autolink concept glossaryid1">QPCS</a>, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=4&amp;displayformat=dictionary" title="Glossario: QPCC" class="glossary autolink concept glossaryid1">QPCC</a>, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=13&amp;displayformat=dictionary" title="Glossario: ePortfolio" class="glossary autolink concept glossaryid1">ePortfolio</a></p>
+</td>
+<td>individualizzato, di classe</td>
+<td>Ottone 2023<a href="http://www.competenzestrategiche.it/mahara/view/view.php?id=127"><br /></a></td>
+</tr>
+<tr>
+<td><strong><em>IC</em></strong></td>
+<td><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=2&amp;displayformat=dictionary" title="Glossario: QSAr" class="glossary autolink concept glossaryid1">QSAr</a></td>
+<td>individualizzato, di classe, longitudinale    </td>
+<td><a href="https://romatrepress.uniroma3.it/wp-content/uploads/2020/12/12.G.-Marrone-L.-Romano.pdf">Marrone-Romano 2020</a></td>
+</tr>
+<tr>
+<td><strong><em><strong><em><strong><em>IeFP</em></strong></em></strong></em></strong></td>
+<td>
+<p><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=2&amp;displayformat=dictionary" title="Glossario: QSAr" class="glossary autolink concept glossaryid1">QSAr</a></p>
+</td>
+<td>individualizzato, orientamento in ingresso</td>
+<td>Como 2023 (in Rassegna CNOS 2/2023)</td>
+</tr>
+<tr>
+<td><strong><em><strong><em><strong><em>Università</em></strong></em></strong></em></strong></td>
+<td>
+<p><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a>, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=3&amp;displayformat=dictionary" title="Glossario: QPCS" class="glossary autolink concept glossaryid1">QPCS</a>, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=6&amp;displayformat=dictionary" title="Glossario: ZTPI" class="glossary autolink concept glossaryid1">ZTPI</a>, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=7&amp;displayformat=dictionary" title="Glossario: QAP" class="glossary autolink concept glossaryid1">QAP</a></p>
+</td>
+<td>individualizzato, laboratorio</td>
+<td><a href="https://www.ledonline.it/ECPs-Journal/allegati/ECPS-s-842-competenze-strategiche-scuola.pdf">Margottini 2017</a>; <a href="https://www.competenzestrategiche.it//pluginfile.php/2095/mod_folder/content/0/Studi%20%28Articoli%20e%20contributi%29/MARGOTTINI-ROSSI_2019.pdf?forcedownload=1">Margottini-Rossi 2019</a>    </td>
+</tr>
+<tr>
+<td><strong><em><strong><em>Università</em></strong></em></strong></td>
+<td>
+<p><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=4&amp;displayformat=dictionary" title="Glossario: QPCC" class="glossary autolink concept glossaryid1">QPCC</a>, <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=7&amp;displayformat=dictionary" title="Glossario: QAP" class="glossary autolink concept glossaryid1">QAP</a>, EntreComp EU</p>
+</td>
+<td>individualizzato, di classe</td>
+<td>
+<p>Ottone, <a href="https://www.competenzestrategiche.it//pluginfile.php/2095/mod_folder/content/0/03_Altri%20file/Esercitazione_QPCC-QAP_EntreComp.docx?forcedownload=1">Traccia di lavoro</a></p>
+</td>
+</tr>
+<tr>
+<td><strong><em>Pratica clinica    </em></strong></td>
+<td><a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=2&amp;displayformat=dictionary" title="Glossario: QSAr" class="glossary autolink concept glossaryid1">QSAr</a></td>
+<td>individualizzato</td>
+<td><a href="https://www.competenzestrategiche.it//pluginfile.php/2095/mod_folder/content/0/Studi%20%28Articoli%20e%20contributi%29/MELOGNO_2018.pdf?forcedownload=1">Melogno 2018</a></td>
+</tr>
+</tbody>
+</table>
+<p style="text-align: center;"><span style="font-size: small;"><em> </em></span><span style="font-size: small;"><em> </em></span></p>
+<h6><span style="color: #39b3e6;">Il Progetto Apprendo nel biennio della Scuola Secondaria di II grado</span></h6>
+<p><span style="color: #39b3e6;"><em>L'esperienza dell'Istituto Dalla Chiesa di Montefiascone (VT)</em></span></p>
+<p><span>L'I.I.S.S. "Carlo Alberto dalla Chiesa" di Montefiascone (VT) ha inserito nella programmazione didattico-formativa delle classi del biennio il progetto "Apprendo",</span> un intervento formativo che ha come fine generale quello di rafforzare le competenze trasversali degli studenti, con particolare attenzione alla competenza chiave di cittadinanza “imparare ad imparare”. Il progetto prevede  la somministrazione del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> e un lavoro biennale con studenti di tutte le classi prime e seconde del liceo (classico, scientifico, linguistico) e dell'ist. tecnico (economico e tecnologico)  finalizzato a potenziare i fattori cognitivi, affettivi, motivazionali e relazionali, che intervengono nell’attività di studio (che un giorno sarà attività lavorativa), influenzando in modo significativo i risultati di apprendimento.</p>
+<p>Il progetto, attivo dall'anno scolastico 2015-2016 è una pratica ormai consolidata che ha raggiunto un livello organizzativo apprezzabile, è parte integrante dell'Offerta formativa dell'Istituto ed è una attività obbligatoria integrata nei percorsi di studio. Lo scopo principale è favorire l’inclusione degli alunni del biennio e fornire loro un’opportunità formativa finalizzata allo sviluppo e al potenziamento delle competenze trasversali (<a href="https://romatrepress.uniroma3.it/wp-content/uploads/2020/12/11.D.M.-Ardito.pdf">Ardito, 2020</a>).</p>
+<p><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/84/Approfondisci.png" width="30" height="30" style="vertical-align: middle;" /> <strong><a href="https://www.competenzestrategiche.it//mod/page/view.php?id=122">Per approfondire...</a> </strong></p>
+<p> </p>
+<h6><span style="color: #39b3e6;">Un percorso di orientamento nel primo ciclo</span></h6>
+<p><span style="color: #39b3e6;"><em>L'esperienza dell'Istituto comprensivo di Loreto Apruino</em></span></p>
+<p>L’istituto comprensivo di Loreto Aprutino (PE) a partire dall’anno scolastico 2014-2015 ha avviato un laboratorio per indagare lo sviluppo delle strategie cognitive e metacognitive e l'approccio al metodo di studio degli alunni della Scuola secondaria di I grado. In una prospettiva che valorizza la continuità a gennaio 2015 ha proposto la compilazione del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=2&amp;displayformat=dictionary" title="Glossario: QSAr" class="glossary autolink concept glossaryid1">QSAr</a> alle tre classi quinte della Scuola primaria come azione mirata di orientamento in vista del passaggio al ciclo successivo.</p>
+<p>Dopo tre anni, nel mese di giugno 2019, agli stessi allievi ha richiesto la compilazione del <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> con l'obiettivo di registrare eventuali miglioramenti. I profili emersi sono stati oggetto di riflessione per gli studenti e i docenti con il supporto di una docente psicologa e il coinvolgimento diretto dei genitori.</p>
+<p> </p>
+<p><a href="https://www.competenzestrategiche.it//mod/page/view.php?id=123"><strong><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/84/Approfondisci.png" width="30" height="30" style="vertical-align: middle;" />  Per approfondire...</strong></a></p>
+<p> </p></div><div class="book_chapter"><a name="ch85"></a><h3>6.2. Le risorse per un uso educativo degli strumenti</h3><p>La sezione Formazione della piattaforma <i>Competenzestrategiche.it</i> contiene risorse per la formazione e l’autoformazione di docenti, studenti e altri utilizzatori.</p>
+<p>Le sezioni più documentate sono quelle inerenti il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=1&amp;displayformat=dictionary" title="Glossario: QSA" class="glossary autolink concept glossaryid1">QSA</a> e il <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=2&amp;displayformat=dictionary" title="Glossario: QSAr" class="glossary autolink concept glossaryid1">QSAr</a>. I materiali informativi sul questionario e sui vari fattori sono stati predisposti per accrescere la consapevolezza dei processi cognitivi, affettivi e motivazionali che informano l'attività di apprendimento, esplorarne il grado di apprendimento raggiunto e impostare una valida azione formativa utilizzando il <b>Questionario sulle Strategie di Apprendimento (<span class="nolink">QSA</span>)</b> di M. Pellerey nelle due versioni intera e ridotta.</p>
+<p style="text-align: center;"><strong><span style="font-size: small;">Fig. 23: Verso un utilizzo educativo del <span class="nolink">QSA </span>e del <span class="nolink">QSAr</span>: percorso e strumenti</span></strong></p>
+<p style="text-align: center;"><span style="font-size: small;"><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/85/libretto_Ep.png" width="800" height="451" /></span></p>
+<p></p>
+<p><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/85/Download.png" width="30" height="30" style="vertical-align: middle;" /> <a href="https://www.competenzestrategiche.it/mod/resource/view.php?id=155">Libretto dello studente (QSAr)</a></p>
+<p><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/85/Download.png" width="30" height="30" style="vertical-align: middle;" /> Libretto dello studente (<span class="nolink">QSA</span>)</p>
+<p><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/85/Download.png" width="30" height="30" style="vertical-align: middle;" /> <a href="https://www.competenzestrategiche.it/mahara/view/view.php?id=127">Guida e modello dell'ePortfolio dello studente nei PCTO</a></p>
+<p></p>
+<p></p></div><div class="book_chapter"><a name="ch89"></a><h3>6.3. Il libretto dello studente e l'ePortfolio su Mahara</h3><p>La piattaforma mette a disposizione anche alcuni strumenti che sono stati predisposti per supportare (e documentare) un percorso di sviluppo delle proprie <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=5&amp;displayformat=dictionary" title="Glossario: competenze strategiche" class="glossary autolink concept glossaryid1">competenze strategiche</a>.</p>
+<p>Dal 2014 è disponibile il fac simile di un <a href="https://www.competenzestrategiche.it/mod/book/view.php?id=65&amp;chapterid=87" title="Istruzioni per l'uso"><i>Libretto</i> <i>dello studente</i></a> che può essere scaricato nelle due versioni in relazione ai due questionari</p>
+<ul>
+<li><a href="https://www.competenzestrategiche.it/mod/resource/view.php?id=156">Libretto studente QSA</a> </li>
+<li><a href="https://www.competenzestrategiche.it/mod/resource/view.php?id=155">Libretto studente QSAr</a>.</li>
+</ul>
+<p></p>
+<p>Dal 2018, con l’intento di fornire altre risorse e strumenti per sostenere, promuovere e documentare la crescita di consapevolezza delle <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=5&amp;displayformat=dictionary" title="Glossario: competenze strategiche" class="glossary autolink concept glossaryid1">competenze strategiche</a>, la piattaforma è stata integrata anche con un sistema di <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=13&amp;displayformat=dictionary" title="Glossario: ePortfolio" class="glossary autolink concept glossaryid1">ePortfolio</a> basato sul software open source <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=68&amp;displayformat=dictionary" title="Glossario: Mahara" class="glossary autolink concept glossaryid1">Mahara</a>. Il progetto permette agli Istituti/Altri accreditati di offrire agli studenti (e ad altri soggetti tra cui i docenti stessi) uno strumento per la costruzione di un portfolio digitale personale dove raccogliere le proprie esperienze, documentare competenze e progressi registrati, riflettere e migliorare sulle proprie strategie di apprendimento e costruire un proprio progetto personale di orientamento. </p>
+<p>Nella fase di sperimentazione (2018-2022) più di 1.300 studenti e docenti di Istituti pilota hanno usufruito di questa risorsa e, come esito della ricerca, da gennaio 2023 è accessibile online un <a href="https://www.competenzestrategiche.it/mahara/view/view.php?id=127" title="Guida e modello">modello di ePortfolio</a> per gli studenti del triennio della scuola secondaria di secondo grado in relazione ai Percorsi per le Competenze Trasversali e l’Orientamento (PCTO) il cui utilizzo è aperto a tutti gli utenti che ne faranno richiesta. Il modello è un facsimile di <a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=13&amp;displayformat=dictionary" title="Glossario: ePortfolio" class="glossary autolink concept glossaryid1">ePortfolio</a> composto da 7 pagine o videate in cui uno studente immaginario si presenta, elenca le principali esperienze di apprendimento a scuola e fuori dalla scuola, presenta i lavori migliori, descrive e documenta alcune competenze sviluppate, espone quello che vuole realizzare in futuro, racconta e valuta il percorso riflessivo che ha compiuto nel realizzare l’<a href="https://www.competenzestrategiche.it/mod/glossary/showentry.php?eid=13&amp;displayformat=dictionary" title="Glossario: ePortfolio" class="glossary autolink concept glossaryid1">ePortfolio</a> (Fig. 24). </p>
+<p style="text-align: center;"><span style="font-size: small;"><strong>Fig. 24: Indicazioni per la realizzazione del modello di <span class="nolink">ePortfolio </span>per lo studente in PCTO</strong></span></p>
+<p style="background-color: #eeeeee; text-align: center;" text-align:="" center=""><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/89/Guida%20ePortfolio.png" width="800" height="635" style="display: block; margin-left: auto; margin-right: auto;" /></p>
+<p></p>
+<p><img src="https://www.competenzestrategiche.it/pluginfile.php/2048/mod_book/chapter/89/Vai%20alla%20guida%20e%20al%20modello.png" width="30" height="30" style="vertical-align: middle;" /> <a href="https://www.competenzestrategiche.it/mahara/view/view.php?id=127"><strong>Guida e modello di ePortfolio</strong></a></p></div></div>    </div>
+</div>
+<script type="text/javascript">
+//<![CDATA[
+var require = {
+    baseUrl : 'https://www.competenzestrategiche.it/lib/requirejs.php/1767962153/',
+    // We only support AMD modules with an explicit define() statement.
+    enforceDefine: true,
+    skipDataMain: true,
+    waitSeconds : 0,
+
+    paths: {
+        jquery: 'https://www.competenzestrategiche.it/lib/javascript.php/1767962153/lib/jquery/jquery-3.1.0.min',
+        jqueryui: 'https://www.competenzestrategiche.it/lib/javascript.php/1767962153/lib/jquery/ui-1.12.1/jquery-ui.min',
+        jqueryprivate: 'https://www.competenzestrategiche.it/lib/javascript.php/1767962153/lib/requirejs/jquery-private'
+    },
+
+    // Custom jquery config map.
+    map: {
+      // '*' means all modules will get 'jqueryprivate'
+      // for their 'jquery' dependency.
+      '*': { jquery: 'jqueryprivate' },
+
+      // 'jquery-private' wants the real jQuery module
+      // though. If this line was not here, there would
+      // be an unresolvable cyclic dependency.
+      jqueryprivate: { jquery: 'jquery' }
+    }
+};
+
+//]]>
+</script>
+<script type="text/javascript" src="https://www.competenzestrategiche.it/lib/javascript.php/1767962153/lib/requirejs/require.min.js"></script>
+<script type="text/javascript">
+//<![CDATA[
+require(['core/first'], function() {
+;
+require(["media_videojs/loader"], function(loader) {
+    loader.setUp(function(videojs) {
+        videojs.options.flash.swf = "https://www.competenzestrategiche.it/media/player/videojs/videojs/video-js.swf";
+videojs.addLanguage("it",{
+ "Play": "Play",
+ "Pause": "Pausa",
+ "Current Time": "Orario attuale",
+ "Duration Time": "Durata",
+ "Remaining Time": "Tempo rimanente",
+ "Stream Type": "Tipo del Streaming",
+ "LIVE": "LIVE",
+ "Loaded": "Caricato",
+ "Progress": "Stato",
+ "Fullscreen": "Schermo intero",
+ "Non-Fullscreen": "Chiudi schermo intero",
+ "Mute": "Muto",
+ "Unmute": "Audio",
+ "Playback Rate": "Tasso di riproduzione",
+ "Subtitles": "Sottotitoli",
+ "subtitles off": "Senza sottotitoli",
+ "Captions": "Sottotitoli non udenti",
+ "captions off": "Senza sottotitoli non udenti",
+ "Chapters": "Capitolo",
+ "You aborted the media playback": "La riproduzione del filmato è stata interrotta.",
+ "A network error caused the media download to fail part-way.": "Il download del filmato è stato interrotto a causa di un problema rete.",
+ "The media could not be loaded, either because the server or network failed or because the format is not supported.": "Il filmato non può essere caricato a causa di un errore nel server o nella rete o perché il formato non viene supportato.",
+ "The media playback was aborted due to a corruption problem or because the media used features your browser did not support.": "La riproduzione del filmato è stata interrotta a causa di un file danneggiato o per l’utilizzo di impostazioni non supportate dal browser.",
+ "No compatible source was found for this media.": "Non ci sono fonti compatibili per questo filmato."
+});
+
+    });
+});;
+require(["core/notification"], function(amd) { amd.init(2048, []); });;
+require(["core/log"], function(amd) { amd.setConfig({"level":"warn"}); });
+});
+//]]>
+</script>
+<script type="text/javascript" src="https://www.competenzestrategiche.it/theme/javascript.php/enlightlite/1767962153/footer"></script>
+<script type="text/javascript">
+//<![CDATA[
+M.str = {"moodle":{"lastmodified":"Ultime modifiche","name":"Nome","error":"Errore","info":"Informazioni","yes":"S\u00ec","no":"No","ok":"OK","cancel":"Annulla","confirm":"Conferma","areyousure":"Sei sicuro?","closebuttontitle":"Chiudi","unknownerror":"Errore sconosciuto"},"repository":{"type":"Tipo","size":"Dimensione","invalidjson":"Stringa JSON non valida","nofilesattached":"Non sono presenti file allegati","filepicker":"File picker","logout":"Logout","nofilesavailable":"Non sono presenti file","norepositoriesavailable":"Spiacente, nessuno dei repostory disponibili pu\u00f2 restituire file nel formato richiesto.","fileexistsdialogheader":"Il file esiste gi\u00e0","fileexistsdialog_editor":"Un file con lo stesso nome \u00e8 gi\u00e0 stato allegato al testo che stai modificando.","fileexistsdialog_filemanager":"Un file con lo stesso nome \u00e8 gi\u00e0 stato allegato","renameto":"Rinomina in \"{$a}\"","referencesexist":"Sono presenti {$a} alias\/scorciatoie collegate a questo file","select":"Scegli"},"admin":{"confirmdeletecomments":"Stai per eliminare commenti, sei sicuro ?","confirmation":"Conferma"}};
+//]]>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+(function() {Y.use("moodle-filter_mathjaxloader-loader",function() {M.filter_mathjaxloader.configure({"mathjaxconfig":"\n\nMathJax.Hub.Config({\n    config: [\"Accessible.js\", \"Safe.js\"],\n    errorSettings: { message: [\"!\"] },\n    skipStartupTypeset: true,\n    messageStyle: \"none\"\n});\n","lang":"it"});
+});
+Y.use("moodle-filter_glossary-autolinker",function() {M.filter_glossary.init_filter_autolinking({"courseid":0});
+});
+M.util.help_popups.setup(Y);
+ M.util.js_pending('random6a1b2247230e32'); Y.on('domready', function() { M.util.js_complete("init");  M.util.js_complete('random6a1b2247230e32'); });
+})();
+//]]>
+</script>
+</body>
+</html>

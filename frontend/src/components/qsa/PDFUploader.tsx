@@ -3,12 +3,21 @@
 import { UploadCloud, FileType } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n-context';
+import { QuestionnaireConfig } from '@/lib/questionnaires';
 
 interface PDFUploaderProps {
-    onUploadComplete: (mockData: any) => void;
+    onUploadComplete: (scores: Record<string, number>, pdfToken?: string) => void;
+    questionnaire: QuestionnaireConfig;
 }
 
-export function PDFUploader({ onUploadComplete }: PDFUploaderProps) {
+function isScoreMap(value: unknown): value is Record<string, number> {
+    return typeof value === 'object' && value !== null
+        && Object.values(value).every((score) => typeof score === 'number' && score >= 1 && score <= 9);
+}
+
+export function PDFUploader({ onUploadComplete, questionnaire }: PDFUploaderProps) {
+    const { t } = useI18n();
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [fileInputRef, setFileInputRef] = useState<HTMLInputElement | null>(null);
@@ -51,26 +60,37 @@ export function PDFUploader({ onUploadComplete }: PDFUploaderProps) {
         try {
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('questionnaire_type', questionnaire.id);
             
             // Adjust the URL if necessary based on your Next.js proxy or backend URL
             // Assuming Next.js rewrites /api -> Backend
             // If direct to backend: http://localhost:8000/qsa/upload
-            const response = await fetch('http://localhost:8000/qsa/upload', {
+            const response = await fetch('/api/qsa/upload', {
                 method: 'POST',
                 body: formData,
             });
             
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Upload failed');
+                const errorData = await response.json() as { detail?: string };
+                throw new Error(errorData.detail ?? 'Upload failed');
             }
             
-            const data = await response.json();
-            onUploadComplete(data);
+            const data: unknown = await response.json();
+            if (data && typeof data === 'object') {
+                const { pdf_token, ...scores } = data as Record<string, unknown>;
+                if (isScoreMap(scores)) {
+                    onUploadComplete(scores, typeof pdf_token === 'string' ? pdf_token : undefined);
+                } else {
+                    throw new Error('Invalid scores returned by extractor');
+                }
+            } else {
+                throw new Error('Invalid scores returned by extractor');
+            }
             
         } catch (error) {
             console.error("Upload error:", error);
-            alert("Errore durante l'analisi del documento. Riprova o inserisci i dati manualmente.");
+            const errMsg = error instanceof Error ? error.message : String(error);
+            alert(`${t('pdf.error')}\n(${errMsg})`);
         } finally {
             setIsUploading(false);
         }
@@ -84,24 +104,26 @@ export function PDFUploader({ onUploadComplete }: PDFUploaderProps) {
                 onDragLeave={handleDrag}
                 onDrop={handleDrop}
                 className={cn(
-                    "relative flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-2xl transition-all duration-300 bg-white/5",
-                    isDragging ? "border-blue-500 bg-blue-500/10" : "border-white/20 hover:border-white/40",
+                    "relative flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg transition-colors bg-white",
+                    isDragging ? "border-indigo-400 bg-indigo-50" : "border-slate-300 hover:border-indigo-300",
                     isUploading ? "pointer-events-none opacity-50" : ""
                 )}
             >
                 {isUploading ? (
                     <div className="flex flex-col items-center animate-pulse">
-                        <UploadCloud className="w-12 h-12 text-blue-400 mb-4 animate-bounce" />
-                        <p className="text-lg font-medium">Analizzando il documento con AI...</p>
-                        <p className="text-sm text-muted-foreground mt-2">Estrazione dei 14 fattori in corso...</p>
+                        <UploadCloud className="w-12 h-12 text-indigo-500 mb-4 animate-bounce" />
+                        <p className="text-lg font-medium text-slate-900">{t('pdf.analyzing.title')}</p>
+                        <p className="text-sm text-slate-500 mt-2">
+                            {t('pdf.analyzing.sub')} ({questionnaire.factors.length})
+                        </p>
                     </div>
                 ) : (
                     <>
-                        <div className="p-4 rounded-full bg-white/5 mb-4">
-                            <FileType className="w-8 h-8 text-muted-foreground" />
+                        <div className="p-4 rounded-md bg-indigo-50 mb-4">
+                            <FileType className="w-8 h-8 text-indigo-600" />
                         </div>
-                        <p className="text-lg font-medium mb-1">Trascina qui il tuo file (PDF o Immagine)</p>
-                        <p className="text-sm text-muted-foreground mb-6">oppure clicca per selezionare</p>
+                        <p className="text-lg font-medium text-slate-900 mb-1">{t('pdf.drop')}</p>
+                        <p className="text-sm text-slate-500 mb-6">{t('pdf.or')}</p>
                         <input
                             type="file"
                             className="hidden"
@@ -111,15 +133,15 @@ export function PDFUploader({ onUploadComplete }: PDFUploaderProps) {
                         />
                         <button
                             onClick={triggerFileSelect}
-                            className="px-6 py-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors font-medium text-sm"
+                            className="px-6 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white transition-colors font-medium text-sm"
                         >
-                            Seleziona File
+                            {t('pdf.select')}
                         </button>
                     </>
                 )}
             </div>
-            <p className="text-center text-xs text-muted-foreground mt-4">
-                Supporta: PDF, JPG, PNG. Dimensione massima: 10MB.
+            <p className="text-center text-xs text-slate-500 mt-4">
+                {t('pdf.support')}
             </p>
         </div>
     );

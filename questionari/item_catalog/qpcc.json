@@ -1,0 +1,668 @@
+{
+  "instrument": "QPCC",
+  "source": "M. Pellerey, F. Orio — QPCC (Ed. Lavoro 2001), competenzestrategiche.it",
+  "license_note": "Proprietario. Item e chiave fattori da inserire solo se autorizzati.",
+  "n_items": 63,
+  "response_scale": {
+    "min": 1,
+    "max": 4,
+    "labels": {
+      "it": [
+        "1 = Per nulla d'accordo",
+        "2 = Solo in parte d'accordo",
+        "3 = Abbastanza d'accordo",
+        "4 = Pienamente d'accordo"
+      ],
+      "en": [
+        "1 = Strongly disagree",
+        "2 = Partly agree",
+        "3 = Fairly agree",
+        "4 = Fully agree"
+      ],
+      "sv": [
+        "1 = Instämmer inte alls",
+        "2 = Instämmer delvis",
+        "3 = Instämmer ganska mycket",
+        "4 = Instämmer helt"
+      ]
+    }
+  },
+  "report_scale": {
+    "type": "to_define",
+    "min": null,
+    "max": null
+  },
+  "factors": [],
+  "items": [
+    {
+      "id": "QPCC-001",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-002",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-003",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-004",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-005",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-006",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-007",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-008",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-009",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-010",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-011",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-012",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-013",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-014",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-015",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-016",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-017",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-018",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-019",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-020",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-021",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-022",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-023",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-024",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-025",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-026",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-027",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-028",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-029",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-030",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-031",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-032",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-033",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-034",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-035",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-036",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-037",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-038",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-039",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-040",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-041",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-042",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-043",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-044",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-045",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-046",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-047",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-048",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-049",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-050",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-051",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-052",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-053",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-054",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-055",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-056",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-057",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-058",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-059",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-060",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-061",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-062",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "QPCC-063",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    }
+  ]
+}

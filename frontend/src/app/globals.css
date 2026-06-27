@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Dark mode class-based: .dark sull'<html> attiva sia le varianti dark: sia gli
+   override CSS sotto (vedi fondo file). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
@@ -28,28 +32,51 @@
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
 
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
 
   --animate-fade-in-up: fade-in-up 0.6s ease-out forwards;
 }
 
 :root {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
+  /* Raggio angoli globale: angoli tondi su tutta l'interfaccia (rounded-sm/md/lg/xl). */
+  --radius: 0.75rem;
 
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
+  /* Altezza viewport condivisa per le superfici di chat (guided / assistente / opencode).
+     Unico token: ~header(4rem) + margini, niente piu' magic number duplicati. */
+  --chat-h: calc(100vh - 9rem);
 
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
+  /* UI palette shared with ai4educ-console. */
+  --console-bg: #f8fafc;
+  --console-surface: #ffffff;
+  --console-border: #e2e8f0;
+  --console-text-1: #0f172a;
+  --console-text-2: #64748b;
+  --console-primary: #4f46e5;
+  --console-primary-soft: #eef2ff;
+  --console-topbar-surface: var(--console-surface);
+  --console-topbar-border: var(--console-border);
+  --console-topbar-hover: var(--console-bg);
+  --console-topbar-text: var(--console-text-2);
+  --console-topbar-text-hover: var(--console-text-1);
 
-  --primary: 217.2 91.2% 59.8%;
-  --color-background: #f8fafc;
-  --color-foreground: #0f172a;
+  --background: 210 40% 98%;
+  --foreground: 222.2 84% 4.9%;
 
-  --color-primary: #3b82f6;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+
+  --primary: 243.4 75.4% 58.6%;
+  --color-background: var(--console-bg);
+  --color-foreground: var(--console-text-1);
+
+  --color-primary: var(--console-primary);
   --color-primary-foreground: #ffffff;
 
   --color-muted: #f1f5f9;
@@ -60,38 +87,119 @@
 
   --animate-fade-in-up: fadeInUp 0.5s ease-out forwards;
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
 
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
 /* Custom Utilities */
+
+/* Larghezza contenuto: due soli token condivisi.
+   page-narrow = lettura/form (questionario, pqbl, somministrazione, strumenti);
+   page-wide   = chat/dashboard/admin (home, assistente, profilo, admin). */
+@utility page-narrow {
+  @apply max-w-4xl mx-auto;
+}
+@utility page-wide {
+  @apply max-w-6xl mx-auto;
+}
+
+/* Altezza standard delle superfici di chat. */
+@utility h-chat {
+  height: var(--chat-h);
+}
+
+/* Card: radius unico (rounded-xl) cotto nell'utility -> nessun rounded-* ai call-site. */
 @utility glass-panel {
-  @apply bg-white border border-slate-200 shadow-sm transition-all duration-300;
+  @apply bg-white border border-slate-200 rounded-xl shadow-sm transition-colors duration-150;
 }
 
 @utility glass-panel-hover {
-  @apply hover:border-blue-300 hover:shadow-md hover:-translate-y-1;
+  @apply hover:border-indigo-200 hover:shadow-sm;
 }
 
 @utility text-gradient {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-700;
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-indigo-600;
+}
+
+/* Scala tipografica -1: base 15px. Tutto il testo text-* (rem) si rimpicciolisce
+   in proporzione → interfaccia più densa. */
+html {
+  font-size: 15px;
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
-  /* Subtle professional background pattern */
-  background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-  background-size: 24px 24px;
+  @apply text-slate-900 antialiased;
+  background: var(--console-bg);
+  color: var(--console-text-1);
+}
+
+/* Accessibilità: anello di focus visibile da tastiera su elementi interattivi. */
+:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--console-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Rispetta chi preferisce meno movimento: azzera animazioni/transizioni. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.console-header {
+  height: 4rem;
+  border-bottom: 1px solid var(--console-topbar-border);
+  background: var(--console-topbar-surface);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.03);
+}
+
+.console-topbar-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: var(--radius-md);
+  padding: 0.375rem 0.625rem;
+  color: var(--console-topbar-text);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.console-topbar-action:hover {
+  background: var(--console-topbar-hover);
+  color: var(--console-topbar-text-hover);
+}
+
+.console-topbar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  color: var(--console-topbar-text);
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.console-topbar-icon:hover {
+  background: var(--console-topbar-hover);
+  color: var(--console-topbar-text-hover);
 }
 
 /* Prose styles for markdown content */
@@ -161,9 +269,162 @@ body {
 }
 
 .prose blockquote {
-  border-left: 3px solid #3b82f6;
+  border-left: 3px solid var(--console-primary);
   padding-left: 1em;
   margin-left: 0;
   color: #64748b;
   font-style: italic;
 }
+
+/* ============================================================================
+   DARK MODE
+   Remap centralizzato: invece di aggiungere dark: su ~60 file, ridefiniamo le
+   poche utility hardcoded più usate (bg/text/border slate, surface bianche,
+   sfondi pastello -50) sotto `.dark`. Specificità (.dark .x = 0,2,0) batte la
+   utility singola (.x = 0,1,0): niente !important.
+   Palette: base #0f172a · superficie card #1e293b · fill #334155.
+   ============================================================================ */
+.dark {
+  color-scheme: dark;
+
+  --console-bg: #0f172a;
+  --console-surface: #1e293b;
+  --console-border: #334155;
+  --console-text-1: #f1f5f9;
+  --console-text-2: #94a3b8;
+  --console-primary-soft: #312e81;
+  --console-topbar-surface: #1e293b;
+  --console-topbar-border: #334155;
+  --console-topbar-hover: #334155;
+  --console-topbar-text: #94a3b8;
+  --console-topbar-text-hover: #f1f5f9;
+
+  --background: 222 47% 11%;
+  --foreground: 210 40% 98%;
+  --card: 215 28% 17%;
+}
+
+/* Superfici */
+.dark .bg-white { background-color: #1e293b; }
+.dark .bg-slate-50 { background-color: #0f172a; }
+.dark .bg-slate-100 { background-color: #334155; }
+.dark .bg-slate-200 { background-color: #475569; }
+
+/* Testo */
+.dark .text-slate-900 { color: #f8fafc; }
+.dark .text-slate-800 { color: #e2e8f0; }
+.dark .text-slate-700 { color: #cbd5e1; }
+.dark .text-slate-600 { color: #cbd5e1; }
+.dark .text-slate-500 { color: #94a3b8; }
+.dark .text-slate-400 { color: #94a3b8; }
+
+/* Bordi */
+.dark .border-slate-100 { border-color: #334155; }
+.dark .border-slate-200 { border-color: #334155; }
+.dark .border-slate-300 { border-color: #475569; }
+
+/* Sfondi pastello dei callout/badge → tinte scure leggibili */
+.dark .bg-indigo-50 { background-color: #1e1b4b; }
+.dark .bg-amber-50 { background-color: #3a2206; }
+.dark .bg-green-50 { background-color: #052e16; }
+.dark .bg-emerald-50 { background-color: #052e16; }
+.dark .bg-red-50 { background-color: #3f0a0a; }
+.dark .bg-sky-50 { background-color: #082f49; }
+.dark .bg-yellow-50 { background-color: #3a2e06; }
+
+/* Card: glass-panel cuoce bg-white/border via @apply (non come classe) → override esplicito. */
+.dark .glass-panel { background-color: #1e293b; border-color: #334155; }
+
+/* Testo accentato: schiarito per restare leggibile sugli sfondi scuri. */
+.dark .text-indigo-900,
+.dark .text-indigo-800,
+.dark .text-indigo-700,
+.dark .text-indigo-600 { color: #a5b4fc; }
+.dark .text-amber-950,
+.dark .text-amber-900,
+.dark .text-amber-800,
+.dark .text-amber-700 { color: #fcd34d; }
+.dark .text-green-900,
+.dark .text-green-800,
+.dark .text-green-700,
+.dark .text-green-600 { color: #86efac; }
+.dark .text-emerald-950,
+.dark .text-emerald-700,
+.dark .text-emerald-600 { color: #6ee7b7; }
+.dark .text-red-800,
+.dark .text-red-700,
+.dark .text-red-600 { color: #fca5a5; }
+.dark .text-sky-950,
+.dark .text-sky-800 { color: #7dd3fc; }
+
+/* Prose (markdown chat/documenti) */
+.dark .prose { color: #cbd5e1; }
+.dark .prose h1,
+.dark .prose h2,
+.dark .prose h3,
+.dark .prose h4 { color: #f1f5f9; }
+.dark .prose strong { color: #f8fafc; }
+.dark .prose code { background-color: #334155; color: #e2e8f0; }
+.dark .prose blockquote { color: #94a3b8; }
+
+/* Hover background: le varianti hover:bg-* sono classi a sé, vanno rimappate. */
+.dark .hover\:bg-white:hover { background-color: #334155; }
+.dark .hover\:bg-slate-50:hover { background-color: #334155; }
+.dark .hover\:bg-slate-100:hover { background-color: #475569; }
+.dark .hover\:bg-slate-200:hover { background-color: #475569; }
+.dark .hover\:bg-indigo-50:hover { background-color: #312e81; }
+
+/* Sfondi con opacità (classi distinte) → equivalenti scuri translucidi.
+   bg-white/25 resta com'è: è il badge chiaro sullo step attivo indigo. */
+.dark .bg-white\/95 { background-color: rgba(30, 41, 59, 0.95); }
+.dark .bg-white\/70 { background-color: rgba(15, 23, 42, 0.5); }
+.dark .bg-white\/60 { background-color: rgba(30, 41, 59, 0.6); }
+.dark .bg-slate-50\/40 { background-color: rgba(15, 23, 42, 0.4); }
+.dark .bg-slate-50\/50 { background-color: rgba(15, 23, 42, 0.5); }
+.dark .bg-slate-50\/60 { background-color: rgba(15, 23, 42, 0.6); }
+.dark .bg-slate-900\/40 { background-color: rgba(0, 0, 0, 0.5); }
+.dark .bg-indigo-100\/50 { background-color: rgba(49, 46, 129, 0.5); }
+.dark .bg-indigo-50\/30 { background-color: rgba(30, 27, 75, 0.3); }
+.dark .bg-indigo-50\/40 { background-color: rgba(30, 27, 75, 0.4); }
+.dark .bg-indigo-50\/50 { background-color: rgba(30, 27, 75, 0.5); }
+
+/* Copertura palette completa: gli header di fase / badge usano molte tinte -50/-100
+   (purple, pink, teal, cyan, rose, orange, blue...). Senza override resterebbero
+   chiare in dark con testo chiaro = illeggibili. */
+.dark .bg-purple-50,
+.dark .bg-violet-50 { background-color: #2e1065; }
+.dark .bg-fuchsia-50 { background-color: #4a044e; }
+.dark .bg-pink-50 { background-color: #500724; }
+.dark .bg-rose-50 { background-color: #4c0519; }
+.dark .bg-orange-50 { background-color: #431407; }
+.dark .bg-lime-50 { background-color: #1a2e05; }
+.dark .bg-teal-50 { background-color: #042f2e; }
+.dark .bg-cyan-50 { background-color: #083344; }
+.dark .bg-blue-50 { background-color: #172554; }
+
+.dark .bg-blue-100 { background-color: #172554; }
+.dark .bg-sky-100 { background-color: #082f49; }
+.dark .bg-indigo-100 { background-color: #1e1b4b; }
+.dark .bg-purple-100,
+.dark .bg-violet-100 { background-color: #2e1065; }
+.dark .bg-amber-100 { background-color: #3a2206; }
+.dark .bg-yellow-100 { background-color: #3a2e06; }
+.dark .bg-green-100 { background-color: #052e16; }
+.dark .bg-emerald-100 { background-color: #052e16; }
+.dark .bg-red-100 { background-color: #3f0a0a; }
+.dark .bg-teal-100 { background-color: #042f2e; }
+.dark .bg-cyan-100 { background-color: #083344; }
+.dark .bg-rose-100 { background-color: #4c0519; }
+
+/* Testo accentato per le tinte restanti (badge/header su sfondo scuro). */
+.dark .text-blue-900, .dark .text-blue-800, .dark .text-blue-700, .dark .text-blue-600 { color: #93c5fd; }
+.dark .text-purple-900, .dark .text-purple-800, .dark .text-purple-700, .dark .text-purple-600,
+.dark .text-violet-900, .dark .text-violet-800, .dark .text-violet-700, .dark .text-violet-600 { color: #c4b5fd; }
+.dark .text-pink-900, .dark .text-pink-800, .dark .text-pink-700 { color: #f9a8d4; }
+.dark .text-rose-900, .dark .text-rose-800, .dark .text-rose-700 { color: #fda4af; }
+.dark .text-orange-900, .dark .text-orange-800, .dark .text-orange-700 { color: #fdba74; }
+.dark .text-teal-900, .dark .text-teal-800, .dark .text-teal-700 { color: #5eead4; }
+.dark .text-cyan-900, .dark .text-cyan-800, .dark .text-cyan-700 { color: #67e8f9; }
+.dark .text-lime-900, .dark .text-lime-800, .dark .text-lime-700 { color: #bef264; }
+.dark .text-fuchsia-900, .dark .text-fuchsia-800, .dark .text-fuchsia-700 { color: #f0abfc; }
+.dark .text-yellow-900, .dark .text-yellow-800, .dark .text-yellow-700 { color: #fcd34d; }

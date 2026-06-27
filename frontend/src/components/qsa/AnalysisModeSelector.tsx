@@ -1,39 +1,51 @@
 'use client';
 
 import { BarChart, Layers, HelpCircle } from 'lucide-react';
+import { useI18n } from '@/lib/i18n-context';
 
 interface AnalysisModeSelectorProps {
-    onSelect: (mode: 'factor' | 'second-level' | 'generic') => void;
+    onSelect: (mode: AnalysisMode) => void;
 }
 
+type AnalysisMode = 'factor' | 'second-level' | 'generic';
+
 export function AnalysisModeSelector({ onSelect }: AnalysisModeSelectorProps) {
-    const options = [
+    const { t } = useI18n();
+    const options: Array<{
+        id: AnalysisMode;
+        title: string;
+        desc: string;
+        icon: typeof BarChart;
+        color: string;
+        bg: string;
+        border: string;
+    }> = [
         {
             id: 'factor',
-            title: 'Analisi Fattore per Fattore',
-            desc: 'Analizza ogni singolo punteggio (C1-C7, A1-A7) nel dettaglio.',
+            title: t('mode.factor.title'),
+            desc: t('mode.factor.desc'),
             icon: BarChart,
-            color: 'text-blue-400',
-            bg: 'bg-blue-500/10',
-            border: 'border-blue-500/20'
+            color: 'text-indigo-600',
+            bg: 'bg-indigo-50',
+            border: 'border-indigo-100'
         },
         {
             id: 'second-level',
-            title: 'Analisi Secondo Livello',
-            desc: 'Analisi aggregata delle macro-aree cognitive ed affettive.',
+            title: t('mode.second-level.title'),
+            desc: t('mode.second-level.desc'),
             icon: Layers,
-            color: 'text-purple-400',
-            bg: 'bg-purple-500/10',
-            border: 'border-purple-500/20'
+            color: 'text-indigo-600',
+            bg: 'bg-indigo-50',
+            border: 'border-indigo-100'
         },
         {
             id: 'generic',
-            title: 'Domande Generiche',
-            desc: 'Fai domande libere sul tuo metodo di studio.',
+            title: t('mode.generic.title'),
+            desc: t('mode.generic.desc'),
             icon: HelpCircle,
-            color: 'text-green-400',
-            bg: 'bg-green-500/10',
-            border: 'border-green-500/20'
+            color: 'text-indigo-600',
+            bg: 'bg-indigo-50',
+            border: 'border-indigo-100'
         }
     ];
 
@@ -42,14 +54,14 @@ export function AnalysisModeSelector({ onSelect }: AnalysisModeSelectorProps) {
             {options.map((opt) => (
                 <button
                     key={opt.id}
-                    onClick={() => onSelect(opt.id as any)}
-                    className="flex flex-col items-center text-center p-6 rounded-2xl glass-card border-white/5 hover:border-white/20 transition-all hover:-translate-y-1"
+                    onClick={() => onSelect(opt.id)}
+                    className="flex flex-col items-center text-center p-6 rounded-lg bg-white border border-slate-200 shadow-sm hover:border-indigo-200 transition-colors"
                 >
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${opt.bg} ${opt.border}`}>
+                    <div className={`w-12 h-12 rounded-md border flex items-center justify-center mb-4 ${opt.bg} ${opt.border}`}>
                         <opt.icon className={`w-6 h-6 ${opt.color}`} />
                     </div>
-                    <h3 className="font-semibold text-lg mb-2">{opt.title}</h3>
-                    <p className="text-sm text-muted-foreground">{opt.desc}</p>
+                    <h3 className="font-semibold text-lg text-slate-900 mb-2">{opt.title}</h3>
+                    <p className="text-sm text-slate-500">{opt.desc}</p>
                 </button>
             ))}
         </div>

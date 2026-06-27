@@ -1,0 +1,518 @@
+[
+  {
+    "model": "deepseek-v4-flash",
+    "avg_quality": 0.888818181818182,
+    "avg_tps": 127.98181818181818,
+    "avg_ttft": 4129.663636363636,
+    "reliability": 100.0,
+    "estimated_cost_usd": 0.0,
+    "steps": [
+      {
+        "step_id": "cognitive",
+        "step_label": "1. Fattori Cognitivi",
+        "step_type": "guided",
+        "ttft_ms": 2293.6,
+        "total_duration_ms": 10528.2,
+        "eval_count": 951,
+        "prompt_eval_count": 792,
+        "tokens_per_second": 115.5,
+        "output_text": "Ecco l'analisi dei fattori cognitivi (C1–C7) del tuo profilo QSA.\n\n**C1 (Strategie elaborative): 7/9 – Punto di forza**\nInterpretazione: Utilizzi in modo efficace strategie di apprendimento che collegano le nuove informazioni a conoscenze preesistenti, favorendo una comprensione profonda.\nCommento: Questo punteggio suggerisce che sai andare oltre la memorizzazione superficiale. Per consolidare ulteriormente, potresti variare le modalità di collegamento (es. mappe mentali, analogie, esempi personali).\n\n**C2 (Autoregolazione): 5/9 – Adeguato**\nInterpretazione: La capacità di monitorare e regolare il tuo studio si colloca nella media: riesci a pianificare e controllare il processo, ma non sempre in modo sistematico.\nCommento: Potresti potenziare questo aspetto fissando obiettivi specifici e brevi momenti di verifica intermedia durante lo studio, per abituarti a un’autovalutazione più frequente.\n\n**C3 (Disorientamento): 3/9 – Punto di forza (punteggio invertito)**\nInterpretazione: Il punteggio basso indica un basso livello di disorientamento: affronti i contenuti con una buona chiarezza di direzione, senza sentirti perso.\nCommento: Hai un’ottima percezione del percorso di apprendimento. Per mantenerla, puoi continuare a chiederti “Dove voglio arrivare?” prima di iniziare un argomento nuovo.\n\n**C4 (Disponibilità alla collaborazione): 6/9 – Adeguato**\nInterpretazione: Sei generalmente aperto a studiare in gruppo o a chiedere aiuto, ma non in modo predominante.\nCommento: Questo equilibrio è funzionale. Se noti che lo studio individuale ti blocca, potresti sperimentare brevi sessioni di confronto con un compagno per chiarire punti critici.\n\n**C5 (Organizzatori semantici): 4/9 – Adeguato**\nInterpretazione: L’uso di schemi, grafici, mappe o altri organizzatori visivi è nella media, ma non ancora un’abitudine consolidata.\nCommento: Potresti trarre beneficio dall’introdurre, anche solo per argomenti complessi, uno schema a flusso o una mappa concettuale per migliorare la sintesi visiva.\n\n**C6 (Difficoltà di concentrazione): 7/9 – Area di crescita (punteggio invertito)**\nInterpretazione: Il punteggio alto indica una difficoltà significativa a mantenere la concentrazione durante lo studio.\nCommento: Questa è un’area su cui lavorare. Prova a suddividere lo studio in blocchi di 25–30 minuti (tecnica del Pomodoro) e a ridurre le distrazioni ambientali (notifiche, rumori). Potresti anche valutare il tuo carico di sonno e stress.\n\n**C7 (Autointerrogazione): 5/9 – Adeguato**\nInterpretazione: Ti poni domande durante lo studio con una frequenza media, utile ma non sistematica.\nCommento: Potresti rendere più esplicita questa abitudine: dopo ogni paragrafo, fermati e poniti una domanda chiave sul contenuto appena letto. Questo rafforza la memorizzazione attiva.",
+        "error": null,
+        "raw_metrics": {
+          "usage": {
+            "prompt_tokens": 792,
+            "completion_tokens": 951,
+            "total_tokens": 1743,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 179
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 792
+          },
+          "estimated_cost_usd": 0.0,
+          "response_model": "deepseek-v4-flash",
+          "generation_id": "4da41672-d582-46e7-92e6-f7c942ac0a4d"
+        },
+        "quality": {
+          "factor_coverage": 1.0,
+          "code_format_ok": 1.0,
+          "interpretation_accuracy": 1.0,
+          "practical_advice": 1.0,
+          "score_mentions": 1.0,
+          "no_refusal": 1.0,
+          "connection_analysis": 1.0,
+          "no_greeting": 1.0,
+          "substantive": 1.0,
+          "structure": 0.4,
+          "italian_compliance": 1.0,
+          "has_html": 1.0,
+          "overall": 0.97
+        }
+      },
+      {
+        "step_id": "affective",
+        "step_label": "2. Fattori Affettivi",
+        "step_type": "guided",
+        "ttft_ms": 4482.3,
+        "total_duration_ms": 13136.3,
+        "eval_count": 1139,
+        "prompt_eval_count": 792,
+        "tokens_per_second": 131.6,
+        "output_text": "**A1 (Ansietà di base): 8/9 – Area di crescita**  \nUn punteggio elevato indica una tendenza marcata a percepire situazioni di studio come minacciose o fonte di tensione. Il livello di ansia risulta più alto della media, con il rischio di interferire con la concentrazione e la performance. Potrebbe essere utile integrare strategie di rilassamento o tecniche di gestione dello stress pre-esame.\n\n**A2 (Volizione): 6/9 – Adeguato**  \nLa capacità di mantenere l’impegno verso gli obiettivi di studio è nella norma. Non emergono particolari difficoltà nella persistenza intenzionale, anche se il punteggio non segnala una forza spiccata. Si consiglia di monitorare la costanza nelle fasi più lunghe di preparazione.\n\n**A3 (Attribuzione a cause controllabili): 5/9 – Adeguato**  \nLa tendenza a spiegare i propri risultati scolastici con cause dipendenti da sé (impegno, strategie) è bilanciata. Non si evidenziano distorsioni significative: è presente una discreta consapevolezza del proprio ruolo nel successo/insuccesso, ma l’area potrebbe essere rafforzata per aumentare la motivazione.\n\n**A4 (Attribuzione a cause incontrollabili): 8/9 – Area di crescita**  \nPunteggio alto (invertito) che segnala una propensione a giustificare i risultati con fattori esterni o immodificabili (fortuna, difficoltà del compito, umore del docente). Questa lettura può ridurre il senso di efficacia personale e la spinta al miglioramento. Lavorare sul riconoscimento delle proprie leve di controllo potrebbe essere d’aiuto.\n\n**A5 (Mancanza di perseveranza): 6/9 – Adeguato**  \nLa tendenza ad abbandonare compiti di fronte a ostacoli o noia è nella media. Non emerge un problema critico, ma il valore centrale suggerisce di prestare attenzione a eventuali cali di tenacia in attività particolarmente lunghe o complesse.\n\n**A6 (Percezione di competenza): 3/9 – Area di crescita**  \nPunteggio basso (non invertito) che indica una valutazione negativa delle proprie capacità di apprendimento e di riuscita. Questa insicurezza può alimentare ansia e ridurre la disponibilità a cimentarsi in sfide. Potrebbe essere utile raccogliere feedback positivi e focalizzarsi sui progressi concreti.\n\n**A7 (Interferenze emotive): 7/9 – Area di crescita**  \nPunteggio alto (invertito) che evidenzia come emozioni spiacevoli (ansia, frustrazione, scoraggiamento) entrino spesso nel processo di studio, disturbando la concentrazione e la memoria. È consigliabile integrare tecniche di regolazione emotiva (es. respirazione, pause strutturate, autodialogo positivo).\n\n**Sintesi del profilo affettivo**  \nIl quadro mostra una vulnerabilità emotiva diffusa: ansietà di base elevata (A1), attribuzione a cause incontrollabili (A4), percezione di competenza bassa (A6) e interferenze emotive frequenti (A7) costituiscono le aree prioritarie su cui intervenire. La volizione (A2) e la perseveranza (A5) sono nella norma, mentre l’attribuzione a cause controllabili (A3) è solo adeguata. Si consiglia di lavorare sul potenziamento dell’autoefficacia e sulla gestione dell’ansia per ridurre l’impatto emotivo sullo studio.",
+        "error": null,
+        "raw_metrics": {
+          "usage": {
+            "prompt_tokens": 792,
+            "completion_tokens": 1139,
+            "total_tokens": 1931,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 298
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 792
+          },
+          "estimated_cost_usd": 0.0,
+          "response_model": "deepseek-v4-flash",
+          "generation_id": "a7a38c47-809f-4fbb-8ba5-fbdd533325b8"
+        },
+        "quality": {
+          "factor_coverage": 1.0,
+          "code_format_ok": 1.0,
+          "interpretation_accuracy": 0.786,
+          "practical_advice": 0.0,
+          "score_mentions": 1.0,
+          "no_refusal": 1.0,
+          "connection_analysis": 1.0,
+          "no_greeting": 1.0,
+          "substantive": 1.0,
+          "structure": 0.4,
+          "italian_compliance": 1.0,
+          "has_html": 1.0,
+          "overall": 0.807
+        }
+      },
+      {
+        "step_id": "sl-elaboration",
+        "step_label": "3.1 Elaborazione e Org.",
+        "step_type": "guided",
+        "ttft_ms": 2773.8,
+        "total_duration_ms": 10948.0,
+        "eval_count": 879,
+        "prompt_eval_count": 811,
+        "tokens_per_second": 107.5,
+        "output_text": "**Analisi di secondo livello – Parte 1: Elaborazione e organizzazione**\n\nNel complesso, il profilo mostra una solida capacità di elaborazione profonda (C1 – Strategie elaborative: 7/9), compensata da un uso solo nella media degli organizzatori semantici (C5 – Organizzatori semantici: 4/9) e dell’autointerrogazione (C7 – Autointerrogazione: 5/9). Ciò suggerisce che lo studente sa *trasformare* le informazioni in modo attivo, ma fatica a *strutturarle* visivamente o a *verificarle* sistematicamente con domande interne.\n\n- **Relazione C1 ↔ C5**: un’elevata elaborazione senza un pari ricorso a mappe, schemi o diagrammi rischia di produrre conoscenze ricche ma poco organizzate, più difficili da recuperare in sede di verifica. Il punteggio basso di C5 (pur adeguato) indica che lo studente non sfrutta appieno supporti visivi per dare ordine ai contenuti.\n- **Relazione C1 ↔ C7**: l’autovalutazione è nella media; chi elabora molto ma non si interroga abbastanza può incorrere in un eccesso di fiducia (illusione di sapere) o in una mancanza di controllo metacognitivo. Un C7 più alto aiuterebbe a trasformare l’elaborazione in comprensione verificata.\n- **C5 ↔ C7**: entrambi nella fascia media, possono crescere insieme: creare organizzatori grafici e poi porsi domande su di essi è una strategia combinata potente.\n\n**Orientamento pratico**:\n1. **Approfitta di C1 per potenziare C5**: dopo aver studiato un argomento con le tue solite strategie (riassunti, spiegazioni a voce), costruisci una mappa concettuale o una tabella comparativa. Usa colori o frecce per collegare le idee. Questo trasformerà la tua elaborazione in uno schema ordinato.\n2. **Integra C7 nel tuo metodo**: prima di chiudere una sessione, dedicati 5 minuti a scrivere 3-4 domande aperte sul materiale e a rispondere a voce, come se dovessi spiegare a qualcuno. Se trovi lacune, torna all’elaborazione.\n3. **Allenati a “visualizzare + interrogarti”**: prendi una parte del testo, disegna un diagramma di flusso o una mappa, e poi chiediti “perché questo concetto è collegato a quest’altro?” o “cosa succederebbe se cambiassi un elemento?”. Questo lega i tre fattori.\n\n**Vista d’insieme**: hai un buon motore di elaborazione (C1), ma per renderlo più efficiente hai bisogno di binari (C5) e di un controllo di qualità (C7). Con piccoli aggiustamenti, la tua organizzazione delle informazioni potrà diventare molto più solida.",
+        "error": null,
+        "raw_metrics": {
+          "usage": {
+            "prompt_tokens": 811,
+            "completion_tokens": 879,
+            "total_tokens": 1690,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 188
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 811
+          },
+          "estimated_cost_usd": 0.0,
+          "response_model": "deepseek-v4-flash",
+          "generation_id": "3b63f22a-13a7-45c3-9898-a5f0ff48791e"
+        },
+        "quality": {
+          "factor_coverage": 1.0,
+          "code_format_ok": 0.0,
+          "interpretation_accuracy": 0.833,
+          "practical_advice": 0.667,
+          "score_mentions": 1.0,
+          "no_refusal": 1.0,
+          "connection_analysis": 1.0,
+          "no_greeting": 1.0,
+          "substantive": 1.0,
+          "structure": 0.7,
+          "italian_compliance": 1.0,
+          "has_html": 1.0,
+          "overall": 0.812
+        }
+      },
+      {
+        "step_id": "sl-selfcontrol",
+        "step_label": "3.2 Autocontrollo",
+        "step_type": "guided",
+        "ttft_ms": 5059.9,
+        "total_duration_ms": 18999.5,
+        "eval_count": 1707,
+        "prompt_eval_count": 807,
+        "tokens_per_second": 122.5,
+        "output_text": "Passiamo ora all'analisi di secondo livello della macro-dimensione **Autocontrollo e concentrazione**, che integra i fattori C2 (Autoregolazione), C3 (Disorientamento) e C6 (Difficoltà di concentrazione). L'obiettivo è valutare la capacità complessiva di gestire il processo di studio.\n\n---\n\n### Quadro dei punteggi\n- **C2 (Autoregolazione): 5/9** – livello medio, né critico né di forza.\n- **C3 (Disorientamento): 3/9** – **punto di forza** (scala invertita: punteggio basso = basso disorientamento, quindi buona chiarezza sugli obiettivi e sul metodo).\n- **C6 (Difficoltà di concentrazione): 7/9** – **area di crescita** (scala invertita: punteggio alto = forte difficoltà a mantenere l'attenzione).\n\n---\n\n### Relazione tra i fattori\n\nIl profilo mostra un contrasto interessante: da un lato hai un **buon orientamento** (C3 basso) – sai cosa studiare, hai una direzione chiara e non ti senti perso. Dall’altro lato, **la concentrazione è il vero ostacolo** (C6 alto): fatichi a mantenere il focus, probabilmente a causa di distrazioni interne o esterne. L’Autoregolazione (C2) è nella media, il che significa che disponi di alcune strategie di base per organizzare lo studio, ma non sono sufficienti a contrastare le difficoltà attentive.\n\nQuesta discrepanza suggerisce che il problema non è *cosa* studiare (orientamento), ma *come* mantenere l’attenzione durante lo studio. La componente emotiva gioca un ruolo chiave: notiamo dal profilo complessivo che l’**Ansietà di base** (A1, 8/9) e le **Interferenze emotive** (A7, 7/9) sono elevate, mentre la **Percezione di competenza** (A6) è bassa (3/9). Questi fattori alimentano il circolo: ansia → difficoltà di concentrazione → calo della fiducia → ulteriore ansia. Inoltre, l’**Attribuzione a cause incontrollabili** (A4, 8/9) indica che tendi a vedere le difficoltà come fuori dal tuo controllo, il che indebolisce la motivazione a mettere in atto strategie di autoregolazione.\n\n---\n\n### Capacità di gestione del processo di studio\n\nComplessivamente, la tua capacità di gestire lo studio è **disarmonica**: hai una buona bussola (C3 forte) e un’autoregolazione media, ma la concentrazione è un collo di bottiglia. Senza un intervento mirato, rischi di iniziare lo studio con chiarezza ma di perdere rapidamente efficacia a causa di distrazioni o tensioni emotive. Il punto debole non è la pianificazione astratta, bensì l’esecuzione nei momenti concreti di studio.\n\n---\n\n### Indicazioni pratiche\n\n1. **Rafforza le strategie di concentrazione**:\n   - Utilizza la tecnica del **Pomodoro** (25 minuti di lavoro + 5 di pausa) per segmentare lo studio in blocchi brevi, riducendo il carico attentivo.\n   - Crea un **ambiente privo di distrazioni** (telefono spento, schermo pulito, rumore bianco o silenzio).\n   - Associazza lo studio a **routine fisse** (stesso orario, stesso luogo) per innescare un automatismo.\n\n2. **Gestisci l’ansia e le interferenze emotive**:\n   - Pratica **esercizi di respirazione o mindfulness** prima di iniziare (2-3 minuti) per abbassare l’attivazione fisiologica.\n   - Usa un **diario delle preoccupazioni**: scrivi per 5 minuti ciò che ti disturba, poi chiudi il quaderno e riprendi a studiare.\n   - Riformula l’attribuzione: invece di pensare “non riesco a concentrarmi perché sono incapace” (A4, A6), prova “la concentrazione è una competenza che posso allenare con esercizi specifici” (spostamento verso cause controllabili, A3).\n\n3. **Potenziamento dell’autoregolazione (C2)**:\n   - Pianifica non solo *cosa* studiare, ma anche *come* verificare la tua attenzione: ogni 20 minuti fermati e chiediti “Sto seguendo il filo?” (autointerrogazione, C7, che è media: può essere migliorata).\n   - Definisci **micro-obiettivi** (es. “capisco i primi due paragrafi”) e gratificati dopo ogni piccolo successo per alimentare la motivazione (A2, Volizione, è nella media, può diventare più solida).\n\n4. **Sfrutta il tuo punto di forza (C3)**:\n   - Poiché non hai disorientamento, usa mappe o schemi solo come traccia rapida, non come stampella. Per concentrarti, riduci al minimo la rielaborazione visiva iniziale e vai direttamente all’azione (lettura attiva o esercizi).\n\n---\n\n### Sintesi\n\nIl tuo processo di studio è **ben orientato ma fragile nell’esecuzione**. Il nodo centrale è la concentrazione, aggravata da ansia e percezioni negative. Lavorare sulle tecniche di attenzione e sulla gestione emotiva ti permetterà di allineare la direzione (C3) con l’azione (C2), sbloccando il potenziale che già possiedi.",
+        "error": null,
+        "raw_metrics": {
+          "usage": {
+            "prompt_tokens": 807,
+            "completion_tokens": 1707,
+            "total_tokens": 2514,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 407
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 807
+          },
+          "estimated_cost_usd": 0.0,
+          "response_model": "deepseek-v4-flash",
+          "generation_id": "1dd1d8c7-e89c-4e4d-b20f-6ef1b185277f"
+        },
+        "quality": {
+          "factor_coverage": 1.0,
+          "code_format_ok": 0.0,
+          "interpretation_accuracy": 1.0,
+          "practical_advice": 1.0,
+          "score_mentions": 1.0,
+          "no_refusal": 1.0,
+          "connection_analysis": 0.5,
+          "no_greeting": 1.0,
+          "substantive": 1.0,
+          "structure": 1.0,
+          "italian_compliance": 1.0,
+          "has_html": 1.0,
+          "overall": 0.875
+        }
+      },
+      {
+        "step_id": "sl-motivation",
+        "step_label": "3.3 Motivazione",
+        "step_type": "guided",
+        "ttft_ms": 4043.7,
+        "total_duration_ms": 18190.2,
+        "eval_count": 1505,
+        "prompt_eval_count": 803,
+        "tokens_per_second": 106.4,
+        "output_text": "Ecco l'analisi di secondo livello della macro-dimensione **Motivazione e Volontà**, che integra i fattori A2 (Volizione), A5 (Mancanza di perseveranza) e A6 (Percezione di competenza).\n\n**Analisi integrata**\n\nLa vostra Volizione (A2 = 6/9, punteggio nella media) indica una capacità moderata di mantenere l'impegno verso gli obiettivi, nonostante le distrazioni o le difficoltà. In parallelo, la Mancanza di perseveranza (A5 = 6/9, nella norma) non segnala una tendenza a mollare facilmente: siete in grado di proseguire un'attività, anche quando diventa faticosa. Tuttavia, la Percezione di competenza (A6 = 3/9, area di miglioramento) è decisamente bassa: dubitate sistematicamente delle vostre capacità, non vi sentite all'altezza dei compiti e tendete a sottovalutare i vostri successi.\n\nQuesta discrepanza è cruciale: **avete la volontà e la costanza per studiare, ma non credete di poter riuscire**. La motivazione non è carente nella sua componente \"volitiva\" (il \"carburante\" per agire), ma è minata da una fragile fiducia in voi stessi. Questo crea un circolo vizioso: anche quando vi impegnate, la scarsa autoefficacia vi porta a interpretare gli insuccessi come prove della vostra inadeguatezza, invece che come ostacoli normali da superare.\n\nCollegando questo quadro al contesto generale, emerge un profilo emotivamente sovraccarico: Ansietà di base (A1 = 8/9, area di miglioramento) molto alta, Attribuzione a cause incontrollabili (A4 = 8/9, area di miglioramento) elevata (tendete a credere che i risultati dipendano da fattori esterni o immutabili), e Interferenze emotive (A7 = 7/9, area di miglioramento) marcate. Inoltre, le Difficoltà di concentrazione (C6 = 7/9, area di miglioramento) aggravano il senso di inefficacia. La vostra buona volontà (A2) viene quindi continuamente erosa da ansia, sensazione di non avere controllo e auto-svalutazione.\n\n**Indicazioni pratiche**\n\n1.  **Ristrutturare le attribuzioni**: poiché A4 è alta (attribuite a cause incontrollabili) e A6 è bassa (percepite di non essere competenti), iniziate un diario di studio quotidiano in cui, per ogni risultato (anche piccolo), scrivete una causa **controllabile** che ha contribuito (es. \"ho usato le strategie C1\", \"mi sono preso una pausa\", \"ho ripetuto ad alta voce\"). Questo allena il cervello a cercare spiegazioni modificabili, non globali.\n\n2.  **Micro-obiettivi di conferma**: per contrastare la bassa percezione di competenza, suddividete i compiti in passi molto piccoli (es. 10 minuti di lettura attiva con sottolineatura). Dopo ogni passo, fermatevi e verbalizzate il successo: \"Ce l'ho fatta, ho completato questo pezzo\". Usate un timer per non lasciarvi sopraffare.\n\n3.  **Potenziare la volizione con ancoraggi emotivi**: la vostra A2 è nella media, ma per proteggerla dall'ansia (A1 alta) e dalle interferenze emotive (A7 alta), create un breve rituale di inizio studio: 3 respiri profondi, poi ripetere una frase di auto-efficacia scelta da voi (es. \"ho la perseveranza per continuare anche se mi sento insicuro\"). Questo lega l'azione volitiva a un sostegno emotivo.\n\n4.  **Ridurre il disorientamento**: il fattore C3 (Disorientamento) è basso (3/9, un punto di forza): siete bravi a strutturare lo studio. Sfruttate questa forza: prima di ogni sessione, scrivete una mappa mentale o una scaletta (usando gli organizzatori semantici, C5 = 4/9, potete migliorarli). Vedere il percorso riduce l'ansia e aumenta la percezione di controllo, che indirettamente alza la fiducia in voi stessi.\n\n5.  **Monitoraggio settimanale**: ogni venerdì, valutate su una scala 1-10 quanto siete stati perseveranti (A5) e quanto avete messo volontà (A2). Poi confrontate con quanto vi siete sentiti competenti (A6). Se i primi due sono stabili o in crescita ma il terzo no, applicate il punto 1 e 2 in modo più intensivo.\n\nIn sintesi: la vostra motivazione ha una buona base di volontà e costanza, ma è come un motore potente a cui manca la benzina della fiducia. Lavorando sulle attribuzioni e sui micro-successi, potrete allineare il \"fare\" al \"credere di poter farcela\".",
+        "error": null,
+        "raw_metrics": {
+          "usage": {
+            "prompt_tokens": 803,
+            "completion_tokens": 1505,
+            "total_tokens": 2308,
+            "prompt_tokens_details": {
+              "cached_tokens": 640
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 319
+            },
+            "prompt_cache_hit_tokens": 640,
+            "prompt_cache_miss_tokens": 163
+          },
+          "estimated_cost_usd": 0.0,
+          "response_model": "deepseek-v4-flash",
+          "generation_id": "592a699e-0a95-4132-8ad5-ab94d9b3a4ec"
+        },
+        "quality": {
+          "factor_coverage": 1.0,
+          "code_format_ok": 0.0,
+          "interpretation_accuracy": 1.0,
+          "practical_advice": 0.333,
+          "score_mentions": 1.0,
+          "no_refusal": 1.0,
+          "connection_analysis": 0.0,
+          "no_greeting": 1.0,
+          "substantive": 1.0,
+          "structure": 0.4,
+          "italian_compliance": 1.0,
+          "has_html": 1.0,
+          "overall": 0.74
+        }
+      },
+      {
+        "step_id": "sl-emotions",
+        "step_label": "3.4 Gestione Emotiva",
+        "step_type": "guided",
+        "ttft_ms": 9398.4,
+        "total_duration_ms": 21445.2,
+        "eval_count": 1877,
+        "prompt_eval_count": 798,
+        "tokens_per_second": 155.8,
+        "output_text": "I fattori A1 (Ansietà di base) con punteggio 8/9 e A7 (Interferenze emotive) con 7/9 si collocano entrambi in area di criticità, secondo la scala invertita: punteggi alti indicano una significativa difficoltà nella gestione dello stress e delle emozioni negative. Questa condizione agisce come un filtro emotivo costante che interferisce con l’efficacia dello studio, anche quando le strategie cognitive sono potenzialmente adeguate.\n\nL’interazione è a spirale: un’elevata ansietà di base (A1) rende lo studente più vulnerabile a percepire situazioni di studio come minacciose o opprimenti, attivando risposte emotive intense. Queste, a loro volta, generano interferenze emotive (A7) che disturbano la concentrazione e la fluidità del pensiero, portando a un senso di sopraffazione mentale. Il risultato è una fatica extra che non deriva dalla difficoltà del compito in sé, ma dalla gestione emotiva durante l’esecuzione.\n\nOsservando le risorse presenti nel profilo, emerge un contrasto importante: C1 (Strategie elaborative) è un punto di forza a 7/9, indicando che lo studente possiede strumenti cognitivi validi. Tuttavia, questi non vengono utilizzati al meglio a causa del blocco emotivo. Analogamente, C3 (Disorientamento) è a 3/9 (forza, dato l’invertito), e C7 (Autointerrogazione) è nella media: c’è potenziale per un approccio metacognitivo, ma l’emotività lo soffoca.\n\nA complicare il quadro, il basso punteggio in A6 (Percezione di competenza) a 3/9 segnala uno scollamento tra le capacità reali e la fiducia in sé, alimentato dall’ansia. Inoltre, A4 (Attribuzione a cause incontrollabili) a 8/9 indica una tendenza a vedere i fallimenti come dovuti a fattori esterni o immutabili, il che riduce la motivazione a intervenire.\n\n**Guida pratica per la gestione emotiva:**\n\n1. **Creare una routine di “contenimento” pre-studio**: dedicare 3–5 minuti a un esercizio di respirazione o grounding immediato prima di iniziare, per abbassare il livello basale di ansia (A1) prima che si trasformi in interferenza (A7). Es: inspirare per 4 secondi, trattenere per 4, espirare per 6.\n\n2. **Ristrutturare le attribuzioni**: di fronte a un errore o a uno studio lento, allenarsi a scrivere una frase causale controllabile (tipo “Non ho capito questo passaggio, posso rileggerlo con calma”) per contrastare la tendenza A4. Usare un post-it visibile: “Il blocco è del metodo, non della persona”.\n\n3. **Sfruttare le risorse cognitive quando l’emozione è alta**: invece di forzare lo studio, applicare una strategia di C1 (Strategie elaborative) molto strutturata e meccanica, come fare una mappa schematica o scrivere parole chiave. L’azione manuale e lineare aiuta a bypassare l’interferenza emotiva A7 e a riprendere il controllo.\n\n4. **Programmare micro-pause emotive**: ogni 25–30 minuti di concentrazione, fare una pausa di 2 minuti in cui si scrive su un foglietto l’emozione percepita (es. “ansia”, “frustrazione”) e poi la si strappa. Questo riduce la carica emotiva accumulata e impedisce che A7 aumenti durante la sessione.\n\n5. **Utilizzare C2 (Autoregolazione) per creare un “piano di resilienza”**: dato che C2 è nella media, puoi formalizzare una sequenza di tre passaggi per quando l’ansia sale: (a) riconoscerla, (b) fare l’esercizio di respirazione, (c) rientro nel compito con una domanda guida. Scriverla su un biglietto e tenerla sopra il libro.\n\nIn sintesi, mentre le abilità cognitive (C1) sono un punto di forza solido, la gestione emotiva è una priorità di intervento. Il lavoro principale è ridurre l’attivazione ansiosa di base A1 e spezzare il ciclo che porta all’interferenza A7, affinché le strategie possano effettivamente essere applicate con efficacia.",
+        "error": null,
+        "raw_metrics": {
+          "usage": {
+            "prompt_tokens": 798,
+            "completion_tokens": 1877,
+            "total_tokens": 2675,
+            "prompt_tokens_details": {
+              "cached_tokens": 640
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 808
+            },
+            "prompt_cache_hit_tokens": 640,
+            "prompt_cache_miss_tokens": 158
+          },
+          "estimated_cost_usd": 0.0,
+          "response_model": "deepseek-v4-flash",
+          "generation_id": "3c5d3b94-73ac-445e-82db-1ded92fa9d6f"
+        },
+        "quality": {
+          "factor_coverage": 1.0,
+          "code_format_ok": 1.0,
+          "interpretation_accuracy": 1.0,
+          "practical_advice": 1.0,
+          "score_mentions": 1.0,
+          "no_refusal": 1.0,
+          "connection_analysis": 0.5,
+          "no_greeting": 1.0,
+          "substantive": 1.0,
+          "structure": 0.4,
+          "italian_compliance": 1.0,
+          "has_html": 1.0,
+          "overall": 0.945
+        }
+      },
+      {
+        "step_id": "sl-attribution",
+        "step_label": "3.5 Stile Attributivo",
+        "step_type": "guided",
+        "ttft_ms": 2617.7,
+        "total_duration_ms": 15927.5,
+        "eval_count": 1325,
+        "prompt_eval_count": 804,
+        "tokens_per_second": 99.6,
+        "output_text": "## Analisi di secondo livello – Stile attribuzionale (A3 e A4)\n\nIl tuo profilo evidenzia una **asimmetria critica** tra i due fattori attribuzionali.  \n\n- **A3 (Attribuzione a cause controllabili)** = 5/9 – livello **adeguato** ma non consolidato.  \n- **A4 (Attribuzione a cause incontrollabili)** = 8/9 – dato **invertito**: punteggio elevato = **area di miglioramento**, forte tendenza a spiegare eventi con cause che non dipendono da te (es. fortuna, abilità fissa, difficoltà del compito, umore altrui).  \n\nQuesta combinazione indica un **profilo attribuzionale disfunzionale**:  \n- le attribuzioni a cause controllabili (impegno, strategia, metodo) sono **presenti ma fragili**;  \n- le attribuzioni a cause incontrollabili sono **sovrabbondanti**, specialmente in situazioni di insuccesso.  \n\n### Collegamenti con altri macro-fattori  \n- **A6 (Percezione di competenza)** = 3/9 – area di miglioramento: ti senti poco capace, rafforzando il ciclo “fallisco → è perché non sono portato”.  \n- **A5 (Mancanza di perseveranza)** = 6/9 – livello medio, non ancora problematico, ma la tendenza a spiegare i fallimenti con cause fisse potrebbe minare la costanza nel tempo.  \n- **A1 (Ansietà di base)** = 8/9 e **A7 (Interferenze emotive)** = 7/9 – l’ansia e le emozioni intrusive ti portano a interpretare le difficoltà come segni di incapacità, alimentando lo stile di attribuzione incontrollabile.  \n- **A2 (Volizione)** = 6/9 – la forza di volontà è nella media, ma viene erosa quando credi che lo sforzo non serva a nulla.  \n\n### Esempio del ciclo  \nIn un compito difficile:  \n1. studi con buona **C1 (Strategie elaborative)** (7/9 – punto di forza), ma se il risultato è scarso;  \n2. attivi **A4** (“non sono bravo”, “la prof è ingiusta”, “è capitato male”);  \n3. cala **A6** (percezione di competenza);  \n4. aumentano **A1** e **A7**;  \n5. riduci l’impegno o la **C2 (Autoregolazione)** (5/9), perché “tanto non serve”.  \n\n### Guida pratica  \n\n**1. Riequilibrare il “linguaggio interno”**  \nOgni volta che pensi “non ci posso fare niente”, riscrivi la frase in una versione controllabile:  \n- *“Non ho usato la strategia giusta”* invece di “Non sono portato”;  \n- *“Non ho ripassato abbastanza i collegamenti”* invece di “Il compito era impossibile”.  \n\n**2. Diario attribuzionale settimanale**  \nPrendi 3 successi e 3 insuccessi della settimana. Per ciascuno, scrivi:  \n- Causa che hai pensato (controllabile/incontrollabile?).  \n- Causa alternativa più utile (controllabile).  \n\n**3. Potenzia A3 con l’autointerrogazione (C7 = 5/9)**  \nPrima di studiare, chiediti: *“Quali tecniche specifiche userò per capire questo argomento?”*. Dopo: *“Cosa ho fatto di diverso che mi ha permesso di capire meglio?”*.  \n\n**4. Lavora sulla percezione di competenza (A6)**  \nCostruisci una **progressione di piccole vittorie**: scegli un argomento che hai già studiato ma non padroneggi. Applica le tue **C1 (Strategie elaborative)** per 20 minuti, verifica, e annota il miglioramento. Questo spezza l’associazione “fallimento → incapacità”.  \n\n**5. Gestisci ansia e interferenze (A1, A7)**  \n- Prima di un test, usa una breve tecnica di respirazione (4-7-8) per abbassare l’attivazione emotiva.  \n- Ricorda: l’ansia è un segnale, non una prova di incompetenza. Puoi reagire con un’attribuzione controllabile: *“Ansia = devo attivare le mie strategie di ripasso veloce”*.  \n\n**Sintesi operativa**  \nIl tuo stile attribuzionale è **sbilanciato verso l’impotenza appresa**. La buona notizia: hai risorse cognitive (C1, C2 media) per correggerlo. Lavora sistematicamente sulla **sostituzione delle attribuzioni incontrollabili con attribuzioni controllabili**, e vedrai un effetto positivo su A6, A1 e sulla costanza dello studio.",
+        "error": null,
+        "raw_metrics": {
+          "usage": {
+            "prompt_tokens": 804,
+            "completion_tokens": 1325,
+            "total_tokens": 2129,
+            "prompt_tokens_details": {
+              "cached_tokens": 640
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 183
+            },
+            "prompt_cache_hit_tokens": 640,
+            "prompt_cache_miss_tokens": 164
+          },
+          "estimated_cost_usd": 0.0,
+          "response_model": "deepseek-v4-flash",
+          "generation_id": "817ccb78-01af-4f20-b099-ea49fade95dc"
+        },
+        "quality": {
+          "factor_coverage": 1.0,
+          "code_format_ok": 0.0,
+          "interpretation_accuracy": 1.0,
+          "practical_advice": 1.0,
+          "score_mentions": 1.0,
+          "no_refusal": 1.0,
+          "connection_analysis": 0.5,
+          "no_greeting": 1.0,
+          "substantive": 1.0,
+          "structure": 1.0,
+          "italian_compliance": 1.0,
+          "has_html": 1.0,
+          "overall": 0.875
+        }
+      },
+      {
+        "step_id": "sl-social",
+        "step_label": "3.6 Dimensione Sociale",
+        "step_type": "guided",
+        "ttft_ms": 3151.3,
+        "total_duration_ms": 12902.9,
+        "eval_count": 1132,
+        "prompt_eval_count": 787,
+        "tokens_per_second": 116.1,
+        "output_text": "**Analisi di secondo livello – Dimensione sociale**\n\nIl fattore **C4 (Disponibilità alla collaborazione)** si attesta a **6/9**, valore medio-alto che indica un’inclinazione generalmente positiva verso il lavoro di gruppo, ma non ancora consolidata come punto di forza stabile. La tua apertura a collaborare è presente, ma può essere limitata da altri elementi del tuo profilo.\n\n**Relazioni con altri fattori**\n\n- **C1 (Strategie elaborative) – 7/9 (punto di forza)**: possiedi strumenti cognitivi efficaci per approfondire i contenuti. In gruppo, potresti assumere un ruolo propositivo, ma devi evitare di sovraccaricare i compagni con il tuo ritmo di elaborazione.  \n- **C3 (Disorientamento) – 3/9 (punto di forza, invertito)**: il tuo basso disorientamento indica una buona capacità di mantenere la direzione nello studio. In gruppo, questo ti rende un punto di riferimento stabile.  \n- **C6 (Difficoltà di concentrazione) – 7/9 (area di crescita, invertito)**: la tua attenzione è vulnerabile. In gruppo, il rumore di fondo o la gestione delle dinamiche sociali potrebbero aumentare la distrazione.  \n- **A6 (Percezione di competenza) – 3/9 (area di crescita)**: ti sottovaluti. Questo può frenare la tua partecipazione attiva, facendoti rimanere in secondo piano o delega eccessivamente.  \n- **A1 (Ansietà di base) – 8/9 (area di crescita, invertito)**: l’ansia elevata può rendere il confronto sociale faticoso, portandoti a evitare il gruppo o a temere il giudizio altrui.  \n- **A7 (Interferenze emotive) – 7/9 (area di crescita, invertito)**: le emozioni negative (frustrazione, insicurezza) possono interferire con la collaborazione, specialmente in caso di divergenze.  \n\n**Valutazione complessiva**\n\nLa tua disponibilità alla collaborazione (C4) è discreta, ma il suo potenziale è frenato da ansia (A1), interferenze emotive (A7) e bassa percezione di competenza (A6). Hai le risorse cognitive (C1, C3) per contribuire validamente, ma devi gestire la componente emotiva e rafforzare la fiducia in te stesso.\n\n**Orientamenti pratici**\n\n1. **Scegli gruppi piccoli (3-4 persone)**, così riduci il sovraccarico sociale e aumenti la tua sicurezza.  \n2. **Definisci ruoli chiari all’inizio** del lavoro: ad esempio, chiedi di essere tu a organizzare la scaletta dei compiti, sfruttando il tuo basso disorientamento (C3).  \n3. **Esercitati a esprimere un contributo breve** (es. \"Secondo me questo punto può essere spiegato così\") prima di ogni incontro di gruppo: questo allena la tua A6 e riduce l’ansia.  \n4. **Usa un \"time-out emotivo\"**: se durante il gruppo senti ansia o frustrazione (A1, A7), prenditi 1 minuto per respirare e rientrare nel dialogo.  \n5. **Alterna studio individuale e di gruppo**: la collaborazione non deve sostituire il tuo metodo, ma integrarlo. Data la tua C6 (difficoltà di concentrazione), evita sessioni di gruppo lunghe (max 45 minuti consecutivi).  \n\n**Sintesi**  \nLa collaborazione è un’area che puoi sviluppare, ma non forzarla. Sfrutta i tuoi punti di forza cognitivi (C1, C3) e lavora gradualmente sulla gestione emotiva. Il gruppo può diventare un supporto, non una fonte di stress.",
+        "error": null,
+        "raw_metrics": {
+          "usage": {
+            "prompt_tokens": 787,
+            "completion_tokens": 1132,
+            "total_tokens": 1919,
+            "prompt_tokens_details": {
+              "cached_tokens": 640
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 239
+            },
+            "prompt_cache_hit_tokens": 640,
+            "prompt_cache_miss_tokens": 147
+          },
+          "estimated_cost_usd": 0.0,
+          "response_model": "deepseek-v4-flash",
+          "generation_id": "2ff6dfd7-4a44-4551-99b2-0be114500945"
+        },
+        "quality": {
+          "factor_coverage": 1.0,
+          "code_format_ok": 1.0,
+          "interpretation_accuracy": 1.0,
+          "practical_advice": 1.0,
+          "score_mentions": 1.0,
+          "no_refusal": 1.0,
+          "connection_analysis": 0.0,
+          "no_greeting": 1.0,
+          "substantive": 1.0,
+          "structure": 0.7,
+          "italian_compliance": 1.0,
+          "has_html": 1.0,
+          "overall": 0.935
+        }
+      },
+      {
+        "step_id": "fup-deepening",
+        "step_label": "Q&A - Approfondimento C2",
+        "step_type": "followup",
+        "ttft_ms": 2729.1,
+        "total_duration_ms": 8526.3,
+        "eval_count": 662,
+        "prompt_eval_count": 894,
+        "tokens_per_second": 114.2,
+        "output_text": "Certamente. Dal tuo profilo emerge che C2 (Autoregolazione) si attesta su un punteggio medio (5/9), il che significa che non hai una difficoltà strutturale, ma le tue attuali strategie di pianificazione e automonitoraggio potrebbero essere poco incisive nelle fasi di mantenimento a lungo termine. È un aspetto che si collega bene a ciò che già possiedi: hai un buon C1 (Strategie elaborative), quindi quando sei concentrato riesci a elaborare le informazioni, ma il problema è mantenere la rotta nel tempo.\n\nPer migliorare la tenuta di un piano di studio concreto, ti suggerisco tre strategie pratiche:\n\n1. **Micro-obiettivi e check-in orari**: scomponi ogni sessione di studio in blocchi di 25-30 minuti, con un obiettivo specifico per ciascuno. Alla fine di ogni blocco, fai una pausa di 5 minuti e chiediti: \"Ho raggiunto ciò che avevo programmato?\". Questo allena la consapevolezza dell’avanzamento.\n\n2. **Pianificazione a \"menù\"**: invece di un orario rigido, prepara tre o quattro attività possibili per la giornata (es. leggere un capitolo, fare esercizi, ripetere). Scegli nell’ordine che preferisci, ma impegnati a completarne almeno due. Riduce la pressione della scelta e mantiene la flessibilità.\n\n3. **Ancoraggio ambientale**: associa l’inizio dello studio a un rituale fisso (ad esempio, preparare la scrivania, accendere una luce specifica o ascoltare 2 minuti di silenzio). Questo segnale aiuta il cervello a passare in modalità \"piano in esecuzione\" senza sforzo volontario.\n\nProva a introdurle una alla volta per una settimana, e poi valuta quale impatto ha sulla costanza del tuo piano. L’autoregolazione si allena come un muscolo, non è un tratto fisso.",
+        "error": null,
+        "raw_metrics": {
+          "usage": {
+            "prompt_tokens": 894,
+            "completion_tokens": 662,
+            "total_tokens": 1556,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 189
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 894
+          },
+          "estimated_cost_usd": 0.0,
+          "response_model": "deepseek-v4-flash",
+          "generation_id": "631c6d62-dfb3-4da5-93e8-4a56d132d245"
+        },
+        "quality": {
+          "factor_coverage": 1.0,
+          "code_format_ok": 1.0,
+          "interpretation_accuracy": 1.0,
+          "practical_advice": 1.0,
+          "score_mentions": 1.0,
+          "no_refusal": 1.0,
+          "connection_analysis": 1.0,
+          "no_greeting": 1.0,
+          "substantive": 1.0,
+          "structure": 0.63,
+          "italian_compliance": 1.0,
+          "has_html": 1.0,
+          "overall": 0.982
+        }
+      },
+      {
+        "step_id": "fup-anxiety",
+        "step_label": "Q&A - Gestione ansia",
+        "step_type": "followup",
+        "ttft_ms": 2617.3,
+        "total_duration_ms": 8220.7,
+        "eval_count": 663,
+        "prompt_eval_count": 899,
+        "tokens_per_second": 118.3,
+        "output_text": "Assolutamente. Hai due fattori che si alimentano a vicenda: **A1 (Ansietà di base)** a 8 e **A7 (Interferenze emotive)** a 7, entrambi aree su cui lavorare. L’ansia di base è una tensione diffusa che si attiva appena ti trovi in una situazione valutativa, mentre le interferenze emotive sono i pensieri negativi (tipo “non ce la farò”, “sbaglierò tutto”) che ti distraggono durante la prova e ti fanno perdere il filo.\n\nIl problema nasce dal fatto che l’ansia innesca le interferenze, e le interferenze aumentano l’ansia in un loop che ti blocca. Per spezzarlo, ti suggerisco due strade concrete, legate proprio a questi due fattori:\n\n1. **Per abbassare l’ansia di base (A1)**: nei giorni precedenti l’esame, inserisci delle brevi *simulazioni ambientali*. Studia per 20-30 minuti in un setting simile a quello d’esame (silenzio, tempo cronometrato, niente appunti) e subito dopo fai un respiro lento di 10 secondi. Questo desensibilizza il tuo sistema nervoso all’ambiente, riducendo la reattività ansiosa.\n\n2. **Per ridurre le interferenze emotive (A7)**: durante l’esame, quando senti arrivare un pensiero negativo, *non cercare di bloccarlo* (peggiorerebbe). Invece, etichettalo mentalmente: “Ecco un’interferenza da ansia” e riporta subito l’attenzione al foglio, leggendo la domanda successiva ad alta voce (sotto voce). Questo interrompe il ciclo senza combatterlo.\n\nProva a fare una di queste due cose in modo sistematico per le prossime 2-3 simulazioni di studio, e vedrai che il picco emotivo si attenua. Vuoi che approfondisca qualche aspetto specifico di queste tecniche?",
+        "error": null,
+        "raw_metrics": {
+          "usage": {
+            "prompt_tokens": 899,
+            "completion_tokens": 663,
+            "total_tokens": 1562,
+            "prompt_tokens_details": {
+              "cached_tokens": 768
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 188
+            },
+            "prompt_cache_hit_tokens": 768,
+            "prompt_cache_miss_tokens": 131
+          },
+          "estimated_cost_usd": 0.0,
+          "response_model": "deepseek-v4-flash",
+          "generation_id": "f191c4c7-ab03-4d67-9807-a3eadf3daf85"
+        },
+        "quality": {
+          "factor_coverage": 1.0,
+          "code_format_ok": 1.0,
+          "interpretation_accuracy": 0.5,
+          "practical_advice": 1.0,
+          "score_mentions": 1.0,
+          "no_refusal": 1.0,
+          "connection_analysis": 1.0,
+          "no_greeting": 1.0,
+          "substantive": 1.0,
+          "structure": 0.65,
+          "italian_compliance": 1.0,
+          "has_html": 1.0,
+          "overall": 0.883
+        }
+      },
+      {
+        "step_id": "fup-motivation",
+        "step_label": "Q&A - Motivazione",
+        "step_type": "followup",
+        "ttft_ms": 6259.2,
+        "total_duration_ms": 10427.2,
+        "eval_count": 918,
+        "prompt_eval_count": 898,
+        "tokens_per_second": 220.3,
+        "output_text": "È un’osservazione molto pertinente. La tua A6 (Percezione di competenza) è bassa (3/9), e questo è un punto critico per la motivazione: se non ti senti in grado di riuscire, è difficile sostenere l’impegno. La A2 (Volizione) è nella media, quindi la tua capacità di mantenere la determinazione c’è, ma probabilmente viene erosa proprio dal dubbio sulle tue capacità.\n\nPer migliorare la motivazione, ti suggerisco di lavorare direttamente sulla percezione di competenza con azioni concrete e piccole:\n\n- **Fissa micro-obiettivi** (ad esempio, studiare 20 minuti o imparare tre concetti) e, ogni volta che li raggiungi, riconosci esplicitamente il successo. Questo costruisce gradualmente la fiducia.\n- **Tieni un breve diario di progressi** alla fine di ogni sessione: scrivi una cosa che hai capito o che hai fatto meglio di ieri. È un antidoto alla tendenza a svalutare i tuoi risultati.\n- **Rivedi** le tue strategie di studio: la C1 (Strategie elaborative) è un punto di forza (7/9), quindi hai già buoni strumenti. Usala per approfondire argomenti che ti sembrano ostici, scomponendoli in parti gestibili.\n\nEvita di confrontarti con standard irrealistici e concentrati sul miglioramento personale. La motivazione non nasce dalla volontà astratta, ma dal sentirsi competenti passo dopo passo.",
+        "error": null,
+        "raw_metrics": {
+          "usage": {
+            "prompt_tokens": 898,
+            "completion_tokens": 918,
+            "total_tokens": 1816,
+            "prompt_tokens_details": {
+              "cached_tokens": 768
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 567
+            },
+            "prompt_cache_hit_tokens": 768,
+            "prompt_cache_miss_tokens": 130
+          },
+          "estimated_cost_usd": 0.0,
+          "response_model": "deepseek-v4-flash",
+          "generation_id": "9378d834-2253-4be7-b802-67a600925925"
+        },
+        "quality": {
+          "factor_coverage": 1.0,
+          "code_format_ok": 1.0,
+          "interpretation_accuracy": 1.0,
+          "practical_advice": 0.667,
+          "score_mentions": 1.0,
+          "no_refusal": 1.0,
+          "connection_analysis": 1.0,
+          "no_greeting": 1.0,
+          "substantive": 1.0,
+          "structure": 0.85,
+          "italian_compliance": 1.0,
+          "has_html": 1.0,
+          "overall": 0.953
+        }
+      }
+    ],
+    "concurrency": {
+      "n_users": 3,
+      "step_id": "cognitive",
+      "total_wall_ms": 6254.7,
+      "avg_latency_ms": 6062.0,
+      "p50_ms": 6045.4,
+      "p95_ms": 6254.5,
+      "p99_ms": 6254.5,
+      "errors": 0,
+      "total_requests": 3
+    }
+  }
+]

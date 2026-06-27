@@ -1,0 +1,647 @@
+{
+  "instrument": "ZTPI",
+  "source": "Zimbardo & Boyd (1999) — J Pers Soc Psychol 77(6), 1271–1288. Adatt. it. M. Pellerey.",
+  "license_note": "ZTPI: uso per ricerca secondo i termini degli autori originali.",
+  "n_items": 56,
+  "response_scale": {
+    "min": 1,
+    "max": 5,
+    "labels": {
+      "it": [
+        "1 = Molto falso",
+        "2 = Abbastanza falso",
+        "3 = Neutrale",
+        "4 = Abbastanza vero",
+        "5 = Molto vero"
+      ],
+      "en": [
+        "1 = Very untrue",
+        "2 = Somewhat untrue",
+        "3 = Neutral",
+        "4 = Somewhat true",
+        "5 = Very true"
+      ],
+      "sv": [
+        "1 = Mycket falskt",
+        "2 = Ganska falskt",
+        "3 = Neutralt",
+        "4 = Ganska sant",
+        "5 = Mycket sant"
+      ]
+    }
+  },
+  "report_scale": {
+    "type": "stanine",
+    "min": 1,
+    "max": 9
+  },
+  "factors": [
+    {
+      "code": "T1",
+      "name": {
+        "it": "Passato Negativo",
+        "en": "Past Negative",
+        "sv": "Negativt förflutet"
+      },
+      "direction": "inverse"
+    },
+    {
+      "code": "T2",
+      "name": {
+        "it": "Passato Positivo",
+        "en": "Past Positive",
+        "sv": "Positivt förflutet"
+      },
+      "direction": "direct"
+    },
+    {
+      "code": "T3",
+      "name": {
+        "it": "Presente Edonistico",
+        "en": "Present Hedonistic",
+        "sv": "Hedonistisk nutid"
+      },
+      "direction": "direct"
+    },
+    {
+      "code": "T4",
+      "name": {
+        "it": "Presente Fatalistico",
+        "en": "Present Fatalistic",
+        "sv": "Fatalistisk nutid"
+      },
+      "direction": "inverse"
+    },
+    {
+      "code": "T5",
+      "name": {
+        "it": "Futuro",
+        "en": "Future",
+        "sv": "Framtid"
+      },
+      "direction": "direct"
+    }
+  ],
+  "items": [
+    {
+      "id": "ZTPI-001",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-002",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-003",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-004",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-005",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-006",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-007",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-008",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-009",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-010",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-011",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-012",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-013",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-014",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-015",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-016",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-017",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-018",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-019",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-020",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-021",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-022",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-023",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-024",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-025",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-026",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-027",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-028",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-029",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-030",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-031",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-032",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-033",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-034",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-035",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-036",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-037",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-038",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-039",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-040",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-041",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-042",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-043",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-044",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-045",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-046",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-047",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-048",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-049",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-050",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-051",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-052",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-053",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-054",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-055",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    },
+    {
+      "id": "ZTPI-056",
+      "factor": null,
+      "reverse": null,
+      "text": {
+        "it": "",
+        "en": "",
+        "sv": ""
+      }
+    }
+  ]
+}
