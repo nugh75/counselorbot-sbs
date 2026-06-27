@@ -74,6 +74,9 @@ class AIService:
         self.db = db
         self.config = self._load_config()
         self.last_usage = None
+        # Ultimo ragionamento «sto pensando» estratto (nativo Ollama o tag <think>),
+        # esposto ai chiamatori non-stream (es. audit /live) come canale separato.
+        self.last_thinking = None
         # Modalità "no thinking": disattiva il reasoning sui modelli che lo supportano
         self.disable_thinking = str(self.config.get('disable_thinking', 'false')).lower() == 'true'
         # Override opzionale del budget di ragionamento (es. dal preset del counselor).
@@ -663,11 +666,14 @@ class AIService:
                 "num_predict": max_tokens,
             },
         }
-        if self.disable_thinking:
+        # Estrazione JSON (parser QSA): mai reasoning, altrimenti il `think` puo'
+        # rompere/rallentare l'output strutturato. Forza think off a prescindere.
+        is_json = "json" in system_prompt.lower() or "json" in user_message.lower()
+        if self.disable_thinking or is_json:
             payload["think"] = False
         else:
             payload["think"] = self._plan().enabled
-        if "json" in system_prompt.lower() or "json" in user_message.lower():
+        if is_json:
             payload["format"] = "json"
         response = httpx.post(
             f"{base_url}/api/chat",
@@ -675,7 +681,14 @@ class AIService:
             timeout=httpx.Timeout(600.0, connect=10.0),
         )
         response.raise_for_status()
-        return response.json().get("message", {}).get("content", "")
+        message = response.json().get("message", {}) or {}
+        # Confina il «sto pensando»: preferisci il campo nativo `thinking`; se assente
+        # estrai eventuali tag <think> inlineati nel contenuto (fallback model-agnostico).
+        from .chat_logic import split_thinking
+        extracted, content = split_thinking(message.get("content", "") or "")
+        thinking = message.get("thinking") or extracted
+        self.last_thinking = (thinking or "").strip() or None
+        return content
 
     def _call_llamacpp(self, user_message, system_prompt, model, max_tokens: int = 8000, history=None):
         """llama.cpp / llama-server / llama-swap: endpoint OpenAI-compatibile su /v1."""
@@ -846,7 +859,16 @@ class AIService:
                 "num_predict": max_tokens or 800,
             },
         }
-        payload["think"] = (not self.disable_thinking) and self._plan().enabled
+        is_json = "json" in system_prompt.lower() or "json" in user_message.lower()
+        if is_json:
+            payload["think"] = False
+            payload["format"] = "json"
+        else:
+            payload["think"] = (not self.disable_thinking) and self._plan().enabled
+        from .chat_logic import ThinkStreamSplitter
+        splitter = ThinkStreamSplitter()
+        reasoning_acc: list[str] = []
+        self.last_thinking = None
         with httpx.Client(timeout=httpx.Timeout(600.0, connect=10.0)) as client:
             with client.stream("POST", f"{base_url}/api/chat", json=payload) as response:
                 response.raise_for_status()
@@ -859,10 +881,21 @@ class AIService:
                     msg = event.get("message", {})
                     thinking = msg.get("thinking")
                     if thinking:
+                        reasoning_acc.append(thinking)
                         yield {"type": "reasoning", "text": thinking}
                     content = msg.get("content")
                     if content:
-                        yield {"type": "content", "text": content}
+                        # Fallback tag: i modelli che inlineano <think> vengono separati
+                        # qui, così il testo visibile resta pulito anche senza nativo.
+                        for item in splitter.feed(content):
+                            if item["type"] == "reasoning":
+                                reasoning_acc.append(item["text"])
+                            yield item
+                for item in splitter.flush():
+                    if item["type"] == "reasoning":
+                        reasoning_acc.append(item["text"])
+                    yield item
+        self.last_thinking = "".join(reasoning_acc).strip() or None
 
     def _stream_llamacpp(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
         base_url = (self._get_api_key('llamacpp_url') or "http://localhost:8080").rstrip('/')
