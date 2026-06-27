@@ -49,6 +49,7 @@ from ..chat_logic import (
     _apply_language_directive,
     _apply_qsa_factor_directive,
     _apply_register_directive,
+    _apply_thinking_directive,
     _clamp_max_tokens,
     _ensure_questionnaire_guided_steps,
     _is_strategy_questionnaire,
@@ -275,6 +276,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             questionnaire_type = step.questionnaire_type
 
     system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language)
+    system_prompt = _apply_thinking_directive(system_prompt, request.language)
     model_scores_context = (
         _annotate_qsa_factor_codes(request.scores_context, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else request.scores_context
@@ -469,6 +471,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             questionnaire_type = step.questionnaire_type
 
     system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language)
+    system_prompt = _apply_thinking_directive(system_prompt, request.language)
     model_scores_context = (
         _annotate_qsa_factor_codes(request.scores_context, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else request.scores_context

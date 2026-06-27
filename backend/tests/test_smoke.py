@@ -1732,10 +1732,24 @@ def test_reasoning_resolve_plan():
     assert plan.enabled is False
     assert plan.max_tokens == 800
 
-    # Modello NON reasoning (gemma) + thinking attivo -> spento, nessun gonfiaggio.
-    plan = rp.resolve_plan("gemma4:12b", disable_thinking=False, requested_max_tokens=800)
+    # Gemma 3 resta NON reasoning + thinking attivo -> spento, nessun gonfiaggio.
+    plan = rp.resolve_plan("gemma3:1b", disable_thinking=False, requested_max_tokens=800)
     assert plan.enabled is False
     assert plan.max_tokens == 800
+
+    # Gemma 4 e4b: reasoning attivabile, budget contenuto (pensiero didattico).
+    plan = rp.resolve_plan("gemma4:e4b", disable_thinking=False, requested_max_tokens=None)
+    assert plan.enabled is True
+    assert plan.reasoning_budget == 1500
+    assert plan.max_tokens == 3500  # 1500 budget + 2000 headroom
+    # Gemma 4 12b: ragiona molto di piu' -> headroom AMPIO per non starvare la risposta.
+    plan = rp.resolve_plan("gemma4:12b", disable_thinking=False, requested_max_tokens=None)
+    assert plan.enabled is True
+    assert plan.reasoning_budget == 2000
+    assert plan.max_tokens == 6000  # 2000 budget + 4000 headroom
+    # disable_thinking ha priorita': spegne anche gemma4.
+    plan = rp.resolve_plan("gemma4:e4b", disable_thinking=True, requested_max_tokens=700)
+    assert plan.enabled is False and plan.max_tokens == 700
 
     # Modello sconosciuto + thinking attivo -> prudenza: abilitato col budget legacy.
     plan = rp.resolve_plan("acme/mistero-1", disable_thinking=False, requested_max_tokens=None)
@@ -1752,7 +1766,8 @@ def test_reasoning_resolve_plan():
     assert plan.max_tokens == 20000
 
     assert rp.is_reasoning_model("qwen3.5:9b") is True
-    assert rp.is_reasoning_model("gemma4:12b") is False
+    assert rp.is_reasoning_model("gemma3:1b") is False
+    assert rp.is_reasoning_model("gemma4:12b") is True
 
 
 def test_should_sanitize_ztpi():

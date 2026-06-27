@@ -362,6 +362,128 @@ def _apply_register_directive(system_prompt: str, language: Optional[str]) -> st
     )
 
 
+def _apply_thinking_directive(system_prompt: str, language: Optional[str] = None) -> str:
+    """Confina il ragionamento del modello in un unico blocco `<think>…</think>`.
+
+    Il "pensiero" ha valore didattico (mostrare COME ragiona l'LLM) ma deve restare
+    separato dalla risposta: il frontend lo rende in un riquadro «sto pensando».
+    Per i modelli con thinking nativo (Ollama `think`) il blocco arriva sul canale
+    dedicato; per i modelli che lo inlineano, i tag `<think>` consentono comunque a
+    `split_thinking`/`ThinkStreamSplitter` di estrarlo e ripulire il testo visibile.
+    Vale per qualunque modello, indipendentemente dal supporto nativo."""
+    return (
+        f"{system_prompt}\n\n"
+        "[THINKING] If you reason before answering, put ALL of your reasoning inside "
+        "ONE single block at the very beginning, wrapped exactly in <think> and "
+        "</think> tags, and keep it concise (a few short lines). After </think>, write "
+        "the student-facing answer directly: it must NOT contain your plan, your "
+        "checklist, phrases like 'Attivazione interna', 'Devo', 'Ho i punteggi', nor "
+        "any meta-commentary about what you are doing. Never expose reasoning outside "
+        "the <think> block."
+    )
+
+
+# --- Separazione del ragionamento dal testo visibile (canale «sto pensando») ---
+# Blocchi di pensiero tollerati: <think>, <thinking>, <sto_pensando> (case-insensitive).
+_THINK_BLOCK_RE = re.compile(
+    r"<\s*(think|thinking|sto_pensando)\s*>(.*?)</\s*\1\s*>",
+    re.IGNORECASE | re.DOTALL,
+)
+_THINK_OPEN_RE = re.compile(
+    r"<\s*(?:think|thinking|sto_pensando)\s*>(.*)$",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def split_thinking(text: str) -> tuple[Optional[str], str]:
+    """Estrae i blocchi `<think>…</think>` (fallback per i modelli che inlineano il
+    ragionamento nel contenuto invece di usare il canale nativo).
+
+    Ritorna `(reasoning|None, visible)`: `reasoning` e' il testo dei blocchi
+    concatenato, `visible` e' il testo ripulito. Gestisce anche un `<think>` aperto e
+    non chiuso (output troncato): tutto cio' che segue l'apertura diventa reasoning."""
+    if not text:
+        return None, text or ""
+    reasoning_parts: list[str] = []
+
+    def _collect(match: re.Match) -> str:
+        reasoning_parts.append((match.group(2) or "").strip())
+        return ""
+
+    visible = _THINK_BLOCK_RE.sub(_collect, text)
+    open_match = _THINK_OPEN_RE.search(visible)
+    if open_match:
+        reasoning_parts.append((open_match.group(1) or "").strip())
+        visible = visible[: open_match.start()]
+    visible = re.sub(r"\n{3,}", "\n\n", visible).strip()
+    reasoning = "\n\n".join(part for part in reasoning_parts if part).strip() or None
+    return reasoning, visible
+
+
+class ThinkStreamSplitter:
+    """Separa in streaming i blocchi `<think>…</think>` dal contenuto visibile.
+
+    Robusto ai tag spezzati tra chunk: trattiene in coda solo i caratteri che
+    potrebbero essere l'inizio di un tag. `feed(delta)` e `flush()` ritornano una
+    lista di dict `{"type": "reasoning"|"content", "text": ...}`."""
+
+    _OPEN = ("<think>", "<thinking>", "<sto_pensando>")
+    _CLOSE = ("</think>", "</thinking>", "</sto_pensando>")
+
+    def __init__(self) -> None:
+        self._buf = ""
+        self._in_think = False
+
+    def _emit(self, text: str) -> Optional[dict]:
+        if not text:
+            return None
+        return {"type": "reasoning" if self._in_think else "content", "text": text}
+
+    def _partial_tail_len(self, tags: tuple[str, ...]) -> int:
+        low = self._buf.lower()
+        best = 0
+        for tag in tags:
+            limit = min(len(low), len(tag) - 1)
+            for k in range(limit, 0, -1):
+                if low[-k:] == tag[:k]:
+                    best = max(best, k)
+                    break
+        return best
+
+    def feed(self, delta: str) -> list[dict]:
+        out: list[dict] = []
+        self._buf += delta or ""
+        while True:
+            tags = self._CLOSE if self._in_think else self._OPEN
+            low = self._buf.lower()
+            idx, taglen = -1, 0
+            for tag in tags:
+                pos = low.find(tag)
+                if pos != -1 and (idx == -1 or pos < idx):
+                    idx, taglen = pos, len(tag)
+            if idx == -1:
+                break
+            chunk = self._emit(self._buf[:idx])
+            if chunk:
+                out.append(chunk)
+            self._buf = self._buf[idx + taglen:]
+            self._in_think = not self._in_think
+        tags = self._CLOSE if self._in_think else self._OPEN
+        tail = self._partial_tail_len(tags)
+        if tail < len(self._buf):
+            safe = self._buf[: len(self._buf) - tail]
+            chunk = self._emit(safe)
+            if chunk:
+                out.append(chunk)
+            self._buf = self._buf[len(safe):]
+        return out
+
+    def flush(self) -> list[dict]:
+        chunk = self._emit(self._buf)
+        self._buf = ""
+        return [chunk] if chunk else []
+
+
 # Etichetta del blocco punteggi di riferimento, per lingua dello studente.
 _SCORES_REFERENCE_LABELS = {
     "it": "PROFILO DELLO STUDENTE (punteggi di riferimento, validi per tutta la sessione)",
