@@ -2,6 +2,19 @@
 
 Gli endpoint `prompt-audit` sono strumenti admin-only per verificare i prompt guidati di CounselorBot senza passare dalla UI.
 
+## Autenticazione
+
+Gli endpoint accettano l'autenticazione admin/ricercatore standard via ai4auth. Per prove API automatizzate possono anche usare l'header `X-Prompt-Audit-Token`, ma solo se il backend riceve la variabile `PROMPT_AUDIT_API_TOKEN` dall'ambiente gestito da ai4educ Console.
+
+Esempio:
+
+```bash
+curl -sS http://127.0.0.1:8088/admin/prompt-audit/dry-run \
+  -H 'Content-Type: application/json' \
+  -H "X-Prompt-Audit-Token: $PROMPT_AUDIT_API_TOKEN" \
+  -d '{"questionnaire_type":"QSA","language":"it","phase":"cognitive","mode":"factor","use_phase_prompt":true}'
+```
+
 ## Endpoint
 
 - `POST /admin/prompt-audit/dry-run`: risolve counselor, preset, step guidato, prompt finale, messaggio effettivo, history opzionale, contesto knowledge opzionale e warning. Non chiama il modello.
