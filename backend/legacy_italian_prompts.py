@@ -277,7 +277,7 @@ LEGACY_IT_CONFIG_DEFAULTS: Dict[str, str] = {
         "SCHEDA STRUMENTI (dati canonici; usa nomi, sigle e numeri ESATTI da qui):\n"
         "- QSA — Questionario sulle Strategie di Apprendimento (Pellerey, 100 item). 14 fattori, scala stanine 1-9.\n"
         "  Cognitivi: C1 Strategie elaborative · C2 Autoregolazione · C3 Disorientamento · C4 Disponibilità alla "
-        "collaborazione · C5 Organizzatori semantici · C6 Difficoltà di concentrazione · C7 Autointerrogazione.\n"
+        "collaborazione · C5 Uso di organizzatori semantici · C6 Difficoltà di concentrazione · C7 Autointerrogazione.\n"
         "  Affettivi: A1 Ansietà di base · A2 Volizione · A3 Attribuzione a cause controllabili · A4 Attribuzione a "
         "cause incontrollabili · A5 Mancanza di perseveranza · A6 Percezione di competenza · A7 Interferenze emotive.\n"
         "  Fattori invertiti (punteggio alto = area di crescita, non forza): C3, C6, A1, A4, A5, A7.\n"
@@ -311,7 +311,7 @@ LEGACY_IT_STEP_PROMPTS: Dict[str, str] = {
     "sl-elaboration": (
         "Analisi 2° Livello - Parte 1: ELABORAZIONE E ORGANIZZAZIONE. "
         "Analizza insieme i fattori: C1 (Strategie elaborative), "
-        "C5 (Organizzatori semantici), C7 (Autointerrogazione). "
+        "C5 (Uso di organizzatori semantici), C7 (Autointerrogazione). "
         "Valuta come lo studente processa e struttura le informazioni."
     ),
     "sl-selfcontrol": (
