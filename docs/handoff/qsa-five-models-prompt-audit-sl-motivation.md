@@ -1,6 +1,6 @@
 # QSA five-model Prompt Audit — sl-motivation
 
-Data: 2026-06-27 18:04:34 · Endpoint: `/admin/prompt-audit/live` · Step: `sl-motivation` · Knowledge: `include_knowledge=true`.
+Data: 2026-06-27 18:28:16 · Endpoint: `/admin/prompt-audit/live` · Step: `sl-motivation` · Knowledge: `include_knowledge=true` · Variante: score-aware certified retrieval.
 
 Profilo usato:
 ```text
@@ -21,13 +21,13 @@ PROFILO QSA DELLO STUDENTE:
 - A7: 7/9
 ```
 
-| Counselor | Provider/Model | Certified IDs | Checks | Durata |
-|---|---|---|---|---:|
-| Marco (1) | deepseek/deepseek-v4-flash | qsa-perseverance-small-goals, qsa-perceived-competence | OK | 15754 ms |
-| Sara (2) | ollama/gemma4:e4b | qsa-perseverance-small-goals, qsa-perceived-competence | OK | 11547 ms |
-| Luca (3) | ollama/gemma4:12b | qsa-perseverance-small-goals, qsa-perceived-competence | OK | 13808 ms |
-| Davide (5) | openrouter/inclusionai/ling-2.6-flash | qsa-perseverance-small-goals, qsa-perceived-competence | OK | 3341 ms |
-| Giulia (6) | openrouter/mistralai/mistral-small-24b-instruct-2501 | qsa-perseverance-small-goals, qsa-perceived-competence | OK | 8567 ms |
+| Counselor | Provider/Model | Certified IDs | Checks | Tentativo | Durata |
+|---|---|---|---|---:|---:|
+| Marco (1) | deepseek/deepseek-v4-flash | qsa-perceived-competence | OK | 1 | 14700 ms |
+| Sara (2) | ollama/gemma4:e4b | qsa-perceived-competence | OK | 1 | 9883 ms |
+| Luca (3) | ollama/gemma4:12b | qsa-perceived-competence | OK | 1 | 31232 ms |
+| Davide (5) | openrouter/inclusionai/ling-2.6-flash | qsa-perceived-competence | OK | 1 | 4681 ms |
+| Giulia (6) | openrouter/mistralai/mistral-small-24b-instruct-2501 | qsa-perceived-competence | OK | 1 | 8096 ms |
 
 ## Dettaglio per modello
 
@@ -43,11 +43,11 @@ PROFILO QSA DELLO STUDENTE:
   "use_phase_prompt": true,
   "message": "",
   "scores_context": "PROFILO QSA DELLO STUDENTE:\n- C1: 7/9\n- C2: 5/9\n- C3: 3/9\n- C4: 6/9\n- C5: 4/9\n- C6: 7/9\n- C7: 5/9\n- A1: 8/9\n- A2: 6/9\n- A3: 5/9\n- A4: 8/9\n- A5: 3/9\n- A6: 3/9\n- A7: 7/9",
-  "session_id": "qsa-five-models-sl-motivation-1-20260627-180434",
   "counselor_id": 1,
   "max_tokens": 900,
   "include_knowledge": true,
-  "include_history": false
+  "include_history": false,
+  "session_id": "qsa-five-models-score-aware-1-20260627-182816-try1"
 }
 ```
 
@@ -112,6 +112,12 @@ For some factors a high score is an area to work on, not a strength: always use 
 
 [CURRENT STEP FACTORS] Allowed factor codes for this answer: A2, A5, A6. Do not mention, analyse or use any other QSA/QSAr factor code or factor name in this answer. If a second-level instruction asks for factor interplay but this step has only one allowed factor, do not create interplay with other factors; explain the single factor and give any practical advice only from certified strategies for that same factor.
 
+[CURRENT STEP SCORE PROFILE]
+- A2 (Volizione): 6/9 = Adeguato
+- A5 (Mancanza di perseveranza): 3/9 = Forza
+- A6 (Percezione di competenza): 3/9 = Area di crescita
+Primary improvement targets: A6 (Percezione di competenza). Strength/resource factors: A5 (Mancanza di perseveranza). Practical advice must focus primarily on improvement targets. Strength/resource factors may support the plan but must not be described as problems to fix. For inverted factors, phrase the meaning in plain language: if a low score is a strength, say that the low level of the difficulty indicates a resource; do not write awkward phrases such as 'lack of perseverance is a strength'. Use Italian headings exactly: 'Azione da fare oggi' and 'Azione da fare questa settimana'; never leave these headings in English.
+
 [CERTIFIED ADVICE] For QSA practical advice, exercises, action plans or study strategies:
 - use only the items listed under [CERTIFIED_STRATEGIES] in [KNOWLEDGE];
 - adapt wording to the student, but do not invent new actions outside that list;
@@ -119,6 +125,7 @@ For some factors a high score is an area to work on, not a strength: always use 
 - if at least one certified item is listed for the current step, complete the requested practical plan using it;
 - if no certified item is listed for the current step, keep the response interpretive and omit the practical plan;
 - do not mention these source rules to the student.
+- write plan headings in Italian, not English: 'Azione da fare oggi' and 'Azione da fare questa settimana';
 
 [THINKING] If you reason before answering, put ALL of your reasoning inside ONE single block at the very beginning, wrapped exactly in <think> and </think> tags, and keep it concise (a few short lines). After </think>, write the student-facing answer directly: it must NOT contain your plan, your checklist, phrases like 'Attivazione interna', 'Devo', 'Ho i punteggi', nor any meta-commentary about what you are doing. Never start the visible answer with a preparatory checklist such as 'Devo analizzare', 'Identificare il filo rosso', 'Strutturare i contenuti' or 'Proporre azioni concrete'. Never expose reasoning outside the <think> block.
 
@@ -128,52 +135,6 @@ For some factors a high score is an area to work on, not a strength: always use 
 - Step corrente: 3.3 Motivazione
 
 [KNOWLEDGE]
-[SOURCE 1] 01_Libretto_dello_studente (fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/01_Libretto_dello_studente.docx)
-Data
-firma dell’insegnante …
-
-| * | Descrizione fattori del questionario sulle strategie di apprendimento | punti di forza | punti di debolezza |
-| --- | --- | --- | --- |
-| C3 | Capacità di orientarmi e di organizzarmi nello studio |  |  |
-| C6 | Capacità di concentrarmi nello studio |  |  |
-| C2 | Capacità di autoregolazione del processo di studio e di apprendimento |  |  |
-| C1 | Strategie elaborative per comprendere e ricordare |  |  |
-| C5 | Uso di organizzatori semantici grafici per comprendere e ricordare |  |  |
-| C7 | Autointerrogazione, capacità di porsi e porre domande per capire e ricordare |  |  |
-| C4 | Disponibilità alla collaborazione |  |  |
-| A1 | Ansietà di base |  |  |
-| A7 | Interferenze emotive |  |  |
-| A2 | Volizione e perseveranza nell’impegno |  |  |
-| A5 | Capacità di perseveranza |  |  |
-| A3 | Attribuzione del successo o del fallimento a cause che posso controllare |  |  |
-| A4 | Attribuzione del successo o del fallimento a cause che non posso controllare |  |  |
-| A6 | Percezione di competenza |  |  |
-|  | Previsione dei risultati (prima dello scrutinio) | Risultati del 1° scrutinio
-
----
-
-[SOURCE 2] Libretto_Modello_QSA (fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/Libretto_Modello_QSA.docx)
-Data
-firma dell’insegnante …
-
-| * | Descrizione fattori del questionario sulle strategie di apprendimento | punti di forza | punti di debolezza |
-| --- | --- | --- | --- |
-| C3 | Capacità di orientarmi e di organizzarmi nello studio |  |  |
-| C6 | Capacità di concentrarmi nello studio |  |  |
-| C2 | Capacità di autoregolazione del processo di studio e di apprendimento |  |  |
-| C1 | Strategie elaborative per comprendere e ricordare |  |  |
-| C5 | Uso di organizzatori semantici grafici per comprendere e ricordare |  |  |
-| C7 | Autointerrogazione, capacità di porsi e porre domande per capire e ricordare |  |  |
-| C4 | Disponibilità alla collaborazione |  |  |
-| A1 | Ansietà di base |  |  |
-| A7 | Interferenze emotive |  |  |
-| A2 | Volizione e perseveranza nell’impegno |  |  |
-| A5 | Capacità di perseveranza |  |  |
-| A3 | Attribuzione del successo o del fallimento a cause che posso controllare |  |  |
-| A4 | Attribuzione del successo o del fallimento a cause che non posso controllare |  |  |
-| A6 | Percezione di competenza |  |  |
-|  | Previsione dei risultati (prima dello scrutinio) | Risultati del 1° scrutinio
-
 ## Strategie di supporto approvate
 Usale solo se pertinenti e adattale alla situazione; non citarne l'identificatore.
 - [qsa-planning-next-step] Collegare la riflessione a un prossimo passo concreto, circoscritto e verificabile nella settimana corrente.
@@ -181,9 +142,8 @@ Usale solo se pertinenti e adattale alla situazione; non citarne l'identificator
 
 [CERTIFIED_STRATEGIES]
 ## Strategie di apprendimento certificate
-Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di studio. Proponi solo queste strategie quando sono pertinenti; adattale alla situazione e non citarne l'identificatore.
-- Perseveranza e piccoli obiettivi — Quando: Quando A5 (mancanza di perseveranza) e' un'area di crescita. — Come: Aiutare a scomporre un compito percepito come troppo difficile in un primo passo accessibile e raggiungibile in breve tempo, riflettendo sulle cause dell'abbandono.
-- Percezione di competenza — Quando: Quando A6 (percezione di competenza) e' un'area di crescita. — Come: Valorizzare un risultato concreto gia' ottenuto per rinforzare il circolo responsabilita'-soddisfazione-fiducia, evitando rassicurazioni generiche.
+Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di studio. Proponi solo queste strategie quando sono pertinenti; adattale alla situazione e non citarne l'identificatore. Se una strategia e' indicata come intervento principale, usala come base del piano pratico; se e' indicata come supporto, usala solo per valorizzare una risorsa e non trasformarla in problema.
+- Percezione di competenza — Ruolo: intervento principale — Profilo: A6=3/9 (Area di crescita); target di intervento: A6 — Quando: Quando A6 (percezione di competenza) e' un'area di crescita. — Come: Valorizzare un risultato concreto gia' ottenuto per rinforzare il circolo responsabilita'-soddisfazione-fiducia, evitando rassicurazioni generiche.
 ```
 
 #### Full message dato al modello
@@ -201,52 +161,6 @@ Close with 2 practical actions: one to do today and one to do during the week.
 
 #### Testo iniettato in KNOWLEDGE
 ```text
-[SOURCE 1] 01_Libretto_dello_studente (fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/01_Libretto_dello_studente.docx)
-Data
-firma dell’insegnante …
-
-| * | Descrizione fattori del questionario sulle strategie di apprendimento | punti di forza | punti di debolezza |
-| --- | --- | --- | --- |
-| C3 | Capacità di orientarmi e di organizzarmi nello studio |  |  |
-| C6 | Capacità di concentrarmi nello studio |  |  |
-| C2 | Capacità di autoregolazione del processo di studio e di apprendimento |  |  |
-| C1 | Strategie elaborative per comprendere e ricordare |  |  |
-| C5 | Uso di organizzatori semantici grafici per comprendere e ricordare |  |  |
-| C7 | Autointerrogazione, capacità di porsi e porre domande per capire e ricordare |  |  |
-| C4 | Disponibilità alla collaborazione |  |  |
-| A1 | Ansietà di base |  |  |
-| A7 | Interferenze emotive |  |  |
-| A2 | Volizione e perseveranza nell’impegno |  |  |
-| A5 | Capacità di perseveranza |  |  |
-| A3 | Attribuzione del successo o del fallimento a cause che posso controllare |  |  |
-| A4 | Attribuzione del successo o del fallimento a cause che non posso controllare |  |  |
-| A6 | Percezione di competenza |  |  |
-|  | Previsione dei risultati (prima dello scrutinio) | Risultati del 1° scrutinio
-
----
-
-[SOURCE 2] Libretto_Modello_QSA (fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/Libretto_Modello_QSA.docx)
-Data
-firma dell’insegnante …
-
-| * | Descrizione fattori del questionario sulle strategie di apprendimento | punti di forza | punti di debolezza |
-| --- | --- | --- | --- |
-| C3 | Capacità di orientarmi e di organizzarmi nello studio |  |  |
-| C6 | Capacità di concentrarmi nello studio |  |  |
-| C2 | Capacità di autoregolazione del processo di studio e di apprendimento |  |  |
-| C1 | Strategie elaborative per comprendere e ricordare |  |  |
-| C5 | Uso di organizzatori semantici grafici per comprendere e ricordare |  |  |
-| C7 | Autointerrogazione, capacità di porsi e porre domande per capire e ricordare |  |  |
-| C4 | Disponibilità alla collaborazione |  |  |
-| A1 | Ansietà di base |  |  |
-| A7 | Interferenze emotive |  |  |
-| A2 | Volizione e perseveranza nell’impegno |  |  |
-| A5 | Capacità di perseveranza |  |  |
-| A3 | Attribuzione del successo o del fallimento a cause che posso controllare |  |  |
-| A4 | Attribuzione del successo o del fallimento a cause che non posso controllare |  |  |
-| A6 | Percezione di competenza |  |  |
-|  | Previsione dei risultati (prima dello scrutinio) | Risultati del 1° scrutinio
-
 ## Strategie di supporto approvate
 Usale solo se pertinenti e adattale alla situazione; non citarne l'identificatore.
 - [qsa-planning-next-step] Collegare la riflessione a un prossimo passo concreto, circoscritto e verificabile nella settimana corrente.
@@ -254,30 +168,24 @@ Usale solo se pertinenti e adattale alla situazione; non citarne l'identificator
 
 [CERTIFIED_STRATEGIES]
 ## Strategie di apprendimento certificate
-Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di studio. Proponi solo queste strategie quando sono pertinenti; adattale alla situazione e non citarne l'identificatore.
-- Perseveranza e piccoli obiettivi — Quando: Quando A5 (mancanza di perseveranza) e' un'area di crescita. — Come: Aiutare a scomporre un compito percepito come troppo difficile in un primo passo accessibile e raggiungibile in breve tempo, riflettendo sulle cause dell'abbandono.
-- Percezione di competenza — Quando: Quando A6 (percezione di competenza) e' un'area di crescita. — Come: Valorizzare un risultato concreto gia' ottenuto per rinforzare il circolo responsabilita'-soddisfazione-fiducia, evitando rassicurazioni generiche.
+Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di studio. Proponi solo queste strategie quando sono pertinenti; adattale alla situazione e non citarne l'identificatore. Se una strategia e' indicata come intervento principale, usala come base del piano pratico; se e' indicata come supporto, usala solo per valorizzare una risorsa e non trasformarla in problema.
+- Percezione di competenza — Ruolo: intervento principale — Profilo: A6=3/9 (Area di crescita); target di intervento: A6 — Quando: Quando A6 (percezione di competenza) e' un'area di crescita. — Come: Valorizzare un risultato concreto gia' ottenuto per rinforzare il circolo responsabilita'-soddisfazione-fiducia, evitando rassicurazioni generiche.
 ```
 
 #### Risposta visibile
 ```text
-1.  **Cosa emerge in sintesi**
+1. **Cosa emerge in breve**
+La tua motivazione poggia su una solida base di perseveranza (A5 (Mancanza di perseveranza): 3/9 = risorsa) e su una volizione adeguata (A2 (Volizione): 6/9). Questi due fattori si sostengono a vicenda: la costanza ti permette di proseguire anche quando l’entusiasmo cala. Tuttavia la percezione di competenza (A6 (Percezione di competenza): 3/9) è un’area di crescita, e questo può frenare la spinta: se non ti senti capace, anche la perseveranza rischia di consumarsi perché non vedi i frutti dei tuoi sforzi.
 
-    La tua motivazione si basa su una buona **volizione (A2 (Volizione))** e su una bassa **mancanza di perseveranza (A5 (Mancanza di perseveranza))** — quindi hai la spinta per iniziare e una buona tenuta nel tempo. Ma questi due punti sono frenati da una **percezione di competenza (A6 (Percezione di competenza))** bassa: quando non ti senti capace, la tua stessa volontà rischia di affievolirsi perché non vedi frutti del tuo impegno. In pratica, hai la forza di continuare, ma dubiti di potercela fare.
+2. **Cosa funziona già**
+La bassa mancanza di perseveranza (A5 (Mancanza di perseveranza)) indica che sai mantenere l’impegno nel tempo senza abbandonare facilmente. È una risorsa importante, perché ti permette di sostenere il lavoro anche quando la motivazione iniziale si affievolisce. Inoltre la volizione (A2 (Volizione)) a un livello adeguato mostra che, quando decidi di fare qualcosa, riesci tradurla in azione concreta.
 
-2.  **Cosa già funziona**
+3. **Cosa puoi migliorare**
+Il punto su cui lavorare è la percezione di competenza (A6 (Percezione di competenza)). Quando dubiti delle tue capacità, tendi a sottovalutare i risultati che ottieni e questo può ridurre la soddisfazione e la voglia di proseguire. L’effetto combinato è che la perseveranza (A5 (Mancanza di perseveranza)) e la volizione (A2 (Volizione)) non vengono alimentate dal feedback positivo, quindi rischiano di affievolirsi nel lungo periodo.
 
-    - **A2 (Volizione)** è adeguata: riesci a mantenere l’intenzione di studiare anche quando spunta l’impulso di fare altro.
-    - **A5 (Mancanza di perseveranza)** è bassa, quindi non abbandoni facilmente un compito. Hai una buona resistenza: se inizi, tendi a portare a termine.
-
-3.  **Cosa puoi migliorare**
-
-    - **A6 (Percezione di competenza)** è l’anello debole. Bassa **A6 (Percezione di competenza)** indebolisce **A2 (Volizione)** (volizione): se pensi di non essere all’altezza, a lungo andare la motivazione cala perché non ti riconosci il merito dei progressi. È questo il punto su cui lavorare.
-
-4.  **Piano pratico**
-
-    - **Azione da fare oggi (10-20 minuti)**: prendi un foglio e scrivi un risultato concreto che hai ottenuto in una materia o in un compito recente (anche piccolo). Descrivi cosa hai fatto tu per ottenerlo, senza giudizi. Rileggilo tra un’ora: questo rinforza la percezione che le capacità sono tue e non del caso.
-    - **Azione da fare questa settimana**: scegli un compito che ti sembra difficile e scomponilo in tre passaggi minimi (il primo deve durare non più di 20 minuti). Completa solo il primo passaggio e fermati. Alla fine, nota cosa hai imparato sul fatto di esserne capace. Ripeti per gli altri passaggi nei giorni successivi.
+4. **Piano pratico**
+   - **Azione da fare oggi** (10-20 minuti): Prendi un risultato concreto che hai ottenuto in questa settimana o nel mese – anche piccolo, come aver finito un esercizio o aver capito un argomento. Scrivilo su un foglio, accanto a cosa hai fatto tu per ottenerlo (es. “ho ripetuto tre volte il paragrafo, poi ho risposto correttamente”). Leggilo ad alta voce una volta.
+   - **Azione da fare questa settimana**: Ogni giorno, alla fine della sessione di studio, scrivi una riga su un quaderno: “Oggi ho fatto ____ e ho ottenuto ____”. Alla fine della settimana rileggi tutto l’elenco. Questo ti aiuta a vedere concretamente ciò che sai fare e a rafforzare la percezione di competenza (A6 (Percezione di competenza)) senza bisogno di rassicurazioni generiche.
 ```
 
 ### Sara (2) — ollama/gemma4:e4b
@@ -292,11 +200,11 @@ Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di 
   "use_phase_prompt": true,
   "message": "",
   "scores_context": "PROFILO QSA DELLO STUDENTE:\n- C1: 7/9\n- C2: 5/9\n- C3: 3/9\n- C4: 6/9\n- C5: 4/9\n- C6: 7/9\n- C7: 5/9\n- A1: 8/9\n- A2: 6/9\n- A3: 5/9\n- A4: 8/9\n- A5: 3/9\n- A6: 3/9\n- A7: 7/9",
-  "session_id": "qsa-five-models-sl-motivation-2-20260627-180434",
   "counselor_id": 2,
   "max_tokens": 900,
   "include_knowledge": true,
-  "include_history": false
+  "include_history": false,
+  "session_id": "qsa-five-models-score-aware-2-20260627-182816-try1"
 }
 ```
 
@@ -361,6 +269,12 @@ For some factors a high score is an area to work on, not a strength: always use 
 
 [CURRENT STEP FACTORS] Allowed factor codes for this answer: A2, A5, A6. Do not mention, analyse or use any other QSA/QSAr factor code or factor name in this answer. If a second-level instruction asks for factor interplay but this step has only one allowed factor, do not create interplay with other factors; explain the single factor and give any practical advice only from certified strategies for that same factor.
 
+[CURRENT STEP SCORE PROFILE]
+- A2 (Volizione): 6/9 = Adeguato
+- A5 (Mancanza di perseveranza): 3/9 = Forza
+- A6 (Percezione di competenza): 3/9 = Area di crescita
+Primary improvement targets: A6 (Percezione di competenza). Strength/resource factors: A5 (Mancanza di perseveranza). Practical advice must focus primarily on improvement targets. Strength/resource factors may support the plan but must not be described as problems to fix. For inverted factors, phrase the meaning in plain language: if a low score is a strength, say that the low level of the difficulty indicates a resource; do not write awkward phrases such as 'lack of perseverance is a strength'. Use Italian headings exactly: 'Azione da fare oggi' and 'Azione da fare questa settimana'; never leave these headings in English.
+
 [CERTIFIED ADVICE] For QSA practical advice, exercises, action plans or study strategies:
 - use only the items listed under [CERTIFIED_STRATEGIES] in [KNOWLEDGE];
 - adapt wording to the student, but do not invent new actions outside that list;
@@ -368,6 +282,7 @@ For some factors a high score is an area to work on, not a strength: always use 
 - if at least one certified item is listed for the current step, complete the requested practical plan using it;
 - if no certified item is listed for the current step, keep the response interpretive and omit the practical plan;
 - do not mention these source rules to the student.
+- write plan headings in Italian, not English: 'Azione da fare oggi' and 'Azione da fare questa settimana';
 
 [THINKING] If you reason before answering, put ALL of your reasoning inside ONE single block at the very beginning, wrapped exactly in <think> and </think> tags, and keep it concise (a few short lines). After </think>, write the student-facing answer directly: it must NOT contain your plan, your checklist, phrases like 'Attivazione interna', 'Devo', 'Ho i punteggi', nor any meta-commentary about what you are doing. Never start the visible answer with a preparatory checklist such as 'Devo analizzare', 'Identificare il filo rosso', 'Strutturare i contenuti' or 'Proporre azioni concrete'. Never expose reasoning outside the <think> block.
 
@@ -377,52 +292,6 @@ For some factors a high score is an area to work on, not a strength: always use 
 - Step corrente: 3.3 Motivazione
 
 [KNOWLEDGE]
-[SOURCE 1] 01_Libretto_dello_studente (fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/01_Libretto_dello_studente.docx)
-Data
-firma dell’insegnante …
-
-| * | Descrizione fattori del questionario sulle strategie di apprendimento | punti di forza | punti di debolezza |
-| --- | --- | --- | --- |
-| C3 | Capacità di orientarmi e di organizzarmi nello studio |  |  |
-| C6 | Capacità di concentrarmi nello studio |  |  |
-| C2 | Capacità di autoregolazione del processo di studio e di apprendimento |  |  |
-| C1 | Strategie elaborative per comprendere e ricordare |  |  |
-| C5 | Uso di organizzatori semantici grafici per comprendere e ricordare |  |  |
-| C7 | Autointerrogazione, capacità di porsi e porre domande per capire e ricordare |  |  |
-| C4 | Disponibilità alla collaborazione |  |  |
-| A1 | Ansietà di base |  |  |
-| A7 | Interferenze emotive |  |  |
-| A2 | Volizione e perseveranza nell’impegno |  |  |
-| A5 | Capacità di perseveranza |  |  |
-| A3 | Attribuzione del successo o del fallimento a cause che posso controllare |  |  |
-| A4 | Attribuzione del successo o del fallimento a cause che non posso controllare |  |  |
-| A6 | Percezione di competenza |  |  |
-|  | Previsione dei risultati (prima dello scrutinio) | Risultati del 1° scrutinio
-
----
-
-[SOURCE 2] Libretto_Modello_QSA (fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/Libretto_Modello_QSA.docx)
-Data
-firma dell’insegnante …
-
-| * | Descrizione fattori del questionario sulle strategie di apprendimento | punti di forza | punti di debolezza |
-| --- | --- | --- | --- |
-| C3 | Capacità di orientarmi e di organizzarmi nello studio |  |  |
-| C6 | Capacità di concentrarmi nello studio |  |  |
-| C2 | Capacità di autoregolazione del processo di studio e di apprendimento |  |  |
-| C1 | Strategie elaborative per comprendere e ricordare |  |  |
-| C5 | Uso di organizzatori semantici grafici per comprendere e ricordare |  |  |
-| C7 | Autointerrogazione, capacità di porsi e porre domande per capire e ricordare |  |  |
-| C4 | Disponibilità alla collaborazione |  |  |
-| A1 | Ansietà di base |  |  |
-| A7 | Interferenze emotive |  |  |
-| A2 | Volizione e perseveranza nell’impegno |  |  |
-| A5 | Capacità di perseveranza |  |  |
-| A3 | Attribuzione del successo o del fallimento a cause che posso controllare |  |  |
-| A4 | Attribuzione del successo o del fallimento a cause che non posso controllare |  |  |
-| A6 | Percezione di competenza |  |  |
-|  | Previsione dei risultati (prima dello scrutinio) | Risultati del 1° scrutinio
-
 ## Strategie di supporto approvate
 Usale solo se pertinenti e adattale alla situazione; non citarne l'identificatore.
 - [qsa-planning-next-step] Collegare la riflessione a un prossimo passo concreto, circoscritto e verificabile nella settimana corrente.
@@ -430,9 +299,8 @@ Usale solo se pertinenti e adattale alla situazione; non citarne l'identificator
 
 [CERTIFIED_STRATEGIES]
 ## Strategie di apprendimento certificate
-Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di studio. Proponi solo queste strategie quando sono pertinenti; adattale alla situazione e non citarne l'identificatore.
-- Perseveranza e piccoli obiettivi — Quando: Quando A5 (mancanza di perseveranza) e' un'area di crescita. — Come: Aiutare a scomporre un compito percepito come troppo difficile in un primo passo accessibile e raggiungibile in breve tempo, riflettendo sulle cause dell'abbandono.
-- Percezione di competenza — Quando: Quando A6 (percezione di competenza) e' un'area di crescita. — Come: Valorizzare un risultato concreto gia' ottenuto per rinforzare il circolo responsabilita'-soddisfazione-fiducia, evitando rassicurazioni generiche.
+Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di studio. Proponi solo queste strategie quando sono pertinenti; adattale alla situazione e non citarne l'identificatore. Se una strategia e' indicata come intervento principale, usala come base del piano pratico; se e' indicata come supporto, usala solo per valorizzare una risorsa e non trasformarla in problema.
+- Percezione di competenza — Ruolo: intervento principale — Profilo: A6=3/9 (Area di crescita); target di intervento: A6 — Quando: Quando A6 (percezione di competenza) e' un'area di crescita. — Come: Valorizzare un risultato concreto gia' ottenuto per rinforzare il circolo responsabilita'-soddisfazione-fiducia, evitando rassicurazioni generiche.
 ```
 
 #### Full message dato al modello
@@ -450,52 +318,6 @@ Close with 2 practical actions: one to do today and one to do during the week.
 
 #### Testo iniettato in KNOWLEDGE
 ```text
-[SOURCE 1] 01_Libretto_dello_studente (fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/01_Libretto_dello_studente.docx)
-Data
-firma dell’insegnante …
-
-| * | Descrizione fattori del questionario sulle strategie di apprendimento | punti di forza | punti di debolezza |
-| --- | --- | --- | --- |
-| C3 | Capacità di orientarmi e di organizzarmi nello studio |  |  |
-| C6 | Capacità di concentrarmi nello studio |  |  |
-| C2 | Capacità di autoregolazione del processo di studio e di apprendimento |  |  |
-| C1 | Strategie elaborative per comprendere e ricordare |  |  |
-| C5 | Uso di organizzatori semantici grafici per comprendere e ricordare |  |  |
-| C7 | Autointerrogazione, capacità di porsi e porre domande per capire e ricordare |  |  |
-| C4 | Disponibilità alla collaborazione |  |  |
-| A1 | Ansietà di base |  |  |
-| A7 | Interferenze emotive |  |  |
-| A2 | Volizione e perseveranza nell’impegno |  |  |
-| A5 | Capacità di perseveranza |  |  |
-| A3 | Attribuzione del successo o del fallimento a cause che posso controllare |  |  |
-| A4 | Attribuzione del successo o del fallimento a cause che non posso controllare |  |  |
-| A6 | Percezione di competenza |  |  |
-|  | Previsione dei risultati (prima dello scrutinio) | Risultati del 1° scrutinio
-
----
-
-[SOURCE 2] Libretto_Modello_QSA (fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/Libretto_Modello_QSA.docx)
-Data
-firma dell’insegnante …
-
-| * | Descrizione fattori del questionario sulle strategie di apprendimento | punti di forza | punti di debolezza |
-| --- | --- | --- | --- |
-| C3 | Capacità di orientarmi e di organizzarmi nello studio |  |  |
-| C6 | Capacità di concentrarmi nello studio |  |  |
-| C2 | Capacità di autoregolazione del processo di studio e di apprendimento |  |  |
-| C1 | Strategie elaborative per comprendere e ricordare |  |  |
-| C5 | Uso di organizzatori semantici grafici per comprendere e ricordare |  |  |
-| C7 | Autointerrogazione, capacità di porsi e porre domande per capire e ricordare |  |  |
-| C4 | Disponibilità alla collaborazione |  |  |
-| A1 | Ansietà di base |  |  |
-| A7 | Interferenze emotive |  |  |
-| A2 | Volizione e perseveranza nell’impegno |  |  |
-| A5 | Capacità di perseveranza |  |  |
-| A3 | Attribuzione del successo o del fallimento a cause che posso controllare |  |  |
-| A4 | Attribuzione del successo o del fallimento a cause che non posso controllare |  |  |
-| A6 | Percezione di competenza |  |  |
-|  | Previsione dei risultati (prima dello scrutinio) | Risultati del 1° scrutinio
-
 ## Strategie di supporto approvate
 Usale solo se pertinenti e adattale alla situazione; non citarne l'identificatore.
 - [qsa-planning-next-step] Collegare la riflessione a un prossimo passo concreto, circoscritto e verificabile nella settimana corrente.
@@ -503,58 +325,33 @@ Usale solo se pertinenti e adattale alla situazione; non citarne l'identificator
 
 [CERTIFIED_STRATEGIES]
 ## Strategie di apprendimento certificate
-Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di studio. Proponi solo queste strategie quando sono pertinenti; adattale alla situazione e non citarne l'identificatore.
-- Perseveranza e piccoli obiettivi — Quando: Quando A5 (mancanza di perseveranza) e' un'area di crescita. — Come: Aiutare a scomporre un compito percepito come troppo difficile in un primo passo accessibile e raggiungibile in breve tempo, riflettendo sulle cause dell'abbandono.
-- Percezione di competenza — Quando: Quando A6 (percezione di competenza) e' un'area di crescita. — Come: Valorizzare un risultato concreto gia' ottenuto per rinforzare il circolo responsabilita'-soddisfazione-fiducia, evitando rassicurazioni generiche.
+Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di studio. Proponi solo queste strategie quando sono pertinenti; adattale alla situazione e non citarne l'identificatore. Se una strategia e' indicata come intervento principale, usala come base del piano pratico; se e' indicata come supporto, usala solo per valorizzare una risorsa e non trasformarla in problema.
+- Percezione di competenza — Ruolo: intervento principale — Profilo: A6=3/9 (Area di crescita); target di intervento: A6 — Quando: Quando A6 (percezione di competenza) e' un'area di crescita. — Come: Valorizzare un risultato concreto gia' ottenuto per rinforzare il circolo responsabilita'-soddisfazione-fiducia, evitando rassicurazioni generiche.
 ```
 
 #### Risposta visibile
 ```text
-Cosa emerge brevemente
-Il tuo motore nello studio è la Volizione: hai l’impegno e il desiderio di studiare, ed è una risorsa importante. Tuttavia, per mantenere questo motore acceso, devi gestire due aspetti fondamentali: la tendenza ad abbandonarti (A5 (Mancanza di perseveranza)) e la fiducia che riponi in te stesso nei confronti dello studio (A6 (Percezione di competenza)). Quando un compito risulta troppo grande o richiede uno sforzo prolungato, è naturale che l'energia di volontà venga messa alla prova.
+Fattori trattati: A5 (Mancanza di perseveranza)
 
-Cosa funziona già
-Hai una buona base di Volizione (A2 (Volizione)), ovvero dimostri la capacità di impegnarti e seguire per ragioni interne. Questo ti permette di iniziare i compiti e tenere alta l’attenzione sul tuo obiettivo finale. È il primo passo indispensabile che hai.
+***
 
-Cosa puoi migliorare
-Il passaggio da una volontà iniziatore ad un impegno costante è quello che richiede più attenzione. Dato che la Percezione di competenza (A6 (Percezione di competenza)) è ancora in fase di crescita, tendi a sottovalutarti prima di arrivare alla fine del percorso. Questo senso di incertezza fa sì che quando incontri difficoltà, sia più facile perdere la perseveranza e sentire il desiderio di mollare l’impegno (A5 (Mancanza di perseveranza)). L'obiettivo è costruire piccoli successi per rafforzare la fiducia nelle tue capacità.
+Cosa emerge in sintesi
+La tua motivazione si basa su una volontà attiva e un impegno ben presenti. Tuttavia, c'è un collegamento fondamentale da rafforzare: la fiducia nelle proprie capacità. Quando questa percezione di competenza è bassa, può frenare anche l'impegno (A2 (Volizione)), rendendo difficile mantenere lo slancio quando incontri difficoltà o ritardi nel progresso.
 
-Piano pratico:
-Action to do today (10-20 minuti): Scegli un compito che ti sembra difficile e non cercare subito di risolverlo interamente. Invece, identifica solo il primo passaggio, magari scrivendo i materiali necessari o leggendone l'introduzione. Lavora su quel singolo piccolo punto finché non lo completi, per allenare la capacità di partire e chiudere un segmento senza scoraggiarti.
+Cosa funziona già bene
+Hai una buona volontà (A2 (Volizione)), che ti permette di iniziare e di impegnarti nello studio. Questo è un motore potente che può spingerti avanti finché ti senti in movimento.
 
-Action to do this week: Per ogni materia che devi studiare, cerca di identificare almeno tre piccoli obiettivi raggiungibili entro una settimana (es. ripassare solo i primi 10 concetti; fare gli esercizi del primo capitolo). Quando raggiungi uno di questi mini-traguardi, prenditi un momento per notarlo e celebrare il fatto che hai completato quel segmento con successo. Questo aiuta a rafforzare la fiducia nelle tue capacità (A6 (Percezione di competenza)).
-```
+Cosa si può migliorare
+L'obiettivo primario per aumentare la tua motivazione passa dal rafforzare il senso di efficacia personale, ovvero la Percezione di competenza (A6 (Percezione di competenza)). Lavorare su questo aspetto ti permetterà di percepire ogni tuo sforzo in modo più positivo e automatico. Quando A6 (Percezione di competenza) migliora, diventa più naturale mantenere l'impegno che già mostri con A2 (Volizione), stabilizzando così anche la capacità di perseverare nel tempo.
 
-#### Reasoning confinato, non visibile allo studente
-```text
-Plan ethiopy style notes:
-1.  **Identify Goal & Factors:** Second-level reading of Motivation (A2, A5, A6).
-    *   Factors Present/Allowed: A2 (Volizione), A5 (Mancanza di perseveranza), A6 (Percezione di competenza).
-    *   Scores (Implicit): A2=6/9 (Adeguato), A5=3/9 (Forza), A6=3/9 (Area di crescita).
-2.  **Tone & Style Check:** Sara, empathetic, non-drammatico, accogliente. Caldo ma sobrio. Non usare frasi come "mi dispiace" o "capisco quanto sia difficile". Linguaggio semplice. No emoji. Informal (tu).
-3.  **Structure Enforcement:**
-    *   Analyze A2, A5, A6 *interplay*.
-    *   Must write the entire response in Italian.
-    *   Mandatory headings: 1. Cosa emerge brevemente, 2. Cosa funziona già, 3. Cosa puoi migliorare, 4. Piano pratico (Today/Week).
-4.  **Analysis of Interplay:**
-    *   A5 è bassa (Forza) -> Bassa perseveranza ostacola lo studio.
-    *   A6 è bassa (Area di crescita) -> La scarsa percezione di competenza alimenta il dubbio.
-    *   A2 è media (Adeguato) -> La Volizione c'è, ma viene messa alla prova dalla mancanza di fiducia e dalle difficoltà di mantenere l'impegno su compiti lunghi.
-    *   *Interplay:* La bassa Percezione di Competenza (A6) rende difficile mobilitare pienamente la Volizione (A2), specialmente quando l'impegno richiesto supera le attuali capacità di Perseveranza (A5).
-5.  **Content Generation per Headings:**
-    *   *Cosa emerge:* Il tuo motore è la volontà, ma questa si affievolisce perché i compiti ti sembrano grandi e stai avendo difficoltà a mantenere lo sforzo nel tempo.
-    *   *Cosa funziona già:* Hai una buona base di Volizione (A2).
-    *   *Cosa migliorare:* Devi rafforzare il senso di auto-efficacia (A6) attraverso risultati piccoli, per contrastare la tendenza ad abbandonarti prima del traguardo (A5).
-6.  **Practical Plan Check:**
-    *   Must use [CERTIFIED_STRATEGIES].
-    *   Relevant factors: A5 (mancanza di perseveranza) and A6 (percezione di competenza) are areas for work.
-    *   Strategy 1 (A5): Perseveranza e piccoli obiettivi — Scomporre un compito difficile in primo passo accessibile.
-    *   Strategy 2 (A6): Percezione di competenza — Valorizzare risultato concreto per rinforzare fiducia.
-7.  **Final Polish:** Translate and adopt the empathetic, concrete tone. Ensure all factor names are used correctly when referenced.
+Piano pratico
+Per rafforzare questa percezione e sostenere il tuo impegno:
 
-**(Self-Correction during drafting):** I must not forget to connect A1/A7 (Emotional management) or C1, C2 etc., because they are mentioned in the *general* instruction guidelines, but for this specific turn, I am strictly limited to only discussing A2, A5, A6. The analysis must focus solely on motivation and will.
+Azione da fare oggi (10-20 minuti)
+Identifica un piccolo compito o studio specifico che hai completato negli ultimi giorni e prenditi 15 minuti per rivederlo attivamente. Non limitarti a rileggere, ma spiega ad alta voce come è stato difficile arrivarci o quali passaggi specifici ti hanno permesso di superarlo. L'obiettivo è concentrarti sul tuo processo (la strategia) e non solo sulla risposta corretta, rinforzando la consapevolezza del tuo metodo di lavoro.
 
-8.  **Generate Italian Response.** (Starting with the required structure).
+Azione da fare questa settimana
+Scegli un piccolo progetto che ti interessa nello studio (non necessariamente legato alla materia principale). Suddividilo in tre micro-obiettivi molto gestibili nell'arco della settimana. Ogni volta che completi uno di questi mini-obiettivi, fermati per cinque minuti e scrivi su un quaderno non quello che hai imparato, ma la frase: "Sono riuscito/a a fare X", valorizzando il traguardo raggiunto prima di passare al successivo compito.
 ```
 
 ### Luca (3) — ollama/gemma4:12b
@@ -569,11 +366,11 @@ Plan ethiopy style notes:
   "use_phase_prompt": true,
   "message": "",
   "scores_context": "PROFILO QSA DELLO STUDENTE:\n- C1: 7/9\n- C2: 5/9\n- C3: 3/9\n- C4: 6/9\n- C5: 4/9\n- C6: 7/9\n- C7: 5/9\n- A1: 8/9\n- A2: 6/9\n- A3: 5/9\n- A4: 8/9\n- A5: 3/9\n- A6: 3/9\n- A7: 7/9",
-  "session_id": "qsa-five-models-sl-motivation-3-20260627-180434",
   "counselor_id": 3,
   "max_tokens": 900,
   "include_knowledge": true,
-  "include_history": false
+  "include_history": false,
+  "session_id": "qsa-five-models-score-aware-3-20260627-182816-try1"
 }
 ```
 
@@ -638,6 +435,12 @@ For some factors a high score is an area to work on, not a strength: always use 
 
 [CURRENT STEP FACTORS] Allowed factor codes for this answer: A2, A5, A6. Do not mention, analyse or use any other QSA/QSAr factor code or factor name in this answer. If a second-level instruction asks for factor interplay but this step has only one allowed factor, do not create interplay with other factors; explain the single factor and give any practical advice only from certified strategies for that same factor.
 
+[CURRENT STEP SCORE PROFILE]
+- A2 (Volizione): 6/9 = Adeguato
+- A5 (Mancanza di perseveranza): 3/9 = Forza
+- A6 (Percezione di competenza): 3/9 = Area di crescita
+Primary improvement targets: A6 (Percezione di competenza). Strength/resource factors: A5 (Mancanza di perseveranza). Practical advice must focus primarily on improvement targets. Strength/resource factors may support the plan but must not be described as problems to fix. For inverted factors, phrase the meaning in plain language: if a low score is a strength, say that the low level of the difficulty indicates a resource; do not write awkward phrases such as 'lack of perseverance is a strength'. Use Italian headings exactly: 'Azione da fare oggi' and 'Azione da fare questa settimana'; never leave these headings in English.
+
 [CERTIFIED ADVICE] For QSA practical advice, exercises, action plans or study strategies:
 - use only the items listed under [CERTIFIED_STRATEGIES] in [KNOWLEDGE];
 - adapt wording to the student, but do not invent new actions outside that list;
@@ -645,6 +448,7 @@ For some factors a high score is an area to work on, not a strength: always use 
 - if at least one certified item is listed for the current step, complete the requested practical plan using it;
 - if no certified item is listed for the current step, keep the response interpretive and omit the practical plan;
 - do not mention these source rules to the student.
+- write plan headings in Italian, not English: 'Azione da fare oggi' and 'Azione da fare questa settimana';
 
 [THINKING] If you reason before answering, put ALL of your reasoning inside ONE single block at the very beginning, wrapped exactly in <think> and </think> tags, and keep it concise (a few short lines). After </think>, write the student-facing answer directly: it must NOT contain your plan, your checklist, phrases like 'Attivazione interna', 'Devo', 'Ho i punteggi', nor any meta-commentary about what you are doing. Never start the visible answer with a preparatory checklist such as 'Devo analizzare', 'Identificare il filo rosso', 'Strutturare i contenuti' or 'Proporre azioni concrete'. Never expose reasoning outside the <think> block.
 
@@ -654,52 +458,6 @@ For some factors a high score is an area to work on, not a strength: always use 
 - Step corrente: 3.3 Motivazione
 
 [KNOWLEDGE]
-[SOURCE 1] 01_Libretto_dello_studente (fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/01_Libretto_dello_studente.docx)
-Data
-firma dell’insegnante …
-
-| * | Descrizione fattori del questionario sulle strategie di apprendimento | punti di forza | punti di debolezza |
-| --- | --- | --- | --- |
-| C3 | Capacità di orientarmi e di organizzarmi nello studio |  |  |
-| C6 | Capacità di concentrarmi nello studio |  |  |
-| C2 | Capacità di autoregolazione del processo di studio e di apprendimento |  |  |
-| C1 | Strategie elaborative per comprendere e ricordare |  |  |
-| C5 | Uso di organizzatori semantici grafici per comprendere e ricordare |  |  |
-| C7 | Autointerrogazione, capacità di porsi e porre domande per capire e ricordare |  |  |
-| C4 | Disponibilità alla collaborazione |  |  |
-| A1 | Ansietà di base |  |  |
-| A7 | Interferenze emotive |  |  |
-| A2 | Volizione e perseveranza nell’impegno |  |  |
-| A5 | Capacità di perseveranza |  |  |
-| A3 | Attribuzione del successo o del fallimento a cause che posso controllare |  |  |
-| A4 | Attribuzione del successo o del fallimento a cause che non posso controllare |  |  |
-| A6 | Percezione di competenza |  |  |
-|  | Previsione dei risultati (prima dello scrutinio) | Risultati del 1° scrutinio
-
----
-
-[SOURCE 2] Libretto_Modello_QSA (fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/Libretto_Modello_QSA.docx)
-Data
-firma dell’insegnante …
-
-| * | Descrizione fattori del questionario sulle strategie di apprendimento | punti di forza | punti di debolezza |
-| --- | --- | --- | --- |
-| C3 | Capacità di orientarmi e di organizzarmi nello studio |  |  |
-| C6 | Capacità di concentrarmi nello studio |  |  |
-| C2 | Capacità di autoregolazione del processo di studio e di apprendimento |  |  |
-| C1 | Strategie elaborative per comprendere e ricordare |  |  |
-| C5 | Uso di organizzatori semantici grafici per comprendere e ricordare |  |  |
-| C7 | Autointerrogazione, capacità di porsi e porre domande per capire e ricordare |  |  |
-| C4 | Disponibilità alla collaborazione |  |  |
-| A1 | Ansietà di base |  |  |
-| A7 | Interferenze emotive |  |  |
-| A2 | Volizione e perseveranza nell’impegno |  |  |
-| A5 | Capacità di perseveranza |  |  |
-| A3 | Attribuzione del successo o del fallimento a cause che posso controllare |  |  |
-| A4 | Attribuzione del successo o del fallimento a cause che non posso controllare |  |  |
-| A6 | Percezione di competenza |  |  |
-|  | Previsione dei risultati (prima dello scrutinio) | Risultati del 1° scrutinio
-
 ## Strategie di supporto approvate
 Usale solo se pertinenti e adattale alla situazione; non citarne l'identificatore.
 - [qsa-planning-next-step] Collegare la riflessione a un prossimo passo concreto, circoscritto e verificabile nella settimana corrente.
@@ -707,9 +465,8 @@ Usale solo se pertinenti e adattale alla situazione; non citarne l'identificator
 
 [CERTIFIED_STRATEGIES]
 ## Strategie di apprendimento certificate
-Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di studio. Proponi solo queste strategie quando sono pertinenti; adattale alla situazione e non citarne l'identificatore.
-- Perseveranza e piccoli obiettivi — Quando: Quando A5 (mancanza di perseveranza) e' un'area di crescita. — Come: Aiutare a scomporre un compito percepito come troppo difficile in un primo passo accessibile e raggiungibile in breve tempo, riflettendo sulle cause dell'abbandono.
-- Percezione di competenza — Quando: Quando A6 (percezione di competenza) e' un'area di crescita. — Come: Valorizzare un risultato concreto gia' ottenuto per rinforzare il circolo responsabilita'-soddisfazione-fiducia, evitando rassicurazioni generiche.
+Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di studio. Proponi solo queste strategie quando sono pertinenti; adattale alla situazione e non citarne l'identificatore. Se una strategia e' indicata come intervento principale, usala come base del piano pratico; se e' indicata come supporto, usala solo per valorizzare una risorsa e non trasformarla in problema.
+- Percezione di competenza — Ruolo: intervento principale — Profilo: A6=3/9 (Area di crescita); target di intervento: A6 — Quando: Quando A6 (percezione di competenza) e' un'area di crescita. — Come: Valorizzare un risultato concreto gia' ottenuto per rinforzare il circolo responsabilita'-soddisfazione-fiducia, evitando rassicurazioni generiche.
 ```
 
 #### Full message dato al modello
@@ -727,52 +484,6 @@ Close with 2 practical actions: one to do today and one to do during the week.
 
 #### Testo iniettato in KNOWLEDGE
 ```text
-[SOURCE 1] 01_Libretto_dello_studente (fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/01_Libretto_dello_studente.docx)
-Data
-firma dell’insegnante …
-
-| * | Descrizione fattori del questionario sulle strategie di apprendimento | punti di forza | punti di debolezza |
-| --- | --- | --- | --- |
-| C3 | Capacità di orientarmi e di organizzarmi nello studio |  |  |
-| C6 | Capacità di concentrarmi nello studio |  |  |
-| C2 | Capacità di autoregolazione del processo di studio e di apprendimento |  |  |
-| C1 | Strategie elaborative per comprendere e ricordare |  |  |
-| C5 | Uso di organizzatori semantici grafici per comprendere e ricordare |  |  |
-| C7 | Autointerrogazione, capacità di porsi e porre domande per capire e ricordare |  |  |
-| C4 | Disponibilità alla collaborazione |  |  |
-| A1 | Ansietà di base |  |  |
-| A7 | Interferenze emotive |  |  |
-| A2 | Volizione e perseveranza nell’impegno |  |  |
-| A5 | Capacità di perseveranza |  |  |
-| A3 | Attribuzione del successo o del fallimento a cause che posso controllare |  |  |
-| A4 | Attribuzione del successo o del fallimento a cause che non posso controllare |  |  |
-| A6 | Percezione di competenza |  |  |
-|  | Previsione dei risultati (prima dello scrutinio) | Risultati del 1° scrutinio
-
----
-
-[SOURCE 2] Libretto_Modello_QSA (fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/Libretto_Modello_QSA.docx)
-Data
-firma dell’insegnante …
-
-| * | Descrizione fattori del questionario sulle strategie di apprendimento | punti di forza | punti di debolezza |
-| --- | --- | --- | --- |
-| C3 | Capacità di orientarmi e di organizzarmi nello studio |  |  |
-| C6 | Capacità di concentrarmi nello studio |  |  |
-| C2 | Capacità di autoregolazione del processo di studio e di apprendimento |  |  |
-| C1 | Strategie elaborative per comprendere e ricordare |  |  |
-| C5 | Uso di organizzatori semantici grafici per comprendere e ricordare |  |  |
-| C7 | Autointerrogazione, capacità di porsi e porre domande per capire e ricordare |  |  |
-| C4 | Disponibilità alla collaborazione |  |  |
-| A1 | Ansietà di base |  |  |
-| A7 | Interferenze emotive |  |  |
-| A2 | Volizione e perseveranza nell’impegno |  |  |
-| A5 | Capacità di perseveranza |  |  |
-| A3 | Attribuzione del successo o del fallimento a cause che posso controllare |  |  |
-| A4 | Attribuzione del successo o del fallimento a cause che non posso controllare |  |  |
-| A6 | Percezione di competenza |  |  |
-|  | Previsione dei risultati (prima dello scrutinio) | Risultati del 1° scrutinio
-
 ## Strategie di supporto approvate
 Usale solo se pertinenti e adattale alla situazione; non citarne l'identificatore.
 - [qsa-planning-next-step] Collegare la riflessione a un prossimo passo concreto, circoscritto e verificabile nella settimana corrente.
@@ -780,69 +491,27 @@ Usale solo se pertinenti e adattale alla situazione; non citarne l'identificator
 
 [CERTIFIED_STRATEGIES]
 ## Strategie di apprendimento certificate
-Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di studio. Proponi solo queste strategie quando sono pertinenti; adattale alla situazione e non citarne l'identificatore.
-- Perseveranza e piccoli obiettivi — Quando: Quando A5 (mancanza di perseveranza) e' un'area di crescita. — Come: Aiutare a scomporre un compito percepito come troppo difficile in un primo passo accessibile e raggiungibile in breve tempo, riflettendo sulle cause dell'abbandono.
-- Percezione di competenza — Quando: Quando A6 (percezione di competenza) e' un'area di crescita. — Come: Valorizzare un risultato concreto gia' ottenuto per rinforzare il circolo responsabilita'-soddisfazione-fiducia, evitando rassicurazioni generiche.
+Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di studio. Proponi solo queste strategie quando sono pertinenti; adattale alla situazione e non citarne l'identificatore. Se una strategia e' indicata come intervento principale, usala come base del piano pratico; se e' indicata come supporto, usala solo per valorizzare una risorsa e non trasformarla in problema.
+- Percezione di competenza — Ruolo: intervento principale — Profilo: A6=3/9 (Area di crescita); target di intervento: A6 — Quando: Quando A6 (percezione di competenza) e' un'area di crescita. — Come: Valorizzare un risultato concreto gia' ottenuto per rinforzare il circolo responsabilita'-soddisfazione-fiducia, evitando rassicurazioni generiche.
 ```
 
 #### Risposta visibile
 ```text
-Ciò che emerge è un contrasto tra le tue capacità pratiche e la tua visione di te stesso. Hai la forza per resistere alle difficoltà, ma la mancanza di fiducia nelle tue abilità agisce come un freno psicologico alla tua motivazione.
+Cosa emerge in breve
+La tua motivazione è sostenuta da una buona dose di Volizione (A2 (Volizione)) e da una forte resistenza fisica e mentale, poiché la tua bassa Mancanza di perseveranza (A5 (Mancanza di perseveranza)) indica che non molli facilmente. Tuttavia, la tua bassa Percezione di competenza (A6 (Percezione di competenza)) agisce come un freno sulla tua Volizione (A2 (Volizione)), rendendo difficile mantenere l'entusiasmo costante perché il dubbio sulle tue capacità consuma energia mentale.
 
-Ecco cosa funziona:
-La tua perseveranza (A5 (Mancanza di perseveranza)) è una risorsa concreta e solida; sai mantenere l'impegno quando necessario. Anche la tua volizione (A2 (Volizione)) è adeguata, il che significa che hai la volontà iniziale per metterti in gioco.
+Cosa funziona già
+Hai una base solida: la tua Volizione (A2 (Volizione)) è adeguata per iniziare e gestire le attività quotidiane. Inoltre, il fatto che la Mancanza di perseveranza (A5 (Mancanza di perseveranza)) sia bassa significa che hai la grinta necessaria per restare sui binari anche quando il lavoro diventa pesante.
 
-Ecco cosa puoi migliorare:
-Devi lavorare sulla tua percezione di competenza (A6 (Percezione di competenza)). Attualmente, la scarsa fiducia nelle tue capacità (A6 (Percezione di competenza)) mina la spinta data dalla tua perseveranza (A5 (Mancanza di perseveranza)): se non credi di poter riuscire, ogni ostacolo diventa un dubbio mentale invece di una sfida da superare.
+Cosa puoi migliorare
+Devi lavorare sulla tua Percezione di competenza (A6 (Percezione di competenza)). Poiché la mancanza di fiducia nelle tue capacità erode direttamente la tua Volizione (A2 (Volizione)), devi sostituire le rassicurazioni astratte con prove concrete. Dimostrare a te stesso di saper fare ciò che ti viene richiesto è fondamentale per stabilizzare il tuo slancio e rendere la tua motivazione più resiliente.
 
 Piano pratico:
-- Azione per oggi (10-20 minuti): Scrivi su un foglio tre risultati concreti che hai ottenuto negli ultimi mesi o durante lo studio (es. un esame superato, un concetto difficile compreso, un compito consegnato in tempo). Leggili quando senti dubbi sulla tua capacità.
-- Azione per questa settimana: Prendi un obiettivo di studio della prossima settimana e dividilo in 5 mini-obiettivi molto piccoli e facili da completare entro ogni sessione. Concludi ogni mini-obiettivo segnandolo con una "X" fisica su carta per consolidare la tua percezione di competenza (A6 (Percezione di competenza)).
-```
+- Azione da fare oggi
+Identifica un compito specifico che hai portato a termine con successo negli ultimi giorni e scrivi su un foglio quali abilità concrete hai utilizzato per completarlo.
 
-#### Reasoning confinato, non visibile allo studente
-```text
-*   Role: Luca, pragmatic, direct counselor. No filler, no apologies, no emojis.
-    *   Student Context: "Motivazione e volontà" (Motivation and Will).
-    *   Current Factors allowed: A2 (Volizione), A5 (Mancanza di perseveranza), A6 (Percezione di competenza).
-    *   Scores provided:
-        *   A2 (Volizione): 6/9 -> Adeguato.
-        *   A5 (Mancanza di perseveranza): 3/9 -> Forza (Note: Score is low, but the label for A5 is "Mancanza di perseveranza", and since it's a "negative" trait in its name, a low score means *less* lack of perseverance = Strength).
-        *   A6 (Percezione di competenza): 3/9 -> Area di crescita.
-    *   Instruction: Analysis of the interplay between these specific factors.
-    *   Specific requirements for "Second-level reading": Briefly state what emerges, identify what works, what can be improved, and a practical plan with one action today (10-20 min) and one this week.
-
-        *   A2 (Volizione): 6/9 -> Adeguato.
-        *   A5 (Mancanza di perseveranza): 3/9 -> Forza (Small amount of lack of perseverance = high ability to persist).
-        *   A6 (Percezione di competenza): 3/9 -> Area di crescita (Student feels less competent than they actually are or in specific areas).
-
-    *   *Interplay Analysis:*
-        *   High A5 (Strength) and moderate A2 (Adequate) mean the student has the "engine" to keep going, but low A6 means they don't believe they *can* do it.
-        *   The lack of belief in their own ability (A6) acts as a potential brake on their actual capacity to persevere (A5) and their initial will (A2). Even if the student has the grit to continue, self-doubt creates mental friction.
-
-    1.  **Cosa emerge in breve**: Analysis of motivation components.
-    2.  **Cosa funziona già**: A5 (Forza) and A2 (Adeguato). The ability to keep going is there.
-    3.  **Cosa puoi migliorare**: A6 (Area di crescita). Boosting the sense of competence to remove mental blocks.
-
-        *   A5: "Capacità di perseveranza" (The scale says 1-3 = Forza for A5 because it's "Mancanza di..."). So low score is good.
-        *   A6: "Percezione di competenza". 1-3 = Area di crescita.
-
-    *   Rule: No emojis, no apologies. Italian language only. Direct tone.
-    *   Labels: Use full names (e.g., A2 (Volizione)).
-
-    *   *Refining the Interplay:*
-        "La tua perseveranza (A5) e la tua volizione (A2) sono solide, ma la bassa percezione di competenza (A6) crea un ostacolo mentale: anche se hai le capacità per resistere alle difficoltà, il dubbio su te stessa/o può rallentare il tuo slancio iniziale."
-
-    *   Since A6 is an area of growth, use the "Percezione di competenza" strategy.
-    *   A5 (perseveranza) also allows the "Perseveranza e piccoli obiettivi" strategy if appropriate. However, since A5 is a "Forza", focusing on the competence loop is key.
-
-    *Wait, checking interpretation table:*
-    - A5 (Mancanza di perseveranza): 1-3 = Forza. Yes, that means very little lack of perseverance.
-    - A6 (Percezione di competenza): 1-3 = Area di crescita. This is a problem to fix.
-
-    *Plan Construction:*
-    Today: Reflection on a specific success/attained skill (to boost A6).
-    Week: Break down a big task into small wins (supporting the link between perseverance and growth).
+- Azione da fare questa settimana
+Crea una lista di successi settimanali in cui annoterai ogni piccolo obiettivo raggiunto durante lo studio per costruire una base solida di Percezione di competenza (A6 (Percezione di competenza)).
 ```
 
 ### Davide (5) — openrouter/inclusionai/ling-2.6-flash
@@ -857,11 +526,11 @@ Piano pratico:
   "use_phase_prompt": true,
   "message": "",
   "scores_context": "PROFILO QSA DELLO STUDENTE:\n- C1: 7/9\n- C2: 5/9\n- C3: 3/9\n- C4: 6/9\n- C5: 4/9\n- C6: 7/9\n- C7: 5/9\n- A1: 8/9\n- A2: 6/9\n- A3: 5/9\n- A4: 8/9\n- A5: 3/9\n- A6: 3/9\n- A7: 7/9",
-  "session_id": "qsa-five-models-sl-motivation-5-20260627-180434",
   "counselor_id": 5,
   "max_tokens": 900,
   "include_knowledge": true,
-  "include_history": false
+  "include_history": false,
+  "session_id": "qsa-five-models-score-aware-5-20260627-182816-try1"
 }
 ```
 
@@ -926,6 +595,12 @@ For some factors a high score is an area to work on, not a strength: always use 
 
 [CURRENT STEP FACTORS] Allowed factor codes for this answer: A2, A5, A6. Do not mention, analyse or use any other QSA/QSAr factor code or factor name in this answer. If a second-level instruction asks for factor interplay but this step has only one allowed factor, do not create interplay with other factors; explain the single factor and give any practical advice only from certified strategies for that same factor.
 
+[CURRENT STEP SCORE PROFILE]
+- A2 (Volizione): 6/9 = Adeguato
+- A5 (Mancanza di perseveranza): 3/9 = Forza
+- A6 (Percezione di competenza): 3/9 = Area di crescita
+Primary improvement targets: A6 (Percezione di competenza). Strength/resource factors: A5 (Mancanza di perseveranza). Practical advice must focus primarily on improvement targets. Strength/resource factors may support the plan but must not be described as problems to fix. For inverted factors, phrase the meaning in plain language: if a low score is a strength, say that the low level of the difficulty indicates a resource; do not write awkward phrases such as 'lack of perseverance is a strength'. Use Italian headings exactly: 'Azione da fare oggi' and 'Azione da fare questa settimana'; never leave these headings in English.
+
 [CERTIFIED ADVICE] For QSA practical advice, exercises, action plans or study strategies:
 - use only the items listed under [CERTIFIED_STRATEGIES] in [KNOWLEDGE];
 - adapt wording to the student, but do not invent new actions outside that list;
@@ -933,6 +608,7 @@ For some factors a high score is an area to work on, not a strength: always use 
 - if at least one certified item is listed for the current step, complete the requested practical plan using it;
 - if no certified item is listed for the current step, keep the response interpretive and omit the practical plan;
 - do not mention these source rules to the student.
+- write plan headings in Italian, not English: 'Azione da fare oggi' and 'Azione da fare questa settimana';
 
 [THINKING] If you reason before answering, put ALL of your reasoning inside ONE single block at the very beginning, wrapped exactly in <think> and </think> tags, and keep it concise (a few short lines). After </think>, write the student-facing answer directly: it must NOT contain your plan, your checklist, phrases like 'Attivazione interna', 'Devo', 'Ho i punteggi', nor any meta-commentary about what you are doing. Never start the visible answer with a preparatory checklist such as 'Devo analizzare', 'Identificare il filo rosso', 'Strutturare i contenuti' or 'Proporre azioni concrete'. Never expose reasoning outside the <think> block.
 
@@ -942,52 +618,6 @@ For some factors a high score is an area to work on, not a strength: always use 
 - Step corrente: 3.3 Motivazione
 
 [KNOWLEDGE]
-[SOURCE 1] 01_Libretto_dello_studente (fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/01_Libretto_dello_studente.docx)
-Data
-firma dell’insegnante …
-
-| * | Descrizione fattori del questionario sulle strategie di apprendimento | punti di forza | punti di debolezza |
-| --- | --- | --- | --- |
-| C3 | Capacità di orientarmi e di organizzarmi nello studio |  |  |
-| C6 | Capacità di concentrarmi nello studio |  |  |
-| C2 | Capacità di autoregolazione del processo di studio e di apprendimento |  |  |
-| C1 | Strategie elaborative per comprendere e ricordare |  |  |
-| C5 | Uso di organizzatori semantici grafici per comprendere e ricordare |  |  |
-| C7 | Autointerrogazione, capacità di porsi e porre domande per capire e ricordare |  |  |
-| C4 | Disponibilità alla collaborazione |  |  |
-| A1 | Ansietà di base |  |  |
-| A7 | Interferenze emotive |  |  |
-| A2 | Volizione e perseveranza nell’impegno |  |  |
-| A5 | Capacità di perseveranza |  |  |
-| A3 | Attribuzione del successo o del fallimento a cause che posso controllare |  |  |
-| A4 | Attribuzione del successo o del fallimento a cause che non posso controllare |  |  |
-| A6 | Percezione di competenza |  |  |
-|  | Previsione dei risultati (prima dello scrutinio) | Risultati del 1° scrutinio
-
----
-
-[SOURCE 2] Libretto_Modello_QSA (fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/Libretto_Modello_QSA.docx)
-Data
-firma dell’insegnante …
-
-| * | Descrizione fattori del questionario sulle strategie di apprendimento | punti di forza | punti di debolezza |
-| --- | --- | --- | --- |
-| C3 | Capacità di orientarmi e di organizzarmi nello studio |  |  |
-| C6 | Capacità di concentrarmi nello studio |  |  |
-| C2 | Capacità di autoregolazione del processo di studio e di apprendimento |  |  |
-| C1 | Strategie elaborative per comprendere e ricordare |  |  |
-| C5 | Uso di organizzatori semantici grafici per comprendere e ricordare |  |  |
-| C7 | Autointerrogazione, capacità di porsi e porre domande per capire e ricordare |  |  |
-| C4 | Disponibilità alla collaborazione |  |  |
-| A1 | Ansietà di base |  |  |
-| A7 | Interferenze emotive |  |  |
-| A2 | Volizione e perseveranza nell’impegno |  |  |
-| A5 | Capacità di perseveranza |  |  |
-| A3 | Attribuzione del successo o del fallimento a cause che posso controllare |  |  |
-| A4 | Attribuzione del successo o del fallimento a cause che non posso controllare |  |  |
-| A6 | Percezione di competenza |  |  |
-|  | Previsione dei risultati (prima dello scrutinio) | Risultati del 1° scrutinio
-
 ## Strategie di supporto approvate
 Usale solo se pertinenti e adattale alla situazione; non citarne l'identificatore.
 - [qsa-planning-next-step] Collegare la riflessione a un prossimo passo concreto, circoscritto e verificabile nella settimana corrente.
@@ -995,9 +625,8 @@ Usale solo se pertinenti e adattale alla situazione; non citarne l'identificator
 
 [CERTIFIED_STRATEGIES]
 ## Strategie di apprendimento certificate
-Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di studio. Proponi solo queste strategie quando sono pertinenti; adattale alla situazione e non citarne l'identificatore.
-- Perseveranza e piccoli obiettivi — Quando: Quando A5 (mancanza di perseveranza) e' un'area di crescita. — Come: Aiutare a scomporre un compito percepito come troppo difficile in un primo passo accessibile e raggiungibile in breve tempo, riflettendo sulle cause dell'abbandono.
-- Percezione di competenza — Quando: Quando A6 (percezione di competenza) e' un'area di crescita. — Come: Valorizzare un risultato concreto gia' ottenuto per rinforzare il circolo responsabilita'-soddisfazione-fiducia, evitando rassicurazioni generiche.
+Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di studio. Proponi solo queste strategie quando sono pertinenti; adattale alla situazione e non citarne l'identificatore. Se una strategia e' indicata come intervento principale, usala come base del piano pratico; se e' indicata come supporto, usala solo per valorizzare una risorsa e non trasformarla in problema.
+- Percezione di competenza — Ruolo: intervento principale — Profilo: A6=3/9 (Area di crescita); target di intervento: A6 — Quando: Quando A6 (percezione di competenza) e' un'area di crescita. — Come: Valorizzare un risultato concreto gia' ottenuto per rinforzare il circolo responsabilita'-soddisfazione-fiducia, evitando rassicurazioni generiche.
 ```
 
 #### Full message dato al modello
@@ -1015,52 +644,6 @@ Close with 2 practical actions: one to do today and one to do during the week.
 
 #### Testo iniettato in KNOWLEDGE
 ```text
-[SOURCE 1] 01_Libretto_dello_studente (fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/01_Libretto_dello_studente.docx)
-Data
-firma dell’insegnante …
-
-| * | Descrizione fattori del questionario sulle strategie di apprendimento | punti di forza | punti di debolezza |
-| --- | --- | --- | --- |
-| C3 | Capacità di orientarmi e di organizzarmi nello studio |  |  |
-| C6 | Capacità di concentrarmi nello studio |  |  |
-| C2 | Capacità di autoregolazione del processo di studio e di apprendimento |  |  |
-| C1 | Strategie elaborative per comprendere e ricordare |  |  |
-| C5 | Uso di organizzatori semantici grafici per comprendere e ricordare |  |  |
-| C7 | Autointerrogazione, capacità di porsi e porre domande per capire e ricordare |  |  |
-| C4 | Disponibilità alla collaborazione |  |  |
-| A1 | Ansietà di base |  |  |
-| A7 | Interferenze emotive |  |  |
-| A2 | Volizione e perseveranza nell’impegno |  |  |
-| A5 | Capacità di perseveranza |  |  |
-| A3 | Attribuzione del successo o del fallimento a cause che posso controllare |  |  |
-| A4 | Attribuzione del successo o del fallimento a cause che non posso controllare |  |  |
-| A6 | Percezione di competenza |  |  |
-|  | Previsione dei risultati (prima dello scrutinio) | Risultati del 1° scrutinio
-
----
-
-[SOURCE 2] Libretto_Modello_QSA (fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/Libretto_Modello_QSA.docx)
-Data
-firma dell’insegnante …
-
-| * | Descrizione fattori del questionario sulle strategie di apprendimento | punti di forza | punti di debolezza |
-| --- | --- | --- | --- |
-| C3 | Capacità di orientarmi e di organizzarmi nello studio |  |  |
-| C6 | Capacità di concentrarmi nello studio |  |  |
-| C2 | Capacità di autoregolazione del processo di studio e di apprendimento |  |  |
-| C1 | Strategie elaborative per comprendere e ricordare |  |  |
-| C5 | Uso di organizzatori semantici grafici per comprendere e ricordare |  |  |
-| C7 | Autointerrogazione, capacità di porsi e porre domande per capire e ricordare |  |  |
-| C4 | Disponibilità alla collaborazione |  |  |
-| A1 | Ansietà di base |  |  |
-| A7 | Interferenze emotive |  |  |
-| A2 | Volizione e perseveranza nell’impegno |  |  |
-| A5 | Capacità di perseveranza |  |  |
-| A3 | Attribuzione del successo o del fallimento a cause che posso controllare |  |  |
-| A4 | Attribuzione del successo o del fallimento a cause che non posso controllare |  |  |
-| A6 | Percezione di competenza |  |  |
-|  | Previsione dei risultati (prima dello scrutinio) | Risultati del 1° scrutinio
-
 ## Strategie di supporto approvate
 Usale solo se pertinenti e adattale alla situazione; non citarne l'identificatore.
 - [qsa-planning-next-step] Collegare la riflessione a un prossimo passo concreto, circoscritto e verificabile nella settimana corrente.
@@ -1068,22 +651,26 @@ Usale solo se pertinenti e adattale alla situazione; non citarne l'identificator
 
 [CERTIFIED_STRATEGIES]
 ## Strategie di apprendimento certificate
-Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di studio. Proponi solo queste strategie quando sono pertinenti; adattale alla situazione e non citarne l'identificatore.
-- Perseveranza e piccoli obiettivi — Quando: Quando A5 (mancanza di perseveranza) e' un'area di crescita. — Come: Aiutare a scomporre un compito percepito come troppo difficile in un primo passo accessibile e raggiungibile in breve tempo, riflettendo sulle cause dell'abbandono.
-- Percezione di competenza — Quando: Quando A6 (percezione di competenza) e' un'area di crescita. — Come: Valorizzare un risultato concreto gia' ottenuto per rinforzare il circolo responsabilita'-soddisfazione-fiducia, evitando rassicurazioni generiche.
+Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di studio. Proponi solo queste strategie quando sono pertinenti; adattale alla situazione e non citarne l'identificatore. Se una strategia e' indicata come intervento principale, usala come base del piano pratico; se e' indicata come supporto, usala solo per valorizzare una risorsa e non trasformarla in problema.
+- Percezione di competenza — Ruolo: intervento principale — Profilo: A6=3/9 (Area di crescita); target di intervento: A6 — Quando: Quando A6 (percezione di competenza) e' un'area di crescita. — Come: Valorizzare un risultato concreto gia' ottenuto per rinforzare il circolo responsabilita'-soddisfazione-fiducia, evitando rassicurazioni generiche.
 ```
 
 #### Risposta visibile
 ```text
-Quello che emerge in breve è il seguente: la tua volizione (A2 (Volizione)) è una risorsa che ti aiuta a impegnarti, ma la perseveranza (A5 (Mancanza di perseveranza)) è ancora bassa e la percezione di competenza (A6 (Percezione di competenza)) è giù; quando A5 (Mancanza di perseveranza) è debole, A6 (Percezione di competenza) e A2 (Volizione) si influenzano negativamente, perché fatica a credere che ce la possa fare e questo indebolisce la voglia di impegnarti.
+Cosa emerge in breve
+Qui dentro la tua volizione (A2 (Volizione)) è già adeguata, la tua perseveranza (A5 (Mancanza di perseveranza)) è una risorsa forte e la tua percezione di competenza (A6 (Percezione di competenza)) è l’unico punto su cui lavorare. Piuttosto che vederli separati, questi tre fattori sono una rete: la tua volione cresce quando la percezione di competenza migliora, e la perseveranza che hai ti permette di alimentare quella volizione anche nei momenti difficili.
 
-Cosa già funziona: A2 (Volizione) è al 6, quindi hai già un buon livello di impegno iniziale, sei motivato a partire.
+Cosa già funziona
+Hai una buona base di volizione (A2 (Volizione)) e una perseveranza (A5 (Mancanza di perseveranza)) che ti aiuta a keep going. Questi due fattori si sostengono: la tua energia nel fare emerge dalla forza che hai nel non arrenderti, il che mantiene accesa la motivazione anche quando le cose non vanno subito bene.
 
-Cosa puoi migliorare: lavorare su A5 (Mancanza di perseveranza) per far durare lo sforzo e su A6 (Percezione di competenza) per aumentare la fiducia, con prove concrete di successo che dimostrano che puoi davvero ottenere risultati.
+Cosa puoi migliorare
+La gestione della motivazione e della volontà (A2 (Volizione), A5 (Mancanza di perseveranza), A6 (Percezione di competenza)) passa soprattutto dal lavorare sulla percezione di competenza (A6 (Percezione di competenza)): quando ti senti meno capace, la volione cala e la perseveranza rischia di stringersi diventando fatica. Se invece costruisci la fiducia nelle tue capacità, la volizione si alimenta da sola e la perseveranza diventa più naturale e sostenuta.
 
-Pratico piano:
-- Azione da fare oggi (10-20 minuti): scegli un compito semplice che puoi finire in pochi minuti, affrontalo con impegno e, quando lo completi, annotati cosa hai fatto e il risultato: è un modo concreto per alimentare A2 (Volizione) e A6 (Percezione di competenza).
-- Azione da fare questa settimana: spezza un compito più grande in due o tre passi brevi, pianifica quando farli e celebra ogni mini-risultato, così A5 (Mancanza di perseveranza) trova una scorta di energia e A6 (Percezione di competenza) cresce perché vedi che le tue azioni portano avanti.
+Azione da fare oggi
+Scegli un piccolo compito che tu possa fare bene, imposta un blocco di 10-20 minuti senza distrazioni e, al termine, annota cosa sei riuscito a fare e un punto che hai imparato. Usa quel risultato concreto per dire a te stesso che sei in grado di arrivare a capo di qualcosa: la percezione di competenza (A6 (Percezione di competenza)) cresce con queste piccole vittorie quotidiane.
+
+Azione da fare questa settimana
+Programma tre sessioni da 20 minuti su un argomento che stai studiando, usa strategie semplici di organizzazione (mappe concettuali o schemi) e, alla fine di ogni sessione, scrivi due cose che hai capito e un piccolo successo. In questo modo la tua volizione (A2 (Volizione)) e la perseveranza (A5 (Mancanza di perseveranza)) trovano un supporto quotidiano mentre la tua percezione di competenza (A6 (Percezione di competenza)) si rafforza con il fare e il rivedere ciò che sai.
 ```
 
 ### Giulia (6) — openrouter/mistralai/mistral-small-24b-instruct-2501
@@ -1098,11 +685,11 @@ Pratico piano:
   "use_phase_prompt": true,
   "message": "",
   "scores_context": "PROFILO QSA DELLO STUDENTE:\n- C1: 7/9\n- C2: 5/9\n- C3: 3/9\n- C4: 6/9\n- C5: 4/9\n- C6: 7/9\n- C7: 5/9\n- A1: 8/9\n- A2: 6/9\n- A3: 5/9\n- A4: 8/9\n- A5: 3/9\n- A6: 3/9\n- A7: 7/9",
-  "session_id": "qsa-five-models-sl-motivation-6-20260627-180434",
   "counselor_id": 6,
   "max_tokens": 900,
   "include_knowledge": true,
-  "include_history": false
+  "include_history": false,
+  "session_id": "qsa-five-models-score-aware-6-20260627-182816-try1"
 }
 ```
 
@@ -1167,6 +754,12 @@ For some factors a high score is an area to work on, not a strength: always use 
 
 [CURRENT STEP FACTORS] Allowed factor codes for this answer: A2, A5, A6. Do not mention, analyse or use any other QSA/QSAr factor code or factor name in this answer. If a second-level instruction asks for factor interplay but this step has only one allowed factor, do not create interplay with other factors; explain the single factor and give any practical advice only from certified strategies for that same factor.
 
+[CURRENT STEP SCORE PROFILE]
+- A2 (Volizione): 6/9 = Adeguato
+- A5 (Mancanza di perseveranza): 3/9 = Forza
+- A6 (Percezione di competenza): 3/9 = Area di crescita
+Primary improvement targets: A6 (Percezione di competenza). Strength/resource factors: A5 (Mancanza di perseveranza). Practical advice must focus primarily on improvement targets. Strength/resource factors may support the plan but must not be described as problems to fix. For inverted factors, phrase the meaning in plain language: if a low score is a strength, say that the low level of the difficulty indicates a resource; do not write awkward phrases such as 'lack of perseverance is a strength'. Use Italian headings exactly: 'Azione da fare oggi' and 'Azione da fare questa settimana'; never leave these headings in English.
+
 [CERTIFIED ADVICE] For QSA practical advice, exercises, action plans or study strategies:
 - use only the items listed under [CERTIFIED_STRATEGIES] in [KNOWLEDGE];
 - adapt wording to the student, but do not invent new actions outside that list;
@@ -1174,6 +767,7 @@ For some factors a high score is an area to work on, not a strength: always use 
 - if at least one certified item is listed for the current step, complete the requested practical plan using it;
 - if no certified item is listed for the current step, keep the response interpretive and omit the practical plan;
 - do not mention these source rules to the student.
+- write plan headings in Italian, not English: 'Azione da fare oggi' and 'Azione da fare questa settimana';
 
 [THINKING] If you reason before answering, put ALL of your reasoning inside ONE single block at the very beginning, wrapped exactly in <think> and </think> tags, and keep it concise (a few short lines). After </think>, write the student-facing answer directly: it must NOT contain your plan, your checklist, phrases like 'Attivazione interna', 'Devo', 'Ho i punteggi', nor any meta-commentary about what you are doing. Never start the visible answer with a preparatory checklist such as 'Devo analizzare', 'Identificare il filo rosso', 'Strutturare i contenuti' or 'Proporre azioni concrete'. Never expose reasoning outside the <think> block.
 
@@ -1183,52 +777,6 @@ For some factors a high score is an area to work on, not a strength: always use 
 - Step corrente: 3.3 Motivazione
 
 [KNOWLEDGE]
-[SOURCE 1] 01_Libretto_dello_studente (fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/01_Libretto_dello_studente.docx)
-Data
-firma dell’insegnante …
-
-| * | Descrizione fattori del questionario sulle strategie di apprendimento | punti di forza | punti di debolezza |
-| --- | --- | --- | --- |
-| C3 | Capacità di orientarmi e di organizzarmi nello studio |  |  |
-| C6 | Capacità di concentrarmi nello studio |  |  |
-| C2 | Capacità di autoregolazione del processo di studio e di apprendimento |  |  |
-| C1 | Strategie elaborative per comprendere e ricordare |  |  |
-| C5 | Uso di organizzatori semantici grafici per comprendere e ricordare |  |  |
-| C7 | Autointerrogazione, capacità di porsi e porre domande per capire e ricordare |  |  |
-| C4 | Disponibilità alla collaborazione |  |  |
-| A1 | Ansietà di base |  |  |
-| A7 | Interferenze emotive |  |  |
-| A2 | Volizione e perseveranza nell’impegno |  |  |
-| A5 | Capacità di perseveranza |  |  |
-| A3 | Attribuzione del successo o del fallimento a cause che posso controllare |  |  |
-| A4 | Attribuzione del successo o del fallimento a cause che non posso controllare |  |  |
-| A6 | Percezione di competenza |  |  |
-|  | Previsione dei risultati (prima dello scrutinio) | Risultati del 1° scrutinio
-
----
-
-[SOURCE 2] Libretto_Modello_QSA (fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/Libretto_Modello_QSA.docx)
-Data
-firma dell’insegnante …
-
-| * | Descrizione fattori del questionario sulle strategie di apprendimento | punti di forza | punti di debolezza |
-| --- | --- | --- | --- |
-| C3 | Capacità di orientarmi e di organizzarmi nello studio |  |  |
-| C6 | Capacità di concentrarmi nello studio |  |  |
-| C2 | Capacità di autoregolazione del processo di studio e di apprendimento |  |  |
-| C1 | Strategie elaborative per comprendere e ricordare |  |  |
-| C5 | Uso di organizzatori semantici grafici per comprendere e ricordare |  |  |
-| C7 | Autointerrogazione, capacità di porsi e porre domande per capire e ricordare |  |  |
-| C4 | Disponibilità alla collaborazione |  |  |
-| A1 | Ansietà di base |  |  |
-| A7 | Interferenze emotive |  |  |
-| A2 | Volizione e perseveranza nell’impegno |  |  |
-| A5 | Capacità di perseveranza |  |  |
-| A3 | Attribuzione del successo o del fallimento a cause che posso controllare |  |  |
-| A4 | Attribuzione del successo o del fallimento a cause che non posso controllare |  |  |
-| A6 | Percezione di competenza |  |  |
-|  | Previsione dei risultati (prima dello scrutinio) | Risultati del 1° scrutinio
-
 ## Strategie di supporto approvate
 Usale solo se pertinenti e adattale alla situazione; non citarne l'identificatore.
 - [qsa-planning-next-step] Collegare la riflessione a un prossimo passo concreto, circoscritto e verificabile nella settimana corrente.
@@ -1236,9 +784,8 @@ Usale solo se pertinenti e adattale alla situazione; non citarne l'identificator
 
 [CERTIFIED_STRATEGIES]
 ## Strategie di apprendimento certificate
-Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di studio. Proponi solo queste strategie quando sono pertinenti; adattale alla situazione e non citarne l'identificatore.
-- Perseveranza e piccoli obiettivi — Quando: Quando A5 (mancanza di perseveranza) e' un'area di crescita. — Come: Aiutare a scomporre un compito percepito come troppo difficile in un primo passo accessibile e raggiungibile in breve tempo, riflettendo sulle cause dell'abbandono.
-- Percezione di competenza — Quando: Quando A6 (percezione di competenza) e' un'area di crescita. — Come: Valorizzare un risultato concreto gia' ottenuto per rinforzare il circolo responsabilita'-soddisfazione-fiducia, evitando rassicurazioni generiche.
+Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di studio. Proponi solo queste strategie quando sono pertinenti; adattale alla situazione e non citarne l'identificatore. Se una strategia e' indicata come intervento principale, usala come base del piano pratico; se e' indicata come supporto, usala solo per valorizzare una risorsa e non trasformarla in problema.
+- Percezione di competenza — Ruolo: intervento principale — Profilo: A6=3/9 (Area di crescita); target di intervento: A6 — Quando: Quando A6 (percezione di competenza) e' un'area di crescita. — Come: Valorizzare un risultato concreto gia' ottenuto per rinforzare il circolo responsabilita'-soddisfazione-fiducia, evitando rassicurazioni generiche.
 ```
 
 #### Full message dato al modello
@@ -1256,52 +803,6 @@ Close with 2 practical actions: one to do today and one to do during the week.
 
 #### Testo iniettato in KNOWLEDGE
 ```text
-[SOURCE 1] 01_Libretto_dello_studente (fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/01_Libretto_dello_studente.docx)
-Data
-firma dell’insegnante …
-
-| * | Descrizione fattori del questionario sulle strategie di apprendimento | punti di forza | punti di debolezza |
-| --- | --- | --- | --- |
-| C3 | Capacità di orientarmi e di organizzarmi nello studio |  |  |
-| C6 | Capacità di concentrarmi nello studio |  |  |
-| C2 | Capacità di autoregolazione del processo di studio e di apprendimento |  |  |
-| C1 | Strategie elaborative per comprendere e ricordare |  |  |
-| C5 | Uso di organizzatori semantici grafici per comprendere e ricordare |  |  |
-| C7 | Autointerrogazione, capacità di porsi e porre domande per capire e ricordare |  |  |
-| C4 | Disponibilità alla collaborazione |  |  |
-| A1 | Ansietà di base |  |  |
-| A7 | Interferenze emotive |  |  |
-| A2 | Volizione e perseveranza nell’impegno |  |  |
-| A5 | Capacità di perseveranza |  |  |
-| A3 | Attribuzione del successo o del fallimento a cause che posso controllare |  |  |
-| A4 | Attribuzione del successo o del fallimento a cause che non posso controllare |  |  |
-| A6 | Percezione di competenza |  |  |
-|  | Previsione dei risultati (prima dello scrutinio) | Risultati del 1° scrutinio
-
----
-
-[SOURCE 2] Libretto_Modello_QSA (fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/Libretto_Modello_QSA.docx)
-Data
-firma dell’insegnante …
-
-| * | Descrizione fattori del questionario sulle strategie di apprendimento | punti di forza | punti di debolezza |
-| --- | --- | --- | --- |
-| C3 | Capacità di orientarmi e di organizzarmi nello studio |  |  |
-| C6 | Capacità di concentrarmi nello studio |  |  |
-| C2 | Capacità di autoregolazione del processo di studio e di apprendimento |  |  |
-| C1 | Strategie elaborative per comprendere e ricordare |  |  |
-| C5 | Uso di organizzatori semantici grafici per comprendere e ricordare |  |  |
-| C7 | Autointerrogazione, capacità di porsi e porre domande per capire e ricordare |  |  |
-| C4 | Disponibilità alla collaborazione |  |  |
-| A1 | Ansietà di base |  |  |
-| A7 | Interferenze emotive |  |  |
-| A2 | Volizione e perseveranza nell’impegno |  |  |
-| A5 | Capacità di perseveranza |  |  |
-| A3 | Attribuzione del successo o del fallimento a cause che posso controllare |  |  |
-| A4 | Attribuzione del successo o del fallimento a cause che non posso controllare |  |  |
-| A6 | Percezione di competenza |  |  |
-|  | Previsione dei risultati (prima dello scrutinio) | Risultati del 1° scrutinio
-
 ## Strategie di supporto approvate
 Usale solo se pertinenti e adattale alla situazione; non citarne l'identificatore.
 - [qsa-planning-next-step] Collegare la riflessione a un prossimo passo concreto, circoscritto e verificabile nella settimana corrente.
@@ -1309,28 +810,24 @@ Usale solo se pertinenti e adattale alla situazione; non citarne l'identificator
 
 [CERTIFIED_STRATEGIES]
 ## Strategie di apprendimento certificate
-Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di studio. Proponi solo queste strategie quando sono pertinenti; adattale alla situazione e non citarne l'identificatore.
-- Perseveranza e piccoli obiettivi — Quando: Quando A5 (mancanza di perseveranza) e' un'area di crescita. — Come: Aiutare a scomporre un compito percepito come troppo difficile in un primo passo accessibile e raggiungibile in breve tempo, riflettendo sulle cause dell'abbandono.
-- Percezione di competenza — Quando: Quando A6 (percezione di competenza) e' un'area di crescita. — Come: Valorizzare un risultato concreto gia' ottenuto per rinforzare il circolo responsabilita'-soddisfazione-fiducia, evitando rassicurazioni generiche.
+Fonte autorizzata per consigli pratici, esercizi, piani d'azione e strategie di studio. Proponi solo queste strategie quando sono pertinenti; adattale alla situazione e non citarne l'identificatore. Se una strategia e' indicata come intervento principale, usala come base del piano pratico; se e' indicata come supporto, usala solo per valorizzare una risorsa e non trasformarla in problema.
+- Percezione di competenza — Ruolo: intervento principale — Profilo: A6=3/9 (Area di crescita); target di intervento: A6 — Quando: Quando A6 (percezione di competenza) e' un'area di crescita. — Come: Valorizzare un risultato concreto gia' ottenuto per rinforzare il circolo responsabilita'-soddisfazione-fiducia, evitando rassicurazioni generiche.
 ```
 
 #### Risposta visibile
 ```text
 Cosa emerge in breve:
-La tua A2 (Volizione) è adeguata, ma la A6 (Percezione di competenza) è un'area di crescita. La A5 (Mancanza di perseveranza) è una forza, il che significa che non ti scoraggi facilmente. Tuttavia, la percezione di competenza bassa può influenzare negativamente la volizione. La mancanza di perseveranza può compensare la percezione di competenza bassa, aiutandoti a vedere i compiti come sfide da superare piuttosto che ostacoli insormontabili.
+La tua motivazione è sostenuta da una buona A2 (Volizione), che è adeguata, e da una bassa A5 (Mancanza di perseveranza), che indica che non ti arrendi facilmente. Tuttavia, la tua A6 (Percezione di competenza) è bassa, il che può influenzare negativamente la tua motivazione. La volizione e la percezione di competenza si influenzano a vicenda: una bassa percezione di competenza può limitare la tua volizione, rendendo più difficile mantenere la motivazione.
 
 Cosa già funziona:
-La tua mancanza di perseveranza è una forza, il che significa che non ti scoraggi facilmente di fronte a difficoltà. Questo ti permette di mantenere la motivazione anche quando i compiti diventano difficili.
+La tua volizione è adeguata, il che significa che hai una buona capacità di volere e desiderare di raggiungere i tuoi obiettivi. Inoltre, la tua bassa mancanza di perseveranza indica che non ti arrendi facilmente di fronte alle difficoltà, il che è un punto di forza.
 
 Cosa puoi migliorare:
-La percezione di competenza è un'area di crescita. Puoi lavorare su questo migliorando la tua fiducia nelle tue capacità. Questo può aiutarti a mantenere la motivazione e a vedere i compiti come sfide da superare piuttosto che ostacoli insormontabili.
+La tua percezione di competenza è bassa, il che può influenzare negativamente la tua motivazione. È importante lavorare su questa area per rafforzare la tua fiducia nelle tue capacità e migliorare la tua motivazione.
 
-Piano pratico:
-- Azione da fare oggi: Rifletti su un compito recente che hai completato con successo e valorizza questo risultato. Scrivi un breve elenco dei passaggi che hai seguito e come ti sei sentito una volta completato il compito. Questo ti aiuterà a rinforzare la tua percezione di competenza.
-- Azione da fare questa settimana: Scegli un compito che percepisci come difficile e suddividilo in piccoli passaggi. Completa il primo passo e rifletti su come ti senti dopo averlo completato. Questo ti aiuterà a vedere il compito come una serie di sfide gestibili piuttosto che un ostacolo insormontabile.
-```
+Azione da fare oggi:
+Identifica un piccolo successo recente che hai ottenuto in un compito o progetto. Scrivi brevemente cosa hai fatto e come l'hai raggiunto. Questo ti aiuterà a riconoscere le tue capacità e a rafforzare la tua percezione di competenza.
 
-#### Reasoning confinato, non visibile allo studente
-```text
-Il punteggio di A5 (Mancanza di perseveranza) è basso, quindi è una forza. A2 (Volizione) è adeguato. A6 (Percezione di competenza) è un'area di crescita. A5 (Mancanza di perseveranza) e A6 (Percezione di competenza) sono entrambi bassi, quindi possono compensarsi a vicenda. A5 (Mancanza di perseveranza) può sostenere A2 (Volizione) se la mancanza di perseveranza viene vista come un'opportunità per migliorare la percezione di competenza.
+Azione da fare questa settimana:
+Collega questo successo a un prossimo passo concreto, circoscritto e verificabile. Ad esempio, se hai completato un compito di matematica, pianifica di risolvere un altro problema simile entro la fine della settimana. Questo ti aiuterà a mantenere la motivazione e a vedere i progressi.
 ```
