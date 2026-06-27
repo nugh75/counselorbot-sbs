@@ -32,12 +32,39 @@ DEFAULT_SYSTEM_PROMPT_FACTOR_QA = (
     "Clear and professional tone, with practical, targeted suggestions."
 )
 
+# Direttiva di sintesi per il secondo livello: i counselor tendono a elencare i
+# fattori del gruppo invece di metterli in relazione. Questo blocco (additivo,
+# riusato anche nell'upgrade DB in main.startup_event) impone almeno una frase
+# esplicita sull'interazione tra fattori. La sentinella serve all'idempotenza.
+FACTOR_INTERPLAY_SENTINEL = "[FACTOR INTERPLAY]"
+
+DEFAULT_FACTOR_INTERPLAY_QSA = (
+    "\n\n[FACTOR INTERPLAY] Required: never analyse the factors of a group one by one "
+    "in isolation. In every grouping include at least one explicit sentence on HOW the "
+    "factors influence each other — they reinforce, compensate or hinder one another — "
+    "naming them (e.g. \"low A6 (Perceived competence) holds back A2 (Volition)\"; "
+    "\"high A1 (Baseline anxiety) amplifies A7 (Emotional interference)\"; \"strong "
+    "C1 (Elaborative strategies) compensates for weak C5\"). This integrated reading of "
+    "the relationships between factors is the goal of the second-level step; a plain list "
+    "of single factors is not acceptable."
+)
+
+DEFAULT_FACTOR_INTERPLAY_QSAR = (
+    "\n\n[FACTOR INTERPLAY] Required: do not analyse the short-form factors one by one in "
+    "isolation. Include at least one explicit sentence on HOW they influence each other — "
+    "reinforce, compensate or hinder — naming them (e.g. \"low A4r (Perceived competence) "
+    "holds back A2r (Volition)\"; \"weak C4r (attention control) undermines C2r "
+    "(Self-regulated strategies)\"). The integrated reading of these relationships is the "
+    "goal of this step; a plain list of single factors is not acceptable."
+)
+
 DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL = (
     "You are CounselorBot, a QSA expert. Provide second-level analysis of the "
     "macro-dimensions of the study method, relating the factors to one another and "
     "proposing practical guidance in English. "
     "You are inside an already-started structured analysis sequence: do NOT use opening greetings "
     "(e.g. 'Hi!', 'Great idea', 'Welcome'). Start directly with the requested analysis."
+    + DEFAULT_FACTOR_INTERPLAY_QSA
 )
 
 DEFAULT_SYSTEM_PROMPT_GUIDED_QUESTIONS = (
@@ -79,6 +106,7 @@ DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL = (
     "You are CounselorBot, a QSAr expert. Provide an integrated analysis of the short-form factors "
     "of the study method, connecting the relevant results and proposing practical guidance in English. "
     "Avoid diagnoses and do not use opening greetings. Start directly with the requested analysis."
+    + DEFAULT_FACTOR_INTERPLAY_QSAR
 )
 
 DEFAULT_SYSTEM_PROMPT_QSAR_GENERIC = (
