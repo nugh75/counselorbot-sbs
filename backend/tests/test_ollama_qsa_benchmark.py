@@ -67,7 +67,7 @@ LANG_MAP: dict[str, tuple[str, str]] = {
 # Nomi fattori QSA (italiano)
 QSA_FACTOR_IT: dict[str, str] = {
     "C1": "Strategie elaborative", "C2": "Autoregolazione", "C3": "Disorientamento",
-    "C4": "Disponibilità alla collaborazione", "C5": "Organizzatori semantici",
+    "C4": "Disponibilità alla collaborazione", "C5": "Uso di organizzatori semantici",
     "C6": "Difficoltà di concentrazione", "C7": "Autointerrogazione",
     "A1": "Ansietà di base", "A2": "Volizione",
     "A3": "Attribuzione a cause controllabili", "A4": "Attribuzione a cause incontrollabili",
@@ -78,7 +78,7 @@ QSA_FACTOR_IT: dict[str, str] = {
 # Nomi fattori in inglese
 QSA_FACTOR_EN: dict[str, str] = {
     "C1": "Elaborative strategies", "C2": "Self-regulation", "C3": "Disorientation",
-    "C4": "Willingness to collaborate", "C5": "Semantic organisers",
+    "C4": "Willingness to collaborate", "C5": "Use of semantic organisers",
     "C6": "Concentration difficulties", "C7": "Self-questioning",
     "A1": "Baseline anxiety", "A2": "Volition",
     "A3": "Attribution to controllable causes", "A4": "Attribution to uncontrollable causes",
@@ -172,7 +172,7 @@ QSA_STEPS: list[dict[str, str]] = [
      "prompt": "Analyse ONLY the AFFECTIVE factors (A1-A7) of my QSA profile. For each, give the score, interpretation and a short comment.",
      "factors": "A1,A2,A3,A4,A5,A6,A7"},
     {"id": "sl-elaboration", "label": "3.1 Elaborazione e Org.", "mode": "second-level",
-     "prompt": "Second-Level Analysis - Part 1: ELABORATION AND ORGANISATION. Analyse together the factors: C1 (Elaborative strategies), C5 (Semantic organisers), C7 (Self-questioning). Assess how the student processes and structures information.",
+     "prompt": "Second-Level Analysis - Part 1: ELABORATION AND ORGANISATION. Analyse together the factors: C1 (Elaborative strategies), C5 (Use of semantic organisers), C7 (Self-questioning). Assess how the student processes and structures information.",
      "factors": "C1,C5,C7"},
     {"id": "sl-selfcontrol", "label": "3.2 Autocontrollo", "mode": "second-level",
      "prompt": "Second-Level Analysis - Part 2: SELF-CONTROL AND CONCENTRATION. Analyse together the factors: C2 (Self-regulation), C3 (Disorientation), C6 (Concentration difficulties). Assess the ability to manage the study process.",

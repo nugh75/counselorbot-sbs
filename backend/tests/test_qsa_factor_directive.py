@@ -22,11 +22,17 @@ os.environ.setdefault("COUNSELOR_TRANSLATE_DISABLED", "1")
 os.environ.setdefault("ADMIN_SYNC_DISABLED", "1")
 
 from backend.chat_logic import (
+    _annotate_qsa_factor_codes,
     _apply_qsa_factor_directive,
     _qsa_assessment_labels,
     _qsa_factor_names,
     _QSA_INVERTED_CODES,
     _QSAR_INVERTED_CODES,
+)
+from backend.prompt_config import (
+    DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL,
+    DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL,
+    FACTOR_INTERPLAY_SENTINEL,
 )
 
 
@@ -78,6 +84,48 @@ def test_qsar_inverted_codes_use_inverted_bands():
     for code, name in names.items():
         inverted = code in _QSAR_INVERTED_CODES
         assert _row(code, name, lbl, inverted) in out, f"riga errata per {code}"
+
+
+def test_annotate_does_not_duplicate_name():
+    # Bug storico: il modello scrive "codice nome" senza parentesi e l'annotazione
+    # ci infilava di nuovo il nome → "A6 (Percezione di competenza) Percezione di competenza".
+    out = _annotate_qsa_factor_codes("C1 Strategie elaborative 7/9 Forza", "it")
+    assert out.startswith("C1 (Strategie elaborative) 7/9"), out
+    assert out.count("Strategie elaborative") == 1, out
+
+    out = _annotate_qsa_factor_codes("A6: Percezione di competenza è bassa", "it")
+    assert out.startswith("A6 (Percezione di competenza) è bassa"), out
+    assert out.count("Percezione di competenza") == 1, out
+
+
+def test_annotate_collapses_model_side_duplication():
+    # Il modello stesso ha gia prodotto "(nome) nome": va collassato.
+    out = _annotate_qsa_factor_codes("C1 (Strategie elaborative) Strategie elaborative 7/9", "it")
+    assert out.count("Strategie elaborative") == 1, out
+
+
+def test_annotate_bare_code_still_annotated():
+    out = _annotate_qsa_factor_codes("il C2 va bene", "it")
+    assert out == "il C2 (Autoregolazione) va bene", out
+
+
+def test_annotate_idempotent_on_correct_form():
+    out = _annotate_qsa_factor_codes("C1 (Strategie elaborative): 7/9", "it")
+    assert out.count("Strategie elaborative") == 1, out
+    assert "C1 (Strategie elaborative)" in out, out
+
+
+def test_annotate_c5_canonical_name():
+    out = _annotate_qsa_factor_codes("C5 7/9", "it")
+    assert "C5 (Uso di organizzatori semantici)" in out, out
+
+
+def test_second_level_defaults_require_factor_interplay():
+    # I default di secondo livello devono imporre la sintesi tra fattori, non solo
+    # l'analisi uno-per-uno (flag poca-connessione della batteria).
+    for prompt in (DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL, DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL):
+        assert FACTOR_INTERPLAY_SENTINEL in prompt, prompt
+        assert "influence each other" in prompt, prompt
 
 
 def test_localization_uses_target_language_labels():

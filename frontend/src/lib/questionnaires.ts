@@ -33,7 +33,7 @@ const QSA_FACTOR_DEFINITIONS: FactorDefinition[] = [
     { code: 'C2', name: 'Autoregolazione', description: 'Capacità di regolare il proprio studio', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
     { code: 'C3', name: 'Disorientamento', description: 'Senso di confusione nello studio', lowLabel: 'Forza', midLabel: 'Normale', highLabel: 'Area di crescita' },
     { code: 'C4', name: 'Disponibilità alla collaborazione', description: 'Propensione al lavoro di gruppo', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
-    { code: 'C5', name: 'Organizzatori semantici', description: 'Uso di mappe e schemi', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
+    { code: 'C5', name: 'Uso di organizzatori semantici', description: 'Uso di mappe e schemi', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
     { code: 'C6', name: 'Difficoltà di concentrazione', description: 'Problemi di attenzione', lowLabel: 'Forza', midLabel: 'Normale', highLabel: 'Area di crescita' },
     { code: 'C7', name: 'Autointerrogazione', description: 'Farsi domande durante lo studio', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
     { code: 'A1', name: 'Ansietà di base', description: 'Ansia generale verso lo studio', lowLabel: 'Forza', midLabel: 'Moderata', highLabel: 'Area di crescita' },
