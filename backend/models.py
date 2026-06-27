@@ -123,6 +123,8 @@ class QuestionnaireResult(Base):
     questionnaire_type = Column(String, nullable=False, index=True)
     scores = Column(JSON, nullable=True)
     username = Column(String, nullable=True, index=True)
+    administration_plan_id = Column(Integer, index=True, nullable=True)
+    research_contact_id = Column(Integer, index=True, nullable=True)
     submitted_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -144,6 +146,8 @@ class ValidationResponse(Base):
     factor_scores = Column(JSON, nullable=True)
     response_metadata = Column(JSON, nullable=True)
     username = Column(String, nullable=True, index=True)
+    administration_plan_id = Column(Integer, index=True, nullable=True)
+    research_contact_id = Column(Integer, index=True, nullable=True)
     duration_seconds = Column(Integer, nullable=True)
     submitted_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -180,6 +184,37 @@ class ResearchContact(Base):
     ext_username = Column(String, nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class AdministrationPlan(Base):
+    """Piano operativo per una somministrazione con codice, luogo e ricercatori."""
+
+    __tablename__ = "administration_plans"
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String, nullable=False, unique=True, index=True)
+    title = Column(String, nullable=False)
+    instrument_code = Column(String, index=True, nullable=False)
+    locale = Column(String, index=True, nullable=False, default="en")
+    scheduled_at = Column(DateTime(timezone=True), nullable=True)
+    location = Column(String, nullable=True)
+    notes = Column(Text, nullable=True)
+    status = Column(String, nullable=False, default="planned", index=True)
+    created_by_username = Column(String, nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class AdministrationPlanResearcher(Base):
+    """Ricercatore collegato a un piano: contatto registrato o nome libero."""
+
+    __tablename__ = "administration_plan_researchers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    plan_id = Column(Integer, index=True, nullable=False)
+    research_contact_id = Column(Integer, index=True, nullable=True)
+    external_name = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
 class AssistantQuestion(Base):

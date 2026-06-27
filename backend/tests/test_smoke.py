@@ -96,6 +96,18 @@ def _fake_user_identity():
     }
 
 
+def _identity(username: str, email: str, *, is_admin: bool = False, is_researcher: bool = True) -> dict:
+    return {
+        "email": email,
+        "username": username,
+        "name": username,
+        "groups": ["researchers"] if is_researcher else [],
+        "is_admin": is_admin,
+        "is_researcher": is_researcher,
+        "authenticated": True,
+    }
+
+
 class _FakeAIService:
     """Sostituisce AIService: nessuna rete."""
     last_stream_args = {}
@@ -165,6 +177,47 @@ prompt_audit_routes.AIService = _FakeAIService
 main.app.dependency_overrides[prompt_audit_routes.require_prompt_audit_access] = _fake_admin
 
 client = TestClient(main.app)
+
+
+def _seed_minimal_qsa():
+    db = _TestSession()
+    try:
+        if not db.query(models.Instrument).filter(models.Instrument.code == "QSA").first():
+            db.add(models.Instrument(
+                code="QSA",
+                name_en="QSA",
+                name_es="QSA ES",
+                response_scale_min=1,
+                response_scale_max=4,
+            ))
+        if not db.query(models.Factor).filter(
+            models.Factor.instrument_code == "QSA",
+            models.Factor.code == "C1",
+        ).first():
+            db.add(models.Factor(
+                instrument_code="QSA",
+                code="C1",
+                sort_order=1,
+                dimension="cognitive",
+                label_en="C1",
+                label_es="C1",
+            ))
+        if not db.query(models.QuestionnaireItem).filter(
+            models.QuestionnaireItem.instrument_code == "QSA",
+            models.QuestionnaireItem.item_number == 1,
+        ).first():
+            db.add(models.QuestionnaireItem(
+                instrument_code="QSA",
+                item_number=1,
+                sort_order=1,
+                factor_code="C1",
+                text_en="Item 1",
+                text_es="Item 1 ES",
+                active=True,
+            ))
+        db.commit()
+    finally:
+        db.close()
 
 
 def _ensure_guided_steps(questionnaire_type: str = "QSA"):
@@ -274,6 +327,11 @@ EXPECTED_ROUTES = {
     ("POST", "/admin/research-contacts"),
     ("PUT", "/admin/research-contacts/{contact_id}"),
     ("DELETE", "/admin/research-contacts/{contact_id}"),
+    ("GET", "/admin/administration-plans"),
+    ("POST", "/admin/administration-plans"),
+    ("PUT", "/admin/administration-plans/{plan_id}"),
+    ("DELETE", "/admin/administration-plans/{plan_id}"),
+    ("GET", "/admin/administration-plans/{plan_id}/responses"),
     # Catalogo strategie certificate
     ("GET", "/admin/certified-strategies"),
     ("POST", "/admin/certified-strategies"),
@@ -700,6 +758,167 @@ def test_research_contacts_crud():
     assert r.json()["is_active"] is False
 
     assert client.delete(f"/admin/research-contacts/{cid}").status_code == 200
+
+
+def test_administration_plans_crud():
+    contact = client.post("/admin/research-contacts", json={
+        "name": "Laura Bianchi",
+        "email": "laura.bianchi@example.test",
+        "institution": "Universita Test",
+    })
+    assert contact.status_code == 200, contact.text
+    contact_id = contact.json()["id"]
+
+    r = client.post("/admin/administration-plans", json={
+        "title": "Somministrazione pilota QSA",
+        "instrument_code": "QSA",
+        "locale": "en",
+        "scheduled_at": "2026-07-01T09:00:00Z",
+        "location": "Aula 1",
+        "notes": "Portare QR stampato",
+        "researchers": [
+            {"research_contact_id": contact_id},
+            {"external_name": "Osservatore esterno"},
+        ],
+    })
+    assert r.status_code == 200, r.text
+    plan = r.json()
+    plan_id = plan["id"]
+    assert plan["code"].startswith("AP-")
+    assert plan["responses_count"] == 0
+    assert {row["name"] for row in plan["researchers"]} == {"Laura Bianchi", "Osservatore esterno"}
+
+    listed = client.get("/admin/administration-plans")
+    assert listed.status_code == 200, listed.text
+    assert any(row["id"] == plan_id for row in listed.json())
+
+    updated = client.put(f"/admin/administration-plans/{plan_id}", json={
+        "location": "Aula 2",
+        "status": "active",
+        "researchers": [{"research_contact_id": contact_id}],
+    })
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["location"] == "Aula 2"
+    assert updated.json()["status"] == "active"
+    assert [row["name"] for row in updated.json()["researchers"]] == ["Laura Bianchi"]
+
+    responses = client.get(f"/admin/administration-plans/{plan_id}/responses")
+    assert responses.status_code == 200, responses.text
+    assert responses.json()["questionnaire_results"] == []
+    assert responses.json()["validation_responses"] == []
+
+    assert client.delete(f"/admin/administration-plans/{plan_id}").status_code == 200
+    assert client.delete(f"/admin/research-contacts/{contact_id}").status_code == 200
+
+
+def test_administration_plan_visibility_for_assigned_researcher():
+    alice = client.post("/admin/research-contacts", json={
+        "name": "Alice Researcher",
+        "email": "alice@example.test",
+    }).json()
+    bob = client.post("/admin/research-contacts", json={
+        "name": "Bob Researcher",
+        "email": "bob@example.test",
+    }).json()
+    plan = client.post("/admin/administration-plans", json={
+        "title": "Piano Alice",
+        "instrument_code": "QSA",
+        "locale": "en",
+        "researchers": [{"research_contact_id": alice["id"]}],
+    }).json()
+
+    admin_override = main.app.dependency_overrides.get(auth.get_current_active_admin)
+    try:
+        main.app.dependency_overrides[auth.get_current_active_admin] = lambda: _identity(
+            "alice", "alice@example.test"
+        )
+        r = client.get("/admin/administration-plans")
+        assert r.status_code == 200, r.text
+        assert any(row["id"] == plan["id"] for row in r.json())
+
+        main.app.dependency_overrides[auth.get_current_active_admin] = lambda: _identity(
+            "bob", "bob@example.test"
+        )
+        r = client.get("/admin/administration-plans")
+        assert r.status_code == 200, r.text
+        assert all(row["id"] != plan["id"] for row in r.json())
+    finally:
+        if admin_override is not None:
+            main.app.dependency_overrides[auth.get_current_active_admin] = admin_override
+
+    assert client.delete(f"/admin/administration-plans/{plan['id']}").status_code == 200
+    assert client.delete(f"/admin/research-contacts/{alice['id']}").status_code == 200
+    assert client.delete(f"/admin/research-contacts/{bob['id']}").status_code == 200
+
+
+def test_score_links_plan_and_research_contact_codes():
+    _seed_minimal_qsa()
+    contact = client.post("/admin/research-contacts", json={
+        "name": "Marco Somministratore",
+        "email": "marco@example.test",
+    }).json()
+    plan = client.post("/admin/administration-plans", json={
+        "title": "Somministrazione con piano",
+        "instrument_code": "QSA",
+        "locale": "es",
+        "scheduled_at": "2026-07-02T10:00:00Z",
+        "location": "Laboratorio",
+        "notes": "Sessione test",
+        "researchers": [{"research_contact_id": contact["id"]}],
+    }).json()
+
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        plan_session = "validation-plan-session"
+        r = client.post("/instruments/QSA/score", json={
+            "session_id": plan_session,
+            "locale": "es",
+            "answers": {"1": 3},
+            "save": True,
+            "save_validation": True,
+            "version_label": "test-plan",
+            "response_metadata": {"study_code": plan["code"]},
+            "duration_seconds": 12,
+        })
+        assert r.status_code == 200, r.text
+
+        contact_session = "validation-contact-session"
+        r = client.post("/instruments/QSA/score", json={
+            "session_id": contact_session,
+            "locale": "es",
+            "answers": {"1": 2},
+            "save": True,
+            "save_validation": True,
+            "version_label": "test-contact",
+            "response_metadata": {"study_code": contact["code"]},
+            "duration_seconds": 9,
+        })
+        assert r.status_code == 200, r.text
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+    db = _TestSession()
+    try:
+        plan_result = db.query(models.QuestionnaireResult).filter_by(session_id=plan_session).first()
+        assert plan_result.administration_plan_id == plan["id"]
+        assert plan_result.research_contact_id is None
+        plan_validation = db.query(models.ValidationResponse).filter_by(session_id=plan_session).first()
+        assert plan_validation.administration_plan_id == plan["id"]
+        assert plan_validation.response_metadata["administration_plan_code"] == plan["code"]
+        assert plan_validation.response_metadata["administration_plan_location"] == "Laboratorio"
+        assert "Marco Somministratore" in plan_validation.response_metadata["administration_plan_researchers"]
+
+        contact_result = db.query(models.QuestionnaireResult).filter_by(session_id=contact_session).first()
+        assert contact_result.research_contact_id == contact["id"]
+        assert contact_result.administration_plan_id is None
+        contact_validation = db.query(models.ValidationResponse).filter_by(session_id=contact_session).first()
+        assert contact_validation.research_contact_id == contact["id"]
+        assert contact_validation.response_metadata["research_contact_code"] == contact["code"]
+    finally:
+        db.close()
+
+    blocked = client.delete(f"/admin/administration-plans/{plan['id']}")
+    assert blocked.status_code == 409
 
 
 def test_assistant_questions_seed_and_crud():

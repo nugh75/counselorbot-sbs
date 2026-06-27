@@ -176,6 +176,8 @@ class QuestionnaireResultCreate(BaseModel):
     questionnaire_type: str
     scores: Optional[Dict[str, Any]] = None
     username: Optional[str] = None
+    administration_plan_id: Optional[int] = None
+    research_contact_id: Optional[int] = None
 
 
 class QuestionnaireResultResponse(BaseModel):
@@ -184,6 +186,8 @@ class QuestionnaireResultResponse(BaseModel):
     questionnaire_type: str
     scores: Optional[Union[Dict[str, Any], str]] = None
     username: Optional[str] = None
+    administration_plan_id: Optional[int] = None
+    research_contact_id: Optional[int] = None
     submitted_at: datetime
 
     @validator('scores', pre=True)
@@ -209,6 +213,8 @@ class ValidationResponseResponse(BaseModel):
     factor_scores: Optional[Union[Dict[str, Any], str]] = None
     response_metadata: Optional[Union[Dict[str, Any], str]] = None
     username: Optional[str] = None
+    administration_plan_id: Optional[int] = None
+    research_contact_id: Optional[int] = None
     duration_seconds: Optional[int] = None
     submitted_at: datetime
 
@@ -324,6 +330,69 @@ class ResearchContactResponse(ResearchContactBase):
 
     class Config:
         from_attributes = True
+
+
+class AdministrationPlanResearcherInput(BaseModel):
+    research_contact_id: Optional[int] = None
+    external_name: Optional[str] = None
+
+
+class AdministrationPlanResearcherResponse(BaseModel):
+    id: int
+    research_contact_id: Optional[int] = None
+    external_name: Optional[str] = None
+    name: str
+    email: Optional[str] = None
+    institution: Optional[str] = None
+
+
+class AdministrationPlanBase(BaseModel):
+    title: str
+    instrument_code: str = "QSA"
+    locale: str = "en"
+    scheduled_at: Optional[datetime] = None
+    location: Optional[str] = None
+    notes: Optional[str] = None
+    status: str = "planned"
+    researchers: List[AdministrationPlanResearcherInput] = Field(default_factory=list)
+
+
+class AdministrationPlanCreate(AdministrationPlanBase):
+    code: Optional[str] = None
+
+
+class AdministrationPlanUpdate(BaseModel):
+    title: Optional[str] = None
+    instrument_code: Optional[str] = None
+    locale: Optional[str] = None
+    scheduled_at: Optional[datetime] = None
+    location: Optional[str] = None
+    notes: Optional[str] = None
+    status: Optional[str] = None
+    researchers: Optional[List[AdministrationPlanResearcherInput]] = None
+
+
+class AdministrationPlanResponse(BaseModel):
+    id: int
+    code: str
+    title: str
+    instrument_code: str
+    locale: str
+    scheduled_at: Optional[datetime] = None
+    location: Optional[str] = None
+    notes: Optional[str] = None
+    status: str
+    created_by_username: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    researchers: List[AdministrationPlanResearcherResponse] = Field(default_factory=list)
+    responses_count: int = 0
+
+
+class AdministrationPlanResponsesResponse(BaseModel):
+    plan: AdministrationPlanResponse
+    questionnaire_results: List[QuestionnaireResultResponse]
+    validation_responses: List[ValidationResponseResponse]
 
 
 # --- Domande suggerite dell'assistente docenti ---

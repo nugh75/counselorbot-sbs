@@ -45,6 +45,7 @@ from .routes import prompt_audit as prompt_audit_routes
 from .routes import counselors as counselors_routes
 from .routes import certified_strategies as certified_strategies_routes
 from .routes import research_contacts as research_contacts_routes
+from .routes import administration_plans as administration_plans_routes
 from .routes import assistant_questions as assistant_questions_routes
 
 
@@ -219,6 +220,31 @@ def _seed_and_migrate():
                 conn.commit()
         except Exception as e:
             logger.debug(f"questionnaire_results migration skipped/failed: {e}")
+
+        for table in ("questionnaire_results", "validation_responses"):
+            for clause in [
+                "ADD COLUMN administration_plan_id INTEGER",
+                "ADD COLUMN research_contact_id INTEGER",
+            ]:
+                try:
+                    with database.engine.connect() as conn:
+                        conn.execute(sa_text(f"ALTER TABLE {table} {clause}"))
+                        conn.commit()
+                except Exception as e:
+                    logger.debug(f"{table} migration skipped/failed ({clause}): {e}")
+
+        for idx_clause in [
+            "CREATE INDEX IF NOT EXISTS ix_questionnaire_results_administration_plan_id ON questionnaire_results (administration_plan_id)",
+            "CREATE INDEX IF NOT EXISTS ix_questionnaire_results_research_contact_id ON questionnaire_results (research_contact_id)",
+            "CREATE INDEX IF NOT EXISTS ix_validation_responses_administration_plan_id ON validation_responses (administration_plan_id)",
+            "CREATE INDEX IF NOT EXISTS ix_validation_responses_research_contact_id ON validation_responses (research_contact_id)",
+        ]:
+            try:
+                with database.engine.connect() as conn:
+                    conn.execute(sa_text(idx_clause))
+                    conn.commit()
+            except Exception as e:
+                logger.debug(f"administration link index skipped/failed ({idx_clause}): {e}")
 
         for clause in [
             "ADD COLUMN strumenti_utilizzati JSON",
@@ -755,4 +781,5 @@ app.include_router(prompt_audit_routes.router)
 app.include_router(counselors_routes.router)
 app.include_router(certified_strategies_routes.router)
 app.include_router(research_contacts_routes.router)
+app.include_router(administration_plans_routes.router)
 app.include_router(assistant_questions_routes.router)
