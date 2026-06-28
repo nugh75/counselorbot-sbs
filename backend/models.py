@@ -439,6 +439,61 @@ class LearnerProfileRevision(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class LearnerProfileReflection(Base):
+    """Nota dello studente sui cambiamenti osservati nel proprio profilo."""
+
+    __tablename__ = "learner_profile_reflections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, nullable=False, index=True)
+    note = Column(Text, nullable=False)
+    current_revision_id = Column(Integer, nullable=True, index=True)
+    previous_revision_id = Column(Integer, nullable=True, index=True)
+    session_id = Column(String, nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class StudentBooklet(Base):
+    """Libretto dello studente compilabile, legato a uno strumento.
+
+    Piu' schede per (username, questionnaire_type): nessun vincolo di unicita'.
+    Il titolo della scheda vive in `data["title"]`.
+    """
+
+    __tablename__ = "student_booklets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, nullable=False, index=True)
+    session_id = Column(String, nullable=True, index=True)
+    questionnaire_type = Column(String, nullable=False, index=True)
+    data = Column(JSON, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class PortfolioItem(Base):
+    """Lavoro/elaborato dello studente nel suo portfolio personale.
+
+    Ogni voce ha metadati (titolo, descrizione, categoria, data) ed eventuali
+    immagini allegate. Le immagini sono salvate su disco (PORTFOLIO_STORAGE_DIR);
+    `images` tiene solo i metadati: lista di {id, filename, content_type, path}.
+    """
+
+    __tablename__ = "portfolio_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, nullable=False, index=True)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    category = Column(String, nullable=True, index=True)
+    item_date = Column(String, nullable=True)   # data del lavoro (YYYY-MM-DD), testo libero
+    link = Column(String, nullable=True)         # URL opzionale al lavoro
+    images = Column(JSON, nullable=False, default=list)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class ModelPreset(Base):
     """Preset riusabile = bundle provider + modello + parametri.
 

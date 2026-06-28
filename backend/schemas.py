@@ -577,7 +577,7 @@ class ScoreRequest(BaseModel):
 
 # --- Learner profile (modello del discente auto-dichiarato) ---
 
-LEARNER_PROFILE_FIELDS = ("context", "goal", "main_difficulty", "tried", "notes", "gender", "age")
+LEARNER_PROFILE_FIELDS = ("context", "goal", "main_difficulty", "tried", "notes", "gender", "age", "school_class", "school_year")
 LEARNER_PROFILE_MAX_FIELD_CHARS = 600
 
 
@@ -590,10 +590,12 @@ class LearnerProfileSave(BaseModel):
     notes: Optional[str] = None
     gender: Optional[str] = None
     age: Optional[str] = None
+    school_class: Optional[str] = None
+    school_year: Optional[str] = None
     source: str = "manual"  # intake|session_start|session_end|manual
     session_id: Optional[str] = None
 
-    @validator("context", "goal", "main_difficulty", "tried", "notes", "gender", "age", pre=True)
+    @validator("context", "goal", "main_difficulty", "tried", "notes", "gender", "age", "school_class", "school_year", pre=True)
     def _trim_and_cap(cls, v):
         if v is None:
             return None
@@ -614,6 +616,148 @@ class LearnerProfileResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+LEARNER_REFLECTION_MAX_CHARS = 2000
+BOOKLET_MAX_FIELD_CHARS = 2000
+
+
+def _cap_json_strings(value: Any, limit: int = BOOKLET_MAX_FIELD_CHARS) -> Any:
+    if isinstance(value, str):
+        return value.strip()[:limit]
+    if isinstance(value, list):
+        return [_cap_json_strings(item, limit) for item in value]
+    if isinstance(value, dict):
+        return {str(key)[:120]: _cap_json_strings(item, limit) for key, item in value.items()}
+    return value
+
+
+class LearnerProfileReflectionCreate(BaseModel):
+    note: str
+    current_revision_id: Optional[int] = None
+    previous_revision_id: Optional[int] = None
+    session_id: Optional[str] = None
+
+    @validator("note", pre=True)
+    def _trim_note(cls, v):
+        text = str(v or "").strip()[:LEARNER_REFLECTION_MAX_CHARS]
+        if not text:
+            raise ValueError("note is required")
+        return text
+
+    @validator("session_id", pre=True)
+    def _trim_session_id(cls, v):
+        if v is None:
+            return None
+        return str(v).strip()[:160] or None
+
+
+class LearnerProfileReflectionResponse(BaseModel):
+    id: int
+    note: str
+    current_revision_id: Optional[int] = None
+    previous_revision_id: Optional[int] = None
+    session_id: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class StudentBookletSave(BaseModel):
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+    @validator("data", pre=True)
+    def _trim_booklet_data(cls, v):
+        if not isinstance(v, dict):
+            return {}
+        return _cap_json_strings(v)
+
+
+class StudentBookletResponse(BaseModel):
+    id: int
+    username: str
+    session_id: Optional[str] = None
+    questionnaire_type: str
+    data: Dict[str, Any]
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+PORTFOLIO_MAX_TITLE_CHARS = 200
+PORTFOLIO_MAX_TEXT_CHARS = 4000
+PORTFOLIO_MAX_SHORT_CHARS = 200
+
+
+def _trim(value: Any, limit: int) -> Optional[str]:
+    if value is None:
+        return None
+    text = str(value).strip()[:limit]
+    return text or None
+
+
+class PortfolioItemCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    category: Optional[str] = None
+    item_date: Optional[str] = None
+    link: Optional[str] = None
+
+    @validator("title", pre=True)
+    def _trim_title(cls, v):
+        text = str(v or "").strip()[:PORTFOLIO_MAX_TITLE_CHARS]
+        if not text:
+            raise ValueError("title is required")
+        return text
+
+    @validator("description", pre=True)
+    def _trim_description(cls, v):
+        return _trim(v, PORTFOLIO_MAX_TEXT_CHARS)
+
+    @validator("category", "item_date", "link", pre=True)
+    def _trim_short(cls, v):
+        return _trim(v, PORTFOLIO_MAX_SHORT_CHARS)
+
+
+class PortfolioItemUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+    item_date: Optional[str] = None
+    link: Optional[str] = None
+
+    @validator("title", pre=True)
+    def _trim_title(cls, v):
+        return _trim(v, PORTFOLIO_MAX_TITLE_CHARS)
+
+    @validator("description", pre=True)
+    def _trim_description(cls, v):
+        return _trim(v, PORTFOLIO_MAX_TEXT_CHARS)
+
+    @validator("category", "item_date", "link", pre=True)
+    def _trim_short(cls, v):
+        return _trim(v, PORTFOLIO_MAX_SHORT_CHARS)
+
+
+class PortfolioImage(BaseModel):
+    id: str
+    filename: Optional[str] = None
+
+
+class PortfolioItemResponse(BaseModel):
+    id: int
+    title: str
+    description: Optional[str] = None
+    category: Optional[str] = None
+    item_date: Optional[str] = None
+    link: Optional[str] = None
+    images: List[PortfolioImage] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: Optional[datetime] = None
 
 
 # --- Model presets (provider + modello + parametri riusabili) ---

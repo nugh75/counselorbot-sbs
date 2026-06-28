@@ -189,6 +189,29 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                     <h2 className="text-xl font-bold text-slate-900">{t('selector.section.interviews')}</h2>
                     <div className="grid md:grid-cols-2 gap-3">
                         {interviews.map(renderCard)}
+                        <article className="glass-panel p-4 flex flex-col gap-3">
+                            <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <h3 className="font-bold text-slate-800">Cambiamenti del profilo</h3>
+                                    <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-full">
+                                        {t('selector.badge.agent')}
+                                    </span>
+                                </div>
+                                <p className="text-sm font-medium text-slate-600 mt-1">Riflessione sul tuo profilo nel tempo</p>
+                            </div>
+                            <p className="text-sm text-slate-500 leading-relaxed grow">
+                                Rivedi come e cambiato il tuo profilo e salva una riflessione personale.
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2 pt-1">
+                                <Link
+                                    href="/profilo/cambiamenti"
+                                    className="group inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+                                >
+                                    Apri lo strumento
+                                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                                </Link>
+                            </div>
+                        </article>
                     </div>
                 </section>
             )}

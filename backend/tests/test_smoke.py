@@ -271,7 +271,31 @@ EXPECTED_ROUTES = {
     ("GET", "/user/learner-profile"),
     ("POST", "/user/learner-profile"),
     ("GET", "/user/learner-profile/history"),
+    ("GET", "/user/learner-profile/reflections"),
+    ("POST", "/user/learner-profile/reflections"),
     ("DELETE", "/user/learner-profile"),
+    ("GET", "/user/student-booklets/instrument/{questionnaire_type}"),
+    ("PUT", "/user/student-booklets/instrument/{questionnaire_type}"),
+    ("POST", "/user/student-booklets/instrument/{questionnaire_type}"),
+    ("GET", "/user/student-booklets/instrument/{questionnaire_type}/pdf"),
+    ("GET", "/user/student-booklets/instrument/{questionnaire_type}/list"),
+    ("GET", "/user/student-booklets/id/{booklet_id}"),
+    ("PUT", "/user/student-booklets/id/{booklet_id}"),
+    ("DELETE", "/user/student-booklets/id/{booklet_id}"),
+    ("GET", "/user/student-booklets/id/{booklet_id}/pdf"),
+    ("GET", "/user/certified-strategies"),
+    ("GET", "/user/student-booklets/{session_id}"),
+    ("PUT", "/user/student-booklets/{session_id}"),
+    ("GET", "/user/student-booklets/{session_id}/pdf"),
+    ("GET", "/user/portfolio"),
+    ("POST", "/user/portfolio"),
+    ("GET", "/user/portfolio/categories"),
+    ("GET", "/user/portfolio/{item_id}"),
+    ("PUT", "/user/portfolio/{item_id}"),
+    ("DELETE", "/user/portfolio/{item_id}"),
+    ("POST", "/user/portfolio/{item_id}/images"),
+    ("GET", "/user/portfolio/{item_id}/images/{image_id}"),
+    ("DELETE", "/user/portfolio/{item_id}/images/{image_id}"),
     ("GET", "/admin/questionnaire-results"),
     ("GET", "/admin/validation/summary"),
     ("GET", "/admin/validation/responses"),
@@ -1410,7 +1434,7 @@ def test_prompt_audit_api_token_allows_qsa_dry_run_without_ai4auth():
             main.app.dependency_overrides[prompt_audit_routes.require_prompt_audit_access] = audit_override
 
 
-def test_prompt_audit_live_returns_mocked_response_without_logging():
+def test_prompt_audit_live_returns_mocked_response_and_logs():
     _ensure_guided_steps("QSA")
     session_id = "prompt-audit-live"
     db = _TestSession()
@@ -1432,14 +1456,21 @@ def test_prompt_audit_live_returns_mocked_response_without_logging():
     assert r.status_code == 200, r.text
     body = r.json()
     assert body["response_raw"] == "RISPOSTA_TEST"
-    assert body["response_visible"] == "RISPOSTA_TEST"
+    assert body["response_visible"].endswith("RISPOSTA_TEST")
+    assert "C1 (Strategie elaborative)" in body["response_visible"]
     assert body["usage"]["prompt_tokens"] == 12
     assert isinstance(body["duration_ms"], int)
     assert "checks" in body
 
     db = _TestSession()
     try:
-        assert db.query(models.Log).count() == before_logs
+        assert db.query(models.Log).count() == before_logs + 1
+        entry = (
+            db.query(models.Log)
+            .filter(models.Log.session_id == session_id, models.Log.action == "prompt_audit_live")
+            .first()
+        )
+        assert entry is not None
     finally:
         db.close()
 
@@ -1830,17 +1861,25 @@ def test_log_full_prompt_toggle_off():
         _set_config("log_full_prompt", "true")
 
 
-def test_site_chat_status_public():
-    r = client.get("/site-chat/status")
-    assert r.status_code == 200, r.text
-    body = r.json()
-    assert "n_chunks" in body and "embedding_model" in body
+def test_site_chat_status_for_authenticated_student():
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        r = client.get("/site-chat/status")
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert "n_chunks" in body and "embedding_model" in body
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
 def test_site_chat_document_rejects_unknown_source():
     # Solo le sorgenti indicizzate sono anteprimabili (anti path-traversal).
-    r = client.get("/site-chat/document", params={"source": "../../etc/passwd"})
-    assert r.status_code == 404, r.text
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        r = client.get("/site-chat/document", params={"source": "../../etc/passwd"})
+        assert r.status_code == 404, r.text
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
 def test_site_chat_stream_grounded_mocked():
@@ -1848,14 +1887,27 @@ def test_site_chat_stream_grounded_mocked():
     canned = [{"score": 0.9, "source": "fonti/x.md", "title": "Doc X", "text": "Contenuto di prova."}]
     original_search = site_chat_routes.site_rag_index.search
     site_chat_routes.site_rag_index.search = lambda svc, q, k, *a, **kw: canned
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
     try:
         r = client.post("/site-chat/stream", json={
             "message": "Cos'è il QSA?", "audience": "studente", "session_id": "site-chat-test",
+            "student_context": "CONTESTO_PRIVATO_TEST_DA_NON_LOGGARE",
         })
         assert r.status_code == 200, r.text
         assert "RISPOSTA_TEST" in r.text
         assert '"done": true' in r.text
         assert "fonti/x.md" in r.text  # le fonti citate tornano nell'evento done
+        with _TestSession() as db:
+            entry = (
+                db.query(models.Log)
+                .filter(models.Log.session_id == "site-chat-test", models.Log.action == "site_chat")
+                .order_by(models.Log.timestamp.desc(), models.Log.id.desc())
+                .first()
+            )
+            assert entry is not None
+            details = entry.details
+        assert "student_context" not in details
+        assert "CONTESTO_PRIVATO_TEST_DA_NON_LOGGARE" not in str(details)
         # Il 'mi piace' riusa /strategy-feedback con il response_id emesso.
         m = re.search(r'"response_id":\s*"([0-9a-f-]+)"', r.text)
         assert m, f"response_id mancante nello stream: {r.text[-300:]}"
@@ -1867,6 +1919,7 @@ def test_site_chat_stream_grounded_mocked():
         assert fb.json()["recorded"] >= 1
     finally:
         site_chat_routes.site_rag_index.search = original_search
+        main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
 # --------------------------------------------------------------------------
@@ -2192,9 +2245,22 @@ def test_learner_profile_revisions_and_history():
             "main_difficulty": "Ansia prima dell'esame",
             "source": "session_end",
         })
-        assert r.json()["id"] != first_id
+        second_id = r.json()["id"]
+        assert second_id != first_id
         r = client.get("/user/learner-profile/history")
         assert r.status_code == 200 and len(r.json()) == 2
+
+        r = client.post("/user/learner-profile/reflections", json={
+            "note": "Mi accorgo che la difficolta si e spostata dalla distrazione all'ansia.",
+            "current_revision_id": second_id,
+            "previous_revision_id": first_id,
+            "session_id": "lp-session-1",
+        })
+        assert r.status_code == 200, r.text
+        r = client.get("/user/learner-profile/reflections")
+        assert r.status_code == 200, r.text
+        assert len(r.json()) == 1
+        assert "distrazione" in r.json()[0]["note"]
 
         # Il contesto chat include il profilo dichiarato
         with _TestSession() as db:
@@ -2205,8 +2271,263 @@ def test_learner_profile_revisions_and_history():
 
         r = client.delete("/user/learner-profile")
         assert r.status_code == 200 and r.json()["deleted_revisions"] == 2
+        assert r.json()["deleted_reflections"] == 1
         r = client.get("/user/learner-profile")
         assert r.json() is None
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
+def test_student_booklet_crud_pdf_and_ownership():
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        r = client.post("/questionnaire-result", json={
+            "session_id": "booklet-session",
+            "questionnaire_type": "QSA",
+            "scores": {"C1": 8, "C2": 5, "A6": 3},
+        })
+        assert r.status_code == 200, r.text
+
+        r = client.get("/user/student-booklets/instrument/QSA")
+        assert r.status_code == 200, r.text
+        assert r.json() is None
+
+        r = client.put("/user/student-booklets/instrument/QSA", json={
+            "data": {
+                "strength": "C1 - Strategie elaborative",
+                "growth_area": "A6 - Percezione di competenza",
+                "objective": "Riconoscere un risultato concreto ogni settimana",
+                "student_notes": "Nota personale",
+            }
+        })
+        assert r.status_code == 200, r.text
+        assert r.json()["questionnaire_type"] == "QSA"
+        assert r.json()["session_id"] is None
+        assert r.json()["data"]["student_notes"] == "Nota personale"
+
+        r = client.get("/user/student-booklets/instrument/QSA/pdf")
+        assert r.status_code == 200, r.text
+        assert r.headers["content-type"] == "application/pdf"
+        assert len(r.content) > 100
+
+        r = client.put("/user/student-booklets/instrument/ZTPI", json={
+            "data": {
+                "strength": "T5 - Futuro",
+                "growth_area": "T1 - Passato Negativo",
+                "student_notes": "Nota ZTPI",
+            }
+        })
+        assert r.status_code == 200, r.text
+        assert r.json()["questionnaire_type"] == "ZTPI"
+        r = client.get("/user/student-booklets/instrument/QSA")
+        assert r.status_code == 200, r.text
+        assert r.json()["data"]["student_notes"] == "Nota personale"
+
+        # Compat: la vecchia route per sessione restituisce il libretto dello strumento.
+        r = client.get("/user/student-booklets/booklet-session")
+        assert r.status_code == 200, r.text
+        assert r.json()["questionnaire_type"] == "QSA"
+
+        main.app.dependency_overrides[auth.get_identity] = lambda: _identity(
+            "other", "other@example.test", is_researcher=False
+        )
+        r = client.get("/user/student-booklets/booklet-session")
+        assert r.status_code == 403, r.text
+        r = client.get("/user/student-booklets/instrument/QSA")
+        assert r.status_code == 200, r.text
+        assert r.json() is None
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
+def test_student_booklet_multiple_schede_and_arrays():
+    """Piu' schede per lo stesso strumento + campi forza/area come liste."""
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        # Due schede distinte per QSA.
+        r1 = client.post("/user/student-booklets/instrument/QSA", json={
+            "data": {"title": "Primo trimestre", "strength": ["C1 - Una", "C2 - Due"], "growth_area": ["A6 - Tre"]}
+        })
+        assert r1.status_code == 200, r1.text
+        id1 = r1.json()["id"]
+        assert r1.json()["data"]["strength"] == ["C1 - Una", "C2 - Due"]
+
+        r2 = client.post("/user/student-booklets/instrument/QSA", json={
+            "data": {"title": "Secondo trimestre", "strength": ["A1 - Quattro"]}
+        })
+        assert r2.status_code == 200, r2.text
+        id2 = r2.json()["id"]
+        assert id2 != id1
+
+        # La lista contiene entrambe le schede.
+        r = client.get("/user/student-booklets/instrument/QSA/list")
+        assert r.status_code == 200, r.text
+        ids = {b["id"] for b in r.json()}
+        assert {id1, id2} <= ids
+
+        # Aggiornamento per id e PDF per id.
+        r = client.put(f"/user/student-booklets/id/{id1}", json={
+            "data": {"title": "Primo trimestre", "strength": ["C1 - Una", "C2 - Due", "C3 - Cinque"]}
+        })
+        assert r.status_code == 200, r.text
+        assert r.json()["data"]["strength"] == ["C1 - Una", "C2 - Due", "C3 - Cinque"]
+
+        r = client.get(f"/user/student-booklets/id/{id1}/pdf")
+        assert r.status_code == 200 and r.headers["content-type"] == "application/pdf"
+        assert len(r.content) > 100
+
+        # Ownership: un altro utente non vede/agisce sulla scheda.
+        main.app.dependency_overrides[auth.get_identity] = lambda: _identity(
+            "other", "other@example.test", is_researcher=False
+        )
+        assert client.get(f"/user/student-booklets/id/{id1}").status_code == 403
+        assert client.delete(f"/user/student-booklets/id/{id1}").status_code == 403
+
+        # Il proprietario elimina una scheda.
+        main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+        assert client.delete(f"/user/student-booklets/id/{id2}").status_code == 200
+        r = client.get("/user/student-booklets/instrument/QSA/list")
+        assert id2 not in {b["id"] for b in r.json()}
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
+def test_certified_strategies_for_student_endpoint():
+    """Lo studente vede solo le strategie certificate, attive e nello scope."""
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        r = client.post("/admin/certified-strategies", json={
+            "slug": "booklet-focus-qsa", "name_it": "Tecnica del focus",
+            "description_it": "Riduci le distrazioni durante lo studio.",
+            "recommended_when_it": "Quando C6 e' un'area di crescita.",
+            "factor_codes": ["C6"], "questionnaire_types": ["QSA"], "status": "certified",
+        })
+        assert r.status_code == 200, r.text
+        sid = r.json()["id"]
+        try:
+            hit = client.get("/user/certified-strategies?questionnaire_type=QSA&lang=it")
+            assert hit.status_code == 200, hit.text
+            assert any(s["slug"] == "booklet-focus-qsa" and s["name"] == "Tecnica del focus" for s in hit.json())
+
+            # Fuori scope: non compare per ZTPI.
+            other = client.get("/user/certified-strategies?questionnaire_type=ZTPI&lang=it")
+            assert all(s["slug"] != "booklet-focus-qsa" for s in other.json())
+
+            # Bozza: non viene mai esposta.
+            client.put(f"/admin/certified-strategies/{sid}", json={"status": "draft"})
+            drafted = client.get("/user/certified-strategies?questionnaire_type=QSA&lang=it")
+            assert all(s["slug"] != "booklet-focus-qsa" for s in drafted.json())
+        finally:
+            client.delete(f"/admin/certified-strategies/{sid}")
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
+def test_portfolio_crud_images_search_and_ownership():
+    """Portfolio: CRUD voci, ricerca/filtro, upload/serve/delete immagini, ownership."""
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        r = client.post("/user/portfolio", json={
+            "title": "Tema di storia", "description": "Saggio sul Novecento",
+            "category": "Scrittura", "item_date": "2026-03-01",
+        })
+        assert r.status_code == 200, r.text
+        item_id = r.json()["id"]
+        assert r.json()["images"] == []
+
+        r2 = client.post("/user/portfolio", json={"title": "Progetto robotica", "category": "STEM"})
+        assert r2.status_code == 200, r2.text
+        other_id = r2.json()["id"]
+
+        # Lista + ricerca + filtro categoria.
+        ids = {it["id"] for it in client.get("/user/portfolio").json()}
+        assert {item_id, other_id} <= ids
+
+        searched = client.get("/user/portfolio?q=robotica").json()
+        titles = [it["title"] for it in searched]
+        assert "Progetto robotica" in titles and "Tema di storia" not in titles
+
+        filtered = [it["id"] for it in client.get("/user/portfolio?category=Scrittura").json()]
+        assert item_id in filtered and other_id not in filtered
+
+        cats = client.get("/user/portfolio/categories").json()
+        assert "Scrittura" in cats and "STEM" in cats
+
+        # Update parziale.
+        r = client.put(f"/user/portfolio/{item_id}", json={"title": "Tema di storia (rev)"})
+        assert r.status_code == 200 and r.json()["title"] == "Tema di storia (rev)"
+
+        # Immagine: upload, serve, tipo non valido, delete.
+        png = b"\x89PNG\r\n\x1a\n" + b"0" * 32
+        r = client.post(f"/user/portfolio/{item_id}/images", files={"file": ("a.png", png, "image/png")})
+        assert r.status_code == 200, r.text
+        assert len(r.json()["images"]) == 1
+        image_id = r.json()["images"][0]["id"]
+
+        r = client.get(f"/user/portfolio/{item_id}/images/{image_id}")
+        assert r.status_code == 200 and r.headers["content-type"].startswith("image/png")
+        assert r.content == png
+
+        assert client.post(
+            f"/user/portfolio/{item_id}/images",
+            files={"file": ("a.txt", b"hi", "text/plain")},
+        ).status_code == 400
+
+        r = client.delete(f"/user/portfolio/{item_id}/images/{image_id}")
+        assert r.status_code == 200 and r.json()["images"] == []
+
+        # Ownership: un altro utente non vede/agisce.
+        main.app.dependency_overrides[auth.get_identity] = lambda: _identity(
+            "other", "other@example.test", is_researcher=False
+        )
+        assert client.get(f"/user/portfolio/{item_id}").status_code == 403
+        assert client.delete(f"/user/portfolio/{item_id}").status_code == 403
+        assert client.get("/user/portfolio").json() == []
+
+        # Il proprietario elimina.
+        main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+        assert client.delete(f"/user/portfolio/{item_id}").status_code == 200
+        assert client.delete(f"/user/portfolio/{other_id}").status_code == 200
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
+def test_role_preview_impersonation_scopes_data_to_demo_account():
+    """Anteprima ruoli: un admin reale impersona un account demo (allowlist)."""
+    main.app.dependency_overrides[auth.get_identity] = lambda: _identity(
+        "realadmin", "realadmin@example.test", is_admin=True
+    )
+    try:
+        hdr = {"X-View-As": "studente.demo"}
+
+        # Lavoro creato come account demo (header) vs come admin reale (no header).
+        demo_item = client.post("/user/portfolio", json={"title": "Lavoro demo"}, headers=hdr).json()["id"]
+        admin_item = client.post("/user/portfolio", json={"title": "Lavoro admin"}).json()["id"]
+
+        # Con header: solo i dati del demo.
+        demo_ids = {it["id"] for it in client.get("/user/portfolio", headers=hdr).json()}
+        assert demo_item in demo_ids and admin_item not in demo_ids
+
+        # Query param view_as (per i tag <img>): stesso scoping.
+        q_ids = {it["id"] for it in client.get("/user/portfolio?view_as=studente.demo").json()}
+        assert demo_item in q_ids and admin_item not in q_ids
+
+        # Senza header: solo i dati dell'admin reale.
+        admin_ids = {it["id"] for it in client.get("/user/portfolio").json()}
+        assert admin_item in admin_ids and demo_item not in admin_ids
+
+        # Allowlist: un username non-demo viene ignorato (resta admin).
+        ign_ids = {it["id"] for it in client.get("/user/portfolio", headers={"X-View-As": "vittima.reale"}).json()}
+        assert admin_item in ign_ids and demo_item not in ign_ids
+
+        client.delete(f"/user/portfolio/{demo_item}", headers=hdr)
+        client.delete(f"/user/portfolio/{admin_item}")
+
+        # Un non-admin non puo' impersonare: l'header viene ignorato.
+        main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+        created = client.post("/user/portfolio", json={"title": "no imp"}, headers=hdr).json()["id"]
+        assert created in {it["id"] for it in client.get("/user/portfolio").json()}
+        client.delete(f"/user/portfolio/{created}")
     finally:
         main.app.dependency_overrides.pop(auth.get_identity, None)
 

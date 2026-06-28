@@ -521,3 +521,200 @@ def generate_questionnaire_pdf(
     pdf.output(pdf_bytes)
     pdf_bytes.seek(0)
     return pdf_bytes
+
+
+BOOKLET_LABELS = {
+    "strength": "Punti di forza da valorizzare",
+    "growth_area": "Aree da migliorare",
+    "motivation": "Perche' e' importante per me",
+    "objective": "Obiettivo",
+    "strategy": "Strategia concreta",
+    "period": "Periodo",
+    "commitment": "Impegno rispettato",
+    "difficulties": "Difficolta' incontrate",
+    "improvements": "Miglioramenti osservati",
+    "discovery": "Cosa ho scoperto",
+    "bio_date": "Data biografia",
+    "bio_context": "In occasione di",
+    "bio_discovery": "Ho scoperto che",
+    "bio_keywords": "Parole chiave",
+    "student_notes": "Note dello studente",
+    "final_satisfaction": "Valutazione finale",
+    "final_observations": "Osservazioni finali",
+}
+
+BOOKLET_FACTOR_CODES = {
+    "QSA": ("C1", "C2", "C3", "C4", "C5", "C6", "C7", "A1", "A2", "A3", "A4", "A5", "A6", "A7"),
+    "QSAr": ("C1r", "C2r", "C3r", "C4r", "A1r", "A2r", "A3r", "A4r"),
+    "ZTPI": ("T1", "T2", "T3", "T4", "T5"),
+    "QPCS": ("S1", "S2", "S3", "S4", "S5"),
+    "QPCC": ("K1", "K2", "K3", "K4", "K5"),
+    "QAP": ("AD1", "AD2", "AD3", "AD4"),
+}
+
+
+def _booklet_text(data: dict, key: str) -> str:
+    value = data.get(key)
+    if value is None:
+        return ""
+    if isinstance(value, (int, float)):
+        return str(value)
+    if isinstance(value, list):
+        return ", ".join(str(item).strip() for item in value if str(item).strip())
+    return str(value).strip()
+
+
+def _booklet_text_list(data: dict, key: str) -> list[str]:
+    value = data.get(key)
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    text = str(value).strip()
+    return [text] if text else []
+
+
+def _booklet_field(pdf: FPDF, label: str, value: str, content_w: float) -> None:
+    pdf.set_font("Helvetica", "B", 9)
+    pdf.set_text_color(70, 70, 80)
+    pdf.multi_cell(content_w, 5, _latin1(label), new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(25, 25, 30)
+    pdf.multi_cell(content_w, 6, _latin1(value or "________________________________________"), new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(2)
+
+
+def _booklet_multi_field(pdf: FPDF, label: str, values: list[str], content_w: float) -> None:
+    pdf.set_font("Helvetica", "B", 9)
+    pdf.set_text_color(70, 70, 80)
+    pdf.multi_cell(content_w, 5, _latin1(label), new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(25, 25, 30)
+    if not values:
+        pdf.multi_cell(content_w, 6, _latin1("________________________________________"), new_x="LMARGIN", new_y="NEXT")
+    for item in values:
+        pdf.multi_cell(content_w, 6, _latin1(f"- {item}"), new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(2)
+
+
+def _booklet_section(pdf: FPDF, title: str, content_w: float) -> None:
+    pdf.ln(3)
+    pdf.set_fill_color(238, 242, 255)
+    pdf.set_text_color(49, 46, 129)
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.cell(content_w, 8, _latin1(title), new_x="LMARGIN", new_y="NEXT", fill=True)
+    pdf.ln(2)
+
+
+def generate_student_booklet_pdf(
+    questionnaire_type: str,
+    scores: dict[str, int | float] | None,
+    session_id: str | None,
+    booklet_data: dict | None,
+    username: str,
+    submitted_at: str | None = None,
+    language: str | None = None,
+) -> BytesIO:
+    """Genera il libretto compilato dallo studente per una compilazione."""
+    lang = _normalize_lang(language)
+    ui = UI_TEXT[lang]
+    trans = FACTOR_TRANS[lang]
+    data = booklet_data or {}
+
+    pdf = ResultPDF(title="CounselorBot - Libretto dello studente", page_label=ui["page"])
+    pdf.alias_nb_pages()
+    pdf.set_auto_page_break(auto=True, margin=18)
+    pdf.add_page()
+    content_w = pdf.w - pdf.l_margin - pdf.r_margin
+
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(80, 80, 90)
+    pdf.cell(0, 7, _latin1(f"{ui['type']}: {questionnaire_type}"), new_x="LMARGIN", new_y="NEXT")
+    if submitted_at:
+        try:
+            dt = datetime.fromisoformat(submitted_at)
+            pdf.cell(0, 7, _latin1(f"{ui['date']}: {dt.strftime('%d/%m/%Y %H:%M')}"), new_x="LMARGIN", new_y="NEXT")
+        except (ValueError, TypeError):
+            pass
+    if session_id:
+        pdf.cell(0, 7, _latin1(f"{ui['session']}: {session_id[:16]}..."), new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 7, _latin1(f"Account: {username}"), new_x="LMARGIN", new_y="NEXT")
+    title = _booklet_text(data, "title")
+    if title:
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.set_text_color(49, 46, 129)
+        pdf.multi_cell(content_w, 8, _latin1(title), new_x="LMARGIN", new_y="NEXT")
+
+    _booklet_section(pdf, "1. Profilo di riferimento", content_w)
+    if questionnaire_type in ("SAVICKAS", "EVENTO_STUDIO", "EVENTO_PROFESSIONALE"):
+        pdf.set_font("Helvetica", "", 10)
+        pdf.set_text_color(70, 70, 80)
+        pdf.multi_cell(
+            content_w,
+            6,
+            _latin1("Percorso narrativo qualitativo: usa il libretto per collegare temi emersi, obiettivi e prossimi passi."),
+            new_x="LMARGIN",
+            new_y="NEXT",
+        )
+        pdf.ln(2)
+    elif scores:
+        for code, raw_value in scores.items():
+            try:
+                value_int = int(round(float(raw_value)))
+            except (TypeError, ValueError):
+                continue
+            info = trans.get(code)
+            name = info[0] if info else code
+            label, color = _score_label(value_int, code in INVERTED_CODES, ui)
+            pdf.set_font("Helvetica", "B", 9)
+            pdf.set_text_color(25, 25, 30)
+            pdf.multi_cell(content_w, 5, _latin1(f"{code} - {name}"), new_x="LMARGIN", new_y="NEXT")
+            pdf.set_font("Helvetica", "B", 8)
+            pdf.set_text_color(*color)
+            pdf.cell(0, 5, _latin1(f"{value_int}/9 [{label}]"), new_x="LMARGIN", new_y="NEXT")
+            pdf.ln(1)
+    elif questionnaire_type in BOOKLET_FACTOR_CODES:
+        for code in BOOKLET_FACTOR_CODES[questionnaire_type]:
+            info = trans.get(code)
+            name = info[0] if info else code
+            desc = info[1] if info and len(info) > 1 else ""
+            pdf.set_font("Helvetica", "B", 9)
+            pdf.set_text_color(25, 25, 30)
+            pdf.multi_cell(content_w, 5, _latin1(f"{code} - {name}"), new_x="LMARGIN", new_y="NEXT")
+            if desc:
+                pdf.set_font("Helvetica", "", 8)
+                pdf.set_text_color(80, 80, 90)
+                pdf.multi_cell(content_w, 5, _latin1(desc), new_x="LMARGIN", new_y="NEXT")
+            pdf.ln(1)
+    else:
+        pdf.set_font("Helvetica", "", 10)
+        pdf.set_text_color(70, 70, 80)
+        pdf.multi_cell(content_w, 6, _latin1("Nessuna area predefinita disponibile per questo strumento."), new_x="LMARGIN", new_y="NEXT")
+
+    _booklet_section(pdf, "2. Scelgo cosa valorizzare e migliorare", content_w)
+    _booklet_multi_field(pdf, BOOKLET_LABELS["strength"], _booklet_text_list(data, "strength"), content_w)
+    _booklet_multi_field(pdf, BOOKLET_LABELS["growth_area"], _booklet_text_list(data, "growth_area"), content_w)
+    _booklet_field(pdf, BOOKLET_LABELS["motivation"], _booklet_text(data, "motivation"), content_w)
+
+    _booklet_section(pdf, "3. Obiettivo e strategia", content_w)
+    period = " - ".join(part for part in (_booklet_text(data, "period_start"), _booklet_text(data, "period_end")) if part)
+    _booklet_field(pdf, BOOKLET_LABELS["objective"], _booklet_text(data, "objective"), content_w)
+    _booklet_field(pdf, BOOKLET_LABELS["strategy"], _booklet_text(data, "strategy"), content_w)
+    _booklet_field(pdf, BOOKLET_LABELS["period"], period, content_w)
+
+    _booklet_section(pdf, "4. Verifico il percorso", content_w)
+    for key in ("commitment", "difficulties", "improvements", "discovery"):
+        _booklet_field(pdf, BOOKLET_LABELS[key], _booklet_text(data, key), content_w)
+
+    _booklet_section(pdf, "5. Biografia di apprendimento", content_w)
+    for key in ("bio_date", "bio_context", "bio_discovery", "bio_keywords"):
+        _booklet_field(pdf, BOOKLET_LABELS[key], _booklet_text(data, key), content_w)
+
+    _booklet_section(pdf, "6. Note e valutazione finale", content_w)
+    for key in ("student_notes", "final_satisfaction", "final_observations"):
+        _booklet_field(pdf, BOOKLET_LABELS[key], _booklet_text(data, key), content_w)
+
+    pdf_bytes = BytesIO()
+    pdf.output(pdf_bytes)
+    pdf_bytes.seek(0)
+    return pdf_bytes
