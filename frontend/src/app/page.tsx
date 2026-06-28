@@ -49,29 +49,49 @@ function generateUUID() {
     });
 }
 
-// Intro: un solo compito — orientare e far partire. Hero centrato, niente card né
-// blocco "come si prosegue" (è già lo stepper, nascosto qui). Unico segno: la bussola.
+// Intro: orienta e fa partire, poi racconta cosa si può fare. Hero centrato (unico
+// segno: la bussola) + sezione "cosa puoi fare" a 3 voci con micro-marcatore petrol,
+// senza icone. Niente blocco "come si prosegue" (è lo stepper) né card pesanti.
 function IntroScreen({ onStart }: { onStart: () => void }) {
     const { t } = useI18n();
+    const modes = [
+        { title: t('app.overview.questionnaires.title'), body: t('app.overview.questionnaires.body') },
+        { title: t('app.overview.savickas.title'), body: t('app.overview.savickas.body') },
+        { title: t('app.overview.pqbl.title'), body: t('app.overview.pqbl.body') },
+    ];
 
     return (
-        <div className="flex min-h-[66vh] flex-col items-center justify-center text-center">
-            <CompassMark className="h-14 w-14" />
-            <h1 className="font-display mt-6 text-4xl font-bold text-slate-900 sm:text-5xl">CounselorBot</h1>
-            <p className="mt-4 max-w-xl text-lg leading-relaxed text-slate-600">
-                {t('app.intro.subtitle')}
-            </p>
-            <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-500">
-                {t('app.intro.modes')}
-            </p>
-            <button
-                type="button"
-                onClick={onStart}
-                className="mt-8 inline-flex items-center gap-2 rounded-md bg-ochre-500 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-ochre-600"
-            >
-                {t('app.home.cta')}
-                <ArrowRight className="h-4 w-4" />
-            </button>
+        <div className="space-y-12 py-4">
+            <div className="flex flex-col items-center pt-4 text-center">
+                <CompassMark className="h-14 w-14" />
+                <h1 className="font-display mt-6 text-4xl font-bold text-slate-900 sm:text-5xl">CounselorBot</h1>
+                <p className="mt-4 max-w-xl text-lg leading-relaxed text-slate-600">
+                    {t('app.intro.subtitle')}
+                </p>
+                <button
+                    type="button"
+                    onClick={onStart}
+                    className="mt-8 inline-flex items-center gap-2 rounded-md bg-ochre-500 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-ochre-600"
+                >
+                    {t('app.home.cta')}
+                    <ArrowRight className="h-4 w-4" />
+                </button>
+            </div>
+
+            <section className="mx-auto max-w-4xl">
+                <h2 className="text-center text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
+                    {t('app.home.contains')}
+                </h2>
+                <div className="mt-6 grid gap-8 sm:grid-cols-3">
+                    {modes.map((m) => (
+                        <div key={m.title}>
+                            <span className="block h-0.5 w-10 rounded-full bg-indigo-500" />
+                            <h3 className="mt-3 text-base font-bold text-slate-900">{m.title}</h3>
+                            <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{m.body}</p>
+                        </div>
+                    ))}
+                </div>
+            </section>
         </div>
     );
 }
