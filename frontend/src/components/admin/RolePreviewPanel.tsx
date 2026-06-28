@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Check, Eye, Minus, UserCog } from 'lucide-react';
 import {
-    getViewAsRole, setViewAsRole, clearViewAsRole, type ViewAsRole, type Identity,
+    getViewAsRole, setViewAsRole, clearViewAsRole, VIEW_AS_ACCOUNTS, type ViewAsRole, type Identity,
 } from '@/lib/auth';
 import {
     canUseAssistant, canUsePersonalPage, canUseResearchConsole, canUseTeacherAssistant,
@@ -71,9 +71,9 @@ export function RolePreviewPanel() {
                     Anteprima ruoli
                 </h2>
                 <p className="text-sm text-slate-500">
-                    Vedi l&apos;interfaccia come la vedono gli altri ruoli. L&apos;anteprima vale solo per te
-                    (nel tuo browser) e non cambia i permessi reali. Per uscire usa la barra in basso o il
-                    pulsante &ldquo;Torna ad Admin&rdquo;.
+                    Vedi l&apos;interfaccia come la vedono gli altri ruoli, con un account fittizio dedicato
+                    (non il tuo da amministratore). L&apos;anteprima vale solo per te (nel tuo browser) e non
+                    cambia i permessi reali. Per uscire usa la barra in basso o il pulsante &ldquo;Torna ad Admin&rdquo;.
                 </p>
             </div>
 
@@ -81,7 +81,7 @@ export function RolePreviewPanel() {
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4">
                     <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
                         <UserCog className="h-5 w-5" />
-                        Stai vedendo come: {ROLE_LABEL[active]}
+                        Stai vedendo come: {ROLE_LABEL[active]} ({VIEW_AS_ACCOUNTS[active].name})
                     </div>
                     <button
                         type="button"
@@ -97,6 +97,9 @@ export function RolePreviewPanel() {
                 {PREVIEWABLE.map((role) => (
                     <div key={role} className="glass-panel flex flex-col gap-2 p-4">
                         <h3 className="font-bold text-slate-800">{ROLE_LABEL[role]}</h3>
+                        <p className="text-[11px] font-semibold text-slate-400">
+                            Account fittizio: {VIEW_AS_ACCOUNTS[role].name} · {VIEW_AS_ACCOUNTS[role].username}
+                        </p>
                         <p className="grow text-xs text-slate-500">{ROLE_DESC[role]}</p>
                         <button
                             type="button"
