@@ -276,7 +276,14 @@ EXPECTED_ROUTES = {
     ("DELETE", "/user/learner-profile"),
     ("GET", "/user/student-booklets/instrument/{questionnaire_type}"),
     ("PUT", "/user/student-booklets/instrument/{questionnaire_type}"),
+    ("POST", "/user/student-booklets/instrument/{questionnaire_type}"),
     ("GET", "/user/student-booklets/instrument/{questionnaire_type}/pdf"),
+    ("GET", "/user/student-booklets/instrument/{questionnaire_type}/list"),
+    ("GET", "/user/student-booklets/id/{booklet_id}"),
+    ("PUT", "/user/student-booklets/id/{booklet_id}"),
+    ("DELETE", "/user/student-booklets/id/{booklet_id}"),
+    ("GET", "/user/student-booklets/id/{booklet_id}/pdf"),
+    ("GET", "/user/certified-strategies"),
     ("GET", "/user/student-booklets/{session_id}"),
     ("PUT", "/user/student-booklets/{session_id}"),
     ("GET", "/user/student-booklets/{session_id}/pdf"),
@@ -2320,6 +2327,89 @@ def test_student_booklet_crud_pdf_and_ownership():
         r = client.get("/user/student-booklets/instrument/QSA")
         assert r.status_code == 200, r.text
         assert r.json() is None
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
+def test_student_booklet_multiple_schede_and_arrays():
+    """Piu' schede per lo stesso strumento + campi forza/area come liste."""
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        # Due schede distinte per QSA.
+        r1 = client.post("/user/student-booklets/instrument/QSA", json={
+            "data": {"title": "Primo trimestre", "strength": ["C1 - Una", "C2 - Due"], "growth_area": ["A6 - Tre"]}
+        })
+        assert r1.status_code == 200, r1.text
+        id1 = r1.json()["id"]
+        assert r1.json()["data"]["strength"] == ["C1 - Una", "C2 - Due"]
+
+        r2 = client.post("/user/student-booklets/instrument/QSA", json={
+            "data": {"title": "Secondo trimestre", "strength": ["A1 - Quattro"]}
+        })
+        assert r2.status_code == 200, r2.text
+        id2 = r2.json()["id"]
+        assert id2 != id1
+
+        # La lista contiene entrambe le schede.
+        r = client.get("/user/student-booklets/instrument/QSA/list")
+        assert r.status_code == 200, r.text
+        ids = {b["id"] for b in r.json()}
+        assert {id1, id2} <= ids
+
+        # Aggiornamento per id e PDF per id.
+        r = client.put(f"/user/student-booklets/id/{id1}", json={
+            "data": {"title": "Primo trimestre", "strength": ["C1 - Una", "C2 - Due", "C3 - Cinque"]}
+        })
+        assert r.status_code == 200, r.text
+        assert r.json()["data"]["strength"] == ["C1 - Una", "C2 - Due", "C3 - Cinque"]
+
+        r = client.get(f"/user/student-booklets/id/{id1}/pdf")
+        assert r.status_code == 200 and r.headers["content-type"] == "application/pdf"
+        assert len(r.content) > 100
+
+        # Ownership: un altro utente non vede/agisce sulla scheda.
+        main.app.dependency_overrides[auth.get_identity] = lambda: _identity(
+            "other", "other@example.test", is_researcher=False
+        )
+        assert client.get(f"/user/student-booklets/id/{id1}").status_code == 403
+        assert client.delete(f"/user/student-booklets/id/{id1}").status_code == 403
+
+        # Il proprietario elimina una scheda.
+        main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+        assert client.delete(f"/user/student-booklets/id/{id2}").status_code == 200
+        r = client.get("/user/student-booklets/instrument/QSA/list")
+        assert id2 not in {b["id"] for b in r.json()}
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
+def test_certified_strategies_for_student_endpoint():
+    """Lo studente vede solo le strategie certificate, attive e nello scope."""
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        r = client.post("/admin/certified-strategies", json={
+            "slug": "booklet-focus-qsa", "name_it": "Tecnica del focus",
+            "description_it": "Riduci le distrazioni durante lo studio.",
+            "recommended_when_it": "Quando C6 e' un'area di crescita.",
+            "factor_codes": ["C6"], "questionnaire_types": ["QSA"], "status": "certified",
+        })
+        assert r.status_code == 200, r.text
+        sid = r.json()["id"]
+        try:
+            hit = client.get("/user/certified-strategies?questionnaire_type=QSA&lang=it")
+            assert hit.status_code == 200, hit.text
+            assert any(s["slug"] == "booklet-focus-qsa" and s["name"] == "Tecnica del focus" for s in hit.json())
+
+            # Fuori scope: non compare per ZTPI.
+            other = client.get("/user/certified-strategies?questionnaire_type=ZTPI&lang=it")
+            assert all(s["slug"] != "booklet-focus-qsa" for s in other.json())
+
+            # Bozza: non viene mai esposta.
+            client.put(f"/admin/certified-strategies/{sid}", json={"status": "draft"})
+            drafted = client.get("/user/certified-strategies?questionnaire_type=QSA&lang=it")
+            assert all(s["slug"] != "booklet-focus-qsa" for s in drafted.json())
+        finally:
+            client.delete(f"/admin/certified-strategies/{sid}")
     finally:
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
