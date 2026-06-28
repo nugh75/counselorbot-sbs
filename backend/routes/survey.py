@@ -422,6 +422,168 @@ async def download_student_booklet_pdf_for_instrument(
     )
 
 
+def _owned_booklet(db: Session, booklet_id: int, current_user: dict) -> models.StudentBooklet:
+    booklet = db.query(models.StudentBooklet).filter(models.StudentBooklet.id == booklet_id).first()
+    if not booklet:
+        raise HTTPException(status_code=404, detail="Libretto non trovato")
+    if not current_user.get("is_admin") and booklet.username != current_user.get("username"):
+        raise HTTPException(status_code=403, detail="Azione non consentita")
+    return booklet
+
+
+@router.get(
+    "/user/student-booklets/instrument/{questionnaire_type}/list",
+    response_model=List[schemas.StudentBookletResponse],
+)
+async def list_student_booklets_for_instrument(
+    questionnaire_type: str,
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Elenca tutte le schede del libretto per uno strumento."""
+    code = _normalize_booklet_type(questionnaire_type)
+    return (
+        db.query(models.StudentBooklet)
+        .filter(
+            models.StudentBooklet.username == current_user["username"],
+            models.StudentBooklet.questionnaire_type == code,
+        )
+        .order_by(models.StudentBooklet.updated_at.desc(), models.StudentBooklet.id.desc())
+        .all()
+    )
+
+
+@router.post(
+    "/user/student-booklets/instrument/{questionnaire_type}",
+    response_model=schemas.StudentBookletResponse,
+)
+async def create_student_booklet_for_instrument(
+    questionnaire_type: str,
+    payload: schemas.StudentBookletSave,
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Crea una nuova scheda del libretto per uno strumento."""
+    code = _normalize_booklet_type(questionnaire_type)
+    booklet = models.StudentBooklet(
+        username=current_user["username"],
+        session_id=None,
+        questionnaire_type=code,
+        data=payload.data,
+    )
+    db.add(booklet)
+    db.commit()
+    db.refresh(booklet)
+    return booklet
+
+
+@router.get("/user/student-booklets/id/{booklet_id}", response_model=schemas.StudentBookletResponse)
+async def get_student_booklet_by_id(
+    booklet_id: int,
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Recupera una scheda del libretto per id."""
+    return _owned_booklet(db, booklet_id, current_user)
+
+
+@router.put("/user/student-booklets/id/{booklet_id}", response_model=schemas.StudentBookletResponse)
+async def update_student_booklet_by_id(
+    booklet_id: int,
+    payload: schemas.StudentBookletSave,
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Aggiorna una scheda del libretto per id."""
+    booklet = _owned_booklet(db, booklet_id, current_user)
+    booklet.data = payload.data
+    db.commit()
+    db.refresh(booklet)
+    return booklet
+
+
+@router.delete("/user/student-booklets/id/{booklet_id}")
+async def delete_student_booklet_by_id(
+    booklet_id: int,
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Elimina una scheda del libretto per id."""
+    booklet = _owned_booklet(db, booklet_id, current_user)
+    db.delete(booklet)
+    db.commit()
+    return {"ok": True, "deleted": booklet_id}
+
+
+@router.get("/user/student-booklets/id/{booklet_id}/pdf")
+async def download_student_booklet_pdf_by_id(
+    booklet_id: int,
+    lang: str = Query("it", description="Lingua del PDF (it, en, es, fr, de, sv)"),
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Scarica una scheda del libretto per id."""
+    booklet = _owned_booklet(db, booklet_id, current_user)
+    pdf_bytes = generate_student_booklet_pdf(
+        questionnaire_type=booklet.questionnaire_type,
+        scores=None,
+        session_id=None,
+        booklet_data=booklet.data or {},
+        username=booklet.username,
+        submitted_at=None,
+        language=lang,
+    )
+    filename = f"counselorbot_libretto_{booklet.questionnaire_type}_{booklet.id}.pdf"
+    return Response(
+        content=pdf_bytes.read(),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+def _localized_strategy_field(row: models.CertifiedStrategy, prefix: str, lang: str) -> str:
+    value = getattr(row, f"{prefix}_{lang}", None) or getattr(row, f"{prefix}_it", None)
+    return (value or "").strip()
+
+
+@router.get("/user/certified-strategies")
+async def list_certified_strategies_for_student(
+    questionnaire_type: str = Query(..., description="Strumento (QSA, QSAr, ...)"),
+    lang: str = Query("it", description="Lingua (it, en, es, sv)"),
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Strategie certificate attive, filtrate per strumento, per il libretto."""
+    code = _normalize_booklet_type(questionnaire_type)
+    language = lang if lang in ("it", "en", "es", "sv") else "it"
+    rows = (
+        db.query(models.CertifiedStrategy)
+        .filter(
+            models.CertifiedStrategy.status == "certified",
+            models.CertifiedStrategy.is_active.is_(True),
+        )
+        .order_by(models.CertifiedStrategy.sort_order.asc(), models.CertifiedStrategy.id.asc())
+        .all()
+    )
+    result = []
+    for row in rows:
+        scope = {item.upper() for item in (row.questionnaire_types or [])}
+        if scope and code.upper() not in scope:
+            continue
+        name = _localized_strategy_field(row, "name", language)
+        description = _localized_strategy_field(row, "description", language)
+        if not (name or description):
+            continue
+        result.append({
+            "slug": row.slug,
+            "name": name,
+            "recommended_when": _localized_strategy_field(row, "recommended_when", language),
+            "description": description,
+            "factor_codes": row.factor_codes or [],
+        })
+    return result
+
+
 @router.get("/user/student-booklets/{session_id}", response_model=Optional[schemas.StudentBookletResponse])
 async def get_student_booklet(
     session_id: str,
