@@ -76,9 +76,6 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName }: Cou
             <div className="glass-panel p-6 sm:p-7">
                 <div className="max-w-3xl">
                     <h1 className="text-2xl font-bold text-slate-900">{t('counselor.title')}</h1>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                        {t('counselor.intro')}
-                    </p>
                     {questionnaireName && (
                         <p className="mt-3 inline-flex rounded-md border border-indigo-100 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-900">
                             {t('counselor.selectedTool')}: {questionnaireName}
