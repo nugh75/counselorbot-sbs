@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Eye, X } from 'lucide-react';
 import { getViewAsAccount, clearViewAs, type ViewAsAccount } from '@/lib/auth';
 
@@ -13,9 +13,7 @@ const ROLE_LABEL: Record<ViewAsAccount['role'], string> = {
 // Barra globale: visibile quando un admin sta usando un profilo di prova.
 // Sempre raggiungibile per uscire dall'anteprima da qualsiasi pagina.
 export function RolePreviewBanner() {
-    const [account, setAccount] = useState<ViewAsAccount | null>(null);
-
-    useEffect(() => { setAccount(getViewAsAccount()); }, []);
+    const [account] = useState<ViewAsAccount | null>(() => getViewAsAccount());
 
     if (!account) return null;
 
