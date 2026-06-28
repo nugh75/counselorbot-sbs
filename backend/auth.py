@@ -112,12 +112,42 @@ async def get_identity(request: Request) -> dict:
     return _anonymous_identity()
 
 
-async def get_current_user(identity: dict = Depends(get_identity)) -> dict:
+# Anteprima ruoli: i tre account demo impersonabili (allowlist). Solo un admin
+# reale puo' agire come uno di questi e nessun altro username e' impersonabile,
+# quindi non si possono leggere/scrivere dati di utenti reali. Speculare a
+# VIEW_AS_ACCOUNTS nel frontend.
+VIEW_AS_DEMO_ACCOUNTS = {
+    "studente.demo": {"is_researcher": False, "groups": ["studenti"]},
+    "ricercatore.demo": {"is_researcher": True, "groups": ["researchers"]},
+    "docente.demo": {"is_researcher": False, "groups": ["docenti"]},
+}
+
+
+def _impersonated_demo_identity(username: str) -> dict:
+    cfg = VIEW_AS_DEMO_ACCOUNTS[username]
+    return {
+        "email": f"{username}@anteprima.local",
+        "username": username,
+        "name": username,
+        "groups": list(cfg["groups"]),
+        "is_admin": False,
+        "is_researcher": cfg["is_researcher"],
+        "authenticated": True,
+    }
+
+
+async def get_current_user(request: Request, identity: dict = Depends(get_identity)) -> dict:
     if not identity["authenticated"]:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Non autenticato",
         )
+    # Anteprima ruoli: un admin reale puo' impersonare un account demo, passato
+    # via header X-View-As (chiamate fetch) o query param view_as (tag <img>).
+    if identity.get("is_admin"):
+        view_as = request.headers.get("X-View-As") or request.query_params.get("view_as")
+        if view_as and view_as in VIEW_AS_DEMO_ACCOUNTS:
+            return _impersonated_demo_identity(view_as)
     return identity
 
 
