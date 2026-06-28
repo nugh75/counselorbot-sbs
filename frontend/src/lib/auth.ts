@@ -18,6 +18,22 @@ export interface Identity {
 export type ViewAsRole = 'studente' | 'ricercatore' | 'docente';
 const VIEW_AS_KEY = 'cb_view_as_role';
 
+// Tre account fittizi (uno per ruolo), distinti da quello dell'amministratore:
+// l'anteprima mostra l'identita' di un finto utente, non quella dell'admin.
+export interface ViewAsAccount {
+    username: string;
+    name: string;
+    email: string;
+    groups: string[];
+    is_researcher: boolean;
+}
+
+export const VIEW_AS_ACCOUNTS: Record<ViewAsRole, ViewAsAccount> = {
+    studente: { username: 'studente.demo', name: 'Studente demo', email: 'studente.demo@anteprima.local', groups: ['studenti'], is_researcher: false },
+    ricercatore: { username: 'ricercatore.demo', name: 'Ricercatore demo', email: 'ricercatore.demo@anteprima.local', groups: ['researchers'], is_researcher: true },
+    docente: { username: 'docente.demo', name: 'Docente demo', email: 'docente.demo@anteprima.local', groups: ['docenti'], is_researcher: false },
+};
+
 export function getViewAsRole(): ViewAsRole | null {
     if (typeof window === 'undefined') return null;
     const value = window.localStorage.getItem(VIEW_AS_KEY);
@@ -33,10 +49,17 @@ export function clearViewAsRole(): void {
 }
 
 function applyViewAs(real: Identity, role: ViewAsRole): Identity {
-    const base: Identity = { ...real, is_admin: false, is_researcher: false, groups: [] };
-    if (role === 'ricercatore') return { ...base, is_researcher: true, groups: ['researchers'] };
-    if (role === 'docente') return { ...base, groups: ['docenti'] };
-    return { ...base, groups: ['studenti'] };
+    const account = VIEW_AS_ACCOUNTS[role];
+    return {
+        ...real,
+        username: account.username,
+        name: account.name,
+        email: account.email,
+        groups: [...account.groups],
+        is_admin: false,
+        is_researcher: account.is_researcher,
+        authenticated: true,
+    };
 }
 
 // Identita' reale dal backend, senza applicare l'anteprima ruoli.
