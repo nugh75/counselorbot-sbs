@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowRight, Check, Compass, CircleOff, Cpu, Cloud } from 'lucide-react';
+import { ArrowRight, Check, Cpu, Cloud } from 'lucide-react';
 import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId, subscribeToCounselor, PublicCounselor } from '@/lib/counselor';
 import { useI18n } from '@/lib/i18n-context';
 import { BackButton } from '@/components/ui/BackButton';
@@ -106,11 +106,6 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName }: Cou
                             }`}
                         >
                             <div className="flex items-start gap-3">
-                                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${
-                                    disabled ? 'bg-slate-200 text-slate-400' : 'bg-indigo-50 text-indigo-600'
-                                }`}>
-                                    {disabled ? <CircleOff className="h-4 w-4" /> : <Compass className="h-4 w-4" />}
-                                </div>
                                 <div className="min-w-0 flex-1 space-y-2">
                                     <div>
                                         <div className="flex flex-wrap items-center gap-2">
