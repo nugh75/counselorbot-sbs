@@ -267,11 +267,11 @@ export default function AssistentePage() {
     const SelectedTopicIcon = selectedTopic.icon;
 
     return (
-        <div className="h-[calc(100vh-4rem)] flex flex-col">
+        <div className="flex flex-col lg:h-chat">
             {/* Layout a due colonne: quadrati a sinistra, chat a destra */}
-            <div className="flex-1 flex flex-col lg:flex-row gap-6 overflow-hidden p-6">
+            <div className="flex flex-1 flex-col gap-4 lg:h-full lg:flex-row lg:gap-6 lg:overflow-hidden">
                 {/* Colonna sinistra: quadrati/topic e info topic selezionato - scrollabile */}
-                <div className="w-full lg:w-80 shrink-0 flex flex-col gap-4 overflow-y-auto">
+                <div className="w-full lg:w-80 shrink-0 flex flex-col gap-4 lg:overflow-y-auto lg:pr-1">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900">{t('assistant.title')}</h1>
                         <p className="text-slate-500 mt-1 text-sm">
@@ -302,7 +302,7 @@ export default function AssistentePage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-1">
                         {topics.map((topic) => {
                             const Icon = topic.icon;
                             const active = selectedTopic.id === topic.id;
@@ -343,8 +343,8 @@ export default function AssistentePage() {
                 </div>
 
                 {/* Colonna destra: chat - prende tutto lo spazio rimanente */}
-                <div className="flex-1 min-w-0 flex flex-col gap-4 overflow-hidden">
-                    <div ref={scrollRef} className="glass-panel p-4 flex-1 overflow-y-auto space-y-4">
+                <div className="flex min-h-chat flex-1 min-w-0 flex-col gap-3 overflow-hidden lg:min-h-0 lg:gap-4">
+                    <div ref={scrollRef} className="glass-panel min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
                         {messages.length === 0 && (
                             <div className="flex items-start gap-3 text-slate-600">
                                 <p className="text-sm leading-relaxed pt-1">{t(`assistant.welcome.${audience}`)}</p>
@@ -352,14 +352,14 @@ export default function AssistentePage() {
                         )}
 
                         {messages.map((msg, i) => (
-                            <div key={i} className={`flex items-start gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                                <div className={`max-w-[80%] rounded-lg px-4 py-2.5 ${
+                            <div key={i} className={`flex min-w-0 items-start gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                                <div className={`min-w-0 max-w-[92%] break-words rounded-lg px-4 py-2.5 sm:max-w-[80%] ${
                                     msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-800'
                                 }`}>
                                     {msg.role === 'assistant' && !msg.content
                                         ? <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
                                         : (
-                                            <div className="prose prose-sm max-w-none prose-p:my-1.5 prose-headings:my-2">
+                                            <div className="prose prose-sm max-w-none break-words prose-p:my-1.5 prose-headings:my-2">
                                                 <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{msg.content}</ReactMarkdown>
                                             </div>
                                         )}
@@ -426,12 +426,12 @@ export default function AssistentePage() {
                             }}
                             rows={2}
                             placeholder={t('assistant.inputPlaceholder')}
-                            className="flex-1 resize-none rounded-lg border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="min-w-0 flex-1 resize-none rounded-lg border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                         <button
                             onClick={send}
                             disabled={loading || !input.trim()}
-                            className="h-12 px-5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg flex items-center gap-2 transition-colors"
+                            className="flex h-12 w-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-0 text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:px-5"
                         >
                             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                         </button>
@@ -440,7 +440,7 @@ export default function AssistentePage() {
 
                 {/* Pannello anteprima documento */}
                 {preview && (
-                    <aside className="w-full lg:w-[460px] shrink-0 glass-panel flex flex-col h-[calc(var(--chat-h)+4.5rem)]">
+                    <aside className="glass-panel flex min-h-[22rem] max-h-[min(70svh,34rem)] w-full flex-col lg:h-full lg:max-h-none lg:min-h-0 lg:w-[460px] lg:shrink-0">
                         <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200">
                             <FileText className="w-4 h-4 text-indigo-600 shrink-0" />
                             <span className="text-sm font-semibold text-slate-800 truncate flex-1" title={preview.title}>
