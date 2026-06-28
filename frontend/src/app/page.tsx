@@ -17,10 +17,11 @@ const OpenCodeExperience = dynamic(
     () => import('@/components/qsa/OpenCodeExperience').then((mod) => mod.OpenCodeExperience),
     { ssr: false }
 );
-import { ArrowRight, CheckCircle2, ClipboardList, Compass, FileQuestion, MessageSquare, RotateCcw, LogOut, Download, Layers, Terminal, LogIn, ShieldCheck } from 'lucide-react';
+import { ArrowRight, CheckCircle2, MessageSquare, RotateCcw, LogOut, Download, Layers, Terminal, LogIn, ShieldCheck } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StickyActions } from '@/components/ui/StickyActions';
 import { FlowStepper } from '@/components/ui/FlowStepper';
+import { CompassMark } from '@/components/ui/CompassMark';
 import { toast } from '@/components/ui/Toast';
 import { useI18n } from '@/lib/i18n-context';
 import { addCompletedProfile, hasCompletedAll, getCombinedScoresContext, clearCompletedProfiles, getCompletedProfiles } from '@/lib/profile-tracker';
@@ -48,128 +49,29 @@ function generateUUID() {
     });
 }
 
+// Intro: un solo compito — orientare e far partire. Hero centrato, niente card né
+// blocco "come si prosegue" (è già lo stepper, nascosto qui). Unico segno: la bussola.
 function IntroScreen({ onStart }: { onStart: () => void }) {
-    const { t, lang } = useI18n();
-    const isItalian = lang === 'it';
-    const isAdministrationLang = lang === 'en' || lang === 'es' || lang === 'sv';
-    const pathPrefix = isItalian ? 'it' : isAdministrationLang ? 'administration' : 'unavailable';
-    const overviewItems = [
-        {
-            icon: ClipboardList,
-            title: t('app.overview.questionnaires.title'),
-            body: t('app.overview.questionnaires.body'),
-        },
-        {
-            icon: Compass,
-            title: t('app.overview.savickas.title'),
-            body: t('app.overview.savickas.body'),
-        },
-        {
-            icon: FileQuestion,
-            title: t('app.overview.pqbl.title'),
-            body: t('app.overview.pqbl.body'),
-        },
-    ];
-    const nextSteps = [
-        {
-            icon: ClipboardList,
-            title: t(`selector.path.${pathPrefix}.step1.title`),
-            body: t(`selector.path.${pathPrefix}.step1.body`),
-        },
-        {
-            icon: Compass,
-            title: t('counselor.title'),
-            body: t('counselor.explain.body'),
-        },
-        {
-            icon: MessageSquare,
-            title: t(`selector.path.${pathPrefix}.step3.title`),
-            body: t(`selector.path.${pathPrefix}.step3.body`),
-        },
-    ];
+    const { t } = useI18n();
 
     return (
-        <div className="space-y-6">
-            <section className="glass-panel p-6 sm:p-8">
-                <div className="max-w-4xl">
-                    <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-indigo-700">
-                        <ClipboardList className="h-4 w-4" />
-                        {t('app.overview.kicker')}
-                    </div>
-                    <h1 className="mt-2 text-3xl font-bold text-slate-900">CounselorBot</h1>
-                    <p className="mt-3 text-base leading-relaxed text-slate-600">
-                        {t('app.overview.body')}
-                    </p>
-                </div>
-            </section>
-
-            <section className="space-y-3">
-                <h2 className="text-xl font-bold text-slate-900">{t('app.home.contains')}</h2>
-                <div className="grid gap-3 md:grid-cols-3">
-                    {overviewItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                            <article key={item.title} className="glass-panel p-5">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-indigo-50 text-indigo-600">
-                                    <Icon className="h-5 w-5" />
-                                </div>
-                                <h3 className="mt-4 text-base font-bold text-slate-900">{item.title}</h3>
-                                <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.body}</p>
-                            </article>
-                        );
-                    })}
-                </div>
-            </section>
-
-            <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-                <div className="glass-panel p-5">
-                    <h2 className="text-lg font-bold text-slate-900">{t(`selector.home.${pathPrefix}.title`)}</h2>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                        {t(`selector.home.${pathPrefix}.body`)}
-                    </p>
-                    {isItalian && (
-                        <p className="mt-3 rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm leading-relaxed text-sky-950">
-                            {t('selector.italianNotice')}
-                        </p>
-                    )}
-                    {isAdministrationLang && (
-                        <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-relaxed text-amber-950">
-                            {t('selector.experimentalNotice')}
-                        </p>
-                    )}
-                </div>
-
-                <div className="glass-panel p-5">
-                    <h2 className="text-lg font-bold text-slate-900">{t('app.home.next')}</h2>
-                    <div className="mt-4 space-y-4">
-                        {nextSteps.map((item) => {
-                            const Icon = item.icon;
-                            return (
-                                <div key={item.title} className="flex gap-3">
-                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-600">
-                                        <Icon className="h-4 w-4" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-slate-900">{item.title}</h3>
-                                        <p className="mt-1 text-sm leading-relaxed text-slate-600">{item.body}</p>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            </section>
-
-            <div className="flex justify-end">
-                <button
-                    type="button"
-                    onClick={onStart}
-                    className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
-                >
-                    {t('app.home.cta')}
-                    <ArrowRight className="h-4 w-4" />
-                </button>
-            </div>
+        <div className="flex min-h-[66vh] flex-col items-center justify-center text-center">
+            <CompassMark className="h-14 w-14" />
+            <h1 className="font-display mt-6 text-4xl font-bold text-slate-900 sm:text-5xl">CounselorBot</h1>
+            <p className="mt-4 max-w-xl text-lg leading-relaxed text-slate-600">
+                {t('app.intro.subtitle')}
+            </p>
+            <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-500">
+                {t('app.intro.modes')}
+            </p>
+            <button
+                type="button"
+                onClick={onStart}
+                className="mt-8 inline-flex items-center gap-2 rounded-md bg-ochre-500 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-ochre-600"
+            >
+                {t('app.home.cta')}
+                <ArrowRight className="h-4 w-4" />
+            </button>
         </div>
     );
 }
@@ -502,7 +404,7 @@ export default function Home() {
 
     return (
         <div className="page-wide space-y-8">
-            <FlowStepper steps={flowStages} current={stageIndex} />
+            {step !== 'intro' && <FlowStepper steps={flowStages} current={stageIndex} />}
 
             {/* The selection screen owns its introduction to avoid repeating the page purpose. */}
             {step !== 'intro' && step !== 'questionnaire-select' && step !== 'counselor-select' && (
