@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Check, Eye, Minus, UserCog } from 'lucide-react';
 import {
     getViewAsAccount, setViewAsUsername, clearViewAs, VIEW_AS_ACCOUNTS,
@@ -47,14 +47,12 @@ const CAPABILITIES: { label: string; fn: (id: Identity) => boolean }[] = [
 const ROLES: RoleKey[] = ['studente', 'ricercatore', 'docente', 'admin'];
 
 export function RolePreviewPanel() {
-    const [active, setActive] = useState<ViewAsAccount | null>(null);
-
-    useEffect(() => { setActive(getViewAsAccount()); }, []);
+    const [active] = useState<ViewAsAccount | null>(() => getViewAsAccount());
 
     const startPreview = (account: ViewAsAccount) => {
         setViewAsUsername(account.username);
         // Ricarica sulla home cosi' tutta l'interfaccia usa il profilo scelto.
-        window.location.href = '/';
+        window.location.assign('/');
     };
 
     const stopPreview = () => {
