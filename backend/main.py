@@ -40,6 +40,7 @@ from .routes import chat as chat_routes
 from .routes import memory as memory_routes
 from .routes import site_chat as site_chat_routes
 from .routes import learner_profile as learner_profile_routes
+from .routes import portfolio as portfolio_routes
 from .routes import pqbl as pqbl_routes
 from .routes import opencode as opencode_routes
 from .routes import presets as presets_routes
@@ -241,6 +242,13 @@ def _seed_and_migrate():
             "CREATE INDEX IF NOT EXISTS ix_questionnaire_results_research_contact_id ON questionnaire_results (research_contact_id)",
             "CREATE INDEX IF NOT EXISTS ix_validation_responses_administration_plan_id ON validation_responses (administration_plan_id)",
             "CREATE INDEX IF NOT EXISTS ix_validation_responses_research_contact_id ON validation_responses (research_contact_id)",
+            "CREATE INDEX IF NOT EXISTS ix_student_booklets_username ON student_booklets (username)",
+            "CREATE INDEX IF NOT EXISTS ix_student_booklets_session_id ON student_booklets (session_id)",
+            "CREATE INDEX IF NOT EXISTS ix_student_booklets_questionnaire_type ON student_booklets (questionnaire_type)",
+            # Schede multiple per (utente, strumento): rimuove il vecchio vincolo di unicita'.
+            "DROP INDEX IF EXISTS uq_student_booklets_username_questionnaire",
+            "CREATE INDEX IF NOT EXISTS ix_learner_profile_reflections_username ON learner_profile_reflections (username)",
+            "CREATE INDEX IF NOT EXISTS ix_learner_profile_reflections_session_id ON learner_profile_reflections (session_id)",
         ]:
             try:
                 with database.engine.connect() as conn:
@@ -248,6 +256,13 @@ def _seed_and_migrate():
                     conn.commit()
             except Exception as e:
                 logger.debug(f"administration link index skipped/failed ({idx_clause}): {e}")
+
+        try:
+            with database.engine.connect() as conn:
+                conn.execute(sa_text("ALTER TABLE student_booklets ALTER COLUMN session_id DROP NOT NULL"))
+                conn.commit()
+        except Exception as e:
+            logger.debug(f"student_booklets session_id nullable migration skipped/failed: {e}")
 
         for clause in [
             "ADD COLUMN strumenti_utilizzati JSON",
@@ -801,6 +816,7 @@ app.include_router(chat_routes.router)
 app.include_router(memory_routes.router)
 app.include_router(site_chat_routes.router)
 app.include_router(learner_profile_routes.router)
+app.include_router(portfolio_routes.router)
 app.include_router(pqbl_routes.router)
 app.include_router(opencode_routes.router)
 app.include_router(presets_routes.router)

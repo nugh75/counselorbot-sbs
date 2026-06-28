@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Inter, Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { Header } from '@/components/layout/Header';
+import { RolePreviewBanner } from '@/components/layout/RolePreviewBanner';
+import { ViewAsFetchPatch } from '@/components/layout/ViewAsFetchPatch';
 import { I18nProvider } from '@/lib/i18n-context';
 import { Toaster } from '@/components/ui/Toast';
 
@@ -34,10 +36,12 @@ export default function RootLayout({
             </head>
             <body className={`${inter.variable} ${display.variable} ${mono.variable} min-h-screen bg-slate-50 text-slate-900 selection:bg-indigo-100 selection:text-indigo-900`}>
                 <I18nProvider>
+                    <ViewAsFetchPatch />
                     <Header />
                     <main className="pt-20 px-4 pb-12">
                         {children}
                     </main>
+                    <RolePreviewBanner />
                     <Toaster />
                 </I18nProvider>
             </body>

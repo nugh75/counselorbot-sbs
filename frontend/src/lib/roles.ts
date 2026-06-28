@@ -23,6 +23,10 @@ export function canUseTeacherAssistant(identity: Identity | null | undefined): b
     return Boolean(identity?.authenticated && (identity.is_admin || isTeacher(identity) || isResearcher(identity)));
 }
 
+export function canUseAssistant(identity: Identity | null | undefined): boolean {
+    return Boolean(identity?.authenticated);
+}
+
 export function canUseResearchConsole(identity: Identity | null | undefined): boolean {
     return Boolean(identity?.authenticated && (identity.is_admin || isResearcher(identity)));
 }
@@ -31,5 +35,5 @@ export function canUseResearchConsole(identity: Identity | null | undefined): bo
 // account studente/anonimo possono solo usare gli strumenti e compilare i
 // questionari nella loro lingua — niente storico/profilo personale.
 export function canUsePersonalPage(identity: Identity | null | undefined): boolean {
-    return Boolean(identity?.authenticated && (identity.is_admin || isTeacher(identity) || isResearcher(identity)));
+    return Boolean(identity?.authenticated);
 }

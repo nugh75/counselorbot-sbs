@@ -11,8 +11,10 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
 import { addCompletedProfile, clearCompletedProfiles } from '@/lib/profile-tracker';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
+import { StudentBookletCard, EVENT_BOOKLET_TYPES, bookletTypeOptionLabel, type BookletType } from '@/components/profile/StudentBookletCard';
+import { PortfolioCard } from '@/components/profile/PortfolioCard';
 import {
-    ArrowLeft, User, FileText, Trash2, Download, MessageSquare, Calendar, ChevronRight, ShieldAlert
+    ArrowLeft, ArrowRight, User, FileText, Trash2, Download, MessageSquare, ShieldAlert, Search, History
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList,
@@ -27,6 +29,8 @@ interface QuestionnaireResult {
     submitted_at: string;
 }
 
+const BOOKLET_TYPES: BookletType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', ...EVENT_BOOKLET_TYPES];
+
 export default function ProfilePage() {
     const { t, tf, lang } = useI18n();
     const isDark = useDarkMode();
@@ -36,6 +40,9 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+    const [sessionSearch, setSessionSearch] = useState('');
+    const [selectedBookletType, setSelectedBookletType] = useState<BookletType>('QSA');
+    const [activeTab, setActiveTab] = useState<'taccuino' | 'strumenti' | 'portfolio'>('taccuino');
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -61,7 +68,7 @@ export default function ProfilePage() {
                             new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime()
                         );
                         for (const s of sorted) {
-                            if (['QSA', 'QSAr', 'ZTPI', 'SAVICKAS'].includes(s.questionnaire_type)) {
+                            if (['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'].includes(s.questionnaire_type)) {
                                 addCompletedProfile(s.questionnaire_type, s.session_id, s.scores || {});
                             }
                         }
@@ -126,6 +133,38 @@ export default function ProfilePage() {
         }
     };
 
+    const filteredSessions = useMemo(() => {
+        const query = sessionSearch.trim().toLowerCase();
+        if (!query) return sessions;
+        return sessions.filter((session) => {
+            const submitted = new Date(session.submitted_at);
+            const haystack = [
+                session.questionnaire_type,
+                session.session_id,
+                session.session_id.slice(0, 8),
+                submitted.toLocaleDateString(lang),
+                submitted.toLocaleString(lang),
+            ].join(' ').toLowerCase();
+            return haystack.includes(query);
+        });
+    }, [sessions, sessionSearch, lang]);
+
+    useEffect(() => {
+        if (filteredSessions.length === 0) {
+            if (selectedSession !== null) setSelectedSession(null);
+            return;
+        }
+        if (!selectedSession || !filteredSessions.some((session) => session.session_id === selectedSession.session_id)) {
+            setSelectedSession(filteredSessions[0]);
+            setShowDeleteConfirm(null);
+        }
+    }, [filteredSessions, selectedSession]);
+
+    const formatSessionOption = (session: QuestionnaireResult) => {
+        const submitted = new Date(session.submitted_at).toLocaleString(lang);
+        return `${submitted} · ${session.questionnaire_type} · ${session.session_id.slice(0, 8)}`;
+    };
+
     // Chart score preparation
     const chartData = useMemo(() => {
         if (!selectedSession || !selectedSession.scores) return [];
@@ -159,6 +198,9 @@ export default function ProfilePage() {
             QSAr: 'bg-sky-100 text-sky-700 border-sky-200',
             ZTPI: 'bg-amber-100 text-amber-700 border-amber-200',
             SAVICKAS: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+            QPCS: 'bg-violet-100 text-violet-700 border-violet-200',
+            QPCC: 'bg-rose-100 text-rose-700 border-rose-200',
+            QAP: 'bg-cyan-100 text-cyan-700 border-cyan-200',
         };
         return colors[type] || 'bg-slate-100 text-slate-700 border-slate-200';
     };
@@ -202,8 +244,7 @@ export default function ProfilePage() {
         );
     }
 
-    // Account studente/anonimo: nessuna pagina personale. Possono solo usare gli
-    // strumenti e compilare i questionari (home), non lo storico/profilo.
+    // La pagina personale resta vincolata all'autenticazione: ogni utente vede solo i propri dati.
     if (!canUsePersonalPage(identity)) {
         return (
             <div className="max-w-md mx-auto my-12 p-8 bg-white border border-slate-200 rounded-xl text-center space-y-6 shadow-sm">
@@ -269,72 +310,142 @@ export default function ProfilePage() {
                 </div>
             </section>
 
-            {/* Learner profile (modello del discente) */}
-            <LearnerProfileCard variant="edit" />
+            {/* Tab navigation */}
+            <div className="border-b border-slate-200">
+                <nav className="-mb-px flex flex-wrap gap-1">
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('taccuino')}
+                        className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${activeTab === 'taccuino' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Su di me e libretto
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('strumenti')}
+                        className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${activeTab === 'strumenti' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Strumenti utilizzati
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('portfolio')}
+                        className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${activeTab === 'portfolio' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Portfolio
+                    </button>
+                </nav>
+            </div>
 
-            {/* Main Layout Grid */}
-            <div className="grid lg:grid-cols-3 gap-8">
-                {/* Left Column: Sessions List */}
-                <div className="lg:col-span-1 space-y-4">
-                    <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-indigo-500" />
-                        {t('profile.myCompilations')}
+            {activeTab === 'taccuino' && (
+            <section className="space-y-4" aria-labelledby="personal-profile-section">
+                <div>
+                    <h2 id="personal-profile-section" className="text-lg font-bold text-slate-800">
+                        Su di me
                     </h2>
-                    
-                    <div className="space-y-3 pr-1">
-                        {sessions.map((session) => (
-                            <button
-                                key={session.id}
-                                onClick={() => {
-                                    setSelectedSession(session);
+                    <p className="mt-1 text-sm text-slate-500">
+                        Questa sezione riguarda solo il tuo profilo: non cambia quando scegli una compilazione.
+                    </p>
+                </div>
+                <LearnerProfileCard variant="edit" />
+                <Link
+                    href="/profilo/cambiamenti"
+                    className="glass-panel p-5 flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                            <History className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-slate-800">Cambiamenti del profilo</h3>
+                            <p className="text-sm text-slate-500">Rivedi come e cambiato il tuo profilo e salva una riflessione personale.</p>
+                        </div>
+                    </div>
+                    <ArrowRight className="w-5 h-5 shrink-0 text-slate-400" />
+                </Link>
+            </section>
+            )}
+
+            {activeTab === 'strumenti' && (
+            <>
+            <section className="glass-panel p-5 space-y-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-indigo-500" />
+                            {t('profile.myCompilations')}
+                        </h2>
+                        <p className="mt-1 text-sm text-slate-500">
+                            Cerca e scegli una compilazione: la selezione aggiorna solo il risultato qui sotto.
+                        </p>
+                    </div>
+                    <span className="text-xs font-semibold text-slate-400">
+                        {filteredSessions.length} / {sessions.length}
+                    </span>
+                </div>
+                {sessions.length === 0 ? (
+                    <div className="text-center py-10 px-4 border border-dashed border-slate-200 rounded-xl bg-white space-y-4">
+                        <div className="w-12 h-12 mx-auto rounded-full bg-indigo-50 flex items-center justify-center">
+                            <FileText className="w-6 h-6 text-indigo-400" />
+                        </div>
+                        <p className="text-sm text-slate-500 max-w-xs mx-auto">{t('profile.noSessions')}</p>
+                        <Link
+                            href="/"
+                            className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+                        >
+                            {t('selector.start')}
+                        </Link>
+                    </div>
+                ) : (
+                    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.45fr)]">
+                        <label className="block">
+                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Compilazione attiva</span>
+                            <select
+                                value={selectedSession?.session_id || ''}
+                                onChange={(event) => {
+                                    const next = filteredSessions.find((session) => session.session_id === event.target.value) || null;
+                                    setSelectedSession(next);
                                     setShowDeleteConfirm(null);
                                 }}
-                                className={`w-full text-left p-4 rounded-xl border transition-all flex items-center justify-between gap-3 shadow-sm ${
-                                    selectedSession?.id === session.id
-                                        ? 'border-indigo-600 bg-indigo-50/50'
-                                        : 'border-slate-200 bg-white hover:border-slate-300'
-                                }`}
+                                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                             >
-                                <div className="space-y-2 min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <span className={`px-2.5 py-0.5 border text-[10px] font-bold rounded uppercase ${getTypeColor(session.questionnaire_type)}`}>
-                                            {session.questionnaire_type}
-                                        </span>
-                                        <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                                            <Calendar className="w-3 h-3" />
-                                            {new Date(session.submitted_at).toLocaleDateString(lang)}
-                                        </span>
-                                    </div>
-                                    <p className="text-xs text-slate-500 font-mono truncate">
-                                        ID: {session.session_id.slice(0, 8)}...
-                                    </p>
-                                </div>
-                                <ChevronRight className={`w-4 h-4 shrink-0 transition-transform ${
-                                    selectedSession?.id === session.id ? 'text-indigo-600 translate-x-0.5' : 'text-slate-400'
-                                }`} />
-                            </button>
-                        ))}
-
-                        {sessions.length === 0 && (
-                            <div className="text-center py-12 px-4 border border-dashed border-slate-200 rounded-xl bg-white space-y-4 animate-fade-in-up">
-                                <div className="w-12 h-12 mx-auto rounded-full bg-indigo-50 flex items-center justify-center">
-                                    <FileText className="w-6 h-6 text-indigo-400" />
-                                </div>
-                                <p className="text-sm text-slate-500 max-w-xs mx-auto">{t('profile.noSessions')}</p>
-                                <Link
-                                    href="/"
-                                    className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
-                                >
-                                    {t('selector.start')}
-                                </Link>
+                                {filteredSessions.length === 0 && <option value="">Nessuna compilazione trovata</option>}
+                                {filteredSessions.map((session) => (
+                                    <option key={session.session_id} value={session.session_id}>
+                                        {formatSessionOption(session)}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                        <label className="block">
+                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Cerca</span>
+                            <div className="mt-1 flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2">
+                                <Search className="h-4 w-4 text-slate-400" />
+                                <input
+                                    value={sessionSearch}
+                                    onChange={(event) => setSessionSearch(event.target.value)}
+                                    placeholder="Data, strumento o ID"
+                                    className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+                                />
                             </div>
-                        )}
+                        </label>
                     </div>
-                </div>
+                )}
+            </section>
 
-                {/* Right Column: Selected Session Detail */}
-                <div className="lg:col-span-2 space-y-6">
-                    {selectedSession ? (
+            <section className="space-y-6" aria-labelledby="selected-session-details">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <h2 id="selected-session-details" className="text-lg font-bold text-slate-800">
+                        Risultato della compilazione
+                    </h2>
+                    {selectedSession && (
+                        <span className={`px-3 py-0.5 border text-xs font-bold rounded-full uppercase ${getTypeColor(selectedSession.questionnaire_type)}`}>
+                            {selectedSession.questionnaire_type} · {selectedSession.session_id.slice(0, 8)}
+                        </span>
+                    )}
+                </div>
+                {selectedSession ? (
+                    <>
                         <div className="glass-panel p-6 space-y-6">
                             {/* Session Detail Header */}
                             <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-4">
@@ -496,14 +607,60 @@ export default function ProfilePage() {
                                 </Link>
                             </div>
                         </div>
-                    ) : (
-                        <div className="glass-panel p-12 text-center space-y-4 text-slate-400">
-                            <FileText className="w-12 h-12 mx-auto text-slate-200" />
-                            <p className="font-medium">{t('profile.selectSession')}</p>
-                        </div>
-                    )}
+                    </>
+                ) : (
+                    <div className="glass-panel p-12 text-center space-y-4 text-slate-400">
+                        <FileText className="w-12 h-12 mx-auto text-slate-200" />
+                        <p className="font-medium">{t('profile.selectSession')}</p>
+                    </div>
+                )}
+            </section>
+            </>
+            )}
+
+            {activeTab === 'taccuino' && (
+            <section className="space-y-4" aria-labelledby="student-booklet-section">
+                <div>
+                    <h2 id="student-booklet-section" className="text-lg font-bold text-slate-800">
+                        Libretto dello studente
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                        Ogni strumento ha il suo libretto: scegli lo strumento, compila, salva e scarica il PDF.
+                    </p>
                 </div>
-            </div>
+                <div className="glass-panel p-5">
+                    <label className="block">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Strumento del libretto</span>
+                        <select
+                            value={selectedBookletType}
+                            onChange={(event) => setSelectedBookletType(event.target.value as BookletType)}
+                            className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                        >
+                            {BOOKLET_TYPES.map((type) => (
+                                <option key={type} value={type}>
+                                    {bookletTypeOptionLabel(type)}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                </div>
+                <StudentBookletCard questionnaireType={selectedBookletType} lang={lang} />
+            </section>
+            )}
+
+            {activeTab === 'portfolio' && (
+            <section className="space-y-4" aria-labelledby="portfolio-section">
+                <div>
+                    <h2 id="portfolio-section" className="text-lg font-bold text-slate-800">
+                        Portfolio
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                        Raccogli i tuoi lavori con titolo, descrizione, categoria, data e immagini.
+                    </p>
+                </div>
+                <PortfolioCard />
+            </section>
+            )}
         </div>
     );
 }

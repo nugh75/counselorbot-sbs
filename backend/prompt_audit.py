@@ -463,6 +463,19 @@ def _phase_factor_codes_in_scoped_context(scoped_scores_context: str) -> set[str
     return _factor_codes_in(scoped_scores_context)
 
 
+def _identity_as_dict(identity: Any) -> dict[str, Any]:
+    if isinstance(identity, dict):
+        return identity
+    if identity is None:
+        return {}
+    return {
+        "username": getattr(identity, "username", "") or "",
+        "email": getattr(identity, "email", "") or "",
+        "is_admin": bool(getattr(identity, "is_admin", False)),
+        "authenticated": bool(getattr(identity, "username", "")),
+    }
+
+
 def _log_prompt_audit_live(db: Session, payload, result: dict[str, Any], public: dict[str, Any], identity: dict | None) -> None:
     """Persiste il run di prompt-audit /live nella tabella `logs` (action
     `prompt_audit_live`), così le prove sui counselor compaiono nel visualizzatore
@@ -473,7 +486,7 @@ def _log_prompt_audit_live(db: Session, payload, result: dict[str, Any], public:
     history) redatto."""
     try:
         resolved = public.get("resolved", {})
-        ident = identity or {}
+        ident = _identity_as_dict(identity)
         session_id = (getattr(payload, "session_id", None) or f"prompt-audit-live-{uuid.uuid4()}")
         details = pii.redact_details({
             "audit": True,
