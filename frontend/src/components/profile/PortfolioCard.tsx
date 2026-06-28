@@ -3,7 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FolderOpen, ImagePlus, Loader2, Pencil, Plus, Save, Search, Trash2, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { getViewAsRole, VIEW_AS_ACCOUNTS } from '@/lib/auth';
 import { toast } from '@/components/ui/Toast';
+
+// In anteprima ruolo le <img> (non passano da fetch) devono puntare all'account
+// demo: il backend accetta l'impersonazione anche via query param view_as.
+function imageQuerySuffix(): string {
+    const role = getViewAsRole();
+    return role ? `?view_as=${VIEW_AS_ACCOUNTS[role].username}` : '';
+}
 
 interface PortfolioImage { id: string; filename?: string | null }
 
@@ -249,7 +257,7 @@ export function PortfolioCard() {
                                 {form.images.map((img) => (
                                     <div key={img.id} className="relative h-24 w-24 overflow-hidden rounded-lg border border-slate-200">
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src={`/api/user/portfolio/${form.id}/images/${img.id}`} alt={img.filename || 'immagine'} className="h-full w-full object-cover" />
+                                        <img src={`/api/user/portfolio/${form.id}/images/${img.id}${imageQuerySuffix()}`} alt={img.filename || 'immagine'} className="h-full w-full object-cover" />
                                         <button
                                             type="button"
                                             onClick={() => void deleteImage(img.id)}
@@ -305,7 +313,7 @@ export function PortfolioCard() {
                         <article key={item.id} className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
                             {item.images[0] ? (
                                 // eslint-disable-next-line @next/next/no-img-element
-                                <img src={`/api/user/portfolio/${item.id}/images/${item.images[0].id}`} alt={item.title} className="h-32 w-full object-cover" />
+                                <img src={`/api/user/portfolio/${item.id}/images/${item.images[0].id}${imageQuerySuffix()}`} alt={item.title} className="h-32 w-full object-cover" />
                             ) : (
                                 <div className="flex h-32 w-full items-center justify-center bg-slate-50 text-slate-300">
                                     <FolderOpen className="h-8 w-8" />
