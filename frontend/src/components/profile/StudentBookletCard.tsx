@@ -17,7 +17,6 @@ interface QuestionnaireResult {
 type BookletData = Record<string, string>;
 
 const EMPTY_BOOKLET: BookletData = {
-    student_name: '',
     class_context: '',
     school_year: '',
     strength: '',
@@ -236,8 +235,7 @@ export function StudentBookletCard({ session, lang }: { session: QuestionnaireRe
                 <div className="text-sm text-slate-400">Caricamento libretto...</div>
             ) : (
                 <div className="space-y-6">
-                    <div className="grid gap-3 md:grid-cols-3">
-                        {simpleInput('student_name', 'Nome studente')}
+                    <div className="grid gap-3 md:grid-cols-2">
                         {simpleInput('class_context', 'Classe / contesto')}
                         {simpleInput('school_year', 'Anno / percorso')}
                     </div>
