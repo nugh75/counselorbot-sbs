@@ -241,6 +241,10 @@ def _seed_and_migrate():
             "CREATE INDEX IF NOT EXISTS ix_questionnaire_results_research_contact_id ON questionnaire_results (research_contact_id)",
             "CREATE INDEX IF NOT EXISTS ix_validation_responses_administration_plan_id ON validation_responses (administration_plan_id)",
             "CREATE INDEX IF NOT EXISTS ix_validation_responses_research_contact_id ON validation_responses (research_contact_id)",
+            "CREATE INDEX IF NOT EXISTS ix_student_booklets_username ON student_booklets (username)",
+            "CREATE INDEX IF NOT EXISTS ix_student_booklets_session_id ON student_booklets (session_id)",
+            "CREATE INDEX IF NOT EXISTS ix_learner_profile_reflections_username ON learner_profile_reflections (username)",
+            "CREATE INDEX IF NOT EXISTS ix_learner_profile_reflections_session_id ON learner_profile_reflections (session_id)",
         ]:
             try:
                 with database.engine.connect() as conn:

@@ -11,8 +11,10 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
 import { addCompletedProfile, clearCompletedProfiles } from '@/lib/profile-tracker';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
+import { ProfileChangeReflection } from '@/components/profile/ProfileChangeReflection';
+import { StudentBookletCard } from '@/components/profile/StudentBookletCard';
 import {
-    ArrowLeft, User, FileText, Trash2, Download, MessageSquare, Calendar, ChevronRight, ShieldAlert
+    ArrowLeft, User, FileText, Trash2, Download, MessageSquare, ShieldAlert, Search
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList,
@@ -36,6 +38,7 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+    const [sessionSearch, setSessionSearch] = useState('');
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -61,7 +64,7 @@ export default function ProfilePage() {
                             new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime()
                         );
                         for (const s of sorted) {
-                            if (['QSA', 'QSAr', 'ZTPI', 'SAVICKAS'].includes(s.questionnaire_type)) {
+                            if (['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'].includes(s.questionnaire_type)) {
                                 addCompletedProfile(s.questionnaire_type, s.session_id, s.scores || {});
                             }
                         }
@@ -126,6 +129,38 @@ export default function ProfilePage() {
         }
     };
 
+    const filteredSessions = useMemo(() => {
+        const query = sessionSearch.trim().toLowerCase();
+        if (!query) return sessions;
+        return sessions.filter((session) => {
+            const submitted = new Date(session.submitted_at);
+            const haystack = [
+                session.questionnaire_type,
+                session.session_id,
+                session.session_id.slice(0, 8),
+                submitted.toLocaleDateString(lang),
+                submitted.toLocaleString(lang),
+            ].join(' ').toLowerCase();
+            return haystack.includes(query);
+        });
+    }, [sessions, sessionSearch, lang]);
+
+    useEffect(() => {
+        if (filteredSessions.length === 0) {
+            if (selectedSession !== null) setSelectedSession(null);
+            return;
+        }
+        if (!selectedSession || !filteredSessions.some((session) => session.session_id === selectedSession.session_id)) {
+            setSelectedSession(filteredSessions[0]);
+            setShowDeleteConfirm(null);
+        }
+    }, [filteredSessions, selectedSession]);
+
+    const formatSessionOption = (session: QuestionnaireResult) => {
+        const submitted = new Date(session.submitted_at).toLocaleString(lang);
+        return `${submitted} · ${session.questionnaire_type} · ${session.session_id.slice(0, 8)}`;
+    };
+
     // Chart score preparation
     const chartData = useMemo(() => {
         if (!selectedSession || !selectedSession.scores) return [];
@@ -159,6 +194,9 @@ export default function ProfilePage() {
             QSAr: 'bg-sky-100 text-sky-700 border-sky-200',
             ZTPI: 'bg-amber-100 text-amber-700 border-amber-200',
             SAVICKAS: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+            QPCS: 'bg-violet-100 text-violet-700 border-violet-200',
+            QPCC: 'bg-rose-100 text-rose-700 border-rose-200',
+            QAP: 'bg-cyan-100 text-cyan-700 border-cyan-200',
         };
         return colors[type] || 'bg-slate-100 text-slate-700 border-slate-200';
     };
@@ -202,8 +240,7 @@ export default function ProfilePage() {
         );
     }
 
-    // Account studente/anonimo: nessuna pagina personale. Possono solo usare gli
-    // strumenti e compilare i questionari (home), non lo storico/profilo.
+    // La pagina personale resta vincolata all'autenticazione: ogni utente vede solo i propri dati.
     if (!canUsePersonalPage(identity)) {
         return (
             <div className="max-w-md mx-auto my-12 p-8 bg-white border border-slate-200 rounded-xl text-center space-y-6 shadow-sm">
@@ -269,72 +306,73 @@ export default function ProfilePage() {
                 </div>
             </section>
 
-            {/* Learner profile (modello del discente) */}
-            <LearnerProfileCard variant="edit" />
-
-            {/* Main Layout Grid */}
-            <div className="grid lg:grid-cols-3 gap-8">
-                {/* Left Column: Sessions List */}
-                <div className="lg:col-span-1 space-y-4">
+            <section className="glass-panel p-5 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                         <FileText className="w-5 h-5 text-indigo-500" />
                         {t('profile.myCompilations')}
                     </h2>
-                    
-                    <div className="space-y-3 pr-1">
-                        {sessions.map((session) => (
-                            <button
-                                key={session.id}
-                                onClick={() => {
-                                    setSelectedSession(session);
+                    <span className="text-xs font-semibold text-slate-400">
+                        {filteredSessions.length} / {sessions.length}
+                    </span>
+                </div>
+                {sessions.length === 0 ? (
+                    <div className="text-center py-10 px-4 border border-dashed border-slate-200 rounded-xl bg-white space-y-4">
+                        <div className="w-12 h-12 mx-auto rounded-full bg-indigo-50 flex items-center justify-center">
+                            <FileText className="w-6 h-6 text-indigo-400" />
+                        </div>
+                        <p className="text-sm text-slate-500 max-w-xs mx-auto">{t('profile.noSessions')}</p>
+                        <Link
+                            href="/"
+                            className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+                        >
+                            {t('selector.start')}
+                        </Link>
+                    </div>
+                ) : (
+                    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.45fr)]">
+                        <label className="block">
+                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Compilazione</span>
+                            <select
+                                value={selectedSession?.session_id || ''}
+                                onChange={(event) => {
+                                    const next = filteredSessions.find((session) => session.session_id === event.target.value) || null;
+                                    setSelectedSession(next);
                                     setShowDeleteConfirm(null);
                                 }}
-                                className={`w-full text-left p-4 rounded-xl border transition-all flex items-center justify-between gap-3 shadow-sm ${
-                                    selectedSession?.id === session.id
-                                        ? 'border-indigo-600 bg-indigo-50/50'
-                                        : 'border-slate-200 bg-white hover:border-slate-300'
-                                }`}
+                                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                             >
-                                <div className="space-y-2 min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <span className={`px-2.5 py-0.5 border text-[10px] font-bold rounded uppercase ${getTypeColor(session.questionnaire_type)}`}>
-                                            {session.questionnaire_type}
-                                        </span>
-                                        <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                                            <Calendar className="w-3 h-3" />
-                                            {new Date(session.submitted_at).toLocaleDateString(lang)}
-                                        </span>
-                                    </div>
-                                    <p className="text-xs text-slate-500 font-mono truncate">
-                                        ID: {session.session_id.slice(0, 8)}...
-                                    </p>
-                                </div>
-                                <ChevronRight className={`w-4 h-4 shrink-0 transition-transform ${
-                                    selectedSession?.id === session.id ? 'text-indigo-600 translate-x-0.5' : 'text-slate-400'
-                                }`} />
-                            </button>
-                        ))}
-
-                        {sessions.length === 0 && (
-                            <div className="text-center py-12 px-4 border border-dashed border-slate-200 rounded-xl bg-white space-y-4 animate-fade-in-up">
-                                <div className="w-12 h-12 mx-auto rounded-full bg-indigo-50 flex items-center justify-center">
-                                    <FileText className="w-6 h-6 text-indigo-400" />
-                                </div>
-                                <p className="text-sm text-slate-500 max-w-xs mx-auto">{t('profile.noSessions')}</p>
-                                <Link
-                                    href="/"
-                                    className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
-                                >
-                                    {t('selector.start')}
-                                </Link>
+                                {filteredSessions.length === 0 && <option value="">Nessuna compilazione trovata</option>}
+                                {filteredSessions.map((session) => (
+                                    <option key={session.session_id} value={session.session_id}>
+                                        {formatSessionOption(session)}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                        <label className="block">
+                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Cerca</span>
+                            <div className="mt-1 flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2">
+                                <Search className="h-4 w-4 text-slate-400" />
+                                <input
+                                    value={sessionSearch}
+                                    onChange={(event) => setSessionSearch(event.target.value)}
+                                    placeholder="Data, strumento o ID"
+                                    className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+                                />
                             </div>
-                        )}
+                        </label>
                     </div>
-                </div>
+                )}
+            </section>
 
-                {/* Right Column: Selected Session Detail */}
-                <div className="lg:col-span-2 space-y-6">
-                    {selectedSession ? (
+            {/* Learner profile (modello del discente) */}
+            <LearnerProfileCard variant="edit" />
+            <ProfileChangeReflection selectedSession={selectedSession} lang={lang} />
+
+            <div className="space-y-6">
+                {selectedSession ? (
+                    <>
                         <div className="glass-panel p-6 space-y-6">
                             {/* Session Detail Header */}
                             <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-4">
@@ -496,13 +534,14 @@ export default function ProfilePage() {
                                 </Link>
                             </div>
                         </div>
-                    ) : (
-                        <div className="glass-panel p-12 text-center space-y-4 text-slate-400">
-                            <FileText className="w-12 h-12 mx-auto text-slate-200" />
-                            <p className="font-medium">{t('profile.selectSession')}</p>
-                        </div>
-                    )}
-                </div>
+                        <StudentBookletCard session={selectedSession} lang={lang} />
+                    </>
+                ) : (
+                    <div className="glass-panel p-12 text-center space-y-4 text-slate-400">
+                        <FileText className="w-12 h-12 mx-auto text-slate-200" />
+                        <p className="font-medium">{t('profile.selectSession')}</p>
+                    </div>
+                )}
             </div>
         </div>
     );

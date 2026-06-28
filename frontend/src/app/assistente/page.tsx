@@ -8,7 +8,7 @@ import type { LucideIcon } from 'lucide-react';
 import { Send, GraduationCap, BookOpen, Bot, User, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search } from 'lucide-react';
 import { streamChat } from '@/lib/chat-stream';
 import { ai4authLoginUrl, getIdentity, type Identity } from '@/lib/auth';
-import { canUseTeacherAssistant } from '@/lib/roles';
+import { canUseAssistant, canUseTeacherAssistant } from '@/lib/roles';
 import { useI18n } from '@/lib/i18n-context';
 import { fetchAssistantQuestions, type AssistantQuestionsByTopic } from '@/lib/assistant-questions';
 
@@ -95,7 +95,7 @@ export default function AssistentePage() {
     useEffect(() => {
         getIdentity().then((id) => {
             setIdentity(id);
-            setAudience('docente');
+            setAudience(canUseTeacherAssistant(id) ? 'docente' : 'studente');
         });
     }, []);
 
@@ -211,7 +211,7 @@ export default function AssistentePage() {
 
     const chooseTopic = (topicId: TopicId) => {
         setSelectedTopicId(topicId);
-        setAudience('docente');
+        setAudience(canUseTeacherAssistant(identity) ? 'docente' : 'studente');
         setMessages([]);
         setSessionId(undefined);
         setPreview(null);
@@ -252,7 +252,7 @@ export default function AssistentePage() {
         );
     }
 
-    if (!canUseTeacherAssistant(identity)) {
+    if (!canUseAssistant(identity)) {
         return (
             <div className="page-narrow">
                 <div className="glass-panel p-8 text-center space-y-4">

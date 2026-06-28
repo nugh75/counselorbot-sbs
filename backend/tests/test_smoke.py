@@ -271,7 +271,12 @@ EXPECTED_ROUTES = {
     ("GET", "/user/learner-profile"),
     ("POST", "/user/learner-profile"),
     ("GET", "/user/learner-profile/history"),
+    ("GET", "/user/learner-profile/reflections"),
+    ("POST", "/user/learner-profile/reflections"),
     ("DELETE", "/user/learner-profile"),
+    ("GET", "/user/student-booklets/{session_id}"),
+    ("PUT", "/user/student-booklets/{session_id}"),
+    ("GET", "/user/student-booklets/{session_id}/pdf"),
     ("GET", "/admin/questionnaire-results"),
     ("GET", "/admin/validation/summary"),
     ("GET", "/admin/validation/responses"),
@@ -1410,7 +1415,7 @@ def test_prompt_audit_api_token_allows_qsa_dry_run_without_ai4auth():
             main.app.dependency_overrides[prompt_audit_routes.require_prompt_audit_access] = audit_override
 
 
-def test_prompt_audit_live_returns_mocked_response_without_logging():
+def test_prompt_audit_live_returns_mocked_response_and_logs():
     _ensure_guided_steps("QSA")
     session_id = "prompt-audit-live"
     db = _TestSession()
@@ -1432,14 +1437,21 @@ def test_prompt_audit_live_returns_mocked_response_without_logging():
     assert r.status_code == 200, r.text
     body = r.json()
     assert body["response_raw"] == "RISPOSTA_TEST"
-    assert body["response_visible"] == "RISPOSTA_TEST"
+    assert body["response_visible"].endswith("RISPOSTA_TEST")
+    assert "C1 (Strategie elaborative)" in body["response_visible"]
     assert body["usage"]["prompt_tokens"] == 12
     assert isinstance(body["duration_ms"], int)
     assert "checks" in body
 
     db = _TestSession()
     try:
-        assert db.query(models.Log).count() == before_logs
+        assert db.query(models.Log).count() == before_logs + 1
+        entry = (
+            db.query(models.Log)
+            .filter(models.Log.session_id == session_id, models.Log.action == "prompt_audit_live")
+            .first()
+        )
+        assert entry is not None
     finally:
         db.close()
 
@@ -1830,17 +1842,25 @@ def test_log_full_prompt_toggle_off():
         _set_config("log_full_prompt", "true")
 
 
-def test_site_chat_status_public():
-    r = client.get("/site-chat/status")
-    assert r.status_code == 200, r.text
-    body = r.json()
-    assert "n_chunks" in body and "embedding_model" in body
+def test_site_chat_status_for_authenticated_student():
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        r = client.get("/site-chat/status")
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert "n_chunks" in body and "embedding_model" in body
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
 def test_site_chat_document_rejects_unknown_source():
     # Solo le sorgenti indicizzate sono anteprimabili (anti path-traversal).
-    r = client.get("/site-chat/document", params={"source": "../../etc/passwd"})
-    assert r.status_code == 404, r.text
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        r = client.get("/site-chat/document", params={"source": "../../etc/passwd"})
+        assert r.status_code == 404, r.text
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
 def test_site_chat_stream_grounded_mocked():
@@ -1848,14 +1868,27 @@ def test_site_chat_stream_grounded_mocked():
     canned = [{"score": 0.9, "source": "fonti/x.md", "title": "Doc X", "text": "Contenuto di prova."}]
     original_search = site_chat_routes.site_rag_index.search
     site_chat_routes.site_rag_index.search = lambda svc, q, k, *a, **kw: canned
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
     try:
         r = client.post("/site-chat/stream", json={
             "message": "Cos'è il QSA?", "audience": "studente", "session_id": "site-chat-test",
+            "student_context": "CONTESTO_PRIVATO_TEST_DA_NON_LOGGARE",
         })
         assert r.status_code == 200, r.text
         assert "RISPOSTA_TEST" in r.text
         assert '"done": true' in r.text
         assert "fonti/x.md" in r.text  # le fonti citate tornano nell'evento done
+        with _TestSession() as db:
+            entry = (
+                db.query(models.Log)
+                .filter(models.Log.session_id == "site-chat-test", models.Log.action == "site_chat")
+                .order_by(models.Log.timestamp.desc(), models.Log.id.desc())
+                .first()
+            )
+            assert entry is not None
+            details = entry.details
+        assert "student_context" not in details
+        assert "CONTESTO_PRIVATO_TEST_DA_NON_LOGGARE" not in str(details)
         # Il 'mi piace' riusa /strategy-feedback con il response_id emesso.
         m = re.search(r'"response_id":\s*"([0-9a-f-]+)"', r.text)
         assert m, f"response_id mancante nello stream: {r.text[-300:]}"
@@ -1867,6 +1900,7 @@ def test_site_chat_stream_grounded_mocked():
         assert fb.json()["recorded"] >= 1
     finally:
         site_chat_routes.site_rag_index.search = original_search
+        main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
 # --------------------------------------------------------------------------
@@ -2192,9 +2226,22 @@ def test_learner_profile_revisions_and_history():
             "main_difficulty": "Ansia prima dell'esame",
             "source": "session_end",
         })
-        assert r.json()["id"] != first_id
+        second_id = r.json()["id"]
+        assert second_id != first_id
         r = client.get("/user/learner-profile/history")
         assert r.status_code == 200 and len(r.json()) == 2
+
+        r = client.post("/user/learner-profile/reflections", json={
+            "note": "Mi accorgo che la difficolta si e spostata dalla distrazione all'ansia.",
+            "current_revision_id": second_id,
+            "previous_revision_id": first_id,
+            "session_id": "lp-session-1",
+        })
+        assert r.status_code == 200, r.text
+        r = client.get("/user/learner-profile/reflections")
+        assert r.status_code == 200, r.text
+        assert len(r.json()) == 1
+        assert "distrazione" in r.json()[0]["note"]
 
         # Il contesto chat include il profilo dichiarato
         with _TestSession() as db:
@@ -2205,8 +2252,50 @@ def test_learner_profile_revisions_and_history():
 
         r = client.delete("/user/learner-profile")
         assert r.status_code == 200 and r.json()["deleted_revisions"] == 2
+        assert r.json()["deleted_reflections"] == 1
         r = client.get("/user/learner-profile")
         assert r.json() is None
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
+def test_student_booklet_crud_pdf_and_ownership():
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        r = client.post("/questionnaire-result", json={
+            "session_id": "booklet-session",
+            "questionnaire_type": "QSA",
+            "scores": {"C1": 8, "C2": 5, "A6": 3},
+        })
+        assert r.status_code == 200, r.text
+
+        r = client.get("/user/student-booklets/booklet-session")
+        assert r.status_code == 200, r.text
+        assert r.json() is None
+
+        r = client.put("/user/student-booklets/booklet-session", json={
+            "data": {
+                "student_name": "Student",
+                "strength": "C1 - Strategie elaborative",
+                "growth_area": "A6 - Percezione di competenza",
+                "objective": "Riconoscere un risultato concreto ogni settimana",
+                "student_notes": "Nota personale",
+            }
+        })
+        assert r.status_code == 200, r.text
+        assert r.json()["questionnaire_type"] == "QSA"
+        assert r.json()["data"]["student_notes"] == "Nota personale"
+
+        r = client.get("/user/student-booklets/booklet-session/pdf")
+        assert r.status_code == 200, r.text
+        assert r.headers["content-type"] == "application/pdf"
+        assert len(r.content) > 100
+
+        main.app.dependency_overrides[auth.get_identity] = lambda: _identity(
+            "other", "other@example.test", is_researcher=False
+        )
+        r = client.get("/user/student-booklets/booklet-session")
+        assert r.status_code == 403, r.text
     finally:
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
