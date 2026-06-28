@@ -174,8 +174,7 @@ export function PortfolioCard() {
         <section className="glass-panel p-5 space-y-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                        <FolderOpen className="h-5 w-5 text-indigo-600" />
+                    <h2 className="text-lg font-bold text-slate-800">
                         Portfolio
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">

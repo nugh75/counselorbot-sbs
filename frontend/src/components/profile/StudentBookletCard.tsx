@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { BookOpen, Download, Loader2, Plus, Save, Trash2, X } from 'lucide-react';
+import { Download, Loader2, Plus, Save, Trash2, X } from 'lucide-react';
 import { QUESTIONNAIRES, type QuestionnaireType } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { toast } from '@/components/ui/Toast';
@@ -384,8 +384,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
         <section className="glass-panel p-5 space-y-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                        <BookOpen className="h-5 w-5 text-indigo-600" />
+                    <h2 className="text-lg font-bold text-slate-800">
                         Libretto dello studente · {isQuestionnaireType(questionnaireType) ? questionnaireType : BOOKLET_TYPE_LABEL[questionnaireType]}
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
