@@ -23,7 +23,7 @@ from ..ai_service import AIService, AIError
 from ..chat_logic import _apply_language_directive
 from .. import pii
 from ..api_models import SiteChatRequest
-from ..chat_logic import _clamp_max_tokens, log_error
+from ..chat_logic import _clamp_max_tokens, log_error, _portfolio_context
 from ..memory_service import session_memory
 from ..strategy_memory import shared_response_memory
 from ..prompt_config import (
@@ -262,6 +262,11 @@ async def site_chat_stream(
     top_k = _top_k(ai_service)
     question = (request.message or "").strip()
     student_context = (request.student_context or "").strip()[:6000]
+    # Il portfolio dello studente viene recuperato lato server e aggiunto al
+    # contesto, cosi' l'assistente lo conosce anche senza che il client lo passi.
+    portfolio_context = _portfolio_context(db, current_user.get("username") or "")
+    if portfolio_context:
+        student_context = (f"{student_context}\n\n{portfolio_context}" if student_context else portfolio_context)[:7200]
     provider = ai_service.config.get("active_provider", "unknown")
     model = ai_service.config.get("model_name", "unknown")
 
