@@ -1,7 +1,6 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { TrendingUp, Sprout } from 'lucide-react';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 import {
     ZTPIFactorCode,
@@ -286,7 +285,6 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                     <div className="grid sm:grid-cols-2 gap-x-6 gap-y-3">
                         <div className="space-y-1.5">
                             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-green-700">
-                                <TrendingUp className="w-3.5 h-3.5" />
                                 {t('profile.summary.strengths')}
                             </div>
                             {topStrengths.length > 0
@@ -295,7 +293,6 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                         </div>
                         <div className="space-y-1.5">
                             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-700">
-                                <Sprout className="w-3.5 h-3.5" />
                                 {t('profile.summary.growth')}
                             </div>
                             {topGrowth.length > 0

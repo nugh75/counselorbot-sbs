@@ -1,6 +1,6 @@
 'use client';
 
-import { Send, Bot, ChevronRight, CheckCircle2, Loader2, BarChart3, Volume2, Square, Home, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Send, ChevronRight, CheckCircle2, Loader2, BarChart3, Volume2, Square, Home, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
@@ -1118,9 +1118,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             <div className="lg:col-span-3 flex flex-col h-full bg-white rounded-lg overflow-hidden border border-slate-200 shadow-sm">
                 {/* Header */}
                 <div className={cn("p-4 border-b border-slate-100 flex items-center gap-3", currentColors.headerBg)}>
-                    <div className={cn("w-10 h-10 rounded-md flex items-center justify-center shadow-sm", currentColors.iconBg)}>
-                        <Bot className="w-6 h-6 text-white" />
-                    </div>
                     <div>
                         <h3 className="font-bold text-slate-800">CounselorBot AI</h3>
                         <p className="text-xs text-slate-500 font-medium">{getPhaseLabel(currentPhase)}</p>

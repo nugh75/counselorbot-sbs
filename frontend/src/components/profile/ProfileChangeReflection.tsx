@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Bot, History, Loader2, RefreshCw, Save, Send } from 'lucide-react';
+import { Bot, Loader2, RefreshCw, Save, Send } from 'lucide-react';
 import { streamChat } from '@/lib/chat-stream';
 import { useI18n } from '@/lib/i18n-context';
 import { toast } from '@/components/ui/Toast';
@@ -384,8 +384,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
         <section className="glass-panel p-5 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                        <History className="h-5 w-5 text-indigo-600" />
+                    <h2 className="text-lg font-bold text-slate-800">
                         Cambiamenti del profilo
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">Rivedi come e cambiato il tuo profilo o una scheda del libretto e salva una riflessione personale.</p>
@@ -530,7 +529,6 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
             {assistantOpen && (
                 <div className="rounded-xl border border-indigo-100 bg-white p-4 space-y-3">
                     <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
-                        <Bot className="h-4 w-4 text-indigo-600" />
                         Assistente sul cambiamento
                     </div>
                     <div className="max-h-80 overflow-y-auto space-y-3 rounded-lg bg-slate-50 p-3">
