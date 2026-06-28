@@ -7,7 +7,6 @@ import { BackButton } from '@/components/ui/BackButton';
 import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
 import { getTestAdministration, AdministrationLocale } from '@/lib/test-administrations';
 import { useI18n } from '@/lib/i18n-context';
-import { QuestionnaireIcon } from '@/components/questionnaire/QuestionnaireIcon';
 
 const AVAILABLE_INSTRUMENTS: QuestionnaireType[] = ['QSA', 'QSAr', 'QPCS', 'QPCC', 'ZTPI', 'QAP', 'SAVICKAS'];
 const STRATEGIC_COMPETENCES_URLS: Partial<Record<QuestionnaireType, string>> = {
@@ -53,29 +52,23 @@ export default function InstrumentDetailsPage() {
             <BackButton href={QUESTIONNAIRE_SELECTION_HREF} label={t('detail.back')} />
 
             <section className="glass-panel p-6 sm:p-8">
-                <div className="flex items-start gap-4">
-                    <div className={`w-14 h-14 rounded-lg flex items-center justify-center text-slate-700 shrink-0 ${questionnaire.color.replace('bg-', 'bg-opacity-20 bg-')}`}>
-                        <QuestionnaireIcon icon={questionnaire.icon} className="h-7 w-7" />
-                    </div>
-                    <div>
-                        <span className="text-xs font-semibold uppercase tracking-wide text-indigo-700">{t('detail.kicker')}</span>
-                        <h1 className="text-2xl font-bold text-slate-900 mt-1">{questionnaire.name}</h1>
-                        <p className="text-lg text-slate-700 mt-1">{t(`q.${questionnaire.id}.fullName`)}</p>
-                        <p className="text-slate-600 mt-3">{t(`q.${questionnaire.id}.description`)}</p>
-                    </div>
-                </div>
+                <span className="text-xs font-semibold uppercase tracking-[0.08em] text-indigo-700">{t('detail.kicker')}</span>
+                <h1 className="font-display mt-1 text-3xl font-bold text-slate-900">{questionnaire.name}</h1>
+                <p className="mt-1 text-lg text-slate-700">{t(`q.${questionnaire.id}.fullName`)}</p>
+                <p className="mt-3 text-slate-600 leading-relaxed">{t(`q.${questionnaire.id}.description`)}</p>
             </section>
 
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-3 gap-6">
                 {(['focus', 'path', 'input'] as const).map((topic) => (
-                    <section key={topic} className="glass-panel p-5">
-                        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                    <div key={topic}>
+                        <span className="block h-0.5 w-10 rounded-full bg-indigo-500" />
+                        <h2 className="mt-3 text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
                             {t(`detail.${topic}.title`)}
                         </h2>
-                        <p className="mt-3 text-sm text-slate-700 leading-relaxed">
+                        <p className="mt-2 text-sm text-slate-700 leading-relaxed">
                             {t(`detail.${questionnaire.id}.${topic}`)}
                         </p>
-                    </section>
+                    </div>
                 ))}
             </div>
 
