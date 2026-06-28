@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Float, Integer, String, Text, DateTime, JSON, UniqueConstraint
+from sqlalchemy import Boolean, Column, Float, Integer, String, Text, DateTime, JSON
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -455,12 +455,13 @@ class LearnerProfileReflection(Base):
 
 
 class StudentBooklet(Base):
-    """Libretto dello studente compilabile, legato a uno strumento."""
+    """Libretto dello studente compilabile, legato a uno strumento.
+
+    Piu' schede per (username, questionnaire_type): nessun vincolo di unicita'.
+    Il titolo della scheda vive in `data["title"]`.
+    """
 
     __tablename__ = "student_booklets"
-    __table_args__ = (
-        UniqueConstraint("username", "questionnaire_type", name="uq_student_booklets_username_questionnaire"),
-    )
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, nullable=False, index=True)

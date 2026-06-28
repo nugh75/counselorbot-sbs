@@ -244,7 +244,8 @@ def _seed_and_migrate():
             "CREATE INDEX IF NOT EXISTS ix_student_booklets_username ON student_booklets (username)",
             "CREATE INDEX IF NOT EXISTS ix_student_booklets_session_id ON student_booklets (session_id)",
             "CREATE INDEX IF NOT EXISTS ix_student_booklets_questionnaire_type ON student_booklets (questionnaire_type)",
-            "CREATE UNIQUE INDEX IF NOT EXISTS uq_student_booklets_username_questionnaire ON student_booklets (username, questionnaire_type)",
+            # Schede multiple per (utente, strumento): rimuove il vecchio vincolo di unicita'.
+            "DROP INDEX IF EXISTS uq_student_booklets_username_questionnaire",
             "CREATE INDEX IF NOT EXISTS ix_learner_profile_reflections_username ON learner_profile_reflections (username)",
             "CREATE INDEX IF NOT EXISTS ix_learner_profile_reflections_session_id ON learner_profile_reflections (session_id)",
         ]:
