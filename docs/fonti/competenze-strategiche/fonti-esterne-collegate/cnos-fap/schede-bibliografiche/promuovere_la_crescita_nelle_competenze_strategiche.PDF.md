@@ -1,30 +1,44 @@
 ---
-titolo: Promuovere la crescita nelle competenze strategiche che hanno le loro radici nelle dimensioni morali e spirituali della persona. Rapporto di ricerca
-autori: Marco Bay, Dariusz Grządziel, Michele Pellerey
+titolo: "Promuovere la crescita nelle competenze strategiche che hanno le loro radici nelle dimensioni morali e spirituali della persona. Rapporto di ricerca"
+autori:
+  - Marco Bay
+  - Dariusz Grządziel
+  - Michele Pellerey
 anno: 2008
 fonte: CNOS-FAP
 doi:
 tipo: report
 lingua: italiano
-parole_chiave: [competenze strategiche, dimensioni morali, dimensioni spirituali, autovalutazione, questionario, apprendimento autodiretto, istruzione e formazione professionale]
+parole_chiave:
+  - competenze strategiche
+  - autovalutazione
+  - dimensione spirituale
+  - dimensione morale
+  - formazione professionale
+  - apprendimento permanente
+  - autoregolazione
 ---
 ## Sintesi
-Il volume costituisce il secondo di tre volumi di una ricerca promossa dal CNOS-FAP e descrive l'iter di costruzione e validazione di un questionario per l'autovalutazione dello sviluppo delle competenze strategiche, con particolare riferimento ai sistemi di Istruzione e Formazione professionale e al mondo del lavoro. Le competenze strategiche investigate riguardano la capacità di comprendere e ricordare, collaborare, comunicare, dare senso e prospettiva alla propria esistenza, gestire l'ansietà, autoregolarsi nello studio e nel lavoro, affrontare situazioni sfidanti e decidere. La ricerca si inserisce nel quadro della legge 53/2003 e delle Strategie di Lisbona, con l'obiettivo di esplorare il legame tra costruzione di significato esistenziale e motivazione all'apprendimento. Lo strumento è stato validato su popolazioni italiane e polacche.
+
+Il volume costituisce il secondo di tre rapporti di ricerca promossi dal CNOS-FAP e sintetizza un'indagine biennale (2008-2009) volta ad approfondire il concetto di competenza strategica, individuarne le componenti principali e costruire uno strumento di autovalutazione del loro sviluppo. Lo strumento, un questionario validato su popolazioni italiana e polacca, intende rilevare competenze legate alla capacità di dare senso e prospettiva alla propria esistenza, alla autoregolazione nello studio e nel lavoro, alla collaborazione, alla comunicazione e alla gestione dell'ansietà e delle situazioni sfidanti. La ricerca si inserisce nel quadro della legge 53/2003 e delle Strategie di Lisbona, con l'obiettivo di fornire a operatori dell'istruzione e della formazione professionale uno strumento fondato teoricamente e affidabile sul piano applicativo.
 
 ## Temi principali
-- Concetto di competenza strategica e sue radici filosofiche e psicologiche
-- Relazione tra dimensione spirituale/morale della persona e processi di apprendimento
-- Costruzione e validazione di uno strumento di autovalutazione delle competenze strategiche
-- Autoregolazione, apprendimento autodiretto e capacità di "dirigere se stessi"
-- Confronto tra la situazione italiana e polacca nei percorsi di Istruzione tecnica e Formazione professionale
-- Approccio per competenze nei processi educativi e formativi, anche in ambito internazionale (UE, Lisbona)
-- Ruolo del formatore come facilitatore in una comunità di pratica
+
+- Relazione tra competenze strategiche e dimensioni spirituali e morali della persona
+- Costruzione di significato esistenziale come motore dell'apprendimento lifelong
+- Autoregolazione e capacità di dirigere se stessi nello studio e nel lavoro
+- Validazione di un questionario di autovalutazione delle competenze strategiche
+- Confronto tra i sistemi di istruzione e formazione professionale italiano e polacco
+- Riferimento alle politiche educative internazionali (Lisbona, Isfol)
 
 ## Metodo
-Ricerca-intervento che ha previsto: una prima fase di approfondimento teorico (filosofico e psicologico) del concetto di competenza strategica; la costruzione di un questionario a partire dal quadro teorico; una prima somministrazione e revisione dello strumento; una validazione finale su popolazioni distinte (italiana e polacca) con analisi statistiche e relazione tecnica. Il campione ha coinvolto Centri CNOS-FAP in Italia e Istituti della Regione polacca della Slesia.
+
+Ricerca-intervento articolata in una prima fase teorico-filosofica e psico-educativa (vol. 1) e in una seconda fase di costruzione e validazione empirica di un questionario di autovalutazione (presente volume). Lo strumento è stato somministrato a popolazioni italiane e polacche in contesti di istruzione tecnica e formazione professionale; i dati sono stati sottoposti a elaborazioni statistiche (descritte in una relazione tecnica allegata).
 
 ## Risultati / Tesi
-La ricerca ha portato all'individuazione di un insieme di competenze strategiche fondamentali per una persona in grado di dirigere se stessa, radicate nelle dimensioni morali e spirituali. Il questionario sviluppato e validato si propone come strumento operativo per favorire la consapevolezza e lo sviluppo di tali competenze nei contesti formativi, rispondendo all'esigenza — emersa dalle politiche europee e nazionali — di promuovere l'apprendimento lungo tutto l'arco della vita e pari opportunità di sviluppo personale e professionale.
+
+L'indagine ha portato all'individuazione di otto aree di competenza strategica: capacità di comprendere e ricordare; disponibilità a collaborare; comunicazione e relazione con gli altri; attribuzione di senso e prospettiva esistenziale; gestione dell'ansietà; autogestione nel lavoro e nell'apprendimento; affrontare situazioni sfidanti o pericolose; capacità decisionale. Tali competenze definiscono il profilo di una persona in grado di dirigere se stessa. Lo strumento di autovalutazione prodotto è risultato validato per popolazioni distinte e per l'intera popolazione.
 
 ## Rilevanza
-Utile per ricercatori, formatori e operatori del settore dell'istruzione e della formazione professionale interessati alla valutazione e promozione delle competenze strategiche e trasversali, nonché al rapporto tra dimensione esistenziale e apprendimento. Il questionario descritto è alla base dello strumento poi utilizzato nel progetto CounselorBot per il profilo QSA (Questionario sulle Strategie di Apprendimento).
+
+Utile a ricercatori, formatori e operatori dell'istruzione e della formazione professionale interessati alla valutazione e promozione delle competenze strategiche degli studenti, con particolare attenzione alla dimensione esistenziale e morale dell'apprendimento. Rilevante anche per chi opera in contesti multiculturali e multireligiosi.
