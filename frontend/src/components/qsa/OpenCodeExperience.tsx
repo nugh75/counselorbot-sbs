@@ -6,7 +6,6 @@ import remarkGfm from 'remark-gfm';
 import {
     AlertCircle,
     BarChart3,
-    Bot,
     Eye,
     FileText,
     Monitor,
@@ -16,7 +15,6 @@ import {
     Terminal,
     ThumbsDown,
     ThumbsUp,
-    User,
 } from 'lucide-react';
 import { createTerminalSession, TerminalSession } from '@/lib/opencode-terminal';
 import { streamChat } from '@/lib/chat-stream';
@@ -419,9 +417,6 @@ export function OpenCodeExperience({
                     viewMode === 'chat' ? 'bg-white border-slate-200' : 'bg-[#131924] border-slate-800'
                 }`}>
                     <div className="flex items-center gap-2">
-                        {viewMode === 'chat'
-                            ? <Bot className="w-4 h-4 text-indigo-600" />
-                            : <Terminal className="w-4 h-4 text-sky-400" />}
                         <span className={`font-semibold text-sm ${viewMode === 'chat' ? 'text-slate-800' : 'text-slate-200'}`}>
                             {t('opencode.chatTitle')}
                         </span>
@@ -489,11 +484,6 @@ export function OpenCodeExperience({
                             )}
                             {messages.map((message, index) => (
                                 <div key={index} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                    {message.role === 'assistant' && (
-                                        <div className="w-8 h-8 shrink-0 rounded-full bg-indigo-100 flex items-center justify-center">
-                                            <Bot className="w-4 h-4 text-indigo-700" />
-                                        </div>
-                                    )}
                                     <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm ${
                                         message.role === 'user'
                                             ? 'bg-indigo-600 text-white rounded-tr-md'
@@ -544,11 +534,6 @@ export function OpenCodeExperience({
                                             </>
                                         ) : message.content}
                                     </div>
-                                    {message.role === 'user' && (
-                                        <div className="w-8 h-8 shrink-0 rounded-full bg-slate-200 flex items-center justify-center">
-                                            <User className="w-4 h-4 text-slate-600" />
-                                        </div>
-                                    )}
                                 </div>
                             ))}
                             <div ref={messagesEndRef} />

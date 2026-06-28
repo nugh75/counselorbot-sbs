@@ -1,6 +1,6 @@
 'use client';
 
-import { UploadCloud, FileType } from 'lucide-react';
+import { FileType } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
@@ -111,7 +111,6 @@ export function PDFUploader({ onUploadComplete, questionnaire }: PDFUploaderProp
             >
                 {isUploading ? (
                     <div className="flex flex-col items-center animate-pulse">
-                        <UploadCloud className="w-12 h-12 text-indigo-500 mb-4 animate-bounce" />
                         <p className="text-lg font-medium text-slate-900">{t('pdf.analyzing.title')}</p>
                         <p className="text-sm text-slate-500 mt-2">
                             {t('pdf.analyzing.sub')} ({questionnaire.factors.length})
