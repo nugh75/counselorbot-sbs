@@ -27,6 +27,8 @@ import { useI18n } from '@/lib/i18n-context';
 import { addCompletedProfile, hasCompletedAll, getCombinedScoresContext, clearCompletedProfiles, getCompletedProfiles } from '@/lib/profile-tracker';
 import { ai4authLoginUrl, getIdentity, type Identity } from '@/lib/auth';
 import { getSelectedCounselorId, setSelectedCounselorId } from '@/lib/counselor';
+import { setSelectedInstrumentId } from '@/lib/instrument';
+import { BackButton } from '@/components/ui/BackButton';
 
 
 type Step = 'intro' | 'counselor-select' | 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'combined-interaction';
@@ -129,7 +131,10 @@ export default function Home() {
     // Il chip counselor nell'header deve comparire solo DOPO la scelta: sull'intro
     // azzeriamo la selezione persistita da run precedenti, così non si vede in anticipo.
     useEffect(() => {
-        if (step === 'intro') setSelectedCounselorId(null);
+        if (step === 'intro') {
+            setSelectedCounselorId(null);
+            setSelectedInstrumentId(null);
+        }
     }, [step]);
 
     useEffect(() => {
@@ -159,6 +164,7 @@ export default function Home() {
                 profiles.find((p) => p.questionnaireType === resumeInstrument && p.sessionId === resumeSession)
                 ?? profiles.find((p) => p.questionnaireType === resumeInstrument);
             setSelectedQuestionnaire(questionnaire);
+            setSelectedInstrumentId(questionnaire.id);
             setSessionId(resumeSession);
             setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
             setProfileReviewed(false);
@@ -173,6 +179,7 @@ export default function Home() {
 
         const questionnaire = QUESTIONNAIRES[requestedId];
         setSelectedQuestionnaire(questionnaire);
+        setSelectedInstrumentId(questionnaire.id);
         setScores(null);
         setPdfToken(undefined);
         setSessionId('');
@@ -212,6 +219,7 @@ export default function Home() {
 
     const handleQuestionnaireSelect = (questionnaire: QuestionnaireConfig) => {
         setSelectedQuestionnaire(questionnaire);
+        setSelectedInstrumentId(questionnaire.id);
         setScores(null);
         setPdfToken(undefined);
         setSessionId('');
@@ -444,7 +452,7 @@ export default function Home() {
             {step !== 'intro' && <FlowStepper steps={flowStages} current={stageIndex} />}
 
             {/* The selection screen owns its introduction to avoid repeating the page purpose. */}
-            {step !== 'intro' && step !== 'questionnaire-select' && step !== 'counselor-select' && (
+            {step !== 'intro' && step !== 'questionnaire-select' && step !== 'counselor-select' && step !== 'dashboard' && (
                 <PageHeader
                     title={getStepTitle()}
                     subtitle={getStepDescription()}
@@ -504,6 +512,7 @@ export default function Home() {
                         il bottone "Inizia" resta sempre visibile senza scrollare. */}
                     {step === 'dashboard' && scores && selectedQuestionnaire && (
                         <div className="space-y-4 animate-fade-in-up">
+                            <BackButton onClick={goBack} label={t('nav.back')} />
                             <ProfileVisualization scores={scores} questionnaire={selectedQuestionnaire} />
 
                             <StickyActions>
