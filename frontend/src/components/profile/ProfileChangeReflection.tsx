@@ -54,7 +54,7 @@ interface ChatMessage {
     content: string;
 }
 
-const BOOKLET_TYPES = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
+const BOOKLET_TYPES = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE'];
 
 const PROFILE_FIELDS: { key: keyof LearnerProfileData; label: string }[] = [
     { key: 'age', label: 'Eta' },

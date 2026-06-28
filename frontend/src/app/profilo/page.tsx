@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
 import { addCompletedProfile, clearCompletedProfiles } from '@/lib/profile-tracker';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
-import { StudentBookletCard } from '@/components/profile/StudentBookletCard';
+import { StudentBookletCard, EVENT_BOOKLET_TYPES, bookletTypeOptionLabel, type BookletType } from '@/components/profile/StudentBookletCard';
 import {
     ArrowLeft, ArrowRight, User, FileText, Trash2, Download, MessageSquare, ShieldAlert, Search, History
 } from 'lucide-react';
@@ -28,7 +28,7 @@ interface QuestionnaireResult {
     submitted_at: string;
 }
 
-const BOOKLET_TYPES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
+const BOOKLET_TYPES: BookletType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', ...EVENT_BOOKLET_TYPES];
 
 export default function ProfilePage() {
     const { t, tf, lang } = useI18n();
@@ -40,7 +40,7 @@ export default function ProfilePage() {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
     const [sessionSearch, setSessionSearch] = useState('');
-    const [selectedBookletType, setSelectedBookletType] = useState<QuestionnaireType>('QSA');
+    const [selectedBookletType, setSelectedBookletType] = useState<BookletType>('QSA');
     const [activeTab, setActiveTab] = useState<'taccuino' | 'strumenti'>('taccuino');
 
     const loadData = useCallback(async () => {
@@ -625,12 +625,12 @@ export default function ProfilePage() {
                         <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Strumento del libretto</span>
                         <select
                             value={selectedBookletType}
-                            onChange={(event) => setSelectedBookletType(event.target.value as QuestionnaireType)}
+                            onChange={(event) => setSelectedBookletType(event.target.value as BookletType)}
                             className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                         >
                             {BOOKLET_TYPES.map((type) => (
                                 <option key={type} value={type}>
-                                    {type} · {QUESTIONNAIRES[type].fullName}
+                                    {bookletTypeOptionLabel(type)}
                                 </option>
                             ))}
                         </select>
