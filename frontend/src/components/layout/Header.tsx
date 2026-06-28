@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Bot, ClipboardList, LayoutGrid, LogIn, LogOut, MoreVertical, Settings, User, type LucideIcon } from 'lucide-react';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { HeaderCounselor } from './HeaderCounselor';
+import { HeaderInstrument } from './HeaderInstrument';
 import { ThemeToggle } from './ThemeToggle';
 import { Tooltip, TooltipProvider } from '@/components/ui/Tooltip';
 import { CompassMark } from '@/components/ui/CompassMark';
@@ -70,7 +71,8 @@ export function Header() {
                     </div>
 
                     <div className="ml-auto flex min-w-0 items-center gap-1">
-                        {/* Counselor selezionato: chip compatto, cliccabile per cambiarlo. */}
+                        {/* Strumento e counselor selezionati: badge compatti durante il percorso. */}
+                        <HeaderInstrument />
                         <HeaderCounselor />
 
                         {isLoading ? (
