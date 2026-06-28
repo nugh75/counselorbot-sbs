@@ -11,50 +11,53 @@ export interface Identity {
     authenticated: boolean;
 }
 
-// --- Anteprima ruoli (view as): l'admin puo' vedere l'interfaccia come la
-// vedono gli altri ruoli. L'override e' client-side (localStorage) e si applica
-// solo se l'identita' reale e' admin. L'admin reale resta sempre raggiungibile
-// via getRealIdentity (es. gate della pagina /admin) per poter uscire. ---
+// --- Anteprima ruoli / profili di prova (view as): l'admin puo' usare uno dei
+// profili di prova per vedere l'interfaccia degli altri ruoli e fare prove di
+// interazione. L'override e' client-side (localStorage) e si applica solo se
+// l'identita' reale e' admin; il backend accetta gli stessi username (allowlist)
+// e attribuisce i dati/le interazioni al profilo di prova, che restano in DB.
+// L'admin reale resta raggiungibile via getRealIdentity (gate /admin). ---
 export type ViewAsRole = 'studente' | 'ricercatore' | 'docente';
-const VIEW_AS_KEY = 'cb_view_as_role';
+const VIEW_AS_KEY = 'cb_view_as_user';
 
-// Tre account fittizi (uno per ruolo), distinti da quello dell'amministratore:
-// l'anteprima mostra l'identita' di un finto utente, non quella dell'admin.
 export interface ViewAsAccount {
     username: string;
     name: string;
-    email: string;
-    groups: string[];
+    role: ViewAsRole;
     is_researcher: boolean;
+    groups: string[];
 }
 
-export const VIEW_AS_ACCOUNTS: Record<ViewAsRole, ViewAsAccount> = {
-    studente: { username: 'studente.demo', name: 'Studente demo', email: 'studente.demo@anteprima.local', groups: ['studenti'], is_researcher: false },
-    ricercatore: { username: 'ricercatore.demo', name: 'Ricercatore demo', email: 'ricercatore.demo@anteprima.local', groups: ['researchers'], is_researcher: true },
-    docente: { username: 'docente.demo', name: 'Docente demo', email: 'docente.demo@anteprima.local', groups: ['docenti'], is_researcher: false },
-};
+// Profili di prova. Gli username devono combaciare con VIEW_AS_DEMO_ACCOUNTS
+// nel backend (backend/auth.py).
+export const VIEW_AS_ACCOUNTS: ViewAsAccount[] = [
+    { username: 'studente.demo', name: 'Studente di prova 1', role: 'studente', is_researcher: false, groups: ['studenti'] },
+    { username: 'studente.demo2', name: 'Studente di prova 2', role: 'studente', is_researcher: false, groups: ['studenti'] },
+    { username: 'studente.demo3', name: 'Studente di prova 3', role: 'studente', is_researcher: false, groups: ['studenti'] },
+    { username: 'ricercatore.demo', name: 'Ricercatore di prova', role: 'ricercatore', is_researcher: true, groups: ['researchers'] },
+    { username: 'docente.demo', name: 'Docente di prova', role: 'docente', is_researcher: false, groups: ['docenti'] },
+];
 
-export function getViewAsRole(): ViewAsRole | null {
+export function getViewAsAccount(): ViewAsAccount | null {
     if (typeof window === 'undefined') return null;
-    const value = window.localStorage.getItem(VIEW_AS_KEY);
-    return value === 'studente' || value === 'ricercatore' || value === 'docente' ? value : null;
+    const username = window.localStorage.getItem(VIEW_AS_KEY);
+    return VIEW_AS_ACCOUNTS.find((account) => account.username === username) ?? null;
 }
 
-export function setViewAsRole(role: ViewAsRole): void {
-    if (typeof window !== 'undefined') window.localStorage.setItem(VIEW_AS_KEY, role);
+export function setViewAsUsername(username: string): void {
+    if (typeof window !== 'undefined') window.localStorage.setItem(VIEW_AS_KEY, username);
 }
 
-export function clearViewAsRole(): void {
+export function clearViewAs(): void {
     if (typeof window !== 'undefined') window.localStorage.removeItem(VIEW_AS_KEY);
 }
 
-function applyViewAs(real: Identity, role: ViewAsRole): Identity {
-    const account = VIEW_AS_ACCOUNTS[role];
+function applyViewAs(real: Identity, account: ViewAsAccount): Identity {
     return {
         ...real,
         username: account.username,
         name: account.name,
-        email: account.email,
+        email: `${account.username}@anteprima.local`,
         groups: [...account.groups],
         is_admin: false,
         is_researcher: account.is_researcher,
@@ -62,7 +65,7 @@ function applyViewAs(real: Identity, role: ViewAsRole): Identity {
     };
 }
 
-// Identita' reale dal backend, senza applicare l'anteprima ruoli.
+// Identita' reale dal backend, senza applicare l'anteprima.
 export async function getRealIdentity(): Promise<Identity | null> {
     try {
         const res = await fetch('/api/auth/me');
@@ -73,15 +76,15 @@ export async function getRealIdentity(): Promise<Identity | null> {
     }
 }
 
-// Identita' effettiva usata dalla UI: applica l'anteprima ruoli se l'utente
+// Identita' effettiva usata dalla UI: applica il profilo di prova se l'utente
 // reale e' admin. Un override residuo su un non-admin viene ignorato e pulito.
 export async function getIdentity(): Promise<Identity | null> {
     const real = await getRealIdentity();
     if (!real) return null;
-    const role = getViewAsRole();
-    if (!role) return real;
-    if (real.is_admin) return applyViewAs(real, role);
-    clearViewAsRole();
+    const account = getViewAsAccount();
+    if (!account) return real;
+    if (real.is_admin) return applyViewAs(real, account);
+    clearViewAs();
     return real;
 }
 

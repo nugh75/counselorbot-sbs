@@ -2520,6 +2520,15 @@ def test_role_preview_impersonation_scopes_data_to_demo_account():
         ign_ids = {it["id"] for it in client.get("/user/portfolio", headers={"X-View-As": "vittima.reale"}).json()}
         assert admin_item in ign_ids and demo_item not in ign_ids
 
+        # Piu' profili di prova, isolati tra loro (studente.demo vs studente.demo2).
+        hdr2 = {"X-View-As": "studente.demo2"}
+        demo2_item = client.post("/user/portfolio", json={"title": "Lavoro demo2"}, headers=hdr2).json()["id"]
+        d1 = {it["id"] for it in client.get("/user/portfolio", headers=hdr).json()}
+        d2 = {it["id"] for it in client.get("/user/portfolio", headers=hdr2).json()}
+        assert demo_item in d1 and demo2_item not in d1
+        assert demo2_item in d2 and demo_item not in d2
+        client.delete(f"/user/portfolio/{demo2_item}", headers=hdr2)
+
         client.delete(f"/user/portfolio/{demo_item}", headers=hdr)
         client.delete(f"/user/portfolio/{admin_item}")
 

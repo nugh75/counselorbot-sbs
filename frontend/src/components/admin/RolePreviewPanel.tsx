@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { Check, Eye, Minus, UserCog } from 'lucide-react';
 import {
-    getViewAsRole, setViewAsRole, clearViewAsRole, VIEW_AS_ACCOUNTS, type ViewAsRole, type Identity,
+    getViewAsAccount, setViewAsUsername, clearViewAs, VIEW_AS_ACCOUNTS,
+    type ViewAsRole, type ViewAsAccount, type Identity,
 } from '@/lib/auth';
 import {
     canUseAssistant, canUsePersonalPage, canUseResearchConsole, canUseTeacherAssistant,
@@ -18,11 +19,10 @@ const ROLE_LABEL: Record<RoleKey, string> = {
     admin: 'Admin',
 };
 
-const ROLE_DESC: Record<RoleKey, string> = {
-    studente: 'Compila gli strumenti, usa il taccuino/libretto/portfolio e l\'assistente. Nessun accesso a ricerca o amministrazione.',
+const ROLE_DESC: Record<ViewAsRole, string> = {
+    studente: 'Compila gli strumenti, usa taccuino/libretto/portfolio e l\'assistente. Nessun accesso a ricerca o amministrazione.',
     ricercatore: 'Come lo studente, piu\' la console di ricerca (risultati, validazione, contatti) e l\'assistente docente.',
     docente: 'Come lo studente, piu\' l\'assistente docente. Nessun accesso alla console di ricerca.',
-    admin: 'Accesso completo: amministrazione, ricerca, assistente docente e tutto il resto.',
 };
 
 // Identita' sintetiche per costruire la matrice delle capacita' per ruolo.
@@ -45,21 +45,20 @@ const CAPABILITIES: { label: string; fn: (id: Identity) => boolean }[] = [
 ];
 
 const ROLES: RoleKey[] = ['studente', 'ricercatore', 'docente', 'admin'];
-const PREVIEWABLE: ViewAsRole[] = ['studente', 'ricercatore', 'docente'];
 
 export function RolePreviewPanel() {
-    const [active, setActive] = useState<ViewAsRole | null>(null);
+    const [active, setActive] = useState<ViewAsAccount | null>(null);
 
-    useEffect(() => { setActive(getViewAsRole()); }, []);
+    useEffect(() => { setActive(getViewAsAccount()); }, []);
 
-    const startPreview = (role: ViewAsRole) => {
-        setViewAsRole(role);
-        // Ricarica sulla home cosi' tutta l'interfaccia riflette il ruolo scelto.
+    const startPreview = (account: ViewAsAccount) => {
+        setViewAsUsername(account.username);
+        // Ricarica sulla home cosi' tutta l'interfaccia usa il profilo scelto.
         window.location.href = '/';
     };
 
     const stopPreview = () => {
-        clearViewAsRole();
+        clearViewAs();
         window.location.reload();
     };
 
@@ -68,12 +67,14 @@ export function RolePreviewPanel() {
             <div className="glass-panel p-5 space-y-2">
                 <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                     <Eye className="h-5 w-5 text-indigo-600" />
-                    Anteprima ruoli
+                    Profili di prova
                 </h2>
                 <p className="text-sm text-slate-500">
-                    Vedi l&apos;interfaccia come la vedono gli altri ruoli, con un account fittizio dedicato
-                    (non il tuo da amministratore). L&apos;anteprima vale solo per te (nel tuo browser) e non
-                    cambia i permessi reali. Per uscire usa la barra in basso o il pulsante &ldquo;Torna ad Admin&rdquo;.
+                    Usa un profilo di prova per vedere l&apos;interfaccia degli altri ruoli e fare prove di
+                    interazione. Le tue azioni (taccuino, libretto, portfolio, chat) vengono salvate sul
+                    profilo di prova e <strong>restano nel database</strong>, cosi&apos; puoi riprenderle.
+                    Vale solo per il tuo browser e non cambia i permessi reali; per uscire usa la barra in
+                    basso o &ldquo;Torna ad Admin&rdquo;.
                 </p>
             </div>
 
@@ -81,7 +82,7 @@ export function RolePreviewPanel() {
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4">
                     <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
                         <UserCog className="h-5 w-5" />
-                        Stai vedendo come: {ROLE_LABEL[active]} ({VIEW_AS_ACCOUNTS[active].name})
+                        Profilo attivo: {active.name} ({ROLE_LABEL[active.role]}) · {active.username}
                     </div>
                     <button
                         type="button"
@@ -93,28 +94,34 @@ export function RolePreviewPanel() {
                 </div>
             )}
 
-            <div className="grid gap-3 sm:grid-cols-3">
-                {PREVIEWABLE.map((role) => (
-                    <div key={role} className="glass-panel flex flex-col gap-2 p-4">
-                        <h3 className="font-bold text-slate-800">{ROLE_LABEL[role]}</h3>
-                        <p className="text-[11px] font-semibold text-slate-400">
-                            Account fittizio: {VIEW_AS_ACCOUNTS[role].name} · {VIEW_AS_ACCOUNTS[role].username}
-                        </p>
-                        <p className="grow text-xs text-slate-500">{ROLE_DESC[role]}</p>
-                        <button
-                            type="button"
-                            onClick={() => startPreview(role)}
-                            className={`inline-flex items-center justify-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold ${
-                                active === role
-                                    ? 'border border-indigo-200 bg-indigo-50 text-indigo-700'
-                                    : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                            }`}
-                        >
-                            <Eye className="h-4 w-4" />
-                            {active === role ? 'In anteprima' : 'Vedi come'}
-                        </button>
-                    </div>
-                ))}
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {VIEW_AS_ACCOUNTS.map((account) => {
+                    const isActive = active?.username === account.username;
+                    return (
+                        <div key={account.username} className="glass-panel flex flex-col gap-2 p-4">
+                            <div className="flex items-center gap-2">
+                                <h3 className="font-bold text-slate-800">{account.name}</h3>
+                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                                    {ROLE_LABEL[account.role]}
+                                </span>
+                            </div>
+                            <p className="text-[11px] font-semibold text-slate-400">{account.username}</p>
+                            <p className="grow text-xs text-slate-500">{ROLE_DESC[account.role]}</p>
+                            <button
+                                type="button"
+                                onClick={() => startPreview(account)}
+                                className={`inline-flex items-center justify-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold ${
+                                    isActive
+                                        ? 'border border-indigo-200 bg-indigo-50 text-indigo-700'
+                                        : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                }`}
+                            >
+                                <Eye className="h-4 w-4" />
+                                {isActive ? 'In uso' : 'Usa questo profilo'}
+                            </button>
+                        </div>
+                    );
+                })}
             </div>
 
             {/* Matrice delle capacita' per ruolo: cosa vede/puo' fare ciascun ruolo. */}
