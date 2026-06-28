@@ -16,6 +16,8 @@ export interface LearnerProfileData {
     notes?: string;
     gender?: string;
     age?: string;
+    school_class?: string;
+    school_year?: string;
 }
 
 interface Revision {
@@ -31,6 +33,8 @@ type Variant = 'edit' | 'review' | 'update';
 const FIELDS: { key: keyof LearnerProfileData; labelKey: string; multiline?: boolean; type?: 'number' }[] = [
     { key: 'age', labelKey: 'lp.field.age', type: 'number' },
     { key: 'gender', labelKey: 'lp.field.gender' },
+    { key: 'school_class', labelKey: 'lp.field.schoolClass' },
+    { key: 'school_year', labelKey: 'lp.field.schoolYear' },
     { key: 'context', labelKey: 'lp.field.context' },
     { key: 'goal', labelKey: 'lp.field.goal' },
     { key: 'main_difficulty', labelKey: 'lp.field.difficulty' },

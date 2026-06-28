@@ -8,8 +8,6 @@ import { toast } from '@/components/ui/Toast';
 
 type BookletData = {
     title: string;
-    class_context: string;
-    school_year: string;
     strength: string[];
     growth_area: string[];
     motivation: string;
@@ -44,8 +42,6 @@ const ARRAY_KEYS = ['strength', 'growth_area'] as const;
 
 const EMPTY_BOOKLET: BookletData = {
     title: '',
-    class_context: '',
-    school_year: '',
     strength: [''],
     growth_area: [''],
     motivation: '',
@@ -443,11 +439,6 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
             ) : (
                 <div className="space-y-6">
                     {simpleInput('title', 'Titolo della scheda')}
-
-                    <div className="grid gap-3 md:grid-cols-2">
-                        {simpleInput('class_context', 'Classe / contesto')}
-                        {simpleInput('school_year', 'Anno / percorso')}
-                    </div>
 
                     <div className="grid gap-3 md:grid-cols-2">
                         {factorMulti('strength', 'Punti di forza da valorizzare')}
