@@ -92,6 +92,17 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
                     ))}
                 </div>
             </section>
+
+            <footer className="mx-auto max-w-xl border-t border-slate-100 pt-8 text-center">
+                <p className="text-sm leading-relaxed text-slate-500">{t('app.intro.contact')}</p>
+                <p className="mt-2 text-sm font-semibold text-slate-700">Daniele Dragoni</p>
+                <a
+                    href="mailto:daniele.dragoni@uniroma3.it"
+                    className="text-sm font-medium text-indigo-700 hover:underline"
+                >
+                    daniele.dragoni@uniroma3.it
+                </a>
+            </footer>
         </div>
     );
 }
