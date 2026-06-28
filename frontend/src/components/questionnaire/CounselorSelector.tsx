@@ -75,11 +75,7 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName }: Cou
 
             <div className="glass-panel p-6 sm:p-7">
                 <div className="max-w-3xl">
-                    <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-indigo-700">
-                        <Compass className="h-4 w-4" />
-                        {t('counselor.kicker')}
-                    </div>
-                    <h1 className="mt-2 text-2xl font-bold text-slate-900">{t('counselor.title')}</h1>
+                    <h1 className="text-2xl font-bold text-slate-900">{t('counselor.title')}</h1>
                     <p className="mt-2 text-sm leading-relaxed text-slate-600">
                         {t('counselor.intro')}
                     </p>
