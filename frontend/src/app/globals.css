@@ -405,7 +405,10 @@ h1.text-3xl {
 .dark .text-red-700,
 .dark .text-red-600 { color: #fca5a5; }
 .dark .text-sky-950,
-.dark .text-sky-800 { color: #7dd3fc; }
+.dark .text-sky-900,
+.dark .text-sky-800,
+.dark .text-sky-700,
+.dark .text-sky-600 { color: #7dd3fc; }
 
 /* Prose (markdown chat/documenti) */
 .dark .prose { color: #cbd5e1; }
