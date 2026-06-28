@@ -521,6 +521,7 @@ const it: Dict = {
     'pqbl.final.yourAnswer': 'La tua risposta',
     // header bar (tooltip / etichette)
     'header.services': 'Servizi piattaforma ai4educ',
+    'header.resume': 'Riprendi',
     'header.counselorChosen': 'Counselor scelto: {name}',
     'header.counselorLabel': 'Counselor',
     'header.menu': 'Menu',
@@ -1011,6 +1012,7 @@ const en: Dict = {
     'pqbl.final.yourAnswer': 'Your answer',
     // header bar (tooltips / labels)
     'header.services': 'ai4educ platform services',
+    'header.resume': 'Resume',
     'header.counselorChosen': 'Selected counselor: {name}',
     'header.counselorLabel': 'Counselor',
     'header.menu': 'Menu',
@@ -1500,6 +1502,7 @@ const es: Dict = {
     'profile.stanineScoreLabel': 'Puntuación Stanine:',
     // header bar (tooltips / etiquetas)
     'header.services': 'Servicios de la plataforma ai4educ',
+    'header.resume': 'Reanudar',
     'header.counselorChosen': 'Counselor elegido: {name}',
     'header.counselorLabel': 'Counselor',
     'header.menu': 'Menú',
@@ -1989,6 +1992,7 @@ const fr: Dict = {
     'profile.stanineScoreLabel': 'Score Stanine :',
     // header bar (info-bulles / libellés)
     'header.services': 'Services de la plateforme ai4educ',
+    'header.resume': 'Reprendre',
     'header.counselorChosen': 'Counselor choisi : {name}',
     'header.counselorLabel': 'Counselor',
     'header.menu': 'Menu',
@@ -2478,6 +2482,7 @@ const de: Dict = {
     'profile.stanineScoreLabel': 'Stanine-Wert:',
     // header bar (Tooltips / Beschriftungen)
     'header.services': 'ai4educ-Plattformdienste',
+    'header.resume': 'Fortsetzen',
     'header.counselorChosen': 'Gewählter Counselor: {name}',
     'header.counselorLabel': 'Counselor',
     'header.menu': 'Menü',
@@ -2967,6 +2972,7 @@ const sv: Dict = {
     'profile.stanineScoreLabel': 'Staninepoäng:',
     // header bar (verktygstips / etiketter)
     'header.services': 'ai4educ-plattformstjänster',
+    'header.resume': 'Återuppta',
     'header.counselorChosen': 'Vald counselor: {name}',
     'header.counselorLabel': 'Counselor',
     'header.menu': 'Meny',
