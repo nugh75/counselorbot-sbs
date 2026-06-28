@@ -524,7 +524,6 @@ def generate_questionnaire_pdf(
 
 
 BOOKLET_LABELS = {
-    "student_name": "Studente",
     "class_context": "Classe / contesto",
     "school_year": "Anno / percorso",
     "strength": "Punto di forza scelto",
@@ -610,8 +609,8 @@ def generate_student_booklet_pdf(
     pdf.cell(0, 7, _latin1(f"{ui['session']}: {session_id[:16]}..."), new_x="LMARGIN", new_y="NEXT")
     pdf.cell(0, 7, _latin1(f"Account: {username}"), new_x="LMARGIN", new_y="NEXT")
 
-    _booklet_section(pdf, "1. Dati dello studente", content_w)
-    for key in ("student_name", "class_context", "school_year"):
+    _booklet_section(pdf, "1. Dati del percorso", content_w)
+    for key in ("class_context", "school_year"):
         _booklet_field(pdf, BOOKLET_LABELS[key], _booklet_text(data, key), content_w)
 
     _booklet_section(pdf, "2. Profilo di riferimento", content_w)

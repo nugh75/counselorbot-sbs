@@ -2275,7 +2275,6 @@ def test_student_booklet_crud_pdf_and_ownership():
 
         r = client.put("/user/student-booklets/booklet-session", json={
             "data": {
-                "student_name": "Student",
                 "strength": "C1 - Strategie elaborative",
                 "growth_area": "A6 - Percezione di competenza",
                 "objective": "Riconoscere un risultato concreto ogni settimana",
