@@ -516,19 +516,13 @@ export default function Home() {
                             <ProfileVisualization scores={scores} questionnaire={selectedQuestionnaire} />
 
                             <StickyActions>
-                                <div className="glass-panel px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-3 shadow-md">
-                                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                                        <div className="min-w-0">
-                                            <h3 className="text-sm font-semibold text-slate-800 truncate">{t('dashboard.ready.title')}</h3>
-                                            <p className="text-xs text-slate-500 truncate">{t('dashboard.ready.sub')}</p>
-                                        </div>
-                                    </div>
+                                <div className="glass-panel px-5 py-3 flex justify-end shadow-md">
                                     <button
                                         onClick={startInteraction}
                                         className="shrink-0 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
                                     >
-                                        <MessageSquare className="w-5 h-5" />
                                         {t('dashboard.ready.btn')}
+                                        <ArrowRight className="w-5 h-5" />
                                     </button>
                                 </div>
                             </StickyActions>
