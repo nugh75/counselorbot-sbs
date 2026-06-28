@@ -1129,6 +1129,8 @@ MAX_LEARNER_PROFILE_CHARS = 900
 _LEARNER_PROFILE_LABELS = {
     "age": "Età",
     "gender": "Genere",
+    "school_class": "Classe / contesto",
+    "school_year": "Anno / percorso",
     "context": "Contesto di studio",
     "goal": "Obiettivo attuale",
     "main_difficulty": "Difficoltà principale percepita",

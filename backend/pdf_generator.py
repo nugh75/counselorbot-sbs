@@ -524,8 +524,6 @@ def generate_questionnaire_pdf(
 
 
 BOOKLET_LABELS = {
-    "class_context": "Classe / contesto",
-    "school_year": "Anno / percorso",
     "strength": "Punti di forza da valorizzare",
     "growth_area": "Aree da migliorare",
     "motivation": "Perche' e' importante per me",
@@ -647,11 +645,7 @@ def generate_student_booklet_pdf(
         pdf.set_text_color(49, 46, 129)
         pdf.multi_cell(content_w, 8, _latin1(title), new_x="LMARGIN", new_y="NEXT")
 
-    _booklet_section(pdf, "1. Dati del percorso", content_w)
-    for key in ("class_context", "school_year"):
-        _booklet_field(pdf, BOOKLET_LABELS[key], _booklet_text(data, key), content_w)
-
-    _booklet_section(pdf, "2. Profilo di riferimento", content_w)
+    _booklet_section(pdf, "1. Profilo di riferimento", content_w)
     if questionnaire_type == "SAVICKAS":
         pdf.set_font("Helvetica", "", 10)
         pdf.set_text_color(70, 70, 80)
@@ -697,26 +691,26 @@ def generate_student_booklet_pdf(
         pdf.set_text_color(70, 70, 80)
         pdf.multi_cell(content_w, 6, _latin1("Nessuna area predefinita disponibile per questo strumento."), new_x="LMARGIN", new_y="NEXT")
 
-    _booklet_section(pdf, "3. Scelgo cosa valorizzare e migliorare", content_w)
+    _booklet_section(pdf, "2. Scelgo cosa valorizzare e migliorare", content_w)
     _booklet_multi_field(pdf, BOOKLET_LABELS["strength"], _booklet_text_list(data, "strength"), content_w)
     _booklet_multi_field(pdf, BOOKLET_LABELS["growth_area"], _booklet_text_list(data, "growth_area"), content_w)
     _booklet_field(pdf, BOOKLET_LABELS["motivation"], _booklet_text(data, "motivation"), content_w)
 
-    _booklet_section(pdf, "4. Obiettivo e strategia", content_w)
+    _booklet_section(pdf, "3. Obiettivo e strategia", content_w)
     period = " - ".join(part for part in (_booklet_text(data, "period_start"), _booklet_text(data, "period_end")) if part)
     _booklet_field(pdf, BOOKLET_LABELS["objective"], _booklet_text(data, "objective"), content_w)
     _booklet_field(pdf, BOOKLET_LABELS["strategy"], _booklet_text(data, "strategy"), content_w)
     _booklet_field(pdf, BOOKLET_LABELS["period"], period, content_w)
 
-    _booklet_section(pdf, "5. Verifico il percorso", content_w)
+    _booklet_section(pdf, "4. Verifico il percorso", content_w)
     for key in ("commitment", "difficulties", "improvements", "discovery"):
         _booklet_field(pdf, BOOKLET_LABELS[key], _booklet_text(data, key), content_w)
 
-    _booklet_section(pdf, "6. Biografia di apprendimento", content_w)
+    _booklet_section(pdf, "5. Biografia di apprendimento", content_w)
     for key in ("bio_date", "bio_context", "bio_discovery", "bio_keywords"):
         _booklet_field(pdf, BOOKLET_LABELS[key], _booklet_text(data, key), content_w)
 
-    _booklet_section(pdf, "7. Note e valutazione finale", content_w)
+    _booklet_section(pdf, "6. Note e valutazione finale", content_w)
     for key in ("student_notes", "final_satisfaction", "final_observations"):
         _booklet_field(pdf, BOOKLET_LABELS[key], _booklet_text(data, key), content_w)
 
