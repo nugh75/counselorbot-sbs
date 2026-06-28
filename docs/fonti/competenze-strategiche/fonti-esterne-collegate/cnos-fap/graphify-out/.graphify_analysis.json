@@ -3,10 +3,12 @@
     "0": [
       "apprendimento_permanente",
       "autodeterminazione",
+      "autoregolazione",
       "emad_samir_anis_matta",
       "giuseppe_crea",
       "hard_skills",
       "life_design",
+      "marco_bay",
       "mark_savickas",
       "michele_pellerey",
       "orientamento_professionale",
@@ -35,9 +37,9 @@
     "2": [
       "abiti",
       "autodirezione",
-      "autoregolazione",
       "carattere",
       "cognitive_skills",
+      "dimensioni_spirituali",
       "general_educational_development",
       "heckman_james",
       "imparare_a_dirigere_se_stessi_document",
@@ -48,7 +50,23 @@
       "vittadini_giorgio"
     ],
     "3": [
+      "soft_skill_bernaud",
+      "soft_skill_career_construction",
+      "soft_skill_career_education",
+      "soft_skill_competenze_personali_generali",
+      "soft_skill_enrica_ottone",
+      "soft_skill_filippo_epifani",
+      "soft_skill_funzioni_esecutive",
+      "soft_skill_holland",
+      "soft_skill_life_design",
+      "soft_skill_massimo_margottini",
+      "soft_skill_report",
+      "soft_skill_savickas",
+      "soft_skill_vocational_guidance"
+    ],
+    "4": [
       "ciofs_fp",
+      "cnos_fap",
       "dariusz_grzadziel",
       "enrica_ottone",
       "filippo_epifani",
@@ -60,20 +78,47 @@
       "qpcc",
       "riflessivita"
     ],
-    "4": [
-      "cnos_fap",
+    "5": [
       "dimensioni_morali",
-      "dimensioni_spirituali",
-      "marco_bay",
-      "promuovere_la_crescita_document"
+      "promuovere_la_crescita_document",
+      "promuovere_la_crescita_nelle_competenze_strategiche_cnos_fap",
+      "promuovere_la_crescita_nelle_competenze_strategiche_dariusz_grzadziel",
+      "promuovere_la_crescita_nelle_competenze_strategiche_dimensione_morale",
+      "promuovere_la_crescita_nelle_competenze_strategiche_dimensione_spirituale",
+      "promuovere_la_crescita_nelle_competenze_strategiche_legge_53_2003",
+      "promuovere_la_crescita_nelle_competenze_strategiche_marco_bay",
+      "promuovere_la_crescita_nelle_competenze_strategiche_michele_pellerey",
+      "promuovere_la_crescita_nelle_competenze_strategiche_strategie_di_lisbona"
+    ],
+    "6": [
+      "promuovere_la_crescita_nelle_competenze_strategiche_autovalutazione",
+      "promuovere_la_crescita_nelle_competenze_strategiche_formazione_professionale",
+      "soft_skill_orientamento_professionale"
+    ],
+    "7": [
+      "promuovere_la_crescita_nelle_competenze_strategiche_apprendimento_permanente",
+      "soft_skill_occupabilita"
+    ],
+    "8": [
+      "promuovere_la_crescita_nelle_competenze_strategiche_autoregolazione",
+      "soft_skill_autodeterminazione"
+    ],
+    "9": [
+      "promuovere_la_crescita_nelle_competenze_strategiche_competenze_strategiche",
+      "soft_skill_soft_skill"
     ]
   },
   "cohesion": {
-    "0": 0.23076923076923078,
+    "0": 0.2,
     "1": 0.24175824175824176,
     "2": 0.19230769230769232,
-    "3": 0.34545454545454546,
-    "4": 0.4
+    "3": 0.15384615384615385,
+    "4": 0.3181818181818182,
+    "5": 0.2,
+    "6": 0.6666666666666666,
+    "7": 1.0,
+    "8": 1.0,
+    "9": 1.0
   },
   "gods": [
     {
@@ -85,6 +130,16 @@
       "id": "strumenti_e_metodologie_document",
       "label": "Strumenti e metodologie di orientamento formativo e professionale nel quadro dei processi di apprendimento permanente",
       "degree": 24
+    },
+    {
+      "id": "promuovere_la_crescita_document",
+      "label": "Promuovere la crescita nelle competenze strategiche che hanno le loro radici nelle dimensioni morali e spirituali della persona. Rapporto di ricerca",
+      "degree": 22
+    },
+    {
+      "id": "soft_skill_report",
+      "label": "Soft skill e orientamento professionale",
+      "degree": 20
     },
     {
       "id": "competenze_strategiche",
@@ -115,16 +170,6 @@
       "id": "autovalutazione",
       "label": "Autovalutazione",
       "degree": 8
-    },
-    {
-      "id": "promuovere_la_crescita_document",
-      "label": "Promuovere la crescita nelle competenze strategiche che hanno le loro radici nelle dimensioni morali e spirituali della persona. Rapporto di ricerca",
-      "degree": 8
-    },
-    {
-      "id": "piattaforma_comp_strategiche_margottini_epifani_document",
-      "label": "Promuovere l'autovalutazione di competenze strategiche. Aggiornamenti e sviluppi della piattaforma competenzestrategiche.it",
-      "degree": 4
     }
   ],
   "surprises": [
@@ -185,7 +230,7 @@
     }
   ],
   "tokens": {
-    "input": 0,
-    "output": 0
+    "input": 2045,
+    "output": 13968
   }
 }
