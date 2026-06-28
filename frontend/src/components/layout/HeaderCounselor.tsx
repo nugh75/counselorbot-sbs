@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useSyncExternalStore } from 'react';
-import { Compass } from 'lucide-react';
 import {
     fetchCounselors,
     getSelectedCounselorId,
@@ -33,11 +32,9 @@ export function HeaderCounselor() {
 
     return (
         <div
-            className="flex min-w-0 items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-sm font-medium text-indigo-700"
+            className="flex min-w-0 items-center rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-sm font-medium text-indigo-700"
             title={t('header.counselorChosen', { name: selected.name })}
         >
-            <Compass className="h-4 w-4 shrink-0" />
-            <span className="hidden text-xs text-indigo-500 sm:inline">{t('header.counselorLabel')}</span>
             <span className="max-w-28 truncate sm:max-w-40">{selected.name}</span>
         </div>
     );

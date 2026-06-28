@@ -126,6 +126,12 @@ export default function Home() {
         getIdentity().then(setIdentity);
     }, []);
 
+    // Il chip counselor nell'header deve comparire solo DOPO la scelta: sull'intro
+    // azzeriamo la selezione persistita da run precedenti, così non si vede in anticipo.
+    useEffect(() => {
+        if (step === 'intro') setSelectedCounselorId(null);
+    }, [step]);
+
     useEffect(() => {
         if (identity === undefined || !identity?.authenticated) return;
 
