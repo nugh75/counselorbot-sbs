@@ -12,6 +12,7 @@ import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
 import { addCompletedProfile, clearCompletedProfiles } from '@/lib/profile-tracker';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { StudentBookletCard, EVENT_BOOKLET_TYPES, bookletTypeOptionLabel, type BookletType } from '@/components/profile/StudentBookletCard';
+import { PortfolioCard } from '@/components/profile/PortfolioCard';
 import {
     ArrowLeft, ArrowRight, User, FileText, Trash2, Download, MessageSquare, ShieldAlert, Search, History
 } from 'lucide-react';
@@ -41,7 +42,7 @@ export default function ProfilePage() {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
     const [sessionSearch, setSessionSearch] = useState('');
     const [selectedBookletType, setSelectedBookletType] = useState<BookletType>('QSA');
-    const [activeTab, setActiveTab] = useState<'taccuino' | 'strumenti'>('taccuino');
+    const [activeTab, setActiveTab] = useState<'taccuino' | 'strumenti' | 'portfolio'>('taccuino');
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -325,6 +326,13 @@ export default function ProfilePage() {
                         className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${activeTab === 'strumenti' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                     >
                         Strumenti utilizzati
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('portfolio')}
+                        className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${activeTab === 'portfolio' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Portfolio
                     </button>
                 </nav>
             </div>
@@ -637,6 +645,20 @@ export default function ProfilePage() {
                     </label>
                 </div>
                 <StudentBookletCard questionnaireType={selectedBookletType} lang={lang} />
+            </section>
+            )}
+
+            {activeTab === 'portfolio' && (
+            <section className="space-y-4" aria-labelledby="portfolio-section">
+                <div>
+                    <h2 id="portfolio-section" className="text-lg font-bold text-slate-800">
+                        Portfolio
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                        Raccogli i tuoi lavori con titolo, descrizione, categoria, data e immagini.
+                    </p>
+                </div>
+                <PortfolioCard />
             </section>
             )}
         </div>
