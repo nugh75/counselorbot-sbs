@@ -280,28 +280,6 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
         <div className="w-full glass-panel p-4 space-y-3">
             <h3 className="text-base font-semibold text-center text-slate-800">{fullName}</h3>
 
-            {/* Legend */}
-            <div className="flex justify-center gap-4 text-xs flex-wrap">
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                    <span className="text-slate-600">{positiveLegend}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                    <span className="text-slate-600">{midLegend}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                    <span className="text-slate-600">{t('profile.growth')}</span>
-                </div>
-                {questionnaire.invertedFactors.length > 0 && (
-                    <div className="flex items-center gap-1 text-slate-400">
-                        <span>↔</span>
-                        <span>= {t('profile.invertedScale')}</span>
-                    </div>
-                )}
-            </div>
-
             {/* Sintesi: il messaggio in 3 secondi prima del dettaglio barre. */}
             {hasSummary && (
                 <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 space-y-3 animate-fade-in-up">
@@ -357,6 +335,28 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                         </div>
                     );
                 })}
+            </div>
+
+            {/* Legenda, in basso */}
+            <div className="flex justify-center gap-4 text-xs flex-wrap pt-2 border-t border-slate-100">
+                <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span className="text-slate-600">{positiveLegend}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <span className="text-slate-600">{midLegend}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    <span className="text-slate-600">{t('profile.growth')}</span>
+                </div>
+                {questionnaire.invertedFactors.length > 0 && (
+                    <div className="flex items-center gap-1 text-slate-400">
+                        <span>↔</span>
+                        <span>= {t('profile.invertedScale')}</span>
+                    </div>
+                )}
             </div>
         </div>
     );
