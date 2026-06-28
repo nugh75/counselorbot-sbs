@@ -436,16 +436,19 @@ export default function Home() {
         );
     }
 
-    // Orientamento percorso: mappa lo step interno alle fasi visibili.
-    const flowStages = ['CounselorBot', t('flow.select'), 'Counselor', t('flow.input'), t('flow.profile'), t('flow.chat'), t('flow.done')];
+    // Orientamento percorso: mappa lo step interno alle fasi visibili. Il taccuino
+    // si rivede a inizio interaction (prima della chat) → tappa a sé tra Profilo e Conversa.
+    const flowStages = ['CounselorBot', t('flow.select'), 'Counselor', t('flow.input'), t('flow.profile'), t('flow.taccuino'), t('flow.chat'), t('flow.done')];
+    const inTaccuino = step === 'interaction' && experience === null && !profileReviewed;
     const stageIndex =
         step === 'intro' ? 0
             : step === 'questionnaire-select' ? 1
                 : step === 'counselor-select' ? 2
                     : step === 'method-select' || step === 'manual-input' || step === 'upload-input' ? 3
                         : step === 'dashboard' ? 4
-                            : step === 'interaction' || step === 'combined-interaction' ? 5
-                                : 6;
+                            : inTaccuino ? 5
+                                : step === 'interaction' || step === 'combined-interaction' ? 6
+                                    : 7;
 
     return (
         <div className="page-wide space-y-8">
