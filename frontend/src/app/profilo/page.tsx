@@ -42,6 +42,7 @@ export default function ProfilePage() {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
     const [sessionSearch, setSessionSearch] = useState('');
     const [selectedBookletType, setSelectedBookletType] = useState<QuestionnaireType>('QSA');
+    const [activeTab, setActiveTab] = useState<'taccuino' | 'strumenti'>('taccuino');
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -309,6 +310,27 @@ export default function ProfilePage() {
                 </div>
             </section>
 
+            {/* Tab navigation */}
+            <div className="border-b border-slate-200">
+                <nav className="-mb-px flex flex-wrap gap-1">
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('taccuino')}
+                        className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${activeTab === 'taccuino' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Taccuino e libretto
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('strumenti')}
+                        className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${activeTab === 'strumenti' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Strumenti utilizzati
+                    </button>
+                </nav>
+            </div>
+
+            {activeTab === 'taccuino' && (
             <section className="space-y-4" aria-labelledby="personal-profile-section">
                 <div>
                     <h2 id="personal-profile-section" className="text-lg font-bold text-slate-800">
@@ -321,7 +343,10 @@ export default function ProfilePage() {
                 <LearnerProfileCard variant="edit" />
                 <ProfileChangeReflection lang={lang} />
             </section>
+            )}
 
+            {activeTab === 'strumenti' && (
+            <>
             <section className="glass-panel p-5 space-y-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
@@ -569,7 +594,10 @@ export default function ProfilePage() {
                     </div>
                 )}
             </section>
+            </>
+            )}
 
+            {activeTab === 'taccuino' && (
             <section className="space-y-4" aria-labelledby="student-booklet-section">
                 <div>
                     <h2 id="student-booklet-section" className="text-lg font-bold text-slate-800">
@@ -597,6 +625,7 @@ export default function ProfilePage() {
                 </div>
                 <StudentBookletCard questionnaireType={selectedBookletType} lang={lang} />
             </section>
+            )}
         </div>
     );
 }
