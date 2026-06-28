@@ -4,9 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { QUESTIONNAIRE_LIST, QuestionnaireType, QuestionnaireConfig } from '@/lib/questionnaires';
-import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, ChevronDown, ExternalLink, FileQuestion } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BookOpen, ChevronDown, ExternalLink, FileQuestion } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { QuestionnaireIcon } from './QuestionnaireIcon';
+import { BackButton } from '@/components/ui/BackButton';
 
 const ACTIVE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
 const ADMINISTRATION_LANGS = ['en', 'es', 'sv'] as const;
@@ -36,16 +37,7 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
     return (
         <div className="space-y-6">
             <section className="flex flex-wrap items-center gap-4">
-                {onBack && (
-                    <button
-                        type="button"
-                        onClick={onBack}
-                        className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-indigo-700"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        {t('nav.back')}
-                    </button>
-                )}
+                {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
                 <div className="min-w-0">
                     <h1 className="text-2xl font-bold text-slate-900">{t('selector.title')}</h1>
                 </div>

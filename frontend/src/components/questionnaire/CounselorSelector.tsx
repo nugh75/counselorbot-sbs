@@ -1,9 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, Compass, CircleOff, Cpu, Cloud } from 'lucide-react';
+import { ArrowRight, Check, Compass, CircleOff, Cpu, Cloud } from 'lucide-react';
 import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId, subscribeToCounselor, PublicCounselor } from '@/lib/counselor';
 import { useI18n } from '@/lib/i18n-context';
+import { BackButton } from '@/components/ui/BackButton';
 
 // Selettore counselor lato utente. Se non ci sono counselor configurati non
 // renderizza nulla: il flusso resta identico a prima.
@@ -70,16 +71,7 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName }: Cou
 
     return (
         <section className="space-y-5">
-            {onBack && (
-                <button
-                    type="button"
-                    onClick={onBack}
-                    className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-indigo-700"
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                    {t('nav.back')}
-                </button>
-            )}
+            {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
 
             <div className="glass-panel p-6 sm:p-7">
                 <div className="max-w-3xl">
