@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { LucideIcon } from 'lucide-react';
-import { Send, GraduationCap, BookOpen, Bot, User, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search } from 'lucide-react';
+import { Send, GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search } from 'lucide-react';
 import { streamChat } from '@/lib/chat-stream';
 import { ai4authLoginUrl, getIdentity, type Identity } from '@/lib/auth';
 import { canUseAssistant, canUseTeacherAssistant } from '@/lib/roles';
@@ -347,22 +347,12 @@ export default function AssistentePage() {
                     <div ref={scrollRef} className="glass-panel p-4 flex-1 overflow-y-auto space-y-4">
                         {messages.length === 0 && (
                             <div className="flex items-start gap-3 text-slate-600">
-                                <div className="w-8 h-8 rounded-md bg-indigo-50 flex items-center justify-center shrink-0">
-                                    <Bot className="w-5 h-5 text-indigo-600" />
-                                </div>
                                 <p className="text-sm leading-relaxed pt-1">{t(`assistant.welcome.${audience}`)}</p>
                             </div>
                         )}
 
                         {messages.map((msg, i) => (
                             <div key={i} className={`flex items-start gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                                <div className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${
-                                    msg.role === 'user' ? 'bg-slate-200' : 'bg-indigo-50'
-                                }`}>
-                                    {msg.role === 'user'
-                                        ? <User className="w-5 h-5 text-slate-600" />
-                                        : <Bot className="w-5 h-5 text-indigo-600" />}
-                                </div>
                                 <div className={`max-w-[80%] rounded-lg px-4 py-2.5 ${
                                     msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-800'
                                 }`}>

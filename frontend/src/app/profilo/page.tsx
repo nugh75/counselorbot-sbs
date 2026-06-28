@@ -14,7 +14,7 @@ import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { StudentBookletCard, EVENT_BOOKLET_TYPES, bookletTypeOptionLabel, type BookletType } from '@/components/profile/StudentBookletCard';
 import { PortfolioCard } from '@/components/profile/PortfolioCard';
 import {
-    ArrowLeft, ArrowRight, User, FileText, Trash2, Download, MessageSquare, ShieldAlert, Search, History
+    ArrowLeft, ArrowRight, Trash2, Download, MessageSquare, ShieldAlert, Search
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList,
@@ -227,9 +227,6 @@ export default function ProfilePage() {
     if (!identity) {
         return (
             <div className="max-w-md mx-auto my-12 p-8 bg-white border border-slate-200 rounded-xl text-center space-y-6 shadow-sm">
-                <div className="mx-auto w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center">
-                    <User className="w-6 h-6 text-indigo-600" />
-                </div>
                 <h1 className="text-2xl font-bold text-slate-900">{t('profile.loginRequired')}</h1>
                 <p className="text-slate-500 text-sm">
                     {t('profile.loginRequiredDesc')}
@@ -268,9 +265,6 @@ export default function ProfilePage() {
             {/* Header */}
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
-                        <User className="w-5 h-5" />
-                    </div>
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900">{t('profile.title')}</h1>
                         <p className="text-sm text-slate-500 mt-1">{t('profile.subtitle')}</p>
@@ -353,9 +347,6 @@ export default function ProfilePage() {
                     className="glass-panel p-5 flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors"
                 >
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
-                            <History className="w-5 h-5" />
-                        </div>
                         <div>
                             <h3 className="font-bold text-slate-800">Cambiamenti del profilo</h3>
                             <p className="text-sm text-slate-500">Rivedi come e cambiato il tuo profilo e salva una riflessione personale.</p>
@@ -371,8 +362,7 @@ export default function ProfilePage() {
             <section className="glass-panel p-5 space-y-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                        <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                            <FileText className="w-5 h-5 text-indigo-500" />
+                        <h2 className="text-lg font-bold text-slate-800">
                             {t('profile.myCompilations')}
                         </h2>
                         <p className="mt-1 text-sm text-slate-500">
@@ -385,9 +375,6 @@ export default function ProfilePage() {
                 </div>
                 {sessions.length === 0 ? (
                     <div className="text-center py-10 px-4 border border-dashed border-slate-200 rounded-xl bg-white space-y-4">
-                        <div className="w-12 h-12 mx-auto rounded-full bg-indigo-50 flex items-center justify-center">
-                            <FileText className="w-6 h-6 text-indigo-400" />
-                        </div>
                         <p className="text-sm text-slate-500 max-w-xs mx-auto">{t('profile.noSessions')}</p>
                         <Link
                             href="/"
@@ -537,9 +524,6 @@ export default function ProfilePage() {
                             {/* Detailed Grid of Factors */}
                             {selectedSession.questionnaire_type === 'SAVICKAS' ? (
                                 <div className="space-y-4 text-center py-8">
-                                    <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
-                                        <MessageSquare className="w-6 h-6" />
-                                    </div>
                                     <div className="max-w-md mx-auto space-y-2">
                                         <h3 className="font-bold text-slate-800">{t('profile.savickasTitle')}</h3>
                                         <p className="text-sm text-slate-500 leading-relaxed">
@@ -610,7 +594,6 @@ export default function ProfilePage() {
                     </>
                 ) : (
                     <div className="glass-panel p-12 text-center space-y-4 text-slate-400">
-                        <FileText className="w-12 h-12 mx-auto text-slate-200" />
                         <p className="font-medium">{t('profile.selectSession')}</p>
                     </div>
                 )}
