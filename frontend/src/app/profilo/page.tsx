@@ -318,7 +318,7 @@ export default function ProfilePage() {
                         onClick={() => setActiveTab('taccuino')}
                         className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${activeTab === 'taccuino' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                     >
-                        Taccuino e libretto
+                        Su di me e libretto
                     </button>
                     <button
                         type="button"
@@ -334,7 +334,7 @@ export default function ProfilePage() {
             <section className="space-y-4" aria-labelledby="personal-profile-section">
                 <div>
                     <h2 id="personal-profile-section" className="text-lg font-bold text-slate-800">
-                        Profilo personale
+                        Su di me
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
                         Questa sezione riguarda solo il tuo profilo: non cambia quando scegli una compilazione.
