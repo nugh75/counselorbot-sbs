@@ -6,6 +6,7 @@ import { Bot, ClipboardList, LayoutGrid, LogIn, LogOut, MoreVertical, Settings, 
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { HeaderCounselor } from './HeaderCounselor';
 import { HeaderInstrument } from './HeaderInstrument';
+import { HeaderResume } from './HeaderResume';
 import { ThemeToggle } from './ThemeToggle';
 import { Tooltip, TooltipProvider } from '@/components/ui/Tooltip';
 import { CompassMark } from '@/components/ui/CompassMark';
@@ -147,6 +148,9 @@ export function Header() {
                         )}
 
                         <span className={SEPARATOR} />
+
+                        {/* Riprendi la sessione interrotta (se presente). */}
+                        <HeaderResume />
 
                         {/* Set minimo sempre disponibile: feedback, tema, lingua. */}
                         <Tooltip content={t('nav.feedback')}>

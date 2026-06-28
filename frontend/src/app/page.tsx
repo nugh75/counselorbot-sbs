@@ -28,6 +28,7 @@ import { addCompletedProfile, hasCompletedAll, getCombinedScoresContext, clearCo
 import { ai4authLoginUrl, getIdentity, type Identity } from '@/lib/auth';
 import { getSelectedCounselorId, setSelectedCounselorId } from '@/lib/counselor';
 import { setSelectedInstrumentId } from '@/lib/instrument';
+import { getResume, setResume } from '@/lib/resume';
 import { BackButton } from '@/components/ui/BackButton';
 
 
@@ -141,6 +142,27 @@ export default function Home() {
         if (identity === undefined || !identity?.authenticated) return;
 
         const params = new URLSearchParams(window.location.search);
+
+        // Riprendi la sessione interrotta (pulsante header): torna dritto alla chat.
+        if (params.get('resume')) {
+            const r = getResume();
+            window.history.replaceState(null, '', window.location.pathname);
+            if (r && QUESTIONNAIRES[r.instrument as QuestionnaireType]) {
+                const q = QUESTIONNAIRES[r.instrument as QuestionnaireType];
+                const profiles = getCompletedProfiles();
+                const profile = profiles.find((p) => p.sessionId === r.sessionId)
+                    ?? profiles.find((p) => p.questionnaireType === r.instrument);
+                setSelectedQuestionnaire(q);
+                setSelectedInstrumentId(r.instrument);
+                if (r.counselorId != null) setSelectedCounselorId(r.counselorId);
+                setSessionId(r.sessionId);
+                setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
+                setExperience(r.experience);
+                setProfileReviewed(true);
+                setStep('interaction');
+                return;
+            }
+        }
 
         if (params.get('view') === 'questionnaires') {
             setSelectedQuestionnaire(null);
@@ -300,7 +322,16 @@ export default function Home() {
         setStep('interaction');
     };
 
+    // Scelta modalità chat: apre la chat e registra il punto di ripresa (header "Riprendi").
+    const chooseExperience = (exp: 'standard' | 'opencode') => {
+        setExperience(exp);
+        if (selectedQuestionnaire) {
+            setResume({ instrument: selectedQuestionnaire.id, sessionId, experience: exp, counselorId: getSelectedCounselorId() });
+        }
+    };
+
     const handleInteractionComplete = () => {
+        setResume(null);
         setStep('completed');
     };
 
@@ -337,6 +368,7 @@ export default function Home() {
 
     const handleCombinedComplete = () => {
         clearCompletedProfiles();
+        setResume(null);
         setCombinedScores(null);
         setCombinedContext('');
         setScores(null);
@@ -348,6 +380,7 @@ export default function Home() {
     };
 
     const analyzeAnother = () => {
+        setResume(null);
         setScores(null);
         setSelectedQuestionnaire(null);
         setPdfToken(undefined);
@@ -553,14 +586,14 @@ export default function Home() {
                                         </div>
                                         <div className="grid sm:grid-cols-2 gap-2.5">
                                             <button
-                                                onClick={() => setExperience('standard')}
+                                                onClick={() => chooseExperience('standard')}
                                                 className="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
                                             >
                                                 <MessageSquare className="w-4 h-4" />
                                                 {t('guided.mode.guided')}
                                             </button>
                                             <button
-                                                onClick={() => setExperience('opencode')}
+                                                onClick={() => chooseExperience('opencode')}
                                                 className="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
                                             >
                                                 <Terminal className="w-4 h-4" />
@@ -569,53 +602,23 @@ export default function Home() {
                                         </div>
                                     </div>
                                 </div>
+                            ) : experience === 'standard' ? (
+                                /* Schermata 3: chat (modalità già scelta, nessun toggle in alto). */
+                                <GuidedChatInterface
+                                    scores={scores}
+                                    questionnaireType={selectedQuestionnaire.id}
+                                    onComplete={handleInteractionComplete}
+                                    sessionId={sessionId}
+                                    locale={lang}
+                                />
                             ) : (
-                                /* Schermata 3: chat (profilo già rivisto, non ripetuto qui). */
-                                <>
-                                    {/* Toggle Experience Selector */}
-                                    <div className="flex justify-center bg-slate-100 p-1 rounded-lg max-w-sm mx-auto border border-slate-200 shadow-sm">
-                                        <button
-                                            onClick={() => setExperience('standard')}
-                                            className={`flex-1 py-1.5 px-3 rounded-md font-semibold text-xs transition-all flex items-center justify-center gap-1.5 ${
-                                                experience === 'standard'
-                                                    ? 'bg-white text-indigo-700 shadow-sm border border-slate-200/55'
-                                                    : 'text-slate-500 hover:text-slate-800'
-                                            }`}
-                                        >
-                                            <MessageSquare className="w-3.5 h-3.5" />
-                                            {t('guided.mode.guided')}
-                                        </button>
-                                        <button
-                                            onClick={() => setExperience('opencode')}
-                                            className={`flex-1 py-1.5 px-3 rounded-md font-semibold text-xs transition-all flex items-center justify-center gap-1.5 ${
-                                                experience === 'opencode'
-                                                    ? 'bg-white text-indigo-700 shadow-sm border border-slate-200/55'
-                                                    : 'text-slate-500 hover:text-slate-800'
-                                            }`}
-                                        >
-                                            <Terminal className="w-3.5 h-3.5" />
-                                            {t('guided.mode.sandbox')}
-                                        </button>
-                                    </div>
-
-                                    {experience === 'standard' ? (
-                                        <GuidedChatInterface
-                                            scores={scores}
-                                            questionnaireType={selectedQuestionnaire.id}
-                                            onComplete={handleInteractionComplete}
-                                            sessionId={sessionId}
-                                            locale={lang}
-                                        />
-                                    ) : (
-                                        <OpenCodeExperience
-                                            scores={scores}
-                                            questionnaire={selectedQuestionnaire}
-                                            pdfToken={pdfToken}
-                                            sessionId={sessionId}
-                                            locale={lang}
-                                        />
-                                    )}
-                                </>
+                                <OpenCodeExperience
+                                    scores={scores}
+                                    questionnaire={selectedQuestionnaire}
+                                    pdfToken={pdfToken}
+                                    sessionId={sessionId}
+                                    locale={lang}
+                                />
                             )}
                         </div>
                     )}
