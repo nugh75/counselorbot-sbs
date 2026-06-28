@@ -255,7 +255,7 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
 
 
 @router.post("/chat")
-async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db), identity: dict = Depends(auth.get_identity)):
+async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db), identity: dict = Depends(auth.get_identity_view_as)):
     session_id = request.session_id or str(uuid.uuid4())
     request.language = _normalize_language(request.language)
 
@@ -452,7 +452,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
 
 
 @router.post("/chat/stream")
-async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), identity: dict = Depends(auth.get_identity)):
+async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), identity: dict = Depends(auth.get_identity_view_as)):
     """
     Variante streaming di /chat (Server-Sent Events).
     Eventi: {"delta": "..."} per ogni pezzo, poi {"done": true, "response": <full>, "session_id": ...}.
@@ -720,7 +720,7 @@ async def chat_message(
     questionnaire_type: str = "",
     language: str = "",
     db: Session = Depends(get_db),
-    identity: dict = Depends(auth.get_identity),
+    identity: dict = Depends(auth.get_identity_view_as),
 ):
     language = _normalize_language(language)
     # 1. Retrieve Configuration and System Prompt based on Mode
@@ -809,7 +809,7 @@ async def chat_message(
 async def audit_qsa(
     request: QsaAuditRequest,
     db: Session = Depends(get_db),
-    identity: dict = Depends(auth.get_identity),
+    identity: dict = Depends(auth.get_identity_view_as),
 ):
     # Log completion for QSA-family profile analyses.
     log_entry = models.Log(

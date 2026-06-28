@@ -112,12 +112,14 @@ async def get_identity(request: Request) -> dict:
     return _anonymous_identity()
 
 
-# Anteprima ruoli: i tre account demo impersonabili (allowlist). Solo un admin
-# reale puo' agire come uno di questi e nessun altro username e' impersonabile,
-# quindi non si possono leggere/scrivere dati di utenti reali. Speculare a
-# VIEW_AS_ACCOUNTS nel frontend.
+# Profili di prova impersonabili (allowlist). Solo un admin reale puo' agire
+# come uno di questi e nessun altro username e' impersonabile, quindi non si
+# possono leggere/scrivere dati di utenti reali. I dati creati durante le prove
+# restano in DB sotto questi username. Speculare a VIEW_AS_ACCOUNTS nel frontend.
 VIEW_AS_DEMO_ACCOUNTS = {
     "studente.demo": {"is_researcher": False, "groups": ["studenti"]},
+    "studente.demo2": {"is_researcher": False, "groups": ["studenti"]},
+    "studente.demo3": {"is_researcher": False, "groups": ["studenti"]},
     "ricercatore.demo": {"is_researcher": True, "groups": ["researchers"]},
     "docente.demo": {"is_researcher": False, "groups": ["docenti"]},
 }
@@ -136,19 +138,32 @@ def _impersonated_demo_identity(username: str) -> dict:
     }
 
 
+def _apply_view_as(identity: dict, request: Request) -> dict:
+    """Se l'utente reale e' admin e indica un profilo di prova valido (header
+    X-View-As o query param view_as), restituisce l'identita' impersonata.
+    Altrimenti l'identita' invariata. Da usare ovunque serva che le prove (dati
+    e interazioni) vengano attribuite al profilo di prova, non all'admin."""
+    if identity.get("is_admin"):
+        view_as = request.headers.get("X-View-As") or request.query_params.get("view_as")
+        if view_as and view_as in VIEW_AS_DEMO_ACCOUNTS:
+            return _impersonated_demo_identity(view_as)
+    return identity
+
+
+async def get_identity_view_as(request: Request) -> dict:
+    """Come get_identity ma applica l'anteprima profilo di prova. Usata dagli
+    endpoint a identita' opzionale (chat) cosi' le interazioni di prova si
+    salvano sotto il profilo di prova. /auth/me resta su get_identity (reale)."""
+    return _apply_view_as(await get_identity(request), request)
+
+
 async def get_current_user(request: Request, identity: dict = Depends(get_identity)) -> dict:
     if not identity["authenticated"]:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Non autenticato",
         )
-    # Anteprima ruoli: un admin reale puo' impersonare un account demo, passato
-    # via header X-View-As (chiamate fetch) o query param view_as (tag <img>).
-    if identity.get("is_admin"):
-        view_as = request.headers.get("X-View-As") or request.query_params.get("view_as")
-        if view_as and view_as in VIEW_AS_DEMO_ACCOUNTS:
-            return _impersonated_demo_identity(view_as)
-    return identity
+    return _apply_view_as(identity, request)
 
 
 async def get_current_active_admin(identity: dict = Depends(get_current_user)) -> dict:
