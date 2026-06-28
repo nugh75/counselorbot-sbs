@@ -306,12 +306,30 @@ export default function ProfilePage() {
                 </div>
             </section>
 
-            <section className="glass-panel p-5 space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-indigo-500" />
-                        {t('profile.myCompilations')}
+            <section className="space-y-4" aria-labelledby="personal-profile-section">
+                <div>
+                    <h2 id="personal-profile-section" className="text-lg font-bold text-slate-800">
+                        Profilo personale
                     </h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                        Questa sezione riguarda solo il tuo profilo: non cambia quando scegli una compilazione.
+                    </p>
+                </div>
+                <LearnerProfileCard variant="edit" />
+                <ProfileChangeReflection lang={lang} />
+            </section>
+
+            <section className="glass-panel p-5 space-y-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-indigo-500" />
+                            {t('profile.myCompilations')}
+                        </h2>
+                        <p className="mt-1 text-sm text-slate-500">
+                            Cerca e scegli una compilazione: la selezione aggiorna solo risultato e libretto qui sotto.
+                        </p>
+                    </div>
                     <span className="text-xs font-semibold text-slate-400">
                         {filteredSessions.length} / {sessions.length}
                     </span>
@@ -332,7 +350,7 @@ export default function ProfilePage() {
                 ) : (
                     <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.45fr)]">
                         <label className="block">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Compilazione</span>
+                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Compilazione attiva</span>
                             <select
                                 value={selectedSession?.session_id || ''}
                                 onChange={(event) => {
@@ -366,11 +384,17 @@ export default function ProfilePage() {
                 )}
             </section>
 
-            {/* Learner profile (modello del discente) */}
-            <LearnerProfileCard variant="edit" />
-            <ProfileChangeReflection selectedSession={selectedSession} lang={lang} />
-
-            <div className="space-y-6">
+            <section className="space-y-6" aria-labelledby="selected-session-details">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <h2 id="selected-session-details" className="text-lg font-bold text-slate-800">
+                        Risultato e libretto
+                    </h2>
+                    {selectedSession && (
+                        <span className={`px-3 py-0.5 border text-xs font-bold rounded-full uppercase ${getTypeColor(selectedSession.questionnaire_type)}`}>
+                            {selectedSession.questionnaire_type} · {selectedSession.session_id.slice(0, 8)}
+                        </span>
+                    )}
+                </div>
                 {selectedSession ? (
                     <>
                         <div className="glass-panel p-6 space-y-6">
@@ -542,7 +566,7 @@ export default function ProfilePage() {
                         <p className="font-medium">{t('profile.selectSession')}</p>
                     </div>
                 )}
-            </div>
+            </section>
         </div>
     );
 }
