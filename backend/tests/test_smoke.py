@@ -2492,6 +2492,46 @@ def test_portfolio_crud_images_search_and_ownership():
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
+def test_role_preview_impersonation_scopes_data_to_demo_account():
+    """Anteprima ruoli: un admin reale impersona un account demo (allowlist)."""
+    main.app.dependency_overrides[auth.get_identity] = lambda: _identity(
+        "realadmin", "realadmin@example.test", is_admin=True
+    )
+    try:
+        hdr = {"X-View-As": "studente.demo"}
+
+        # Lavoro creato come account demo (header) vs come admin reale (no header).
+        demo_item = client.post("/user/portfolio", json={"title": "Lavoro demo"}, headers=hdr).json()["id"]
+        admin_item = client.post("/user/portfolio", json={"title": "Lavoro admin"}).json()["id"]
+
+        # Con header: solo i dati del demo.
+        demo_ids = {it["id"] for it in client.get("/user/portfolio", headers=hdr).json()}
+        assert demo_item in demo_ids and admin_item not in demo_ids
+
+        # Query param view_as (per i tag <img>): stesso scoping.
+        q_ids = {it["id"] for it in client.get("/user/portfolio?view_as=studente.demo").json()}
+        assert demo_item in q_ids and admin_item not in q_ids
+
+        # Senza header: solo i dati dell'admin reale.
+        admin_ids = {it["id"] for it in client.get("/user/portfolio").json()}
+        assert admin_item in admin_ids and demo_item not in admin_ids
+
+        # Allowlist: un username non-demo viene ignorato (resta admin).
+        ign_ids = {it["id"] for it in client.get("/user/portfolio", headers={"X-View-As": "vittima.reale"}).json()}
+        assert admin_item in ign_ids and demo_item not in ign_ids
+
+        client.delete(f"/user/portfolio/{demo_item}", headers=hdr)
+        client.delete(f"/user/portfolio/{admin_item}")
+
+        # Un non-admin non puo' impersonare: l'header viene ignorato.
+        main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+        created = client.post("/user/portfolio", json={"title": "no imp"}, headers=hdr).json()["id"]
+        assert created in {it["id"] for it in client.get("/user/portfolio").json()}
+        client.delete(f"/user/portfolio/{created}")
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
 def test_questionnaire_pdf_download():
     """Crea un risultato e verifica che il PDF sia scaricabile."""
     r = client.post("/questionnaire-result", json={
