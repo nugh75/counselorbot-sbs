@@ -6,6 +6,24 @@ import { QUESTIONNAIRES, type QuestionnaireType } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { toast } from '@/components/ui/Toast';
 
+// Libretti narrativi senza dimensioni (fattori): eventi significativi.
+export const EVENT_BOOKLET_TYPES = ['EVENTO_STUDIO', 'EVENTO_PROFESSIONALE'] as const;
+export type BookletType = QuestionnaireType | (typeof EVENT_BOOKLET_TYPES)[number];
+
+const BOOKLET_TYPE_LABEL: Record<string, string> = {
+    EVENTO_STUDIO: 'Evento significativo di studio',
+    EVENTO_PROFESSIONALE: 'Evento significativo professionale',
+};
+
+function isQuestionnaireType(type: BookletType): type is QuestionnaireType {
+    return type in QUESTIONNAIRES;
+}
+
+export function bookletTypeOptionLabel(type: BookletType): string {
+    if (isQuestionnaireType(type)) return `${type} · ${QUESTIONNAIRES[type].fullName}`;
+    return BOOKLET_TYPE_LABEL[type] ?? type;
+}
+
 type BookletData = {
     title: string;
     strength: string[];
@@ -91,7 +109,7 @@ function bookletTitle(summary: BookletSummary, fallback: string): string {
     return title || fallback;
 }
 
-export function StudentBookletCard({ questionnaireType, lang }: { questionnaireType: QuestionnaireType; lang: string }) {
+export function StudentBookletCard({ questionnaireType, lang }: { questionnaireType: BookletType; lang: string }) {
     const { t, tf } = useI18n();
     const [booklets, setBooklets] = useState<BookletSummary[]>([]);
     const [currentId, setCurrentId] = useState<number | null>(null);
@@ -102,7 +120,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
     const [downloading, setDownloading] = useState(false);
 
     const factorOptions = useMemo(() => {
-        if (questionnaireType === 'SAVICKAS') return [];
+        if (!isQuestionnaireType(questionnaireType) || questionnaireType === 'SAVICKAS') return [];
         const config = QUESTIONNAIRES[questionnaireType];
         return (config?.factors || []).map((factor) => {
             const label = tf(`factor.${factor.code}.name`, factor.name);
@@ -368,7 +386,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
                 <div>
                     <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                         <BookOpen className="h-5 w-5 text-indigo-600" />
-                        Libretto dello studente · {questionnaireType}
+                        Libretto dello studente · {isQuestionnaireType(questionnaireType) ? questionnaireType : BOOKLET_TYPE_LABEL[questionnaireType]}
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
                         Crea piu schede per lo stesso strumento: ognuna diventa un percorso con obiettivi, strategie e verifiche.
