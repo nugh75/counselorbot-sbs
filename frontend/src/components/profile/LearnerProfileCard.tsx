@@ -143,9 +143,9 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
 
     const formUi = (
         <div className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-3">
                 {FIELDS.map((f) => (
-                    <label key={f.key} className={`block ${f.multiline ? 'sm:col-span-2' : ''}`}>
+                    <label key={f.key} className="block">
                         <span className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">{t(f.labelKey)}</span>
                         {f.multiline ? (
                             <textarea
@@ -198,9 +198,9 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     );
 
     const summaryUi = (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-3">
             {filledEntries.map((f) => (
-                <div key={f.key} className={`rounded-lg border border-slate-200 bg-slate-50/60 p-3 ${f.multiline ? 'sm:col-span-2' : ''}`}>
+                <div key={f.key} className="rounded-lg border border-slate-200 bg-slate-50/60 p-3">
                     <div className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">{t(f.labelKey)}</div>
                     <p className="mt-1 text-sm leading-relaxed text-slate-800">{f.value}</p>
                 </div>
