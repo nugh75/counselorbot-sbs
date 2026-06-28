@@ -287,6 +287,15 @@ EXPECTED_ROUTES = {
     ("GET", "/user/student-booklets/{session_id}"),
     ("PUT", "/user/student-booklets/{session_id}"),
     ("GET", "/user/student-booklets/{session_id}/pdf"),
+    ("GET", "/user/portfolio"),
+    ("POST", "/user/portfolio"),
+    ("GET", "/user/portfolio/categories"),
+    ("GET", "/user/portfolio/{item_id}"),
+    ("PUT", "/user/portfolio/{item_id}"),
+    ("DELETE", "/user/portfolio/{item_id}"),
+    ("POST", "/user/portfolio/{item_id}/images"),
+    ("GET", "/user/portfolio/{item_id}/images/{image_id}"),
+    ("DELETE", "/user/portfolio/{item_id}/images/{image_id}"),
     ("GET", "/admin/questionnaire-results"),
     ("GET", "/admin/validation/summary"),
     ("GET", "/admin/validation/responses"),
@@ -2410,6 +2419,75 @@ def test_certified_strategies_for_student_endpoint():
             assert all(s["slug"] != "booklet-focus-qsa" for s in drafted.json())
         finally:
             client.delete(f"/admin/certified-strategies/{sid}")
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
+def test_portfolio_crud_images_search_and_ownership():
+    """Portfolio: CRUD voci, ricerca/filtro, upload/serve/delete immagini, ownership."""
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        r = client.post("/user/portfolio", json={
+            "title": "Tema di storia", "description": "Saggio sul Novecento",
+            "category": "Scrittura", "item_date": "2026-03-01",
+        })
+        assert r.status_code == 200, r.text
+        item_id = r.json()["id"]
+        assert r.json()["images"] == []
+
+        r2 = client.post("/user/portfolio", json={"title": "Progetto robotica", "category": "STEM"})
+        assert r2.status_code == 200, r2.text
+        other_id = r2.json()["id"]
+
+        # Lista + ricerca + filtro categoria.
+        ids = {it["id"] for it in client.get("/user/portfolio").json()}
+        assert {item_id, other_id} <= ids
+
+        searched = client.get("/user/portfolio?q=robotica").json()
+        titles = [it["title"] for it in searched]
+        assert "Progetto robotica" in titles and "Tema di storia" not in titles
+
+        filtered = [it["id"] for it in client.get("/user/portfolio?category=Scrittura").json()]
+        assert item_id in filtered and other_id not in filtered
+
+        cats = client.get("/user/portfolio/categories").json()
+        assert "Scrittura" in cats and "STEM" in cats
+
+        # Update parziale.
+        r = client.put(f"/user/portfolio/{item_id}", json={"title": "Tema di storia (rev)"})
+        assert r.status_code == 200 and r.json()["title"] == "Tema di storia (rev)"
+
+        # Immagine: upload, serve, tipo non valido, delete.
+        png = b"\x89PNG\r\n\x1a\n" + b"0" * 32
+        r = client.post(f"/user/portfolio/{item_id}/images", files={"file": ("a.png", png, "image/png")})
+        assert r.status_code == 200, r.text
+        assert len(r.json()["images"]) == 1
+        image_id = r.json()["images"][0]["id"]
+
+        r = client.get(f"/user/portfolio/{item_id}/images/{image_id}")
+        assert r.status_code == 200 and r.headers["content-type"].startswith("image/png")
+        assert r.content == png
+
+        assert client.post(
+            f"/user/portfolio/{item_id}/images",
+            files={"file": ("a.txt", b"hi", "text/plain")},
+        ).status_code == 400
+
+        r = client.delete(f"/user/portfolio/{item_id}/images/{image_id}")
+        assert r.status_code == 200 and r.json()["images"] == []
+
+        # Ownership: un altro utente non vede/agisce.
+        main.app.dependency_overrides[auth.get_identity] = lambda: _identity(
+            "other", "other@example.test", is_researcher=False
+        )
+        assert client.get(f"/user/portfolio/{item_id}").status_code == 403
+        assert client.delete(f"/user/portfolio/{item_id}").status_code == 403
+        assert client.get("/user/portfolio").json() == []
+
+        # Il proprietario elimina.
+        main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+        assert client.delete(f"/user/portfolio/{item_id}").status_code == 200
+        assert client.delete(f"/user/portfolio/{other_id}").status_code == 200
     finally:
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
