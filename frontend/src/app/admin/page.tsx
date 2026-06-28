@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, Award, MessageCircleQuestion, PanelLeftClose, PanelLeftOpen, CalendarDays } from 'lucide-react';
+import { ArrowLeft, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, Award, MessageCircleQuestion, PanelLeftClose, PanelLeftOpen, CalendarDays, Eye } from 'lucide-react';
 import { ConfigForm } from '@/components/admin/ConfigForm';
 import { LogViewer } from '@/components/admin/LogViewer';
 import { CostStats } from '@/components/admin/CostStats';
@@ -20,13 +20,14 @@ import { PqblAdminPanel } from '@/components/admin/PqblAdminPanel';
 import { ResearchContactsPanel } from '@/components/admin/ResearchContactsPanel';
 import { AdministrationPlansPanel } from '@/components/admin/AdministrationPlansPanel';
 import { AssistantQuestionsPanel } from '@/components/admin/AssistantQuestionsPanel';
-import { getIdentity } from '@/lib/auth';
+import { RolePreviewPanel } from '@/components/admin/RolePreviewPanel';
+import { getRealIdentity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { canUseResearchConsole } from '@/lib/roles';
 
 import { cn } from '@/lib/utils';
 
-type AdminTab = 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'certifiedStrategies' | 'assistantQuestions' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'training' | 'pqbl';
+type AdminTab = 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'certifiedStrategies' | 'assistantQuestions' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'training' | 'pqbl' | 'rolePreview';
 
 export default function AdminPage() {
     const router = useRouter();
@@ -84,11 +85,17 @@ export default function AdminPage() {
                 { id: 'pqbl', label: t('admin.tab.pqbl'), icon: GraduationCap },
             ],
         },
+        {
+            title: 'Anteprima',
+            items: [
+                { id: 'rolePreview', label: 'Anteprima ruoli', icon: Eye },
+            ],
+        },
     ];
     const activeItem = navGroups.flatMap((group) => group.items).find((item) => item.id === activeTab);
 
     useEffect(() => {
-        getIdentity().then((id) => {
+        getRealIdentity().then((id) => {
             setAuthState(canUseResearchConsole(id) ? 'admin' : 'forbidden');
         });
     }, []);
@@ -213,6 +220,7 @@ export default function AdminPage() {
                         {activeTab === 'training' && <TrainingDatasetPanel />}
                         {activeTab === 'pqbl' && <PqblAdminPanel />}
                         {activeTab === 'validation' && <ValidationExportPanel />}
+                        {activeTab === 'rolePreview' && <RolePreviewPanel />}
                     </div>
                 </div>
             </section>
