@@ -646,7 +646,7 @@ def generate_student_booklet_pdf(
         pdf.multi_cell(content_w, 8, _latin1(title), new_x="LMARGIN", new_y="NEXT")
 
     _booklet_section(pdf, "1. Profilo di riferimento", content_w)
-    if questionnaire_type == "SAVICKAS":
+    if questionnaire_type in ("SAVICKAS", "EVENTO_STUDIO", "EVENTO_PROFESSIONALE"):
         pdf.set_font("Helvetica", "", 10)
         pdf.set_text_color(70, 70, 80)
         pdf.multi_cell(

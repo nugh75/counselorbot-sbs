@@ -16,7 +16,12 @@ from .. import scoring_service
 router = APIRouter()
 get_db = database.get_db
 
-STUDENT_BOOKLET_TYPES = ("QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP")
+# Strumenti del libretto: i 7 questionari + due libretti narrativi senza dimensioni
+# (eventi significativi), in cui forza/area sono testo libero come per Savickas.
+STUDENT_BOOKLET_TYPES = (
+    "QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP",
+    "EVENTO_STUDIO", "EVENTO_PROFESSIONALE",
+)
 
 
 def _get_owned_questionnaire_result(session_id: str, current_user: dict, db: Session) -> models.QuestionnaireResult:
