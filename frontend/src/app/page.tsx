@@ -452,7 +452,7 @@ export default function Home() {
             {step !== 'intro' && <FlowStepper steps={flowStages} current={stageIndex} />}
 
             {/* The selection screen owns its introduction to avoid repeating the page purpose. */}
-            {step !== 'intro' && step !== 'questionnaire-select' && step !== 'counselor-select' && step !== 'dashboard' && (
+            {step !== 'intro' && step !== 'questionnaire-select' && step !== 'counselor-select' && step !== 'dashboard' && step !== 'interaction' && (
                 <PageHeader
                     title={getStepTitle()}
                     subtitle={getStepDescription()}
@@ -541,18 +541,17 @@ export default function Home() {
                     {/* Step: Guided Chat Interaction */}
                     {step === 'interaction' && scores && selectedQuestionnaire && (
                         <div className="space-y-6">
+                            <BackButton onClick={goBack} label={t('nav.back')} />
                             {experience === null && !profileReviewed ? (
-                                /* Schermata 1: profilo studente, a sé. La card guida l'avanzamento
-                                   (Conferma/Salta) e si auto-salta se non c'è nulla / non autenticato. */
-                                <div className="max-w-2xl mx-auto">
-                                    <LearnerProfileCard
-                                        variant="review"
-                                        sessionId={sessionId}
-                                        requireInitial
-                                        onDone={() => setProfileReviewed(true)}
-                                        onUnavailable={() => setProfileReviewed(true)}
-                                    />
-                                </div>
+                                /* Schermata 1: profilo studente, a tutta pagina. La card guida
+                                   l'avanzamento (Conferma/Salta) e si auto-salta se non c'è nulla. */
+                                <LearnerProfileCard
+                                    variant="review"
+                                    sessionId={sessionId}
+                                    requireInitial
+                                    onDone={() => setProfileReviewed(true)}
+                                    onUnavailable={() => setProfileReviewed(true)}
+                                />
                             ) : experience === null ? (
                                 /* Schermata 2: scelta modalità, compatta (tasti piccoli, affiancati). */
                                 <div className="max-w-md mx-auto">

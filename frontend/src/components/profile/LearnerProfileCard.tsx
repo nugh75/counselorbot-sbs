@@ -142,35 +142,37 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
         .filter((f) => f.value);
 
     const formUi = (
-        <div className="space-y-3">
-            {FIELDS.map((f) => (
-                <label key={f.key} className="block">
-                    <span className="text-sm text-slate-600">{t(f.labelKey)}</span>
-                    {f.multiline ? (
-                        <textarea
-                            value={form[f.key] || ''}
-                            maxLength={600}
-                            rows={2}
-                            onChange={(e) => {
-                                setValidationError('');
-                                setForm((prev) => ({ ...prev, [f.key]: e.target.value }));
-                            }}
-                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                        />
-                    ) : (
-                        <input
-                            type="text"
-                            value={form[f.key] || ''}
-                            maxLength={600}
-                            onChange={(e) => {
-                                setValidationError('');
-                                setForm((prev) => ({ ...prev, [f.key]: e.target.value }));
-                            }}
-                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                        />
-                    )}
-                </label>
-            ))}
+        <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+                {FIELDS.map((f) => (
+                    <label key={f.key} className={`block ${f.multiline ? 'sm:col-span-2' : ''}`}>
+                        <span className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">{t(f.labelKey)}</span>
+                        {f.multiline ? (
+                            <textarea
+                                value={form[f.key] || ''}
+                                maxLength={600}
+                                rows={2}
+                                onChange={(e) => {
+                                    setValidationError('');
+                                    setForm((prev) => ({ ...prev, [f.key]: e.target.value }));
+                                }}
+                                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            />
+                        ) : (
+                            <input
+                                type="text"
+                                value={form[f.key] || ''}
+                                maxLength={600}
+                                onChange={(e) => {
+                                    setValidationError('');
+                                    setForm((prev) => ({ ...prev, [f.key]: e.target.value }));
+                                }}
+                                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            />
+                        )}
+                    </label>
+                ))}
+            </div>
             <div className="flex items-center gap-3 pt-1">
                 <button
                     onClick={() => void save(saveSource)}
@@ -196,11 +198,14 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     );
 
     const summaryUi = (
-        <ul className="space-y-1 text-sm text-slate-700">
+        <div className="grid gap-3 sm:grid-cols-2">
             {filledEntries.map((f) => (
-                <li key={f.key}><span className="text-slate-500">{t(f.labelKey)}:</span> {f.value}</li>
+                <div key={f.key} className={`rounded-lg border border-slate-200 bg-slate-50/60 p-3 ${f.multiline ? 'sm:col-span-2' : ''}`}>
+                    <div className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">{t(f.labelKey)}</div>
+                    <p className="mt-1 text-sm leading-relaxed text-slate-800">{f.value}</p>
+                </div>
             ))}
-        </ul>
+        </div>
     );
 
     const title = variant === 'update' ? t('lp.updateTitle')
