@@ -35,14 +35,6 @@ interface Reflection {
     created_at: string;
 }
 
-interface QuestionnaireResult {
-    id: number;
-    session_id: string;
-    questionnaire_type: string;
-    scores: Record<string, number> | null;
-    submitted_at: string;
-}
-
 interface ChatMessage {
     role: 'user' | 'assistant';
     content: string;
@@ -73,7 +65,7 @@ function formatRevision(revision: Revision | undefined): string {
     return [`Revisione ${revision.id} (${new Date(revision.created_at).toLocaleString('it-IT')})`, ...lines].join('\n');
 }
 
-export function ProfileChangeReflection({ selectedSession, lang }: { selectedSession: QuestionnaireResult | null; lang: string }) {
+export function ProfileChangeReflection({ lang }: { lang: string }) {
     const { t } = useI18n();
     const [history, setHistory] = useState<Revision[]>([]);
     const [reflections, setReflections] = useState<Reflection[]>([]);
@@ -117,14 +109,6 @@ export function ProfileChangeReflection({ selectedSession, lang }: { selectedSes
     }, [current, previous]);
 
     const studentContext = useMemo(() => {
-        const selected = selectedSession
-            ? [
-                `Compilazione selezionata: ${selectedSession.questionnaire_type}`,
-                `Data compilazione: ${new Date(selectedSession.submitted_at).toLocaleString(lang)}`,
-                `Sessione: ${selectedSession.session_id}`,
-                selectedSession.scores ? `Punteggi: ${Object.entries(selectedSession.scores).map(([k, v]) => `${k}=${v}/9`).join(', ')}` : '',
-            ].filter(Boolean).join('\n')
-            : 'Nessuna compilazione selezionata.';
         const reflectionLines = reflections.slice(0, 5).map((r) => `- ${new Date(r.created_at).toLocaleDateString(lang)}: ${r.note}`);
         return [
             'PROFILO CORRENTE',
@@ -138,10 +122,8 @@ export function ProfileChangeReflection({ selectedSession, lang }: { selectedSes
             '',
             'RIFLESSIONI SALVATE',
             reflectionLines.length ? reflectionLines.join('\n') : 'Nessuna riflessione salvata.',
-            '',
-            selected,
         ].join('\n');
-    }, [changes, current, previous, reflections, selectedSession, lang]);
+    }, [changes, current, previous, reflections, lang]);
 
     const saveReflection = async () => {
         if (!note.trim()) return;
@@ -154,7 +136,7 @@ export function ProfileChangeReflection({ selectedSession, lang }: { selectedSes
                     note,
                     current_revision_id: current?.id ?? null,
                     previous_revision_id: previous?.id ?? null,
-                    session_id: selectedSession?.session_id ?? null,
+                    session_id: null,
                 }),
             });
             if (!res.ok) throw new Error('Save failed');
