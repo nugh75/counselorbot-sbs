@@ -676,7 +676,7 @@ class StudentBookletSave(BaseModel):
 class StudentBookletResponse(BaseModel):
     id: int
     username: str
-    session_id: str
+    session_id: Optional[str] = None
     questionnaire_type: str
     data: Dict[str, Any]
     created_at: datetime

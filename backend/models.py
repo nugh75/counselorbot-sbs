@@ -455,16 +455,16 @@ class LearnerProfileReflection(Base):
 
 
 class StudentBooklet(Base):
-    """Libretto dello studente compilabile, legato a una compilazione."""
+    """Libretto dello studente compilabile, legato a uno strumento."""
 
     __tablename__ = "student_booklets"
     __table_args__ = (
-        UniqueConstraint("username", "session_id", name="uq_student_booklets_username_session"),
+        UniqueConstraint("username", "questionnaire_type", name="uq_student_booklets_username_questionnaire"),
     )
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, nullable=False, index=True)
-    session_id = Column(String, nullable=False, index=True)
+    session_id = Column(String, nullable=True, index=True)
     questionnaire_type = Column(String, nullable=False, index=True)
     data = Column(JSON, nullable=False, default=dict)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

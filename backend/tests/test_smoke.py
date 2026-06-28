@@ -274,6 +274,9 @@ EXPECTED_ROUTES = {
     ("GET", "/user/learner-profile/reflections"),
     ("POST", "/user/learner-profile/reflections"),
     ("DELETE", "/user/learner-profile"),
+    ("GET", "/user/student-booklets/instrument/{questionnaire_type}"),
+    ("PUT", "/user/student-booklets/instrument/{questionnaire_type}"),
+    ("GET", "/user/student-booklets/instrument/{questionnaire_type}/pdf"),
     ("GET", "/user/student-booklets/{session_id}"),
     ("PUT", "/user/student-booklets/{session_id}"),
     ("GET", "/user/student-booklets/{session_id}/pdf"),
@@ -2269,11 +2272,11 @@ def test_student_booklet_crud_pdf_and_ownership():
         })
         assert r.status_code == 200, r.text
 
-        r = client.get("/user/student-booklets/booklet-session")
+        r = client.get("/user/student-booklets/instrument/QSA")
         assert r.status_code == 200, r.text
         assert r.json() is None
 
-        r = client.put("/user/student-booklets/booklet-session", json={
+        r = client.put("/user/student-booklets/instrument/QSA", json={
             "data": {
                 "strength": "C1 - Strategie elaborative",
                 "growth_area": "A6 - Percezione di competenza",
@@ -2283,18 +2286,40 @@ def test_student_booklet_crud_pdf_and_ownership():
         })
         assert r.status_code == 200, r.text
         assert r.json()["questionnaire_type"] == "QSA"
+        assert r.json()["session_id"] is None
         assert r.json()["data"]["student_notes"] == "Nota personale"
 
-        r = client.get("/user/student-booklets/booklet-session/pdf")
+        r = client.get("/user/student-booklets/instrument/QSA/pdf")
         assert r.status_code == 200, r.text
         assert r.headers["content-type"] == "application/pdf"
         assert len(r.content) > 100
+
+        r = client.put("/user/student-booklets/instrument/ZTPI", json={
+            "data": {
+                "strength": "T5 - Futuro",
+                "growth_area": "T1 - Passato Negativo",
+                "student_notes": "Nota ZTPI",
+            }
+        })
+        assert r.status_code == 200, r.text
+        assert r.json()["questionnaire_type"] == "ZTPI"
+        r = client.get("/user/student-booklets/instrument/QSA")
+        assert r.status_code == 200, r.text
+        assert r.json()["data"]["student_notes"] == "Nota personale"
+
+        # Compat: la vecchia route per sessione restituisce il libretto dello strumento.
+        r = client.get("/user/student-booklets/booklet-session")
+        assert r.status_code == 200, r.text
+        assert r.json()["questionnaire_type"] == "QSA"
 
         main.app.dependency_overrides[auth.get_identity] = lambda: _identity(
             "other", "other@example.test", is_researcher=False
         )
         r = client.get("/user/student-booklets/booklet-session")
         assert r.status_code == 403, r.text
+        r = client.get("/user/student-booklets/instrument/QSA")
+        assert r.status_code == 200, r.text
+        assert r.json() is None
     finally:
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
