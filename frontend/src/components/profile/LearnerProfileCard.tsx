@@ -14,6 +14,8 @@ export interface LearnerProfileData {
     main_difficulty?: string;
     tried?: string;
     notes?: string;
+    gender?: string;
+    age?: string;
 }
 
 interface Revision {
@@ -26,7 +28,9 @@ interface Revision {
 
 type Variant = 'edit' | 'review' | 'update';
 
-const FIELDS: { key: keyof LearnerProfileData; labelKey: string; multiline?: boolean }[] = [
+const FIELDS: { key: keyof LearnerProfileData; labelKey: string; multiline?: boolean; type?: 'number' }[] = [
+    { key: 'age', labelKey: 'lp.field.age', type: 'number' },
+    { key: 'gender', labelKey: 'lp.field.gender' },
     { key: 'context', labelKey: 'lp.field.context' },
     { key: 'goal', labelKey: 'lp.field.goal' },
     { key: 'main_difficulty', labelKey: 'lp.field.difficulty' },
@@ -160,7 +164,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                             />
                         ) : (
                             <input
-                                type="text"
+                                type={f.type ?? 'text'}
                                 value={form[f.key] || ''}
                                 maxLength={600}
                                 onChange={(e) => {

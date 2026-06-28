@@ -1127,6 +1127,8 @@ def _update_markdown_memory_background(
 MAX_LEARNER_PROFILE_CHARS = 900
 
 _LEARNER_PROFILE_LABELS = {
+    "age": "Età",
+    "gender": "Genere",
     "context": "Contesto di studio",
     "goal": "Obiettivo attuale",
     "main_difficulty": "Difficoltà principale percepita",
