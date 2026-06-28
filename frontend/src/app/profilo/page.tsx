@@ -11,10 +11,9 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
 import { addCompletedProfile, clearCompletedProfiles } from '@/lib/profile-tracker';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
-import { ProfileChangeReflection } from '@/components/profile/ProfileChangeReflection';
 import { StudentBookletCard } from '@/components/profile/StudentBookletCard';
 import {
-    ArrowLeft, User, FileText, Trash2, Download, MessageSquare, ShieldAlert, Search
+    ArrowLeft, ArrowRight, User, FileText, Trash2, Download, MessageSquare, ShieldAlert, Search, History
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList,
@@ -341,7 +340,21 @@ export default function ProfilePage() {
                     </p>
                 </div>
                 <LearnerProfileCard variant="edit" />
-                <ProfileChangeReflection lang={lang} />
+                <Link
+                    href="/profilo/cambiamenti"
+                    className="glass-panel p-5 flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                            <History className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-slate-800">Cambiamenti del profilo</h3>
+                            <p className="text-sm text-slate-500">Rivedi come e cambiato il tuo profilo e salva una riflessione personale.</p>
+                        </div>
+                    </div>
+                    <ArrowRight className="w-5 h-5 shrink-0 text-slate-400" />
+                </Link>
             </section>
             )}
 
