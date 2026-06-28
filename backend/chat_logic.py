@@ -1170,6 +1170,45 @@ def _learner_profile_context(db, username: str) -> str:
     return "\n".join(lines)[:MAX_LEARNER_PROFILE_CHARS]
 
 
+MAX_PORTFOLIO_CHARS = 1200
+
+
+def _portfolio_context(db, username: str) -> str:
+    """Sezione 'portfolio' = lavori/elaborati caricati dallo studente.
+
+    Solo metadati testuali (titolo, categoria, data, descrizione); le immagini
+    non entrano nel contesto. Usala per contestualizzare, non sono punteggi."""
+    if not username:
+        return ""
+    items = (
+        db.query(models.PortfolioItem)
+        .filter(models.PortfolioItem.username == username)
+        .order_by(models.PortfolioItem.created_at.desc(), models.PortfolioItem.id.desc())
+        .limit(20)
+        .all()
+    )
+    if not items:
+        return ""
+    lines = [
+        "## Portfolio dello studente",
+        "Lavori ed elaborati caricati dallo studente: usali per contestualizzare la conversazione.",
+    ]
+    for item in items:
+        head = item.title or "Senza titolo"
+        meta = []
+        if item.category:
+            meta.append(item.category)
+        if item.item_date:
+            meta.append(item.item_date)
+        suffix = f" ({', '.join(meta)})" if meta else ""
+        line = f"- {head}{suffix}"
+        desc = str(item.description or "").strip()
+        if desc:
+            line += f": {desc}"
+        lines.append(line)
+    return "\n".join(lines)[:MAX_PORTFOLIO_CHARS]
+
+
 def _retrieved_context(
     db,
     session_id: str,
@@ -1330,7 +1369,9 @@ def build_context_envelope(
         parts_system.append("[STUDENT]\n" + "\n".join(student_lines))
 
     # --- [PROFILE] modello discente (auto-dichiarato) + PUNTEGGI (riferimento) ---
-    profile_context = _learner_profile_context(db, identity.get("username", "") if identity else "")
+    username_for_context = identity.get("username", "") if identity else ""
+    profile_context = _learner_profile_context(db, username_for_context)
+    portfolio_context = _portfolio_context(db, username_for_context)
     # Punteggi: nel turno di analisi arrivano nel messaggio utente, nei follow-up
     # si recuperano da quelli persistiti e si scope-ano alla sezione corrente.
     persisted_scores = "" if model_scores_context or not include_session_memory else session_memory.get_scores(session_id)
@@ -1342,7 +1383,7 @@ def build_context_envelope(
             system_prompt_scores = ""
     else:
         system_prompt_scores = ""
-    profile_block = "\n\n".join(s for s in (profile_context, system_prompt_scores) if s)
+    profile_block = "\n\n".join(s for s in (profile_context, portfolio_context, system_prompt_scores) if s)
     if profile_block:
         parts_system.append("[PROFILE]\n" + profile_block)
 

@@ -688,6 +688,78 @@ class StudentBookletResponse(BaseModel):
         from_attributes = True
 
 
+PORTFOLIO_MAX_TITLE_CHARS = 200
+PORTFOLIO_MAX_TEXT_CHARS = 4000
+PORTFOLIO_MAX_SHORT_CHARS = 200
+
+
+def _trim(value: Any, limit: int) -> Optional[str]:
+    if value is None:
+        return None
+    text = str(value).strip()[:limit]
+    return text or None
+
+
+class PortfolioItemCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    category: Optional[str] = None
+    item_date: Optional[str] = None
+    link: Optional[str] = None
+
+    @validator("title", pre=True)
+    def _trim_title(cls, v):
+        text = str(v or "").strip()[:PORTFOLIO_MAX_TITLE_CHARS]
+        if not text:
+            raise ValueError("title is required")
+        return text
+
+    @validator("description", pre=True)
+    def _trim_description(cls, v):
+        return _trim(v, PORTFOLIO_MAX_TEXT_CHARS)
+
+    @validator("category", "item_date", "link", pre=True)
+    def _trim_short(cls, v):
+        return _trim(v, PORTFOLIO_MAX_SHORT_CHARS)
+
+
+class PortfolioItemUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+    item_date: Optional[str] = None
+    link: Optional[str] = None
+
+    @validator("title", pre=True)
+    def _trim_title(cls, v):
+        return _trim(v, PORTFOLIO_MAX_TITLE_CHARS)
+
+    @validator("description", pre=True)
+    def _trim_description(cls, v):
+        return _trim(v, PORTFOLIO_MAX_TEXT_CHARS)
+
+    @validator("category", "item_date", "link", pre=True)
+    def _trim_short(cls, v):
+        return _trim(v, PORTFOLIO_MAX_SHORT_CHARS)
+
+
+class PortfolioImage(BaseModel):
+    id: str
+    filename: Optional[str] = None
+
+
+class PortfolioItemResponse(BaseModel):
+    id: int
+    title: str
+    description: Optional[str] = None
+    category: Optional[str] = None
+    item_date: Optional[str] = None
+    link: Optional[str] = None
+    images: List[PortfolioImage] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+
 # --- Model presets (provider + modello + parametri riusabili) ---
 class ModelPresetBase(BaseModel):
     name: str
