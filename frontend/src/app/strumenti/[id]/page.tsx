@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, ArrowRight, ExternalLink } from 'lucide-react';
+import { ArrowRight, ExternalLink } from 'lucide-react';
+import { BackButton } from '@/components/ui/BackButton';
 import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
 import { getTestAdministration, AdministrationLocale } from '@/lib/test-administrations';
 import { useI18n } from '@/lib/i18n-context';
@@ -40,20 +41,16 @@ export default function InstrumentDetailsPage() {
             <div className="max-w-xl mx-auto glass-panel p-8 text-center space-y-4">
                 <h1 className="text-xl font-bold text-slate-900">{t('detail.unavailable.title')}</h1>
                 <p className="text-slate-600">{t('detail.unavailable.body')}</p>
-                <Link href={QUESTIONNAIRE_SELECTION_HREF} className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-700">
-                    <ArrowLeft className="w-4 h-4" />
-                    {t('detail.back')}
-                </Link>
+                <div className="flex justify-center">
+                    <BackButton href={QUESTIONNAIRE_SELECTION_HREF} label={t('detail.back')} />
+                </div>
             </div>
         );
     }
 
     return (
         <div className="page-narrow space-y-6">
-            <Link href={QUESTIONNAIRE_SELECTION_HREF} className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-indigo-700">
-                <ArrowLeft className="w-4 h-4" />
-                {t('detail.back')}
-            </Link>
+            <BackButton href={QUESTIONNAIRE_SELECTION_HREF} label={t('detail.back')} />
 
             <section className="glass-panel p-6 sm:p-8">
                 <div className="flex items-start gap-4">

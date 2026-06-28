@@ -3,7 +3,8 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { AlertTriangle, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { BackButton } from '@/components/ui/BackButton';
 import { AdministrationCopy, AdministrationInstrument } from '@/lib/test-administrations';
 import { addCompletedProfile } from '@/lib/profile-tracker';
 import { ai4authLoginUrl } from '@/lib/auth';
@@ -506,14 +507,8 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
                     renderResults(dim, copy.dimensionTitles[dim] ?? dim)
                 ))}
 
-                <div className="flex flex-col-reverse justify-between gap-3 sm:flex-row">
-                    <Link
-                        href={QUESTIONNAIRE_SELECTION_HREF}
-                        className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-5 py-2.5 font-semibold text-slate-700 hover:bg-slate-50"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        {copy.back}
-                    </Link>
+                <div className="flex flex-col-reverse justify-between gap-3 sm:flex-row sm:items-center">
+                    <BackButton href={QUESTIONNAIRE_SELECTION_HREF} label={copy.back} />
                     <div className="flex gap-2">
                         <Link
                             href={`/?session_id=${createdSessionId}&instrument=${instrument}`}
@@ -541,10 +536,7 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
 
     return (
         <div lang={locale} className="max-w-5xl mx-auto space-y-6">
-            <Link href={QUESTIONNAIRE_SELECTION_HREF} className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-indigo-700">
-                <ArrowLeft className="w-4 h-4" />
-                {copy.back}
-            </Link>
+            <BackButton href={QUESTIONNAIRE_SELECTION_HREF} label={copy.back} />
 
             <header className="glass-panel p-6 space-y-4">
                 <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-bold tracking-wide text-amber-900">
