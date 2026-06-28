@@ -4,16 +4,16 @@
 // X-View-As con l'account demo: cosi' il backend scopa i dati per-utente a
 // quell'account fittizio (non all'admin). L'install avviene al caricamento del
 // modulo (non in useEffect) per precedere i fetch nei componenti.
-import { getViewAsRole, VIEW_AS_ACCOUNTS } from '@/lib/auth';
+import { getViewAsAccount } from '@/lib/auth';
 
 let installed = false;
 
 function installFetchPatch() {
     if (installed || typeof window === 'undefined') return;
     installed = true;
-    const role = getViewAsRole();
-    if (!role) return;
-    const demoUser = VIEW_AS_ACCOUNTS[role].username;
+    const account = getViewAsAccount();
+    if (!account) return;
+    const demoUser = account.username;
     const originalFetch = window.fetch.bind(window);
     window.fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
         try {

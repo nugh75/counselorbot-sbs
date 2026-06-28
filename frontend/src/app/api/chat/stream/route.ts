@@ -21,6 +21,9 @@ const AUTH_HEADERS = [
     'remote-email',
     'remote-name',
     'remote-groups',
+    // Anteprima profilo di prova: senza questo, le interazioni in streaming si
+    // attribuirebbero all'admin invece che al profilo di prova selezionato.
+    'x-view-as',
 ];
 
 export async function POST(req: NextRequest) {
