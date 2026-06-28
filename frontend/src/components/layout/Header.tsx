@@ -60,10 +60,10 @@ export function Header() {
             <header className="console-header fixed top-0 left-0 right-0 z-50">
                 <div className="page-wide px-4 sm:px-6 h-full flex items-center gap-4">
                     <div className="flex items-center gap-3 min-w-0">
-                        <Bot className="w-8 h-8 shrink-0 text-indigo-600" strokeWidth={1.8} />
+                        <AxisMark className="h-8 w-8 shrink-0" />
                         {/* CounselorBot e' il brand principale: titolo grande -> home. */}
                         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-                        <a href="/" className="block text-lg sm:text-2xl font-bold text-slate-900 whitespace-nowrap hover:opacity-80 transition-opacity leading-none" aria-label={t('nav.homeAria')}>
+                        <a href="/" className="font-display block text-lg sm:text-2xl font-bold text-slate-900 whitespace-nowrap hover:opacity-80 transition-opacity leading-none" aria-label={t('nav.homeAria')}>
                             CounselorBot
                         </a>
                     </div>
@@ -157,6 +157,33 @@ export function Header() {
                 </div>
             </header>
         </TooltipProvider>
+    );
+}
+
+// Mark del brand: il PROFILO è l'artefatto centrale dello strumento. Glifo radar
+// — assi + poligono tracciato in petrol, centro "sei qui" in ocra. Sostituisce
+// l'icona Bot generica con qualcosa che parla del sottostante (profili a più assi).
+function AxisMark({ className }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 32 32" fill="none" className={className} aria-hidden="true">
+            <g stroke="#155e63" strokeWidth="1" opacity="0.3">
+                <line x1="16" y1="16" x2="16" y2="5" />
+                <line x1="16" y1="16" x2="25.5" y2="10.5" />
+                <line x1="16" y1="16" x2="25.5" y2="21.5" />
+                <line x1="16" y1="16" x2="16" y2="27" />
+                <line x1="16" y1="16" x2="6.5" y2="21.5" />
+                <line x1="16" y1="16" x2="6.5" y2="10.5" />
+            </g>
+            <polygon
+                points="16,7.2 20.8,13.3 24.6,21 16,22.6 7.9,20.7 11.7,13.5"
+                fill="#155e63"
+                fillOpacity="0.12"
+                stroke="#155e63"
+                strokeWidth="1.5"
+                strokeLinejoin="round"
+            />
+            <circle cx="16" cy="16" r="1.7" fill="#c9711f" />
+        </svg>
     );
 }
 
