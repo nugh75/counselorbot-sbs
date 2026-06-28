@@ -3,14 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FolderOpen, ImagePlus, Loader2, Pencil, Plus, Save, Search, Trash2, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
-import { getViewAsRole, VIEW_AS_ACCOUNTS } from '@/lib/auth';
+import { getViewAsAccount } from '@/lib/auth';
 import { toast } from '@/components/ui/Toast';
 
-// In anteprima ruolo le <img> (non passano da fetch) devono puntare all'account
-// demo: il backend accetta l'impersonazione anche via query param view_as.
+// In anteprima le <img> (non passano da fetch) devono puntare all'account di
+// prova: il backend accetta l'impersonazione anche via query param view_as.
 function imageQuerySuffix(): string {
-    const role = getViewAsRole();
-    return role ? `?view_as=${VIEW_AS_ACCOUNTS[role].username}` : '';
+    const account = getViewAsAccount();
+    return account ? `?view_as=${account.username}` : '';
 }
 
 interface PortfolioImage { id: string; filename?: string | null }

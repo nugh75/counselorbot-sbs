@@ -2,32 +2,32 @@
 
 import { useEffect, useState } from 'react';
 import { Eye, X } from 'lucide-react';
-import { getViewAsRole, clearViewAsRole, VIEW_AS_ACCOUNTS, type ViewAsRole } from '@/lib/auth';
+import { getViewAsAccount, clearViewAs, type ViewAsAccount } from '@/lib/auth';
 
-const ROLE_LABEL: Record<ViewAsRole, string> = {
+const ROLE_LABEL: Record<ViewAsAccount['role'], string> = {
     studente: 'Studente',
     ricercatore: 'Ricercatore',
     docente: 'Docente',
 };
 
-// Barra globale: visibile quando un admin sta usando l'anteprima ruoli.
+// Barra globale: visibile quando un admin sta usando un profilo di prova.
 // Sempre raggiungibile per uscire dall'anteprima da qualsiasi pagina.
 export function RolePreviewBanner() {
-    const [role, setRole] = useState<ViewAsRole | null>(null);
+    const [account, setAccount] = useState<ViewAsAccount | null>(null);
 
-    useEffect(() => { setRole(getViewAsRole()); }, []);
+    useEffect(() => { setAccount(getViewAsAccount()); }, []);
 
-    if (!role) return null;
+    if (!account) return null;
 
     const exit = () => {
-        clearViewAsRole();
+        clearViewAs();
         window.location.reload();
     };
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center gap-3 bg-amber-500 px-4 py-2 text-sm font-semibold text-amber-950 shadow-lg">
             <Eye className="h-4 w-4 shrink-0" />
-            <span>Anteprima ruolo: {ROLE_LABEL[role]} · account fittizio {VIEW_AS_ACCOUNTS[role].name}.</span>
+            <span>Profilo di prova: {account.name} ({ROLE_LABEL[account.role]}) · le tue azioni vengono salvate su questo account.</span>
             <button
                 type="button"
                 onClick={exit}
