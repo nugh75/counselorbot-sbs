@@ -968,7 +968,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     // Loading state
     if (initialLoading) {
         return (
-            <div className="flex items-center justify-center h-chat min-h-[600px]">
+            <div className="flex min-h-chat items-center justify-center lg:h-chat">
                 <div className="text-center space-y-3">
                     <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
                     <p className="text-sm text-slate-500">{t('guided.loading')}</p>
@@ -1018,9 +1018,9 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             : t('guided.hint.free');
 
     return (
-        <div className="grid lg:grid-cols-4 gap-6 h-chat min-h-[600px]">
+        <div className="grid gap-4 lg:h-chat lg:grid-cols-4 lg:gap-6">
             {/* Left Sidebar */}
-            <div className="lg:col-span-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-4 custom-scrollbar lg:col-span-1 lg:overflow-y-auto lg:pr-2">
                 {/* Phase Progress */}
                 <div className="glass-panel p-4 space-y-3">
                     <div className="flex justify-between items-center">
@@ -1115,28 +1115,28 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             </div>
 
             {/* Chat Area */}
-            <div className="lg:col-span-3 flex flex-col h-full bg-white rounded-lg overflow-hidden border border-slate-200 shadow-sm">
+            <div className="flex min-h-chat min-w-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm lg:col-span-3 lg:h-full lg:min-h-0">
                 {/* Header */}
-                <div className={cn("p-4 border-b border-slate-100 flex items-center gap-3", currentColors.headerBg)}>
-                    <div>
+                <div className={cn("flex min-w-0 items-center gap-3 border-b border-slate-100 p-4", currentColors.headerBg)}>
+                    <div className="min-w-0">
                         <h3 className="font-bold text-slate-800">CounselorBot AI</h3>
-                        <p className="text-xs text-slate-500 font-medium">{getPhaseLabel(currentPhase)}</p>
+                        <p className="truncate text-xs font-medium text-slate-500">{getPhaseLabel(currentPhase)}</p>
                     </div>
                 </div>
 
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-6">
                     {messages.map((msg, idx) => (
                         <div key={idx} className={cn(
-                            "flex animate-in fade-in slide-in-from-bottom-2 duration-300",
+                            "flex min-w-0 animate-in fade-in slide-in-from-bottom-2 duration-300",
                             msg.role === 'user' ? 'justify-end' : msg.role === 'system' ? 'justify-center' : 'justify-start'
                         )}>
                             {msg.role === 'system' ? (
-                                <span className="text-[10px] font-medium text-slate-400 uppercase tracking-widest py-2 px-3 bg-slate-50 rounded-full">{msg.content}</span>
+                                <span className="max-w-full break-words rounded-full bg-slate-50 px-3 py-2 text-[10px] font-medium uppercase tracking-widest text-slate-400">{msg.content}</span>
                             ) : (
-                                <div className={cn("flex flex-col gap-1 max-w-[90%]", msg.role === 'user' ? "items-end" : "items-start")}>
+                                <div className={cn("flex min-w-0 max-w-[94%] flex-col gap-1 sm:max-w-[90%]", msg.role === 'user' ? "items-end" : "items-start")}>
                                     <div className={cn(
-                                        "px-5 py-3.5 rounded-lg text-sm leading-relaxed shadow-sm",
+                                        "min-w-0 break-words rounded-lg px-4 py-3 text-sm leading-relaxed shadow-sm sm:px-5 sm:py-3.5",
                                         msg.role === 'user'
                                             ? 'bg-indigo-600 text-white rounded-tr-sm'
                                             : 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm'
@@ -1148,12 +1148,12 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                         <button
                                                             type="button"
                                                             onClick={() => toggleReasoning(idx)}
-                                                            className="flex w-full items-center gap-1.5 text-[10px] uppercase tracking-wide text-slate-400 hover:text-slate-600 transition-colors"
+                                                            className="flex w-full min-w-0 items-center gap-1.5 text-[10px] uppercase tracking-wide text-slate-400 transition-colors hover:text-slate-600"
                                                         >
                                                             {!msg.content.trim() && <Loader2 className="w-3 h-3 animate-spin" />}
                                                             <ChevronRight className={cn("w-3 h-3 transition-transform", !hiddenReasoning.has(idx) && "rotate-90")} />
                                                             {t('guided.reasoning')}
-                                                            <span className="ml-auto normal-case tracking-normal text-slate-400/80">
+                                                            <span className="ml-auto truncate normal-case tracking-normal text-slate-400/80">
                                                                 {hiddenReasoning.has(idx) ? t('guided.reasoningShow') : t('guided.reasoningHide')}
                                                             </span>
                                                         </button>
@@ -1165,7 +1165,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                     </div>
                                                 )}
                                                 {msg.content.trim() ? (
-                                                    <div className="overflow-x-auto rounded-lg border border-slate-200/80 bg-white">
+                                                    <div className="min-w-0 max-w-full overflow-x-auto rounded-lg border border-slate-200/80 bg-white">
                                                         <ReactMarkdown
                                                             remarkPlugins={[remarkGfm]}
                                                             components={markdownComponents}
@@ -1248,7 +1248,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     )}
                     {/* Fine sessione: invito a rivedere il profilo dopo la conversazione */}
                     {currentPhase === FIXED_CONCLUSION_ID && (
-                        <div className="max-w-2xl">
+                        <div className="max-w-full sm:max-w-2xl">
                             <LearnerProfileCard variant="update" sessionId={sessionId} />
                         </div>
                     )}
@@ -1257,7 +1257,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
                 {/* Input Area */}
                 {currentPhase === FIXED_CONCLUSION_ID ? (
-                    <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-center">
+                    <div className="flex justify-center border-t border-slate-100 bg-slate-50 p-3 sm:p-4">
                         <button
                             onClick={onComplete}
                             className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center gap-2"
@@ -1267,7 +1267,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         </button>
                     </div>
                 ) : (
-                    <form onSubmit={handleSend} className="p-4 border-t border-slate-100 bg-white">
+                    <form onSubmit={handleSend} className="border-t border-slate-100 bg-white p-3 sm:p-4">
                         {/* Domande suggerite per lo step corrente: compilano l'input per permettere modifica prima dell'invio. */}
                         {!isLoading && suggestedQuestions.length > 0 && (
                             <div className="mb-2 flex flex-wrap gap-1.5">
@@ -1316,12 +1316,12 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                 onChange={(e) => setInput(e.target.value)}
                                 placeholder={inputPlaceholder}
                                 disabled={isLoading}
-                                className="flex-1 bg-slate-50 border border-slate-200 rounded-md px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400 disabled:opacity-50"
+                                className="min-w-0 flex-1 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50"
                             />
                             <button
                                 type="submit"
                                 disabled={isLoading || !input.trim()}
-                                className="p-3 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                                className="shrink-0 rounded-md bg-indigo-600 p-3 text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
                             >
                                 <Send className="w-5 h-5" />
                             </button>

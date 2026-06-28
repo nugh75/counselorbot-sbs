@@ -353,17 +353,17 @@ export function OpenCodeExperience({
     };
 
     return (
-        <div className="w-full flex flex-col xl:flex-row gap-6 h-chat min-h-[600px]">
-            <div className="flex-1 flex flex-col bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm h-full">
-                <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                    <span className="font-semibold text-slate-800 flex items-center gap-2">
+        <div className="flex w-full flex-col gap-4 xl:h-chat xl:flex-row xl:gap-6">
+            <div className="flex min-h-[18rem] max-h-[min(60svh,34rem)] flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm xl:h-full xl:max-h-none xl:min-h-0">
+                <div className="flex flex-col gap-2 border-b border-slate-200 bg-slate-50 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+                    <span className="flex min-w-0 items-center gap-2 font-semibold text-slate-800">
                         <BarChart3 className="w-4 h-4 text-indigo-600" />
                         {t('opencode.studentProfile')}
                     </span>
                     {pdfToken && (
                         <button
                             onClick={() => setShowPdf(current => !current)}
-                            className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                            className={`flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                                 showPdf ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:text-slate-900'
                             }`}
                         >
@@ -376,7 +376,7 @@ export function OpenCodeExperience({
                     {showPdf && pdfToken ? (
                         <iframe
                             src={`/api/opencode/pdf/${pdfToken}`}
-                            className="w-full h-full border border-slate-200 rounded-lg bg-white shadow-inner min-h-[450px]"
+                            className="h-full min-h-[18rem] w-full rounded-lg border border-slate-200 bg-white shadow-inner sm:min-h-[28rem]"
                             title={t('opencode.pdfTitle')}
                         />
                     ) : scoreGroups.length > 0 ? scoreGroups.map(group => (
@@ -410,13 +410,13 @@ export function OpenCodeExperience({
                 </div>
             </div>
 
-            <div className={`flex-1 flex flex-col rounded-xl border overflow-hidden shadow-md h-full ${
+            <div className={`flex min-h-chat min-w-0 flex-1 flex-col overflow-hidden rounded-xl border shadow-md xl:h-full xl:min-h-0 ${
                 viewMode === 'chat' ? 'bg-slate-50 border-slate-200' : 'bg-[#0b0f17] border-slate-800'
             }`}>
-                <div className={`px-4 py-3 border-b flex items-center justify-between ${
+                <div className={`flex flex-col gap-2 border-b px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4 ${
                     viewMode === 'chat' ? 'bg-white border-slate-200' : 'bg-[#131924] border-slate-800'
                 }`}>
-                    <div className="flex items-center gap-2">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
                         <span className={`font-semibold text-sm ${viewMode === 'chat' ? 'text-slate-800' : 'text-slate-200'}`}>
                             {t('opencode.chatTitle')}
                         </span>
@@ -428,13 +428,13 @@ export function OpenCodeExperience({
                             }`}>
                                 {t(`opencode.status.${status}`)}
                             </span>
-                        )}
+                            )}
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex flex-wrap items-center gap-1">
                         <button
                             onClick={switchView}
                             disabled={!workspaceKey || (viewMode === 'terminal' && !graphicalAvailable)}
-                            className={`p-1.5 rounded-lg transition-colors disabled:opacity-40 flex items-center gap-1.5 text-xs ${
+                            className={`flex items-center gap-1.5 rounded-lg p-1.5 text-xs transition-colors disabled:opacity-40 ${
                                 viewMode === 'chat'
                                     ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
                                     : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -447,7 +447,7 @@ export function OpenCodeExperience({
                         <button
                             onClick={viewMode === 'chat' ? resetChat : startOpenCode}
                             disabled={busy || streaming}
-                            className={`p-1.5 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5 text-xs ${
+                            className={`flex items-center gap-1.5 rounded-lg p-1.5 text-xs transition-colors disabled:opacity-50 ${
                                 viewMode === 'chat'
                                     ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
                                     : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -466,7 +466,7 @@ export function OpenCodeExperience({
                     </div>
                 ) : (
                     <>
-                        <div className="flex-1 overflow-y-auto min-h-0 p-4 space-y-5">
+                        <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-5">
                             {busy && messages.length === 0 && (
                                 <div className="h-full flex items-center justify-center text-sm text-slate-500">
                                     <RefreshCw className="w-4 h-4 mr-2 animate-spin text-indigo-600" />
@@ -483,8 +483,8 @@ export function OpenCodeExperience({
                                 </div>
                             )}
                             {messages.map((message, index) => (
-                                <div key={index} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm ${
+                                <div key={index} className={`flex min-w-0 gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                    <div className={`min-w-0 max-w-[92%] break-words rounded-2xl px-4 py-3 text-sm shadow-sm sm:max-w-[85%] ${
                                         message.role === 'user'
                                             ? 'bg-indigo-600 text-white rounded-tr-md'
                                             : 'bg-white border border-slate-200 text-slate-800 rounded-tl-md'
@@ -492,7 +492,7 @@ export function OpenCodeExperience({
                                         {message.role === 'assistant' ? (
                                             <>
                                                 {message.content ? (
-                                                    <div className="prose prose-sm prose-slate max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2">
+                                                    <div className="prose prose-sm prose-slate max-w-none break-words prose-p:my-2 prose-ul:my-2 prose-ol:my-2">
                                                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                                             {message.content}
                                                         </ReactMarkdown>
@@ -538,11 +538,11 @@ export function OpenCodeExperience({
                             ))}
                             <div ref={messagesEndRef} />
                         </div>
-                        <form onSubmit={submit} className="p-4 bg-white border-t border-slate-200">
+                        <form onSubmit={submit} className="border-t border-slate-200 bg-white p-3 sm:p-4">
                             {error && messages.length > 0 && (
                                 <p className="text-xs text-rose-600 mb-2">{error}</p>
                             )}
-                            <div className="flex items-end gap-2 rounded-xl border border-slate-300 bg-slate-50 p-2 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent">
+                            <div className="flex min-w-0 items-end gap-2 rounded-xl border border-slate-300 bg-slate-50 p-2 focus-within:border-transparent focus-within:ring-2 focus-within:ring-indigo-500">
                                 <textarea
                                     value={input}
                                     onChange={event => setInput(event.target.value)}
@@ -550,13 +550,13 @@ export function OpenCodeExperience({
                                     disabled={busy || streaming || !openCodeSessionId}
                                     rows={1}
                                     placeholder={t('opencode.placeholder')}
-                                    className="flex-1 max-h-32 resize-none bg-transparent px-2 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 disabled:opacity-60"
+                                    className="max-h-32 min-w-0 flex-1 resize-none bg-transparent px-2 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 disabled:opacity-60"
                                 />
                                 {streaming ? (
                                     <button
                                         type="button"
                                         onClick={stopGeneration}
-                                        className="p-2.5 rounded-lg bg-slate-800 text-white hover:bg-slate-900"
+                                        className="shrink-0 rounded-lg bg-slate-800 p-2.5 text-white hover:bg-slate-900"
                                         title={t('opencode.stop')}
                                     >
                                         <Square className="w-4 h-4 fill-current" />
@@ -565,7 +565,7 @@ export function OpenCodeExperience({
                                     <button
                                         type="submit"
                                         disabled={!input.trim() || busy || !openCodeSessionId}
-                                        className="p-2.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40"
+                                        className="shrink-0 rounded-lg bg-indigo-600 p-2.5 text-white hover:bg-indigo-700 disabled:opacity-40"
                                         title={t('opencode.send')}
                                     >
                                         <Send className="w-4 h-4" />

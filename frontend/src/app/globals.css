@@ -83,8 +83,9 @@
   --radius: 0.75rem;
 
   /* Altezza viewport condivisa per le superfici di chat (guided / assistente / opencode).
-     Unico token: ~header(4rem) + margini, niente piu' magic number duplicati. */
-  --chat-h: calc(100vh - 9rem);
+     svh evita salti su mobile; dvh viene usato dove supportato per seguire le chrome del browser. */
+  --chat-h: calc(100svh - 9rem - env(safe-area-inset-bottom, 0px));
+  --chat-mobile-h: min(32rem, var(--chat-h));
 
   /* UI palette shared with ai4educ-console. */
   --console-bg: #f8fafc;
@@ -150,9 +151,20 @@
   @apply max-w-6xl mx-auto;
 }
 
-/* Altezza standard delle superfici di chat. */
+@supports (height: 100dvh) {
+  :root {
+    --chat-h: calc(100dvh - 9rem - env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Altezza standard delle superfici di chat. Su mobile si usa min-h-chat
+   nei singoli pannelli, mentre h-chat resta riservata ai breakpoint desktop. */
 @utility h-chat {
   height: var(--chat-h);
+}
+
+@utility min-h-chat {
+  min-height: var(--chat-mobile-h);
 }
 
 /* Card: radius unico (rounded-xl) cotto nell'utility -> nessun rounded-* ai call-site. */
