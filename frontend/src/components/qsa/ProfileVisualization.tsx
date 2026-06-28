@@ -107,8 +107,8 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
     const ztpiSegments = isZTPI ? makeZTPISegments(ztpiCode) : [];
 
     return (
-        <div className="flex items-center gap-3 py-1">
-            <div className="w-44 flex-shrink-0">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-2 py-2 sm:flex sm:items-center sm:gap-3 sm:py-1">
+            <div className="col-start-1 row-start-1 min-w-0 sm:w-44 sm:flex-shrink-0">
                 <div className="flex items-center gap-2">
                     <span className="font-mono font-bold text-slate-700">{code}</span>
                     {isInverted && <span className="text-[10px] text-slate-400">↔</span>}
@@ -118,7 +118,7 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
                 </div>
             </div>
 
-            <div className="flex-1 relative">
+            <div className="relative col-span-2 row-start-2 min-w-0 sm:flex-1">
                 {isZTPI ? (
                     <div className="flex h-6 rounded-md overflow-hidden border border-slate-200">
                         {ztpiSegments.map((segment, idx) => {
@@ -185,7 +185,7 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
                 />
             </div>
 
-            <div className="w-24 flex-shrink-0 text-right">
+            <div className="col-start-2 row-start-1 w-24 flex-shrink-0 text-right">
                 <span
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold"
                     style={{
