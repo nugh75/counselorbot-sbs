@@ -29,6 +29,8 @@ interface QuestionnaireResult {
     submitted_at: string;
 }
 
+const BOOKLET_TYPES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
+
 export default function ProfilePage() {
     const { t, tf, lang } = useI18n();
     const isDark = useDarkMode();
@@ -39,6 +41,7 @@ export default function ProfilePage() {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
     const [sessionSearch, setSessionSearch] = useState('');
+    const [selectedBookletType, setSelectedBookletType] = useState<QuestionnaireType>('QSA');
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -327,7 +330,7 @@ export default function ProfilePage() {
                             {t('profile.myCompilations')}
                         </h2>
                         <p className="mt-1 text-sm text-slate-500">
-                            Cerca e scegli una compilazione: la selezione aggiorna solo risultato e libretto qui sotto.
+                            Cerca e scegli una compilazione: la selezione aggiorna solo il risultato qui sotto.
                         </p>
                     </div>
                     <span className="text-xs font-semibold text-slate-400">
@@ -387,7 +390,7 @@ export default function ProfilePage() {
             <section className="space-y-6" aria-labelledby="selected-session-details">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <h2 id="selected-session-details" className="text-lg font-bold text-slate-800">
-                        Risultato e libretto
+                        Risultato della compilazione
                     </h2>
                     {selectedSession && (
                         <span className={`px-3 py-0.5 border text-xs font-bold rounded-full uppercase ${getTypeColor(selectedSession.questionnaire_type)}`}>
@@ -558,7 +561,6 @@ export default function ProfilePage() {
                                 </Link>
                             </div>
                         </div>
-                        <StudentBookletCard session={selectedSession} lang={lang} />
                     </>
                 ) : (
                     <div className="glass-panel p-12 text-center space-y-4 text-slate-400">
@@ -566,6 +568,34 @@ export default function ProfilePage() {
                         <p className="font-medium">{t('profile.selectSession')}</p>
                     </div>
                 )}
+            </section>
+
+            <section className="space-y-4" aria-labelledby="student-booklet-section">
+                <div>
+                    <h2 id="student-booklet-section" className="text-lg font-bold text-slate-800">
+                        Libretto dello studente
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                        Ogni strumento ha il suo libretto: scegli lo strumento, compila, salva e scarica il PDF.
+                    </p>
+                </div>
+                <div className="glass-panel p-5">
+                    <label className="block">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Strumento del libretto</span>
+                        <select
+                            value={selectedBookletType}
+                            onChange={(event) => setSelectedBookletType(event.target.value as QuestionnaireType)}
+                            className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                        >
+                            {BOOKLET_TYPES.map((type) => (
+                                <option key={type} value={type}>
+                                    {type} · {QUESTIONNAIRES[type].fullName}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                </div>
+                <StudentBookletCard questionnaireType={selectedBookletType} lang={lang} />
             </section>
         </div>
     );

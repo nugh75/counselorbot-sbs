@@ -545,6 +545,15 @@ BOOKLET_LABELS = {
     "final_observations": "Osservazioni finali",
 }
 
+BOOKLET_FACTOR_CODES = {
+    "QSA": ("C1", "C2", "C3", "C4", "C5", "C6", "C7", "A1", "A2", "A3", "A4", "A5", "A6", "A7"),
+    "QSAr": ("C1r", "C2r", "C3r", "C4r", "A1r", "A2r", "A3r", "A4r"),
+    "ZTPI": ("T1", "T2", "T3", "T4", "T5"),
+    "QPCS": ("S1", "S2", "S3", "S4", "S5"),
+    "QPCC": ("K1", "K2", "K3", "K4", "K5"),
+    "QAP": ("AD1", "AD2", "AD3", "AD4"),
+}
+
 
 def _booklet_text(data: dict, key: str) -> str:
     value = data.get(key)
@@ -579,7 +588,7 @@ def _booklet_section(pdf: FPDF, title: str, content_w: float) -> None:
 def generate_student_booklet_pdf(
     questionnaire_type: str,
     scores: dict[str, int | float] | None,
-    session_id: str,
+    session_id: str | None,
     booklet_data: dict | None,
     username: str,
     submitted_at: str | None = None,
@@ -606,7 +615,8 @@ def generate_student_booklet_pdf(
             pdf.cell(0, 7, _latin1(f"{ui['date']}: {dt.strftime('%d/%m/%Y %H:%M')}"), new_x="LMARGIN", new_y="NEXT")
         except (ValueError, TypeError):
             pass
-    pdf.cell(0, 7, _latin1(f"{ui['session']}: {session_id[:16]}..."), new_x="LMARGIN", new_y="NEXT")
+    if session_id:
+        pdf.cell(0, 7, _latin1(f"{ui['session']}: {session_id[:16]}..."), new_x="LMARGIN", new_y="NEXT")
     pdf.cell(0, 7, _latin1(f"Account: {username}"), new_x="LMARGIN", new_y="NEXT")
 
     _booklet_section(pdf, "1. Dati del percorso", content_w)
@@ -641,10 +651,23 @@ def generate_student_booklet_pdf(
             pdf.set_text_color(*color)
             pdf.cell(0, 5, _latin1(f"{value_int}/9 [{label}]"), new_x="LMARGIN", new_y="NEXT")
             pdf.ln(1)
+    elif questionnaire_type in BOOKLET_FACTOR_CODES:
+        for code in BOOKLET_FACTOR_CODES[questionnaire_type]:
+            info = trans.get(code)
+            name = info[0] if info else code
+            desc = info[1] if info and len(info) > 1 else ""
+            pdf.set_font("Helvetica", "B", 9)
+            pdf.set_text_color(25, 25, 30)
+            pdf.multi_cell(content_w, 5, _latin1(f"{code} - {name}"), new_x="LMARGIN", new_y="NEXT")
+            if desc:
+                pdf.set_font("Helvetica", "", 8)
+                pdf.set_text_color(80, 80, 90)
+                pdf.multi_cell(content_w, 5, _latin1(desc), new_x="LMARGIN", new_y="NEXT")
+            pdf.ln(1)
     else:
         pdf.set_font("Helvetica", "", 10)
         pdf.set_text_color(70, 70, 80)
-        pdf.multi_cell(content_w, 6, _latin1("Nessun punteggio numerico disponibile per questa compilazione."), new_x="LMARGIN", new_y="NEXT")
+        pdf.multi_cell(content_w, 6, _latin1("Nessuna area predefinita disponibile per questo strumento."), new_x="LMARGIN", new_y="NEXT")
 
     _booklet_section(pdf, "3. Scelgo cosa valorizzare e migliorare", content_w)
     for key in ("strength", "growth_area", "motivation"):

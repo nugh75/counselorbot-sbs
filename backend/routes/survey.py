@@ -16,6 +16,8 @@ from .. import scoring_service
 router = APIRouter()
 get_db = database.get_db
 
+STUDENT_BOOKLET_TYPES = ("QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP")
+
 
 def _get_owned_questionnaire_result(session_id: str, current_user: dict, db: Session) -> models.QuestionnaireResult:
     result = db.query(models.QuestionnaireResult).filter(
@@ -26,6 +28,25 @@ def _get_owned_questionnaire_result(session_id: str, current_user: dict, db: Ses
     if not current_user.get("is_admin") and result.username != current_user.get("username"):
         raise HTTPException(status_code=403, detail="Azione non consentita")
     return result
+
+
+def _normalize_booklet_type(questionnaire_type: str) -> str:
+    for code in STUDENT_BOOKLET_TYPES:
+        if code.lower() == str(questionnaire_type or "").lower():
+            return code
+    raise HTTPException(status_code=404, detail="Strumento non supportato")
+
+
+def _student_booklet_for_type(db: Session, username: str, questionnaire_type: str) -> Optional[models.StudentBooklet]:
+    return (
+        db.query(models.StudentBooklet)
+        .filter(
+            models.StudentBooklet.username == username,
+            models.StudentBooklet.questionnaire_type == questionnaire_type,
+        )
+        .order_by(models.StudentBooklet.updated_at.desc(), models.StudentBooklet.id.desc())
+        .first()
+    )
 
 
 def _normalize_validation_metadata(metadata: Optional[dict], username: Optional[str], db: Session) -> dict:
@@ -335,22 +356,81 @@ async def get_user_questionnaire_results(
     return results
 
 
+@router.get("/user/student-booklets/instrument/{questionnaire_type}", response_model=Optional[schemas.StudentBookletResponse])
+async def get_student_booklet_for_instrument(
+    questionnaire_type: str,
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Recupera il libretto dello studente per uno strumento."""
+    code = _normalize_booklet_type(questionnaire_type)
+    return _student_booklet_for_type(db, current_user["username"], code)
+
+
+@router.put("/user/student-booklets/instrument/{questionnaire_type}", response_model=schemas.StudentBookletResponse)
+async def save_student_booklet_for_instrument(
+    questionnaire_type: str,
+    payload: schemas.StudentBookletSave,
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Crea o aggiorna il libretto compilabile legato a uno strumento."""
+    code = _normalize_booklet_type(questionnaire_type)
+    username = current_user["username"]
+    booklet = _student_booklet_for_type(db, username, code)
+    if booklet is None:
+        booklet = models.StudentBooklet(
+            username=username,
+            session_id=None,
+            questionnaire_type=code,
+            data=payload.data,
+        )
+        db.add(booklet)
+    else:
+        booklet.session_id = None
+        booklet.questionnaire_type = code
+        booklet.data = payload.data
+    db.commit()
+    db.refresh(booklet)
+    return booklet
+
+
+@router.get("/user/student-booklets/instrument/{questionnaire_type}/pdf")
+async def download_student_booklet_pdf_for_instrument(
+    questionnaire_type: str,
+    lang: str = Query("it", description="Lingua del PDF (it, en, es, fr, de, sv)"),
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Scarica il libretto dello studente per lo strumento selezionato."""
+    code = _normalize_booklet_type(questionnaire_type)
+    booklet = _student_booklet_for_type(db, current_user["username"], code)
+    pdf_bytes = generate_student_booklet_pdf(
+        questionnaire_type=code,
+        scores=None,
+        session_id=None,
+        booklet_data=booklet.data if booklet else {},
+        username=current_user["username"],
+        submitted_at=None,
+        language=lang,
+    )
+    filename = f"counselorbot_libretto_{code}.pdf"
+    return Response(
+        content=pdf_bytes.read(),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
 @router.get("/user/student-booklets/{session_id}", response_model=Optional[schemas.StudentBookletResponse])
 async def get_student_booklet(
     session_id: str,
     current_user: dict = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Recupera il libretto dello studente per una compilazione propria."""
-    _get_owned_questionnaire_result(session_id, current_user, db)
-    return (
-        db.query(models.StudentBooklet)
-        .filter(
-            models.StudentBooklet.username == current_user["username"],
-            models.StudentBooklet.session_id == session_id,
-        )
-        .first()
-    )
+    """Compat: recupera il libretto dello strumento della compilazione propria."""
+    result = _get_owned_questionnaire_result(session_id, current_user, db)
+    return _student_booklet_for_type(db, current_user["username"], result.questionnaire_type)
 
 
 @router.put("/user/student-booklets/{session_id}", response_model=schemas.StudentBookletResponse)
@@ -360,31 +440,9 @@ async def save_student_booklet(
     current_user: dict = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Crea o aggiorna il libretto compilabile legato a una compilazione."""
+    """Compat: salva il libretto dello strumento della compilazione propria."""
     result = _get_owned_questionnaire_result(session_id, current_user, db)
-    username = current_user["username"]
-    booklet = (
-        db.query(models.StudentBooklet)
-        .filter(
-            models.StudentBooklet.username == username,
-            models.StudentBooklet.session_id == session_id,
-        )
-        .first()
-    )
-    if booklet is None:
-        booklet = models.StudentBooklet(
-            username=username,
-            session_id=session_id,
-            questionnaire_type=result.questionnaire_type,
-            data=payload.data,
-        )
-        db.add(booklet)
-    else:
-        booklet.questionnaire_type = result.questionnaire_type
-        booklet.data = payload.data
-    db.commit()
-    db.refresh(booklet)
-    return booklet
+    return await save_student_booklet_for_instrument(result.questionnaire_type, payload, current_user, db)
 
 
 @router.get("/user/student-booklets/{session_id}/pdf")
@@ -394,33 +452,9 @@ async def download_student_booklet_pdf(
     current_user: dict = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Scarica il libretto dello studente della compilazione selezionata."""
+    """Compat: scarica il libretto dello strumento della compilazione propria."""
     result = _get_owned_questionnaire_result(session_id, current_user, db)
-    booklet = (
-        db.query(models.StudentBooklet)
-        .filter(
-            models.StudentBooklet.username == current_user["username"],
-            models.StudentBooklet.session_id == session_id,
-        )
-        .first()
-    )
-    scores = result.scores if isinstance(result.scores, dict) else {}
-    submitted_str = str(result.submitted_at) if result.submitted_at else None
-    pdf_bytes = generate_student_booklet_pdf(
-        questionnaire_type=result.questionnaire_type,
-        scores=scores,
-        session_id=result.session_id,
-        booklet_data=booklet.data if booklet else {},
-        username=current_user["username"],
-        submitted_at=submitted_str,
-        language=lang,
-    )
-    filename = f"counselorbot_libretto_{result.questionnaire_type}_{result.id}.pdf"
-    return Response(
-        content=pdf_bytes.read(),
-        media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
+    return await download_student_booklet_pdf_for_instrument(result.questionnaire_type, lang, current_user, db)
 
 
 @router.get("/admin/questionnaire-results", response_model=List[schemas.QuestionnaireResultResponse])

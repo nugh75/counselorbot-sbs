@@ -6,14 +6,6 @@ import { QUESTIONNAIRES, type QuestionnaireType } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { toast } from '@/components/ui/Toast';
 
-interface QuestionnaireResult {
-    id: number;
-    session_id: string;
-    questionnaire_type: string;
-    scores: Record<string, number> | null;
-    submitted_at: string;
-}
-
 type BookletData = Record<string, string>;
 
 const EMPTY_BOOKLET: BookletData = {
@@ -49,7 +41,7 @@ function toBookletData(raw: unknown): BookletData {
     return next;
 }
 
-export function StudentBookletCard({ session, lang }: { session: QuestionnaireResult | null; lang: string }) {
+export function StudentBookletCard({ questionnaireType, lang }: { questionnaireType: QuestionnaireType; lang: string }) {
     const { t, tf } = useI18n();
     const [form, setForm] = useState<BookletData>(EMPTY_BOOKLET);
     const [loading, setLoading] = useState(false);
@@ -57,27 +49,18 @@ export function StudentBookletCard({ session, lang }: { session: QuestionnaireRe
     const [downloading, setDownloading] = useState(false);
 
     const factorOptions = useMemo(() => {
-        if (!session || !session.scores || session.questionnaire_type === 'SAVICKAS') return [];
-        const config = QUESTIONNAIRES[session.questionnaire_type as QuestionnaireType];
-        const orderedCodes = config?.factors.map((factor) => factor.code) || Object.keys(session.scores);
-        return orderedCodes
-            .filter((code) => session.scores && session.scores[code] !== undefined)
-            .map((code) => {
-                const factor = config?.factors.find((item) => item.code === code);
-                const label = tf(`factor.${code}.name`, factor?.name || code);
-                const value = session.scores?.[code];
-                return { value: `${code} - ${label}${value ? ` (${value}/9)` : ''}`, label: `${code} - ${label}${value ? ` (${value}/9)` : ''}` };
-            });
-    }, [session, tf]);
+        if (questionnaireType === 'SAVICKAS') return [];
+        const config = QUESTIONNAIRES[questionnaireType];
+        return (config?.factors || []).map((factor) => {
+            const label = tf(`factor.${factor.code}.name`, factor.name);
+            return { value: `${factor.code} - ${label}`, label: `${factor.code} - ${label}` };
+        });
+    }, [questionnaireType, tf]);
 
     useEffect(() => {
-        if (!session) {
-            setForm(EMPTY_BOOKLET);
-            return;
-        }
         let active = true;
         setLoading(true);
-        fetch(`/api/user/student-booklets/${encodeURIComponent(session.session_id)}`)
+        fetch(`/api/user/student-booklets/instrument/${encodeURIComponent(questionnaireType)}`)
             .then(async (res) => {
                 if (!active) return;
                 if (res.ok) {
@@ -94,17 +77,16 @@ export function StudentBookletCard({ session, lang }: { session: QuestionnaireRe
                 if (active) setLoading(false);
             });
         return () => { active = false; };
-    }, [session]);
+    }, [questionnaireType]);
 
     const setValue = (key: keyof BookletData, value: string) => {
         setForm((prev) => ({ ...prev, [key]: value }));
     };
 
     const saveBooklet = async (showToast = true) => {
-        if (!session) return false;
         setSaving(true);
         try {
-            const res = await fetch(`/api/user/student-booklets/${encodeURIComponent(session.session_id)}`, {
+            const res = await fetch(`/api/user/student-booklets/instrument/${encodeURIComponent(questionnaireType)}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ data: form }),
@@ -124,18 +106,17 @@ export function StudentBookletCard({ session, lang }: { session: QuestionnaireRe
     };
 
     const downloadPdf = async () => {
-        if (!session) return;
         setDownloading(true);
         try {
             const saved = await saveBooklet(false);
             if (!saved) return;
-            const res = await fetch(`/api/user/student-booklets/${encodeURIComponent(session.session_id)}/pdf?lang=${lang}`);
+            const res = await fetch(`/api/user/student-booklets/instrument/${encodeURIComponent(questionnaireType)}/pdf?lang=${lang}`);
             if (!res.ok) throw new Error('PDF download failed');
             const blob = await res.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `counselorbot_libretto_${session.questionnaire_type}_${session.session_id.slice(0, 8)}.pdf`;
+            a.download = `counselorbot_libretto_${questionnaireType}.pdf`;
             document.body.appendChild(a);
             a.click();
             a.remove();
@@ -179,7 +160,7 @@ export function StudentBookletCard({ session, lang }: { session: QuestionnaireRe
             <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</span>
             {factorOptions.length > 0 ? (
                 <select value={form[key]} onChange={(event) => setValue(key, event.target.value)} className={inputClass}>
-                    <option value="">Scegli dal profilo...</option>
+                    <option value="">Scegli dallo strumento...</option>
                     {factorOptions.map((option) => (
                         <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
@@ -195,18 +176,16 @@ export function StudentBookletCard({ session, lang }: { session: QuestionnaireRe
         </label>
     );
 
-    if (!session) return null;
-
     return (
         <section className="glass-panel p-5 space-y-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                         <BookOpen className="h-5 w-5 text-indigo-600" />
-                        Libretto dello studente
+                        Libretto dello studente · {questionnaireType}
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                        Compila il tuo libretto per trasformare il profilo in obiettivi, strategie e verifiche.
+                        Compila il tuo libretto per trasformare lo strumento scelto in obiettivi, strategie e verifiche.
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-2">

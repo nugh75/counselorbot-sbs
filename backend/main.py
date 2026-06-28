@@ -243,6 +243,8 @@ def _seed_and_migrate():
             "CREATE INDEX IF NOT EXISTS ix_validation_responses_research_contact_id ON validation_responses (research_contact_id)",
             "CREATE INDEX IF NOT EXISTS ix_student_booklets_username ON student_booklets (username)",
             "CREATE INDEX IF NOT EXISTS ix_student_booklets_session_id ON student_booklets (session_id)",
+            "CREATE INDEX IF NOT EXISTS ix_student_booklets_questionnaire_type ON student_booklets (questionnaire_type)",
+            "CREATE UNIQUE INDEX IF NOT EXISTS uq_student_booklets_username_questionnaire ON student_booklets (username, questionnaire_type)",
             "CREATE INDEX IF NOT EXISTS ix_learner_profile_reflections_username ON learner_profile_reflections (username)",
             "CREATE INDEX IF NOT EXISTS ix_learner_profile_reflections_session_id ON learner_profile_reflections (session_id)",
         ]:
@@ -252,6 +254,13 @@ def _seed_and_migrate():
                     conn.commit()
             except Exception as e:
                 logger.debug(f"administration link index skipped/failed ({idx_clause}): {e}")
+
+        try:
+            with database.engine.connect() as conn:
+                conn.execute(sa_text("ALTER TABLE student_booklets ALTER COLUMN session_id DROP NOT NULL"))
+                conn.commit()
+        except Exception as e:
+            logger.debug(f"student_booklets session_id nullable migration skipped/failed: {e}")
 
         for clause in [
             "ADD COLUMN strumenti_utilizzati JSON",
