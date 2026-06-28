@@ -11,7 +11,36 @@ export interface Identity {
     authenticated: boolean;
 }
 
-export async function getIdentity(): Promise<Identity | null> {
+// --- Anteprima ruoli (view as): l'admin puo' vedere l'interfaccia come la
+// vedono gli altri ruoli. L'override e' client-side (localStorage) e si applica
+// solo se l'identita' reale e' admin. L'admin reale resta sempre raggiungibile
+// via getRealIdentity (es. gate della pagina /admin) per poter uscire. ---
+export type ViewAsRole = 'studente' | 'ricercatore' | 'docente';
+const VIEW_AS_KEY = 'cb_view_as_role';
+
+export function getViewAsRole(): ViewAsRole | null {
+    if (typeof window === 'undefined') return null;
+    const value = window.localStorage.getItem(VIEW_AS_KEY);
+    return value === 'studente' || value === 'ricercatore' || value === 'docente' ? value : null;
+}
+
+export function setViewAsRole(role: ViewAsRole): void {
+    if (typeof window !== 'undefined') window.localStorage.setItem(VIEW_AS_KEY, role);
+}
+
+export function clearViewAsRole(): void {
+    if (typeof window !== 'undefined') window.localStorage.removeItem(VIEW_AS_KEY);
+}
+
+function applyViewAs(real: Identity, role: ViewAsRole): Identity {
+    const base: Identity = { ...real, is_admin: false, is_researcher: false, groups: [] };
+    if (role === 'ricercatore') return { ...base, is_researcher: true, groups: ['researchers'] };
+    if (role === 'docente') return { ...base, groups: ['docenti'] };
+    return { ...base, groups: ['studenti'] };
+}
+
+// Identita' reale dal backend, senza applicare l'anteprima ruoli.
+export async function getRealIdentity(): Promise<Identity | null> {
     try {
         const res = await fetch('/api/auth/me');
         if (!res.ok) return null;
@@ -19,6 +48,18 @@ export async function getIdentity(): Promise<Identity | null> {
     } catch {
         return null;
     }
+}
+
+// Identita' effettiva usata dalla UI: applica l'anteprima ruoli se l'utente
+// reale e' admin. Un override residuo su un non-admin viene ignorato e pulito.
+export async function getIdentity(): Promise<Identity | null> {
+    const real = await getRealIdentity();
+    if (!real) return null;
+    const role = getViewAsRole();
+    if (!role) return real;
+    if (real.is_admin) return applyViewAs(real, role);
+    clearViewAsRole();
+    return real;
 }
 
 // Console ai4educ: portale per tutti gli utenti, manager per gli amministratori.
