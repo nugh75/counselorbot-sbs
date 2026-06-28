@@ -17,7 +17,7 @@ const OpenCodeExperience = dynamic(
     () => import('@/components/qsa/OpenCodeExperience').then((mod) => mod.OpenCodeExperience),
     { ssr: false }
 );
-import { ArrowRight, CheckCircle2, MessageSquare, RotateCcw, LogOut, Download, Layers, Terminal, LogIn, ShieldCheck } from 'lucide-react';
+import { ArrowRight, MessageSquare, RotateCcw, LogOut, Download, Layers, Terminal, LogIn } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StickyActions } from '@/components/ui/StickyActions';
 import { FlowStepper } from '@/components/ui/FlowStepper';
@@ -415,9 +415,6 @@ export default function Home() {
         return (
             <div className="page-narrow">
                 <div className="glass-panel p-8 text-center space-y-5">
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-indigo-50 text-indigo-600">
-                        <ShieldCheck className="h-6 w-6" />
-                    </div>
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900">Accesso richiesto</h1>
                         <p className="mt-2 text-sm leading-relaxed text-slate-600">
@@ -521,9 +518,6 @@ export default function Home() {
                             <StickyActions>
                                 <div className="glass-panel px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-3 shadow-md">
                                     <div className="flex items-center gap-3 min-w-0 flex-1">
-                                        <div className="w-10 h-10 shrink-0 rounded-md bg-indigo-50 flex items-center justify-center">
-                                            <MessageSquare className="w-5 h-5 text-indigo-600" />
-                                        </div>
                                         <div className="min-w-0">
                                             <h3 className="text-sm font-semibold text-slate-800 truncate">{t('dashboard.ready.title')}</h3>
                                             <p className="text-xs text-slate-500 truncate">{t('dashboard.ready.sub')}</p>
@@ -559,9 +553,6 @@ export default function Home() {
                                 /* Schermata 2: scelta modalità, compatta (tasti piccoli, affiancati). */
                                 <div className="max-w-md mx-auto">
                                     <div className="glass-panel p-6 text-center space-y-4">
-                                        <div className="w-11 h-11 mx-auto rounded-md bg-indigo-50 flex items-center justify-center">
-                                            <MessageSquare className="w-5 h-5 text-indigo-600" />
-                                        </div>
                                         <div>
                                             <h3 className="text-base font-semibold text-slate-800">{t('experience.choose.title')}</h3>
                                             <p className="text-sm text-slate-500 mt-1">{t('experience.choose.sub')}</p>
@@ -651,9 +642,6 @@ export default function Home() {
                     {step === 'completed' && (
                         <div className="max-w-xl mx-auto">
                             <div className="glass-panel p-8 text-center space-y-6">
-                                <div className="w-14 h-14 mx-auto rounded-md bg-green-50 flex items-center justify-center">
-                                    <CheckCircle2 className="w-7 h-7 text-green-600" />
-                                </div>
                                 <div>
                                     <h2 className="text-2xl font-bold text-slate-800">{t('completed.title')}</h2>
                                     <p className="text-slate-500 mt-3">

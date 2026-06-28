@@ -6,7 +6,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useI18n } from '@/lib/i18n-context';
-import { UserCircle, History, Trash2, Check, Pencil, X } from 'lucide-react';
+import { History, Trash2, Check, Pencil, X } from 'lucide-react';
 
 export interface LearnerProfileData {
     context?: string;
@@ -215,7 +215,6 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     return (
         <div className="glass-panel p-5 space-y-4">
             <div className="flex items-center gap-2">
-                <UserCircle className="w-5 h-5 text-indigo-600" />
                 <h3 className="font-semibold text-slate-800">{title}</h3>
             </div>
             <p className="text-sm leading-relaxed text-slate-500">

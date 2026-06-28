@@ -1,6 +1,6 @@
 'use client';
 
-import { Keyboard, ArrowRight, Upload } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 
@@ -28,9 +28,6 @@ export function InputMethodSelector({ onSelect, questionnaire }: InputMethodSele
                 <div className="absolute top-4 right-4 p-2 rounded-full bg-slate-50 opacity-0 group-hover:opacity-100 transition-opacity">
                     <ArrowRight className="w-5 h-5 text-indigo-600" />
                 </div>
-                <div className="mb-5 p-4 rounded-md bg-indigo-50 border border-indigo-100">
-                    <Keyboard className="w-8 h-8 text-indigo-600" />
-                </div>
                 <h3 className="text-xl font-semibold mb-2 text-slate-900">{t('method.manual.title')}</h3>
                 <p className="text-sm text-center text-slate-600 px-4">
                     {manualDescription}
@@ -51,9 +48,6 @@ export function InputMethodSelector({ onSelect, questionnaire }: InputMethodSele
                     </span>
                 </div>
 
-                <div className="mb-5 p-4 rounded-md bg-indigo-50 border border-indigo-100">
-                    <Upload className="w-8 h-8 text-indigo-600" />
-                </div>
                 <h3 className="text-xl font-semibold mb-2 text-slate-900">{t('method.upload.title')}</h3>
                 <p className="text-sm text-center text-slate-600 px-4">
                     {t('method.upload.desc')}
