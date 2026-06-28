@@ -13,7 +13,7 @@ import { CompassMark } from '@/components/ui/CompassMark';
 import { cn } from '@/lib/utils';
 import { ai4authLoginUrl, AI4AUTH_LOGOUT_URL, AI4EDUC_PORTAL_URL, AI4EDUC_MANAGER_URL, getIdentity, type Identity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
-import { canUsePersonalPage, canUseResearchConsole, canUseTeacherAssistant } from '@/lib/roles';
+import { canUseAssistant, canUsePersonalPage, canUseResearchConsole } from '@/lib/roles';
 
 interface SecondaryItem {
     key: string;
@@ -36,7 +36,7 @@ export function Header() {
     const accountLabel = identity?.name || identity?.email || identity?.username;
     // Console ai4educ: admin -> manager, tutti gli altri (incl. caricamento) -> portale.
     const consoleUrl = identity?.is_admin ? AI4EDUC_MANAGER_URL : AI4EDUC_PORTAL_URL;
-    const canOpenTeacherAssistant = canUseTeacherAssistant(identity);
+    const canOpenAssistant = canUseAssistant(identity);
     const canOpenResearchConsole = canUseResearchConsole(identity);
     const canOpenPersonalPage = canUsePersonalPage(identity);
 
@@ -45,10 +45,10 @@ export function Header() {
 
     // Azioni di navigazione secondarie: in linea da `sm`, raccolte in un menu su mobile.
     const secondaryItems: SecondaryItem[] = [];
-    if (isAuthenticated && (canOpenTeacherAssistant || canOpenResearchConsole)) {
+    if (isAuthenticated && canOpenResearchConsole) {
         secondaryItems.push({ key: 'services', href: consoleUrl, external: true, icon: LayoutGrid, label: t('header.services') });
     }
-    if (canOpenTeacherAssistant) {
+    if (canOpenAssistant) {
         secondaryItems.push({ key: 'assistant', href: '/assistente', icon: Bot, label: t('assistant.title') });
     }
     if (canOpenPersonalPage) {

@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Float, Integer, String, Text, DateTime, JSON
+from sqlalchemy import Boolean, Column, Float, Integer, String, Text, DateTime, JSON, UniqueConstraint
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -437,6 +437,38 @@ class LearnerProfileRevision(Base):
     source = Column(String, nullable=False, default="manual")  # intake|session_start|session_end|manual
     session_id = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class LearnerProfileReflection(Base):
+    """Nota dello studente sui cambiamenti osservati nel proprio profilo."""
+
+    __tablename__ = "learner_profile_reflections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, nullable=False, index=True)
+    note = Column(Text, nullable=False)
+    current_revision_id = Column(Integer, nullable=True, index=True)
+    previous_revision_id = Column(Integer, nullable=True, index=True)
+    session_id = Column(String, nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class StudentBooklet(Base):
+    """Libretto dello studente compilabile, legato a una compilazione."""
+
+    __tablename__ = "student_booklets"
+    __table_args__ = (
+        UniqueConstraint("username", "session_id", name="uq_student_booklets_username_session"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, nullable=False, index=True)
+    session_id = Column(String, nullable=False, index=True)
+    questionnaire_type = Column(String, nullable=False, index=True)
+    data = Column(JSON, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
 class ModelPreset(Base):

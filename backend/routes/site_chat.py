@@ -58,15 +58,12 @@ _SITE_CHAT_GROUP_MARKERS = (
 
 
 def _can_use_site_chat(identity: dict) -> bool:
-    if identity.get("is_admin"):
-        return True
-    groups = [str(g).lower() for g in identity.get("groups") or []]
-    return any(marker in group for group in groups for marker in _SITE_CHAT_GROUP_MARKERS)
+    return bool(identity.get("authenticated"))
 
 
 async def _require_site_chat_user(identity: dict = Depends(auth.get_current_user)) -> dict:
     if not _can_use_site_chat(identity):
-        raise HTTPException(status_code=403, detail="Assistente riservato a docenti, ricercatori e amministratori")
+        raise HTTPException(status_code=403, detail="Assistente disponibile solo per utenti autenticati")
     return identity
 
 
@@ -264,6 +261,7 @@ async def site_chat_stream(
     max_tokens = _clamp_max_tokens(request.max_tokens)
     top_k = _top_k(ai_service)
     question = (request.message or "").strip()
+    student_context = (request.student_context or "").strip()[:6000]
     provider = ai_service.config.get("active_provider", "unknown")
     model = ai_service.config.get("model_name", "unknown")
 
@@ -363,8 +361,15 @@ async def site_chat_stream(
             f"PREVIOUS CONVERSATION (for continuity only, NOT a source):\n{prior_memory}\n\n---\n\n"
             if prior_memory else ""
         )
+        student_context_block = (
+            "PRIVATE STUDENT CONTEXT (from the authenticated student's profile; use it only to help "
+            "the student reflect, do NOT present it as a document source):\n"
+            f"{student_context}\n\n---\n\n"
+            if student_context else ""
+        )
         full_message = (
             f"{memory_block}"
+            f"{student_context_block}"
             f"MATERIALS (extracted from website documents):\n\n{context}\n\n"
             f"---\n\nQUESTION:\n{question}"
         )
