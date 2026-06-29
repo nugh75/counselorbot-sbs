@@ -558,16 +558,20 @@ export default function Home() {
                     {/* Step: Guided Chat Interaction */}
                     {step === 'interaction' && scores && selectedQuestionnaire && (
                         <div className="space-y-6">
-                            <BackButton onClick={goBack} label={t('nav.back')} />
+                            {!(experience === null && !profileReviewed) && (
+                                <BackButton onClick={goBack} label={t('nav.back')} />
+                            )}
                             {experience === null && !profileReviewed ? (
                                 /* Schermata 1: profilo studente, a tutta pagina. La card guida
-                                   l'avanzamento (Conferma/Salta) e si auto-salta se non c'è nulla. */
+                                   l'avanzamento con la "prima riga" uniforme (back + matita +
+                                   freccia destra) e si auto-salta se non c'è nulla. */
                                 <LearnerProfileCard
                                     variant="review"
                                     sessionId={sessionId}
                                     requireInitial
                                     onDone={() => setProfileReviewed(true)}
                                     onUnavailable={() => setProfileReviewed(true)}
+                                    onBack={goBack}
                                 />
                             ) : experience === null ? (
                                 /* Schermata 2: scelta modalità, compatta (tasti piccoli, affiancati). */
