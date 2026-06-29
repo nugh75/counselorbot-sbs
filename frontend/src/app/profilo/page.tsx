@@ -704,18 +704,6 @@ export default function ProfilePage() {
                                     </div>
                                 )}
                             </div>
-
-                            {/* Call to Action: ancorata in fondo alla card, sempre raggiungibile
-                                senza scrollare tutta la scheda fattori. */}
-                            <div className="sticky bottom-0 -mx-6 -mb-6 mt-2 px-6 pt-3 pb-6 bg-gradient-to-t from-[var(--console-surface)] via-[var(--console-surface)] to-transparent rounded-b-xl">
-                                <Link
-                                    href={`/?session_id=${selectedSession.session_id}&instrument=${selectedSession.questionnaire_type}`}
-                                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-md text-sm text-center shadow-lg shadow-indigo-600/20 transition-colors flex items-center justify-center gap-2"
-                                >
-                                    <MessageSquare className="w-4 h-4" />
-                                    {t('history.resume')}
-                                </Link>
-                            </div>
                         </div>
                     </>
                 ) : (
