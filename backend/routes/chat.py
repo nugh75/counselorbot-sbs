@@ -60,12 +60,14 @@ from ..chat_logic import (
     _is_strategy_questionnaire,
     _phase_factor_codes,
     _resolve_system_prompt,
+    _requires_complete_factor_output,
     _scope_scores_to_codes,
     _resolve_user_message_for_chat,
     _retrieved_context,
     _sanitize_ztpi_step_label,
     _sanitize_ztpi_user_text,
     _should_sanitize_ztpi_text,
+    _should_include_step_analysis_context,
     _student_visible_response,
     _update_markdown_memory_background,
     build_context_envelope,
@@ -276,6 +278,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     is_first_step = False
     step_label = ""
     questionnaire_type = request.questionnaire_type or ""
+    step = None
     if request.use_phase_prompt and request.phase:
         step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first()
         if step:
@@ -297,17 +300,21 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             step_label = step.label
             questionnaire_type = step.questionnaire_type
 
-    phase_codes = _phase_factor_codes(db, request.phase)
-    system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language)
-    system_prompt = _apply_current_step_factor_scope_directive(system_prompt, questionnaire_type, phase_codes)
+    step_mode = step.system_prompt_mode if step else request.mode
+    include_analysis_context = _should_include_step_analysis_context(step_mode)
+    phase_codes = _phase_factor_codes(db, request.phase) if include_analysis_context else set()
+    if include_analysis_context:
+        system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language, phase_codes)
+        system_prompt = _apply_current_step_factor_scope_directive(system_prompt, questionnaire_type, phase_codes)
     model_scores_context = (
         _annotate_qsa_factor_codes(request.scores_context, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else request.scores_context
     )
-    system_prompt = _apply_current_step_score_profile_directive(
-        system_prompt, questionnaire_type, request.language, model_scores_context, phase_codes
-    )
-    system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type, request.language)
+    if include_analysis_context:
+        system_prompt = _apply_current_step_score_profile_directive(
+            system_prompt, questionnaire_type, request.language, model_scores_context, phase_codes
+        )
+        system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type, request.language)
     system_prompt = _apply_thinking_directive(system_prompt, request.language)
     model_message = (
         _annotate_qsa_factor_codes(effective_message, request.language, questionnaire_type=questionnaire_type)
@@ -324,11 +331,15 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     )
 
     # 2. Recupera le fonti KNOWLEDGE (grafo + strategie + certificate + votate).
-    retrieval_query = f"{step_label} {model_message} {model_scores_context}".strip()
-    knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
-        db, session_id, request, questionnaire_type, retrieval_query,
-        ai_service=ai_service,
-    )
+    knowledge_context = ""
+    strategy_ids: list[str] = []
+    certified_strategy_ids: list[str] = []
+    if include_analysis_context:
+        retrieval_query = f"{step_label} {model_message} {model_scores_context}".strip()
+        knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
+            db, session_id, request, questionnaire_type, retrieval_query,
+            ai_service=ai_service,
+        )
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         knowledge_context = _sanitize_ztpi_user_text(knowledge_context, request.language)
 
@@ -338,13 +349,17 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     # Punteggi nel messaggio scope-ati alla sezione corrente: il modello analizza
     # solo i fattori del suo step, non quelli di altre sezioni. Il profilo intero
     # resta persistito (update_context) per i follow-up cross-sezione.
-    message_scores_context = _scope_scores_to_codes(model_scores_context, phase_codes)
+    message_scores_context = (
+        _scope_scores_to_codes(model_scores_context, phase_codes)
+        if include_analysis_context
+        else ""
+    )
     system_prompt_final, full_message, history = build_context_envelope(
         db, ai_service, request, session_id, identity,
         c_persona=c_persona, counselor_name=c_name, system_prompt=system_prompt, step_label=step_label,
         questionnaire_type=questionnaire_type, effective_message=model_message,
         model_scores_context=model_scores_context, message_scores_context=message_scores_context,
-        knowledge_context=knowledge_context,
+        knowledge_context=knowledge_context, include_scores_reference=include_analysis_context,
     )
 
     # 4. Get AI Response (KNOWLEDGE nel system, continuity nella history -> no summary).
@@ -368,9 +383,10 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         response_content = _annotate_qsa_factor_codes(
             response_content, request.language, questionnaire_type=questionnaire_type
         )
-        response_content = _ensure_required_qsa_factor_codes(
-            response_content, questionnaire_type, request.language, _phase_factor_codes(db, request.phase)
-        )
+        if _requires_complete_factor_output(request.mode):
+            response_content = _ensure_required_qsa_factor_codes(
+                response_content, questionnaire_type, request.language, _phase_factor_codes(db, request.phase)
+            )
 
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         step_label = _sanitize_ztpi_step_label(step_label, request.language)
@@ -481,6 +497,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     is_first_step = False
     step_label = ""
     questionnaire_type = request.questionnaire_type or ""
+    step = None
     if request.use_phase_prompt and request.phase:
         step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first()
         if step:
@@ -502,17 +519,21 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             step_label = step.label
             questionnaire_type = step.questionnaire_type
 
-    phase_codes = _phase_factor_codes(db, request.phase)
-    system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language)
-    system_prompt = _apply_current_step_factor_scope_directive(system_prompt, questionnaire_type, phase_codes)
+    step_mode = step.system_prompt_mode if step else request.mode
+    include_analysis_context = _should_include_step_analysis_context(step_mode)
+    phase_codes = _phase_factor_codes(db, request.phase) if include_analysis_context else set()
+    if include_analysis_context:
+        system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language, phase_codes)
+        system_prompt = _apply_current_step_factor_scope_directive(system_prompt, questionnaire_type, phase_codes)
     model_scores_context = (
         _annotate_qsa_factor_codes(request.scores_context, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else request.scores_context
     )
-    system_prompt = _apply_current_step_score_profile_directive(
-        system_prompt, questionnaire_type, request.language, model_scores_context, phase_codes
-    )
-    system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type, request.language)
+    if include_analysis_context:
+        system_prompt = _apply_current_step_score_profile_directive(
+            system_prompt, questionnaire_type, request.language, model_scores_context, phase_codes
+        )
+        system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type, request.language)
     system_prompt = _apply_thinking_directive(system_prompt, request.language)
     model_message = (
         _annotate_qsa_factor_codes(effective_message, request.language, questionnaire_type=questionnaire_type)
@@ -522,7 +543,11 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     # Punteggi nel messaggio scope-ati alla sezione corrente: il modello analizza
     # solo i fattori del suo step, non quelli di altre sezioni. Il profilo intero
     # resta persistito (update_context) per i follow-up cross-sezione.
-    message_scores_context = _scope_scores_to_codes(model_scores_context, phase_codes)
+    message_scores_context = (
+        _scope_scores_to_codes(model_scores_context, phase_codes)
+        if include_analysis_context
+        else ""
+    )
 
     session_memory.update_context(
         session_id,
@@ -534,11 +559,15 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     )
 
     # Recupera le fonti KNOWLEDGE (grafo + strategie + certificate + votate).
-    retrieval_query = f"{step_label} {model_message} {model_scores_context}".strip()
-    knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
-        db, session_id, request, questionnaire_type, retrieval_query,
-        ai_service=ai_service,
-    )
+    knowledge_context = ""
+    strategy_ids: list[str] = []
+    certified_strategy_ids: list[str] = []
+    if include_analysis_context:
+        retrieval_query = f"{step_label} {model_message} {model_scores_context}".strip()
+        knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
+            db, session_id, request, questionnaire_type, retrieval_query,
+            ai_service=ai_service,
+        )
     sanitize = _should_sanitize_ztpi_text(request.mode, request.phase)
     if sanitize:
         knowledge_context = _sanitize_ztpi_user_text(knowledge_context, request.language)
@@ -554,7 +583,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         c_persona=c_persona, counselor_name=c_name, system_prompt=system_prompt, step_label=step_label,
         questionnaire_type=questionnaire_type, effective_message=model_message,
         model_scores_context=model_scores_context, message_scores_context=message_scores_context,
-        knowledge_context=knowledge_context,
+        knowledge_context=knowledge_context, include_scores_reference=include_analysis_context,
     )
 
     provider = c_provider or ai_service.config.get('active_provider', 'unknown')
@@ -650,9 +679,10 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             response_content = _student_visible_response(
                 "".join(chunks), questionnaire_type, request.language, sanitize
             )
-            response_content = _ensure_required_qsa_factor_codes(
-                response_content, questionnaire_type, request.language, _phase_factor_codes(db, request.phase)
-            )
+            if _requires_complete_factor_output(request.mode):
+                response_content = _ensure_required_qsa_factor_codes(
+                    response_content, questionnaire_type, request.language, _phase_factor_codes(db, request.phase)
+                )
             if not response_content.strip():
                 raise AIError(
                     "Il provider AI ha terminato lo stream senza contenuto visibile. "

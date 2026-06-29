@@ -1263,6 +1263,98 @@ def test_existing_extended_guided_modes_resolve_saved_prompt_keys():
     assert MODE_TO_SYSTEM_PROMPT_KEY["qap-summary"] == "prompt_qap_summary"
 
 
+def test_prompt_audit_intro_envelope_is_light_for_all_instruments():
+    intros = [
+        ("QSA", "intro", "PROFILO QSA DELLO STUDENTE:\n- C1: 7/9\n- A1: 8/9"),
+        ("QSAr", "qsar-intro", "PROFILO QSAr DELLO STUDENTE:\n- C1r: 7/9\n- A1r: 8/9"),
+        ("ZTPI", "ztpi-intro", "PROFILO ZTPI DELLO STUDENTE:\n- T1: 7/9\n- T2: 5/9"),
+        ("SAVICKAS", "savickas-intro", ""),
+        ("QPCS", "qpcs-welcome", "PROFILO QPCS DELLO STUDENTE:\n- S1: 7/9\n- S2: 5/9"),
+        ("QPCC", "qpcc-welcome", "PROFILO QPCC DELLO STUDENTE:\n- K1: 7/9\n- K2: 5/9"),
+        ("QAP", "qap-welcome", "PROFILO QAP DELLO STUDENTE:\n- AD1: 7/9\n- AD2: 5/9"),
+    ]
+    for questionnaire_type, _, _ in intros:
+        _ensure_guided_steps(questionnaire_type)
+
+    counselor = client.post("/admin/counselors", json={
+        "slug": "prompt-audit-intro-light",
+        "name": "Nadia",
+        "persona": "You are Nadia, a balanced and clear counsellor.",
+        "questionnaire_types": ["QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP"],
+        "is_active": True,
+    })
+    assert counselor.status_code == 200, counselor.text
+    counselor_id = counselor.json()["id"]
+
+    forbidden_system_blocks = [
+        "[FACTOR LABELS]",
+        "[INTERPRETATION TABLE]",
+        "[CURRENT FACTOR SCOPE]",
+        "[CURRENT STEP FACTORS]",
+        "[CURRENT STEP SCORE PROFILE]",
+        "[CERTIFIED ADVICE]",
+        "[KNOWLEDGE]",
+        "[PROFILE]",
+    ]
+    forbidden_score_fragments = ["PROFILO", "/9", "- C1", "- A1", "- T1", "- S1", "- K1", "- AD1"]
+
+    for questionnaire_type, phase, scores_context in intros:
+        r = client.post("/admin/prompt-audit/dry-run", json={
+            "questionnaire_type": questionnaire_type,
+            "language": "it",
+            "phase": phase,
+            "mode": "generic",
+            "use_phase_prompt": True,
+            "scores_context": scores_context,
+            "session_id": f"prompt-audit-intro-light-{questionnaire_type.lower()}",
+            "counselor_id": counselor_id,
+            "include_knowledge": True,
+            "include_history": False,
+        })
+        assert r.status_code == 200, r.text
+        body = r.json()
+        system_prompt = body["envelope"]["system_prompt_final"]
+        full_message = body["envelope"]["full_message"]
+
+        assert body["resolved"]["step"]["mode"] == "intro"
+        assert body["inputs"]["scoped_scores_context"] == ""
+        assert body["knowledge"]["context"] == ""
+        assert body["knowledge"]["strategy_ids"] == []
+        assert body["knowledge"]["certified_strategy_ids"] == []
+        assert system_prompt.count("You are Nadia") == 1
+        assert "You are Nadia. You are introducing" not in system_prompt
+        assert "cognitive and affective factors" not in system_prompt
+        assert "cognitive and affective components" not in system_prompt
+        assert "[INTRO ALLOWED QUESTIONS]" in system_prompt
+        assert "the path is guided step by step" in system_prompt
+        assert "QSA and QSAr for learning strategies" in system_prompt
+        assert "QAP for career adaptability" in system_prompt
+        for marker in forbidden_system_blocks:
+            assert marker not in system_prompt, (questionnaire_type, marker, system_prompt)
+        for marker in forbidden_score_fragments:
+            assert marker not in full_message, (questionnaire_type, marker, full_message)
+
+    r = client.post("/admin/prompt-audit/dry-run", json={
+        "questionnaire_type": "QSA",
+        "language": "it",
+        "phase": "intro",
+        "mode": "generic",
+        "use_phase_prompt": False,
+        "message": "Come funziona l'interazione e quali strumenti sono disponibili?",
+        "scores_context": "PROFILO QSA DELLO STUDENTE:\n- C1: 7/9\n- A1: 8/9",
+        "session_id": "prompt-audit-intro-light-free-question",
+        "counselor_id": counselor_id,
+        "include_knowledge": True,
+        "include_history": False,
+    })
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["envelope"]["full_message"] == "Come funziona l'interazione e quali strumenti sono disponibili?"
+    assert "[INTRO ALLOWED QUESTIONS]" in body["envelope"]["system_prompt_final"]
+    assert "[KNOWLEDGE]" not in body["envelope"]["system_prompt_final"]
+    assert "PROFILO QSA" not in body["envelope"]["full_message"]
+
+
 def test_prompt_audit_dry_run_builds_qsa_envelope_without_side_effects():
     _ensure_guided_steps("QSA")
     session_id = "prompt-audit-dry-run"
@@ -1316,6 +1408,12 @@ def test_prompt_audit_dry_run_builds_qsa_envelope_without_side_effects():
     assert body["resolved"]["provider"] == "openrouter"
     assert body["resolved"]["model"] == "deepseek/deepseek-v4-flash"
     assert body["resolved"]["counselor"]["id"] == counselor_id
+    system_prompt = body["envelope"]["system_prompt_final"]
+    assert "You are Prompt Audit QSA, a QSA expert" not in system_prompt
+    assert "You are CounselorBot" not in system_prompt
+    assert "C1 (Strategie elaborative)" in system_prompt
+    assert "C7 (Autointerrogazione)" in system_prompt
+    assert "A1 (Ansietà di base)" not in system_prompt
     assert "Analyse ONLY the COGNITIVE factors" in body["inputs"]["effective_user_message"]
     assert "- C1" in body["inputs"]["scoped_scores_context"]
     assert "- A1" not in body["inputs"]["scoped_scores_context"]
@@ -1328,6 +1426,38 @@ def test_prompt_audit_dry_run_builds_qsa_envelope_without_side_effects():
     finally:
         db.close()
     assert session_memory.get_summary(session_id) == ""
+
+
+def test_startup_migration_rewrites_counselorbot_prompt_identity_prefix():
+    db = _TestSession()
+    try:
+        cfg = db.query(models.Config).filter(models.Config.key == "prompt_factor").first()
+        if cfg is None:
+            cfg = models.Config(key="prompt_factor", value="", description="test prompt")
+            db.add(cfg)
+            db.flush()
+        original = cfg.value
+        cfg.value = (
+            "You are CounselorBot, a study tutor for students.\n"
+            "Goal:\n"
+            "Always speak in a simple, direct and encouraging tone, in the requested language, addressing the student informally.\n"
+            "Analyse the requested factors."
+        )
+        db.commit()
+
+        main._migrate_counselor_personas_and_intros(db)
+        db.refresh(cfg)
+
+        assert cfg.value.startswith("Goal:\nAnalyse the requested factors.")
+        assert "You are CounselorBot" not in cfg.value
+        assert "{{counselor_name}}" not in cfg.value
+        assert "Always speak in a simple" not in cfg.value
+    finally:
+        cfg = db.query(models.Config).filter(models.Config.key == "prompt_factor").first()
+        if cfg is not None:
+            cfg.value = original
+            db.commit()
+        db.close()
 
 
 def test_prompt_audit_scopes_certified_strategies_to_qsa_second_level_step():
@@ -1759,6 +1889,25 @@ def test_chat_smoke_mocked_ai():
     assert r.json()["response"] == "RISPOSTA_TEST"
 
 
+def test_chat_factor_qa_does_not_force_all_step_factor_codes():
+    _ensure_guided_steps("QSA")
+    session_id = "factor-qa-no-forced-scope-prefix"
+    session_memory.clear(session_id)
+    r = client.post("/chat", json={
+        "message": "Su quale strategia cognitiva dovrei lavorare per prima?",
+        "mode": "factor-qa",
+        "phase": "cognitive",
+        "use_phase_prompt": True,
+        "session_id": session_id,
+        "questionnaire_type": "QSA",
+        "language": "it",
+        "scores_context": "PROFILO QSA DELLO STUDENTE:\n- C1: 7/9\n- C3: 8/9\n- C4: 3/9",
+    })
+    assert r.status_code == 200, r.text
+    assert not r.json()["response"].startswith("Fattori trattati:"), r.json()["response"]
+    session_memory.clear(session_id)
+
+
 def _latest_log_details(session_id: str) -> dict:
     db = _TestSession()
     try:
@@ -1803,6 +1952,59 @@ def test_chat_log_persists_prompt_envelope():
     assert envelope["system_prompt_final"], "system_prompt_final vuoto"
     assert "Come posso migliorare il metodo di studio?" in envelope["full_message"]
     assert isinstance(envelope["history"], list)
+
+
+def test_chat_intro_envelope_includes_learner_profile_without_scores():
+    _ensure_guided_steps("QSA")
+    session_id = "intro-envelope-learner-profile"
+    session_memory.clear(session_id)
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    db = _TestSession()
+    try:
+        db.add(models.LearnerProfileRevision(
+            username="student",
+            data={
+                "goal": "Capire come organizzare lo studio",
+                "main_difficulty": "Mi distraggo quando studio da solo",
+            },
+            source="test",
+            session_id=session_id,
+        ))
+        db.commit()
+    finally:
+        db.close()
+
+    try:
+        r = client.post("/chat", json={
+            "message": "Presentami il percorso",
+            "mode": "generic",
+            "phase": "intro",
+            "use_phase_prompt": True,
+            "session_id": session_id,
+            "questionnaire_type": "QSA",
+            "language": "it",
+            "scores_context": "PROFILO QSA DELLO STUDENTE:\n- C1: 7/9\n- A1: 8/9",
+        })
+        assert r.status_code == 200, r.text
+        envelope = _latest_log_details(session_id).get("envelope")
+        assert "[PROFILE]" in envelope["system_prompt_final"]
+        assert "Profilo dichiarato dallo studente" in envelope["system_prompt_final"]
+        assert "Capire come organizzare lo studio" in envelope["system_prompt_final"]
+        assert "PROFILO QSA" not in envelope["system_prompt_final"]
+        assert "PROFILO QSA" not in envelope["full_message"]
+        assert "/9" not in envelope["full_message"]
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        db = _TestSession()
+        try:
+            db.query(models.LearnerProfileRevision).filter(
+                models.LearnerProfileRevision.username == "student",
+                models.LearnerProfileRevision.session_id == session_id,
+            ).delete()
+            db.commit()
+        finally:
+            db.close()
+        session_memory.clear(session_id)
 
 
 def test_chat_stream_log_persists_prompt_envelope():
