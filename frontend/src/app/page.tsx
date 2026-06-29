@@ -17,7 +17,7 @@ const OpenCodeExperience = dynamic(
     () => import('@/components/qsa/OpenCodeExperience').then((mod) => mod.OpenCodeExperience),
     { ssr: false }
 );
-import { ArrowRight, MessageSquare, RotateCcw, LogOut, Download, Layers, Terminal, LogIn } from 'lucide-react';
+import { ArrowRight, MessageSquare, Terminal, LogIn } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StickyActions } from '@/components/ui/StickyActions';
 import { FlowStepper } from '@/components/ui/FlowStepper';
@@ -652,9 +652,8 @@ export default function Home() {
                                     <div className="pt-4">
                                         <button
                                             onClick={handleCombinedStart}
-                                            className="w-full py-3.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-md transition-colors flex items-center justify-center gap-2 shadow-md"
+                                            className="w-full py-3.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-md transition-colors flex items-center justify-center shadow-md"
                                         >
-                                            <Layers className="w-5 h-5" />
                                             {t('completed.combined')}
                                         </button>
                                     </div>
@@ -663,9 +662,8 @@ export default function Home() {
                                 <div className="grid grid-cols-3 gap-4 pt-4">
                                     <button
                                         onClick={analyzeAnother}
-                                        className="py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
+                                        className="py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center"
                                     >
-                                        <RotateCcw className="w-5 h-5" />
                                         {t('completed.another')}
                                     </button>
                                     <button
@@ -687,9 +685,8 @@ export default function Home() {
                                                 toast.error(t('toast.error'));
                                             }
                                         }}
-                                        className="py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
+                                        className="py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center"
                                     >
-                                        <Download className="w-5 h-5" />
                                         {t('completed.downloadPdf')}
                                     </button>
                                     <button
@@ -697,9 +694,8 @@ export default function Home() {
                                             setSelectedCounselorId(null);
                                             setStep('intro');
                                         }}
-                                        className="py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
+                                        className="py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-md transition-colors flex items-center justify-center"
                                     >
-                                        <LogOut className="w-5 h-5" />
                                         {t('completed.end')}
                                     </button>
                                 </div>
