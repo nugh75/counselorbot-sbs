@@ -338,7 +338,6 @@ export default function AssistentePage() {
         );
     }
 
-    const SelectedTopicIcon = selectedTopic.icon;
     // Anteprima ruolo (admin che impersona un profilo di prova): serve per
     // rendere immediatamente visibile a quale assistente si sta interagando.
     const viewAs = getViewAsAccount();
@@ -351,30 +350,21 @@ export default function AssistentePage() {
                 <div className="w-full lg:w-80 shrink-0 flex flex-col gap-4 lg:overflow-y-auto lg:pr-1">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900">{t('assistant.title')}</h1>
-                        <p className="text-slate-500 mt-1 text-sm">
-                            {t('assistant.subtitle')}
-                        </p>
                     </div>
 
-                    {/* Badge ruolo: indica chiaramente quale assistente (studente vs
-                        docente/formatori) e' attivo. Visualizza anche l'eventuale
-                        profilo di prova quando l'admin impersona un ruolo. */}
-                    <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                    {/* Badge ruolo: icone distinte per audience + profilo di prova
+                        quando admin impersona. Senza testo esplicito: l'icona
+                        e il colore bastano a distinguere. */}
+                    <div className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 ${
                         audience === 'studente'
-                            ? 'border-indigo-200 bg-indigo-50 text-indigo-800'
-                            : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                            ? 'border-indigo-200 bg-indigo-50 text-indigo-600'
+                            : 'border-emerald-200 bg-emerald-50 text-emerald-600'
                     }`}>
                         {audience === 'studente'
                             ? <GraduationCap className="h-4 w-4 shrink-0" />
                             : <BookOpen className="h-4 w-4 shrink-0" />}
-                        <span className="font-semibold">
-                            {t(`assistant.audienceBadge.${audience}`)}
-                        </span>
                         {viewAs && (
-                            <span
-                                className="ml-auto inline-flex items-center gap-1 text-xs font-medium opacity-80"
-                                title={t('assistant.previewHint')}
-                            >
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-600">
                                 <Eye className="h-3.5 w-3.5" />
                                 {viewAs.name}
                             </span>
@@ -450,23 +440,17 @@ export default function AssistentePage() {
                         })}
                     </div>
 
-                    {/* Riepilogo argomento + azione "Prepara domanda" compatta.
-                        Niente card duplicata titolo/corpo: solo il nome
-                        dell'argomento attivo e il bottone. */}
-                    <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
-                        <div className="flex items-center gap-2 min-w-0">
-                            <SelectedTopicIcon className="h-4 w-4 text-indigo-600 shrink-0" />
-                            <span className="truncate text-sm font-semibold text-slate-700" title={selectedTopic.title}>
-                                {selectedTopic.title}
-                            </span>
-                        </div>
+                    {/* Bottone "Prepara domanda" compatto: cerchio con punto
+                        interrogativo, senza testo. La card del topic selezionato
+                        comunica già l'argomento. */}
+                    <div className="flex justify-end">
                         <button
                             type="button"
                             onClick={prepareQuestion}
-                            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                            title={t('assistant.prepareQuestion')}
+                            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-bold text-slate-500 hover:border-indigo-300 hover:text-indigo-600 transition-colors"
                         >
-                            <BookOpen className="h-3.5 w-3.5" />
-                            {t('assistant.prepareQuestion')}
+                            ?
                         </button>
                     </div>
                 </div>
