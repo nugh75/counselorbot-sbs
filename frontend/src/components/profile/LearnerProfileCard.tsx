@@ -7,7 +7,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
-import { History, Trash2, Check, Pencil, X } from 'lucide-react';
+import { History, Trash2, Pencil, X } from 'lucide-react';
+import { PencilButton } from '@/components/ui/PencilButton';
+import { ForwardButton } from '@/components/ui/ForwardButton';
 
 export interface LearnerProfileData {
     context?: string;
@@ -235,20 +237,20 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
             {variant === 'review' && !isIntake && !editing ? (
                 <div className="space-y-3">
                     {summaryUi}
+                    {/* Stessa "prima riga" delle altre fasi: cerchio con la matita */}
+                    {/* (PencilButton, modifica) + cerchio con freccia a destra */}
+                    {/* (ForwardButton, conferma e vai avanti). Grafica uniforme. */}
                     <div className="flex items-center gap-3">
-                        <button
+                        <PencilButton
+                            onClick={() => setEditing(true)}
+                            label={t('lp.edit')}
+                        />
+                        <ForwardButton
                             onClick={() => void save('session_start')}
                             disabled={saving}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
-                        >
-                            <Check className="w-4 h-4" /> {t('lp.confirm')}
-                        </button>
-                        <button
-                            onClick={() => setEditing(true)}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-slate-600 hover:text-slate-800"
-                        >
-                            <Pencil className="w-4 h-4" /> {t('lp.edit')}
-                        </button>
+                            label={t('lp.confirm')}
+                        />
+                        {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
                     </div>
                 </div>
             ) : variant === 'edit' && !isIntake && !editing ? (

@@ -487,12 +487,13 @@ export default function Home() {
             {step !== 'intro' && <FlowStepper steps={flowStages} current={stageIndex} />}
 
             {/* The selection screen owns its introduction to avoid repeating the page purpose. */}
-            {step !== 'intro' && step !== 'questionnaire-select' && step !== 'counselor-select' && step !== 'dashboard' && step !== 'interaction' && (
+            {/* method-select e manual-input gestiscono la loro "prima riga" */}
+            {/* internamente (BackButton + ForwardButton), come strumenti/counselor. */}
+            {step !== 'intro' && step !== 'questionnaire-select' && step !== 'counselor-select' && step !== 'dashboard' && step !== 'interaction' && step !== 'method-select' && step !== 'manual-input' && (
                 <PageHeader
                     title={getStepTitle()}
                     subtitle={getStepDescription()}
                     onBack={step !== 'completed' ? goBack : undefined}
-                    forward={step === 'manual-input' ? <ForwardButton type="submit" form="score-form" label={t('score.submit')} /> : undefined}
                 />
             )}
 
@@ -527,12 +528,12 @@ export default function Home() {
 
                     {/* Step: Input Method Selection */}
                     {step === 'method-select' && selectedQuestionnaire && (
-                        <InputMethodSelector onSelect={handleMethodSelect} questionnaire={selectedQuestionnaire} />
+                        <InputMethodSelector onSelect={handleMethodSelect} onBack={goBack} questionnaire={selectedQuestionnaire} />
                     )}
 
                     {/* Step: Manual Input */}
                     {step === 'manual-input' && selectedQuestionnaire && (
-                        <ScoreInputForm questionnaire={selectedQuestionnaire} onSubmit={handleScoresSubmit} initialScores={scores || undefined} />
+                        <ScoreInputForm questionnaire={selectedQuestionnaire} onSubmit={handleScoresSubmit} initialScores={scores || undefined} onBack={goBack} />
                     )}
 
                     {/* Step: PDF Upload */}
