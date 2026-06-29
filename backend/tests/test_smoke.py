@@ -1263,6 +1263,74 @@ def test_existing_extended_guided_modes_resolve_saved_prompt_keys():
     assert MODE_TO_SYSTEM_PROMPT_KEY["qap-summary"] == "prompt_qap_summary"
 
 
+def test_prompt_audit_intro_envelope_is_light_for_all_instruments():
+    intros = [
+        ("QSA", "intro", "PROFILO QSA DELLO STUDENTE:\n- C1: 7/9\n- A1: 8/9"),
+        ("QSAr", "qsar-intro", "PROFILO QSAr DELLO STUDENTE:\n- C1r: 7/9\n- A1r: 8/9"),
+        ("ZTPI", "ztpi-intro", "PROFILO ZTPI DELLO STUDENTE:\n- T1: 7/9\n- T2: 5/9"),
+        ("SAVICKAS", "savickas-intro", ""),
+        ("QPCS", "qpcs-welcome", "PROFILO QPCS DELLO STUDENTE:\n- S1: 7/9\n- S2: 5/9"),
+        ("QPCC", "qpcc-welcome", "PROFILO QPCC DELLO STUDENTE:\n- K1: 7/9\n- K2: 5/9"),
+        ("QAP", "qap-welcome", "PROFILO QAP DELLO STUDENTE:\n- AD1: 7/9\n- AD2: 5/9"),
+    ]
+    for questionnaire_type, _, _ in intros:
+        _ensure_guided_steps(questionnaire_type)
+
+    counselor = client.post("/admin/counselors", json={
+        "slug": "prompt-audit-intro-light",
+        "name": "Nadia",
+        "persona": "You are Nadia, a balanced and clear counsellor.",
+        "questionnaire_types": ["QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP"],
+        "is_active": True,
+    })
+    assert counselor.status_code == 200, counselor.text
+    counselor_id = counselor.json()["id"]
+
+    forbidden_system_blocks = [
+        "[FACTOR LABELS]",
+        "[INTERPRETATION TABLE]",
+        "[CURRENT FACTOR SCOPE]",
+        "[CURRENT STEP FACTORS]",
+        "[CURRENT STEP SCORE PROFILE]",
+        "[CERTIFIED ADVICE]",
+        "[KNOWLEDGE]",
+        "[PROFILE]",
+    ]
+    forbidden_score_fragments = ["PROFILO", "/9", "- C1", "- A1", "- T1", "- S1", "- K1", "- AD1"]
+
+    for questionnaire_type, phase, scores_context in intros:
+        r = client.post("/admin/prompt-audit/dry-run", json={
+            "questionnaire_type": questionnaire_type,
+            "language": "it",
+            "phase": phase,
+            "mode": "generic",
+            "use_phase_prompt": True,
+            "scores_context": scores_context,
+            "session_id": f"prompt-audit-intro-light-{questionnaire_type.lower()}",
+            "counselor_id": counselor_id,
+            "include_knowledge": True,
+            "include_history": False,
+        })
+        assert r.status_code == 200, r.text
+        body = r.json()
+        system_prompt = body["envelope"]["system_prompt_final"]
+        full_message = body["envelope"]["full_message"]
+
+        assert body["resolved"]["step"]["mode"] == "intro"
+        assert body["inputs"]["scoped_scores_context"] == ""
+        assert body["knowledge"]["context"] == ""
+        assert body["knowledge"]["strategy_ids"] == []
+        assert body["knowledge"]["certified_strategy_ids"] == []
+        assert system_prompt.count("You are Nadia") == 1
+        assert "You are Nadia. You are introducing" not in system_prompt
+        assert "cognitive and affective factors" not in system_prompt
+        assert "cognitive and affective components" not in system_prompt
+        for marker in forbidden_system_blocks:
+            assert marker not in system_prompt, (questionnaire_type, marker, system_prompt)
+        for marker in forbidden_score_fragments:
+            assert marker not in full_message, (questionnaire_type, marker, full_message)
+
+
 def test_prompt_audit_dry_run_builds_qsa_envelope_without_side_effects():
     _ensure_guided_steps("QSA")
     session_id = "prompt-audit-dry-run"

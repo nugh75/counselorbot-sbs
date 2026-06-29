@@ -582,6 +582,21 @@ def _is_strategy_questionnaire(questionnaire_type: Optional[str]) -> bool:
     return (questionnaire_type or "").upper() in {"QSA", "QSAR"}
 
 
+def _is_intro_step_mode(system_prompt_mode: Optional[str]) -> bool:
+    """True for guided welcome/intro steps.
+
+    Intro turns should stay lightweight: no score table, no factor directives,
+    no RAG/strategy context. The counselor persona already supplies identity
+    and style; the intro prompt only describes the current turn.
+    """
+    return (system_prompt_mode or "").strip().lower() == "intro"
+
+
+def _should_include_step_analysis_context(system_prompt_mode: Optional[str]) -> bool:
+    """Whether this guided step should receive analysis-only context."""
+    return not _is_intro_step_mode(system_prompt_mode)
+
+
 def _qsa_factor_names(language: Optional[str], questionnaire_type: str = "QSA") -> dict[str, str]:
     dictionary = _QSAR_FACTOR_NAMES if (questionnaire_type or "").upper() == "QSAR" else _QSA_FACTOR_NAMES
     return dictionary.get(language or "it", dictionary["it"])
@@ -1313,6 +1328,7 @@ def build_context_envelope(
     knowledge_context: str,
     include_history: bool = True,
     include_session_memory: bool = True,
+    include_profile: bool = True,
     create_anonymous_code: bool = True,
 ) -> tuple[str, str, list]:
     """Assembla l'envelope canonico della chat counselor (Fase 5):
@@ -1371,11 +1387,15 @@ def build_context_envelope(
 
     # --- [PROFILE] modello discente (auto-dichiarato) + PUNTEGGI (riferimento) ---
     username_for_context = identity.get("username", "") if identity else ""
-    profile_context = _learner_profile_context(db, username_for_context)
-    portfolio_context = _portfolio_context(db, username_for_context)
+    profile_context = _learner_profile_context(db, username_for_context) if include_profile else ""
+    portfolio_context = _portfolio_context(db, username_for_context) if include_profile else ""
     # Punteggi: nel turno di analisi arrivano nel messaggio utente, nei follow-up
     # si recuperano da quelli persistiti e si scope-ano alla sezione corrente.
-    persisted_scores = "" if model_scores_context or not include_session_memory else session_memory.get_scores(session_id)
+    persisted_scores = (
+        ""
+        if model_scores_context or not include_session_memory or not include_profile
+        else session_memory.get_scores(session_id)
+    )
     if persisted_scores:
         scoped_scores = _scope_scores_to_codes(persisted_scores, _phase_factor_codes(db, request.phase))
         if scoped_scores:
