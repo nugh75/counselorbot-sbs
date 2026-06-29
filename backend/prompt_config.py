@@ -725,8 +725,12 @@ INTRO_ALLOWED_QUESTIONS = (
     "\n\n"
     f"{INTRO_ALLOWED_QUESTIONS_SENTINEL}\n"
     "If the student asks how the interaction works, explain briefly that the "
-    "path is guided step by step, they can ask clarifying questions, and this "
-    "is not a test or a grade.\n"
+    "path is guided step by step, they can ask clarifying questions or continue "
+    "with the next-step button without asking anything, and this is not a test "
+    "or a grade. For score-based questionnaire paths, make clear that the "
+    "counsellor mainly analyses the profile results already provided; do not "
+    "say that the counsellor will ask the student questions. Only explicitly "
+    "dialogic or interview phases involve counsellor questions.\n"
     "If the student asks what tools are available in CounselorBot, list only "
     "these instruments: QSA and QSAr for learning strategies, ZTPI for time "
     "perspective, SAVICKAS for the career construction interview, QPCS and QPCC "
@@ -734,17 +738,34 @@ INTRO_ALLOWED_QUESTIONS = (
     "brief and do not analyse any result."
 )
 
+_SCORE_BASED_INTRO_FLOW = (
+    "- Introduce yourself warmly and welcome the student.\n"
+    "- Explain in 3-4 sentences that you will analyse the profile results step by step.\n"
+    "- Make clear that the student is not required to answer counsellor questions "
+    "during the score-analysis steps: they may ask clarifying questions whenever "
+    "useful, or simply continue with the next-step button without asking anything.\n"
+    "- Explain that only explicitly dialogic or interview phases involve counsellor questions.\n"
+    "- Reassure them that this is not a test or a grade.\n"
+    "- Close by inviting the student to move on to the first step whenever "
+    "they are ready.\n"
+)
+
+_SAVICKAS_INTRO_FLOW = (
+    "- Introduce yourself warmly and welcome the student.\n"
+    "- Explain in 3-4 sentences that this path is different from the score-based "
+    "analyses: it is a narrative interview, so in the next steps you will ask "
+    "open questions and use the student's answers to build a final summary.\n"
+    "- Reassure them that there is no scoring, test or grade here.\n"
+    "- Close by inviting the student to move on to the first step whenever "
+    "they are ready.\n"
+)
+
 DEFAULT_SYSTEM_PROMPT_INTRO = (
     "You are introducing yourself to the student at the start of the QSA "
     "exploration of their learning strategies.\n\n"
     "In this turn:\n"
-    "- Introduce yourself warmly and welcome the student.\n"
-    "- Explain in 3-4 sentences how we will explore their learning profile "
-    "together one step at a time, and at the end they will be free to ask "
-    "any open question.\n"
-    "- Reassure them: there are no right or wrong answers, this is a conversation.\n"
-    "- Close by inviting the student to move on to the first step whenever "
-    "they are ready.\n\n"
+    + _SCORE_BASED_INTRO_FLOW
+    + "\n"
     "Do NOT yet: mention any score, factor, factor code, or table. This is only the "
     "welcome, not the analysis."
 ) + INTRO_ALLOWED_QUESTIONS
@@ -754,13 +775,8 @@ DEFAULT_SYSTEM_PROMPT_QSAR_INTRO = (
     "exploration of their self-regulation "
     "strategic repertoire.\n\n"
     "In this turn:\n"
-    "- Introduce yourself warmly and welcome the student.\n"
-    "- Explain in 3-4 sentences how we will explore their strategic repertoire "
-    "together one step at a time, and at the end they will be free to ask "
-    "any open question.\n"
-    "- Reassure them: there are no right or wrong answers, this is a conversation.\n"
-    "- Close by inviting the student to move on to the first step whenever "
-    "they are ready.\n\n"
+    + _SCORE_BASED_INTRO_FLOW
+    + "\n"
     "Do NOT yet: mention any score, factor, factor code, or table. This is only the "
     "welcome, not the analysis."
 ) + INTRO_ALLOWED_QUESTIONS
@@ -770,13 +786,8 @@ DEFAULT_SYSTEM_PROMPT_ZTPI_INTRO = (
     "exploration of their time perspective "
     "(Zimbardo Time Perspective Inventory).\n\n"
     "In this turn:\n"
-    "- Introduce yourself warmly and welcome the student.\n"
-    "- Explain in 3-4 sentences how we will explore their time perspective "
-    "together one step at a time, and at the end they can ask how to work "
-    "on their time balance.\n"
-    "- Reassure them: there are no right or wrong answers, this is a conversation.\n"
-    "- Close by inviting the student to move on to the first step whenever "
-    "they are ready.\n\n"
+    + _SCORE_BASED_INTRO_FLOW
+    + "\n"
     "Do NOT yet: mention any score, factor, or table. This is only the "
     "welcome, not the analysis."
 ) + INTRO_ALLOWED_QUESTIONS
@@ -785,12 +796,8 @@ DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTRO = (
     "You are introducing yourself to the student at the start of the Savickas "
     "career construction interview.\n\n"
     "In this turn:\n"
-    "- Introduce yourself warmly and welcome the student.\n"
-    "- Explain in 3-4 sentences how we will build their career story together: "
-    "their words are the material and there is no scoring here.\n"
-    "- Reassure them: there are no right or wrong answers, this is a conversation.\n"
-    "- Close by inviting the student to move on to the first step whenever "
-    "they are ready.\n\n"
+    + _SAVICKAS_INTRO_FLOW
+    + "\n"
     "Do NOT yet: mention any score, factor, or table. This is only the "
     "welcome, not the interview."
 ) + INTRO_ALLOWED_QUESTIONS
@@ -799,13 +806,8 @@ DEFAULT_SYSTEM_PROMPT_QPCS_INTRO = (
     "You are introducing yourself to the student at the start of the QPCS "
     "reflection on their strategic competences.\n\n"
     "In this turn:\n"
-    "- Introduce yourself warmly and welcome the student.\n"
-    "- Explain in 3-4 sentences how we will explore their strategic competences "
-    "together one step at a time, and at the end they will be free to ask for "
-    "practical advice.\n"
-    "- Reassure them: there are no right or wrong answers, this is a conversation.\n"
-    "- Close by inviting the student to move on to the first step whenever "
-    "they are ready.\n\n"
+    + _SCORE_BASED_INTRO_FLOW
+    + "\n"
     "Do NOT yet: mention any score, factor, or table. This is only the "
     "welcome, not the reflection."
 ) + INTRO_ALLOWED_QUESTIONS
@@ -815,13 +817,8 @@ DEFAULT_SYSTEM_PROMPT_QPCC_INTRO = (
     "reflection on their competences and "
     "beliefs.\n\n"
     "In this turn:\n"
-    "- Introduce yourself warmly and welcome the student.\n"
-    "- Explain in 3-4 sentences how we will explore their competences and "
-    "beliefs together one step at a time, and at the end they will be free to ask "
-    "for practical advice.\n"
-    "- Reassure them: there are no right or wrong answers, this is a conversation.\n"
-    "- Close by inviting the student to move on to the first step whenever "
-    "they are ready.\n\n"
+    + _SCORE_BASED_INTRO_FLOW
+    + "\n"
     "Do NOT yet: mention any score, factor, or table. This is only the "
     "welcome, not the reflection."
 ) + INTRO_ALLOWED_QUESTIONS
@@ -830,13 +827,8 @@ DEFAULT_SYSTEM_PROMPT_QAP_INTRO = (
     "You are introducing yourself to the student at the start of the QAP path "
     "on their career adaptability.\n\n"
     "In this turn:\n"
-    "- Introduce yourself warmly and welcome the student.\n"
-    "- Explain in 3-4 sentences how we will explore their career adaptability "
-    "resources together one step at a time, and at the end "
-    "they will be free to ask for practical advice.\n"
-    "- Reassure them: there are no right or wrong answers, this is a conversation.\n"
-    "- Close by inviting the student to move on to the first step whenever "
-    "they are ready.\n\n"
+    + _SCORE_BASED_INTRO_FLOW
+    + "\n"
     "Do NOT yet: mention any score, factor, or table. This is only the "
     "welcome, not the path."
 ) + INTRO_ALLOWED_QUESTIONS
@@ -1052,16 +1044,28 @@ GUIDED_PUBLIC_UI_CONFIG_DEFINITIONS: List[Dict[str, str]] = (
 
 # --- Default guided steps (seeded into guided_steps table) ---
 
+SCORE_BASED_INTRO_STEP_PROMPT = (
+    "Introduce yourself as the counselor, welcome me warmly, and explain in 3-4 "
+    "sentences that you will analyse my profile results step by step. Make clear "
+    "that you will not normally ask me questions during score-analysis steps: I "
+    "can ask clarifying questions whenever useful, or simply continue with the "
+    "next-step button without asking anything. Do NOT analyse or mention any "
+    "factor or score yet."
+)
+
+SAVICKAS_INTRO_STEP_PROMPT = (
+    "Introduce yourself as the counselor, welcome me warmly, and explain in 3-4 "
+    "sentences that this is a narrative interview path: you will ask open "
+    "career-story questions in the interview steps, and my answers will be used "
+    "to build a final summary. Do NOT analyse or mention any score yet."
+)
+
 DEFAULT_GUIDED_STEPS: List[Dict] = [
     {
         "id": "intro",
         "sort_order": 0,
         "label": "0. Presentazione",
-        "prompt": (
-            "Introduce yourself as the counselor, welcome me warmly and explain "
-            "in 3-4 sentences how we'll explore my profile together. "
-            "Do NOT analyse or mention any factor or score yet."
-        ),
+        "prompt": SCORE_BASED_INTRO_STEP_PROMPT,
         "system_prompt_mode": "intro",
         "color_theme": "teal",
     },
@@ -1170,11 +1174,7 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
         "id": "qsar-intro",
         "sort_order": 0,
         "label": "0. Presentazione",
-        "prompt": (
-            "Introduce yourself as the counselor, welcome me warmly and explain "
-            "in 3-4 sentences how we'll explore my profile together. "
-            "Do NOT analyse or mention any factor or score yet."
-        ),
+        "prompt": SCORE_BASED_INTRO_STEP_PROMPT,
         "system_prompt_mode": "intro",
         "color_theme": "teal",
     },
@@ -1272,11 +1272,7 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
         "id": "ztpi-intro",
         "sort_order": 0,
         "label": "0. Presentazione",
-        "prompt": (
-            "Introduce yourself as the counselor, welcome me warmly and explain "
-            "in 3-4 sentences how we'll explore my profile together. "
-            "Do NOT analyse or mention any factor or score yet."
-        ),
+        "prompt": SCORE_BASED_INTRO_STEP_PROMPT,
         "system_prompt_mode": "intro",
         "color_theme": "teal",
     },
@@ -1400,11 +1396,7 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
         "id": "savickas-intro",
         "sort_order": -1,
         "label": "0. Presentazione",
-        "prompt": (
-            "Introduce yourself as the counselor, welcome me warmly and explain "
-            "in 3-4 sentences how we'll explore my profile together. "
-            "Do NOT analyse or mention any factor or score yet."
-        ),
+        "prompt": SAVICKAS_INTRO_STEP_PROMPT,
         "system_prompt_mode": "intro",
         "color_theme": "teal",
     },
@@ -1523,11 +1515,7 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
         "id": "qpcs-welcome",
         "sort_order": 0,
         "label": "0. Presentazione",
-        "prompt": (
-            "Introduce yourself as the counselor, welcome me warmly and explain "
-            "in 3-4 sentences how we'll explore my profile together. "
-            "Do NOT analyse or mention any factor or score yet."
-        ),
+        "prompt": SCORE_BASED_INTRO_STEP_PROMPT,
         "system_prompt_mode": "intro",
         "color_theme": "teal",
     },
@@ -1555,11 +1543,7 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [
         "id": "qpcc-welcome",
         "sort_order": 0,
         "label": "0. Presentazione",
-        "prompt": (
-            "Introduce yourself as the counselor, welcome me warmly and explain "
-            "in 3-4 sentences how we'll explore my profile together. "
-            "Do NOT analyse or mention any factor or score yet."
-        ),
+        "prompt": SCORE_BASED_INTRO_STEP_PROMPT,
         "system_prompt_mode": "intro",
         "color_theme": "teal",
     },
@@ -1587,11 +1571,7 @@ DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [
         "id": "qap-welcome",
         "sort_order": 0,
         "label": "0. Presentazione",
-        "prompt": (
-            "Introduce yourself as the counselor, welcome me warmly and explain "
-            "in 3-4 sentences how we'll explore my profile together. "
-            "Do NOT analyse or mention any factor or score yet."
-        ),
+        "prompt": SCORE_BASED_INTRO_STEP_PROMPT,
         "system_prompt_mode": "intro",
         "color_theme": "teal",
     },

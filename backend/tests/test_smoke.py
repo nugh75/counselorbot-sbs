@@ -1325,10 +1325,20 @@ def test_prompt_audit_intro_envelope_is_light_for_all_instruments():
         assert "You are Nadia. You are introducing" not in system_prompt
         assert "cognitive and affective factors" not in system_prompt
         assert "cognitive and affective components" not in system_prompt
+        assert "there are no right or wrong answers" not in system_prompt
+        assert "they can ask clarifying questions or continue with the next-step button without asking anything" in system_prompt
+        assert "do not say that the counsellor will ask the student questions" in system_prompt
+        assert "Only explicitly dialogic or interview phases involve counsellor questions" in system_prompt
         assert "[INTRO ALLOWED QUESTIONS]" in system_prompt
         assert "the path is guided step by step" in system_prompt
         assert "QSA and QSAr for learning strategies" in system_prompt
         assert "QAP for career adaptability" in system_prompt
+        assert "how we'll explore my profile together" not in full_message
+        if questionnaire_type == "SAVICKAS":
+            assert "narrative interview path" in full_message
+        else:
+            assert "you will not normally ask me questions during score-analysis steps" in full_message
+            assert "next-step button without asking anything" in full_message
         for marker in forbidden_system_blocks:
             assert marker not in system_prompt, (questionnaire_type, marker, system_prompt)
         for marker in forbidden_score_fragments:
@@ -1457,6 +1467,63 @@ def test_startup_migration_rewrites_counselorbot_prompt_identity_prefix():
         if cfg is not None:
             cfg.value = original
             db.commit()
+        db.close()
+
+
+def test_startup_migration_updates_intro_question_contract():
+    _ensure_guided_steps("QSA")
+    db = _TestSession()
+    cfg = None
+    step = None
+    original_cfg = None
+    original_step_prompt = None
+    try:
+        cfg = db.query(models.Config).filter(models.Config.key == "prompt_intro").first()
+        if cfg is None:
+            cfg = models.Config(key="prompt_intro", value="", description="test prompt")
+            db.add(cfg)
+            db.flush()
+        step = db.query(models.GuidedStep).filter(models.GuidedStep.id == "intro").first()
+        assert step is not None
+        original_cfg = cfg.value
+        original_step_prompt = step.prompt
+        cfg.value = (
+            "You are introducing yourself to the student at the start of the QSA "
+            "exploration of their learning strategies.\n\n"
+            "In this turn:\n"
+            "- Introduce yourself warmly and welcome the student.\n"
+            "- Explain in 3-4 sentences how we will explore their learning profile "
+            "together one step at a time, and at the end they will be free to ask "
+            "any open question.\n"
+            "- Reassure them: there are no right or wrong answers, this is a conversation.\n"
+            "- Close by inviting the student to move on to the first step whenever "
+            "they are ready.\n\n"
+            "Do NOT yet: mention any score, factor, factor code, or table. This is only the "
+            "welcome, not the analysis."
+        )
+        step.prompt = (
+            "Introduce yourself as the counselor, welcome me warmly and explain "
+            "in 3-4 sentences how we'll explore my profile together. "
+            "Do NOT analyse or mention any factor or score yet."
+        )
+        db.commit()
+
+        main._migrate_counselor_personas_and_intros(db)
+        db.refresh(cfg)
+        db.refresh(step)
+
+        assert "there are no right or wrong answers" not in cfg.value
+        assert "not a test or a grade" in cfg.value
+        assert "do not say that the counsellor will ask the student questions" in cfg.value
+        assert "you will not normally ask me questions during score-analysis steps" in step.prompt
+        assert "next-step button without asking anything" in step.prompt
+        assert "how we'll explore my profile together" not in step.prompt
+    finally:
+        if cfg is not None and original_cfg is not None:
+            cfg.value = original_cfg
+        if step is not None and original_step_prompt is not None:
+            step.prompt = original_step_prompt
+        db.commit()
         db.close()
 
 
