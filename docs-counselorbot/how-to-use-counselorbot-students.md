@@ -28,11 +28,11 @@ honestly.
 ## 4. Use the guided chat
 
 After the questionnaire, the **guided chat** begins: an AI counselor analyses your
-results step by step. In score-based paths, you are not required to answer counselor
-questions: you can ask for clarification whenever you want, or simply continue with
-the next-step button. Interview paths, such as Savickas, are different because the
-counselor asks open narrative questions. The counselor remembers what you talked
-about to give continuity to the conversation.
+results step by step. In score-based paths, you can move forward with the next-step
+button whenever you are ready, and write to the counselor when you want a
+clarification. Interview paths, such as Savickas, are different because the counselor
+asks open narrative questions. The counselor remembers what you talked about to give
+continuity to the conversation.
 
 ## 5. Read your profile
 

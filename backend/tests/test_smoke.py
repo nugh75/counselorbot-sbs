@@ -1326,9 +1326,12 @@ def test_prompt_audit_intro_envelope_is_light_for_all_instruments():
         assert "cognitive and affective factors" not in system_prompt
         assert "cognitive and affective components" not in system_prompt
         assert "there are no right or wrong answers" not in system_prompt
-        assert "they can ask clarifying questions or continue with the next-step button without asking anything" in system_prompt
-        assert "do not say that the counsellor will ask the student questions" in system_prompt
-        assert "Only explicitly dialogic or interview phases involve counsellor questions" in system_prompt
+        assert "without asking anything" not in system_prompt
+        assert "not required to answer counsellor questions" not in system_prompt
+        assert "the student can move forward when ready" in system_prompt
+        assert "guiding the reading of the profile results already provided" in system_prompt
+        assert "Avoid meta-negations about questions" in system_prompt
+        assert "Only explicitly dialogic or interview phases are question-led" in system_prompt
         assert "[INTRO ALLOWED QUESTIONS]" in system_prompt
         assert "the path is guided step by step" in system_prompt
         assert "QSA and QSAr for learning strategies" in system_prompt
@@ -1337,8 +1340,11 @@ def test_prompt_audit_intro_envelope_is_light_for_all_instruments():
         if questionnaire_type == "SAVICKAS":
             assert "narrative interview path" in full_message
         else:
-            assert "you will not normally ask me questions during score-analysis steps" in full_message
-            assert "next-step button without asking anything" in full_message
+            assert "will not normally ask me questions" not in full_message
+            assert "without asking anything" not in full_message
+            assert "step-by-step reading of my profile results" in full_message
+            assert "move forward with the next-step button when ready" in full_message
+            assert "Avoid bureaucratic wording, stage labels and meta-negations" in full_message
         for marker in forbidden_system_blocks:
             assert marker not in system_prompt, (questionnaire_type, marker, system_prompt)
         for marker in forbidden_score_fragments:
@@ -1492,19 +1498,24 @@ def test_startup_migration_updates_intro_question_contract():
             "exploration of their learning strategies.\n\n"
             "In this turn:\n"
             "- Introduce yourself warmly and welcome the student.\n"
-            "- Explain in 3-4 sentences how we will explore their learning profile "
-            "together one step at a time, and at the end they will be free to ask "
-            "any open question.\n"
-            "- Reassure them: there are no right or wrong answers, this is a conversation.\n"
+            "- Explain in 3-4 sentences that you will analyse the profile results step by step.\n"
+            "- Make clear that the student is not required to answer counsellor questions "
+            "during the score-analysis steps: they may ask clarifying questions whenever "
+            "useful, or simply continue with the next-step button without asking anything.\n"
+            "- Explain that only explicitly dialogic or interview phases involve counsellor questions.\n"
+            "- Reassure them that this is not a test or a grade.\n"
             "- Close by inviting the student to move on to the first step whenever "
-            "they are ready.\n\n"
+            "they are ready.\n"
             "Do NOT yet: mention any score, factor, factor code, or table. This is only the "
             "welcome, not the analysis."
         )
         step.prompt = (
-            "Introduce yourself as the counselor, welcome me warmly and explain "
-            "in 3-4 sentences how we'll explore my profile together. "
-            "Do NOT analyse or mention any factor or score yet."
+            "Introduce yourself as the counselor, welcome me warmly, and explain in 3-4 "
+            "sentences that you will analyse my profile results step by step. Make clear "
+            "that you will not normally ask me questions during score-analysis steps: I "
+            "can ask clarifying questions whenever useful, or simply continue with the "
+            "next-step button without asking anything. Do NOT analyse or mention any "
+            "factor or score yet."
         )
         db.commit()
 
@@ -1514,9 +1525,12 @@ def test_startup_migration_updates_intro_question_contract():
 
         assert "there are no right or wrong answers" not in cfg.value
         assert "not a test or a grade" in cfg.value
-        assert "do not say that the counsellor will ask the student questions" in cfg.value
-        assert "you will not normally ask me questions during score-analysis steps" in step.prompt
-        assert "next-step button without asking anything" in step.prompt
+        assert "without asking anything" not in cfg.value
+        assert "guiding the reading of the profile results already provided" in cfg.value
+        assert "will not normally ask me questions" not in step.prompt
+        assert "without asking anything" not in step.prompt
+        assert "step-by-step reading of my profile results" in step.prompt
+        assert "move forward with the next-step button when ready" in step.prompt
         assert "how we'll explore my profile together" not in step.prompt
     finally:
         if cfg is not None and original_cfg is not None:

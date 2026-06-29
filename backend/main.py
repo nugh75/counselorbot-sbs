@@ -859,10 +859,19 @@ _LEGACY_INTRO_QUESTION_CONTRACT_MARKERS = (
     "they will be free to ask any open question",
     "they will be free to ask for practical advice",
     "at the end they can ask how to work on their time balance",
+    "do not say that the counsellor will ask the student questions",
+    "not required to answer counsellor questions",
+    "without asking anything",
 )
-_LEGACY_GUIDED_STEP_INTRO_PROMPT_MARKERS = (
-    "how we'll explore my profile together",
-    "Do NOT analyse or mention any factor or score yet.",
+_LEGACY_GUIDED_STEP_INTRO_PROMPT_MARKER_SETS = (
+    (
+        "how we'll explore my profile together",
+        "Do NOT analyse or mention any factor or score yet.",
+    ),
+    (
+        "you will not normally ask me questions during score-analysis steps",
+        "next-step button without asking anything",
+    ),
 )
 _PERSONA_IDENTITY_PREFIX_RE = re.compile(
     r"^\s*You are (?:\{\{counselor_name\}\}|CounselorBot|the CounselorBot counsellor),?[^.\n]*\.\s*",
@@ -986,7 +995,10 @@ def _migrate_counselor_personas_and_intros(db):
             continue
         current_prompt = step.prompt or ""
         if (
-            all(marker in current_prompt for marker in _LEGACY_GUIDED_STEP_INTRO_PROMPT_MARKERS)
+            any(
+                all(marker in current_prompt for marker in marker_set)
+                for marker_set in _LEGACY_GUIDED_STEP_INTRO_PROMPT_MARKER_SETS
+            )
             and current_prompt != default_prompt
         ):
             step.prompt = default_prompt
