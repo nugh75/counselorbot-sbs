@@ -107,21 +107,22 @@ def _usage_cost_usd(usage: dict | None, provider: str | None = None, model: str 
 
 
 def _resolve_counselor(db, counselor_id):
-    """(provider, model, persona, disable_thinking, reasoning_budget) dal counselor + preset.
+    """(provider, model, persona, name, disable_thinking, reasoning_budget) dal counselor + preset.
 
     provider/model None -> usa la config globale; persona None -> nessun prefisso
-    al system prompt; disable_thinking None -> usa la config globale;
-    reasoning_budget None -> usa il default della famiglia del modello.
+    al system prompt; name None -> placeholder {{counselor_name}} usa il fallback;
+    disable_thinking None -> usa la config globale; reasoning_budget None -> usa il
+    default della famiglia del modello.
     """
     if not counselor_id:
-        return None, None, None, None, None
+        return None, None, None, None, None, None
     counselor = (
         db.query(models.Counselor)
         .filter(models.Counselor.id == counselor_id, models.Counselor.is_active.is_(True))
         .first()
     )
     if not counselor:
-        return None, None, None, None, None
+        return None, None, None, None, None, None
     provider = model = None
     disable_thinking = None
     reasoning_budget = None
@@ -135,7 +136,7 @@ def _resolve_counselor(db, counselor_id):
             provider, model = preset.provider, preset.model
             disable_thinking = bool(preset.disable_thinking)
             reasoning_budget = preset.reasoning_budget
-    return provider, model, counselor.persona, disable_thinking, reasoning_budget
+    return provider, model, counselor.persona, counselor.name, disable_thinking, reasoning_budget
 
 
 def _apply_counselor_overrides(
@@ -261,7 +262,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
 
     # 1. Retrieve Configuration and System Prompt based on Mode
     ai_service = AIService(db)
-    c_provider, c_model, c_persona, c_disable_thinking, c_reasoning_budget = _resolve_counselor(db, request.counselor_id)
+    c_provider, c_model, c_persona, c_name, c_disable_thinking, c_reasoning_budget = _resolve_counselor(db, request.counselor_id)
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
     # L'headroom per il reasoning e' applicato dinamicamente per-modello in AIService.
     max_tokens = _clamp_max_tokens(request.max_tokens)
@@ -340,7 +341,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     message_scores_context = _scope_scores_to_codes(model_scores_context, phase_codes)
     system_prompt_final, full_message, history = build_context_envelope(
         db, ai_service, request, session_id, identity,
-        c_persona=c_persona, system_prompt=system_prompt, step_label=step_label,
+        c_persona=c_persona, counselor_name=c_name, system_prompt=system_prompt, step_label=step_label,
         questionnaire_type=questionnaire_type, effective_message=model_message,
         model_scores_context=model_scores_context, message_scores_context=message_scores_context,
         knowledge_context=knowledge_context,
@@ -468,7 +469,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
 
     # Preparazione (usa la db della richiesta, ancora aperta qui)
     ai_service = AIService(db)
-    c_provider, c_model, c_persona, c_disable_thinking, c_reasoning_budget = _resolve_counselor(db, request.counselor_id)
+    c_provider, c_model, c_persona, c_name, c_disable_thinking, c_reasoning_budget = _resolve_counselor(db, request.counselor_id)
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
     # L'headroom per il reasoning e' applicato dinamicamente per-modello in AIService.
     max_tokens = _clamp_max_tokens(request.max_tokens)
@@ -550,7 +551,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     #   MESSAGES = history verbatim + user (scores scope-ati + msg)
     system_prompt_final, full_message, history = build_context_envelope(
         db, ai_service, request, session_id, identity,
-        c_persona=c_persona, system_prompt=system_prompt, step_label=step_label,
+        c_persona=c_persona, counselor_name=c_name, system_prompt=system_prompt, step_label=step_label,
         questionnaire_type=questionnaire_type, effective_message=model_message,
         model_scores_context=model_scores_context, message_scores_context=message_scores_context,
         knowledge_context=knowledge_context,
