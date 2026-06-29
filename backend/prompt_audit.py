@@ -40,6 +40,7 @@ from .chat_logic import (
     _should_include_step_analysis_context,
     _step_allows_practical_advice,
     build_context_envelope,
+    conversation_id_for,
     full_prompt_logging_enabled,
     split_thinking,
 )
@@ -503,9 +504,11 @@ def _log_prompt_audit_live(db: Session, payload, result: dict[str, Any], public:
         resolved = public.get("resolved", {})
         ident = _identity_as_dict(identity)
         session_id = (getattr(payload, "session_id", None) or f"prompt-audit-live-{uuid.uuid4()}")
+        conversation_id = conversation_id_for(session_id)
         details = pii.redact_details({
             "audit": True,
             "source": "prompt-audit-live",
+            "conversation_id": conversation_id,
             "mode": payload.mode,
             "phase": payload.phase,
             "counselor_id": getattr(payload, "counselor_id", None),
@@ -529,6 +532,7 @@ def _log_prompt_audit_live(db: Session, payload, result: dict[str, Any], public:
             details["envelope"] = pii.redact_envelope(result.get("envelope", {}))
         db.add(models.Log(
             session_id=session_id,
+            conversation_id=conversation_id,
             action="prompt_audit_live",
             username=ident.get("username") or None,
             email=ident.get("email") or None,

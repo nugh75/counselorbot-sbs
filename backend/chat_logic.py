@@ -6,6 +6,7 @@ Importato dai router in backend/routes/."""
 import re
 import logging
 import asyncio
+import uuid
 from typing import List, Optional
 
 from fastapi import HTTPException
@@ -82,15 +83,24 @@ def build_log_envelope(system_prompt_final: str, full_message: str, history) -> 
     }
 
 
+def conversation_id_for(session_id: Optional[str], requested: Optional[str] = None) -> str:
+    """Stable id used to group all log rows for one chat conversation."""
+    candidate = (requested or session_id or "").strip()
+    return candidate or str(uuid.uuid4())
+
+
 def log_error(db, session_id: str, error: str, *, identity: Optional[dict] = None,
               action: str = "chat_error", questionnaire_type: Optional[str] = None,
-              mode: Optional[str] = None, phase: Optional[str] = None) -> None:
+              mode: Optional[str] = None, phase: Optional[str] = None,
+              conversation_id: Optional[str] = None) -> None:
     """Scrive un record di log per un errore di chat. Best-effort: non propaga
     eccezioni (un fallimento di logging non deve peggiorare l'errore originale)."""
     try:
         ident = identity or {}
+        resolved_conversation_id = conversation_id_for(session_id, conversation_id)
         db.add(models.Log(
             session_id=session_id,
+            conversation_id=resolved_conversation_id,
             action=action,
             username=ident.get("username") or None,
             email=ident.get("email") or None,
@@ -98,7 +108,7 @@ def log_error(db, session_id: str, error: str, *, identity: Optional[dict] = Non
             questionnaire_type=questionnaire_type,
             mode=mode,
             phase=phase,
-            details={"error": str(error)[:1000]},
+            details={"error": str(error)[:1000], "conversation_id": resolved_conversation_id},
         ))
         db.commit()
     except Exception as e:  # pragma: no cover - difensivo

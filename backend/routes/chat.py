@@ -73,6 +73,7 @@ from ..chat_logic import (
     _update_markdown_memory_background,
     build_context_envelope,
     build_log_envelope,
+    conversation_id_for,
     full_prompt_logging_enabled,
     strip_markdown,
 )
@@ -261,6 +262,7 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
 @router.post("/chat")
 async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db), identity: dict = Depends(auth.get_identity_view_as)):
     session_id = request.session_id or str(uuid.uuid4())
+    conversation_id = conversation_id_for(session_id, request.conversation_id)
     request.language = _normalize_language(request.language)
 
     # 1. Retrieve Configuration and System Prompt based on Mode
@@ -378,7 +380,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         logger.error(f"Errore AI chat session {session_id}: {e}")
         from ..chat_logic import log_error as _log_error
         _log_error(db, session_id, str(e), identity=identity, questionnaire_type=questionnaire_type,
-                   mode=request.mode, phase=request.phase)
+                   mode=request.mode, phase=request.phase, conversation_id=conversation_id)
         raise HTTPException(status_code=502, detail=str(e))
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         response_content = _sanitize_ztpi_user_text(response_content, request.language)
@@ -416,6 +418,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     _usage = getattr(ai_service, "last_usage", None)
     _cost_usd = _usage_cost_usd(_usage, _provider, _model)
     _details = pii.redact_details({
+        "conversation_id": conversation_id,
         "mode": request.mode,
         "phase": request.phase,
         "user_input": request.message,
@@ -438,6 +441,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         )
     log_entry = models.Log(
         session_id=session_id,
+        conversation_id=conversation_id,
         action="chat_message",
         username=identity.get("username") or None,
         email=identity.get("email") or None,
@@ -465,6 +469,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     return {
         "response": response_content,
         "session_id": session_id,
+        "conversation_id": conversation_id,
         "strategy_ids": strategy_ids,
         "certified_strategy_ids": certified_strategy_ids,
         "response_id": response_id,
@@ -484,6 +489,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     import json as _json
 
     session_id = request.session_id or str(uuid.uuid4())
+    conversation_id = conversation_id_for(session_id, request.conversation_id)
     request.language = _normalize_language(request.language)
 
     # Preparazione (usa la db della richiesta, ancora aperta qui)
@@ -599,6 +605,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         try:
             cost_usd = _usage_cost_usd(usage, provider, model)
             _details = pii.redact_details({
+                "conversation_id": conversation_id,
                 "mode": request.mode,
                 "phase": request.phase,
                 "user_input": request.message,
@@ -622,6 +629,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 )
             log_entry = models.Log(
                 session_id=session_id,
+                conversation_id=conversation_id,
                 action="chat_message",
                 username=identity.get("username") or None,
                 email=identity.get("email") or None,
@@ -721,7 +729,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
 
             response_id = _log_stream(response_content, usage_info)
 
-            yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': certified_strategy_ids, 'response_id': response_id})}\n\n"
+            yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': certified_strategy_ids, 'response_id': response_id})}\n\n"
         except Exception as e:
             logger.error(f"Errore stream chat session {session_id}: {e}")
             try:
@@ -729,7 +737,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 _err_db = database.SessionLocal()
                 try:
                     _log_error(_err_db, session_id, str(e), identity=identity,
-                               questionnaire_type=questionnaire_type, mode=request.mode, phase=request.phase)
+                               questionnaire_type=questionnaire_type, mode=request.mode, phase=request.phase,
+                               conversation_id=conversation_id)
                 finally:
                     _err_db.close()
             except Exception:
@@ -753,11 +762,13 @@ async def chat_message(
     session_id: str,
     mode: str,
     background_tasks: BackgroundTasks,
+    conversation_id: str | None = None,
     questionnaire_type: str = "",
     language: str = "",
     db: Session = Depends(get_db),
     identity: dict = Depends(auth.get_identity_view_as),
 ):
+    resolved_conversation_id = conversation_id_for(session_id, conversation_id)
     language = _normalize_language(language)
     # 1. Retrieve Configuration and System Prompt based on Mode
     ai_service = AIService(db)
@@ -803,6 +814,7 @@ async def chat_message(
     usage = getattr(ai_service, "last_usage", None)
     cost_usd = _usage_cost_usd(usage, provider, model)
     _details = pii.redact_details({
+        "conversation_id": resolved_conversation_id,
         "mode": mode,
         "user_input": message,
         "bot_response": response_content,
@@ -819,6 +831,7 @@ async def chat_message(
         )
     log_entry = models.Log(
         session_id=session_id,
+        conversation_id=resolved_conversation_id,
         action="chat_message",
         username=identity.get("username") or None,
         email=identity.get("email") or None,
@@ -838,7 +851,7 @@ async def chat_message(
         log_entry.response_id = response_id
     db.commit()
 
-    return {"response": response_content, "response_id": response_id}
+    return {"response": response_content, "conversation_id": resolved_conversation_id, "response_id": response_id}
 
 
 @router.post("/qsa/audit")
@@ -850,6 +863,7 @@ async def audit_qsa(
     # Log completion for QSA-family profile analyses.
     log_entry = models.Log(
         session_id=request.session_id,
+        conversation_id=request.session_id,
         action="qsa_completed",
         username=identity.get("username") or None,
         email=identity.get("email") or None,

@@ -9,6 +9,7 @@ class ChatRequest(schemas.BaseModel):
     message: str = ""
     mode: str = "generic"
     session_id: Optional[str] = None
+    conversation_id: Optional[str] = None
     scores_context: str = ""  # Formatted QSA scores from frontend
     questionnaire_type: Optional[str] = None
     phase: Optional[str] = None
@@ -24,6 +25,7 @@ class SiteChatRequest(schemas.BaseModel):
     message: str = ""
     audience: str = "studente"  # 'docente' | 'studente'
     session_id: Optional[str] = None
+    conversation_id: Optional[str] = None
     max_tokens: Optional[int] = None
     language: Optional[str] = "it"  # lingua della risposta (it|en|es|fr|de|sv)
     collection: str = "competenzestrategiche"  # base di conoscenza: 'competenzestrategiche' | 'counselorbot'

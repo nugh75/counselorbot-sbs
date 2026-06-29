@@ -22,6 +22,7 @@ class Log(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(String, index=True)
+    conversation_id = Column(String, index=True, nullable=True)
     user_id = Column(Integer, nullable=True)
     # Identita' testuale (ai4auth fornisce username/email, non un User.id integer).
     username = Column(String, index=True, nullable=True)

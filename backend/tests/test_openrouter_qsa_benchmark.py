@@ -156,6 +156,7 @@ def _ensure_log_schema(database_module: Any) -> None:
     from sqlalchemy import text as sa_text
 
     for clause in [
+        "ADD COLUMN conversation_id VARCHAR",
         "ADD COLUMN username VARCHAR",
         "ADD COLUMN email VARCHAR",
         "ADD COLUMN anonymous_research_code VARCHAR",

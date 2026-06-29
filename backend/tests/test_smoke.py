@@ -502,7 +502,7 @@ def test_admin_logs_options_has_new_filter_fields():
     assert r.status_code == 200, r.text
     body = r.json()
     for key in ("actions", "providers", "questionnaire_types", "usernames",
-                "anonymous_research_codes", "models", "phases", "modes"):
+                "anonymous_research_codes", "conversation_ids", "models", "phases", "modes"):
         assert key in body, f"options manca '{key}': {body}"
         assert isinstance(body[key], list)
 
@@ -1887,6 +1887,42 @@ def test_chat_smoke_mocked_ai():
     r = client.post("/chat", json={"message": "ciao", "mode": "generic"})
     assert r.status_code == 200, r.text
     assert r.json()["response"] == "RISPOSTA_TEST"
+    assert r.json()["conversation_id"] == r.json()["session_id"]
+
+
+def test_chat_logs_conversation_id_and_admin_filter():
+    session_id = "conversation-log-session"
+    conversation_id = "conversation-log-id"
+    r = client.post("/chat", json={
+        "message": "ciao",
+        "mode": "generic",
+        "session_id": session_id,
+        "conversation_id": conversation_id,
+    })
+    assert r.status_code == 200, r.text
+    assert r.json()["session_id"] == session_id
+    assert r.json()["conversation_id"] == conversation_id
+
+    with _TestSession() as db:
+        entry = (
+            db.query(models.Log)
+            .filter(models.Log.session_id == session_id, models.Log.action == "chat_message")
+            .order_by(models.Log.timestamp.desc(), models.Log.id.desc())
+            .first()
+        )
+        assert entry is not None
+        assert entry.conversation_id == conversation_id
+        assert entry.details["conversation_id"] == conversation_id
+
+    listed = client.get(f"/admin/logs?conversation_id={conversation_id}")
+    assert listed.status_code == 200, listed.text
+    assert any(row["conversation_id"] == conversation_id for row in listed.json())
+
+    conversation = client.get(f"/admin/logs/conversation/{conversation_id}")
+    assert conversation.status_code == 200, conversation.text
+    rows = conversation.json()
+    assert rows
+    assert {row["conversation_id"] for row in rows} == {conversation_id}
 
 
 def test_chat_factor_qa_does_not_force_all_step_factor_codes():
