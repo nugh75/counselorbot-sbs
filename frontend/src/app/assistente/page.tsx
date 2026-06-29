@@ -5,12 +5,13 @@ import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { LucideIcon } from 'lucide-react';
-import { Send, GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search } from 'lucide-react';
+import { Send, GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search, Award, Eye, Users } from 'lucide-react';
 import { streamChat } from '@/lib/chat-stream';
 import { ai4authLoginUrl, getIdentity, getViewAsAccount, type Identity } from '@/lib/auth';
 import { canUseAssistant, canUseTeacherAssistant } from '@/lib/roles';
 import { useI18n } from '@/lib/i18n-context';
 import { fetchAssistantQuestions, type AssistantQuestionsByTopic } from '@/lib/assistant-questions';
+import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId, subscribeToCounselor, type PublicCounselor } from '@/lib/counselor';
 
 // Tabelle con bordi + scroll orizzontale per una lettura pulita dei documenti.
 const mdComponents: Components = {
@@ -46,17 +47,38 @@ interface PreviewState {
 }
 
 // I contenuti testuali sono localizzati via i18n: qui restano solo id + icona.
-// `teacherOnly` nasconde il topic all'audience studente: l'assistente docente
-// mostra argomenti di ruolo (es. "Uso didattico") che uno studente non deve vedere.
-const TOPIC_IDS = ['questionari', 'validazione', 'didattica', 'fonti'] as const;
-type TopicId = typeof TOPIC_IDS[number];
-const TOPIC_ICONS: Record<TopicId, LucideIcon> = {
-    questionari: ClipboardList,
-    validazione: Search,
-    didattica: GraduationCap,
-    fonti: Library,
+// I topic dipendono dalla combinazione (collection, audience): ogni coppia
+// ha il suo insieme di schede, distinte per ruolo e base di conoscenza.
+type TopicId = string;
+const TOPIC_ICONS: Record<string, LucideIcon> = {
+    cs_strumenti: ClipboardList,
+    cs_risultati: Award,
+    cs_approfondire: Library,
+    cs_metodologia: ClipboardList,
+    cs_validazione: Search,
+    cs_didattica: GraduationCap,
+    cs_materiali: Library,
+    cb_piattaforma: BookOpen,
+    cb_strumenti: ClipboardList,
+    cb_percorso: Award,
+    cb_console: BookOpen,
+    cb_counselor: ClipboardList,
+    cb_guida: GraduationCap,
 };
-const TEACHER_ONLY_TOPICS: ReadonlySet<TopicId> = new Set(['didattica']);
+// Matrice topic per (collection, audience). Le(collection) definiscono i
+// set di schede; gli id sono univoci cosi' ognuno ha titolo/body/prompt
+// propri nella i18n (studente e docente hanno argomenti diversi).
+const TOPICS_BY_COLLECTION_AUDIENCE: Record<Collection, Record<Audience, TopicId[]>> = {
+    competenzestrategiche: {
+        studente: ['cs_strumenti', 'cs_risultati', 'cs_approfondire'],
+        docente: ['cs_metodologia', 'cs_validazione', 'cs_didattica', 'cs_materiali'],
+    },
+    counselorbot: {
+        studente: ['cb_piattaforma', 'cb_strumenti', 'cb_percorso'],
+        docente: ['cb_console', 'cb_counselor', 'cb_guida'],
+    },
+};
+const firstTopic = (c: Collection, a: Audience): TopicId => TOPICS_BY_COLLECTION_AUDIENCE[c][a][0];
 
 // Mostra solo il nome leggibile del file citato.
 function sourceLabel(src: string): string {
@@ -78,7 +100,7 @@ export default function AssistentePage() {
     const [sessionId, setSessionId] = useState<string | undefined>(undefined);
     const [conversationId, setConversationId] = useState<string | undefined>(undefined);
     const [preview, setPreview] = useState<PreviewState | null>(null);
-    const [selectedTopicId, setSelectedTopicId] = useState<TopicId>(TOPIC_IDS[0]);
+    const [selectedTopicId, setSelectedTopicId] = useState<TopicId>(firstTopic('competenzestrategiche', 'studente'));
     const scrollRef = useRef<HTMLDivElement>(null);
     // Domande suggerite dal DB (gestite da admin), per topic; per le lingue senza
     // righe si ricade sulle varianti i18n.
@@ -86,25 +108,29 @@ export default function AssistentePage() {
     // Indice della prossima domanda per topic: "Prepara domanda" scorre la lista
     // cosi' propone ogni volta una domanda diversa invece di ripetere la stessa.
     const questionVariantIdx = useRef<Record<string, number>>({});
+    // Counselor AI: opzionale, scelta in una dropdown. Il sito-chat invia
+    // counselor_id al backend che applichera' la persona al system prompt.
+    const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
+    const [counselorId, setCounselorId] = useState<number | null>(null);
 
-    const topics = TOPIC_IDS.map((id) => ({
+    const topicIds = TOPICS_BY_COLLECTION_AUDIENCE[collection][audience];
+    const topics = topicIds.map((id) => ({
         id,
         icon: TOPIC_ICONS[id],
         title: t(`assistant.topic.${id}.title`),
         body: t(`assistant.topic.${id}.body`),
         prompt: t(`assistant.topic.${id}.prompt`),
-        teacherOnly: TEACHER_ONLY_TOPICS.has(id),
-    })).filter((topic) => audience !== 'studente' || !topic.teacherOnly);
+    }));
     const selectedTopic = topics.find((x) => x.id === selectedTopicId) ?? topics[0];
 
-    // Se il topic selezionato e' stato filtrato (es. passaggio a audience
-    // studente che nasconde i topic da docente), ripristina il primo visibile.
+    // Se cambio collection o audience e il topic selezionato non e' piu
+    // disponibile nella nuova combinazione, ripristina il primo visibile.
     useEffect(() => {
-        if (!topics.some((x) => x.id === selectedTopicId) && topics.length > 0) {
-            setSelectedTopicId(topics[0].id);
+        if (!topicIds.includes(selectedTopicId) && topicIds.length > 0) {
+            setSelectedTopicId(topicIds[0]);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [audience]);
+    }, [collection, audience]);
 
     // Audience derivata dal ruolo: se l'admin e' in "view as", segue il profilo
     // di prova (studente -> 'studente'; docente/ricercatore -> 'docente'); per
@@ -135,10 +161,30 @@ export default function AssistentePage() {
         return () => { active = false; };
     }, [lang]);
 
+    // Carica i counselor attivi per la lingua corrente e mantiene allineata la
+    // selezione se cambia dall'esterno (header). counselor_id e' opzionale:
+    // se non ci sono counselor configurati la dropdown resta "nessuno".
+    useEffect(() => {
+        let active = true;
+        fetchCounselors(lang).then((list) => {
+            if (!active) return;
+            setCounselors(list);
+            const stored = getSelectedCounselorId();
+            setCounselorId(list.some((c) => c.id === stored && c.is_active !== false) ? stored : null);
+        });
+        const unsub = subscribeToCounselor(() => setCounselorId(getSelectedCounselorId()));
+        return () => { active = false; unsub(); };
+    }, [lang]);
+
     const scrollToBottom = () => {
         requestAnimationFrame(() => {
             scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
         });
+    };
+
+    const chooseCounselor = (id: number | null) => {
+        setCounselorId(id);
+        setSelectedCounselorId(id);
     };
 
     const prepareQuestion = () => {
@@ -172,7 +218,7 @@ export default function AssistentePage() {
 
         try {
             const result = await streamChat(
-                { message: question, audience, session_id: sessionId, conversation_id: conversationId, language: lang, collection },
+                { message: question, audience, session_id: sessionId, conversation_id: conversationId, language: lang, collection, counselor_id: counselorId ?? undefined },
                 (full) => updateLast(full),
                 undefined,
                 undefined,
@@ -236,17 +282,18 @@ export default function AssistentePage() {
 
     const chooseTopic = (topicId: TopicId) => {
         setSelectedTopicId(topicId);
-        setAudience(deriveAudience(identity));
         setMessages([]);
         setSessionId(undefined);
         setConversationId(undefined);
         setPreview(null);
     };
 
-    // Cambio base di conoscenza: azzera la conversazione (contesto diverso).
+    // Cambio base di conoscenza: azzera la conversazione (contesto diverso) e
+    // ripristina il primo topic della nuova combinazione (collection, audience).
     const chooseCollection = (next: Collection) => {
         if (next === collection) return;
         setCollection(next);
+        setSelectedTopicId(firstTopic(next, audience));
         setMessages([]);
         setSessionId(undefined);
         setConversationId(undefined);
@@ -292,6 +339,9 @@ export default function AssistentePage() {
     }
 
     const SelectedTopicIcon = selectedTopic.icon;
+    // Anteprima ruolo (admin che impersona un profilo di prova): serve per
+    // rendere immediatamente visibile a quale assistente si sta interagando.
+    const viewAs = getViewAsAccount();
 
     return (
         <div className="flex flex-col lg:h-chat">
@@ -304,6 +354,31 @@ export default function AssistentePage() {
                         <p className="text-slate-500 mt-1 text-sm">
                             {t('assistant.subtitle')}
                         </p>
+                    </div>
+
+                    {/* Badge ruolo: indica chiaramente quale assistente (studente vs
+                        docente/formatori) e' attivo. Visualizza anche l'eventuale
+                        profilo di prova quando l'admin impersona un ruolo. */}
+                    <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                        audience === 'studente'
+                            ? 'border-indigo-200 bg-indigo-50 text-indigo-800'
+                            : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                    }`}>
+                        {audience === 'studente'
+                            ? <GraduationCap className="h-4 w-4 shrink-0" />
+                            : <BookOpen className="h-4 w-4 shrink-0" />}
+                        <span className="font-semibold">
+                            {t(`assistant.audienceBadge.${audience}`)}
+                        </span>
+                        {viewAs && (
+                            <span
+                                className="ml-auto inline-flex items-center gap-1 text-xs font-medium opacity-80"
+                                title={t('assistant.previewHint')}
+                            >
+                                <Eye className="h-3.5 w-3.5" />
+                                {viewAs.name}
+                            </span>
+                        )}
                     </div>
 
                     {/* Selettore base di conoscenza: progetto vs piattaforma CounselorBot. */}
@@ -329,6 +404,31 @@ export default function AssistentePage() {
                         </div>
                     </div>
 
+                    {/* Selettore counselor AI: opzionale. Definisce lo stile
+                        dell'assistente (persona). "Nessuno" = assistente neutro. */}
+                    <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1.5 flex items-center gap-1.5">
+                            <Users className="h-3.5 w-3.5" />
+                            {t('assistant.counselor.label')}
+                        </p>
+                        <select
+                            value={counselorId ?? ''}
+                            onChange={(e) => chooseCounselor(e.target.value ? Number(e.target.value) : null)}
+                            disabled={counselors.length === 0}
+                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
+                        >
+                            <option value="">{t('assistant.counselor.none')}</option>
+                            {counselors.map((c) => (
+                                <option key={c.id} value={c.id} disabled={c.is_active === false}>
+                                    {c.name}{c.is_active === false ? ` — ${t('assistant.counselor.unavailable')}` : ''}
+                                </option>
+                            ))}
+                        </select>
+                        {counselors.length === 0 && (
+                            <p className="mt-1 text-xs text-slate-400">{t('assistant.counselor.empty')}</p>
+                        )}
+                    </div>
+
                     <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-1">
                         {topics.map((topic) => {
                             const Icon = topic.icon;
@@ -350,20 +450,22 @@ export default function AssistentePage() {
                         })}
                     </div>
 
-                    <div className="glass-panel p-4 flex flex-col gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-indigo-50 text-indigo-600">
-                            <SelectedTopicIcon className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <h2 className="font-bold text-slate-900">{selectedTopic.title}</h2>
-                            <p className="mt-1 text-sm leading-relaxed text-slate-600">{selectedTopic.body}</p>
+                    {/* Riepilogo argomento + azione "Prepara domanda" compatta.
+                        Niente card duplicata titolo/corpo: solo il nome
+                        dell'argomento attivo e il bottone. */}
+                    <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <SelectedTopicIcon className="h-4 w-4 text-indigo-600 shrink-0" />
+                            <span className="truncate text-sm font-semibold text-slate-700" title={selectedTopic.title}>
+                                {selectedTopic.title}
+                            </span>
                         </div>
                         <button
                             type="button"
                             onClick={prepareQuestion}
-                            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                         >
-                            <BookOpen className="h-4 w-4" />
+                            <BookOpen className="h-3.5 w-3.5" />
                             {t('assistant.prepareQuestion')}
                         </button>
                     </div>
@@ -374,7 +476,7 @@ export default function AssistentePage() {
                     <div ref={scrollRef} className="glass-panel min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
                         {messages.length === 0 && (
                             <div className="flex items-start gap-3 text-slate-600">
-                                <p className="text-sm leading-relaxed pt-1">{t(`assistant.welcome.${audience}`)}</p>
+                                <p className="text-sm leading-relaxed pt-1">{t(`assistant.welcome.${collection === 'counselorbot' ? 'cb' : 'cs'}${audience}`)}</p>
                             </div>
                         )}
 
