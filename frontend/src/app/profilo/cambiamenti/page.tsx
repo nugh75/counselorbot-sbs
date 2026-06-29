@@ -78,13 +78,13 @@ export default function ProfileChangesPage() {
     return (
         <div className="page-wide px-4 py-8 space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
-                <h1 className="text-2xl font-bold text-slate-900">Cambiamenti del profilo</h1>
+                <h1 className="text-2xl font-bold text-slate-900">{t('profileChanges.title')}</h1>
                 <Link
                     href="/profilo"
                     className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4" />
-                    Torna al taccuino
+                    {t('profileChanges.backToNotebook')}
                 </Link>
             </div>
             <ProfileChangeReflection lang={lang} />
