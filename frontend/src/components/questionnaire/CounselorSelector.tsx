@@ -69,6 +69,75 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName }: Cou
         );
     }
 
+    const renderCard = (c: PublicCounselor) => {
+        const disabled = c.is_active === false;
+        const isSelected = selected === c.id;
+        return (
+            <button
+                key={c.id}
+                type="button"
+                onClick={() => choose(c)}
+                disabled={disabled}
+                className={`relative rounded-lg border p-4 text-left transition-colors ${
+                    disabled
+                        ? 'cursor-not-allowed border-slate-200 bg-slate-50 opacity-70'
+                        : isSelected
+                            ? 'border-indigo-400 bg-indigo-50 ring-1 ring-indigo-300'
+                            : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50'
+                }`}
+            >
+                <div className="flex items-start gap-3">
+                    <div className="min-w-0 flex-1 space-y-2">
+                        <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <h2 className="text-base font-bold text-slate-900">{c.name}</h2>
+                                {disabled && (
+                                    <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold uppercase text-slate-500">
+                                        {t('counselor.unavailable')}
+                                    </span>
+                                )}
+                                {c.model_origin && (
+                                    <span
+                                        title={t(c.model_origin === 'local' ? 'counselor.origin.local.hint' : 'counselor.origin.external.hint')}
+                                        className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-400"
+                                    >
+                                        {c.model_origin === 'local'
+                                            ? <Cpu className="h-3 w-3" />
+                                            : <Cloud className="h-3 w-3" />}
+                                        {t(c.model_origin === 'local' ? 'counselor.origin.local' : 'counselor.origin.external')}
+                                    </span>
+                                )}
+                            </div>
+                            <p className="mt-0.5 text-sm text-slate-600">{counselorTone(c.description, t('counselor.toneDefault'))}</p>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1.5">
+                            {(c.questionnaire_types || []).slice(0, 6).map((q) => (
+                                <span key={q} className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+                                    {q}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {isSelected && !disabled && (
+                    <div className="absolute right-3 top-3 rounded-full bg-indigo-600 p-1 text-white">
+                        <Check className="h-3.5 w-3.5" />
+                    </div>
+                )}
+            </button>
+        );
+    };
+
+    // Locale prima, cloud dopo. Mantiene l'ordine (sort_order) entro ogni gruppo.
+    const localItems = counselors.filter((c) => c.model_origin === 'local');
+    const cloudItems = counselors.filter((c) => c.model_origin !== 'local');
+    const groups = [
+        { key: 'local' as const, label: t('counselor.group.local'), items: localItems },
+        { key: 'external' as const, label: t('counselor.group.external'), items: cloudItems },
+    ].filter((g) => g.items.length > 0);
+
     return (
         <section className="space-y-5">
             {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
@@ -87,68 +156,22 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName }: Cou
                 </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {counselors.map((c) => {
-                    const disabled = c.is_active === false;
-                    const isSelected = selected === c.id;
-                    return (
-                        <button
-                            key={c.id}
-                            type="button"
-                            onClick={() => choose(c)}
-                            disabled={disabled}
-                            className={`relative rounded-lg border p-4 text-left transition-colors ${
-                                disabled
-                                    ? 'cursor-not-allowed border-slate-200 bg-slate-50 opacity-70'
-                                    : isSelected
-                                        ? 'border-indigo-400 bg-indigo-50 ring-1 ring-indigo-300'
-                                        : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50'
-                            }`}
-                        >
-                            <div className="flex items-start gap-3">
-                                <div className="min-w-0 flex-1 space-y-2">
-                                    <div>
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <h2 className="text-base font-bold text-slate-900">{c.name}</h2>
-                                            {disabled && (
-                                                <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold uppercase text-slate-500">
-                                                    {t('counselor.unavailable')}
-                                                </span>
-                                            )}
-                                            {c.model_origin && (
-                                                <span
-                                                    title={t(c.model_origin === 'local' ? 'counselor.origin.local.hint' : 'counselor.origin.external.hint')}
-                                                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-400"
-                                                >
-                                                    {c.model_origin === 'local'
-                                                        ? <Cpu className="h-3 w-3" />
-                                                        : <Cloud className="h-3 w-3" />}
-                                                    {t(c.model_origin === 'local' ? 'counselor.origin.local' : 'counselor.origin.external')}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <p className="mt-0.5 text-sm text-slate-600">{counselorTone(c.description, t('counselor.toneDefault'))}</p>
-                                    </div>
-
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {(c.questionnaire_types || []).slice(0, 6).map((q) => (
-                                            <span key={q} className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500">
-                                                {q}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {isSelected && !disabled && (
-                                <div className="absolute right-3 top-3 rounded-full bg-indigo-600 p-1 text-white">
-                                    <Check className="h-3.5 w-3.5" />
-                                </div>
-                            )}
-                        </button>
-                    );
-                })}
-            </div>
+            {groups.map((group) => (
+                <div key={group.key} className="space-y-3">
+                    <div className="flex items-center gap-3">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">
+                            {group.key === 'local'
+                                ? <Cpu className="h-3.5 w-3.5" />
+                                : <Cloud className="h-3.5 w-3.5" />}
+                            {group.label}
+                        </span>
+                        <span className="h-px flex-1 bg-slate-200" />
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {group.items.map(renderCard)}
+                    </div>
+                </div>
+            ))}
 
             {onContinue && (
                 <div className="flex justify-end">
