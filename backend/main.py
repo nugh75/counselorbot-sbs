@@ -783,6 +783,10 @@ _INTRO_CONFIG_KEYS = (
 )
 _OLD_INTRO_IDENTITY = "You are the CounselorBot counsellor."
 _PLACEHOLDER_INTRO_IDENTITY = "You are {{counselor_name}}."
+_OLD_COUNSELORBOT_PROMPT_PREFIXES = (
+    ("You are CounselorBot,", "You are {{counselor_name}},"),
+    ("You are CounselorBot.", "You are {{counselor_name}}."),
+)
 _LEGACY_INTRO_BODY_MARKERS = {
     "prompt_intro": ("cognitive and affective factors",),
     "prompt_qsar_intro": ("cognitive and affective components",),
@@ -824,6 +828,20 @@ def _migrate_counselor_personas_and_intros(db):
         item["key"]: item["default"]
         for item in GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS.values()
     }
+    counselor_prompt_keys = set(SYSTEM_PROMPT_DEFAULTS) | set(intro_defaults_by_key)
+    for key in counselor_prompt_keys:
+        cfg = db.query(models.Config).filter(models.Config.key == key).first()
+        if not cfg:
+            continue
+        current = cfg.value or ""
+        for old, new in _OLD_COUNSELORBOT_PROMPT_PREFIXES:
+            if current.startswith(old):
+                current = new + current[len(old):]
+                break
+        if current != (cfg.value or ""):
+            cfg.value = current
+            changed = True
+
     for key in _INTRO_CONFIG_KEYS:
         cfg = db.query(models.Config).filter(models.Config.key == key).first()
         if not cfg:

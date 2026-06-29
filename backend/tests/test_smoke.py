@@ -1408,6 +1408,8 @@ def test_prompt_audit_dry_run_builds_qsa_envelope_without_side_effects():
     assert body["resolved"]["provider"] == "openrouter"
     assert body["resolved"]["model"] == "deepseek/deepseek-v4-flash"
     assert body["resolved"]["counselor"]["id"] == counselor_id
+    assert "You are Prompt Audit QSA, a QSA expert" in body["envelope"]["system_prompt_final"]
+    assert "You are CounselorBot" not in body["envelope"]["system_prompt_final"]
     assert "Analyse ONLY the COGNITIVE factors" in body["inputs"]["effective_user_message"]
     assert "- C1" in body["inputs"]["scoped_scores_context"]
     assert "- A1" not in body["inputs"]["scoped_scores_context"]
@@ -1420,6 +1422,34 @@ def test_prompt_audit_dry_run_builds_qsa_envelope_without_side_effects():
     finally:
         db.close()
     assert session_memory.get_summary(session_id) == ""
+
+
+def test_startup_migration_rewrites_counselorbot_prompt_identity_prefix():
+    db = _TestSession()
+    try:
+        cfg = db.query(models.Config).filter(models.Config.key == "prompt_factor").first()
+        if cfg is None:
+            cfg = models.Config(key="prompt_factor", value="", description="test prompt")
+            db.add(cfg)
+            db.flush()
+        original = cfg.value
+        cfg.value = (
+            "You are CounselorBot, a study tutor for students.\n"
+            "Always speak in a simple, direct and encouraging tone."
+        )
+        db.commit()
+
+        main._migrate_counselor_personas_and_intros(db)
+        db.refresh(cfg)
+
+        assert cfg.value.startswith("You are {{counselor_name}}, a study tutor for students.")
+        assert "You are CounselorBot" not in cfg.value
+    finally:
+        cfg = db.query(models.Config).filter(models.Config.key == "prompt_factor").first()
+        if cfg is not None:
+            cfg.value = original
+            db.commit()
+        db.close()
 
 
 def test_prompt_audit_scopes_certified_strategies_to_qsa_second_level_step():
