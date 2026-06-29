@@ -707,7 +707,7 @@ export default function Home() {
                         </div>
                     )}
 
-                    {/* Step: Farewell — commiato e ritorno all'inizio del percorso. */}
+                    {/* Step: Farewell — commiato, feedback opzionale e ritorno all'inizio del percorso. */}
                     {step === 'farewell' && (
                         <div className="max-w-xl mx-auto">
                             <div className="glass-panel p-8 text-center space-y-6">
@@ -719,6 +719,14 @@ export default function Home() {
                                 </div>
 
                                 <div className="space-y-4 pt-4">
+                                    <a
+                                        href="/questionario"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="block w-full py-3.5 bg-ochre-500 hover:bg-ochre-600 text-white font-bold rounded-md transition-colors shadow-md"
+                                    >
+                                        {t('farewell.feedback')}
+                                    </a>
                                     <button
                                         onClick={() => {
                                             setSelectedCounselorId(null);
