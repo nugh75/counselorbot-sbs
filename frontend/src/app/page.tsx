@@ -555,10 +555,9 @@ export default function Home() {
                                 <div className="glass-panel px-5 py-3 flex justify-end shadow-md">
                                     <button
                                         onClick={startInteraction}
-                                        className="shrink-0 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
+                                        className="shrink-0 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center"
                                     >
                                         {t('dashboard.ready.btn')}
-                                        <ArrowRight className="w-5 h-5" />
                                     </button>
                                 </div>
                             </StickyActions>
