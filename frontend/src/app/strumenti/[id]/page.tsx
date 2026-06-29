@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowRight, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { BackButton } from '@/components/ui/BackButton';
 import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
 import { getTestAdministration, AdministrationLocale } from '@/lib/test-administrations';
@@ -83,10 +83,9 @@ export default function InstrumentDetailsPage() {
                     </div>
                     <Link
                         href={`/somministrazione/${id}/${inAppAdministration}`}
-                        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-800 transition-colors"
+                        className="inline-flex shrink-0 items-center justify-center rounded-md bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-800 transition-colors"
                     >
                         {t(isEnglishFallback ? 'detail.assessment.inapp.englishLink' : 'detail.assessment.inapp.link')}
-                        <ArrowRight className="w-4 h-4" />
                     </Link>
                 </section>
             )}
@@ -121,10 +120,9 @@ export default function InstrumentDetailsPage() {
                 <p className="text-sm text-indigo-900">{t('detail.ready')}</p>
                 <Link
                     href={`/?start=${questionnaire.id}`}
-                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+                    className="inline-flex shrink-0 items-center justify-center rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
                 >
                     {t('selector.start')}
-                    <ArrowRight className="w-4 h-4" />
                 </Link>
             </section>
         </div>

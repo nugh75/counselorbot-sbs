@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, CheckCircle, Send } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Send } from 'lucide-react';
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n-context';
 import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
@@ -492,10 +492,9 @@ export default function QuestionarioPage() {
                                 <button
                                     type="button"
                                     onClick={() => { setError(null); setWizardStep((s) => Math.min(TOTAL_STEPS - 1, s + 1)); }}
-                                    className="ml-auto inline-flex items-center gap-2 px-6 py-2.5 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors shadow-md shadow-indigo-600/20"
+                                    className="ml-auto inline-flex items-center px-6 py-2.5 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors shadow-md shadow-indigo-600/20"
                                 >
                                     {t('survey.wizard.next')}
-                                    <ArrowRight className="w-4 h-4" />
                                 </button>
                             ) : (
                                 <button

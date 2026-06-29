@@ -14,7 +14,7 @@ import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { StudentBookletCard, EVENT_BOOKLET_TYPES, bookletTypeOptionLabel, type BookletType } from '@/components/profile/StudentBookletCard';
 import { PortfolioCard } from '@/components/profile/PortfolioCard';
 import {
-    ArrowLeft, ArrowRight, Trash2, Download, MessageSquare, ShieldAlert, Search,
+    ArrowLeft, Trash2, Download, MessageSquare, ShieldAlert, Search,
     BookOpen, Wrench, Folder
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -426,15 +426,12 @@ export default function ProfilePage() {
                 <LearnerProfileCard variant="edit" />
                 <Link
                     href="/profilo/cambiamenti"
-                    className="glass-panel p-5 flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors"
+                    className="glass-panel p-5 block hover:bg-slate-50 transition-colors"
                 >
-                    <div className="flex items-center gap-3">
-                        <div>
-                            <h3 className="font-bold text-slate-800">{t('profileChanges.title')}</h3>
-                            <p className="text-sm text-slate-500">{t('profileChanges.cardBody')}</p>
-                        </div>
+                    <div>
+                        <h3 className="font-bold text-slate-800">{t('profileChanges.title')}</h3>
+                        <p className="text-sm text-slate-500">{t('profileChanges.cardBody')}</p>
                     </div>
-                    <ArrowRight className="w-5 h-5 shrink-0 text-slate-400" />
                 </Link>
             </section>
             )}

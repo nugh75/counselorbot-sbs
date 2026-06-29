@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-    ArrowRight, BookOpen, CheckCircle2, FileType, Lightbulb,
+    BookOpen, CheckCircle2, FileType, Lightbulb,
     ListChecks, Loader2, RotateCcw, Target, UploadCloud, XCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -472,10 +472,9 @@ export default function PqblPage() {
                     </div>
                     <button
                         onClick={startLearningSession}
-                        className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
+                        className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center"
                     >
                         {t('pqbl.onboarding.start')}
-                        <ArrowRight className="w-5 h-5" />
                     </button>
                 </div>
             )}
@@ -553,10 +552,9 @@ export default function PqblPage() {
                     {currentAnsweredCorrect && (
                         <button
                             onClick={goNext}
-                            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
+                            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center"
                         >
                             {currentIndex + 1 < questions.length ? t('pqbl.quiz.next') : t('pqbl.quiz.finish')}
-                            <ArrowRight className="w-5 h-5" />
                         </button>
                     )}
                 </div>
