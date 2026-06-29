@@ -73,6 +73,15 @@ def test_qsa_every_factor_has_correct_band_row():
         assert _row(code, name, lbl, inverted) in out, f"riga errata per {code}"
 
 
+def test_qsa_factor_directive_scopes_rows_to_current_step():
+    out = _apply_qsa_factor_directive("BASE", "QSA", "it", {"C1", "C2", "C3", "C4", "C5", "C6", "C7"})
+    assert "C1 (Strategie elaborative)" in out
+    assert "C7 (Autointerrogazione)" in out
+    assert "A1 (Ansietà di base)" not in out
+    assert "A7 (Interferenze emotive)" not in out
+    assert "lists only the factor codes allowed in the current step" in out
+
+
 def test_qsa_a5_is_growth_at_high_score():
     # Regressione esplicita del bug: A5=9 deve essere Area di crescita, non Forza.
     out = _apply_qsa_factor_directive("BASE", "QSA", "it")

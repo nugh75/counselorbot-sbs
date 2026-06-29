@@ -4,6 +4,7 @@ load_dotenv()
 import asyncio
 import logging
 import os
+import re
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -30,6 +31,7 @@ from .prompt_config import (
     GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
     INTRO_ALLOWED_QUESTIONS,
     INTRO_ALLOWED_QUESTIONS_SENTINEL,
+    MODE_TO_SYSTEM_PROMPT_KEY,
 )
 from .questionnaire_catalog import INSTRUMENT_CATALOG_DEFAULTS
 from .guided_text_i18n import seed_definitions as guided_text_seed_definitions
@@ -781,6 +783,7 @@ _INTRO_CONFIG_KEYS = (
     "prompt_qpcc_welcome",   # QPCC
     "prompt_qap_welcome",    # QAP
 )
+_PERSONA_SCOPED_CONFIG_KEYS = tuple(sorted(set(MODE_TO_SYSTEM_PROMPT_KEY.values())))
 _OLD_INTRO_IDENTITY = "You are the CounselorBot counsellor."
 _PLACEHOLDER_INTRO_IDENTITY = "You are {{counselor_name}}."
 _OLD_COUNSELORBOT_PROMPT_PREFIXES = (
@@ -796,6 +799,25 @@ _LEGACY_INTRO_BODY_MARKERS = {
     "prompt_qpcc_welcome": ("competences and beliefs together one at a time",),
     "prompt_qap_welcome": ("four resources of their career adaptability (CAAS)",),
 }
+_PERSONA_IDENTITY_PREFIX_RE = re.compile(
+    r"^\s*You are (?:\{\{counselor_name\}\}|CounselorBot|the CounselorBot counsellor),?[^.\n]*\.\s*",
+    re.IGNORECASE,
+)
+_PERSONA_TONE_PREFIXES = (
+    "Always speak in a simple, direct and encouraging tone, in the requested language, addressing the student informally.",
+    "Always speak in simple, direct and encouraging English, addressing the student informally.",
+)
+
+
+def _strip_persona_scoped_prompt_prefix(value: str, fallback: str = "") -> str:
+    current = value or ""
+    current = _PERSONA_IDENTITY_PREFIX_RE.sub("", current, count=1).lstrip()
+    for prefix in _PERSONA_TONE_PREFIXES:
+        if current.startswith(prefix):
+            current = current[len(prefix):].lstrip()
+        current = current.replace(prefix + " ", "")
+        current = current.replace(prefix + "\n", "")
+    return current or fallback
 
 
 def _migrate_counselor_personas_and_intros(db):
@@ -824,6 +846,10 @@ def _migrate_counselor_personas_and_intros(db):
             counselor.persona = new_persona
             changed = True
 
+    config_defaults_by_key = {
+        item["key"]: item["default"]
+        for item in ALL_CONFIG_TEXT_DEFINITIONS
+    }
     intro_defaults_by_key = {
         item["key"]: item["default"]
         for item in GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS.values()
@@ -840,6 +866,19 @@ def _migrate_counselor_personas_and_intros(db):
                 break
         if current != (cfg.value or ""):
             cfg.value = current
+            changed = True
+
+    for key in _PERSONA_SCOPED_CONFIG_KEYS:
+        cfg = db.query(models.Config).filter(models.Config.key == key).first()
+        if not cfg:
+            continue
+        current = cfg.value or ""
+        stripped = _strip_persona_scoped_prompt_prefix(
+            current,
+            config_defaults_by_key.get(key, ""),
+        )
+        if stripped != current:
+            cfg.value = stripped
             changed = True
 
     for key in _INTRO_CONFIG_KEYS:

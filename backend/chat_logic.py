@@ -571,7 +571,7 @@ def _scope_scores_to_codes(scores: str, codes: set[str]) -> str:
     return "\n".join(out)
 
 
-_QSA_SCORE_RE = re.compile(r"\b([CA]\d{1,2})\b[^\n\r0-9]{0,80}?([1-9])\s*/\s*9\b", re.IGNORECASE)
+_QSA_SCORE_RE = re.compile(r"\b([CA]\d{1,2}r?)\b[^\n\r0-9]{0,80}?([1-9])\s*/\s*9\b", re.IGNORECASE)
 
 
 def _is_qsa(questionnaire_type: Optional[str]) -> bool:
@@ -602,6 +602,19 @@ def _qsa_factor_names(language: Optional[str], questionnaire_type: str = "QSA") 
     return dictionary.get(language or "it", dictionary["it"])
 
 
+def _qsa_factor_items(
+    language: Optional[str],
+    questionnaire_type: str = "QSA",
+    allowed_codes: Optional[set[str]] = None,
+) -> list[tuple[str, str]]:
+    names = _qsa_factor_names(language, questionnaire_type)
+    if not allowed_codes:
+        return list(names.items())
+    allowed = {code.upper() for code in allowed_codes}
+    scoped = [(code, name) for code, name in names.items() if code.upper() in allowed]
+    return scoped or list(names.items())
+
+
 # Etichette di interpretazione QSA per lingua. Servono nel system prompt: il
 # modello le copia testualmente nella colonna "Interpretazione" della tabella,
 # quindi devono essere già nella lingua dello studente (altrimenti escono in
@@ -622,7 +635,7 @@ def _qsa_assessment_labels(language: Optional[str]) -> dict[str, str]:
 
 def _qsa_band_for_score(code: str, score: int, questionnaire_type: str = "QSA") -> str:
     inverted_codes = _QSAR_INVERTED_CODES if (questionnaire_type or "").upper() == "QSAR" else _QSA_INVERTED_CODES
-    if code.upper() in inverted_codes:
+    if code.upper() in {item.upper() for item in inverted_codes}:
         if score <= 3:
             return "strength"
         if score <= 6:
@@ -647,14 +660,14 @@ def _qsa_step_score_profile(
     names = _qsa_factor_names(language, questionnaire_type)
     rows = []
     for code, raw_score in _QSA_SCORE_RE.findall(scores_context):
-        code = code.upper()
-        if code not in allowed_codes or code not in names:
+        code_key = next((known for known in names if known.upper() == code.upper()), code.upper())
+        if code_key.upper() not in {item.upper() for item in allowed_codes} or code_key not in names:
             continue
         score = int(raw_score)
-        band = _qsa_band_for_score(code, score, questionnaire_type)
+        band = _qsa_band_for_score(code_key, score, questionnaire_type)
         rows.append({
-            "code": code,
-            "name": names[code],
+            "code": code_key,
+            "name": names[code_key],
             "score": str(score),
             "band": band,
             "label": labels[band],
@@ -780,13 +793,18 @@ def _ensure_required_qsa_factor_codes(
     return f"{label}: {factors}\n\n{text}"
 
 
-def _apply_qsa_factor_directive(system_prompt: str, questionnaire_type: str, language: Optional[str]) -> str:
+def _apply_qsa_factor_directive(
+    system_prompt: str,
+    questionnaire_type: str,
+    language: Optional[str],
+    allowed_codes: Optional[set[str]] = None,
+) -> str:
     if not _is_strategy_questionnaire(questionnaire_type):
         return system_prompt
     instrument = "QSAr" if (questionnaire_type or "").upper() == "QSAR" else "QSA"
-    names = _qsa_factor_names(language, questionnaire_type)
+    factor_items = _qsa_factor_items(language, questionnaire_type, allowed_codes)
     inverted_codes = _QSAR_INVERTED_CODES if instrument == "QSAr" else _QSA_INVERTED_CODES
-    examples = ", ".join(f"{code} ({name})" for code, name in names.items())
+    examples = ", ".join(f"{code} ({name})" for code, name in factor_items)
     # Label di interpretazione nella lingua dello studente: il modello le riusa
     # tali e quali nella tabella, quindi non devono restare in inglese.
     lbl = _qsa_assessment_labels(language)
@@ -796,10 +814,24 @@ def _apply_qsa_factor_directive(system_prompt: str, questionnaire_type: str, lan
     direct_bands = f"1-3 = {lbl['growth']} · 4-6 = {lbl['adequate']} · 7-9 = {lbl['strength']}"
     inverted_bands = f"1-3 = {lbl['strength']} · 4-6 = {lbl['normal']} · 7-9 = {lbl['growth']}"
     rows = [
-        f"- {code} ({name}): {inverted_bands if code in inverted_codes else direct_bands}"
-        for code, name in names.items()
+        f"- {code} ({name}): {inverted_bands if code.upper() in {item.upper() for item in inverted_codes} else direct_bands}"
+        for code, name in factor_items
     ]
     interpretation_table = "\n".join(rows)
+    scope_sentence = (
+        "The mandatory reference above lists only the factor codes allowed in the "
+        "current step. Do not introduce other factors or relationships with other "
+        "factors just because they exist elsewhere in the questionnaire."
+        if allowed_codes
+        else (
+            "The mandatory reference above lists all possible "
+            f"{instrument} factors only so you can name them correctly. In the current "
+            "answer, discuss ONLY the factor codes present in the student's current "
+            "message, score lines or guided-step prompt. Do not introduce other factors "
+            "or relationships with other factors just because they appear in the "
+            "reference list."
+        )
+    )
     return (
         f"{system_prompt}\n\n"
         "[FACTOR LABELS] In every reply addressed to the student, never write "
@@ -814,13 +846,12 @@ def _apply_qsa_factor_directive(system_prompt: str, questionnaire_type: str, lan
         "For some factors a high score is an area to work on, not a strength: "
         "always use the band shown in the factor's own row; never read "
         "'high = strength' automatically.\n\n"
-        "[CURRENT FACTOR SCOPE] The mandatory reference above lists all possible "
-        f"{instrument} factors only so you can name them correctly. In the current "
-        "answer, discuss ONLY the factor codes present in the student's current "
-        "message, score lines or guided-step prompt. Do not introduce other factors "
-        "or relationships with other factors just because they appear in the "
-        "reference list."
+        f"[CURRENT FACTOR SCOPE] {scope_sentence}"
     )
+
+
+def _requires_complete_factor_output(mode: Optional[str]) -> bool:
+    return (mode or "").strip().lower() in {"factor", "qsar-factor"}
 
 
 def _apply_current_step_factor_scope_directive(system_prompt: str, questionnaire_type: str, allowed_codes: set[str]) -> str:

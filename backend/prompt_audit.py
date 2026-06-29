@@ -31,6 +31,7 @@ from .chat_logic import (
     _phase_factor_codes,
     _qsa_step_score_profile,
     _resolve_system_prompt,
+    _requires_complete_factor_output,
     _retrieved_context,
     _sanitize_ztpi_step_label,
     _sanitize_ztpi_user_text,
@@ -248,7 +249,7 @@ def build_prompt_audit(
     include_analysis_context = _should_include_step_analysis_context(step_mode)
     required_codes = _phase_factor_codes(db, request.phase) if include_analysis_context else set()
     if include_analysis_context:
-        system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language)
+        system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language, required_codes)
         system_prompt = _apply_current_step_factor_scope_directive(system_prompt, questionnaire_type, required_codes)
 
     model_scores_context = (
@@ -586,12 +587,13 @@ def run_prompt_audit_live(
         response_visible = _annotate_qsa_factor_codes(
             response_raw, payload.language, questionnaire_type=questionnaire_type
         )
-        response_visible = _ensure_required_qsa_factor_codes(
-            response_visible,
-            questionnaire_type,
-            payload.language,
-            _phase_factor_codes(db, payload.phase),
-        )
+        if _requires_complete_factor_output(payload.mode):
+            response_visible = _ensure_required_qsa_factor_codes(
+                response_visible,
+                questionnaire_type,
+                payload.language,
+                _phase_factor_codes(db, payload.phase),
+            )
     else:
         response_visible = response_raw
 
