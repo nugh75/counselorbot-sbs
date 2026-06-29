@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowRight, Check, Cpu, Cloud } from 'lucide-react';
+import { Check, Cpu, Cloud } from 'lucide-react';
 import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId, subscribeToCounselor, PublicCounselor } from '@/lib/counselor';
 import { useI18n } from '@/lib/i18n-context';
 import { BackButton } from '@/components/ui/BackButton';
@@ -179,10 +179,9 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName }: Cou
                         type="button"
                         onClick={onContinue}
                         disabled={!selected}
-                        className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                        className="inline-flex items-center rounded-md bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                     >
                         {t('counselor.continue')}
-                        <ArrowRight className="h-4 w-4" />
                     </button>
                 </div>
             )}
