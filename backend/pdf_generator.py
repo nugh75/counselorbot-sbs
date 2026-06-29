@@ -286,6 +286,9 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "savickas_1": "Questo e' un questionario qualitativo (Savickas). I risultati sono disponibili nella trascrizione della chat.",
         "savickas_2": "Il percorso narrativo della Career Construction Interview non produce punteggi numerici.",
         "page": "Pagina",
+        "conversation": "Conversazione",
+        "student": "Studente",
+        "counselor": "Counselor",
     },
     "en": {
         "title": "CounselorBot - Questionnaire Results",
@@ -297,6 +300,9 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "savickas_1": "This is a qualitative questionnaire (Savickas). The results are available in the chat transcript.",
         "savickas_2": "The narrative path of the Career Construction Interview does not produce numerical scores.",
         "page": "Page",
+        "conversation": "Conversation",
+        "student": "Student",
+        "counselor": "Counselor",
     },
     "es": {
         "title": "CounselorBot - Resultados del Cuestionario",
@@ -308,6 +314,9 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "savickas_1": "Este es un cuestionario cualitativo (Savickas). Los resultados están disponibles en la transcripción del chat.",
         "savickas_2": "El recorrido narrativo de la Career Construction Interview no produce puntuaciones numéricas.",
         "page": "Página",
+        "conversation": "Conversación",
+        "student": "Estudiante",
+        "counselor": "Counselor",
     },
     "fr": {
         "title": "CounselorBot - Résultats du Questionnaire",
@@ -319,6 +328,9 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "savickas_1": "Ceci est un questionnaire qualitatif (Savickas). Les résultats sont disponibles dans la transcription du chat.",
         "savickas_2": "Le parcours narratif de la Career Construction Interview ne produit pas de scores numériques.",
         "page": "Page",
+        "conversation": "Conversation",
+        "student": "Étudiant",
+        "counselor": "Counselor",
     },
     "de": {
         "title": "CounselorBot - Fragebogen-Ergebnisse",
@@ -330,6 +342,9 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "savickas_1": "Dies ist ein qualitativer Fragebogen (Savickas). Die Ergebnisse sind im Chat-Verlauf verfügbar.",
         "savickas_2": "Der narrative Verlauf des Career Construction Interview liefert keine numerischen Werte.",
         "page": "Seite",
+        "conversation": "Unterhaltung",
+        "student": "Student",
+        "counselor": "Counselor",
     },
     "sv": {
         "title": "CounselorBot - Frågeformulärsresultat",
@@ -341,6 +356,9 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "savickas_1": "Detta är ett kvalitativt frågeformulär (Savickas). Resultaten finns i chattutskriften.",
         "savickas_2": "Den narrativa vägen i Career Construction Interview ger inga numeriska poäng.",
         "page": "Sida",
+        "conversation": "Konversation",
+        "student": "Student",
+        "counselor": "Counselor",
     },
 }
 
@@ -391,12 +409,47 @@ def _score_label(value: int, inverted: bool, ui: dict[str, str]) -> tuple[str, t
     return (ui["normal"], (234, 179, 8))
 
 
+def _strip_markdown(text: str) -> str:
+    """Rimuove i marker markdown piu' comuni per renderizzare nel PDF (fpdf2 non li supporta)."""
+    import re
+    text = re.sub(r"\*\*(.+?)\*\*", r"\1", text)  # bold
+    text = re.sub(r"\*(.+?)\*", r"\1", text)       # italic
+    text = re.sub(r"^#{1,6}\s*", "", text, flags=re.MULTILINE)  # headings
+    text = re.sub(r"^[-*]\s*", "  - ", text, flags=re.MULTILINE)  # list items
+    return text
+
+
+def _render_conversation(pdf, messages: list[dict], ui: dict[str, str], content_w: float):
+    """Renderizza i turni studente/counselor come testo a capo automatico."""
+    pdf.add_page()
+    pdf.set_font("Helvetica", "B", 12)
+    pdf.set_text_color(25, 25, 30)
+    pdf.cell(0, 8, _latin1(ui["conversation"]), new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(3)
+
+    for msg in messages:
+        role = msg.get("role", "")
+        text = msg.get("text", "").strip()
+        if not text:
+            continue
+        label = ui["counselor"] if role == "counselor" else ui["student"]
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.set_text_color(60, 60, 130 if role == "counselor" else 90)
+        pdf.cell(0, 6, _latin1(label), new_x="LMARGIN", new_y="NEXT")
+        pdf.set_x(pdf.l_margin)
+        pdf.set_font("Helvetica", "", 10)
+        pdf.set_text_color(40, 40, 50)
+        pdf.multi_cell(content_w, 5, _latin1(_strip_markdown(text)), new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(3)
+
+
 def generate_questionnaire_pdf(
     questionnaire_type: str,
     scores: dict[str, int | float] | None,
     session_id: str,
     submitted_at: str | None = None,
     language: str | None = None,
+    messages: list[dict] | None = None,
 ) -> BytesIO:
     """Genera un PDF dei risultati nella lingua selezionata, restituisce BytesIO.
 
@@ -516,6 +569,10 @@ def generate_questionnaire_pdf(
         pdf.set_font("Helvetica", "I", 7)
         pdf.set_text_color(140, 140, 150)
         pdf.multi_cell(content_w, 4, _latin1(ui["inverted_note"]), new_x="LMARGIN", new_y="NEXT")
+
+    # Conversazione: trascrizione completa studente/counselor
+    if messages:
+        _render_conversation(pdf, messages, ui, content_w)
 
     pdf_bytes = BytesIO()
     pdf.output(pdf_bytes)
