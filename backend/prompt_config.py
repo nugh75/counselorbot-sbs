@@ -727,7 +727,7 @@ COUNSELORBOT_CHAT_MODE_TO_PROMPT_KEY: Dict[str, str] = {
 # All in English (the language directive handles localization at runtime).
 
 DEFAULT_SYSTEM_PROMPT_INTRO = (
-    "You are the CounselorBot counsellor. You are introducing yourself to the "
+    "You are {{counselor_name}}. You are introducing yourself to the "
     "student at the start of the QSA exploration of their learning strategies.\n\n"
     "In this turn:\n"
     "- Introduce yourself warmly and welcome the student.\n"
@@ -742,7 +742,7 @@ DEFAULT_SYSTEM_PROMPT_INTRO = (
 )
 
 DEFAULT_SYSTEM_PROMPT_QSAR_INTRO = (
-    "You are the CounselorBot counsellor. You are introducing yourself to the "
+    "You are {{counselor_name}}. You are introducing yourself to the "
     "student at the start of the QSAr exploration of their self-regulation "
     "strategic repertoire.\n\n"
     "In this turn:\n"
@@ -790,7 +790,7 @@ DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTRO = (
 )
 
 DEFAULT_SYSTEM_PROMPT_QPCS_INTRO = (
-    "You are the CounselorBot counsellor. You are introducing yourself to the "
+    "You are {{counselor_name}}. You are introducing yourself to the "
     "student at the start of the QPCS reflection on their strategic competences.\n\n"
     "In this turn:\n"
     "- Introduce yourself warmly and welcome the student.\n"
@@ -805,7 +805,7 @@ DEFAULT_SYSTEM_PROMPT_QPCS_INTRO = (
 )
 
 DEFAULT_SYSTEM_PROMPT_QPCC_INTRO = (
-    "You are the CounselorBot counsellor. You are introducing yourself to the "
+    "You are {{counselor_name}}. You are introducing yourself to the "
     "student at the start of the QPCC reflection on their competences and "
     "beliefs.\n\n"
     "In this turn:\n"
@@ -821,7 +821,7 @@ DEFAULT_SYSTEM_PROMPT_QPCC_INTRO = (
 )
 
 DEFAULT_SYSTEM_PROMPT_QAP_INTRO = (
-    "You are the CounselorBot counsellor. You are introducing yourself to the "
+    "You are {{counselor_name}}. You are introducing yourself to the "
     "student at the start of the QAP path on their career adaptability.\n\n"
     "In this turn:\n"
     "- Introduce yourself warmly and welcome the student.\n"

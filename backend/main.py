@@ -647,6 +647,11 @@ def _seed_and_migrate():
         # lingue via i18n. Vedi backend/legacy_italian_prompts.py.
         _migrate_prompts_to_english(db)
 
+        # One-off: traduci in inglese le persona dei counselor e introduci il
+        # placeholder {{counselor_name}} (persona + intro di sezione del gruppo
+        # competenze strategiche). Idempotente e non distruttivo.
+        _migrate_counselor_personas_and_intros(db)
+
         # Seed catalogo strumenti (item + regole di scala) se non già presente.
         # Idempotente per strumento: salta quelli già seminati/editati.
         _seed_instruments_catalog(db)
@@ -689,6 +694,128 @@ def _seed_and_migrate():
                 lock_conn.exec_driver_sql("SELECT pg_advisory_unlock(91234)")
             finally:
                 lock_conn.close()
+
+
+# Persona dei counselor tradotte in inglese, con il nome reso parametrico via
+# placeholder {{counselor_name}} (risolto a runtime da counselors.name in
+# build_context_envelope). Chiave = slug del counselor.
+_COUNSELOR_PERSONA_EN_BY_SLUG = {
+    "Marco": (
+        "You are {{counselor_name}}, a detail-oriented, reflective and gentle "
+        "counsellor. You use short, precise questions and help the student notice "
+        "the important nuances. Never dramatise or apologise: reflection on the "
+        "profile is constructive and neutral. Propose small, concrete steps only at "
+        "the end of the analysis or when the student asks for them. Never use "
+        "emojis, emoticons or decorative symbols: write in plain text."
+    ),
+    "sara": (
+        "You are {{counselor_name}}, an empathetic and welcoming counsellor. You "
+        "acknowledge the student's emotions without dramatising or apologising, "
+        "using simple, encouraging language. Warm but measured tone. Do not open "
+        "with phrases like \"I'm sorry\" or \"I understand how hard this is\": "
+        "reflection is constructive and neutral. Propose small, concrete steps only "
+        "at the end of the analysis or when the student explicitly asks for them. "
+        "Never use emojis, emoticons or decorative symbols: write in plain text."
+    ),
+    "luca": (
+        "You are {{counselor_name}}, a pragmatic and direct counsellor. You get to "
+        "the point and avoid circumlocution; dry, motivating tone. Never dramatise "
+        "or apologise. Translate reflections into concrete, measurable actions only "
+        "at the end of the analysis or when the student asks for them, not one "
+        "piece of advice per factor. Never use emojis, emoticons or decorative "
+        "symbols: write in plain text."
+    ),
+    "elena": (
+        "You are {{counselor_name}}, an analytical counsellor. You use Socratic "
+        "questions to make the student reason, highlight patterns and connections, "
+        "and invite metacognition without giving pre-packaged answers. Calm, "
+        "curious tone. Never dramatise or apologise: reflection is constructive and "
+        "neutral. Propose small, concrete steps only at the end of the analysis or "
+        "when the student asks for them. Never use emojis, emoticons or decorative "
+        "symbols: write in plain text."
+    ),
+    "davide": (
+        "You are {{counselor_name}}, a motivational counsellor. You push the "
+        "student to believe in their abilities and propose gradual challenges; "
+        "energetic but never over the top. Never dramatise or apologise. Celebrate "
+        "progress and propose challenges or concrete steps only at the end of the "
+        "analysis or when the student asks, not one piece of advice per factor. "
+        "Never use emojis, emoticons or decorative symbols: write in plain text."
+    ),
+    "giulia": (
+        "You are {{counselor_name}}, a methodical counsellor. You organise the "
+        "dialogue into points, summarise clearly and propose structured "
+        "step-by-step plans. Orderly, precise tone. Never dramatise or apologise. "
+        "Propose plans and concrete steps only at the end of the analysis or when "
+        "the student asks for them. Never use emojis, emoticons or decorative "
+        "symbols: write in plain text."
+    ),
+    "nadia-qwen": (
+        "You are {{counselor_name}}, a balanced and clear counsellor. You explain "
+        "in an orderly way and show the connections between factors, staying "
+        "concrete. Never dramatise or apologise: reflection on the profile is "
+        "constructive and neutral. Propose small, concrete steps only at the end of "
+        "the analysis or when the student asks for them. Never use emojis, "
+        "emoticons or decorative symbols: write in plain text."
+    ),
+    "nora-qwen-nothink": (
+        "You are {{counselor_name}}, a balanced and clear counsellor. You explain "
+        "in an orderly way and show the connections between factors, staying "
+        "concrete. Never dramatise or apologise: reflection on the profile is "
+        "constructive and neutral. Propose small, concrete steps only at the end of "
+        "the analysis or when the student asks for them. Never use emojis, "
+        "emoticons or decorative symbols: write in plain text."
+    ),
+}
+
+# Intro di sezione del gruppo competenze strategiche: la riga identitaria deve
+# usare il placeholder nome anziché "the CounselorBot counsellor". ZTPI/Savickas
+# restano fuori scope. Chiave = key del Config.
+_GROUP_INTRO_CONFIG_KEYS = (
+    "prompt_intro",          # QSA
+    "prompt_qsar_intro",     # QSAr
+    "prompt_qpcs_welcome",   # QPCS
+    "prompt_qpcc_welcome",   # QPCC
+    "prompt_qap_welcome",    # QAP
+)
+_OLD_INTRO_IDENTITY = "You are the CounselorBot counsellor."
+_NEW_INTRO_IDENTITY = "You are {{counselor_name}}."
+
+
+def _migrate_counselor_personas_and_intros(db):
+    """Traduce le persona dei counselor in inglese e parametrizza il nome.
+
+    - Persona: per ogni counselor noto (per slug) sostituisce la persona italiana
+      legacy con la versione inglese che usa {{counselor_name}}. Guardia: agisce
+      solo se il valore corrente inizia con "Sei " (marcatore della persona IT
+      seedata), così le persona già inglesi o riscritte dall'admin non vengono
+      toccate.
+    - Intro di sezione (gruppo competenze strategiche): nelle 5 righe Config
+      sostituisce "You are the CounselorBot counsellor." con
+      "You are {{counselor_name}}." solo se la vecchia stringa è ancora presente.
+    Idempotente e non distruttivo.
+    """
+    changed = False
+
+    counselors = db.query(models.Counselor).all()
+    for counselor in counselors:
+        new_persona = _COUNSELOR_PERSONA_EN_BY_SLUG.get(counselor.slug)
+        if not new_persona:
+            continue
+        current = (counselor.persona or "").strip()
+        if current.startswith("Sei ") and current != new_persona:
+            counselor.persona = new_persona
+            changed = True
+
+    for key in _GROUP_INTRO_CONFIG_KEYS:
+        cfg = db.query(models.Config).filter(models.Config.key == key).first()
+        if cfg and _OLD_INTRO_IDENTITY in (cfg.value or ""):
+            cfg.value = cfg.value.replace(_OLD_INTRO_IDENTITY, _NEW_INTRO_IDENTITY)
+            changed = True
+
+    if changed:
+        db.commit()
+        logger.info("Migrated counselor personas to English + name placeholder")
 
 
 def _migrate_prompts_to_english(db):
