@@ -16,6 +16,8 @@ import { PortfolioCard } from '@/components/profile/PortfolioCard';
 import {
     ArrowLeft, ArrowRight, Trash2, Download, MessageSquare, ShieldAlert, Search
 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList,
     type TooltipContentProps,
@@ -634,13 +636,13 @@ export default function ProfilePage() {
                                                     {msg.role === 'student' ? 'Tu (Studente)' : 'CounselorBot'}
                                                 </span>
                                                 <div
-                                                    className={`max-w-[85%] rounded-lg px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words ${
+                                                    className={`max-w-[85%] rounded-lg px-3 py-2 text-sm leading-relaxed break-words ${
                                                         msg.role === 'student'
-                                                            ? 'bg-indigo-600 text-white'
-                                                            : 'bg-slate-100 text-slate-800 border border-slate-200/60'
+                                                            ? 'bg-indigo-600 text-white prose prose-sm prose-invert prose-p:my-0 prose-headings:my-1 prose-ul:my-0.5 prose-li:my-0'
+                                                            : 'bg-slate-100 text-slate-800 border border-slate-200/60 prose prose-sm prose-p:my-0 prose-headings:my-1 prose-ul:my-0.5 prose-li:my-0'
                                                     }`}
                                                 >
-                                                    {msg.text}
+                                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
                                                 </div>
                                             </div>
                                         ))}
