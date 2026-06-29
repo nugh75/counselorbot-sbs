@@ -1927,6 +1927,59 @@ def test_chat_log_persists_prompt_envelope():
     assert isinstance(envelope["history"], list)
 
 
+def test_chat_intro_envelope_includes_learner_profile_without_scores():
+    _ensure_guided_steps("QSA")
+    session_id = "intro-envelope-learner-profile"
+    session_memory.clear(session_id)
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    db = _TestSession()
+    try:
+        db.add(models.LearnerProfileRevision(
+            username="student",
+            data={
+                "goal": "Capire come organizzare lo studio",
+                "main_difficulty": "Mi distraggo quando studio da solo",
+            },
+            source="test",
+            session_id=session_id,
+        ))
+        db.commit()
+    finally:
+        db.close()
+
+    try:
+        r = client.post("/chat", json={
+            "message": "Presentami il percorso",
+            "mode": "generic",
+            "phase": "intro",
+            "use_phase_prompt": True,
+            "session_id": session_id,
+            "questionnaire_type": "QSA",
+            "language": "it",
+            "scores_context": "PROFILO QSA DELLO STUDENTE:\n- C1: 7/9\n- A1: 8/9",
+        })
+        assert r.status_code == 200, r.text
+        envelope = _latest_log_details(session_id).get("envelope")
+        assert "[PROFILE]" in envelope["system_prompt_final"]
+        assert "Profilo dichiarato dallo studente" in envelope["system_prompt_final"]
+        assert "Capire come organizzare lo studio" in envelope["system_prompt_final"]
+        assert "PROFILO QSA" not in envelope["system_prompt_final"]
+        assert "PROFILO QSA" not in envelope["full_message"]
+        assert "/9" not in envelope["full_message"]
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        db = _TestSession()
+        try:
+            db.query(models.LearnerProfileRevision).filter(
+                models.LearnerProfileRevision.username == "student",
+                models.LearnerProfileRevision.session_id == session_id,
+            ).delete()
+            db.commit()
+        finally:
+            db.close()
+        session_memory.clear(session_id)
+
+
 def test_chat_stream_log_persists_prompt_envelope():
     session_id = "envelope-log-stream"
     session_memory.clear(session_id)

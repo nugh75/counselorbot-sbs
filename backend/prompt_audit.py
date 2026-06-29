@@ -304,7 +304,7 @@ def build_prompt_audit(
         knowledge_context=knowledge_context,
         include_history=bool(getattr(payload, "include_history", False)),
         include_session_memory=bool(getattr(payload, "include_history", False)),
-        include_profile=include_analysis_context,
+        include_scores_reference=include_analysis_context,
         create_anonymous_code=False,
     )
 

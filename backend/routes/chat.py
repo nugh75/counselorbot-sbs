@@ -358,7 +358,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         c_persona=c_persona, counselor_name=c_name, system_prompt=system_prompt, step_label=step_label,
         questionnaire_type=questionnaire_type, effective_message=model_message,
         model_scores_context=model_scores_context, message_scores_context=message_scores_context,
-        knowledge_context=knowledge_context, include_profile=include_analysis_context,
+        knowledge_context=knowledge_context, include_scores_reference=include_analysis_context,
     )
 
     # 4. Get AI Response (KNOWLEDGE nel system, continuity nella history -> no summary).
@@ -581,7 +581,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         c_persona=c_persona, counselor_name=c_name, system_prompt=system_prompt, step_label=step_label,
         questionnaire_type=questionnaire_type, effective_message=model_message,
         model_scores_context=model_scores_context, message_scores_context=message_scores_context,
-        knowledge_context=knowledge_context, include_profile=include_analysis_context,
+        knowledge_context=knowledge_context, include_scores_reference=include_analysis_context,
     )
 
     provider = c_provider or ai_service.config.get('active_provider', 'unknown')
