@@ -1325,10 +1325,34 @@ def test_prompt_audit_intro_envelope_is_light_for_all_instruments():
         assert "You are Nadia. You are introducing" not in system_prompt
         assert "cognitive and affective factors" not in system_prompt
         assert "cognitive and affective components" not in system_prompt
+        assert "[INTRO ALLOWED QUESTIONS]" in system_prompt
+        assert "the path is guided step by step" in system_prompt
+        assert "QSA and QSAr for learning strategies" in system_prompt
+        assert "QAP for career adaptability" in system_prompt
         for marker in forbidden_system_blocks:
             assert marker not in system_prompt, (questionnaire_type, marker, system_prompt)
         for marker in forbidden_score_fragments:
             assert marker not in full_message, (questionnaire_type, marker, full_message)
+
+    r = client.post("/admin/prompt-audit/dry-run", json={
+        "questionnaire_type": "QSA",
+        "language": "it",
+        "phase": "intro",
+        "mode": "generic",
+        "use_phase_prompt": False,
+        "message": "Come funziona l'interazione e quali strumenti sono disponibili?",
+        "scores_context": "PROFILO QSA DELLO STUDENTE:\n- C1: 7/9\n- A1: 8/9",
+        "session_id": "prompt-audit-intro-light-free-question",
+        "counselor_id": counselor_id,
+        "include_knowledge": True,
+        "include_history": False,
+    })
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["envelope"]["full_message"] == "Come funziona l'interazione e quali strumenti sono disponibili?"
+    assert "[INTRO ALLOWED QUESTIONS]" in body["envelope"]["system_prompt_final"]
+    assert "[KNOWLEDGE]" not in body["envelope"]["system_prompt_final"]
+    assert "PROFILO QSA" not in body["envelope"]["full_message"]
 
 
 def test_prompt_audit_dry_run_builds_qsa_envelope_without_side_effects():
