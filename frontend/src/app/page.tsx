@@ -29,6 +29,7 @@ import { getSelectedCounselorId, setSelectedCounselorId } from '@/lib/counselor'
 import { setSelectedInstrumentId } from '@/lib/instrument';
 import { getResume, setResume } from '@/lib/resume';
 import { BackButton } from '@/components/ui/BackButton';
+import { ForwardButton } from '@/components/ui/ForwardButton';
 
 
 type Step = 'intro' | 'counselor-select' | 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'combined-interaction' | 'farewell';
@@ -491,6 +492,7 @@ export default function Home() {
                     title={getStepTitle()}
                     subtitle={getStepDescription()}
                     onBack={step !== 'completed' ? goBack : undefined}
+                    forward={step === 'manual-input' ? <ForwardButton type="submit" form="score-form" label={t('score.submit')} /> : undefined}
                 />
             )}
 
@@ -544,17 +546,11 @@ export default function Home() {
                     {/* Step: Dashboard with Profile. */}
                     {step === 'dashboard' && scores && selectedQuestionnaire && (
                         <div className="space-y-4 animate-fade-in-up">
-                            <BackButton onClick={goBack} label={t('nav.back')} />
-                            <ProfileVisualization scores={scores} questionnaire={selectedQuestionnaire} />
-
-                            <div className="flex justify-end">
-                                <button
-                                    onClick={startInteraction}
-                                    className="shrink-0 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors"
-                                >
-                                    {t('dashboard.ready.btn')}
-                                </button>
+                            <div className="flex items-center gap-3">
+                                <BackButton onClick={goBack} label={t('nav.back')} />
+                                <ForwardButton onClick={startInteraction} label={t('dashboard.ready.btn')} />
                             </div>
+                            <ProfileVisualization scores={scores} questionnaire={selectedQuestionnaire} />
                         </div>
                     )}
 

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ExternalLink } from 'lucide-react';
 import { BackButton } from '@/components/ui/BackButton';
+import { ForwardButton } from '@/components/ui/ForwardButton';
 import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
 import { getTestAdministration, AdministrationLocale } from '@/lib/test-administrations';
 import { useI18n } from '@/lib/i18n-context';
@@ -39,7 +40,7 @@ export default function InstrumentDetailsPage() {
             <div className="max-w-xl mx-auto glass-panel p-8 text-center space-y-4">
                 <h1 className="text-xl font-bold text-slate-900">{t('detail.unavailable.title')}</h1>
                 <p className="text-slate-600">{t('detail.unavailable.body')}</p>
-                <div className="flex justify-center">
+                <div className="flex items-center justify-center gap-3">
                     <BackButton href={QUESTIONNAIRE_SELECTION_HREF} label={t('detail.back')} />
                 </div>
             </div>
@@ -48,7 +49,10 @@ export default function InstrumentDetailsPage() {
 
     return (
         <div className="page-narrow space-y-6">
-            <BackButton href={QUESTIONNAIRE_SELECTION_HREF} label={t('detail.back')} />
+            <div className="flex items-center gap-3">
+                <BackButton href={QUESTIONNAIRE_SELECTION_HREF} label={t('detail.back')} />
+                <ForwardButton href={`/?start=${questionnaire.id}`} label={t('selector.start')} />
+            </div>
 
             <section className="glass-panel p-6 sm:p-8">
                 <span className="text-xs font-semibold uppercase tracking-[0.08em] text-indigo-700">{t('detail.kicker')}</span>
@@ -116,14 +120,8 @@ export default function InstrumentDetailsPage() {
                 </section>
             )}
 
-            <section className="rounded-xl bg-indigo-50 border border-indigo-100 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <section className="rounded-xl bg-indigo-50 border border-indigo-100 p-5">
                 <p className="text-sm text-indigo-900">{t('detail.ready')}</p>
-                <Link
-                    href={`/?start=${questionnaire.id}`}
-                    className="inline-flex shrink-0 items-center justify-center rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
-                >
-                    {t('selector.start')}
-                </Link>
             </section>
         </div>
     );

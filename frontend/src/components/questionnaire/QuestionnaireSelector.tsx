@@ -2,11 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { QUESTIONNAIRE_LIST, QuestionnaireType, QuestionnaireConfig } from '@/lib/questionnaires';
-import { AlertTriangle, BookOpen, ChevronDown, ExternalLink } from 'lucide-react';
+import { AlertTriangle, BookOpen, Check, ChevronDown, ExternalLink } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { BackButton } from '@/components/ui/BackButton';
+import { ForwardButton } from '@/components/ui/ForwardButton';
 
 const ACTIVE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
 const ADMINISTRATION_LANGS = ['en', 'es', 'sv'] as const;
@@ -26,7 +28,13 @@ interface QuestionnaireSelectorProps {
 
 export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelectorProps) {
     const { t, lang, setLang } = useI18n();
+    const router = useRouter();
     const [expanded, setExpanded] = useState<string | null>(null);
+    // Selezione come nel CounselorSelector: si clicca la card per evidenziarla,
+    // poi si avanza con la freccia in alto (nessuna azione "vai" per card).
+    // La chiave è l'id strumento per i questionari, oppure 'profile-changes' / 'pqbl'
+    // per le card che portano ad altre pagine.
+    const [selectedKey, setSelectedKey] = useState<string | null>(null);
     const active = QUESTIONNAIRE_LIST.filter((q) => ACTIVE_QUESTIONNAIRES.includes(q.id));
     const upcoming = QUESTIONNAIRE_LIST.filter((q) => !ACTIVE_QUESTIONNAIRES.includes(q.id));
     // Competenze Strategiche = strumenti con assessment sul sito / in-app; Interviste = agentOnly (Savickas).
@@ -36,6 +44,14 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
     const isAdministrationLang = ADMINISTRATION_LANGS.includes(lang as 'en' | 'es' | 'sv');
     const isUnavailableQuestionnaireLang = lang === 'fr' || lang === 'de';
 
+    const handleContinue = () => {
+        if (!selectedKey) return;
+        if (selectedKey === 'profile-changes') { router.push('/profilo/cambiamenti'); return; }
+        if (selectedKey === 'pqbl') { router.push('/pqbl'); return; }
+        const q = active.find((item) => item.id === selectedKey);
+        if (q) onSelect(q);
+    };
+
     // Card strumento, senza icona: testa (nome + badge + nome esteso), descrizione,
     // dettaglio espandibile, azioni ed eventuali credenziali sito.
     const renderCard = (q: QuestionnaireConfig) => {
@@ -43,6 +59,7 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
         const externalAssessmentUrl = isItalian && !q.agentOnly ? STRATEGIC_COMPETENCES_URLS[q.id] : undefined;
         const hasExternalAssessment = Boolean(externalAssessmentUrl);
         const isExpanded = expanded === q.id;
+        const isSelected = selectedKey === q.id;
         const primaryBadge = hasInAppAdministration
             ? t('selector.badge.inApp')
             : hasExternalAssessment
@@ -51,7 +68,28 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                     ? t('selector.badge.agent')
                     : t('selector.badge.results');
         return (
-            <article key={q.id} className="glass-panel p-4 flex flex-col gap-3">
+            <article
+                key={q.id}
+                role="button"
+                tabIndex={0}
+                aria-pressed={isSelected}
+                onClick={() => setSelectedKey(q.id)}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedKey(q.id);
+                    }
+                }}
+                className={cn(
+                    'glass-panel p-4 flex flex-col gap-3 relative cursor-pointer transition-colors',
+                    isSelected ? 'ring-2 ring-indigo-400 border-indigo-300' : 'hover:border-indigo-200',
+                )}
+            >
+                {isSelected && (
+                    <div className="absolute right-3 top-3 rounded-full bg-indigo-600 p-1 text-white">
+                        <Check className="h-3.5 w-3.5" />
+                    </div>
+                )}
                 <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                         <h3 className="font-bold text-slate-800">{q.name}</h3>
@@ -75,15 +113,10 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                     {t(`q.${q.id}.description`)}
                 </p>
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <button
-                        onClick={() => onSelect(q)}
-                        className="inline-flex items-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
-                    >
-                        {t('selector.useTool')}
-                    </button>
                     {hasInAppAdministration && (
                         <Link
                             href={`/somministrazione/${q.id}/${lang}`}
+                            onClick={(e) => e.stopPropagation()}
                             className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
                         >
                             {t('selector.completeQuestionnaire')}
@@ -94,6 +127,7 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                             href={externalAssessmentUrl}
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
                             className="group inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
                         >
                             {t('selector.openStrategic')}
@@ -102,6 +136,7 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                     )}
                     <Link
                         href={`/strumenti/${q.id}`}
+                        onClick={(e) => e.stopPropagation()}
                         className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-700 transition-colors"
                     >
                         <BookOpen className="w-4 h-4" />
@@ -109,7 +144,7 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                     </Link>
                     <button
                         type="button"
-                        onClick={() => setExpanded(isExpanded ? null : q.id)}
+                        onClick={(e) => { e.stopPropagation(); setExpanded(isExpanded ? null : q.id); }}
                         className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-700 transition-colors"
                     >
                         <ChevronDown className={cn('w-4 h-4 transition-transform', isExpanded && 'rotate-180')} />
@@ -150,7 +185,10 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
 
     return (
         <div className="space-y-8">
-            {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
+            <div className="flex items-center gap-3">
+                {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
+                <ForwardButton onClick={handleContinue} disabled={!selectedKey} label={t('counselor.continue')} />
+            </div>
 
             {isUnavailableQuestionnaireLang && (
                 <section className="rounded-xl border-2 border-amber-300 bg-amber-50 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
@@ -185,7 +223,27 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                     <h2 className="text-xl font-bold text-slate-900">{t('selector.section.interviews')}</h2>
                     <div className="grid md:grid-cols-2 gap-3">
                         {interviews.map(renderCard)}
-                        <article className="glass-panel p-4 flex flex-col gap-3">
+                        <article
+                            role="button"
+                            tabIndex={0}
+                            aria-pressed={selectedKey === 'profile-changes'}
+                            onClick={() => setSelectedKey('profile-changes')}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    setSelectedKey('profile-changes');
+                                }
+                            }}
+                            className={cn(
+                                'glass-panel p-4 flex flex-col gap-3 relative cursor-pointer transition-colors',
+                                selectedKey === 'profile-changes' ? 'ring-2 ring-indigo-400 border-indigo-300' : 'hover:border-indigo-200',
+                            )}
+                        >
+                            {selectedKey === 'profile-changes' && (
+                                <div className="absolute right-3 top-3 rounded-full bg-indigo-600 p-1 text-white">
+                                    <Check className="h-3.5 w-3.5" />
+                                </div>
+                            )}
                             <div className="min-w-0">
                                 <div className="flex flex-wrap items-center gap-2">
                                     <h3 className="font-bold text-slate-800">{t('profileChanges.title')}</h3>
@@ -198,14 +256,6 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                             <p className="text-sm text-slate-500 leading-relaxed grow">
                                 {t('profileChanges.cardBody')}
                             </p>
-                            <div className="flex flex-wrap items-center gap-2 pt-1">
-                                <Link
-                                    href="/profilo/cambiamenti"
-                                    className="inline-flex items-center rounded-md bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 text-sm font-semibold transition-colors"
-                                >
-                                    {t('selector.useTool')}
-                                </Link>
-                            </div>
                         </article>
                     </div>
                 </section>
@@ -214,7 +264,27 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
             {/* 3. Strumenti attivi (pQBL da PDF) */}
             <section className="space-y-4">
                 <h2 className="text-xl font-bold text-slate-900">{t('selector.section.active')}</h2>
-                <div className="glass-panel p-5 flex flex-col sm:flex-row sm:items-center gap-4 border border-indigo-100">
+                <div
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={selectedKey === 'pqbl'}
+                    onClick={() => setSelectedKey('pqbl')}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setSelectedKey('pqbl');
+                        }
+                    }}
+                    className={cn(
+                        'glass-panel p-5 flex flex-col sm:flex-row sm:items-center gap-4 relative cursor-pointer transition-colors',
+                        selectedKey === 'pqbl' ? 'ring-2 ring-indigo-400 border-indigo-300' : 'border border-indigo-100 hover:border-indigo-200',
+                    )}
+                >
+                    {selectedKey === 'pqbl' && (
+                        <div className="absolute right-3 top-3 rounded-full bg-indigo-600 p-1 text-white">
+                            <Check className="h-3.5 w-3.5" />
+                        </div>
+                    )}
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                             <h3 className="font-bold text-slate-800">{t('pqbl.card.title')}</h3>
@@ -224,12 +294,6 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                         </div>
                         <p className="text-sm text-slate-500 mt-1 leading-relaxed">{t('pqbl.card.desc')}</p>
                     </div>
-                    <Link
-                        href="/pqbl"
-                        className="inline-flex shrink-0 items-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
-                    >
-                        {t('pqbl.card.cta')}
-                    </Link>
                 </div>
             </section>
 
