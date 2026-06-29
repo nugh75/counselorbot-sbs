@@ -662,6 +662,45 @@ async def delete_questionnaire_result(
     return {"status": "success", "message": "Risultato eliminato con successo"}
 
 
+@router.get("/user/questionnaire-result/{session_id}/conversation")
+async def get_user_session_conversation(
+    session_id: str,
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Restituisce i messaggi della conversazione per una specifica sessione dell'utente."""
+    result = db.query(models.QuestionnaireResult).filter(
+        models.QuestionnaireResult.session_id == session_id
+    ).first()
+    if not result:
+        raise HTTPException(status_code=404, detail="Risultato non trovato")
+
+    if not current_user.get("is_admin") and result.username != current_user.get("username"):
+        raise HTTPException(status_code=403, detail="Non autorizzato a visualizzare questa sessione")
+
+    # Recupera i messaggi
+    messages = []
+    log_rows = (
+        db.query(models.Log)
+        .filter(
+            models.Log.action == "chat_message",
+            models.Log.session_id == session_id,
+        )
+        .order_by(models.Log.timestamp.asc())
+        .all()
+    )
+    for row in log_rows:
+        d = row.details or {}
+        user_input = (d.get("user_input") or "").strip()
+        bot_response = (d.get("bot_response") or "").strip()
+        if user_input:
+            messages.append({"role": "student", "text": user_input})
+        if bot_response:
+            messages.append({"role": "counselor", "text": bot_response})
+            
+    return messages
+
+
 @router.get("/questionnaire-result/{session_id}/pdf")
 async def download_questionnaire_pdf(
     session_id: str,

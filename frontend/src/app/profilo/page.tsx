@@ -37,6 +37,8 @@ export default function ProfilePage() {
     const [identity, setIdentity] = useState<Identity | null>(null);
     const [sessions, setSessions] = useState<QuestionnaireResult[]>([]);
     const [selectedSession, setSelectedSession] = useState<QuestionnaireResult | null>(null);
+    const [conversation, setConversation] = useState<Array<{ role: string; text: string }> | null>(null);
+    const [convLoading, setConvLoading] = useState(false);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
@@ -87,6 +89,29 @@ export default function ProfilePage() {
     useEffect(() => {
         void loadData();
     }, [loadData]);
+
+    useEffect(() => {
+        if (!selectedSession) {
+            setConversation(null);
+            return;
+        }
+        setConvLoading(true);
+        setConversation(null);
+        apiFetch(`/api/user/questionnaire-result/${selectedSession.session_id}/conversation`)
+            .then((res) => {
+                if (res.ok) return res.json();
+                throw new Error('Failed to fetch conversation');
+            })
+            .then((data) => {
+                setConversation(data as Array<{ role: string; text: string }>);
+            })
+            .catch((err) => {
+                console.error("Error loading conversation:", err);
+            })
+            .finally(() => {
+                setConvLoading(false);
+            });
+    }, [selectedSession]);
 
     const handleDelete = async (sessionId: string) => {
         setActionLoading(sessionId);
@@ -578,6 +603,50 @@ export default function ProfilePage() {
                                     </div>
                                 </div>
                             ) : null}
+
+                            {/* Render Chat Conversation */}
+                            <div className="space-y-3 bg-white p-4 border border-slate-100 rounded-xl">
+                                <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                    <MessageSquare className="w-4 h-4 text-indigo-600" />
+                                    Conversazione registrata
+                                </h3>
+                                
+                                {convLoading && (
+                                    <div className="py-6 text-center text-xs text-slate-400">
+                                        Caricamento messaggi...
+                                    </div>
+                                )}
+                                
+                                {!convLoading && conversation && conversation.length === 0 && (
+                                    <p className="text-xs text-slate-400 text-center py-4">
+                                        Nessun messaggio presente in questa sessione.
+                                    </p>
+                                )}
+                                
+                                {!convLoading && conversation && conversation.length > 0 && (
+                                    <div className="max-h-96 overflow-y-auto space-y-3 pr-2 border-l border-slate-100 pl-4 mt-2">
+                                        {conversation.map((msg, index) => (
+                                            <div
+                                                key={index}
+                                                className={`flex flex-col ${msg.role === 'student' ? 'items-end' : 'items-start'}`}
+                                            >
+                                                <span className="text-[10px] font-semibold text-slate-400 mb-0.5 uppercase tracking-wider">
+                                                    {msg.role === 'student' ? 'Tu (Studente)' : 'CounselorBot'}
+                                                </span>
+                                                <div
+                                                    className={`max-w-[85%] rounded-lg px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words ${
+                                                        msg.role === 'student'
+                                                            ? 'bg-indigo-600 text-white'
+                                                            : 'bg-slate-100 text-slate-800 border border-slate-200/60'
+                                                    }`}
+                                                >
+                                                    {msg.text}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
 
                             {/* Call to Action: ancorata in fondo alla card, sempre raggiungibile
                                 senza scrollare tutta la scheda fattori. */}
