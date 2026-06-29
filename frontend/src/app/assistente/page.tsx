@@ -7,7 +7,7 @@ import remarkGfm from 'remark-gfm';
 import type { LucideIcon } from 'lucide-react';
 import { Send, GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search } from 'lucide-react';
 import { streamChat } from '@/lib/chat-stream';
-import { ai4authLoginUrl, getIdentity, type Identity } from '@/lib/auth';
+import { ai4authLoginUrl, getIdentity, getViewAsAccount, type Identity } from '@/lib/auth';
 import { canUseAssistant, canUseTeacherAssistant } from '@/lib/roles';
 import { useI18n } from '@/lib/i18n-context';
 import { fetchAssistantQuestions, type AssistantQuestionsByTopic } from '@/lib/assistant-questions';
@@ -46,6 +46,8 @@ interface PreviewState {
 }
 
 // I contenuti testuali sono localizzati via i18n: qui restano solo id + icona.
+// `teacherOnly` nasconde il topic all'audience studente: l'assistente docente
+// mostra argomenti di ruolo (es. "Uso didattico") che uno studente non deve vedere.
 const TOPIC_IDS = ['questionari', 'validazione', 'didattica', 'fonti'] as const;
 type TopicId = typeof TOPIC_IDS[number];
 const TOPIC_ICONS: Record<TopicId, LucideIcon> = {
@@ -54,6 +56,7 @@ const TOPIC_ICONS: Record<TopicId, LucideIcon> = {
     didattica: GraduationCap,
     fonti: Library,
 };
+const TEACHER_ONLY_TOPICS: ReadonlySet<TopicId> = new Set(['didattica']);
 
 // Mostra solo il nome leggibile del file citato.
 function sourceLabel(src: string): string {
@@ -90,13 +93,33 @@ export default function AssistentePage() {
         title: t(`assistant.topic.${id}.title`),
         body: t(`assistant.topic.${id}.body`),
         prompt: t(`assistant.topic.${id}.prompt`),
-    }));
+        teacherOnly: TEACHER_ONLY_TOPICS.has(id),
+    })).filter((topic) => audience !== 'studente' || !topic.teacherOnly);
     const selectedTopic = topics.find((x) => x.id === selectedTopicId) ?? topics[0];
+
+    // Se il topic selezionato e' stato filtrato (es. passaggio a audience
+    // studente che nasconde i topic da docente), ripristina il primo visibile.
+    useEffect(() => {
+        if (!topics.some((x) => x.id === selectedTopicId) && topics.length > 0) {
+            setSelectedTopicId(topics[0].id);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [audience]);
+
+    // Audience derivata dal ruolo: se l'admin e' in "view as", segue il profilo
+    // di prova (studente -> 'studente'; docente/ricercatore -> 'docente'); per
+    // un utente reale cade su canUseTeacherAssistant. Cosi' l'impersonazione
+    // studente mostra la versione studente dell'assistente, non quella docente.
+    const deriveAudience = (id: Identity | null | undefined): Audience => {
+        const viewAs = getViewAsAccount();
+        if (viewAs) return viewAs.role === 'studente' ? 'studente' : 'docente';
+        return canUseTeacherAssistant(id) ? 'docente' : 'studente';
+    };
 
     useEffect(() => {
         getIdentity().then((id) => {
             setIdentity(id);
-            setAudience(canUseTeacherAssistant(id) ? 'docente' : 'studente');
+            setAudience(deriveAudience(id));
         });
     }, []);
 
@@ -213,7 +236,7 @@ export default function AssistentePage() {
 
     const chooseTopic = (topicId: TopicId) => {
         setSelectedTopicId(topicId);
-        setAudience(canUseTeacherAssistant(identity) ? 'docente' : 'studente');
+        setAudience(deriveAudience(identity));
         setMessages([]);
         setSessionId(undefined);
         setConversationId(undefined);
