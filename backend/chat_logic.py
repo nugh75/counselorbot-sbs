@@ -1329,6 +1329,7 @@ def build_context_envelope(
     include_history: bool = True,
     include_session_memory: bool = True,
     include_profile: bool = True,
+    include_scores_reference: bool = True,
     create_anonymous_code: bool = True,
 ) -> tuple[str, str, list]:
     """Assembla l'envelope canonico della chat counselor (Fase 5):
@@ -1393,7 +1394,7 @@ def build_context_envelope(
     # si recuperano da quelli persistiti e si scope-ano alla sezione corrente.
     persisted_scores = (
         ""
-        if model_scores_context or not include_session_memory or not include_profile
+        if model_scores_context or not include_session_memory or not include_scores_reference
         else session_memory.get_scores(session_id)
     )
     if persisted_scores:
