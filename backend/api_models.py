@@ -29,6 +29,7 @@ class SiteChatRequest(schemas.BaseModel):
     max_tokens: Optional[int] = None
     language: Optional[str] = "it"  # lingua della risposta (it|en|es|fr|de|sv)
     collection: str = "competenzestrategiche"  # base di conoscenza: 'competenzestrategiche' | 'counselorbot'
+    counselor_id: Optional[int] = None  # counselor AI opzionale per la persona nel system prompt
     student_context: Optional[str] = None  # contesto privato passato da /profilo, non usato come fonte RAG
 
 

@@ -95,6 +95,21 @@ _AUDIENCE_DEFAULT_PROMPT_COUNSELORBOT = {
 def _normalize_collection(collection: str | None) -> str:
     return COLLECTION_COUNSELORBOT if collection == COLLECTION_COUNSELORBOT else COLLECTION_COMPETENZE
 
+
+def _resolve_counselor(db, counselor_id):
+    """(persona, name) dal counselor attivo. None se non selezionato/non trovato."""
+    if not counselor_id:
+        return None, None
+    counselor = (
+        db.query(models.Counselor)
+        .filter(models.Counselor.id == counselor_id, models.Counselor.is_active.is_(True))
+        .first()
+    )
+    if not counselor:
+        return None, None
+    return counselor.persona, counselor.name
+
+
 _NO_MATERIAL_MESSAGE_BY_LANG = {
     "it": "Al momento non ho materiali del sito da consultare per rispondere. "
           "Riprova più tardi o contatta un amministratore.",
@@ -259,6 +274,10 @@ async def site_chat_stream(
     system_prompt = _apply_language_directive(
         _resolve_site_prompt(ai_service, request.audience, collection), request.language
     )
+    # Counselor AI: anteponi la persona al system prompt, se selezionato.
+    c_persona, c_name = _resolve_counselor(db, request.counselor_id)
+    if c_persona:
+        system_prompt = f"{c_persona.strip()}\n\n{system_prompt}"
     max_tokens = _clamp_max_tokens(request.max_tokens)
     top_k = _top_k(ai_service)
     question = (request.message or "").strip()
