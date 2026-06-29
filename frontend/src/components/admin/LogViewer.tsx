@@ -314,6 +314,10 @@ export function LogViewer() {
         () => (filters.anonymous_research_code ? filters.anonymous_research_code.split(',').filter(Boolean) : []),
         [filters.anonymous_research_code],
     );
+    const conversationSelected = useMemo(
+        () => (filters.conversation_id ? filters.conversation_id.split(',').filter(Boolean) : []),
+        [filters.conversation_id],
+    );
 
     const buildParams = useCallback((withPaging: boolean) => {
         const params = new URLSearchParams();
@@ -823,11 +827,15 @@ export function LogViewer() {
                 </button>
                 {showAdvanced && (
                     <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                        <input
-                            value={filters.conversation_id}
-                            onChange={(event) => setFilter('conversation_id', event.target.value)}
-                            placeholder={t('admin.logs.conversationId')}
-                            className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-400"
+                        <MultiSelectFilter
+                            label={t('admin.logs.allConversations')}
+                            options={options.conversation_ids}
+                            selected={conversationSelected}
+                            onChange={(values) => setMultiFilter('conversation_id', values)}
+                            searchPlaceholder={t('admin.logs.multiSelectSearch')}
+                            selectedLabel={(n) => t('admin.logs.multiSelectSelected').replace('{n}', String(n))}
+                            clearLabel={t('admin.logs.multiSelectClear')}
+                            emptyLabel={t('admin.logs.multiSelectEmpty')}
                         />
                         <select value={filters.model} onChange={(event) => setFilter('model', event.target.value)} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-400">
                             {modelOptions.map((value) => <option key={value || 'all'} value={value}>{value || t('admin.logs.allModels')}</option>)}
