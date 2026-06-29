@@ -57,49 +57,51 @@ interface ChatMessage {
 
 const BOOKLET_TYPES = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE'];
 
-const PROFILE_FIELDS: { key: keyof LearnerProfileData; label: string }[] = [
-    { key: 'age', label: 'Eta' },
-    { key: 'gender', label: 'Genere' },
-    { key: 'school_class', label: 'Classe / contesto' },
-    { key: 'school_year', label: 'Anno / percorso' },
-    { key: 'context', label: 'Contesto' },
-    { key: 'goal', label: 'Obiettivo' },
-    { key: 'main_difficulty', label: 'Difficolta principale' },
-    { key: 'tried', label: 'Strategie gia provate' },
-    { key: 'notes', label: 'Note' },
+const PROFILE_FIELDS: { key: keyof LearnerProfileData; labelKey: string }[] = [
+    { key: 'age', labelKey: 'profileChanges.field.age' },
+    { key: 'gender', labelKey: 'profileChanges.field.gender' },
+    { key: 'school_class', labelKey: 'profileChanges.field.schoolClass' },
+    { key: 'school_year', labelKey: 'profileChanges.field.schoolYear' },
+    { key: 'context', labelKey: 'profileChanges.field.context' },
+    { key: 'goal', labelKey: 'profileChanges.field.goal' },
+    { key: 'main_difficulty', labelKey: 'profileChanges.field.difficulty' },
+    { key: 'tried', labelKey: 'profileChanges.field.tried' },
+    { key: 'notes', labelKey: 'profileChanges.field.notes' },
 ];
 
 // Campi della scheda libretto da mostrare (in ordine), uno per riga.
-const BOOKLET_FIELDS: { key: string; label: string }[] = [
-    { key: 'title', label: 'Titolo' },
-    { key: 'strength', label: 'Punti di forza da valorizzare' },
-    { key: 'growth_area', label: 'Aree da migliorare' },
-    { key: 'motivation', label: 'Motivazione' },
-    { key: 'objective', label: 'Obiettivo' },
-    { key: 'strategy', label: 'Strategia' },
-    { key: 'period', label: 'Periodo' },
-    { key: 'commitment', label: 'Impegno rispettato' },
-    { key: 'difficulties', label: 'Difficolta incontrate' },
-    { key: 'improvements', label: 'Miglioramenti osservati' },
-    { key: 'discovery', label: 'Cosa ho capito o scoperto' },
-    { key: 'student_notes', label: 'Note' },
-    { key: 'final_satisfaction', label: 'Valutazione finale' },
-    { key: 'final_observations', label: 'Osservazioni finali' },
+const BOOKLET_FIELDS: { key: string; labelKey: string }[] = [
+    { key: 'title', labelKey: 'profileChanges.bookletField.title' },
+    { key: 'strength', labelKey: 'profileChanges.bookletField.strength' },
+    { key: 'growth_area', labelKey: 'profileChanges.bookletField.growthArea' },
+    { key: 'motivation', labelKey: 'profileChanges.bookletField.motivation' },
+    { key: 'objective', labelKey: 'profileChanges.bookletField.objective' },
+    { key: 'strategy', labelKey: 'profileChanges.bookletField.strategy' },
+    { key: 'period', labelKey: 'profileChanges.bookletField.period' },
+    { key: 'commitment', labelKey: 'profileChanges.bookletField.commitment' },
+    { key: 'difficulties', labelKey: 'profileChanges.bookletField.difficulties' },
+    { key: 'improvements', labelKey: 'profileChanges.bookletField.improvements' },
+    { key: 'discovery', labelKey: 'profileChanges.bookletField.discovery' },
+    { key: 'student_notes', labelKey: 'profileChanges.bookletField.notes' },
+    { key: 'final_satisfaction', labelKey: 'profileChanges.bookletField.finalSatisfaction' },
+    { key: 'final_observations', labelKey: 'profileChanges.bookletField.finalObservations' },
 ];
+
+type FieldLabel = { key: keyof LearnerProfileData; label: string };
 
 function valueOf(revision: Revision | undefined, key: keyof LearnerProfileData): string {
     return (revision?.data?.[key] || '').trim();
 }
 
-function formatRevision(revision: Revision | undefined): string {
-    if (!revision) return 'Nessuna revisione disponibile.';
-    const lines = PROFILE_FIELDS
+function formatRevision(revision: Revision | undefined, fields: FieldLabel[], lang: string, t: (key: string, vars?: Record<string, string | number>) => string): string {
+    if (!revision) return t('profileChanges.context.noRevision');
+    const lines = fields
         .map((field) => {
             const value = valueOf(revision, field.key);
             return value ? `- ${field.label}: ${value}` : '';
         })
         .filter(Boolean);
-    return [`Revisione ${revision.id} (${new Date(revision.created_at).toLocaleString('it-IT')})`, ...lines].join('\n');
+    return [t('profileChanges.context.revision', { id: revision.id, date: new Date(revision.created_at).toLocaleString(lang) }), ...lines].join('\n');
 }
 
 function bookletFieldValue(data: Record<string, unknown>, key: string): string {
@@ -113,10 +115,10 @@ function bookletFieldValue(data: Record<string, unknown>, key: string): string {
     return String(raw).trim();
 }
 
-function bookletTitle(scheda: BookletScheda): string {
+function bookletTitle(scheda: BookletScheda, fallback: string): string {
     const raw = scheda.data?.title;
     const title = typeof raw === 'string' ? raw.trim() : '';
-    return title || `Scheda ${scheda.id}`;
+    return title || fallback;
 }
 
 function bookletReflections(scheda: BookletScheda | undefined): BookletReflection[] {
@@ -183,53 +185,63 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
     const current = history[revIndex];
     const previous = history[revIndex + 1];
     const selectedScheda = useMemo(() => booklets.find((s) => s.id === bookletId), [booklets, bookletId]);
+    const profileFields = useMemo(
+        () => PROFILE_FIELDS.map((field) => ({ key: field.key, label: t(field.labelKey) })),
+        [t],
+    );
+    const bookletFields = useMemo(
+        () => BOOKLET_FIELDS.map((field) => ({ key: field.key, label: t(field.labelKey) })),
+        [t],
+    );
 
     const changes = useMemo(() => {
         if (!current || !previous) return [];
-        return PROFILE_FIELDS.map((field) => {
+        return profileFields.map((field) => {
             const before = valueOf(previous, field.key);
             const after = valueOf(current, field.key);
             return before !== after ? { ...field, before, after } : null;
         }).filter(Boolean) as { key: keyof LearnerProfileData; label: string; before: string; after: string }[];
-    }, [current, previous]);
+    }, [current, previous, profileFields]);
 
     const bookletRows = useMemo(() => {
         if (!selectedScheda) return [];
-        return BOOKLET_FIELDS
+        return bookletFields
             .map((field) => ({ label: field.label, value: bookletFieldValue(selectedScheda.data, field.key) }))
             .filter((row) => row.value);
-    }, [selectedScheda]);
+    }, [selectedScheda, bookletFields]);
 
     const currentBookletReflections = useMemo(() => bookletReflections(selectedScheda), [selectedScheda]);
 
     const studentContext = useMemo(() => {
         if (mode === 'libretto') {
-            if (!selectedScheda) return 'Nessuna scheda del libretto selezionata.';
+            if (!selectedScheda) return t('profileChanges.context.noBookletSelected');
             const rows = bookletRows.map((row) => `- ${row.label}: ${row.value}`);
             const reflLines = currentBookletReflections.slice(0, 5).map((r) => `- ${r.created_at ? new Date(r.created_at).toLocaleDateString(lang) + ': ' : ''}${r.note}`);
             return [
-                `SCHEDA DEL LIBRETTO (${selectedScheda.questionnaire_type})`,
-                rows.length ? rows.join('\n') : 'Scheda ancora vuota.',
+                t('profileChanges.context.bookletHeader', { type: selectedScheda.questionnaire_type }),
+                rows.length ? rows.join('\n') : t('profileChanges.context.emptyBooklet'),
                 '',
-                'RIFLESSIONI SALVATE SULLA SCHEDA',
-                reflLines.length ? reflLines.join('\n') : 'Nessuna riflessione salvata.',
+                t('profileChanges.context.bookletReflectionsHeader'),
+                reflLines.length ? reflLines.join('\n') : t('profileChanges.context.noSavedReflections'),
             ].join('\n');
         }
         const reflectionLines = reflections.slice(0, 5).map((r) => `- ${new Date(r.created_at).toLocaleDateString(lang)}: ${r.note}`);
         return [
-            'PROFILO CORRENTE',
-            formatRevision(current),
+            t('profileChanges.context.currentProfile'),
+            formatRevision(current, profileFields, lang, t),
             '',
-            'PROFILO PRECEDENTE',
-            formatRevision(previous),
+            t('profileChanges.context.previousProfile'),
+            formatRevision(previous, profileFields, lang, t),
             '',
-            'CAMBIAMENTI RILEVATI',
-            changes.length ? changes.map((c) => `- ${c.label}: prima "${c.before || '-'}", ora "${c.after || '-'}"`).join('\n') : 'Nessun cambiamento testuale rilevato.',
+            t('profileChanges.context.detectedChanges'),
+            changes.length
+                ? changes.map((c) => `- ${c.label}: ${t('profileChanges.before').toLowerCase()} "${c.before || '-'}", ${t('profileChanges.now').toLowerCase()} "${c.after || '-'}"`).join('\n')
+                : t('profileChanges.noTextChanges'),
             '',
-            'RIFLESSIONI SALVATE',
-            reflectionLines.length ? reflectionLines.join('\n') : 'Nessuna riflessione salvata.',
+            t('profileChanges.context.savedReflections'),
+            reflectionLines.length ? reflectionLines.join('\n') : t('profileChanges.context.noSavedReflections'),
         ].join('\n');
-    }, [mode, selectedScheda, bookletRows, currentBookletReflections, changes, current, previous, reflections, lang]);
+    }, [mode, selectedScheda, bookletRows, currentBookletReflections, changes, current, previous, reflections, lang, profileFields, t]);
 
     const saveProfileReflection = async () => {
         const res = await apiFetch('/api/user/learner-profile/reflections', {
@@ -246,7 +258,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
     };
 
     const saveBookletReflection = async () => {
-        if (!selectedScheda) throw new Error('Nessuna scheda selezionata');
+        if (!selectedScheda) throw new Error(t('profileChanges.context.noBookletSelected'));
         const nextReflections = [
             ...currentBookletReflections,
             { note: note.trim(), created_at: new Date().toISOString() },
@@ -270,7 +282,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
             }
             setNote('');
             await load();
-            toast.success('Riflessione salvata.');
+            toast.success(t('profileChanges.saved'));
         } catch (e) {
             console.error('Failed to save reflection', e);
             toast.error(t('toast.error'));
@@ -315,10 +327,10 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
             if (result.session_id) setChatSessionId(result.session_id);
             if (result.conversation_id) setChatConversationId(result.conversation_id);
         } catch (e) {
-            const message = e instanceof Error ? e.message : 'Errore nella risposta.';
+            const message = e instanceof Error ? e.message : t('toast.error');
             setMessages((items) => {
                 const next = [...items];
-                next[next.length - 1] = { role: 'assistant', content: `Errore: ${message}` };
+                next[next.length - 1] = { role: 'assistant', content: `${t('profileChanges.errorPrefix')}: ${message}` };
                 return next;
             });
         } finally {
@@ -330,8 +342,8 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
         setAssistantOpen(true);
         if (messages.length === 0) {
             const question = mode === 'libretto'
-                ? 'Aiutami a riflettere su questa scheda del libretto: cosa funziona, cosa posso migliorare e quale prossimo passo realistico posso scegliere?'
-                : 'Aiutami a ragionare sui cambiamenti del mio profilo: cosa e cambiato, cosa resta stabile e quale prossimo passo realistico posso scegliere?';
+                ? t('profileChanges.assistantBookletQuestion')
+                : t('profileChanges.assistantProfileQuestion');
             void sendToAssistant(question);
         }
     };
@@ -341,13 +353,13 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
     const reflectionBlock = (
         <div className="space-y-3 border-t border-slate-100 pt-3">
             <label className="block">
-                <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">La tua riflessione</span>
+                <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profileChanges.reflectionLabel')}</span>
                 <textarea
                     value={note}
                     onChange={(event) => setNote(event.target.value)}
                     rows={4}
                     className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                    placeholder="Che cosa noti? Quale piccolo passo vuoi provare?"
+                    placeholder={t('profileChanges.reflectionPlaceholder')}
                 />
             </label>
             <div className="flex flex-wrap gap-2">
@@ -358,7 +370,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                     className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                 >
                     <Save className="h-4 w-4" />
-                    Salva riflessione
+                    {t('profileChanges.saveReflection')}
                 </button>
                 <button
                     type="button"
@@ -366,7 +378,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                     className="inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"
                 >
                     <Bot className="h-4 w-4" />
-                    Ragiona con l&apos;assistente
+                    {t('profileChanges.assistantButton')}
                 </button>
             </div>
             {mode === 'profilo' && reflections.length > 0 && (
@@ -389,9 +401,9 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h2 className="text-lg font-bold text-slate-800">
-                        Cambiamenti del profilo
+                        {t('profileChanges.title')}
                     </h2>
-                    <p className="mt-1 text-sm text-slate-500">Rivedi come e cambiato il tuo profilo o una scheda del libretto e salva una riflessione personale.</p>
+                    <p className="mt-1 text-sm text-slate-500">{t('profileChanges.subtitle')}</p>
                 </div>
                 <button
                     type="button"
@@ -399,7 +411,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                     className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
                 >
                     <RefreshCw className="h-3.5 w-3.5" />
-                    Aggiorna
+                    {t('profileChanges.refresh')}
                 </button>
             </div>
 
@@ -410,28 +422,28 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                     onClick={() => { setMode('profilo'); setAssistantOpen(false); setMessages([]); setChatConversationId(undefined); }}
                     className={`rounded px-3 py-1.5 ${mode === 'profilo' ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
                 >
-                    Profilo
+                    {t('profileChanges.mode.profile')}
                 </button>
                 <button
                     type="button"
                     onClick={() => { setMode('libretto'); setAssistantOpen(false); setMessages([]); setChatConversationId(undefined); }}
                     className={`rounded px-3 py-1.5 ${mode === 'libretto' ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
                 >
-                    Libretto
+                    {t('profileChanges.mode.booklet')}
                 </button>
             </div>
 
             {loading ? (
-                <div className="text-sm text-slate-400">Caricamento...</div>
+                <div className="text-sm text-slate-400">{t('profileChanges.loading')}</div>
             ) : mode === 'profilo' ? (
                 !current ? (
                     <div className="rounded-lg border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">
-                        Compila il tuo profilo personale per iniziare a osservare i cambiamenti.
+                        {t('profileChanges.profileEmpty')}
                     </div>
                 ) : (
                     <div className="space-y-4">
                         <label className="block">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Quale cambiamento analizzare</span>
+                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profileChanges.selectChange')}</span>
                             <select
                                 value={revIndex}
                                 onChange={(event) => setRevIndex(Number(event.target.value))}
@@ -440,8 +452,8 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                                 {history.map((rev, index) => {
                                     const prev = history[index + 1];
                                     const label = prev
-                                        ? `${new Date(rev.created_at).toLocaleString(lang)} (rispetto a ${new Date(prev.created_at).toLocaleDateString(lang)})`
-                                        : `${new Date(rev.created_at).toLocaleString(lang)} (prima revisione)`;
+                                        ? t('profileChanges.optionCompared', { date: new Date(rev.created_at).toLocaleString(lang), previousDate: new Date(prev.created_at).toLocaleDateString(lang) })
+                                        : t('profileChanges.optionFirstRevision', { date: new Date(rev.created_at).toLocaleString(lang) });
                                     return <option key={rev.id} value={index}>{label}</option>;
                                 })}
                             </select>
@@ -449,7 +461,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
 
                         {!previous ? (
                             <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">
-                                Questa e la prima revisione: salva almeno due revisioni del profilo per vedere il confronto dei cambiamenti.
+                                {t('profileChanges.firstRevision')}
                             </div>
                         ) : changes.length ? (
                             <div className="space-y-2">
@@ -457,15 +469,15 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                                     <div key={change.key} className="rounded-lg border border-slate-200 bg-white p-3 text-sm">
                                         <div className="font-semibold text-slate-800">{change.label}</div>
                                         <div className="mt-1 space-y-1 text-xs text-slate-500">
-                                            <div><span className="font-semibold text-slate-400">Prima:</span> {change.before || '-'}</div>
-                                            <div><span className="font-semibold text-indigo-500">Ora:</span> {change.after || '-'}</div>
+                                            <div><span className="font-semibold text-slate-400">{t('profileChanges.before')}:</span> {change.before || '-'}</div>
+                                            <div><span className="font-semibold text-indigo-500">{t('profileChanges.now')}:</span> {change.after || '-'}</div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         ) : (
                             <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">
-                                Nessun cambiamento testuale rispetto alla revisione precedente.
+                                {t('profileChanges.noTextChanges')}
                             </div>
                         )}
 
@@ -475,12 +487,12 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
             ) : (
                 booklets.length === 0 ? (
                     <div className="rounded-lg border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">
-                        Non hai ancora schede del libretto. Creane una dal taccuino per poterci riflettere.
+                        {t('profileChanges.bookletEmptyList')}
                     </div>
                 ) : (
                     <div className="space-y-4">
                         <label className="block">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Quale scheda del libretto</span>
+                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profileChanges.selectBooklet')}</span>
                             <select
                                 value={bookletId ?? ''}
                                 onChange={(event) => setBookletId(Number(event.target.value))}
@@ -488,7 +500,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                             >
                                 {booklets.map((scheda) => (
                                     <option key={scheda.id} value={scheda.id}>
-                                        {scheda.questionnaire_type} · {bookletTitle(scheda)}
+                                        {scheda.questionnaire_type} · {bookletTitle(scheda, t('profileChanges.bookletFallbackTitle', { id: scheda.id }))}
                                     </option>
                                 ))}
                             </select>
@@ -505,13 +517,13 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                             </div>
                         ) : (
                             <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">
-                                Questa scheda e ancora vuota: compilala dal taccuino per poterci riflettere.
+                                {t('profileChanges.bookletEmpty')}
                             </div>
                         )}
 
                         {currentBookletReflections.length > 0 && (
                             <div className="space-y-2 border-t border-slate-100 pt-3">
-                                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Riflessioni su questa scheda</div>
+                                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profileChanges.bookletReflectionsTitle')}</div>
                                 {currentBookletReflections.slice().reverse().slice(0, 3).map((reflection, index) => (
                                     <div key={index} className="rounded-md bg-slate-50 p-3 text-sm text-slate-600">
                                         {reflection.created_at && (
@@ -533,7 +545,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
             {assistantOpen && (
                 <div className="rounded-xl border border-indigo-100 bg-white p-4 space-y-3">
                     <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
-                        Assistente sul cambiamento
+                        {t('profileChanges.assistantTitle')}
                     </div>
                     <div className="max-h-80 overflow-y-auto space-y-3 rounded-lg bg-slate-50 p-3">
                         {messages.map((message, index) => (
@@ -556,7 +568,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                             onChange={(event) => setChatInput(event.target.value)}
                             rows={2}
                             className="flex-1 resize-none rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                            placeholder="Scrivi una domanda..."
+                            placeholder={t('profileChanges.chatPlaceholder')}
                         />
                         <button
                             type="button"

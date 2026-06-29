@@ -406,7 +406,7 @@ export default function ProfilePage() {
                         </button>
                         {/* Tooltip */}
                         <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 scale-90 rounded bg-slate-900 px-2.5 py-1 text-xs text-white opacity-0 transition-all group-hover:opacity-100 group-hover:scale-100 whitespace-nowrap shadow-md">
-                            Strumenti utilizzati
+                            {t('profile.usedTools')}
                             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
                         </div>
                     </div>
@@ -430,8 +430,8 @@ export default function ProfilePage() {
                 >
                     <div className="flex items-center gap-3">
                         <div>
-                            <h3 className="font-bold text-slate-800">Cambiamenti del profilo</h3>
-                            <p className="text-sm text-slate-500">Rivedi come e cambiato il tuo profilo e salva una riflessione personale.</p>
+                            <h3 className="font-bold text-slate-800">{t('profileChanges.title')}</h3>
+                            <p className="text-sm text-slate-500">{t('profileChanges.cardBody')}</p>
                         </div>
                     </div>
                     <ArrowRight className="w-5 h-5 shrink-0 text-slate-400" />
