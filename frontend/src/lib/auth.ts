@@ -52,6 +52,20 @@ export function clearViewAs(): void {
     if (typeof window !== 'undefined') window.localStorage.removeItem(VIEW_AS_KEY);
 }
 
+export function withViewAsHeaders(headers?: HeadersInit): Headers {
+    const next = new Headers(headers);
+    const account = getViewAsAccount();
+    if (account) next.set('X-View-As', account.username);
+    return next;
+}
+
+export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+    return fetch(input, {
+        ...init,
+        headers: withViewAsHeaders(init.headers),
+    });
+}
+
 function applyViewAs(real: Identity, account: ViewAsAccount): Identity {
     return {
         ...real,

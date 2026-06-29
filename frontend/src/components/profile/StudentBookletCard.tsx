@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Download, Loader2, Plus, Save, Trash2, X } from 'lucide-react';
 import { QUESTIONNAIRES, type QuestionnaireType } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
+import { apiFetch } from '@/lib/auth';
 import { toast } from '@/components/ui/Toast';
 
 // Libretti narrativi senza dimensioni (fattori): eventi significativi.
@@ -131,7 +132,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
     const loadBooklet = useCallback(async (id: number) => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/user/student-booklets/id/${id}`);
+            const res = await apiFetch(`/api/user/student-booklets/id/${id}`);
             if (!res.ok) throw new Error('Load failed');
             const data = await res.json();
             setCurrentId(id);
@@ -154,7 +155,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
             .then((res) => (res.ok ? res.json() : []))
             .then((data) => { if (active) setStrategies(Array.isArray(data) ? data : []); })
             .catch(() => { if (active) setStrategies([]); });
-        fetch(`/api/user/student-booklets/instrument/${encodeURIComponent(questionnaireType)}/list`)
+        apiFetch(`/api/user/student-booklets/instrument/${encodeURIComponent(questionnaireType)}/list`)
             .then(async (res) => {
                 if (!active) return;
                 const list: BookletSummary[] = res.ok ? await res.json() : [];
@@ -171,7 +172,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
 
     const refreshList = useCallback(async () => {
         try {
-            const res = await fetch(`/api/user/student-booklets/instrument/${encodeURIComponent(questionnaireType)}/list`);
+            const res = await apiFetch(`/api/user/student-booklets/instrument/${encodeURIComponent(questionnaireType)}/list`);
             if (res.ok) setBooklets(await res.json());
         } catch {
             /* ignore */
@@ -218,7 +219,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
             const url = isUpdate
                 ? `/api/user/student-booklets/id/${currentId}`
                 : `/api/user/student-booklets/instrument/${encodeURIComponent(questionnaireType)}`;
-            const res = await fetch(url, {
+            const res = await apiFetch(url, {
                 method: isUpdate ? 'PUT' : 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ data: form }),
@@ -243,7 +244,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
         setSaving(true);
         try {
             const title = `Scheda ${booklets.length + 1}`;
-            const res = await fetch(`/api/user/student-booklets/instrument/${encodeURIComponent(questionnaireType)}`, {
+            const res = await apiFetch(`/api/user/student-booklets/instrument/${encodeURIComponent(questionnaireType)}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ data: { ...EMPTY_BOOKLET, title } }),
@@ -265,7 +266,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
         if (currentId == null) return;
         if (!window.confirm('Eliminare questa scheda?')) return;
         try {
-            const res = await fetch(`/api/user/student-booklets/id/${currentId}`, { method: 'DELETE' });
+            const res = await apiFetch(`/api/user/student-booklets/id/${currentId}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Delete failed');
             const remaining = booklets.filter((b) => b.id !== currentId);
             setBooklets(remaining);
@@ -287,7 +288,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
         try {
             const id = await persist(false);
             if (id == null) return;
-            const res = await fetch(`/api/user/student-booklets/id/${id}/pdf?lang=${lang}`);
+            const res = await apiFetch(`/api/user/student-booklets/id/${id}/pdf?lang=${lang}`);
             if (!res.ok) throw new Error('PDF download failed');
             const blob = await res.blob();
             const url = window.URL.createObjectURL(blob);

@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Bot, Loader2, RefreshCw, Save, Send } from 'lucide-react';
 import { streamChat } from '@/lib/chat-stream';
+import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { toast } from '@/components/ui/Toast';
 
@@ -154,9 +155,9 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
         setLoading(true);
         try {
             const [historyRes, reflectionsRes, ...bookletRes] = await Promise.all([
-                fetch('/api/user/learner-profile/history'),
-                fetch('/api/user/learner-profile/reflections'),
-                ...BOOKLET_TYPES.map((type) => fetch(`/api/user/student-booklets/instrument/${encodeURIComponent(type)}/list`)),
+                apiFetch('/api/user/learner-profile/history'),
+                apiFetch('/api/user/learner-profile/reflections'),
+                ...BOOKLET_TYPES.map((type) => apiFetch(`/api/user/student-booklets/instrument/${encodeURIComponent(type)}/list`)),
             ]);
             setHistory(historyRes.ok ? await historyRes.json() : []);
             setReflections(reflectionsRes.ok ? await reflectionsRes.json() : []);
@@ -231,7 +232,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
     }, [mode, selectedScheda, bookletRows, currentBookletReflections, changes, current, previous, reflections, lang]);
 
     const saveProfileReflection = async () => {
-        const res = await fetch('/api/user/learner-profile/reflections', {
+        const res = await apiFetch('/api/user/learner-profile/reflections', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -250,7 +251,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
             ...currentBookletReflections,
             { note: note.trim(), created_at: new Date().toISOString() },
         ];
-        const res = await fetch(`/api/user/student-booklets/id/${selectedScheda.id}`, {
+        const res = await apiFetch(`/api/user/student-booklets/id/${selectedScheda.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ data: { ...selectedScheda.data, reflections: nextReflections } }),
