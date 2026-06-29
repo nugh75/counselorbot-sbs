@@ -381,6 +381,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const [currentPhase, setCurrentPhase] = useState<string>('');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
+    const [conversationId, setConversationId] = useState<string | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
     const [lastAnalysisFailed, setLastAnalysisFailed] = useState(false);
@@ -434,6 +435,10 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
+
+    useEffect(() => {
+        setConversationId(undefined);
+    }, [questionnaireType, sessionId]);
 
     useEffect(() => {
         scrollToBottom();
@@ -690,6 +695,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         use_phase_prompt: false,
                         scores_context: scoresContext,
                         session_id: sessionId,
+                        conversation_id: conversationId,
                         questionnaire_type: questionnaireType,
                         language: activeLocale,
                         max_tokens: 700,
@@ -703,6 +709,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     use_phase_prompt: true,
                     scores_context: scoresContext,
                     session_id: sessionId,
+                    conversation_id: conversationId,
                     questionnaire_type: questionnaireType,
                     language: activeLocale,
                     max_tokens: 700,
@@ -732,6 +739,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             try {
                 const result = await streamChat(buildPayload(false), (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
                 responseText = result.response || '';
+                if (result.conversation_id) setConversationId(result.conversation_id);
                 setLastFeedbackTargets(result.strategy_ids, result.response_id);
                 streamOk = true;
             } catch {
@@ -858,6 +866,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 mode: resolveInteractiveMode(),
                 phase: isAnalysisStep(currentPhase) ? currentPhase : undefined,
                 session_id: sessionId,
+                conversation_id: conversationId,
                 questionnaire_type: questionnaireType,
                 language: activeLocale,
                 max_tokens: 900,
@@ -873,6 +882,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 (r) => updateReasoning(r),
             );
             const { response } = result;
+            if (result.conversation_id) setConversationId(result.conversation_id);
             setLastFeedbackTargets(result.strategy_ids, result.response_id);
 
             // Sul testo completo applica il segnale di avanzamento

@@ -147,6 +147,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [chatInput, setChatInput] = useState('');
     const [chatSessionId, setChatSessionId] = useState<string | undefined>(undefined);
+    const [chatConversationId, setChatConversationId] = useState<string | undefined>(undefined);
     const [chatLoading, setChatLoading] = useState(false);
 
     const load = useCallback(async () => {
@@ -291,6 +292,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                     collection: 'counselorbot',
                     language: lang,
                     session_id: chatSessionId,
+                    conversation_id: chatConversationId,
                     student_context: studentContext,
                 },
                 (full) => {
@@ -310,6 +312,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                 return next;
             });
             if (result.session_id) setChatSessionId(result.session_id);
+            if (result.conversation_id) setChatConversationId(result.conversation_id);
         } catch (e) {
             const message = e instanceof Error ? e.message : 'Errore nella risposta.';
             setMessages((items) => {
@@ -403,14 +406,14 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
             <div className="inline-flex rounded-md border border-slate-200 bg-white p-1 text-sm font-semibold">
                 <button
                     type="button"
-                    onClick={() => { setMode('profilo'); setAssistantOpen(false); setMessages([]); }}
+                    onClick={() => { setMode('profilo'); setAssistantOpen(false); setMessages([]); setChatConversationId(undefined); }}
                     className={`rounded px-3 py-1.5 ${mode === 'profilo' ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
                 >
                     Profilo
                 </button>
                 <button
                     type="button"
-                    onClick={() => { setMode('libretto'); setAssistantOpen(false); setMessages([]); }}
+                    onClick={() => { setMode('libretto'); setAssistantOpen(false); setMessages([]); setChatConversationId(undefined); }}
                     className={`rounded px-3 py-1.5 ${mode === 'libretto' ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
                 >
                     Libretto

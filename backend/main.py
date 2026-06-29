@@ -331,6 +331,7 @@ def _seed_and_migrate():
         # Raw SQL migration: add denormalized/indexed columns + identity to logs (idempotent).
         # Permette filtri rapidi e join feedback senza scansionare il JSON details.
         for clause in [
+            "ADD COLUMN conversation_id VARCHAR",
             "ADD COLUMN username VARCHAR",
             "ADD COLUMN email VARCHAR",
             "ADD COLUMN anonymous_research_code VARCHAR",
@@ -351,6 +352,7 @@ def _seed_and_migrate():
 
         # Indici secondari sulle nuove colonne filtrabili (idempotenti).
         for idx_clause in [
+            "CREATE INDEX IF NOT EXISTS ix_logs_conversation_id ON logs (conversation_id)",
             "CREATE INDEX IF NOT EXISTS ix_logs_username ON logs (username)",
             "CREATE INDEX IF NOT EXISTS ix_logs_anonymous_research_code ON logs (anonymous_research_code)",
             "CREATE INDEX IF NOT EXISTS ix_logs_provider ON logs (provider)",

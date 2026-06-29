@@ -41,6 +41,7 @@ class ConfigResponse(ConfigBase):
 # Log
 class LogBase(BaseModel):
     session_id: str
+    conversation_id: Optional[str] = None
     action: str
     details: Dict[str, Any]
 

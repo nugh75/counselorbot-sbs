@@ -76,6 +76,7 @@ def _apply_log_filters(
     q,
     *,
     session_id: Optional[str] = None,
+    conversation_id: Optional[str] = None,
     action: Optional[str] = None,
     provider: Optional[str] = None,
     questionnaire_type: Optional[str] = None,
@@ -96,6 +97,13 @@ def _apply_log_filters(
     """Applica i filtri comuni a una query su models.Log. Muta e ritorna `q`."""
     if session_id:
         q = q.filter(models.Log.session_id == session_id)
+    if conversation_id:
+        details_text = cast(models.Log.details, Text)
+        q = q.filter(or_(
+            models.Log.conversation_id == conversation_id,
+            models.Log.session_id == conversation_id,
+            details_text.ilike(f'%\"conversation_id\"%{conversation_id}%'),
+        ))
     if action:
         q = q.filter(models.Log.action == action)
     if provider:
@@ -225,6 +233,8 @@ def _normalize_log_metadata(log: models.Log) -> models.Log:
         setattr(log, "phase", _text_value(details.get("phase")) or _text_value(details.get("audience")))
     if not _text_value(getattr(log, "mode", None)):
         setattr(log, "mode", _text_value(details.get("mode")))
+    if not _text_value(getattr(log, "conversation_id", None)):
+        setattr(log, "conversation_id", _text_value(details.get("conversation_id")) or _text_value(log.session_id))
     return log
 
 
@@ -324,6 +334,10 @@ async def log_filter_options(
         _text_value(log.anonymous_research_code) for log in logs
         if _text_value(log.anonymous_research_code)
     })
+    conversation_ids = sorted({
+        _text_value(log.conversation_id) for log in logs
+        if _text_value(log.conversation_id)
+    })
     models_list = sorted({_text_value(log.model_name) for log in logs if _text_value(log.model_name)})
     phases = sorted({_text_value(log.phase) for log in logs if _text_value(log.phase)})
     modes = sorted({_text_value(log.mode) for log in logs if _text_value(log.mode)})
@@ -333,6 +347,7 @@ async def log_filter_options(
         "questionnaire_types": questionnaire_types,
         "usernames": usernames,
         "anonymous_research_codes": anonymous_research_codes,
+        "conversation_ids": conversation_ids,
         "models": models_list,
         "phases": phases,
         "modes": modes,
@@ -344,6 +359,7 @@ async def read_logs(
     skip: int = 0,
     limit: int = 100,
     session_id: Optional[str] = None,
+    conversation_id: Optional[str] = None,
     action: Optional[str] = None,
     provider: Optional[str] = None,
     questionnaire_type: Optional[str] = None,
@@ -369,7 +385,7 @@ async def read_logs(
     query = db.query(models.Log)
     query = _apply_log_filters(
         query,
-        session_id=session_id, action=action, provider=provider,
+        session_id=session_id, conversation_id=conversation_id, action=action, provider=provider,
         questionnaire_type=questionnaire_type, username=username,
         anonymous_research_code=anonymous_research_code,
         from_date=from_date, to_date=to_date, search=q,
@@ -383,6 +399,7 @@ async def read_logs(
 @router.get("/admin/logs/count")
 async def count_logs(
     session_id: Optional[str] = None,
+    conversation_id: Optional[str] = None,
     action: Optional[str] = None,
     provider: Optional[str] = None,
     questionnaire_type: Optional[str] = None,
@@ -406,7 +423,7 @@ async def count_logs(
     query = db.query(func.count(models.Log.id))
     query = _apply_log_filters(
         query,
-        session_id=session_id, action=action, provider=provider,
+        session_id=session_id, conversation_id=conversation_id, action=action, provider=provider,
         questionnaire_type=questionnaire_type, username=username,
         anonymous_research_code=anonymous_research_code,
         from_date=from_date, to_date=to_date, search=q,
@@ -433,9 +450,34 @@ async def read_session_logs(
     return _prepare_log_response(db, logs)
 
 
+@router.get("/admin/logs/conversation/{conversation_id}", response_model=List[schemas.LogResponse])
+async def read_conversation_logs(
+    conversation_id: str,
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Ricostruisce tutti i turni con lo stesso conversation_id.
+
+    Per compatibilita' con i record storici, se conversation_id non e' valorizzato
+    usa anche session_id come chiave equivalente.
+    """
+    logs = (
+        db.query(models.Log)
+        .filter(or_(
+            models.Log.conversation_id == conversation_id,
+            models.Log.session_id == conversation_id,
+            cast(models.Log.details, Text).ilike(f'%\"conversation_id\"%{conversation_id}%'),
+        ))
+        .order_by(models.Log.timestamp.asc())
+        .all()
+    )
+    return _prepare_log_response(db, logs)
+
+
 @router.get("/admin/logs/stats")
 async def logs_stats(
     session_id: Optional[str] = None,
+    conversation_id: Optional[str] = None,
     action: Optional[str] = None,
     provider: Optional[str] = None,
     questionnaire_type: Optional[str] = None,
@@ -461,7 +503,7 @@ async def logs_stats(
     base = db.query(models.Log)
     base = _apply_log_filters(
         base,
-        session_id=session_id, action=action, provider=provider,
+        session_id=session_id, conversation_id=conversation_id, action=action, provider=provider,
         questionnaire_type=questionnaire_type, username=username,
         anonymous_research_code=anonymous_research_code,
         from_date=from_date, to_date=to_date, search=q,
@@ -472,6 +514,9 @@ async def logs_stats(
     total = base.count()
     distinct_sessions = (
         base.with_entities(models.Log.session_id).distinct().count()
+    )
+    distinct_conversations = (
+        base.with_entities(func.coalesce(models.Log.conversation_id, models.Log.session_id)).distinct().count()
     )
 
     def _group(field):
@@ -529,6 +574,7 @@ async def logs_stats(
     return {
         "total": int(total),
         "distinct_sessions": int(distinct_sessions),
+        "distinct_conversations": int(distinct_conversations),
         "by_action": by_action,
         "by_provider": by_provider,
         "by_questionnaire_type": by_questionnaire,
@@ -656,6 +702,7 @@ def _budget_status(db: Session, now: datetime) -> dict:
 @router.get("/admin/cost-stats")
 async def cost_stats(
     session_id: Optional[str] = None,
+    conversation_id: Optional[str] = None,
     action: Optional[str] = None,
     provider: Optional[str] = None,
     questionnaire_type: Optional[str] = None,
@@ -683,7 +730,7 @@ async def cost_stats(
     base = db.query(models.Log)
     base = _apply_log_filters(
         base,
-        session_id=session_id, action=action, provider=provider,
+        session_id=session_id, conversation_id=conversation_id, action=action, provider=provider,
         questionnaire_type=questionnaire_type, username=username,
         anonymous_research_code=anonymous_research_code,
         from_date=from_date, to_date=to_date, search=q,
@@ -781,7 +828,7 @@ async def cost_stats(
     # Aggregati di periodo su TUTTA la storia (filtri data azzerati): totali
     # reali settimana/mese/anno + proiezione run-rate del periodo corrente.
     period_filt = dict(
-        session_id=session_id, action=action, provider=provider,
+        session_id=session_id, conversation_id=conversation_id, action=action, provider=provider,
         questionnaire_type=questionnaire_type, username=username,
         anonymous_research_code=anonymous_research_code,
         from_date=None, to_date=None, search=q,
@@ -944,6 +991,7 @@ async def logs_pii_report(
 async def export_logs(
     format: str = "csv",
     session_id: Optional[str] = None,
+    conversation_id: Optional[str] = None,
     action: Optional[str] = None,
     provider: Optional[str] = None,
     questionnaire_type: Optional[str] = None,
@@ -968,7 +1016,7 @@ async def export_logs(
     query = db.query(models.Log)
     query = _apply_log_filters(
         query,
-        session_id=session_id, action=action, provider=provider,
+        session_id=session_id, conversation_id=conversation_id, action=action, provider=provider,
         questionnaire_type=questionnaire_type, username=username,
         anonymous_research_code=anonymous_research_code,
         from_date=from_date, to_date=to_date, search=q,
@@ -985,6 +1033,7 @@ async def export_logs(
                 "id": log.id,
                 "timestamp": log.timestamp.isoformat() if log.timestamp else None,
                 "session_id": log.session_id,
+                "conversation_id": log.conversation_id,
                 "username": log.username,
                 "email": log.email,
                 "anonymous_research_code": log.anonymous_research_code,
@@ -1012,7 +1061,7 @@ async def export_logs(
     output = io.StringIO()
     writer = _csv.writer(output)
     writer.writerow([
-        "id", "timestamp", "session_id", "username", "anonymous_research_code", "action",
+        "id", "timestamp", "session_id", "conversation_id", "username", "anonymous_research_code", "action",
         "provider", "model_name", "questionnaire_type", "phase", "mode",
         "response_id", "cost_usd", "helpful", "details",
     ])
@@ -1021,6 +1070,7 @@ async def export_logs(
             log.id,
             log.timestamp.isoformat() if log.timestamp else "",
             log.session_id,
+            log.conversation_id or "",
             log.username or "",
             log.anonymous_research_code or "",
             log.action,

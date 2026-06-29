@@ -32,6 +32,7 @@ type LogDetails = Record<string, unknown>;
 interface LogEntry {
     id: number;
     session_id: string;
+    conversation_id?: string | null;
     action: string;
     timestamp: string;
     user_id?: number | null;
@@ -52,6 +53,7 @@ interface LogEntry {
 interface LogStats {
     total: number;
     distinct_sessions: number;
+    distinct_conversations?: number;
     by_action: Record<string, number>;
     by_provider: Record<string, number>;
     by_questionnaire_type: Record<string, number>;
@@ -83,6 +85,7 @@ interface LogOptions {
     questionnaire_types: string[];
     usernames: string[];
     anonymous_research_codes: string[];
+    conversation_ids: string[];
     models: string[];
     phases: string[];
     modes: string[];
@@ -257,6 +260,7 @@ export function LogViewer() {
         questionnaire_type: '',
         username: '',
         anonymous_research_code: '',
+        conversation_id: '',
         from_date: '',
         to_date: '',
         model: '',
@@ -276,6 +280,7 @@ export function LogViewer() {
     const [hygieneLoading, setHygieneLoading] = useState(false);
     const [hygieneMessage, setHygieneMessage] = useState('');
     const [selectedSession, setSelectedSession] = useState<string | null>(null);
+    const [selectedSessionKind, setSelectedSessionKind] = useState<'session' | 'conversation'>('session');
     const [sessionLogs, setSessionLogs] = useState<LogEntry[]>([]);
     const [sessionLoading, setSessionLoading] = useState(false);
     const [options, setOptions] = useState<LogOptions>({
@@ -284,6 +289,7 @@ export function LogViewer() {
         questionnaire_types: [],
         usernames: [],
         anonymous_research_codes: [],
+        conversation_ids: [],
         models: [],
         phases: [],
         modes: [],
@@ -365,6 +371,7 @@ export function LogViewer() {
                 questionnaire_types: Array.isArray(data?.questionnaire_types) ? data.questionnaire_types : [],
                 usernames: Array.isArray(data?.usernames) ? data.usernames : [],
                 anonymous_research_codes: Array.isArray(data?.anonymous_research_codes) ? data.anonymous_research_codes : [],
+                conversation_ids: Array.isArray(data?.conversation_ids) ? data.conversation_ids : [],
                 models: Array.isArray(data?.models) ? data.models : [],
                 phases: Array.isArray(data?.phases) ? data.phases : [],
                 modes: Array.isArray(data?.modes) ? data.modes : [],
@@ -430,6 +437,7 @@ export function LogViewer() {
 
     const openSession = async (sessionId: string) => {
         setSelectedSession(sessionId);
+        setSelectedSessionKind('session');
         setSessionLogs([]);
         setSessionLoading(true);
         try {
@@ -439,6 +447,23 @@ export function LogViewer() {
             setSessionLogs(await res.json());
         } catch (error) {
             console.error('Failed to fetch session logs', error);
+        } finally {
+            setSessionLoading(false);
+        }
+    };
+
+    const openConversation = async (conversationId: string) => {
+        setSelectedSession(conversationId);
+        setSelectedSessionKind('conversation');
+        setSessionLogs([]);
+        setSessionLoading(true);
+        try {
+            const res = await fetch(`/api/admin/logs/conversation/${encodeURIComponent(conversationId)}`);
+            if (handleAuthError(res)) return;
+            if (!res.ok) throw new Error('conversation fetch failed');
+            setSessionLogs(await res.json());
+        } catch (error) {
+            console.error('Failed to fetch conversation logs', error);
         } finally {
             setSessionLoading(false);
         }
@@ -485,6 +510,7 @@ export function LogViewer() {
             questionnaire_type: '',
             username: '',
             anonymous_research_code: '',
+            conversation_id: '',
             from_date: '',
             to_date: '',
             model: '',
@@ -550,6 +576,11 @@ export function LogViewer() {
         return preview || '-';
     };
 
+    const logConversationId = (log: LogEntry): string => {
+        const details = asObject(log.details);
+        return log.conversation_id || textValue(details.conversation_id) || log.session_id;
+    };
+
     const detailBlock = (label: string, text: string, key?: string) => (
         <div key={key} className="rounded-md border border-slate-200 bg-slate-50 p-3">
             <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</div>
@@ -607,7 +638,10 @@ export function LogViewer() {
         const error = textValue(details.error);
         const usage = (details.usage && typeof details.usage === 'object') ? details.usage as Record<string, unknown> : {};
         const sources = Array.isArray(details.sources) ? details.sources as string[] : [];
+        const conversationId = logConversationId(log);
         const chips: { k: string; v: string }[] = [
+            { k: t('admin.logs.conversationId'), v: conversationId || '-' },
+            { k: t('admin.logs.sessionId'), v: log.session_id || '-' },
             { k: t('admin.logs.provider'), v: log.provider || textValue(details.provider) || '-' },
             { k: t('admin.logs.model'), v: log.model_name || textValue(details.model) || '-' },
             { k: t('admin.logs.questionnaire'), v: log.questionnaire_type || '-' },
@@ -628,6 +662,7 @@ export function LogViewer() {
             'bot_response', 'answer', 'error', 'usage', 'sources',
             'provider', 'model', 'phase', 'mode', 'quality',
             'cost_usd', 'estimated_cost_usd', 'model_name', 'anonymous_research_code',
+            'conversation_id', 'session_id',
         ]);
         const otherNodes = Object.entries(details)
             .filter(([key]) => !consumed.has(key))
@@ -788,6 +823,12 @@ export function LogViewer() {
                 </button>
                 {showAdvanced && (
                     <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        <input
+                            value={filters.conversation_id}
+                            onChange={(event) => setFilter('conversation_id', event.target.value)}
+                            placeholder={t('admin.logs.conversationId')}
+                            className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-400"
+                        />
                         <select value={filters.model} onChange={(event) => setFilter('model', event.target.value)} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-400">
                             {modelOptions.map((value) => <option key={value || 'all'} value={value}>{value || t('admin.logs.allModels')}</option>)}
                         </select>
@@ -898,7 +939,7 @@ export function LogViewer() {
                             <thead className="bg-slate-50 text-xs uppercase text-slate-500">
                                 <tr>
                                     <th className="px-2 py-2 font-semibold">{t('admin.logs.date')}</th>
-                                    <th className="px-2 py-2 font-semibold">{t('admin.logs.session')}</th>
+                                    <th className="px-2 py-2 font-semibold">{t('admin.logs.conversation')}</th>
                                     <th className="px-2 py-2 font-semibold">{t('admin.logs.anonCode')}</th>
                                     <th className="px-2 py-2 font-semibold">{t('admin.logs.action')}</th>
                                     <th className="px-2 py-2 font-semibold">{t('admin.logs.provider')}</th>
@@ -912,6 +953,7 @@ export function LogViewer() {
                             <tbody className="divide-y divide-slate-100">
                                 {logs.map((log) => {
                                     const details = asObject(log.details);
+                                    const conversationId = logConversationId(log);
                                     const anon = log.anonymous_research_code || textValue(details.anonymous_research_code) || '-';
                                     const modelName = log.model_name || textValue(details.model) || '-';
                                     const costText = typeof log.cost_usd === 'number' ? `$${log.cost_usd.toFixed(6)}` : (textValue(details.cost_usd) || textValue(details.estimated_cost_usd) || '-');
@@ -921,8 +963,11 @@ export function LogViewer() {
                                         <tr className="align-top hover:bg-slate-50">
                                             <td className="px-2 py-2 align-top text-xs text-slate-600"><div className="truncate" title={formatDate(log.timestamp)}>{formatDate(log.timestamp)}</div></td>
                                             <td className="px-2 py-2 align-top">
-                                                <button type="button" onClick={() => void openSession(log.session_id)} title={log.session_id} className="block w-full truncate text-left font-mono text-xs font-medium text-sky-700 hover:text-sky-900">
-                                                    {short(log.session_id, 18)}
+                                                <button type="button" onClick={() => void openConversation(conversationId)} title={conversationId} className="block w-full truncate text-left font-mono text-xs font-medium text-sky-700 hover:text-sky-900">
+                                                    {short(conversationId, 18)}
+                                                </button>
+                                                <button type="button" onClick={() => void openSession(log.session_id)} title={log.session_id} className="block w-full truncate text-left font-mono text-[11px] text-slate-400 hover:text-slate-600">
+                                                    {t('admin.logs.session')}: {short(log.session_id, 14)}
                                                 </button>
                                                 {log.username && <div className="truncate text-xs text-slate-400" title={log.username}>{log.username}</div>}
                                             </td>
@@ -1080,14 +1125,16 @@ export function LogViewer() {
                     <div className="flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-white shadow-xl">
                         <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
                             <div>
-                                <h4 className="font-semibold text-slate-900">{t('admin.logs.conversation')}</h4>
+                                <h4 className="font-semibold text-slate-900">{selectedSessionKind === 'conversation' ? t('admin.logs.conversation') : t('admin.logs.session')}</h4>
                                 <p className="font-mono text-xs text-slate-500">{selectedSession}</p>
                             </div>
                             <div className="flex items-center gap-2">
-                                <button type="button" onClick={() => void deleteSelectedSession()} className="inline-flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100">
-                                    <Trash2 className="h-4 w-4" />
-                                    {t('admin.logs.deleteSession')}
-                                </button>
+                                {selectedSessionKind === 'session' && (
+                                    <button type="button" onClick={() => void deleteSelectedSession()} className="inline-flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100">
+                                        <Trash2 className="h-4 w-4" />
+                                        {t('admin.logs.deleteSession')}
+                                    </button>
+                                )}
                                 <button type="button" onClick={() => setSelectedSession(null)} className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50">
                                     <X className="h-4 w-4" />
                                 </button>

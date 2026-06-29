@@ -23,7 +23,7 @@ from ..ai_service import AIService, AIError
 from ..chat_logic import _apply_language_directive
 from .. import pii
 from ..api_models import SiteChatRequest
-from ..chat_logic import _clamp_max_tokens, log_error, _portfolio_context
+from ..chat_logic import _clamp_max_tokens, conversation_id_for, log_error, _portfolio_context
 from ..memory_service import session_memory
 from ..strategy_memory import shared_response_memory
 from ..prompt_config import (
@@ -252,6 +252,7 @@ async def site_chat_stream(
     "sources": [...]}. Errori: {"error": "..."}.
     """
     session_id = request.session_id or str(uuid.uuid4())
+    conversation_id = conversation_id_for(session_id, request.conversation_id)
     collection = _normalize_collection(request.collection)
     index = get_index(collection)
     ai_service = AIService(db)
@@ -287,7 +288,7 @@ async def site_chat_stream(
     except AIError as e:
         logger.error("Site-chat retrieval AIError: %s", e)
         log_error(db, session_id, str(e), action="chat_error", questionnaire_type=_SITE_QTYPE,
-                  mode="site_chat", phase=request.audience)
+                  mode="site_chat", phase=request.audience, conversation_id=conversation_id)
         results = None
         retrieval_error = str(e)
     else:
@@ -302,6 +303,7 @@ async def site_chat_stream(
             cost_usd = _usage_cost_usd(usage, provider, model)
             log_entry = models.Log(
                 session_id=session_id,
+                conversation_id=conversation_id,
                 action="site_chat",
                 username=current_user.get("username") or None,
                 email=current_user.get("email") or None,
@@ -311,6 +313,7 @@ async def site_chat_stream(
                 questionnaire_type=_SITE_QTYPE,
                 phase=request.audience or None,
                 details=pii.redact_details({
+                    "conversation_id": conversation_id,
                     "audience": request.audience,
                     "question": question,
                     "answer": answer,
@@ -358,7 +361,7 @@ async def site_chat_stream(
         if not results:
             no_material = _no_material_message(request.language)
             yield f"data: {_json.dumps({'delta': no_material, 'display': no_material})}\n\n"
-            yield f"data: {_json.dumps({'done': True, 'response': no_material, 'session_id': session_id, 'sources': []})}\n\n"
+            yield f"data: {_json.dumps({'done': True, 'response': no_material, 'session_id': session_id, 'conversation_id': conversation_id, 'sources': []})}\n\n"
             return
 
         context, sources = build_context(results)
@@ -397,14 +400,15 @@ async def site_chat_stream(
 
             answer = _strip_fonte_tokens("".join(chunks))
             response_id = _log_and_persist(answer, sources, usage_info)
-            yield f"data: {_json.dumps({'done': True, 'response': answer, 'session_id': session_id, 'sources': sources, 'response_id': response_id})}\n\n"
+            yield f"data: {_json.dumps({'done': True, 'response': answer, 'session_id': session_id, 'conversation_id': conversation_id, 'sources': sources, 'response_id': response_id})}\n\n"
         except Exception as e:
             logger.error("Errore site-chat stream %s: %s", session_id, e)
             if isinstance(e, AIError):
                 err_db = database.SessionLocal()
                 try:
                     log_error(err_db, session_id, str(e), action="chat_error",
-                              questionnaire_type=_SITE_QTYPE, mode="site_chat", phase=request.audience)
+                              questionnaire_type=_SITE_QTYPE, mode="site_chat", phase=request.audience,
+                              conversation_id=conversation_id)
                 finally:
                     err_db.close()
             yield f"data: {_json.dumps({'error': str(e)})}\n\n"

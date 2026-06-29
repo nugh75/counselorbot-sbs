@@ -980,6 +980,7 @@ async def chat_opencode(
                                             rid = None
                                         log_entry = models.Log(
                                             session_id=request.session_id,
+                                            conversation_id=request.session_id,
                                             action="opencode_chat",
                                             username=identity.get("username") or None,
                                             email=identity.get("email") or None,
@@ -991,6 +992,7 @@ async def chat_opencode(
                                             mode="opencode",
                                             response_id=rid,
                                             details=pii.redact_details({
+                                                "conversation_id": request.session_id,
                                                 "workspace_key": key,
                                                 "duration_ms": int((time.monotonic() - started_at) * 1000),
                                                 "message_count": message_count,

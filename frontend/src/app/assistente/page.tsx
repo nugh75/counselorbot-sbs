@@ -73,6 +73,7 @@ export default function AssistentePage() {
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const [sessionId, setSessionId] = useState<string | undefined>(undefined);
+    const [conversationId, setConversationId] = useState<string | undefined>(undefined);
     const [preview, setPreview] = useState<PreviewState | null>(null);
     const [selectedTopicId, setSelectedTopicId] = useState<TopicId>(TOPIC_IDS[0]);
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -148,7 +149,7 @@ export default function AssistentePage() {
 
         try {
             const result = await streamChat(
-                { message: question, audience, session_id: sessionId, language: lang, collection },
+                { message: question, audience, session_id: sessionId, conversation_id: conversationId, language: lang, collection },
                 (full) => updateLast(full),
                 undefined,
                 undefined,
@@ -166,6 +167,7 @@ export default function AssistentePage() {
                 return next;
             });
             if (result.session_id) setSessionId(result.session_id);
+            if (result.conversation_id) setConversationId(result.conversation_id);
         } catch (e) {
             updateLast(t('assistant.error', { message: e instanceof Error ? e.message : t('assistant.errorGeneric') }));
         } finally {
@@ -214,6 +216,7 @@ export default function AssistentePage() {
         setAudience(canUseTeacherAssistant(identity) ? 'docente' : 'studente');
         setMessages([]);
         setSessionId(undefined);
+        setConversationId(undefined);
         setPreview(null);
     };
 
@@ -223,6 +226,7 @@ export default function AssistentePage() {
         setCollection(next);
         setMessages([]);
         setSessionId(undefined);
+        setConversationId(undefined);
         setPreview(null);
     };
 
