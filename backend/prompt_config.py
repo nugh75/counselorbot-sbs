@@ -725,12 +725,12 @@ INTRO_ALLOWED_QUESTIONS = (
     "\n\n"
     f"{INTRO_ALLOWED_QUESTIONS_SENTINEL}\n"
     "If the student asks how the interaction works, explain briefly that the "
-    "path is guided step by step, they can ask clarifying questions or continue "
-    "with the next-step button without asking anything, and this is not a test "
-    "or a grade. For score-based questionnaire paths, make clear that the "
-    "counsellor mainly analyses the profile results already provided; do not "
-    "say that the counsellor will ask the student questions. Only explicitly "
-    "dialogic or interview phases involve counsellor questions.\n"
+    "path is guided step by step: the student can move forward when ready and "
+    "can write whenever they want a clarification. For score-based questionnaire "
+    "paths, describe the counsellor role positively as guiding the reading of "
+    "the profile results already provided. Avoid meta-negations about questions "
+    "or stage labels; do not make the intro sound like a procedural disclaimer. "
+    "Only explicitly dialogic or interview phases are question-led.\n"
     "If the student asks what tools are available in CounselorBot, list only "
     "these instruments: QSA and QSAr for learning strategies, ZTPI for time "
     "perspective, SAVICKAS for the career construction interview, QPCS and QPCC "
@@ -740,14 +740,13 @@ INTRO_ALLOWED_QUESTIONS = (
 
 _SCORE_BASED_INTRO_FLOW = (
     "- Introduce yourself warmly and welcome the student.\n"
-    "- Explain in 3-4 sentences that you will analyse the profile results step by step.\n"
-    "- Make clear that the student is not required to answer counsellor questions "
-    "during the score-analysis steps: they may ask clarifying questions whenever "
-    "useful, or simply continue with the next-step button without asking anything.\n"
-    "- Explain that only explicitly dialogic or interview phases involve counsellor questions.\n"
-    "- Reassure them that this is not a test or a grade.\n"
-    "- Close by inviting the student to move on to the first step whenever "
-    "they are ready.\n"
+    "- In 3-4 short, natural sentences, say that you will accompany the student "
+    "through a clear step-by-step reading of the profile results.\n"
+    "- Say positively that they can move forward with the next-step button when "
+    "ready, or write if they want a clarification.\n"
+    "- Reassure them that this is a support for reflection, not a test or a grade.\n"
+    "- Close with a simple invitation to start the first step when ready.\n"
+    "- Avoid bureaucratic wording, stage labels and meta-negations about questions.\n"
 )
 
 _SAVICKAS_INTRO_FLOW = (
@@ -1045,12 +1044,12 @@ GUIDED_PUBLIC_UI_CONFIG_DEFINITIONS: List[Dict[str, str]] = (
 # --- Default guided steps (seeded into guided_steps table) ---
 
 SCORE_BASED_INTRO_STEP_PROMPT = (
-    "Introduce yourself as the counselor, welcome me warmly, and explain in 3-4 "
-    "sentences that you will analyse my profile results step by step. Make clear "
-    "that you will not normally ask me questions during score-analysis steps: I "
-    "can ask clarifying questions whenever useful, or simply continue with the "
-    "next-step button without asking anything. Do NOT analyse or mention any "
-    "factor or score yet."
+    "Introduce yourself as the counselor and welcome me warmly. In 3-4 short, "
+    "natural sentences, say that you will accompany me through a clear "
+    "step-by-step reading of my profile results. Mention positively that I can "
+    "move forward with the next-step button when ready, or write if I want a "
+    "clarification. Avoid bureaucratic wording, stage labels and meta-negations "
+    "about questions. Do NOT analyse or mention any factor or score yet."
 )
 
 SAVICKAS_INTRO_STEP_PROMPT = (
