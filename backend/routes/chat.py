@@ -68,6 +68,7 @@ from ..chat_logic import (
     _sanitize_ztpi_user_text,
     _should_sanitize_ztpi_text,
     _should_include_step_analysis_context,
+    _step_allows_practical_advice,
     _student_visible_response,
     _update_markdown_memory_background,
     build_context_envelope,
@@ -311,10 +312,12 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         if _is_strategy_questionnaire(questionnaire_type) else request.scores_context
     )
     if include_analysis_context:
+        include_advice = _step_allows_practical_advice(step_mode)
         system_prompt = _apply_current_step_score_profile_directive(
-            system_prompt, questionnaire_type, request.language, model_scores_context, phase_codes
+            system_prompt, questionnaire_type, request.language, model_scores_context, phase_codes, include_advice
         )
-        system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type, request.language)
+        if include_advice:
+            system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type)
     system_prompt = _apply_thinking_directive(system_prompt, request.language)
     model_message = (
         _annotate_qsa_factor_codes(effective_message, request.language, questionnaire_type=questionnaire_type)
@@ -530,10 +533,12 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         if _is_strategy_questionnaire(questionnaire_type) else request.scores_context
     )
     if include_analysis_context:
+        include_advice = _step_allows_practical_advice(step_mode)
         system_prompt = _apply_current_step_score_profile_directive(
-            system_prompt, questionnaire_type, request.language, model_scores_context, phase_codes
+            system_prompt, questionnaire_type, request.language, model_scores_context, phase_codes, include_advice
         )
-        system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type, request.language)
+        if include_advice:
+            system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type)
     system_prompt = _apply_thinking_directive(system_prompt, request.language)
     model_message = (
         _annotate_qsa_factor_codes(effective_message, request.language, questionnaire_type=questionnaire_type)
