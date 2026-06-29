@@ -1408,8 +1408,12 @@ def test_prompt_audit_dry_run_builds_qsa_envelope_without_side_effects():
     assert body["resolved"]["provider"] == "openrouter"
     assert body["resolved"]["model"] == "deepseek/deepseek-v4-flash"
     assert body["resolved"]["counselor"]["id"] == counselor_id
-    assert "You are Prompt Audit QSA, a QSA expert" in body["envelope"]["system_prompt_final"]
-    assert "You are CounselorBot" not in body["envelope"]["system_prompt_final"]
+    system_prompt = body["envelope"]["system_prompt_final"]
+    assert "You are Prompt Audit QSA, a QSA expert" not in system_prompt
+    assert "You are CounselorBot" not in system_prompt
+    assert "C1 (Strategie elaborative)" in system_prompt
+    assert "C7 (Autointerrogazione)" in system_prompt
+    assert "A1 (Ansietà di base)" not in system_prompt
     assert "Analyse ONLY the COGNITIVE factors" in body["inputs"]["effective_user_message"]
     assert "- C1" in body["inputs"]["scoped_scores_context"]
     assert "- A1" not in body["inputs"]["scoped_scores_context"]
@@ -1435,15 +1439,19 @@ def test_startup_migration_rewrites_counselorbot_prompt_identity_prefix():
         original = cfg.value
         cfg.value = (
             "You are CounselorBot, a study tutor for students.\n"
-            "Always speak in a simple, direct and encouraging tone."
+            "Goal:\n"
+            "Always speak in a simple, direct and encouraging tone, in the requested language, addressing the student informally.\n"
+            "Analyse the requested factors."
         )
         db.commit()
 
         main._migrate_counselor_personas_and_intros(db)
         db.refresh(cfg)
 
-        assert cfg.value.startswith("You are {{counselor_name}}, a study tutor for students.")
+        assert cfg.value.startswith("Goal:\nAnalyse the requested factors.")
         assert "You are CounselorBot" not in cfg.value
+        assert "{{counselor_name}}" not in cfg.value
+        assert "Always speak in a simple" not in cfg.value
     finally:
         cfg = db.query(models.Config).filter(models.Config.key == "prompt_factor").first()
         if cfg is not None:
@@ -1879,6 +1887,25 @@ def test_chat_smoke_mocked_ai():
     r = client.post("/chat", json={"message": "ciao", "mode": "generic"})
     assert r.status_code == 200, r.text
     assert r.json()["response"] == "RISPOSTA_TEST"
+
+
+def test_chat_factor_qa_does_not_force_all_step_factor_codes():
+    _ensure_guided_steps("QSA")
+    session_id = "factor-qa-no-forced-scope-prefix"
+    session_memory.clear(session_id)
+    r = client.post("/chat", json={
+        "message": "Su quale strategia cognitiva dovrei lavorare per prima?",
+        "mode": "factor-qa",
+        "phase": "cognitive",
+        "use_phase_prompt": True,
+        "session_id": session_id,
+        "questionnaire_type": "QSA",
+        "language": "it",
+        "scores_context": "PROFILO QSA DELLO STUDENTE:\n- C1: 7/9\n- C3: 8/9\n- C4: 3/9",
+    })
+    assert r.status_code == 200, r.text
+    assert not r.json()["response"].startswith("Fattori trattati:"), r.json()["response"]
+    session_memory.clear(session_id)
 
 
 def _latest_log_details(session_id: str) -> dict:
