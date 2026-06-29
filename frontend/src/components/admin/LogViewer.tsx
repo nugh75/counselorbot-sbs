@@ -1,9 +1,10 @@
 'use client';
 
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     AlertTriangle,
     BarChart3,
+    ChevronDown,
     ChevronLeft,
     ChevronRight,
     Download,
@@ -79,9 +80,109 @@ interface LogOptions {
     providers: string[];
     questionnaire_types: string[];
     usernames: string[];
+    anonymous_research_codes: string[];
     models: string[];
     phases: string[];
     modes: string[];
+}
+
+interface MultiSelectFilterProps {
+    label: string;
+    options: string[];
+    selected: string[];
+    onChange: (next: string[]) => void;
+    searchPlaceholder: string;
+    selectedLabel: (n: number) => string;
+    clearLabel: string;
+    emptyLabel: string;
+}
+
+function MultiSelectFilter({
+    label,
+    options,
+    selected,
+    onChange,
+    searchPlaceholder,
+    selectedLabel,
+    clearLabel,
+    emptyLabel,
+}: MultiSelectFilterProps) {
+    const [open, setOpen] = useState(false);
+    const [query, setQuery] = useState('');
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!open) return;
+        const onClick = (event: MouseEvent) => {
+            if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+        };
+        document.addEventListener('mousedown', onClick);
+        return () => document.removeEventListener('mousedown', onClick);
+    }, [open]);
+
+    const filtered = useMemo(() => {
+        const needle = query.trim().toLowerCase();
+        return needle ? options.filter((value) => value.toLowerCase().includes(needle)) : options;
+    }, [options, query]);
+
+    const toggle = (value: string) => {
+        onChange(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value]);
+    };
+
+    const summary = selected.length === 0
+        ? label
+        : selected.length === 1
+            ? selected[0]
+            : selectedLabel(selected.length);
+
+    return (
+        <div ref={ref} className="relative min-w-0">
+            <button
+                type="button"
+                onClick={() => setOpen((value) => !value)}
+                className="flex h-10 w-full items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-400"
+            >
+                <span className={`truncate ${selected.length === 0 ? 'text-slate-400' : ''}`}>{summary}</span>
+                <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+            </button>
+            {open && (
+                <div className="absolute z-20 mt-1 w-full min-w-[200px] rounded-md border border-slate-200 bg-white p-2 shadow-lg">
+                    <input
+                        value={query}
+                        onChange={(event) => setQuery(event.target.value)}
+                        placeholder={searchPlaceholder}
+                        className="mb-2 h-8 w-full rounded border border-slate-200 px-2 text-sm outline-none focus:border-sky-400"
+                        autoFocus
+                    />
+                    <div className="max-h-56 overflow-auto">
+                        {filtered.length === 0 && (
+                            <div className="px-2 py-3 text-center text-xs text-slate-400">{emptyLabel}</div>
+                        )}
+                        {filtered.map((value) => (
+                            <label key={value} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-50">
+                                <input
+                                    type="checkbox"
+                                    checked={selected.includes(value)}
+                                    onChange={() => toggle(value)}
+                                    className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                                />
+                                <span className="truncate" title={value}>{value}</span>
+                            </label>
+                        ))}
+                    </div>
+                    {selected.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => onChange([])}
+                            className="mt-2 w-full rounded border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                        >
+                            {clearLabel}
+                        </button>
+                    )}
+                </div>
+            )}
+        </div>
+    );
 }
 
 const DEFAULT_ACTIONS = ['chat_message', 'site_chat', 'opencode_chat', 'chat_error'];
@@ -180,6 +281,7 @@ export function LogViewer() {
         providers: [],
         questionnaire_types: [],
         usernames: [],
+        anonymous_research_codes: [],
         models: [],
         phases: [],
         modes: [],
@@ -191,6 +293,19 @@ export function LogViewer() {
         setPage(0);
         setFilters((current) => ({ ...current, [key]: value }));
     };
+
+    const setMultiFilter = (key: keyof typeof filters, values: string[]) => {
+        setFilter(key, values.join(','));
+    };
+
+    const usernameSelected = useMemo(
+        () => (filters.username ? filters.username.split(',').filter(Boolean) : []),
+        [filters.username],
+    );
+    const anonCodeSelected = useMemo(
+        () => (filters.anonymous_research_code ? filters.anonymous_research_code.split(',').filter(Boolean) : []),
+        [filters.anonymous_research_code],
+    );
 
     const buildParams = useCallback((withPaging: boolean) => {
         const params = new URLSearchParams();
@@ -247,6 +362,7 @@ export function LogViewer() {
                 providers: Array.isArray(data?.providers) ? data.providers : [],
                 questionnaire_types: Array.isArray(data?.questionnaire_types) ? data.questionnaire_types : [],
                 usernames: Array.isArray(data?.usernames) ? data.usernames : [],
+                anonymous_research_codes: Array.isArray(data?.anonymous_research_codes) ? data.anonymous_research_codes : [],
                 models: Array.isArray(data?.models) ? data.models : [],
                 phases: Array.isArray(data?.phases) ? data.phases : [],
                 modes: Array.isArray(data?.modes) ? data.modes : [],
@@ -552,7 +668,7 @@ export function LogViewer() {
             </div>
 
             <div className="rounded-lg border border-slate-200 bg-white p-4">
-                <div className="grid gap-3 lg:grid-cols-[minmax(220px,1.5fr)_repeat(6,minmax(120px,1fr))_auto]">
+                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                     <label className="relative block">
                         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                         <input
@@ -571,17 +687,25 @@ export function LogViewer() {
                     <select value={filters.questionnaire_type} onChange={(event) => setFilter('questionnaire_type', event.target.value)} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-400">
                         {questionnaireOptions.map((value) => <option key={value || 'all'} value={value}>{value || t('admin.logs.allQuestionnaires')}</option>)}
                     </select>
-                    <input
-                        value={filters.username}
-                        onChange={(event) => setFilter('username', event.target.value)}
-                        placeholder={t('admin.logs.username')}
-                        className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-400"
+                    <MultiSelectFilter
+                        label={t('admin.logs.allUsernames')}
+                        options={options.usernames}
+                        selected={usernameSelected}
+                        onChange={(values) => setMultiFilter('username', values)}
+                        searchPlaceholder={t('admin.logs.multiSelectSearch')}
+                        selectedLabel={(n) => t('admin.logs.multiSelectSelected').replace('{n}', String(n))}
+                        clearLabel={t('admin.logs.multiSelectClear')}
+                        emptyLabel={t('admin.logs.multiSelectEmpty')}
                     />
-                    <input
-                        value={filters.anonymous_research_code}
-                        onChange={(event) => setFilter('anonymous_research_code', event.target.value)}
-                        placeholder={t('admin.logs.anonCode')}
-                        className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-400"
+                    <MultiSelectFilter
+                        label={t('admin.logs.allAnonCodes')}
+                        options={options.anonymous_research_codes}
+                        selected={anonCodeSelected}
+                        onChange={(values) => setMultiFilter('anonymous_research_code', values)}
+                        searchPlaceholder={t('admin.logs.multiSelectSearch')}
+                        selectedLabel={(n) => t('admin.logs.multiSelectSelected').replace('{n}', String(n))}
+                        clearLabel={t('admin.logs.multiSelectClear')}
+                        emptyLabel={t('admin.logs.multiSelectEmpty')}
                     />
                     <div className="grid grid-cols-2 gap-2">
                         <input type="date" value={filters.from_date} onChange={(event) => setFilter('from_date', event.target.value)} className="h-10 min-w-0 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-sky-400" />
