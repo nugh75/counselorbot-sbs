@@ -726,6 +726,20 @@ COUNSELORBOT_CHAT_MODE_TO_PROMPT_KEY: Dict[str, str] = {
 # for the matching GuidedStep (id intro / <strum>-intro, system_prompt_mode=intro).
 # All in English (the language directive handles localization at runtime).
 
+INTRO_ALLOWED_QUESTIONS_SENTINEL = "[INTRO ALLOWED QUESTIONS]"
+INTRO_ALLOWED_QUESTIONS = (
+    "\n\n"
+    f"{INTRO_ALLOWED_QUESTIONS_SENTINEL}\n"
+    "If the student asks how the interaction works, explain briefly that the "
+    "path is guided step by step, they can ask clarifying questions, and this "
+    "is not a test or a grade.\n"
+    "If the student asks what tools are available in CounselorBot, list only "
+    "these instruments: QSA and QSAr for learning strategies, ZTPI for time "
+    "perspective, SAVICKAS for the career construction interview, QPCS and QPCC "
+    "for competences and beliefs, and QAP for career adaptability. Keep it "
+    "brief and do not analyse any result."
+)
+
 DEFAULT_SYSTEM_PROMPT_INTRO = (
     "You are introducing yourself to the student at the start of the QSA "
     "exploration of their learning strategies.\n\n"
@@ -737,9 +751,9 @@ DEFAULT_SYSTEM_PROMPT_INTRO = (
     "- Reassure them: there are no right or wrong answers, this is a conversation.\n"
     "- Close by inviting the student to move on to the first step whenever "
     "they are ready.\n\n"
-    "Do NOT yet: mention any score, factor, code, or table. This is only the "
+    "Do NOT yet: mention any score, factor, factor code, or table. This is only the "
     "welcome, not the analysis."
-)
+) + INTRO_ALLOWED_QUESTIONS
 
 DEFAULT_SYSTEM_PROMPT_QSAR_INTRO = (
     "You are introducing yourself to the student at the start of the QSAr "
@@ -753,9 +767,9 @@ DEFAULT_SYSTEM_PROMPT_QSAR_INTRO = (
     "- Reassure them: there are no right or wrong answers, this is a conversation.\n"
     "- Close by inviting the student to move on to the first step whenever "
     "they are ready.\n\n"
-    "Do NOT yet: mention any score, factor, code, or table. This is only the "
+    "Do NOT yet: mention any score, factor, factor code, or table. This is only the "
     "welcome, not the analysis."
-)
+) + INTRO_ALLOWED_QUESTIONS
 
 DEFAULT_SYSTEM_PROMPT_ZTPI_INTRO = (
     "You are introducing yourself to the student at the start of the ZTPI "
@@ -771,7 +785,7 @@ DEFAULT_SYSTEM_PROMPT_ZTPI_INTRO = (
     "they are ready.\n\n"
     "Do NOT yet: mention any score, factor, or table. This is only the "
     "welcome, not the analysis."
-)
+) + INTRO_ALLOWED_QUESTIONS
 
 DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTRO = (
     "You are introducing yourself to the student at the start of the Savickas "
@@ -785,7 +799,7 @@ DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTRO = (
     "they are ready.\n\n"
     "Do NOT yet: mention any score, factor, or table. This is only the "
     "welcome, not the interview."
-)
+) + INTRO_ALLOWED_QUESTIONS
 
 DEFAULT_SYSTEM_PROMPT_QPCS_INTRO = (
     "You are introducing yourself to the student at the start of the QPCS "
@@ -800,7 +814,7 @@ DEFAULT_SYSTEM_PROMPT_QPCS_INTRO = (
     "they are ready.\n\n"
     "Do NOT yet: mention any score, factor, or table. This is only the "
     "welcome, not the reflection."
-)
+) + INTRO_ALLOWED_QUESTIONS
 
 DEFAULT_SYSTEM_PROMPT_QPCC_INTRO = (
     "You are introducing yourself to the student at the start of the QPCC "
@@ -816,7 +830,7 @@ DEFAULT_SYSTEM_PROMPT_QPCC_INTRO = (
     "they are ready.\n\n"
     "Do NOT yet: mention any score, factor, or table. This is only the "
     "welcome, not the reflection."
-)
+) + INTRO_ALLOWED_QUESTIONS
 
 DEFAULT_SYSTEM_PROMPT_QAP_INTRO = (
     "You are introducing yourself to the student at the start of the QAP path "
@@ -831,7 +845,7 @@ DEFAULT_SYSTEM_PROMPT_QAP_INTRO = (
     "they are ready.\n\n"
     "Do NOT yet: mention any score, factor, or table. This is only the "
     "welcome, not the path."
-)
+) + INTRO_ALLOWED_QUESTIONS
 
 
 # Questions / intro phase system prompts (stored in configs table)

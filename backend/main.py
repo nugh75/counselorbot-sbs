@@ -28,6 +28,8 @@ from .prompt_config import (
     DEFAULT_QAP_GUIDED_STEPS,
     SYSTEM_PROMPT_DEFAULTS,
     GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
+    INTRO_ALLOWED_QUESTIONS,
+    INTRO_ALLOWED_QUESTIONS_SENTINEL,
 )
 from .questionnaire_catalog import INSTRUMENT_CATALOG_DEFAULTS
 from .guided_text_i18n import seed_definitions as guided_text_seed_definitions
@@ -833,6 +835,8 @@ def _migrate_counselor_personas_and_intros(db):
         markers = _LEGACY_INTRO_BODY_MARKERS.get(key, ())
         if any(marker in current for marker in markers):
             current = intro_defaults_by_key.get(key, current)
+        elif INTRO_ALLOWED_QUESTIONS_SENTINEL not in current:
+            current = current.rstrip() + INTRO_ALLOWED_QUESTIONS
         if current != (cfg.value or ""):
             cfg.value = current
             changed = True
