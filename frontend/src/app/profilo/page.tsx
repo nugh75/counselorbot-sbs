@@ -14,7 +14,8 @@ import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { StudentBookletCard, EVENT_BOOKLET_TYPES, bookletTypeOptionLabel, type BookletType } from '@/components/profile/StudentBookletCard';
 import { PortfolioCard } from '@/components/profile/PortfolioCard';
 import {
-    ArrowLeft, ArrowRight, Trash2, Download, MessageSquare, ShieldAlert, Search
+    ArrowLeft, ArrowRight, Trash2, Download, MessageSquare, ShieldAlert, Search,
+    BookOpen, Wrench, Folder
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -48,6 +49,18 @@ export default function ProfilePage() {
     const [selectedBookletType, setSelectedBookletType] = useState<BookletType>('QSA');
     const [activeTab, setActiveTab] = useState<'taccuino' | 'strumenti' | 'portfolio'>('taccuino');
 
+    const bookletTypesOptions = useMemo((): BookletType[] => {
+        const completed = sessions
+            .map((s) => s.questionnaire_type)
+            .filter((type, index, self) => self.indexOf(type) === index) as BookletType[];
+
+        if (completed.length === 0) {
+            return ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', ...EVENT_BOOKLET_TYPES];
+        }
+
+        return [...completed, ...EVENT_BOOKLET_TYPES];
+    }, [sessions]);
+
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
@@ -65,6 +78,10 @@ export default function ProfilePage() {
                                 ? data.find((session) => session.session_id === selected.session_id) ?? data[0] ?? null
                                 : data[0] ?? null
                         ));
+
+                        if (data.length > 0) {
+                            setSelectedBookletType(data[0].questionnaire_type as BookletType);
+                        }
 
                         // Sync localStorage completed profiles
                         clearCompletedProfiles();
@@ -333,28 +350,69 @@ export default function ProfilePage() {
 
             {/* Tab navigation */}
             <div className="border-b border-slate-200">
-                <nav className="-mb-px flex flex-wrap gap-1">
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('taccuino')}
-                        className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${activeTab === 'taccuino' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-                    >
-                        Su di me e libretto
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('strumenti')}
-                        className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${activeTab === 'strumenti' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-                    >
-                        Strumenti utilizzati
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('portfolio')}
-                        className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${activeTab === 'portfolio' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-                    >
-                        Portfolio
-                    </button>
+                <nav className="-mb-px flex gap-2 overflow-x-auto pb-px scrollbar-none">
+                    {/* Tab: Taccuino */}
+                    <div className="group relative">
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('taccuino')}
+                            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+                                activeTab === 'taccuino'
+                                    ? 'border-indigo-600 text-indigo-700'
+                                    : 'border-transparent text-slate-500 hover:text-slate-700'
+                            }`}
+                        >
+                            <BookOpen className="w-4 h-4 shrink-0" />
+                            <span className="hidden sm:inline">Su di me e libretto</span>
+                        </button>
+                        {/* Tooltip */}
+                        <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 scale-90 rounded bg-slate-900 px-2.5 py-1 text-xs text-white opacity-0 transition-all group-hover:opacity-100 group-hover:scale-100 whitespace-nowrap shadow-md sm:hidden">
+                            Su di me e libretto
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
+                        </div>
+                    </div>
+
+                    {/* Tab: Strumenti */}
+                    <div className="group relative">
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('strumenti')}
+                            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+                                activeTab === 'strumenti'
+                                    ? 'border-indigo-600 text-indigo-700'
+                                    : 'border-transparent text-slate-500 hover:text-slate-700'
+                            }`}
+                        >
+                            <Wrench className="w-4 h-4 shrink-0" />
+                            <span className="hidden sm:inline">Strumenti utilizzati</span>
+                        </button>
+                        {/* Tooltip */}
+                        <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 scale-90 rounded bg-slate-900 px-2.5 py-1 text-xs text-white opacity-0 transition-all group-hover:opacity-100 group-hover:scale-100 whitespace-nowrap shadow-md sm:hidden">
+                            Strumenti utilizzati
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
+                        </div>
+                    </div>
+
+                    {/* Tab: Portfolio */}
+                    <div className="group relative">
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('portfolio')}
+                            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+                                activeTab === 'portfolio'
+                                    ? 'border-indigo-600 text-indigo-700'
+                                    : 'border-transparent text-slate-500 hover:text-slate-700'
+                            }`}
+                        >
+                            <Folder className="w-4 h-4 shrink-0" />
+                            <span className="hidden sm:inline">Portfolio</span>
+                        </button>
+                        {/* Tooltip */}
+                        <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 scale-90 rounded bg-slate-900 px-2.5 py-1 text-xs text-white opacity-0 transition-all group-hover:opacity-100 group-hover:scale-100 whitespace-nowrap shadow-md sm:hidden">
+                            Portfolio
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
+                        </div>
+                    </div>
                 </nav>
             </div>
 
@@ -690,7 +748,7 @@ export default function ProfilePage() {
                             onChange={(event) => setSelectedBookletType(event.target.value as BookletType)}
                             className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                         >
-                            {BOOKLET_TYPES.map((type) => (
+                            {bookletTypesOptions.map((type) => (
                                 <option key={type} value={type}>
                                     {bookletTypeOptionLabel(type)}
                                 </option>
