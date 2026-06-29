@@ -1113,8 +1113,8 @@ def test_resolve_counselor_helper():
     from backend.database import SessionLocal
     db = SessionLocal()
     try:
-        assert _resolve_counselor(db, None) == (None, None, None, None, None)
-        assert _resolve_counselor(db, 999999) == (None, None, None, None, None)
+        assert _resolve_counselor(db, None) == (None, None, None, None, None, None)
+        assert _resolve_counselor(db, 999999) == (None, None, None, None, None, None)
 
         preset = models.ModelPreset(
             name="No reasoning test",
@@ -1139,6 +1139,7 @@ def test_resolve_counselor_helper():
             "openrouter",
             "deepseek/deepseek-r1",
             "Persona test",
+            "No reasoning test",
             True,
             4096,
         )
@@ -3066,6 +3067,50 @@ def test_build_context_envelope_canonical_blocks():
     assert "domanda" in full_message
     assert isinstance(history, list) and history, history
     assert history[-1]["role"] == "assistant"
+    session_memory.clear(sid)
+
+
+def test_build_context_envelope_counselor_name_placeholder():
+    """Il placeholder {{counselor_name}} (persona + intro di sezione) viene
+    risolto dal nome del counselor; senza counselor usa il fallback neutro."""
+    from backend.api_models import ChatRequest
+    from backend.chat_logic import build_context_envelope
+    sid = "envelope-name-test"
+    session_memory.clear(sid)
+    db = next(_override_get_db())
+    ai = _FakeAIService(db)
+    request = ChatRequest(message="ciao", questionnaire_type="QSA", language="it")
+    identity = {"username": "student"}
+
+    # Con counselor selezionato: placeholder -> nome reale (persona + section).
+    system_final, _, _ = build_context_envelope(
+        db, ai, request, sid, identity,
+        c_persona="You are {{counselor_name}}, a clear counsellor.",
+        counselor_name="Nadia",
+        system_prompt="You are {{counselor_name}}. Welcome the student.",
+        step_label="0. Presentazione", questionnaire_type="QSA",
+        effective_message="ciao", model_scores_context="",
+        message_scores_context="", knowledge_context="",
+        include_history=False, include_session_memory=False,
+        create_anonymous_code=False,
+    )
+    assert "{{counselor_name}}" not in system_final, system_final
+    assert "You are Nadia, a clear counsellor." in system_final
+    assert "You are Nadia. Welcome the student." in system_final
+
+    # Senza counselor: fallback neutro, nessun letterale residuo.
+    system_no_counselor, _, _ = build_context_envelope(
+        db, ai, request, sid, identity,
+        c_persona="",
+        system_prompt="You are {{counselor_name}}. Welcome the student.",
+        step_label="0. Presentazione", questionnaire_type="QSA",
+        effective_message="ciao", model_scores_context="",
+        message_scores_context="", knowledge_context="",
+        include_history=False, include_session_memory=False,
+        create_anonymous_code=False,
+    )
+    assert "{{counselor_name}}" not in system_no_counselor
+    assert "You are the counsellor. Welcome the student." in system_no_counselor
     session_memory.clear(sid)
 
 

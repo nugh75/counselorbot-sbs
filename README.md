@@ -148,3 +148,26 @@ Le utility database leggono `POSTGRES_HOST_PORT` da `.env`; con il compose forni
 ### Note
 - Nel compose il database applicativo e' PostgreSQL; `counselorbot.db` resta il fallback SQLite per l'avvio locale senza `DATABASE_URL` e per eventuali migrazioni legacy.
 - Il frontend espone `127.0.0.1:3000`; il backend resta accessibile all'interno delle reti Docker e tramite proxy.
+
+## Testing dei prompt (make)
+
+Target `make` per ispezionare l'envelope (system prompt + messaggio) di un counselor,
+scegliendo questionario e passo. Eseguono il path reale di prompt-audit dentro il
+container backend (`scripts/prompt_test.py`); la modalita' `live` chiama il LLM e
+salva la riga nei `logs` con l'envelope completo.
+
+```bash
+make help                                  # elenco target e variabili
+make prompt-steps Q=QSA                     # step disponibili per un questionario
+make prompt-dry  Q=QSA STEP=intro           # solo envelope (no LLM, no log)
+make prompt-test Q=QSA STEP=intro           # live: chiama il LLM e salva il log
+make prompt-test Q=QSAr STEP=qsar-cognitive STUDENT=barbaraambu
+make prompt-log  ID=<log id>                # dump dell'envelope salvato
+```
+
+Variabili (default): `Q=QSA STEP=intro STUDENT=admin COUNSELOR=7 RESP_LANG=it KNOWLEDGE=true`.
+`COUNSELOR=7` e' Nadia (ollama locale). Per avere l'envelope nei log serve il
+full-prompt-logging attivo: `make prompt-log-on` (config DB `log_full_prompt`, gia'
+attiva di default), `make prompt-log-off` per disattivarlo.
+
+Dettagli e tabella completa: [docs/make-prompt-testing.md](docs/make-prompt-testing.md).
