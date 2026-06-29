@@ -356,39 +356,17 @@ export default function ProfilePage() {
                         <button
                             type="button"
                             onClick={() => setActiveTab('taccuino')}
-                            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+                            className={`flex items-center justify-center p-3 border-b-2 -mb-px transition-colors ${
                                 activeTab === 'taccuino'
                                     ? 'border-indigo-600 text-indigo-700'
                                     : 'border-transparent text-slate-500 hover:text-slate-700'
                             }`}
                         >
-                            <BookOpen className="w-4 h-4 shrink-0" />
-                            <span className="hidden sm:inline">Su di me e libretto</span>
+                            <BookOpen className="w-5 h-5 shrink-0" />
                         </button>
                         {/* Tooltip */}
-                        <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 scale-90 rounded bg-slate-900 px-2.5 py-1 text-xs text-white opacity-0 transition-all group-hover:opacity-100 group-hover:scale-100 whitespace-nowrap shadow-md sm:hidden">
+                        <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 scale-90 rounded bg-slate-900 px-2.5 py-1 text-xs text-white opacity-0 transition-all group-hover:opacity-100 group-hover:scale-100 whitespace-nowrap shadow-md">
                             Su di me e libretto
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
-                        </div>
-                    </div>
-
-                    {/* Tab: Strumenti */}
-                    <div className="group relative">
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('strumenti')}
-                            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-                                activeTab === 'strumenti'
-                                    ? 'border-indigo-600 text-indigo-700'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700'
-                            }`}
-                        >
-                            <Wrench className="w-4 h-4 shrink-0" />
-                            <span className="hidden sm:inline">Strumenti utilizzati</span>
-                        </button>
-                        {/* Tooltip */}
-                        <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 scale-90 rounded bg-slate-900 px-2.5 py-1 text-xs text-white opacity-0 transition-all group-hover:opacity-100 group-hover:scale-100 whitespace-nowrap shadow-md sm:hidden">
-                            Strumenti utilizzati
                             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
                         </div>
                     </div>
@@ -398,18 +376,37 @@ export default function ProfilePage() {
                         <button
                             type="button"
                             onClick={() => setActiveTab('portfolio')}
-                            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+                            className={`flex items-center justify-center p-3 border-b-2 -mb-px transition-colors ${
                                 activeTab === 'portfolio'
                                     ? 'border-indigo-600 text-indigo-700'
                                     : 'border-transparent text-slate-500 hover:text-slate-700'
                             }`}
                         >
-                            <Folder className="w-4 h-4 shrink-0" />
-                            <span className="hidden sm:inline">Portfolio</span>
+                            <Folder className="w-5 h-5 shrink-0" />
                         </button>
                         {/* Tooltip */}
-                        <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 scale-90 rounded bg-slate-900 px-2.5 py-1 text-xs text-white opacity-0 transition-all group-hover:opacity-100 group-hover:scale-100 whitespace-nowrap shadow-md sm:hidden">
+                        <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 scale-90 rounded bg-slate-900 px-2.5 py-1 text-xs text-white opacity-0 transition-all group-hover:opacity-100 group-hover:scale-100 whitespace-nowrap shadow-md">
                             Portfolio
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
+                        </div>
+                    </div>
+
+                    {/* Tab: Strumenti */}
+                    <div className="group relative">
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('strumenti')}
+                            className={`flex items-center justify-center p-3 border-b-2 -mb-px transition-colors ${
+                                activeTab === 'strumenti'
+                                    ? 'border-indigo-600 text-indigo-700'
+                                    : 'border-transparent text-slate-500 hover:text-slate-700'
+                            }`}
+                        >
+                            <Wrench className="w-5 h-5 shrink-0" />
+                        </button>
+                        {/* Tooltip */}
+                        <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 scale-90 rounded bg-slate-900 px-2.5 py-1 text-xs text-white opacity-0 transition-all group-hover:opacity-100 group-hover:scale-100 whitespace-nowrap shadow-md">
+                            Strumenti utilizzati
                             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
                         </div>
                     </div>
