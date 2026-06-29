@@ -1,6 +1,5 @@
 'use client';
 
-import { ArrowRight } from 'lucide-react';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 
@@ -25,9 +24,6 @@ export function InputMethodSelector({ onSelect, questionnaire }: InputMethodSele
                 onClick={() => onSelect('manual')}
                 className="group relative flex flex-col items-center justify-center p-8 h-56 rounded-lg bg-white border border-slate-200 shadow-sm hover:border-indigo-200 transition-colors text-left"
             >
-                <div className="absolute top-4 right-4 p-2 rounded-full bg-slate-50 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <ArrowRight className="w-5 h-5 text-indigo-600" />
-                </div>
                 <h3 className="text-xl font-semibold mb-2 text-slate-900">{t('method.manual.title')}</h3>
                 <p className="text-sm text-center text-slate-600 px-4">
                     {manualDescription}
@@ -38,10 +34,6 @@ export function InputMethodSelector({ onSelect, questionnaire }: InputMethodSele
                 onClick={() => onSelect('upload')}
                 className="group relative flex flex-col items-center justify-center p-8 h-56 rounded-lg bg-white border border-slate-200 shadow-sm hover:border-indigo-200 transition-colors text-left"
             >
-                <div className="absolute top-4 right-4 p-2 rounded-full bg-slate-50 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <ArrowRight className="w-5 h-5 text-indigo-600" />
-                </div>
-
                 <div className="absolute top-4 left-4">
                     <span className="px-2 py-1 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
                         {t('method.upload.badge')}

@@ -17,9 +17,8 @@ const OpenCodeExperience = dynamic(
     () => import('@/components/qsa/OpenCodeExperience').then((mod) => mod.OpenCodeExperience),
     { ssr: false }
 );
-import { ArrowRight, MessageSquare, Terminal, LogIn } from 'lucide-react';
+import { MessageSquare, Terminal, LogIn } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { StickyActions } from '@/components/ui/StickyActions';
 import { FlowStepper } from '@/components/ui/FlowStepper';
 import { CompassMark } from '@/components/ui/CompassMark';
 import { toast } from '@/components/ui/Toast';
@@ -74,10 +73,9 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
                 <button
                     type="button"
                     onClick={onStart}
-                    className="mt-8 inline-flex items-center gap-2 rounded-md bg-ochre-500 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-ochre-600"
+                    className="mt-8 inline-flex items-center rounded-md bg-ochre-500 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-ochre-600"
                 >
                     {t('app.home.cta')}
-                    <ArrowRight className="h-4 w-4" />
                 </button>
             </div>
 
@@ -543,24 +541,20 @@ export default function Home() {
                         />
                     )}
 
-                    {/* Step: Dashboard with Profile.
-                        CTA ancorata in fondo: il grafico (QSA = molti fattori) scorre sopra,
-                        il bottone "Inizia" resta sempre visibile senza scrollare. */}
+                    {/* Step: Dashboard with Profile. */}
                     {step === 'dashboard' && scores && selectedQuestionnaire && (
                         <div className="space-y-4 animate-fade-in-up">
                             <BackButton onClick={goBack} label={t('nav.back')} />
                             <ProfileVisualization scores={scores} questionnaire={selectedQuestionnaire} />
 
-                            <StickyActions>
-                                <div className="glass-panel px-5 py-3 flex justify-end shadow-md">
-                                    <button
-                                        onClick={startInteraction}
-                                        className="shrink-0 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center"
-                                    >
-                                        {t('dashboard.ready.btn')}
-                                    </button>
-                                </div>
-                            </StickyActions>
+                            <div className="flex justify-end">
+                                <button
+                                    onClick={startInteraction}
+                                    className="shrink-0 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors"
+                                >
+                                    {t('dashboard.ready.btn')}
+                                </button>
+                            </div>
                         </div>
                     )}
 

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { QUESTIONNAIRE_LIST, QuestionnaireType, QuestionnaireConfig } from '@/lib/questionnaires';
-import { AlertTriangle, ArrowRight, BookOpen, ChevronDown, ExternalLink } from 'lucide-react';
+import { AlertTriangle, BookOpen, ChevronDown, ExternalLink } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { BackButton } from '@/components/ui/BackButton';
 
@@ -77,18 +77,16 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                     <button
                         onClick={() => onSelect(q)}
-                        className="group inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+                        className="inline-flex items-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
                     >
                         {t('selector.useTool')}
-                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                     </button>
                     {hasInAppAdministration && (
                         <Link
                             href={`/somministrazione/${q.id}/${lang}`}
-                            className="group inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                            className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
                         >
                             {t('selector.completeQuestionnaire')}
-                            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                         </Link>
                     )}
                     {!hasInAppAdministration && hasExternalAssessment && (
@@ -164,10 +162,9 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                     <button
                         type="button"
                         onClick={() => setLang('en')}
-                        className="inline-flex shrink-0 items-center gap-2 rounded-md bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-800 transition-colors"
+                        className="inline-flex shrink-0 items-center rounded-md bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-800 transition-colors"
                     >
                         {t('selector.unavailable.switchEnglish')}
-                        <ArrowRight className="w-4 h-4" />
                     </button>
                 </section>
             )}
@@ -204,10 +201,9 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                             <div className="flex flex-wrap items-center gap-2 pt-1">
                                 <Link
                                     href="/profilo/cambiamenti"
-                                    className="group inline-flex items-center gap-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 text-sm font-semibold transition-colors"
+                                    className="inline-flex items-center rounded-md bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 text-sm font-semibold transition-colors"
                                 >
                                     {t('selector.useTool')}
-                                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                                 </Link>
                             </div>
                         </article>
@@ -230,10 +226,9 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                     </div>
                     <Link
                         href="/pqbl"
-                        className="group inline-flex shrink-0 items-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+                        className="inline-flex shrink-0 items-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
                     >
                         {t('pqbl.card.cta')}
-                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                     </Link>
                 </div>
             </section>

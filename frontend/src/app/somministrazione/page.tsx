@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, Languages } from 'lucide-react';
+import { Languages } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { Callout } from '@/components/ui/Callout';
 import type { Lang } from '@/lib/i18n';
@@ -141,28 +141,25 @@ export default function TestAdministrationsPage() {
                                 {lang === 'en' && (
                                     <Link
                                         href={`/somministrazione/${id}/en`}
-                                        className="inline-flex items-center justify-between rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
+                                        className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
                                     >
                                         {copy.open}
-                                        <ArrowRight className="w-4 h-4" />
                                     </Link>
                                 )}
                                 {lang === 'es' && (
                                     <Link
                                         href={`/somministrazione/${id}/es`}
-                                        className="inline-flex items-center justify-between rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
+                                        className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
                                     >
                                         {copy.open}
-                                        <ArrowRight className="w-4 h-4" />
                                     </Link>
                                 )}
                                 {lang === 'sv' && (
                                     <Link
                                         href={`/somministrazione/${id}/sv`}
-                                        className="inline-flex items-center justify-between rounded-md border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-800 hover:bg-indigo-100"
+                                        className="inline-flex items-center rounded-md border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-800 hover:bg-indigo-100"
                                     >
                                         {copy.open}
-                                        <ArrowRight className="w-4 h-4" />
                                     </Link>
                                 )}
                             </div>
