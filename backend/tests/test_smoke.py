@@ -1944,6 +1944,8 @@ def test_chat_smoke_mocked_ai():
 def test_chat_logs_conversation_id_and_admin_filter():
     session_id = "conversation-log-session"
     conversation_id = "conversation-log-id"
+    second_session_id = "conversation-log-session-2"
+    second_conversation_id = "conversation-log-id-2"
     r = client.post("/chat", json={
         "message": "ciao",
         "mode": "generic",
@@ -1953,6 +1955,14 @@ def test_chat_logs_conversation_id_and_admin_filter():
     assert r.status_code == 200, r.text
     assert r.json()["session_id"] == session_id
     assert r.json()["conversation_id"] == conversation_id
+    r2 = client.post("/chat", json={
+        "message": "ciao ancora",
+        "mode": "generic",
+        "session_id": second_session_id,
+        "conversation_id": second_conversation_id,
+    })
+    assert r2.status_code == 200, r2.text
+    assert r2.json()["conversation_id"] == second_conversation_id
 
     with _TestSession() as db:
         entry = (
@@ -1968,6 +1978,11 @@ def test_chat_logs_conversation_id_and_admin_filter():
     listed = client.get(f"/admin/logs?conversation_id={conversation_id}")
     assert listed.status_code == 200, listed.text
     assert any(row["conversation_id"] == conversation_id for row in listed.json())
+
+    listed_multi = client.get(f"/admin/logs?conversation_id={conversation_id},{second_conversation_id}")
+    assert listed_multi.status_code == 200, listed_multi.text
+    listed_multi_ids = {row["conversation_id"] for row in listed_multi.json()}
+    assert {conversation_id, second_conversation_id} <= listed_multi_ids
 
     conversation = client.get(f"/admin/logs/conversation/{conversation_id}")
     assert conversation.status_code == 200, conversation.text

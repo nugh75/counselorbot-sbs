@@ -59,7 +59,7 @@ def _to_float(value, field: str) -> Optional[float]:
 def _multi_values(value: Optional[str]) -> List[str]:
     """Spezza un filtro multi-valore (CSV) in lista deduplicata, ordine preservato.
 
-    Permette alla UI di mandare piu' username / codici anonimi separati da virgola
+    Permette alla UI di mandare piu' username / codici anonimi / conversazioni separati da virgola
     (multiscelta) mantenendo retro-compatibile il valore singolo.
     """
     if not value:
@@ -70,6 +70,10 @@ def _multi_values(value: Optional[str]) -> List[str]:
         if cleaned and cleaned not in seen:
             seen[cleaned] = None
     return list(seen.keys())
+
+
+def _conversation_id_detail_match(details_text, conversation_id: str):
+    return details_text.ilike(f'%\"conversation_id\"%\"{conversation_id}\"%')
 
 
 def _apply_log_filters(
@@ -97,13 +101,17 @@ def _apply_log_filters(
     """Applica i filtri comuni a una query su models.Log. Muta e ritorna `q`."""
     if session_id:
         q = q.filter(models.Log.session_id == session_id)
-    if conversation_id:
+    conversation_ids = _multi_values(conversation_id)
+    if conversation_ids:
         details_text = cast(models.Log.details, Text)
-        q = q.filter(or_(
-            models.Log.conversation_id == conversation_id,
-            models.Log.session_id == conversation_id,
-            details_text.ilike(f'%\"conversation_id\"%{conversation_id}%'),
-        ))
+        clauses = []
+        for conv_id in conversation_ids:
+            clauses.extend([
+                models.Log.conversation_id == conv_id,
+                models.Log.session_id == conv_id,
+                _conversation_id_detail_match(details_text, conv_id),
+            ])
+        q = q.filter(or_(*clauses))
     if action:
         q = q.filter(models.Log.action == action)
     if provider:
@@ -466,7 +474,7 @@ async def read_conversation_logs(
         .filter(or_(
             models.Log.conversation_id == conversation_id,
             models.Log.session_id == conversation_id,
-            cast(models.Log.details, Text).ilike(f'%\"conversation_id\"%{conversation_id}%'),
+            _conversation_id_detail_match(cast(models.Log.details, Text), conversation_id),
         ))
         .order_by(models.Log.timestamp.asc())
         .all()
