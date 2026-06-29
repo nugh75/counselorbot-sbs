@@ -691,7 +691,10 @@ async def download_questionnaire_pdf(
     )
     for row in log_rows:
         d = row.details or {}
-        user_input = (d.get("user_input") or d.get("effective_user_input") or "").strip()
+        # ponytail: usa solo user_input (la vera interazione studente).
+        # effective_user_input contiene il prompt di sistema inglese dei guided
+        # step: non è una vera interazione e non va nel PDF studente.
+        user_input = (d.get("user_input") or "").strip()
         bot_response = (d.get("bot_response") or "").strip()
         if user_input:
             messages.append({"role": "student", "text": user_input})
