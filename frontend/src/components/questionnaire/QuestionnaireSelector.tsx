@@ -207,7 +207,7 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                                     href="/profilo/cambiamenti"
                                     className="group inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
                                 >
-                                    Apri lo strumento
+                                    Usa lo strumento
                                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                                 </Link>
                             </div>
