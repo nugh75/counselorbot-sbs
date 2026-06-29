@@ -700,22 +700,14 @@ export default function Home() {
                                     </button>
                                 </div>
 
-                                <div className="pt-4 border-t border-slate-100">
-                                    <p className="text-sm text-slate-400 mb-3">
-                                        {t('completed.thanks')}
-                                    </p>
-                                    <a
-                                        href="/questionario"
-                                        className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
-                                    >
-                                        {t('completed.feedbackLink')}
-                                    </a>
-                                </div>
+                                <p className="pt-4 border-t border-slate-100 text-sm text-slate-400">
+                                    {t('completed.thanks')}
+                                </p>
                             </div>
                         </div>
                     )}
 
-                    {/* Step: Farewell — commiato, questionario di gradimento, torna alla home */}
+                    {/* Step: Farewell — commiato e ritorno all'inizio del percorso. */}
                     {step === 'farewell' && (
                         <div className="max-w-xl mx-auto">
                             <div className="glass-panel p-8 text-center space-y-6">
@@ -727,14 +719,6 @@ export default function Home() {
                                 </div>
 
                                 <div className="space-y-4 pt-4">
-                                    <a
-                                        href="/questionario"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="block w-full py-3.5 bg-ochre-500 hover:bg-ochre-600 text-white font-bold rounded-md transition-colors shadow-md"
-                                    >
-                                        {t('farewell.feedback')}
-                                    </a>
                                     <button
                                         onClick={() => {
                                             setSelectedCounselorId(null);
