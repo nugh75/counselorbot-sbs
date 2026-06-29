@@ -37,7 +37,7 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
     const isUnavailableQuestionnaireLang = lang === 'fr' || lang === 'de';
 
     // Card strumento, senza icona: testa (nome + badge + nome esteso), descrizione,
-    // eventuali credenziali sito, dettaglio espandibile e azioni.
+    // dettaglio espandibile, azioni ed eventuali credenziali sito.
     const renderCard = (q: QuestionnaireConfig) => {
         const hasInAppAdministration = isAdministrationLang && !q.agentOnly;
         const externalAssessmentUrl = isItalian && !q.agentOnly ? STRATEGIC_COMPETENCES_URLS[q.id] : undefined;
@@ -74,11 +74,6 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                 <p className="text-sm text-slate-500 leading-relaxed grow">
                     {t(`q.${q.id}.description`)}
                 </p>
-                {hasExternalAssessment && (
-                    <p className="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-900">
-                        {t('selector.externalCredentials')}
-                    </p>
-                )}
                 {isExpanded && (
                     <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 text-sm text-slate-600 space-y-2">
                         <div>
@@ -139,6 +134,18 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                         {isExpanded ? t('selector.hide') : t('selector.expand')}
                     </button>
                 </div>
+                {hasExternalAssessment && (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                        <div className="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-xs text-sky-900">
+                            <span className="font-semibold text-sky-700">{t('detail.assessment.codeLabel')}</span>
+                            <span className="ml-2 font-bold">1087</span>
+                        </div>
+                        <div className="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-xs text-sky-900">
+                            <span className="font-semibold text-sky-700">{t('detail.assessment.passwordLabel')}</span>
+                            <span className="ml-2 font-bold">counselor</span>
+                        </div>
+                    </div>
+                )}
             </article>
         );
     };

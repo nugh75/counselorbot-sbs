@@ -24,10 +24,9 @@ export default function InstrumentDetailsPage() {
     const params = useParams<{ id: string }>();
     const id = params.id as QuestionnaireType;
     const questionnaire = AVAILABLE_INSTRUMENTS.includes(id) ? QUESTIONNAIRES[id] : null;
-    const assessmentUrl = STRATEGIC_COMPETENCES_URLS[id];
-    // Surface the in-app questionnaire under validation alongside the external
-    // Competenze Strategiche platform. en/es/sv use their own locale; Italian
-    // shows the English version (default) for completeness.
+    const assessmentUrl = lang === 'it' ? STRATEGIC_COMPETENCES_URLS[id] : undefined;
+    // Surface the in-app questionnaire under validation. en/es/sv use their own
+    // locale; Italian also shows the English version (default) for completeness.
     const inAppLocale: AdministrationLocale | null =
         lang === 'en' || lang === 'es' || lang === 'sv' ? lang
             : lang === 'it' ? 'en'
