@@ -95,7 +95,7 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores }: Score
     const gridCols = groupedFactors.length === 1 ? 'grid-cols-1 max-w-xl mx-auto' : 'md:grid-cols-2';
 
     return (
-        <form onSubmit={handleSubmit(onFormSubmit)} className="w-full max-w-4xl mx-auto space-y-4 animate-fade-in-up">
+        <form id="score-form" onSubmit={handleSubmit(onFormSubmit)} className="w-full max-w-4xl mx-auto space-y-4 animate-fade-in-up">
             <div className={cn("grid gap-x-8 gap-y-3", gridCols)}>
                 {groupedFactors.map(({ prefix, factors }) => {
                     const colorClass = PREFIX_COLOR[prefix] || 'text-slate-700';
@@ -109,15 +109,6 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores }: Score
                         </div>
                     );
                 })}
-            </div>
-
-            <div className="flex justify-end pt-2">
-                <button
-                    type="submit"
-                    className="px-8 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors"
-                >
-                    {t('score.submit')}
-                </button>
             </div>
         </form>
     );

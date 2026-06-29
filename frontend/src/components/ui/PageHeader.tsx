@@ -13,12 +13,18 @@ interface PageHeaderProps {
     onBack?: () => void;
     backLabel?: string;
     actions?: ReactNode;
+    forward?: ReactNode;
 }
 
-export function PageHeader({ title, subtitle, backHref, onBack, backLabel = 'Indietro', actions }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, backHref, onBack, backLabel = 'Indietro', actions, forward }: PageHeaderProps) {
     return (
         <div className="flex flex-wrap items-center gap-4">
-            {(backHref || onBack) && <BackButton href={backHref} onClick={onBack} label={backLabel} />}
+            {(backHref || onBack) && (
+                <div className="flex items-center gap-3">
+                    <BackButton href={backHref} onClick={onBack} label={backLabel} />
+                    {forward}
+                </div>
+            )}
             <div className="min-w-0">
                 <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
                 {subtitle && <p className="text-slate-500 mt-1">{subtitle}</p>}

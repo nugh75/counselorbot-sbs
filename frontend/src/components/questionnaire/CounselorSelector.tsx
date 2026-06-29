@@ -5,6 +5,7 @@ import { Check, Cpu, Cloud } from 'lucide-react';
 import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId, subscribeToCounselor, PublicCounselor } from '@/lib/counselor';
 import { useI18n } from '@/lib/i18n-context';
 import { BackButton } from '@/components/ui/BackButton';
+import { ForwardButton } from '@/components/ui/ForwardButton';
 
 // Selettore counselor lato utente. Se non ci sono counselor configurati non
 // renderizza nulla: il flusso resta identico a prima.
@@ -140,7 +141,16 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName }: Cou
 
     return (
         <section className="space-y-5">
-            {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
+            <div className="flex items-center gap-3">
+                {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
+                {onContinue && (
+                    <ForwardButton
+                        onClick={onContinue}
+                        label={t('counselor.continue')}
+                        disabled={!selected}
+                    />
+                )}
+            </div>
 
             <div className="glass-panel p-6 sm:p-7">
                 <div className="max-w-3xl">
@@ -173,18 +183,6 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName }: Cou
                 </div>
             ))}
 
-            {onContinue && (
-                <div className="flex justify-end">
-                    <button
-                        type="button"
-                        onClick={onContinue}
-                        disabled={!selected}
-                        className="inline-flex items-center rounded-md bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-                    >
-                        {t('counselor.continue')}
-                    </button>
-                </div>
-            )}
-        </section>
+            </section>
     );
 }
