@@ -112,33 +112,39 @@ def _apply_log_filters(
                 _conversation_id_detail_match(details_text, conv_id),
             ])
         q = q.filter(or_(*clauses))
-    if action:
-        q = q.filter(models.Log.action == action)
-    if provider:
-        q = q.filter(or_(
-            models.Log.provider == provider,
-            cast(models.Log.details, Text).ilike(f'%\"provider\"%{provider}%'),
-        ))
-    if questionnaire_type:
-        q = q.filter(or_(
-            models.Log.questionnaire_type == questionnaire_type,
-            cast(models.Log.details, Text).ilike(f'%\"questionnaire_type\"%{questionnaire_type}%'),
-        ))
+    actions = _multi_values(action)
+    if actions:
+        q = q.filter(models.Log.action.in_(actions))
+    providers = _multi_values(provider)
+    if providers:
+        clauses = [models.Log.provider.in_(providers)]
+        for prov in providers:
+            clauses.append(cast(models.Log.details, Text).ilike(f'%\"provider\"%{prov}%'))
+        q = q.filter(or_(*clauses))
+    qtypes = _multi_values(questionnaire_type)
+    if qtypes:
+        clauses = [models.Log.questionnaire_type.in_(qtypes)]
+        for qt in qtypes:
+            clauses.append(cast(models.Log.details, Text).ilike(f'%\"questionnaire_type\"%{qt}%'))
+        q = q.filter(or_(*clauses))
     usernames = _multi_values(username)
     if usernames:
         q = q.filter(models.Log.username.in_(usernames))
     anon_codes = _multi_values(anonymous_research_code)
     if anon_codes:
         q = q.filter(models.Log.anonymous_research_code.in_(anon_codes))
-    if model:
-        q = q.filter(or_(
-            models.Log.model_name == model,
-            cast(models.Log.details, Text).ilike(f'%\"model\"%{model}%'),
-        ))
-    if phase:
-        q = q.filter(models.Log.phase == phase)
-    if mode:
-        q = q.filter(models.Log.mode == mode)
+    models_list = _multi_values(model)
+    if models_list:
+        clauses = [models.Log.model_name.in_(models_list)]
+        for md in models_list:
+            clauses.append(cast(models.Log.details, Text).ilike(f'%\"model\"%{md}%'))
+        q = q.filter(or_(*clauses))
+    phases = _multi_values(phase)
+    if phases:
+        q = q.filter(models.Log.phase.in_(phases))
+    modes = _multi_values(mode)
+    if modes:
+        q = q.filter(models.Log.mode.in_(modes))
     if paid_only:
         q = q.filter(models.Log.cost_usd.isnot(None), models.Log.cost_usd > 0)
     cmin = _to_float(cost_min, "cost_min")
@@ -384,12 +390,15 @@ async def read_logs(
     phase: Optional[str] = None,
     mode: Optional[str] = None,
     has_pii: bool = False,
+    sort: Optional[str] = "desc",
     current_user: models.User = Depends(auth.get_current_active_admin),
     db: Session = Depends(get_db),
 ):
     """Log conversazionali con filtri opzionali (sessione, azione, provider,
     questionario, username, range date, ricerca testuale nel details, modello,
-    solo-a-pagamento, range costo, feedback, fase, mode, PII rilevata)."""
+    solo-a-pagamento, range costo, feedback, fase, mode, PII rilevata).
+    ``sort`` controlla l'ordine temporale: "desc" (piu' recenti prima, default)
+    o "asc" (cronologico crescente)."""
     query = db.query(models.Log)
     query = _apply_log_filters(
         query,
@@ -400,7 +409,8 @@ async def read_logs(
         model=model, paid_only=paid_only, cost_min=cost_min, cost_max=cost_max,
         feedback=feedback, phase=phase, mode=mode, has_pii=has_pii,
     )
-    logs = query.order_by(models.Log.timestamp.desc()).offset(skip).limit(min(limit, 500)).all()
+    order_col = models.Log.timestamp.asc() if (sort or "desc").lower() == "asc" else models.Log.timestamp.desc()
+    logs = query.order_by(order_col).offset(skip).limit(min(limit, 500)).all()
     return _prepare_log_response(db, logs)
 
 
@@ -1016,11 +1026,13 @@ async def export_logs(
     phase: Optional[str] = None,
     mode: Optional[str] = None,
     has_pii: bool = False,
+    sort: Optional[str] = "desc",
     current_user: models.User = Depends(auth.get_current_active_admin),
     db: Session = Depends(get_db),
 ):
     """Esporta i log (CSV/JSON) con gli stessi filtri di /admin/logs.
-    Rispetta gli stessi filtri di read_logs. I PII sono gia' redatti nel DB."""
+    Rispetta gli stessi filtri di read_logs. I PII sono gia' redatti nel DB.
+    ``sort`` controlla l'ordine temporale: "desc" (default) o "asc"."""
     query = db.query(models.Log)
     query = _apply_log_filters(
         query,
@@ -1031,7 +1043,8 @@ async def export_logs(
         model=model, paid_only=paid_only, cost_min=cost_min, cost_max=cost_max,
         feedback=feedback, phase=phase, mode=mode, has_pii=has_pii,
     )
-    logs = query.order_by(models.Log.timestamp.desc()).limit(10000).all()
+    order_col = models.Log.timestamp.asc() if (sort or "desc").lower() == "asc" else models.Log.timestamp.desc()
+    logs = query.order_by(order_col).limit(10000).all()
     _prepare_log_response(db, logs)
 
     fmt = (format or "csv").lower()

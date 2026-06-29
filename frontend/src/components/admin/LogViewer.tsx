@@ -253,6 +253,7 @@ export function LogViewer() {
     const [autoRefresh, setAutoRefresh] = useState(false);
     const [page, setPage] = useState(0);
     const [limit, setLimit] = useState(50);
+    const [sort, setSort] = useState<'desc' | 'asc'>('desc');
     const [filters, setFilters] = useState({
         q: '',
         action: '',
@@ -318,6 +319,30 @@ export function LogViewer() {
         () => (filters.conversation_id ? filters.conversation_id.split(',').filter(Boolean) : []),
         [filters.conversation_id],
     );
+    const actionSelected = useMemo(
+        () => (filters.action ? filters.action.split(',').filter(Boolean) : []),
+        [filters.action],
+    );
+    const providerSelected = useMemo(
+        () => (filters.provider ? filters.provider.split(',').filter(Boolean) : []),
+        [filters.provider],
+    );
+    const questionnaireSelected = useMemo(
+        () => (filters.questionnaire_type ? filters.questionnaire_type.split(',').filter(Boolean) : []),
+        [filters.questionnaire_type],
+    );
+    const modelSelected = useMemo(
+        () => (filters.model ? filters.model.split(',').filter(Boolean) : []),
+        [filters.model],
+    );
+    const phaseSelected = useMemo(
+        () => (filters.phase ? filters.phase.split(',').filter(Boolean) : []),
+        [filters.phase],
+    );
+    const modeSelected = useMemo(
+        () => (filters.mode ? filters.mode.split(',').filter(Boolean) : []),
+        [filters.mode],
+    );
 
     const buildParams = useCallback((withPaging: boolean) => {
         const params = new URLSearchParams();
@@ -327,12 +352,13 @@ export function LogViewer() {
             else if (key === 'to_date') params.set(key, `${value}T23:59:59`);
             else params.set(key, value.trim());
         });
+        params.set('sort', sort);
         if (withPaging) {
             params.set('skip', String(page * limit));
             params.set('limit', String(limit));
         }
         return params;
-    }, [filters, limit, page]);
+    }, [filters, limit, page, sort]);
 
     const handleAuthError = useCallback((res: Response) => {
         if (res.status === 401 || res.status === 403) {
@@ -555,22 +581,22 @@ export function LogViewer() {
 
     const actionOptions = useMemo(() => {
         const values = options.actions.length ? options.actions : DEFAULT_ACTIONS;
-        return ['', ...Array.from(new Set(values)).sort()];
+        return Array.from(new Set(values)).sort();
     }, [options.actions]);
 
     const providerOptions = useMemo(() => {
         const values = options.providers.length ? options.providers : DEFAULT_PROVIDERS;
-        return ['', ...Array.from(new Set(values)).sort()];
+        return Array.from(new Set(values)).sort();
     }, [options.providers]);
 
     const questionnaireOptions = useMemo(() => {
         const values = options.questionnaire_types.length ? options.questionnaire_types : DEFAULT_QUESTIONNAIRES;
-        return ['', ...Array.from(new Set(values)).sort()];
+        return Array.from(new Set(values)).sort();
     }, [options.questionnaire_types]);
 
-    const modelOptions = useMemo(() => ['', ...Array.from(new Set(options.models)).sort()], [options.models]);
-    const phaseOptions = useMemo(() => ['', ...Array.from(new Set(options.phases)).sort()], [options.phases]);
-    const modeOptions = useMemo(() => ['', ...Array.from(new Set(options.modes)).sort()], [options.modes]);
+    const modelOptions = useMemo(() => Array.from(new Set(options.models)).sort(), [options.models]);
+    const phaseOptions = useMemo(() => Array.from(new Set(options.phases)).sort(), [options.phases]);
+    const modeOptions = useMemo(() => Array.from(new Set(options.modes)).sort(), [options.modes]);
 
     const renderLogPreview = (log: LogEntry) => {
         const details = asObject(log.details);
@@ -775,15 +801,36 @@ export function LogViewer() {
                             className="h-10 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-700 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
                         />
                     </label>
-                    <select value={filters.action} onChange={(event) => setFilter('action', event.target.value)} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-400">
-                        {actionOptions.map((value) => <option key={value || 'all'} value={value}>{value || t('admin.logs.allActions')}</option>)}
-                    </select>
-                    <select value={filters.provider} onChange={(event) => setFilter('provider', event.target.value)} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-400">
-                        {providerOptions.map((value) => <option key={value || 'all'} value={value}>{value || t('admin.logs.allProviders')}</option>)}
-                    </select>
-                    <select value={filters.questionnaire_type} onChange={(event) => setFilter('questionnaire_type', event.target.value)} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-400">
-                        {questionnaireOptions.map((value) => <option key={value || 'all'} value={value}>{value || t('admin.logs.allQuestionnaires')}</option>)}
-                    </select>
+                    <MultiSelectFilter
+                        label={t('admin.logs.allActions')}
+                        options={actionOptions}
+                        selected={actionSelected}
+                        onChange={(values) => setMultiFilter('action', values)}
+                        searchPlaceholder={t('admin.logs.multiSelectSearch')}
+                        selectedLabel={(n) => t('admin.logs.multiSelectSelected').replace('{n}', String(n))}
+                        clearLabel={t('admin.logs.multiSelectClear')}
+                        emptyLabel={t('admin.logs.multiSelectEmpty')}
+                    />
+                    <MultiSelectFilter
+                        label={t('admin.logs.allProviders')}
+                        options={providerOptions}
+                        selected={providerSelected}
+                        onChange={(values) => setMultiFilter('provider', values)}
+                        searchPlaceholder={t('admin.logs.multiSelectSearch')}
+                        selectedLabel={(n) => t('admin.logs.multiSelectSelected').replace('{n}', String(n))}
+                        clearLabel={t('admin.logs.multiSelectClear')}
+                        emptyLabel={t('admin.logs.multiSelectEmpty')}
+                    />
+                    <MultiSelectFilter
+                        label={t('admin.logs.allQuestionnaires')}
+                        options={questionnaireOptions}
+                        selected={questionnaireSelected}
+                        onChange={(values) => setMultiFilter('questionnaire_type', values)}
+                        searchPlaceholder={t('admin.logs.multiSelectSearch')}
+                        selectedLabel={(n) => t('admin.logs.multiSelectSelected').replace('{n}', String(n))}
+                        clearLabel={t('admin.logs.multiSelectClear')}
+                        emptyLabel={t('admin.logs.multiSelectEmpty')}
+                    />
                     <MultiSelectFilter
                         label={t('admin.logs.allUsernames')}
                         options={options.usernames}
@@ -837,15 +884,36 @@ export function LogViewer() {
                             clearLabel={t('admin.logs.multiSelectClear')}
                             emptyLabel={t('admin.logs.multiSelectEmpty')}
                         />
-                        <select value={filters.model} onChange={(event) => setFilter('model', event.target.value)} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-400">
-                            {modelOptions.map((value) => <option key={value || 'all'} value={value}>{value || t('admin.logs.allModels')}</option>)}
-                        </select>
-                        <select value={filters.phase} onChange={(event) => setFilter('phase', event.target.value)} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-400">
-                            {phaseOptions.map((value) => <option key={value || 'all'} value={value}>{value || t('admin.logs.allPhases')}</option>)}
-                        </select>
-                        <select value={filters.mode} onChange={(event) => setFilter('mode', event.target.value)} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-400">
-                            {modeOptions.map((value) => <option key={value || 'all'} value={value}>{value || t('admin.logs.allModes')}</option>)}
-                        </select>
+                        <MultiSelectFilter
+                            label={t('admin.logs.allModels')}
+                            options={modelOptions}
+                            selected={modelSelected}
+                            onChange={(values) => setMultiFilter('model', values)}
+                            searchPlaceholder={t('admin.logs.multiSelectSearch')}
+                            selectedLabel={(n) => t('admin.logs.multiSelectSelected').replace('{n}', String(n))}
+                            clearLabel={t('admin.logs.multiSelectClear')}
+                            emptyLabel={t('admin.logs.multiSelectEmpty')}
+                        />
+                        <MultiSelectFilter
+                            label={t('admin.logs.allPhases')}
+                            options={phaseOptions}
+                            selected={phaseSelected}
+                            onChange={(values) => setMultiFilter('phase', values)}
+                            searchPlaceholder={t('admin.logs.multiSelectSearch')}
+                            selectedLabel={(n) => t('admin.logs.multiSelectSelected').replace('{n}', String(n))}
+                            clearLabel={t('admin.logs.multiSelectClear')}
+                            emptyLabel={t('admin.logs.multiSelectEmpty')}
+                        />
+                        <MultiSelectFilter
+                            label={t('admin.logs.allModes')}
+                            options={modeOptions}
+                            selected={modeSelected}
+                            onChange={(values) => setMultiFilter('mode', values)}
+                            searchPlaceholder={t('admin.logs.multiSelectSearch')}
+                            selectedLabel={(n) => t('admin.logs.multiSelectSelected').replace('{n}', String(n))}
+                            clearLabel={t('admin.logs.multiSelectClear')}
+                            emptyLabel={t('admin.logs.multiSelectEmpty')}
+                        />
                         <select value={filters.feedback} onChange={(event) => setFilter('feedback', event.target.value)} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-400">
                             <option value="">{t('admin.logs.feedbackAll')}</option>
                             <option value="helpful">{t('admin.logs.feedbackHelpful')}</option>
@@ -918,6 +986,16 @@ export function LogViewer() {
                     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 text-sm text-slate-500">
                         <span>{t('admin.logs.totalCount').replace('{n}', String(total))}</span>
                         <div className="flex items-center gap-2">
+                            <span className="text-xs text-slate-400">{t('admin.logs.sortOrder')}:</span>
+                            <select
+                                value={sort}
+                                onChange={(event) => { setSort(event.target.value as 'desc' | 'asc'); setPage(0); }}
+                                className="h-9 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-sky-400"
+                            >
+                                <option value="desc">{t('admin.logs.sortDesc')}</option>
+                                <option value="asc">{t('admin.logs.sortAsc')}</option>
+                            </select>
+                            <span className="mx-1 h-4 w-px bg-slate-200"></span>
                             <select value={limit} onChange={(event) => { setLimit(Number(event.target.value)); setPage(0); }} className="h-9 rounded-md border border-slate-200 bg-white px-2 text-sm">
                                 {[25, 50, 100, 200].map((value) => <option key={value} value={value}>{value}</option>)}
                             </select>
@@ -946,7 +1024,18 @@ export function LogViewer() {
                             </colgroup>
                             <thead className="bg-slate-50 text-xs uppercase text-slate-500">
                                 <tr>
-                                    <th className="px-2 py-2 font-semibold">{t('admin.logs.date')}</th>
+                                    <th className="px-2 py-2 font-semibold select-none">
+                                        <button
+                                            type="button"
+                                            onClick={() => setSort((current) => (current === 'desc' ? 'asc' : 'desc'))}
+                                            className="flex items-center gap-1 hover:text-slate-900 focus:outline-none"
+                                        >
+                                            {t('admin.logs.date')}
+                                            <span className="text-slate-400">
+                                                {sort === 'desc' ? '↓' : '↑'}
+                                            </span>
+                                        </button>
+                                    </th>
                                     <th className="px-2 py-2 font-semibold">{t('admin.logs.conversation')}</th>
                                     <th className="px-2 py-2 font-semibold">{t('admin.logs.anonCode')}</th>
                                     <th className="px-2 py-2 font-semibold">{t('admin.logs.action')}</th>
