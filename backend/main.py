@@ -69,6 +69,56 @@ from .chat_logic import (  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
+GUIDED_COMPLETION_CONCLUSION_KEYS = (
+    "text_guided_conclusion",
+    "text_qsar_conclusion",
+    "text_ztpi_conclusion",
+    "text_savickas_conclusion",
+    "text_qpcs_conclusion",
+    "text_qpcc_conclusion",
+    "text_qap_conclusion",
+)
+
+GUIDED_COMPLETION_LANG_SUFFIXES = ("", "__en", "__es", "__fr", "__de", "__sv")
+
+GUIDED_COMPLETION_HOME_REPLACEMENTS = {
+    "Clicca sul pulsante in basso per tornare alla Home Page.": "Continua per scegliere il prossimo passaggio.",
+    "Quando vuoi, puoi tornare alla Home Page e riprendere da qui.": "Quando vuoi, continua per scegliere il prossimo passaggio.",
+    "You have completed the analysis path. Click the button below to return to the Home Page.": "You have completed the analysis path. Use the button below to choose your next step.",
+    "Click the button below to return to the Home Page.": "Use the button below to choose your next step.",
+    "Whenever you like, you can return to the Home Page and pick up from here.": "When you're ready, continue to choose your next step.",
+    "Haz clic en el botón de abajo para volver a la página de inicio.": "Usa el botón de abajo para elegir el siguiente paso.",
+    "Cuando quieras, puedes volver a la página de inicio y retomar desde aquí.": "Cuando quieras, continúa para elegir el siguiente paso.",
+    "Clique sur le bouton ci-dessous pour revenir à la page d'accueil.": "Utilise le bouton ci-dessous pour choisir la prochaine étape.",
+    "Quand tu veux, tu peux revenir à la page d'accueil et reprendre d'ici.": "Quand tu es prêt, continue pour choisir la prochaine étape.",
+    "Klicke auf die Schaltfläche unten, um zur Startseite zurückzukehren.": "Nutze die Schaltfläche unten, um den nächsten Schritt auszuwählen.",
+    "Wann immer du möchtest, kannst du zur Startseite zurückkehren und hier weitermachen.": "Wenn du bereit bist, fahre fort und wähle den nächsten Schritt.",
+    "Klicka på knappen nedan för att återgå till startsidan.": "Använd knappen nedan för att välja nästa steg.",
+    "När du vill kan du gå tillbaka till startsidan och fortsätta härifrån.": "När du är redo kan du fortsätta och välja nästa steg.",
+}
+
+
+def _migrate_guided_completion_home_texts(db):
+    """Replace old guided conclusion copy that incorrectly points to the home page."""
+    keys = [
+        f"{base_key}{suffix}"
+        for base_key in GUIDED_COMPLETION_CONCLUSION_KEYS
+        for suffix in GUIDED_COMPLETION_LANG_SUFFIXES
+    ]
+    changed = False
+
+    configs = db.query(models.Config).filter(models.Config.key.in_(keys)).all()
+    for cfg in configs:
+        value = cfg.value or ""
+        updated = value
+        for old, new in GUIDED_COMPLETION_HOME_REPLACEMENTS.items():
+            updated = updated.replace(old, new)
+        if updated != value:
+            cfg.value = updated
+            changed = True
+
+    return changed
+
 # Create Database Tables
 models.Base.metadata.create_all(bind=database.engine)
 
@@ -437,6 +487,9 @@ def _seed_and_migrate():
                     )
                 )
                 changed = True
+
+        if _migrate_guided_completion_home_texts(db):
+            changed = True
 
         if changed:
             db.commit()

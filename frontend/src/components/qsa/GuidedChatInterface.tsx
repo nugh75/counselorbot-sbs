@@ -1,6 +1,6 @@
 'use client';
 
-import { Send, ChevronRight, CheckCircle2, Loader2, BarChart3, Volume2, Square, Home, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Send, ChevronRight, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
@@ -1270,9 +1270,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     <div className="flex justify-center border-t border-slate-100 bg-slate-50 p-3 sm:p-4">
                         <button
                             onClick={onComplete}
-                            className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center gap-2"
+                            className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors"
                         >
-                            <Home className="w-5 h-5" />
                             {t('guided.backHome')}
                         </button>
                     </div>

@@ -1460,6 +1460,57 @@ def test_startup_migration_rewrites_counselorbot_prompt_identity_prefix():
         db.close()
 
 
+def test_startup_migration_rewrites_guided_completion_home_texts():
+    db = _TestSession()
+    fixtures = {
+        "text_guided_conclusion": (
+            "Hai completato il percorso QSA.\n"
+            "Hai gia' una base chiara su cui costruire.\n"
+            "Quando vuoi, puoi tornare alla Home Page e riprendere da qui."
+        ),
+        "text_qsar_conclusion__en": (
+            "You have completed the QSAr analysis path. "
+            "Click the button below to return to the Home Page."
+        ),
+    }
+    originals = {}
+    created = set()
+
+    try:
+        for key, value in fixtures.items():
+            cfg = db.query(models.Config).filter(models.Config.key == key).first()
+            if cfg is None:
+                cfg = models.Config(key=key, value="", description="test guided completion text")
+                db.add(cfg)
+                db.flush()
+                created.add(key)
+            originals[key] = cfg.value
+            cfg.value = value
+        db.commit()
+
+        assert main._migrate_guided_completion_home_texts(db) is True
+        db.commit()
+
+        italian = db.query(models.Config).filter(models.Config.key == "text_guided_conclusion").first()
+        english = db.query(models.Config).filter(models.Config.key == "text_qsar_conclusion__en").first()
+
+        assert "Home Page" not in italian.value
+        assert "prossimo passaggio" in italian.value
+        assert "Home Page" not in english.value
+        assert "choose your next step" in english.value
+    finally:
+        for key, original in originals.items():
+            cfg = db.query(models.Config).filter(models.Config.key == key).first()
+            if cfg is None:
+                continue
+            if key in created:
+                db.delete(cfg)
+            else:
+                cfg.value = original
+        db.commit()
+        db.close()
+
+
 def test_prompt_audit_scopes_certified_strategies_to_qsa_second_level_step():
     _ensure_guided_steps("QSA")
     db = _TestSession()
