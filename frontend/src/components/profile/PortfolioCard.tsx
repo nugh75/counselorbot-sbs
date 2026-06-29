@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FolderOpen, ImagePlus, Loader2, Pencil, Plus, Save, Search, Trash2, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
-import { getViewAsAccount } from '@/lib/auth';
+import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import { toast } from '@/components/ui/Toast';
 
 // In anteprima le <img> (non passano da fetch) devono puntare all'account di
@@ -70,8 +70,8 @@ export function PortfolioCard() {
             if (q.trim()) params.set('q', q.trim());
             if (categoryFilter) params.set('category', categoryFilter);
             const [itemsRes, catsRes] = await Promise.all([
-                fetch(`/api/user/portfolio?${params.toString()}`),
-                fetch('/api/user/portfolio/categories'),
+                apiFetch(`/api/user/portfolio?${params.toString()}`),
+                apiFetch('/api/user/portfolio/categories'),
             ]);
             setItems(itemsRes.ok ? await itemsRes.json() : []);
             setCategories(catsRes.ok ? await catsRes.json() : []);
@@ -99,7 +99,7 @@ export function PortfolioCard() {
                 item_date: form.item_date,
                 link: form.link,
             };
-            const res = await fetch(
+            const res = await apiFetch(
                 form.id ? `/api/user/portfolio/${form.id}` : '/api/user/portfolio',
                 {
                     method: form.id ? 'PUT' : 'POST',
@@ -123,7 +123,7 @@ export function PortfolioCard() {
     const deleteItem = async (id: number) => {
         if (!window.confirm('Eliminare questo lavoro?')) return;
         try {
-            const res = await fetch(`/api/user/portfolio/${id}`, { method: 'DELETE' });
+            const res = await apiFetch(`/api/user/portfolio/${id}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Delete failed');
             if (form?.id === id) setForm(null);
             await load();
@@ -140,7 +140,7 @@ export function PortfolioCard() {
         try {
             const data = new FormData();
             data.append('file', file);
-            const res = await fetch(`/api/user/portfolio/${form.id}/images`, { method: 'POST', body: data });
+            const res = await apiFetch(`/api/user/portfolio/${form.id}/images`, { method: 'POST', body: data });
             if (!res.ok) throw new Error('Upload failed');
             const saved: PortfolioItem = await res.json();
             setForm(toForm(saved));
@@ -157,7 +157,7 @@ export function PortfolioCard() {
     const deleteImage = async (imageId: string) => {
         if (!form?.id) return;
         try {
-            const res = await fetch(`/api/user/portfolio/${form.id}/images/${imageId}`, { method: 'DELETE' });
+            const res = await apiFetch(`/api/user/portfolio/${form.id}/images/${imageId}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Delete failed');
             const saved: PortfolioItem = await res.json();
             setForm(toForm(saved));

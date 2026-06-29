@@ -25,7 +25,7 @@ import { CompassMark } from '@/components/ui/CompassMark';
 import { toast } from '@/components/ui/Toast';
 import { useI18n } from '@/lib/i18n-context';
 import { addCompletedProfile, hasCompletedAll, getCombinedScoresContext, clearCompletedProfiles, getCompletedProfiles } from '@/lib/profile-tracker';
-import { ai4authLoginUrl, getIdentity, type Identity } from '@/lib/auth';
+import { apiFetch, ai4authLoginUrl, getIdentity, type Identity } from '@/lib/auth';
 import { getSelectedCounselorId, setSelectedCounselorId } from '@/lib/counselor';
 import { setSelectedInstrumentId } from '@/lib/instrument';
 import { getResume, setResume } from '@/lib/resume';
@@ -220,7 +220,7 @@ export default function Home() {
         if (!existingSessionId) {
             addCompletedProfile(questionnaire.id, newSessionId, {});
             try {
-                await fetch('/api/questionnaire-result', {
+                await apiFetch('/api/questionnaire-result', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -290,7 +290,7 @@ export default function Home() {
 
         // Log Audit
         try {
-            await fetch('/api/qsa/audit', {
+            await apiFetch('/api/qsa/audit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -305,7 +305,7 @@ export default function Home() {
 
         // Salva risultati questionario su DB
         try {
-            await fetch('/api/questionnaire-result', {
+            await apiFetch('/api/questionnaire-result', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -347,7 +347,7 @@ export default function Home() {
 
         // Save combined questionnaire result to DB
         try {
-            await fetch('/api/questionnaire-result', {
+            await apiFetch('/api/questionnaire-result', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -672,7 +672,7 @@ export default function Home() {
                                     <button
                                         onClick={async () => {
                                             try {
-                                                const res = await fetch(`/api/questionnaire-result/${sessionId}/pdf?lang=${lang}`);
+                                                const res = await apiFetch(`/api/questionnaire-result/${sessionId}/pdf?lang=${lang}`);
                                                 if (!res.ok) throw new Error('PDF download failed');
                                                 const blob = await res.blob();
                                                 const url = window.URL.createObjectURL(blob);

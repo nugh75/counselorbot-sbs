@@ -7,7 +7,7 @@ import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { BackButton } from '@/components/ui/BackButton';
 import { AdministrationCopy, AdministrationInstrument } from '@/lib/test-administrations';
 import { addCompletedProfile } from '@/lib/profile-tracker';
-import { ai4authLoginUrl } from '@/lib/auth';
+import { apiFetch, ai4authLoginUrl } from '@/lib/auth';
 
 const QUESTIONNAIRE_SELECTION_HREF = '/?view=questionnaires';
 
@@ -77,7 +77,7 @@ function getOrCreateAnonymousResearchCode() {
 
 async function fetchAnonymousResearchCode(): Promise<{ code: string | null; authenticated: boolean }> {
     try {
-        const res = await fetch('/api/user/anonymous-research-code');
+        const res = await apiFetch('/api/user/anonymous-research-code');
         if (res.status === 401) return { code: null, authenticated: false };
         if (!res.ok) return { code: null, authenticated: true };
         const data = await res.json();
@@ -385,7 +385,7 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
 
         // Scoring lato server (le regole vivono nel DB) + salvataggio.
         try {
-            const res = await fetch(`/api/instruments/${instrument}/score`, {
+            const res = await apiFetch(`/api/instruments/${instrument}/score`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

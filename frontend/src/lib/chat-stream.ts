@@ -1,6 +1,8 @@
 // Helper per consumare l'endpoint SSE /api/chat/stream.
 // Chiama onDelta(fullText) ad ogni aggiornamento e ritorna la risposta finale.
 
+import { withViewAsHeaders } from '@/lib/auth';
+
 export interface ChatStreamResult {
     response: string;
     session_id?: string;
@@ -19,7 +21,7 @@ export async function streamChat(
 ): Promise<ChatStreamResult> {
     const res = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withViewAsHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(payload),
         signal,
     });

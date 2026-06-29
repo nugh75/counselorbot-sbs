@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n-context';
-import { getIdentity, type Identity } from '@/lib/auth';
+import { apiFetch, getIdentity, type Identity } from '@/lib/auth';
 import { canUsePersonalPage } from '@/lib/roles';
 import { useDarkMode } from '@/lib/use-dark-mode';
 import { toast } from '@/components/ui/Toast';
@@ -50,7 +50,7 @@ export default function ProfilePage() {
             const id = await getIdentity();
             if (id?.authenticated) {
                 setIdentity(id);
-                const res = await fetch('/api/user/questionnaire-results');
+                const res = await apiFetch('/api/user/questionnaire-results');
                 if (res.ok) {
                     const payload: unknown = await res.json();
                     if (Array.isArray(payload)) {
@@ -91,7 +91,7 @@ export default function ProfilePage() {
     const handleDelete = async (sessionId: string) => {
         setActionLoading(sessionId);
         try {
-            const res = await fetch(`/api/questionnaire-result/${sessionId}`, {
+            const res = await apiFetch(`/api/questionnaire-result/${sessionId}`, {
                 method: 'DELETE',
             });
             if (res.ok) {
@@ -116,7 +116,7 @@ export default function ProfilePage() {
 
     const handleDownloadPdf = async (sessionId: string, type: string) => {
         try {
-            const res = await fetch(`/api/questionnaire-result/${sessionId}/pdf?lang=${lang}`);
+            const res = await apiFetch(`/api/questionnaire-result/${sessionId}/pdf?lang=${lang}`);
             if (!res.ok) throw new Error('PDF download failed');
             const blob = await res.blob();
             const url = window.URL.createObjectURL(blob);

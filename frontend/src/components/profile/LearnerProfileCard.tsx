@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useI18n } from '@/lib/i18n-context';
+import { apiFetch } from '@/lib/auth';
 import { History, Trash2, Check, Pencil, X } from 'lucide-react';
 
 export interface LearnerProfileData {
@@ -69,7 +70,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
 
     const load = useCallback(async () => {
         try {
-            const res = await fetch('/api/user/learner-profile');
+            const res = await apiFetch('/api/user/learner-profile');
             if (res.status === 401) { setHidden(true); return; }
             if (!res.ok) { setHidden(true); return; }
             const rev: Revision | null = await res.json();
@@ -97,7 +98,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
         setValidationError('');
         setSaving(true);
         try {
-            const res = await fetch('/api/user/learner-profile', {
+            const res = await apiFetch('/api/user/learner-profile', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...form, source, session_id: sessionId || null }),
@@ -122,14 +123,14 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     const loadHistory = async () => {
         if (showHistory) { setShowHistory(false); return; }
         if (history === null) {
-            const res = await fetch('/api/user/learner-profile/history');
+            const res = await apiFetch('/api/user/learner-profile/history');
             if (res.ok) setHistory(await res.json());
         }
         setShowHistory(true);
     };
 
     const deleteAll = async () => {
-        await fetch('/api/user/learner-profile', { method: 'DELETE' });
+        await apiFetch('/api/user/learner-profile', { method: 'DELETE' });
         setProfile(null);
         setForm({});
         setHistory(null);
