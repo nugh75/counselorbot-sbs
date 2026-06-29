@@ -854,6 +854,16 @@ _LEGACY_INTRO_BODY_MARKERS = {
     "prompt_qpcc_welcome": ("competences and beliefs together one at a time",),
     "prompt_qap_welcome": ("four resources of their career adaptability (CAAS)",),
 }
+_LEGACY_INTRO_QUESTION_CONTRACT_MARKERS = (
+    "there are no right or wrong answers",
+    "they will be free to ask any open question",
+    "they will be free to ask for practical advice",
+    "at the end they can ask how to work on their time balance",
+)
+_LEGACY_GUIDED_STEP_INTRO_PROMPT_MARKERS = (
+    "how we'll explore my profile together",
+    "Do NOT analyse or mention any factor or score yet.",
+)
 _PERSONA_IDENTITY_PREFIX_RE = re.compile(
     r"^\s*You are (?:\{\{counselor_name\}\}|CounselorBot|the CounselorBot counsellor),?[^.\n]*\.\s*",
     re.IGNORECASE,
@@ -945,12 +955,41 @@ def _migrate_counselor_personas_and_intros(db):
             if current.startswith(prefix):
                 current = current[len(prefix):].lstrip()
         markers = _LEGACY_INTRO_BODY_MARKERS.get(key, ())
-        if any(marker in current for marker in markers):
+        has_stale_question_contract = any(
+            marker in current for marker in _LEGACY_INTRO_QUESTION_CONTRACT_MARKERS
+        )
+        if any(marker in current for marker in markers) or has_stale_question_contract:
             current = intro_defaults_by_key.get(key, current)
         elif INTRO_ALLOWED_QUESTIONS_SENTINEL not in current:
             current = current.rstrip() + INTRO_ALLOWED_QUESTIONS
         if current != (cfg.value or ""):
             cfg.value = current
+            changed = True
+
+    intro_step_defaults = {}
+    for steps in (
+        DEFAULT_GUIDED_STEPS,
+        DEFAULT_QSAR_GUIDED_STEPS,
+        DEFAULT_ZTPI_GUIDED_STEPS,
+        DEFAULT_SAVICKAS_GUIDED_STEPS,
+        DEFAULT_QPCS_GUIDED_STEPS,
+        DEFAULT_QPCC_GUIDED_STEPS,
+        DEFAULT_QAP_GUIDED_STEPS,
+    ):
+        for step_def in steps:
+            if step_def.get("system_prompt_mode") == "intro":
+                intro_step_defaults[step_def["id"]] = step_def["prompt"]
+
+    for step_id, default_prompt in intro_step_defaults.items():
+        step = db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).first()
+        if not step:
+            continue
+        current_prompt = step.prompt or ""
+        if (
+            all(marker in current_prompt for marker in _LEGACY_GUIDED_STEP_INTRO_PROMPT_MARKERS)
+            and current_prompt != default_prompt
+        ):
+            step.prompt = default_prompt
             changed = True
 
     if changed:
