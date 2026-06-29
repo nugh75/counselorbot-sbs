@@ -32,7 +32,7 @@ import { getResume, setResume } from '@/lib/resume';
 import { BackButton } from '@/components/ui/BackButton';
 
 
-type Step = 'intro' | 'counselor-select' | 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'combined-interaction';
+type Step = 'intro' | 'counselor-select' | 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'combined-interaction' | 'farewell';
 
 const STARTABLE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
 
@@ -397,6 +397,7 @@ export default function Home() {
         else if (step === 'dashboard') setStep('manual-input');
         else if (step === 'interaction') setStep(isAgentOnly(selectedQuestionnaire) ? 'counselor-select' : 'dashboard');
         else if (step === 'completed') setStep('dashboard');
+        else if (step === 'farewell') setStep('completed');
         else if (step === 'combined-interaction') setStep('completed');
     };
 
@@ -412,6 +413,7 @@ export default function Home() {
             case 'interaction': return selectedQuestionnaire?.id === 'SAVICKAS' ? t('step.interaction.title.savickas') : t('step.interaction.title.guided');
             case 'combined-interaction': return 'Analisi Combinata dei Profili';
             case 'completed': return t('step.completed.title');
+            case 'farewell': return t('step.farewell.title');
             default: return 'CounselorBot';
         }
     };
@@ -430,6 +432,7 @@ export default function Home() {
                     : `${t('step.interaction.desc.guidedPrefix')} ${selectedQuestionnaire?.name}`;
             case 'combined-interaction': return "Analisi integrata dei profili QSA, ZTPI e Savickas";
             case 'completed': return t('step.completed.desc');
+            case 'farewell': return t('step.farewell.desc');
             default: return '';
         }
     };
@@ -690,10 +693,7 @@ export default function Home() {
                                         {t('completed.downloadPdf')}
                                     </button>
                                     <button
-                                        onClick={() => {
-                                            setSelectedCounselorId(null);
-                                            setStep('intro');
-                                        }}
+                                        onClick={() => setStep('farewell')}
                                         className="py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-md transition-colors flex items-center justify-center"
                                     >
                                         {t('completed.end')}
@@ -710,6 +710,40 @@ export default function Home() {
                                     >
                                         {t('completed.feedbackLink')}
                                     </a>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Step: Farewell — commiato, questionario di gradimento, torna alla home */}
+                    {step === 'farewell' && (
+                        <div className="max-w-xl mx-auto">
+                            <div className="glass-panel p-8 text-center space-y-6">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-slate-800">{t('farewell.title')}</h2>
+                                    <p className="text-slate-500 mt-3">
+                                        {t('farewell.body')}
+                                    </p>
+                                </div>
+
+                                <div className="space-y-4 pt-4">
+                                    <a
+                                        href="/questionario"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="block w-full py-3.5 bg-ochre-500 hover:bg-ochre-600 text-white font-bold rounded-md transition-colors shadow-md"
+                                    >
+                                        {t('farewell.feedback')}
+                                    </a>
+                                    <button
+                                        onClick={() => {
+                                            setSelectedCounselorId(null);
+                                            setStep('intro');
+                                        }}
+                                        className="w-full py-3.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded-md transition-colors"
+                                    >
+                                        {t('farewell.home')}
+                                    </button>
                                 </div>
                             </div>
                         </div>
