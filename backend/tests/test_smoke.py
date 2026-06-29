@@ -501,7 +501,8 @@ def test_admin_logs_options_has_new_filter_fields():
     r = client.get("/admin/logs/options")
     assert r.status_code == 200, r.text
     body = r.json()
-    for key in ("actions", "providers", "questionnaire_types", "models", "phases", "modes"):
+    for key in ("actions", "providers", "questionnaire_types", "usernames",
+                "anonymous_research_codes", "models", "phases", "modes"):
         assert key in body, f"options manca '{key}': {body}"
         assert isinstance(body[key], list)
 

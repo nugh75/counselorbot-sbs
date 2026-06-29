@@ -56,6 +56,22 @@ def _to_float(value, field: str) -> Optional[float]:
         raise HTTPException(status_code=400, detail=f"{field} non valido (numero atteso)")
 
 
+def _multi_values(value: Optional[str]) -> List[str]:
+    """Spezza un filtro multi-valore (CSV) in lista deduplicata, ordine preservato.
+
+    Permette alla UI di mandare piu' username / codici anonimi separati da virgola
+    (multiscelta) mantenendo retro-compatibile il valore singolo.
+    """
+    if not value:
+        return []
+    seen: dict = {}
+    for part in value.split(","):
+        cleaned = part.strip()
+        if cleaned and cleaned not in seen:
+            seen[cleaned] = None
+    return list(seen.keys())
+
+
 def _apply_log_filters(
     q,
     *,
@@ -92,10 +108,12 @@ def _apply_log_filters(
             models.Log.questionnaire_type == questionnaire_type,
             cast(models.Log.details, Text).ilike(f'%\"questionnaire_type\"%{questionnaire_type}%'),
         ))
-    if username:
-        q = q.filter(models.Log.username == username)
-    if anonymous_research_code:
-        q = q.filter(models.Log.anonymous_research_code == anonymous_research_code)
+    usernames = _multi_values(username)
+    if usernames:
+        q = q.filter(models.Log.username.in_(usernames))
+    anon_codes = _multi_values(anonymous_research_code)
+    if anon_codes:
+        q = q.filter(models.Log.anonymous_research_code.in_(anon_codes))
     if model:
         q = q.filter(or_(
             models.Log.model_name == model,
@@ -302,6 +320,10 @@ async def log_filter_options(
         if _text_value(log.questionnaire_type)
     })
     usernames = sorted({log.username for log in logs if _text_value(log.username)})
+    anonymous_research_codes = sorted({
+        _text_value(log.anonymous_research_code) for log in logs
+        if _text_value(log.anonymous_research_code)
+    })
     models_list = sorted({_text_value(log.model_name) for log in logs if _text_value(log.model_name)})
     phases = sorted({_text_value(log.phase) for log in logs if _text_value(log.phase)})
     modes = sorted({_text_value(log.mode) for log in logs if _text_value(log.mode)})
@@ -310,6 +332,7 @@ async def log_filter_options(
         "providers": providers,
         "questionnaire_types": questionnaire_types,
         "usernames": usernames,
+        "anonymous_research_codes": anonymous_research_codes,
         "models": models_list,
         "phases": phases,
         "modes": modes,
