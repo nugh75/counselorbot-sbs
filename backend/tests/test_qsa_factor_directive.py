@@ -29,6 +29,7 @@ from backend.chat_logic import (
     _sanitize_qsa_inverted_wording,
     _qsa_assessment_labels,
     _qsa_factor_names,
+    _step_allows_practical_advice,
     _QSA_INVERTED_CODES,
     _QSAR_INVERTED_CODES,
 )
@@ -79,7 +80,9 @@ def test_qsa_factor_directive_scopes_rows_to_current_step():
     assert "C7 (Autointerrogazione)" in out
     assert "A1 (Ansietà di base)" not in out
     assert "A7 (Interferenze emotive)" not in out
-    assert "lists only the factor codes allowed in the current step" in out
+    # P1.1: con allowed_codes valorizzato, [CURRENT FACTOR SCOPE] sparisce;
+    # lo scope è dichiarato una sola volta da [CURRENT STEP FACTORS].
+    assert "[CURRENT FACTOR SCOPE]" not in out
 
 
 def test_qsa_a5_is_growth_at_high_score():
@@ -96,7 +99,7 @@ def test_current_step_score_profile_marks_targets_and_resources():
         "- A5: 3/9",
         "- A6: 3/9",
     ])
-    out = _apply_current_step_score_profile_directive("BASE", "QSA", "it", scores, {"A2", "A5", "A6"})
+    out = _apply_current_step_score_profile_directive("BASE", "QSA", "it", scores, {"A2", "A5", "A6"}, include_advice=True)
     assert "[CURRENT STEP SCORE PROFILE]" in out
     assert "A5 (Mancanza di perseveranza): 3/9 = Forza" in out
     assert "A6 (Percezione di competenza): 3/9 = Area di crescita" in out
@@ -193,6 +196,108 @@ def test_localization_uses_target_language_labels():
     assert lbl_es["growth"] in out  # "Área de mejora"
     assert "Area di crescita" not in out
     assert "Area for growth" not in out
+
+
+# --- P0.1: gating consigli sugli step -------------------------------------
+
+def test_step_allows_practical_advice():
+    # factor / qsar-factor: interpretive-only, niente piano pratico
+    assert _step_allows_practical_advice("factor") is False
+    assert _step_allows_practical_advice("qsar-factor") is False
+    assert _step_allows_practical_advice(None) is False
+    assert _step_allows_practical_advice("") is False
+    assert _step_allows_practical_advice("intro") is False
+    # second-level / generic (e varianti qsar): emettono il piano pratico
+    assert _step_allows_practical_advice("second-level") is True
+    assert _step_allows_practical_advice("generic") is True
+    assert _step_allows_practical_advice("qsar-second-level") is True
+    assert _step_allows_practical_advice("qsar-generic") is True
+    # case-insensitive + whitespace
+    assert _step_allows_practical_advice("  Second-Level  ") is True
+
+
+def _scores_for_profile():
+    return "\n".join([
+        "PROFILO QSA DELLO STUDENTE:",
+        "- A2: 6/9",
+        "- A5: 3/9",
+        "- A6: 3/9",
+    ])
+
+
+def test_score_profile_factor_step_omits_advice_tail():
+    # step factor: bande risolte SI, coda consiglio + heading rule NO
+    out = _apply_current_step_score_profile_directive(
+        "BASE", "QSA", "it", _scores_for_profile(), {"A2", "A5", "A6"}, include_advice=False
+    )
+    assert "[CURRENT STEP SCORE PROFILE]" in out
+    assert "A5 (Mancanza di perseveranza): 3/9 = Forza" in out
+    assert "A6 (Percezione di competenza): 3/9 = Area di crescita" in out
+    # niente coda consiglio (era la contraddizione con il SECTION "advice deferred")
+    assert "Practical advice must focus" not in out
+    assert "Primary improvement targets" not in out
+    assert "Azione da fare oggi" not in out
+
+
+def test_score_profile_second_level_step_keeps_advice_tail():
+    # step sl-*: coda consiglio + heading rule SI (regressione P0.1)
+    out = _apply_current_step_score_profile_directive(
+        "BASE", "QSA", "it", _scores_for_profile(), {"A2", "A5", "A6"}, include_advice=True
+    )
+    assert "[CURRENT STEP SCORE PROFILE]" in out
+    assert "Primary improvement targets: A6 (Percezione di competenza)" in out
+    assert "Practical advice must focus" in out
+    assert "Azione da fare oggi" in out
+
+
+# --- P0.2: certified-advice fallback --------------------------------------
+
+def test_certified_advice_fallback_to_approved_support_strategies():
+    from backend.chat_logic import _apply_certified_advice_directive
+    out = _apply_certified_advice_directive("BASE", "QSA")
+    # il vecchio bavaglio "keep interpretive and omit" non deve esserci
+    assert "keep the response interpretive and omit the practical plan" not in out
+    # nuovo fallback: attingere dalle strategie di supporto approvate in KNOWLEDGE
+    assert "approved support strategies in [KNOWLEDGE]" in out
+    # resta il fallback chiuso: interpretive solo se manca anche quello
+    assert "stay interpretive only if neither is available" in out
+    # P1.1: bullet "keep advice scoped" rimosso (scope già dichiarato da [CURRENT STEP FACTORS])
+    assert "keep advice scoped" not in out
+    # P1.2: heading rule 'Azione da fare oggi/questa settimana' tolta da certified-advice
+    # (rimane solo nella coda di _apply_current_step_score_profile_directive, gated a include_advice)
+    assert "Azione da fare oggi" not in out
+    assert "Azione da fare questa settimana" not in out
+
+
+# --- P1.3: gestione invertiti, niente testo morto -------------------------
+
+def test_factor_directive_footer_inverted_removed():
+    # P1.3: il footer ridondante "For some factors a high score..." rimosso
+    # (la risoluzione per-riga + "inversion already resolved" bastano)
+    out = _apply_qsa_factor_directive("BASE", "QSA", "it", {"A2", "A5", "A6"})
+    assert "For some factors a high score" not in out
+    assert "never read 'high = strength' automatically" not in out
+
+
+def test_score_profile_inverted_note_conditional_on_scope():
+    scores = _scores_for_profile()  # A2, A5, A6 — A5 e' invertito
+    # scope con A5 → nota invertiti presente, esempio A5 presente
+    out_a5 = _apply_current_step_score_profile_directive(
+        "BASE", "QSA", "it", scores, {"A2", "A5", "A6"}, include_advice=True
+    )
+    assert "For inverted factors" in out_a5
+    assert "lack of perseverance is a strength" in out_a5
+    # scope senza A5 (solo fattori non invertiti) → nota assente, niente testo morto
+    scores_no_a5 = "\n".join([
+        "PROFILO QSA DELLO STUDENTE:",
+        "- A2: 6/9",
+        "- A6: 3/9",
+    ])
+    out_no_a5 = _apply_current_step_score_profile_directive(
+        "BASE", "QSA", "it", scores_no_a5, {"A2", "A6"}, include_advice=True
+    )
+    assert "For inverted factors" not in out_no_a5
+    assert "lack of perseverance is a strength" not in out_no_a5
 
 
 if __name__ == "__main__":

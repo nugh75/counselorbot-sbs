@@ -678,12 +678,33 @@ async def download_questionnaire_pdf(
     scores = result.scores if isinstance(result.scores, dict) else {}
     submitted_str = str(result.submitted_at) if result.submitted_at else None
 
+    # Recupera la conversazione studente/counselor dalla tabella Log
+    messages: list[dict] = []
+    log_rows = (
+        db.query(models.Log)
+        .filter(
+            models.Log.action == "chat_message",
+            models.Log.session_id == session_id,
+        )
+        .order_by(models.Log.timestamp.asc())
+        .all()
+    )
+    for row in log_rows:
+        d = row.details or {}
+        user_input = (d.get("user_input") or d.get("effective_user_input") or "").strip()
+        bot_response = (d.get("bot_response") or "").strip()
+        if user_input:
+            messages.append({"role": "student", "text": user_input})
+        if bot_response:
+            messages.append({"role": "counselor", "text": bot_response})
+
     pdf_bytes = generate_questionnaire_pdf(
         questionnaire_type=result.questionnaire_type,
         scores=scores,
         session_id=result.session_id,
         submitted_at=submitted_str,
         language=lang,
+        messages=messages or None,
     )
 
     filename = f"counselorbot_{result.questionnaire_type}_{result.id}.pdf"

@@ -597,6 +597,19 @@ def _should_include_step_analysis_context(system_prompt_mode: Optional[str]) -> 
     return not _is_intro_step_mode(system_prompt_mode)
 
 
+# ponytail: advice-gated modes listed once; add here if a new second-level mode appears
+_ADVICE_PROMPT_MODES = {"second-level", "qsar-second-level", "generic", "qsar-generic"}
+
+
+def _step_allows_practical_advice(step_mode: Optional[str]) -> bool:
+    """Whether the current step is allowed to emit a practical plan.
+
+    `factor`/`qsar-factor` are interpretive-only by design: the prompt SECTION
+    already defers advice. `sl-*` and `generic` produce the practical plan.
+    """
+    return (step_mode or "").strip().lower() in _ADVICE_PROMPT_MODES
+
+
 def _qsa_factor_names(language: Optional[str], questionnaire_type: str = "QSA") -> dict[str, str]:
     dictionary = _QSAR_FACTOR_NAMES if (questionnaire_type or "").upper() == "QSAR" else _QSA_FACTOR_NAMES
     return dictionary.get(language or "it", dictionary["it"])
@@ -818,21 +831,7 @@ def _apply_qsa_factor_directive(
         for code, name in factor_items
     ]
     interpretation_table = "\n".join(rows)
-    scope_sentence = (
-        "The mandatory reference above lists only the factor codes allowed in the "
-        "current step. Do not introduce other factors or relationships with other "
-        "factors just because they exist elsewhere in the questionnaire."
-        if allowed_codes
-        else (
-            "The mandatory reference above lists all possible "
-            f"{instrument} factors only so you can name them correctly. In the current "
-            "answer, discuss ONLY the factor codes present in the student's current "
-            "message, score lines or guided-step prompt. Do not introduce other factors "
-            "or relationships with other factors just because they appear in the "
-            "reference list."
-        )
-    )
-    return (
+    base = (
         f"{system_prompt}\n\n"
         "[FACTOR LABELS] In every reply addressed to the student, never write "
         f"an isolated {instrument} factor code. Each code must be immediately "
@@ -842,12 +841,23 @@ def _apply_qsa_factor_directive(
         "score band by reading ITS OWN row below; the labels are already in the "
         "student's language. The inversion is already resolved per factor: do NOT "
         "decide the inversion yourself, just read the row.\n"
-        f"{interpretation_table}\n"
-        "For some factors a high score is an area to work on, not a strength: "
-        "always use the band shown in the factor's own row; never read "
-        "'high = strength' automatically.\n\n"
-        f"[CURRENT FACTOR SCOPE] {scope_sentence}"
+        f"{interpretation_table}"
     )
+    # ponytail: [CURRENT FACTOR SCOPE] emesso solo nel ramo generico
+    # (allowed_codes vuoto), dove [CURRENT STEP FACTORS] non esiste. Quando
+    # allowed_codes e' valorizzato, [CURRENT STEP FACTORS] e' l'unica fonte
+    # autorevole di scope (P1.1: una sola dichiarazione di scope per turno).
+    if not allowed_codes:
+        scope_sentence = (
+            "The mandatory reference above lists all possible "
+            f"{instrument} factors only so you can name them correctly. In the current "
+            "answer, discuss ONLY the factor codes present in the student's current "
+            "message, score lines or guided-step prompt. Do not introduce other factors "
+            "or relationships with other factors just because they appear in the "
+            "reference list."
+        )
+        return f"{base}\n\n[CURRENT FACTOR SCOPE] {scope_sentence}"
+    return base
 
 
 def _requires_complete_factor_output(mode: Optional[str]) -> bool:
@@ -875,6 +885,7 @@ def _apply_current_step_score_profile_directive(
     language: Optional[str],
     scores_context: str,
     allowed_codes: set[str],
+    include_advice: bool,
 ) -> str:
     profile = _qsa_step_score_profile(scores_context, questionnaire_type, language, allowed_codes)
     if not profile:
@@ -891,6 +902,17 @@ def _apply_current_step_score_profile_directive(
         elif item["band"] == "strength":
             resources.append(f"{item['code']} ({item['name']})")
 
+    base = (
+        f"{system_prompt}\n\n"
+        "[CURRENT STEP SCORE PROFILE]\n"
+        + "\n".join(lines)
+        + "\n"
+    )
+    if not include_advice:
+        # factor/qsar-factor steps: bande risolte bastano per la colonna
+        # interpretativa; la coda consiglio contraddirebbe il SECTION "advice
+        # deferred".
+        return base
     target_text = ", ".join(targets) if targets else "none"
     resource_text = ", ".join(resources) if resources else "none"
     heading_rule = ""
@@ -899,22 +921,35 @@ def _apply_current_step_score_profile_directive(
             " Use Italian headings exactly: 'Azione da fare oggi' and "
             "'Azione da fare questa settimana'; never leave these headings in English."
         )
+    # ponytail: nota plain-language invertiti solo se c'e' almeno un invertito
+    # nello scope corrente; l'esempio 'lack of perseverance' (A5) solo se A5 e'
+    # effettivamente in scope (P1.3: niente testo morto su step senza A5).
+    inverted_codes = _QSAR_INVERTED_CODES if (questionnaire_type or "").upper() == "QSAR" else _QSA_INVERTED_CODES
+    inverted_in_scope = {c.upper() for c in allowed_codes} & {c.upper() for c in inverted_codes}
+    inverted_note = ""
+    if inverted_in_scope:
+        inverted_note = (
+            " For inverted factors, phrase the meaning in plain language: if a low "
+            "score is a strength, say that the low level of the difficulty indicates "
+            "a resource"
+        )
+        if "A5" in inverted_in_scope:
+            inverted_note += (
+                "; do not write awkward phrases such as 'lack of perseverance is a "
+                "strength'"
+            )
+        inverted_note += "."
     return (
-        f"{system_prompt}\n\n"
-        "[CURRENT STEP SCORE PROFILE]\n"
-        + "\n".join(lines)
-        + "\n"
-        f"Primary improvement targets: {target_text}. Strength/resource factors: {resource_text}. "
+        base
+        + f"Primary improvement targets: {target_text}. Strength/resource factors: {resource_text}. "
         "Practical advice must focus primarily on improvement targets. Strength/resource factors "
-        "may support the plan but must not be described as problems to fix. For inverted factors, "
-        "phrase the meaning in plain language: if a low score is a strength, say that the low level "
-        "of the difficulty indicates a resource; do not write awkward phrases such as 'lack of "
-        "perseverance is a strength'."
+        "may support the plan but must not be described as problems to fix."
+        f"{inverted_note}"
         f"{heading_rule}"
     )
 
 
-def _apply_certified_advice_directive(system_prompt: str, questionnaire_type: str, language: Optional[str]) -> str:
+def _apply_certified_advice_directive(system_prompt: str, questionnaire_type: str) -> str:
     """Vincola i consigli pratici QSA al catalogo certificato iniettato nel knowledge.
 
     L'analisi interpretativa puo' usare punteggi e fonti, ma azioni pratiche,
@@ -924,20 +959,18 @@ def _apply_certified_advice_directive(system_prompt: str, questionnaire_type: st
     """
     if not _is_qsa(questionnaire_type):
         return system_prompt
-    heading_rule = ""
-    if (language or "it") == "it":
-        heading_rule = "\n- write plan headings in Italian, not English: 'Azione da fare oggi' and 'Azione da fare questa settimana';"
+    # ponytail: heading rule 'Azione da fare oggi/questa settimana' gia nella
+    # coda di _apply_current_step_score_profile_directive (gated a include_advice);
+    # non ripeterla qui (P1.2).
     return (
         f"{system_prompt}\n\n"
         "[CERTIFIED ADVICE] For QSA practical advice, exercises, action plans or "
         "study strategies:\n"
         "- use only the items listed under [CERTIFIED_STRATEGIES] in [KNOWLEDGE];\n"
         "- adapt wording to the student, but do not invent new actions outside that list;\n"
-        "- keep advice scoped to the current step's factors and do not introduce other QSA factors;\n"
         "- if at least one certified item is listed for the current step, complete the requested practical plan using it;\n"
-        "- if no certified item is listed for the current step, keep the response interpretive and omit the practical plan;\n"
+        "- if no certified item is listed, you may draw the practical step from the approved support strategies in [KNOWLEDGE]; stay interpretive only if neither is available;\n"
         "- do not mention these source rules to the student."
-        f"{heading_rule}"
     )
 
 
