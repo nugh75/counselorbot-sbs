@@ -96,40 +96,32 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                     </div>
                 )}
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                    {hasInAppAdministration ? (
+                    <button
+                        onClick={() => onSelect(q)}
+                        className="group inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+                    >
+                        {q.agentOnly ? t('selector.startInterview') : t('selector.useTool')}
+                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                    </button>
+                    {hasInAppAdministration && (
                         <Link
                             href={`/somministrazione/${q.id}/${lang}`}
-                            className="group inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+                            className="group inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
                         >
                             {t('selector.completeQuestionnaire')}
                             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                         </Link>
-                    ) : hasExternalAssessment ? (
+                    )}
+                    {!hasInAppAdministration && hasExternalAssessment && (
                         <a
                             href={externalAssessmentUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+                            className="group inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
                         >
                             {t('selector.openStrategic')}
                             <ExternalLink className="w-4 h-4" />
                         </a>
-                    ) : (
-                        <button
-                            onClick={() => onSelect(q)}
-                            className="group inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
-                        >
-                            {q.agentOnly ? t('selector.startInterview') : t('selector.enterResults')}
-                            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-                        </button>
-                    )}
-                    {(hasInAppAdministration || hasExternalAssessment) && (
-                        <button
-                            onClick={() => onSelect(q)}
-                            className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                        >
-                            {t('selector.haveResults')}
-                        </button>
                     )}
                     <Link
                         href={`/strumenti/${q.id}`}
@@ -205,7 +197,7 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                             <div className="flex flex-wrap items-center gap-2 pt-1">
                                 <Link
                                     href="/profilo/cambiamenti"
-                                    className="group inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+                                    className="group inline-flex items-center gap-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 text-sm font-semibold transition-colors"
                                 >
                                     Usa lo strumento
                                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
