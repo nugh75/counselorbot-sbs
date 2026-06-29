@@ -85,7 +85,8 @@ def build_log_envelope(system_prompt_final: str, full_message: str, history) -> 
 
 def conversation_id_for(session_id: Optional[str], requested: Optional[str] = None) -> str:
     """Stable id used to group all log rows for one chat conversation."""
-    candidate = (requested or session_id or "").strip()
+    # ponytail: generate new UUID if requested is empty to keep conversation_id unique from session_id
+    candidate = (requested or "").strip()
     return candidate or str(uuid.uuid4())
 
 

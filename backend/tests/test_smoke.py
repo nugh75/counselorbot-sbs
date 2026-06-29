@@ -1938,7 +1938,8 @@ def test_chat_smoke_mocked_ai():
     r = client.post("/chat", json={"message": "ciao", "mode": "generic"})
     assert r.status_code == 200, r.text
     assert r.json()["response"] == "RISPOSTA_TEST"
-    assert r.json()["conversation_id"] == r.json()["session_id"]
+    assert r.json()["conversation_id"] != r.json()["session_id"]
+
 
 
 def test_chat_logs_conversation_id_and_admin_filter():
