@@ -222,9 +222,11 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
 
     return (
         <div className="glass-panel p-5 space-y-4">
-            <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-slate-800">{title}</h3>
-            </div>
+            {variant !== 'edit' && (
+                <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-slate-800">{title}</h3>
+                </div>
+            )}
             <p className="text-sm leading-relaxed text-slate-500">
                 {isIntake ? t('lp.intro') : t('lp.reviewIntro')}
             </p>
