@@ -203,7 +203,7 @@ async def strategy_feedback_summary(current_user: models.User = Depends(auth.get
 @router.post("/questionnaire-result", response_model=schemas.QuestionnaireResultResponse)
 async def submit_questionnaire_result(
     result: schemas.QuestionnaireResultCreate,
-    identity: dict = Depends(auth.get_identity),
+    identity: dict = Depends(auth.get_identity_view_as),
     db: Session = Depends(get_db),
 ):
     """Salva i risultati di un questionario completato (endpoint pubblico)."""
@@ -243,7 +243,7 @@ async def get_instrument_rules(code: str, locale: str = Query("en"), db: Session
 async def score_instrument(
     code: str,
     payload: schemas.ScoreRequest,
-    identity: dict = Depends(auth.get_identity),
+    identity: dict = Depends(auth.get_identity_view_as),
     db: Session = Depends(get_db),
 ):
     """Calcola il profilo lato server dalle risposte item-level e (opzionale) lo salva.
