@@ -4,6 +4,8 @@ import { useForm } from 'react-hook-form';
 import { QuestionnaireConfig, FactorDefinition } from '@/lib/questionnaires';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
+import { BackButton } from '@/components/ui/BackButton';
+import { ForwardButton } from '@/components/ui/ForwardButton';
 
 type FormData = { scores: Record<string, string | number> };
 
@@ -22,9 +24,10 @@ interface ScoreInputFormProps {
     questionnaire: QuestionnaireConfig;
     onSubmit: (scores: Record<string, number>) => void;
     initialScores?: Record<string, number>;
+    onBack?: () => void;
 }
 
-export function ScoreInputForm({ questionnaire, onSubmit, initialScores }: ScoreInputFormProps) {
+export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack }: ScoreInputFormProps) {
     const { t, tf } = useI18n();
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
         defaultValues: { scores: initialScores || {} },
@@ -94,22 +97,32 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores }: Score
 
     const gridCols = groupedFactors.length === 1 ? 'grid-cols-1 max-w-xl mx-auto' : 'md:grid-cols-2';
 
+    // Stessa "prima riga" di selezione usata da QuestionnaireSelector /
+    // CounselorSelector / InputMethodSelector: BackButton (cerchio+freccia) +
+    // ForwardButton (cerchio+freccia a destra, qui submit del form). Nessun
+    // testo introduttivo: il FlowStepper in alto descrive già la fase.
     return (
-        <form id="score-form" onSubmit={handleSubmit(onFormSubmit)} className="w-full max-w-4xl mx-auto space-y-4 animate-fade-in-up">
-            <div className={cn("grid gap-x-8 gap-y-3", gridCols)}>
-                {groupedFactors.map(({ prefix, factors }) => {
-                    const colorClass = PREFIX_COLOR[prefix] || 'text-slate-700';
-                    const label = PREFIX_COLOR[prefix] ? t(`score.prefix.${prefix}`) : `${prefix}`;
-                    return (
-                        <div key={prefix} className="space-y-1.5">
-                            <div className="flex items-center gap-2 mb-2 pb-1 border-b border-slate-200">
-                                <h3 className={cn("text-lg font-bold", colorClass)}>{label}</h3>
-                            </div>
-                            {factors.map(f => <InputRow key={f.code} factor={f} />)}
-                        </div>
-                    );
-                })}
+        <div className="w-full max-w-4xl mx-auto space-y-5 animate-fade-in-up">
+            <div className="flex items-center gap-3">
+                {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
+                <ForwardButton type="submit" form="score-form" label={t('score.submit')} />
             </div>
-        </form>
+            <form id="score-form" onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+                <div className={cn("grid gap-x-8 gap-y-3", gridCols)}>
+                    {groupedFactors.map(({ prefix, factors }) => {
+                        const colorClass = PREFIX_COLOR[prefix] || 'text-slate-700';
+                        const label = PREFIX_COLOR[prefix] ? t(`score.prefix.${prefix}`) : `${prefix}`;
+                        return (
+                            <div key={prefix} className="space-y-1.5">
+                                <div className="flex items-center gap-2 mb-2 pb-1 border-b border-slate-200">
+                                    <h3 className={cn("text-lg font-bold", colorClass)}>{label}</h3>
+                                </div>
+                                {factors.map(f => <InputRow key={f.code} factor={f} />)}
+                            </div>
+                        );
+                    })}
+                </div>
+            </form>
+        </div>
     );
 }
