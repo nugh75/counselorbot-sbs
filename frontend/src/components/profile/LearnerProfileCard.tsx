@@ -10,6 +10,7 @@ import { apiFetch } from '@/lib/auth';
 import { History, Trash2, Pencil, X } from 'lucide-react';
 import { PencilButton } from '@/components/ui/PencilButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
+import { BackButton } from '@/components/ui/BackButton';
 
 export interface LearnerProfileData {
     context?: string;
@@ -53,9 +54,13 @@ interface Props {
     // Chiamato quando la card non ha nulla da mostrare (non autenticato / errore /
     // dismessa): permette al parent di saltare in automatico la schermata profilo.
     onUnavailable?: () => void;
+    // Rende la "prima riga" uniforme alle altre fasi di selezione
+    // (BackButton freccia sinistra + matita + freccia destra). Se omesso, la
+    // riga superiore non mostra il back.
+    onBack?: () => void;
 }
 
-export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial = false, onUnavailable }: Props) {
+export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial = false, onUnavailable, onBack }: Props) {
     const { t } = useI18n();
     const [hidden, setHidden] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -236,11 +241,11 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
 
             {variant === 'review' && !isIntake && !editing ? (
                 <div className="space-y-3">
-                    {summaryUi}
-                    {/* Stessa "prima riga" delle altre fasi: cerchio con la matita */}
-                    {/* (PencilButton, modifica) + cerchio con freccia a destra */}
-                    {/* (ForwardButton, conferma e vai avanti). Grafica uniforme. */}
+                    {/* Stessa "prima riga" delle altre fasi: freccia sinistra */}
+                    {/* (BackButton) + matita (PencilButton, modifica) + freccia */}
+                    {/* destra (ForwardButton, conferma e vai avanti). Grafica uniforme. */}
                     <div className="flex items-center gap-3">
+                        {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
                         <PencilButton
                             onClick={() => setEditing(true)}
                             label={t('lp.edit')}
@@ -252,6 +257,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                         />
                         {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
                     </div>
+                    {summaryUi}
                 </div>
             ) : variant === 'edit' && !isIntake && !editing ? (
                 <div className="space-y-3">
