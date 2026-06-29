@@ -31,11 +31,13 @@ from .chat_logic import (
     _phase_factor_codes,
     _qsa_step_score_profile,
     _resolve_system_prompt,
+    _requires_complete_factor_output,
     _retrieved_context,
     _sanitize_ztpi_step_label,
     _sanitize_ztpi_user_text,
     _scope_scores_to_codes,
     _should_sanitize_ztpi_text,
+    _should_include_step_analysis_context,
     build_context_envelope,
     full_prompt_logging_enabled,
     split_thinking,
@@ -243,29 +245,37 @@ def build_prompt_audit(
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
     system_prompt = _apply_language_directive(system_prompt, request.language)
     system_prompt = _apply_register_directive(system_prompt, request.language)
-    required_codes = _phase_factor_codes(db, request.phase)
-    system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language)
-    system_prompt = _apply_current_step_factor_scope_directive(system_prompt, questionnaire_type, required_codes)
+    step_mode = step.system_prompt_mode if step else request.mode
+    include_analysis_context = _should_include_step_analysis_context(step_mode)
+    required_codes = _phase_factor_codes(db, request.phase) if include_analysis_context else set()
+    if include_analysis_context:
+        system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language, required_codes)
+        system_prompt = _apply_current_step_factor_scope_directive(system_prompt, questionnaire_type, required_codes)
 
     model_scores_context = (
         _annotate_qsa_factor_codes(request.scores_context, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else request.scores_context
     )
-    system_prompt = _apply_current_step_score_profile_directive(
-        system_prompt, questionnaire_type, request.language, model_scores_context, required_codes
-    )
-    system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type, request.language)
+    if include_analysis_context:
+        system_prompt = _apply_current_step_score_profile_directive(
+            system_prompt, questionnaire_type, request.language, model_scores_context, required_codes
+        )
+        system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type, request.language)
     system_prompt = _apply_thinking_directive(system_prompt, request.language)
     model_message = (
         _annotate_qsa_factor_codes(effective_message, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else effective_message
     )
-    message_scores_context = _scope_scores_to_codes(model_scores_context, required_codes)
+    message_scores_context = (
+        _scope_scores_to_codes(model_scores_context, required_codes)
+        if include_analysis_context
+        else ""
+    )
 
     knowledge_context = ""
     strategy_ids: list[str] = []
     certified_strategy_ids: list[str] = []
-    if bool(getattr(payload, "include_knowledge", True)):
+    if include_analysis_context and bool(getattr(payload, "include_knowledge", True)):
         retrieval_query = f"{step_label} {model_message} {model_scores_context}".strip()
         knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
             db, session_id, request, questionnaire_type, retrieval_query, ai_service=ai_service
@@ -295,6 +305,7 @@ def build_prompt_audit(
         knowledge_context=knowledge_context,
         include_history=bool(getattr(payload, "include_history", False)),
         include_session_memory=bool(getattr(payload, "include_history", False)),
+        include_scores_reference=include_analysis_context,
         create_anonymous_code=False,
     )
 
@@ -576,12 +587,13 @@ def run_prompt_audit_live(
         response_visible = _annotate_qsa_factor_codes(
             response_raw, payload.language, questionnaire_type=questionnaire_type
         )
-        response_visible = _ensure_required_qsa_factor_codes(
-            response_visible,
-            questionnaire_type,
-            payload.language,
-            _phase_factor_codes(db, payload.phase),
-        )
+        if _requires_complete_factor_output(payload.mode):
+            response_visible = _ensure_required_qsa_factor_codes(
+                response_visible,
+                questionnaire_type,
+                payload.language,
+                _phase_factor_codes(db, payload.phase),
+            )
     else:
         response_visible = response_raw
 

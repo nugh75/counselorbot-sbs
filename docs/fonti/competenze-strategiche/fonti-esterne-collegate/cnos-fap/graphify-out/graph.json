@@ -25,7 +25,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "promuovere l'autovalutazione di competenze strategiche. aggiornamenti e sviluppi della piattaforma competenzestrategiche.it",
       "id": "piattaforma_comp_strategiche_margottini_epifani_document"
     },
@@ -51,7 +51,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "massimo margottini",
       "id": "margottini_massimo"
     },
@@ -64,7 +64,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "filippo epifani",
       "id": "epifani_filippo"
     },
@@ -103,7 +103,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "universita roma tre",
       "id": "universita_roma_tre"
     },
@@ -116,7 +116,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "centro di ricerca e servizi per la formazione a distanza",
       "id": "centro_ricerca_formazione_distanza"
     },
@@ -129,7 +129,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "competenze strategiche",
       "id": "competenze_strategiche"
     },
@@ -142,7 +142,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "autovalutazione",
       "id": "autovalutazione"
     },
@@ -155,7 +155,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "portfolio digitale",
       "id": "portfolio_digitale"
     },
@@ -246,7 +246,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 6,
       "norm_label": "autoregolazione",
       "id": "autoregolazione"
     },
@@ -272,7 +272,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 6,
       "norm_label": "soft skill e orientamento professionale",
       "id": "soft_skill_document"
     },
@@ -285,7 +285,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 3,
       "norm_label": "strumenti e metodologie di orientamento formativo e professionale nel quadro dei processi di apprendimento permanente",
       "id": "strumenti_e_metodologie_document"
     },
@@ -298,7 +298,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "promuovere l'autovalutazione di competenze strategiche. aggiornamenti e sviluppi della piattaforma competenzestrategiche.it",
       "id": "piattaforma_comp_strategiche_document"
     },
@@ -311,7 +311,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 4,
       "norm_label": "promuovere la crescita nelle competenze strategiche che hanno le loro radici nelle dimensioni morali e spirituali della persona. rapporto di ricerca",
       "id": "promuovere_la_crescita_document"
     },
@@ -324,7 +324,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 6,
       "norm_label": "soft skill e orientamento professionale (scheda bibliografica)",
       "id": "soft_skill_scheda_document"
     },
@@ -337,7 +337,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 5,
       "norm_label": "michele pellerey",
       "id": "michele_pellerey"
     },
@@ -350,7 +350,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "filippo epifani",
       "id": "filippo_epifani"
     },
@@ -363,7 +363,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "massimo margottini",
       "id": "massimo_margottini"
     },
@@ -376,7 +376,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "dariusz grzadziel",
       "id": "dariusz_grzadziel"
     },
@@ -389,7 +389,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "enrica ottone",
       "id": "enrica_ottone"
     },
@@ -402,7 +402,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 3,
       "norm_label": "marco bay",
       "id": "marco_bay"
     },
@@ -415,7 +415,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 3,
       "norm_label": "giuseppe crea",
       "id": "giuseppe_crea"
     },
@@ -428,7 +428,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 3,
       "norm_label": "sergio melogno",
       "id": "sergio_melogno"
     },
@@ -441,7 +441,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 3,
       "norm_label": "emad samir anis matta",
       "id": "emad_samir_anis_matta"
     },
@@ -454,7 +454,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 6,
       "norm_label": "mark savickas",
       "id": "mark_savickas"
     },
@@ -467,7 +467,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "cnos-fap",
       "id": "cnos_fap"
     },
@@ -480,7 +480,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "ciofs/fp",
       "id": "ciofs_fp"
     },
@@ -493,7 +493,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 3,
       "norm_label": "mahara",
       "id": "mahara"
     },
@@ -506,7 +506,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "qsa (questionario strategie di apprendimento)",
       "id": "qsa"
     },
@@ -519,7 +519,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "qsar (versione ridotta qsa)",
       "id": "qsar"
     },
@@ -532,7 +532,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "qpcs (questionario sulle competenze strategiche)",
       "id": "qpcs"
     },
@@ -545,7 +545,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "ztpi (zimbardo time perspective inventory)",
       "id": "ztpi"
     },
@@ -558,7 +558,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "qap (questionario adattamento professionale)",
       "id": "qap"
     },
@@ -571,7 +571,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 0,
       "norm_label": "qpcc (questionario sulle competenze cognitive)",
       "id": "qpcc"
     },
@@ -584,7 +584,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 6,
       "norm_label": "soft skill",
       "id": "soft_skill"
     },
@@ -597,7 +597,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 6,
       "norm_label": "orientamento professionale",
       "id": "orientamento_professionale"
     },
@@ -610,7 +610,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 6,
       "norm_label": "life design",
       "id": "life_design"
     },
@@ -623,7 +623,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 7,
       "norm_label": "autodeterminazione",
       "id": "autodeterminazione"
     },
@@ -636,7 +636,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 3,
       "norm_label": "apprendimento permanente",
       "id": "apprendimento_permanente"
     },
@@ -649,7 +649,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "character skills",
       "id": "character_skills"
     },
@@ -662,7 +662,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 3,
       "norm_label": "hard skills",
       "id": "hard_skills"
     },
@@ -675,7 +675,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "identita professionale",
       "id": "identita_professionale"
     },
@@ -688,7 +688,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "riflessivita",
       "id": "riflessivita"
     },
@@ -714,7 +714,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 2,
       "norm_label": "dimensioni morali",
       "id": "dimensioni_morali"
     },
@@ -740,7 +740,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "progetto di ricerca-intervento sul ruolo del portfolio digitale: strumento di formazione professionale iniziale e continua dei docenti del secondo ciclo del sistema istruttivo e formativo, in particolare dell'iefp. verifica della possibilita di estensione al caso degli allievi",
       "id": "portfolio_digitale_document"
     },
@@ -753,7 +753,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 4,
       "norm_label": "marco bay",
       "id": "promuovere_la_crescita_nelle_competenze_strategiche_marco_bay"
     },
@@ -766,7 +766,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 4,
       "norm_label": "dariusz grzadziel",
       "id": "promuovere_la_crescita_nelle_competenze_strategiche_dariusz_grzadziel"
     },
@@ -779,7 +779,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 4,
       "norm_label": "michele pellerey",
       "id": "promuovere_la_crescita_nelle_competenze_strategiche_michele_pellerey"
     },
@@ -805,7 +805,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 4,
       "norm_label": "autovalutazione",
       "id": "promuovere_la_crescita_nelle_competenze_strategiche_autovalutazione"
     },
@@ -818,7 +818,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 4,
       "norm_label": "dimensione spirituale",
       "id": "promuovere_la_crescita_nelle_competenze_strategiche_dimensione_spirituale"
     },
@@ -831,7 +831,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 4,
       "norm_label": "dimensione morale",
       "id": "promuovere_la_crescita_nelle_competenze_strategiche_dimensione_morale"
     },
@@ -844,7 +844,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 4,
       "norm_label": "formazione professionale",
       "id": "promuovere_la_crescita_nelle_competenze_strategiche_formazione_professionale"
     },
@@ -857,7 +857,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "apprendimento permanente",
       "id": "promuovere_la_crescita_nelle_competenze_strategiche_apprendimento_permanente"
     },
@@ -870,7 +870,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 1,
       "norm_label": "autoregolazione",
       "id": "promuovere_la_crescita_nelle_competenze_strategiche_autoregolazione"
     },
@@ -883,7 +883,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 4,
       "norm_label": "legge 53/2003",
       "id": "promuovere_la_crescita_nelle_competenze_strategiche_legge_53_2003"
     },
@@ -896,7 +896,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 4,
       "norm_label": "strategie di lisbona",
       "id": "promuovere_la_crescita_nelle_competenze_strategiche_strategie_di_lisbona"
     },
@@ -909,7 +909,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 4,
       "norm_label": "cnos-fap",
       "id": "promuovere_la_crescita_nelle_competenze_strategiche_cnos_fap"
     },
@@ -922,7 +922,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 1,
       "norm_label": "soft skill e orientamento professionale",
       "id": "soft_skill_report"
     },
@@ -935,7 +935,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 1,
       "norm_label": "filippo epifani",
       "id": "soft_skill_filippo_epifani"
     },
@@ -948,7 +948,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 1,
       "norm_label": "massimo margottini",
       "id": "soft_skill_massimo_margottini"
     },
@@ -961,7 +961,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 1,
       "norm_label": "enrica ottone",
       "id": "soft_skill_enrica_ottone"
     },
@@ -987,7 +987,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 4,
       "norm_label": "orientamento professionale",
       "id": "soft_skill_orientamento_professionale"
     },
@@ -1000,7 +1000,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 1,
       "norm_label": "competenze personali generali",
       "id": "soft_skill_competenze_personali_generali"
     },
@@ -1013,7 +1013,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 1,
       "norm_label": "life design",
       "id": "soft_skill_life_design"
     },
@@ -1026,7 +1026,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 1,
       "norm_label": "career construction",
       "id": "soft_skill_career_construction"
     },
@@ -1039,7 +1039,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 1,
       "norm_label": "autodeterminazione",
       "id": "soft_skill_autodeterminazione"
     },
@@ -1052,7 +1052,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 1,
       "norm_label": "funzioni esecutive",
       "id": "soft_skill_funzioni_esecutive"
     },
@@ -1065,7 +1065,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "occupabilita",
       "id": "soft_skill_occupabilita"
     },
@@ -1078,7 +1078,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 1,
       "norm_label": "savickas",
       "id": "soft_skill_savickas"
     },
@@ -1091,7 +1091,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 1,
       "norm_label": "holland",
       "id": "soft_skill_holland"
     },
@@ -1104,7 +1104,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 1,
       "norm_label": "bernaud",
       "id": "soft_skill_bernaud"
     },
@@ -1117,7 +1117,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 1,
       "norm_label": "vocational guidance",
       "id": "soft_skill_vocational_guidance"
     },
@@ -1130,9 +1130,152 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 1,
       "norm_label": "career education",
       "id": "soft_skill_career_education"
+    },
+    {
+      "label": "Promuovere la crescita nelle competenze strategiche che hanno le loro radici nelle dimensioni morali e spirituali della persona. Rapporto di ricerca",
+      "file_type": "document",
+      "source_file": "schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 4,
+      "norm_label": "promuovere la crescita nelle competenze strategiche che hanno le loro radici nelle dimensioni morali e spirituali della persona. rapporto di ricerca",
+      "id": "promuovere_la_crescita_nelle_competenze_strategiche_report"
+    },
+    {
+      "label": "QSAr (Versione ridotta del QSA)",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 3,
+      "norm_label": "qsar (versione ridotta del qsa)",
+      "id": "strumenti_e_metodologie_qsar"
+    },
+    {
+      "label": "Piattaforma competenzestrategiche.it",
+      "file_type": "code",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 3,
+      "norm_label": "piattaforma competenzestrategiche.it",
+      "id": "strumenti_e_metodologie_piattaforma_competenze_strategiche"
+    },
+    {
+      "label": "Portfolio digitale",
+      "file_type": "concept",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 3,
+      "norm_label": "portfolio digitale",
+      "id": "strumenti_e_metodologie_portfolio_digitale"
+    },
+    {
+      "label": "Soft skills",
+      "file_type": "concept",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 3,
+      "norm_label": "soft skills",
+      "id": "strumenti_e_metodologie_soft_skills"
+    },
+    {
+      "label": "Hard skills generiche",
+      "file_type": "concept",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 3,
+      "norm_label": "hard skills generiche",
+      "id": "strumenti_e_metodologie_hard_skills_generiche"
+    },
+    {
+      "label": "Autoregolazione",
+      "file_type": "concept",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "autoregolazione",
+      "id": "strumenti_e_metodologie_autoregolazione"
+    },
+    {
+      "label": "Competenze strategiche",
+      "file_type": "concept",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "competenze strategiche",
+      "id": "strumenti_e_metodologie_competenze_strategiche"
+    },
+    {
+      "label": "Occupabilit\u00e0",
+      "file_type": "concept",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 3,
+      "norm_label": "occupabilita",
+      "id": "strumenti_e_metodologie_occupabilita"
+    },
+    {
+      "label": "Prospettiva temporale",
+      "file_type": "concept",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 6,
+      "norm_label": "prospettiva temporale",
+      "id": "strumenti_e_metodologie_prospettiva_temporale"
+    },
+    {
+      "label": "Autoorientamento",
+      "file_type": "concept",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 6,
+      "norm_label": "autoorientamento",
+      "id": "strumenti_e_metodologie_autoorientamento"
     }
   ],
   "links": [
@@ -1937,20 +2080,20 @@
       "target": "soft_skill_document"
     },
     {
-      "relation": "conceptually_related_to",
+      "relation": "references",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "strumenti_e_metodologie.pdf",
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
       "source_location": null,
       "weight": 1.0,
       "source": "strumenti_e_metodologie_document",
       "target": "apprendimento_permanente"
     },
     {
-      "relation": "conceptually_related_to",
+      "relation": "references",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "strumenti_e_metodologie.pdf",
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
       "source_location": null,
       "weight": 1.0,
       "source": "strumenti_e_metodologie_document",
@@ -2030,7 +2173,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "strumenti_e_metodologie.pdf",
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
       "source_location": null,
       "weight": 1.0,
       "source": "strumenti_e_metodologie_document",
@@ -2067,10 +2210,10 @@
       "target": "michele_pellerey"
     },
     {
-      "relation": "conceptually_related_to",
+      "relation": "references",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "strumenti_e_metodologie.pdf",
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
       "source_location": null,
       "weight": 1.0,
       "source": "strumenti_e_metodologie_document",
@@ -2080,7 +2223,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "strumenti_e_metodologie.pdf",
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
       "source_location": null,
       "weight": 1.0,
       "source": "strumenti_e_metodologie_document",
@@ -2110,7 +2253,107 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "strumenti_e_metodologie.pdf",
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_e_metodologie_document",
+      "target": "strumenti_e_metodologie_autoorientamento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_e_metodologie_document",
+      "target": "strumenti_e_metodologie_autoregolazione"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_e_metodologie_document",
+      "target": "strumenti_e_metodologie_competenze_strategiche"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_e_metodologie_document",
+      "target": "strumenti_e_metodologie_hard_skills_generiche"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_e_metodologie_document",
+      "target": "strumenti_e_metodologie_occupabilita"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_e_metodologie_document",
+      "target": "strumenti_e_metodologie_piattaforma_competenze_strategiche"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_e_metodologie_document",
+      "target": "strumenti_e_metodologie_portfolio_digitale"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_e_metodologie_document",
+      "target": "strumenti_e_metodologie_prospettiva_temporale"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_e_metodologie_document",
+      "target": "strumenti_e_metodologie_qsar"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_e_metodologie_document",
+      "target": "strumenti_e_metodologie_soft_skills"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
       "source_location": null,
       "weight": 1.0,
       "source": "strumenti_e_metodologie_document",
@@ -2527,6 +2770,16 @@
       "target": "ciofs_fp"
     },
     {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "mahara",
+      "target": "strumenti_e_metodologie_portfolio_digitale"
+    },
+    {
       "relation": "references",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
@@ -2535,6 +2788,26 @@
       "weight": 1.0,
       "source": "portfolio_digitale_document",
       "target": "mahara"
+    },
+    {
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_e_metodologie_qsar",
+      "target": "qsa"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "ztpi",
+      "target": "strumenti_e_metodologie_prospettiva_temporale"
     },
     {
       "relation": "references",
@@ -2555,6 +2828,36 @@
       "weight": 1.0,
       "source": "life_design",
       "target": "orientamento_professionale"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.7,
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_e_metodologie_autoorientamento",
+      "target": "orientamento_professionale"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_e_metodologie_prospettiva_temporale",
+      "target": "orientamento_professionale"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.7,
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "autodeterminazione",
+      "target": "strumenti_e_metodologie_competenze_strategiche"
     },
     {
       "relation": "conceptually_related_to",
@@ -2580,6 +2883,36 @@
       "relation": "cites",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_la_crescita_nelle_competenze_strategiche_report",
+      "target": "promuovere_la_crescita_nelle_competenze_strategiche_marco_bay"
+    },
+    {
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_la_crescita_nelle_competenze_strategiche_report",
+      "target": "promuovere_la_crescita_nelle_competenze_strategiche_dariusz_grzadziel"
+    },
+    {
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_la_crescita_nelle_competenze_strategiche_report",
+      "target": "promuovere_la_crescita_nelle_competenze_strategiche_michele_pellerey"
+    },
+    {
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
       "source_file": "schede-bibliografiche/soft_skill.md",
       "source_location": null,
       "weight": 1.0,
@@ -2597,6 +2930,16 @@
       "target": "soft_skill_soft_skill"
     },
     {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_la_crescita_nelle_competenze_strategiche_report",
+      "target": "promuovere_la_crescita_nelle_competenze_strategiche_competenze_strategiche"
+    },
+    {
       "relation": "conceptually_related_to",
       "confidence": "INFERRED",
       "confidence_score": 1.0,
@@ -2605,6 +2948,36 @@
       "weight": 1.0,
       "source": "promuovere_la_crescita_nelle_competenze_strategiche_autovalutazione",
       "target": "soft_skill_orientamento_professionale"
+    },
+    {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_la_crescita_nelle_competenze_strategiche_report",
+      "target": "promuovere_la_crescita_nelle_competenze_strategiche_autovalutazione"
+    },
+    {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_la_crescita_nelle_competenze_strategiche_report",
+      "target": "promuovere_la_crescita_nelle_competenze_strategiche_dimensione_spirituale"
+    },
+    {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_la_crescita_nelle_competenze_strategiche_report",
+      "target": "promuovere_la_crescita_nelle_competenze_strategiche_dimensione_morale"
     },
     {
       "relation": "conceptually_related_to",
@@ -2617,6 +2990,16 @@
       "target": "soft_skill_orientamento_professionale"
     },
     {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_la_crescita_nelle_competenze_strategiche_report",
+      "target": "promuovere_la_crescita_nelle_competenze_strategiche_formazione_professionale"
+    },
+    {
       "relation": "conceptually_related_to",
       "confidence": "INFERRED",
       "confidence_score": 1.0,
@@ -2625,6 +3008,16 @@
       "weight": 1.0,
       "source": "promuovere_la_crescita_nelle_competenze_strategiche_apprendimento_permanente",
       "target": "soft_skill_occupabilita"
+    },
+    {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_la_crescita_nelle_competenze_strategiche_report",
+      "target": "promuovere_la_crescita_nelle_competenze_strategiche_apprendimento_permanente"
     },
     {
       "relation": "conceptually_related_to",
@@ -2640,11 +3033,51 @@
       "relation": "references",
       "confidence": "INFERRED",
       "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_la_crescita_nelle_competenze_strategiche_report",
+      "target": "promuovere_la_crescita_nelle_competenze_strategiche_autoregolazione"
+    },
+    {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 1.0,
       "source_file": "schede-bibliografiche/soft_skill.md",
       "source_location": null,
       "weight": 1.0,
       "source": "soft_skill_report",
       "target": "promuovere_la_crescita_nelle_competenze_strategiche_autoregolazione"
+    },
+    {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_la_crescita_nelle_competenze_strategiche_report",
+      "target": "promuovere_la_crescita_nelle_competenze_strategiche_legge_53_2003"
+    },
+    {
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_la_crescita_nelle_competenze_strategiche_report",
+      "target": "promuovere_la_crescita_nelle_competenze_strategiche_strategie_di_lisbona"
+    },
+    {
+      "relation": "cites",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_la_crescita_nelle_competenze_strategiche_report",
+      "target": "promuovere_la_crescita_nelle_competenze_strategiche_cnos_fap"
     },
     {
       "relation": "cites",
@@ -2655,6 +3088,16 @@
       "weight": 1.0,
       "source": "soft_skill_report",
       "target": "promuovere_la_crescita_nelle_competenze_strategiche_cnos_fap"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_la_crescita_nelle_competenze_strategiche_report",
+      "target": "soft_skill_report"
     },
     {
       "relation": "references",
@@ -2815,6 +3258,36 @@
       "weight": 1.0,
       "source": "soft_skill_report",
       "target": "soft_skill_vocational_guidance"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_e_metodologie_soft_skills",
+      "target": "strumenti_e_metodologie_occupabilita"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_e_metodologie_hard_skills_generiche",
+      "target": "strumenti_e_metodologie_occupabilita"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.7,
+      "source_file": "schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_e_metodologie_autoregolazione",
+      "target": "strumenti_e_metodologie_competenze_strategiche"
     }
   ],
   "hyperedges": []

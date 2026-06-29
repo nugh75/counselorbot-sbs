@@ -4,6 +4,7 @@ load_dotenv()
 import asyncio
 import logging
 import os
+import re
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -28,6 +29,9 @@ from .prompt_config import (
     DEFAULT_QAP_GUIDED_STEPS,
     SYSTEM_PROMPT_DEFAULTS,
     GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
+    INTRO_ALLOWED_QUESTIONS,
+    INTRO_ALLOWED_QUESTIONS_SENTINEL,
+    MODE_TO_SYSTEM_PROMPT_KEY,
 )
 from .questionnaire_catalog import INSTRUMENT_CATALOG_DEFAULTS
 from .guided_text_i18n import seed_definitions as guided_text_seed_definitions
@@ -768,18 +772,52 @@ _COUNSELOR_PERSONA_EN_BY_SLUG = {
     ),
 }
 
-# Intro di sezione del gruppo competenze strategiche: la riga identitaria deve
-# usare il placeholder nome anziché "the CounselorBot counsellor". ZTPI/Savickas
-# restano fuori scope. Chiave = key del Config.
-_GROUP_INTRO_CONFIG_KEYS = (
+# Intro di sezione: l'identita/stile vive nella persona del counselor; i prompt
+# intro descrivono solo il compito del turno. Chiave = key del Config.
+_INTRO_CONFIG_KEYS = (
     "prompt_intro",          # QSA
     "prompt_qsar_intro",     # QSAr
+    "prompt_ztpi_intro",     # ZTPI
+    "prompt_savickas_intro", # SAVICKAS
     "prompt_qpcs_welcome",   # QPCS
     "prompt_qpcc_welcome",   # QPCC
     "prompt_qap_welcome",    # QAP
 )
+_PERSONA_SCOPED_CONFIG_KEYS = tuple(sorted(set(MODE_TO_SYSTEM_PROMPT_KEY.values())))
 _OLD_INTRO_IDENTITY = "You are the CounselorBot counsellor."
-_NEW_INTRO_IDENTITY = "You are {{counselor_name}}."
+_PLACEHOLDER_INTRO_IDENTITY = "You are {{counselor_name}}."
+_OLD_COUNSELORBOT_PROMPT_PREFIXES = (
+    ("You are CounselorBot,", "You are {{counselor_name}},"),
+    ("You are CounselorBot.", "You are {{counselor_name}}."),
+)
+_LEGACY_INTRO_BODY_MARKERS = {
+    "prompt_intro": ("cognitive and affective factors",),
+    "prompt_qsar_intro": ("cognitive and affective components",),
+    "prompt_ztpi_intro": ("five time orientations",),
+    "prompt_savickas_intro": ("you will ask five questions",),
+    "prompt_qpcs_welcome": ("strategic competences together one at a time",),
+    "prompt_qpcc_welcome": ("competences and beliefs together one at a time",),
+    "prompt_qap_welcome": ("four resources of their career adaptability (CAAS)",),
+}
+_PERSONA_IDENTITY_PREFIX_RE = re.compile(
+    r"^\s*You are (?:\{\{counselor_name\}\}|CounselorBot|the CounselorBot counsellor),?[^.\n]*\.\s*",
+    re.IGNORECASE,
+)
+_PERSONA_TONE_PREFIXES = (
+    "Always speak in a simple, direct and encouraging tone, in the requested language, addressing the student informally.",
+    "Always speak in simple, direct and encouraging English, addressing the student informally.",
+)
+
+
+def _strip_persona_scoped_prompt_prefix(value: str, fallback: str = "") -> str:
+    current = value or ""
+    current = _PERSONA_IDENTITY_PREFIX_RE.sub("", current, count=1).lstrip()
+    for prefix in _PERSONA_TONE_PREFIXES:
+        if current.startswith(prefix):
+            current = current[len(prefix):].lstrip()
+        current = current.replace(prefix + " ", "")
+        current = current.replace(prefix + "\n", "")
+    return current or fallback
 
 
 def _migrate_counselor_personas_and_intros(db):
@@ -790,9 +828,10 @@ def _migrate_counselor_personas_and_intros(db):
       solo se il valore corrente inizia con "Sei " (marcatore della persona IT
       seedata), così le persona già inglesi o riscritte dall'admin non vengono
       toccate.
-    - Intro di sezione (gruppo competenze strategiche): nelle 5 righe Config
-      sostituisce "You are the CounselorBot counsellor." con
-      "You are {{counselor_name}}." solo se la vecchia stringa è ancora presente.
+    - Intro di sezione: rimuove la frase identitaria iniziale dai prompt intro
+      già salvati in Config, perché identità e stile sono coperti dalla persona
+      del counselor. Agisce solo su prefissi esatti noti, lasciando intatto il
+      resto del prompt.
     Idempotente e non distruttivo.
     """
     changed = False
@@ -807,15 +846,61 @@ def _migrate_counselor_personas_and_intros(db):
             counselor.persona = new_persona
             changed = True
 
-    for key in _GROUP_INTRO_CONFIG_KEYS:
+    config_defaults_by_key = {
+        item["key"]: item["default"]
+        for item in ALL_CONFIG_TEXT_DEFINITIONS
+    }
+    intro_defaults_by_key = {
+        item["key"]: item["default"]
+        for item in GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS.values()
+    }
+    counselor_prompt_keys = set(SYSTEM_PROMPT_DEFAULTS) | set(intro_defaults_by_key)
+    for key in counselor_prompt_keys:
         cfg = db.query(models.Config).filter(models.Config.key == key).first()
-        if cfg and _OLD_INTRO_IDENTITY in (cfg.value or ""):
-            cfg.value = cfg.value.replace(_OLD_INTRO_IDENTITY, _NEW_INTRO_IDENTITY)
+        if not cfg:
+            continue
+        current = cfg.value or ""
+        for old, new in _OLD_COUNSELORBOT_PROMPT_PREFIXES:
+            if current.startswith(old):
+                current = new + current[len(old):]
+                break
+        if current != (cfg.value or ""):
+            cfg.value = current
+            changed = True
+
+    for key in _PERSONA_SCOPED_CONFIG_KEYS:
+        cfg = db.query(models.Config).filter(models.Config.key == key).first()
+        if not cfg:
+            continue
+        current = cfg.value or ""
+        stripped = _strip_persona_scoped_prompt_prefix(
+            current,
+            config_defaults_by_key.get(key, ""),
+        )
+        if stripped != current:
+            cfg.value = stripped
+            changed = True
+
+    for key in _INTRO_CONFIG_KEYS:
+        cfg = db.query(models.Config).filter(models.Config.key == key).first()
+        if not cfg:
+            continue
+        current = cfg.value or ""
+        for prefix in (_OLD_INTRO_IDENTITY, _PLACEHOLDER_INTRO_IDENTITY):
+            if current.startswith(prefix):
+                current = current[len(prefix):].lstrip()
+        markers = _LEGACY_INTRO_BODY_MARKERS.get(key, ())
+        if any(marker in current for marker in markers):
+            current = intro_defaults_by_key.get(key, current)
+        elif INTRO_ALLOWED_QUESTIONS_SENTINEL not in current:
+            current = current.rstrip() + INTRO_ALLOWED_QUESTIONS
+        if current != (cfg.value or ""):
+            cfg.value = current
             changed = True
 
     if changed:
         db.commit()
-        logger.info("Migrated counselor personas to English + name placeholder")
+        logger.info("Migrated counselor personas and scoped intro prompts")
 
 
 def _migrate_prompts_to_english(db):
