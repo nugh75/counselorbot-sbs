@@ -285,6 +285,7 @@ def build_prompt_audit(
         session_id,
         {},
         c_persona=c_persona,
+        counselor_name=(counselor or {}).get("name"),
         system_prompt=system_prompt,
         step_label=step_label_for_envelope,
         questionnaire_type=questionnaire_type,

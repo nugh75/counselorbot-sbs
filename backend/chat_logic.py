@@ -1303,6 +1303,7 @@ def build_context_envelope(
     identity: dict,
     *,
     c_persona: str,
+    counselor_name: Optional[str] = None,
     system_prompt: str,
     step_label: str,
     questionnaire_type: str,
@@ -1394,6 +1395,12 @@ def build_context_envelope(
     system_prompt_final = "\n\n".join(parts_system)
     if c_persona:
         system_prompt_final = f"{c_persona.strip()}\n\n{system_prompt_final}"
+    # Placeholder nome counselor: risolto dal campo counselors.name, usato sia nella
+    # persona sia negli intro di sezione. Fallback neutro quando nessun counselor e'
+    # selezionato, cosi' il letterale {{counselor_name}} non raggiunge mai il modello.
+    system_prompt_final = system_prompt_final.replace(
+        "{{counselor_name}}", (counselor_name or "the counsellor")
+    )
 
     # --- MESSAGES: history verbatim + user corrente (scores scope-ati + msg) ---
     history = session_memory.get_transcript(session_id) if include_history and include_session_memory else []
