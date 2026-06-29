@@ -74,22 +74,6 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                 <p className="text-sm text-slate-500 leading-relaxed grow">
                     {t(`q.${q.id}.description`)}
                 </p>
-                {isExpanded && (
-                    <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 text-sm text-slate-600 space-y-2">
-                        <div>
-                            <span className="font-semibold text-slate-800">{t('detail.focus.title')}: </span>
-                            {t(`detail.${q.id}.focus`)}
-                        </div>
-                        <div>
-                            <span className="font-semibold text-slate-800">{t('detail.input.title')}: </span>
-                            {t(`detail.${q.id}.input`)}
-                        </div>
-                        <div>
-                            <span className="font-semibold text-slate-800">{t('detail.path.title')}: </span>
-                            {t(`detail.${q.id}.path`)}
-                        </div>
-                    </div>
-                )}
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                     <button
                         onClick={() => onSelect(q)}
@@ -134,6 +118,22 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                         {isExpanded ? t('selector.hide') : t('selector.expand')}
                     </button>
                 </div>
+                {isExpanded && (
+                    <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 text-sm text-slate-600 space-y-2">
+                        <div>
+                            <span className="font-semibold text-slate-800">{t('detail.focus.title')}: </span>
+                            {t(`detail.${q.id}.focus`)}
+                        </div>
+                        <div>
+                            <span className="font-semibold text-slate-800">{t('detail.input.title')}: </span>
+                            {t(`detail.${q.id}.input`)}
+                        </div>
+                        <div>
+                            <span className="font-semibold text-slate-800">{t('detail.path.title')}: </span>
+                            {t(`detail.${q.id}.path`)}
+                        </div>
+                    </div>
+                )}
                 {hasExternalAssessment && (
                     <div className="flex flex-wrap gap-2 pt-1">
                         <div className="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-xs text-sky-900">
