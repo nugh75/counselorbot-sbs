@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
     AlertTriangle,
     BarChart3,
@@ -23,6 +23,8 @@ import {
     X,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useI18n } from '@/lib/i18n-context';
 
 type LogDetails = Record<string, unknown>;
@@ -548,12 +550,53 @@ export function LogViewer() {
         return preview || '-';
     };
 
-    const detailBlock = (label: string, text: string, accent: string) => (
-        <div className={`rounded-md border-l-4 p-3 ${accent}`}>
-            <div className="mb-1 text-xs font-semibold uppercase tracking-wide opacity-70">{label}</div>
-            <div className="whitespace-pre-wrap break-words text-sm text-slate-800">{text}</div>
+    const detailBlock = (label: string, text: string, key?: string) => (
+        <div key={key} className="rounded-md border border-slate-200 bg-slate-50 p-3">
+            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</div>
+            <div className="prose prose-sm max-w-none break-words text-slate-700 prose-p:my-1 prose-pre:my-1 prose-pre:whitespace-pre-wrap prose-headings:my-1.5 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-table:my-1">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+            </div>
         </div>
     );
+
+    // Espande in modo leggibile qualsiasi valore annidato (oggetti/array) invece
+    // di scaricarne il JSON grezzo: le stringhe mantengono i loro a-capo reali e
+    // il markdown viene renderizzato. Evita virgolette, graffe e '\n' di escape.
+    const renderDetailValue = (label: string, value: unknown, keyId: string): ReactNode => {
+        if (value === null || value === undefined) return null;
+        if (typeof value === 'string') {
+            return value.trim() ? detailBlock(label, value, keyId) : null;
+        }
+        if (typeof value === 'number' || typeof value === 'boolean') {
+            return detailBlock(label, String(value), keyId);
+        }
+        if (Array.isArray(value)) {
+            if (value.length === 0) return null;
+            const allScalar = value.every((item) => item === null || typeof item !== 'object');
+            if (allScalar) {
+                const text = value.map(textValue).filter((s) => s.trim()).join('\n');
+                return text ? detailBlock(label, text, keyId) : null;
+            }
+            const items = value
+                .map((item, i) => renderDetailValue(`#${i + 1}`, item, `${keyId}.${i}`))
+                .filter(Boolean);
+            return items.length ? (
+                <div key={keyId} className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</div>
+                    <div className="space-y-2 border-l-2 border-slate-200 pl-3">{items}</div>
+                </div>
+            ) : null;
+        }
+        const entries = Object.entries(value as Record<string, unknown>)
+            .map(([k, v]) => renderDetailValue(k, v, `${keyId}.${k}`))
+            .filter(Boolean);
+        return entries.length ? (
+            <div key={keyId} className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</div>
+                <div className="space-y-2 border-l-2 border-slate-200 pl-3">{entries}</div>
+            </div>
+        ) : null;
+    };
 
     const renderHumanDetail = (log: LogEntry) => {
         const details = asObject(log.details);
@@ -578,7 +621,21 @@ export function LogViewer() {
         const quality = textValue(details.quality);
         if (quality) chips.push({ k: t('admin.logs.d.quality'), v: quality });
 
-        const hasContent = userInput || botResponse || error || systemPrompt || effective;
+        // Any remaining detail keys not already surfaced above — keeps the human
+        // view complete relative to the raw JSON instead of silently dropping fields.
+        const consumed = new Set([
+            'user_input', 'question', 'effective_user_input', 'system_prompt',
+            'bot_response', 'answer', 'error', 'usage', 'sources',
+            'provider', 'model', 'phase', 'mode', 'quality',
+            'cost_usd', 'estimated_cost_usd', 'model_name', 'anonymous_research_code',
+        ]);
+        const otherNodes = Object.entries(details)
+            .filter(([key]) => !consumed.has(key))
+            .map(([key, value]) => renderDetailValue(key, value, key))
+            .filter(Boolean);
+
+        const hasContent = Boolean(userInput || botResponse || error || systemPrompt || effective)
+            || sources.length > 0 || otherNodes.length > 0;
         return (
             <div className="space-y-3">
                 <div className="flex flex-wrap gap-2">
@@ -588,12 +645,13 @@ export function LogViewer() {
                         </span>
                     ))}
                 </div>
-                {userInput && detailBlock(t('admin.logs.d.userInput'), userInput, 'border-sky-400 bg-sky-50/60 text-sky-700')}
-                {effective && effective !== userInput && detailBlock(t('admin.logs.d.effectiveInput'), effective, 'border-amber-400 bg-amber-50/60 text-amber-700')}
-                {systemPrompt && detailBlock(t('admin.logs.d.systemPrompt'), systemPrompt, 'border-slate-300 bg-slate-50 text-slate-500')}
-                {botResponse && detailBlock(t('admin.logs.d.botResponse'), botResponse, 'border-emerald-400 bg-emerald-50/60 text-emerald-700')}
-                {error && detailBlock(t('admin.logs.d.error'), error, 'border-red-400 bg-red-50 text-red-700')}
-                {sources.length > 0 && detailBlock(t('admin.logs.d.sources'), sources.join('\n'), 'border-violet-300 bg-violet-50/60 text-violet-700')}
+                {userInput && detailBlock(t('admin.logs.d.userInput'), userInput)}
+                {effective && effective !== userInput && detailBlock(t('admin.logs.d.effectiveInput'), effective)}
+                {systemPrompt && detailBlock(t('admin.logs.d.systemPrompt'), systemPrompt)}
+                {botResponse && detailBlock(t('admin.logs.d.botResponse'), botResponse)}
+                {error && detailBlock(t('admin.logs.d.error'), error)}
+                {sources.length > 0 && detailBlock(t('admin.logs.d.sources'), sources.join('\n'))}
+                {otherNodes}
                 {!hasContent && <div className="text-sm text-slate-400">{t('admin.logs.d.empty')}</div>}
             </div>
         );
