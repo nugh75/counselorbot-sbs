@@ -80,7 +80,7 @@ DEFAULT_GUIDED_TEXT_QUESTIONS_INTRO = (
 
 DEFAULT_GUIDED_TEXT_CONCLUSION = (
     "Hai completato il percorso di analisi del QSA. Spero ti sia stato utile! "
-    "Clicca sul pulsante in basso per tornare alla Home Page."
+    "Continua per scegliere il prossimo passaggio."
 )
 
 # --- QSAr System Prompts ---
@@ -119,7 +119,7 @@ DEFAULT_GUIDED_TEXT_QSAR_QUESTIONS_INTRO = (
 
 DEFAULT_GUIDED_TEXT_QSAR_CONCLUSION = (
     "Hai completato il percorso di analisi del QSAr. "
-    "Clicca sul pulsante in basso per tornare alla Home Page."
+    "Continua per scegliere il prossimo passaggio."
 )
 
 
@@ -220,7 +220,7 @@ DEFAULT_GUIDED_TEXT_ZTPI_QUESTIONS_INTRO = (
 DEFAULT_GUIDED_TEXT_ZTPI_CONCLUSION = (
     "Hai completato il percorso di analisi della tua prospettiva temporale. "
     "Ricorda: lavorare verso un profilo temporale equilibrato è un percorso graduale. "
-    "Clicca sul pulsante in basso per tornare alla Home Page."
+    "Continua per scegliere il prossimo passaggio."
 )
 
 DEFAULT_GUIDED_TEXT_SAVICKAS_QUESTIONS_INTRO = (
@@ -231,7 +231,7 @@ DEFAULT_GUIDED_TEXT_SAVICKAS_QUESTIONS_INTRO = (
 DEFAULT_GUIDED_TEXT_SAVICKAS_CONCLUSION = (
     "Hai completato l'intervista Savickas di career counseling. "
     "Puoi usare la sintesi come bussola e aggiornarla nel tempo mentre fai esperienza. "
-    "Clicca sul pulsante in basso per tornare alla Home Page."
+    "Continua per scegliere il prossimo passaggio."
 )
 
 
@@ -288,7 +288,7 @@ DEFAULT_GUIDED_TEXT_QPCS_QUESTIONS_INTRO = (
 )
 DEFAULT_GUIDED_TEXT_QPCS_CONCLUSION = (
     "Hai completato l'analisi delle tue competenze strategiche (QPCS). "
-    "Clicca sul pulsante in basso per tornare alla Home Page."
+    "Continua per scegliere il prossimo passaggio."
 )
 DEFAULT_GUIDED_TEXT_QPCC_QUESTIONS_INTRO = (
     "Abbiamo analizzato il tuo profilo di competenze e convinzioni. "
@@ -296,7 +296,7 @@ DEFAULT_GUIDED_TEXT_QPCC_QUESTIONS_INTRO = (
 )
 DEFAULT_GUIDED_TEXT_QPCC_CONCLUSION = (
     "Hai completato l'analisi di competenze e convinzioni (QPCC). "
-    "Clicca sul pulsante in basso per tornare alla Home Page."
+    "Continua per scegliere il prossimo passaggio."
 )
 DEFAULT_GUIDED_TEXT_QAP_QUESTIONS_INTRO = (
     "Abbiamo analizzato il tuo profilo di adattabilita' professionale. "
@@ -304,7 +304,7 @@ DEFAULT_GUIDED_TEXT_QAP_QUESTIONS_INTRO = (
 )
 DEFAULT_GUIDED_TEXT_QAP_CONCLUSION = (
     "Hai completato l'analisi dell'adattabilita' professionale (QAP). "
-    "Clicca sul pulsante in basso per tornare alla Home Page."
+    "Continua per scegliere il prossimo passaggio."
 )
 
 

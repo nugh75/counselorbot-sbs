@@ -54,14 +54,14 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         "text_guided_conclusion": (
             "You have completed the QSA path.\n"
             "You already have a clear foundation to build on: with small, steady steps you can improve a lot.\n"
-            "Whenever you like, you can return to the Home Page and pick up from here."
+            "When you're ready, continue to choose your next step."
         ),
         "text_qsar_questions_intro": (
             "We have completed the structured analysis of your QSAr profile. "
             "Now you can ask me any open question about the results or request specific advice."
         ),
         "text_qsar_conclusion": (
-            "You have completed the QSAr analysis path. Click the button below to return to the Home Page."
+            "You have completed the QSAr analysis path. Use the button below to choose your next step."
         ),
         "text_ztpi_questions_intro": (
             "We have completed the structured analysis of your time perspective. "
@@ -71,7 +71,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         "text_ztpi_conclusion": (
             "You have completed the analysis path of your time perspective. "
             "Remember: working towards a balanced time perspective is a gradual journey. "
-            "Click the button below to return to the Home Page."
+            "Use the button below to choose your next step."
         ),
         "text_savickas_questions_intro": (
             "We have completed the 5 questions of the Savickas interview. "
@@ -80,7 +80,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         "text_savickas_conclusion": (
             "You have completed the Savickas career counselling interview. "
             "You can use the summary as a compass and update it over time as you gain experience. "
-            "Click the button below to return to the Home Page."
+            "Use the button below to choose your next step."
         ),
         "text_qpcs_questions_intro": (
             "We have explored your strategic competences together. "
@@ -88,7 +88,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         ),
         "text_qpcs_conclusion": (
             "You have completed the reflection path on your strategic competences (QPCS). "
-            "Click the button below to return to the Home Page."
+            "Use the button below to choose your next step."
         ),
         "text_qpcc_questions_intro": (
             "We have explored your competences and beliefs together. "
@@ -96,7 +96,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         ),
         "text_qpcc_conclusion": (
             "You have completed the reflection path on competences and beliefs (QPCC). "
-            "Click the button below to return to the Home Page."
+            "Use the button below to choose your next step."
         ),
         "text_qap_questions_intro": (
             "We have explored the resources of your career adaptability together. "
@@ -104,7 +104,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         ),
         "text_qap_conclusion": (
             "You have completed the path on career adaptability (QAP). "
-            "Click the button below to return to the Home Page."
+            "Use the button below to choose your next step."
         ),
     },
     "es": {
@@ -129,14 +129,14 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         "text_guided_conclusion": (
             "Has completado el recorrido QSA.\n"
             "Ya tienes una base clara sobre la que construir: con pequeños pasos constantes puedes mejorar mucho.\n"
-            "Cuando quieras, puedes volver a la página de inicio y retomar desde aquí."
+            "Cuando quieras, continúa para elegir el siguiente paso."
         ),
         "text_qsar_questions_intro": (
             "Hemos completado el análisis estructurado de tu perfil QSAr. "
             "Ahora puedes hacerme cualquier pregunta libre sobre los resultados o pedir consejos específicos."
         ),
         "text_qsar_conclusion": (
-            "Has completado el recorrido de análisis del QSAr. Haz clic en el botón de abajo para volver a la página de inicio."
+            "Has completado el recorrido de análisis del QSAr. Usa el botón de abajo para elegir el siguiente paso."
         ),
         "text_ztpi_questions_intro": (
             "Hemos completado el análisis estructurado de tu perspectiva temporal. "
@@ -146,7 +146,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         "text_ztpi_conclusion": (
             "Has completado el recorrido de análisis de tu perspectiva temporal. "
             "Recuerda: trabajar hacia una perspectiva temporal equilibrada es un proceso gradual. "
-            "Haz clic en el botón de abajo para volver a la página de inicio."
+            "Usa el botón de abajo para elegir el siguiente paso."
         ),
         "text_savickas_questions_intro": (
             "Hemos completado las 5 preguntas de la entrevista de Savickas. "
@@ -155,7 +155,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         "text_savickas_conclusion": (
             "Has completado la entrevista de orientación profesional de Savickas. "
             "Puedes usar la síntesis como brújula y actualizarla con el tiempo a medida que ganas experiencia. "
-            "Haz clic en el botón de abajo para volver a la página de inicio."
+            "Usa el botón de abajo para elegir el siguiente paso."
         ),
         "text_qpcs_questions_intro": (
             "Hemos explorado juntos tus competencias estratégicas. "
@@ -163,7 +163,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         ),
         "text_qpcs_conclusion": (
             "Has completado el recorrido de reflexión sobre tus competencias estratégicas (QPCS). "
-            "Haz clic en el botón de abajo para volver a la página de inicio."
+            "Usa el botón de abajo para elegir el siguiente paso."
         ),
         "text_qpcc_questions_intro": (
             "Hemos explorado juntos tus competencias y convicciones. "
@@ -171,7 +171,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         ),
         "text_qpcc_conclusion": (
             "Has completado el recorrido de reflexión sobre competencias y convicciones (QPCC). "
-            "Haz clic en el botón de abajo para volver a la página de inicio."
+            "Usa el botón de abajo para elegir el siguiente paso."
         ),
         "text_qap_questions_intro": (
             "Hemos explorado juntos los recursos de tu adaptabilidad profesional. "
@@ -179,7 +179,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         ),
         "text_qap_conclusion": (
             "Has completado el recorrido sobre la adaptabilidad profesional (QAP). "
-            "Haz clic en el botón de abajo para volver a la página de inicio."
+            "Usa el botón de abajo para elegir el siguiente paso."
         ),
     },
     "fr": {
@@ -204,14 +204,14 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         "text_guided_conclusion": (
             "Tu as terminé le parcours QSA.\n"
             "Tu disposes déjà d'une base claire sur laquelle construire : avec de petits pas réguliers, tu peux beaucoup progresser.\n"
-            "Quand tu veux, tu peux revenir à la page d'accueil et reprendre d'ici."
+            "Quand tu es prêt, continue pour choisir la prochaine étape."
         ),
         "text_qsar_questions_intro": (
             "Nous avons terminé l'analyse structurée de ton profil QSAr. "
             "Tu peux maintenant me poser n'importe quelle question sur les résultats ou demander des conseils précis."
         ),
         "text_qsar_conclusion": (
-            "Tu as terminé le parcours d'analyse du QSAr. Clique sur le bouton ci-dessous pour revenir à la page d'accueil."
+            "Tu as terminé le parcours d'analyse du QSAr. Utilise le bouton ci-dessous pour choisir la prochaine étape."
         ),
         "text_ztpi_questions_intro": (
             "Nous avons terminé l'analyse structurée de ta perspective temporelle. "
@@ -221,7 +221,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         "text_ztpi_conclusion": (
             "Tu as terminé le parcours d'analyse de ta perspective temporelle. "
             "Souviens-toi : travailler vers une perspective temporelle équilibrée est un cheminement progressif. "
-            "Clique sur le bouton ci-dessous pour revenir à la page d'accueil."
+            "Utilise le bouton ci-dessous pour choisir la prochaine étape."
         ),
         "text_savickas_questions_intro": (
             "Nous avons terminé les 5 questions de l'entretien de Savickas. "
@@ -230,7 +230,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         "text_savickas_conclusion": (
             "Tu as terminé l'entretien d'orientation professionnelle de Savickas. "
             "Tu peux utiliser la synthèse comme boussole et la mettre à jour au fil du temps à mesure que tu acquiers de l'expérience. "
-            "Clique sur le bouton ci-dessous pour revenir à la page d'accueil."
+            "Utilise le bouton ci-dessous pour choisir la prochaine étape."
         ),
         "text_qpcs_questions_intro": (
             "Nous avons exploré ensemble tes compétences stratégiques. "
@@ -238,7 +238,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         ),
         "text_qpcs_conclusion": (
             "Tu as terminé le parcours de réflexion sur tes compétences stratégiques (QPCS). "
-            "Clique sur le bouton ci-dessous pour revenir à la page d'accueil."
+            "Utilise le bouton ci-dessous pour choisir la prochaine étape."
         ),
         "text_qpcc_questions_intro": (
             "Nous avons exploré ensemble tes compétences et tes convictions. "
@@ -246,7 +246,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         ),
         "text_qpcc_conclusion": (
             "Tu as terminé le parcours de réflexion sur les compétences et les convictions (QPCC). "
-            "Clique sur le bouton ci-dessous pour revenir à la page d'accueil."
+            "Utilise le bouton ci-dessous pour choisir la prochaine étape."
         ),
         "text_qap_questions_intro": (
             "Nous avons exploré ensemble les ressources de ton adaptabilité professionnelle. "
@@ -254,7 +254,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         ),
         "text_qap_conclusion": (
             "Tu as terminé le parcours sur l'adaptabilité professionnelle (QAP). "
-            "Clique sur le bouton ci-dessous pour revenir à la page d'accueil."
+            "Utilise le bouton ci-dessous pour choisir la prochaine étape."
         ),
     },
     "de": {
@@ -279,14 +279,14 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         "text_guided_conclusion": (
             "Du hast den QSA-Pfad abgeschlossen.\n"
             "Du hast bereits eine klare Grundlage zum Aufbauen: mit kleinen, stetigen Schritten kannst du dich stark verbessern.\n"
-            "Wann immer du möchtest, kannst du zur Startseite zurückkehren und hier weitermachen."
+            "Wenn du bereit bist, fahre fort und wähle den nächsten Schritt."
         ),
         "text_qsar_questions_intro": (
             "Wir haben die strukturierte Analyse deines QSAr-Profils abgeschlossen. "
             "Jetzt kannst du mir jede freie Frage zu den Ergebnissen stellen oder gezielte Ratschläge erbitten."
         ),
         "text_qsar_conclusion": (
-            "Du hast den QSAr-Analysepfad abgeschlossen. Klicke auf die Schaltfläche unten, um zur Startseite zurückzukehren."
+            "Du hast den QSAr-Analysepfad abgeschlossen. Nutze die Schaltfläche unten, um den nächsten Schritt auszuwählen."
         ),
         "text_ztpi_questions_intro": (
             "Wir haben die strukturierte Analyse deiner Zeitperspektive abgeschlossen. "
@@ -296,7 +296,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         "text_ztpi_conclusion": (
             "Du hast den Analysepfad deiner Zeitperspektive abgeschlossen. "
             "Denk daran: auf eine ausgewogene Zeitperspektive hinzuarbeiten ist ein schrittweiser Weg. "
-            "Klicke auf die Schaltfläche unten, um zur Startseite zurückzukehren."
+            "Nutze die Schaltfläche unten, um den nächsten Schritt auszuwählen."
         ),
         "text_savickas_questions_intro": (
             "Wir haben die 5 Fragen des Savickas-Interviews abgeschlossen. "
@@ -305,7 +305,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         "text_savickas_conclusion": (
             "Du hast das Savickas-Interview zur Berufsberatung abgeschlossen. "
             "Du kannst die Zusammenfassung als Kompass nutzen und sie mit der Zeit aktualisieren, während du Erfahrung sammelst. "
-            "Klicke auf die Schaltfläche unten, um zur Startseite zurückzukehren."
+            "Nutze die Schaltfläche unten, um den nächsten Schritt auszuwählen."
         ),
         "text_qpcs_questions_intro": (
             "Wir haben gemeinsam deine strategischen Kompetenzen erkundet. "
@@ -313,7 +313,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         ),
         "text_qpcs_conclusion": (
             "Du hast den Reflexionspfad zu deinen strategischen Kompetenzen (QPCS) abgeschlossen. "
-            "Klicke auf die Schaltfläche unten, um zur Startseite zurückzukehren."
+            "Nutze die Schaltfläche unten, um den nächsten Schritt auszuwählen."
         ),
         "text_qpcc_questions_intro": (
             "Wir haben gemeinsam deine Kompetenzen und Überzeugungen erkundet. "
@@ -321,7 +321,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         ),
         "text_qpcc_conclusion": (
             "Du hast den Reflexionspfad zu Kompetenzen und Überzeugungen (QPCC) abgeschlossen. "
-            "Klicke auf die Schaltfläche unten, um zur Startseite zurückzukehren."
+            "Nutze die Schaltfläche unten, um den nächsten Schritt auszuwählen."
         ),
         "text_qap_questions_intro": (
             "Wir haben gemeinsam die Ressourcen deiner beruflichen Anpassungsfähigkeit erkundet. "
@@ -329,7 +329,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         ),
         "text_qap_conclusion": (
             "Du hast den Pfad zur beruflichen Anpassungsfähigkeit (QAP) abgeschlossen. "
-            "Klicke auf die Schaltfläche unten, um zur Startseite zurückzukehren."
+            "Nutze die Schaltfläche unten, um den nächsten Schritt auszuwählen."
         ),
     },
     "sv": {
@@ -354,14 +354,14 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         "text_guided_conclusion": (
             "Du har slutfört QSA-vägen.\n"
             "Du har redan en tydlig grund att bygga på: med små, stadiga steg kan du förbättras mycket.\n"
-            "När du vill kan du gå tillbaka till startsidan och fortsätta härifrån."
+            "När du är redo kan du fortsätta och välja nästa steg."
         ),
         "text_qsar_questions_intro": (
             "Vi har slutfört den strukturerade analysen av din QSAr-profil. "
             "Nu kan du ställa vilken fri fråga som helst om resultaten eller be om specifika råd."
         ),
         "text_qsar_conclusion": (
-            "Du har slutfört QSAr-analysvägen. Klicka på knappen nedan för att återgå till startsidan."
+            "Du har slutfört QSAr-analysvägen. Använd knappen nedan för att välja nästa steg."
         ),
         "text_ztpi_questions_intro": (
             "Vi har slutfört den strukturerade analysen av ditt tidsperspektiv. "
@@ -371,7 +371,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         "text_ztpi_conclusion": (
             "Du har slutfört analysvägen för ditt tidsperspektiv. "
             "Kom ihåg: att arbeta mot ett balanserat tidsperspektiv är en gradvis resa. "
-            "Klicka på knappen nedan för att återgå till startsidan."
+            "Använd knappen nedan för att välja nästa steg."
         ),
         "text_savickas_questions_intro": (
             "Vi har slutfört de 5 frågorna i Savickas-intervjun. "
@@ -380,7 +380,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         "text_savickas_conclusion": (
             "Du har slutfört Savickas karriärvägledningsintervju. "
             "Du kan använda sammanfattningen som en kompass och uppdatera den över tid när du får erfarenhet. "
-            "Klicka på knappen nedan för att återgå till startsidan."
+            "Använd knappen nedan för att välja nästa steg."
         ),
         "text_qpcs_questions_intro": (
             "Vi har tillsammans utforskat dina strategiska kompetenser. "
@@ -388,7 +388,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         ),
         "text_qpcs_conclusion": (
             "Du har slutfört reflektionsvägen om dina strategiska kompetenser (QPCS). "
-            "Klicka på knappen nedan för att återgå till startsidan."
+            "Använd knappen nedan för att välja nästa steg."
         ),
         "text_qpcc_questions_intro": (
             "Vi har tillsammans utforskat dina kompetenser och övertygelser. "
@@ -396,7 +396,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         ),
         "text_qpcc_conclusion": (
             "Du har slutfört reflektionsvägen om kompetenser och övertygelser (QPCC). "
-            "Klicka på knappen nedan för att återgå till startsidan."
+            "Använd knappen nedan för att välja nästa steg."
         ),
         "text_qap_questions_intro": (
             "Vi har tillsammans utforskat resurserna i din yrkesmässiga anpassningsförmåga. "
@@ -404,7 +404,7 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
         ),
         "text_qap_conclusion": (
             "Du har slutfört vägen om yrkesmässig anpassningsförmåga (QAP). "
-            "Klicka på knappen nedan för att återgå till startsidan."
+            "Använd knappen nedan för att välja nästa steg."
         ),
     },
 }
