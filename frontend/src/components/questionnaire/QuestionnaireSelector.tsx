@@ -98,9 +98,9 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                     <button
                         onClick={() => onSelect(q)}
-                        className="group inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+                        className="group inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
                     >
-                        {q.agentOnly ? t('selector.startInterview') : t('selector.useTool')}
+                        {t('selector.useTool')}
                         <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                     </button>
                     {hasInAppAdministration && (
@@ -197,7 +197,7 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                             <div className="flex flex-wrap items-center gap-2 pt-1">
                                 <Link
                                     href="/profilo/cambiamenti"
-                                    className="group inline-flex items-center gap-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 text-sm font-semibold transition-colors"
+                                    className="group inline-flex items-center gap-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 text-sm font-semibold transition-colors"
                                 >
                                     Usa lo strumento
                                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
@@ -211,11 +211,11 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
             {/* 3. Strumenti attivi (pQBL da PDF) */}
             <section className="space-y-4">
                 <h2 className="text-xl font-bold text-slate-900">{t('selector.section.active')}</h2>
-                <div className="glass-panel p-5 flex flex-col sm:flex-row sm:items-center gap-4 border border-emerald-100">
+                <div className="glass-panel p-5 flex flex-col sm:flex-row sm:items-center gap-4 border border-indigo-100">
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                             <h3 className="font-bold text-slate-800">{t('pqbl.card.title')}</h3>
-                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-full">
+                            <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded-full">
                                 {t('pqbl.card.badge')}
                             </span>
                         </div>
@@ -223,7 +223,7 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                     </div>
                     <Link
                         href="/pqbl"
-                        className="group inline-flex shrink-0 items-center gap-2 rounded-md bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+                        className="group inline-flex shrink-0 items-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
                     >
                         {t('pqbl.card.cta')}
                         <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
