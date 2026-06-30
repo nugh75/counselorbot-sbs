@@ -118,6 +118,7 @@ async def create_counselor(
         sort_order=payload.sort_order or 0,
         is_active=payload.is_active,
         show_in_assistant=payload.show_in_assistant or False,
+        assistant_audience=payload.assistant_audience,
     )
     db.add(counselor)
     db.commit()

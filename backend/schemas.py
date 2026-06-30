@@ -835,6 +835,7 @@ class CounselorBase(BaseModel):
     sort_order: int = 0
     is_active: bool = True
     show_in_assistant: bool = False
+    assistant_audience: Optional[str] = None
 
 
 class CounselorCreate(CounselorBase):
@@ -854,6 +855,7 @@ class CounselorUpdate(BaseModel):
     sort_order: Optional[int] = None
     is_active: Optional[bool] = None
     show_in_assistant: Optional[bool] = None
+    assistant_audience: Optional[str] = None
 
 
 class CounselorResponse(CounselorBase):
@@ -878,6 +880,7 @@ class CounselorPublic(BaseModel):
     language: List[str] = ["*"]
     is_active: bool = True
     show_in_assistant: bool = False
+    assistant_audience: Optional[str] = None
     # "local" (Ollama/llama.cpp) | "external" (API a pagamento). Derivato dal preset.
     model_origin: Optional[str] = None
 

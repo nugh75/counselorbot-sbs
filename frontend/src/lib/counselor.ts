@@ -11,6 +11,7 @@ export interface PublicCounselor {
     language: string[];
     is_active?: boolean;
     show_in_assistant?: boolean;
+    assistant_audience?: string | null;
     model_origin?: 'local' | 'external' | null;
 }
 
