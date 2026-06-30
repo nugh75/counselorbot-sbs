@@ -136,7 +136,7 @@
     {
       "label": "README.md - Fonti esterne collegate",
       "file_type": "document",
-      "source_file": "fonti-esterne-collegate/README.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/README.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
@@ -168,7 +168,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 2,
       "norm_label": "cnos-fap",
       "id": "cnos_fap"
     },
@@ -251,15 +251,15 @@
       "id": "piattaforma_comp_strategiche_margottini_epifani"
     },
     {
-      "label": "Portfolio digitale",
+      "label": "Portfolio Digitale",
       "file_type": "document",
-      "source_file": "fonti-esterne-collegate/cnos-fap/portfolio_digitale.pdf",
+      "source_file": null,
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 4,
       "norm_label": "portfolio digitale",
       "id": "portfolio_digitale"
     },
@@ -278,27 +278,27 @@
     },
     {
       "label": "Massimo Margottini",
-      "file_type": "concept",
+      "file_type": "document",
       "source_file": null,
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "massimo margottini",
       "id": "massimo_margottini"
     },
     {
       "label": "Filippo Epifani",
-      "file_type": "concept",
+      "file_type": "document",
       "source_file": null,
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "filippo epifani",
       "id": "filippo_epifani"
     },
@@ -343,14 +343,14 @@
     },
     {
       "label": "Autovalutazione",
-      "file_type": "concept",
+      "file_type": "document",
       "source_file": null,
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "autovalutazione",
       "id": "autovalutazione"
     },
@@ -376,7 +376,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "metacognizione",
       "id": "metacognizione"
     },
@@ -395,14 +395,14 @@
     },
     {
       "label": "Autoregolazione",
-      "file_type": "concept",
+      "file_type": "document",
       "source_file": null,
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 4,
       "norm_label": "autoregolazione",
       "id": "autoregolazione"
     },
@@ -415,7 +415,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "competenze trasversali",
       "id": "competenze_trasversali"
     },
@@ -428,7 +428,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "character skills",
       "id": "character_skills"
     },
@@ -480,7 +480,7 @@
       "captured_at": null,
       "author": "Michele Pellerey",
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "soft skill e orientamento professionale",
       "id": "cnos_fap_soft_skill_document"
     },
@@ -493,7 +493,7 @@
       "captured_at": null,
       "author": "Michele Pellerey",
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "soft skill e orientamento professionale (scheda bibliografica)",
       "id": "cnos_fap_schede_bibliografiche_soft_skill_document"
     },
@@ -506,7 +506,7 @@
       "captured_at": null,
       "author": "Michele Pellerey",
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "strumenti e metodologie di orientamento formativo e professionale nel quadro dei processi di apprendimento permanente",
       "id": "cnos_fap_strumenti_e_metodologie_document"
     },
@@ -519,46 +519,46 @@
       "captured_at": null,
       "author": "Michele Pellerey",
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "strumenti e metodologie di orientamento formativo e professionale... (scheda bibliografica)",
       "id": "cnos_fap_schede_bibliografiche_strumenti_e_metodologie_document"
     },
     {
       "label": "Imparare a dirigere se stessi. Progettazione e realizzazione di una guida e di uno strumento informatico...",
       "file_type": "document",
-      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/Imparare_a_dirigere_se_stessi.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/schede-bibliografiche/Imparare_a_dirigere_se_stessi.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": "Michele Pellerey et al.",
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "imparare a dirigere se stessi. progettazione e realizzazione di una guida e di uno strumento informatico...",
       "id": "cnos_fap_schede_bibliografiche_imparare_a_dirigere_se_stessi_document"
     },
     {
       "label": "Promuovere l'autovalutazione di competenze strategiche. Aggiornamenti e sviluppi della piattaforma competenzestrategiche.it",
       "file_type": "document",
-      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/piattaforma_comp._strategiche_-_margottini_epifani.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/schede-bibliografiche/piattaforma_comp._strategiche_-_margottini_epifani.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": "Massimo Margottini, Filippo Epifani",
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "promuovere l'autovalutazione di competenze strategiche. aggiornamenti e sviluppi della piattaforma competenzestrategiche.it",
       "id": "cnos_fap_schede_bibliografiche_piattaforma_comp_strategiche_margottini_epifani_document"
     },
     {
       "label": "Progetto di ricerca-intervento sul ruolo del portfolio digitale...",
       "file_type": "document",
-      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/portfolio_digitale.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/schede-bibliografiche/portfolio_digitale.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": "Michele Pellerey",
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "progetto di ricerca-intervento sul ruolo del portfolio digitale...",
       "id": "cnos_fap_schede_bibliografiche_portfolio_digitale_document"
     },
@@ -571,7 +571,7 @@
       "captured_at": null,
       "author": "Marco Bay, Dariusz Grz\u0105dziel, Michele Pellerey",
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "promuovere la crescita nelle competenze strategiche che hanno le loro radici nelle dimensioni morali e spirituali della persona. rapporto di ricerca",
       "id": "cnos_fap_schede_bibliografiche_promuovere_la_crescita_nelle_competenze_strategiche_pdf_document"
     },
@@ -584,7 +584,7 @@
       "captured_at": null,
       "author": "D.M. Ardito",
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "11.d.m. ardito.pdf",
       "id": "roma_tre_press_11_d_m_ardito_document"
     },
@@ -597,7 +597,7 @@
       "captured_at": null,
       "author": "G. Marrone, L. Romano",
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "12.g. marrone-l. romano.pdf",
       "id": "roma_tre_press_12_g_marrone_l_romano_document"
     },
@@ -610,7 +610,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "marco bay",
       "id": "autore_bay_marco"
     },
@@ -623,7 +623,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 11,
+      "community": 12,
       "norm_label": "giuseppe crea",
       "id": "autore_crea_giuseppe"
     },
@@ -636,7 +636,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 13,
+      "community": 14,
       "norm_label": "emad samir anis matta",
       "id": "autore_samir_anis_matta_emad"
     },
@@ -649,7 +649,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 13,
       "norm_label": "sergio melogno",
       "id": "autore_melogno_sergio"
     },
@@ -662,7 +662,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "d.m. ardito",
       "id": "autore_ardito_d_m"
     },
@@ -675,7 +675,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "g. marrone",
       "id": "autore_marrone_g"
     },
@@ -688,7 +688,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "l. romano",
       "id": "autore_romano_l"
     },
@@ -701,7 +701,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "soft skill",
       "id": "concetto_soft_skill"
     },
@@ -714,7 +714,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "qsa (questionario sulle strategie di apprendimento)",
       "id": "concetto_qsa"
     },
@@ -727,7 +727,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "qpcs (questionario sulle percezioni di competenza e strategie)",
       "id": "concetto_qpcs"
     },
@@ -740,7 +740,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "piattaforma competenzestrategiche.it",
       "id": "concetto_competenzestrategiche_it"
     },
@@ -753,7 +753,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "mahara (piattaforma portfolio digitale)",
       "id": "concetto_mahara"
     },
@@ -766,7 +766,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "ztpi (zimbardo time perspective inventory)",
       "id": "concetto_ztpi"
     },
@@ -779,7 +779,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "qsar (versione ridotta del qsa)",
       "id": "concetto_qsar"
     },
@@ -792,7 +792,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "qap (questionario di adattamento professionale)",
       "id": "concetto_qap"
     },
@@ -805,7 +805,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "qpcc (questionario percezione di competenza e career)",
       "id": "concetto_qpcc"
     },
@@ -818,7 +818,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "life design (paradigma di orientamento)",
       "id": "concetto_life_design"
     },
@@ -831,7 +831,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "orientamento professionale",
       "id": "concetto_orientamento_professionale"
     },
@@ -844,7 +844,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "hard skills",
       "id": "concetto_hard_skills"
     },
@@ -857,7 +857,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "iefp (istruzione e formazione professionale)",
       "id": "concetto_iefp"
     },
@@ -870,46 +870,46 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "character skills (heckman)",
       "id": "concetto_character_skills"
     },
     {
       "label": "Presentazione del QSA (Questionario sulle Strategie di Apprendimento)",
       "file_type": "document",
-      "source_file": "sito-competenzestrategiche/convegni/schede-bibliografiche/Presenta_QSA_convegnisti.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/convegni/schede-bibliografiche/Presenta_QSA_convegnisti.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": "Enrica Ottone",
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "presentazione del qsa (questionario sulle strategie di apprendimento)",
       "id": "presenta_qsa_convegnisti_document"
     },
     {
       "label": "Intelligenza Artificiale Generativa Conversazionale per Imparare il QSA \u2013 Funzione Docente",
       "file_type": "document",
-      "source_file": "sito-competenzestrategiche/convegni/schede-bibliografiche/Presentazione_Chatbot_convegnisti_02.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/convegni/schede-bibliografiche/Presentazione_Chatbot_convegnisti_02.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": "Enrica Ottone",
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "intelligenza artificiale generativa conversazionale per imparare il qsa \u2013 funzione docente",
       "id": "presentazione_chatbot_convegnisti_02_document"
     },
     {
       "label": "Strumenti e risorse aperte a servizio delle persone: autovalutazione, orientamento, formazione",
       "file_type": "document",
-      "source_file": "sito-competenzestrategiche/convegni/schede-bibliografiche/Presentazione_DIDACTA_2023.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/convegni/schede-bibliografiche/Presentazione_DIDACTA_2023.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": "Enrica Ottone",
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "strumenti e risorse aperte a servizio delle persone: autovalutazione, orientamento, formazione",
       "id": "presentazione_didacta_2023_document"
     },
@@ -922,7 +922,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "convegno internazionale 'dirigere se stessi nello studio e nel lavoro' 13 settembre 2019",
       "id": "abstract_fascicolo_convegno_2019"
     },
@@ -935,7 +935,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "ii convegno internazionale 'dirigere se stessi nello studio e nel lavoro' 24 gennaio 2025",
       "id": "programma_convegno_24gennaio2025_dettagliato_convegno_2025"
     },
@@ -948,7 +948,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "fiera didacta 2023, firenze 8 marzo 2023",
       "id": "presentazione_didacta_2023_fiera_didacta_2023"
     },
@@ -961,7 +961,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "michele pellerey",
       "id": "abstract_fascicolo_pellerey"
     },
@@ -974,7 +974,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "massimo margottini",
       "id": "abstract_fascicolo_margottini"
     },
@@ -987,7 +987,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "enrica ottone",
       "id": "presenta_qsa_convegnisti_ottone"
     },
@@ -1000,7 +1000,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "francesca rossi",
       "id": "abstract_fascicolo_rossi"
     },
@@ -1013,7 +1013,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "dariusz grzadziel",
       "id": "programma_convegno_24gennaio2025_dettagliato_grzadziel"
     },
@@ -1026,7 +1026,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "mario tonini",
       "id": "programma_convegno_24gennaio2025_dettagliato_tonini"
     },
@@ -1039,7 +1039,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "zimbardo time perspective inventory (ztpi)",
       "id": "abstract_fascicolo_ztpi"
     },
@@ -1052,7 +1052,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "questionario di percorso di carriera e di studio (qpcs)",
       "id": "abstract_fascicolo_qpcs"
     },
@@ -1065,7 +1065,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "questionario di adattabilita professionale (qap)",
       "id": "abstract_fascicolo_qap"
     },
@@ -1078,7 +1078,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "piattaforma competenzestrategiche.it",
       "id": "presentazione_didacta_2023_competenzestrategiche_it"
     },
@@ -1091,7 +1091,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "asklea ai",
       "id": "presentazione_chatbot_convegnisti_02_asklea_ai"
     },
@@ -1104,7 +1104,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "eportfolio",
       "id": "presentazione_didacta_2023_eportfolio"
     },
@@ -1117,7 +1117,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "libretto dello studente",
       "id": "presentazione_didacta_2023_libretto_studente"
     },
@@ -1130,7 +1130,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "qsa-r_presentazione.pdf",
       "id": "sito_competenzestrategiche_guide_qsa_r_presentazione_pdf"
     },
@@ -1143,40 +1143,40 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 0,
       "norm_label": "schede_fattori_qsa.pdf",
       "id": "sito_competenzestrategiche_guide_schede_fattori_qsa_pdf"
     },
     {
       "label": "QSA-r_Presentazione.md",
       "file_type": "document",
-      "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/QSA-r_Presentazione.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/guide/schede-bibliografiche/QSA-r_Presentazione.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": "Enrica Ottone",
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "qsa-r_presentazione.md",
       "id": "sito_competenzestrategiche_guide_schede_bibliografiche_qsa_r_presentazione_md"
     },
     {
       "label": "Guida piattaforma",
       "file_type": "document",
-      "source_file": "sito-competenzestrategiche/guide-html/guida-piattaforma-book-69.html",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/guide-html/guida-piattaforma-book-69.html",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": "Filippo Epifani, Massimo Margottini, Enrica Ottone",
       "contributor": null,
-      "community": 7,
+      "community": 0,
       "norm_label": "guida piattaforma",
       "id": "sito_competenzestrategiche_guide_html_guida_piattaforma_book_69_html"
     },
     {
       "label": "Le risorse per la formazione",
       "file_type": "document",
-      "source_file": "sito-competenzestrategiche/guide-html/pagina-formazione.html",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/guide-html/pagina-formazione.html",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
@@ -1189,7 +1189,7 @@
     {
       "label": "La procedura",
       "file_type": "document",
-      "source_file": "sito-competenzestrategiche/guide-html/pagina-procedura.html",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/guide-html/pagina-procedura.html",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
@@ -1202,7 +1202,7 @@
     {
       "label": "I questionari",
       "file_type": "document",
-      "source_file": "sito-competenzestrategiche/guide-html/pagina-questionari.html",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/guide-html/pagina-questionari.html",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
@@ -1215,13 +1215,13 @@
     {
       "label": "La presentazione del QSA",
       "file_type": "document",
-      "source_file": "sito-competenzestrategiche/guide-html/presentazione-qsa-book-65.html",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/guide-html/presentazione-qsa-book-65.html",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "la presentazione del qsa",
       "id": "sito_competenzestrategiche_guide_html_presentazione_qsa_book_65_html"
     },
@@ -1234,7 +1234,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 0,
       "norm_label": "enrica ottone",
       "id": "author_enrica_ottone"
     },
@@ -1247,7 +1247,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 0,
       "norm_label": "filippo epifani",
       "id": "author_filippo_epifani"
     },
@@ -1260,7 +1260,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 0,
       "norm_label": "massimo margottini",
       "id": "author_massimo_margottini"
     },
@@ -1273,7 +1273,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "questionario sulle strategie di apprendimento (qsa)",
       "id": "concept_qsa"
     },
@@ -1351,7 +1351,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 0,
       "norm_label": "competenzestrategiche.it",
       "id": "concept_competenzestrategiche"
     },
@@ -1364,7 +1364,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 0,
       "norm_label": "strategie di apprendimento",
       "id": "concept_strategie_apprendimento"
     },
@@ -1377,7 +1377,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "consapevolezza metacognitiva",
       "id": "concept_consapevolezza_metacognitiva"
     },
@@ -1390,7 +1390,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 0,
       "norm_label": "autovalutazione",
       "id": "concept_autovalutazione"
     },
@@ -1403,7 +1403,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 0,
       "norm_label": "studio",
       "id": "concept_studio"
     },
@@ -1416,7 +1416,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 0,
       "norm_label": "fattori cognitivi",
       "id": "concept_fattori_cognitivi"
     },
@@ -1429,7 +1429,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 0,
       "norm_label": "fattori motivazionali",
       "id": "concept_fattori_motivazionali"
     },
@@ -1442,7 +1442,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "c1 | strategie elaborative",
       "id": "factor_c1"
     },
@@ -1455,7 +1455,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "c3 | disorientamento",
       "id": "factor_c3"
     },
@@ -1468,7 +1468,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "c4 | disponibilita alla collaborazione",
       "id": "factor_c4"
     },
@@ -1481,7 +1481,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "c5 | uso di organizzatori semantici",
       "id": "factor_c5"
     },
@@ -1494,7 +1494,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "c6 | difficolta di concentrazione",
       "id": "factor_c6"
     },
@@ -1507,7 +1507,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "c7 | autointerrogazione",
       "id": "factor_c7"
     },
@@ -1520,7 +1520,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "a1 | ansieta di base",
       "id": "factor_a1"
     },
@@ -1533,7 +1533,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "a2 | volizione",
       "id": "factor_a2"
     },
@@ -1546,7 +1546,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "a3 | attribuzione a cause controllabili",
       "id": "factor_a3"
     },
@@ -1559,7 +1559,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "a4 | attribuzione a cause incontrollabili",
       "id": "factor_a4"
     },
@@ -1572,7 +1572,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "a5 | mancanza di perseveranza",
       "id": "factor_a5"
     },
@@ -1585,7 +1585,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "a6 | percezione di competenza",
       "id": "factor_a6"
     },
@@ -1598,27 +1598,27 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "a7 | interferenze emotive",
       "id": "factor_a7"
     },
     {
       "label": "Apprendo: una possibile alleanza educativa",
       "file_type": "paper",
-      "source_file": "fonti-esterne-collegate/roma-tre-press/schede-bibliografiche/11.D.M.-Ardito.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/roma-tre-press/schede-bibliografiche/11.D.M.-Ardito.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "apprendo: una possibile alleanza educativa",
       "id": "11_d_m_ardito"
     },
     {
       "label": "Mi autovaluto a conclusione del primo ciclo",
       "file_type": "paper",
-      "source_file": "fonti-esterne-collegate/roma-tre-press/schede-bibliografiche/12.G.-Marrone-L.-Romano.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/roma-tre-press/schede-bibliografiche/12.G.-Marrone-L.-Romano.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
@@ -1631,104 +1631,104 @@
     {
       "label": "Dirigere se stessi nello studio e nel lavoro. Competenze strategiche.it: strumenti e applicazioni",
       "file_type": "document",
-      "source_file": "schede-bibliografiche/Dirigere_se_stessi_2020.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Dirigere_se_stessi_2020.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "dirigere se stessi nello studio e nel lavoro. competenze strategiche.it: strumenti e applicazioni",
       "id": "dirigere_se_stessi_2020"
     },
     {
       "label": "Riflessione nei processi di apprendimento",
       "file_type": "paper",
-      "source_file": "schede-bibliografiche/Grzadziel_Convegno_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Grzadziel_Convegno_2019.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "riflessione nei processi di apprendimento",
       "id": "grzadziel_convegno_2019"
     },
     {
       "label": "Appunti per formatori. Guida all'uso della piattaforma www.competenzestrategiche.it",
       "file_type": "concept",
-      "source_file": "schede-bibliografiche/Guida_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Guida_2019.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "appunti per formatori. guida all'uso della piattaforma www.competenzestrategiche.it",
       "id": "guida_2019"
     },
     {
       "label": "Guida all'uso della piattaforma www.competenzestrategiche.it",
       "file_type": "concept",
-      "source_file": "schede-bibliografiche/Guida_2023.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Guida_2023.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "guida all'uso della piattaforma www.competenzestrategiche.it",
       "id": "guida_2023"
     },
     {
       "label": "Introduzione",
       "file_type": "paper",
-      "source_file": "schede-bibliografiche/Introduzione_Volume_2020.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Introduzione_Volume_2020.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "introduzione",
       "id": "introduzione_volume_2020"
     },
     {
       "label": "Competenzestrategiche.it: Strumenti e Applicazioni",
       "file_type": "paper",
-      "source_file": "schede-bibliografiche/Margottini_Convegno_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Margottini_Convegno_2019.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "competenzestrategiche.it: strumenti e applicazioni",
       "id": "margottini_convegno_2019"
     },
     {
       "label": "Dirigere se stessi nello studio e nel lavoro: Riflessioni",
       "file_type": "paper",
-      "source_file": "schede-bibliografiche/Pellerey_Convegno_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Pellerey_Convegno_2019.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "dirigere se stessi nello studio e nel lavoro: riflessioni",
       "id": "pellerey_convegno_2019"
     },
     {
       "label": "README - Archivio sito competenzestrategiche.it",
       "file_type": "document",
-      "source_file": "sito-competenzestrategiche/README.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/README.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 14,
+      "community": 17,
       "norm_label": "readme - archivio sito competenzestrategiche.it",
       "id": "readme"
     },
@@ -1741,7 +1741,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "abstract fascicolo",
       "id": "abstract_fascicolo"
     },
@@ -1767,7 +1767,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "presentazione chatbot convegnisti 02",
       "id": "presentazione_chatbot_convegnisti_02"
     },
@@ -1780,7 +1780,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "daniele maria ardito",
       "id": "daniele_maria_ardito"
     },
@@ -1812,40 +1812,40 @@
     },
     {
       "label": "Michele Pellerey",
-      "file_type": "concept",
+      "file_type": "document",
       "source_file": null,
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 3,
       "norm_label": "michele pellerey",
       "id": "michele_pellerey"
     },
     {
       "label": "Enrica Ottone",
-      "file_type": "concept",
+      "file_type": "document",
       "source_file": null,
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "enrica ottone",
       "id": "enrica_ottone"
     },
     {
       "label": "Dariusz Grz\u0105dziel",
-      "file_type": "concept",
+      "file_type": "document",
       "source_file": null,
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 1,
       "norm_label": "dariusz grzadziel",
       "id": "dariusz_grzadziel"
     },
@@ -1858,7 +1858,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "alleanza educativa",
       "id": "alleanza_educativa"
     },
@@ -1871,7 +1871,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "apprendere ad apprendere",
       "id": "apprendere_ad_apprendere"
     },
@@ -1897,7 +1897,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "apprendimento autoregolato",
       "id": "apprendimento_autoregolato"
     },
@@ -1910,20 +1910,20 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "attribuzioni causali",
       "id": "attribuzioni_causali"
     },
     {
-      "label": "autodeterminazione",
-      "file_type": "concept",
+      "label": "Autodeterminazione",
+      "file_type": "document",
       "source_file": null,
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 4,
       "norm_label": "autodeterminazione",
       "id": "autodeterminazione"
     },
@@ -1936,7 +1936,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "autonomia",
       "id": "autonomia"
     },
@@ -1949,7 +1949,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "competenza",
       "id": "competenza"
     },
@@ -1962,7 +1962,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "coscienziosita",
       "id": "coscienziosita"
     },
@@ -1975,7 +1975,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "didattica",
       "id": "didattica"
     },
@@ -1988,7 +1988,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "imparare a imparare",
       "id": "imparare_a_imparare"
     },
@@ -2001,7 +2001,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "metodologie orientative",
       "id": "metodologie_orientative"
     },
@@ -2027,7 +2027,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "orientamento",
       "id": "orientamento"
     },
@@ -2040,7 +2040,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "orientamento scolastico e professionale",
       "id": "orientamento_scolastico_e_professionale"
     },
@@ -2053,7 +2053,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "piattaforma digitale",
       "id": "piattaforma_digitale"
     },
@@ -2066,7 +2066,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "piattaforma online",
       "id": "piattaforma_online"
     },
@@ -2092,7 +2092,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "qap",
       "id": "qap"
     },
@@ -2105,21 +2105,21 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "qpcs",
       "id": "qpcs"
     },
     {
-      "label": "QSA",
-      "file_type": "concept",
+      "label": "QSA \u2014 Questionario sulle Strategie di Apprendimento",
+      "file_type": "document",
       "source_file": null,
       "source_location": null,
       "source_url": null,
       "captured_at": null,
-      "author": null,
+      "author": "Michele Pellerey",
       "contributor": null,
-      "community": 5,
-      "norm_label": "qsa",
+      "community": 3,
+      "norm_label": "qsa \u2014 questionario sulle strategie di apprendimento",
       "id": "qsa"
     },
     {
@@ -2131,7 +2131,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "relazione",
       "id": "relazione"
     },
@@ -2144,7 +2144,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "riflessione",
       "id": "riflessione"
     },
@@ -2157,7 +2157,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "strategie di studio",
       "id": "strategie_di_studio"
     },
@@ -2170,7 +2170,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "studio",
       "id": "studio"
     },
@@ -2183,7 +2183,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 5,
       "norm_label": "lavoro",
       "id": "lavoro"
     },
@@ -2196,21 +2196,21 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 7,
       "norm_label": "zimmerman",
       "id": "zimmerman"
     },
     {
-      "label": "ZTPI",
-      "file_type": "concept",
+      "label": "ZTPI \u2014 Zimbardo Time Perspective Inventory",
+      "file_type": "document",
       "source_file": null,
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
-      "norm_label": "ztpi",
+      "community": 3,
+      "norm_label": "ztpi \u2014 zimbardo time perspective inventory",
       "id": "ztpi"
     },
     {
@@ -2222,7 +2222,7 @@
       "captured_at": null,
       "author": "Ottone, Enrica",
       "contributor": "",
-      "community": 1,
+      "community": 0,
       "norm_label": "griglia di osservazione \u2013 generale",
       "id": "02_griglia_osservazione_docente"
     },
@@ -2235,7 +2235,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "career adapt-abilities inventory (caas)",
       "id": "qap_caas"
     },
@@ -2248,7 +2248,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "career adaptability",
       "id": "qap_career_adaptability"
     },
@@ -2261,7 +2261,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 3,
       "norm_label": "qap \u2013 questionario per l'adattabilita professionale",
       "id": "qap_qap"
     },
@@ -2274,7 +2274,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "qsa \u2013 questionario sulle strategie di apprendimento",
       "id": "qsa_questionario_qsa"
     },
@@ -2287,7 +2287,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "learning strategies",
       "id": "qsa_questionario_learning_strategies"
     },
@@ -2300,7 +2300,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "metacognition",
       "id": "qsa_questionario_metacognition"
     },
@@ -2313,7 +2313,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "self-regulation (autoregolazione)",
       "id": "qsa_questionario_self_regulation"
     },
@@ -2326,7 +2326,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "teacher observation",
       "id": "02_griglia_osservazione_docente_teacher_observation"
     },
@@ -2339,46 +2339,46 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 1,
+      "community": 0,
       "norm_label": "qsa codes (c1\u2013c7, a1\u2013a7)",
       "id": "02_griglia_osservazione_docente_qsa_codes"
     },
     {
       "label": "Adattabilit\u00e0 professionale e competenze strategiche nella scuola e all'universit\u00e0",
       "file_type": "paper",
-      "source_file": "sito-competenzestrategiche/studi/schede-bibliografiche/MARGOTTINI-ROSSI_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/studi/schede-bibliografiche/MARGOTTINI-ROSSI_2019.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "adattabilita professionale e competenze strategiche nella scuola e all'universita",
       "id": "margottini_rossi_2019_document"
     },
     {
       "label": "Somministrazione del QSAr a un campione clinico di ragazzi con DSA della scuola secondaria di primo grado. Riflessioni su un caso",
       "file_type": "paper",
-      "source_file": "sito-competenzestrategiche/studi/schede-bibliografiche/MELOGNO_2018.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/studi/schede-bibliografiche/MELOGNO_2018.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "somministrazione del qsar a un campione clinico di ragazzi con dsa della scuola secondaria di primo grado. riflessioni su un caso",
       "id": "melogno_2018_document"
     },
     {
       "label": "Competenzestrategiche.it: un cantiere aperto di ricerca, azione, formazione",
       "file_type": "paper",
-      "source_file": "sito-competenzestrategiche/studi/schede-bibliografiche/OTTONE_2023.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/studi/schede-bibliografiche/OTTONE_2023.md",
       "source_location": null,
       "source_url": null,
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "competenzestrategiche.it: un cantiere aperto di ricerca, azione, formazione",
       "id": "ottone_2023_document"
     },
@@ -2391,7 +2391,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "massimo margottini",
       "id": "margottini_rossi_2019_massimo_margottini"
     },
@@ -2404,7 +2404,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "francesca rossi",
       "id": "margottini_rossi_2019_francesca_rossi"
     },
@@ -2417,7 +2417,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "sergio melogno",
       "id": "melogno_2018_sergio_melogno"
     },
@@ -2430,7 +2430,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "enrica ottone",
       "id": "ottone_2023_enrica_ottone"
     },
@@ -2443,7 +2443,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "competenze strategiche",
       "id": "margottini_rossi_2019_competenze_strategiche"
     },
@@ -2456,7 +2456,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "qsa",
       "id": "margottini_rossi_2019_qsa"
     },
@@ -2469,7 +2469,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "ztpi",
       "id": "margottini_rossi_2019_ztpi"
     },
@@ -2482,7 +2482,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "qap",
       "id": "margottini_rossi_2019_qap"
     },
@@ -2495,7 +2495,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "career adaptability",
       "id": "margottini_rossi_2019_career_adaptability"
     },
@@ -2508,7 +2508,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "qsar",
       "id": "melogno_2018_qsar"
     },
@@ -2521,7 +2521,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "dsa",
       "id": "melogno_2018_dsa"
     },
@@ -2534,7 +2534,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "strategie di apprendimento",
       "id": "melogno_2018_strategie_di_apprendimento"
     },
@@ -2547,7 +2547,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "autovalutazione",
       "id": "melogno_2018_autovalutazione"
     },
@@ -2560,7 +2560,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "competenze strategiche",
       "id": "ottone_2023_competenze_strategiche"
     },
@@ -2573,7 +2573,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "autovalutazione",
       "id": "ottone_2023_autovalutazione"
     },
@@ -2586,7 +2586,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "piattaforma online",
       "id": "ottone_2023_piattaforma_online"
     },
@@ -2599,7 +2599,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "eportfolio",
       "id": "ottone_2023_eportfolio"
     },
@@ -2612,7 +2612,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "qsa",
       "id": "ottone_2023_qsa"
     },
@@ -2625,7 +2625,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "moodle",
       "id": "ottone_2023_moodle"
     },
@@ -2638,9 +2638,438 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 6,
       "norm_label": "competenzestrategiche.it",
       "id": "ottone_2023_competenzestrategiche_it"
+    },
+    {
+      "label": "Dirigere se stessi nello studio e nel lavoro. CompetenzeStrategiche.it: Strumenti e Applicazioni. Abstract",
+      "file_type": "document",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/convegni/schede-bibliografiche/Abstract_fascicolo.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "Francesca Rossi",
+      "contributor": null,
+      "id": "abstract_fascicolo_document",
+      "community": 11,
+      "norm_label": "dirigere se stessi nello studio e nel lavoro. competenzestrategiche.it: strumenti e applicazioni. abstract"
+    },
+    {
+      "label": "Dirigere se stessi nello studio e nel lavoro. CompetenzeStrategiche.it: Strumenti e Applicazioni (2019)",
+      "file_type": "document",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/convegni/schede-bibliografiche/Programma_Convegno_13_settembre_2019.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "programma_convegno_13_settembre_2019_document",
+      "community": 15,
+      "norm_label": "dirigere se stessi nello studio e nel lavoro. competenzestrategiche.it: strumenti e applicazioni (2019)"
+    },
+    {
+      "label": "Dirigere se stessi nello studio e nel lavoro. Competenzestrategiche.it: Strumenti e applicazioni (2025)",
+      "file_type": "document",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/convegni/schede-bibliografiche/Programma_Convegno_24Gennaio2025_dettagliato.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "Michele Pellerey, Dariusz Grz\u0105dziel, Massimo Margottini, Enrica Ottone, Mario Tonini",
+      "contributor": null,
+      "id": "programma_convegno_24gennaio2025_dettagliato_document",
+      "community": 16,
+      "norm_label": "dirigere se stessi nello studio e nel lavoro. competenzestrategiche.it: strumenti e applicazioni (2025)"
+    },
+    {
+      "label": "Schede_fattori_QSA.md",
+      "file_type": "document",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/guide/schede-bibliografiche/Schede_fattori_QSA.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "Enrica Ottone",
+      "contributor": null,
+      "id": "sito_competenzestrategiche_guide_schede_bibliografiche_schede_fattori_qsa_md",
+      "community": 18,
+      "norm_label": "schede_fattori_qsa.md"
+    },
+    {
+      "label": "Promuovere la crescita nelle competenze strategiche che hanno le loro radici nelle dimensioni morali e spirituali della persona (2008)",
+      "file_type": "document",
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "Marco Bay; Dariusz Grz\u0105dziel; Michele Pellerey",
+      "contributor": null,
+      "id": "promuovere_crescita_competenze_strategiche_2008",
+      "community": 4,
+      "norm_label": "promuovere la crescita nelle competenze strategiche che hanno le loro radici nelle dimensioni morali e spirituali della persona (2008)"
+    },
+    {
+      "label": "Soft skill e orientamento professionale (2017)",
+      "file_type": "document",
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "Michele Pellerey; Filippo Epifani; Massimo Margottini; Enrica Ottone",
+      "contributor": null,
+      "id": "soft_skill_orientamento_2017",
+      "community": 4,
+      "norm_label": "soft skill e orientamento professionale (2017)"
+    },
+    {
+      "label": "Strumenti e metodologie di orientamento formativo e professionale nel quadro dei processi di apprendimento permanente (2018)",
+      "file_type": "document",
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "Michele Pellerey; Marco Bay; Giuseppe Crea; Filippo Epifani; Dariusz Grzadziel; Massimo Margottini; Emad Samir Anis Matta; Sergio Melogno; Enrica Ottone",
+      "contributor": null,
+      "id": "strumenti_metodologie_orientamento_2018",
+      "community": 4,
+      "norm_label": "strumenti e metodologie di orientamento formativo e professionale nel quadro dei processi di apprendimento permanente (2018)"
+    },
+    {
+      "label": "Schede sui fattori del Questionario sulle Strategie di Apprendimento (QSA) \u2014 testo integrale (2017)",
+      "file_type": "document",
+      "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/03_Schede_fattori_QSA_testo_integrale.md",
+      "source_location": null,
+      "source_url": "https://www.competenzestrategiche.it/",
+      "captured_at": null,
+      "author": "Enrica Ottone",
+      "contributor": null,
+      "id": "schede_fattori_qsa",
+      "community": 3,
+      "norm_label": "schede sui fattori del questionario sulle strategie di apprendimento (qsa) \u2014 testo integrale (2017)"
+    },
+    {
+      "label": "Marco Bay",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "marco_bay",
+      "community": 4,
+      "norm_label": "marco bay"
+    },
+    {
+      "label": "Giuseppe Crea",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "giuseppe_crea",
+      "community": 4,
+      "norm_label": "giuseppe crea"
+    },
+    {
+      "label": "Emad Samir Anis Matta",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "emad_samir_anis_matta",
+      "community": 4,
+      "norm_label": "emad samir anis matta"
+    },
+    {
+      "label": "Sergio Melogno",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "sergio_melogno",
+      "community": 4,
+      "norm_label": "sergio melogno"
+    },
+    {
+      "label": "Mark L. Savickas",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "savickas",
+      "community": 4,
+      "norm_label": "mark l. savickas"
+    },
+    {
+      "label": "APPRENDO \u2014 Strumenti e attivit\u00e0 per promuovere l'apprendimento",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "apprendo",
+      "community": 3,
+      "norm_label": "apprendo \u2014 strumenti e attivita per promuovere l'apprendimento"
+    },
+    {
+      "label": "Soft Skills / Competenze Personali Generali",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "soft_skills",
+      "community": 4,
+      "norm_label": "soft skills / competenze personali generali"
+    },
+    {
+      "label": "Orientamento Professionale",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "orientamento_professionale",
+      "community": 4,
+      "norm_label": "orientamento professionale"
+    },
+    {
+      "label": "Apprendimento Permanente (Lifelong Learning)",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "apprendimento_permanente",
+      "community": 4,
+      "norm_label": "apprendimento permanente (lifelong learning)"
+    },
+    {
+      "label": "Life Design",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "life_design",
+      "community": 4,
+      "norm_label": "life design"
+    },
+    {
+      "label": "Career Construction",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "career_construction",
+      "community": 4,
+      "norm_label": "career construction"
+    },
+    {
+      "label": "Funzioni Esecutive",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "funzioni_esecutive",
+      "community": 4,
+      "norm_label": "funzioni esecutive"
+    },
+    {
+      "label": "Occupabilit\u00e0",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "occupabilita",
+      "community": 4,
+      "norm_label": "occupabilita"
+    },
+    {
+      "label": "Dimensione Spirituale e Morale della Persona",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "dimensione_spirituale_morale",
+      "community": 4,
+      "norm_label": "dimensione spirituale e morale della persona"
+    },
+    {
+      "label": "Prospettiva Temporale",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "prospettiva_temporale",
+      "community": 4,
+      "norm_label": "prospettiva temporale"
+    },
+    {
+      "label": "Otto Aree di Competenza Strategica",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "otto_aree_competenza_strategica",
+      "community": 4,
+      "norm_label": "otto aree di competenza strategica"
+    },
+    {
+      "label": "QSAr \u2014 Versione Ridotta del QSA",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "qsar",
+      "community": 4,
+      "norm_label": "qsar \u2014 versione ridotta del qsa"
+    },
+    {
+      "label": "Mahara \u2014 Portfolio Digitale",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "mahara",
+      "community": 4,
+      "norm_label": "mahara \u2014 portfolio digitale"
+    },
+    {
+      "label": "CounselorBot",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "counselorbot",
+      "community": 3,
+      "norm_label": "counselorbot"
+    },
+    {
+      "label": "catalog 'certified_strategies'",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "certified_strategies",
+      "community": 3,
+      "norm_label": "catalog 'certified_strategies'"
+    },
+    {
+      "label": "Fattori Cognitivi e Metacognitivi QSA",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "fattori_cognitivi_metacognitivi",
+      "community": 3,
+      "norm_label": "fattori cognitivi e metacognitivi qsa"
+    },
+    {
+      "label": "Fattori Motivazionali e Affettivi QSA",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "fattori_motivazionali_affettivi",
+      "community": 3,
+      "norm_label": "fattori motivazionali e affettivi qsa"
+    },
+    {
+      "label": "Legge 53/2003",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "legge_53_2003",
+      "community": 4,
+      "norm_label": "legge 53/2003"
+    },
+    {
+      "label": "Strategie di Lisbona",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "strategie_lisbona",
+      "community": 4,
+      "norm_label": "strategie di lisbona"
+    },
+    {
+      "label": "ISFOL",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "isfol",
+      "community": 4,
+      "norm_label": "isfol"
     }
   ],
   "links": [
@@ -2801,8 +3230,8 @@
       "source_file": "fonti-esterne-collegate/roma-tre-press/schede-bibliografiche/12.G.-Marrone-L.-Romano.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "12_g_marrone_l_romano",
-      "target": "competenze_strategiche"
+      "source": "competenze_strategiche",
+      "target": "12_g_marrone_l_romano"
     },
     {
       "relation": "references",
@@ -2841,8 +3270,8 @@
       "source_file": "schede-bibliografiche/Dirigere_se_stessi_2020.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "dirigere_se_stessi_2020",
-      "target": "competenze_strategiche"
+      "source": "competenze_strategiche",
+      "target": "dirigere_se_stessi_2020"
     },
     {
       "relation": "conceptually_related_to",
@@ -2851,8 +3280,8 @@
       "source_file": "schede-bibliografiche/Guida_2019.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "guida_2019",
-      "target": "competenze_strategiche"
+      "source": "competenze_strategiche",
+      "target": "guida_2019"
     },
     {
       "relation": "conceptually_related_to",
@@ -2861,8 +3290,8 @@
       "source_file": "schede-bibliografiche/Guida_2023.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "guida_2023",
-      "target": "competenze_strategiche"
+      "source": "competenze_strategiche",
+      "target": "guida_2023"
     },
     {
       "relation": "conceptually_related_to",
@@ -2871,8 +3300,8 @@
       "source_file": "fonti-esterne-collegate/cnos-fap/Imparare_a_dirigere_se_stessi.pdf",
       "source_location": null,
       "weight": 1.0,
-      "source": "imparare_a_dirigere_se_stessi",
-      "target": "competenze_strategiche"
+      "source": "competenze_strategiche",
+      "target": "imparare_a_dirigere_se_stessi"
     },
     {
       "relation": "conceptually_related_to",
@@ -2881,8 +3310,8 @@
       "source_file": "schede-bibliografiche/Introduzione_Volume_2020.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "introduzione_volume_2020",
-      "target": "competenze_strategiche"
+      "source": "competenze_strategiche",
+      "target": "introduzione_volume_2020"
     },
     {
       "relation": "conceptually_related_to",
@@ -2891,8 +3320,8 @@
       "source_file": "schede-bibliografiche/Margottini_Convegno_2019.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "margottini_convegno_2019",
-      "target": "competenze_strategiche"
+      "source": "competenze_strategiche",
+      "target": "margottini_convegno_2019"
     },
     {
       "relation": "references",
@@ -2901,8 +3330,8 @@
       "source_file": "sito-competenzestrategiche/studi/schede-bibliografiche/MARGOTTINI-ROSSI_2019.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "margottini_rossi_2019_document",
-      "target": "competenze_strategiche"
+      "source": "competenze_strategiche",
+      "target": "margottini_rossi_2019_document"
     },
     {
       "relation": "conceptually_related_to",
@@ -2911,8 +3340,8 @@
       "source_file": "schede-bibliografiche/Pellerey_Convegno_2019.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "pellerey_convegno_2019",
-      "target": "competenze_strategiche"
+      "source": "competenze_strategiche",
+      "target": "pellerey_convegno_2019"
     },
     {
       "relation": "conceptually_related_to",
@@ -2921,8 +3350,8 @@
       "source_file": "fonti-esterne-collegate/cnos-fap/piattaforma_comp._strategiche_-_margottini_epifani.pdf",
       "source_location": null,
       "weight": 1.0,
-      "source": "piattaforma_comp_strategiche_margottini_epifani",
-      "target": "competenze_strategiche"
+      "source": "competenze_strategiche",
+      "target": "piattaforma_comp_strategiche_margottini_epifani"
     },
     {
       "relation": "conceptually_related_to",
@@ -2931,8 +3360,8 @@
       "source_file": "fonti-esterne-collegate/cnos-fap/promuovere_la_crescita_nelle_competenze_strategiche.PDF",
       "source_location": null,
       "weight": 1.0,
-      "source": "promuovere_la_crescita_nelle_competenze_strategiche",
-      "target": "competenze_strategiche"
+      "source": "competenze_strategiche",
+      "target": "promuovere_la_crescita_nelle_competenze_strategiche"
     },
     {
       "relation": "conceptually_related_to",
@@ -2941,8 +3370,8 @@
       "source_file": "schede-bibliografiche/Guida_2023.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "guida_2023",
-      "target": "cnos_fap"
+      "source": "cnos_fap",
+      "target": "guida_2023"
     },
     {
       "relation": "conceptually_related_to",
@@ -2951,8 +3380,8 @@
       "source_file": "schede-bibliografiche/Introduzione_Volume_2020.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "introduzione_volume_2020",
-      "target": "cnos_fap"
+      "source": "cnos_fap",
+      "target": "introduzione_volume_2020"
     },
     {
       "relation": "cites",
@@ -2961,8 +3390,8 @@
       "source_file": "fonti-esterne-collegate/cnos-fap/piattaforma_comp._strategiche_-_margottini_epifani.pdf",
       "source_location": null,
       "weight": 1.0,
-      "source": "piattaforma_comp_strategiche_margottini_epifani",
-      "target": "pellerey"
+      "source": "pellerey",
+      "target": "piattaforma_comp_strategiche_margottini_epifani"
     },
     {
       "relation": "conceptually_related_to",
@@ -3141,8 +3570,8 @@
       "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/portfolio_digitale.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "cnos_fap_schede_bibliografiche_portfolio_digitale_document",
-      "target": "portfolio_digitale"
+      "source": "portfolio_digitale",
+      "target": "cnos_fap_schede_bibliografiche_portfolio_digitale_document"
     },
     {
       "relation": "conceptually_related_to",
@@ -3151,7 +3580,27 @@
       "source_file": "fonti-esterne-collegate/cnos-fap/strumenti_e_metodologie.pdf",
       "source_location": null,
       "weight": 1.0,
-      "source": "cnos_fap_strumenti_e_metodologie_document",
+      "source": "portfolio_digitale",
+      "target": "cnos_fap_strumenti_e_metodologie_document"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_metodologie_orientamento_2018",
+      "target": "portfolio_digitale"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 0.8,
+      "source": "mahara",
       "target": "portfolio_digitale"
     },
     {
@@ -3171,8 +3620,8 @@
       "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/Imparare_a_dirigere_se_stessi.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "cnos_fap_schede_bibliografiche_imparare_a_dirigere_se_stessi_document",
-      "target": "massimo_margottini"
+      "source": "massimo_margottini",
+      "target": "cnos_fap_schede_bibliografiche_imparare_a_dirigere_se_stessi_document"
     },
     {
       "relation": "conceptually_related_to",
@@ -3181,8 +3630,8 @@
       "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/piattaforma_comp._strategiche_-_margottini_epifani.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "cnos_fap_schede_bibliografiche_piattaforma_comp_strategiche_margottini_epifani_document",
-      "target": "massimo_margottini"
+      "source": "massimo_margottini",
+      "target": "cnos_fap_schede_bibliografiche_piattaforma_comp_strategiche_margottini_epifani_document"
     },
     {
       "relation": "conceptually_related_to",
@@ -3191,14 +3640,14 @@
       "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/portfolio_digitale.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "cnos_fap_schede_bibliografiche_portfolio_digitale_document",
-      "target": "massimo_margottini"
+      "source": "massimo_margottini",
+      "target": "cnos_fap_schede_bibliografiche_portfolio_digitale_document"
     },
     {
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Dirigere_se_stessi_2020.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Dirigere_se_stessi_2020.md",
       "source_location": null,
       "weight": 1.0,
       "source": "dirigere_se_stessi_2020",
@@ -3208,7 +3657,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Guida_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Guida_2019.md",
       "source_location": null,
       "weight": 1.0,
       "source": "guida_2019",
@@ -3218,7 +3667,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Guida_2023.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Guida_2023.md",
       "source_location": null,
       "weight": 1.0,
       "source": "guida_2023",
@@ -3228,7 +3677,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Introduzione_Volume_2020.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Introduzione_Volume_2020.md",
       "source_location": null,
       "weight": 1.0,
       "source": "introduzione_volume_2020",
@@ -3238,10 +3687,30 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Margottini_Convegno_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Margottini_Convegno_2019.md",
       "source_location": null,
       "weight": 1.0,
       "source": "margottini_convegno_2019",
+      "target": "massimo_margottini"
+    },
+    {
+      "relation": "authored_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "soft_skill_orientamento_2017",
+      "target": "massimo_margottini"
+    },
+    {
+      "relation": "authored_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_metodologie_orientamento_2018",
       "target": "massimo_margottini"
     },
     {
@@ -3251,8 +3720,8 @@
       "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/Imparare_a_dirigere_se_stessi.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "cnos_fap_schede_bibliografiche_imparare_a_dirigere_se_stessi_document",
-      "target": "filippo_epifani"
+      "source": "filippo_epifani",
+      "target": "cnos_fap_schede_bibliografiche_imparare_a_dirigere_se_stessi_document"
     },
     {
       "relation": "conceptually_related_to",
@@ -3261,8 +3730,8 @@
       "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/piattaforma_comp._strategiche_-_margottini_epifani.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "cnos_fap_schede_bibliografiche_piattaforma_comp_strategiche_margottini_epifani_document",
-      "target": "filippo_epifani"
+      "source": "filippo_epifani",
+      "target": "cnos_fap_schede_bibliografiche_piattaforma_comp_strategiche_margottini_epifani_document"
     },
     {
       "relation": "conceptually_related_to",
@@ -3271,14 +3740,14 @@
       "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/portfolio_digitale.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "cnos_fap_schede_bibliografiche_portfolio_digitale_document",
-      "target": "filippo_epifani"
+      "source": "filippo_epifani",
+      "target": "cnos_fap_schede_bibliografiche_portfolio_digitale_document"
     },
     {
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Guida_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Guida_2019.md",
       "source_location": null,
       "weight": 1.0,
       "source": "guida_2019",
@@ -3288,17 +3757,37 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Guida_2023.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Guida_2023.md",
       "source_location": null,
       "weight": 1.0,
       "source": "guida_2023",
       "target": "filippo_epifani"
     },
     {
+      "relation": "authored_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "soft_skill_orientamento_2017",
+      "target": "filippo_epifani"
+    },
+    {
+      "relation": "authored_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_metodologie_orientamento_2018",
+      "target": "filippo_epifani"
+    },
+    {
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Dirigere_se_stessi_2020.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Dirigere_se_stessi_2020.md",
       "source_location": null,
       "weight": 1.0,
       "source": "dirigere_se_stessi_2020",
@@ -3308,7 +3797,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Guida_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Guida_2019.md",
       "source_location": null,
       "weight": 1.0,
       "source": "guida_2019",
@@ -3318,7 +3807,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Guida_2023.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Guida_2023.md",
       "source_location": null,
       "weight": 1.0,
       "source": "guida_2023",
@@ -3328,7 +3817,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Introduzione_Volume_2020.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Introduzione_Volume_2020.md",
       "source_location": null,
       "weight": 1.0,
       "source": "introduzione_volume_2020",
@@ -3338,10 +3827,70 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Margottini_Convegno_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Margottini_Convegno_2019.md",
       "source_location": null,
       "weight": 1.0,
       "source": "margottini_convegno_2019",
+      "target": "autovalutazione"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_crescita_competenze_strategiche_2008",
+      "target": "autovalutazione"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "soft_skill_orientamento_2017",
+      "target": "autovalutazione"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/03_Schede_fattori_QSA_testo_integrale.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "schede_fattori_qsa",
+      "target": "autovalutazione"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 0.7,
+      "source": "autoregolazione",
+      "target": "autovalutazione"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 0.7,
+      "source": "autodeterminazione",
+      "target": "autovalutazione"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/03_Schede_fattori_QSA_testo_integrale.md",
+      "source_location": null,
+      "weight": 0.8,
+      "source": "qsa",
       "target": "autovalutazione"
     },
     {
@@ -3351,8 +3900,8 @@
       "source_file": "fonti-esterne-collegate/roma-tre-press/schede-bibliografiche/11.D.M.-Ardito.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "11_d_m_ardito",
-      "target": "metacognizione"
+      "source": "metacognizione",
+      "target": "11_d_m_ardito"
     },
     {
       "relation": "conceptually_related_to",
@@ -3361,8 +3910,8 @@
       "source_file": "schede-bibliografiche/Grzadziel_Convegno_2019.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "grzadziel_convegno_2019",
-      "target": "metacognizione"
+      "source": "metacognizione",
+      "target": "grzadziel_convegno_2019"
     },
     {
       "relation": "conceptually_related_to",
@@ -3371,8 +3920,8 @@
       "source_file": "schede-bibliografiche/Introduzione_Volume_2020.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "introduzione_volume_2020",
-      "target": "metacognizione"
+      "source": "metacognizione",
+      "target": "introduzione_volume_2020"
     },
     {
       "relation": "conceptually_related_to",
@@ -3391,14 +3940,14 @@
       "source_file": "fonti-esterne-collegate/cnos-fap/soft_skill.pdf",
       "source_location": null,
       "weight": 1.0,
-      "source": "cnos_fap_soft_skill_document",
-      "target": "autoregolazione"
+      "source": "autoregolazione",
+      "target": "cnos_fap_soft_skill_document"
     },
     {
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Introduzione_Volume_2020.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Introduzione_Volume_2020.md",
       "source_location": null,
       "weight": 1.0,
       "source": "introduzione_volume_2020",
@@ -3408,7 +3957,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Pellerey_Convegno_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Pellerey_Convegno_2019.md",
       "source_location": null,
       "weight": 1.0,
       "source": "pellerey_convegno_2019",
@@ -3421,8 +3970,8 @@
       "source_file": "sito-competenzestrategiche/guide-html/presentazione-qsa-book-65.html",
       "source_location": null,
       "weight": 1.0,
-      "source": "sito_competenzestrategiche_guide_html_presentazione_qsa_book_65_html",
-      "target": "autoregolazione"
+      "source": "autoregolazione",
+      "target": "sito_competenzestrategiche_guide_html_presentazione_qsa_book_65_html"
     },
     {
       "relation": "references",
@@ -3431,7 +3980,47 @@
       "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/QSA-r_Presentazione.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "sito_competenzestrategiche_guide_schede_bibliografiche_qsa_r_presentazione_md",
+      "source": "autoregolazione",
+      "target": "sito_competenzestrategiche_guide_schede_bibliografiche_qsa_r_presentazione_md"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_crescita_competenze_strategiche_2008",
+      "target": "autoregolazione"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "soft_skill_orientamento_2017",
+      "target": "autoregolazione"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 0.8,
+      "source": "autoregolazione",
+      "target": "autodeterminazione"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 0.7,
+      "source": "soft_skills",
       "target": "autoregolazione"
     },
     {
@@ -3441,8 +4030,8 @@
       "source_file": "fonti-esterne-collegate/roma-tre-press/schede-bibliografiche/11.D.M.-Ardito.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "11_d_m_ardito",
-      "target": "competenze_trasversali"
+      "source": "competenze_trasversali",
+      "target": "11_d_m_ardito"
     },
     {
       "relation": "conceptually_related_to",
@@ -3451,8 +4040,8 @@
       "source_file": "schede-bibliografiche/Pellerey_Convegno_2019.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "pellerey_convegno_2019",
-      "target": "character_skills"
+      "source": "character_skills",
+      "target": "pellerey_convegno_2019"
     },
     {
       "relation": "references",
@@ -3461,8 +4050,8 @@
       "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "cnos_fap_schede_bibliografiche_soft_skill_document",
-      "target": "cnos_fap_soft_skill_document"
+      "source": "cnos_fap_soft_skill_document",
+      "target": "cnos_fap_schede_bibliografiche_soft_skill_document"
     },
     {
       "relation": "conceptually_related_to",
@@ -3541,8 +4130,8 @@
       "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/portfolio_digitale.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "cnos_fap_schede_bibliografiche_portfolio_digitale_document",
-      "target": "cnos_fap_strumenti_e_metodologie_document"
+      "source": "cnos_fap_strumenti_e_metodologie_document",
+      "target": "cnos_fap_schede_bibliografiche_portfolio_digitale_document"
     },
     {
       "relation": "references",
@@ -3551,8 +4140,8 @@
       "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "cnos_fap_schede_bibliografiche_strumenti_e_metodologie_document",
-      "target": "cnos_fap_strumenti_e_metodologie_document"
+      "source": "cnos_fap_strumenti_e_metodologie_document",
+      "target": "cnos_fap_schede_bibliografiche_strumenti_e_metodologie_document"
     },
     {
       "relation": "cites",
@@ -3728,7 +4317,7 @@
       "relation": "cites",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/piattaforma_comp._strategiche_-_margottini_epifani.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/schede-bibliografiche/piattaforma_comp._strategiche_-_margottini_epifani.md",
       "source_location": null,
       "weight": 1.0,
       "source": "cnos_fap_schede_bibliografiche_piattaforma_comp_strategiche_margottini_epifani_document",
@@ -3818,7 +4407,7 @@
       "relation": "conceptually_related_to",
       "confidence": "INFERRED",
       "confidence_score": 0.8,
-      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/portfolio_digitale.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/schede-bibliografiche/portfolio_digitale.md",
       "source_location": null,
       "weight": 1.0,
       "source": "cnos_fap_schede_bibliografiche_portfolio_digitale_document",
@@ -4031,8 +4620,8 @@
       "source_file": "sito-competenzestrategiche/convegni/schede-bibliografiche/Presenta_QSA_convegnisti.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "presenta_qsa_convegnisti_ottone",
-      "target": "presenta_qsa_convegnisti_document"
+      "source": "presenta_qsa_convegnisti_document",
+      "target": "presenta_qsa_convegnisti_ottone"
     },
     {
       "relation": "references",
@@ -4041,8 +4630,8 @@
       "source_file": "sito-competenzestrategiche/convegni/schede-bibliografiche/Presentazione_Chatbot_convegnisti_02.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "presenta_qsa_convegnisti_ottone",
-      "target": "presentazione_chatbot_convegnisti_02_document"
+      "source": "presentazione_chatbot_convegnisti_02_document",
+      "target": "presenta_qsa_convegnisti_ottone"
     },
     {
       "relation": "references",
@@ -4081,8 +4670,8 @@
       "source_file": "sito-competenzestrategiche/convegni/schede-bibliografiche/Presentazione_DIDACTA_2023.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "presenta_qsa_convegnisti_ottone",
-      "target": "presentazione_didacta_2023_document"
+      "source": "presentazione_didacta_2023_document",
+      "target": "presenta_qsa_convegnisti_ottone"
     },
     {
       "relation": "references",
@@ -4191,8 +4780,8 @@
       "source_file": "sito-competenzestrategiche/convegni/schede-bibliografiche/Programma_Convegno_13_settembre_2019.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "dirigere_se_stessi_2020",
-      "target": "abstract_fascicolo_convegno_2019"
+      "source": "abstract_fascicolo_convegno_2019",
+      "target": "dirigere_se_stessi_2020"
     },
     {
       "relation": "references",
@@ -4201,8 +4790,8 @@
       "source_file": "sito-competenzestrategiche/convegni/schede-bibliografiche/Programma_Convegno_24Gennaio2025_dettagliato.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "dirigere_se_stessi_2020",
-      "target": "programma_convegno_24gennaio2025_dettagliato_convegno_2025"
+      "source": "programma_convegno_24gennaio2025_dettagliato_convegno_2025",
+      "target": "dirigere_se_stessi_2020"
     },
     {
       "relation": "conceptually_related_to",
@@ -4281,8 +4870,8 @@
       "source_file": "sito-competenzestrategiche/convegni/schede-bibliografiche/Programma_Convegno_24Gennaio2025_dettagliato.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "dirigere_se_stessi_2020",
-      "target": "abstract_fascicolo_ztpi"
+      "source": "abstract_fascicolo_ztpi",
+      "target": "dirigere_se_stessi_2020"
     },
     {
       "relation": "references",
@@ -4291,8 +4880,8 @@
       "source_file": "sito-competenzestrategiche/convegni/schede-bibliografiche/Programma_Convegno_24Gennaio2025_dettagliato.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "dirigere_se_stessi_2020",
-      "target": "abstract_fascicolo_qpcs"
+      "source": "abstract_fascicolo_qpcs",
+      "target": "dirigere_se_stessi_2020"
     },
     {
       "relation": "references",
@@ -4301,8 +4890,8 @@
       "source_file": "sito-competenzestrategiche/convegni/schede-bibliografiche/Programma_Convegno_24Gennaio2025_dettagliato.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "dirigere_se_stessi_2020",
-      "target": "abstract_fascicolo_qap"
+      "source": "abstract_fascicolo_qap",
+      "target": "dirigere_se_stessi_2020"
     },
     {
       "relation": "references",
@@ -4311,8 +4900,8 @@
       "source_file": "sito-competenzestrategiche/convegni/schede-bibliografiche/Programma_Convegno_24Gennaio2025_dettagliato.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "dirigere_se_stessi_2020",
-      "target": "presentazione_didacta_2023_competenzestrategiche_it"
+      "source": "presentazione_didacta_2023_competenzestrategiche_it",
+      "target": "dirigere_se_stessi_2020"
     },
     {
       "relation": "cites",
@@ -4321,8 +4910,8 @@
       "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/QSA-r_Presentazione.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "sito_competenzestrategiche_guide_schede_bibliografiche_qsa_r_presentazione_md",
-      "target": "sito_competenzestrategiche_guide_qsa_r_presentazione_pdf"
+      "source": "sito_competenzestrategiche_guide_qsa_r_presentazione_pdf",
+      "target": "sito_competenzestrategiche_guide_schede_bibliografiche_qsa_r_presentazione_md"
     },
     {
       "relation": "cites",
@@ -4821,8 +5410,8 @@
       "source_file": "sito-competenzestrategiche/modelli-operativi/02_Griglia_osservazione_docente.pdf",
       "source_location": null,
       "weight": 1.0,
-      "source": "02_griglia_osservazione_docente",
-      "target": "concept_qsa"
+      "source": "concept_qsa",
+      "target": "02_griglia_osservazione_docente"
     },
     {
       "relation": "semantically_similar_to",
@@ -4881,8 +5470,8 @@
       "source_file": "sito-competenzestrategiche/convegni/schede-bibliografiche/Programma_Convegno_24Gennaio2025_dettagliato.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "dirigere_se_stessi_2020",
-      "target": "concept_qsa"
+      "source": "concept_qsa",
+      "target": "dirigere_se_stessi_2020"
     },
     {
       "relation": "conceptually_related_to",
@@ -4891,8 +5480,8 @@
       "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/Schede_fattori_QSA.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "factor_a1",
-      "target": "concept_qsa"
+      "source": "concept_qsa",
+      "target": "factor_a1"
     },
     {
       "relation": "conceptually_related_to",
@@ -4901,8 +5490,8 @@
       "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/Schede_fattori_QSA.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "factor_a2",
-      "target": "concept_qsa"
+      "source": "concept_qsa",
+      "target": "factor_a2"
     },
     {
       "relation": "conceptually_related_to",
@@ -4911,8 +5500,8 @@
       "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/Schede_fattori_QSA.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "factor_a3",
-      "target": "concept_qsa"
+      "source": "concept_qsa",
+      "target": "factor_a3"
     },
     {
       "relation": "conceptually_related_to",
@@ -4921,8 +5510,8 @@
       "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/Schede_fattori_QSA.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "factor_a4",
-      "target": "concept_qsa"
+      "source": "concept_qsa",
+      "target": "factor_a4"
     },
     {
       "relation": "conceptually_related_to",
@@ -4931,8 +5520,8 @@
       "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/Schede_fattori_QSA.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "factor_a5",
-      "target": "concept_qsa"
+      "source": "concept_qsa",
+      "target": "factor_a5"
     },
     {
       "relation": "conceptually_related_to",
@@ -4941,8 +5530,8 @@
       "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/Schede_fattori_QSA.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "factor_a6",
-      "target": "concept_qsa"
+      "source": "concept_qsa",
+      "target": "factor_a6"
     },
     {
       "relation": "conceptually_related_to",
@@ -4951,8 +5540,8 @@
       "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/Schede_fattori_QSA.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "factor_a7",
-      "target": "concept_qsa"
+      "source": "concept_qsa",
+      "target": "factor_a7"
     },
     {
       "relation": "conceptually_related_to",
@@ -4961,8 +5550,8 @@
       "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/Schede_fattori_QSA.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "factor_c1",
-      "target": "concept_qsa"
+      "source": "concept_qsa",
+      "target": "factor_c1"
     },
     {
       "relation": "conceptually_related_to",
@@ -4971,8 +5560,8 @@
       "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/Schede_fattori_QSA.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "factor_c3",
-      "target": "concept_qsa"
+      "source": "concept_qsa",
+      "target": "factor_c3"
     },
     {
       "relation": "conceptually_related_to",
@@ -4981,8 +5570,8 @@
       "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/Schede_fattori_QSA.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "factor_c4",
-      "target": "concept_qsa"
+      "source": "concept_qsa",
+      "target": "factor_c4"
     },
     {
       "relation": "conceptually_related_to",
@@ -4991,8 +5580,8 @@
       "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/Schede_fattori_QSA.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "factor_c5",
-      "target": "concept_qsa"
+      "source": "concept_qsa",
+      "target": "factor_c5"
     },
     {
       "relation": "conceptually_related_to",
@@ -5001,8 +5590,8 @@
       "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/Schede_fattori_QSA.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "factor_c6",
-      "target": "concept_qsa"
+      "source": "concept_qsa",
+      "target": "factor_c6"
     },
     {
       "relation": "conceptually_related_to",
@@ -5011,8 +5600,8 @@
       "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/Schede_fattori_QSA.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "factor_c7",
-      "target": "concept_qsa"
+      "source": "concept_qsa",
+      "target": "factor_c7"
     },
     {
       "relation": "conceptually_related_to",
@@ -5021,8 +5610,8 @@
       "source_file": "schede-bibliografiche/Grzadziel_Convegno_2019.md",
       "source_location": null,
       "weight": 1.0,
-      "source": "grzadziel_convegno_2019",
-      "target": "concept_qsa"
+      "source": "concept_qsa",
+      "target": "grzadziel_convegno_2019"
     },
     {
       "relation": "semantically_similar_to",
@@ -5031,8 +5620,8 @@
       "source_file": null,
       "source_location": null,
       "weight": 1.0,
-      "source": "qsa",
-      "target": "concept_qsa"
+      "source": "concept_qsa",
+      "target": "qsa"
     },
     {
       "relation": "conceptually_related_to",
@@ -5068,7 +5657,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "fonti-esterne-collegate/roma-tre-press/schede-bibliografiche/11.D.M.-Ardito.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/roma-tre-press/schede-bibliografiche/11.D.M.-Ardito.md",
       "source_location": null,
       "weight": 1.0,
       "source": "11_d_m_ardito",
@@ -5141,8 +5730,8 @@
       "source_file": "sito-competenzestrategiche/convegni/Abstract_fascicolo.pdf",
       "source_location": null,
       "weight": 1.0,
-      "source": "abstract_fascicolo",
-      "target": "dirigere_se_stessi_2020"
+      "source": "dirigere_se_stessi_2020",
+      "target": "abstract_fascicolo"
     },
     {
       "relation": "conceptually_related_to",
@@ -5168,7 +5757,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Dirigere_se_stessi_2020.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Dirigere_se_stessi_2020.md",
       "source_location": null,
       "weight": 1.0,
       "source": "dirigere_se_stessi_2020",
@@ -5178,7 +5767,7 @@
       "relation": "cites",
       "confidence": "INFERRED",
       "confidence_score": 0.9,
-      "source_file": "schede-bibliografiche/Dirigere_se_stessi_2020.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Dirigere_se_stessi_2020.md",
       "source_location": null,
       "weight": 1.0,
       "source": "dirigere_se_stessi_2020",
@@ -5188,7 +5777,7 @@
       "relation": "cites",
       "confidence": "INFERRED",
       "confidence_score": 0.9,
-      "source_file": "schede-bibliografiche/Dirigere_se_stessi_2020.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Dirigere_se_stessi_2020.md",
       "source_location": null,
       "weight": 1.0,
       "source": "dirigere_se_stessi_2020",
@@ -5208,7 +5797,7 @@
       "relation": "cites",
       "confidence": "INFERRED",
       "confidence_score": 0.9,
-      "source_file": "schede-bibliografiche/Dirigere_se_stessi_2020.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Dirigere_se_stessi_2020.md",
       "source_location": null,
       "weight": 1.0,
       "source": "dirigere_se_stessi_2020",
@@ -5218,7 +5807,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Dirigere_se_stessi_2020.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Dirigere_se_stessi_2020.md",
       "source_location": null,
       "weight": 1.0,
       "source": "dirigere_se_stessi_2020",
@@ -5238,7 +5827,7 @@
       "relation": "cites",
       "confidence": "INFERRED",
       "confidence_score": 0.9,
-      "source_file": "schede-bibliografiche/Dirigere_se_stessi_2020.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Dirigere_se_stessi_2020.md",
       "source_location": null,
       "weight": 1.0,
       "source": "dirigere_se_stessi_2020",
@@ -5248,7 +5837,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Dirigere_se_stessi_2020.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Dirigere_se_stessi_2020.md",
       "source_location": null,
       "weight": 1.0,
       "source": "dirigere_se_stessi_2020",
@@ -5271,8 +5860,8 @@
       "source_file": "sito-competenzestrategiche/convegni/Presenta_QSA_convegnisti.pdf",
       "source_location": null,
       "weight": 1.0,
-      "source": "presenta_qsa_convegnisti",
-      "target": "dirigere_se_stessi_2020"
+      "source": "dirigere_se_stessi_2020",
+      "target": "presenta_qsa_convegnisti"
     },
     {
       "relation": "conceptually_related_to",
@@ -5281,8 +5870,8 @@
       "source_file": "sito-competenzestrategiche/convegni/Presentazione_Chatbot_convegnisti_02.pdf",
       "source_location": null,
       "weight": 1.0,
-      "source": "presentazione_chatbot_convegnisti_02",
-      "target": "dirigere_se_stessi_2020"
+      "source": "dirigere_se_stessi_2020",
+      "target": "presentazione_chatbot_convegnisti_02"
     },
     {
       "relation": "conceptually_related_to",
@@ -5308,7 +5897,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Grzadziel_Convegno_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Grzadziel_Convegno_2019.md",
       "source_location": null,
       "weight": 1.0,
       "source": "grzadziel_convegno_2019",
@@ -5318,7 +5907,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Grzadziel_Convegno_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Grzadziel_Convegno_2019.md",
       "source_location": null,
       "weight": 1.0,
       "source": "grzadziel_convegno_2019",
@@ -5358,7 +5947,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Guida_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Guida_2019.md",
       "source_location": null,
       "weight": 1.0,
       "source": "guida_2019",
@@ -5398,7 +5987,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Guida_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Guida_2019.md",
       "source_location": null,
       "weight": 1.0,
       "source": "guida_2019",
@@ -5408,7 +5997,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Guida_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Guida_2019.md",
       "source_location": null,
       "weight": 1.0,
       "source": "guida_2019",
@@ -5418,7 +6007,7 @@
       "relation": "cites",
       "confidence": "INFERRED",
       "confidence_score": 0.9,
-      "source_file": "schede-bibliografiche/Guida_2023.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Guida_2023.md",
       "source_location": null,
       "weight": 1.0,
       "source": "guida_2023",
@@ -5428,7 +6017,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Guida_2023.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Guida_2023.md",
       "source_location": null,
       "weight": 1.0,
       "source": "guida_2023",
@@ -5478,7 +6067,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Guida_2023.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Guida_2023.md",
       "source_location": null,
       "weight": 1.0,
       "source": "guida_2023",
@@ -5488,7 +6077,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Guida_2023.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Guida_2023.md",
       "source_location": null,
       "weight": 1.0,
       "source": "guida_2023",
@@ -5498,7 +6087,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Introduzione_Volume_2020.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Introduzione_Volume_2020.md",
       "source_location": null,
       "weight": 1.0,
       "source": "introduzione_volume_2020",
@@ -5508,7 +6097,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Introduzione_Volume_2020.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Introduzione_Volume_2020.md",
       "source_location": null,
       "weight": 1.0,
       "source": "introduzione_volume_2020",
@@ -5528,7 +6117,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Introduzione_Volume_2020.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Introduzione_Volume_2020.md",
       "source_location": null,
       "weight": 1.0,
       "source": "introduzione_volume_2020",
@@ -5568,7 +6157,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Margottini_Convegno_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Margottini_Convegno_2019.md",
       "source_location": null,
       "weight": 1.0,
       "source": "margottini_convegno_2019",
@@ -5578,7 +6167,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Margottini_Convegno_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Margottini_Convegno_2019.md",
       "source_location": null,
       "weight": 1.0,
       "source": "margottini_convegno_2019",
@@ -5598,7 +6187,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Pellerey_Convegno_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Pellerey_Convegno_2019.md",
       "source_location": null,
       "weight": 1.0,
       "source": "pellerey_convegno_2019",
@@ -5638,7 +6227,7 @@
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "schede-bibliografiche/Pellerey_Convegno_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Pellerey_Convegno_2019.md",
       "source_location": null,
       "weight": 1.0,
       "source": "pellerey_convegno_2019",
@@ -5675,6 +6264,106 @@
       "target": "qsa"
     },
     {
+      "relation": "authored_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_crescita_competenze_strategiche_2008",
+      "target": "michele_pellerey"
+    },
+    {
+      "relation": "edited_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "soft_skill_orientamento_2017",
+      "target": "michele_pellerey"
+    },
+    {
+      "relation": "edited_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_metodologie_orientamento_2018",
+      "target": "michele_pellerey"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/03_Schede_fattori_QSA_testo_integrale.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "schede_fattori_qsa",
+      "target": "michele_pellerey"
+    },
+    {
+      "relation": "created",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/03_Schede_fattori_QSA_testo_integrale.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "michele_pellerey",
+      "target": "qsa"
+    },
+    {
+      "relation": "authored_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "soft_skill_orientamento_2017",
+      "target": "enrica_ottone"
+    },
+    {
+      "relation": "authored_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_metodologie_orientamento_2018",
+      "target": "enrica_ottone"
+    },
+    {
+      "relation": "authored_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/03_Schede_fattori_QSA_testo_integrale.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "schede_fattori_qsa",
+      "target": "enrica_ottone"
+    },
+    {
+      "relation": "authored_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_crescita_competenze_strategiche_2008",
+      "target": "dariusz_grzadziel"
+    },
+    {
+      "relation": "authored_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_metodologie_orientamento_2018",
+      "target": "dariusz_grzadziel"
+    },
+    {
       "relation": "semantically_similar_to",
       "confidence": "INFERRED",
       "confidence_score": 0.8,
@@ -5683,6 +6372,36 @@
       "weight": 1.0,
       "source": "apprendere_ad_apprendere",
       "target": "imparare_a_imparare"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "soft_skill_orientamento_2017",
+      "target": "autodeterminazione"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_metodologie_orientamento_2018",
+      "target": "autodeterminazione"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 0.7,
+      "source": "soft_skills",
+      "target": "autodeterminazione"
     },
     {
       "relation": "references",
@@ -5713,6 +6432,86 @@
       "weight": 1.0,
       "source": "qap",
       "target": "qap_qap"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_metodologie_orientamento_2018",
+      "target": "qsa"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/03_Schede_fattori_QSA_testo_integrale.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "schede_fattori_qsa",
+      "target": "qsa"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/03_Schede_fattori_QSA_testo_integrale.md",
+      "source_location": null,
+      "weight": 0.8,
+      "source": "counselorbot",
+      "target": "qsa"
+    },
+    {
+      "relation": "part_of",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/03_Schede_fattori_QSA_testo_integrale.md",
+      "source_location": null,
+      "weight": 0.8,
+      "source": "fattori_cognitivi_metacognitivi",
+      "target": "qsa"
+    },
+    {
+      "relation": "part_of",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/03_Schede_fattori_QSA_testo_integrale.md",
+      "source_location": null,
+      "weight": 0.8,
+      "source": "fattori_motivazionali_affettivi",
+      "target": "qsa"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 0.8,
+      "source": "qsa",
+      "target": "qsar"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_metodologie_orientamento_2018",
+      "target": "ztpi"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 0.8,
+      "source": "ztpi",
+      "target": "prospettiva_temporale"
     },
     {
       "relation": "references",
@@ -5808,7 +6607,7 @@
       "relation": "conceptually_related_to",
       "confidence": "INFERRED",
       "confidence_score": 0.7,
-      "source_file": "sito-competenzestrategiche/studi/schede-bibliografiche/MARGOTTINI-ROSSI_2019.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/studi/schede-bibliografiche/MARGOTTINI-ROSSI_2019.md",
       "source_location": null,
       "weight": 1.0,
       "source": "margottini_rossi_2019_document",
@@ -5818,7 +6617,7 @@
       "relation": "cites",
       "confidence": "INFERRED",
       "confidence_score": 0.8,
-      "source_file": "sito-competenzestrategiche/studi/schede-bibliografiche/OTTONE_2023.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/studi/schede-bibliografiche/OTTONE_2023.md",
       "source_location": null,
       "weight": 1.0,
       "source": "ottone_2023_document",
@@ -5878,7 +6677,7 @@
       "relation": "conceptually_related_to",
       "confidence": "INFERRED",
       "confidence_score": 0.7,
-      "source_file": "sito-competenzestrategiche/studi/schede-bibliografiche/OTTONE_2023.md",
+      "source_file": "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/studi/schede-bibliografiche/OTTONE_2023.md",
       "source_location": null,
       "weight": 1.0,
       "source": "ottone_2023_document",
@@ -5963,7 +6762,388 @@
       "weight": 1.0,
       "source": "ottone_2023_document",
       "target": "ottone_2023_qsa"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_crescita_competenze_strategiche_2008",
+      "target": "apprendimento_permanente"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_crescita_competenze_strategiche_2008",
+      "target": "dimensione_spirituale_morale"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_crescita_competenze_strategiche_2008",
+      "target": "isfol"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_crescita_competenze_strategiche_2008",
+      "target": "legge_53_2003"
+    },
+    {
+      "relation": "authored_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_crescita_competenze_strategiche_2008",
+      "target": "marco_bay"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_crescita_competenze_strategiche_2008",
+      "target": "otto_aree_competenza_strategica"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "promuovere_crescita_competenze_strategiche_2008",
+      "target": "strategie_lisbona"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 0.6,
+      "source": "promuovere_crescita_competenze_strategiche_2008",
+      "target": "strumenti_metodologie_orientamento_2018"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "soft_skill_orientamento_2017",
+      "target": "career_construction"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "soft_skill_orientamento_2017",
+      "target": "funzioni_esecutive"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "soft_skill_orientamento_2017",
+      "target": "life_design"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "soft_skill_orientamento_2017",
+      "target": "occupabilita"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "soft_skill_orientamento_2017",
+      "target": "orientamento_professionale"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "soft_skill_orientamento_2017",
+      "target": "savickas"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "soft_skill_orientamento_2017",
+      "target": "soft_skills"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 0.6,
+      "source": "soft_skill_orientamento_2017",
+      "target": "strumenti_metodologie_orientamento_2018"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_metodologie_orientamento_2018",
+      "target": "apprendimento_permanente"
+    },
+    {
+      "relation": "authored_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_metodologie_orientamento_2018",
+      "target": "emad_samir_anis_matta"
+    },
+    {
+      "relation": "authored_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_metodologie_orientamento_2018",
+      "target": "giuseppe_crea"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_metodologie_orientamento_2018",
+      "target": "mahara"
+    },
+    {
+      "relation": "authored_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_metodologie_orientamento_2018",
+      "target": "marco_bay"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_metodologie_orientamento_2018",
+      "target": "orientamento_professionale"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_metodologie_orientamento_2018",
+      "target": "prospettiva_temporale"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_metodologie_orientamento_2018",
+      "target": "qsar"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/03_Schede_fattori_QSA_testo_integrale.md",
+      "source_location": null,
+      "weight": 0.6,
+      "source": "strumenti_metodologie_orientamento_2018",
+      "target": "schede_fattori_qsa"
+    },
+    {
+      "relation": "authored_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_metodologie_orientamento_2018",
+      "target": "sergio_melogno"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "strumenti_metodologie_orientamento_2018",
+      "target": "soft_skills"
+    },
+    {
+      "relation": "published_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/03_Schede_fattori_QSA_testo_integrale.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "schede_fattori_qsa",
+      "target": "apprendo"
+    },
+    {
+      "relation": "feeds_into",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/03_Schede_fattori_QSA_testo_integrale.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "schede_fattori_qsa",
+      "target": "certified_strategies"
+    },
+    {
+      "relation": "used_by",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/03_Schede_fattori_QSA_testo_integrale.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "schede_fattori_qsa",
+      "target": "counselorbot"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/03_Schede_fattori_QSA_testo_integrale.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "schede_fattori_qsa",
+      "target": "fattori_cognitivi_metacognitivi"
+    },
+    {
+      "relation": "about",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/03_Schede_fattori_QSA_testo_integrale.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "schede_fattori_qsa",
+      "target": "fattori_motivazionali_affettivi"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 0.8,
+      "source": "life_design",
+      "target": "savickas"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 0.7,
+      "source": "soft_skills",
+      "target": "occupabilita"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 0.8,
+      "source": "orientamento_professionale",
+      "target": "apprendimento_permanente"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 0.7,
+      "source": "orientamento_professionale",
+      "target": "life_design"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md",
+      "source_location": null,
+      "weight": 0.8,
+      "source": "life_design",
+      "target": "career_construction"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "sito-competenzestrategiche/guide/schede-bibliografiche/03_Schede_fattori_QSA_testo_integrale.md",
+      "source_location": null,
+      "weight": 0.8,
+      "source": "counselorbot",
+      "target": "certified_strategies"
     }
   ],
-  "hyperedges": []
+  "hyperedges": [],
+  "built_at_commit": "eed9f42a185b450acbbe01aabc1c251d1bc45d26"
 }
