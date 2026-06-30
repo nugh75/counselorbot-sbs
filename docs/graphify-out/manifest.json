@@ -1,0 +1,597 @@
+{
+  "/home/nugh75/counselorbot-sbs/docs/handoff/qsa-five-models-prompt-audit-sl-motivation.json": {
+    "mtime": 1782597166.1598296,
+    "ast_hash": "306323518d4f46398199c97773a2c966",
+    "semantic_hash": "306323518d4f46398199c97773a2c966"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/handoff/qsa-sara-certified-second-level-audit.json": {
+    "mtime": 1782597166.1635954,
+    "ast_hash": "c498c7add67e9f3e979c0fa240d919a2",
+    "semantic_hash": "c498c7add67e9f3e979c0fa240d919a2"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/README.md": {
+    "mtime": 1782559999.1913116,
+    "ast_hash": "b6835de30607d25a2070c0b710f7ebaa",
+    "semantic_hash": "b6835de30607d25a2070c0b710f7ebaa"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/README.md": {
+    "mtime": 1782559999.2611268,
+    "ast_hash": "bce523b8f0f90606d7a1db098bfd0961",
+    "semantic_hash": "bce523b8f0f90606d7a1db098bfd0961"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/schede-bibliografiche/Imparare_a_dirigere_se_stessi.md": {
+    "mtime": 1782559999.4666939,
+    "ast_hash": "ec915bfd9d98bc4e5e364c8aaab58347",
+    "semantic_hash": "ec915bfd9d98bc4e5e364c8aaab58347"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/schede-bibliografiche/piattaforma_comp._strategiche_-_margottini_epifani.md": {
+    "mtime": 1782559999.4666939,
+    "ast_hash": "bf7f115f438fc59d222be069b2ce7306",
+    "semantic_hash": "bf7f115f438fc59d222be069b2ce7306"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/schede-bibliografiche/portfolio_digitale.md": {
+    "mtime": 1782559999.4666939,
+    "ast_hash": "890a2bdfb4183c4b550fbb4b38c54935",
+    "semantic_hash": "890a2bdfb4183c4b550fbb4b38c54935"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/schede-bibliografiche/promuovere_la_crescita_nelle_competenze_strategiche.PDF.md": {
+    "mtime": 1782631693.2809873,
+    "ast_hash": "f97854feb78ddbe756e4f2979f6989f8",
+    "semantic_hash": "f97854feb78ddbe756e4f2979f6989f8"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/schede-bibliografiche/soft_skill.md": {
+    "mtime": 1782631693.2809873,
+    "ast_hash": "4fe4109adcf0736e8c874728c4b6f5fc",
+    "semantic_hash": "4fe4109adcf0736e8c874728c4b6f5fc"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/schede-bibliografiche/strumenti_e_metodologie.md": {
+    "mtime": 1782727816.3366787,
+    "ast_hash": "ac8f6fb1603a610d8c6ac409a12833a5",
+    "semantic_hash": "ac8f6fb1603a610d8c6ac409a12833a5"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/roma-tre-press/schede-bibliografiche/11.D.M.-Ardito.md": {
+    "mtime": 1782559999.5442662,
+    "ast_hash": "9c31b3f78fc44db6532ab6389de4019b",
+    "semantic_hash": "9c31b3f78fc44db6532ab6389de4019b"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/roma-tre-press/schede-bibliografiche/12.G.-Marrone-L.-Romano.md": {
+    "mtime": 1782559999.5442662,
+    "ast_hash": "2957137c90dd0554c2a85f16f94c6aa1",
+    "semantic_hash": "2957137c90dd0554c2a85f16f94c6aa1"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Dirigere_se_stessi_2020.md": {
+    "mtime": 1782559999.5442662,
+    "ast_hash": "2f9c849e578805a687da846c4bc16d3c",
+    "semantic_hash": "2f9c849e578805a687da846c4bc16d3c"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Grzadziel_Convegno_2019.md": {
+    "mtime": 1782559999.5442662,
+    "ast_hash": "3fb216159ab1aec37fe2f4ef88b4fcab",
+    "semantic_hash": "3fb216159ab1aec37fe2f4ef88b4fcab"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Guida_2019.md": {
+    "mtime": 1782559999.5481448,
+    "ast_hash": "adbf85c371a1c7c4a2c2e6d158cd8e0d",
+    "semantic_hash": "adbf85c371a1c7c4a2c2e6d158cd8e0d"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Guida_2023.md": {
+    "mtime": 1782559999.5481448,
+    "ast_hash": "c8e5b0f0b2c12a44e680d1ee16466388",
+    "semantic_hash": "c8e5b0f0b2c12a44e680d1ee16466388"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Introduzione_Volume_2020.md": {
+    "mtime": 1782559999.5481448,
+    "ast_hash": "1532aafb95ab848a6df4bae0d7effdd1",
+    "semantic_hash": "1532aafb95ab848a6df4bae0d7effdd1"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Margottini_Convegno_2019.md": {
+    "mtime": 1782559999.5481448,
+    "ast_hash": "2614ba632cfd90f96257f7cb11cc1bad",
+    "semantic_hash": "2614ba632cfd90f96257f7cb11cc1bad"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/schede-bibliografiche/Pellerey_Convegno_2019.md": {
+    "mtime": 1782559999.5481448,
+    "ast_hash": "b8d3fd620178df1c62d6ed2cb78831be",
+    "semantic_hash": "b8d3fd620178df1c62d6ed2cb78831be"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/README.md": {
+    "mtime": 1782559999.5481448,
+    "ast_hash": "406595cf51ebcc45c4e36541645811e4",
+    "semantic_hash": "406595cf51ebcc45c4e36541645811e4"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/convegni/schede-bibliografiche/Abstract_fascicolo.md": {
+    "mtime": 1782559999.567538,
+    "ast_hash": "1b59b96f7a9e2382a6daa8514179c91e",
+    "semantic_hash": "1b59b96f7a9e2382a6daa8514179c91e"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/convegni/schede-bibliografiche/Presenta_QSA_convegnisti.md": {
+    "mtime": 1782559999.567538,
+    "ast_hash": "255c937fd1174581d17a075d5aad27e4",
+    "semantic_hash": "255c937fd1174581d17a075d5aad27e4"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/convegni/schede-bibliografiche/Presentazione_Chatbot_convegnisti_02.md": {
+    "mtime": 1782559999.567538,
+    "ast_hash": "66d415fcb94c0345d80af7c0593db630",
+    "semantic_hash": "66d415fcb94c0345d80af7c0593db630"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/convegni/schede-bibliografiche/Presentazione_DIDACTA_2023.md": {
+    "mtime": 1782559999.567538,
+    "ast_hash": "e21c8538b7ff9ace5af674c7b50a7faa",
+    "semantic_hash": "e21c8538b7ff9ace5af674c7b50a7faa"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/convegni/schede-bibliografiche/Programma_Convegno_13_settembre_2019.md": {
+    "mtime": 1782559999.567538,
+    "ast_hash": "830f405d5c071b959362276cc35a3c10",
+    "semantic_hash": "830f405d5c071b959362276cc35a3c10"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/convegni/schede-bibliografiche/Programma_Convegno_24Gennaio2025_dettagliato.md": {
+    "mtime": 1782559999.567538,
+    "ast_hash": "2deb9c1deb8d5dcdbb6bc365906c4c1c",
+    "semantic_hash": "2deb9c1deb8d5dcdbb6bc365906c4c1c"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/guide-html/guida-piattaforma-book-69.html": {
+    "mtime": 1782559999.567538,
+    "ast_hash": "5674a20a4f3ed11712eeb1aa8f684669",
+    "semantic_hash": "5674a20a4f3ed11712eeb1aa8f684669"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/guide-html/pagina-formazione.html": {
+    "mtime": 1782559999.567538,
+    "ast_hash": "ad663a1e9fc3f1f82fa4b4961f17a664",
+    "semantic_hash": "ad663a1e9fc3f1f82fa4b4961f17a664"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/guide-html/pagina-procedura.html": {
+    "mtime": 1782559999.567538,
+    "ast_hash": "30adcdb9a7defcdd24fe262155e6685a",
+    "semantic_hash": "30adcdb9a7defcdd24fe262155e6685a"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/guide-html/pagina-questionari.html": {
+    "mtime": 1782559999.567538,
+    "ast_hash": "78f1f3fdbf90960306f5e3d3c35fc50d",
+    "semantic_hash": "78f1f3fdbf90960306f5e3d3c35fc50d"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/guide-html/presentazione-qsa-book-65.html": {
+    "mtime": 1782559999.567538,
+    "ast_hash": "d542a1a29826741c2c0f44aa22d3c1b8",
+    "semantic_hash": "d542a1a29826741c2c0f44aa22d3c1b8"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/guide/schede-bibliografiche/03_Schede_fattori_QSA_testo_integrale.md": {
+    "mtime": 1782597166.1598296,
+    "ast_hash": "dbc052f509bb181ce02e84f38333dc36",
+    "semantic_hash": "dbc052f509bb181ce02e84f38333dc36"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/guide/schede-bibliografiche/QSA-r_Presentazione.md": {
+    "mtime": 1782559999.5830526,
+    "ast_hash": "40f1cb75ec6691d2cd4058f9d881b127",
+    "semantic_hash": "40f1cb75ec6691d2cd4058f9d881b127"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/guide/schede-bibliografiche/Schede_fattori_QSA.md": {
+    "mtime": 1782559999.5830526,
+    "ast_hash": "18ee531d3cf730291e42b0a6793616ae",
+    "semantic_hash": "18ee531d3cf730291e42b0a6793616ae"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/schede-bibliografiche/02_Griglia_osservazione_docente.md": {
+    "mtime": 1782559999.5908098,
+    "ast_hash": "b262a0edcbe83ec65c05fb29a3379324",
+    "semantic_hash": "b262a0edcbe83ec65c05fb29a3379324"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/strumenti/schede-bibliografiche/QAP.md": {
+    "mtime": 1782559999.5946884,
+    "ast_hash": "c9d1b6bc2758af69726c3cb991124d9a",
+    "semantic_hash": "c9d1b6bc2758af69726c3cb991124d9a"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/strumenti/schede-bibliografiche/QSA_Questionario.md": {
+    "mtime": 1782559999.5946884,
+    "ast_hash": "8b3d5e089f65b55609b6ea3f2e0f85f7",
+    "semantic_hash": "8b3d5e089f65b55609b6ea3f2e0f85f7"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/studi/schede-bibliografiche/MARGOTTINI-ROSSI_2019.md": {
+    "mtime": 1782559999.6994112,
+    "ast_hash": "b627494d92c9094d3c785e56a0158748",
+    "semantic_hash": "b627494d92c9094d3c785e56a0158748"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/studi/schede-bibliografiche/MELOGNO_2018.md": {
+    "mtime": 1782559999.6994112,
+    "ast_hash": "a5858336744db20a3a546616c96b5375",
+    "semantic_hash": "a5858336744db20a3a546616c96b5375"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/studi/schede-bibliografiche/OTTONE_2023.md": {
+    "mtime": 1782559999.6994112,
+    "ast_hash": "2ae870df3164ea7efdf46cbce40e37a2",
+    "semantic_hash": "2ae870df3164ea7efdf46cbce40e37a2"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/future-implementazione/audit-anonimizzazione-pii-api.md": {
+    "mtime": 1782559999.6994112,
+    "ast_hash": "e4293908677db3e64ae0431c01fe5738",
+    "semantic_hash": "e4293908677db3e64ae0431c01fe5738"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/future-implementazione/piano-pqbl-da-pdf.md": {
+    "mtime": 1782559999.6994112,
+    "ast_hash": "1a2691ab95d4b94e8f1947657027f0de",
+    "semantic_hash": "1a2691ab95d4b94e8f1947657027f0de"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/handoff-counselor-persona-placeholder.md": {
+    "mtime": 1782720214.5227284,
+    "ast_hash": "d3238b0154a4f6f5cf6c9b4b2cb29e2e",
+    "semantic_hash": "d3238b0154a4f6f5cf6c9b4b2cb29e2e"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/handoff/prompt-audit-findings.md": {
+    "mtime": 1782559999.6994112,
+    "ast_hash": "e56ad46721281aeabd4c1519cce6f895",
+    "semantic_hash": "e56ad46721281aeabd4c1519cce6f895"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/handoff/qsa-counselor-battery-after-fixes.md": {
+    "mtime": 1782572415.156227,
+    "ast_hash": "e42fbbf5c83d7af204e47a284789fdea",
+    "semantic_hash": "e42fbbf5c83d7af204e47a284789fdea"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/handoff/qsa-counselor-battery-report.md": {
+    "mtime": 1782572415.156227,
+    "ast_hash": "30c1d04b8ab707cc1936a0b705f3561f",
+    "semantic_hash": "30c1d04b8ab707cc1936a0b705f3561f"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/handoff/qsa-counselor-battery-suggestions.md": {
+    "mtime": 1782572415.156227,
+    "ast_hash": "3864965964cb365d218a51761f69f615",
+    "semantic_hash": "3864965964cb365d218a51761f69f615"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/handoff/qsa-counselor-reasoning-confined.md": {
+    "mtime": 1782564853.2854617,
+    "ast_hash": "273c24f51c39b6cf39aece4cf90b50d7",
+    "semantic_hash": "273c24f51c39b6cf39aece4cf90b50d7"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/handoff/qsa-envelope-contradictions-fix-plan.md": {
+    "mtime": 1782736238.8501782,
+    "ast_hash": "7391d4f736201704b12513456367c72c",
+    "semantic_hash": "7391d4f736201704b12513456367c72c"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/handoff/qsa-five-models-prompt-audit-sl-motivation.md": {
+    "mtime": 1782597166.1598296,
+    "ast_hash": "65a14e183e8566607bd4120aff6608e2",
+    "semantic_hash": "65a14e183e8566607bd4120aff6608e2"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/handoff/qsa-next-steps-todo.md": {
+    "mtime": 1782597166.1635954,
+    "ast_hash": "026709bef75ffc653299d0150e6958de",
+    "semantic_hash": "026709bef75ffc653299d0150e6958de"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/handoff/qsa-sara-certified-second-level-audit.md": {
+    "mtime": 1782597166.1635954,
+    "ast_hash": "3603ace9cbc16d9be3580e8ff6031441",
+    "semantic_hash": "3603ace9cbc16d9be3580e8ff6031441"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/handoff/qsa-section3-multimodel-audit.md": {
+    "mtime": 1782597166.1635954,
+    "ast_hash": "4590deb5fe41048865eafb0360ac0a7f",
+    "semantic_hash": "4590deb5fe41048865eafb0360ac0a7f"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/implementazione/pQBL-counselorbot.md": {
+    "mtime": 1782559999.7032897,
+    "ast_hash": "556bd7c7986cfbc47105da272e5cd031",
+    "semantic_hash": "556bd7c7986cfbc47105da272e5cd031"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/implementazione/prompt-audit-api.md": {
+    "mtime": 1782559999.7032897,
+    "ast_hash": "23580ccb6c575fb083f60d42db0d3bef",
+    "semantic_hash": "23580ccb6c575fb083f60d42db0d3bef"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/implementazione/verifica-implementazione.md": {
+    "mtime": 1782559999.7032897,
+    "ast_hash": "dac0ed7f5ac27e0328e273ccb926c595",
+    "semantic_hash": "dac0ed7f5ac27e0328e273ccb926c595"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/make-prompt-testing.md": {
+    "mtime": 1782720214.5227284,
+    "ast_hash": "c4e6f0ca72c39f1bfad43ef19802a99e",
+    "semantic_hash": "c4e6f0ca72c39f1bfad43ef19802a99e"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/progetto/comunicazioni/contatto-begona-qsa-es-2026-05-30.md": {
+    "mtime": 1782559999.7032897,
+    "ast_hash": "a0161b45caa8561a74b5b4153b6e25ba",
+    "semantic_hash": "a0161b45caa8561a74b5b4153b6e25ba"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/progetto/comunicazioni/mail-olle-en.md": {
+    "mtime": 1782559999.7032897,
+    "ast_hash": "dffb4becf6cd77e781fe2ba8f704e131",
+    "semantic_hash": "dffb4becf6cd77e781fe2ba8f704e131"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/progetto/comunicazioni/mail-olle.md": {
+    "mtime": 1782559999.7032897,
+    "ast_hash": "4887ca6536659a54dd9f37d69191a713",
+    "semantic_hash": "4887ca6536659a54dd9f37d69191a713"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/progetto/diario.md": {
+    "mtime": 1782559999.7032897,
+    "ast_hash": "084a4abb882ad9996dff83b7796a5097",
+    "semantic_hash": "084a4abb882ad9996dff83b7796a5097"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/progetto/organizzazione/grafo-docs-2026-05-30.md": {
+    "mtime": 1782559999.7032897,
+    "ast_hash": "d8cd4ecc203351d9582869a57ad0c21e",
+    "semantic_hash": "d8cd4ecc203351d9582869a57ad0c21e"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/progetto/organizzazione/graphify-docs-2026-05-30/README.md": {
+    "mtime": 1782559999.7032897,
+    "ast_hash": "32d606a67fe3539f33b4206097d2a75d",
+    "semantic_hash": "32d606a67fe3539f33b4206097d2a75d"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/progetto/organizzazione/proposta-organizzazione-docs-implementata-2026-05-30.md": {
+    "mtime": 1782559999.7032897,
+    "ast_hash": "1d8fbbfb9cb73ef3a8dc47a918aef64a",
+    "semantic_hash": "1d8fbbfb9cb73ef3a8dc47a918aef64a"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/prompting/live-db-prompt-translation-review.md": {
+    "mtime": 1782559999.7032897,
+    "ast_hash": "25a91a1cc4e40bf2ec1d177cee07e037",
+    "semantic_hash": "25a91a1cc4e40bf2ec1d177cee07e037"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/prompting/prompt-translations-review.md": {
+    "mtime": 1782559999.7032897,
+    "ast_hash": "bd419c73da193dbd7afac1082f1dca4b",
+    "semantic_hash": "bd419c73da193dbd7afac1082f1dca4b"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/proposte/punto1-conflitto-etichette_2026-06-27_12-24.md": {
+    "mtime": 1782555908.8801098,
+    "ast_hash": "146715ec239d7fa7382ccb1ef9633929",
+    "semantic_hash": "146715ec239d7fa7382ccb1ef9633929"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/proposte/punto2-direttiva-per-fattore_2026-06-27_12-37.md": {
+    "mtime": 1782560107.410162,
+    "ast_hash": "bb1f8dc038d9bd2bfff044b769a1a157",
+    "semantic_hash": "bb1f8dc038d9bd2bfff044b769a1a157"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/questionari/item-catalog.md": {
+    "mtime": 1782559999.7071686,
+    "ast_hash": "41a477ee8675c5807208ff20111c3a1f",
+    "semantic_hash": "41a477ee8675c5807208ff20111c3a1f"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/questionari/strumenti/schede-bibliografiche/QAP_it.md": {
+    "mtime": 1782559999.7110472,
+    "ast_hash": "962807b287c951c5ce1c52c7518d2dd9",
+    "semantic_hash": "962807b287c951c5ce1c52c7518d2dd9"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/questionari/strumenti/schede-bibliografiche/QPCC_it.md": {
+    "mtime": 1782559999.7110472,
+    "ast_hash": "0af068e3f1166ad0a7277aaad6e9e399",
+    "semantic_hash": "0af068e3f1166ad0a7277aaad6e9e399"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/questionari/strumenti/schede-bibliografiche/QPCS_it.md": {
+    "mtime": 1782559999.7110472,
+    "ast_hash": "6231248b6f55d71b9a4625caa9f3fd6c",
+    "semantic_hash": "6231248b6f55d71b9a4625caa9f3fd6c"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/questionari/strumenti/schede-bibliografiche/QSA_it.md": {
+    "mtime": 1782559999.7110472,
+    "ast_hash": "32542225fac6549b5d10196aa500fca8",
+    "semantic_hash": "32542225fac6549b5d10196aa500fca8"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/questionari/strumenti/schede-bibliografiche/QSAr_it.md": {
+    "mtime": 1782559999.7110472,
+    "ast_hash": "389da5dad11fc129f4a4232ddba47363",
+    "semantic_hash": "389da5dad11fc129f4a4232ddba47363"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/questionari/strumenti/schede-bibliografiche/ZTPI_it.md": {
+    "mtime": 1782559999.7110472,
+    "ast_hash": "430131d899e53b5c41f6354e2ee9531c",
+    "semantic_hash": "430131d899e53b5c41f6354e2ee9531c"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/validazione/dettagli-validazione-questionari.md": {
+    "mtime": 1782559999.7110472,
+    "ast_hash": "561aea9985d83d5c6609998ca54c558a",
+    "semantic_hash": "561aea9985d83d5c6609998ca54c558a"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/validazione/diagnosi-somministrazione-ensv.md": {
+    "mtime": 1782559999.7110472,
+    "ast_hash": "a8e37b894fad6c8e131b1cf555a59d21",
+    "semantic_hash": "a8e37b894fad6c8e131b1cf555a59d21"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/validazione/formule/schede-bibliografiche/formule-validazione.md": {
+    "mtime": 1782559999.7149258,
+    "ast_hash": "b434cb9cb6cc1ece6b8714ae4063c313",
+    "semantic_hash": "b434cb9cb6cc1ece6b8714ae4063c313"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/validazione/formule/sorgenti-latex/schede-bibliografiche/formule-validazione.md": {
+    "mtime": 1782559999.7149258,
+    "ast_hash": "a9dbbd18691f1568dd2aff8cdc7bf67d",
+    "semantic_hash": "a9dbbd18691f1568dd2aff8cdc7bf67d"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/validazione/manuale-operativo-validazione.md": {
+    "mtime": 1782559999.7149258,
+    "ast_hash": "13a99a97ae011afb6bed3fa8fd07fc78",
+    "semantic_hash": "13a99a97ae011afb6bed3fa8fd07fc78"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/validazione/progetto-validazione-qsa-qsar-sv-en.md": {
+    "mtime": 1782559999.7149258,
+    "ast_hash": "eb14c5605593a84920756af3dfe7367c",
+    "semantic_hash": "eb14c5605593a84920756af3dfe7367c"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/validazione/validazione-questionari-e-stanine.md": {
+    "mtime": 1782559999.7149258,
+    "ast_hash": "9decdc842fbf0c2abd84dc07adc17960",
+    "semantic_hash": "9decdc842fbf0c2abd84dc07adc17960"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/Dirigere_se_stessi_2020.pdf": {
+    "mtime": 1782559999.2262192,
+    "ast_hash": "3e7a0725888a2edca2c6c05c106be972",
+    "semantic_hash": "3e7a0725888a2edca2c6c05c106be972"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/Grzadziel_Convegno_2019.pdf": {
+    "mtime": 1782559999.2262192,
+    "ast_hash": "1092e18da8eefecec8b850db060d1591",
+    "semantic_hash": "1092e18da8eefecec8b850db060d1591"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/Guida_2019.pdf": {
+    "mtime": 1782559999.2339764,
+    "ast_hash": "02cf75a802002ca2ecf670d65cab9951",
+    "semantic_hash": "02cf75a802002ca2ecf670d65cab9951"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/Guida_2023.pdf": {
+    "mtime": 1782559999.249491,
+    "ast_hash": "310e296af580ead12f753277e1fc8966",
+    "semantic_hash": "310e296af580ead12f753277e1fc8966"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/Introduzione_Volume_2020.pdf": {
+    "mtime": 1782559999.249491,
+    "ast_hash": "bdc460ff79f0fd1b6b915c8e103f69c9",
+    "semantic_hash": "bdc460ff79f0fd1b6b915c8e103f69c9"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/Margottini_Convegno_2019.pdf": {
+    "mtime": 1782559999.2611268,
+    "ast_hash": "59cbb4580f65e2e0a7b2111fcc8cf7f4",
+    "semantic_hash": "59cbb4580f65e2e0a7b2111fcc8cf7f4"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/Pellerey_Convegno_2019.pdf": {
+    "mtime": 1782559999.2611268,
+    "ast_hash": "e082d76f0b37bae244ce51f496d1387d",
+    "semantic_hash": "e082d76f0b37bae244ce51f496d1387d"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/Imparare_a_dirigere_se_stessi.pdf": {
+    "mtime": 1782559999.4085145,
+    "ast_hash": "edd65ed23957654b938854d9bf76f83b",
+    "semantic_hash": "edd65ed23957654b938854d9bf76f83b"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/piattaforma_comp._strategiche_-_margottini_epifani.pdf": {
+    "mtime": 1782559999.412393,
+    "ast_hash": "09b829a670423f3582fdce2df89eb6e3",
+    "semantic_hash": "09b829a670423f3582fdce2df89eb6e3"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/portfolio_digitale.pdf": {
+    "mtime": 1782559999.4473007,
+    "ast_hash": "e2bb39d420b66b44158a39f6aecfc61e",
+    "semantic_hash": "e2bb39d420b66b44158a39f6aecfc61e"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/promuovere_la_crescita_nelle_competenze_strategiche.PDF": {
+    "mtime": 1782559999.4666939,
+    "ast_hash": "65aff06eb7ead4a57193b7bfb10605ad",
+    "semantic_hash": "65aff06eb7ead4a57193b7bfb10605ad"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/soft_skill.pdf": {
+    "mtime": 1782559999.474451,
+    "ast_hash": "d3ecbf372c42b01fc343b2a3468f6913",
+    "semantic_hash": "d3ecbf372c42b01fc343b2a3468f6913"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/strumenti_e_metodologie.pdf": {
+    "mtime": 1782559999.5442662,
+    "ast_hash": "89c26a5154dd873ae96a83746b92eedb",
+    "semantic_hash": "89c26a5154dd873ae96a83746b92eedb"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/roma-tre-press/11.D.M.-Ardito.pdf": {
+    "mtime": 1782559999.5442662,
+    "ast_hash": "d672e807de3f32ff8e8fc3586f2e4255",
+    "semantic_hash": "d672e807de3f32ff8e8fc3586f2e4255"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/roma-tre-press/12.G.-Marrone-L.-Romano.pdf": {
+    "mtime": 1782559999.5442662,
+    "ast_hash": "479b43064b5df240336da303cdf3e5ba",
+    "semantic_hash": "479b43064b5df240336da303cdf3e5ba"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Abstract_fascicolo.pdf": {
+    "mtime": 1782559999.5481448,
+    "ast_hash": "392ed5ea99bc5d83e0aa4c42ff788c22",
+    "semantic_hash": "392ed5ea99bc5d83e0aa4c42ff788c22"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Presenta_QSA_convegnisti.pdf": {
+    "mtime": 1782559999.5520236,
+    "ast_hash": "4c76fc2161fa6e3d14516ab1286dec05",
+    "semantic_hash": "4c76fc2161fa6e3d14516ab1286dec05"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Presentazione_Chatbot_convegnisti_02.pdf": {
+    "mtime": 1782559999.5559022,
+    "ast_hash": "7d14ed30acc359c6720f9e1f38c3aeeb",
+    "semantic_hash": "7d14ed30acc359c6720f9e1f38c3aeeb"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Presentazione_DIDACTA_2023.pdf": {
+    "mtime": 1782559999.5597808,
+    "ast_hash": "173e15f0d1127cfb0b7ff2de46f8b802",
+    "semantic_hash": "173e15f0d1127cfb0b7ff2de46f8b802"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_13_settembre_2019.pdf": {
+    "mtime": 1782559999.5636594,
+    "ast_hash": "43f777fe906139b8ee98b74ceb56ea1e",
+    "semantic_hash": "43f777fe906139b8ee98b74ceb56ea1e"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_24Gennaio2025_dettagliato.pdf": {
+    "mtime": 1782559999.567538,
+    "ast_hash": "69736c418e238c93226515a70868c17f",
+    "semantic_hash": "69736c418e238c93226515a70868c17f"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/guide/QSA-r_Presentazione.pdf": {
+    "mtime": 1782559999.5791738,
+    "ast_hash": "0d252b68906ef5e119f8bd79bdf4e513",
+    "semantic_hash": "0d252b68906ef5e119f8bd79bdf4e513"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf": {
+    "mtime": 1782559999.5830526,
+    "ast_hash": "6ee4f0b6480af27b1287ad3771891f99",
+    "semantic_hash": "6ee4f0b6480af27b1287ad3771891f99"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/modelli-operativi/02_Griglia_osservazione_docente.pdf": {
+    "mtime": 1782559999.5869312,
+    "ast_hash": "74f095590f2d6d62385d03639ab109ef",
+    "semantic_hash": "74f095590f2d6d62385d03639ab109ef"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/strumenti/QAP.pdf": {
+    "mtime": 1782559999.5946884,
+    "ast_hash": "0c1c85479940a24109ff68fe32e82741",
+    "semantic_hash": "0c1c85479940a24109ff68fe32e82741"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/strumenti/QSA_Questionario.pdf": {
+    "mtime": 1782559999.5946884,
+    "ast_hash": "2d50f2d148dc2e5b60b1eb30c562fbb6",
+    "semantic_hash": "2d50f2d148dc2e5b60b1eb30c562fbb6"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/studi/MARGOTTINI-ROSSI_2019.pdf": {
+    "mtime": 1782559999.5946884,
+    "ast_hash": "c6f031ea7ab5682d21b2fa9cd52d06fa",
+    "semantic_hash": "c6f031ea7ab5682d21b2fa9cd52d06fa"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/studi/MELOGNO_2018.pdf": {
+    "mtime": 1782559999.6955326,
+    "ast_hash": "f0f02339548348110a12e6be65bb2fb5",
+    "semantic_hash": "f0f02339548348110a12e6be65bb2fb5"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/sito-competenzestrategiche/studi/OTTONE_2023.pdf": {
+    "mtime": 1782559999.6994112,
+    "ast_hash": "fa679aaee2a0d998d970fa5eb5da8eee",
+    "semantic_hash": "fa679aaee2a0d998d970fa5eb5da8eee"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/questionari/strumenti/QAP_it.pdf": {
+    "mtime": 1782559999.7071686,
+    "ast_hash": "ad2e014ffb03f4ae980ae8ab624a76d4",
+    "semantic_hash": "ad2e014ffb03f4ae980ae8ab624a76d4"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/questionari/strumenti/QPCC_it.pdf": {
+    "mtime": 1782559999.7071686,
+    "ast_hash": "bec9eb3167fa1d0cce77d2a9fdb6d42e",
+    "semantic_hash": "bec9eb3167fa1d0cce77d2a9fdb6d42e"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/questionari/strumenti/QPCS_it.pdf": {
+    "mtime": 1782559999.7071686,
+    "ast_hash": "55ef8dfc319d412b45707ead08f699e2",
+    "semantic_hash": "55ef8dfc319d412b45707ead08f699e2"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/questionari/strumenti/QSA_it.pdf": {
+    "mtime": 1782559999.7110472,
+    "ast_hash": "a6cae5a3bb1f18d2dd81de3617f0caed",
+    "semantic_hash": "a6cae5a3bb1f18d2dd81de3617f0caed"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/questionari/strumenti/QSAr_it.pdf": {
+    "mtime": 1782559999.7110472,
+    "ast_hash": "b7907ea8f02dfb8b6e13c996a1e171e3",
+    "semantic_hash": "b7907ea8f02dfb8b6e13c996a1e171e3"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/questionari/strumenti/ZTPI_it.pdf": {
+    "mtime": 1782559999.7110472,
+    "ast_hash": "17423cae3f0b7b4757b38e5eb1d7af62",
+    "semantic_hash": "17423cae3f0b7b4757b38e5eb1d7af62"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/validazione/formule/formule-validazione.pdf": {
+    "mtime": 1782559999.7149258,
+    "ast_hash": "7b1331389d3fba4b5fc364dc8106e482",
+    "semantic_hash": "7b1331389d3fba4b5fc364dc8106e482"
+  },
+  "/home/nugh75/counselorbot-sbs/docs/validazione/formule/sorgenti-latex/formule-validazione.pdf": {
+    "mtime": 1782559999.7149258,
+    "ast_hash": "7b1331389d3fba4b5fc364dc8106e482",
+    "semantic_hash": "7b1331389d3fba4b5fc364dc8106e482"
+  }
+}
