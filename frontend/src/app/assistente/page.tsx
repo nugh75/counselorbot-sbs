@@ -182,7 +182,8 @@ export default function AssistentePage() {
         let active = true;
         fetchCounselors(lang).then((list) => {
             if (!active) return;
-            setCounselors(list);
+            const assistantList = list.filter((c) => c.show_in_assistant !== false);
+            setCounselors(assistantList);
             const stored = getSelectedCounselorId();
             setCounselorId(list.some((c) => c.id === stored && c.is_active !== false) ? stored : null);
         });

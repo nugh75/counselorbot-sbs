@@ -446,6 +446,16 @@ def _seed_and_migrate():
         except Exception as e:
             logger.debug(f"counselors language migration skipped/failed: {e}")
 
+        # Migration: add show_in_assistant column to counselors.
+        try:
+            with database.engine.connect() as conn:
+                conn.execute(sa_text(
+                    "ALTER TABLE counselors ADD COLUMN show_in_assistant BOOLEAN NOT NULL DEFAULT false"
+                ))
+                conn.commit()
+        except Exception as e:
+            logger.debug(f"counselors show_in_assistant migration skipped/failed: {e}")
+
         # Create initial admin user if not exists
         user = db.query(models.User).filter(models.User.username == "admin").first()
         if not user:
@@ -730,6 +740,9 @@ def _seed_and_migrate():
         # competenze strategiche). Idempotente e non distruttivo.
         _migrate_counselor_personas_and_intros(db)
 
+        # Seed counselor per l'assistente (se non esistono già).
+        _seed_assistant_counselors(db)
+
         # Seed catalogo strumenti (item + regole di scala) se non già presente.
         # Idempotente per strumento: salta quelli già seminati/editati.
         _seed_instruments_catalog(db)
@@ -843,6 +856,33 @@ _COUNSELOR_PERSONA_EN_BY_SLUG = {
         "constructive and neutral. Propose small, concrete steps only at the end of "
         "the analysis or when the student asks for them. Never use emojis, "
         "emoticons or decorative symbols: write in plain text."
+    ),
+    # --- Counselor per l'assistente ---
+    "sintesi-studente": (
+        "You are {{counselor_name}}, a synthetic assistant for students. You connect "
+        "ideas and give the big picture. Always relate the student's question to the "
+        "broader framework, showing how concepts fit together. Summarise clearly, use "
+        "examples, and avoid unnecessary detail unless asked. Warm, encouraging tone. "
+        "Never use emojis."
+    ),
+    "analisi-studente": (
+        "You are {{counselor_name}}, an analytical assistant for students. You break "
+        "down concepts into clear, detailed step-by-step explanations. Cite specific "
+        "factors, items, and data from the materials. Be precise and thorough; never "
+        "skip details. Patient, structured tone. Never use emojis."
+    ),
+    "sintesi-docente": (
+        "You are {{counselor_name}}, a synthetic assistant for teachers and "
+        "researchers. You connect theoretical frameworks, research findings, and "
+        "practical implications. Give overviews, highlight patterns, and show how "
+        "different instruments and studies relate. Concise, professional tone. Never "
+        "use emojis."
+    ),
+    "analisi-docente": (
+        "You are {{counselor_name}}, an analytical assistant for teachers and "
+        "researchers. You provide detailed, evidence-based answers citing specific "
+        "studies, authors, factors, and normative data. Break down complex topics "
+        "with rigour. Technical, precise tone. Never use emojis."
     ),
 }
 
@@ -1026,6 +1066,52 @@ def _migrate_counselor_personas_and_intros(db):
     if changed:
         db.commit()
         logger.info("Migrated counselor personas and scoped intro prompts")
+
+
+# Counselor predefiniti per l'assistente (sintetico/analitico × studente/docente).
+# Usano Ollama. Tutti con show_in_assistant=True, lingua ["*"].
+_ASSISTANT_COUNSELOR_DEFAULTS = [
+    {"slug": "sintesi-studente", "name": "Sintesi", "description": "Collega le idee e da' il quadro d'insieme. Per studenti.",
+     "avatar": None, "questionnaire_types": [], "sort_order": 100},
+    {"slug": "analisi-studente", "name": "Analisi", "description": "Spiega nel dettaglio passo dopo passo. Per studenti.",
+     "avatar": None, "questionnaire_types": [], "sort_order": 101},
+    {"slug": "sintesi-docente", "name": "Sintesi Docenti", "description": "Connette framework teorici e implicazioni pratiche. Per docenti.",
+     "avatar": None, "questionnaire_types": [], "sort_order": 102},
+    {"slug": "analisi-docente", "name": "Analisi Docenti", "description": "Risposte dettagliate con citazioni da studi e autori. Per docenti.",
+     "avatar": None, "questionnaire_types": [], "sort_order": 103},
+]
+
+
+def _seed_assistant_counselors(db):
+    """Crea i 4 counselor per l'assistente se non esistono (idempotente per slug).
+    Se esistono già, aggiorna show_in_assistant=True e la persona."""
+    existing_slugs = {c.slug for c in db.query(models.Counselor).all()}
+    changed = False
+    for cfg in _ASSISTANT_COUNSELOR_DEFAULTS:
+        slug = cfg["slug"]
+        persona = _COUNSELOR_PERSONA_EN_BY_SLUG.get(slug)
+        if slug in existing_slugs:
+            c = db.query(models.Counselor).filter(models.Counselor.slug == slug).first()
+            if c:
+                if not c.show_in_assistant:
+                    c.show_in_assistant = True
+                    changed = True
+                if persona and c.persona != persona:
+                    c.persona = persona
+                    changed = True
+            continue
+        c = models.Counselor(
+            slug=slug, name=cfg["name"], description=cfg["description"],
+            persona=persona, avatar=cfg["avatar"],
+            questionnaire_types=cfg["questionnaire_types"],
+            language=["*"], sort_order=cfg["sort_order"],
+            is_active=True, show_in_assistant=True,
+        )
+        db.add(c)
+        changed = True
+    if changed:
+        db.commit()
+        logger.info("Seeded/updated assistant counselors")
 
 
 def _migrate_prompts_to_english(db):
