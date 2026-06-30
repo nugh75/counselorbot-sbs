@@ -654,6 +654,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             }
             phaseMessages.push({ role: 'system', content: questionsBanner }, { role: 'assistant', content: questionsIntro });
             setMessages(prev => [...prev, ...phaseMessages]);
+            void generateReflectionQuestions();
         } else if (currentPhase === FIXED_CONCLUSION_ID) {
             setLastAnalysisFailed(false);
             void recordMemoryEvent(currentPhase, true);
@@ -671,6 +672,55 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         // The phase guard above intentionally makes this effect run once per phase.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentPhase, initialLoading]);
+
+    const generateReflectionQuestions = async () => {
+        const controller = beginRequest();
+        setIsLoading(true);
+        const scoresContext = scoresContextOverride ?? formatScoresForPrompt(scores);
+        const updateLast = (content: string) => {
+            setMessages(prev => {
+                const copy = [...prev];
+                copy[copy.length - 1] = { ...copy[copy.length - 1], role: 'assistant', content };
+                return copy;
+            });
+        };
+        const updateReasoning = (reasoning: string) => {
+            setMessages(prev => {
+                const copy = [...prev];
+                copy[copy.length - 1] = { ...copy[copy.length - 1], role: 'assistant', reasoning };
+                return copy;
+            });
+        };
+        const dropLast = () => setMessages(prev => prev.slice(0, -1));
+
+        setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+        try {
+            const result = await streamChat({
+                message: 'Based on the profile results and the discussion so far, ask the student exactly three open reflective questions. The questions must help the student reason about what emerged, what surprised them, and one concrete strategy or first step. Do not restart the questionnaire, do not re-run the analysis, and do not answer the questions yourself.',
+                memory_message: '',
+                internal_message: true,
+                mode: 'generic',
+                phase: FIXED_QUESTIONS_ID,
+                scores_context: scoresContext,
+                session_id: sessionId,
+                conversation_id: conversationId,
+                questionnaire_type: questionnaireType,
+                language: activeLocale,
+                max_tokens: 500,
+                counselor_id: getSelectedCounselorId(),
+            }, (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
+            if (result.conversation_id) setConversationId(result.conversation_id);
+            setLastFeedbackTargets(result.strategy_ids, result.response_id);
+            if (!result.response?.trim()) dropLast();
+        } catch {
+            if (!controller.signal.aborted) dropLast();
+        } finally {
+            if (requestRef.current === controller) {
+                requestRef.current = null;
+                setIsLoading(false);
+            }
+        }
+    };
 
     const generateAnalysis = async (step: StepDef) => {
         const controller = beginRequest();

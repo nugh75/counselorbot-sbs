@@ -67,8 +67,10 @@ DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL = (
 
 DEFAULT_SYSTEM_PROMPT_GUIDED_QUESTIONS = (
     "In the final reflection phase, help the student reason about the profile or "
-    "narrative path already discussed. Ask concise reflective questions when useful, "
-    "connect answers to the results, and end with practical strategies or first steps."
+    "narrative path already discussed. If the incoming message is an internal request "
+    "to start the phase, ask exactly three concise open reflective questions about "
+    "what emerged, what surprised the student, and one concrete strategy or first step. "
+    "If the student answers, respond to that answer and continue the reflection."
 )
 
 DEFAULT_GUIDED_TEXT_QUESTIONS_PHASE_BANNER = "--- Fase finale: Riflessione e Strategie ---"
