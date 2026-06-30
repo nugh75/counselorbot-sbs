@@ -8,7 +8,7 @@ export interface PublicCounselor {
     description?: string | null;
     avatar?: string | null;
     questionnaire_types?: string[] | null;
-    language: string;
+    language: string[];
     is_active?: boolean;
     model_origin?: 'local' | 'external' | null;
 }
@@ -41,9 +41,13 @@ export function subscribeToCounselor(onChange: () => void): () => void {
     };
 }
 
-export async function fetchCounselors(lang?: string): Promise<PublicCounselor[]> {
+export async function fetchCounselors(lang?: string, languageFilter?: string): Promise<PublicCounselor[]> {
     try {
-        const url = lang ? `/api/counselors?lang=${encodeURIComponent(lang)}` : '/api/counselors';
+        const params = new URLSearchParams();
+        if (lang) params.set('lang', lang);
+        if (languageFilter) params.set('language', languageFilter);
+        const qs = params.toString();
+        const url = qs ? `/api/counselors?${qs}` : '/api/counselors';
         const res = await fetch(url);
         if (!res.ok) return [];
         const data = await res.json();

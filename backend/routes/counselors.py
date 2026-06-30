@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from .. import models, schemas, auth, database
 from ..counselor_i18n import localized_description, translate_counselor_async
+from sqlalchemy import literal
 
 router = APIRouter()
 get_db = database.get_db
@@ -47,13 +48,21 @@ def _serialize(counselor: models.Counselor, presets: dict) -> schemas.CounselorR
 @router.get("/counselors", response_model=List[schemas.CounselorPublic])
 async def list_public_counselors(
     lang: Optional[str] = Query(None),
+    language: Optional[str] = Query(None, description="Filtra counselor che supportano questa lingua ('*' = tutte)"),
     db: Session = Depends(get_db),
 ):
-    rows = (
+    q = (
         db.query(models.Counselor)
+        .filter(models.Counselor.is_active.is_(True))
         .order_by(models.Counselor.sort_order.asc(), models.Counselor.id.asc())
-        .all()
     )
+    if language:
+        # PostgreSQL JSON containment: counselor supports '["*"]' (all) OR the specific language code
+        q = q.filter(
+            models.Counselor.language.op("@>")(literal('["*"]'))
+            | models.Counselor.language.op("@>")(literal(f'["{language}"]'))
+        )
+    rows = q.all()
     presets = _preset_map(db)
     active = _active_provider(db)
     out = []
@@ -103,7 +112,7 @@ async def create_counselor(
         avatar=payload.avatar,
         preset_id=payload.preset_id,
         questionnaire_types=payload.questionnaire_types,
-        language=payload.language or "it",
+        language=payload.language or ["*"],
         sort_order=payload.sort_order or 0,
         is_active=payload.is_active,
     )
