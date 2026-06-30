@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Check } from 'lucide-react';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { cn } from '@/lib/utils';
+import { apiFetch } from '@/lib/auth';
 
 // Selezione del metodo di inserimento per il questionario.
 // Stesso pattern del QuestionnaireSelector / CounselorSelector:
@@ -15,8 +16,16 @@ import { cn } from '@/lib/utils';
 // introduttivo: il FlowStepper in alto descrive già la fase.
 type Method = 'manual' | 'upload' | 'resume';
 
+interface SavedResult {
+    id: number;
+    session_id: string;
+    questionnaire_type: string;
+    scores: Record<string, number> | null;
+    submitted_at: string;
+}
+
 interface InputMethodSelectorProps {
-    onSelect: (method: Method) => void;
+    onSelect: (method: Method, resumeData?: { sessionId: string; scores: Record<string, number> }) => void;
     onBack?: () => void;
     questionnaire?: QuestionnaireConfig;
     hasPreviousData?: boolean;
@@ -38,6 +47,25 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire, hasPrevio
         ? t('method.manual.descTpl', { name: questionnaire.name, codes: questionnaire.factors.map(f => f.code).join(', ') })
         : t('method.manual.descNoQ');
     const [selected, setSelected] = useState<Method | null>(null);
+    const [savedResults, setSavedResults] = useState<SavedResult[]>([]);
+    const [chosenResultId, setChosenResultId] = useState<number | null>(null);
+
+    const loadSavedResults = useCallback(async () => {
+        if (!questionnaire || !hasPreviousData) return;
+        try {
+            const res = await apiFetch('/api/user/questionnaire-results');
+            if (!res.ok) return;
+            const all: SavedResult[] = await res.json();
+            const filtered = all
+                .filter((r) => r.questionnaire_type === questionnaire.id && r.scores && Object.keys(r.scores).length > 0)
+                .sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime());
+            setSavedResults(filtered);
+        } catch {
+            setSavedResults([]);
+        }
+    }, [questionnaire, hasPreviousData]);
+
+    useEffect(() => { void loadSavedResults(); }, [loadSavedResults]);
 
     const options: Option[] = [
         { key: 'manual', title: t('method.manual.title'), desc: manualDescription },
@@ -88,19 +116,54 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire, hasPrevio
         );
     };
 
+    const canContinue = selected === 'resume'
+        ? chosenResultId !== null
+        : selected !== null;
+
+    const handleContinue = () => {
+        if (!selected) return;
+        if (selected === 'resume') {
+            const result = savedResults.find((r) => r.id === chosenResultId);
+            if (result && result.scores) {
+                onSelect('resume', { sessionId: result.session_id, scores: result.scores });
+            }
+        } else {
+            onSelect(selected);
+        }
+    };
+
     return (
         <section className="space-y-5">
             <div className="flex items-center gap-3">
                 {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
                 <ForwardButton
-                    onClick={() => { if (selected) onSelect(selected); }}
-                    disabled={!selected}
+                    onClick={handleContinue}
+                    disabled={!canContinue}
                     label={t('counselor.continue')}
                 />
             </div>
             <div className="grid md:grid-cols-2 gap-6 w-full max-w-4xl">
                 {options.map(renderCard)}
             </div>
+            {selected === 'resume' && savedResults.length > 0 && (
+                <div className="max-w-4xl">
+                    <label className="block">
+                        <span className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">{t('method.resume.choose')}</span>
+                        <select
+                            value={chosenResultId ?? ''}
+                            onChange={(e) => setChosenResultId(e.target.value ? Number(e.target.value) : null)}
+                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                        >
+                            <option value="">{t('method.resume.placeholder')}</option>
+                            {savedResults.map((r) => (
+                                <option key={r.id} value={r.id}>
+                                    {new Date(r.submitted_at).toLocaleString()} · {r.session_id.slice(0, 8)}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                </div>
+            )}
         </section>
     );
 }

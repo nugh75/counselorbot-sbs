@@ -261,15 +261,12 @@ export default function Home() {
         setStep(scores !== null ? 'dashboard' : 'method-select');
     };
 
-    const handleMethodSelect = (method: 'manual' | 'upload' | 'resume') => {
-        if (method === 'resume') {
-            const profiles = getCompletedProfiles();
-            const profile = profiles.find((p) => p.questionnaireType === selectedQuestionnaire?.id);
-            if (profile && profile.scores && Object.keys(profile.scores).length) {
-                setScores(profile.scores);
-                setStep('dashboard');
-                return;
-            }
+    const handleMethodSelect = (method: 'manual' | 'upload' | 'resume', resumeData?: { sessionId: string; scores: Record<string, number> }) => {
+        if (method === 'resume' && resumeData) {
+            setScores(resumeData.scores);
+            setSessionId(resumeData.sessionId);
+            setStep('dashboard');
+            return;
         }
         setStep(method === 'manual' ? 'manual-input' : 'upload-input');
     };
