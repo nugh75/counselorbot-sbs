@@ -142,8 +142,12 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire, hasPrevio
                     label={t('counselor.continue')}
                 />
             </div>
-            <div className="grid md:grid-cols-2 gap-6 w-full max-w-4xl">
-                {options.map(renderCard)}
+            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-5xl">
+                {options.map((opt) => (
+                    <div key={opt.key} className="flex-1 min-w-0">
+                        {renderCard(opt)}
+                    </div>
+                ))}
             </div>
             {selected === 'resume' && savedResults.length > 0 && (
                 <div className="max-w-4xl">
