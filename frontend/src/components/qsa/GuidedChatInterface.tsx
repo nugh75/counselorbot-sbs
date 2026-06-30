@@ -514,16 +514,11 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     .map((s) => ({ ...s, label: stepLabel(activeLocale, s.id, s.label) }));
                 setSteps(normalizedSteps);
 
-                const phaseOrder = questionnaireType === 'SAVICKAS'
-                    ? [
-                        ...normalizedSteps.map((s: StepDef) => s.id),
-                        FIXED_CONCLUSION_ID,
-                    ]
-                    : [
-                        ...normalizedSteps.map((s: StepDef) => s.id),
-                        FIXED_QUESTIONS_ID,
-                        FIXED_CONCLUSION_ID,
-                    ];
+                const phaseOrder = [
+                    ...normalizedSteps.map((s: StepDef) => s.id),
+                    FIXED_QUESTIONS_ID,
+                    FIXED_CONCLUSION_ID,
+                ];
                 setPhases(phaseOrder);
                 const sessionScope = `${questionnaireType}:${sessionId}`;
                 const shouldRestoreSession = loadedSessionScopeRef.current !== sessionScope;

@@ -287,6 +287,7 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "savickas_2": "Il percorso narrativo della Career Construction Interview non produce punteggi numerici.",
         "page": "Pagina",
         "conversation": "Conversazione",
+        "summary": "Sintesi della discussione e strategie",
         "student": "Studente",
         "counselor": "Counselor",
     },
@@ -301,6 +302,7 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "savickas_2": "The narrative path of the Career Construction Interview does not produce numerical scores.",
         "page": "Page",
         "conversation": "Conversation",
+        "summary": "Discussion Summary and Strategies",
         "student": "Student",
         "counselor": "Counselor",
     },
@@ -315,6 +317,7 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "savickas_2": "El recorrido narrativo de la Career Construction Interview no produce puntuaciones numéricas.",
         "page": "Página",
         "conversation": "Conversación",
+        "summary": "Resumen de la conversación y estrategias",
         "student": "Estudiante",
         "counselor": "Counselor",
     },
@@ -329,6 +332,7 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "savickas_2": "Le parcours narratif de la Career Construction Interview ne produit pas de scores numériques.",
         "page": "Page",
         "conversation": "Conversation",
+        "summary": "Synthèse de la discussion et stratégies",
         "student": "Étudiant",
         "counselor": "Counselor",
     },
@@ -343,6 +347,7 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "savickas_2": "Der narrative Verlauf des Career Construction Interview liefert keine numerischen Werte.",
         "page": "Seite",
         "conversation": "Unterhaltung",
+        "summary": "Zusammenfassung der Diskussion und Strategien",
         "student": "Student",
         "counselor": "Counselor",
     },
@@ -357,6 +362,7 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "savickas_2": "Den narrativa vägen i Career Construction Interview ger inga numeriska poäng.",
         "page": "Sida",
         "conversation": "Konversation",
+        "summary": "Sammanfattning av samtalet och strategier",
         "student": "Student",
         "counselor": "Counselor",
     },
@@ -419,6 +425,20 @@ def _strip_markdown(text: str) -> str:
     return text
 
 
+def _render_summary(pdf, summary_text: str, ui: dict[str, str], content_w: float):
+    """Renderizza la sintesi AI della discussione prima della trascrizione."""
+    if pdf.get_y() > pdf.h - 70:
+        pdf.add_page()
+    pdf.set_font("Helvetica", "B", 12)
+    pdf.set_text_color(25, 25, 30)
+    pdf.cell(0, 8, _latin1(ui["summary"]), new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(2)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(40, 40, 50)
+    pdf.multi_cell(content_w, 5, _latin1(_strip_markdown(summary_text)), new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(4)
+
+
 def _render_conversation(pdf, messages: list[dict], ui: dict[str, str], content_w: float):
     """Renderizza i turni studente/counselor come testo a capo automatico."""
     pdf.add_page()
@@ -450,6 +470,7 @@ def generate_questionnaire_pdf(
     submitted_at: str | None = None,
     language: str | None = None,
     messages: list[dict] | None = None,
+    summary_text: str | None = None,
 ) -> BytesIO:
     """Genera un PDF dei risultati nella lingua selezionata, restituisce BytesIO.
 
@@ -570,7 +591,9 @@ def generate_questionnaire_pdf(
         pdf.set_text_color(140, 140, 150)
         pdf.multi_cell(content_w, 4, _latin1(ui["inverted_note"]), new_x="LMARGIN", new_y="NEXT")
 
-    # Conversazione: trascrizione completa studente/counselor
+    # Sintesi AI e conversazione: prima il riepilogo utile, poi la trascrizione completa.
+    if summary_text and summary_text.strip():
+        _render_summary(pdf, summary_text.strip(), ui, content_w)
     if messages:
         _render_conversation(pdf, messages, ui, content_w)
 

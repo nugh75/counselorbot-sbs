@@ -30,6 +30,7 @@ from starlette.testclient import TestClient
 from backend import database, models, auth
 import backend.main as main
 import backend.routes.chat as chat_routes
+import backend.routes.survey as survey_routes
 import backend.chat_logic as chat_logic
 from backend.memory_service import session_memory
 from backend.prompt_config import MODE_TO_SYSTEM_PROMPT_KEY
@@ -1101,6 +1102,8 @@ def test_guided_step_questions_seed_and_public_payload():
 
     qsa_payload = client.get("/qsa/guided-ui-texts?questionnaire_type=QSA&lang=it").json()
     assert len(qsa_payload["fixed_phase_questions"]) >= 3
+    savickas_payload = client.get("/qsa/guided-ui-texts?questionnaire_type=SAVICKAS&lang=it").json()
+    assert len(savickas_payload["fixed_phase_questions"]) >= 3
 
     en_payload = client.get("/qsa/guided-ui-texts?questionnaire_type=QSA&lang=en").json()
     cognitive = next(s for s in en_payload["guided_steps"] if s["id"] == "cognitive")
@@ -2941,6 +2944,62 @@ def test_questionnaire_pdf_download():
     assert r.status_code == 200, r.text
     assert r.headers["content-type"] == "application/pdf"
     assert len(r.content) > 100
+
+
+def test_questionnaire_pdf_download_generates_cached_ai_summary():
+    """Il PDF include una sintesi AI cacheata quando esiste una conversazione."""
+    session_id = "pdf-summary-test-session"
+    client.post("/questionnaire-result", json={
+        "session_id": session_id,
+        "questionnaire_type": "SAVICKAS",
+        "scores": {},
+    })
+    db = _TestSession()
+    try:
+        db.query(models.Log).filter(models.Log.session_id == session_id).delete()
+        db.add(models.Log(
+            session_id=session_id,
+            action="chat_message",
+            questionnaire_type="SAVICKAS",
+            details={
+                "user_input": "Voglio scegliere un percorso piu' coerente con i miei interessi.",
+                "bot_response": "Emerge il tema della curiosita' e della continuita'.",
+                "certified_strategy_ids": [],
+                "strategy_ids": [],
+            },
+        ))
+        db.commit()
+    finally:
+        db.close()
+
+    calls = []
+    original = survey_routes.AIService.get_response
+
+    def fake_summary(self, *args, **kwargs):
+        calls.append((args, kwargs))
+        return "## Sintesi della discussione\nHai riflettuto su interessi e continuita'.\n\n## Strategie suggerite\nProva un primo passo concreto."
+
+    survey_routes.AIService.get_response = fake_summary
+    try:
+        first = client.get(f"/questionnaire-result/{session_id}/pdf?lang=it")
+        second = client.get(f"/questionnaire-result/{session_id}/pdf?lang=it")
+    finally:
+        survey_routes.AIService.get_response = original
+
+    assert first.status_code == 200, first.text
+    assert second.status_code == 200, second.text
+    assert len(calls) == 1
+
+    db = _TestSession()
+    try:
+        cached = db.query(models.Log).filter(
+            models.Log.session_id == session_id,
+            models.Log.action == survey_routes.PDF_SUMMARY_ACTION,
+        ).all()
+        assert len(cached) == 1
+        assert "Strategie" in cached[0].details["summary"]
+    finally:
+        db.close()
 
 
 def test_qsa_extractor_rejects_incomplete_scores():

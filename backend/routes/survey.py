@@ -1,4 +1,5 @@
 """Endpoint survey + feedback strategie (pubblici e admin)."""
+import logging
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -11,10 +12,12 @@ from ..anonymous_codes import get_or_create_anonymous_research_code
 from ..validation_export import build_validation_csv, validation_query, validation_summary
 from ..strategy_memory import shared_response_memory, strategy_memory
 from ..pdf_generator import generate_questionnaire_pdf, generate_student_booklet_pdf
+from ..ai_service import AIService
 from .. import scoring_service
 
 router = APIRouter()
 get_db = database.get_db
+logger = logging.getLogger(__name__)
 
 # Strumenti del libretto: i 7 questionari + due libretti narrativi senza dimensioni
 # (eventi significativi), in cui forza/area sono testo libero come per Savickas.
@@ -662,6 +665,169 @@ async def delete_questionnaire_result(
     return {"status": "success", "message": "Risultato eliminato con successo"}
 
 
+PDF_SUMMARY_ACTION = "questionnaire_pdf_summary"
+_PDF_SUMMARY_MAX_CONVERSATION_CHARS = 12000
+
+
+_PDF_SUMMARY_FALLBACK = {
+    "it": "La sintesi automatica non e' disponibile in questo momento. La trascrizione completa della discussione resta consultabile nelle pagine successive.",
+    "en": "The automatic summary is not available right now. The full discussion transcript remains available in the following pages.",
+    "es": "El resumen automático no está disponible en este momento. La transcripción completa de la conversación sigue disponible en las páginas siguientes.",
+    "fr": "La synthèse automatique n'est pas disponible pour le moment. La transcription complète reste disponible dans les pages suivantes.",
+    "de": "Die automatische Zusammenfassung ist momentan nicht verfügbar. Das vollständige Gesprächsprotokoll bleibt auf den folgenden Seiten verfügbar.",
+    "sv": "Den automatiska sammanfattningen är inte tillgänglig just nu. Hela samtalsutskriften finns på följande sidor.",
+}
+
+
+_PDF_SUMMARY_LANG_NAME = {
+    "it": "Italian",
+    "en": "English",
+    "es": "Spanish",
+    "fr": "French",
+    "de": "German",
+    "sv": "Swedish",
+}
+
+
+def _pdf_language(lang: str) -> str:
+    code = (lang or "it").split("-")[0].lower()
+    return code if code in _PDF_SUMMARY_LANG_NAME else "it"
+
+
+def _session_conversation_messages(db: Session, session_id: str) -> list[dict]:
+    messages: list[dict] = []
+    log_rows = (
+        db.query(models.Log)
+        .filter(models.Log.action == "chat_message", models.Log.session_id == session_id)
+        .order_by(models.Log.timestamp.asc())
+        .all()
+    )
+    for row in log_rows:
+        d = row.details or {}
+        user_input = (d.get("user_input") or "").strip()
+        bot_response = (d.get("bot_response") or "").strip()
+        if user_input:
+            messages.append({"role": "student", "text": user_input})
+        if bot_response:
+            messages.append({"role": "counselor", "text": bot_response})
+    return messages
+
+
+def _pdf_strategy_context(db: Session, session_id: str, lang: str) -> str:
+    log_rows = (
+        db.query(models.Log)
+        .filter(models.Log.action == "chat_message", models.Log.session_id == session_id)
+        .order_by(models.Log.timestamp.asc())
+        .all()
+    )
+    certified_slugs: list[str] = []
+    strategy_ids: list[str] = []
+    for row in log_rows:
+        d = row.details or {}
+        certified_slugs.extend(str(item) for item in (d.get("certified_strategy_ids") or []) if item)
+        strategy_ids.extend(str(item) for item in (d.get("strategy_ids") or []) if item)
+
+    lines: list[str] = []
+    if certified_slugs:
+        rows = (
+            db.query(models.CertifiedStrategy)
+            .filter(models.CertifiedStrategy.slug.in_(list(dict.fromkeys(certified_slugs))))
+            .all()
+        )
+        by_slug = {row.slug: row for row in rows}
+        for slug in dict.fromkeys(certified_slugs):
+            row = by_slug.get(slug)
+            if not row:
+                continue
+            name = _localized_strategy_field(row, "name", lang) or row.slug
+            desc = _localized_strategy_field(row, "description", lang)
+            lines.append(f"- {name}: {desc}" if desc else f"- {name}")
+    for strategy_id in dict.fromkeys(strategy_ids):
+        lines.append(f"- {strategy_id}")
+    return "\n".join(lines)
+
+
+def _cached_pdf_summary(db: Session, session_id: str, lang: str, turn_count: int) -> str | None:
+    rows = (
+        db.query(models.Log)
+        .filter(models.Log.action == PDF_SUMMARY_ACTION, models.Log.session_id == session_id)
+        .order_by(models.Log.timestamp.desc())
+        .all()
+    )
+    for row in rows:
+        d = row.details or {}
+        if d.get("language") == lang and d.get("turn_count") == turn_count:
+            summary = (d.get("summary") or "").strip()
+            if summary:
+                return summary
+    return None
+
+
+def _generate_pdf_summary(
+    db: Session,
+    *,
+    result: models.QuestionnaireResult,
+    scores: dict,
+    messages: list[dict],
+    lang: str,
+) -> str | None:
+    if not messages:
+        return None
+
+    lang = _pdf_language(lang)
+    cached = _cached_pdf_summary(db, result.session_id, lang, len(messages))
+    if cached:
+        return cached
+
+    conversation = "\n".join(
+        f"{('Student' if msg.get('role') == 'student' else 'Counselor')}: {msg.get('text', '').strip()}"
+        for msg in messages
+        if msg.get("text")
+    )[:_PDF_SUMMARY_MAX_CONVERSATION_CHARS]
+    strategies = _pdf_strategy_context(db, result.session_id, lang) or "-"
+    system_prompt = (
+        "You write concise, student-facing counseling summaries. Avoid diagnosis. "
+        "Extract only what is supported by the questionnaire results and conversation."
+    )
+    user_prompt = f"""
+Write in {_PDF_SUMMARY_LANG_NAME[lang]}.
+
+Questionnaire: {result.questionnaire_type}
+Scores: {scores or '-'}
+Certified or retrieved strategies mentioned:
+{strategies}
+
+Conversation transcript:
+{conversation}
+
+Create a short Markdown summary with these four sections:
+1. Discussion summary
+2. Main results or themes
+3. Suggested strategies
+4. First practical steps
+
+Keep it concrete, warm, and useful for the student. Maximum 350 words.
+""".strip()
+
+    try:
+        summary = AIService(db).get_response(user_prompt, system_prompt, "generic", max_tokens=900).strip()
+    except Exception as exc:
+        logger.warning("PDF summary generation failed for session %s: %s", result.session_id, exc)
+        return _PDF_SUMMARY_FALLBACK[lang]
+
+    if not summary:
+        return _PDF_SUMMARY_FALLBACK[lang]
+
+    db.add(models.Log(
+        session_id=result.session_id,
+        action=PDF_SUMMARY_ACTION,
+        questionnaire_type=result.questionnaire_type,
+        details={"language": lang, "turn_count": len(messages), "summary": summary},
+    ))
+    db.commit()
+    return summary
+
+
 @router.get("/user/questionnaire-result/{session_id}/conversation")
 async def get_user_session_conversation(
     session_id: str,
@@ -678,27 +844,7 @@ async def get_user_session_conversation(
     if not current_user.get("is_admin") and result.username != current_user.get("username"):
         raise HTTPException(status_code=403, detail="Non autorizzato a visualizzare questa sessione")
 
-    # Recupera i messaggi
-    messages = []
-    log_rows = (
-        db.query(models.Log)
-        .filter(
-            models.Log.action == "chat_message",
-            models.Log.session_id == session_id,
-        )
-        .order_by(models.Log.timestamp.asc())
-        .all()
-    )
-    for row in log_rows:
-        d = row.details or {}
-        user_input = (d.get("user_input") or "").strip()
-        bot_response = (d.get("bot_response") or "").strip()
-        if user_input:
-            messages.append({"role": "student", "text": user_input})
-        if bot_response:
-            messages.append({"role": "counselor", "text": bot_response})
-            
-    return messages
+    return _session_conversation_messages(db, session_id)
 
 
 @router.get("/questionnaire-result/{session_id}/pdf")
@@ -717,28 +863,11 @@ async def download_questionnaire_pdf(
     scores = result.scores if isinstance(result.scores, dict) else {}
     submitted_str = str(result.submitted_at) if result.submitted_at else None
 
-    # Recupera la conversazione studente/counselor dalla tabella Log
-    messages: list[dict] = []
-    log_rows = (
-        db.query(models.Log)
-        .filter(
-            models.Log.action == "chat_message",
-            models.Log.session_id == session_id,
-        )
-        .order_by(models.Log.timestamp.asc())
-        .all()
-    )
-    for row in log_rows:
-        d = row.details or {}
-        # ponytail: usa solo user_input (la vera interazione studente).
-        # effective_user_input contiene il prompt di sistema inglese dei guided
-        # step: non è una vera interazione e non va nel PDF studente.
-        user_input = (d.get("user_input") or "").strip()
-        bot_response = (d.get("bot_response") or "").strip()
-        if user_input:
-            messages.append({"role": "student", "text": user_input})
-        if bot_response:
-            messages.append({"role": "counselor", "text": bot_response})
+    # ponytail: usa solo user_input (la vera interazione studente).
+    # effective_user_input contiene il prompt di sistema inglese dei guided
+    # step: non è una vera interazione e non va nel PDF studente.
+    messages = _session_conversation_messages(db, session_id)
+    summary_text = _generate_pdf_summary(db, result=result, scores=scores, messages=messages, lang=lang)
 
     pdf_bytes = generate_questionnaire_pdf(
         questionnaire_type=result.questionnaire_type,
@@ -747,6 +876,7 @@ async def download_questionnaire_pdf(
         submitted_at=submitted_str,
         language=lang,
         messages=messages or None,
+        summary_text=summary_text,
     )
 
     filename = f"counselorbot_{result.questionnaire_type}_{result.id}.pdf"

@@ -190,6 +190,11 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
             "Quali direzioni future sembrano coerenti con il mio racconto?",
             "Puoi aiutarmi a trasformare la sintesi in un piano 7/30/90 giorni?",
         ],
+        FIXED_QUESTIONS_STEP_ID: [
+            "Quale parte della mia storia mi fa riflettere di piu'?",
+            "Quale risorsa personale emerge dal racconto e voglio usare meglio?",
+            "Quale primo passo concreto posso fare nei prossimi giorni?",
+        ],
     },
     "QPCS": {
         "qpcs-intro": [

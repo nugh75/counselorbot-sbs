@@ -165,6 +165,39 @@ _AGENT_GUIDED_TEXTS = {
             "text_qap_conclusion", DEFAULT_GUIDED_TEXT_QAP_CONCLUSION),
 }
 
+_REFLECTION_FIXED_QUESTIONS = {
+    "it": [
+        "Quale risultato o tema ti fa riflettere di piu'?",
+        "Quale punto di forza puoi usare meglio da subito?",
+        "Quale piccola strategia vuoi provare questa settimana?",
+    ],
+    "en": [
+        "Which result or theme makes you reflect the most?",
+        "Which strength can you use better right away?",
+        "Which small strategy do you want to try this week?",
+    ],
+    "es": [
+        "¿Qué resultado o tema te hace reflexionar más?",
+        "¿Qué fortaleza puedes aprovechar mejor desde ahora?",
+        "¿Qué pequeña estrategia quieres probar esta semana?",
+    ],
+    "fr": [
+        "Quel résultat ou thème te fait le plus réfléchir ?",
+        "Quelle force peux-tu mieux utiliser dès maintenant ?",
+        "Quelle petite stratégie veux-tu essayer cette semaine ?",
+    ],
+    "de": [
+        "Welches Ergebnis oder Thema bringt dich am meisten zum Nachdenken?",
+        "Welche Stärke kannst du ab sofort besser nutzen?",
+        "Welche kleine Strategie möchtest du diese Woche ausprobieren?",
+    ],
+    "sv": [
+        "Vilket resultat eller tema får dig att reflektera mest?",
+        "Vilken styrka kan du använda bättre redan nu?",
+        "Vilken liten strategi vill du prova den här veckan?",
+    ],
+}
+
 
 @router.get("/qsa/guided-ui-texts")
 async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it", db: Session = Depends(get_db)):
@@ -221,7 +254,11 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
         }
         for s in steps
     ]
-    result["fixed_phase_questions"] = questions_by_step.get(FIXED_QUESTIONS_STEP_ID, [])
+    result["fixed_phase_questions"] = (
+        questions_by_step.get(FIXED_QUESTIONS_STEP_ID)
+        or _REFLECTION_FIXED_QUESTIONS.get(lang)
+        or _REFLECTION_FIXED_QUESTIONS["it"]
+    )
 
     # Override questions/conclusion texts per questionnaire
     if questionnaire_type == "QSAr":

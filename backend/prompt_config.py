@@ -66,16 +66,17 @@ DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL = (
 )
 
 DEFAULT_SYSTEM_PROMPT_GUIDED_QUESTIONS = (
-    "In the questions and follow-up phase, reply clearly and practically, tailored "
-    "to the QSA profile already provided. Connect the answer to the relevant "
-    "factors when useful."
+    "In the final reflection phase, help the student reason about the profile or "
+    "narrative path already discussed. Ask concise reflective questions when useful, "
+    "connect answers to the results, and end with practical strategies or first steps."
 )
 
-DEFAULT_GUIDED_TEXT_QUESTIONS_PHASE_BANNER = "--- Fase 4: Domande e Approfondimenti ---"
+DEFAULT_GUIDED_TEXT_QUESTIONS_PHASE_BANNER = "--- Fase finale: Riflessione e Strategie ---"
 
 DEFAULT_GUIDED_TEXT_QUESTIONS_INTRO = (
-    "Abbiamo completato l'analisi strutturata. Ora puoi farmi qualsiasi domanda "
-    "libera sul tuo metodo di studio, sui risultati o chiedere consigli specifici."
+    "Abbiamo completato l'analisi strutturata. Prima di concludere, puoi riflettere "
+    "sui risultati, chiarire cosa ti rappresenta di più e scegliere una strategia "
+    "concreta da provare."
 )
 
 DEFAULT_GUIDED_TEXT_CONCLUSION = (
