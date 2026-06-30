@@ -1,23 +1,25 @@
-# Documentazione CounselorBot
+# CounselorBot documentation
 
-Questa cartella e' il punto unico di ingresso per la documentazione del progetto.
+This directory is the canonical entry point for stable project documentation, research materials, implementation notes, and curated source archives.
 
-## Indice
+## Index
 
-- [Organizzazione docs implementata](progetto/organizzazione/proposta-organizzazione-docs-implementata-2026-05-30.md): inventario, mappatura e decisioni della migrazione.
-- [Grafo della documentazione](progetto/organizzazione/grafo-docs-2026-05-30.md): vista Mermaid della struttura `docs/`.
-- [Grafo Graphify docs](progetto/organizzazione/graphify-docs-2026-05-30/README.md): output generato con `safishamsi/graphify`.
-- [Diario di bordo](progetto/diario.md): cronologia del progetto.
-- [Comunicazioni](progetto/comunicazioni/): bozze e testi di contatto.
-- [Validazione](validazione/): progetto scientifico, manuale operativo, dettagli psicometrici, diagnosi e stanine.
-- [Questionari](questionari/): strumenti PDF e guida al catalogo item.
-- [Prompting](prompting/): review e analisi delle traduzioni dei prompt.
-- [Implementazione](implementazione/): verifiche tecniche e note di sviluppo.
-- [Fonti](fonti/): materiali bibliografici, archivio del sito competenzestrategiche.it e fonti esterne collegate.
+- [Implemented documentation organization](progetto/organizzazione/proposta-organizzazione-docs-implementata-2026-05-30.md): inventory, mapping, and migration decisions.
+- [Documentation graph](progetto/organizzazione/grafo-docs-2026-05-30.md): Mermaid view of the `docs/` structure.
+- [Graphify documentation graph](progetto/organizzazione/graphify-docs-2026-05-30/README.md): generated output from `safishamsi/graphify`.
+- [Project log](progetto/diario.md): project chronology.
+- [Communications](progetto/comunicazioni/): contact drafts and messages.
+- [Validation](validazione/): scientific plan, operating manual, psychometric details, diagnosis, and stanine notes.
+- [Questionnaires](questionari/): instrument PDFs and item-catalog guide.
+- [Prompting](prompting/): prompt translation reviews and analyses.
+- [Implementation](implementazione/): technical checks and development notes.
+- [Future implementation](future-implementazione/): deferred technical plans and audits.
+- [Handoffs](handoff/): working-session handoffs and prompt-audit findings.
+- [Sources](fonti/): bibliographic material, the archived `competenzestrategiche.it` public site content, and linked external sources.
 
-## Regole di collocazione
+## Placement rules
 
-- La documentazione stabile vive in `docs/`.
-- I file necessari al runtime restano dove il codice li carica, oppure vengono spostati solo aggiornando il codice.
-- I README tecnici locali possono restare accanto al modulo che documentano quando servono a chi lavora direttamente in quella cartella.
-- I file generati o temporanei non dovrebbero entrare nella documentazione canonica, salvo che siano artefatti deliberatamente pubblicati.
+- Stable documentation belongs in `docs/`.
+- Runtime files stay where the application loads them, unless code is updated together with the move.
+- Local technical README files may remain next to the module or generated artifact they document.
+- Generated or temporary files should not be treated as canonical documentation unless they are intentionally published artifacts.

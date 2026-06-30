@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CounselorBot frontend
 
-## Getting Started
+This is the Next.js App Router frontend for CounselorBot SBS.
 
-First, run the development server:
+## Stack
+
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- Framer Motion
+- Recharts and Plotly for charts
+- `react-markdown` for AI responses and document previews
+
+## Main routes
+
+- `/` — student flow: counselor selection, instrument selection, manual input or upload, profile visualization, and guided AI chat.
+- `/assistente` — RAG-based assistant over project documentation and strategic-competence sources.
+- `/pqbl` — PDF upload and pure Question-Based Learning session.
+- `/profilo` and `/profilo/cambiamenti` — learner profile and profile history.
+- `/questionario` — user feedback questionnaire.
+- `/somministrazione` — administration-plan entry flow.
+- `/admin` — research/admin console.
+- `/api/chat/stream` — filesystem API route for Server-Sent Events; this bypasses the normal Next.js rewrite because rewrites buffer streaming responses.
+
+## Backend access
+
+`next.config.ts` rewrites frontend calls from `/api/:path*` to `http://backend:8000/:path*` inside Docker. The exception is `/api/chat/stream`, implemented in `src/app/api/chat/stream/route.ts` for streaming chat.
+
+`/counselorbot` and `/counselorbot/*` redirect to `/` so the app can be mounted behind a proxy under that path.
+
+## Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Useful checks:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run build
+npx tsc --noEmit
+```
 
-## Learn More
+## Production build
 
-To learn more about Next.js, take a look at the following resources:
+The Dockerfile builds a standalone Next.js output and runs it with `node server.js`:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+docker compose up -d --build frontend
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Any frontend code or dependency change requires rebuilding the image in Docker-based deployments.
 
-## Deploy on Vercel
+## Notes for contributors
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Student-facing strings are centralized under `src/lib/i18n*.ts` where possible.
+- Admin translations live in `src/lib/i18n-admin.ts`; add keys to all supported language blocks.
+- Authentication data comes from `/auth/me`, which is backed by ai4auth forward-auth headers in production.
+- Chat streaming errors are emitted as SSE `{error}` events and handled by `src/lib/chat-stream.ts`.
