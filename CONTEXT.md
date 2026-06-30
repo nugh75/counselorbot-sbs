@@ -11,107 +11,307 @@
 ## Domain
 CounselorBot is an AI-powered web app that helps students analyze learning/career profiles through guided chat over seven instruments. UI and content are primarily Italian.
 
+### Instruments
+| Code | Description | Inverted factors |
+|------|-------------|------------------|
+| QSA | Learning strategies (full, cognitive + affective) | ✓ (high = growth area) |
+| QSAr | Reduced QSA | ✓ |
+| ZTPI | Zimbardo time perspective | — |
+| SAVICKAS | Career construction interview (narrative) | — |
+| QPCS | Perceived strategic competences | — |
+| QPCC | Perceived competences and beliefs | — |
+| QAP | Career adaptability | — |
+| EVENTO_STUDIO | Significant study events (narrative, no dimensions) | — |
+| EVENTO_PROFESSIONALE | Significant professional events (narrative, no dimensions) | — |
+
 ### Core Concepts
-- **QSA**: learning strategies — full profile with cognitive and affective factors. Has **inverted factors** (high score = area of growth, not strength).
-- **QSAr**: reduced QSA for quicker learning-strategy analysis.
-- **ZTPI**: Zimbardo time perspective profile.
-- **SAVICKAS**: narrative career construction interview.
-- **QPCS**: perceived strategic competences.
-- **QPCC**: perceived competences and beliefs.
-- **QAP**: career adaptability resources.
-- **Guided path**: ordered `GuidedStep` rows per `questionnaire_type`. Each step has a `prompt` and a `system_prompt_mode`.
-- **Suggested questions**: `GuidedStepQuestion` rows linked to steps, shown in the student chat UI.
-- **Session**: a chat session tied to a questionnaire result. Has rolling Markdown conversational memory.
-- **Student-facing chat** vs **Admin panel**: two sides of the same app. Admin edits prompts, API keys, guided steps live.
+- **Guided path**: ordered `GuidedStep` rows per `questionnaire_type`. Each step has a `prompt` and `system_prompt_mode`. Steps are database-driven, seeded at startup from `prompt_config.py`.
+- **Suggested questions**: `GuidedStepQuestion` rows linked to steps, shown as clickable suggestions in the student chat UI. Defaults in `guided_step_questions_seed.py`.
+- **Session**: a chat session tied to a `QuestionnaireResult`. Has rolling Markdown conversational memory on disk.
+- **Student-facing chat** vs **Admin panel**: two sides of the same app. Admin edits prompts, API keys, guided steps, counselors live via UI.
 
 ### User Roles
-- **Student**: fills out questionnaires, interacts with guided chat.
-- **Admin**: configures prompts, AI providers, guided steps; views results.
+- **Student**: fills out questionnaires, interacts with guided chat, can view own learner profile and portfolio
+- **Counselor**: can view assigned students' data with restricted access
+- **Admin**: configures prompts, AI providers, guided steps, counselors; views all results
 
 ## Architecture
 
-### Request path / frontend↔backend wiring
-The frontend reaches the backend through a Next.js rewrite in `frontend/next.config.ts`: `/api/:path*` → `http://backend:8000/:path*`. Exception: **`/api/chat/stream`** is served by a filesystem route at `frontend/src/app/api/chat/stream/route.ts` because the rewrite buffers Server-Sent Events. `/counselorbot` and `/counselorbot/*` redirect to root (app is mounted under that path behind the proxy).
+### Request path
+Frontend reaches backend via Next.js rewrite in `frontend/next.config.ts`:
+`/api/:path*` → `http://backend:8000/:path*`
+
+Exception: **`/api/chat/stream`** is a filesystem route `frontend/src/app/api/chat/stream/route.ts` because Next.js rewrite buffers Server-Sent Events.
+
+`/counselorbot` and `/counselorbot/*` redirect to root (app is mounted under that path behind the proxy).
 
 ### Auth
-No client-side tokens. Authentication is **ai4auth forward-auth at the edge** (Nginx Proxy Manager): the proxy injects `Remote-*` headers, parsed in `backend/auth.py`. Admin status = membership in the `admins` group. `frontend/src/lib/auth.ts` reads identity from `/auth/me`.
+ai4auth forward-auth at the edge (Nginx). Proxy injects `Remote-*` headers → parsed in `backend/auth.py`. Admin = `admins` group. `frontend/src/lib/auth.ts` reads identity from `/auth/me`.
 
-### Key Directories
+### Data Model
+- **Config**: key-value DB store for prompts, UI texts, provider/model, API keys. Secrets overridable via env vars (`ENV_KEY_MAP` in `ai_service.py`). Defaults in `prompt_config.py`, seeded at startup without overwriting.
+- **GuidedStep**: per `questionnaire_type`, ordered steps with `prompt` + `system_prompt_mode`
+- **GuidedStepQuestion**: suggested questions per step
+- **QuestionnaireResult**: per-session survey data
+- **StudentBooklet**: per-instrument narrative booklet
+- **Session memory**: on-disk per-session rolling Markdown (`SESSION_MEMORY_DIR`), thread-safe, with expired-session cleanup
+- **Strategy memory**: read-only knowledge base from `knowledge/approved_strategies.md`
+
+### AI Providers
+`AIService` (`backend/ai_service.py`) dispatches to openai / anthropic / gemini / mistral / openrouter / ollama / llamacpp through a provider registry. Each provider: `call`, `stream`, `call_max`, `stream_max`. `disable_thinking` per-provider. **Error contract**: config/provider failures raise `AIError` — never returned as chat content.
+
+### Docker
+Code baked into images (no volume mounts). Any backend/frontend change requires rebuild. When adding a new backend subpackage, add a `COPY` line in `backend/Dockerfile` (copies explicit paths, not whole tree).
+
+### Networks
+Containers on `proxy-network` + `auth-network` (external). Exposed ports: backend `8088` (host-only), frontend `3000` through Nginx proxy.
+
+## Commands
+
+```bash
+# ── Docker (production) ──
+docker compose up -d --build         # Full stack
+docker compose ps                    # Status
+docker compose logs -f backend       # Backend logs
+docker exec counselorbot_backend python -m backend.tests.test_smoke  # Tests
+
+# ── Local dev ──
+uvicorn backend.main:app --reload --port 8000   # Backend (from repo root)
+cd frontend && npm run dev                      # Frontend (http://localhost:3000)
+cd frontend && npm run build                    # Production build + typecheck
+cd frontend && npm run lint                     # ESLint
+cd frontend && npx tsc --noEmit                 # Standalone typecheck
+
+# ── Prompt testing (Makefile) ──
+make prompt-test Q=QSA STEP=intro                    # Live LLM call, save log
+make prompt-dry Q=QSAr STEP=qsar-cognitive           # Envelope only, no LLM
+make prompt-steps Q=ZTPI                             # List steps for questionnaire
+make prompt-log ID=42                                # Dump envelope from log
+make prompt-log-on                                   # Enable full-prompt-logging
+make prompt-log-off                                  # Disable full-prompt-logging
+make prompt-test Q=QSA STEP=intro COUNSELOR=7 STUDENT=barbaraambu RESP_LANG=en  # Full params
+```
+
+## API Reference
+
+### Chat & Guided UI
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/qsa/guided-ui-texts?questionnaire_type=QSA&lang=it` | — | Get guided steps + suggested questions for student UI |
+| `POST` | `/api/chat` | student | Non-streaming chat turn |
+| `POST` | `/api/chat/stream` | student | SSE streaming chat turn (filesystem route) |
+| `POST` | `/api/chat/message` | student | Chat message logging |
+| `POST` | `/api/tts` | student | Text-to-speech |
+
+### Surveys & Scoring
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/api/survey` | student | Submit survey response |
+| `POST` | `/api/questionnaire-result` | student | Submit scored questionnaire result → triggers guided chat |
+| `POST` | `/api/instruments/{code}/score` | student | Score a single instrument's responses |
+| `GET` | `/api/instruments/{code}/rules` | student | Get instrument scoring rules + factor definitions |
+| `GET` | `/api/user/questionnaire-results` | student | List own questionnaire results |
+| `GET` | `/api/questionnaire-result/{session_id}/pdf` | student | Download student booklet PDF |
+| `GET` | `/api/questionnaire-result/{session_id}/conversation` | student | Get full conversation for a session |
+| `POST` | `/api/strategy-feedback` | student | Submit feedback on a recommended strategy |
+| `GET` | `/api/user/certified-strategies` | student | List certified strategies |
+
+### Student Booklets (per-instrument narrative documents)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/user/student-booklets/instrument/{type}` | student | Get booklet for instrument type |
+| `PUT` | `/api/user/student-booklets/instrument/{type}` | student | Create/update booklet |
+| `GET` | `/api/user/student-booklets/instrument/{type}/pdf` | student | Download booklet as PDF |
+| `DELETE` | `/api/user/student-booklets/id/{booklet_id}` | student | Delete booklet |
+
+### Learner Profile
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/user/learner-profile` | student | Get profile |
+| `POST` | `/api/user/learner-profile` | student | Create/update profile |
+| `GET` | `/api/user/learner-profile/history` | student | Profile change history |
+| `POST` | `/api/user/learner-profile/reflections` | student | Add reflection note |
+| `DELETE` | `/api/user/learner-profile` | student | Delete profile |
+
+### Portfolio
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/user/portfolio` | student | List items |
+| `POST` | `/api/user/portfolio` | student | Create item |
+| `PUT` | `/api/user/portfolio/{id}` | student | Update item |
+| `DELETE` | `/api/user/portfolio/{id}` | student | Delete item |
+| `POST` | `/api/user/portfolio/{id}/images` | student | Upload image |
+
+### Counselors (public info for student chat)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/counselors` | student | List available counselors (public info) |
+
+### Assistant Questions (suggested questions in guided chat)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/assistant-questions` | student | Get suggested questions for current step |
+
+### Site Chat (public-facing chatbot on landing page)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/api/site-chat/stream` | — | SSE chat stream (public) |
+| `GET` | `/api/site-chat/status` | admin | Index status |
+| `POST` | `/api/site-chat/reindex` | admin | Rebuild RAG index |
+
+### PQBL (Problem/Question-Based Learning)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/api/pqbl/upload` | — | Upload document for question generation |
+| `POST` | `/api/pqbl/sessions` | student | Start PQBL session |
+| `GET` | `/api/pqbl/sessions/{id}/questions` | student | Get generated questions |
+| `POST` | `/api/pqbl/sessions/{id}/answer` | student | Submit answer |
+| `POST` | `/api/pqbl/sessions/{id}/final-test` | student | Take final test |
+| `GET` | `/api/pqbl/sessions/{id}/summary` | student | Session summary |
+
+### Admin: Config
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/admin/config` | List all config entries |
+| `POST` | `/api/admin/config` | Create/update config entry |
+| `GET` | `/api/admin/config/env-status` | Check which secrets are overridden by env vars |
+| `GET` | `/api/admin/models` | List available AI models per provider |
+
+### Admin: Prompt Audit
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/admin/prompt-audit/dry-run` | Build envelope without calling LLM |
+| `POST` | `/api/admin/prompt-audit/live` | Call LLM with current config |
+| `POST` | `/api/admin/prompt-audit/matrix` | Test multiple provider/model combos |
+
+### Admin: Guided Steps
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/admin/guided-steps` | List all steps |
+| `POST` | `/api/admin/guided-steps` | Create step |
+| `PUT` | `/api/admin/guided-steps/{id}` | Update step |
+| `DELETE` | `/api/admin/guided-steps/{id}` | Delete step |
+| `PATCH` | `/api/admin/guided-steps/reorder` | Reorder steps |
+
+### Admin: Instruments & Factors
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/admin/instruments` | List instruments |
+| `POST` | `/api/admin/instruments` | Create instrument |
+| `PUT` | `/api/admin/instruments/{code}` | Update instrument |
+| `GET` | `/api/admin/instruments/{code}/factors` | List factors |
+| `POST` | `/api/admin/instruments/{code}/factors` | Create factor |
+| `PUT` | `/api/admin/factors/{id}` | Update factor |
+| `DELETE` | `/api/admin/factors/{id}` | Delete factor |
+| `GET` | `/api/admin/instruments/{code}/items` | List items |
+| `POST` | `/api/admin/instruments/{code}/items` | Create item |
+| `PUT` | `/api/admin/items/{id}` | Update item |
+| `DELETE` | `/api/admin/items/{id}` | Delete item |
+| `GET/POST/DELETE` | `/api/admin/instruments/{code}/norm-thresholds` | Normative thresholds |
+
+### Admin: Training Dataset (QSA fine-tuning)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/admin/training-dataset/summary` | Status overview |
+| `GET` | `/api/admin/training-dataset/examples` | List examples |
+| `POST` | `/api/admin/training-dataset/examples` | Create example |
+| `POST` | `/api/admin/training-dataset/generate` | Auto-generate examples from submissions |
+| `PATCH` | `/api/admin/training-dataset/examples/{id}` | Update example |
+| `DELETE` | `/api/admin/training-dataset/examples/{id}` | Delete example |
+| `GET` | `/api/admin/training-dataset/export.jsonl` | Export ChatML JSONL |
+
+### Admin: Other
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/admin/logs` | Logs with filtering |
+| `GET` | `/api/admin/logs/count` | Log counts |
+| `GET` | `/api/admin/logs/stats` | Aggregated stats |
+| `GET` | `/api/admin/cost-stats` | Cost per model/provider |
+| `DELETE` | `/api/admin/logs/session/{id}` | Delete session logs |
+| `POST` | `/api/admin/logs/retention-run` | Run log retention cleanup |
+| `GET` | `/api/admin/surveys` | List surveys |
+| `DELETE` | `/api/admin/survey/{id}` | Delete survey |
+| `GET` | `/api/admin/validation/summary` | Validation data summary |
+| `GET` | `/api/admin/validation/export.csv` | Export validation CSV |
+| `GET` | `/api/admin/questionnaire-results` | List all results |
+| `GET` | `/api/admin/strategy-feedback` | Strategy feedback summary |
+| `GET/POST/PUT/DELETE` | `/api/admin/counselors` | Counselor management |
+| `GET/POST/PUT/DELETE` | `/api/admin/presets` | Model presets |
+| `GET/POST/PUT/DELETE` | `/api/admin/certified-strategies` | Certified strategies |
+| `POST` | `/api/admin/benchmark/run` | Run benchmark |
+| `GET` | `/api/admin/benchmark/runs` | Benchmark history |
+| `GET/POST/PUT/DELETE` | `/api/admin/administration-plans` | Administration plans |
+| `GET/POST/PUT/DELETE` | `/api/admin/research-contacts` | Research contacts |
+
+## File Layout
 ```
 backend/
-  main.py              — thin: app creation, CORS, lifespan, startup seeding
+  main.py                   Thin: app creation, CORS, lifespan, startup seeding
   routes/
-    admin.py           — admin endpoints
-    survey.py          — questionnaire endpoints
-    chat.py            — chat/stream endpoints
-    memory.py          — session memory endpoints
-  chat_logic.py        — shared pure helpers (prompt resolution, memory retrieval)
-  ai_service.py        — multi-provider AI dispatch
-  auth.py              — Remote-* header parsing
-  prompt_config.py     — default Config values (seeded into DB)
-  guided_step_questions_seed.py — Italian default suggested questions
-  tests/
-    test_smoke.py      — smoke/regression guardrail
+    admin.py                Admin CRUD (logs, config, guided steps, instruments, dataset)
+    survey.py               Questionnaire submission, scoring, booklets, PDF
+    chat.py                 Chat (stream/non-stream), guided UI texts, TTS, QSA upload
+    memory.py               Session memory endpoints
+    site_chat.py            Public-facing chatbot + RAG
+    learner_profile.py      Student learner profile
+    portfolio.py            Student portfolio (items + images)
+    pqbl.py                 Problem/Question-Based Learning
+    opencode.py             OpenCode agent workspace for PDF chat
+    presets.py              Model presets
+    benchmark.py            Benchmark runner
+    prompt_audit.py         Prompt testing (dry-run, live, matrix)
+    counselors.py           Counselor profiles
+    certified_strategies.py Certified strategy management
+    research_contacts.py    Research contact management
+    administration_plans.py Study administration plans
+    assistant_questions.py  Suggested questions for guided chat
+  chat_logic.py             Prompt resolution, memory retrieval, post-processing
+  ai_service.py             Multi-provider AI dispatch + env overrides
+  auth.py                   Remote-* header parsing + role checks
+  prompt_config.py          Default Config values (seeded at startup)
+  scoring_service.py        Instrument scoring logic
+  strategy_memory.py        Read-only knowledge base
+  questionnaire_catalog.py  Instrument catalog defaults
+  guided_text_i18n.py       Italian default guided text definitions
+  guided_step_questions_seed.py  Italian default suggested questions per step
+  anonymous_codes.py        Anonymous research code generation
+  models.py                 SQLAlchemy models
+  schemas.py                Pydantic schemas
+  database.py               DB connection + session management
+  tests/test_smoke.py       Smoke/regression guardrail
 frontend/
-  src/
-    app/               — Next.js App Router pages
-      admin/           — admin UI
-      api/chat/stream/ — SSE bypass route
-    components/
-      admin/           — admin panel components (ConfigForm, etc.)
-    lib/
-      auth.ts          — identity from /auth/me
-      chat-stream.ts   — SSE consumer
-      i18n.ts          — student-facing strings
-      i18n-admin.ts    — admin strings (IT + EN blocks)
-      i18n-factors.ts  — factor descriptions
-      i18n-survey.ts   — survey UI strings
-      questionnaires.ts — factor definitions, inverted codes
+  src/app/                  Next.js App Router
+    admin/                  Admin panel pages
+    api/chat/stream/        SSE bypass filesystem route
+  src/components/admin/     Admin UI components (ConfigForm, etc.)
+  src/lib/
+    auth.ts                 Identity from /auth/me
+    chat-stream.ts          SSE consumer (throws on {error})
+    i18n.ts                 Student-facing strings
+    i18n-admin.ts           Admin strings (IT + EN blocks)
+    i18n-factors.ts         Factor descriptions
+    i18n-survey.ts          Survey UI strings
+    questionnaires.ts       Factor definitions + inverted codes
+knowledge/
+  approved_strategies.md    Read-only strategy knowledge base
+scripts/
+  prompt_test.py            Prompt envelope tester
+Makefile                    Prompt testing shortcuts
 ```
 
-### Key Files
-- `backend/main.py` — app creation, CORS, lifespan (Ollama preload), and the idempotent **startup seeding/migration** (`startup_event`). Then `include_router` for each router.
-- `backend/ai_service.py` — `AIService` dispatches to openai / anthropic / gemini / mistral / openrouter / ollama / llamacpp through a provider registry. Each provider has `call`, `stream`, `call_max`, `stream_max`. Error contract: config/provider failures raise `AIError` — never return/yield error strings as chat content.
-- `backend/chat_logic.py` — `_resolve_system_prompt` and `_resolve_user_message_for_chat` (guided-phase overrides, conversational follow-up, anti-greeting suffix). Also `_retrieved_context`.
-- `backend/prompt_config.py` — `ALL_CONFIG_TEXT_DEFINITIONS` with default values. Seeded into DB at startup **without overwriting existing values**.
-- `frontend/next.config.ts` — API rewrite + `/counselorbot` redirects.
-- `frontend/src/lib/chat-stream.ts` — SSE consumer; throws on `{error}` events.
-- `knowledge/approved_strategies.md` — read-only knowledge base for strategy memory.
-
-### Data Model (essential)
-- **Config**: key-value store for prompts, UI texts, provider/model selection, API keys. Secrets can be overridden by env vars (`ENV_KEY_MAP` in `ai_service.py`). Admin UI: `ConfigForm.tsx`.
-- **GuidedStep**: per `questionnaire_type`, ordered steps with `prompt` and `system_prompt_mode`.
-- **GuidedStepQuestion**: suggested questions linked to steps, shown at base of guided-chat UI.
-- **Session memory**: per-session rolling Markdown on disk (`SESSION_MEMORY_DIR`), file-backed, thread-safe, expired-session cleanup loop.
-- **Strategy memory**: read-only collective knowledge base from `knowledge/approved_strategies.md`.
-
-### Docker notes
-Code is **baked into the images** (no volume mount for app code). Any backend or frontend change requires rebuild + recreate of that service. When adding a new backend subpackage/module dir, add a matching `COPY` line in `backend/Dockerfile` — it copies explicit paths, NOT the whole tree.
-
 ## Conventions
-- **Backend layout**: routes in `backend/routes/`, logic in `backend/chat_logic.py`, models in `backend/api_models.py`. `main.py` is thin.
-- **Configuration is DB-driven**: prompts, UI texts, and API keys are DB rows, not constants. Defaults in `prompt_config.py`, seeded at startup. Admin edits live via `ConfigForm.tsx`.
-- **Error contract**: AI failures raise `AIError`. SSE catches and emits `{error}` event. Non-streaming `/chat` maps `AIError` to HTTP 502. Frontend consumer throws on `{error}`.
-- **Student-facing sanitization**: QSA factor codes expanded to `Code (Name)` (`_annotate_qsa_factor_codes`). ZTPI technical labels stripped (`_sanitize_ztpi_*`). Inverted QSA factors (`_QSA_INVERTED_CODES`) must stay aligned with `frontend/src/lib/questionnaires.ts`.
-- **i18n**: admin strings in `i18n-admin.ts` with IT + EN blocks — add new keys to both.
-- **Tests**: run against dedicated `counselorbot_test` Postgres DB (never SQLite). Override `get_db`/auth, mock `AIService`. Plain-runnable and pytest-compatible.
-- **Startup seeding**: idempotent (no overwrite of existing). Raw-SQL column migrations must be idempotent.
+- **Configuration is DB-driven**: prompts, UI texts, API keys are DB rows, seeded from `prompt_config.py` at startup (idempotent, no overwrite). Admin edits live via ConfigForm.
+- **Error contract**: AI failures raise `AIError`. SSE emits `{error}` event. Non-streaming maps `AIError` → HTTP 502. Frontend consumer throws on `{error}`.
+- **Student-facing sanitization**: QSA codes expanded to `Code (Name)`. ZTPI labels stripped. Inverted QSA factors must stay aligned with `questionnaires.ts`.
+- **i18n**: admin strings in `i18n-admin.ts` (IT + EN blocks). Add new keys to both.
+- **Tests**: dedicated `counselorbot_test` Postgres DB (never SQLite). Override `get_db`/auth, mock `AIService`. Plain-runnable and pytest-compatible.
+- **Startup seeding**: idempotent. Raw-SQL column migrations must be idempotent.
+- **Backend Dockerfile**: copies explicit paths (`COPY backend/routes/`, `COPY backend/tests/`), not the whole tree. Missing COPY → `ModuleNotFoundError` after rebuild.
 
-## Common Tasks
-
-| Task | Command / Procedure |
-|---|---|
-| Avvio Docker | `docker compose up -d --build` |
-| Avvio locale | Backend: `uvicorn backend.main:app --reload --port 8000` (da repo root). Frontend: `cd frontend && npm run dev` |
-| Test backend | `docker exec counselorbot_backend python -m backend.tests.test_smoke` |
-| Lint frontend | `cd frontend && npm run lint` |
-| Typecheck frontend | `cd frontend && npx tsc --noEmit` |
-| Build frontend | `cd frontend && npm run build` |
-| Aggiungere un provider AI | Aggiungi entry nel registry di `AIService` (1 riga) + coppia `_call_`/`_stream_` |
-| Aggiungere un nuovo questionario | Crea `GuidedStep` rows, `GuidedStepQuestion` rows, seed in `guided_step_questions_seed.py`, aggiungi route in `backend/routes/` |
-| Aggiungere directory backend | Aggiungi `COPY` in `backend/Dockerfile` |
-
-## ADRs / Decisions
-- **SSE bypass**: `/api/chat/stream` non passa per il rewrite Next.js perché bufferizza gli SSE. Servito da filesystem route Next.js.
-- **Test con Postgres reale**: mai SQLite, per fedeltà dialettale (sequences, JSON, `func.now()`).
-- **No volume mount per codice**: le immagini contengono il codice. Ogni modifica richiede rebuild.
+## Notes
+- `GEMINI.md` describes a separate "3-layer agent" philosophy for agent workflows — not the app's runtime architecture
+- Student booklets for `EVENTO_STUDIO`/`EVENTO_PROFESSIONALE` are narrative-only (no dimensions)
+- `prompt_test.py` runs inside the backend container via `docker exec` with env vars for all parameters
+- Log retention: configurable via `logFullRetentionDays` config key, with manual `retention-run` trigger
+- `openai_assistants` functions can auto-generate QSA training examples
+- The `_resolve_system_prompt` function applies: counselor overrides → guided-phase mode → questionnaire-default → fallbacks
