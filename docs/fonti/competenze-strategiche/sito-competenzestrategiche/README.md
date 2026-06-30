@@ -1,6 +1,6 @@
 # `competenzestrategiche.it` site archive
 
-Downloaded on 2026-05-30 from public pages on `https://www.competenzestrategiche.it/`.
+Downloaded on 2026-05-30 from public pages on `competenzestrategiche.it`.
 
 The crawl covered public course pages, printable Moodle books, static pages, directories, and Moodle resources. Login, registration, interactive questionnaires, generic graphic assets, and application pages were excluded.
 

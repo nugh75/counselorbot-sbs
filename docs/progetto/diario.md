@@ -6,6 +6,12 @@ Questo file raccoglie la cronologia dettagliata delle attività svolte per il pr
 
 ## Versione Italiana (Cronologica)
 
+### 30 Giugno 2026 - README in inglese e verifica link
+* **README aggiornati**: riscritti in inglese i README del repository, della cartella `docs/`, del frontend e degli archivi locali delle fonti.
+* **Allineamento al codice**: documentati stack attuale, flussi principali, route frontend/backend, setup Docker, sviluppo locale, pQBL, assistente RAG, admin console e test dei prompt.
+* **Igiene dei link**: verificati i link locali nei README tracciati da Git e rimossi dai README gli URL esterni non certificabili o già noti come non disponibili.
+* **Git**: modifiche documentali tracciate nella cronologia Git con commit dedicati.
+
 ### 30 Maggio 2026 - Organizzazione documentazione
 * **Cartella unica `docs/`**: Consolidata la documentazione stabile del progetto in `docs/`, con indice principale in [`docs/README.md`](../README.md).
 * **Nuova tassonomia**: Organizzati i materiali in `progetto/`, `validazione/`, `questionari/`, `prompting/`, `implementazione/` e `fonti/`.
@@ -43,6 +49,12 @@ Questo file raccoglie la cronologia dettagliata delle attività svolte per il pr
 ---
 
 ## English Version (Chronological)
+
+### June 30, 2026 - English README files and link check
+* **README update**: rewrote the repository, `docs/`, frontend, and local source-archive README files in English.
+* **Code alignment**: documented the current stack, main flows, frontend/backend routes, Docker setup, local development, pQBL, the RAG assistant, the admin console, and prompt-testing commands.
+* **Link hygiene**: checked local links in Git-tracked README files and removed external URLs that were not certifiable or were already known to be unavailable.
+* **Git**: documentation changes were tracked in Git history with dedicated commits.
 
 ### May 30, 2026 - Documentation Organization
 * **Single `docs/` folder**: Consolidated stable project documentation in `docs/`, with the main index in [`docs/README.md`](../README.md).

@@ -84,7 +84,7 @@ npm install
 npm run dev
 ```
 
-Open <http://localhost:3000>. Without ai4auth headers or a valid ai4auth session, the app runs as an anonymous user and admin functionality is unavailable.
+Open `http://localhost:3000`. Without ai4auth headers or a valid ai4auth session, the app runs as an anonymous user and admin functionality is unavailable.
 
 ## Useful commands
 
