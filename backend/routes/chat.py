@@ -434,16 +434,19 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         step_label = _sanitize_ztpi_step_label(step_label, request.language)
 
     # Transcript verbatim role-tagged per la sessione (Fase 2).
-    if request.memory_message is not None:
+    if request.internal_message:
+        _transcript_user = ""
+    elif request.memory_message is not None:
         _transcript_user = request.memory_message
     elif step_label:
         _transcript_user = f"[Avvio analisi: {step_label}]"
     else:
         _transcript_user = request.message
+    _memory_user_message = request.memory_message if request.memory_message is not None else ("" if request.internal_message else request.message)
 
     # Deterministic local write: complete it before the client can advance phase.
     _update_markdown_memory_background(
-        session_id, request.memory_message if request.memory_message is not None else request.message, response_content,
+        session_id, _memory_user_message, response_content,
         step_label, is_first_step, knowledge_context, request.phase or "", model_scores_context,
         questionnaire_type, request.language or "", False,
         transcript_user=_transcript_user,
@@ -458,7 +461,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         "conversation_id": conversation_id,
         "mode": request.mode,
         "phase": request.phase,
-        "user_input": request.message,
+        "user_input": "" if request.internal_message else request.message,
         "effective_user_input": effective_message,
         "bot_response": response_content,
         "system_prompt_key": prompt_key,
@@ -645,7 +648,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 "conversation_id": conversation_id,
                 "mode": request.mode,
                 "phase": request.phase,
-                "user_input": request.message,
+                "user_input": "" if request.internal_message else request.message,
                 "effective_user_input": effective_message,
                 "bot_response": response_content,
                 "system_prompt_key": prompt_key,
@@ -741,17 +744,20 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 )
 
             # Transcript verbatim role-tagged per la sessione (Fase 2).
-            if request.memory_message is not None:
+            if request.internal_message:
+                _transcript_user = ""
+            elif request.memory_message is not None:
                 _transcript_user = request.memory_message
             elif step_label:
                 _transcript_user = f"[Avvio analisi: {step_label}]"
             else:
                 _transcript_user = request.message
+            _memory_user_message = request.memory_message if request.memory_message is not None else ("" if request.internal_message else request.message)
 
             # Complete the local memory write before the frontend records a phase transition.
             _update_markdown_memory_background(
                 session_id,
-                request.memory_message if request.memory_message is not None else request.message,
+                _memory_user_message,
                 response_content,
                 step_label,
                 is_first_step,
