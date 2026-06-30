@@ -46,15 +46,13 @@ export function Header() {
 
     const isLoading = identity === undefined;
     const isAuthenticated = !!identity?.authenticated;
+    const showServices = isAuthenticated && canOpenResearchConsole;
     const authHref = isAuthenticated ? AI4AUTH_LOGOUT_URL : ai4authLoginUrl('/admin');
     const authLabel = isAuthenticated ? t('nav.logout') : t('nav.adminLogin');
     const AuthIcon = isAuthenticated ? LogOut : LogIn;
 
     // Azioni di navigazione secondarie: in linea da `sm`, raccolte in un menu su mobile.
     const secondaryItems: SecondaryItem[] = [];
-    if (isAuthenticated && canOpenResearchConsole) {
-        secondaryItems.push({ key: 'services', href: consoleUrl, external: true, icon: LayoutGrid, label: t('header.services') });
-    }
     if (canOpenAssistant) {
         secondaryItems.push({ key: 'assistant', href: '/assistente', icon: Bot, label: t('assistant.title') });
     }
@@ -100,6 +98,8 @@ export function Header() {
                                     authHref={authHref}
                                     authLabel={authLabel}
                                     authIcon={AuthIcon}
+                                    servicesHref={showServices ? consoleUrl : undefined}
+                                    servicesLabel={t('header.services')}
                                 />
 
                                 {accountLabel && canOpenPersonalPage && (
@@ -144,6 +144,17 @@ export function Header() {
 
                                 {secondaryItems.length > 0 && <span className={cn(SEPARATOR, 'hidden sm:block')} />}
 
+                                {/* Accedi ad altre risorse: subito prima di Esci. */}
+                                {showServices && (
+                                    <div className="hidden sm:block">
+                                        <Tooltip content={t('header.services')}>
+                                            <a href={consoleUrl} className="console-topbar-icon" aria-label={t('header.services')} title={t('header.services')}>
+                                                <LayoutGrid className="w-4 h-4" />
+                                            </a>
+                                        </Tooltip>
+                                    </div>
+                                )}
+
                                 <div className="hidden sm:block">
                                     <Tooltip content={authLabel}>
                                         <a href={authHref} className="console-topbar-icon" aria-label={authLabel}>
@@ -185,6 +196,8 @@ function MobileHeaderMenu({
     authHref,
     authLabel,
     authIcon: AuthIcon,
+    servicesHref,
+    servicesLabel,
 }: {
     items: SecondaryItem[];
     label: string;
@@ -192,6 +205,8 @@ function MobileHeaderMenu({
     authHref: string;
     authLabel: string;
     authIcon: LucideIcon;
+    servicesHref?: string;
+    servicesLabel: string;
 }) {
     const { lang, setLang, t } = useI18n();
     const dark = useDarkMode();
@@ -283,6 +298,12 @@ function MobileHeaderMenu({
                         <ClipboardList className="h-4 w-4 shrink-0" />
                         <span className="truncate">{t('nav.feedback')}</span>
                     </Link>
+                    {servicesHref && (
+                        <a role="menuitem" href={servicesHref} className={itemClass} onClick={close}>
+                            <LayoutGrid className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{servicesLabel}</span>
+                        </a>
+                    )}
                     <a role="menuitem" href={authHref} className={itemClass} onClick={close}>
                         <AuthIcon className="h-4 w-4 shrink-0" />
                         <span className="truncate">{authLabel}</span>
