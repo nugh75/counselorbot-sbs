@@ -182,14 +182,18 @@ export default function AssistentePage() {
         let active = true;
         fetchCounselors(lang).then((list) => {
             if (!active) return;
-            const assistantList = list.filter((c) => c.show_in_assistant !== false);
+            const assistantList = list.filter((c) => {
+                if (c.show_in_assistant === false) return false;
+                if (c.assistant_audience && c.assistant_audience !== audience) return false;
+                return true;
+            });
             setCounselors(assistantList);
             const stored = getSelectedCounselorId();
             setCounselorId(list.some((c) => c.id === stored && c.is_active !== false) ? stored : null);
         });
         const unsub = subscribeToCounselor(() => setCounselorId(getSelectedCounselorId()));
         return () => { active = false; unsub(); };
-    }, [lang]);
+    }, [lang, audience]);
 
     const scrollToBottom = () => {
         requestAnimationFrame(() => {

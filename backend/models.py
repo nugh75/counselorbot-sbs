@@ -565,6 +565,7 @@ class Counselor(Base):
     sort_order = Column(Integer, nullable=False, default=0)
     is_active = Column(Boolean, nullable=False, default=True)
     show_in_assistant = Column(Boolean, nullable=False, default=False)
+    assistant_audience = Column(String, nullable=True)  # null=entrambi, "studente", "docente"
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 

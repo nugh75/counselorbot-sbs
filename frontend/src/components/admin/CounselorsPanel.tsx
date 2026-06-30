@@ -23,6 +23,7 @@ interface Counselor {
     sort_order: number;
     is_active: boolean;
     show_in_assistant: boolean;
+    assistant_audience: string | null;
     provider: string | null;
     model: string | null;
 }
@@ -30,12 +31,12 @@ interface Counselor {
 type FormState = {
     slug: string; name: string; description: string; description_i18n: Record<string, string>;
     persona: string; avatar: string;
-    preset_id: string; questionnaire_types: string[]; language: string[]; sort_order: string; is_active: boolean; show_in_assistant: boolean;
+    preset_id: string; questionnaire_types: string[]; language: string[]; sort_order: string; is_active: boolean; show_in_assistant: boolean; assistant_audience: string;
 };
 
 const EMPTY: FormState = {
     slug: '', name: '', description: '', description_i18n: {}, persona: '', avatar: '',
-    preset_id: '', questionnaire_types: [], language: ['*'], sort_order: '0', is_active: true, show_in_assistant: false,
+    preset_id: '', questionnaire_types: [], language: ['*'], sort_order: '0', is_active: true, show_in_assistant: false, assistant_audience: '',
 };
 
 export function CounselorsPanel() {
@@ -75,6 +76,7 @@ export function CounselorsPanel() {
             avatar: c.avatar || '', preset_id: c.preset_id != null ? String(c.preset_id) : '',
             questionnaire_types: c.questionnaire_types || [], language: Array.isArray(c.language) ? c.language : ['*'],
             sort_order: String(c.sort_order ?? 0), is_active: c.is_active, show_in_assistant: c.show_in_assistant || false,
+            assistant_audience: c.assistant_audience || '',
         });
         setTLang(uiLang);
         setEditingId(c.id);
@@ -145,6 +147,7 @@ export function CounselorsPanel() {
         questionnaire_types: form.questionnaire_types,
         language: form.language, sort_order: Number(form.sort_order) || 0,
         is_active: form.is_active, show_in_assistant: form.show_in_assistant,
+        assistant_audience: form.assistant_audience || null,
     });
 
     const save = async () => {
@@ -261,6 +264,18 @@ export function CounselorsPanel() {
                     <input type="checkbox" checked={form.show_in_assistant} onChange={(e) => setForm({ ...form, show_in_assistant: e.target.checked })} />
                     {t('admin.counselors.showInAssistant') || 'Mostra in assistente'}
                 </label>
+                {form.show_in_assistant && (
+                    <label className="flex items-center gap-2 text-sm text-slate-600">
+                        <span className="text-xs text-slate-500">
+                            {t('admin.counselors.assistantAudience') || 'Visibile a:'}
+                        </span>
+                        <select className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700" value={form.assistant_audience} onChange={(e) => setForm({ ...form, assistant_audience: e.target.value })}>
+                            <option value="">{t('admin.counselors.bothAudiences') || 'Entrambi'}</option>
+                            <option value="studente">{t('audience.studente') || 'Studente'}</option>
+                            <option value="docente">{t('audience.docente') || 'Docente'}</option>
+                        </select>
+                    </label>
+                )}
                 <button type="button" disabled={saving} onClick={() => void save()} className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
                     <Check className="h-4 w-4" />{t('admin.counselors.save')}
                 </button>
