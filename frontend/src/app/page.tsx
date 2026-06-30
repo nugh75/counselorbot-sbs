@@ -489,7 +489,7 @@ export default function Home() {
             {/* The selection screen owns its introduction to avoid repeating the page purpose. */}
             {/* method-select e manual-input gestiscono la loro "prima riga" */}
             {/* internamente (BackButton + ForwardButton), come strumenti/counselor. */}
-            {step !== 'intro' && step !== 'questionnaire-select' && step !== 'counselor-select' && step !== 'dashboard' && step !== 'interaction' && step !== 'method-select' && step !== 'manual-input' && (
+            {step !== 'intro' && step !== 'questionnaire-select' && step !== 'counselor-select' && step !== 'dashboard' && step !== 'interaction' && step !== 'method-select' && step !== 'manual-input' && step !== 'upload-input' && (
                 <PageHeader
                     title={getStepTitle()}
                     subtitle={getStepDescription()}
@@ -541,6 +541,7 @@ export default function Home() {
                         <PDFUploader
                             questionnaire={selectedQuestionnaire}
                             onUploadComplete={handleUploadComplete}
+                            onBack={goBack}
                         />
                     )}
 

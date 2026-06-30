@@ -5,10 +5,12 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
+import { BackButton } from '@/components/ui/BackButton';
 
 interface PDFUploaderProps {
     onUploadComplete: (scores: Record<string, number>, pdfToken?: string) => void;
     questionnaire: QuestionnaireConfig;
+    onBack?: () => void;
 }
 
 function isScoreMap(value: unknown): value is Record<string, number> {
@@ -16,7 +18,7 @@ function isScoreMap(value: unknown): value is Record<string, number> {
         && Object.values(value).every((score) => typeof score === 'number' && score >= 1 && score <= 9);
 }
 
-export function PDFUploader({ onUploadComplete, questionnaire }: PDFUploaderProps) {
+export function PDFUploader({ onUploadComplete, questionnaire, onBack }: PDFUploaderProps) {
     const { t } = useI18n();
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -97,7 +99,11 @@ export function PDFUploader({ onUploadComplete, questionnaire }: PDFUploaderProp
     };
 
     return (
-        <div className="w-full max-w-xl mx-auto">
+        <div className="w-full space-y-5 animate-fade-in-up">
+            <div className="flex items-center gap-3">
+                {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
+            </div>
+            <div className="w-full max-w-xl mx-auto">
             <div
                 onDragEnter={handleDrag}
                 onDragOver={handleDrag}
@@ -142,6 +148,7 @@ export function PDFUploader({ onUploadComplete, questionnaire }: PDFUploaderProp
             <p className="text-center text-xs text-slate-500 mt-4">
                 {t('pdf.support')}
             </p>
+            </div>
         </div>
     );
 }
