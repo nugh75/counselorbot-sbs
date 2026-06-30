@@ -62,6 +62,33 @@ COUNSELORBOT_LOCK_PATH = os.path.join(INDEX_DIR, ".counselorbot.build.lock")
 # Nomi pubblici delle collezioni (combaciano col toggle del frontend).
 COLLECTION_COMPETENZE = "competenzestrategiche"
 COLLECTION_COUNSELORBOT = "counselorbot"
+COLLECTION_FRAMEWORK = "framework"
+COLLECTION_QUESTIONARI = "questionari"
+
+# --- Percorsi per le nuove collezioni plain ---
+FRAMEWORK_DOCS_DIR = os.environ.get(
+    "FRAMEWORK_DOCS_DIR", os.path.join(_REPO_ROOT, "docs", "fonti", "competenze-strategiche")
+)
+QUESTIONARI_DOCS_DIR = os.environ.get(
+    "QUESTIONARI_DOCS_DIR", os.path.join(_REPO_ROOT, "docs", "questionari")
+)
+VALIDAZIONE_DOCS_DIR = os.environ.get(
+    "VALIDAZIONE_DOCS_DIR", os.path.join(_REPO_ROOT, "docs", "validazione")
+)
+
+# Indici separati per le nuove collezioni
+FRAMEWORK_INDEX_PATH = os.path.join(INDEX_DIR, "framework_rag_index.json")
+FRAMEWORK_EMB_PATH = os.path.join(INDEX_DIR, "framework_embeddings.npy")
+FRAMEWORK_CACHE_PATH = os.path.join(INDEX_DIR, "framework_embed_cache.npz")
+FRAMEWORK_LOCK_PATH = os.path.join(INDEX_DIR, ".framework.build.lock")
+
+QUESTIONARI_INDEX_PATH = os.path.join(INDEX_DIR, "questionari_rag_index.json")
+QUESTIONARI_EMB_PATH = os.path.join(INDEX_DIR, "questionari_embeddings.npy")
+QUESTIONARI_CACHE_PATH = os.path.join(INDEX_DIR, "questionari_embed_cache.npz")
+QUESTIONARI_LOCK_PATH = os.path.join(INDEX_DIR, ".questionari.build.lock")
+
+# Le guide che definiscono il progetto competenzestrategiche (solo queste, niente altro).
+_GUIDE_STEMS = {"guida_2019", "guida_2023"}
 
 # Sorgenti escluse dal corpus (relative a docs/): materiali interni/di sviluppo,
 # non contenuti del sito. Le mail organizzative (es. mail-olle) restano fuori.
@@ -585,6 +612,118 @@ def _plain_signature(docs_dir: str) -> dict[str, str]:
     return sig
 
 
+def _collect_guides_only() -> tuple[list[dict], dict[str, str]]:
+    """Colleziona solo le guide PDF del progetto competenzestrategiche.it."""
+    return _collect_filtered_plain(
+        FRAMEWORK_DOCS_DIR,
+        include=lambda stem, _rel: stem.lower() in _GUIDE_STEMS,
+    )
+
+
+def _guides_signature() -> dict[str, str]:
+    return _filtered_plain_signature(
+        FRAMEWORK_DOCS_DIR,
+        include=lambda stem, _rel: stem.lower() in _GUIDE_STEMS,
+    )
+
+
+def _collect_framework() -> tuple[list[dict], dict[str, str]]:
+    """Tutti i PDF/markdown teorici tranne le guide del progetto."""
+    return _collect_filtered_plain(
+        FRAMEWORK_DOCS_DIR,
+        include=lambda stem, _rel: stem.lower() not in _GUIDE_STEMS,
+    )
+
+
+def _framework_signature() -> dict[str, str]:
+    return _filtered_plain_signature(
+        FRAMEWORK_DOCS_DIR,
+        include=lambda stem, _rel: stem.lower() not in _GUIDE_STEMS,
+    )
+
+
+def _collect_counselorbot_plus_validazione() -> tuple[list[dict], dict[str, str]]:
+    """Collezione counselorbot: docs-counselorbot/ + docs/validazione/."""
+    chunks_a, sig_a = _collect_plain_corpus(COUNSELORBOT_DOCS_DIR)
+    chunks_b, sig_b = _collect_plain_corpus(VALIDAZIONE_DOCS_DIR)
+    sig = {**sig_a, **sig_b}
+    return chunks_a + chunks_b, sig
+
+
+def _counselorbot_validazione_signature() -> dict[str, str]:
+    sig_a = _plain_signature(COUNSELORBOT_DOCS_DIR)
+    sig_b = _plain_signature(VALIDAZIONE_DOCS_DIR)
+    return {**sig_a, **sig_b}
+
+
+def _collect_filtered_plain(docs_dir: str, include) -> tuple[list[dict], dict[str, str]]:
+    """Come _collect_plain_corpus ma filtra per nome file (stem, relpath)."""
+    chunks: list[dict] = []
+    signature: dict[str, str] = {}
+    if not os.path.isdir(docs_dir):
+        logger.warning("Cartella plain filtrata assente: %s", docs_dir)
+        signature["__normalizer_version__"] = str(_NORMALIZER_VERSION)
+        return chunks, signature
+    for root, _dirs, files in os.walk(docs_dir):
+        for fn in sorted(files):
+            low = fn.lower()
+            abspath = os.path.join(root, fn)
+            relpath = os.path.relpath(abspath, docs_dir).replace("\\", "/")
+            stem = os.path.splitext(fn)[0]
+            if not include(stem, relpath):
+                continue
+            if low.endswith(".md"):
+                try:
+                    with open(abspath, encoding="utf-8") as f:
+                        text = _normalize_markdown(f.read())
+                except Exception as e:
+                    logger.warning("Impossibile leggere %s: %s", abspath, e)
+                    continue
+                try:
+                    signature[relpath] = str(int(os.path.getmtime(abspath)))
+                except OSError:
+                    signature[relpath] = "md"
+            elif low.endswith(".pdf"):
+                try:
+                    st = os.stat(abspath)
+                    signature[relpath] = f"{st.st_size}:{int(st.st_mtime)}"
+                except OSError:
+                    signature[relpath] = "pdf"
+                raw = _extract_pdf_text(abspath)
+                if not raw.strip():
+                    continue
+                text = _normalize_markdown(raw)
+            else:
+                continue
+            title = _first_heading(text) or stem.replace("_", " ")
+            for i, chunk_text in enumerate(_chunk_markdown(text)):
+                chunks.append({"id": f"{relpath}#{i}", "source": relpath, "title": title, "text": chunk_text})
+    signature["__normalizer_version__"] = str(_NORMALIZER_VERSION)
+    return chunks, signature
+
+
+def _filtered_plain_signature(docs_dir: str, include) -> dict[str, str]:
+    """Firma metadati per collezione plain filtrata."""
+    sig: dict[str, str] = {}
+    if os.path.isdir(docs_dir):
+        for root, _dirs, files in os.walk(docs_dir):
+            for fn in sorted(files):
+                low = fn.lower()
+                if not (low.endswith(".md") or low.endswith(".pdf")):
+                    continue
+                relpath = os.path.relpath(os.path.join(root, fn), docs_dir).replace("\\", "/")
+                stem = os.path.splitext(fn)[0]
+                if not include(stem, relpath):
+                    continue
+                try:
+                    st = os.stat(os.path.join(root, fn))
+                    sig[relpath] = f"{st.st_size}:{int(st.st_mtime)}" if low.endswith(".pdf") else str(int(st.st_mtime))
+                except OSError:
+                    sig[relpath] = "f"
+    sig["__normalizer_version__"] = str(_NORMALIZER_VERSION)
+    return sig
+
+
 class _EmbeddingCache:
     """Cache hash(testo+modello)→vettore, persistita su .npz. Evita di ri-embeddare
     i chunk invariati a ogni rebuild (con migliaia di chunk fa la differenza)."""
@@ -920,28 +1059,61 @@ class SiteRagIndex:
         }
 
 
-# Collezione di default: documenti di competenzestrategiche.it (pipeline graphify + grafo).
+# Collezione: solo le guide ufficiali del progetto competenzestrategiche.it.
 site_rag_index = SiteRagIndex(
-    docs_dir=DOCS_DIR, index_path=INDEX_PATH, emb_path=EMB_PATH,
+    docs_dir=FRAMEWORK_DOCS_DIR,
+    index_path=INDEX_PATH, emb_path=EMB_PATH,
     cache_path=CACHE_PATH, lock_path=LOCK_PATH,
-    collector=_collect_corpus, graph_loader=_load_graph,
-    signature_fn=_corpus_signature, mode="graphify",
+    collector=_collect_guides_only,
+    graph_loader=_empty_graph,
+    signature_fn=_guides_signature,
+    mode="plain",
 )
 
-# Collezione separata: documenti specifici di CounselorBot (cartella plain, niente grafo).
+# Collezione separata: documenti specifici di CounselorBot (piattaforma + validazione).
 counselorbot_rag_index = SiteRagIndex(
-    docs_dir=COUNSELORBOT_DOCS_DIR, index_path=COUNSELORBOT_INDEX_PATH,
-    emb_path=COUNSELORBOT_EMB_PATH, cache_path=COUNSELORBOT_CACHE_PATH,
+    docs_dir=COUNSELORBOT_DOCS_DIR,
+    index_path=COUNSELORBOT_INDEX_PATH,
+    emb_path=COUNSELORBOT_EMB_PATH,
+    cache_path=COUNSELORBOT_CACHE_PATH,
     lock_path=COUNSELORBOT_LOCK_PATH,
-    collector=lambda: _collect_plain_corpus(COUNSELORBOT_DOCS_DIR),
+    collector=_collect_counselorbot_plus_validazione,
     graph_loader=_empty_graph,
-    signature_fn=lambda: _plain_signature(COUNSELORBOT_DOCS_DIR),
+    signature_fn=_counselorbot_validazione_signature,
+    mode="plain",
+)
+
+# Nuova collezione: framework teorico e articoli di ricerca.
+framework_rag_index = SiteRagIndex(
+    docs_dir=FRAMEWORK_DOCS_DIR,
+    index_path=FRAMEWORK_INDEX_PATH,
+    emb_path=FRAMEWORK_EMB_PATH,
+    cache_path=FRAMEWORK_CACHE_PATH,
+    lock_path=FRAMEWORK_LOCK_PATH,
+    collector=_collect_framework,
+    graph_loader=_empty_graph,
+    signature_fn=_framework_signature,
+    mode="plain",
+)
+
+# Nuova collezione: questionari e strumenti.
+questionari_rag_index = SiteRagIndex(
+    docs_dir=QUESTIONARI_DOCS_DIR,
+    index_path=QUESTIONARI_INDEX_PATH,
+    emb_path=QUESTIONARI_EMB_PATH,
+    cache_path=QUESTIONARI_CACHE_PATH,
+    lock_path=QUESTIONARI_LOCK_PATH,
+    collector=lambda: _collect_plain_corpus(QUESTIONARI_DOCS_DIR),
+    graph_loader=_empty_graph,
+    signature_fn=lambda: _plain_signature(QUESTIONARI_DOCS_DIR),
     mode="plain",
 )
 
 RAG_COLLECTIONS = {
     COLLECTION_COMPETENZE: site_rag_index,
     COLLECTION_COUNSELORBOT: counselorbot_rag_index,
+    COLLECTION_FRAMEWORK: framework_rag_index,
+    COLLECTION_QUESTIONARI: questionari_rag_index,
 }
 
 
@@ -1011,9 +1183,19 @@ def get_document_preview(source: str, collection: str = COLLECTION_COMPETENZE):
     - None                          se non anteprimabile.
     """
     if collection == COLLECTION_COUNSELORBOT:
-        return _plain_document_preview(source, COUNSELORBOT_DOCS_DIR)
+        # Cerca prima in docs-counselorbot, poi in validazione
+        preview = _plain_document_preview(source, COUNSELORBOT_DOCS_DIR)
+        if preview:
+            return preview
+        return _plain_document_preview(source, VALIDAZIONE_DOCS_DIR)
+    if collection == COLLECTION_FRAMEWORK:
+        return _plain_document_preview(source, FRAMEWORK_DOCS_DIR)
+    if collection == COLLECTION_QUESTIONARI:
+        return _plain_document_preview(source, QUESTIONARI_DOCS_DIR)
+    if collection == COLLECTION_COMPETENZE:
+        return _plain_document_preview(source, FRAMEWORK_DOCS_DIR)  # guide sono dentro fonti/
     low = source.lower()
-    # PDF originale → anteprima diretta
+    # PDF originale -> anteprima diretta
     if low.endswith(".pdf"):
         p = _safe_doc_abspath(source)
         if p and os.path.isfile(p):
@@ -1025,7 +1207,7 @@ def get_document_preview(source: str, collection: str = COLLECTION_COMPETENZE):
             text = _normalize_markdown(f.read())
         title = _first_heading(text) or os.path.splitext(os.path.basename(source))[0].replace("_", " ")
         return ("markdown", text, title)
-    # Il file sorgente è già markdown
+    # Il file sorgente e' gia' markdown
     if low.endswith(".md"):
         p = _safe_doc_abspath(source)
         if p and os.path.isfile(p):
