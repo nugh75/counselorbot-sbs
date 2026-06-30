@@ -261,7 +261,16 @@ export default function Home() {
         setStep(scores !== null ? 'dashboard' : 'method-select');
     };
 
-    const handleMethodSelect = (method: 'manual' | 'upload') => {
+    const handleMethodSelect = (method: 'manual' | 'upload' | 'resume') => {
+        if (method === 'resume') {
+            const profiles = getCompletedProfiles();
+            const profile = profiles.find((p) => p.questionnaireType === selectedQuestionnaire?.id);
+            if (profile && profile.scores && Object.keys(profile.scores).length) {
+                setScores(profile.scores);
+                setStep('dashboard');
+                return;
+            }
+        }
         setStep(method === 'manual' ? 'manual-input' : 'upload-input');
     };
 
@@ -528,7 +537,15 @@ export default function Home() {
 
                     {/* Step: Input Method Selection */}
                     {step === 'method-select' && selectedQuestionnaire && (
-                        <InputMethodSelector onSelect={handleMethodSelect} onBack={goBack} questionnaire={selectedQuestionnaire} />
+                        <InputMethodSelector
+                            onSelect={handleMethodSelect}
+                            onBack={goBack}
+                            questionnaire={selectedQuestionnaire}
+                            hasPreviousData={getCompletedProfiles().some(
+                                (p) => p.questionnaireType === selectedQuestionnaire.id
+                                    && p.scores && Object.keys(p.scores).length > 0,
+                            )}
+                        />
                     )}
 
                     {/* Step: Manual Input */}

@@ -13,12 +13,13 @@ import { cn } from '@/lib/utils';
 // si clicca la card per evidenziarla (badge check), poi si avanza con la
 // freccia in alto e si torna indietro con la freccia. Nessun testo
 // introduttivo: il FlowStepper in alto descrive già la fase.
-type Method = 'manual' | 'upload';
+type Method = 'manual' | 'upload' | 'resume';
 
 interface InputMethodSelectorProps {
     onSelect: (method: Method) => void;
     onBack?: () => void;
     questionnaire?: QuestionnaireConfig;
+    hasPreviousData?: boolean;
 }
 
 interface Option {
@@ -28,7 +29,7 @@ interface Option {
     badge?: string;
 }
 
-export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMethodSelectorProps) {
+export function InputMethodSelector({ onSelect, onBack, questionnaire, hasPreviousData = false }: InputMethodSelectorProps) {
     const { t } = useI18n();
     const supportsProfileUpload = questionnaire
         ? ['QSA', 'QSAr', 'QPCS', 'QPCC', 'QAP'].includes(questionnaire.id)
@@ -45,6 +46,12 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
             title: t('method.upload.title'),
             desc: t('method.upload.desc'),
             badge: t('method.upload.badge'),
+        }] : []),
+        ...(hasPreviousData ? [{
+            key: 'resume' as Method,
+            title: t('method.resume.title'),
+            desc: t('method.resume.desc'),
+            badge: t('method.resume.badge'),
         }] : []),
     ];
 
