@@ -632,6 +632,56 @@ COUNSELORBOT_CHAT_CONFIG_DEFINITIONS: List[Dict[str, str]] = [
     },
 ]
 
+# --- Contesti per le nuove collezioni RAG (framework teorico e questionari) ---
+
+DEFAULT_FRAMEWORK_CHAT_CONTEXT = (
+    "FRAMEWORK AND RESEARCH CONTEXT (basic information, always valid):\n"
+    "- This knowledge base contains theoretical articles, research papers, conference "
+    "proceedings, and scholarly publications about STRATEGIC COMPETENCES, self-regulated "
+    "learning, career construction, soft skills, orientation, and related constructs.\n"
+    "- Authors include Pellerey, Margottini, Ottone, Grządziel, Epifani, and collaborators "
+    "from CNOS-FAP, Università Pontificia Salesiana, and Roma Tre.\n"
+    "- Answer about THEORETICAL FOUNDATIONS, research findings, methodological frameworks, "
+    "and the scientific background of the instruments.\n"
+    "- Do NOT answer about the practical administration of questionnaires (that belongs to "
+    "the 'Questionari e strumenti' knowledge base). Do NOT answer about how the CounselorBot "
+    "platform works (that belongs to the 'CounselorBot' knowledge base).\n"
+    "- If the question is about the guides for using competenzestrategiche.it, refer to the "
+    "'Competenze strategiche' knowledge base."
+)
+
+DEFAULT_QUESTIONARI_CHAT_CONTEXT = (
+    "QUESTIONNAIRES AND INSTRUMENTS CONTEXT (basic information, always valid):\n"
+    "- This knowledge base contains the QUESTIONNAIRES and INSTRUMENTS: QSA, QSAr, ZTPI, "
+    "QPCS, QPCC, QAP — their items, factor structures, scoring rules, and normative data.\n"
+    "- Answer about HOW THE QUESTIONNAIRES WORK: items, scales, factor descriptions, "
+    "reverse scoring, interpretation of results, stanine bands, profile structure.\n"
+    "- Do NOT answer about the theoretical foundations of strategic competences (that "
+    "belongs to the 'Framework e ricerche' knowledge base). Do NOT answer about how the "
+    "CounselorBot platform works (that belongs to the 'CounselorBot' knowledge base).\n"
+    "- Do NOT invent items or factors not present in the materials."
+)
+
+FRAMEWORK_CHAT_CONFIG_DEFINITIONS: List[Dict[str, str]] = [
+    {
+        "key": "framework_chat_context",
+        "label": "Framework Chat - Contesto (base, sempre iniettato)",
+        "description": "Verita' di base sulla collezione Framework: articoli teorici, ricerche, "
+                       "pubblicazioni accademiche su competenze strategiche e costrutti collegati",
+        "default": DEFAULT_FRAMEWORK_CHAT_CONTEXT,
+    },
+]
+
+QUESTIONARI_CHAT_CONFIG_DEFINITIONS: List[Dict[str, str]] = [
+    {
+        "key": "questionari_chat_context",
+        "label": "Questionari Chat - Contesto (base, sempre iniettato)",
+        "description": "Verita' di base sulla collezione Questionari: strumenti QSA/QSAr/ZTPI/QPCS/QPCC/QAP, "
+                       "item, fattori, scoring, interpretazione",
+        "default": DEFAULT_QUESTIONARI_CHAT_CONTEXT,
+    },
+]
+
 # --- pQBL (pure Question-Based Learning) da PDF — metodo Jemstedt & Bälter ---
 # Lo studente carica un PDF; l'AI estrae skill e genera MCQ con feedback
 # formativo per ogni alternativa. Vedi backend/pqbl_generator.py.
@@ -1042,6 +1092,8 @@ ALL_CONFIG_TEXT_DEFINITIONS: List[Dict[str, str]] = (
     + GUIDED_FIXED_PHASE_LABEL_DEFINITIONS
     + SITE_CHAT_CONFIG_DEFINITIONS
     + COUNSELORBOT_CHAT_CONFIG_DEFINITIONS
+    + FRAMEWORK_CHAT_CONFIG_DEFINITIONS
+    + QUESTIONARI_CHAT_CONFIG_DEFINITIONS
     + PQBL_CONFIG_DEFINITIONS
 )
 

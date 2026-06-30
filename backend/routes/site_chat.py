@@ -36,6 +36,8 @@ from ..prompt_config import (
     DEFAULT_SITE_CHAT_PLATFORM_CONTEXT,
     DEFAULT_SITE_CHAT_KNOWLEDGE_CARD,
     DEFAULT_COUNSELORBOT_CHAT_CONTEXT,
+    DEFAULT_FRAMEWORK_CHAT_CONTEXT,
+    DEFAULT_QUESTIONARI_CHAT_CONTEXT,
 )
 from ..rag_index import (
     site_rag_index,
@@ -45,6 +47,8 @@ from ..rag_index import (
     DEFAULT_TOP_K,
     COLLECTION_COMPETENZE,
     COLLECTION_COUNSELORBOT,
+    COLLECTION_FRAMEWORK,
+    COLLECTION_QUESTIONARI,
 )
 
 router = APIRouter()
@@ -93,7 +97,8 @@ _AUDIENCE_DEFAULT_PROMPT_COUNSELORBOT = {
 
 
 def _normalize_collection(collection: str | None) -> str:
-    return COLLECTION_COUNSELORBOT if collection == COLLECTION_COUNSELORBOT else COLLECTION_COMPETENZE
+    valid = {COLLECTION_COUNSELORBOT, COLLECTION_FRAMEWORK, COLLECTION_QUESTIONARI, COLLECTION_COMPETENZE}
+    return collection if collection in valid else COLLECTION_COMPETENZE
 
 
 def _resolve_counselor(db, counselor_id):
@@ -157,14 +162,23 @@ def _resolve_site_prompt(ai_service: AIService, audience: str, collection: str =
     if collection == COLLECTION_COUNSELORBOT:
         key = COUNSELORBOT_CHAT_MODE_TO_PROMPT_KEY[audience]
         prompt = ai_service.config.get(key, _AUDIENCE_DEFAULT_PROMPT_COUNSELORBOT[audience])
-        # Per CounselorBot: contesto base della piattaforma + scheda strumenti canonica.
         ctx = ai_service.config.get("counselorbot_chat_context", DEFAULT_COUNSELORBOT_CHAT_CONTEXT)
+        card = ai_service.config.get("site_chat_knowledge_card", DEFAULT_SITE_CHAT_KNOWLEDGE_CARD)
+    elif collection == COLLECTION_FRAMEWORK:
+        key = SITE_CHAT_MODE_TO_PROMPT_KEY[audience]
+        prompt = ai_service.config.get(key, _AUDIENCE_DEFAULT_PROMPT[audience])
+        ctx = ai_service.config.get("framework_chat_context", DEFAULT_FRAMEWORK_CHAT_CONTEXT)
+        card = ""
+    elif collection == COLLECTION_QUESTIONARI:
+        key = SITE_CHAT_MODE_TO_PROMPT_KEY[audience]
+        prompt = ai_service.config.get(key, _AUDIENCE_DEFAULT_PROMPT[audience])
+        ctx = ai_service.config.get("questionari_chat_context", DEFAULT_QUESTIONARI_CHAT_CONTEXT)
+        card = ""
     else:
         key = SITE_CHAT_MODE_TO_PROMPT_KEY[audience]
         prompt = ai_service.config.get(key, _AUDIENCE_DEFAULT_PROMPT[audience])
-        # Verità di base + scheda strumenti canonica, in testa al prompt (indipendenti dal RAG).
         ctx = ai_service.config.get("site_chat_platform_context", DEFAULT_SITE_CHAT_PLATFORM_CONTEXT)
-    card = ai_service.config.get("site_chat_knowledge_card", DEFAULT_SITE_CHAT_KNOWLEDGE_CARD)
+        card = ai_service.config.get("site_chat_knowledge_card", DEFAULT_SITE_CHAT_KNOWLEDGE_CARD)
     preamble = "\n\n".join(p.strip() for p in (ctx, card) if p and p.strip())
     if preamble:
         prompt = f"{preamble}\n\n{prompt}"

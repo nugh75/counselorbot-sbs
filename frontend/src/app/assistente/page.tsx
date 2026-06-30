@@ -26,7 +26,7 @@ const mdComponents: Components = {
 
 type Audience = 'studente' | 'docente';
 // Base di conoscenza selezionabile: contenuti del progetto vs piattaforma CounselorBot.
-type Collection = 'competenzestrategiche' | 'counselorbot';
+type Collection = 'competenzestrategiche' | 'counselorbot' | 'framework' | 'questionari';
 
 interface Msg {
     role: 'user' | 'assistant';
@@ -64,18 +64,32 @@ const TOPIC_ICONS: Record<string, LucideIcon> = {
     cb_console: BookOpen,
     cb_counselor: ClipboardList,
     cb_guida: GraduationCap,
+    fw_teoria: Library,
+    fw_articoli: BookOpen,
+    fw_autori: Users,
+    q_strumenti: ClipboardList,
+    q_fattori: Search,
+    q_scoring: Award,
 };
 // Matrice topic per (collection, audience). Le(collection) definiscono i
 // set di schede; gli id sono univoci cosi' ognuno ha titolo/body/prompt
 // propri nella i18n (studente e docente hanno argomenti diversi).
 const TOPICS_BY_COLLECTION_AUDIENCE: Record<Collection, Record<Audience, TopicId[]>> = {
     competenzestrategiche: {
-        studente: ['cs_strumenti', 'cs_risultati', 'cs_approfondire'],
-        docente: ['cs_metodologia', 'cs_validazione', 'cs_didattica', 'cs_materiali'],
+        studente: ['cs_strumenti'],
+        docente: ['cs_metodologia'],
     },
     counselorbot: {
         studente: ['cb_piattaforma', 'cb_strumenti', 'cb_percorso'],
         docente: ['cb_console', 'cb_counselor', 'cb_guida'],
+    },
+    framework: {
+        studente: ['fw_teoria'],
+        docente: ['fw_teoria', 'fw_articoli', 'fw_autori'],
+    },
+    questionari: {
+        studente: ['q_strumenti', 'q_fattori'],
+        docente: ['q_strumenti', 'q_fattori', 'q_scoring'],
     },
 };
 const firstTopic = (c: Collection, a: Audience): TopicId => TOPICS_BY_COLLECTION_AUDIENCE[c][a][0];
@@ -190,9 +204,10 @@ export default function AssistentePage() {
     const prepareQuestion = () => {
         // Preferisci le domande dal DB (gestite da admin); fallback alle varianti i18n.
         const fromDb = dbQuestions[selectedTopic.id] ?? [];
+        const promptText = selectedTopic.prompt || '';
         const variants = fromDb.length > 0
             ? fromDb
-            : selectedTopic.prompt.split('|||').map((s) => s.trim()).filter(Boolean);
+            : promptText.split('|||').map((s: string) => s.trim()).filter(Boolean);
         if (variants.length === 0) return;
         const i = questionVariantIdx.current[selectedTopic.id] ?? 0;
         setInput(variants[i % variants.length]);
@@ -365,13 +380,13 @@ export default function AssistentePage() {
                         </div>
                     )}
 
-                    {/* Selettore base di conoscenza: progetto vs piattaforma CounselorBot. */}
+                    {/* Selettore base di conoscenza: 4 collezioni RAG. */}
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1.5">
                             {t('assistant.collection.label')}
                         </p>
                         <div className="grid grid-cols-2 gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
-                            {(['competenzestrategiche', 'counselorbot'] as Collection[]).map((c) => (
+                            {(['competenzestrategiche', 'framework', 'questionari', 'counselorbot'] as Collection[]).map((c) => (
                                 <button
                                     key={c}
                                     type="button"
