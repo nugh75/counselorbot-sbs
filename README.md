@@ -1,173 +1,140 @@
-# CounselorBot
+# CounselorBot SBS
 
-CounselorBot è un'applicazione web AI-powered progettata per aiutare gli studenti ad analizzare le loro strategie di apprendimento (QSA).
+CounselorBot SBS is an AI-assisted learning and career guidance web app. Students complete or discuss educational instruments, review their profile with an AI counselor, build a learner profile and portfolio, and can use a PDF-based pQBL learning flow. Administrators manage instruments, prompts, AI models, counselors, logs, validation exports, benchmark runs, and training datasets.
 
-## Documentazione
+## Documentation
 
-La documentazione stabile del progetto vive in [`docs/`](docs/). L'indice principale è [`docs/README.md`](docs/README.md).
+Stable project documentation lives in [`docs/`](docs/). Start from [`docs/README.md`](docs/README.md).
 
-## Prerequisiti
+## Stack
 
-*   **Python** 3.10 o superiore
-*   **Node.js** 18 o superiore
-*   **npm** (o yarn/pnpm)
+- **Backend**: FastAPI, SQLAlchemy, PostgreSQL, Uvicorn
+- **Frontend**: Next.js App Router, React, TypeScript, Tailwind CSS
+- **Runtime**: Docker Compose, PostgreSQL, ai4auth forward-auth, optional local/remote AI providers
+- **AI providers**: OpenAI, Anthropic, Gemini, Mistral, OpenRouter, Ollama, llama.cpp-compatible endpoints
 
-## Installazione e Avvio
+## Main features
 
-Il progetto è diviso in due parti: **Backend** (FastAPI) e **Frontend** (Next.js). È necessario avviare entrambi per far funzionare l'applicazione.
+- Guided chat for QSA, QSAr, ZTPI, Savickas, QPCS, QPCC, and QAP.
+- Manual scoring and QSA PDF/image upload assisted by local OCR/parser models.
+- Student booklet PDFs, learner profile, reflections, portfolio items, and certified strategies.
+- Public site assistant with RAG over project documentation and strategic-competence sources.
+- pQBL from uploaded PDFs: question generation, guided practice, summaries, and final test.
+- Admin console for config, prompts, guided steps, suggested questions, counselors, model presets, logs, costs, benchmarks, validation exports, instruments, administration plans, research contacts, and QSA training datasets.
 
-### 1. Backend Setup
+## Repository layout
 
-1.  Spostati nella cartella `backend`:
-    ```bash
-    cd backend
-    ```
-
-2.  Crea un virtual environment (se non esiste già):
-    ```bash
-    python3 -m venv venv
-    ```
-
-3.  Attiva il virtual environment:
-    *   **Mac/Linux**: `source venv/bin/activate`
-    *   **Windows**: `venv\Scripts\activate`
-
-4.  Installa le dipendenze:
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-5.  Torna nella root del progetto e avvia il server backend:
-    ```bash
-    cd ..
-    uvicorn backend.main:app --reload --port 8000
-    ```
-    Il backend sarà attivo su `http://localhost:8000`.
-
-### 2. Frontend Setup
-
-1.  Apri un nuovo terminale e spostati nella cartella `frontend`:
-    ```bash
-    cd frontend
-    ```
-
-2.  Installa le dipendenze:
-    ```bash
-    npm install
-    ```
-
-3.  Avvia il server di sviluppo:
-    ```bash
-    npm run dev
-    ```
-    Il frontend sarà attivo su `http://localhost:3000`.
-
-## Accesso all'Applicazione
-
-*   **Home Page**: [http://localhost:3000](http://localhost:3000)
-*   **Login**: [http://localhost:3000/login](http://localhost:3000/login)
-*   **Admin Dashboard**: [http://localhost:3000/admin](http://localhost:3000/admin)
-
-### Autenticazione
-
-In produzione l'identita' viene fornita da **ai4auth** tramite il reverse proxy. In sviluppo locale, senza gli header forward-auth o una sessione ai4auth verificabile, l'applicazione opera come utente anonimo e le funzioni amministrative non sono disponibili.
-
-## Funzionalità Principali
-
-*   **Analisi QSA**: Inserimento manuale o caricamento assistito da AI (PDF/Foto).
-*   **Dashboard Admin**: Configurazione delle API Key (OpenAI, Anthropic, Gemini, ecc.) e gestione dei Prompt di sistema.
-*   **Chat AI**: Consulente virtuale basato sui punteggi QSA dell'utente.
-
----
-
-## 🐳 Docker
-
-L'applicazione può essere avviata con Docker Compose per un setup rapido.
-
-### Prerequisiti Docker
-- Docker e Docker Compose installati
-
-### Avvio Rapido
-
-```bash
-docker compose up --build
+```text
+backend/                 FastAPI app, routes, models, AI dispatch, scoring, tests
+frontend/                Next.js app, UI components, i18n, SSE route for chat streaming
+docs/                    Stable project documentation and research materials
+docs-counselorbot/       Documentation corpus used by the site assistant
+knowledge/               Approved strategy knowledge base used by chat
+scripts/                 Prompt-testing helper script used by Makefile
+training_datasets/       Dataset artifacts and exports
+uploads/                 Runtime upload storage mounted in Docker
+session_memory/          Runtime chat memory mounted in Docker
 ```
 
-Questo comando:
-1. Costruisce le immagini per frontend e backend
-2. Avvia entrambi i servizi
-3. Avvia PostgreSQL e conserva i dati nel volume `postgres_data`
+## Configuration
 
-Il compose di produzione collega inoltre frontend e backend alle reti Docker esterne `proxy-network` e `ai4educ-console_default`, necessarie per proxy e autenticazione.
+1. Copy or create a `.env` file from [`.env.example`](.env.example).
+2. Set PostgreSQL credentials and any AI provider keys you need.
+3. In production, ai4auth injects `Remote-*` identity headers through the reverse proxy. Admin access is controlled by admin groups.
+4. API keys can be managed from the admin panel, but environment variables take precedence at runtime.
 
-### Accesso
-- **Frontend**: http://localhost:3000
-- **PostgreSQL**: localhost:5435
+Do not commit `.env` files, API keys, production uploads, or database dumps.
 
-### Configurazione API Keys
-Le chiavi API si configurano dal pannello admin:
-Le chiavi si configurano dal pannello admin dopo autenticazione ai4auth, oppure tramite le variabili in `.env` (che hanno precedenza sulla configurazione salvata nel database).
+## Docker setup
 
-### Comandi Utili
+The production-oriented setup is Docker Compose. Code is baked into the backend and frontend images, so application changes require a rebuild.
 
 ```bash
-# Avvia in background
-docker compose up -d
-
-# Ferma i container
-docker compose down
-
-# Ricostruisci dopo modifiche al codice
-docker compose up --build
-
-# Visualizza i log
-docker compose logs -f
+docker compose up -d --build
+docker compose ps
+docker compose logs -f backend
 ```
 
-### Utility Operative
+Services:
+
+- Backend: exposed inside Docker on `8000`, host-only on `127.0.0.1:8088`
+- Frontend: host-only on `127.0.0.1:3000`
+- PostgreSQL: host port `5435`
+
+The compose file also joins the external `proxy-network` and `ai4educ-console_default` networks for reverse proxy and ai4auth integration.
+
+## Local development
+
+Backend:
 
 ```bash
-# Controllo read-only delle sequence PostgreSQL
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cd ..
+uvicorn backend.main:app --reload --port 8000
+```
+
+Frontend:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open <http://localhost:3000>. Without ai4auth headers or a valid ai4auth session, the app runs as an anonymous user and admin functionality is unavailable.
+
+## Useful commands
+
+```bash
+# Frontend checks
+cd frontend && npm run lint
+cd frontend && npm run build
+
+# Backend smoke test inside Docker
+docker exec counselorbot_backend python -m backend.tests.test_smoke
+
+# Database utilities from the host
 python check_sequences.py
-
-# Verifica dell'import legacy SQLite -> PostgreSQL senza scritture
 python migrate_data.py --dry-run
-
-# Import legacy effettivo, dopo aver verificato il dry-run
 python migrate_data.py
 
-# Reinstalla soltanto la configurazione Nginx Proxy Manager
-./update_nginx.sh
-
-# Build, avvio Compose e aggiornamento Nginx
+# Deployment helpers
 ./deploy.sh
+./update_nginx.sh
 ```
 
-Le utility database leggono `POSTGRES_HOST_PORT` da `.env`; con il compose fornito il valore host e' `5435`.
+## Prompt testing
 
-### Note
-- Nel compose il database applicativo e' PostgreSQL; `counselorbot.db` resta il fallback SQLite per l'avvio locale senza `DATABASE_URL` e per eventuali migrazioni legacy.
-- Il frontend espone `127.0.0.1:3000`; il backend resta accessibile all'interno delle reti Docker e tramite proxy.
-
-## Testing dei prompt (make)
-
-Target `make` per ispezionare l'envelope (system prompt + messaggio) di un counselor,
-scegliendo questionario e passo. Eseguono il path reale di prompt-audit dentro il
-container backend (`scripts/prompt_test.py`); la modalita' `live` chiama il LLM e
-salva la riga nei `logs` con l'envelope completo.
+The Makefile runs the real prompt-audit path inside the backend container.
 
 ```bash
-make help                                  # elenco target e variabili
-make prompt-steps Q=QSA                     # step disponibili per un questionario
-make prompt-dry  Q=QSA STEP=intro           # solo envelope (no LLM, no log)
-make prompt-test Q=QSA STEP=intro           # live: chiama il LLM e salva il log
+make help
+make prompt-steps Q=QSA
+make prompt-dry  Q=QSA STEP=intro
+make prompt-test Q=QSA STEP=intro
 make prompt-test Q=QSAr STEP=qsar-cognitive STUDENT=barbaraambu
-make prompt-log  ID=<log id>                # dump dell'envelope salvato
+make prompt-log  ID=<log id>
 ```
 
-Variabili (default): `Q=QSA STEP=intro STUDENT=admin COUNSELOR=7 RESP_LANG=it KNOWLEDGE=true`.
-`COUNSELOR=7` e' Nadia (ollama locale). Per avere l'envelope nei log serve il
-full-prompt-logging attivo: `make prompt-log-on` (config DB `log_full_prompt`, gia'
-attiva di default), `make prompt-log-off` per disattivarlo.
+Defaults: `Q=QSA STEP=intro STUDENT=admin COUNSELOR=7 RESP_LANG=it KNOWLEDGE=true`.
 
-Dettagli e tabella completa: [docs/make-prompt-testing.md](docs/make-prompt-testing.md).
+More details: [`docs/make-prompt-testing.md`](docs/make-prompt-testing.md).
+
+## API overview
+
+Most frontend requests go through the Next.js rewrite `/api/:path* -> http://backend:8000/:path*`. Streaming chat uses the filesystem route `frontend/src/app/api/chat/stream/route.ts` to avoid rewrite buffering.
+
+Main backend route groups:
+
+- `/auth/me`
+- `/chat`, `/chat/stream`, `/chat/message`, `/tts`
+- `/qsa/guided-ui-texts`, `/qsa/audit`, `/qsa/upload`
+- `/survey`, `/questionnaire-result`, `/instruments/{code}/score`, `/instruments/{code}/rules`
+- `/user/learner-profile`, `/user/portfolio`, `/user/student-booklets`, `/user/certified-strategies`
+- `/site-chat/*`
+- `/pqbl/*`
+- `/opencode/*`
+- `/admin/*`
