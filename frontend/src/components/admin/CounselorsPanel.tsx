@@ -1,9 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, Check, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check, X, Languages } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
-
 import { LANGUAGES } from '@/lib/i18n';
 
 const QTYPES = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
@@ -15,6 +14,7 @@ interface Counselor {
     slug: string;
     name: string;
     description: string | null;
+    description_i18n: Record<string, string> | null;
     persona: string | null;
     avatar: string | null;
     preset_id: number | null;
@@ -27,23 +27,25 @@ interface Counselor {
 }
 
 type FormState = {
-    slug: string; name: string; description: string; persona: string; avatar: string;
-    preset_id: string;     questionnaire_types: string[]; language: string[]; sort_order: string; is_active: boolean;
+    slug: string; name: string; description: string; description_i18n: Record<string, string>;
+    persona: string; avatar: string;
+    preset_id: string; questionnaire_types: string[]; language: string[]; sort_order: string; is_active: boolean;
 };
 
 const EMPTY: FormState = {
-    slug: '', name: '', description: '', persona: '', avatar: '',
+    slug: '', name: '', description: '', description_i18n: {}, persona: '', avatar: '',
     preset_id: '', questionnaire_types: [], language: ['*'], sort_order: '0', is_active: true,
 };
 
 export function CounselorsPanel() {
-    const { t } = useI18n();
+    const { t, lang: uiLang } = useI18n();
     const [counselors, setCounselors] = useState<Counselor[]>([]);
     const [presets, setPresets] = useState<Preset[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState<number | 'new' | null>(null);
     const [form, setForm] = useState<FormState>(EMPTY);
     const [saving, setSaving] = useState(false);
+    const [tLang, setTLang] = useState(uiLang);
 
     const refresh = useCallback(async () => {
         setLoading(true);
@@ -64,14 +66,16 @@ export function CounselorsPanel() {
 
     useEffect(() => { void refresh(); }, [refresh]);
 
-    const startNew = () => { setForm(EMPTY); setEditingId('new'); };
+    const startNew = () => { setForm(EMPTY); setTLang(uiLang); setEditingId('new'); };
     const startEdit = (c: Counselor) => {
         setForm({
-            slug: c.slug, name: c.name, description: c.description || '', persona: c.persona || '',
+            slug: c.slug, name: c.name, description: c.description || '',
+            description_i18n: c.description_i18n || {}, persona: c.persona || '',
             avatar: c.avatar || '', preset_id: c.preset_id != null ? String(c.preset_id) : '',
             questionnaire_types: c.questionnaire_types || [], language: Array.isArray(c.language) ? c.language : ['*'],
             sort_order: String(c.sort_order ?? 0), is_active: c.is_active,
         });
+        setTLang(uiLang);
         setEditingId(c.id);
     };
     const cancel = () => { setEditingId(null); setForm(EMPTY); };
@@ -85,7 +89,6 @@ export function CounselorsPanel() {
 
     const toggleLang = (code: string) => setForm((f) => {
         if (code === '*') return { ...f, language: ['*'] };
-        // remove '*' and toggle the specific code
         const filtered = f.language.filter((x) => x !== '*');
         const next = filtered.includes(code)
             ? filtered.filter((x) => x !== code)
@@ -93,23 +96,63 @@ export function CounselorsPanel() {
         return { ...f, language: next.length === 0 ? ['*'] : next };
     });
 
+    // Current description for the active translation language tab
+    const descForLang = (code: string) => code === 'it' ? form.description : (form.description_i18n[code] || '');
+
+    const setDescForLang = (code: string, value: string) => {
+        if (code === 'it') {
+            setForm((f) => ({ ...f, description: value }));
+        } else {
+            setForm((f) => ({ ...f, description_i18n: { ...f.description_i18n, [code]: value } }));
+        }
+    };
+
+    const translate = async () => {
+        if (!form.description.trim()) return;
+        setSaving(true);
+        try {
+            // First save to get an ID (for new counselors), then call translate
+            const body = buildBody();
+            const url = editingId === 'new' ? '/api/admin/counselors' : `/api/admin/counselors/${editingId}`;
+            const method = editingId === 'new' ? 'POST' : 'PUT';
+            const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            if (!res.ok) throw new Error('save failed');
+            const saved: Counselor = await res.json();
+            if (editingId === 'new') setEditingId(saved.id);
+            // Now trigger auto-translate
+            const tres = await fetch(`/api/admin/counselors/${saved.id}/translate`, { method: 'POST' });
+            if (!tres.ok) throw new Error('translate failed');
+            const translated: Counselor = await tres.json();
+            setForm((f) => ({
+                ...f,
+                description_i18n: translated.description_i18n || {},
+            }));
+        } catch (e) {
+            console.error('Translate failed', e);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const buildBody = () => ({
+        slug: form.slug.trim(), name: form.name.trim(),
+        description: form.description.trim() || null,
+        description_i18n: Object.keys(form.description_i18n).length > 0 ? form.description_i18n : null,
+        persona: form.persona.trim() || null,
+        avatar: form.avatar.trim() || null,
+        preset_id: form.preset_id === '' ? null : Number(form.preset_id),
+        questionnaire_types: form.questionnaire_types,
+        language: form.language, sort_order: Number(form.sort_order) || 0,
+        is_active: form.is_active,
+    });
+
     const save = async () => {
         if (!form.slug.trim() || !form.name.trim()) return;
         setSaving(true);
         try {
-            const body = {
-                slug: form.slug.trim(), name: form.name.trim(),
-                description: form.description.trim() || null,
-                persona: form.persona.trim() || null,
-                avatar: form.avatar.trim() || null,
-                preset_id: form.preset_id === '' ? null : Number(form.preset_id),
-                questionnaire_types: form.questionnaire_types,
-                language: form.language, sort_order: Number(form.sort_order) || 0,
-                is_active: form.is_active,
-            };
             const url = editingId === 'new' ? '/api/admin/counselors' : `/api/admin/counselors/${editingId}`;
             const method = editingId === 'new' ? 'POST' : 'PUT';
-            const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(buildBody()) });
             if (!res.ok) throw new Error('save failed');
             cancel();
             await refresh();
@@ -164,9 +207,39 @@ export function CounselorsPanel() {
                     <input className={inputCls} type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} />
                 </label>
             </div>
-            <label className="mt-3 flex flex-col text-xs font-medium text-slate-500">{t('admin.counselors.description')}
-                <input className={inputCls} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-            </label>
+
+            {/* Translation language tabs + description */}
+            <div className="mt-3">
+                <div className="mb-1 flex items-center gap-2">
+                    <span className="text-xs font-medium text-slate-500">{t('admin.counselors.description')}</span>
+                    <button type="button" disabled={saving} onClick={() => void translate()} title={t('admin.counselors.translateHint') || 'Traduci via Ollama'} className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-500 hover:bg-slate-50 disabled:opacity-50">
+                        <Languages className="h-3 w-3" /> {t('admin.counselors.translate') || 'Traduci'}
+                    </button>
+                </div>
+                <div className="mb-2 flex flex-wrap gap-1">
+                    {LANGUAGES.map((l) => (
+                        <button
+                            key={l.code}
+                            type="button"
+                            onClick={() => setTLang(l.code)}
+                            className={`rounded-md border px-2 py-0.5 text-[10px] font-medium ${
+                                tLang === l.code
+                                    ? 'border-indigo-300 bg-indigo-100 text-indigo-700'
+                                    : 'border-slate-200 bg-white text-slate-500'
+                            }`}
+                        >
+                            {l.label}
+                        </button>
+                    ))}
+                </div>
+                <input
+                    className={inputCls}
+                    value={descForLang(tLang)}
+                    onChange={(e) => setDescForLang(tLang, e.target.value)}
+                    placeholder={tLang === 'it' ? 'Descrizione in italiano...' : `Descrizione in ${tLang}...`}
+                />
+            </div>
+
             <label className="mt-3 flex flex-col text-xs font-medium text-slate-500">{t('admin.counselors.persona')}
                 <textarea className="min-h-[90px] w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700 outline-none focus:border-sky-400" value={form.persona} onChange={(e) => setForm({ ...form, persona: e.target.value })} />
             </label>

@@ -10,8 +10,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from .. import models, schemas, auth, database
-from ..counselor_i18n import localized_description, translate_counselor_async
-from sqlalchemy import literal
+from ..counselor_i18n import localized_description, translate_counselor_async, translate_counselor_sync
+from sqlalchemy import cast as sa_cast, String
 
 router = APIRouter()
 get_db = database.get_db
@@ -57,10 +57,12 @@ async def list_public_counselors(
         .order_by(models.Counselor.sort_order.asc(), models.Counselor.id.asc())
     )
     if language:
-        # PostgreSQL JSON containment: counselor supports '["*"]' (all) OR the specific language code
+        # Filter counselors whose language list contains '*' (all) or the specific code.
+        # The language column stores a JSON array as text; we match by string pattern.
+        lang_text = sa_cast(models.Counselor.language, String)
         q = q.filter(
-            models.Counselor.language.op("@>")(literal('["*"]'))
-            | models.Counselor.language.op("@>")(literal(f'["{language}"]'))
+            lang_text.like('%"*"%')
+            | lang_text.like(f'%"{language}"%')
         )
     rows = q.all()
     presets = _preset_map(db)
@@ -172,3 +174,17 @@ async def delete_counselor(
     db.delete(counselor)
     db.commit()
     return {"ok": True, "deleted": counselor_id}
+
+
+@router.post("/admin/counselors/{counselor_id}/translate", response_model=schemas.CounselorResponse)
+async def translate_counselor(
+    counselor_id: int,
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    counselor = db.query(models.Counselor).filter(models.Counselor.id == counselor_id).first()
+    if not counselor:
+        raise HTTPException(status_code=404, detail="Counselor non trovato")
+    translate_counselor_sync(db, counselor_id, force=True)
+    db.refresh(counselor)
+    return _serialize(counselor, _preset_map(db))
