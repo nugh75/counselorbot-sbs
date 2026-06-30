@@ -23,7 +23,7 @@ import { FlowStepper } from '@/components/ui/FlowStepper';
 import { CompassMark } from '@/components/ui/CompassMark';
 import { toast } from '@/components/ui/Toast';
 import { useI18n } from '@/lib/i18n-context';
-import { addCompletedProfile, hasCompletedAll, getCombinedScoresContext, clearCompletedProfiles, getCompletedProfiles } from '@/lib/profile-tracker';
+import { addCompletedProfile, getCompletedProfiles } from '@/lib/profile-tracker';
 import { apiFetch, ai4authLoginUrl, getIdentity, type Identity } from '@/lib/auth';
 import { getSelectedCounselorId, setSelectedCounselorId } from '@/lib/counselor';
 import { setSelectedInstrumentId } from '@/lib/instrument';
@@ -32,7 +32,7 @@ import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 
 
-type Step = 'intro' | 'counselor-select' | 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'combined-interaction' | 'farewell';
+type Step = 'intro' | 'counselor-select' | 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'farewell';
 
 const STARTABLE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
 
@@ -121,8 +121,6 @@ export default function Home() {
     // Schermata profilo studente separata dalla scelta modalità: true = già rivisto,
     // si passa alla scelta. Auto-skip se la card non ha nulla da mostrare.
     const [profileReviewed, setProfileReviewed] = useState(false);
-    const [combinedScores, setCombinedScores] = useState<Record<string, number> | null>(null);
-    const [combinedContext, setCombinedContext] = useState<string>('');
 
     useEffect(() => {
         getIdentity().then(setIdentity);
@@ -340,50 +338,6 @@ export default function Home() {
         setStep('completed');
     };
 
-    const handleCombinedStart = async () => {
-        const newSessionId = generateUUID();
-        const profiles = getCompletedProfiles();
-
-        // Merge scores from all profiles (no key collision: QSA uses C/A, ZTPI uses T)
-        const merged: Record<string, number> = {};
-        for (const p of profiles) {
-            Object.assign(merged, p.scores);
-        }
-
-        // Save combined questionnaire result to DB
-        try {
-            await apiFetch('/api/questionnaire-result', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    session_id: newSessionId,
-                    questionnaire_type: 'COMBINED',
-                    scores: merged,
-                }),
-            });
-        } catch (e) {
-            console.error('Failed to save combined result', e);
-        }
-
-        setCombinedScores(merged);
-        setCombinedContext(getCombinedScoresContext());
-        setSessionId(newSessionId);
-        setStep('combined-interaction');
-    };
-
-    const handleCombinedComplete = () => {
-        clearCompletedProfiles();
-        setResume(null);
-        setCombinedScores(null);
-        setCombinedContext('');
-        setScores(null);
-        setSelectedQuestionnaire(null);
-        setPdfToken(undefined);
-        setExperience(null);
-        setSelectedCounselorId(null);
-        setStep('intro');
-    };
-
     const analyzeAnother = () => {
         setResume(null);
         setScores(null);
@@ -403,7 +357,6 @@ export default function Home() {
         else if (step === 'interaction') setStep(isAgentOnly(selectedQuestionnaire) ? 'counselor-select' : 'dashboard');
         else if (step === 'completed') setStep('dashboard');
         else if (step === 'farewell') setStep('completed');
-        else if (step === 'combined-interaction') setStep('completed');
     };
 
     const getStepTitle = () => {
@@ -416,7 +369,6 @@ export default function Home() {
             case 'upload-input': return t('step.uploadInput.title');
             case 'dashboard': return t('step.dashboard.title');
             case 'interaction': return selectedQuestionnaire?.id === 'SAVICKAS' ? t('step.interaction.title.savickas') : t('step.interaction.title.guided');
-            case 'combined-interaction': return 'Analisi Combinata dei Profili';
             case 'completed': return t('step.completed.title');
             case 'farewell': return t('step.farewell.title');
             default: return 'CounselorBot';
@@ -435,7 +387,6 @@ export default function Home() {
                 return selectedQuestionnaire?.id === 'SAVICKAS'
                     ? t('step.interaction.desc.savickas')
                     : `${t('step.interaction.desc.guidedPrefix')} ${selectedQuestionnaire?.name}`;
-            case 'combined-interaction': return "Analisi integrata dei profili QSA, ZTPI e Savickas";
             case 'completed': return t('step.completed.desc');
             case 'farewell': return t('step.farewell.desc');
             default: return '';
@@ -485,7 +436,7 @@ export default function Home() {
                     : step === 'method-select' || step === 'manual-input' || step === 'upload-input' ? 3
                         : step === 'dashboard' ? 4
                             : inTaccuino ? 5
-                                : step === 'interaction' || step === 'combined-interaction' ? 6
+                                : step === 'interaction' ? 6
                                     : 7;
 
     return (
@@ -635,18 +586,6 @@ export default function Home() {
                         </div>
                     )}
 
-                    {/* Step: Combined Profile Analysis */}
-                    {step === 'combined-interaction' && combinedScores && (
-                        <GuidedChatInterface
-                            scores={combinedScores}
-                            questionnaireType={'QSA'}
-                            onComplete={handleCombinedComplete}
-                            sessionId={sessionId}
-                            locale={lang}
-                            scoresContextOverride={combinedContext}
-                        />
-                    )}
-
                     {/* Step: Completed - Ask for another analysis */}
                     {step === 'completed' && (
                         <div className="max-w-xl mx-auto">
@@ -659,17 +598,6 @@ export default function Home() {
                                         {t('completed.body2')}
                                     </p>
                                 </div>
-
-                                {hasCompletedAll() && (
-                                    <div className="pt-4">
-                                        <button
-                                            onClick={handleCombinedStart}
-                                            className="w-full py-3.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-md transition-colors flex items-center justify-center shadow-md"
-                                        >
-                                            {t('completed.combined')}
-                                        </button>
-                                    </div>
-                                )}
 
                                 <div className="grid grid-cols-3 gap-4 pt-4">
                                     <button
