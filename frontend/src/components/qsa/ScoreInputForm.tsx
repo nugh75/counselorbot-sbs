@@ -102,12 +102,12 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack 
     // ForwardButton (cerchio+freccia a destra, qui submit del form). Nessun
     // testo introduttivo: il FlowStepper in alto descrive già la fase.
     return (
-        <div className="w-full max-w-4xl mx-auto space-y-5 animate-fade-in-up">
+        <div className="w-full space-y-5 animate-fade-in-up">
             <div className="flex items-center gap-3">
                 {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
                 <ForwardButton type="submit" form="score-form" label={t('score.submit')} />
             </div>
-            <form id="score-form" onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+            <form id="score-form" onSubmit={handleSubmit(onFormSubmit)} className="max-w-4xl mx-auto space-y-4">
                 <div className={cn("grid gap-x-8 gap-y-3", gridCols)}>
                     {groupedFactors.map(({ prefix, factors }) => {
                         const colorClass = PREFIX_COLOR[prefix] || 'text-slate-700';
