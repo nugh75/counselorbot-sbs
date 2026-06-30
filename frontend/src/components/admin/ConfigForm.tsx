@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Save, Server, Cpu, Plus, Trash2, ChevronUp, ChevronDown, Palette, RefreshCw } from 'lucide-react';
+import { Cpu, FileText, Layers, Palette, Plus, RefreshCw, Save, Server, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 
 // --- Types ---
@@ -22,6 +22,8 @@ interface GuidedStep {
     color_theme: string;
     questionnaire_type: string;
 }
+
+type InstrumentSubsection = 'step-prompts' | 'system-prompts' | 'texts' | 'guided-steps';
 
 // --- Constants ---
 
@@ -119,6 +121,7 @@ const PROVIDERS: Record<string, { label: string; models: string[] }> = {
 };
 
 const SYSTEM_PROMPT_MODES = [
+    { value: 'intro', label: 'Presentazione' },
     { value: 'factor', label: 'Analisi Fattori' },
     { value: 'second-level', label: 'Secondo Livello' },
     { value: 'generic', label: 'Generica' },
@@ -140,6 +143,13 @@ const SYSTEM_PROMPT_MODES = [
     { value: 'qap-summary', label: 'QAP Sintesi' },
 ];
 
+const INSTRUMENT_SUBSECTIONS: Array<{ id: InstrumentSubsection; labelKey: string }> = [
+    { id: 'step-prompts', labelKey: 'admin.config.inner.stepPrompts' },
+    { id: 'system-prompts', labelKey: 'admin.config.inner.systemPrompts' },
+    { id: 'texts', labelKey: 'admin.config.inner.texts' },
+    { id: 'guided-steps', labelKey: 'admin.config.inner.guidedSteps' },
+];
+
 const COLOR_THEMES = [
     { value: 'blue', label: 'Blu', dot: 'bg-blue-500' },
     { value: 'purple', label: 'Viola', dot: 'bg-purple-500' },
@@ -155,6 +165,41 @@ const COLOR_THEMES = [
     { value: 'rose', label: 'Rosa chiaro', dot: 'bg-rose-500' },
 ];
 
+const SYSTEM_PROMPT_KEY_BY_MODE: Record<string, string> = {
+    factor: 'prompt_factor',
+    'factor-qa': 'prompt_factor_qa',
+    'second-level': 'prompt_second_level',
+    generic: 'prompt_generic',
+    'qsar-factor': 'prompt_qsar_factor',
+    'qsar-factor-qa': 'prompt_qsar_factor_qa',
+    'qsar-second-level': 'prompt_qsar_second_level',
+    'qsar-generic': 'prompt_qsar_generic',
+    'ztpi-factor': 'prompt_ztpi_factor',
+    'ztpi-btp': 'prompt_ztpi_btp',
+    'savickas-interview': 'prompt_savickas_interview',
+    'savickas-summary': 'prompt_savickas_summary',
+    'qpcs-factor': 'prompt_qpcs_factor',
+    'qpcc-factor': 'prompt_qpcc_factor',
+    'qap-factor': 'prompt_qap_factor',
+    'qpcs-interview': 'prompt_qpcs_interview',
+    'qpcs-summary': 'prompt_qpcs_summary',
+    'qpcc-interview': 'prompt_qpcc_interview',
+    'qpcc-summary': 'prompt_qpcc_summary',
+    'qap-interview': 'prompt_qap_interview',
+    'qap-summary': 'prompt_qap_summary',
+};
+
+const SYSTEM_PROMPT_KEY_BY_PHASE: Record<string, string> = {
+    questions: 'prompt_guided_questions',
+    intro: 'prompt_intro',
+    'qsar-intro': 'prompt_qsar_intro',
+    'ztpi-intro': 'prompt_ztpi_intro',
+    'savickas-intro': 'prompt_savickas_intro',
+    'qpcs-welcome': 'prompt_qpcs_welcome',
+    'qpcc-welcome': 'prompt_qpcc_welcome',
+    'qap-welcome': 'prompt_qap_welcome',
+};
+
 // --- Helper to get auth header ---
 
 // Auth gestita al bordo da ai4auth (forward-auth): nessun token lato client.
@@ -166,6 +211,172 @@ function authJsonHeaders(): Record<string, string> {
     return { 'Content-Type': 'application/json' };
 }
 
+function normalizedQuestionnaireType(questionnaireType: string): string {
+    return questionnaireType.trim().toUpperCase();
+}
+
+function textStats(text: string | null | undefined): { chars: number; lines: number } {
+    const value = text || '';
+    return {
+        chars: value.length,
+        lines: value ? value.split('\n').length : 0,
+    };
+}
+
+function promptKeyForStep(step: GuidedStep | undefined): string {
+    if (!step) return '';
+    return SYSTEM_PROMPT_KEY_BY_PHASE[step.id] || SYSTEM_PROMPT_KEY_BY_MODE[step.system_prompt_mode] || 'prompt_generic';
+}
+
+function PromptTextBlock({
+    title,
+    subtitle,
+    text,
+    emptyLabel,
+}: {
+    title: string;
+    subtitle?: string;
+    text: string | null | undefined;
+    emptyLabel: string;
+}) {
+    const value = text || '';
+    const stats = textStats(value);
+    return (
+        <div className="rounded-lg border border-slate-200 bg-white">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
+                <div>
+                    <h5 className="text-sm font-semibold text-slate-800">{title}</h5>
+                    {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
+                </div>
+                <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500">
+                    {stats.chars} char · {stats.lines} righe
+                </span>
+            </div>
+            <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words p-4 text-xs leading-relaxed text-slate-700">
+                {value.trim() ? value : emptyLabel}
+            </pre>
+        </div>
+    );
+}
+
+function StepPromptsPanel({
+    questionnaireType,
+    steps,
+    selectedStepId,
+    onSelectStep,
+    onEditSystemPrompts,
+    onEditStep,
+    configs,
+    t,
+}: {
+    questionnaireType: string;
+    steps: GuidedStep[];
+    selectedStepId: string;
+    onSelectStep: (stepId: string) => void;
+    onEditSystemPrompts: () => void;
+    onEditStep: () => void;
+    configs: ConfigItem[];
+    t: (key: string, vars?: Record<string, string | number>) => string;
+}) {
+    const selectedStep = steps.find((step) => step.id === selectedStepId) || steps[0];
+    const systemPromptKey = promptKeyForStep(selectedStep);
+    const systemPrompt = configs.find((config) => config.key === systemPromptKey)?.value || '';
+    const modeLabel = selectedStep?.system_prompt_mode
+        ? t(`admin.mode.${selectedStep.system_prompt_mode}`)
+        : '';
+
+    return (
+        <div className="glass-panel p-5 space-y-5">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-slate-700">
+                        <Layers className="h-4 w-4 text-indigo-600" />
+                        {t('admin.promptAudit.title')}
+                    </h3>
+                    <p className="mt-1 max-w-3xl text-xs text-slate-500">
+                        {t('admin.promptAudit.subtitle')}
+                    </p>
+                </div>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+                <label className="space-y-2 text-xs font-semibold text-slate-500">
+                    {t('admin.promptAudit.stepSelect')}
+                    <select
+                        className="w-full rounded-md border border-slate-300 bg-white p-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500"
+                        value={selectedStep?.id || ''}
+                        onChange={(event) => onSelectStep(event.target.value)}
+                    >
+                        {steps.map((step) => (
+                            <option key={step.id} value={step.id}>
+                                {step.sort_order}. {step.label || step.id}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+
+                <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 sm:grid-cols-3">
+                    <div>
+                        <p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.instrument')}</p>
+                        <p className="mt-1 font-mono text-slate-800">{questionnaireType}</p>
+                    </div>
+                    <div>
+                        <p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.mode')}</p>
+                        <p className="mt-1 text-slate-800">{modeLabel}</p>
+                    </div>
+                    <div>
+                        <p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.promptKey')}</p>
+                        <p className="mt-1 break-words font-mono text-slate-800">{systemPromptKey || '-'}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-2">
+                <PromptTextBlock
+                    title={t('admin.promptAudit.block.systemPrompt')}
+                    subtitle={systemPromptKey}
+                    text={systemPrompt}
+                    emptyLabel={t('admin.promptAudit.empty')}
+                />
+                <PromptTextBlock
+                    title={t('admin.promptAudit.block.stepPrompt')}
+                    subtitle={selectedStep ? selectedStep.id : undefined}
+                    text={selectedStep?.prompt}
+                    emptyLabel={t('admin.promptAudit.empty')}
+                />
+            </div>
+
+            <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 p-4 text-xs text-slate-600">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h4 className="flex items-center gap-2 text-sm font-semibold text-indigo-800">
+                            <FileText className="h-4 w-4" />
+                            {t('admin.promptAudit.injectedList')}
+                        </h4>
+                        <p className="mt-2">{t('admin.promptAudit.onlyPrompts')}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            onClick={onEditSystemPrompts}
+                            className="rounded-md border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50"
+                        >
+                            {t('admin.promptAudit.editSystemPrompt')}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onEditStep}
+                            className="rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+                        >
+                            {t('admin.promptAudit.editStep')}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // --- Component ---
 
 export function ConfigForm() {
@@ -173,6 +384,7 @@ export function ConfigForm() {
     const [configs, setConfigs] = useState<ConfigItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [section, setSection] = useState<string>('general');
+    const [instrumentSubsection, setInstrumentSubsection] = useState<InstrumentSubsection>('step-prompts');
     const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
     const showToast = (type: 'success' | 'error', msg: string) => {
@@ -194,6 +406,15 @@ export function ConfigForm() {
         id: '', sort_order: 0, label: '', prompt: '',
         system_prompt_mode: 'generic', color_theme: 'blue', questionnaire_type: 'QSA',
     });
+    const [promptStepIds, setPromptStepIds] = useState<Record<string, string>>({});
+
+    const openSection = (nextSection: string) => {
+        setSection(nextSection);
+        if (nextSection !== 'general') {
+            setInstrumentSubsection('step-prompts');
+            setShowNewStepForm(false);
+        }
+    };
 
     // --- Fetch all data ---
 
@@ -371,6 +592,7 @@ export function ConfigForm() {
             if (res.ok) {
                 const created = await res.json();
                 setGuidedSteps(prev => [...prev, created]);
+                setPromptStepIds(prev => ({ ...prev, [created.questionnaire_type]: created.id }));
                 setNewStep({ id: '', sort_order: 0, label: '', prompt: '', system_prompt_mode: 'generic', color_theme: 'blue', questionnaire_type: newStep.questionnaire_type });
                 setShowNewStepForm(false);
                 showToast('success', t('admin.config.saved'));
@@ -392,6 +614,13 @@ export function ConfigForm() {
             });
             if (res.ok) {
                 setGuidedSteps(prev => prev.filter(s => s.id !== stepId));
+                setPromptStepIds(prev => {
+                    const next = { ...prev };
+                    for (const [qType, selectedId] of Object.entries(next)) {
+                        if (selectedId === stepId) delete next[qType];
+                    }
+                    return next;
+                });
                 showToast('success', t('admin.config.deleted'));
             } else {
                 throw new Error(`HTTP ${res.status}`);
@@ -623,7 +852,7 @@ export function ConfigForm() {
             {/* Sub-tab nav per risorsa */}
             <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
                 <button
-                    onClick={() => setSection('general')}
+                    onClick={() => openSection('general')}
                     className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
                         section === 'general'
                             ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
@@ -638,7 +867,7 @@ export function ConfigForm() {
                     return (
                         <button
                             key={tab.id}
-                            onClick={() => setSection(tab.id)}
+                            onClick={() => openSection(tab.id)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
                                 section === tab.id
                                     ? `${c.bg} ${c.border} ${c.title}`
@@ -790,14 +1019,18 @@ export function ConfigForm() {
             </div>
             )}
 
-            {/* 3. Prompt e Testi — solo questionario attivo */}
+            {/* 3. Strumento attivo: prompt, testi e step separati in tab interne */}
             {questionnaireConfigs.filter((q) => q.id === section).map((q) => {
                 const c = colorMap[q.color];
                 const allKeys = [...q.systemPrompts.map(p => p.key), ...q.texts.map(t => textConfigKey(t.key))];
+                const sectionSteps = guidedSteps
+                    .filter(s => normalizedQuestionnaireType(s.questionnaire_type) === normalizedQuestionnaireType(q.questionnaireType))
+                    .sort((a, b) => a.sort_order - b.sort_order);
+                const selectedPromptStepId = promptStepIds[q.questionnaireType] || sectionSteps[0]?.id || '';
                 return (
                     <div key={q.id} className={`space-y-4 border-l-4 ${c.border} pl-4`}>
                         {/* Header questionario */}
-                        <div className={`${c.bg} rounded-lg px-4 py-3 flex items-center justify-between`}>
+                        <div className={`${c.bg} rounded-lg px-4 py-3 flex flex-wrap items-center justify-between gap-3`}>
                             <div className="flex items-center gap-2">
                                 <div className={`w-3 h-3 rounded-full ${c.dot}`} />
                                 <h3 className={`text-sm font-bold ${c.title} uppercase tracking-wider`}>
@@ -818,298 +1051,339 @@ export function ConfigForm() {
                             </button>
                         </div>
 
-                        {/* Sub: Prompt di Sistema */}
-                        <div className="space-y-3">
-                            <div className={`${c.subBg} rounded px-3 py-1.5`}>
-                                <h4 className={`text-xs font-bold ${c.subTitle} uppercase tracking-wider`}>
-                                    {t('admin.config.systemPrompts')}
-                                </h4>
-                            </div>
-                            {q.systemPrompts.map((def) => {
-                                const currentVal = getConfigValue(def.key);
+                        <div className="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-white p-1">
+                            {INSTRUMENT_SUBSECTIONS.map((sub) => {
+                                const active = instrumentSubsection === sub.id;
                                 return (
-                                    <div key={def.key} className="glass-panel p-5 space-y-3">
-                                        <div className="flex justify-between items-start gap-3">
-                                            <h3 className={`text-sm font-bold ${c.title}`}>{t(`admin.config.label.${def.key}`)}</h3>
-                                            <button
-                                                onClick={() => saveConfigKey(def.key, def.label)}
-                                                className="p-2 hover:bg-slate-100 rounded-md text-indigo-600 transition-colors shrink-0"
-                                            >
-                                                <Save className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                        <textarea
-                                            className={`w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm min-h-[120px] ${c.ring} outline-none font-mono text-slate-900`}
-                                            value={currentVal}
-                                            onChange={(e) => setConfigDraft(def.key, e.target.value, def.label)}
-                                        />
-                                    </div>
+                                    <button
+                                        key={sub.id}
+                                        type="button"
+                                        onClick={() => {
+                                            setInstrumentSubsection(sub.id);
+                                            if (sub.id !== 'guided-steps') setShowNewStepForm(false);
+                                        }}
+                                        className={`rounded-md border px-3 py-2 text-xs font-semibold transition-colors ${
+                                            active
+                                                ? `${c.bg} ${c.border} ${c.title}`
+                                                : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                                        }`}
+                                    >
+                                        {t(sub.labelKey)}
+                                    </button>
                                 );
                             })}
                         </div>
 
-                        {/* Sub: Testi e Messaggi */}
-                        {q.texts.length > 0 && (
-                            <div className="space-y-3">
-                                <div className={`${c.subBg} rounded px-3 py-1.5 flex items-center justify-between`}>
-                                    <h4 className={`text-xs font-bold ${c.subTitle} uppercase tracking-wider`}>
-                                        {t('admin.config.textsMessages')}
-                                    </h4>
-                                    <span className={`text-[10px] font-bold ${c.subTitle} bg-white/60 px-2 py-0.5 rounded uppercase`}>
-                                        {t('admin.config.editingLang')}: {lang.toUpperCase()}
-                                    </span>
+                        {instrumentSubsection === 'step-prompts' && (
+                            sectionSteps.length > 0 ? (
+                                <StepPromptsPanel
+                                    questionnaireType={q.questionnaireType}
+                                    steps={sectionSteps}
+                                    selectedStepId={selectedPromptStepId}
+                                    onSelectStep={(stepId) => setPromptStepIds(prev => ({ ...prev, [q.questionnaireType]: stepId }))}
+                                    onEditSystemPrompts={() => setInstrumentSubsection('system-prompts')}
+                                    onEditStep={() => setInstrumentSubsection('guided-steps')}
+                                    configs={configs}
+                                    t={t}
+                                />
+                            ) : (
+                                <div className="rounded-lg border border-slate-200 bg-white p-6 text-center text-sm text-slate-400">
+                                    {t('admin.config.noSteps')}
                                 </div>
-                                {q.texts.map((def) => {
-                                    const localizedKey = textConfigKey(def.key);
-                                    const currentVal = getTextValue(def.key);
+                            )
+                        )}
+
+                        {instrumentSubsection === 'system-prompts' && (
+                            <div className="space-y-3">
+                                <div className={`${c.subBg} rounded px-3 py-1.5`}>
+                                    <h4 className={`text-xs font-bold ${c.subTitle} uppercase tracking-wider`}>
+                                        {t('admin.config.systemPrompts')}
+                                    </h4>
+                                </div>
+                                {q.systemPrompts.map((def) => {
+                                    const currentVal = getConfigValue(def.key);
                                     return (
                                         <div key={def.key} className="glass-panel p-5 space-y-3">
                                             <div className="flex justify-between items-start gap-3">
                                                 <h3 className={`text-sm font-bold ${c.title}`}>{t(`admin.config.label.${def.key}`)}</h3>
                                                 <button
-                                                    onClick={() => saveConfigKey(localizedKey, def.label)}
+                                                    onClick={() => saveConfigKey(def.key, def.label)}
                                                     className="p-2 hover:bg-slate-100 rounded-md text-indigo-600 transition-colors shrink-0"
                                                 >
                                                     <Save className="w-4 h-4" />
                                                 </button>
                                             </div>
-                                            {def.type === 'input' ? (
-                                                <input
-                                                    className={`w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm ${c.ring} outline-none text-slate-900`}
-                                                    value={currentVal}
-                                                    onChange={(e) => setConfigDraft(localizedKey, e.target.value, def.label)}
-                                                />
-                                            ) : (
-                                                <textarea
-                                                    className={`w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm min-h-[80px] ${c.ring} outline-none font-mono text-slate-900`}
-                                                    value={currentVal}
-                                                    onChange={(e) => setConfigDraft(localizedKey, e.target.value, def.label)}
-                                                />
-                                            )}
+                                            <textarea
+                                                className={`w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm min-h-[160px] ${c.ring} outline-none font-mono text-slate-900`}
+                                                value={currentVal}
+                                                onChange={(e) => setConfigDraft(def.key, e.target.value, def.label)}
+                                            />
                                         </div>
                                     );
                                 })}
                             </div>
                         )}
+
+                        {instrumentSubsection === 'texts' && (
+                            q.texts.length > 0 ? (
+                                <div className="space-y-3">
+                                    <div className={`${c.subBg} rounded px-3 py-1.5 flex items-center justify-between`}>
+                                        <h4 className={`text-xs font-bold ${c.subTitle} uppercase tracking-wider`}>
+                                            {t('admin.config.textsMessages')}
+                                        </h4>
+                                        <span className={`text-[10px] font-bold ${c.subTitle} bg-white/60 px-2 py-0.5 rounded uppercase`}>
+                                            {t('admin.config.editingLang')}: {lang.toUpperCase()}
+                                        </span>
+                                    </div>
+                                    {q.texts.map((def) => {
+                                        const localizedKey = textConfigKey(def.key);
+                                        const currentVal = getTextValue(def.key);
+                                        return (
+                                            <div key={def.key} className="glass-panel p-5 space-y-3">
+                                                <div className="flex justify-between items-start gap-3">
+                                                    <h3 className={`text-sm font-bold ${c.title}`}>{t(`admin.config.label.${def.key}`)}</h3>
+                                                    <button
+                                                        onClick={() => saveConfigKey(localizedKey, def.label)}
+                                                        className="p-2 hover:bg-slate-100 rounded-md text-indigo-600 transition-colors shrink-0"
+                                                    >
+                                                        <Save className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                                {def.type === 'input' ? (
+                                                    <input
+                                                        className={`w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm ${c.ring} outline-none text-slate-900`}
+                                                        value={currentVal}
+                                                        onChange={(e) => setConfigDraft(localizedKey, e.target.value, def.label)}
+                                                    />
+                                                ) : (
+                                                    <textarea
+                                                        className={`w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm min-h-[100px] ${c.ring} outline-none font-mono text-slate-900`}
+                                                        value={currentVal}
+                                                        onChange={(e) => setConfigDraft(localizedKey, e.target.value, def.label)}
+                                                    />
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="rounded-lg border border-slate-200 bg-white p-6 text-center text-sm text-slate-400">
+                                    {t('admin.config.noTexts')}
+                                </div>
+                            )
+                        )}
+
+                        {instrumentSubsection === 'guided-steps' && (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">{t('admin.config.guidedSteps')}</h3>
+                                        <p className="text-xs text-slate-500 ml-1 mt-1">
+                                            {t('admin.config.guidedStepsDesc')}
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => { setNewStep(prev => ({ ...prev, questionnaire_type: q.questionnaireType })); setShowNewStepForm(true); }}
+                                        className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-md transition-colors shadow-sm"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                        {t('admin.config.addStep')}
+                                    </button>
+                                </div>
+
+                                {/* New Step Form */}
+                                {showNewStepForm && (
+                                    <div className="glass-panel p-6 space-y-4 border-2 border-dashed border-indigo-300 bg-indigo-50/30">
+                                        <h3 className="text-sm font-semibold text-indigo-700">{t('admin.config.newStep')}</h3>
+
+                                        <div className="grid md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepId')}</label>
+                                                <input
+                                                    className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 font-mono"
+                                                    placeholder={t('admin.config.placeholderStepId')}
+                                                    value={newStep.id}
+                                                    onChange={(e) => setNewStep(prev => ({ ...prev, id: e.target.value }))}
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepTitle')}</label>
+                                                <input
+                                                    className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900"
+                                                    placeholder={t('admin.config.placeholderStepTitle')}
+                                                    value={newStep.label}
+                                                    onChange={(e) => setNewStep(prev => ({ ...prev, label: e.target.value }))}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepSystemPrompt')}</label>
+                                                <select
+                                                    className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                    value={newStep.system_prompt_mode}
+                                                    onChange={(e) => setNewStep(prev => ({ ...prev, system_prompt_mode: e.target.value }))}
+                                                >
+                                                    {SYSTEM_PROMPT_MODES.map(m => (
+                                                        <option key={m.value} value={m.value}>{t(`admin.mode.${m.value}`)}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepColor')}</label>
+                                                <select
+                                                    className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                    value={newStep.color_theme}
+                                                    onChange={(e) => setNewStep(prev => ({ ...prev, color_theme: e.target.value }))}
+                                                >
+                                                    {COLOR_THEMES.map(c => (
+                                                        <option key={c.value} value={c.value}>{t(`admin.color.${c.value}`)}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepPromptCreate')}</label>
+                                            <textarea
+                                                className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm min-h-[100px] focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-slate-900"
+                                                placeholder={t('admin.config.placeholderStepPrompt')}
+                                                value={newStep.prompt}
+                                                onChange={(e) => setNewStep(prev => ({ ...prev, prompt: e.target.value }))}
+                                            />
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={handleCreateStep}
+                                                disabled={!newStep.id.trim() || !newStep.label.trim() || !newStep.prompt.trim()}
+                                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-50"
+                                            >
+                                                {t('admin.config.createStep')}
+                                            </button>
+                                            <button
+                                                onClick={() => setShowNewStepForm(false)}
+                                                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-lg transition-colors"
+                                            >
+                                                {t('admin.config.cancel')}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Existing Steps */}
+                                <div className="space-y-4">
+                                    {sectionSteps.map((step, idx) => {
+                                        const colorDef = COLOR_THEMES.find(c => c.value === step.color_theme);
+                                        return (
+                                            <div key={step.id} className="glass-panel p-6 space-y-4">
+                                                {/* Header with dynamic title */}
+                                                <div className="flex justify-between items-start gap-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-3 h-3 rounded-full ${colorDef?.dot || 'bg-indigo-500'}`} />
+                                                        <h3 className="text-sm font-semibold text-slate-900">
+                                                            {step.label || step.id}
+                                                        </h3>
+                                                        <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
+                                                            {step.id}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            onClick={() => handleMoveStep(step.id, 'up')}
+                                                            disabled={idx === 0}
+                                                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-30"
+                                                            title={t('admin.config.moveUp')}
+                                                        >
+                                                            <ChevronUp className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleMoveStep(step.id, 'down')}
+                                                            disabled={idx === sectionSteps.length - 1}
+                                                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-30"
+                                                            title={t('admin.config.moveDown')}
+                                                        >
+                                                            <ChevronDown className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleSaveStep(step)}
+                                                            className="p-1.5 hover:bg-slate-100 rounded-md text-indigo-600 transition-colors"
+                                                            title={t('admin.config.save')}
+                                                        >
+                                                            <Save className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteStep(step.id)}
+                                                            className="p-1.5 hover:bg-red-50 rounded-lg text-red-400 hover:text-red-600 transition-colors"
+                                                            title={t('admin.config.delete')}
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Editable fields */}
+                                                <div className="grid md:grid-cols-3 gap-4">
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepTitle')}</label>
+                                                        <input
+                                                            className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900"
+                                                            value={step.label}
+                                                            onChange={(e) => updateStepField(step.id, 'label', e.target.value)}
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepSystemPrompt')}</label>
+                                                        <select
+                                                            className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                            value={step.system_prompt_mode}
+                                                            onChange={(e) => updateStepField(step.id, 'system_prompt_mode', e.target.value)}
+                                                        >
+                                                            {SYSTEM_PROMPT_MODES.map(m => (
+                                                                <option key={m.value} value={m.value}>{t(`admin.mode.${m.value}`)}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-semibold text-slate-500 flex items-center gap-1">
+                                                            <Palette className="w-3 h-3" /> {t('admin.config.stepColor')}
+                                                        </label>
+                                                        <select
+                                                            className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                            value={step.color_theme}
+                                                            onChange={(e) => updateStepField(step.id, 'color_theme', e.target.value)}
+                                                        >
+                                                            {COLOR_THEMES.map(c => (
+                                                                <option key={c.value} value={c.value}>{t(`admin.color.${c.value}`)}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepPromptSend')}</label>
+                                                    <textarea
+                                                        className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 text-sm min-h-[100px] focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-slate-900"
+                                                        value={step.prompt}
+                                                        onChange={(e) => updateStepField(step.id, 'prompt', e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+
+                                    {sectionSteps.length === 0 && !showNewStepForm && (
+                                        <div className="text-center py-8 text-slate-400 text-sm">
+                                            {t('admin.config.noSteps')}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
             })}
-
-            {/* 4. Dynamic Guided Steps — per questionario attivo */}
-            {section !== 'general' && (() => {
-            const qType = questionnaireConfigs.find((q) => q.id === section)?.questionnaireType || section.toUpperCase();
-            const sectionSteps = guidedSteps
-                .filter(s => s.questionnaire_type === qType)
-                .sort((a, b) => a.sort_order - b.sort_order);
-            return (
-            <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">{t('admin.config.guidedSteps')}</h3>
-                        <p className="text-xs text-slate-500 ml-1 mt-1">
-                            {t('admin.config.guidedStepsDesc')}
-                        </p>
-                    </div>
-                    <button
-                        onClick={() => { setNewStep(prev => ({ ...prev, questionnaire_type: qType })); setShowNewStepForm(true); }}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-md transition-colors shadow-sm"
-                    >
-                        <Plus className="w-4 h-4" />
-                        {t('admin.config.addStep')}
-                    </button>
-                </div>
-
-                {/* New Step Form */}
-                {showNewStepForm && (
-                    <div className="glass-panel p-6 space-y-4 border-2 border-dashed border-indigo-300 bg-indigo-50/30">
-                        <h3 className="text-sm font-semibold text-indigo-700">{t('admin.config.newStep')}</h3>
-
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepId')}</label>
-                                <input
-                                    className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 font-mono"
-                                    placeholder={t('admin.config.placeholderStepId')}
-                                    value={newStep.id}
-                                    onChange={(e) => setNewStep(prev => ({ ...prev, id: e.target.value }))}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepTitle')}</label>
-                                <input
-                                    className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900"
-                                    placeholder={t('admin.config.placeholderStepTitle')}
-                                    value={newStep.label}
-                                    onChange={(e) => setNewStep(prev => ({ ...prev, label: e.target.value }))}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepSystemPrompt')}</label>
-                                <select
-                                    className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
-                                    value={newStep.system_prompt_mode}
-                                    onChange={(e) => setNewStep(prev => ({ ...prev, system_prompt_mode: e.target.value }))}
-                                >
-                                    {SYSTEM_PROMPT_MODES.map(m => (
-                                        <option key={m.value} value={m.value}>{t(`admin.mode.${m.value}`)}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepColor')}</label>
-                                <select
-                                    className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
-                                    value={newStep.color_theme}
-                                    onChange={(e) => setNewStep(prev => ({ ...prev, color_theme: e.target.value }))}
-                                >
-                                    {COLOR_THEMES.map(c => (
-                                        <option key={c.value} value={c.value}>{t(`admin.color.${c.value}`)}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepPromptCreate')}</label>
-                            <textarea
-                                className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm min-h-[100px] focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-slate-900"
-                                placeholder={t('admin.config.placeholderStepPrompt')}
-                                value={newStep.prompt}
-                                onChange={(e) => setNewStep(prev => ({ ...prev, prompt: e.target.value }))}
-                            />
-                        </div>
-
-                        <div className="flex gap-2">
-                            <button
-                                onClick={handleCreateStep}
-                                disabled={!newStep.id.trim() || !newStep.label.trim() || !newStep.prompt.trim()}
-                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-50"
-                            >
-                                {t('admin.config.createStep')}
-                            </button>
-                            <button
-                                onClick={() => setShowNewStepForm(false)}
-                                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-lg transition-colors"
-                            >
-                                {t('admin.config.cancel')}
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* Existing Steps */}
-                <div className="space-y-4">
-                    {sectionSteps.map((step, idx) => {
-                        const colorDef = COLOR_THEMES.find(c => c.value === step.color_theme);
-                        return (
-                            <div key={step.id} className="glass-panel p-6 space-y-4">
-                                {/* Header with dynamic title */}
-                                <div className="flex justify-between items-start gap-3">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-3 h-3 rounded-full ${colorDef?.dot || 'bg-indigo-500'}`} />
-                                        <h3 className="text-sm font-semibold text-slate-900">
-                                            {step.label || step.id}
-                                        </h3>
-                                        <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
-                                            {step.id}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            onClick={() => handleMoveStep(step.id, 'up')}
-                                            disabled={idx === 0}
-                                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-30"
-                                            title={t('admin.config.moveUp')}
-                                        >
-                                            <ChevronUp className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleMoveStep(step.id, 'down')}
-                                            disabled={idx === sectionSteps.length - 1}
-                                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-30"
-                                            title={t('admin.config.moveDown')}
-                                        >
-                                            <ChevronDown className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleSaveStep(step)}
-                                            className="p-1.5 hover:bg-slate-100 rounded-md text-indigo-600 transition-colors"
-                                            title={t('admin.config.save')}
-                                        >
-                                            <Save className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteStep(step.id)}
-                                            className="p-1.5 hover:bg-red-50 rounded-lg text-red-400 hover:text-red-600 transition-colors"
-                                            title={t('admin.config.delete')}
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Editable fields */}
-                                <div className="grid md:grid-cols-3 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepTitle')}</label>
-                                        <input
-                                            className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900"
-                                            value={step.label}
-                                            onChange={(e) => updateStepField(step.id, 'label', e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepSystemPrompt')}</label>
-                                        <select
-                                            className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
-                                            value={step.system_prompt_mode}
-                                            onChange={(e) => updateStepField(step.id, 'system_prompt_mode', e.target.value)}
-                                        >
-                                            {SYSTEM_PROMPT_MODES.map(m => (
-                                                <option key={m.value} value={m.value}>{t(`admin.mode.${m.value}`)}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-                                            <Palette className="w-3 h-3" /> {t('admin.config.stepColor')}
-                                        </label>
-                                        <select
-                                            className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
-                                            value={step.color_theme}
-                                            onChange={(e) => updateStepField(step.id, 'color_theme', e.target.value)}
-                                        >
-                                            {COLOR_THEMES.map(c => (
-                                                <option key={c.value} value={c.value}>{t(`admin.color.${c.value}`)}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepPromptSend')}</label>
-                                    <textarea
-                                        className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 text-sm min-h-[100px] focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-slate-900"
-                                        value={step.prompt}
-                                        onChange={(e) => updateStepField(step.id, 'prompt', e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                        );
-                    })}
-
-                    {sectionSteps.length === 0 && !showNewStepForm && (
-                        <div className="text-center py-8 text-slate-400 text-sm">
-                            {t('admin.config.noSteps')}
-                        </div>
-                    )}
-                </div>
-            </div>
-            );
-            })()}
 
         </div>
     );
