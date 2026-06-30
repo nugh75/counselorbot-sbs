@@ -112,7 +112,7 @@ class AIService:
             'openrouter': {'call': self._call_openrouter, 'stream': self._stream_openrouter, 'call_max': None, 'stream_max': None},
             'gemini':     {'call': self._call_gemini,     'stream': None,                    'call_max': None, 'stream_max': None},
             'mistral':    {'call': self._call_mistral,    'stream': None,                    'call_max': None, 'stream_max': None},
-            'ollama':     {'call': self._call_ollama,     'stream': self._stream_ollama,     'call_max': 8000, 'stream_max': None},
+            'ollama':     {'call': self._call_ollama,     'stream': self._stream_ollama,     'call_max': 8000, 'stream_max': 4096},
             'llamacpp':   {'call': self._call_llamacpp,   'stream': self._stream_llamacpp,   'call_max': 8000, 'stream_max': None},
         }
         # Provider OpenAI-compatibili (groq/cerebras/deepseek/together/fireworks/deepinfra):
@@ -856,7 +856,7 @@ class AIService:
             "keep_alive": self.ollama_keep_alive,
             "options": {
                 "num_ctx": self.ollama_num_ctx,
-                "num_predict": max_tokens or 800,
+                "num_predict": max_tokens or 4096,
             },
         }
         is_json = "json" in system_prompt.lower() or "json" in user_message.lower()
