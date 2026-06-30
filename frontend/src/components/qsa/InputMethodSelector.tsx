@@ -85,33 +85,77 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire, hasPrevio
 
     const renderCard = (opt: Option) => {
         const isSelected = selected === opt.key;
+        const cardClass = cn(
+            'relative flex flex-col items-start justify-center p-8 h-56 rounded-lg border text-left transition-colors w-full',
+            isSelected
+                ? 'border-indigo-400 bg-indigo-50 ring-1 ring-indigo-300'
+                : 'bg-white border-slate-200 hover:border-indigo-200 cursor-pointer'
+        );
+        const badge = opt.badge && (
+            <div className="absolute top-4 left-4">
+                <span className="px-2 py-1 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
+                    {opt.badge}
+                </span>
+            </div>
+        );
+        const check = isSelected && (
+            <div className="absolute right-3 top-3 rounded-full bg-indigo-600 p-1 text-white">
+                <Check className="h-3.5 w-3.5" />
+            </div>
+        );
+        const body = (
+            <>
+                <h3 className="text-xl font-semibold mb-2 text-slate-900">{opt.title}</h3>
+                <p className="text-sm text-slate-600">{opt.desc}</p>
+            </>
+        );
+
+        // La card "resume" contiene un <select>, non può essere un <button>.
+        if (opt.key === 'resume') {
+            return (
+                <div
+                    key={opt.key}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelected(opt.key)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(opt.key); } }}
+                    aria-pressed={isSelected}
+                    className={cardClass}
+                >
+                    {badge}
+                    {check}
+                    {body}
+                    {isSelected && savedResults.length > 0 && (
+                        <div className="absolute inset-x-4 bottom-4" onClick={(e) => e.stopPropagation()}>
+                            <select
+                                value={chosenResultId ?? ''}
+                                onChange={(e) => setChosenResultId(e.target.value ? Number(e.target.value) : null)}
+                                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            >
+                                <option value="">{t('method.resume.placeholder')}</option>
+                                {savedResults.map((r) => (
+                                    <option key={r.id} value={r.id}>
+                                        {new Date(r.submitted_at).toLocaleString()} · {r.session_id.slice(0, 8)}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
         return (
             <button
                 key={opt.key}
                 type="button"
                 onClick={() => setSelected(opt.key)}
                 aria-pressed={isSelected}
-                className={cn(
-                    'relative flex flex-col items-start justify-center p-8 h-56 rounded-lg border text-left transition-colors',
-                    isSelected
-                        ? 'border-indigo-400 bg-indigo-50 ring-1 ring-indigo-300'
-                        : 'bg-white border-slate-200 hover:border-indigo-200'
-                )}
+                className={cardClass}
             >
-                {opt.badge && (
-                    <div className="absolute top-4 left-4">
-                        <span className="px-2 py-1 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
-                            {opt.badge}
-                        </span>
-                    </div>
-                )}
-                {isSelected && (
-                    <div className="absolute right-3 top-3 rounded-full bg-indigo-600 p-1 text-white">
-                        <Check className="h-3.5 w-3.5" />
-                    </div>
-                )}
-                <h3 className="text-xl font-semibold mb-2 text-slate-900">{opt.title}</h3>
-                <p className="text-sm text-slate-600">{opt.desc}</p>
+                {badge}
+                {check}
+                {body}
             </button>
         );
     };
@@ -149,25 +193,6 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire, hasPrevio
                     </div>
                 ))}
             </div>
-            {selected === 'resume' && savedResults.length > 0 && (
-                <div className="max-w-4xl">
-                    <label className="block">
-                        <span className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">{t('method.resume.choose')}</span>
-                        <select
-                            value={chosenResultId ?? ''}
-                            onChange={(e) => setChosenResultId(e.target.value ? Number(e.target.value) : null)}
-                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                        >
-                            <option value="">{t('method.resume.placeholder')}</option>
-                            {savedResults.map((r) => (
-                                <option key={r.id} value={r.id}>
-                                    {new Date(r.submitted_at).toLocaleString()} · {r.session_id.slice(0, 8)}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-                </div>
-            )}
         </section>
     );
 }
