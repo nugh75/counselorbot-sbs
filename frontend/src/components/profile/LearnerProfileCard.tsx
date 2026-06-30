@@ -229,7 +229,25 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
         : t('lp.title');
 
     return (
-        <div className="glass-panel p-5 space-y-4">
+        <div className="space-y-4">
+            {/* "Prima riga" uniforme a tutte le altre fasi: pulsanti fuori dal */}
+            {/* frame del taccuino (BackButton + PencilButton + ForwardButton). */}
+            {variant === 'review' && !isIntake && !editing && (
+                <div className="flex items-center gap-3">
+                    {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
+                    <PencilButton
+                        onClick={() => setEditing(true)}
+                        label={t('lp.edit')}
+                    />
+                    <ForwardButton
+                        onClick={() => void save('session_start')}
+                        disabled={saving}
+                        label={t('lp.confirm')}
+                    />
+                    {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
+                </div>
+            )}
+            <div className="glass-panel p-5 space-y-4">
             {variant !== 'edit' && (
                 <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-slate-800">{title}</h3>
@@ -241,22 +259,6 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
 
             {variant === 'review' && !isIntake && !editing ? (
                 <div className="space-y-3">
-                    {/* Stessa "prima riga" delle altre fasi: freccia sinistra */}
-                    {/* (BackButton) + matita (PencilButton, modifica) + freccia */}
-                    {/* destra (ForwardButton, conferma e vai avanti). Grafica uniforme. */}
-                    <div className="flex items-center gap-3">
-                        {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
-                        <PencilButton
-                            onClick={() => setEditing(true)}
-                            label={t('lp.edit')}
-                        />
-                        <ForwardButton
-                            onClick={() => void save('session_start')}
-                            disabled={saving}
-                            label={t('lp.confirm')}
-                        />
-                        {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
-                    </div>
                     {summaryUi}
                 </div>
             ) : variant === 'edit' && !isIntake && !editing ? (
@@ -313,6 +315,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
             ) : (
                 formUi
             )}
+            </div>
         </div>
     );
 }

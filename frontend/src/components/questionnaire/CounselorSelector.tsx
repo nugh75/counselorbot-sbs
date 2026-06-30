@@ -160,9 +160,6 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName }: Cou
                             {t('counselor.selectedTool')}: {questionnaireName}
                         </p>
                     )}
-                    <p className="mt-3 text-sm leading-relaxed text-slate-500">
-                        <strong className="text-slate-700">{t('counselor.explain.title')}:</strong> {t('counselor.explain.body')}
-                    </p>
                 </div>
             </div>
 
