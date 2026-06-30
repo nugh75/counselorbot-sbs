@@ -427,6 +427,25 @@ def _seed_and_migrate():
             except Exception as e:
                 logger.debug(f"model_presets migration skipped/failed ({clause}): {e}")
 
+        # Migration: counselor.language da VARCHAR a JSON array di lingue.
+        # I counselor esistenti supportano tutte le lingue (["*"]).
+        try:
+            with database.engine.connect() as conn:
+                conn.execute(sa_text(
+                    """ALTER TABLE counselors ALTER COLUMN language TYPE JSON USING ('["*"]')::json"""
+                ))
+                conn.commit()
+        except Exception:
+            pass
+        try:
+            with database.engine.connect() as conn:
+                conn.execute(sa_text(
+                    "UPDATE counselors SET language = '[\"*\"]'::json"
+                ))
+                conn.commit()
+        except Exception as e:
+            logger.debug(f"counselors language migration skipped/failed: {e}")
+
         # Create initial admin user if not exists
         user = db.query(models.User).filter(models.User.username == "admin").first()
         if not user:

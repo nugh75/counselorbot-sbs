@@ -831,7 +831,7 @@ class CounselorBase(BaseModel):
     avatar: Optional[str] = None
     preset_id: Optional[int] = None
     questionnaire_types: Optional[List[str]] = None
-    language: str = "it"
+    language: List[str] = ["*"]
     sort_order: int = 0
     is_active: bool = True
 
@@ -849,7 +849,7 @@ class CounselorUpdate(BaseModel):
     avatar: Optional[str] = None
     preset_id: Optional[int] = None
     questionnaire_types: Optional[List[str]] = None
-    language: Optional[str] = None
+    language: Optional[List[str]] = None
     sort_order: Optional[int] = None
     is_active: Optional[bool] = None
 
@@ -873,7 +873,7 @@ class CounselorPublic(BaseModel):
     description: Optional[str] = None
     avatar: Optional[str] = None
     questionnaire_types: Optional[List[str]] = None
-    language: str = "it"
+    language: List[str] = ["*"]
     is_active: bool = True
     # "local" (Ollama/llama.cpp) | "external" (API a pagamento). Derivato dal preset.
     model_origin: Optional[str] = None

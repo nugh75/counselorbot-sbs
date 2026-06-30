@@ -30,7 +30,7 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName }: Cou
     const load = useCallback(async () => {
         setLoaded(false);
         try {
-            const list = await fetchCounselors(lang);
+            const list = await fetchCounselors(lang, lang);
             setCounselors(list);
             const stored = getSelectedCounselorId();
             // se il counselor salvato non esiste piu', azzera

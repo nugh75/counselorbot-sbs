@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 
+import { LANGUAGES } from '@/lib/i18n';
+
 const QTYPES = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
 
 interface Preset { id: number; name: string; provider: string; model: string; }
@@ -17,7 +19,7 @@ interface Counselor {
     avatar: string | null;
     preset_id: number | null;
     questionnaire_types: string[] | null;
-    language: string;
+    language: string[];
     sort_order: number;
     is_active: boolean;
     provider: string | null;
@@ -26,12 +28,12 @@ interface Counselor {
 
 type FormState = {
     slug: string; name: string; description: string; persona: string; avatar: string;
-    preset_id: string; questionnaire_types: string[]; language: string; sort_order: string; is_active: boolean;
+    preset_id: string;     questionnaire_types: string[]; language: string[]; sort_order: string; is_active: boolean;
 };
 
 const EMPTY: FormState = {
     slug: '', name: '', description: '', persona: '', avatar: '',
-    preset_id: '', questionnaire_types: [], language: 'it', sort_order: '0', is_active: true,
+    preset_id: '', questionnaire_types: [], language: ['*'], sort_order: '0', is_active: true,
 };
 
 export function CounselorsPanel() {
@@ -67,7 +69,7 @@ export function CounselorsPanel() {
         setForm({
             slug: c.slug, name: c.name, description: c.description || '', persona: c.persona || '',
             avatar: c.avatar || '', preset_id: c.preset_id != null ? String(c.preset_id) : '',
-            questionnaire_types: c.questionnaire_types || [], language: c.language || 'it',
+            questionnaire_types: c.questionnaire_types || [], language: Array.isArray(c.language) ? c.language : ['*'],
             sort_order: String(c.sort_order ?? 0), is_active: c.is_active,
         });
         setEditingId(c.id);
@@ -80,6 +82,16 @@ export function CounselorsPanel() {
             ? f.questionnaire_types.filter((x) => x !== q)
             : [...f.questionnaire_types, q],
     }));
+
+    const toggleLang = (code: string) => setForm((f) => {
+        if (code === '*') return { ...f, language: ['*'] };
+        // remove '*' and toggle the specific code
+        const filtered = f.language.filter((x) => x !== '*');
+        const next = filtered.includes(code)
+            ? filtered.filter((x) => x !== code)
+            : [...filtered, code];
+        return { ...f, language: next.length === 0 ? ['*'] : next };
+    });
 
     const save = async () => {
         if (!form.slug.trim() || !form.name.trim()) return;
@@ -139,11 +151,15 @@ export function CounselorsPanel() {
                         {presets.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.provider}/{p.model})</option>)}
                     </select>
                 </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.counselors.language')}
-                    <select className={inputCls} value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })}>
-                        <option value="it">it</option><option value="en">en</option><option value="es">es</option>
-                    </select>
-                </label>
+                <div className="col-span-full">
+                    <div className="mb-1 text-xs font-medium text-slate-500">{t('admin.counselors.language')}</div>
+                    <div className="flex flex-wrap gap-2">
+                        <button key="*" type="button" onClick={() => toggleLang('*')} className={`rounded-md border px-2 py-1 text-xs font-medium ${form.language.includes('*') ? 'border-indigo-300 bg-indigo-100 text-indigo-700' : 'border-slate-200 bg-white text-slate-500'}`}>{t('admin.counselors.allLanguages') || 'Tutte (*)'}</button>
+                        {LANGUAGES.map((l) => (
+                            <button key={l.code} type="button" onClick={() => toggleLang(l.code)} className={`rounded-md border px-2 py-1 text-xs font-medium ${form.language.includes(l.code) ? 'border-indigo-300 bg-indigo-100 text-indigo-700' : 'border-slate-200 bg-white text-slate-500'}`}>{l.label}</button>
+                        ))}
+                    </div>
+                </div>
                 <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.counselors.order')}
                     <input className={inputCls} type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} />
                 </label>
