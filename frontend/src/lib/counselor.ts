@@ -10,6 +10,7 @@ export interface PublicCounselor {
     questionnaire_types?: string[] | null;
     language: string[];
     is_active?: boolean;
+    show_in_assistant?: boolean;
     model_origin?: 'local' | 'external' | null;
 }
 
