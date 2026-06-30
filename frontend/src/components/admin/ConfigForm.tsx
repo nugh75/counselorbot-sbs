@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Save, Server, Cpu, Plus, Trash2, ChevronUp, ChevronDown, Palette, RefreshCw } from 'lucide-react';
+import { Cpu, FileText, Layers, Palette, Plus, RefreshCw, Save, Server, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 
 // --- Types ---
@@ -119,6 +119,7 @@ const PROVIDERS: Record<string, { label: string; models: string[] }> = {
 };
 
 const SYSTEM_PROMPT_MODES = [
+    { value: 'intro', label: 'Presentazione' },
     { value: 'factor', label: 'Analisi Fattori' },
     { value: 'second-level', label: 'Secondo Livello' },
     { value: 'generic', label: 'Generica' },
@@ -155,6 +156,51 @@ const COLOR_THEMES = [
     { value: 'rose', label: 'Rosa chiaro', dot: 'bg-rose-500' },
 ];
 
+const QUESTIONNAIRE_TYPE_BY_SECTION: Record<string, string> = {
+    qsa: 'QSA',
+    qsar: 'QSAr',
+    ztpi: 'ZTPI',
+    savickas: 'SAVICKAS',
+    qpcs: 'QPCS',
+    qpcc: 'QPCC',
+    qap: 'QAP',
+};
+
+const SYSTEM_PROMPT_KEY_BY_MODE: Record<string, string> = {
+    factor: 'prompt_factor',
+    'factor-qa': 'prompt_factor_qa',
+    'second-level': 'prompt_second_level',
+    generic: 'prompt_generic',
+    'qsar-factor': 'prompt_qsar_factor',
+    'qsar-factor-qa': 'prompt_qsar_factor_qa',
+    'qsar-second-level': 'prompt_qsar_second_level',
+    'qsar-generic': 'prompt_qsar_generic',
+    'ztpi-factor': 'prompt_ztpi_factor',
+    'ztpi-btp': 'prompt_ztpi_btp',
+    'savickas-interview': 'prompt_savickas_interview',
+    'savickas-summary': 'prompt_savickas_summary',
+    'qpcs-factor': 'prompt_qpcs_factor',
+    'qpcc-factor': 'prompt_qpcc_factor',
+    'qap-factor': 'prompt_qap_factor',
+    'qpcs-interview': 'prompt_qpcs_interview',
+    'qpcs-summary': 'prompt_qpcs_summary',
+    'qpcc-interview': 'prompt_qpcc_interview',
+    'qpcc-summary': 'prompt_qpcc_summary',
+    'qap-interview': 'prompt_qap_interview',
+    'qap-summary': 'prompt_qap_summary',
+};
+
+const SYSTEM_PROMPT_KEY_BY_PHASE: Record<string, string> = {
+    questions: 'prompt_guided_questions',
+    intro: 'prompt_intro',
+    'qsar-intro': 'prompt_qsar_intro',
+    'ztpi-intro': 'prompt_ztpi_intro',
+    'savickas-intro': 'prompt_savickas_intro',
+    'qpcs-welcome': 'prompt_qpcs_welcome',
+    'qpcc-welcome': 'prompt_qpcc_welcome',
+    'qap-welcome': 'prompt_qap_welcome',
+};
+
 // --- Helper to get auth header ---
 
 // Auth gestita al bordo da ai4auth (forward-auth): nessun token lato client.
@@ -164,6 +210,148 @@ function authHeaders(): Record<string, string> {
 
 function authJsonHeaders(): Record<string, string> {
     return { 'Content-Type': 'application/json' };
+}
+
+function normalizedQuestionnaireType(questionnaireType: string): string {
+    return questionnaireType.trim().toUpperCase();
+}
+
+function textStats(text: string | null | undefined): { chars: number; lines: number } {
+    const value = text || '';
+    return {
+        chars: value.length,
+        lines: value ? value.split('\n').length : 0,
+    };
+}
+
+function promptKeyForStep(step: GuidedStep | undefined): string {
+    if (!step) return '';
+    return SYSTEM_PROMPT_KEY_BY_PHASE[step.id] || SYSTEM_PROMPT_KEY_BY_MODE[step.system_prompt_mode] || 'prompt_generic';
+}
+
+function PromptTextBlock({
+    title,
+    subtitle,
+    text,
+    emptyLabel,
+}: {
+    title: string;
+    subtitle?: string;
+    text: string | null | undefined;
+    emptyLabel: string;
+}) {
+    const value = text || '';
+    const stats = textStats(value);
+    return (
+        <div className="rounded-lg border border-slate-200 bg-white">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
+                <div>
+                    <h5 className="text-sm font-semibold text-slate-800">{title}</h5>
+                    {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
+                </div>
+                <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500">
+                    {stats.chars} char · {stats.lines} righe
+                </span>
+            </div>
+            <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words p-4 text-xs leading-relaxed text-slate-700">
+                {value.trim() ? value : emptyLabel}
+            </pre>
+        </div>
+    );
+}
+
+function StepPromptsPanel({
+    questionnaireType,
+    steps,
+    selectedStepId,
+    onSelectStep,
+    configs,
+    t,
+}: {
+    questionnaireType: string;
+    steps: GuidedStep[];
+    selectedStepId: string;
+    onSelectStep: (stepId: string) => void;
+    configs: ConfigItem[];
+    t: (key: string, vars?: Record<string, string | number>) => string;
+}) {
+    const selectedStep = steps.find((step) => step.id === selectedStepId) || steps[0];
+    const systemPromptKey = promptKeyForStep(selectedStep);
+    const systemPrompt = configs.find((config) => config.key === systemPromptKey)?.value || '';
+    const modeLabel = selectedStep?.system_prompt_mode
+        ? t(`admin.mode.${selectedStep.system_prompt_mode}`)
+        : '';
+
+    return (
+        <div className="glass-panel p-5 space-y-5">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-slate-700">
+                        <Layers className="h-4 w-4 text-indigo-600" />
+                        {t('admin.promptAudit.title')}
+                    </h3>
+                    <p className="mt-1 max-w-3xl text-xs text-slate-500">
+                        {t('admin.promptAudit.subtitle')}
+                    </p>
+                </div>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+                <label className="space-y-2 text-xs font-semibold text-slate-500">
+                    {t('admin.promptAudit.stepSelect')}
+                    <select
+                        className="w-full rounded-md border border-slate-300 bg-white p-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500"
+                        value={selectedStep?.id || ''}
+                        onChange={(event) => onSelectStep(event.target.value)}
+                    >
+                        {steps.map((step) => (
+                            <option key={step.id} value={step.id}>
+                                {step.sort_order}. {step.label || step.id}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+
+                <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 sm:grid-cols-3">
+                    <div>
+                        <p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.instrument')}</p>
+                        <p className="mt-1 font-mono text-slate-800">{questionnaireType}</p>
+                    </div>
+                    <div>
+                        <p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.mode')}</p>
+                        <p className="mt-1 text-slate-800">{modeLabel}</p>
+                    </div>
+                    <div>
+                        <p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.promptKey')}</p>
+                        <p className="mt-1 break-words font-mono text-slate-800">{systemPromptKey || '-'}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-2">
+                <PromptTextBlock
+                    title={t('admin.promptAudit.block.systemPrompt')}
+                    subtitle={systemPromptKey}
+                    text={systemPrompt}
+                    emptyLabel={t('admin.promptAudit.empty')}
+                />
+                <PromptTextBlock
+                    title={t('admin.promptAudit.block.stepPrompt')}
+                    subtitle={selectedStep ? selectedStep.id : undefined}
+                    text={selectedStep?.prompt}
+                    emptyLabel={t('admin.promptAudit.empty')}
+                />
+            </div>
+
+            <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 p-4 text-xs text-slate-600">
+                <h4 className="flex items-center gap-2 text-sm font-semibold text-indigo-800">
+                    <FileText className="h-4 w-4" />
+                    {t('admin.promptAudit.injectedList')}
+                </h4>
+                <p className="mt-2">{t('admin.promptAudit.onlyPrompts')}</p>
+            </div>
+        </div>
+    );
 }
 
 // --- Component ---
@@ -194,6 +382,7 @@ export function ConfigForm() {
         id: '', sort_order: 0, label: '', prompt: '',
         system_prompt_mode: 'generic', color_theme: 'blue', questionnaire_type: 'QSA',
     });
+    const [promptStepIds, setPromptStepIds] = useState<Record<string, string>>({});
 
     // --- Fetch all data ---
 
@@ -266,6 +455,16 @@ export function ConfigForm() {
         if (activeKeyMissing) { setLiveModels([]); return; }
         fetchModels(activeProvider);
     }, [activeProvider, activeKeyMissing]);
+
+    const activePromptQuestionnaireType = QUESTIONNAIRE_TYPE_BY_SECTION[section] || '';
+    const activePromptSteps = activePromptQuestionnaireType
+        ? guidedSteps
+            .filter((step) => normalizedQuestionnaireType(step.questionnaire_type) === normalizedQuestionnaireType(activePromptQuestionnaireType))
+            .sort((a, b) => a.sort_order - b.sort_order)
+        : [];
+    const activePromptStepId = activePromptQuestionnaireType
+        ? (promptStepIds[activePromptQuestionnaireType] || activePromptSteps[0]?.id || '')
+        : '';
 
     // Opzioni della tendina: modelli live se disponibili, altrimenti fallback statico.
     // Il modello attivo viene sempre incluso così resta selezionato anche se non in elenco.
@@ -371,6 +570,7 @@ export function ConfigForm() {
             if (res.ok) {
                 const created = await res.json();
                 setGuidedSteps(prev => [...prev, created]);
+                setPromptStepIds(prev => ({ ...prev, [created.questionnaire_type]: created.id }));
                 setNewStep({ id: '', sort_order: 0, label: '', prompt: '', system_prompt_mode: 'generic', color_theme: 'blue', questionnaire_type: newStep.questionnaire_type });
                 setShowNewStepForm(false);
                 showToast('success', t('admin.config.saved'));
@@ -392,6 +592,13 @@ export function ConfigForm() {
             });
             if (res.ok) {
                 setGuidedSteps(prev => prev.filter(s => s.id !== stepId));
+                setPromptStepIds(prev => {
+                    const next = { ...prev };
+                    for (const [qType, selectedId] of Object.entries(next)) {
+                        if (selectedId === stepId) delete next[qType];
+                    }
+                    return next;
+                });
                 showToast('success', t('admin.config.deleted'));
             } else {
                 throw new Error(`HTTP ${res.status}`);
@@ -894,6 +1101,17 @@ export function ConfigForm() {
                     </div>
                 );
             })}
+
+            {section !== 'general' && activePromptQuestionnaireType && activePromptSteps.length > 0 && (
+                <StepPromptsPanel
+                    questionnaireType={activePromptQuestionnaireType}
+                    steps={activePromptSteps}
+                    selectedStepId={activePromptStepId}
+                    onSelectStep={(stepId) => setPromptStepIds(prev => ({ ...prev, [activePromptQuestionnaireType]: stepId }))}
+                    configs={configs}
+                    t={t}
+                />
+            )}
 
             {/* 4. Dynamic Guided Steps — per questionario attivo */}
             {section !== 'general' && (() => {
