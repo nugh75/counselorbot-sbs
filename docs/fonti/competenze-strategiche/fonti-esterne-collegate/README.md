@@ -9,7 +9,6 @@ This directory does not contain files hosted directly on `competenzestrategiche.
 - `cnos-fap/`: publications and articles hosted by CNOS-FAP.
 - `roma-tre-press/`: chapters and contributions hosted by Roma TrE-Press.
 
-## External resources not downloaded
+## External resources not linked
 
-- `http://www.cnos-fap.it/sites/default/files/pubblicazioni/promuovere%20la%20crescita%20nelle%20competenze%20%20strategiche.pdf`: returned `403`; the available HTTPS variant was downloaded as `promuovere_la_crescita_nelle_competenze_strategiche.PDF`.
-- `https://core.ac.uk/download/pdf/322531384.pdf`: returned `404` at download time.
+Dead or access-blocked source URLs are not kept here as clickable links. The CNOS-FAP blocked PDF is represented by the downloaded HTTPS copy `promuovere_la_crescita_nelle_competenze_strategiche.PDF`; the unavailable Core source is recorded only as a failed source reference in the crawl notes.
