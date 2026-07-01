@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Cpu, FileText, Layers, Palette, Plus, RefreshCw, Save, Server, Trash2, ChevronUp, ChevronDown, Pencil } from 'lucide-react';
+import { Cpu, FileText, Layers, Palette, Plus, RefreshCw, Save, Server, Trash2, ChevronUp, ChevronDown, Pencil, Award } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
 
@@ -831,32 +831,51 @@ function StepPromptsPanel({
                 </div>
 
                 {flags.knowledge && (
-                    <div className="rounded-lg border border-indigo-100 bg-indigo-50/20 p-4 space-y-3">
-                        <h5 className="text-xs font-semibold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
-                            <Layers className="w-3.5 h-3.5 text-indigo-600" />
-                            Fonti di Conoscenza e Strategie
-                        </h5>
-                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                            {['rag_counselorbot', 'rag_competenzestrategiche', 'rag_questionari', 'approved_strategies', 'certified_strategies', 'shared_responses'].map((name) => (
-                                <label key={name} className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
-                                    <input type="checkbox" className="accent-indigo-600" checked={flags[name]} onChange={() => toggleFlag(name)} />
-                                    {componentText.labels[name] || name}
+                    <div className="grid gap-4 md:grid-cols-2">
+                        {/* Fonti RAG e Documentazione */}
+                        <div className="rounded-lg border border-indigo-100 bg-indigo-50/20 p-4 space-y-3">
+                            <h5 className="text-xs font-semibold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
+                                <Layers className="w-3.5 h-3.5 text-indigo-600" />
+                                Fonti di Conoscenza RAG e Risposte
+                            </h5>
+                            <div className="grid gap-2">
+                                {['rag_counselorbot', 'rag_competenzestrategiche', 'rag_questionari', 'shared_responses'].map((name) => (
+                                    <label key={name} className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
+                                        <input type="checkbox" className="accent-indigo-600" checked={flags[name]} onChange={() => toggleFlag(name)} />
+                                        {componentText.labels[name] || name}
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Strategie QSA */}
+                        <div className="rounded-lg border border-emerald-100 bg-emerald-50/20 p-4 space-y-3">
+                            <h5 className="text-xs font-semibold uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
+                                <Award className="w-3.5 h-3.5 text-emerald-600" />
+                                Strategie Consigliate
+                            </h5>
+                            <div className="grid gap-2">
+                                {['approved_strategies', 'certified_strategies'].map((name) => (
+                                    <label key={name} className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
+                                        <input type="checkbox" className="accent-emerald-600" checked={flags[name]} onChange={() => toggleFlag(name)} />
+                                        {componentText.labels[name] || name}
+                                    </label>
+                                ))}
+                                <label className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
+                                    <span>Limite strategie certificate</span>
+                                    <select
+                                        className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 disabled:bg-slate-100 disabled:text-slate-400 focus:ring-1 focus:ring-emerald-500 outline-none"
+                                        value={certifiedStrategyLimit}
+                                        onChange={(event) => updateCertifiedStrategyLimit(Number(event.target.value))}
+                                        disabled={!flags.knowledge || !flags.certified_strategies}
+                                    >
+                                        <option value={0}>Nessuna</option>
+                                        <option value={1}>1</option>
+                                        <option value={2}>2</option>
+                                        <option value={3}>3</option>
+                                    </select>
                                 </label>
-                            ))}
-                            <label className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
-                                <span>Limite strategie certificate</span>
-                                <select
-                                    className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 disabled:bg-slate-100 disabled:text-slate-400 focus:ring-1 focus:ring-indigo-500 outline-none"
-                                    value={certifiedStrategyLimit}
-                                    onChange={(event) => updateCertifiedStrategyLimit(Number(event.target.value))}
-                                    disabled={!flags.knowledge || !flags.certified_strategies}
-                                >
-                                    <option value={0}>Nessuna</option>
-                                    <option value={1}>1</option>
-                                    <option value={2}>2</option>
-                                    <option value={3}>3</option>
-                                </select>
-                            </label>
+                            </div>
                         </div>
                     </div>
                 )}
