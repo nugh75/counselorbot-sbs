@@ -744,7 +744,7 @@ function StepPromptsPanel({
                         {PROMPT_LANGUAGES.map((item) => <option key={item.code} value={item.code}>{item.label}</option>)}
                     </select>
                 </label>
-                <div className="flex flex-wrap gap-x-8 gap-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+                <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 sm:grid-cols-3 lg:col-span-4">
                     <div><p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.instrument')}</p><p className="mt-1 font-mono text-slate-800">{questionnaireType}</p></div>
                     <div><p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.mode')}</p><p className="mt-1 text-slate-800">{modeLabel}</p></div>
                     <div><p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.promptKey')}</p><p className="mt-1 break-words font-mono text-slate-800">{systemPromptKey || '-'}</p></div>
