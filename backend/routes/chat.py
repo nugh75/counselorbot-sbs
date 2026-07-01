@@ -385,6 +385,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             db, session_id, retrieval_request, questionnaire_type, retrieval_query,
             ai_service=ai_service,
             certified_strategy_limit=component_options["certified_strategy_limit"],
+            component_flags=component_flags,
         )
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         knowledge_context = _sanitize_ztpi_user_text(knowledge_context, request.language)
@@ -627,6 +628,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             db, session_id, retrieval_request, questionnaire_type, retrieval_query,
             ai_service=ai_service,
             certified_strategy_limit=component_options["certified_strategy_limit"],
+            component_flags=component_flags,
         )
     sanitize = _should_sanitize_ztpi_text(request.mode, request.phase)
     if sanitize:
