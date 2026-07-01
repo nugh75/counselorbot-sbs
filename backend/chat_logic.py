@@ -1397,6 +1397,18 @@ def _portfolio_context(db, username: str) -> str:
     return "\n".join(lines)[:MAX_PORTFOLIO_CHARS]
 
 
+def _filter_allowed_strategy_entries(entries: List[dict], allowed_strategy_ids) -> List[dict]:
+    """Apply the admin step whitelist when it exists.
+
+    `None` means no explicit whitelist was saved yet, so all eligible strategies
+    remain allowed. An empty list is a real whitelist and blocks every strategy.
+    """
+    if allowed_strategy_ids is None or not isinstance(allowed_strategy_ids, list):
+        return entries
+    allowed = {str(item).strip() for item in allowed_strategy_ids if str(item).strip()}
+    return [entry for entry in entries if str(entry.get("id", "")).strip() in allowed]
+
+
 def _retrieved_context(
     db,
     session_id: str,
@@ -1428,6 +1440,7 @@ def _retrieved_context(
             ai_service=ai_service,
             markdown_text=approved_strategies_markdown,
         )
+        strategies = _filter_allowed_strategy_entries(strategies, component_flags.get("allowed_strategies"))
     strategy_context = strategy_memory.render_context(strategies)
 
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
@@ -1459,6 +1472,7 @@ def _retrieved_context(
             limit=certified_limit,
             ai_service=ai_service,
         )
+        certified = _filter_allowed_strategy_entries(certified, component_flags.get("allowed_strategies"))
     certified_context = certified_strategy_memory.render_context(certified, request.language or "it")
 
     learned_responses = []
