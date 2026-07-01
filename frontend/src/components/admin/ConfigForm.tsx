@@ -1046,6 +1046,9 @@ function StepPromptsPanel({
             </div>
 
             <div className="grid gap-4">
+                {selectedCounselorId !== '' && (
+                    <PromptTextBlock title={componentText.labels.counselor} text={textValue(preview?.components?.counselor)} emptyLabel={loadingLabel} />
+                )}
                 <EditablePromptTextBlock
                     title={componentText.labels.step_prompt}
                     subtitle={localizedStepKey || selectedStep?.id}
@@ -1107,7 +1110,9 @@ function StepPromptsPanel({
                 <PromptTextBlock title={componentText.labels.other_scores} text={textValue(preview?.components?.other_scores)} emptyLabel={loadingLabel} />
                 <PromptTextBlock title={componentText.labels.knowledge} text={ragSummary} emptyLabel={loadingLabel} />
                 <PromptTextBlock title={componentText.labels.history} text={textValue(preview?.components?.history)} emptyLabel={loadingLabel} />
-                <PromptTextBlock title={componentText.labels.counselor} text={textValue(preview?.components?.counselor)} emptyLabel={loadingLabel} />
+                {selectedCounselorId === '' && (
+                    <PromptTextBlock title={componentText.labels.counselor} text={textValue(preview?.components?.counselor)} emptyLabel={loadingLabel} />
+                )}
                 <PromptTextBlock title={componentText.labels.metadata} text={textValue(preview?.components?.metadata)} emptyLabel={loadingLabel} />
                 <PromptTextBlock title={componentText.labels.profile} text={textValue(preview?.components?.profile)} emptyLabel={loadingLabel} />
                 <PromptTextBlock title={componentText.labels.student_booklet} text={textValue(preview?.components?.student_booklet)} emptyLabel={loadingLabel} />
