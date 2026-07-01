@@ -906,7 +906,7 @@ function StepPromptsPanel({
                 </div>
 
                 {flags.knowledge && (
-                    <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-4">
                         {/* Fonti RAG e Documentazione */}
                         <div className="rounded-lg border border-indigo-100 bg-indigo-50/20 p-4 space-y-3">
                             <h5 className="text-xs font-semibold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
