@@ -221,6 +221,15 @@ const PROMPT_COMPONENT_DEFAULTS: Record<string, boolean> = {
     student_booklet: true,
 };
 
+const PROMPT_LANGUAGES = [
+    { code: 'it', label: 'Italiano' },
+    { code: 'en', label: 'English' },
+    { code: 'es', label: 'Español' },
+    { code: 'fr', label: 'Français' },
+    { code: 'de', label: 'Deutsch' },
+    { code: 'sv', label: 'Svenska' },
+];
+
 const PROMPT_COMPONENT_LABELS: Record<string, string> = {
     system_prompt: 'System prompt',
     guidance: 'Raccomandazioni iniziali',
@@ -281,6 +290,10 @@ function promptComponentConfigKey(questionnaireType: string, stepId: string): st
 
 function promptGuidanceConfigKey(questionnaireType: string, stepId: string): string {
     return `prompt_guidance_${questionnaireType.trim().toUpperCase().replace(/[^A-Za-z0-9_-]+/g, '-')}_${stepId.trim().replace(/[^A-Za-z0-9_-]+/g, '-')}`;
+}
+
+function localizedStepPromptConfigKey(stepId: string, language: string): string {
+    return `guided_step_prompt_${stepId.trim().replace(/[^A-Za-z0-9_-]+/g, '-')}${language === 'it' ? '' : `__${language}`}`;
 }
 
 function parseComponentFlags(raw: string): Record<string, boolean> {
@@ -403,6 +416,8 @@ function StepPromptsPanel({
     results,
     selectedSessionId,
     onSelectSession,
+    selectedLanguage,
+    onSelectLanguage,
     onSaveComponentFlags,
     onSaveSystemPrompt,
     onSaveGuidance,
@@ -419,10 +434,12 @@ function StepPromptsPanel({
     results: QuestionnaireResult[];
     selectedSessionId: string;
     onSelectSession: (sessionId: string) => void;
+    selectedLanguage: string;
+    onSelectLanguage: (language: string) => void;
     onSaveComponentFlags: (key: string, flags: Record<string, boolean>) => void;
     onSaveSystemPrompt: (key: string, value: string) => void;
     onSaveGuidance: (key: string, value: string) => void;
-    onSaveStepPrompt: (step: GuidedStep, value: string) => void;
+    onSaveStepPrompt: (step: GuidedStep, value: string, language: string, localizedKey: string) => void;
     t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
     const selectedStep = steps.find((step) => step.id === selectedStepId) || steps[0];
@@ -432,6 +449,10 @@ function StepPromptsPanel({
     const guidanceKey = selectedStep ? promptGuidanceConfigKey(questionnaireType, selectedStep.id) : '';
     const configFlags = parseComponentFlags(configs.find((config) => config.key === componentKey)?.value || '');
     const guidanceText = configs.find((config) => config.key === guidanceKey)?.value || '';
+    const localizedStepKey = selectedStep ? localizedStepPromptConfigKey(selectedStep.id, selectedLanguage) : '';
+    const localizedStepValue = selectedLanguage === 'it'
+        ? selectedStep?.prompt || ''
+        : (configs.find((config) => config.key === localizedStepKey)?.value || selectedStep?.prompt || '');
     const [preview, setPreview] = useState<PromptPreview | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
     const [editingPrompt, setEditingPrompt] = useState<'system' | 'guidance' | 'step' | null>(null);
@@ -446,8 +467,8 @@ function StepPromptsPanel({
         setEditingPrompt(null);
         setSystemDraft(systemPrompt);
         setGuidanceDraft(guidanceText);
-        setStepDraft(selectedStep?.prompt || '');
-    }, [systemPrompt, guidanceText, selectedStep?.id, selectedStep?.prompt]);
+        setStepDraft(localizedStepValue);
+    }, [systemPrompt, guidanceText, selectedStep?.id, localizedStepValue]);
 
     useEffect(() => {
         if (!selectedStep) return;
@@ -458,10 +479,11 @@ function StepPromptsPanel({
             headers: authJsonHeaders(),
             body: JSON.stringify({
                 questionnaire_type: questionnaireType,
-                language: 'it',
+                language: selectedLanguage,
                 phase: selectedStep.id,
                 mode: selectedStep.system_prompt_mode || 'generic',
-                use_phase_prompt: true,
+                message: localizedStepValue,
+                use_phase_prompt: false,
                 session_id: selectedSessionId || undefined,
                 include_knowledge: true,
                 include_history: true,
@@ -472,7 +494,7 @@ function StepPromptsPanel({
             .catch(() => { if (!cancelled) setPreview(null); })
             .finally(() => { if (!cancelled) setPreviewLoading(false); });
         return () => { cancelled = true; };
-    }, [questionnaireType, selectedStep?.id, selectedStep?.system_prompt_mode, selectedSessionId, configs.find((config) => config.key === componentKey)?.value]);
+    }, [questionnaireType, selectedStep?.id, selectedStep?.system_prompt_mode, selectedSessionId, selectedLanguage, localizedStepValue, configs.find((config) => config.key === componentKey)?.value]);
 
     const flags = { ...configFlags, ...(preview?.component_flags || {}) };
     const toggleFlag = (name: string) => {
@@ -500,7 +522,7 @@ function StepPromptsPanel({
                 </div>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-3">
+            <div className="grid gap-4 lg:grid-cols-4">
                 <label className="space-y-2 text-xs font-semibold text-slate-500">
                     {t('admin.promptAudit.stepSelect')}
                     <select className="w-full rounded-md border border-slate-300 bg-white p-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedStep?.id || ''} onChange={(event) => onSelectStep(event.target.value)}>
@@ -512,6 +534,12 @@ function StepPromptsPanel({
                     <select className="w-full rounded-md border border-slate-300 bg-white p-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedSessionId} onChange={(event) => onSelectSession(event.target.value)}>
                         <option value="">{t('admin.promptAudit.noSession')}</option>
                         {results.map((result) => <option key={result.session_id} value={result.session_id}>{result.username || '-'} · {result.session_id} · {new Date(result.submitted_at).toLocaleDateString()}</option>)}
+                    </select>
+                </label>
+                <label className="space-y-2 text-xs font-semibold text-slate-500">
+                    Lingua prompt
+                    <select className="w-full rounded-md border border-slate-300 bg-white p-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedLanguage} onChange={(event) => onSelectLanguage(event.target.value)}>
+                        {PROMPT_LANGUAGES.map((item) => <option key={item.code} value={item.code}>{item.label}</option>)}
                     </select>
                 </label>
                 <div className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 sm:grid-cols-3 lg:grid-cols-1">
@@ -568,8 +596,8 @@ function StepPromptsPanel({
                 />
                 <EditablePromptTextBlock
                     title={t('admin.promptAudit.block.stepPrompt')}
-                    subtitle={selectedStep ? selectedStep.id : undefined}
-                    text={selectedStep?.prompt}
+                    subtitle={localizedStepKey || selectedStep?.id}
+                    text={localizedStepValue}
                     emptyLabel={t('admin.promptAudit.empty')}
                     editing={editingPrompt === 'step'}
                     draft={stepDraft}
@@ -577,10 +605,10 @@ function StepPromptsPanel({
                     onDraftChange={setStepDraft}
                     onSave={() => {
                         if (!selectedStep) return;
-                        onSaveStepPrompt(selectedStep, stepDraft);
+                        onSaveStepPrompt(selectedStep, stepDraft, selectedLanguage, localizedStepKey);
                         setEditingPrompt(null);
                     }}
-                    onCancel={() => { setStepDraft(selectedStep?.prompt || ''); setEditingPrompt(null); }}
+                    onCancel={() => { setStepDraft(localizedStepValue); setEditingPrompt(null); }}
                 />
                 <PromptTextBlock title="Fattori cognitivi" text={textValue(preview?.components?.cognitive_factors)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
                 <PromptTextBlock title="Fattori affettivi" text={textValue(preview?.components?.affective_factors)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
@@ -641,6 +669,7 @@ export function ConfigForm() {
     });
     const [promptStepIds, setPromptStepIds] = useState<Record<string, string>>({});
     const [promptSessionIds, setPromptSessionIds] = useState<Record<string, string>>({});
+    const [promptLanguages, setPromptLanguages] = useState<Record<string, string>>({});
     const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
 
     const openSection = (nextSection: string) => {
@@ -1331,6 +1360,8 @@ export function ConfigForm() {
                                     results={questionnaireResults.filter((result) => normalizedQuestionnaireType(result.questionnaire_type) === normalizedQuestionnaireType(q.questionnaireType))}
                                     selectedSessionId={promptSessionIds[q.questionnaireType] || ''}
                                     onSelectSession={(sessionId) => setPromptSessionIds(prev => ({ ...prev, [q.questionnaireType]: sessionId }))}
+                                    selectedLanguage={promptLanguages[q.questionnaireType] || lang || 'it'}
+                                    onSelectLanguage={(language) => setPromptLanguages(prev => ({ ...prev, [q.questionnaireType]: language }))}
                                     onSaveComponentFlags={saveComponentFlags}
                                     onSaveSystemPrompt={(key, value) => {
                                         setConfigDraft(key, value, key);
@@ -1340,7 +1371,12 @@ export function ConfigForm() {
                                         setConfigDraft(key, value, key);
                                         handleSaveConfig({ key, value, description: key });
                                     }}
-                                    onSaveStepPrompt={(step, value) => {
+                                    onSaveStepPrompt={(step, value, language, localizedKey) => {
+                                        if (language !== 'it') {
+                                            setConfigDraft(localizedKey, value, localizedKey);
+                                            handleSaveConfig({ key: localizedKey, value, description: localizedKey });
+                                            return;
+                                        }
                                         const updated = { ...step, prompt: value };
                                         setGuidedSteps(prev => prev.map(s => s.id === step.id ? updated : s));
                                         handleSaveStep(updated);
