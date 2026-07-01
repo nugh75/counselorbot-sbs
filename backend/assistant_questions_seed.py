@@ -325,11 +325,16 @@ DEFAULT_ASSISTANT_QUESTIONS: dict[str, list[str]] = {
 
 
 def seed_assistant_questions(db, models) -> None:
-    """Inserisce le domande di default (it) se la tabella è vuota. Idempotente."""
-    if db.query(models.AssistantQuestion).count() > 0:
-        return
+    """Inserisce le domande di default (it) mancanti. Idempotente."""
+    existing = {
+        (row.topic, row.language, row.text)
+        for row in db.query(models.AssistantQuestion).all()
+    }
+    inserted = False
     for topic, questions in DEFAULT_ASSISTANT_QUESTIONS.items():
         for order, text in enumerate(questions):
+            if (topic, "it", text) in existing:
+                continue
             db.add(
                 models.AssistantQuestion(
                     topic=topic,
@@ -339,4 +344,6 @@ def seed_assistant_questions(db, models) -> None:
                     is_active=True,
                 )
             )
-    db.commit()
+            inserted = True
+    if inserted:
+        db.commit()

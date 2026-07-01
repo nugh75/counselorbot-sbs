@@ -5,9 +5,29 @@ import { Check, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import type { AdminAssistantQuestion } from '@/lib/assistant-questions';
 
-// Topic allineati a TOPIC_IDS della pagina /assistente: solo questi vengono
-// renderizzati nell'assistente, quindi l'admin sceglie tra questi.
-const TOPICS = ['questionari', 'validazione', 'didattica', 'fonti'] as const;
+// Topic allineati a TOPICS_BY_COLLECTION_AUDIENCE della pagina /assistente.
+// Solo questi vengono renderizzati nell'assistente, quindi l'admin sceglie tra questi.
+const TOPICS = [
+    'cs_strumenti',
+    'cs_risultati',
+    'cs_approfondire',
+    'cs_metodologia',
+    'cs_validazione',
+    'cs_didattica',
+    'cs_materiali',
+    'cb_piattaforma',
+    'cb_strumenti',
+    'cb_percorso',
+    'cb_console',
+    'cb_counselor',
+    'cb_guida',
+    'fw_teoria',
+    'fw_articoli',
+    'fw_autori',
+    'q_strumenti',
+    'q_fattori',
+    'q_scoring',
+] as const;
 const LANGUAGES = ['it', 'en', 'es', 'fr', 'de', 'sv'] as const;
 
 type FormState = {
@@ -19,7 +39,7 @@ type FormState = {
 };
 
 const EMPTY: FormState = {
-    topic: 'questionari',
+    topic: 'cs_strumenti',
     language: 'it',
     text: '',
     sort_order: 0,
@@ -77,7 +97,7 @@ export function AssistantQuestionsPanel() {
 
     const startNew = () => {
         const lang = filterLang === 'all' ? 'it' : filterLang;
-        const topic = filterTopic === 'all' ? 'questionari' : filterTopic;
+        const topic = filterTopic === 'all' ? 'cs_strumenti' : filterTopic;
         // Append in coda al topic+lingua corrente.
         const maxOrder = items
             .filter((q) => q.topic === topic && q.language === lang)
