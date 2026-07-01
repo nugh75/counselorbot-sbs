@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Cpu, FileText, Layers, Palette, Plus, RefreshCw, Save, Server, Trash2, ChevronUp, ChevronDown, Pencil } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
 
 // --- Types ---
 
@@ -532,6 +533,8 @@ function StepPromptsPanel({
     results,
     selectedSessionId,
     onSelectSession,
+    selectedCounselorId,
+    onSelectCounselor,
     selectedLanguage,
     onSelectLanguage,
     onSaveComponentFlags,
@@ -551,6 +554,8 @@ function StepPromptsPanel({
     results: QuestionnaireResult[];
     selectedSessionId: string;
     onSelectSession: (sessionId: string) => void;
+    selectedCounselorId: number | '';
+    onSelectCounselor: (counselorId: number | '') => void;
     selectedLanguage: string;
     onSelectLanguage: (language: string) => void;
     onSaveComponentFlags: (key: string, flags: Record<string, boolean>) => void;
@@ -575,6 +580,12 @@ function StepPromptsPanel({
         : (configs.find((config) => config.key === localizedStepKey)?.value || selectedStep?.prompt || '');
     const [preview, setPreview] = useState<PromptPreview | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
+    // ponytail: reuse public /counselors fetch (active only), filter client-side by instrument.
+    const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
+    useEffect(() => { fetchCounselors().then(setCounselors).catch(() => setCounselors([])); }, []);
+    const instrumentCounselors = counselors.filter((c) =>
+        (c.questionnaire_types || []).some((t) => normalizedQuestionnaireType(t) === normalizedQuestionnaireType(questionnaireType))
+    );
     const [editingPrompt, setEditingPrompt] = useState<'system' | 'meta' | 'guidance' | 'step' | null>(null);
     const [systemDraft, setSystemDraft] = useState(systemPrompt);
     const [metaDraft, setMetaDraft] = useState(metaPrompt);
@@ -607,6 +618,7 @@ function StepPromptsPanel({
                 message: localizedStepValue,
                 use_phase_prompt: false,
                 session_id: selectedSessionId || undefined,
+                counselor_id: selectedCounselorId || undefined,
                 include_knowledge: true,
                 include_history: true,
             }),
@@ -616,7 +628,7 @@ function StepPromptsPanel({
             .catch(() => { if (!cancelled) setPreview(null); })
             .finally(() => { if (!cancelled) setPreviewLoading(false); });
         return () => { cancelled = true; };
-    }, [questionnaireType, selectedStep?.id, selectedStep?.system_prompt_mode, selectedSessionId, selectedLanguage, localizedStepValue, configs.find((config) => config.key === componentKey)?.value]);
+    }, [questionnaireType, selectedStep?.id, selectedStep?.system_prompt_mode, selectedSessionId, selectedCounselorId, selectedLanguage, localizedStepValue, configs.find((config) => config.key === componentKey)?.value]);
 
     const flags = { ...configFlags, ...(preview?.component_flags || {}) };
     const toggleFlag = (name: string) => {
@@ -679,6 +691,13 @@ function StepPromptsPanel({
                     <select className="w-full rounded-md border border-slate-300 bg-white p-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedSessionId} onChange={(event) => onSelectSession(event.target.value)}>
                         <option value="">{t('admin.promptAudit.noSession')}</option>
                         {results.map((result) => <option key={result.session_id} value={result.session_id}>{result.username || '-'} · {result.session_id} · {new Date(result.submitted_at).toLocaleDateString()}</option>)}
+                    </select>
+                </label>
+                <label className="space-y-2 text-xs font-semibold text-slate-500">
+                    {t('admin.promptAudit.counselorSelect')}
+                    <select className="w-full rounded-md border border-slate-300 bg-white p-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedCounselorId} onChange={(event) => onSelectCounselor(event.target.value ? Number(event.target.value) : '')}>
+                        <option value="">{t('admin.promptAudit.noCounselor')}</option>
+                        {instrumentCounselors.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                 </label>
                 <label className="space-y-2 text-xs font-semibold text-slate-500">
@@ -822,6 +841,7 @@ export function ConfigForm() {
     });
     const [promptStepIds, setPromptStepIds] = useState<Record<string, string>>({});
     const [promptSessionIds, setPromptSessionIds] = useState<Record<string, string>>({});
+    const [promptCounselorIds, setPromptCounselorIds] = useState<Record<string, number | ''>>({});
     const [promptLanguages, setPromptLanguages] = useState<Record<string, string>>({});
     const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
 
@@ -1520,6 +1540,8 @@ export function ConfigForm() {
                                     results={questionnaireResults.filter((result) => normalizedQuestionnaireType(result.questionnaire_type) === normalizedQuestionnaireType(q.questionnaireType))}
                                     selectedSessionId={promptSessionIds[q.questionnaireType] || ''}
                                     onSelectSession={(sessionId) => setPromptSessionIds(prev => ({ ...prev, [q.questionnaireType]: sessionId }))}
+                                    selectedCounselorId={promptCounselorIds[q.questionnaireType] ?? ''}
+                                    onSelectCounselor={(counselorId) => setPromptCounselorIds(prev => ({ ...prev, [q.questionnaireType]: counselorId }))}
                                     selectedLanguage={promptLanguages[q.questionnaireType] || lang || 'it'}
                                     onSelectLanguage={(language) => setPromptLanguages(prev => ({ ...prev, [q.questionnaireType]: language }))}
                                     onSaveComponentFlags={saveComponentFlags}
