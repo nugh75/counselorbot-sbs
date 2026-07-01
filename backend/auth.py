@@ -150,11 +150,11 @@ def _apply_view_as(identity: dict, request: Request) -> dict:
     return identity
 
 
-async def get_identity_view_as(request: Request) -> dict:
+async def get_identity_view_as(request: Request, identity: dict = Depends(get_identity)) -> dict:
     """Come get_identity ma applica l'anteprima profilo di prova. Usata dagli
     endpoint a identita' opzionale (chat) cosi' le interazioni di prova si
     salvano sotto il profilo di prova. /auth/me resta su get_identity (reale)."""
-    return _apply_view_as(await get_identity(request), request)
+    return _apply_view_as(identity, request)
 
 
 async def get_current_user(request: Request, identity: dict = Depends(get_identity)) -> dict:

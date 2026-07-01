@@ -1092,21 +1092,22 @@ def test_score_links_plan_and_research_contact_codes():
 
 def test_assistant_questions_seed_and_crud():
     # Lo startup (seeding) non gira nei test: semino esplicitamente come a runtime.
-    from backend.assistant_questions_seed import seed_assistant_questions
+    from backend.assistant_questions_seed import DEFAULT_ASSISTANT_QUESTIONS, seed_assistant_questions
     _db = _TestSession()
     try:
         seed_assistant_questions(_db, models)
     finally:
         _db.close()
 
-    # Le domande di default (it) sono seminate per i 4 topic.
+    # Le domande di default (it) sono seminate per i topic realmente usati da /assistente.
     grouped = client.get("/assistant-questions?lang=it").json()
-    assert {"questionari", "validazione", "didattica", "fonti"} <= set(grouped)
-    assert all(len(qs) >= 20 for qs in grouped.values())
+    assert set(DEFAULT_ASSISTANT_QUESTIONS) <= set(grouped)
+    for topic in DEFAULT_ASSISTANT_QUESTIONS:
+        assert len(grouped[topic]) >= 20
 
     # Create
     r = client.post("/admin/assistant-questions", json={
-        "topic": "questionari", "language": "it",
+        "topic": "q_strumenti", "language": "it",
         "text": "Domanda di test inserita da admin?", "sort_order": 99,
     })
     assert r.status_code == 200, r.text
@@ -1114,11 +1115,11 @@ def test_assistant_questions_seed_and_crud():
     assert r.json()["text"] == "Domanda di test inserita da admin?"
 
     # Compare pubblica
-    assert "Domanda di test inserita da admin?" in client.get("/assistant-questions?lang=it").json()["questionari"]
+    assert "Domanda di test inserita da admin?" in client.get("/assistant-questions?lang=it").json()["q_strumenti"]
 
     # Update -> disattiva: sparisce dalla GET pubblica
     assert client.put(f"/admin/assistant-questions/{qid}", json={"is_active": False}).status_code == 200
-    assert "Domanda di test inserita da admin?" not in client.get("/assistant-questions?lang=it").json().get("questionari", [])
+    assert "Domanda di test inserita da admin?" not in client.get("/assistant-questions?lang=it").json().get("q_strumenti", [])
 
     # Lingua senza righe -> topic omesso (fallback i18n nel frontend)
     assert client.get("/assistant-questions?lang=de").json() == {}
