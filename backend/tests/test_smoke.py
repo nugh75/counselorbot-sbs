@@ -1392,15 +1392,15 @@ def test_prompt_audit_intro_envelope_is_light_for_all_instruments():
         assert "the path is guided step by step" in system_prompt
         assert "QSA and QSAr for learning strategies" in system_prompt
         assert "QAP for career adaptability" in system_prompt
-        assert "how we'll explore my profile together" not in full_message
+        assert "how we'll explore my profile together" not in system_prompt
         if questionnaire_type == "SAVICKAS":
-            assert "narrative interview path" in full_message
+            assert "narrative interview path" in system_prompt
         else:
-            assert "will not normally ask me questions" not in full_message
-            assert "without asking anything" not in full_message
-            assert "step-by-step reading of my profile results" in full_message
-            assert "move forward with the next-step button when ready" in full_message
-            assert "Avoid bureaucratic wording, stage labels and meta-negations" in full_message
+            assert "will not normally ask me questions" not in system_prompt
+            assert "without asking anything" not in system_prompt
+            assert "step-by-step reading of my profile results" in system_prompt
+            assert "move forward with the next-step button when ready" in system_prompt
+            assert "Avoid bureaucratic wording, stage labels and meta-negations" in system_prompt
         for marker in forbidden_system_blocks:
             assert marker not in system_prompt, (questionnaire_type, marker, system_prompt)
         for marker in forbidden_score_fragments:
@@ -1562,7 +1562,7 @@ def test_prompt_audit_component_flags_use_saved_and_payload_values():
         assert body["component_flags"]["system_prompt"] is True
         assert body["component_flags"]["step_prompt"] is True
         assert body["component_flags"]["metadata"] is True
-        assert "Audit step prompt visible" in body["envelope"]["full_message"]
+        assert "Audit step prompt visible" in body["envelope"]["system_prompt_final"]
         assert "Questionario: QSA" in body["envelope"]["system_prompt_final"]
     finally:
         db = _TestSession()

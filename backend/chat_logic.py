@@ -1800,9 +1800,20 @@ def build_context_envelope(
         components["step_prompt"] = effective_message
         components["knowledge"] = knowledge_context
 
-    parts_system = [system_prompt] if system_prompt else []
-    if c_persona and _component_enabled(component_flags, "counselor"):
-        parts_system.append(c_persona.strip())
+    parts_system = []
+    if getattr(request, "use_phase_prompt", False):
+        if effective_message:
+            parts_system.append(effective_message)
+        if c_persona and _component_enabled(component_flags, "counselor"):
+            parts_system.append(c_persona.strip())
+        if system_prompt:
+            parts_system.append(system_prompt)
+    else:
+        if system_prompt:
+            parts_system.append(system_prompt)
+        if c_persona and _component_enabled(component_flags, "counselor"):
+            parts_system.append(c_persona.strip())
+
     meta_system_prompt = _instrument_meta_system_prompt(db, questionnaire_type, step_id)
     if components is not None:
         components["meta_system_prompt"] = meta_system_prompt
@@ -1901,12 +1912,15 @@ def build_context_envelope(
 
     # --- MESSAGES: history verbatim + user corrente (scores scope-ati + msg) ---
     history = session_memory.get_transcript(session_id) if include_history and include_session_memory and _component_enabled(component_flags, "history") else []
-    if message_scores_context and effective_message:
-        full_message = f"{message_scores_context}\n\nDOMANDA DELLO STUDENTE:\n{effective_message}"
-    elif message_scores_context:
+    if getattr(request, "use_phase_prompt", False):
         full_message = message_scores_context
     else:
-        full_message = effective_message
+        if message_scores_context and effective_message:
+            full_message = f"{message_scores_context}\n\nDOMANDA DELLO STUDENTE:\n{effective_message}"
+        elif message_scores_context:
+            full_message = message_scores_context
+        else:
+            full_message = effective_message
     if components is not None:
         components["history"] = history
 
