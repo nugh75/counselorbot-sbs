@@ -3522,13 +3522,16 @@ def test_build_context_envelope_component_flags_disable_parts():
     sid = "component-flags-test"
     session_memory.clear(sid)
     db = next(_override_get_db())
+    db.query(models.Config).filter(models.Config.key == "prompt_meta_QSA").delete()
+    db.add(models.Config(key="prompt_meta_QSA", value="META QSA", description="test"))
+    db.commit()
     ai = _FakeAIService(db)
     request = ChatRequest(message="domanda", questionnaire_type="QSA", language="it")
     components = {}
 
     system_final, full_message, history = build_context_envelope(
         db, ai, request, sid, {"username": "student"},
-        c_persona="PERSONA", system_prompt="SYS",
+        c_persona="PERSONA", system_prompt="BASEPROMPT",
         step_label="Step 1", questionnaire_type="QSA",
         effective_message="domanda", model_scores_context="SCORES",
         message_scores_context="SCORES", knowledge_context="KNOWLEDGE_BLOCK",
@@ -3536,13 +3539,15 @@ def test_build_context_envelope_component_flags_disable_parts():
         components=components,
     )
 
-    assert "SYS" not in system_final
+    assert "BASEPROMPT" not in system_final
     assert "PERSONA" not in system_final
+    assert "META QSA" in system_final
     assert "KNOWLEDGE_BLOCK" not in system_final
     assert "SCORES" not in full_message
     assert full_message == ""
     assert history == []
     assert components["system_prompt"] == ""
+    assert components["meta_system_prompt"] == "META QSA"
     session_memory.clear(sid)
 
 

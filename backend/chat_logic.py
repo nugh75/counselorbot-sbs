@@ -1407,6 +1407,11 @@ def prompt_component_config_key(questionnaire_type: str, step_id: str) -> str:
     return f"prompt_components_{q}_{s}"
 
 
+def prompt_meta_config_key(questionnaire_type: str) -> str:
+    q = re.sub(r"[^A-Za-z0-9_-]+", "-", (questionnaire_type or "GENERIC").strip().upper())
+    return f"prompt_meta_{q}"
+
+
 def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None) -> dict[str, bool]:
     flags = dict(PROMPT_COMPONENT_DEFAULTS)
     try:
@@ -1489,6 +1494,16 @@ def _render_booklet_data(data, prefix: str = "") -> list[str]:
     return [f"- {prefix[:-1]}: {value}"[:300]] if value else []
 
 
+def _instrument_meta_system_prompt(db, questionnaire_type: str) -> str:
+    if not questionnaire_type:
+        return ""
+    try:
+        row = db.query(models.Config).filter(models.Config.key == prompt_meta_config_key(questionnaire_type)).first()
+        return str(row.value or "").strip() if row else ""
+    except Exception:
+        return ""
+
+
 def _student_booklet_context(db, username: str, questionnaire_type: str, session_id: str) -> str:
     if not username or not questionnaire_type:
         return ""
@@ -1565,6 +1580,11 @@ def build_context_envelope(
         components["knowledge"] = knowledge_context
 
     parts_system = [system_prompt] if system_prompt else []
+    meta_system_prompt = _instrument_meta_system_prompt(db, questionnaire_type)
+    if components is not None:
+        components["meta_system_prompt"] = meta_system_prompt
+    if meta_system_prompt:
+        parts_system.append("[META SYSTEM PROMPT]\n" + meta_system_prompt)
 
     # --- [STUDENT] dati studente da identity + stato sessione distillato ---
     student_lines: list[str] = []
