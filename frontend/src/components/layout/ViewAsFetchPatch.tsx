@@ -11,9 +11,6 @@ let installed = false;
 function installFetchPatch() {
     if (installed || typeof window === 'undefined') return;
     installed = true;
-    const account = getViewAsAccount();
-    if (!account) return;
-    const demoUser = account.username;
     const originalFetch = window.fetch.bind(window);
     window.fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
         try {
@@ -23,9 +20,12 @@ function installFetchPatch() {
                     ? input.toString()
                     : input.url;
             if (url.startsWith('/api') || url.includes('/api/')) {
-                const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
-                headers.set('X-View-As', demoUser);
-                return originalFetch(input, { ...init, headers });
+                const account = getViewAsAccount();
+                if (account) {
+                    const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
+                    headers.set('X-View-As', account.username);
+                    return originalFetch(input, { ...init, headers });
+                }
             }
         } catch {
             /* fall through to the original fetch */

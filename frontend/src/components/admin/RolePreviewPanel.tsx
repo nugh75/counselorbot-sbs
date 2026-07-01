@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { Check, Eye, Minus, UserCog } from 'lucide-react';
 import {
-    getViewAsAccount, setViewAsUsername, clearViewAs, VIEW_AS_ACCOUNTS,
+    getViewAsAccount, clearViewAs, VIEW_AS_ACCOUNTS,
     type ViewAsRole, type ViewAsAccount, type Identity,
 } from '@/lib/auth';
 import {
     canUseAssistant, canUsePersonalPage, canUseResearchConsole, canUseTeacherAssistant,
 } from '@/lib/roles';
+import { toast } from '@/components/ui/Toast';
 
 type RoleKey = ViewAsRole | 'admin';
 
@@ -50,9 +51,8 @@ export function RolePreviewPanel() {
     const [active] = useState<ViewAsAccount | null>(() => getViewAsAccount());
 
     const startPreview = (account: ViewAsAccount) => {
-        setViewAsUsername(account.username);
-        // Ricarica sulla home cosi' tutta l'interfaccia usa il profilo scelto.
-        window.location.assign('/');
+        window.open(`/?view_as=${account.username}`, '_blank');
+        toast.success(`Anteprima avviata in una nuova finestra come ${account.name}`);
     };
 
     const stopPreview = () => {
