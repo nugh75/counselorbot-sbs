@@ -800,6 +800,7 @@ export function ConfigForm() {
             title: 'QSA — Questionario Strategie di Apprendimento',
             color: 'blue' as const,
             systemPrompts: [
+                { key: 'prompt_intro', label: 'Prompt Presentazione QSA' },
                 { key: 'prompt_factor', label: 'Prompt Analisi Fattori' },
                 { key: 'prompt_second_level', label: 'Prompt Secondo Livello' },
                 { key: 'prompt_generic', label: 'Prompt Chat Generica' },

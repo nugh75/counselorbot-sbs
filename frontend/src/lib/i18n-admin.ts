@@ -404,6 +404,7 @@ const it: Dict = {
     'admin.mode.qap-interview': 'QAP - Percorso Guidato',
     'admin.mode.qap-summary': 'QAP - Sintesi Finale',
     // prompt/text labels
+    'admin.config.label.prompt_intro': 'Prompt Presentazione QSA',
     'admin.config.label.prompt_factor': 'Prompt Analisi Fattori',
     'admin.config.label.prompt_second_level': 'Prompt Secondo Livello',
     'admin.config.label.prompt_generic': 'Prompt Chat Generica',
@@ -915,6 +916,7 @@ const en: Dict = {
     'admin.mode.qap-factor': 'QAP - Resources Analysis',
     'admin.mode.qap-interview': 'QAP - Guided Path',
     'admin.mode.qap-summary': 'QAP - Final Summary',
+    'admin.config.label.prompt_intro': 'QSA Intro Prompt',
     'admin.config.label.prompt_factor': 'Factor Analysis Prompt',
     'admin.config.label.prompt_second_level': 'Second-Level Prompt',
     'admin.config.label.prompt_generic': 'Generic Chat Prompt',
