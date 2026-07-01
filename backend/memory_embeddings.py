@@ -134,6 +134,13 @@ class MemoryEmbedder:
     def _save(self) -> None:
         try:
             self._cache_path.parent.mkdir(parents=True, exist_ok=True)
+            grouped: dict[int, list[tuple[str, np.ndarray]]] = {}
+            for key, vector in self._vectors.items():
+                arr = np.asarray(vector, dtype=np.float32).reshape(-1)
+                if arr.size:
+                    grouped.setdefault(int(arr.shape[0]), []).append((key, arr))
+            kept = max(grouped.values(), key=len) if grouped else []
+            self._vectors = {key: vector for key, vector in kept}
             keys = list(self._vectors.keys())
             vecs = np.stack(list(self._vectors.values())) if keys else np.zeros((0, 0), dtype=np.float32)
             with open(self._cache_path, "wb") as f:

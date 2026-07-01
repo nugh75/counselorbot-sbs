@@ -43,7 +43,7 @@ from backend.qsa_extractor import (
     _scores_schema,
     _validate_scores,
 )
-from backend.strategy_memory import shared_response_memory
+from backend.strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_memory
 
 
 # --- DB Postgres dedicato ai test (stessa istanza, db separato) ---
@@ -1851,6 +1851,146 @@ def test_prompt_audit_certified_strategy_limit_can_disable_injection():
             db.commit()
         finally:
             db.close()
+
+
+def test_retrieved_context_respects_allowed_strategies_whitelist():
+    from backend.api_models import ChatRequest
+    from backend.chat_logic import _retrieved_context
+
+    _ensure_guided_steps("QSA")
+    approved_markdown = """# Strategie condivise
+
+## test-approved-allowed
+- status: approved
+- questionnaires: QSA
+- keywords: A6 motivation whitelist
+- text.it: Approved allowed strategy text.
+
+## test-approved-blocked
+- status: approved
+- questionnaires: QSA
+- keywords: A6 motivation whitelist
+- text.it: Approved blocked strategy text.
+"""
+    db = _TestSession()
+    original_approved = None
+    try:
+        db.query(models.CertifiedStrategy).filter(
+            models.CertifiedStrategy.slug.in_(["test-certified-allowed", "test-certified-blocked"])
+        ).delete(synchronize_session=False)
+        db.add(models.CertifiedStrategy(
+            slug="test-certified-allowed",
+            name_it="Certified allowed strategy",
+            recommended_when_it="Quando A6 e' un'area di crescita.",
+            description_it="Certified allowed strategy text.",
+            factor_codes=["A6"],
+            match_mode="any",
+            questionnaire_types=["QSA"],
+            keywords="A6 motivation whitelist",
+            status="certified",
+            sort_order=-101,
+            is_active=True,
+        ))
+        db.add(models.CertifiedStrategy(
+            slug="test-certified-blocked",
+            name_it="Certified blocked strategy",
+            recommended_when_it="Quando A6 e' un'area di crescita.",
+            description_it="Certified blocked strategy text.",
+            factor_codes=["A6"],
+            match_mode="any",
+            questionnaire_types=["QSA"],
+            keywords="A6 motivation whitelist",
+            status="certified",
+            sort_order=-100,
+            is_active=True,
+        ))
+        row = db.query(models.Config).filter(models.Config.key == APPROVED_STRATEGIES_CONFIG_KEY).first()
+        original_approved = row.value if row else None
+        if row:
+            row.value = approved_markdown
+        else:
+            db.add(models.Config(
+                key=APPROVED_STRATEGIES_CONFIG_KEY,
+                value=approved_markdown,
+                description="test approved strategies",
+            ))
+        db.commit()
+    finally:
+        db.close()
+
+    try:
+        db = _TestSession()
+        try:
+            request = ChatRequest(
+                message="A6 motivation whitelist",
+                mode="second-level",
+                phase="sl-motivation",
+                scores_context="PROFILO QSA DELLO STUDENTE:\n- A6: 3/9",
+                questionnaire_type="QSA",
+                language="it",
+            )
+            context, strategy_ids, certified_ids = _retrieved_context(
+                db,
+                session_id="test-allowed-strategies",
+                request=request,
+                questionnaire_type="QSA",
+                query="A6 motivation whitelist",
+                certified_strategy_limit=3,
+                component_flags={
+                    "approved_strategies": True,
+                    "certified_strategies": True,
+                    "shared_responses": False,
+                    "rag_competenzestrategiche": False,
+                    "rag_counselorbot": False,
+                    "rag_questionari": False,
+                    "allowed_strategies": ["test-approved-allowed", "test-certified-allowed"],
+                },
+            )
+        finally:
+            db.close()
+        assert strategy_ids == ["test-approved-allowed"]
+        assert certified_ids == ["test-certified-allowed"]
+        assert "Approved allowed strategy text." in context
+        assert "Approved blocked strategy text." not in context
+        assert "Certified allowed strategy text." in context
+        assert "Certified blocked strategy text." not in context
+    finally:
+        db = _TestSession()
+        try:
+            db.query(models.CertifiedStrategy).filter(
+                models.CertifiedStrategy.slug.in_(["test-certified-allowed", "test-certified-blocked"])
+            ).delete(synchronize_session=False)
+            row = db.query(models.Config).filter(models.Config.key == APPROVED_STRATEGIES_CONFIG_KEY).first()
+            if row and original_approved is None:
+                db.delete(row)
+            elif row:
+                row.value = original_approved
+            db.commit()
+        finally:
+            db.close()
+
+
+def test_memory_embedder_save_drops_mixed_vector_dimensions():
+    import tempfile
+    from pathlib import Path
+
+    import numpy as np
+
+    from backend.memory_embeddings import MemoryEmbedder
+
+    with tempfile.TemporaryDirectory() as tmp:
+        cache_path = Path(tmp) / "memory-cache.npz"
+        embedder = MemoryEmbedder(cache_path=cache_path)
+        embedder._vectors = {
+            "old-dimension": np.ones(4, dtype=np.float32),
+            "new-dimension-1": np.ones(8, dtype=np.float32),
+            "new-dimension-2": np.ones(8, dtype=np.float32),
+        }
+        embedder._save()
+
+        data = np.load(cache_path, allow_pickle=True)
+        assert data["vecs"].shape == (2, 8)
+        assert set(data["keys"].tolist()) == {"new-dimension-1", "new-dimension-2"}
 
 
 def test_prompt_audit_api_token_allows_qsa_dry_run_without_ai4auth():
