@@ -1388,7 +1388,6 @@ def _retrieved_context(
 
 PROMPT_COMPONENT_DEFAULTS = {
     "system_prompt": True,
-    "guidance": True,
     "step_prompt": True,
     "cognitive_factors": True,
     "affective_factors": True,
@@ -1406,12 +1405,6 @@ def prompt_component_config_key(questionnaire_type: str, step_id: str) -> str:
     q = re.sub(r"[^A-Za-z0-9_-]+", "-", (questionnaire_type or "GENERIC").strip().upper())
     s = re.sub(r"[^A-Za-z0-9_-]+", "-", (step_id or "generic").strip())
     return f"prompt_components_{q}_{s}"
-
-
-def prompt_guidance_config_key(questionnaire_type: str, step_id: str) -> str:
-    q = re.sub(r"[^A-Za-z0-9_-]+", "-", (questionnaire_type or "GENERIC").strip().upper())
-    s = re.sub(r"[^A-Za-z0-9_-]+", "-", (step_id or "generic").strip())
-    return f"prompt_guidance_{q}_{s}"
 
 
 def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None) -> dict[str, bool]:
@@ -1479,17 +1472,6 @@ def _scores_enabled(flags: dict[str, bool] | None, questionnaire_type: str) -> b
     if _is_strategy_questionnaire(questionnaire_type):
         return _component_enabled(flags, "cognitive_factors") or _component_enabled(flags, "affective_factors")
     return _component_enabled(flags, "other_scores")
-
-
-def _prompt_guidance_context(db, questionnaire_type: str, step_id: str | None) -> str:
-    if not step_id:
-        return ""
-    try:
-        key = prompt_guidance_config_key(questionnaire_type, step_id)
-        row = db.query(models.Config).filter(models.Config.key == key).first()
-        return str(row.value or "").strip() if row else ""
-    except Exception:
-        return ""
 
 
 def _render_booklet_data(data, prefix: str = "") -> list[str]:
@@ -1583,11 +1565,6 @@ def build_context_envelope(
         components["knowledge"] = knowledge_context
 
     parts_system = [system_prompt] if system_prompt else []
-    guidance_context = _prompt_guidance_context(db, questionnaire_type, request.phase) if _component_enabled(component_flags, "guidance") else ""
-    if components is not None:
-        components["guidance"] = guidance_context
-    if guidance_context:
-        parts_system.append("[GUIDANCE]\n" + guidance_context)
 
     # --- [STUDENT] dati studente da identity + stato sessione distillato ---
     student_lines: list[str] = []

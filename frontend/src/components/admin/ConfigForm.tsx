@@ -208,7 +208,6 @@ const SYSTEM_PROMPT_KEY_BY_MODE: Record<string, string> = {
 
 const PROMPT_COMPONENT_DEFAULTS: Record<string, boolean> = {
     system_prompt: true,
-    guidance: true,
     step_prompt: true,
     cognitive_factors: true,
     affective_factors: true,
@@ -235,7 +234,6 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
         title: 'Componenti passati alla fase',
         labels: {
             system_prompt: 'Prompt di sistema',
-            guidance: 'Raccomandazioni iniziali',
             step_prompt: 'Prompt dello step',
             cognitive_factors: 'Fattori cognitivi',
             affective_factors: 'Fattori affettivi',
@@ -252,7 +250,6 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
         title: 'Components passed to this phase',
         labels: {
             system_prompt: 'System prompt',
-            guidance: 'Initial recommendations',
             step_prompt: 'Step prompt',
             cognitive_factors: 'Cognitive factors',
             affective_factors: 'Affective factors',
@@ -269,7 +266,6 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
         title: 'Componentes pasados a esta fase',
         labels: {
             system_prompt: 'Prompt de sistema',
-            guidance: 'Recomendaciones iniciales',
             step_prompt: 'Prompt del paso',
             cognitive_factors: 'Factores cognitivos',
             affective_factors: 'Factores afectivos',
@@ -286,7 +282,6 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
         title: 'Composants transmis à cette phase',
         labels: {
             system_prompt: 'Prompt système',
-            guidance: 'Recommandations initiales',
             step_prompt: "Prompt de l’étape",
             cognitive_factors: 'Facteurs cognitifs',
             affective_factors: 'Facteurs affectifs',
@@ -303,7 +298,6 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
         title: 'An diese Phase übergebene Komponenten',
         labels: {
             system_prompt: 'System-Prompt',
-            guidance: 'Anfangsempfehlungen',
             step_prompt: 'Schritt-Prompt',
             cognitive_factors: 'Kognitive Faktoren',
             affective_factors: 'Affektive Faktoren',
@@ -320,7 +314,6 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
         title: 'Komponenter som skickas till denna fas',
         labels: {
             system_prompt: 'Systemprompt',
-            guidance: 'Inledande rekommendationer',
             step_prompt: 'Stegprompt',
             cognitive_factors: 'Kognitiva faktorer',
             affective_factors: 'Affektiva faktorer',
@@ -336,12 +329,12 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
 };
 
 const PROMPT_UI_TEXTS: Record<string, Record<string, string>> = {
-    it: { languagePrompt: 'Lingua prompt', edit: 'Modifica', save: 'Salva', cancel: 'Annulla', loading: 'Caricamento...', finalPrompt: 'Prompt finale assemblato' },
-    en: { languagePrompt: 'Prompt language', edit: 'Edit', save: 'Save', cancel: 'Cancel', loading: 'Loading...', finalPrompt: 'Final assembled prompt' },
-    es: { languagePrompt: 'Idioma del prompt', edit: 'Editar', save: 'Guardar', cancel: 'Cancelar', loading: 'Cargando...', finalPrompt: 'Prompt final ensamblado' },
-    fr: { languagePrompt: 'Langue du prompt', edit: 'Modifier', save: 'Enregistrer', cancel: 'Annuler', loading: 'Chargement...', finalPrompt: 'Prompt final assemblé' },
-    de: { languagePrompt: 'Prompt-Sprache', edit: 'Bearbeiten', save: 'Speichern', cancel: 'Abbrechen', loading: 'Wird geladen...', finalPrompt: 'Final zusammengesetzter Prompt' },
-    sv: { languagePrompt: 'Promptspråk', edit: 'Redigera', save: 'Spara', cancel: 'Avbryt', loading: 'Laddar...', finalPrompt: 'Slutlig sammanställd prompt' },
+    it: { languagePrompt: 'Lingua prompt', guidanceNotes: 'Appunti per modificare la fase', edit: 'Modifica', save: 'Salva', cancel: 'Annulla', loading: 'Caricamento...', finalPrompt: 'Prompt finale assemblato' },
+    en: { languagePrompt: 'Prompt language', guidanceNotes: 'Notes for editing this phase', edit: 'Edit', save: 'Save', cancel: 'Cancel', loading: 'Loading...', finalPrompt: 'Final assembled prompt' },
+    es: { languagePrompt: 'Idioma del prompt', guidanceNotes: 'Notas para editar esta fase', edit: 'Editar', save: 'Guardar', cancel: 'Cancelar', loading: 'Cargando...', finalPrompt: 'Prompt final ensamblado' },
+    fr: { languagePrompt: 'Langue du prompt', guidanceNotes: 'Notes pour modifier cette phase', edit: 'Modifier', save: 'Enregistrer', cancel: 'Annuler', loading: 'Chargement...', finalPrompt: 'Prompt final assemblé' },
+    de: { languagePrompt: 'Prompt-Sprache', guidanceNotes: 'Notizen zur Bearbeitung dieser Phase', edit: 'Bearbeiten', save: 'Speichern', cancel: 'Abbrechen', loading: 'Wird geladen...', finalPrompt: 'Final zusammengesetzter Prompt' },
+    sv: { languagePrompt: 'Promptspråk', guidanceNotes: 'Anteckningar för att redigera denna fas', edit: 'Redigera', save: 'Spara', cancel: 'Avbryt', loading: 'Laddar...', finalPrompt: 'Slutlig sammanställd prompt' },
 };
 
 function promptComponentText(language: string) {
@@ -638,6 +631,26 @@ function StepPromptsPanel({
                 </div>
             </div>
 
+            <EditablePromptTextBlock
+                title={uiText.guidanceNotes}
+                subtitle={guidanceKey}
+                text={guidanceText}
+                emptyLabel={t('admin.promptAudit.empty')}
+                editing={editingPrompt === 'guidance'}
+                draft={guidanceDraft}
+                onEdit={() => setEditingPrompt('guidance')}
+                onDraftChange={setGuidanceDraft}
+                onSave={() => {
+                    if (!guidanceKey) return;
+                    onSaveGuidance(guidanceKey, guidanceDraft);
+                    setEditingPrompt(null);
+                }}
+                onCancel={() => { setGuidanceDraft(guidanceText); setEditingPrompt(null); }}
+                editLabel={uiText.edit}
+                saveLabel={uiText.save}
+                cancelLabel={uiText.cancel}
+            />
+
             <div className="grid gap-4 lg:grid-cols-4">
                 <label className="space-y-2 text-xs font-semibold text-slate-500">
                     {t('admin.promptAudit.stepSelect')}
@@ -693,25 +706,6 @@ function StepPromptsPanel({
                         setEditingPrompt(null);
                     }}
                     onCancel={() => { setSystemDraft(systemPrompt); setEditingPrompt(null); }}
-                    editLabel={uiText.edit}
-                    saveLabel={uiText.save}
-                    cancelLabel={uiText.cancel}
-                />
-                <EditablePromptTextBlock
-                    title={componentText.labels.guidance}
-                    subtitle={guidanceKey}
-                    text={guidanceText}
-                    emptyLabel={t('admin.promptAudit.empty')}
-                    editing={editingPrompt === 'guidance'}
-                    draft={guidanceDraft}
-                    onEdit={() => setEditingPrompt('guidance')}
-                    onDraftChange={setGuidanceDraft}
-                    onSave={() => {
-                        if (!guidanceKey) return;
-                        onSaveGuidance(guidanceKey, guidanceDraft);
-                        setEditingPrompt(null);
-                    }}
-                    onCancel={() => { setGuidanceDraft(guidanceText); setEditingPrompt(null); }}
                     editLabel={uiText.edit}
                     saveLabel={uiText.save}
                     cancelLabel={uiText.cancel}

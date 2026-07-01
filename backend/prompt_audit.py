@@ -30,7 +30,6 @@ from .chat_logic import (
     filter_scores_by_components,
     get_prompt_component_flags,
     prompt_component_config_key,
-    prompt_guidance_config_key,
     _is_strategy_questionnaire,
     _phase_factor_codes,
     _qsa_step_score_profile,
@@ -404,7 +403,6 @@ def build_prompt_audit(
         "components": components,
         "component_flags": component_flags,
         "component_config_key": prompt_component_config_key(questionnaire_type, request.phase or "generic"),
-        "guidance_config_key": prompt_guidance_config_key(questionnaire_type, request.phase or "generic"),
         "selected_result": {
             "session_id": result.session_id,
             "username": result.username,
