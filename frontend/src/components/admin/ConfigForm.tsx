@@ -234,6 +234,7 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
         title: 'Componenti passati alla fase',
         labels: {
             system_prompt: 'Prompt di sistema',
+            meta_system_prompt: 'Meta system prompt strumento',
             step_prompt: 'Prompt dello step',
             cognitive_factors: 'Fattori cognitivi',
             affective_factors: 'Fattori affettivi',
@@ -250,6 +251,7 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
         title: 'Components passed to this phase',
         labels: {
             system_prompt: 'System prompt',
+            meta_system_prompt: 'Instrument meta system prompt',
             step_prompt: 'Step prompt',
             cognitive_factors: 'Cognitive factors',
             affective_factors: 'Affective factors',
@@ -266,6 +268,7 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
         title: 'Componentes pasados a esta fase',
         labels: {
             system_prompt: 'Prompt de sistema',
+            meta_system_prompt: 'Meta prompt de sistema del instrumento',
             step_prompt: 'Prompt del paso',
             cognitive_factors: 'Factores cognitivos',
             affective_factors: 'Factores afectivos',
@@ -282,6 +285,7 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
         title: 'Composants transmis à cette phase',
         labels: {
             system_prompt: 'Prompt système',
+            meta_system_prompt: 'Meta prompt système de l’instrument',
             step_prompt: "Prompt de l’étape",
             cognitive_factors: 'Facteurs cognitifs',
             affective_factors: 'Facteurs affectifs',
@@ -298,6 +302,7 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
         title: 'An diese Phase übergebene Komponenten',
         labels: {
             system_prompt: 'System-Prompt',
+            meta_system_prompt: 'Instrument-Meta-System-Prompt',
             step_prompt: 'Schritt-Prompt',
             cognitive_factors: 'Kognitive Faktoren',
             affective_factors: 'Affektive Faktoren',
@@ -314,6 +319,7 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
         title: 'Komponenter som skickas till denna fas',
         labels: {
             system_prompt: 'Systemprompt',
+            meta_system_prompt: 'Instrumentets meta-systemprompt',
             step_prompt: 'Stegprompt',
             cognitive_factors: 'Kognitiva faktorer',
             affective_factors: 'Affektiva faktorer',
@@ -390,6 +396,10 @@ function promptComponentConfigKey(questionnaireType: string, stepId: string): st
 
 function promptGuidanceConfigKey(questionnaireType: string, stepId: string): string {
     return `prompt_guidance_${questionnaireType.trim().toUpperCase().replace(/[^A-Za-z0-9_-]+/g, '-')}_${stepId.trim().replace(/[^A-Za-z0-9_-]+/g, '-')}`;
+}
+
+function promptMetaConfigKey(questionnaireType: string): string {
+    return `prompt_meta_${questionnaireType.trim().toUpperCase().replace(/[^A-Za-z0-9_-]+/g, '-')}`;
 }
 
 function localizedStepPromptConfigKey(stepId: string, language: string): string {
@@ -526,6 +536,7 @@ function StepPromptsPanel({
     onSelectLanguage,
     onSaveComponentFlags,
     onSaveSystemPrompt,
+    onSaveMetaPrompt,
     onSaveGuidance,
     onSaveStepPrompt,
     t,
@@ -544,6 +555,7 @@ function StepPromptsPanel({
     onSelectLanguage: (language: string) => void;
     onSaveComponentFlags: (key: string, flags: Record<string, boolean>) => void;
     onSaveSystemPrompt: (key: string, value: string) => void;
+    onSaveMetaPrompt: (key: string, value: string) => void;
     onSaveGuidance: (key: string, value: string) => void;
     onSaveStepPrompt: (step: GuidedStep, value: string, language: string, localizedKey: string) => void;
     t: (key: string, vars?: Record<string, string | number>) => string;
@@ -553,16 +565,19 @@ function StepPromptsPanel({
     const systemPrompt = configs.find((config) => config.key === systemPromptKey)?.value || '';
     const componentKey = selectedStep ? promptComponentConfigKey(questionnaireType, selectedStep.id) : '';
     const guidanceKey = selectedStep ? promptGuidanceConfigKey(questionnaireType, selectedStep.id) : '';
+    const metaPromptKey = promptMetaConfigKey(questionnaireType);
     const configFlags = parseComponentFlags(configs.find((config) => config.key === componentKey)?.value || '');
     const guidanceText = configs.find((config) => config.key === guidanceKey)?.value || '';
+    const metaPrompt = configs.find((config) => config.key === metaPromptKey)?.value || '';
     const localizedStepKey = selectedStep ? localizedStepPromptConfigKey(selectedStep.id, selectedLanguage) : '';
     const localizedStepValue = selectedLanguage === 'it'
         ? selectedStep?.prompt || ''
         : (configs.find((config) => config.key === localizedStepKey)?.value || selectedStep?.prompt || '');
     const [preview, setPreview] = useState<PromptPreview | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
-    const [editingPrompt, setEditingPrompt] = useState<'system' | 'guidance' | 'step' | null>(null);
+    const [editingPrompt, setEditingPrompt] = useState<'system' | 'meta' | 'guidance' | 'step' | null>(null);
     const [systemDraft, setSystemDraft] = useState(systemPrompt);
+    const [metaDraft, setMetaDraft] = useState(metaPrompt);
     const [guidanceDraft, setGuidanceDraft] = useState(guidanceText);
     const [stepDraft, setStepDraft] = useState(selectedStep?.prompt || '');
     const modeLabel = selectedStep?.system_prompt_mode
@@ -572,9 +587,10 @@ function StepPromptsPanel({
     useEffect(() => {
         setEditingPrompt(null);
         setSystemDraft(systemPrompt);
+        setMetaDraft(metaPrompt);
         setGuidanceDraft(guidanceText);
         setStepDraft(localizedStepValue);
-    }, [systemPrompt, guidanceText, selectedStep?.id, localizedStepValue]);
+    }, [systemPrompt, metaPrompt, guidanceText, selectedStep?.id, localizedStepValue]);
 
     useEffect(() => {
         if (!selectedStep) return;
@@ -613,7 +629,7 @@ function StepPromptsPanel({
     const componentText = promptComponentText(selectedLanguage);
     const uiText = promptUiText(selectedLanguage);
     const finalPrompt = preview?.envelope
-        ? `${componentText.labels.step_prompt}\n${preview.envelope.full_message || ''}\n\n${componentText.labels.system_prompt}\n${preview.envelope.system_prompt_final || ''}\n\n${componentText.labels.history}\n${JSON.stringify(preview.envelope.history || [], null, 2)}`
+        ? `${componentText.labels.step_prompt}\n${preview?.components?.step_prompt || ''}\n\n${componentText.labels.system_prompt}\n${preview?.components?.system_prompt || ''}\n\n${componentText.labels.meta_system_prompt}\n${preview?.components?.meta_system_prompt || metaPrompt}\n\n${componentText.labels.history}\n${JSON.stringify(preview.envelope.history || [], null, 2)}`
         : '';
     const loadingLabel = previewLoading ? uiText.loading : t('admin.promptAudit.empty');
 
@@ -725,6 +741,24 @@ function StepPromptsPanel({
                         setEditingPrompt(null);
                     }}
                     onCancel={() => { setSystemDraft(systemPrompt); setEditingPrompt(null); }}
+                    editLabel={uiText.edit}
+                    saveLabel={uiText.save}
+                    cancelLabel={uiText.cancel}
+                />
+                <EditablePromptTextBlock
+                    title={componentText.labels.meta_system_prompt}
+                    subtitle={metaPromptKey}
+                    text={metaPrompt}
+                    emptyLabel={t('admin.promptAudit.empty')}
+                    editing={editingPrompt === 'meta'}
+                    draft={metaDraft}
+                    onEdit={() => setEditingPrompt('meta')}
+                    onDraftChange={setMetaDraft}
+                    onSave={() => {
+                        onSaveMetaPrompt(metaPromptKey, metaDraft);
+                        setEditingPrompt(null);
+                    }}
+                    onCancel={() => { setMetaDraft(metaPrompt); setEditingPrompt(null); }}
                     editLabel={uiText.edit}
                     saveLabel={uiText.save}
                     cancelLabel={uiText.cancel}
@@ -1090,6 +1124,7 @@ export function ConfigForm() {
             title: 'QSA — Questionario Strategie di Apprendimento',
             color: 'blue' as const,
             systemPrompts: [
+                { key: 'prompt_meta_QSA', label: 'Meta system prompt QSA' },
                 { key: 'prompt_intro', label: 'Prompt Presentazione QSA' },
                 { key: 'prompt_factor', label: 'Prompt Analisi Fattori' },
                 { key: 'prompt_second_level', label: 'Prompt Secondo Livello' },
@@ -1110,6 +1145,7 @@ export function ConfigForm() {
             title: 'QSAr — Questionario Strategie di Apprendimento Ridotto',
             color: 'sky' as const,
             systemPrompts: [
+                { key: 'prompt_meta_QSAR', label: 'Meta system prompt QSAr' },
                 { key: 'prompt_qsar_factor', label: 'Prompt Analisi Fattori' },
                 { key: 'prompt_qsar_second_level', label: 'Prompt Secondo Livello' },
                 { key: 'prompt_qsar_factor_qa', label: 'Prompt Approfondimento' },
@@ -1126,6 +1162,7 @@ export function ConfigForm() {
             title: 'ZTPI — Zimbardo Time Perspective Inventory',
             color: 'emerald' as const,
             systemPrompts: [
+                { key: 'prompt_meta_ZTPI', label: 'Meta system prompt ZTPI' },
                 { key: 'prompt_ztpi_factor', label: 'Prompt Analisi Fattori' },
                 { key: 'prompt_ztpi_btp', label: 'Prompt Profilo Temporale Bilanciato' },
             ],
@@ -1140,6 +1177,7 @@ export function ConfigForm() {
             title: 'Savickas — Career Construction Interview',
             color: 'amber' as const,
             systemPrompts: [
+                { key: 'prompt_meta_SAVICKAS', label: 'Meta system prompt Savickas' },
                 { key: 'prompt_savickas_interview', label: 'Prompt Intervista' },
                 { key: 'prompt_savickas_summary', label: 'Prompt Sintesi Finale' },
             ],
@@ -1154,6 +1192,7 @@ export function ConfigForm() {
             title: 'QPCS — Percezione delle Competenze Strategiche',
             color: 'purple' as const,
             systemPrompts: [
+                { key: 'prompt_meta_QPCS', label: 'Meta system prompt QPCS' },
                 { key: 'prompt_qpcs_factor', label: 'Prompt Analisi Fattori' },
                 ...(configs.some(c => c.key === 'prompt_qpcs_interview')
                     ? [{ key: 'prompt_qpcs_interview', label: 'Prompt Percorso Guidato' }]
@@ -1173,6 +1212,7 @@ export function ConfigForm() {
             title: 'QPCC — Percezione delle Competenze e Convinzioni',
             color: 'indigo' as const,
             systemPrompts: [
+                { key: 'prompt_meta_QPCC', label: 'Meta system prompt QPCC' },
                 { key: 'prompt_qpcc_factor', label: 'Prompt Analisi Fattori' },
                 ...(configs.some(c => c.key === 'prompt_qpcc_interview')
                     ? [{ key: 'prompt_qpcc_interview', label: 'Prompt Percorso Guidato' }]
@@ -1192,6 +1232,7 @@ export function ConfigForm() {
             title: 'QAP — Adattabilità Professionale',
             color: 'green' as const,
             systemPrompts: [
+                { key: 'prompt_meta_QAP', label: 'Meta system prompt QAP' },
                 { key: 'prompt_qap_factor', label: 'Prompt Analisi Risorse' },
                 ...(configs.some(c => c.key === 'prompt_qap_interview')
                     ? [{ key: 'prompt_qap_interview', label: 'Prompt Percorso Guidato' }]
@@ -1483,6 +1524,10 @@ export function ConfigForm() {
                                     onSelectLanguage={(language) => setPromptLanguages(prev => ({ ...prev, [q.questionnaireType]: language }))}
                                     onSaveComponentFlags={saveComponentFlags}
                                     onSaveSystemPrompt={(key, value) => {
+                                        setConfigDraft(key, value, key);
+                                        handleSaveConfig({ key, value, description: key });
+                                    }}
+                                    onSaveMetaPrompt={(key, value) => {
                                         setConfigDraft(key, value, key);
                                         handleSaveConfig({ key, value, description: key });
                                     }}
