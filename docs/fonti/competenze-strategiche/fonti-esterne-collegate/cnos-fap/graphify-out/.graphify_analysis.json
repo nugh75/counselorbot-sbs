@@ -10,7 +10,6 @@
       "piattaforma_comp_strategiche_document",
       "piattaforma_comp_strategiche_margottini_epifani_document",
       "qap",
-      "qpcc",
       "qpcs",
       "qsa",
       "qsar",
@@ -18,8 +17,36 @@
       "ztpi"
     ],
     "1": [
-      "promuovere_la_crescita_nelle_competenze_strategiche_autoregolazione",
-      "soft_skill_autodeterminazione",
+      "abiti",
+      "autodirezione",
+      "carattere",
+      "cognitive_skills",
+      "dimensioni_morali",
+      "general_educational_development",
+      "heckman_james",
+      "imparare_a_dirigere_se_stessi_document",
+      "metacognizione",
+      "motivazione",
+      "non_cognitive_skills",
+      "promuovere_la_crescita_nelle_competenze_strategiche_document",
+      "vittadini_giorgio"
+    ],
+    "2": [
+      "apprendimento_permanente",
+      "emad_samir_anis_matta",
+      "giuseppe_crea",
+      "hard_skills",
+      "mahara",
+      "sergio_melogno",
+      "strumenti_e_metodologie_document",
+      "strumenti_e_metodologie_hard_skills_generiche",
+      "strumenti_e_metodologie_occupabilita",
+      "strumenti_e_metodologie_piattaforma_competenze_strategiche",
+      "strumenti_e_metodologie_portfolio_digitale",
+      "strumenti_e_metodologie_qsar",
+      "strumenti_e_metodologie_soft_skills"
+    ],
+    "3": [
       "soft_skill_bernaud",
       "soft_skill_career_construction",
       "soft_skill_career_education",
@@ -34,54 +61,7 @@
       "soft_skill_savickas",
       "soft_skill_vocational_guidance"
     ],
-    "2": [
-      "abiti",
-      "autodirezione",
-      "carattere",
-      "cognitive_skills",
-      "dimensioni_morali",
-      "dimensioni_spirituali",
-      "general_educational_development",
-      "heckman_james",
-      "imparare_a_dirigere_se_stessi_document",
-      "metacognizione",
-      "motivazione",
-      "non_cognitive_skills",
-      "promuovere_la_crescita_nelle_competenze_strategiche_document",
-      "vittadini_giorgio"
-    ],
-    "3": [
-      "apprendimento_permanente",
-      "emad_samir_anis_matta",
-      "giuseppe_crea",
-      "hard_skills",
-      "mahara",
-      "marco_bay",
-      "sergio_melogno",
-      "strumenti_e_metodologie_document",
-      "strumenti_e_metodologie_hard_skills_generiche",
-      "strumenti_e_metodologie_occupabilita",
-      "strumenti_e_metodologie_piattaforma_competenze_strategiche",
-      "strumenti_e_metodologie_portfolio_digitale",
-      "strumenti_e_metodologie_qsar",
-      "strumenti_e_metodologie_soft_skills"
-    ],
     "4": [
-      "promuovere_la_crescita_document",
-      "promuovere_la_crescita_nelle_competenze_strategiche_autovalutazione",
-      "promuovere_la_crescita_nelle_competenze_strategiche_cnos_fap",
-      "promuovere_la_crescita_nelle_competenze_strategiche_dariusz_grzadziel",
-      "promuovere_la_crescita_nelle_competenze_strategiche_dimensione_morale",
-      "promuovere_la_crescita_nelle_competenze_strategiche_dimensione_spirituale",
-      "promuovere_la_crescita_nelle_competenze_strategiche_formazione_professionale",
-      "promuovere_la_crescita_nelle_competenze_strategiche_legge_53_2003",
-      "promuovere_la_crescita_nelle_competenze_strategiche_marco_bay",
-      "promuovere_la_crescita_nelle_competenze_strategiche_michele_pellerey",
-      "promuovere_la_crescita_nelle_competenze_strategiche_report",
-      "promuovere_la_crescita_nelle_competenze_strategiche_strategie_di_lisbona",
-      "soft_skill_orientamento_professionale"
-    ],
-    "5": [
       "ciofs_fp",
       "cnos_fap",
       "dariusz_grzadziel",
@@ -89,47 +69,75 @@
       "filippo_epifani",
       "identita_professionale",
       "massimo_margottini",
-      "michele_pellerey",
       "portfolio_digitale",
       "portfolio_digitale_document",
+      "qpcc",
       "riflessivita"
+    ],
+    "5": [
+      "dimensioni_spirituali",
+      "marco_bay",
+      "promuovere_la_crescita_document",
+      "promuovere_la_crescita_nelle_competenze_strategiche_cnos_fap",
+      "promuovere_la_crescita_nelle_competenze_strategiche_dariusz_grzadziel",
+      "promuovere_la_crescita_nelle_competenze_strategiche_dimensione_morale",
+      "promuovere_la_crescita_nelle_competenze_strategiche_dimensione_spirituale",
+      "promuovere_la_crescita_nelle_competenze_strategiche_legge_53_2003",
+      "promuovere_la_crescita_nelle_competenze_strategiche_marco_bay",
+      "promuovere_la_crescita_nelle_competenze_strategiche_michele_pellerey",
+      "promuovere_la_crescita_nelle_competenze_strategiche_strategie_di_lisbona"
     ],
     "6": [
       "autoregolazione",
-      "life_design",
       "mark_savickas",
-      "orientamento_professionale",
+      "michele_pellerey",
       "soft_skill",
       "soft_skill_document",
-      "soft_skill_scheda_document",
+      "soft_skill_scheda_document"
+    ],
+    "7": [
+      "life_design",
+      "orientamento_professionale",
       "strumenti_e_metodologie_autoorientamento",
       "strumenti_e_metodologie_prospettiva_temporale"
     ],
-    "7": [
+    "8": [
       "autodeterminazione",
       "strumenti_e_metodologie_autoregolazione",
       "strumenti_e_metodologie_competenze_strategiche"
     ],
-    "8": [
+    "9": [
+      "promuovere_la_crescita_nelle_competenze_strategiche_autovalutazione",
+      "promuovere_la_crescita_nelle_competenze_strategiche_formazione_professionale",
+      "soft_skill_orientamento_professionale"
+    ],
+    "10": [
       "promuovere_la_crescita_nelle_competenze_strategiche_apprendimento_permanente",
       "soft_skill_occupabilita"
     ],
-    "9": [
+    "11": [
+      "promuovere_la_crescita_nelle_competenze_strategiche_autoregolazione",
+      "soft_skill_autodeterminazione"
+    ],
+    "12": [
       "promuovere_la_crescita_nelle_competenze_strategiche_competenze_strategiche",
       "soft_skill_soft_skill"
     ]
   },
   "cohesion": {
-    "0": 0.22857142857142856,
-    "1": 0.14285714285714285,
-    "2": 0.17582417582417584,
-    "3": 0.17582417582417584,
-    "4": 0.28205128205128205,
-    "5": 0.34545454545454546,
-    "6": 0.3055555555555556,
-    "7": 0.6666666666666666,
-    "8": 1.0,
-    "9": 1.0
+    "0": 0.24175824175824176,
+    "1": 0.19230769230769232,
+    "2": 0.19230769230769232,
+    "3": 0.15384615384615385,
+    "4": 0.34545454545454546,
+    "5": 0.18181818181818182,
+    "6": 0.4666666666666667,
+    "7": 0.5,
+    "8": 0.6666666666666666,
+    "9": 0.6666666666666666,
+    "10": 1.0,
+    "11": 1.0,
+    "12": 1.0
   },
   "gods": [
     {
@@ -150,7 +158,7 @@
     {
       "id": "soft_skill_report",
       "label": "Soft skill e orientamento professionale",
-      "degree": 21
+      "degree": 20
     },
     {
       "id": "competenze_strategiche",
@@ -160,11 +168,6 @@
     {
       "id": "portfolio_digitale",
       "label": "Portfolio digitale",
-      "degree": 14
-    },
-    {
-      "id": "promuovere_la_crescita_nelle_competenze_strategiche_report",
-      "label": "Promuovere la crescita nelle competenze strategiche che hanno le loro radici nelle dimensioni morali e spirituali della persona. Rapporto di ricerca",
       "degree": 14
     },
     {
@@ -181,6 +184,11 @@
       "id": "soft_skill_document",
       "label": "Soft skill e orientamento professionale",
       "degree": 10
+    },
+    {
+      "id": "autovalutazione",
+      "label": "Autovalutazione",
+      "degree": 8
     }
   ],
   "surprises": [
@@ -241,7 +249,7 @@
     }
   ],
   "tokens": {
-    "input": 1314,
-    "output": 10545
+    "input": 0,
+    "output": 0
   }
 }

@@ -3,7 +3,13 @@
     "0": [
       "02_griglia_osservazione_docente_griglia",
       "guida_piattaforma_book_69_guida",
+      "item_catalog_doc",
+      "live_db_prompt_review",
+      "melogno_2018_competenze_strategiche",
+      "melogno_2018_dsa",
+      "melogno_2018_paper",
       "progetto_validazione_qsa_qsar_sv_en_progetto",
+      "qap_questionario",
       "qsa_qsa",
       "schede_fattori_qsa_a1",
       "schede_fattori_qsa_a2",
@@ -22,6 +28,22 @@
       "validazione_questionari_e_stanine_validazione"
     ],
     "1": [
+      "readme_analysis_json",
+      "readme_communities",
+      "readme_cost",
+      "readme_counselorbot_docs",
+      "readme_docs",
+      "readme_env",
+      "readme_extraction_summary",
+      "readme_gemini",
+      "readme_graph_json",
+      "readme_graph_tree_html",
+      "readme_graphify",
+      "readme_readme_md",
+      "readme_version_agent_skill",
+      "readme_version_cli"
+    ],
+    "2": [
       "12_g_marrone_l_romano_marrone_romano_contribution",
       "cnos_fap_organization",
       "competenze_strategiche_concept",
@@ -35,21 +57,6 @@
       "readme_competenzestrategiche_archive",
       "soft_skill_soft_skill_e_orientamento",
       "strumenti_e_metodologie_report"
-    ],
-    "2": [
-      "counselorbot_app",
-      "diario_progetto",
-      "grafo_docs_doc",
-      "item_catalog_doc",
-      "live_db_prompt_review",
-      "mail_olle_en",
-      "mail_olle_it",
-      "prompt_translations_review_doc",
-      "proposta_organizzazione_doc",
-      "qsa_questionnaire",
-      "savickas_interview",
-      "verifica_implementazione_doc",
-      "ztpi_questionnaire"
     ],
     "3": [
       "formule_validazione_pdf",
@@ -78,6 +85,18 @@
       "roma_tre_press_entity"
     ],
     "5": [
+      "counselorbot_app",
+      "diario_progetto",
+      "grafo_docs_doc",
+      "mail_olle_en",
+      "mail_olle_it",
+      "prompt_translations_review_doc",
+      "proposta_organizzazione_doc",
+      "savickas_interview",
+      "verifica_implementazione_doc",
+      "ztpi_questionnaire"
+    ],
+    "6": [
       "readme_counselorbot",
       "readme_diario",
       "readme_grafo",
@@ -87,7 +106,7 @@
       "readme_questionari",
       "readme_validazione"
     ],
-    "6": [
+    "7": [
       "dettagli_validazione_questionari_specifiche",
       "diagnosi_somministrazione_ensv_diagnosi",
       "qap_qap",
@@ -95,7 +114,7 @@
       "qpcs_it_qpcs",
       "ztpi_it_ztpi"
     ],
-    "7": [
+    "8": [
       "presentazione_chatbot_convegnisti_02_chatbot",
       "programma_convegno_13_settembre_2019_convegno",
       "programma_convegno_13_settembre_2019_gaetano_domenici",
@@ -103,19 +122,12 @@
       "programma_convegno_13_settembre_2019_massimiliano_fiorucci",
       "programma_convegno_13_settembre_2019_michele_pellerey"
     ],
-    "8": [
+    "9": [
       "abstract_fascicolo_abstract",
       "competenze_strategiche_progetto",
       "didacta_evento",
       "presentazione_didacta_2023_convegno",
       "qsa_r_presentazione_guida"
-    ],
-    "9": [
-      "melogno_2018_competenze_strategiche",
-      "melogno_2018_dsa",
-      "melogno_2018_paper",
-      "qap_questionario",
-      "qsa_questionario_qsa"
     ],
     "10": [
       "concept_metacognition",
@@ -132,32 +144,32 @@
       "universita_roma_tre"
     ],
     "13": [
-      "margottini_massimo"
+      "11_d_m_ardito_ardito_contribution"
     ],
     "14": [
       "epifani_filippo"
     ],
     "15": [
-      "11_d_m_ardito_ardito_contribution"
+      "margottini_massimo"
     ],
     "16": [
-      "ottone_2023_paper"
+      "margottini_rossi_2019_paper"
     ],
     "17": [
-      "margottini_rossi_2019_paper"
+      "ottone_2023_paper"
     ]
   },
   "cohesion": {
-    "0": 0.10526315789473684,
-    "1": 0.15384615384615385,
-    "2": 0.16666666666666666,
+    "0": 0.08333333333333333,
+    "1": 0.2087912087912088,
+    "2": 0.15384615384615385,
     "3": 0.16666666666666666,
     "4": 0.2,
-    "5": 0.25,
-    "6": 0.3333333333333333,
+    "5": 0.2,
+    "6": 0.25,
     "7": 0.3333333333333333,
-    "8": 0.4,
-    "9": 0.5,
+    "8": 0.3333333333333333,
+    "9": 0.4,
     "10": 0.8333333333333334,
     "11": 1.0,
     "12": 1.0,
@@ -171,7 +183,12 @@
     {
       "id": "qsa_qsa",
       "label": "Questionario sulle Strategie di Apprendimento (QSA)",
-      "degree": 22
+      "degree": 27
+    },
+    {
+      "id": "readme_graphify",
+      "label": "graphify CLI",
+      "degree": 11
     },
     {
       "id": "readme_counselorbot",
@@ -201,11 +218,6 @@
     {
       "id": "mail_olle_it",
       "label": "Mail a Olle (KTH) - Versione Italiana",
-      "degree": 4
-    },
-    {
-      "id": "qsa_questionnaire",
-      "label": "Questionario sulle Strategie di Apprendimento (QSA)",
       "degree": 4
     },
     {
@@ -254,6 +266,17 @@
       "why": "inferred connection - not explicitly stated in source; crosses file types (paper \u2194 doc); connects across different repos/directories; peripheral node `Griglia di osservazione del docente` unexpectedly reaches hub `Questionario sulle Strategie di Apprendimento (QSA)`"
     },
     {
+      "source": "Questionario sulle Strategie di Apprendimento (QSA)",
+      "target": "Questionario sull'Approccio allo Studio (QAP)",
+      "source_files": [
+        "validazione/dettagli-validazione-questionari.md",
+        "fonti/competenze-strategiche/sito-competenzestrategiche/strumenti/QAP.pdf"
+      ],
+      "confidence": "INFERRED",
+      "relation": "conceptually_related_to",
+      "why": "inferred connection - not explicitly stated in source; crosses file types (paper \u2194 doc); connects across different repos/directories; peripheral node `Questionario sull'Approccio allo Studio (QAP)` unexpectedly reaches hub `Questionario sulle Strategie di Apprendimento (QSA)`"
+    },
+    {
       "source": "Convegno: Le competenze strategiche che aiutano a studiare e a riuscire",
       "target": "Questionario sulle Strategie di Apprendimento (QSA)",
       "source_files": [
@@ -263,21 +286,10 @@
       "confidence": "EXTRACTED",
       "relation": "references",
       "why": "crosses file types (paper \u2194 doc); connects across different repos/directories; bridges separate communities"
-    },
-    {
-      "source": "Questionario sulle Strategie di Apprendimento (QSA)",
-      "target": "C1 | Strategie elaborative",
-      "source_files": [
-        "validazione/dettagli-validazione-questionari.md",
-        "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf"
-      ],
-      "confidence": "EXTRACTED",
-      "relation": "references",
-      "why": "crosses file types (paper \u2194 doc); connects across different repos/directories; peripheral node `C1 | Strategie elaborative` unexpectedly reaches hub `Questionario sulle Strategie di Apprendimento (QSA)`"
     }
   ],
   "tokens": {
-    "input": 641833,
-    "output": 21546
+    "input": 692,
+    "output": 5209
   }
 }

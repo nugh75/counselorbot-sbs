@@ -1,1 +1,62 @@
-{}
+{
+  "schede-bibliografiche/QAP_it.md": {
+    "mtime": 1782559999.7110472,
+    "ast_hash": "962807b287c951c5ce1c52c7518d2dd9",
+    "semantic_hash": "962807b287c951c5ce1c52c7518d2dd9"
+  },
+  "schede-bibliografiche/QPCC_it.md": {
+    "mtime": 1782559999.7110472,
+    "ast_hash": "0af068e3f1166ad0a7277aaad6e9e399",
+    "semantic_hash": "0af068e3f1166ad0a7277aaad6e9e399"
+  },
+  "schede-bibliografiche/QPCS_it.md": {
+    "mtime": 1782559999.7110472,
+    "ast_hash": "6231248b6f55d71b9a4625caa9f3fd6c",
+    "semantic_hash": "6231248b6f55d71b9a4625caa9f3fd6c"
+  },
+  "schede-bibliografiche/QSA_it.md": {
+    "mtime": 1782559999.7110472,
+    "ast_hash": "32542225fac6549b5d10196aa500fca8",
+    "semantic_hash": "32542225fac6549b5d10196aa500fca8"
+  },
+  "schede-bibliografiche/QSAr_it.md": {
+    "mtime": 1782559999.7110472,
+    "ast_hash": "389da5dad11fc129f4a4232ddba47363",
+    "semantic_hash": "389da5dad11fc129f4a4232ddba47363"
+  },
+  "schede-bibliografiche/ZTPI_it.md": {
+    "mtime": 1782559999.7110472,
+    "ast_hash": "430131d899e53b5c41f6354e2ee9531c",
+    "semantic_hash": "430131d899e53b5c41f6354e2ee9531c"
+  },
+  "QAP_it.pdf": {
+    "mtime": 1782559999.7071686,
+    "ast_hash": "ad2e014ffb03f4ae980ae8ab624a76d4",
+    "semantic_hash": "ad2e014ffb03f4ae980ae8ab624a76d4"
+  },
+  "QPCC_it.pdf": {
+    "mtime": 1782559999.7071686,
+    "ast_hash": "bec9eb3167fa1d0cce77d2a9fdb6d42e",
+    "semantic_hash": "bec9eb3167fa1d0cce77d2a9fdb6d42e"
+  },
+  "QPCS_it.pdf": {
+    "mtime": 1782559999.7071686,
+    "ast_hash": "55ef8dfc319d412b45707ead08f699e2",
+    "semantic_hash": "55ef8dfc319d412b45707ead08f699e2"
+  },
+  "QSA_it.pdf": {
+    "mtime": 1782559999.7110472,
+    "ast_hash": "a6cae5a3bb1f18d2dd81de3617f0caed",
+    "semantic_hash": "a6cae5a3bb1f18d2dd81de3617f0caed"
+  },
+  "QSAr_it.pdf": {
+    "mtime": 1782559999.7110472,
+    "ast_hash": "b7907ea8f02dfb8b6e13c996a1e171e3",
+    "semantic_hash": "b7907ea8f02dfb8b6e13c996a1e171e3"
+  },
+  "ZTPI_it.pdf": {
+    "mtime": 1782559999.7110472,
+    "ast_hash": "17423cae3f0b7b4757b38e5eb1d7af62",
+    "semantic_hash": "17423cae3f0b7b4757b38e5eb1d7af62"
+  }
+}

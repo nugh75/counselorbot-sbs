@@ -1,47 +1,61 @@
 {
   "communities": {
     "0": [
-      "autodeterminazione",
-      "autore_ardito_d_m",
-      "autore_bay_marco",
-      "autore_marrone_g",
-      "autore_romano_l",
-      "cnos_fap_schede_bibliografiche_imparare_a_dirigere_se_stessi_document",
-      "cnos_fap_schede_bibliografiche_piattaforma_comp_strategiche_margottini_epifani_document",
-      "cnos_fap_schede_bibliografiche_portfolio_digitale_document",
-      "cnos_fap_schede_bibliografiche_promuovere_la_crescita_nelle_competenze_strategiche_pdf_document",
-      "cnos_fap_schede_bibliografiche_soft_skill_document",
-      "cnos_fap_schede_bibliografiche_strumenti_e_metodologie_document",
-      "cnos_fap_soft_skill_document",
-      "cnos_fap_strumenti_e_metodologie_document",
-      "concetto_character_skills",
-      "concetto_competenzestrategiche_it",
-      "concetto_hard_skills",
-      "concetto_iefp",
-      "concetto_life_design",
-      "concetto_mahara",
-      "concetto_orientamento_professionale",
-      "concetto_qap",
-      "concetto_qpcc",
-      "concetto_qpcs",
-      "concetto_qsa",
-      "concetto_qsar",
-      "concetto_soft_skill",
-      "concetto_ztpi",
-      "dariusz_grzadziel",
-      "filippo_epifani",
-      "michele_pellerey",
-      "portfolio_digitale",
-      "roma_tre_press_11_d_m_ardito_document",
-      "roma_tre_press_12_g_marrone_l_romano_document"
+      "11_d_m_ardito",
+      "12_g_marrone_l_romano",
+      "alleanza_educativa",
+      "apprendere_ad_apprendere",
+      "apprendimento",
+      "autonomia",
+      "baldacci",
+      "character_skills",
+      "cnos_fap",
+      "competenza",
+      "competenze_chiave_di_cittadinanza",
+      "competenze_strategiche",
+      "competenze_trasversali",
+      "core_ac_uk_download_322531384",
+      "coscienziosita",
+      "daniele_maria_ardito",
+      "ged",
+      "graziella_marrone",
+      "heckman",
+      "imparare_a_dirigere_se_stessi",
+      "imparare_a_imparare",
+      "introduzione_volume_2020_pdf",
+      "lorella_romano",
+      "margottini",
+      "margottini_convegno_2019_pdf",
+      "metacognizione",
+      "miglioramento",
+      "motivazione_ad_apprendere",
+      "non_cognitive_skills",
+      "pellerey",
+      "pellerey_convegno_2019",
+      "pellerey_convegno_2019_pdf",
+      "piattaforma_comp_strategiche_margottini_epifani",
+      "progettualita",
+      "promuovere_la_crescita_nelle_competenze_strategiche",
+      "readme_md",
+      "relazione",
+      "roma_tre_press",
+      "self_directed_learning",
+      "vittadini"
     ],
     "1": [
       "02_griglia_osservazione_docente",
       "02_griglia_osservazione_docente_qsa_codes",
       "02_griglia_osservazione_docente_teacher_observation",
-      "autoregolazione",
+      "author_enrica_ottone",
+      "author_filippo_epifani",
+      "author_massimo_margottini",
+      "concept_autovalutazione",
       "concept_consapevolezza_metacognitiva",
+      "concept_fattori_cognitivi",
+      "concept_fattori_motivazionali",
       "concept_qsa",
+      "concept_strategie_apprendimento",
+      "concept_studio",
       "factor_a1",
       "factor_a2",
       "factor_a3",
@@ -59,37 +73,43 @@
       "qsa_questionario_metacognition",
       "qsa_questionario_qsa",
       "qsa_questionario_self_regulation",
+      "sito_competenzestrategiche_guide_html_guida_piattaforma_book_69_html",
       "sito_competenzestrategiche_guide_html_presentazione_qsa_book_65_html",
       "sito_competenzestrategiche_guide_qsa_r_presentazione_pdf",
-      "sito_competenzestrategiche_guide_schede_bibliografiche_qsa_r_presentazione_md"
+      "sito_competenzestrategiche_guide_schede_bibliografiche_qsa_r_presentazione_md",
+      "sito_competenzestrategiche_guide_schede_fattori_qsa_pdf"
     ],
     "2": [
-      "12_g_marrone_l_romano",
-      "apprendimento",
-      "baldacci",
-      "competenze_chiave_di_cittadinanza",
-      "competenze_strategiche",
-      "core_ac_uk_download_322531384",
-      "ged",
-      "graziella_marrone",
-      "heckman",
-      "imparare_a_dirigere_se_stessi",
-      "introduzione_volume_2020_pdf",
-      "lorella_romano",
-      "margottini",
-      "margottini_convegno_2019_pdf",
-      "miglioramento",
-      "motivazione_ad_apprendere",
-      "non_cognitive_skills",
-      "pellerey",
-      "pellerey_convegno_2019_pdf",
-      "piattaforma_comp_strategiche_margottini_epifani",
-      "progettualita",
-      "promuovere_la_crescita_nelle_competenze_strategiche",
-      "readme_md",
-      "roma_tre_press",
-      "self_directed_learning",
-      "vittadini"
+      "cnos_fap_schede_bibliografiche_imparare_a_dirigere_se_stessi_document",
+      "cnos_fap_schede_bibliografiche_piattaforma_comp_strategiche_margottini_epifani_document",
+      "cnos_fap_schede_bibliografiche_portfolio_digitale_document",
+      "cnos_fap_schede_bibliografiche_strumenti_e_metodologie_document",
+      "concetto_character_skills",
+      "concetto_competenzestrategiche_it",
+      "concetto_hard_skills",
+      "concetto_iefp",
+      "concetto_mahara",
+      "concetto_qap",
+      "concetto_qpcc",
+      "concetto_qpcs",
+      "emad_samir_anis_matta",
+      "enrica_ottone",
+      "filippo_epifani",
+      "giuseppe_crea",
+      "guida_2019",
+      "guida_2023",
+      "mahara",
+      "massimo_margottini",
+      "metodologie_orientative",
+      "orientamento_scolastico_e_professionale",
+      "piattaforma_online",
+      "portfolio_digitale",
+      "prospettiva_temporale",
+      "qpcs",
+      "qsar",
+      "sergio_melogno",
+      "strumenti_metodologie_orientamento_2018",
+      "ztpi"
     ],
     "3": [
       "abstract_fascicolo",
@@ -103,7 +123,6 @@
       "didattica",
       "dirigere_se_stessi_2020",
       "lavoro",
-      "presenta_qsa_convegnisti",
       "presenta_qsa_convegnisti_document",
       "presenta_qsa_convegnisti_ottone",
       "presentazione_chatbot_convegnisti_02",
@@ -120,6 +139,33 @@
       "studio"
     ],
     "4": [
+      "competenzestrategiche_it_site",
+      "concept_self_direction",
+      "concept_strategic_competencies",
+      "dirigere_se_stessi_2020_document",
+      "fonti_esterne_collegate_cnos_fap",
+      "fonti_esterne_collegate_core_source_unavailable",
+      "fonti_esterne_collegate_readme",
+      "fonti_esterne_collegate_roma_tre_press",
+      "grzadziel_convegno_2019_document",
+      "guida_2019_document",
+      "guida_2023_document",
+      "person_grzadziel",
+      "sito_competenzestrategiche_convegni",
+      "sito_competenzestrategiche_guide",
+      "sito_competenzestrategiche_guide_html",
+      "sito_competenzestrategiche_modelli_operativi",
+      "sito_competenzestrategiche_qap_it",
+      "sito_competenzestrategiche_qpcc_it",
+      "sito_competenzestrategiche_qpcs_it",
+      "sito_competenzestrategiche_qsa_it",
+      "sito_competenzestrategiche_qsar_it",
+      "sito_competenzestrategiche_readme",
+      "sito_competenzestrategiche_strumenti",
+      "sito_competenzestrategiche_studi",
+      "sito_competenzestrategiche_ztpi_it"
+    ],
+    "5": [
       "margottini_rossi_2019_career_adaptability",
       "margottini_rossi_2019_competenze_strategiche",
       "margottini_rossi_2019_document",
@@ -144,63 +190,64 @@
       "ottone_2023_piattaforma_online",
       "ottone_2023_qsa"
     ],
-    "5": [
+    "6": [
+      "apprendo",
       "autovalutazione",
-      "cnos_fap",
-      "enrica_ottone",
-      "guida_2019",
-      "guida_2023",
+      "certified_strategies",
+      "counselorbot",
+      "fattori_cognitivi_metacognitivi",
+      "fattori_motivazionali_affettivi",
       "introduzione_volume_2020",
       "margottini_convegno_2019",
-      "massimo_margottini",
-      "metodologie_orientative",
+      "michele_pellerey",
       "orientamento",
-      "orientamento_scolastico_e_professionale",
       "piattaforma_digitale",
-      "piattaforma_online",
+      "presenta_qsa_convegnisti",
       "qap",
       "qap_caas",
       "qap_career_adaptability",
       "qap_qap",
-      "qpcs",
       "qsa",
-      "ztpi"
-    ],
-    "6": [
-      "11_d_m_ardito",
-      "alleanza_educativa",
-      "apprendere_ad_apprendere",
-      "apprendimento_autoregolato",
-      "attribuzioni_causali",
-      "autonomia",
-      "character_skills",
-      "competenza",
-      "competenze_trasversali",
-      "coscienziosita",
-      "daniele_maria_ardito",
-      "grzadziel_convegno_2019",
-      "imparare_a_imparare",
-      "metacognizione",
-      "pellerey_convegno_2019",
-      "relazione",
-      "riflessione",
-      "strategie_di_studio",
-      "zimmerman"
+      "schede_fattori_qsa"
     ],
     "7": [
-      "author_enrica_ottone",
-      "author_filippo_epifani",
-      "author_massimo_margottini",
-      "concept_autovalutazione",
-      "concept_competenzestrategiche",
-      "concept_fattori_cognitivi",
-      "concept_fattori_motivazionali",
-      "concept_strategie_apprendimento",
-      "concept_studio",
-      "sito_competenzestrategiche_guide_html_guida_piattaforma_book_69_html",
-      "sito_competenzestrategiche_guide_schede_fattori_qsa_pdf"
+      "autodeterminazione",
+      "autore_ardito_d_m",
+      "autore_marrone_g",
+      "autore_romano_l",
+      "autoregolazione",
+      "career_construction",
+      "cnos_fap_schede_bibliografiche_soft_skill_document",
+      "cnos_fap_soft_skill_document",
+      "concetto_life_design",
+      "concetto_soft_skill",
+      "funzioni_esecutive",
+      "life_design",
+      "occupabilita",
+      "orientamento_professionale",
+      "roma_tre_press_11_d_m_ardito_document",
+      "roma_tre_press_12_g_marrone_l_romano_document",
+      "savickas",
+      "soft_skills"
     ],
     "8": [
+      "apprendimento_autoregolato",
+      "apprendimento_permanente",
+      "attribuzioni_causali",
+      "dariusz_grzadziel",
+      "dimensione_spirituale_morale",
+      "grzadziel_convegno_2019",
+      "isfol",
+      "legge_53_2003",
+      "marco_bay",
+      "otto_aree_competenza_strategica",
+      "promuovere_crescita_competenze_strategiche_2008",
+      "riflessione",
+      "strategie_di_studio",
+      "strategie_lisbona",
+      "zimmerman"
+    ],
+    "9": [
       "concept_qap",
       "concept_qpcc",
       "concept_qpcs",
@@ -210,46 +257,22 @@
       "sito_competenzestrategiche_guide_html_pagina_procedura_html",
       "sito_competenzestrategiche_guide_html_pagina_questionari_html"
     ],
-    "9": [
-      "concept_self_direction",
-      "concept_strategic_competencies",
-      "dirigere_se_stessi_2020_document",
-      "guida_2019_document",
-      "guida_2023_document"
-    ],
     "10": [
-      "grzadziel_convegno_2019_document",
-      "person_grzadziel"
-    ],
-    "11": [
-      "autore_crea_giuseppe"
-    ],
-    "12": [
-      "autore_melogno_sergio"
-    ],
-    "13": [
-      "autore_samir_anis_matta_emad"
-    ],
-    "14": [
       "readme"
     ]
   },
   "cohesion": {
-    "0": 0.10795454545454546,
-    "1": 0.12923076923076923,
-    "2": 0.09230769230769231,
-    "3": 0.10461538461538461,
-    "4": 0.09090909090909091,
-    "5": 0.18421052631578946,
-    "6": 0.10526315789473684,
-    "7": 0.18181818181818182,
-    "8": 0.5357142857142857,
-    "9": 0.5,
-    "10": 1.0,
-    "11": 1.0,
-    "12": 1.0,
-    "13": 1.0,
-    "14": 1.0
+    "0": 0.06025641025641026,
+    "1": 0.08571428571428572,
+    "2": 0.1310344827586207,
+    "3": 0.11,
+    "4": 0.08666666666666667,
+    "5": 0.09090909090909091,
+    "6": 0.17647058823529413,
+    "7": 0.16993464052287582,
+    "8": 0.13333333333333333,
+    "9": 0.5357142857142857,
+    "10": 1.0
   },
   "gods": [
     {
@@ -263,9 +286,19 @@
       "degree": 32
     },
     {
+      "id": "strumenti_metodologie_orientamento_2018",
+      "label": "Strumenti e metodologie di orientamento formativo e professionale nel quadro dei processi di apprendimento permanente (2018)",
+      "degree": 29
+    },
+    {
       "id": "competenze_strategiche",
       "label": "Competenze strategiche",
-      "degree": 18
+      "degree": 19
+    },
+    {
+      "id": "cnos_fap_soft_skill_document",
+      "label": "Soft skill e orientamento professionale",
+      "degree": 19
     },
     {
       "id": "piattaforma_comp_strategiche_margottini_epifani",
@@ -273,9 +306,9 @@
       "degree": 18
     },
     {
-      "id": "cnos_fap_strumenti_e_metodologie_document",
-      "label": "Strumenti e metodologie di orientamento formativo e professionale nel quadro dei processi di apprendimento permanente",
-      "degree": 15
+      "id": "sito_competenzestrategiche_readme",
+      "label": "competenzestrategiche.it site archive README",
+      "degree": 18
     },
     {
       "id": "sito_competenzestrategiche_guide_html_presentazione_qsa_book_65_html",
@@ -288,22 +321,23 @@
       "degree": 13
     },
     {
-      "id": "cnos_fap_schede_bibliografiche_piattaforma_comp_strategiche_margottini_epifani_document",
-      "label": "Promuovere l'autovalutazione di competenze strategiche. Aggiornamenti e sviluppi della piattaforma competenzestrategiche.it",
-      "degree": 12
-    },
-    {
-      "id": "pellerey_convegno_2019",
-      "label": "Dirigere se stessi nello studio e nel lavoro: Riflessioni",
-      "degree": 12
-    },
-    {
-      "id": "cnos_fap_schede_bibliografiche_imparare_a_dirigere_se_stessi_document",
-      "label": "Imparare a dirigere se stessi. Progettazione e realizzazione di una guida e di uno strumento informatico...",
-      "degree": 11
+      "id": "promuovere_crescita_competenze_strategiche_2008",
+      "label": "Promuovere la crescita nelle competenze strategiche che hanno le loro radici nelle dimensioni morali e spirituali della persona (2008)",
+      "degree": 13
     }
   ],
   "surprises": [
+    {
+      "source": "Dirigere se stessi nello studio e nel lavoro. Competenze strategiche.it: strumenti e applicazioni",
+      "target": "Presenta QSA convegnisti",
+      "source_files": [
+        "schede-bibliografiche/Dirigere_se_stessi_2020.md",
+        "sito-competenzestrategiche/convegni/Presenta_QSA_convegnisti.pdf"
+      ],
+      "confidence": "INFERRED",
+      "relation": "conceptually_related_to",
+      "why": "inferred connection - not explicitly stated in source; crosses file types (doc \u2194 paper); connects across different repos/directories; bridges separate communities; peripheral node `Presenta QSA convegnisti` unexpectedly reaches hub `Dirigere se stessi nello studio e nel lavoro. Competenze strategiche.it: strumenti e applicazioni`"
+    },
     {
       "source": "Introduzione Volume 2020",
       "target": "Competenze strategiche",
@@ -316,52 +350,41 @@
       "why": "inferred connection - not explicitly stated in source; crosses file types (paper \u2194 doc); connects across different repos/directories; peripheral node `Introduzione Volume 2020` unexpectedly reaches hub `Competenze strategiche`"
     },
     {
-      "source": "Abstract fascicolo",
-      "target": "Dirigere se stessi nello studio e nel lavoro. Competenze strategiche.it: strumenti e applicazioni",
+      "source": "Dirigere se stessi nello studio e nel lavoro. Competenze strategiche.it: strumenti e applicazioni",
+      "target": "Abstract fascicolo",
       "source_files": [
-        "sito-competenzestrategiche/convegni/Abstract_fascicolo.pdf",
-        "schede-bibliografiche/Dirigere_se_stessi_2020.md"
+        "schede-bibliografiche/Dirigere_se_stessi_2020.md",
+        "sito-competenzestrategiche/convegni/Abstract_fascicolo.pdf"
       ],
       "confidence": "INFERRED",
       "relation": "conceptually_related_to",
       "why": "inferred connection - not explicitly stated in source; crosses file types (doc \u2194 paper); connects across different repos/directories; peripheral node `Abstract fascicolo` unexpectedly reaches hub `Dirigere se stessi nello studio e nel lavoro. Competenze strategiche.it: strumenti e applicazioni`"
     },
     {
-      "source": "Presenta QSA convegnisti",
-      "target": "Dirigere se stessi nello studio e nel lavoro. Competenze strategiche.it: strumenti e applicazioni",
+      "source": "Dirigere se stessi nello studio e nel lavoro. Competenze strategiche.it: strumenti e applicazioni",
+      "target": "Presentazione Chatbot convegnisti 02",
       "source_files": [
-        "sito-competenzestrategiche/convegni/Presenta_QSA_convegnisti.pdf",
-        "schede-bibliografiche/Dirigere_se_stessi_2020.md"
-      ],
-      "confidence": "INFERRED",
-      "relation": "conceptually_related_to",
-      "why": "inferred connection - not explicitly stated in source; crosses file types (doc \u2194 paper); connects across different repos/directories; peripheral node `Presenta QSA convegnisti` unexpectedly reaches hub `Dirigere se stessi nello studio e nel lavoro. Competenze strategiche.it: strumenti e applicazioni`"
-    },
-    {
-      "source": "Presentazione Chatbot convegnisti 02",
-      "target": "Dirigere se stessi nello studio e nel lavoro. Competenze strategiche.it: strumenti e applicazioni",
-      "source_files": [
-        "sito-competenzestrategiche/convegni/Presentazione_Chatbot_convegnisti_02.pdf",
-        "schede-bibliografiche/Dirigere_se_stessi_2020.md"
+        "schede-bibliografiche/Dirigere_se_stessi_2020.md",
+        "sito-competenzestrategiche/convegni/Presentazione_Chatbot_convegnisti_02.pdf"
       ],
       "confidence": "INFERRED",
       "relation": "conceptually_related_to",
       "why": "inferred connection - not explicitly stated in source; crosses file types (doc \u2194 paper); connects across different repos/directories; peripheral node `Presentazione Chatbot convegnisti 02` unexpectedly reaches hub `Dirigere se stessi nello studio e nel lavoro. Competenze strategiche.it: strumenti e applicazioni`"
     },
     {
-      "source": "Margottini Convegno 2019",
-      "target": "Competenze strategiche",
+      "source": "competenzestrategiche.it site archive README",
+      "target": "Grzadziel Convegno 2019",
       "source_files": [
-        "Margottini_Convegno_2019.pdf",
-        "fonti-esterne-collegate/README.md"
+        "sito-competenzestrategiche/README.md",
+        "Grzadziel_Convegno_2019.pdf"
       ],
-      "confidence": "INFERRED",
-      "relation": "conceptually_related_to",
-      "why": "inferred connection - not explicitly stated in source; crosses file types (paper \u2194 doc); connects across different repos/directories"
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "crosses file types (paper \u2194 doc); connects across different repos/directories; peripheral node `Grzadziel Convegno 2019` unexpectedly reaches hub `competenzestrategiche.it site archive README`"
     }
   ],
   "tokens": {
-    "input": 475337,
-    "output": 114220
+    "input": 1093,
+    "output": 9608
   }
 }

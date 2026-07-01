@@ -1,157 +1,148 @@
-# Graph Report - .  (2026-06-30)
+# Graph Report - /home/nugh75/counselorbot-sbs/docs  (2026-07-01)
 
 ## Corpus Check
-- Large corpus: 119 files · ~1,007,988 words. Semantic extraction will be expensive (many Claude tokens). Consider running on a subfolder.
+- cluster-only mode — file stats not available
 
 ## Summary
-- 296 nodes · 596 edges · 29 communities (20 shown, 9 thin omitted)
-- Extraction: 65% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 39 edges (avg confidence: 0.83)
+- 322 nodes · 631 edges · 21 communities (16 shown, 5 thin omitted)
+- Extraction: 70% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 40 edges (avg confidence: 0.82)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
-- [[_COMMUNITY_Community 0|Community 0]]
-- [[_COMMUNITY_Community 1|Community 1]]
-- [[_COMMUNITY_Community 2|Community 2]]
-- [[_COMMUNITY_Community 3|Community 3]]
-- [[_COMMUNITY_Community 4|Community 4]]
-- [[_COMMUNITY_Community 5|Community 5]]
-- [[_COMMUNITY_Community 6|Community 6]]
-- [[_COMMUNITY_Community 7|Community 7]]
-- [[_COMMUNITY_Community 8|Community 8]]
-- [[_COMMUNITY_Community 9|Community 9]]
-- [[_COMMUNITY_Community 10|Community 10]]
-- [[_COMMUNITY_Community 11|Community 11]]
-- [[_COMMUNITY_Community 12|Community 12]]
-- [[_COMMUNITY_Community 13|Community 13]]
-- [[_COMMUNITY_Community 14|Community 14]]
-- [[_COMMUNITY_Community 15|Community 15]]
-- [[_COMMUNITY_Community 16|Community 16]]
-- [[_COMMUNITY_Community 17|Community 17]]
-- [[_COMMUNITY_Community 18|Community 18]]
-- [[_COMMUNITY_Community 19|Community 19]]
-- [[_COMMUNITY_Community 20|Community 20]]
-- [[_COMMUNITY_Community 21|Community 21]]
-- [[_COMMUNITY_Community 22|Community 22]]
-- [[_COMMUNITY_Community 23|Community 23]]
-- [[_COMMUNITY_Community 24|Community 24]]
-- [[_COMMUNITY_Community 25|Community 25]]
-- [[_COMMUNITY_Community 26|Community 26]]
-- [[_COMMUNITY_Community 28|Community 28]]
+- [[_COMMUNITY_QSAQSAr Validation Studies|QSA/QSAr Validation Studies]]
+- [[_COMMUNITY_Competenze Strategiche Platform|Competenze Strategiche Platform]]
+- [[_COMMUNITY_QAP Career Adaptability|QAP Career Adaptability]]
+- [[_COMMUNITY_CounselorBot Admin Console|CounselorBot Admin Console]]
+- [[_COMMUNITY_Ontology Base Concepts|Ontology Base Concepts]]
+- [[_COMMUNITY_QSA Learning Strategy Factors|QSA Learning Strategy Factors]]
+- [[_COMMUNITY_Project Documentation & Tasks|Project Documentation & Tasks]]
+- [[_COMMUNITY_Graphify Documentation Graph|Graphify Documentation Graph]]
+- [[_COMMUNITY_Self-Regulated Learning Theory|Self-Regulated Learning Theory]]
+- [[_COMMUNITY_Apprendo Project Resources|Apprendo Project Resources]]
+- [[_COMMUNITY_Site Archive & Conference PDFs|Site Archive & Conference PDFs]]
+- [[_COMMUNITY_CounselorBot Implementation & Review|CounselorBot Implementation & Review]]
+- [[_COMMUNITY_Soft Skills & Career Orientation|Soft Skills & Career Orientation]]
+- [[_COMMUNITY_CounselorBot Documentation|CounselorBot Documentation]]
+- [[_COMMUNITY_Character Skills Theory|Character Skills Theory]]
+- [[_COMMUNITY_Strategic Competences & DSA|Strategic Competences & DSA]]
+- [[_COMMUNITY_Giuseppe Crea|Giuseppe Crea]]
+- [[_COMMUNITY_Emad Samir Anis Matta|Emad Samir Anis Matta]]
+- [[_COMMUNITY_Sergio Melogno|Sergio Melogno]]
+- [[_COMMUNITY_Dirigere se stessi (2020)|Dirigere se stessi (2020)]]
+- [[_COMMUNITY_Career Orientation Methods|Career Orientation Methods]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `QSA (Questionario sulle Strategie di Apprendimento)` - 46 edges
-2. `Michele Pellerey` - 25 edges
-3. `Piattaforma Competenzestrategiche.it` - 24 edges
-4. `QSAr (Questionario ridotto sulle Strategie di Apprendimento)` - 20 edges
-5. `QAP (Questionario sull'Adattabilita Professionale)` - 20 edges
-6. `Promuovere l'autovalutazione di competenze strategiche (Margottini & Epifani)` - 20 edges
-7. `ZTPI (Zimbardo Time Perspective Inventory)` - 19 edges
-8. `Guida all'uso della piattaforma competenzestrategiche.it (Terza edizione 2023)` - 17 edges
-9. `Progetto validazione QSA/QSAr in svedese e inglese` - 17 edges
-10. `QPCS (Questionario sulla percezione delle proprie Competenze Strategiche)` - 16 edges
+1. `QSA (Questionario sulle Strategie di Apprendimento)` - 45 edges
+2. `progetto/diario.md` - 26 edges
+3. `Michele Pellerey` - 24 edges
+4. `Piattaforma Competenzestrategiche.it` - 23 edges
+5. `QSAr (Questionario ridotto sulle Strategie di Apprendimento)` - 20 edges
+6. `QAP (Questionario sull'Adattabilita Professionale)` - 20 edges
+7. `Promuovere l'autovalutazione di competenze strategiche (Margottini & Epifani)` - 20 edges
+8. `ZTPI (Zimbardo Time Perspective Inventory)` - 19 edges
+9. `Guida all'uso della piattaforma competenzestrategiche.it (Terza edizione 2023)` - 17 edges
+10. `Progetto validazione QSA/QSAr in svedese e inglese` - 17 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `Formulario per la Validazione e lo Scoring dei Questionari` --semantically_similar_to--> `Validazione dei questionari e costruzione delle stanine`  [INFERRED] [semantically similar]
-  /home/nugh75/counselorbot-sbs/docs/validazione/formule/formule-validazione.pdf → /home/nugh75/counselorbot-sbs/docs/validazione/validazione-questionari-e-stanine.md
-- `ZTPI (Zimbardo Time Perspective Inventory)` --references--> `Zimbardo & Boyd, ZTPI original publication (1999)`  [EXTRACTED]
-  fonti/competenze-strategiche/Guida_2023.pdf → /home/nugh75/counselorbot-sbs/docs/validazione/diagnosi-somministrazione-ensv.md
 - `QPCC - modulo strumento (versione 2016)` --semantically_similar_to--> `Dettagli di validazione e struttura dei questionari`  [INFERRED] [semantically similar]
-  /home/nugh75/counselorbot-sbs/docs/questionari/strumenti/QPCC_it.pdf → /home/nugh75/counselorbot-sbs/docs/validazione/dettagli-validazione-questionari.md
+  questionari/strumenti/QPCC_it.pdf → validazione/dettagli-validazione-questionari.md
 - `Promuovere l'autovalutazione di competenze strategiche (Margottini & Epifani)` --semantically_similar_to--> `Dettagli di validazione e struttura dei questionari`  [INFERRED] [semantically similar]
-  /home/nugh75/counselorbot-sbs/docs/fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/piattaforma_comp._strategiche_-_margottini_epifani.pdf → /home/nugh75/counselorbot-sbs/docs/validazione/dettagli-validazione-questionari.md
-- `Catalogo item - scaffolding multilingue (IT/EN/SV)` --references--> `Michele Pellerey`  [EXTRACTED]
-  /home/nugh75/counselorbot-sbs/docs/questionari/item-catalog.md → fonti/competenze-strategiche/Guida_2023.pdf
+  fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/piattaforma_comp._strategiche_-_margottini_epifani.pdf → validazione/dettagli-validazione-questionari.md
+- `Introduzione - Volume Dirigere se stessi nello studio e nel lavoro (2020)` --semantically_similar_to--> `Guida all'uso della piattaforma www.competenzestrategiche.it`  [INFERRED] [semantically similar]
+  fonti/competenze-strategiche/Introduzione_Volume_2020.pdf → fonti/competenze-strategiche/sito-competenzestrategiche/guide-html/guida-piattaforma-book-69.html
+- `QPCS modulo questionario (55 frasi)` --semantically_similar_to--> `Ottone 2023 - Competenzestrategiche.it: un cantiere aperto`  [INFERRED] [semantically similar]
+  questionari/strumenti/QPCS_it.pdf → fonti/competenze-strategiche/sito-competenzestrategiche/studi/OTTONE_2023.pdf
+- `QSA - Questionario (100 item, versione IT)` --semantically_similar_to--> `Schede sui fattori del QSA (Apprendo, Ottone)`  [INFERRED] [semantically similar]
+  questionari/strumenti/QSA_it.pdf → fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf
 
 ## Import Cycles
 - None detected.
 
-## Hyperedges (group relationships)
-- **Framework Competenze Strategiche** — theory_pellerey, instrument_qsa, instrument_qpcs, instrument_qpcc, platform_competenzestrategiche [0.95]
-- **Ecosistema Convegni e Ricerca CompetenzeStrategiche 2019-2025** — doc_programma_convegno_2019, doc_programma_convegno_2025, doc_abstract_fascicolo_2019, doc_pellerey_convegno_2019, doc_margottini_convegno_2019, doc_grzadziel_convegno_2019, doc_chatbot_convegnisti_2025, platform_competenzestrategiche, platform_counselorbot, institution_auxilium [0.9]
-- **Envelope QSA completo** — n09, n15, n16, n13, n18, n17 [INFERRED]
-- **Triade strumenti orientamento** — n01, n03, n04, n27, n24 [INFERRED]
-- **QSA Prompt Audit Ecosystem** — doc_qsa-five-models-prompt-audit-sl-motivation, doc_qsa-five-models-prompt-audit-sl-motivation-md, doc_qsa-sara-certified-second-level-audit-json, doc_qsa-sara-certified-second-level-audit-md, doc_qsa-section3-multimodel-audit, doc_prompt-audit-api, doc_make-prompt-testing [INFERRED 1.00]
-- **Instruments Bibliographic Cards** — doc_QSA_it, doc_QSAr_it, doc_ZTPI_it, doc_QAP_it, doc_QPCS_it, doc_QPCC_it [INFERRED 1.00]
+## Communities (21 total, 5 thin omitted)
 
-## Communities (29 total, 9 thin omitted)
+### Community 0 - "QSA/QSAr Validation Studies"
+Cohesion: 0.09
+Nodes (55): John N. Boyd, John Hattie, Francesco Orio, Michele Pellerey, Philip G. Zimbardo, Promuovere l'autovalutazione di competenze strategiche (Margottini & Epifani), Affidabilita (alpha Cronbach, omega McDonald), Confirmatory Factor Analysis (CFA) (+47 more)
 
-### Community 0 - "Community 0"
-Cohesion: 0.08
-Nodes (52): Daniele Maria Ardito, Graziella Marrone, Lorella Romano, Mario Tonini, Autovalutazione, Character Skills, Prevenzione Dispersione Scolastica, I 14 Fattori QSA (+44 more)
+### Community 1 - "Competenze Strategiche Platform"
+Cohesion: 0.10
+Nodes (43): Daniele Maria Ardito, Graziella Marrone, Lorella Romano, Mario Tonini, Autovalutazione, Prevenzione Dispersione Scolastica, I 14 Fattori QSA, Imparare ad Imparare (+35 more)
 
-### Community 1 - "Community 1"
-Cohesion: 0.08
-Nodes (41): Piattaforma CompetenzeStrategiche.it, Imparare a imparare (competenza chiave di cittadinanza), Metacognizione / autoregolazione dell'apprendimento, Progetto Apprendo (intervento formativo), QSA (Questionario sulle Strategie di Apprendimento), QSA A1 - Ansieta di base, QSA A2 - Volizione, QSA A3 - Attribuzione a cause controllabili (+33 more)
-
-### Community 2 - "Community 2"
-Cohesion: 0.12
-Nodes (32): instrument, instrument, instrument, instrument, instrument, instrument, instrument, instrument (+24 more)
-
-### Community 3 - "Community 3"
+### Community 2 - "QAP Career Adaptability"
 Cohesion: 0.11
-Nodes (22): Bibliographic card — QAP, Bibliographic card — QPCC, Bibliographic card — QPCS, Bibliographic card — QSA, Bibliographic card — QSAr, Bibliographic card — ZTPI, Contact with M. Begoña Alfageme González — QSA Spanish validation, Validation formulas (bibliographic card) (+14 more)
+Nodes (35): Marco Bay, Filippo Epifani, Dariusz Grzadziel, Jean Guichard, Raffaella Leproni, Massimo Margottini, Enrica Ottone, Erik J. Porfeli (+27 more)
 
-### Community 4 - "Community 4"
-Cohesion: 0.20
-Nodes (18): Filippo Epifani, Dariusz Grzadziel, Enrica Ottone, Michele Pellerey, Fonti esterne collegate - README, ePortfolio (Mahara), Piattaforma Competenzestrategiche.it, QSAr (Questionario ridotto sulle Strategie di Apprendimento) (+10 more)
+### Community 3 - "CounselorBot Admin Console"
+Cohesion: 0.11
+Nodes (25): Admin console, M. Begoña Alfageme González, ChatInterface, Counseling session summaries, Gemini SDK (google-genai), GuidedChatInterface, main.py (1392 lines), Prof. Olle Bälter (KTH) (+17 more)
 
-### Community 5 - "Community 5"
-Cohesion: 0.19
-Nodes (14): Jeffrey Greene, James J. Heckman, George McCloskey, Joseph Nuttin, Barry Zimmerman, Apprendimento autoregolato (Zimmerman), Attribuzioni causali (locus, stabilita, controllabilita), Autodeterminazione (+6 more)
+### Community 4 - "Ontology Base Concepts"
+Cohesion: 0.16
+Nodes (24): instrument, instrument, instrument, instrument, instrument, instrument, system, subsystem (+16 more)
 
-### Community 6 - "Community 6"
-Cohesion: 0.20
-Nodes (14): Jean Guichard, Massimo Margottini, Francesca Rossi, Margottini 2019 - La piattaforma competenzestrategiche.it (slides convegno), Adattabilita professionale, Career construction / costruzione professionale (Savickas), Identita professionale, Convegno Internazionale Dirigere se stessi nello studio e nel lavoro (13 set 2019) (+6 more)
+### Community 5 - "QSA Learning Strategy Factors"
+Cohesion: 0.14
+Nodes (22): Metacognizione / autoregolazione dell'apprendimento, QSA (Questionario sulle Strategie di Apprendimento), QSA A1 - Ansieta di base, QSA A2 - Volizione, QSA A3 - Attribuzione a cause controllabili, QSA A5 - Mancanza di perseveranza, QSA A6 - Percezione di competenza, QSA A7 - Interferenze emotive (+14 more)
 
-### Community 7 - "Community 7"
-Cohesion: 0.27
-Nodes (13): John N. Boyd, Philip G. Zimbardo, Prospettiva temporale (passato, presente, futuro), QPCS (Questionario sulla percezione delle proprie Competenze Strategiche), ZTPI (Zimbardo Time Perspective Inventory), Guida all'uso della piattaforma competenzestrategiche.it (Terza edizione 2023), Questionario sulle strategie di apprendimento (QSA), LAS 1996, Career Adapt-Abilities Scale (Savickas & Porfeli, 2012) (+5 more)
+### Community 6 - "Project Documentation & Tasks"
+Cohesion: 0.11
+Nodes (19): Bibliographic card — QAP, Contact with M. Begoña Alfageme González — QSA Spanish validation, Validation formulas (bibliographic card), Validation formulas (LaTeX source), Graphify docs generation README (2026-05-30), Make prompt testing guide, pQBL in CounselorBot, Project Diary / Diario di Bordo (+11 more)
 
-### Community 8 - "Community 8"
-Cohesion: 0.33
-Nodes (12): Raffaella Leproni, Erik J. Porfeli, Mark L. Savickas, CAAS - Career Adapt-Abilities Scale, QAP (Questionario sull'Adattabilita Professionale), QPCC (Questionario di Percezione delle proprie Competenze e Convinzioni), Forward + back translation (WP2 adattamento linguistico), Zimbardo & Boyd, ZTPI original publication (1999) (+4 more)
+### Community 7 - "Graphify Documentation Graph"
+Cohesion: 0.12
+Nodes (18): Communications directory, CounselorBot, Sources directory, Future implementation directory, Gemini backend (Graphify extraction), Documentation graph 2026-05-30, graph.json, GRAPH_TREE.html (+10 more)
 
-### Community 9 - "Community 9"
+### Community 8 - "Self-Regulated Learning Theory"
+Cohesion: 0.17
+Nodes (16): Jeffrey Greene, James J. Heckman, George McCloskey, Joseph Nuttin, Barry Zimmerman, Apprendimento autoregolato (Zimmerman), Attribuzioni causali (locus, stabilita, controllabilita), Autodeterminazione (+8 more)
+
+### Community 9 - "Apprendo Project Resources"
+Cohesion: 0.18
+Nodes (15): Imparare a imparare (competenza chiave di cittadinanza), Progetto Apprendo (intervento formativo), Ardito, Apprendo: una possibile alleanza educativa, Schede sui fattori del QSA (Apprendo, Ottone), Archivio sito competenzestrategiche.it (README), Guida all'uso della piattaforma www.competenzestrategiche.it, Bay, Grzadziel, Pellerey, Promuovere la crescita nelle competenze strategiche (CNOS-FAP 2010), Margottini, Validazione del QSA ridotto (CNOS-FAP 2018) (+7 more)
+
+### Community 10 - "Site Archive & Conference PDFs"
+Cohesion: 0.15
+Nodes (13): Conference materials, Grzadziel Convegno 2019 PDF, Guida 2023 PDF, Guide PDFs, Guide HTML snapshots, Margottini Convegno 2019 PDF, Operating models DOC/DOCX, Pellerey Convegno 2019 PDF (+5 more)
+
+### Community 11 - "CounselorBot Implementation & Review"
 Cohesion: 0.18
 Nodes (12): CounselorBot Application, Diario di Bordo / Project Journal, Grafo della documentazione 2026-05-30, Live DB prompt translation review (IT -> EN), Email to Olle (KTH) - English Version, Mail a Olle (KTH) - Versione Italiana, Prompt translation review (IT -> EN) - General, Organizzazione documentazione implementata - 2026-05-30 (+4 more)
 
-### Community 10 - "Community 10"
-Cohesion: 0.24
-Nodes (11): John Hattie, Francesco Orio, Promuovere l'autovalutazione di competenze strategiche (Margottini & Epifani), CNOS-FAP, Competenze strategiche, Feedback formativo / autovalutazione, Orientamento scolastico e progetto di vita, Piattaforma competenzestrategiche.it (+3 more)
+### Community 12 - "Soft Skills & Career Orientation"
+Cohesion: 0.32
+Nodes (8): CNOS-FAP (Centro Nazionale Opere Salesiane - Formazione Aggiornamento Professionale), Soft Skills, Soft skill e orientamento professionale (scheda), Mahara Digital Portfolio, Michele Pellerey, Soft skill e orientamento professionale, Strumenti e metodologie di orientamento formativo e professionale nel quadro dei processi di apprendimento permanente, Career Construction Theory (Savickas)
 
-### Community 11 - "Community 11"
-Cohesion: 0.38
-Nodes (10): Confirmatory Factor Analysis (CFA), CFI (Comparative Fit Index), Progetto CounselorBot, Alpha di Cronbach, Omega di McDonald, Reverse scoring (inversione delle risposte), RMSEA (Root Mean Square Error of Approximation), Validazione psicometrica dei questionari (+2 more)
-
-### Community 12 - "Community 12"
-Cohesion: 0.39
-Nodes (9): Affidabilita (alpha Cronbach, omega McDonald), Invarianza di misura (MGCFA), Codifica QSAr A4/A6 (percezione di competenza), Scala stanine (1-9), Validazione psicometrica, Dettagli di validazione e struttura dei questionari, Separazione Research Mode / Counseling Mode, Progetto validazione QSA/QSAr in svedese e inglese (+1 more)
-
-### Community 13 - "Community 13"
-Cohesion: 0.33
-Nodes (6): CNOS-FAP (Centro Nazionale Opere Salesiane - Formazione Aggiornamento Professionale), Mahara Digital Portfolio, Michele Pellerey, Portfolio Digitale, Soft Skill e Orientamento Professionale, Strumenti e metodologie di orientamento formativo e professionale nel quadro dei processi di apprendimento permanente
-
-### Community 14 - "Community 14"
-Cohesion: 0.33
-Nodes (5): base_url, date, profile, results, step
-
-### Community 15 - "Community 15"
-Cohesion: 0.83
-Nodes (4): Soft Skills, Soft skill e orientamento professionale (scheda), Soft skill e orientamento professionale, Career Construction Theory (Savickas)
-
-### Community 16 - "Community 16"
+### Community 13 - "CounselorBot Documentation"
 Cohesion: 0.50
 Nodes (4): Documentazione CounselorBot, Diario di bordo, Grafo della documentazione, Organizzazione docs implementata
 
-### Community 17 - "Community 17"
-Cohesion: 0.67
-Nodes (3): Marco Bay, Promuovere la crescita nelle competenze strategiche (scheda), Promuovere la crescita nelle competenze strategiche (Rapporto di ricerca)
+### Community 14 - "Character Skills Theory"
+Cohesion: 1.00
+Nodes (3): Character Skills, Dirigere se stessi: Riflessioni (scheda), Character Skills Theory (Heckman)
 
-### Community 18 - "Community 18"
+### Community 15 - "Strategic Competences & DSA"
 Cohesion: 0.67
 Nodes (3): Competenze Strategiche, Disturbi Specifici dell'Apprendimento (DSA), Profilo di competenze strategiche in studenti universitari con DSA
 
 ## Knowledge Gaps
-- **65 isolated node(s):** `QSA C1 - Strategie elaborative`, `QSA C5 - Uso di organizzatori semantici`, `QSA C7 - Autointerrogazione`, `QSA C2 - Autoregolazione`, `QSA C4 - Disponibilita alla collaborazione` (+60 more)
+- **93 isolated node(s):** `QSA C1 - Strategie elaborative`, `QSA C5 - Uso di organizzatori semantici`, `QSA C7 - Autointerrogazione`, `QSA C2 - Autoregolazione`, `QSA C4 - Disponibilita alla collaborazione` (+88 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **5 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+
+## Suggested Questions
+_Questions this graph is uniquely positioned to answer:_
+
+- **Why does `Piattaforma Competenzestrategiche.it` connect `Competenze Strategiche Platform` to `QSA/QSAr Validation Studies`, `QAP Career Adaptability`, `QSA Learning Strategy Factors`?**
+  _High betweenness centrality (0.152) - this node is a cross-community bridge._
+- **Why does `QSA (Questionario sulle Strategie di Apprendimento)` connect `QSA Learning Strategy Factors` to `QSA/QSAr Validation Studies`, `QAP Career Adaptability`, `Self-Regulated Learning Theory`, `Apprendo Project Resources`, `CounselorBot Implementation & Review`?**
+  _High betweenness centrality (0.138) - this node is a cross-community bridge._
+- **Why does `Michele Pellerey` connect `QSA/QSAr Validation Studies` to `Self-Regulated Learning Theory`, `Competenze Strategiche Platform`, `QAP Career Adaptability`, `QSA Learning Strategy Factors`?**
+  _High betweenness centrality (0.090) - this node is a cross-community bridge._
+- **What connects `QSA C1 - Strategie elaborative`, `QSA C5 - Uso di organizzatori semantici`, `QSA C7 - Autointerrogazione` to the rest of the system?**
+  _94 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `QSA/QSAr Validation Studies` be split into smaller, more focused modules?**
+  _Cohesion score 0.09427609427609428 - nodes in this community are weakly interconnected._
+- **Should `Competenze Strategiche Platform` be split into smaller, more focused modules?**
+  _Cohesion score 0.09966777408637874 - nodes in this community are weakly interconnected._
+- **Should `QAP Career Adaptability` be split into smaller, more focused modules?**
+  _Cohesion score 0.10588235294117647 - nodes in this community are weakly interconnected._
