@@ -57,6 +57,7 @@ from ..chat_logic import (
     _clamp_max_tokens,
     _ensure_questionnaire_guided_steps,
     _ensure_required_qsa_factor_codes,
+    filter_scores_by_components,
     get_prompt_component_flags,
     _is_strategy_questionnaire,
     _phase_factor_codes,
@@ -352,10 +353,11 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         _annotate_qsa_factor_codes(request.scores_context, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else request.scores_context
     )
-    if include_analysis_context and component_flags.get("scores", True):
+    component_scores_context = filter_scores_by_components(model_scores_context, questionnaire_type, component_flags)
+    if include_analysis_context and component_scores_context:
         include_advice = _step_allows_practical_advice(step_mode)
         system_prompt = _apply_current_step_score_profile_directive(
-            system_prompt, questionnaire_type, request.language, model_scores_context, phase_codes, include_advice
+            system_prompt, questionnaire_type, request.language, component_scores_context, phase_codes, include_advice
         )
         if include_advice:
             system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type)
@@ -378,10 +380,9 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     knowledge_context = ""
     strategy_ids: list[str] = []
     certified_strategy_ids: list[str] = []
-    if include_analysis_context and component_flags.get("knowledge", True):
-        scores_enabled = component_flags.get("scores", True)
-        retrieval_query = f"{step_label} {model_message if component_flags.get('step_prompt', True) else ''} {model_scores_context if scores_enabled else ''}".strip()
-        retrieval_request = request if scores_enabled else request.copy(update={"scores_context": ""})
+    if component_flags.get("knowledge", True):
+        retrieval_query = f"{step_label} {model_message if component_flags.get('step_prompt', True) else ''} {component_scores_context}".strip()
+        retrieval_request = request.copy(update={"scores_context": component_scores_context})
         knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
             db, session_id, retrieval_request, questionnaire_type, retrieval_query,
             ai_service=ai_service,
@@ -396,9 +397,9 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     # solo i fattori del suo step, non quelli di altre sezioni. Il profilo intero
     # resta persistito (update_context) per i follow-up cross-sezione.
     message_scores_context = (
-        _scope_scores_to_codes(model_scores_context, phase_codes)
-        if include_analysis_context and component_flags.get("scores", True)
-        else ""
+        _scope_scores_to_codes(component_scores_context, phase_codes)
+        if include_analysis_context and phase_codes
+        else component_scores_context
     )
     system_prompt_final, full_message, history = build_context_envelope(
         db, ai_service, request, session_id, identity,
@@ -584,10 +585,11 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         _annotate_qsa_factor_codes(request.scores_context, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else request.scores_context
     )
-    if include_analysis_context and component_flags.get("scores", True):
+    component_scores_context = filter_scores_by_components(model_scores_context, questionnaire_type, component_flags)
+    if include_analysis_context and component_scores_context:
         include_advice = _step_allows_practical_advice(step_mode)
         system_prompt = _apply_current_step_score_profile_directive(
-            system_prompt, questionnaire_type, request.language, model_scores_context, phase_codes, include_advice
+            system_prompt, questionnaire_type, request.language, component_scores_context, phase_codes, include_advice
         )
         if include_advice:
             system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type)
@@ -601,9 +603,9 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     # solo i fattori del suo step, non quelli di altre sezioni. Il profilo intero
     # resta persistito (update_context) per i follow-up cross-sezione.
     message_scores_context = (
-        _scope_scores_to_codes(model_scores_context, phase_codes)
-        if include_analysis_context and component_flags.get("scores", True)
-        else ""
+        _scope_scores_to_codes(component_scores_context, phase_codes)
+        if include_analysis_context and phase_codes
+        else component_scores_context
     )
 
     session_memory.update_context(
@@ -619,10 +621,9 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     knowledge_context = ""
     strategy_ids: list[str] = []
     certified_strategy_ids: list[str] = []
-    if include_analysis_context and component_flags.get("knowledge", True):
-        scores_enabled = component_flags.get("scores", True)
-        retrieval_query = f"{step_label} {model_message if component_flags.get('step_prompt', True) else ''} {model_scores_context if scores_enabled else ''}".strip()
-        retrieval_request = request if scores_enabled else request.copy(update={"scores_context": ""})
+    if component_flags.get("knowledge", True):
+        retrieval_query = f"{step_label} {model_message if component_flags.get('step_prompt', True) else ''} {component_scores_context}".strip()
+        retrieval_request = request.copy(update={"scores_context": component_scores_context})
         knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
             db, session_id, retrieval_request, questionnaire_type, retrieval_query,
             ai_service=ai_service,

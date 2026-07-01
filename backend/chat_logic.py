@@ -1388,8 +1388,11 @@ def _retrieved_context(
 
 PROMPT_COMPONENT_DEFAULTS = {
     "system_prompt": True,
+    "guidance": True,
     "step_prompt": True,
-    "scores": True,
+    "cognitive_factors": True,
+    "affective_factors": True,
+    "other_scores": True,
     "knowledge": True,
     "history": True,
     "counselor": True,
@@ -1405,14 +1408,27 @@ def prompt_component_config_key(questionnaire_type: str, step_id: str) -> str:
     return f"prompt_components_{q}_{s}"
 
 
+def prompt_guidance_config_key(questionnaire_type: str, step_id: str) -> str:
+    q = re.sub(r"[^A-Za-z0-9_-]+", "-", (questionnaire_type or "GENERIC").strip().upper())
+    s = re.sub(r"[^A-Za-z0-9_-]+", "-", (step_id or "generic").strip())
+    return f"prompt_guidance_{q}_{s}"
+
+
 def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None) -> dict[str, bool]:
     flags = dict(PROMPT_COMPONENT_DEFAULTS)
     try:
+        step = db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).first() if step_id else None
+        if step and _is_intro_step_mode(step.system_prompt_mode):
+            flags.update({"cognitive_factors": False, "affective_factors": False, "other_scores": False, "knowledge": False})
         key = prompt_component_config_key(questionnaire_type, step_id or "generic")
         row = db.query(models.Config).filter(models.Config.key == key).first()
         if row and row.value:
             saved = json.loads(row.value)
             if isinstance(saved, dict):
+                if "scores" in saved:
+                    flags["cognitive_factors"] = bool(saved["scores"])
+                    flags["affective_factors"] = bool(saved["scores"])
+                    flags["other_scores"] = bool(saved["scores"])
                 for name in flags:
                     if name in saved:
                         flags[name] = bool(saved[name])
@@ -1428,6 +1444,52 @@ def _component_enabled(flags: dict[str, bool] | None, name: str) -> bool:
 
 
 MAX_BOOKLET_CONTEXT_CHARS = 1800
+_SCORE_COMPONENT_RE = re.compile(r"\b([A-Z]{1,3}\d{1,2}r?)\b", re.IGNORECASE)
+
+
+def filter_scores_by_components(scores_context: str, questionnaire_type: str, flags: dict[str, bool] | None) -> str:
+    text = scores_context or ""
+    if not text:
+        return ""
+    if not _is_strategy_questionnaire(questionnaire_type):
+        return text if _component_enabled(flags, "other_scores") else ""
+    allowed: tuple[str, ...] = tuple(
+        prefix
+        for enabled, prefix in (
+            (_component_enabled(flags, "cognitive_factors"), "C"),
+            (_component_enabled(flags, "affective_factors"), "A"),
+        )
+        if enabled
+    )
+    if not allowed:
+        return ""
+    lines: list[str] = []
+    for line in text.splitlines():
+        codes = [code.upper() for code in _SCORE_COMPONENT_RE.findall(line)]
+        if not codes:
+            if not lines:
+                lines.append(line)
+            continue
+        if any(code.startswith(allowed) for code in codes):
+            lines.append(line)
+    return "\n".join(lines).strip()
+
+
+def _scores_enabled(flags: dict[str, bool] | None, questionnaire_type: str) -> bool:
+    if _is_strategy_questionnaire(questionnaire_type):
+        return _component_enabled(flags, "cognitive_factors") or _component_enabled(flags, "affective_factors")
+    return _component_enabled(flags, "other_scores")
+
+
+def _prompt_guidance_context(db, questionnaire_type: str, step_id: str | None) -> str:
+    if not step_id:
+        return ""
+    try:
+        key = prompt_guidance_config_key(questionnaire_type, step_id)
+        row = db.query(models.Config).filter(models.Config.key == key).first()
+        return str(row.value or "").strip() if row else ""
+    except Exception:
+        return ""
 
 
 def _render_booklet_data(data, prefix: str = "") -> list[str]:
@@ -1508,7 +1570,7 @@ def build_context_envelope(
         system_prompt = ""
     if not _component_enabled(component_flags, "step_prompt"):
         effective_message = ""
-    if not _component_enabled(component_flags, "scores"):
+    if not _scores_enabled(component_flags, questionnaire_type):
         message_scores_context = ""
         include_scores_reference = False
     if not _component_enabled(component_flags, "knowledge"):
@@ -1521,6 +1583,11 @@ def build_context_envelope(
         components["knowledge"] = knowledge_context
 
     parts_system = [system_prompt] if system_prompt else []
+    guidance_context = _prompt_guidance_context(db, questionnaire_type, request.phase) if _component_enabled(component_flags, "guidance") else ""
+    if components is not None:
+        components["guidance"] = guidance_context
+    if guidance_context:
+        parts_system.append("[GUIDANCE]\n" + guidance_context)
 
     # --- [STUDENT] dati studente da identity + stato sessione distillato ---
     student_lines: list[str] = []
@@ -1586,7 +1653,9 @@ def build_context_envelope(
     profile_block = "\n\n".join(s for s in (profile_context, portfolio_context, system_prompt_scores) if s)
     if components is not None:
         components["profile"] = profile_block
-        components["scores"] = "\n\n".join(s for s in (message_scores_context, system_prompt_scores) if s)
+        components["cognitive_factors"] = filter_scores_by_components(message_scores_context, questionnaire_type, {"cognitive_factors": True, "affective_factors": False})
+        components["affective_factors"] = filter_scores_by_components(message_scores_context, questionnaire_type, {"cognitive_factors": False, "affective_factors": True})
+        components["other_scores"] = "" if _is_strategy_questionnaire(questionnaire_type) else message_scores_context
     if profile_block:
         parts_system.append("[PROFILE]\n" + profile_block)
 

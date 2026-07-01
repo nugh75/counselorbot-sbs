@@ -3532,7 +3532,7 @@ def test_build_context_envelope_component_flags_disable_parts():
         step_label="Step 1", questionnaire_type="QSA",
         effective_message="domanda", model_scores_context="SCORES",
         message_scores_context="SCORES", knowledge_context="KNOWLEDGE_BLOCK",
-        component_flags={"system_prompt": False, "step_prompt": False, "scores": False, "knowledge": False, "counselor": False, "history": False},
+        component_flags={"system_prompt": False, "step_prompt": False, "cognitive_factors": False, "affective_factors": False, "other_scores": False, "knowledge": False, "counselor": False, "history": False},
         components=components,
     )
 
