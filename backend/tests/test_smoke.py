@@ -1447,6 +1447,80 @@ def test_prompt_audit_dry_run_builds_qsa_envelope_without_side_effects():
     assert session_memory.get_summary(session_id) == ""
 
 
+def test_prompt_audit_component_flags_use_saved_and_payload_values():
+    _ensure_guided_steps("QSA")
+    step_id = "audit-component-flags"
+    config_key = "prompt_components_QSA_audit-component-flags"
+    disabled_flags = '{"system_prompt": false, "step_prompt": false, "metadata": false, "knowledge": false, "history": false}'
+
+    db = _TestSession()
+    try:
+        db.query(models.Config).filter(models.Config.key == config_key).delete()
+        db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).delete()
+        db.add(models.GuidedStep(
+            id=step_id,
+            sort_order=999,
+            label="Audit Component Flags",
+            prompt="Audit step prompt visible",
+            system_prompt_mode="generic",
+            color_theme="slate",
+            questionnaire_type="QSA",
+        ))
+        db.add(models.Config(key=config_key, value=disabled_flags, description="test component flags"))
+        db.commit()
+    finally:
+        db.close()
+
+    try:
+        payload = {
+            "questionnaire_type": "QSA",
+            "language": "it",
+            "phase": step_id,
+            "mode": "generic",
+            "use_phase_prompt": True,
+            "include_knowledge": True,
+            "include_history": True,
+        }
+        r = client.post("/admin/prompt-audit/dry-run", json=payload)
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["component_config_key"] == config_key
+        assert body["component_flags"]["system_prompt"] is False
+        assert body["component_flags"]["step_prompt"] is False
+        assert body["component_flags"]["metadata"] is False
+        assert body["components"]["system_prompt"] == ""
+        assert body["components"]["step_prompt"] == ""
+        assert body["components"]["metadata"] == ""
+        assert body["envelope"]["full_message"] == ""
+        assert "Questionario: QSA" not in body["envelope"]["system_prompt_final"]
+
+        r = client.post("/admin/prompt-audit/dry-run", json={
+            **payload,
+            "component_flags": {
+                "system_prompt": True,
+                "step_prompt": True,
+                "metadata": True,
+                "knowledge": False,
+                "history": False,
+            },
+        })
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["component_flags"]["system_prompt"] is True
+        assert body["component_flags"]["step_prompt"] is True
+        assert body["component_flags"]["metadata"] is True
+        assert "Audit step prompt visible" in body["envelope"]["full_message"]
+        assert "Questionario: QSA" in body["envelope"]["system_prompt_final"]
+    finally:
+        db = _TestSession()
+        try:
+            db.query(models.Config).filter(models.Config.key == config_key).delete()
+            db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).delete()
+            db.commit()
+        finally:
+            db.close()
+
+
 def test_startup_migration_rewrites_counselorbot_prompt_identity_prefix():
     db = _TestSession()
     try:

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Check } from 'lucide-react';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
@@ -50,22 +50,24 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire, hasPrevio
     const [savedResults, setSavedResults] = useState<SavedResult[]>([]);
     const [chosenResultId, setChosenResultId] = useState<number | null>(null);
 
-    const loadSavedResults = useCallback(async () => {
-        if (!questionnaire || !hasPreviousData) return;
-        try {
-            const res = await apiFetch('/api/user/questionnaire-results');
-            if (!res.ok) return;
-            const all: SavedResult[] = await res.json();
-            const filtered = all
-                .filter((r) => r.questionnaire_type === questionnaire.id && r.scores && Object.keys(r.scores).length > 0)
-                .sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime());
-            setSavedResults(filtered);
-        } catch {
-            setSavedResults([]);
+    useEffect(() => {
+        let cancelled = false;
+        if (!questionnaire || !hasPreviousData) {
+            queueMicrotask(() => { if (!cancelled) setSavedResults([]); });
+            return () => { cancelled = true; };
         }
+        apiFetch('/api/user/questionnaire-results')
+            .then((res) => res.ok ? res.json() : [])
+            .then((all: SavedResult[]) => {
+                if (cancelled) return;
+                const filtered = all
+                    .filter((r) => r.questionnaire_type === questionnaire.id && r.scores && Object.keys(r.scores).length > 0)
+                    .sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime());
+                setSavedResults(filtered);
+            })
+            .catch(() => { if (!cancelled) setSavedResults([]); });
+        return () => { cancelled = true; };
     }, [questionnaire, hasPreviousData]);
-
-    useEffect(() => { void loadSavedResults(); }, [loadSavedResults]);
 
     const options: Option[] = [
         { key: 'manual', title: t('method.manual.title'), desc: manualDescription },

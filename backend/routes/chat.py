@@ -47,13 +47,11 @@ from ..prompt_config import (
 )
 from ..chat_logic import (
     _annotate_qsa_factor_codes,
-    _apply_language_directive,
+    _apply_global_directives,
     _apply_certified_advice_directive,
     _apply_current_step_factor_scope_directive,
     _apply_current_step_score_profile_directive,
     _apply_qsa_factor_directive,
-    _apply_register_directive,
-    _apply_thinking_directive,
     _clamp_max_tokens,
     _ensure_questionnaire_guided_steps,
     _ensure_required_qsa_factor_codes,
@@ -312,8 +310,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     max_tokens = _clamp_max_tokens(request.max_tokens)
 
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
-    system_prompt = _apply_language_directive(system_prompt, request.language)
-    system_prompt = _apply_register_directive(system_prompt, request.language)
+    system_prompt = _apply_global_directives(system_prompt, request.language, db)
     effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)
 
     # 1b. Reset memoria se inizia una nuova analisi guidata (primo step)
@@ -361,7 +358,6 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         )
         if include_advice:
             system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type)
-    system_prompt = _apply_thinking_directive(system_prompt, request.language)
     model_message = (
         _annotate_qsa_factor_codes(effective_message, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else effective_message
@@ -404,6 +400,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     system_prompt_final, full_message, history = build_context_envelope(
         db, ai_service, request, session_id, identity,
         c_persona=c_persona, counselor_name=c_name, system_prompt=system_prompt, step_label=step_label,
+        step_id=request.phase,
         questionnaire_type=questionnaire_type, effective_message=model_message,
         model_scores_context=model_scores_context, message_scores_context=message_scores_context,
         knowledge_context=knowledge_context, include_scores_reference=include_analysis_context,
@@ -545,8 +542,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     # L'headroom per il reasoning e' applicato dinamicamente per-modello in AIService.
     max_tokens = _clamp_max_tokens(request.max_tokens)
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
-    system_prompt = _apply_language_directive(system_prompt, request.language)
-    system_prompt = _apply_register_directive(system_prompt, request.language)
+    system_prompt = _apply_global_directives(system_prompt, request.language, db)
     effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)
 
     is_first_step = False
@@ -593,7 +589,6 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         )
         if include_advice:
             system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type)
-    system_prompt = _apply_thinking_directive(system_prompt, request.language)
     model_message = (
         _annotate_qsa_factor_codes(effective_message, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else effective_message
@@ -641,6 +636,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     system_prompt_final, full_message, history = build_context_envelope(
         db, ai_service, request, session_id, identity,
         c_persona=c_persona, counselor_name=c_name, system_prompt=system_prompt, step_label=step_label,
+        step_id=request.phase,
         questionnaire_type=questionnaire_type, effective_message=model_message,
         model_scores_context=model_scores_context, message_scores_context=message_scores_context,
         knowledge_context=knowledge_context, include_scores_reference=include_analysis_context,
@@ -831,7 +827,7 @@ async def chat_message(
         prompt_key,
         SYSTEM_PROMPT_DEFAULTS.get(prompt_key, DEFAULT_SYSTEM_PROMPT_GENERIC),
     )
-    system_prompt = _apply_language_directive(system_prompt, language)
+    system_prompt = _apply_global_directives(system_prompt, language, db)
 
     session_memory.update_context(
         session_id,

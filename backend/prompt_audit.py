@@ -21,10 +21,8 @@ from .chat_logic import (
     _apply_certified_advice_directive,
     _apply_current_step_factor_scope_directive,
     _apply_current_step_score_profile_directive,
-    _apply_language_directive,
+    _apply_global_directives,
     _apply_qsa_factor_directive,
-    _apply_register_directive,
-    _apply_thinking_directive,
     _clamp_max_tokens,
     _ensure_required_qsa_factor_codes,
     filter_scores_by_components,
@@ -46,6 +44,7 @@ from .chat_logic import (
     build_context_envelope,
     conversation_id_for,
     full_prompt_logging_enabled,
+    PROMPT_COMPONENT_DEFAULTS,
     split_thinking,
 )
 from .guided_text_i18n import SECONDARY_LANGS
@@ -243,7 +242,7 @@ def build_prompt_audit(
     *,
     ai_service_cls: Callable[[Session], AIService] = AIService,
 ) -> dict[str, Any]:
-    request = ChatRequest(**payload.model_dump(exclude={"include_knowledge", "include_history"}, exclude_none=False))
+    request = ChatRequest(**payload.model_dump(exclude={"include_knowledge", "include_history", "component_flags"}, exclude_none=False))
     request.language = _normalize_language(request.language)
     session_id = request.session_id or f"prompt-audit-{uuid.uuid4()}"
     result = db.query(models.QuestionnaireResult).filter(models.QuestionnaireResult.session_id == session_id).first() if request.session_id else None
@@ -267,10 +266,14 @@ def build_prompt_audit(
         step_label = ""
         questionnaire_type = request.questionnaire_type or ""
     component_flags = get_prompt_component_flags(db, questionnaire_type, request.phase)
+    payload_flags = getattr(payload, "component_flags", None)
+    if isinstance(payload_flags, dict):
+        for name in PROMPT_COMPONENT_DEFAULTS:
+            if name in payload_flags:
+                component_flags[name] = bool(payload_flags[name])
 
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
-    system_prompt = _apply_language_directive(system_prompt, request.language)
-    system_prompt = _apply_register_directive(system_prompt, request.language)
+    system_prompt = _apply_global_directives(system_prompt, request.language, db)
     step_mode = step.system_prompt_mode if step else request.mode
     include_analysis_context = _should_include_step_analysis_context(step_mode)
     required_codes = _phase_factor_codes(db, request.phase) if include_analysis_context else set()
@@ -290,7 +293,6 @@ def build_prompt_audit(
         )
         if include_advice:
             system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type)
-    system_prompt = _apply_thinking_directive(system_prompt, request.language)
     model_message = (
         _annotate_qsa_factor_codes(effective_message, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else effective_message
@@ -329,6 +331,7 @@ def build_prompt_audit(
         counselor_name=(counselor or {}).get("name"),
         system_prompt=system_prompt,
         step_label=step_label_for_envelope,
+        step_id=getattr(payload, "phase", None),
         questionnaire_type=questionnaire_type,
         effective_message=model_message,
         model_scores_context=model_scores_context,

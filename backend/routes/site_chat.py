@@ -286,7 +286,7 @@ async def site_chat_stream(
     index = get_index(collection)
     ai_service = AIService(db)
     system_prompt = _apply_language_directive(
-        _resolve_site_prompt(ai_service, request.audience, collection), request.language
+        _resolve_site_prompt(ai_service, request.audience, collection), request.language, db=db
     )
     # Counselor AI: anteponi la persona al system prompt, se selezionato.
     c_persona, c_name = _resolve_counselor(db, request.counselor_id)

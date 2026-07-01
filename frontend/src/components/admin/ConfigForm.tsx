@@ -161,6 +161,15 @@ const SYSTEM_PROMPT_MODES = [
     { value: 'qap-summary', label: 'QAP Sintesi' },
 ];
 
+const DEFAULT_PLACEHOLDERS: Record<string, [string, string]> = {
+    it: ['Italian', 'italiano'],
+    en: ['English', 'English'],
+    es: ['Spanish', 'español'],
+    fr: ['French', 'français'],
+    de: ['German', 'Deutsch'],
+    sv: ['Swedish', 'svenska'],
+};
+
 const INSTRUMENT_SUBSECTIONS: Array<{ id: InstrumentSubsection; labelKey: string }> = [
     { id: 'step-prompts', labelKey: 'admin.config.inner.stepPrompts' },
     { id: 'system-prompts', labelKey: 'admin.config.inner.systemPrompts' },
@@ -399,8 +408,14 @@ function promptGuidanceConfigKey(questionnaireType: string, stepId: string): str
     return `prompt_guidance_${questionnaireType.trim().toUpperCase().replace(/[^A-Za-z0-9_-]+/g, '-')}_${stepId.trim().replace(/[^A-Za-z0-9_-]+/g, '-')}`;
 }
 
-function promptMetaConfigKey(questionnaireType: string): string {
-    return `prompt_meta_${questionnaireType.trim().toUpperCase().replace(/[^A-Za-z0-9_-]+/g, '-')}`;
+function promptMetaConfigKey(questionnaireType: string, stepId?: string): string {
+    const q = questionnaireType.trim().toUpperCase().replace(/[^A-Za-z0-9_-]+/g, '-');
+    const base = `prompt_meta_${q}`;
+    if (stepId) {
+        const s = stepId.trim().replace(/[^A-Za-z0-9_-]+/g, '-');
+        return `${base}_${s}`;
+    }
+    return base;
 }
 
 function localizedStepPromptConfigKey(stepId: string, language: string): string {
@@ -412,6 +427,20 @@ function parseComponentFlags(raw: string): Record<string, boolean> {
         return { ...PROMPT_COMPONENT_DEFAULTS, ...(JSON.parse(raw || '{}') || {}) };
     } catch {
         return { ...PROMPT_COMPONENT_DEFAULTS };
+    }
+}
+
+function parseComponentFlagOverrides(raw: string): Record<string, boolean> {
+    try {
+        const parsed = JSON.parse(raw || '{}') || {};
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+        return Object.fromEntries(
+            Object.keys(PROMPT_COMPONENT_DEFAULTS)
+                .filter((name) => name in parsed)
+                .map((name) => [name, Boolean(parsed[name])])
+        );
+    } catch {
+        return {};
     }
 }
 
@@ -570,10 +599,15 @@ function StepPromptsPanel({
     const systemPrompt = configs.find((config) => config.key === systemPromptKey)?.value || '';
     const componentKey = selectedStep ? promptComponentConfigKey(questionnaireType, selectedStep.id) : '';
     const guidanceKey = selectedStep ? promptGuidanceConfigKey(questionnaireType, selectedStep.id) : '';
-    const metaPromptKey = promptMetaConfigKey(questionnaireType);
-    const configFlags = parseComponentFlags(configs.find((config) => config.key === componentKey)?.value || '');
+    const metaPromptKey = promptMetaConfigKey(questionnaireType, selectedStep?.id);
+    const instrumentMetaKey = promptMetaConfigKey(questionnaireType);
+    const componentConfigValue = configs.find((config) => config.key === componentKey)?.value || '';
+    const configFlags = parseComponentFlags(componentConfigValue);
+    const configFlagOverrides = parseComponentFlagOverrides(componentConfigValue);
     const guidanceText = configs.find((config) => config.key === guidanceKey)?.value || '';
-    const metaPrompt = configs.find((config) => config.key === metaPromptKey)?.value || '';
+    const metaPrompt = configs.find((config) => config.key === metaPromptKey)?.value
+        || configs.find((config) => config.key === instrumentMetaKey)?.value
+        || '';
     const localizedStepKey = selectedStep ? localizedStepPromptConfigKey(selectedStep.id, selectedLanguage) : '';
     const localizedStepValue = selectedLanguage === 'it'
         ? selectedStep?.prompt || ''
@@ -598,18 +632,19 @@ function StepPromptsPanel({
         ? t(`admin.mode.${selectedStep.system_prompt_mode}`)
         : '';
 
-    useEffect(() => {
-        setEditingPrompt(null);
-        setSystemDraft(systemPrompt);
-        setMetaDraft(metaPrompt);
-        setGuidanceDraft(guidanceText);
-        setStepDraft(localizedStepValue);
-    }, [systemPrompt, metaPrompt, guidanceText, selectedStep?.id, localizedStepValue]);
+    const flags = {
+        ...PROMPT_COMPONENT_DEFAULTS,
+        ...(preview?.component_flags || configFlags),
+        ...configFlagOverrides,
+    };
+    const flagsJson = JSON.stringify(flags);
 
     useEffect(() => {
         if (!selectedStep) return;
         let cancelled = false;
-        setPreviewLoading(true);
+        const loadingTimer = window.setTimeout(() => {
+            if (!cancelled) setPreviewLoading(true);
+        }, 0);
         fetch('/api/admin/prompt-audit/dry-run', {
             method: 'POST',
             headers: authJsonHeaders(),
@@ -624,16 +659,16 @@ function StepPromptsPanel({
                 counselor_id: selectedCounselorId || undefined,
                 include_knowledge: true,
                 include_history: true,
+                component_flags: JSON.parse(flagsJson),
             }),
         })
             .then((res) => res.ok ? res.json() : null)
             .then((data) => { if (!cancelled) setPreview(data); })
             .catch(() => { if (!cancelled) setPreview(null); })
             .finally(() => { if (!cancelled) setPreviewLoading(false); });
-        return () => { cancelled = true; };
-    }, [questionnaireType, selectedStep?.id, selectedStep?.system_prompt_mode, selectedSessionId, selectedCounselorId, selectedLanguage, localizedStepValue, configs.find((config) => config.key === componentKey)?.value]);
+        return () => { cancelled = true; window.clearTimeout(loadingTimer); };
+    }, [questionnaireType, selectedStep?.id, selectedStep?.system_prompt_mode, selectedSessionId, selectedCounselorId, selectedLanguage, localizedStepValue, flagsJson]);
 
-    const flags = { ...configFlags, ...(preview?.component_flags || {}) };
     const toggleFlag = (name: string) => {
         if (!componentKey) return;
         onSaveComponentFlags(componentKey, { ...flags, [name]: !flags[name] });
@@ -644,7 +679,7 @@ function StepPromptsPanel({
     const componentText = promptComponentText(selectedLanguage);
     const uiText = promptUiText(selectedLanguage);
     const finalPrompt = preview?.envelope
-        ? `${componentText.labels.step_prompt}\n${preview?.components?.step_prompt || ''}\n\n${componentText.labels.system_prompt}\n${preview?.components?.system_prompt || ''}\n\n${componentText.labels.meta_system_prompt}\n${preview?.components?.meta_system_prompt || metaPrompt}\n\n${componentText.labels.history}\n${JSON.stringify(preview.envelope.history || [], null, 2)}`
+        ? `SYSTEM\n${preview.envelope.system_prompt_final || ''}\n\nUSER MESSAGE\n${preview.envelope.full_message || ''}\n\n${componentText.labels.history}\n${JSON.stringify(preview.envelope.history || [], null, 2)}`
         : '';
     const loadingLabel = previewLoading ? uiText.loading : t('admin.promptAudit.empty');
 
@@ -669,7 +704,7 @@ function StepPromptsPanel({
                 emptyLabel={t('admin.promptAudit.empty')}
                 editing={editingPrompt === 'guidance'}
                 draft={guidanceDraft}
-                onEdit={() => setEditingPrompt('guidance')}
+                onEdit={() => { setGuidanceDraft(guidanceText); setEditingPrompt('guidance'); }}
                 onDraftChange={setGuidanceDraft}
                 onSave={() => {
                     if (!guidanceKey) return;
@@ -709,7 +744,7 @@ function StepPromptsPanel({
                         {PROMPT_LANGUAGES.map((item) => <option key={item.code} value={item.code}>{item.label}</option>)}
                     </select>
                 </label>
-                <div className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 sm:grid-cols-3 lg:grid-cols-1">
+                <div className="flex flex-wrap gap-x-8 gap-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
                     <div><p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.instrument')}</p><p className="mt-1 font-mono text-slate-800">{questionnaireType}</p></div>
                     <div><p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.mode')}</p><p className="mt-1 text-slate-800">{modeLabel}</p></div>
                     <div><p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.promptKey')}</p><p className="mt-1 break-words font-mono text-slate-800">{systemPromptKey || '-'}</p></div>
@@ -736,7 +771,7 @@ function StepPromptsPanel({
                     emptyLabel={t('admin.promptAudit.empty')}
                     editing={editingPrompt === 'step'}
                     draft={stepDraft}
-                    onEdit={() => setEditingPrompt('step')}
+                    onEdit={() => { setStepDraft(localizedStepValue); setEditingPrompt('step'); }}
                     onDraftChange={setStepDraft}
                     onSave={() => {
                         if (!selectedStep) return;
@@ -755,7 +790,7 @@ function StepPromptsPanel({
                     emptyLabel={t('admin.promptAudit.empty')}
                     editing={editingPrompt === 'system'}
                     draft={systemDraft}
-                    onEdit={() => setEditingPrompt('system')}
+                    onEdit={() => { setSystemDraft(systemPrompt); setEditingPrompt('system'); }}
                     onDraftChange={setSystemDraft}
                     onSave={() => {
                         if (!systemPromptKey) return;
@@ -774,7 +809,7 @@ function StepPromptsPanel({
                     emptyLabel={t('admin.promptAudit.empty')}
                     editing={editingPrompt === 'meta'}
                     draft={metaDraft}
-                    onEdit={() => setEditingPrompt('meta')}
+                    onEdit={() => { setMetaDraft(metaPrompt); setEditingPrompt('meta'); }}
                     onDraftChange={setMetaDraft}
                     onSave={() => {
                         onSaveMetaPrompt(metaPromptKey, metaDraft);
@@ -847,6 +882,7 @@ export function ConfigForm() {
     const [promptCounselorIds, setPromptCounselorIds] = useState<Record<string, number | ''>>({});
     const [promptLanguages, setPromptLanguages] = useState<Record<string, string>>({});
     const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
+    const [placeholderDraft, setPlaceholderDraft] = useState<Record<string, [string, string]>>({});
 
     const openSection = (nextSection: string) => {
         setSection(nextSection);
@@ -929,6 +965,26 @@ export function ConfigForm() {
         if (activeKeyMissing) { setLiveModels([]); return; }
         fetchModels(activeProvider);
     }, [activeProvider, activeKeyMissing]);
+
+    useEffect(() => {
+        const raw = getConfigValue('placeholder_language_mappings');
+        if (raw) {
+            try {
+                const parsed = JSON.parse(raw);
+                const norm: Record<string, [string, string]> = {};
+                for (const [code, val] of Object.entries(parsed)) {
+                    if (Array.isArray(val) && val.length === 2) {
+                        norm[code] = [String(val[0]), String(val[1])];
+                    }
+                }
+                if (Object.keys(norm).length > 0) {
+                    setPlaceholderDraft(norm);
+                    return;
+                }
+            } catch { /* fallback */ }
+        }
+        setPlaceholderDraft({ ...DEFAULT_PLACEHOLDERS });
+    }, [configs]);
 
     // Opzioni della tendina: modelli live se disponibili, altrimenti fallback statico.
     // Il modello attivo viene sempre incluso così resta selezionato anche se non in elenco.
@@ -1318,6 +1374,17 @@ export function ConfigForm() {
                     <Server className="w-4 h-4" />
                     {t('admin.config.section.general')}
                 </button>
+                <button
+                    onClick={() => openSection('directives')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
+                        section === 'directives'
+                            ? 'bg-amber-50 border-amber-200 text-amber-700'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                >
+                    <FileText className="w-4 h-4" />
+                    {t('admin.config.section.directives')}
+                </button>
                 {questTabs.map((tab) => {
                     const c = colorMap[tab.color];
                     return (
@@ -1472,6 +1539,117 @@ export function ConfigForm() {
                 })}
             </div>
 
+            {/* Placeholder Language Mappings */}
+            <div className="glass-panel p-6 space-y-4">
+                <h3 className="text-lg font-medium text-slate-900 flex items-center gap-2">
+                    <Layers className="w-5 h-5 text-indigo-600" />
+                    Placeholder lingua ({'{lang}'}, {'{lang_native}'})
+                </h3>
+                <p className="text-xs text-slate-500 max-w-2xl">
+                    Definisci come vengono risolti i placeholder {'{lang}'} (nome inglese) e {'{lang_native}'} (nome nativo) per ogni lingua supportata. Usati nelle direttive globali e nei system prompt.
+                </p>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="border-b border-slate-200">
+                                <th className="text-left py-2 px-3 text-slate-500 font-medium w-24">Codice</th>
+                                <th className="text-left py-2 px-3 text-slate-500 font-medium">{'{lang}'} — Nome inglese</th>
+                                <th className="text-left py-2 px-3 text-slate-500 font-medium">{'{lang_native}'} — Nome nativo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {Object.entries(DEFAULT_PLACEHOLDERS).map(([code]) => {
+                                const val = placeholderDraft[code] || ['', ''];
+                                return (
+                                    <tr key={code} className="border-b border-slate-100">
+                                        <td className="py-2 px-3 font-mono text-slate-700">{code}</td>
+                                        <td className="py-2 px-3">
+                                            <input
+                                                className="w-full bg-slate-50 border border-slate-300 rounded-md px-2 py-1.5 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                value={val[0]}
+                                                onChange={(e) => {
+                                                    setPlaceholderDraft(prev => ({
+                                                        ...prev,
+                                                        [code]: [e.target.value, prev[code]?.[1] || ''],
+                                                    }));
+                                                }}
+                                                placeholder="English name"
+                                            />
+                                        </td>
+                                        <td className="py-2 px-3">
+                                            <input
+                                                className="w-full bg-slate-50 border border-slate-300 rounded-md px-2 py-1.5 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                value={val[1]}
+                                                onChange={(e) => {
+                                                    setPlaceholderDraft(prev => ({
+                                                        ...prev,
+                                                        [code]: [prev[code]?.[0] || '', e.target.value],
+                                                    }));
+                                                }}
+                                                placeholder="Native name"
+                                            />
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+                <div className="flex justify-end pt-2">
+                    <button
+                        onClick={() => {
+                            const json = JSON.stringify(placeholderDraft);
+                            handleSaveConfig({ key: 'placeholder_language_mappings', value: json, description: 'Mappatura placeholder lingua' });
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+                    >
+                        <Save className="w-4 h-4" />
+                        Salva mappatura lingue
+                    </button>
+                </div>
+            </div>
+
+            </div>
+            )}
+
+            {section === 'directives' && (
+            <div className="space-y-6">
+                <div className="glass-panel p-6 space-y-6">
+                    <h3 className="text-lg font-medium text-slate-900 flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-amber-600" />
+                        {t('admin.config.section.directives')}
+                    </h3>
+                    <p className="text-xs text-slate-500 max-w-2xl">
+                        Queste direttive vengono iniettate in coda a ogni system prompt del counselorbot, per tutti gli strumenti. Lascia vuoto per usare il default hardcoded. Usa {'{lang}'} e {'{lang_native}'} come placeholder nel campo &quot;Direttiva linguaggio&quot; per il nome della lingua.
+                    </p>
+                    {[
+                        { key: 'directive_language', label: 'Direttiva linguaggio [LANGUAGE]', hint: 'Usa {lang} e {lang_native}' },
+                        { key: 'directive_register', label: 'Direttiva registro [REGISTER]' },
+                        { key: 'directive_thinking', label: 'Direttiva thinking [THINKING]' },
+                    ].map((def) => {
+                        const currentVal = getConfigValue(def.key);
+                        return (
+                            <div key={def.key} className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                    <label className="text-sm font-semibold text-slate-700">{def.label}</label>
+                                    <button
+                                        onClick={() => handleSaveConfig({ key: def.key, value: getConfigValue(def.key), description: def.label })}
+                                        className="p-2 hover:bg-slate-100 rounded-md text-indigo-600 transition-colors shrink-0"
+                                    >
+                                        <Save className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                {def.hint && <p className="text-xs text-amber-600">{def.hint}</p>}
+                                <textarea
+                                    className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm min-h-[160px] ring-amber-500 outline-none font-mono text-slate-900 focus:ring-2"
+                                    value={currentVal}
+                                    onChange={(e) => setConfigDraft(def.key, e.target.value, def.label)}
+                                    placeholder="Lascia vuoto per default hardcoded"
+                                />
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
             )}
 
@@ -1533,6 +1711,7 @@ export function ConfigForm() {
                         {instrumentSubsection === 'step-prompts' && (
                             sectionSteps.length > 0 ? (
                                 <StepPromptsPanel
+                                    key={`${q.questionnaireType}-${selectedPromptStepId}-${promptLanguages[q.questionnaireType] || lang || 'it'}`}
                                     questionnaireType={q.questionnaireType}
                                     steps={sectionSteps}
                                     selectedStepId={selectedPromptStepId}

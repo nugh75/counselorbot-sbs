@@ -1,3 +1,4 @@
+import json
 from typing import Dict, List
 
 
@@ -1087,9 +1088,102 @@ MODE_TO_SYSTEM_PROMPT_KEY: Dict[str, str] = {
 }
 
 
+# --- Instrument-level meta system prompts (injected as [META SYSTEM PROMPT]) ---
+# Empty default: optional extra context an admin can fill per-instrument.
+# Per-step overrides use prompt_meta_{Q}_{STEP_ID} and are created on demand.
+
+META_SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
+    {
+        "key": "prompt_meta_QSA",
+        "label": "Meta system prompt QSA",
+        "description": "Contesto aggiuntivo iniettato come [META SYSTEM PROMPT] per lo strumento QSA (vuoto = nessun contesto extra)",
+        "default": "",
+    },
+    {
+        "key": "prompt_meta_QSAR",
+        "label": "Meta system prompt QSAr",
+        "description": "Contesto aggiuntivo iniettato come [META SYSTEM PROMPT] per lo strumento QSAr",
+        "default": "",
+    },
+    {
+        "key": "prompt_meta_ZTPI",
+        "label": "Meta system prompt ZTPI",
+        "description": "Contesto aggiuntivo iniettato come [META SYSTEM PROMPT] per lo strumento ZTPI",
+        "default": "",
+    },
+    {
+        "key": "prompt_meta_SAVICKAS",
+        "label": "Meta system prompt Savickas",
+        "description": "Contesto aggiuntivo iniettato come [META SYSTEM PROMPT] per lo strumento Savickas",
+        "default": "",
+    },
+    {
+        "key": "prompt_meta_QPCS",
+        "label": "Meta system prompt QPCS",
+        "description": "Contesto aggiuntivo iniettato come [META SYSTEM PROMPT] per lo strumento QPCS",
+        "default": "",
+    },
+    {
+        "key": "prompt_meta_QPCC",
+        "label": "Meta system prompt QPCC",
+        "description": "Contesto aggiuntivo iniettato come [META SYSTEM PROMPT] per lo strumento QPCC",
+        "default": "",
+    },
+    {
+        "key": "prompt_meta_QAP",
+        "label": "Meta system prompt QAP",
+        "description": "Contesto aggiuntivo iniettato come [META SYSTEM PROMPT] per lo strumento QAP",
+        "default": "",
+    },
+]
+
+
+# --- Global directives (language, register, thinking) — editable via admin ---
+GLOBAL_DIRECTIVE_DEFINITIONS: List[Dict[str, str]] = [
+    {
+        "key": "directive_language",
+        "label": "Direttiva linguaggio",
+        "description": "Istruzione [LANGUAGE] iniettata in ogni system prompt (usa {lang} e {lang_native} come placeholder per la lingua dello studente). Vuoto = usa default hardcoded.",
+        "default": "[LANGUAGE] You MUST write your ENTIRE response in {lang} ({lang_native}), regardless of the language of the instructions or scores above. Translate any fixed phrases, headings and labels into {lang} as well. Also produce your internal reasoning/thinking in {lang} ({lang_native}). Do NOT mix languages.",
+    },
+    {
+        "key": "directive_register",
+        "label": "Direttiva registro",
+        "description": "Istruzione [REGISTER] iniettata in ogni system prompt. Vuoto = usa default hardcoded.",
+        "default": "[REGISTER] Always address the student informally, using the informal second-person form of the chosen language (Italian 'tu' not 'Lei', Spanish 'tú', German and Swedish 'du', French 'tu'). Keep this informal register consistent across the ENTIRE conversation, including follow-up answers and summaries. Never switch to the formal form.",
+    },
+    {
+        "key": "directive_thinking",
+        "label": "Direttiva thinking",
+        "description": "Istruzione [THINKING] iniettata in ogni system prompt. Vuoto = usa default hardcoded.",
+        "default": "[THINKING] If you reason before answering, put ALL of your reasoning inside ONE single block at the very beginning, wrapped exactly in <think> and </think> tags, and keep it concise (a few short lines). After </think>, write the student-facing answer directly: it must NOT contain your plan, your checklist, phrases like 'Attivazione interna', 'Devo', 'Ho i punteggi', nor any meta-commentary about what you are doing. Never start the visible answer with a preparatory checklist such as 'Devo analizzare', 'Identificare il filo rosso', 'Strutturare i contenuti' or 'Proporre azioni concrete'. Never expose reasoning outside the <think> block.",
+    },
+]
+
+
+# --- Placeholder language mappings (editable via admin) ---
+PLACEHOLDER_DEFINITIONS: List[Dict[str, str]] = [
+    {
+        "key": "placeholder_language_mappings",
+        "label": "Mappatura placeholder lingua",
+        "description": "Sostituzioni per {lang} e {lang_native} in ogni lingua supportata. Formato: JSON con chiave=lingua, valore=[nome_inglese, nome_nativo].",
+        "default": json.dumps({
+            "it": ["Italian", "italiano"],
+            "en": ["English", "English"],
+            "es": ["Spanish", "español"],
+            "fr": ["French", "français"],
+            "de": ["German", "Deutsch"],
+            "sv": ["Swedish", "svenska"],
+        }, ensure_ascii=False),
+    },
+]
+
 # All config-table text definitions (seeded on startup)
 ALL_CONFIG_TEXT_DEFINITIONS: List[Dict[str, str]] = (
     SYSTEM_PROMPT_DEFINITIONS
+    + META_SYSTEM_PROMPT_DEFINITIONS
+    + GLOBAL_DIRECTIVE_DEFINITIONS
+    + PLACEHOLDER_DEFINITIONS
     + list(GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS.values())
     + GUIDED_STATIC_TEXT_DEFINITIONS
     + GUIDED_FIXED_PHASE_LABEL_DEFINITIONS

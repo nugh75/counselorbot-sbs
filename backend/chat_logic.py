@@ -215,6 +215,25 @@ SUPPORTED_AI_LANGUAGES = {
     "sv": ("Swedish", "svenska"),
 }
 
+
+def _get_language_mappings(db=None) -> dict:
+    """Legge le mappature placeholder lingua dal DB se disponibili, altrimenti
+    restituisce il dict hardcoded SUPPORTED_AI_LANGUAGES.
+    Il valore salvato è un JSON con chiave=lang_code, valore=[nome_inglese, nome_nativo]."""
+    if db is None:
+        return dict(SUPPORTED_AI_LANGUAGES)
+    row = db.query(models.Config).filter(models.Config.key == "placeholder_language_mappings").first()
+    if not row or not (row.value or "").strip():
+        return dict(SUPPORTED_AI_LANGUAGES)
+    try:
+        parsed = json.loads(row.value.strip())
+        if isinstance(parsed, dict):
+            return {k: tuple(v) for k, v in parsed.items()}
+    except (ValueError, TypeError):
+        pass
+    return dict(SUPPORTED_AI_LANGUAGES)
+
+
 _QSA_FACTOR_NAMES = {
     "it": {
         "C1": "Strategie elaborative", "C2": "Autoregolazione", "C3": "Disorientamento",
@@ -349,13 +368,88 @@ _QSA_INVERTED_CODES = ("C3", "C6", "A1", "A4", "A5", "A7")
 _QSAR_INVERTED_CODES = ("C4r", "A1r")
 
 
-def _apply_language_directive(system_prompt: str, language: Optional[str]) -> str:
+def _apply_global_directives(system_prompt: str, language: Optional[str], db=None) -> str:
+    """Applica in un unico blocco le tre direttive globali: lingua, registro e
+    thinking. Legge i testi dalle config del DB se presenti; altrimenti usa i
+    default hardcoded."""
+    if db is None:
+        db_local = database.SessionLocal()
+        try:
+            return _apply_global_directives(system_prompt, language, db_local)
+        finally:
+            db_local.close()
+
+    def _read(key: str, fallback: str) -> str:
+        row = db.query(models.Config).filter(models.Config.key == key).first()
+        if row and (row.value or "").strip():
+            return row.value.strip()
+        return fallback
+
+    lang_directive = _read("directive_language", "")
+    register_directive = _read("directive_register", "")
+    thinking_directive = _read("directive_thinking", "")
+
+    mappings = _get_language_mappings(db)
+
+    # Fallback ai default hardcoded per chi non ha ancora salvato nulla
+    if not lang_directive:
+        if language and language in mappings:
+            eng, native = mappings[language]
+            lang_directive = (
+                f"[LANGUAGE] You MUST write your ENTIRE response in {eng} ({native}), "
+                f"regardless of the language of the instructions or scores above. "
+                f"Translate any fixed phrases, headings and labels into {eng} as well. "
+                f"Also produce your internal reasoning/thinking in {eng} ({native}). "
+                f"Do NOT mix languages."
+            )
+        else:
+            lang_directive = ""
+    else:
+        # Replace placeholders with actual language names
+        if language and language in mappings:
+            eng, native = mappings[language]
+            lang_directive = lang_directive.replace("{lang}", eng).replace("{lang_native}", native)
+
+    if not register_directive:
+        register_directive = (
+            "[REGISTER] Always address the student informally, using the informal "
+            "second-person form of the chosen language (Italian 'tu' not 'Lei', "
+            "Spanish 'tú', German and Swedish 'du', French 'tu'). Keep this informal "
+            "register consistent across the ENTIRE conversation, including follow-up "
+            "answers and summaries. Never switch to the formal form."
+        )
+
+    if not thinking_directive:
+        thinking_directive = (
+            "[THINKING] If you reason before answering, put ALL of your reasoning inside "
+            "ONE single block at the very beginning, wrapped exactly in <think> and "
+            "</think> tags, and keep it concise (a few short lines). After </think>, write "
+            "the student-facing answer directly: it must NOT contain your plan, your "
+            "checklist, phrases like 'Attivazione interna', 'Devo', 'Ho i punteggi', nor "
+            "any meta-commentary about what you are doing. Never start the visible answer "
+            "with a preparatory checklist such as 'Devo analizzare', 'Identificare il filo "
+            "rosso', 'Strutturare i contenuti' or 'Proporre azioni concrete'. Never expose "
+            "reasoning outside the <think> block."
+        )
+
+    parts = [system_prompt]
+    if lang_directive:
+        parts.append("\n\n" + lang_directive)
+    if register_directive:
+        parts.append("\n\n" + register_directive)
+    if thinking_directive:
+        parts.append("\n\n" + thinking_directive)
+    return "".join(parts)
+
+
+def _apply_language_directive(system_prompt: str, language: Optional[str], db=None) -> str:
     """Aggiunge in coda al system prompt l'istruzione di rispondere nella lingua scelta.
     Per ogni lingua supportata viene aggiunta la direttiva [LANGUAGE] che forza
     l'intera risposta in quella lingua, a prescindere dalla lingua delle istruzioni."""
-    if not language or language not in SUPPORTED_AI_LANGUAGES:
+    mappings = _get_language_mappings(db)
+    if not language or language not in mappings:
         return system_prompt
-    eng, native = SUPPORTED_AI_LANGUAGES[language]
+    eng, native = mappings[language]
     return (
         f"{system_prompt}\n\n"
         f"[LANGUAGE] You MUST write your ENTIRE response in {eng} ({native}), "
@@ -1407,9 +1501,13 @@ def prompt_component_config_key(questionnaire_type: str, step_id: str) -> str:
     return f"prompt_components_{q}_{s}"
 
 
-def prompt_meta_config_key(questionnaire_type: str) -> str:
+def prompt_meta_config_key(questionnaire_type: str, step_id: str | None = None) -> str:
     q = re.sub(r"[^A-Za-z0-9_-]+", "-", (questionnaire_type or "GENERIC").strip().upper())
-    return f"prompt_meta_{q}"
+    base = f"prompt_meta_{q}"
+    if step_id:
+        s = re.sub(r"[^A-Za-z0-9_-]+", "-", step_id.strip())
+        return f"{base}_{s}"
+    return base
 
 
 def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None) -> dict[str, bool]:
@@ -1494,10 +1592,17 @@ def _render_booklet_data(data, prefix: str = "") -> list[str]:
     return [f"- {prefix[:-1]}: {value}"[:300]] if value else []
 
 
-def _instrument_meta_system_prompt(db, questionnaire_type: str) -> str:
+def _instrument_meta_system_prompt(db, questionnaire_type: str, step_id: str | None = None) -> str:
     if not questionnaire_type:
         return ""
     try:
+        # First try per-step config, fall back to instrument-level
+        if step_id:
+            step_key = prompt_meta_config_key(questionnaire_type, step_id)
+            row = db.query(models.Config).filter(models.Config.key == step_key).first()
+            if row and str(row.value or "").strip():
+                return str(row.value).strip()
+        # Fallback to instrument-level meta prompt
         row = db.query(models.Config).filter(models.Config.key == prompt_meta_config_key(questionnaire_type)).first()
         return str(row.value or "").strip() if row else ""
     except Exception:
@@ -1537,6 +1642,7 @@ def build_context_envelope(
     counselor_name: Optional[str] = None,
     system_prompt: str,
     step_label: str,
+    step_id: str | None = None,
     questionnaire_type: str,
     effective_message: str,
     model_scores_context: str,
@@ -1580,7 +1686,7 @@ def build_context_envelope(
         components["knowledge"] = knowledge_context
 
     parts_system = [system_prompt] if system_prompt else []
-    meta_system_prompt = _instrument_meta_system_prompt(db, questionnaire_type)
+    meta_system_prompt = _instrument_meta_system_prompt(db, questionnaire_type, step_id)
     if components is not None:
         components["meta_system_prompt"] = meta_system_prompt
     if meta_system_prompt:
@@ -1624,7 +1730,7 @@ def build_context_envelope(
             student_lines.append(f"- Note condivise: {notes}")
     student_block = "\n".join(student_lines)
     if components is not None:
-        components["metadata"] = student_block
+        components["metadata"] = student_block if _component_enabled(component_flags, "metadata") else ""
     if student_block and _component_enabled(component_flags, "metadata"):
         parts_system.append("[STUDENT]\n" + student_block)
 
@@ -1668,7 +1774,7 @@ def build_context_envelope(
 
     system_prompt_final = "\n\n".join(parts_system)
     if components is not None:
-        components["counselor"] = c_persona or ""
+        components["counselor"] = (c_persona or "") if _component_enabled(component_flags, "counselor") else ""
     if c_persona and _component_enabled(component_flags, "counselor"):
         system_prompt_final = f"{c_persona.strip()}\n\n{system_prompt_final}"
     # Placeholder nome counselor: risolto dal campo counselors.name, usato sia nella
