@@ -1270,6 +1270,9 @@ def _resolve_system_prompt(ai_service: AIService, mode: str, phase: Optional[str
 def _resolve_user_message_for_chat(ai_service: AIService, request: ChatRequest, db):
     """Resolve the effective user message, optionally loading a guided-step prompt from DB."""
     if request.use_phase_prompt:
+        if request.message and request.message.strip():
+            return request.message, f"guided_step:{request.phase}"
+
         if not request.phase:
             raise HTTPException(status_code=400, detail="phase is required when use_phase_prompt=true")
 

@@ -797,7 +797,7 @@ function StepPromptsPanel({
                 phase: selectedStep.id,
                 mode: selectedStep.system_prompt_mode || 'generic',
                 message: localizedStepValue,
-                use_phase_prompt: false,
+                use_phase_prompt: true,
                 session_id: selectedSessionId || undefined,
                 counselor_id: selectedCounselorId || undefined,
                 include_knowledge: true,
