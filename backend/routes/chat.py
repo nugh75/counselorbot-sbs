@@ -57,6 +57,7 @@ from ..chat_logic import (
     _ensure_required_qsa_factor_codes,
     filter_scores_by_components,
     get_prompt_component_flags,
+    get_prompt_component_options,
     _is_strategy_questionnaire,
     _phase_factor_codes,
     _resolve_system_prompt,
@@ -341,6 +342,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
 
     component_flags = get_prompt_component_flags(db, questionnaire_type, request.phase)
     step_mode = step.system_prompt_mode if step else request.mode
+    component_options = get_prompt_component_options(db, questionnaire_type, request.phase, step_mode)
     include_analysis_context = _should_include_step_analysis_context(step_mode)
     phase_codes = _phase_factor_codes(db, request.phase) if include_analysis_context else set()
     if include_analysis_context:
@@ -382,6 +384,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
             db, session_id, retrieval_request, questionnaire_type, retrieval_query,
             ai_service=ai_service,
+            certified_strategy_limit=component_options["certified_strategy_limit"],
         )
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         knowledge_context = _sanitize_ztpi_user_text(knowledge_context, request.language)
@@ -572,6 +575,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
 
     component_flags = get_prompt_component_flags(db, questionnaire_type, request.phase)
     step_mode = step.system_prompt_mode if step else request.mode
+    component_options = get_prompt_component_options(db, questionnaire_type, request.phase, step_mode)
     include_analysis_context = _should_include_step_analysis_context(step_mode)
     phase_codes = _phase_factor_codes(db, request.phase) if include_analysis_context else set()
     if include_analysis_context:
@@ -622,6 +626,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
             db, session_id, retrieval_request, questionnaire_type, retrieval_query,
             ai_service=ai_service,
+            certified_strategy_limit=component_options["certified_strategy_limit"],
         )
     sanitize = _should_sanitize_ztpi_text(request.mode, request.phase)
     if sanitize:
