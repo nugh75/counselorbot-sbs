@@ -610,11 +610,11 @@ function StepPromptsPanel({
     const ragSummary = preview?.knowledge
         ? `RAG: ${preview.knowledge.included ? 'ON' : 'OFF'}\ncontext_length: ${preview.knowledge.context_length || 0}\nstrategy_ids: ${(preview.knowledge.strategy_ids || []).join(', ') || '-'}\ncertified_strategy_ids: ${(preview.knowledge.certified_strategy_ids || []).join(', ') || '-'}`
         : '';
-    const finalPrompt = preview?.envelope
-        ? `SYSTEM\n${preview.envelope.system_prompt_final || ''}\n\nMESSAGE\n${preview.envelope.full_message || ''}\n\nHISTORY\n${JSON.stringify(preview.envelope.history || [], null, 2)}`
-        : '';
     const componentText = promptComponentText(selectedLanguage);
     const uiText = promptUiText(selectedLanguage);
+    const finalPrompt = preview?.envelope
+        ? `${componentText.labels.step_prompt}\n${preview.envelope.full_message || ''}\n\n${componentText.labels.system_prompt}\n${preview.envelope.system_prompt_final || ''}\n\n${componentText.labels.history}\n${JSON.stringify(preview.envelope.history || [], null, 2)}`
+        : '';
     const loadingLabel = previewLoading ? uiText.loading : t('admin.promptAudit.empty');
 
     return (
@@ -692,25 +692,6 @@ function StepPromptsPanel({
 
             <div className="grid gap-4">
                 <EditablePromptTextBlock
-                    title={componentText.labels.system_prompt}
-                    subtitle={systemPromptKey}
-                    text={systemPrompt}
-                    emptyLabel={t('admin.promptAudit.empty')}
-                    editing={editingPrompt === 'system'}
-                    draft={systemDraft}
-                    onEdit={() => setEditingPrompt('system')}
-                    onDraftChange={setSystemDraft}
-                    onSave={() => {
-                        if (!systemPromptKey) return;
-                        onSaveSystemPrompt(systemPromptKey, systemDraft);
-                        setEditingPrompt(null);
-                    }}
-                    onCancel={() => { setSystemDraft(systemPrompt); setEditingPrompt(null); }}
-                    editLabel={uiText.edit}
-                    saveLabel={uiText.save}
-                    cancelLabel={uiText.cancel}
-                />
-                <EditablePromptTextBlock
                     title={componentText.labels.step_prompt}
                     subtitle={localizedStepKey || selectedStep?.id}
                     text={localizedStepValue}
@@ -725,6 +706,25 @@ function StepPromptsPanel({
                         setEditingPrompt(null);
                     }}
                     onCancel={() => { setStepDraft(localizedStepValue); setEditingPrompt(null); }}
+                    editLabel={uiText.edit}
+                    saveLabel={uiText.save}
+                    cancelLabel={uiText.cancel}
+                />
+                <EditablePromptTextBlock
+                    title={componentText.labels.system_prompt}
+                    subtitle={systemPromptKey}
+                    text={systemPrompt}
+                    emptyLabel={t('admin.promptAudit.empty')}
+                    editing={editingPrompt === 'system'}
+                    draft={systemDraft}
+                    onEdit={() => setEditingPrompt('system')}
+                    onDraftChange={setSystemDraft}
+                    onSave={() => {
+                        if (!systemPromptKey) return;
+                        onSaveSystemPrompt(systemPromptKey, systemDraft);
+                        setEditingPrompt(null);
+                    }}
+                    onCancel={() => { setSystemDraft(systemPrompt); setEditingPrompt(null); }}
                     editLabel={uiText.edit}
                     saveLabel={uiText.save}
                     cancelLabel={uiText.cancel}
