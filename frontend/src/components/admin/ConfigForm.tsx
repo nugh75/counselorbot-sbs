@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Cpu, FileText, Layers, Palette, Plus, RefreshCw, Save, Server, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Cpu, FileText, Layers, Palette, Plus, RefreshCw, Save, Server, Trash2, ChevronUp, ChevronDown, Pencil } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 
 // --- Types ---
@@ -318,6 +318,70 @@ function PromptTextBlock({
     );
 }
 
+function EditablePromptTextBlock({
+    title,
+    subtitle,
+    text,
+    emptyLabel,
+    editing,
+    draft,
+    onEdit,
+    onDraftChange,
+    onSave,
+    onCancel,
+}: {
+    title: string;
+    subtitle?: string;
+    text: string | null | undefined;
+    emptyLabel: string;
+    editing: boolean;
+    draft: string;
+    onEdit: () => void;
+    onDraftChange: (value: string) => void;
+    onSave: () => void;
+    onCancel: () => void;
+}) {
+    const value = editing ? draft : (text || '');
+    const stats = textStats(value);
+    return (
+        <div className="rounded-lg border border-slate-200 bg-white">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
+                <div>
+                    <h5 className="text-sm font-semibold text-slate-800">{title}</h5>
+                    {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500">
+                        {stats.chars} char · {stats.lines} righe
+                    </span>
+                    {!editing && (
+                        <button type="button" onClick={onEdit} className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-indigo-600" title="Modifica">
+                            <Pencil className="h-4 w-4" />
+                        </button>
+                    )}
+                </div>
+            </div>
+            {editing ? (
+                <div className="space-y-3 p-4">
+                    <textarea
+                        className="min-h-[220px] w-full rounded-md border border-slate-300 bg-slate-50 p-3 font-mono text-xs leading-relaxed text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500"
+                        value={draft}
+                        onChange={(event) => onDraftChange(event.target.value)}
+                    />
+                    <div className="flex gap-2">
+                        <button type="button" onClick={onSave} className="rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700">Salva</button>
+                        <button type="button" onClick={onCancel} className="rounded-md bg-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-300">Annulla</button>
+                    </div>
+                </div>
+            ) : (
+                <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words p-4 text-xs leading-relaxed text-slate-700">
+                    {value.trim() ? value : emptyLabel}
+                </pre>
+            )}
+        </div>
+    );
+}
+
 function StepPromptsPanel({
     questionnaireType,
     steps,
@@ -330,6 +394,8 @@ function StepPromptsPanel({
     selectedSessionId,
     onSelectSession,
     onSaveComponentFlags,
+    onSaveSystemPrompt,
+    onSaveStepPrompt,
     t,
 }: {
     questionnaireType: string;
@@ -343,6 +409,8 @@ function StepPromptsPanel({
     selectedSessionId: string;
     onSelectSession: (sessionId: string) => void;
     onSaveComponentFlags: (key: string, flags: Record<string, boolean>) => void;
+    onSaveSystemPrompt: (key: string, value: string) => void;
+    onSaveStepPrompt: (step: GuidedStep, value: string) => void;
     t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
     const selectedStep = steps.find((step) => step.id === selectedStepId) || steps[0];
@@ -352,9 +420,18 @@ function StepPromptsPanel({
     const flags = parseComponentFlags(configs.find((config) => config.key === componentKey)?.value || '');
     const [preview, setPreview] = useState<PromptPreview | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
+    const [editingPrompt, setEditingPrompt] = useState<'system' | 'step' | null>(null);
+    const [systemDraft, setSystemDraft] = useState(systemPrompt);
+    const [stepDraft, setStepDraft] = useState(selectedStep?.prompt || '');
     const modeLabel = selectedStep?.system_prompt_mode
         ? t(`admin.mode.${selectedStep.system_prompt_mode}`)
         : '';
+
+    useEffect(() => {
+        setEditingPrompt(null);
+        setSystemDraft(systemPrompt);
+        setStepDraft(selectedStep?.prompt || '');
+    }, [systemPrompt, selectedStep?.id, selectedStep?.prompt]);
 
     useEffect(() => {
         if (!selectedStep) return;
@@ -439,9 +516,39 @@ function StepPromptsPanel({
                 </div>
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-2">
-                <PromptTextBlock title={t('admin.promptAudit.block.systemPrompt')} subtitle={systemPromptKey} text={systemPrompt} emptyLabel={t('admin.promptAudit.empty')} />
-                <PromptTextBlock title={t('admin.promptAudit.block.stepPrompt')} subtitle={selectedStep ? selectedStep.id : undefined} text={selectedStep?.prompt} emptyLabel={t('admin.promptAudit.empty')} />
+            <div className="grid gap-4">
+                <EditablePromptTextBlock
+                    title={t('admin.promptAudit.block.systemPrompt')}
+                    subtitle={systemPromptKey}
+                    text={systemPrompt}
+                    emptyLabel={t('admin.promptAudit.empty')}
+                    editing={editingPrompt === 'system'}
+                    draft={systemDraft}
+                    onEdit={() => setEditingPrompt('system')}
+                    onDraftChange={setSystemDraft}
+                    onSave={() => {
+                        if (!systemPromptKey) return;
+                        onSaveSystemPrompt(systemPromptKey, systemDraft);
+                        setEditingPrompt(null);
+                    }}
+                    onCancel={() => { setSystemDraft(systemPrompt); setEditingPrompt(null); }}
+                />
+                <EditablePromptTextBlock
+                    title={t('admin.promptAudit.block.stepPrompt')}
+                    subtitle={selectedStep ? selectedStep.id : undefined}
+                    text={selectedStep?.prompt}
+                    emptyLabel={t('admin.promptAudit.empty')}
+                    editing={editingPrompt === 'step'}
+                    draft={stepDraft}
+                    onEdit={() => setEditingPrompt('step')}
+                    onDraftChange={setStepDraft}
+                    onSave={() => {
+                        if (!selectedStep) return;
+                        onSaveStepPrompt(selectedStep, stepDraft);
+                        setEditingPrompt(null);
+                    }}
+                    onCancel={() => { setStepDraft(selectedStep?.prompt || ''); setEditingPrompt(null); }}
+                />
                 <PromptTextBlock title="Punteggi / fattori" text={textValue(preview?.components?.scores)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
                 <PromptTextBlock title="RAG / knowledge" text={ragSummary} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
                 <PromptTextBlock title="Memoria / history" text={textValue(preview?.components?.history)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
@@ -1190,6 +1297,15 @@ export function ConfigForm() {
                                     selectedSessionId={promptSessionIds[q.questionnaireType] || ''}
                                     onSelectSession={(sessionId) => setPromptSessionIds(prev => ({ ...prev, [q.questionnaireType]: sessionId }))}
                                     onSaveComponentFlags={saveComponentFlags}
+                                    onSaveSystemPrompt={(key, value) => {
+                                        setConfigDraft(key, value, key);
+                                        handleSaveConfig({ key, value, description: key });
+                                    }}
+                                    onSaveStepPrompt={(step, value) => {
+                                        const updated = { ...step, prompt: value };
+                                        setGuidedSteps(prev => prev.map(s => s.id === step.id ? updated : s));
+                                        handleSaveStep(updated);
+                                    }}
                                     t={t}
                                 />
                             ) : (
