@@ -36,7 +36,7 @@ interface PromptPreview {
     envelope?: { system_prompt_final?: string; full_message?: string; history?: unknown[] };
     components?: Record<string, unknown>;
     component_flags?: Record<string, boolean>;
-    component_options?: { certified_strategy_limit?: number };
+    component_options?: { certified_strategy_limit?: number; allowed_strategies?: string[] };
     component_config_key?: string;
     knowledge?: { included?: boolean; context_length?: number; strategy_ids?: string[]; certified_strategy_ids?: string[] };
     selected_result?: { session_id: string; username?: string | null; submitted_at?: string | null } | null;
@@ -500,6 +500,16 @@ function parseCertifiedStrategyLimit(raw: string, fallback: number): number {
     }
 }
 
+function parseAllowedStrategies(raw: string): string[] | undefined {
+    try {
+        const parsed = JSON.parse(raw || '{}') || {};
+        if (parsed && Array.isArray(parsed.allowed_strategies)) {
+            return parsed.allowed_strategies.map(String);
+        }
+    } catch {}
+    return undefined;
+}
+
 function textValue(value: unknown): string {
     if (typeof value === 'string') return value;
     if (value == null) return '';
@@ -675,6 +685,28 @@ function StepPromptsPanel({
     // ponytail: reuse public /counselors fetch (active only), filter client-side by instrument.
     const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
     useEffect(() => { fetchCounselors().then(setCounselors).catch(() => setCounselors([])); }, []);
+
+    const [allApprovedStrategies, setAllApprovedStrategies] = useState<any[]>([]);
+    const [allCertifiedStrategies, setAllCertifiedStrategies] = useState<any[]>([]);
+    useEffect(() => {
+        fetch('/api/admin/approved-strategies')
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+                if (data && Array.isArray(data.strategies)) {
+                    setAllApprovedStrategies(data.strategies);
+                }
+            })
+            .catch(() => {});
+
+        fetch('/api/admin/certified-strategies')
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+                if (Array.isArray(data)) {
+                    setAllCertifiedStrategies(data);
+                }
+            })
+            .catch(() => {});
+    }, []);
     // Counselors with empty/null questionnaire_types are "available for all instruments"
     // (matches backend behavior in prompt_audit.py _add_static_warnings).
     const instrumentCounselors = counselors.filter((c) =>
@@ -696,7 +728,13 @@ function StepPromptsPanel({
         ...configFlagOverrides,
     };
     const certifiedStrategyLimit = preview?.component_options?.certified_strategy_limit ?? configCertifiedStrategyLimit;
-    const componentConfigPayload = { ...flags, certified_strategy_limit: certifiedStrategyLimit };
+    const configAllowedStrategies = parseAllowedStrategies(componentConfigValue);
+    const allowedStrategies = preview?.component_options?.allowed_strategies ?? configAllowedStrategies;
+    const componentConfigPayload = {
+        ...flags,
+        certified_strategy_limit: certifiedStrategyLimit,
+        allowed_strategies: allowedStrategies,
+    };
     const flagsJson = JSON.stringify(componentConfigPayload);
 
     useEffect(() => {
@@ -736,6 +774,43 @@ function StepPromptsPanel({
     const updateCertifiedStrategyLimit = (value: number) => {
         if (!componentKey) return;
         onSaveComponentFlags(componentKey, { ...componentConfigPayload, certified_strategy_limit: value });
+    };
+    const eligibleApproved = allApprovedStrategies.filter((s) =>
+        Array.isArray(s.questionnaires) &&
+        s.questionnaires.some((q: string) => q.toUpperCase() === questionnaireType.toUpperCase())
+    );
+    const eligibleCertified = allCertifiedStrategies.filter((s) =>
+        Array.isArray(s.questionnaire_types) &&
+        s.questionnaire_types.some((q: string) => q.toUpperCase() === questionnaireType.toUpperCase()) &&
+        s.is_active
+    );
+    const isStrategyAllowed = (idOrSlug: string) => {
+        if (!componentConfigPayload.allowed_strategies) {
+            return true;
+        }
+        return componentConfigPayload.allowed_strategies.includes(idOrSlug);
+    };
+    const toggleStrategyAllowed = (idOrSlug: string) => {
+        if (!componentKey) return;
+        let currentList: string[];
+        if (!componentConfigPayload.allowed_strategies) {
+            const allSlugs = [
+                ...eligibleApproved.map((s) => s.id),
+                ...eligibleCertified.map((s) => s.slug),
+            ];
+            currentList = allSlugs;
+        } else {
+            currentList = [...componentConfigPayload.allowed_strategies];
+        }
+        if (currentList.includes(idOrSlug)) {
+            currentList = currentList.filter((item) => item !== idOrSlug);
+        } else {
+            currentList.push(idOrSlug);
+        }
+        onSaveComponentFlags(componentKey, {
+            ...componentConfigPayload,
+            allowed_strategies: currentList,
+        });
     };
     const ragSummary = preview?.knowledge
         ? `RAG: ${preview.knowledge.included ? 'ON' : 'OFF'}\ncontext_length: ${preview.knowledge.context_length || 0}\nstrategy_ids: ${(preview.knowledge.strategy_ids || []).join(', ') || '-'}\ncertified_strategy_ids: ${(preview.knowledge.certified_strategy_ids || []).join(', ') || '-'}`
@@ -876,6 +951,50 @@ function StepPromptsPanel({
                                     </select>
                                 </label>
                             </div>
+
+                            {flags.approved_strategies && eligibleApproved.length > 0 && (
+                                <div className="mt-3 space-y-1.5 border-t border-emerald-100 pt-3">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700/70 ml-1">Seleziona Strategie Approvate Attive</p>
+                                    <div className="grid gap-1.5 max-h-[160px] overflow-y-auto pr-1">
+                                        {eligibleApproved.map((strategy) => (
+                                            <label key={strategy.id} className="flex items-start gap-2 rounded-md border border-slate-200 bg-white p-2 text-[11px] text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
+                                                <input
+                                                    type="checkbox"
+                                                    className="accent-emerald-600 mt-0.5"
+                                                    checked={isStrategyAllowed(strategy.id)}
+                                                    onChange={() => toggleStrategyAllowed(strategy.id)}
+                                                />
+                                                <div className="leading-tight">
+                                                    <span className="font-mono text-[9px] font-bold text-slate-400 mr-1">[{strategy.id}]</span>
+                                                    {strategy.texts?.[selectedLanguage] || strategy.texts?.it || strategy.id}
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {flags.certified_strategies && eligibleCertified.length > 0 && (
+                                <div className="mt-3 space-y-1.5 border-t border-emerald-100 pt-3">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700/70 ml-1">Seleziona Strategie Certificate Attive</p>
+                                    <div className="grid gap-1.5 max-h-[160px] overflow-y-auto pr-1">
+                                        {eligibleCertified.map((strategy) => (
+                                            <label key={strategy.slug} className="flex items-start gap-2 rounded-md border border-slate-200 bg-white p-2 text-[11px] text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
+                                                <input
+                                                    type="checkbox"
+                                                    className="accent-emerald-600 mt-0.5"
+                                                    checked={isStrategyAllowed(strategy.slug)}
+                                                    onChange={() => toggleStrategyAllowed(strategy.slug)}
+                                                />
+                                                <div className="leading-tight">
+                                                    <span className="font-mono text-[9px] font-bold text-slate-400 mr-1">[{strategy.slug}]</span>
+                                                    {strategy[`name_${selectedLanguage}`] || strategy.name_it || strategy.slug}
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
