@@ -584,6 +584,7 @@ function StepPromptsPanel({
     const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
     useEffect(() => { fetchCounselors().then(setCounselors).catch(() => setCounselors([])); }, []);
     const instrumentCounselors = counselors.filter((c) =>
+        c.show_in_assistant !== false &&
         (c.questionnaire_types || []).some((t) => normalizedQuestionnaireType(t) === normalizedQuestionnaireType(questionnaireType))
     );
     const [editingPrompt, setEditingPrompt] = useState<'system' | 'meta' | 'guidance' | 'step' | null>(null);
