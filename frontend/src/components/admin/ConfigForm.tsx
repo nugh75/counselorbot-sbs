@@ -36,6 +36,7 @@ interface PromptPreview {
     envelope?: { system_prompt_final?: string; full_message?: string; history?: unknown[] };
     components?: Record<string, unknown>;
     component_flags?: Record<string, boolean>;
+    component_options?: { certified_strategy_limit?: number };
     component_config_key?: string;
     knowledge?: { included?: boolean; context_length?: number; strategy_ids?: string[]; certified_strategy_ids?: string[] };
     selected_result?: { session_id: string; username?: string | null; submitted_at?: string | null } | null;
@@ -444,6 +445,21 @@ function parseComponentFlagOverrides(raw: string): Record<string, boolean> {
     }
 }
 
+function defaultCertifiedStrategyLimit(mode: string | undefined): number {
+    return mode === 'second-level' || mode === 'qsar-second-level' ? 3 : 2;
+}
+
+function parseCertifiedStrategyLimit(raw: string, fallback: number): number {
+    try {
+        const parsed = JSON.parse(raw || '{}') || {};
+        const value = Number(parsed.certified_strategy_limit);
+        if (!Number.isFinite(value)) return fallback;
+        return Math.max(0, Math.min(3, Math.trunc(value)));
+    } catch {
+        return fallback;
+    }
+}
+
 function textValue(value: unknown): string {
     if (typeof value === 'string') return value;
     if (value == null) return '';
@@ -587,7 +603,7 @@ function StepPromptsPanel({
     onSelectCounselor: (counselorId: number | '') => void;
     selectedLanguage: string;
     onSelectLanguage: (language: string) => void;
-    onSaveComponentFlags: (key: string, flags: Record<string, boolean>) => void;
+    onSaveComponentFlags: (key: string, flags: Record<string, unknown>) => void;
     onSaveSystemPrompt: (key: string, value: string) => void;
     onSaveMetaPrompt: (key: string, value: string) => void;
     onSaveGuidance: (key: string, value: string) => void;
@@ -604,6 +620,8 @@ function StepPromptsPanel({
     const componentConfigValue = configs.find((config) => config.key === componentKey)?.value || '';
     const configFlags = parseComponentFlags(componentConfigValue);
     const configFlagOverrides = parseComponentFlagOverrides(componentConfigValue);
+    const defaultCertifiedLimit = defaultCertifiedStrategyLimit(selectedStep?.system_prompt_mode);
+    const configCertifiedStrategyLimit = parseCertifiedStrategyLimit(componentConfigValue, defaultCertifiedLimit);
     const guidanceText = configs.find((config) => config.key === guidanceKey)?.value || '';
     const metaPrompt = configs.find((config) => config.key === metaPromptKey)?.value
         || configs.find((config) => config.key === instrumentMetaKey)?.value
@@ -637,7 +655,9 @@ function StepPromptsPanel({
         ...(preview?.component_flags || configFlags),
         ...configFlagOverrides,
     };
-    const flagsJson = JSON.stringify(flags);
+    const certifiedStrategyLimit = preview?.component_options?.certified_strategy_limit ?? configCertifiedStrategyLimit;
+    const componentConfigPayload = { ...flags, certified_strategy_limit: certifiedStrategyLimit };
+    const flagsJson = JSON.stringify(componentConfigPayload);
 
     useEffect(() => {
         if (!selectedStep) return;
@@ -671,7 +691,11 @@ function StepPromptsPanel({
 
     const toggleFlag = (name: string) => {
         if (!componentKey) return;
-        onSaveComponentFlags(componentKey, { ...flags, [name]: !flags[name] });
+        onSaveComponentFlags(componentKey, { ...componentConfigPayload, [name]: !flags[name] });
+    };
+    const updateCertifiedStrategyLimit = (value: number) => {
+        if (!componentKey) return;
+        onSaveComponentFlags(componentKey, { ...componentConfigPayload, certified_strategy_limit: value });
     };
     const ragSummary = preview?.knowledge
         ? `RAG: ${preview.knowledge.included ? 'ON' : 'OFF'}\ncontext_length: ${preview.knowledge.context_length || 0}\nstrategy_ids: ${(preview.knowledge.strategy_ids || []).join(', ') || '-'}\ncertified_strategy_ids: ${(preview.knowledge.certified_strategy_ids || []).join(', ') || '-'}`
@@ -760,6 +784,20 @@ function StepPromptsPanel({
                             {componentText.labels[name] || name}
                         </label>
                     ))}
+                    <label className="flex items-center justify-between gap-3 rounded-md border border-slate-200 px-3 py-2 text-xs text-slate-700">
+                        <span>Strategie certificate</span>
+                        <select
+                            className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 disabled:bg-slate-100 disabled:text-slate-400"
+                            value={certifiedStrategyLimit}
+                            onChange={(event) => updateCertifiedStrategyLimit(Number(event.target.value))}
+                            disabled={!flags.knowledge}
+                        >
+                            <option value={0}>Nessuna</option>
+                            <option value={1}>1</option>
+                            <option value={2}>2</option>
+                            <option value={3}>3</option>
+                        </select>
+                    </label>
                 </div>
             </div>
 
@@ -1014,7 +1052,7 @@ export function ConfigForm() {
 
     const getConfigValue = (key: string) => configs.find(c => c.key === key)?.value || '';
 
-    const saveComponentFlags = (key: string, flags: Record<string, boolean>) => {
+    const saveComponentFlags = (key: string, flags: Record<string, unknown>) => {
         const value = JSON.stringify(flags);
         setConfigDraft(key, value, key);
         handleSaveConfig({ key, value, description: key });

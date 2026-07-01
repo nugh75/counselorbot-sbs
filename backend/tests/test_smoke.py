@@ -1787,6 +1787,72 @@ def test_prompt_audit_scopes_certified_strategies_to_qsa_second_level_step():
     assert "Primary improvement targets: A6 (Percezione di competenza)" in body["envelope"]["system_prompt_final"]
 
 
+def test_prompt_audit_certified_strategy_limit_can_disable_injection():
+    _ensure_guided_steps("QSA")
+    config_key = "prompt_components_QSA_sl-motivation"
+    db = _TestSession()
+    original = None
+    try:
+        slug = "test-certified-a6-disabled-by-limit"
+        db.query(models.CertifiedStrategy).filter(models.CertifiedStrategy.slug == slug).delete()
+        db.add(models.CertifiedStrategy(
+            slug=slug,
+            name_it=slug,
+            recommended_when_it="Quando A6 e' un'area di crescita.",
+            description_it="Strategia certificata per A6.",
+            factor_codes=["A6"],
+            match_mode="any",
+            questionnaire_types=["QSA"],
+            keywords="A6 percezione competenza",
+            status="certified",
+            sort_order=0,
+            is_active=True,
+        ))
+        row = db.query(models.Config).filter(models.Config.key == config_key).first()
+        original = row.value if row else None
+        if row:
+            row.value = '{"certified_strategy_limit": 0}'
+        else:
+            db.add(models.Config(key=config_key, value='{"certified_strategy_limit": 0}', description=config_key))
+        db.commit()
+    finally:
+        db.close()
+
+    try:
+        scores_context = "\n".join([
+            "PROFILO QSA DELLO STUDENTE:",
+            "- A2: 6/9", "- A5: 3/9", "- A6: 3/9",
+        ])
+        r = client.post("/admin/prompt-audit/dry-run", json={
+            "questionnaire_type": "QSA",
+            "language": "it",
+            "phase": "sl-motivation",
+            "mode": "second-level",
+            "use_phase_prompt": True,
+            "scores_context": scores_context,
+            "session_id": "prompt-audit-certified-disabled",
+            "include_knowledge": True,
+            "include_history": False,
+        })
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["component_options"]["certified_strategy_limit"] == 0
+        assert body["knowledge"]["certified_strategy_ids"] == []
+        assert "[CERTIFIED_STRATEGIES]" not in body["knowledge"]["context"]
+    finally:
+        db = _TestSession()
+        try:
+            db.query(models.CertifiedStrategy).filter(models.CertifiedStrategy.slug == "test-certified-a6-disabled-by-limit").delete()
+            row = db.query(models.Config).filter(models.Config.key == config_key).first()
+            if row and original is None:
+                db.delete(row)
+            elif row:
+                row.value = original
+            db.commit()
+        finally:
+            db.close()
+
+
 def test_prompt_audit_api_token_allows_qsa_dry_run_without_ai4auth():
     _ensure_guided_steps("QSA")
     audit_override = main.app.dependency_overrides.pop(

@@ -27,6 +27,7 @@ from .chat_logic import (
     _ensure_required_qsa_factor_codes,
     filter_scores_by_components,
     get_prompt_component_flags,
+    get_prompt_component_options,
     prompt_component_config_key,
     prompt_meta_config_key,
     _is_strategy_questionnaire,
@@ -266,11 +267,22 @@ def build_prompt_audit(
         step_label = ""
         questionnaire_type = request.questionnaire_type or ""
     component_flags = get_prompt_component_flags(db, questionnaire_type, request.phase)
+    component_options = get_prompt_component_options(
+        db,
+        questionnaire_type,
+        request.phase,
+        step.system_prompt_mode if step else request.mode,
+    )
     payload_flags = getattr(payload, "component_flags", None)
     if isinstance(payload_flags, dict):
         for name in PROMPT_COMPONENT_DEFAULTS:
             if name in payload_flags:
                 component_flags[name] = bool(payload_flags[name])
+        if "certified_strategy_limit" in payload_flags:
+            try:
+                component_options["certified_strategy_limit"] = max(0, min(3, int(payload_flags["certified_strategy_limit"])))
+            except (TypeError, ValueError):
+                pass
 
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
     system_prompt = _apply_global_directives(system_prompt, request.language, db)
@@ -310,7 +322,8 @@ def build_prompt_audit(
         retrieval_query = f"{step_label} {model_message if component_flags.get('step_prompt', True) else ''} {component_scores_context}".strip()
         retrieval_request = request.copy(update={"scores_context": component_scores_context})
         knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
-            db, session_id, retrieval_request, questionnaire_type, retrieval_query, ai_service=ai_service
+            db, session_id, retrieval_request, questionnaire_type, retrieval_query, ai_service=ai_service,
+            certified_strategy_limit=component_options["certified_strategy_limit"],
         )
 
     sanitize_ztpi = _should_sanitize_ztpi_text(request.mode, request.phase)
@@ -406,6 +419,7 @@ def build_prompt_audit(
         },
         "components": components,
         "component_flags": component_flags,
+        "component_options": component_options,
         "component_config_key": prompt_component_config_key(questionnaire_type, request.phase or "generic"),
         "meta_config_key": prompt_meta_config_key(questionnaire_type),
         "selected_result": {

@@ -1401,6 +1401,7 @@ def _retrieved_context(
     questionnaire_type: str,
     query: str,
     ai_service=None,
+    certified_strategy_limit: int | None = None,
 ) -> tuple[str, List[str], List[str]]:
     """Fonti KNOWLEDGE per l'envelope: grafo competenzestrategiche + strategie
     approvate + certificate per-fattore + risposte votate.
@@ -1433,16 +1434,21 @@ def _retrieved_context(
         if part and part.strip()
     )
     step_mode = step.system_prompt_mode if step else request.mode
-    certified_limit = 3 if step_mode in {"second-level", "qsar-second-level"} else 2
-    certified = certified_strategy_memory.retrieve(
-        db,
-        questionnaire_type=questionnaire_type,
-        scores_context=certified_scores_context,
-        query=certified_phase_query,
-        language=request.language or "it",
-        limit=certified_limit,
-        ai_service=ai_service,
+    certified_limit = _coerce_certified_strategy_limit(
+        certified_strategy_limit,
+        _default_certified_strategy_limit(step_mode),
     )
+    certified = []
+    if certified_limit > 0:
+        certified = certified_strategy_memory.retrieve(
+            db,
+            questionnaire_type=questionnaire_type,
+            scores_context=certified_scores_context,
+            query=certified_phase_query,
+            language=request.language or "it",
+            limit=certified_limit,
+            ai_service=ai_service,
+        )
     certified_context = certified_strategy_memory.render_context(certified, request.language or "it")
     learned_responses = shared_response_memory.retrieve(
         db,
@@ -1534,6 +1540,35 @@ def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None)
     except Exception:
         pass
     return flags
+
+
+def _default_certified_strategy_limit(step_mode: str | None) -> int:
+    return 3 if step_mode in {"second-level", "qsar-second-level"} else 2
+
+
+def _coerce_certified_strategy_limit(value, default: int) -> int:
+    try:
+        limit = int(value)
+    except (TypeError, ValueError):
+        return default
+    return max(0, min(3, limit))
+
+
+def get_prompt_component_options(db, questionnaire_type: str, step_id: str | None, step_mode: str | None = None) -> dict[str, int]:
+    options = {"certified_strategy_limit": _default_certified_strategy_limit(step_mode)}
+    try:
+        key = prompt_component_config_key(questionnaire_type, step_id or "generic")
+        row = db.query(models.Config).filter(models.Config.key == key).first()
+        if row and row.value:
+            saved = json.loads(row.value)
+            if isinstance(saved, dict) and "certified_strategy_limit" in saved:
+                options["certified_strategy_limit"] = _coerce_certified_strategy_limit(
+                    saved.get("certified_strategy_limit"),
+                    options["certified_strategy_limit"],
+                )
+    except Exception:
+        pass
+    return options
 
 
 def _component_enabled(flags: dict[str, bool] | None, name: str) -> bool:
