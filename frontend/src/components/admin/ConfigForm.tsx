@@ -810,7 +810,7 @@ function StepPromptsPanel({
             .catch(() => { if (!cancelled) setPreview(null); })
             .finally(() => { if (!cancelled) setPreviewLoading(false); });
         return () => { cancelled = true; window.clearTimeout(loadingTimer); };
-    }, [questionnaireType, selectedStep?.id, selectedStep?.system_prompt_mode, selectedSessionId, selectedCounselorId, selectedLanguage, localizedStepValue, flagsJson]);
+    }, [questionnaireType, selectedStep?.id, selectedStep?.system_prompt_mode, selectedSessionId, selectedCounselorId, selectedLanguage, localizedStepValue, systemPrompt, guidanceText, metaPrompt, flagsJson]);
 
     const toggleFlag = (name: string) => {
         if (!componentKey) return;
