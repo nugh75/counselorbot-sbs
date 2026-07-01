@@ -282,7 +282,7 @@ export default function Home() {
 
     const startInteraction = async () => {
         if (!getSelectedCounselorId()) {
-            toast.info('Scegli un counselor prima di iniziare il percorso.');
+            toast.info(t('counselor.selectFirst'));
             setStep('counselor-select');
             return;
         }
@@ -427,7 +427,7 @@ export default function Home() {
 
     // Orientamento percorso: mappa lo step interno alle fasi visibili. Il taccuino
     // si rivede a inizio interaction (prima della chat) → tappa a sé tra Profilo e Conversa.
-    const flowStages = ['CounselorBot', t('flow.select'), 'Counselor', t('flow.input'), t('flow.profile'), t('flow.taccuino'), t('flow.chat'), t('flow.done')];
+    const flowStages = ['CounselorBot', t('flow.select'), t('flow.counselor'), t('flow.input'), t('flow.profile'), t('flow.taccuino'), t('flow.chat'), t('flow.done')];
     const inTaccuino = step === 'interaction' && experience === null && !profileReviewed;
     const stageIndex =
         step === 'intro' ? 0
