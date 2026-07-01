@@ -1812,10 +1812,10 @@ def build_context_envelope(
         if system_prompt:
             parts_system.append(system_prompt)
     else:
-        if system_prompt:
-            parts_system.append(system_prompt)
         if c_persona and _component_enabled(component_flags, "counselor"):
             parts_system.append(c_persona.strip())
+        if system_prompt:
+            parts_system.append(system_prompt)
 
     meta_system_prompt = _instrument_meta_system_prompt(db, questionnaire_type, step_id)
     if components is not None:
