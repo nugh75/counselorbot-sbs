@@ -215,9 +215,7 @@ const SYSTEM_PROMPT_KEY_BY_MODE: Record<string, string> = {
     'qpcc-summary': 'prompt_qpcc_summary',
     'qap-interview': 'prompt_qap_interview',
     'qap-summary': 'prompt_qap_summary',
-};
-
-const PROMPT_COMPONENT_DEFAULTS: Record<string, boolean> = {
+};const PROMPT_COMPONENT_DEFAULTS: Record<string, boolean> = {
     system_prompt: true,
     step_prompt: true,
     cognitive_factors: true,
@@ -229,6 +227,12 @@ const PROMPT_COMPONENT_DEFAULTS: Record<string, boolean> = {
     metadata: true,
     profile: true,
     student_booklet: true,
+    rag_counselorbot: false,
+    rag_competenzestrategiche: true,
+    rag_questionari: false,
+    approved_strategies: true,
+    certified_strategies: true,
+    shared_responses: true,
 };
 
 const PROMPT_LANGUAGES = [
@@ -256,6 +260,12 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
             metadata: 'Metadati fase/studente',
             profile: 'Profilo / portfolio',
             student_booklet: 'Taccuino studente',
+            rag_counselorbot: 'RAG CounselorBot (docs-counselorbot)',
+            rag_competenzestrategiche: 'RAG Competenzestrategiche (guide)',
+            rag_questionari: 'RAG Questionari e Strumenti',
+            approved_strategies: 'Strategie approvate QSA',
+            certified_strategies: 'Strategie certificate',
+            shared_responses: 'Risposte condivise votate utili',
         },
     },
     en: {
@@ -273,6 +283,12 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
             metadata: 'Phase/student metadata',
             profile: 'Profile / portfolio',
             student_booklet: 'Student notebook',
+            rag_counselorbot: 'RAG CounselorBot (docs-counselorbot)',
+            rag_competenzestrategiche: 'RAG Competenzestrategiche (guides)',
+            rag_questionari: 'RAG Questionnaires & Instruments',
+            approved_strategies: 'Approved QSA strategies',
+            certified_strategies: 'Certified strategies',
+            shared_responses: 'Shared responses voted helpful',
         },
     },
     es: {
@@ -290,6 +306,12 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
             metadata: 'Metadatos fase/estudiante',
             profile: 'Perfil / portafolio',
             student_booklet: 'Cuaderno del estudiante',
+            rag_counselorbot: 'RAG CounselorBot (docs-counselorbot)',
+            rag_competenzestrategiche: 'RAG Competenzestrategiche (guías)',
+            rag_questionari: 'RAG Cuestionarios e Instrumentos',
+            approved_strategies: 'Estrategias aprobadas QSA',
+            certified_strategies: 'Estrategias certificadas',
+            shared_responses: 'Respuestas compartidas votadas útiles',
         },
     },
     fr: {
@@ -307,6 +329,12 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
             metadata: 'Métadonnées phase/étudiant',
             profile: 'Profil / portfolio',
             student_booklet: 'Carnet étudiant',
+            rag_counselorbot: 'RAG CounselorBot (docs-counselorbot)',
+            rag_competenzestrategiche: 'RAG Competenzestrategiche (guides)',
+            rag_questionari: 'RAG Questionnaires & Instruments',
+            approved_strategies: 'Stratégies approuvées QSA',
+            certified_strategies: 'Stratégies certifiées',
+            shared_responses: 'Réponses partagées votées utiles',
         },
     },
     de: {
@@ -324,6 +352,12 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
             metadata: 'Phasen-/Studierenden-Metadaten',
             profile: 'Profil / Portfolio',
             student_booklet: 'Studierenden-Notizbuch',
+            rag_counselorbot: 'RAG CounselorBot (docs-counselorbot)',
+            rag_competenzestrategiche: 'RAG Competenzestrategiche (Leitfäden)',
+            rag_questionari: 'RAG Fragebögen & Instrumente',
+            approved_strategies: 'Zugelassene QSA-Strategien',
+            certified_strategies: 'Zertifizierte Strategien',
+            shared_responses: 'Geteilte Antworten als hilfreich bewertet',
         },
     },
     sv: {
@@ -341,6 +375,12 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
             metadata: 'Fas-/studentmetadata',
             profile: 'Profil / portfolio',
             student_booklet: 'Studentens anteckningsbok',
+            rag_counselorbot: 'RAG CounselorBot (docs-counselorbot)',
+            rag_competenzestrategiche: 'RAG Competenzestrategiche (guider)',
+            rag_questionari: 'RAG Frågeformulär & Instrument',
+            approved_strategies: 'Godkända QSA-strategier',
+            certified_strategies: 'Certifierade strategier',
+            shared_responses: 'Delade svar som röstats fram som hjälpsamma',
         },
     },
 };
@@ -775,30 +815,51 @@ function StepPromptsPanel({
                 </div>
             </div>
 
-            <div className="rounded-lg border border-slate-200 bg-white p-4">
-                <h4 className="text-sm font-semibold text-slate-800">{componentText.title}</h4>
-                <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {Object.keys(PROMPT_COMPONENT_DEFAULTS).map((name) => (
-                        <label key={name} className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-xs text-slate-700">
-                            <input type="checkbox" className="accent-indigo-600" checked={flags[name]} onChange={() => toggleFlag(name)} />
-                            {componentText.labels[name] || name}
-                        </label>
-                    ))}
-                    <label className="flex items-center justify-between gap-3 rounded-md border border-slate-200 px-3 py-2 text-xs text-slate-700">
-                        <span>Strategie certificate</span>
-                        <select
-                            className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 disabled:bg-slate-100 disabled:text-slate-400"
-                            value={certifiedStrategyLimit}
-                            onChange={(event) => updateCertifiedStrategyLimit(Number(event.target.value))}
-                            disabled={!flags.knowledge}
-                        >
-                            <option value={0}>Nessuna</option>
-                            <option value={1}>1</option>
-                            <option value={2}>2</option>
-                            <option value={3}>3</option>
-                        </select>
-                    </label>
+            <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-4">
+                <div>
+                    <h4 className="text-sm font-semibold text-slate-800">{componentText.title}</h4>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        {Object.keys(PROMPT_COMPONENT_DEFAULTS)
+                            .filter((name) => !['rag_counselorbot', 'rag_competenzestrategiche', 'rag_questionari', 'approved_strategies', 'certified_strategies', 'shared_responses'].includes(name))
+                            .map((name) => (
+                                <label key={name} className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
+                                    <input type="checkbox" className="accent-indigo-600" checked={flags[name]} onChange={() => toggleFlag(name)} />
+                                    {componentText.labels[name] || name}
+                                </label>
+                            ))}
+                    </div>
                 </div>
+
+                {flags.knowledge && (
+                    <div className="rounded-lg border border-indigo-100 bg-indigo-50/20 p-4 space-y-3">
+                        <h5 className="text-xs font-semibold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
+                            <Layers className="w-3.5 h-3.5 text-indigo-600" />
+                            Fonti di Conoscenza e Strategie
+                        </h5>
+                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                            {['rag_counselorbot', 'rag_competenzestrategiche', 'rag_questionari', 'approved_strategies', 'certified_strategies', 'shared_responses'].map((name) => (
+                                <label key={name} className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
+                                    <input type="checkbox" className="accent-indigo-600" checked={flags[name]} onChange={() => toggleFlag(name)} />
+                                    {componentText.labels[name] || name}
+                                </label>
+                            ))}
+                            <label className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
+                                <span>Limite strategie certificate</span>
+                                <select
+                                    className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 disabled:bg-slate-100 disabled:text-slate-400 focus:ring-1 focus:ring-indigo-500 outline-none"
+                                    value={certifiedStrategyLimit}
+                                    onChange={(event) => updateCertifiedStrategyLimit(Number(event.target.value))}
+                                    disabled={!flags.knowledge || !flags.certified_strategies}
+                                >
+                                    <option value={0}>Nessuna</option>
+                                    <option value={1}>1</option>
+                                    <option value={2}>2</option>
+                                    <option value={3}>3</option>
+                                </select>
+                            </label>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="grid gap-4">

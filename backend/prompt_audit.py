@@ -324,6 +324,7 @@ def build_prompt_audit(
         knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
             db, session_id, retrieval_request, questionnaire_type, retrieval_query, ai_service=ai_service,
             certified_strategy_limit=component_options["certified_strategy_limit"],
+            component_flags=component_flags,
         )
 
     sanitize_ztpi = _should_sanitize_ztpi_text(request.mode, request.phase)

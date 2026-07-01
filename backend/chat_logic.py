@@ -19,7 +19,7 @@ from .ai_service import AIService
 from .memory_service import session_memory
 from .strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_memory, strategy_memory
 from .certified_strategy_service import certified_strategy_memory
-from .rag_index import site_rag_index, build_context as rag_build_context
+from .rag_index import site_rag_index, counselorbot_rag_index, questionari_rag_index, build_context as rag_build_context
 from .api_models import ChatRequest
 from .prompt_config import (
     DEFAULT_SYSTEM_PROMPT_GENERIC,
@@ -1402,24 +1402,31 @@ def _retrieved_context(
     query: str,
     ai_service=None,
     certified_strategy_limit: int | None = None,
+    component_flags: dict | None = None,
 ) -> tuple[str, List[str], List[str]]:
-    """Fonti KNOWLEDGE per l'envelope: grafo competenzestrategiche + strategie
-    approvate + certificate per-fattore + risposte votate.
+    """Fonti KNOWLEDGE per l'envelope: RAG (competenzestrategiche, counselorbot, questionari)
+    + strategie approvate + certificate per-fattore + risposte votate.
 
-    I dati studente (profilo dichiarato, punteggi, stato sessione, goals/...
+    I dati studente (profilo dichiarato, punteggi, stato sessione, goals/
     episodi) NON vivono più qui: sono assemblati in `build_context_envelope`
     nei blocchi [STUDENT] e [PROFILE] del system prompt."""
-    strategies_config = db.query(models.Config).filter(models.Config.key == APPROVED_STRATEGIES_CONFIG_KEY).first()
-    approved_strategies_markdown = strategies_config.value if strategies_config else None
-    strategies = strategy_memory.retrieve(
-        questionnaire_type=questionnaire_type,
-        phase=request.phase or "",
-        query=query,
-        language=request.language or "it",
-        ai_service=ai_service,
-        markdown_text=approved_strategies_markdown,
-    )
+    if component_flags is None:
+        component_flags = PROMPT_COMPONENT_DEFAULTS
+
+    strategies = []
+    if bool(component_flags.get("approved_strategies", True)):
+        strategies_config = db.query(models.Config).filter(models.Config.key == APPROVED_STRATEGIES_CONFIG_KEY).first()
+        approved_strategies_markdown = strategies_config.value if strategies_config else None
+        strategies = strategy_memory.retrieve(
+            questionnaire_type=questionnaire_type,
+            phase=request.phase or "",
+            query=query,
+            language=request.language or "it",
+            ai_service=ai_service,
+            markdown_text=approved_strategies_markdown,
+        )
     strategy_context = strategy_memory.render_context(strategies)
+
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
     phase_codes = _phase_factor_codes(db, request.phase)
     certified_scores_context = _scope_scores_to_codes(request.scores_context or "", phase_codes) if phase_codes else (request.scores_context or "")
@@ -1439,7 +1446,7 @@ def _retrieved_context(
         _default_certified_strategy_limit(step_mode),
     )
     certified = []
-    if certified_limit > 0:
+    if bool(component_flags.get("certified_strategies", True)) and certified_limit > 0:
         certified = certified_strategy_memory.retrieve(
             db,
             questionnaire_type=questionnaire_type,
@@ -1450,36 +1457,76 @@ def _retrieved_context(
             ai_service=ai_service,
         )
     certified_context = certified_strategy_memory.render_context(certified, request.language or "it")
-    learned_responses = shared_response_memory.retrieve(
-        db,
-        questionnaire_type=questionnaire_type,
-        phase=request.phase or "",
-        query=query,
-        language=request.language or "it",
-    )
+
+    learned_responses = []
+    if bool(component_flags.get("shared_responses", True)):
+        learned_responses = shared_response_memory.retrieve(
+            db,
+            questionnaire_type=questionnaire_type,
+            phase=request.phase or "",
+            query=query,
+            language=request.language or "it",
+        )
     learned_context = shared_response_memory.render_context(learned_responses)
 
-    # Grafo di conoscenza competenzestrategiche (l'unica collezione con grafo
-    # graphify): retrieval ibrido con espansione via grafo, riuso di
-    # SiteRagIndex.search. Tollerante: se Ollama/embedding non disponibili il
-    # counselor continua senza questa fonte (non degrada l'esperienza).
+    # RAG: Guide Competenzestrategiche.it
     graph_context = ""
-    try:
-        if query:
-            rag_results = site_rag_index.search(
-                ai_service, query,
-                top_k=6, audience="studente",
-                max_per_source=2, min_score=0.25,
-            )
-            if rag_results:
-                graph_context = rag_build_context(rag_results, max_chars=3500)[0]
-    except Exception as e:
-        logger.warning(f"RAG competenzestrategiche non disponibile: {e}")
-        graph_context = ""
+    if bool(component_flags.get("rag_competenzestrategiche", True)):
+        try:
+            if query:
+                rag_results = site_rag_index.search(
+                    ai_service, query,
+                    top_k=6, audience="studente",
+                    max_per_source=2, min_score=0.25,
+                )
+                if rag_results:
+                    graph_context = rag_build_context(rag_results, max_chars=3500)[0]
+        except Exception as e:
+            logger.warning(f"RAG competenzestrategiche non disponibile: {e}")
+            graph_context = ""
+
+    # RAG: Documenti CounselorBot (docs-counselorbot)
+    counselorbot_context = ""
+    if bool(component_flags.get("rag_counselorbot", False)):
+        try:
+            if query:
+                cb_results = counselorbot_rag_index.search(
+                    ai_service, query,
+                    top_k=3, audience="studente",
+                    max_per_source=2, min_score=0.25,
+                )
+                if cb_results:
+                    counselorbot_context = rag_build_context(cb_results, max_chars=3500)[0]
+        except Exception as e:
+            logger.warning(f"RAG counselorbot non disponibile: {e}")
+            counselorbot_context = ""
+
+    # RAG: Materiali Questionari e strumenti
+    questionari_context = ""
+    if bool(component_flags.get("rag_questionari", False)):
+        try:
+            if query:
+                q_results = questionari_rag_index.search(
+                    ai_service, query,
+                    top_k=4, audience="studente",
+                    max_per_source=2, min_score=0.25,
+                )
+                if q_results:
+                    questionari_context = rag_build_context(q_results, max_chars=3500)[0]
+        except Exception as e:
+            logger.warning(f"RAG questionari non disponibile: {e}")
+            questionari_context = ""
 
     sections = [
         section
-        for section in (graph_context, strategy_context, certified_context, learned_context)
+        for section in (
+            graph_context,
+            counselorbot_context,
+            questionari_context,
+            strategy_context,
+            certified_context,
+            learned_context,
+        )
         if section
     ]
     return (
@@ -1501,6 +1548,12 @@ PROMPT_COMPONENT_DEFAULTS = {
     "metadata": True,
     "profile": True,
     "student_booklet": True,
+    "rag_counselorbot": False,
+    "rag_competenzestrategiche": True,
+    "rag_questionari": False,
+    "approved_strategies": True,
+    "certified_strategies": True,
+    "shared_responses": True,
 }
 
 
@@ -1524,7 +1577,18 @@ def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None)
     try:
         step = db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).first() if step_id else None
         if step and _is_intro_step_mode(step.system_prompt_mode):
-            flags.update({"cognitive_factors": False, "affective_factors": False, "other_scores": False, "knowledge": False})
+            flags.update({
+                "cognitive_factors": False,
+                "affective_factors": False,
+                "other_scores": False,
+                "knowledge": False,
+                "rag_counselorbot": True,
+                "rag_competenzestrategiche": False,
+                "rag_questionari": False,
+                "approved_strategies": False,
+                "certified_strategies": False,
+                "shared_responses": False,
+            })
         key = prompt_component_config_key(questionnaire_type, step_id or "generic")
         row = db.query(models.Config).filter(models.Config.key == key).first()
         if row and row.value:

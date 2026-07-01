@@ -3788,6 +3788,47 @@ def test_build_context_envelope_counselor_name_placeholder():
     session_memory.clear(sid)
 
 
+def test_retrieved_context_routing_and_strategy_exclusion():
+    from backend.chat_logic import _retrieved_context, get_prompt_component_flags
+    from backend.api_models import ChatRequest
+
+    db = next(_override_get_db())
+    request = ChatRequest(
+        message="ciao",
+        mode="generic",
+        phase="intro",
+        scores_context="C1: 5/9",
+        questionnaire_type="QSA",
+        language="it",
+    )
+
+    # 1. Test defaults for intro phase (no strategies, only counselorbot RAG)
+    flags = get_prompt_component_flags(db, "QSA", "intro")
+    
+    assert flags["knowledge"] is False
+    assert flags["rag_counselorbot"] is True
+    assert flags["rag_competenzestrategiche"] is False
+    assert flags["approved_strategies"] is False
+    assert flags["certified_strategies"] is False
+    assert flags["shared_responses"] is False
+
+    # 2. Test _retrieved_context routing logic using these flags
+    # We toggle knowledge to True to test RAG retrieval with these flags
+    flags["knowledge"] = True
+    knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
+        db,
+        session_id="test-routing",
+        request=request,
+        questionnaire_type="QSA",
+        query="counselorbot",
+        component_flags=flags,
+    )
+
+    # Strategies must be empty since they are disabled in flags
+    assert strategy_ids == []
+    assert certified_strategy_ids == []
+
+
 # --------------------------------------------------------------------------
 # Runner senza pytest
 # --------------------------------------------------------------------------
