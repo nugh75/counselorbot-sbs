@@ -969,22 +969,22 @@ function StepPromptsPanel({
                         </div>
 
                         {/* Strategie QSA */}
-                        <div className="rounded-lg border border-emerald-100 bg-emerald-50/20 p-4 space-y-3">
-                            <h5 className="text-xs font-semibold uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
-                                <Award className="w-3.5 h-3.5 text-emerald-600" />
+                        <div className="rounded-lg border border-indigo-100 bg-indigo-50/20 p-4 space-y-3">
+                            <h5 className="text-xs font-semibold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
+                                <Award className="w-3.5 h-3.5 text-indigo-600" />
                                 {componentText.strategies_title}
                             </h5>
                             <div className="grid gap-2">
                                 {['approved_strategies', 'certified_strategies'].map((name) => (
                                     <label key={name} className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
-                                        <input type="checkbox" className="accent-emerald-600" checked={flags[name]} onChange={() => toggleFlag(name)} />
+                                        <input type="checkbox" className="accent-indigo-600" checked={flags[name]} onChange={() => toggleFlag(name)} />
                                         {componentText.labels[name] || name}
                                     </label>
                                 ))}
                                 <label className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
                                     <span>{componentText.certified_strategies_limit}</span>
                                     <select
-                                        className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 disabled:bg-slate-100 disabled:text-slate-400 focus:ring-1 focus:ring-emerald-500 outline-none"
+                                        className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 disabled:bg-slate-100 disabled:text-slate-400 focus:ring-1 focus:ring-indigo-500 outline-none"
                                         value={certifiedStrategyLimit}
                                         onChange={(event) => updateCertifiedStrategyLimit(Number(event.target.value))}
                                         disabled={!flags.knowledge || !flags.certified_strategies}
@@ -998,14 +998,14 @@ function StepPromptsPanel({
                             </div>
 
                             {flags.approved_strategies && eligibleApproved.length > 0 && (
-                                <div className="mt-3 space-y-1.5 border-t border-emerald-100 pt-3">
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700/70 ml-1">{componentText.select_approved_strategies}</p>
+                                <div className="mt-3 space-y-1.5 border-t border-indigo-100 pt-3">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-700/70 ml-1">{componentText.select_approved_strategies}</p>
                                     <div className="grid gap-1.5 max-h-[160px] overflow-y-auto pr-1">
                                         {eligibleApproved.map((strategy) => (
                                             <label key={strategy.id} className="flex items-start gap-2 rounded-md border border-slate-200 bg-white p-2 text-[11px] text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
                                                 <input
                                                     type="checkbox"
-                                                    className="accent-emerald-600 mt-0.5"
+                                                    className="accent-indigo-600 mt-0.5"
                                                     checked={isStrategyAllowed(strategy.id)}
                                                     onChange={() => toggleStrategyAllowed(strategy.id)}
                                                 />
@@ -1020,14 +1020,14 @@ function StepPromptsPanel({
                             )}
 
                             {flags.certified_strategies && eligibleCertified.length > 0 && (
-                                <div className="mt-3 space-y-1.5 border-t border-emerald-100 pt-3">
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700/70 ml-1">{componentText.select_certified_strategies}</p>
+                                <div className="mt-3 space-y-1.5 border-t border-indigo-100 pt-3">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-700/70 ml-1">{componentText.select_certified_strategies}</p>
                                     <div className="grid gap-1.5 max-h-[160px] overflow-y-auto pr-1">
                                         {eligibleCertified.map((strategy) => (
                                             <label key={strategy.slug} className="flex items-start gap-2 rounded-md border border-slate-200 bg-white p-2 text-[11px] text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
                                                 <input
                                                     type="checkbox"
-                                                    className="accent-emerald-600 mt-0.5"
+                                                    className="accent-indigo-600 mt-0.5"
                                                     checked={isStrategyAllowed(strategy.slug)}
                                                     onChange={() => toggleStrategyAllowed(strategy.slug)}
                                                 />
