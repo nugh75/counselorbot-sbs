@@ -1801,6 +1801,8 @@ def build_context_envelope(
         components["knowledge"] = knowledge_context
 
     parts_system = [system_prompt] if system_prompt else []
+    if c_persona and _component_enabled(component_flags, "counselor"):
+        parts_system.append(c_persona.strip())
     meta_system_prompt = _instrument_meta_system_prompt(db, questionnaire_type, step_id)
     if components is not None:
         components["meta_system_prompt"] = meta_system_prompt
@@ -1890,8 +1892,6 @@ def build_context_envelope(
     system_prompt_final = "\n\n".join(parts_system)
     if components is not None:
         components["counselor"] = (c_persona or "") if _component_enabled(component_flags, "counselor") else ""
-    if c_persona and _component_enabled(component_flags, "counselor"):
-        system_prompt_final = f"{c_persona.strip()}\n\n{system_prompt_final}"
     # Placeholder nome counselor: risolto dal campo counselors.name, usato sia nella
     # persona sia negli intro di sezione. Fallback neutro quando nessun counselor e'
     # selezionato, cosi' il letterale {{counselor_name}} non raggiunge mai il modello.
