@@ -335,8 +335,21 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
     },
 };
 
+const PROMPT_UI_TEXTS: Record<string, Record<string, string>> = {
+    it: { languagePrompt: 'Lingua prompt', edit: 'Modifica', save: 'Salva', cancel: 'Annulla', loading: 'Caricamento...', finalPrompt: 'Prompt finale assemblato' },
+    en: { languagePrompt: 'Prompt language', edit: 'Edit', save: 'Save', cancel: 'Cancel', loading: 'Loading...', finalPrompt: 'Final assembled prompt' },
+    es: { languagePrompt: 'Idioma del prompt', edit: 'Editar', save: 'Guardar', cancel: 'Cancelar', loading: 'Cargando...', finalPrompt: 'Prompt final ensamblado' },
+    fr: { languagePrompt: 'Langue du prompt', edit: 'Modifier', save: 'Enregistrer', cancel: 'Annuler', loading: 'Chargement...', finalPrompt: 'Prompt final assemblé' },
+    de: { languagePrompt: 'Prompt-Sprache', edit: 'Bearbeiten', save: 'Speichern', cancel: 'Abbrechen', loading: 'Wird geladen...', finalPrompt: 'Final zusammengesetzter Prompt' },
+    sv: { languagePrompt: 'Promptspråk', edit: 'Redigera', save: 'Spara', cancel: 'Avbryt', loading: 'Laddar...', finalPrompt: 'Slutlig sammanställd prompt' },
+};
+
 function promptComponentText(language: string) {
     return PROMPT_COMPONENT_TEXTS[language] || PROMPT_COMPONENT_TEXTS.it;
+}
+
+function promptUiText(language: string) {
+    return PROMPT_UI_TEXTS[language] || PROMPT_UI_TEXTS.it;
 }
 
 const SYSTEM_PROMPT_KEY_BY_PHASE: Record<string, string> = {
@@ -446,6 +459,9 @@ function EditablePromptTextBlock({
     onDraftChange,
     onSave,
     onCancel,
+    editLabel,
+    saveLabel,
+    cancelLabel,
 }: {
     title: string;
     subtitle?: string;
@@ -457,6 +473,9 @@ function EditablePromptTextBlock({
     onDraftChange: (value: string) => void;
     onSave: () => void;
     onCancel: () => void;
+    editLabel: string;
+    saveLabel: string;
+    cancelLabel: string;
 }) {
     const value = editing ? draft : (text || '');
     const stats = textStats(value);
@@ -472,7 +491,7 @@ function EditablePromptTextBlock({
                         {stats.chars} char · {stats.lines} righe
                     </span>
                     {!editing && (
-                        <button type="button" onClick={onEdit} className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-indigo-600" title="Modifica">
+                        <button type="button" onClick={onEdit} className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-indigo-600" title={editLabel}>
                             <Pencil className="h-4 w-4" />
                         </button>
                     )}
@@ -486,8 +505,8 @@ function EditablePromptTextBlock({
                         onChange={(event) => onDraftChange(event.target.value)}
                     />
                     <div className="flex gap-2">
-                        <button type="button" onClick={onSave} className="rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700">Salva</button>
-                        <button type="button" onClick={onCancel} className="rounded-md bg-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-300">Annulla</button>
+                        <button type="button" onClick={onSave} className="rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700">{saveLabel}</button>
+                        <button type="button" onClick={onCancel} className="rounded-md bg-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-300">{cancelLabel}</button>
                     </div>
                 </div>
             ) : (
@@ -602,6 +621,8 @@ function StepPromptsPanel({
         ? `SYSTEM\n${preview.envelope.system_prompt_final || ''}\n\nMESSAGE\n${preview.envelope.full_message || ''}\n\nHISTORY\n${JSON.stringify(preview.envelope.history || [], null, 2)}`
         : '';
     const componentText = promptComponentText(selectedLanguage);
+    const uiText = promptUiText(selectedLanguage);
+    const loadingLabel = previewLoading ? uiText.loading : t('admin.promptAudit.empty');
 
     return (
         <div className="glass-panel p-5 space-y-5">
@@ -632,7 +653,7 @@ function StepPromptsPanel({
                     </select>
                 </label>
                 <label className="space-y-2 text-xs font-semibold text-slate-500">
-                    Lingua prompt
+                    {uiText.languagePrompt}
                     <select className="w-full rounded-md border border-slate-300 bg-white p-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedLanguage} onChange={(event) => onSelectLanguage(event.target.value)}>
                         {PROMPT_LANGUAGES.map((item) => <option key={item.code} value={item.code}>{item.label}</option>)}
                     </select>
@@ -658,7 +679,7 @@ function StepPromptsPanel({
 
             <div className="grid gap-4">
                 <EditablePromptTextBlock
-                    title={t('admin.promptAudit.block.systemPrompt')}
+                    title={componentText.labels.system_prompt}
                     subtitle={systemPromptKey}
                     text={systemPrompt}
                     emptyLabel={t('admin.promptAudit.empty')}
@@ -672,9 +693,12 @@ function StepPromptsPanel({
                         setEditingPrompt(null);
                     }}
                     onCancel={() => { setSystemDraft(systemPrompt); setEditingPrompt(null); }}
+                    editLabel={uiText.edit}
+                    saveLabel={uiText.save}
+                    cancelLabel={uiText.cancel}
                 />
                 <EditablePromptTextBlock
-                    title="Raccomandazioni iniziali"
+                    title={componentText.labels.guidance}
                     subtitle={guidanceKey}
                     text={guidanceText}
                     emptyLabel={t('admin.promptAudit.empty')}
@@ -688,9 +712,12 @@ function StepPromptsPanel({
                         setEditingPrompt(null);
                     }}
                     onCancel={() => { setGuidanceDraft(guidanceText); setEditingPrompt(null); }}
+                    editLabel={uiText.edit}
+                    saveLabel={uiText.save}
+                    cancelLabel={uiText.cancel}
                 />
                 <EditablePromptTextBlock
-                    title={t('admin.promptAudit.block.stepPrompt')}
+                    title={componentText.labels.step_prompt}
                     subtitle={localizedStepKey || selectedStep?.id}
                     text={localizedStepValue}
                     emptyLabel={t('admin.promptAudit.empty')}
@@ -704,17 +731,20 @@ function StepPromptsPanel({
                         setEditingPrompt(null);
                     }}
                     onCancel={() => { setStepDraft(localizedStepValue); setEditingPrompt(null); }}
+                    editLabel={uiText.edit}
+                    saveLabel={uiText.save}
+                    cancelLabel={uiText.cancel}
                 />
-                <PromptTextBlock title="Fattori cognitivi" text={textValue(preview?.components?.cognitive_factors)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
-                <PromptTextBlock title="Fattori affettivi" text={textValue(preview?.components?.affective_factors)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
-                <PromptTextBlock title="Altri punteggi/profilo" text={textValue(preview?.components?.other_scores)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
-                <PromptTextBlock title="RAG / knowledge" text={ragSummary} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
-                <PromptTextBlock title="Memoria / history" text={textValue(preview?.components?.history)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
-                <PromptTextBlock title="Counselor" text={textValue(preview?.components?.counselor)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
-                <PromptTextBlock title="Metadati" text={textValue(preview?.components?.metadata)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
-                <PromptTextBlock title="Profilo / portfolio" text={textValue(preview?.components?.profile)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
-                <PromptTextBlock title="Taccuino studente" text={textValue(preview?.components?.student_booklet)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
-                <PromptTextBlock title={t('admin.promptAudit.finalPrompt')} text={finalPrompt} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
+                <PromptTextBlock title={componentText.labels.cognitive_factors} text={textValue(preview?.components?.cognitive_factors)} emptyLabel={loadingLabel} />
+                <PromptTextBlock title={componentText.labels.affective_factors} text={textValue(preview?.components?.affective_factors)} emptyLabel={loadingLabel} />
+                <PromptTextBlock title={componentText.labels.other_scores} text={textValue(preview?.components?.other_scores)} emptyLabel={loadingLabel} />
+                <PromptTextBlock title={componentText.labels.knowledge} text={ragSummary} emptyLabel={loadingLabel} />
+                <PromptTextBlock title={componentText.labels.history} text={textValue(preview?.components?.history)} emptyLabel={loadingLabel} />
+                <PromptTextBlock title={componentText.labels.counselor} text={textValue(preview?.components?.counselor)} emptyLabel={loadingLabel} />
+                <PromptTextBlock title={componentText.labels.metadata} text={textValue(preview?.components?.metadata)} emptyLabel={loadingLabel} />
+                <PromptTextBlock title={componentText.labels.profile} text={textValue(preview?.components?.profile)} emptyLabel={loadingLabel} />
+                <PromptTextBlock title={componentText.labels.student_booklet} text={textValue(preview?.components?.student_booklet)} emptyLabel={loadingLabel} />
+                <PromptTextBlock title={uiText.finalPrompt} text={finalPrompt} emptyLabel={loadingLabel} />
             </div>
 
             <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 p-4 text-xs text-slate-600">
