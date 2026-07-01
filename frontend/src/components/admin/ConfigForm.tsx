@@ -208,8 +208,11 @@ const SYSTEM_PROMPT_KEY_BY_MODE: Record<string, string> = {
 
 const PROMPT_COMPONENT_DEFAULTS: Record<string, boolean> = {
     system_prompt: true,
+    guidance: true,
     step_prompt: true,
-    scores: true,
+    cognitive_factors: true,
+    affective_factors: true,
+    other_scores: true,
     knowledge: true,
     history: true,
     counselor: true,
@@ -220,8 +223,11 @@ const PROMPT_COMPONENT_DEFAULTS: Record<string, boolean> = {
 
 const PROMPT_COMPONENT_LABELS: Record<string, string> = {
     system_prompt: 'System prompt',
+    guidance: 'Raccomandazioni iniziali',
     step_prompt: 'Prompt dello step',
-    scores: 'Punteggi / fattori',
+    cognitive_factors: 'Fattori cognitivi',
+    affective_factors: 'Fattori affettivi',
+    other_scores: 'Altri punteggi/profilo',
     knowledge: 'RAG / knowledge',
     history: 'Memoria / history',
     counselor: 'Counselor persona',
@@ -271,6 +277,10 @@ function promptKeyForStep(step: GuidedStep | undefined): string {
 
 function promptComponentConfigKey(questionnaireType: string, stepId: string): string {
     return `prompt_components_${questionnaireType.trim().toUpperCase().replace(/[^A-Za-z0-9_-]+/g, '-')}_${stepId.trim().replace(/[^A-Za-z0-9_-]+/g, '-')}`;
+}
+
+function promptGuidanceConfigKey(questionnaireType: string, stepId: string): string {
+    return `prompt_guidance_${questionnaireType.trim().toUpperCase().replace(/[^A-Za-z0-9_-]+/g, '-')}_${stepId.trim().replace(/[^A-Za-z0-9_-]+/g, '-')}`;
 }
 
 function parseComponentFlags(raw: string): Record<string, boolean> {
@@ -395,6 +405,7 @@ function StepPromptsPanel({
     onSelectSession,
     onSaveComponentFlags,
     onSaveSystemPrompt,
+    onSaveGuidance,
     onSaveStepPrompt,
     t,
 }: {
@@ -410,6 +421,7 @@ function StepPromptsPanel({
     onSelectSession: (sessionId: string) => void;
     onSaveComponentFlags: (key: string, flags: Record<string, boolean>) => void;
     onSaveSystemPrompt: (key: string, value: string) => void;
+    onSaveGuidance: (key: string, value: string) => void;
     onSaveStepPrompt: (step: GuidedStep, value: string) => void;
     t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
@@ -417,11 +429,14 @@ function StepPromptsPanel({
     const systemPromptKey = promptKeyForStep(selectedStep);
     const systemPrompt = configs.find((config) => config.key === systemPromptKey)?.value || '';
     const componentKey = selectedStep ? promptComponentConfigKey(questionnaireType, selectedStep.id) : '';
-    const flags = parseComponentFlags(configs.find((config) => config.key === componentKey)?.value || '');
+    const guidanceKey = selectedStep ? promptGuidanceConfigKey(questionnaireType, selectedStep.id) : '';
+    const configFlags = parseComponentFlags(configs.find((config) => config.key === componentKey)?.value || '');
+    const guidanceText = configs.find((config) => config.key === guidanceKey)?.value || '';
     const [preview, setPreview] = useState<PromptPreview | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
-    const [editingPrompt, setEditingPrompt] = useState<'system' | 'step' | null>(null);
+    const [editingPrompt, setEditingPrompt] = useState<'system' | 'guidance' | 'step' | null>(null);
     const [systemDraft, setSystemDraft] = useState(systemPrompt);
+    const [guidanceDraft, setGuidanceDraft] = useState(guidanceText);
     const [stepDraft, setStepDraft] = useState(selectedStep?.prompt || '');
     const modeLabel = selectedStep?.system_prompt_mode
         ? t(`admin.mode.${selectedStep.system_prompt_mode}`)
@@ -430,8 +445,9 @@ function StepPromptsPanel({
     useEffect(() => {
         setEditingPrompt(null);
         setSystemDraft(systemPrompt);
+        setGuidanceDraft(guidanceText);
         setStepDraft(selectedStep?.prompt || '');
-    }, [systemPrompt, selectedStep?.id, selectedStep?.prompt]);
+    }, [systemPrompt, guidanceText, selectedStep?.id, selectedStep?.prompt]);
 
     useEffect(() => {
         if (!selectedStep) return;
@@ -458,6 +474,7 @@ function StepPromptsPanel({
         return () => { cancelled = true; };
     }, [questionnaireType, selectedStep?.id, selectedStep?.system_prompt_mode, selectedSessionId, configs.find((config) => config.key === componentKey)?.value]);
 
+    const flags = { ...configFlags, ...(preview?.component_flags || {}) };
     const toggleFlag = (name: string) => {
         if (!componentKey) return;
         onSaveComponentFlags(componentKey, { ...flags, [name]: !flags[name] });
@@ -534,6 +551,22 @@ function StepPromptsPanel({
                     onCancel={() => { setSystemDraft(systemPrompt); setEditingPrompt(null); }}
                 />
                 <EditablePromptTextBlock
+                    title="Raccomandazioni iniziali"
+                    subtitle={guidanceKey}
+                    text={guidanceText}
+                    emptyLabel={t('admin.promptAudit.empty')}
+                    editing={editingPrompt === 'guidance'}
+                    draft={guidanceDraft}
+                    onEdit={() => setEditingPrompt('guidance')}
+                    onDraftChange={setGuidanceDraft}
+                    onSave={() => {
+                        if (!guidanceKey) return;
+                        onSaveGuidance(guidanceKey, guidanceDraft);
+                        setEditingPrompt(null);
+                    }}
+                    onCancel={() => { setGuidanceDraft(guidanceText); setEditingPrompt(null); }}
+                />
+                <EditablePromptTextBlock
                     title={t('admin.promptAudit.block.stepPrompt')}
                     subtitle={selectedStep ? selectedStep.id : undefined}
                     text={selectedStep?.prompt}
@@ -549,7 +582,9 @@ function StepPromptsPanel({
                     }}
                     onCancel={() => { setStepDraft(selectedStep?.prompt || ''); setEditingPrompt(null); }}
                 />
-                <PromptTextBlock title="Punteggi / fattori" text={textValue(preview?.components?.scores)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
+                <PromptTextBlock title="Fattori cognitivi" text={textValue(preview?.components?.cognitive_factors)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
+                <PromptTextBlock title="Fattori affettivi" text={textValue(preview?.components?.affective_factors)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
+                <PromptTextBlock title="Altri punteggi/profilo" text={textValue(preview?.components?.other_scores)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
                 <PromptTextBlock title="RAG / knowledge" text={ragSummary} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
                 <PromptTextBlock title="Memoria / history" text={textValue(preview?.components?.history)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
                 <PromptTextBlock title="Counselor" text={textValue(preview?.components?.counselor)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
@@ -1298,6 +1333,10 @@ export function ConfigForm() {
                                     onSelectSession={(sessionId) => setPromptSessionIds(prev => ({ ...prev, [q.questionnaireType]: sessionId }))}
                                     onSaveComponentFlags={saveComponentFlags}
                                     onSaveSystemPrompt={(key, value) => {
+                                        setConfigDraft(key, value, key);
+                                        handleSaveConfig({ key, value, description: key });
+                                    }}
+                                    onSaveGuidance={(key, value) => {
                                         setConfigDraft(key, value, key);
                                         handleSaveConfig({ key, value, description: key });
                                     }}
