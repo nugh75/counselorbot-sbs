@@ -1572,8 +1572,9 @@ def prompt_meta_config_key(questionnaire_type: str, step_id: str | None = None) 
     return base
 
 
-def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None) -> dict[str, bool]:
+def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None) -> dict:
     flags = dict(PROMPT_COMPONENT_DEFAULTS)
+    flags["allowed_strategies"] = None
     try:
         step = db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).first() if step_id else None
         if step and _is_intro_step_mode(step.system_prompt_mode):
@@ -1598,9 +1599,13 @@ def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None)
                     flags["cognitive_factors"] = bool(saved["scores"])
                     flags["affective_factors"] = bool(saved["scores"])
                     flags["other_scores"] = bool(saved["scores"])
-                for name in flags:
+                for name in PROMPT_COMPONENT_DEFAULTS:
                     if name in saved:
                         flags[name] = bool(saved[name])
+                if "allowed_strategies" in saved:
+                    val = saved.get("allowed_strategies")
+                    if isinstance(val, list):
+                        flags["allowed_strategies"] = [str(x) for x in val]
     except Exception:
         pass
     return flags
@@ -1618,18 +1623,26 @@ def _coerce_certified_strategy_limit(value, default: int) -> int:
     return max(0, min(3, limit))
 
 
-def get_prompt_component_options(db, questionnaire_type: str, step_id: str | None, step_mode: str | None = None) -> dict[str, int]:
-    options = {"certified_strategy_limit": _default_certified_strategy_limit(step_mode)}
+def get_prompt_component_options(db, questionnaire_type: str, step_id: str | None, step_mode: str | None = None) -> dict:
+    options = {
+        "certified_strategy_limit": _default_certified_strategy_limit(step_mode),
+        "allowed_strategies": None,
+    }
     try:
         key = prompt_component_config_key(questionnaire_type, step_id or "generic")
         row = db.query(models.Config).filter(models.Config.key == key).first()
         if row and row.value:
             saved = json.loads(row.value)
-            if isinstance(saved, dict) and "certified_strategy_limit" in saved:
-                options["certified_strategy_limit"] = _coerce_certified_strategy_limit(
-                    saved.get("certified_strategy_limit"),
-                    options["certified_strategy_limit"],
-                )
+            if isinstance(saved, dict):
+                if "certified_strategy_limit" in saved:
+                    options["certified_strategy_limit"] = _coerce_certified_strategy_limit(
+                        saved.get("certified_strategy_limit"),
+                        options["certified_strategy_limit"],
+                    )
+                if "allowed_strategies" in saved:
+                    val = saved.get("allowed_strategies")
+                    if isinstance(val, list):
+                        options["allowed_strategies"] = [str(x) for x in val]
     except Exception:
         pass
     return options

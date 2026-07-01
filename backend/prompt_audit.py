@@ -283,6 +283,11 @@ def build_prompt_audit(
                 component_options["certified_strategy_limit"] = max(0, min(3, int(payload_flags["certified_strategy_limit"])))
             except (TypeError, ValueError):
                 pass
+        if "allowed_strategies" in payload_flags:
+            val = payload_flags["allowed_strategies"]
+            if isinstance(val, list):
+                component_flags["allowed_strategies"] = [str(x) for x in val]
+                component_options["allowed_strategies"] = [str(x) for x in val]
 
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
     system_prompt = _apply_global_directives(system_prompt, request.language, db)
