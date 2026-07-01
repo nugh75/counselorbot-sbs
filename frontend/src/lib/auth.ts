@@ -40,16 +40,33 @@ export const VIEW_AS_ACCOUNTS: ViewAsAccount[] = [
 
 export function getViewAsAccount(): ViewAsAccount | null {
     if (typeof window === 'undefined') return null;
-    const username = window.localStorage.getItem(VIEW_AS_KEY);
+    let username = window.sessionStorage.getItem(VIEW_AS_KEY);
+
+    if (!username) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const viewAsParam = urlParams.get('view_as');
+        if (viewAsParam && VIEW_AS_ACCOUNTS.some((account) => account.username === viewAsParam)) {
+            window.sessionStorage.setItem(VIEW_AS_KEY, viewAsParam);
+            username = viewAsParam;
+
+            try {
+                const newUrl = window.location.pathname + window.location.search.replace(/[?&]view_as=[^&]+/, '').replace(/^&/, '?').replace(/\?$/, '');
+                window.history.replaceState({}, '', newUrl);
+            } catch (e) {
+                console.error('Failed to clean view_as query parameter', e);
+            }
+        }
+    }
+
     return VIEW_AS_ACCOUNTS.find((account) => account.username === username) ?? null;
 }
 
 export function setViewAsUsername(username: string): void {
-    if (typeof window !== 'undefined') window.localStorage.setItem(VIEW_AS_KEY, username);
+    if (typeof window !== 'undefined') window.sessionStorage.setItem(VIEW_AS_KEY, username);
 }
 
 export function clearViewAs(): void {
-    if (typeof window !== 'undefined') window.localStorage.removeItem(VIEW_AS_KEY);
+    if (typeof window !== 'undefined') window.sessionStorage.removeItem(VIEW_AS_KEY);
 }
 
 export function withViewAsHeaders(headers?: HeadersInit): Headers {
