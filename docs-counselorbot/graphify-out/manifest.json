@@ -1,25 +1,20 @@
 {
-  "/home/nugh75/counselorbot-sbs/docs-counselorbot/.graphify_detect.json": {
-    "mtime": 1782825243.3372364,
-    "ast_hash": "3c61e2eb92353ec9a375784c5c94fc5f",
-    "semantic_hash": "3c61e2eb92353ec9a375784c5c94fc5f"
-  },
-  "/home/nugh75/counselorbot-sbs/docs-counselorbot/counselorbot-guide-teachers.md": {
+  "counselorbot-guide-teachers.md": {
     "mtime": 1782825117.1462083,
     "ast_hash": "05f8873e2e3dfff877e463c8b0889740",
     "semantic_hash": "05f8873e2e3dfff877e463c8b0889740"
   },
-  "/home/nugh75/counselorbot-sbs/docs-counselorbot/counselorbot-platform.md": {
+  "counselorbot-platform.md": {
     "mtime": 1782824935.3383293,
     "ast_hash": "604881f0aca16a5b3af5c8dc6a208f3d",
     "semantic_hash": "604881f0aca16a5b3af5c8dc6a208f3d"
   },
-  "/home/nugh75/counselorbot-sbs/docs-counselorbot/how-to-use-counselorbot-students.md": {
+  "how-to-use-counselorbot-students.md": {
     "mtime": 1782825151.9301462,
     "ast_hash": "67f7098daf0ad004979dad7136de7130",
     "semantic_hash": "67f7098daf0ad004979dad7136de7130"
   },
-  "/home/nugh75/counselorbot-sbs/docs-counselorbot/technical-pedagogical-description.md": {
+  "technical-pedagogical-description.md": {
     "mtime": 1782825060.3270767,
     "ast_hash": "fd11fd99fe1352025249a5c5d1fac8e8",
     "semantic_hash": "fd11fd99fe1352025249a5c5d1fac8e8"

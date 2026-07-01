@@ -12,9 +12,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "readme_counselorbot",
-      "community": 5,
-      "norm_label": "documentazione counselorbot"
+      "community": 6,
+      "norm_label": "documentazione counselorbot",
+      "id": "readme_counselorbot"
     },
     {
       "label": "Organizzazione docs implementata",
@@ -25,9 +25,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "readme_organizzazione",
-      "community": 5,
-      "norm_label": "organizzazione docs implementata"
+      "community": 6,
+      "norm_label": "organizzazione docs implementata",
+      "id": "readme_organizzazione"
     },
     {
       "label": "Grafo della documentazione",
@@ -38,9 +38,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "readme_grafo",
-      "community": 5,
-      "norm_label": "grafo della documentazione"
+      "community": 6,
+      "norm_label": "grafo della documentazione",
+      "id": "readme_grafo"
     },
     {
       "label": "Diario di bordo",
@@ -51,9 +51,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "readme_diario",
-      "community": 5,
-      "norm_label": "diario di bordo"
+      "community": 6,
+      "norm_label": "diario di bordo",
+      "id": "readme_diario"
     },
     {
       "label": "Validazione",
@@ -64,9 +64,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "readme_validazione",
-      "community": 5,
-      "norm_label": "validazione"
+      "community": 6,
+      "norm_label": "validazione",
+      "id": "readme_validazione"
     },
     {
       "label": "Questionari",
@@ -77,9 +77,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "readme_questionari",
-      "community": 5,
-      "norm_label": "questionari"
+      "community": 6,
+      "norm_label": "questionari",
+      "id": "readme_questionari"
     },
     {
       "label": "Prompting",
@@ -90,9 +90,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "readme_prompting",
-      "community": 5,
-      "norm_label": "prompting"
+      "community": 6,
+      "norm_label": "prompting",
+      "id": "readme_prompting"
     },
     {
       "label": "Implementazione",
@@ -103,9 +103,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "readme_implementazione",
-      "community": 5,
-      "norm_label": "implementazione"
+      "community": 6,
+      "norm_label": "implementazione",
+      "id": "readme_implementazione"
     },
     {
       "label": "Fonti",
@@ -116,9 +116,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "readme_fonti",
       "community": 4,
-      "norm_label": "fonti"
+      "norm_label": "fonti",
+      "id": "readme_fonti"
     },
     {
       "label": "Guida 2023",
@@ -129,9 +129,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "guida_2023_pdf",
       "community": 4,
-      "norm_label": "guida 2023"
+      "norm_label": "guida 2023",
+      "id": "guida_2023_pdf"
     },
     {
       "label": "Guida 2019",
@@ -142,9 +142,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "guida_2019_pdf",
       "community": 4,
-      "norm_label": "guida 2019"
+      "norm_label": "guida 2019",
+      "id": "guida_2019_pdf"
     },
     {
       "label": "Grzadziel Convegno 2019",
@@ -155,9 +155,9 @@
       "captured_at": null,
       "author": "Grzadziel",
       "contributor": null,
-      "id": "grzadziel_convegno_2019_pdf",
       "community": 4,
-      "norm_label": "grzadziel convegno 2019"
+      "norm_label": "grzadziel convegno 2019",
+      "id": "grzadziel_convegno_2019_pdf"
     },
     {
       "label": "Margottini Convegno 2019",
@@ -168,9 +168,9 @@
       "captured_at": null,
       "author": "Margottini",
       "contributor": null,
-      "id": "margottini_convegno_2019_pdf",
       "community": 4,
-      "norm_label": "margottini convegno 2019"
+      "norm_label": "margottini convegno 2019",
+      "id": "margottini_convegno_2019_pdf"
     },
     {
       "label": "Competenze Strategiche",
@@ -181,9 +181,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "concept_competenze_strategiche",
       "community": 4,
-      "norm_label": "competenze strategiche"
+      "norm_label": "competenze strategiche",
+      "id": "concept_competenze_strategiche"
     },
     {
       "label": "Dirigere se stessi (2020)",
@@ -194,9 +194,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "dirigere_se_stessi_2020_document",
       "community": 11,
-      "norm_label": "dirigere se stessi (2020)"
+      "norm_label": "dirigere se stessi (2020)",
+      "id": "dirigere_se_stessi_2020_document"
     },
     {
       "label": "Introduzione Volume (2020)",
@@ -207,9 +207,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "introduzione_volume_2020_document",
       "community": 11,
-      "norm_label": "introduzione volume (2020)"
+      "norm_label": "introduzione volume (2020)",
+      "id": "introduzione_volume_2020_document"
     },
     {
       "label": "Pellerey Convegno (2019)",
@@ -220,9 +220,9 @@
       "captured_at": null,
       "author": "Michele Pellerey",
       "contributor": null,
-      "id": "pellerey_convegno_2019_document",
       "community": 4,
-      "norm_label": "pellerey convegno (2019)"
+      "norm_label": "pellerey convegno (2019)",
+      "id": "pellerey_convegno_2019_document"
     },
     {
       "label": "README Fonti Esterne",
@@ -233,9 +233,9 @@
       "captured_at": "2026-05-30",
       "author": null,
       "contributor": null,
-      "id": "readme_external_sources",
       "community": 4,
-      "norm_label": "readme fonti esterne"
+      "norm_label": "readme fonti esterne",
+      "id": "readme_external_sources"
     },
     {
       "label": "CNOS-FAP",
@@ -246,9 +246,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "cnos_fap_entity",
       "community": 4,
-      "norm_label": "cnos-fap"
+      "norm_label": "cnos-fap",
+      "id": "cnos_fap_entity"
     },
     {
       "label": "Roma TrE-Press",
@@ -259,99 +259,99 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "roma_tre_press_entity",
       "community": 4,
-      "norm_label": "roma tre-press"
+      "norm_label": "roma tre-press",
+      "id": "roma_tre_press_entity"
     },
     {
       "label": "Imparare a dirigere se stessi",
       "file_type": "document",
       "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/Imparare_a_dirigere_se_stessi.pdf",
-      "id": "imparare_a_dirigere_se_stessi_document",
-      "community": 1,
-      "norm_label": "imparare a dirigere se stessi"
+      "community": 2,
+      "norm_label": "imparare a dirigere se stessi",
+      "id": "imparare_a_dirigere_se_stessi_document"
     },
     {
       "label": "Promuovere l'autovalutazione di competenze strategiche. Aggiornamenti e sviluppi della piattaforma competenzestrategiche.it",
       "file_type": "paper",
       "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/piattaforma_comp._strategiche_-_margottini_epifani.pdf",
       "author": "Massimo Margottini, Filippo Epifani",
-      "id": "margottini_epifani_paper",
-      "community": 1,
-      "norm_label": "promuovere l'autovalutazione di competenze strategiche. aggiornamenti e sviluppi della piattaforma competenzestrategiche.it"
+      "community": 2,
+      "norm_label": "promuovere l'autovalutazione di competenze strategiche. aggiornamenti e sviluppi della piattaforma competenzestrategiche.it",
+      "id": "margottini_epifani_paper"
     },
     {
       "label": "Promuovere la crescita nelle competenze strategiche",
       "file_type": "document",
       "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/promuovere_la_crescita_nelle_competenze_strategiche.PDF",
-      "id": "promuovere_la_crescita_document",
-      "community": 1,
-      "norm_label": "promuovere la crescita nelle competenze strategiche"
+      "community": 2,
+      "norm_label": "promuovere la crescita nelle competenze strategiche",
+      "id": "promuovere_la_crescita_document"
     },
     {
       "label": "Strumenti e metodologie di orientamento formativo e professionale nel quadro dei processi di apprendimento permanente",
       "file_type": "document",
       "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/strumenti_e_metodologie.pdf",
       "author": "Michele Pellerey",
-      "id": "strumenti_e_metodologie_report",
-      "community": 1,
-      "norm_label": "strumenti e metodologie di orientamento formativo e professionale nel quadro dei processi di apprendimento permanente"
+      "community": 2,
+      "norm_label": "strumenti e metodologie di orientamento formativo e professionale nel quadro dei processi di apprendimento permanente",
+      "id": "strumenti_e_metodologie_report"
     },
     {
       "label": "CNOS-FAP (Centro Nazionale Opere Salesiane - Formazione Aggiornamento Professionale)",
       "file_type": "concept",
       "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/strumenti_e_metodologie.pdf",
-      "id": "cnos_fap_organization",
-      "community": 1,
-      "norm_label": "cnos-fap (centro nazionale opere salesiane - formazione aggiornamento professionale)"
+      "community": 2,
+      "norm_label": "cnos-fap (centro nazionale opere salesiane - formazione aggiornamento professionale)",
+      "id": "cnos_fap_organization"
     },
     {
       "label": "Piattaforma competenzestrategiche.it",
       "file_type": "code",
       "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/piattaforma_comp._strategiche_-_margottini_epifani.pdf",
-      "id": "competenzestrategiche_it_platform",
-      "community": 1,
-      "norm_label": "piattaforma competenzestrategiche.it"
+      "community": 2,
+      "norm_label": "piattaforma competenzestrategiche.it",
+      "id": "competenzestrategiche_it_platform"
     },
     {
       "label": "Michele Pellerey",
       "file_type": "concept",
       "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/strumenti_e_metodologie.pdf",
-      "id": "pellerey_michele",
-      "community": 1,
-      "norm_label": "michele pellerey"
+      "community": 2,
+      "norm_label": "michele pellerey",
+      "id": "pellerey_michele"
     },
     {
       "label": "Massimo Margottini",
       "file_type": "concept",
       "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/piattaforma_comp._strategiche_-_margottini_epifani.pdf",
-      "id": "margottini_massimo",
-      "community": 13,
-      "norm_label": "massimo margottini"
+      "community": 15,
+      "norm_label": "massimo margottini",
+      "id": "margottini_massimo"
     },
     {
       "label": "Filippo Epifani",
       "file_type": "concept",
       "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/piattaforma_comp._strategiche_-_margottini_epifani.pdf",
-      "id": "epifani_filippo",
       "community": 14,
-      "norm_label": "filippo epifani"
+      "norm_label": "filippo epifani",
+      "id": "epifani_filippo"
     },
     {
       "label": "Competenze Strategiche",
       "file_type": "concept",
       "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/piattaforma_comp._strategiche_-_margottini_epifani.pdf",
-      "id": "competenze_strategiche_concept",
-      "community": 1,
-      "norm_label": "competenze strategiche"
+      "community": 2,
+      "norm_label": "competenze strategiche",
+      "id": "competenze_strategiche_concept"
     },
     {
       "label": "Mahara Digital Portfolio",
       "file_type": "code",
       "source_file": "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/strumenti_e_metodologie.pdf",
-      "id": "mahara_portfolio",
-      "community": 1,
-      "norm_label": "mahara digital portfolio"
+      "community": 2,
+      "norm_label": "mahara digital portfolio",
+      "id": "mahara_portfolio"
     },
     {
       "label": "Portfolio Digitale",
@@ -362,9 +362,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "portfolio_digitale_portfolio_digitale",
-      "community": 1,
-      "norm_label": "portfolio digitale"
+      "community": 2,
+      "norm_label": "portfolio digitale",
+      "id": "portfolio_digitale_portfolio_digitale"
     },
     {
       "label": "Soft Skill e Orientamento Professionale",
@@ -375,9 +375,9 @@
       "captured_at": "2017-06-16",
       "author": "michele_pellerey",
       "contributor": "filippo_epifani, massimo_margottini, enrica_ottone",
-      "id": "soft_skill_soft_skill_e_orientamento",
-      "community": 1,
-      "norm_label": "soft skill e orientamento professionale"
+      "community": 2,
+      "norm_label": "soft skill e orientamento professionale",
+      "id": "soft_skill_soft_skill_e_orientamento"
     },
     {
       "label": "Contributo di G. Marrone e L. Romano",
@@ -388,9 +388,9 @@
       "captured_at": null,
       "author": "g_marrone, l_romano",
       "contributor": null,
-      "id": "12_g_marrone_l_romano_marrone_romano_contribution",
-      "community": 1,
-      "norm_label": "contributo di g. marrone e l. romano"
+      "community": 2,
+      "norm_label": "contributo di g. marrone e l. romano",
+      "id": "12_g_marrone_l_romano_marrone_romano_contribution"
     },
     {
       "label": "Contributo di D.M. Ardito",
@@ -401,9 +401,9 @@
       "captured_at": null,
       "author": "d_m_ardito",
       "contributor": null,
-      "id": "11_d_m_ardito_ardito_contribution",
-      "community": 15,
-      "norm_label": "contributo di d.m. ardito"
+      "community": 13,
+      "norm_label": "contributo di d.m. ardito",
+      "id": "11_d_m_ardito_ardito_contribution"
     },
     {
       "label": "Archivio sito competenzestrategiche.it",
@@ -414,114 +414,114 @@
       "captured_at": "2026-05-30",
       "author": null,
       "contributor": null,
-      "id": "readme_competenzestrategiche_archive",
-      "community": 1,
-      "norm_label": "archivio sito competenzestrategiche.it"
+      "community": 2,
+      "norm_label": "archivio sito competenzestrategiche.it",
+      "id": "readme_competenzestrategiche_archive"
     },
     {
       "label": "Chatbot per l'orientamento e il supporto agli studenti",
       "file_type": "document",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Presentazione_Chatbot_convegnisti_02.pdf",
-      "id": "presentazione_chatbot_convegnisti_02_chatbot",
-      "community": 7,
-      "norm_label": "chatbot per l'orientamento e il supporto agli studenti"
+      "community": 8,
+      "norm_label": "chatbot per l'orientamento e il supporto agli studenti",
+      "id": "presentazione_chatbot_convegnisti_02_chatbot"
     },
     {
       "label": "Convegno: Le competenze strategiche che aiutano a studiare e a riuscire",
       "file_type": "document",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_13_settembre_2019.pdf",
       "author": "Universit\u00e0 degli Studi di Roma Tre",
-      "id": "programma_convegno_13_settembre_2019_convegno",
-      "community": 7,
-      "norm_label": "convegno: le competenze strategiche che aiutano a studiare e a riuscire"
+      "community": 8,
+      "norm_label": "convegno: le competenze strategiche che aiutano a studiare e a riuscire",
+      "id": "programma_convegno_13_settembre_2019_convegno"
     },
     {
       "label": "Michele Pellerey",
       "file_type": "concept",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_13_settembre_2019.pdf",
-      "id": "programma_convegno_13_settembre_2019_michele_pellerey",
-      "community": 7,
-      "norm_label": "michele pellerey"
+      "community": 8,
+      "norm_label": "michele pellerey",
+      "id": "programma_convegno_13_settembre_2019_michele_pellerey"
     },
     {
       "label": "Giuseppe Spadafora",
       "file_type": "concept",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_13_settembre_2019.pdf",
-      "id": "programma_convegno_13_settembre_2019_giuseppe_spadafora",
-      "community": 7,
-      "norm_label": "giuseppe spadafora"
+      "community": 8,
+      "norm_label": "giuseppe spadafora",
+      "id": "programma_convegno_13_settembre_2019_giuseppe_spadafora"
     },
     {
       "label": "Massimiliano Fiorucci",
       "file_type": "concept",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_13_settembre_2019.pdf",
-      "id": "programma_convegno_13_settembre_2019_massimiliano_fiorucci",
-      "community": 7,
-      "norm_label": "massimiliano fiorucci"
+      "community": 8,
+      "norm_label": "massimiliano fiorucci",
+      "id": "programma_convegno_13_settembre_2019_massimiliano_fiorucci"
     },
     {
       "label": "Gaetano Domenici",
       "file_type": "concept",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_13_settembre_2019.pdf",
-      "id": "programma_convegno_13_settembre_2019_gaetano_domenici",
-      "community": 7,
-      "norm_label": "gaetano domenici"
+      "community": 8,
+      "norm_label": "gaetano domenici",
+      "id": "programma_convegno_13_settembre_2019_gaetano_domenici"
     },
     {
       "label": "Presentazione DIDACTA 2023",
       "file_type": "document",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Presentazione_DIDACTA_2023.pdf",
-      "id": "presentazione_didacta_2023_convegno",
-      "community": 8,
-      "norm_label": "presentazione didacta 2023"
+      "community": 9,
+      "norm_label": "presentazione didacta 2023",
+      "id": "presentazione_didacta_2023_convegno"
     },
     {
       "label": "Programma Convegno 24 Gennaio 2025",
       "file_type": "document",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_24Gennaio2025_dettagliato.pdf",
-      "id": "programma_convegno_24gennaio2025_programma",
       "community": 12,
-      "norm_label": "programma convegno 24 gennaio 2025"
+      "norm_label": "programma convegno 24 gennaio 2025",
+      "id": "programma_convegno_24gennaio2025_programma"
     },
     {
       "label": "Abstract Fascicolo",
       "file_type": "document",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Abstract_fascicolo.pdf",
-      "id": "abstract_fascicolo_abstract",
-      "community": 8,
-      "norm_label": "abstract fascicolo"
+      "community": 9,
+      "norm_label": "abstract fascicolo",
+      "id": "abstract_fascicolo_abstract"
     },
     {
       "label": "QSA-r Presentazione",
       "file_type": "document",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/guide/QSA-r_Presentazione.pdf",
-      "id": "qsa_r_presentazione_guida",
-      "community": 8,
-      "norm_label": "qsa-r presentazione"
+      "community": 9,
+      "norm_label": "qsa-r presentazione",
+      "id": "qsa_r_presentazione_guida"
     },
     {
       "label": "Progetto Competenze Strategiche",
       "file_type": "concept",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Presentazione_DIDACTA_2023.pdf",
-      "id": "competenze_strategiche_progetto",
-      "community": 8,
-      "norm_label": "progetto competenze strategiche"
+      "community": 9,
+      "norm_label": "progetto competenze strategiche",
+      "id": "competenze_strategiche_progetto"
     },
     {
       "label": "Fiera Didacta Italia",
       "file_type": "concept",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Presentazione_DIDACTA_2023.pdf",
-      "id": "didacta_evento",
-      "community": 8,
-      "norm_label": "fiera didacta italia"
+      "community": 9,
+      "norm_label": "fiera didacta italia",
+      "id": "didacta_evento"
     },
     {
       "label": "Universit\u00e0 degli Studi Roma Tre",
       "file_type": "concept",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/Programma_Convegno_24Gennaio2025_dettagliato.pdf",
-      "id": "universita_roma_tre",
       "community": 12,
-      "norm_label": "universita degli studi roma tre"
+      "norm_label": "universita degli studi roma tre",
+      "id": "universita_roma_tre"
     },
     {
       "label": "C1 | Strategie elaborative",
@@ -532,9 +532,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "schede_fattori_qsa_c1",
       "community": 0,
-      "norm_label": "c1 | strategie elaborative"
+      "norm_label": "c1 | strategie elaborative",
+      "id": "schede_fattori_qsa_c1"
     },
     {
       "label": "C5 | Organizzatori semantici",
@@ -545,9 +545,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "schede_fattori_qsa_c5",
       "community": 0,
-      "norm_label": "c5 | organizzatori semantici"
+      "norm_label": "c5 | organizzatori semantici",
+      "id": "schede_fattori_qsa_c5"
     },
     {
       "label": "C7 | Autointerrogazione",
@@ -558,9 +558,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "schede_fattori_qsa_c7",
       "community": 0,
-      "norm_label": "c7 | autointerrogazione"
+      "norm_label": "c7 | autointerrogazione",
+      "id": "schede_fattori_qsa_c7"
     },
     {
       "label": "C2 | Autoregolazione",
@@ -571,9 +571,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "schede_fattori_qsa_c2",
       "community": 0,
-      "norm_label": "c2 | autoregolazione"
+      "norm_label": "c2 | autoregolazione",
+      "id": "schede_fattori_qsa_c2"
     },
     {
       "label": "C3 | Disorientamento",
@@ -584,9 +584,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "schede_fattori_qsa_c3",
       "community": 0,
-      "norm_label": "c3 | disorientamento"
+      "norm_label": "c3 | disorientamento",
+      "id": "schede_fattori_qsa_c3"
     },
     {
       "label": "C6 | Difficolt\u00e0 di concentrazione",
@@ -597,9 +597,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "schede_fattori_qsa_c6",
       "community": 0,
-      "norm_label": "c6 | difficolta di concentrazione"
+      "norm_label": "c6 | difficolta di concentrazione",
+      "id": "schede_fattori_qsa_c6"
     },
     {
       "label": "C4 | Collaborazione",
@@ -610,9 +610,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "schede_fattori_qsa_c4",
       "community": 0,
-      "norm_label": "c4 | collaborazione"
+      "norm_label": "c4 | collaborazione",
+      "id": "schede_fattori_qsa_c4"
     },
     {
       "label": "A1 | Ansiet\u00e0 di base",
@@ -623,9 +623,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "schede_fattori_qsa_a1",
       "community": 0,
-      "norm_label": "a1 | ansieta di base"
+      "norm_label": "a1 | ansieta di base",
+      "id": "schede_fattori_qsa_a1"
     },
     {
       "label": "A7 | Interferenze emotive",
@@ -636,9 +636,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "schede_fattori_qsa_a7",
       "community": 0,
-      "norm_label": "a7 | interferenze emotive"
+      "norm_label": "a7 | interferenze emotive",
+      "id": "schede_fattori_qsa_a7"
     },
     {
       "label": "A2 | Volizione",
@@ -649,9 +649,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "schede_fattori_qsa_a2",
       "community": 0,
-      "norm_label": "a2 | volizione"
+      "norm_label": "a2 | volizione",
+      "id": "schede_fattori_qsa_a2"
     },
     {
       "label": "A5 | Mancanza di perseveranza",
@@ -662,9 +662,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "schede_fattori_qsa_a5",
       "community": 0,
-      "norm_label": "a5 | mancanza di perseveranza"
+      "norm_label": "a5 | mancanza di perseveranza",
+      "id": "schede_fattori_qsa_a5"
     },
     {
       "label": "A3 | Attribuzione a fattori controllabili",
@@ -675,9 +675,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "schede_fattori_qsa_a3",
       "community": 0,
-      "norm_label": "a3 | attribuzione a fattori controllabili"
+      "norm_label": "a3 | attribuzione a fattori controllabili",
+      "id": "schede_fattori_qsa_a3"
     },
     {
       "label": "A4 | Attribuzione a fattori non controllabili",
@@ -688,9 +688,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "schede_fattori_qsa_a4",
       "community": 0,
-      "norm_label": "a4 | attribuzione a fattori non controllabili"
+      "norm_label": "a4 | attribuzione a fattori non controllabili",
+      "id": "schede_fattori_qsa_a4"
     },
     {
       "label": "A6 | Percezione di competenza",
@@ -701,9 +701,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "schede_fattori_qsa_a6",
       "community": 0,
-      "norm_label": "a6 | percezione di competenza"
+      "norm_label": "a6 | percezione di competenza",
+      "id": "schede_fattori_qsa_a6"
     },
     {
       "label": "Guida all'uso della piattaforma www.competenzestrategiche.it",
@@ -714,9 +714,9 @@
       "captured_at": null,
       "author": "Epifani Filippo, Margottini Massimo, Ottone Enrica",
       "contributor": null,
-      "id": "guida_piattaforma_book_69_guida",
       "community": 0,
-      "norm_label": "guida all'uso della piattaforma www.competenzestrategiche.it"
+      "norm_label": "guida all'uso della piattaforma www.competenzestrategiche.it",
+      "id": "guida_piattaforma_book_69_guida"
     },
     {
       "label": "Griglia di osservazione del docente",
@@ -727,170 +727,154 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "02_griglia_osservazione_docente_griglia",
       "community": 0,
-      "norm_label": "griglia di osservazione del docente"
-    },
-    {
-      "label": "Questionario sulle Strategie d'Apprendimento (QSA)",
-      "file_type": "document",
-      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/strumenti/QSA_Questionario.pdf",
-      "id": "qsa_questionario_qsa",
-      "community": 9,
-      "norm_label": "questionario sulle strategie d'apprendimento (qsa)"
+      "norm_label": "griglia di osservazione del docente",
+      "id": "02_griglia_osservazione_docente_griglia"
     },
     {
       "label": "Questionario sull'Approccio allo Studio (QAP)",
       "file_type": "document",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/strumenti/QAP.pdf",
-      "id": "qap_questionario",
-      "community": 9,
-      "norm_label": "questionario sull'approccio allo studio (qap)"
+      "community": 0,
+      "norm_label": "questionario sull'approccio allo studio (qap)",
+      "id": "qap_questionario"
     },
     {
       "label": "Profilo di competenze strategiche in studenti universitari con DSA",
       "file_type": "paper",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/MELOGNO_2018.pdf",
       "author": "Melogno et al.",
-      "id": "melogno_2018_paper",
-      "community": 9,
-      "norm_label": "profilo di competenze strategiche in studenti universitari con dsa"
+      "community": 0,
+      "norm_label": "profilo di competenze strategiche in studenti universitari con dsa",
+      "id": "melogno_2018_paper"
     },
     {
       "label": "Disturbi Specifici dell'Apprendimento (DSA)",
       "file_type": "concept",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/MELOGNO_2018.pdf",
-      "id": "melogno_2018_dsa",
-      "community": 9,
-      "norm_label": "disturbi specifici dell'apprendimento (dsa)"
+      "community": 0,
+      "norm_label": "disturbi specifici dell'apprendimento (dsa)",
+      "id": "melogno_2018_dsa"
     },
     {
       "label": "Competenze Strategiche",
       "file_type": "concept",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/MELOGNO_2018.pdf",
-      "id": "melogno_2018_competenze_strategiche",
-      "community": 9,
-      "norm_label": "competenze strategiche"
+      "community": 0,
+      "norm_label": "competenze strategiche",
+      "id": "melogno_2018_competenze_strategiche"
     },
     {
       "label": "Ottone 2023 - Studio Competenze Strategiche",
       "file_type": "paper",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/OTTONE_2023.pdf",
-      "id": "ottone_2023_paper",
-      "community": 16,
-      "norm_label": "ottone 2023 - studio competenze strategiche"
+      "community": 17,
+      "norm_label": "ottone 2023 - studio competenze strategiche",
+      "id": "ottone_2023_paper"
     },
     {
       "label": "Margottini & Rossi 2019 - Studio Competenze Strategiche",
       "file_type": "paper",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/MARGOTTINI-ROSSI_2019.pdf",
-      "id": "margottini_rossi_2019_paper",
-      "community": 17,
-      "norm_label": "margottini & rossi 2019 - studio competenze strategiche"
+      "community": 16,
+      "norm_label": "margottini & rossi 2019 - studio competenze strategiche",
+      "id": "margottini_rossi_2019_paper"
     },
     {
       "label": "Verifica Implementazione CounselorBot",
       "file_type": "document",
       "source_file": "implementazione/verifica-implementazione.md",
-      "id": "verifica_implementazione_doc",
-      "community": 2,
-      "norm_label": "verifica implementazione counselorbot"
+      "community": 5,
+      "norm_label": "verifica implementazione counselorbot",
+      "id": "verifica_implementazione_doc"
     },
     {
       "label": "Diario di Bordo / Project Journal",
       "file_type": "document",
       "source_file": "progetto/diario.md",
-      "id": "diario_progetto",
-      "community": 2,
-      "norm_label": "diario di bordo / project journal"
+      "community": 5,
+      "norm_label": "diario di bordo / project journal",
+      "id": "diario_progetto"
     },
     {
       "label": "Mail a Olle (KTH) - Versione Italiana",
       "file_type": "document",
       "source_file": "progetto/comunicazioni/mail-olle.md",
-      "id": "mail_olle_it",
-      "community": 2,
-      "norm_label": "mail a olle (kth) - versione italiana"
+      "community": 5,
+      "norm_label": "mail a olle (kth) - versione italiana",
+      "id": "mail_olle_it"
     },
     {
       "label": "Email to Olle (KTH) - English Version",
       "file_type": "document",
       "source_file": "progetto/comunicazioni/mail-olle-en.md",
-      "id": "mail_olle_en",
-      "community": 2,
-      "norm_label": "email to olle (kth) - english version"
+      "community": 5,
+      "norm_label": "email to olle (kth) - english version",
+      "id": "mail_olle_en"
     },
     {
       "label": "Grafo della documentazione 2026-05-30",
       "file_type": "document",
       "source_file": "progetto/organizzazione/grafo-docs-2026-05-30.md",
-      "id": "grafo_docs_doc",
-      "community": 2,
-      "norm_label": "grafo della documentazione 2026-05-30"
+      "community": 5,
+      "norm_label": "grafo della documentazione 2026-05-30",
+      "id": "grafo_docs_doc"
     },
     {
       "label": "Organizzazione documentazione implementata - 2026-05-30",
       "file_type": "document",
       "source_file": "progetto/organizzazione/proposta-organizzazione-docs-implementata-2026-05-30.md",
-      "id": "proposta_organizzazione_doc",
-      "community": 2,
-      "norm_label": "organizzazione documentazione implementata - 2026-05-30"
+      "community": 5,
+      "norm_label": "organizzazione documentazione implementata - 2026-05-30",
+      "id": "proposta_organizzazione_doc"
     },
     {
       "label": "Live DB prompt translation review (IT -> EN)",
       "file_type": "document",
       "source_file": "prompting/live-db-prompt-translation-review.md",
-      "id": "live_db_prompt_review",
-      "community": 2,
-      "norm_label": "live db prompt translation review (it -> en)"
+      "community": 0,
+      "norm_label": "live db prompt translation review (it -> en)",
+      "id": "live_db_prompt_review"
     },
     {
       "label": "Prompt translation review (IT -> EN) - General",
       "file_type": "document",
       "source_file": "prompting/prompt-translations-review.md",
-      "id": "prompt_translations_review_doc",
-      "community": 2,
-      "norm_label": "prompt translation review (it -> en) - general"
+      "community": 5,
+      "norm_label": "prompt translation review (it -> en) - general",
+      "id": "prompt_translations_review_doc"
     },
     {
       "label": "Catalogo item \u2014 scaffolding multilingue",
       "file_type": "document",
       "source_file": "questionari/item-catalog.md",
-      "id": "item_catalog_doc",
-      "community": 2,
-      "norm_label": "catalogo item \u2014 scaffolding multilingue"
+      "community": 0,
+      "norm_label": "catalogo item \u2014 scaffolding multilingue",
+      "id": "item_catalog_doc"
     },
     {
       "label": "CounselorBot Application",
       "file_type": "code",
       "source_file": "implementazione/verifica-implementazione.md",
-      "id": "counselorbot_app",
-      "community": 2,
-      "norm_label": "counselorbot application"
-    },
-    {
-      "label": "Questionario sulle Strategie di Apprendimento (QSA)",
-      "file_type": "concept",
-      "source_file": "progetto/comunicazioni/mail-olle.md",
-      "id": "qsa_questionnaire",
-      "community": 2,
-      "norm_label": "questionario sulle strategie di apprendimento (qsa)"
+      "community": 5,
+      "norm_label": "counselorbot application",
+      "id": "counselorbot_app"
     },
     {
       "label": "Zimbardo Time Perspective Inventory (ZTPI)",
       "file_type": "concept",
       "source_file": "prompting/prompt-translations-review.md",
-      "id": "ztpi_questionnaire",
-      "community": 2,
-      "norm_label": "zimbardo time perspective inventory (ztpi)"
+      "community": 5,
+      "norm_label": "zimbardo time perspective inventory (ztpi)",
+      "id": "ztpi_questionnaire"
     },
     {
       "label": "Savickas Career Construction Interview",
       "file_type": "concept",
       "source_file": "implementazione/verifica-implementazione.md",
-      "id": "savickas_interview",
-      "community": 2,
-      "norm_label": "savickas career construction interview"
+      "community": 5,
+      "norm_label": "savickas career construction interview",
+      "id": "savickas_interview"
     },
     {
       "label": "Questionario di Autovalutazione dei Processi (QAP)",
@@ -901,9 +885,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "qap_it_qap",
       "community": 10,
-      "norm_label": "questionario di autovalutazione dei processi (qap)"
+      "norm_label": "questionario di autovalutazione dei processi (qap)",
+      "id": "qap_it_qap"
     },
     {
       "label": "Questionario sui Processi Cognitivi e di Controllo (QPCC)",
@@ -914,9 +898,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "qpcc_it_qpcc",
       "community": 10,
-      "norm_label": "questionario sui processi cognitivi e di controllo (qpcc)"
+      "norm_label": "questionario sui processi cognitivi e di controllo (qpcc)",
+      "id": "qpcc_it_qpcc"
     },
     {
       "label": "Questionario sulle Strategie di Apprendimento (QSA)",
@@ -927,9 +911,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "qsa_it_qsa",
       "community": 10,
-      "norm_label": "questionario sulle strategie di apprendimento (qsa)"
+      "norm_label": "questionario sulle strategie di apprendimento (qsa)",
+      "id": "qsa_it_qsa"
     },
     {
       "label": "Metacognition and Learning Strategies",
@@ -940,9 +924,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "concept_metacognition",
       "community": 10,
-      "norm_label": "metacognition and learning strategies"
+      "norm_label": "metacognition and learning strategies",
+      "id": "concept_metacognition"
     },
     {
       "label": "Questionario di Percezione delle Competenze Strategiche (QPCS)",
@@ -952,9 +936,9 @@
       "source_url": null,
       "captured_at": null,
       "author": "Michele Pellerey",
-      "id": "qpcs_it_qpcs",
-      "community": 6,
-      "norm_label": "questionario di percezione delle competenze strategiche (qpcs)"
+      "community": 7,
+      "norm_label": "questionario di percezione delle competenze strategiche (qpcs)",
+      "id": "qpcs_it_qpcs"
     },
     {
       "label": "Zimbardo Time Perspective Inventory (ZTPI)",
@@ -964,9 +948,9 @@
       "source_url": null,
       "captured_at": null,
       "author": "Philip Zimbardo",
-      "id": "ztpi_it_ztpi",
-      "community": 6,
-      "norm_label": "zimbardo time perspective inventory (ztpi)"
+      "community": 7,
+      "norm_label": "zimbardo time perspective inventory (ztpi)",
+      "id": "ztpi_it_ztpi"
     },
     {
       "label": "Diagnosi: somministrazioni EN/SV",
@@ -976,9 +960,9 @@
       "source_url": null,
       "captured_at": null,
       "author": null,
-      "id": "diagnosi_somministrazione_ensv_diagnosi",
-      "community": 6,
-      "norm_label": "diagnosi: somministrazioni en/sv"
+      "community": 7,
+      "norm_label": "diagnosi: somministrazioni en/sv",
+      "id": "diagnosi_somministrazione_ensv_diagnosi"
     },
     {
       "label": "Validazione dei questionari e costruzione delle stanine",
@@ -988,9 +972,9 @@
       "source_url": null,
       "captured_at": null,
       "author": null,
-      "id": "validazione_questionari_e_stanine_validazione",
       "community": 0,
-      "norm_label": "validazione dei questionari e costruzione delle stanine"
+      "norm_label": "validazione dei questionari e costruzione delle stanine",
+      "id": "validazione_questionari_e_stanine_validazione"
     },
     {
       "label": "Dettagli di Validazione e Struttura dei Questionari",
@@ -1000,9 +984,9 @@
       "source_url": null,
       "captured_at": null,
       "author": null,
-      "id": "dettagli_validazione_questionari_specifiche",
-      "community": 6,
-      "norm_label": "dettagli di validazione e struttura dei questionari"
+      "community": 7,
+      "norm_label": "dettagli di validazione e struttura dei questionari",
+      "id": "dettagli_validazione_questionari_specifiche"
     },
     {
       "label": "Progetto di adattamento e validazione QSA/QSAr (SV/EN)",
@@ -1012,9 +996,9 @@
       "source_url": null,
       "captured_at": null,
       "author": null,
-      "id": "progetto_validazione_qsa_qsar_sv_en_progetto",
       "community": 0,
-      "norm_label": "progetto di adattamento e validazione qsa/qsar (sv/en)"
+      "norm_label": "progetto di adattamento e validazione qsa/qsar (sv/en)",
+      "id": "progetto_validazione_qsa_qsar_sv_en_progetto"
     },
     {
       "label": "Questionario sulle Strategie di Apprendimento (QSA)",
@@ -1024,9 +1008,9 @@
       "source_url": null,
       "captured_at": null,
       "author": "Michele Pellerey",
-      "id": "qsa_qsa",
       "community": 0,
-      "norm_label": "questionario sulle strategie di apprendimento (qsa)"
+      "norm_label": "questionario sulle strategie di apprendimento (qsa)",
+      "id": "qsa_qsa"
     },
     {
       "label": "Questionario di Percezione delle Competenze di Cittadinanza (QPCC)",
@@ -1036,9 +1020,9 @@
       "source_url": null,
       "captured_at": null,
       "author": "Michele Pellerey",
-      "id": "qpcc_qpcc",
-      "community": 6,
-      "norm_label": "questionario di percezione delle competenze di cittadinanza (qpcc)"
+      "community": 7,
+      "norm_label": "questionario di percezione delle competenze di cittadinanza (qpcc)",
+      "id": "qpcc_qpcc"
     },
     {
       "label": "Questionario sull'Autovalutazione Professionale (QAP)",
@@ -1048,9 +1032,9 @@
       "source_url": null,
       "captured_at": null,
       "author": null,
-      "id": "qap_qap",
-      "community": 6,
-      "norm_label": "questionario sull'autovalutazione professionale (qap)"
+      "community": 7,
+      "norm_label": "questionario sull'autovalutazione professionale (qap)",
+      "id": "qap_qap"
     },
     {
       "label": "Manuale Operativo per la Validazione del QSAr",
@@ -1061,9 +1045,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "manuale_operativo_validazione_qsar",
       "community": 3,
-      "norm_label": "manuale operativo per la validazione del qsar"
+      "norm_label": "manuale operativo per la validazione del qsar",
+      "id": "manuale_operativo_validazione_qsar"
     },
     {
       "label": "QSAr English Validation (Sweden)",
@@ -1074,9 +1058,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "manuale_operativo_validazione_qsar_en",
       "community": 3,
-      "norm_label": "qsar english validation (sweden)"
+      "norm_label": "qsar english validation (sweden)",
+      "id": "manuale_operativo_validazione_qsar_en"
     },
     {
       "label": "backend/questionnaire_catalog.py",
@@ -1087,9 +1071,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "questionnaire_catalog_py",
       "community": 3,
-      "norm_label": "backend/questionnaire_catalog.py"
+      "norm_label": "backend/questionnaire_catalog.py",
+      "id": "questionnaire_catalog_py"
     },
     {
       "label": "Passo 1: Preparazione e Consenso",
@@ -1100,9 +1084,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "manuale_operativo_validazione_step1",
       "community": 3,
-      "norm_label": "passo 1: preparazione e consenso"
+      "norm_label": "passo 1: preparazione e consenso",
+      "id": "manuale_operativo_validazione_step1"
     },
     {
       "label": "Passo 2: Verifica Linguistica e Interviste Cognitive",
@@ -1113,9 +1097,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "manuale_operativo_validazione_step2",
       "community": 3,
-      "norm_label": "passo 2: verifica linguistica e interviste cognitive"
+      "norm_label": "passo 2: verifica linguistica e interviste cognitive",
+      "id": "manuale_operativo_validazione_step2"
     },
     {
       "label": "Passo 3: Studio Pilota",
@@ -1126,9 +1110,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "manuale_operativo_validazione_step3",
       "community": 3,
-      "norm_label": "passo 3: studio pilota"
+      "norm_label": "passo 3: studio pilota",
+      "id": "manuale_operativo_validazione_step3"
     },
     {
       "label": "Passo 4: La Raccolta Dati Principale",
@@ -1139,9 +1123,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "manuale_operativo_validazione_step4",
       "community": 3,
-      "norm_label": "passo 4: la raccolta dati principale"
+      "norm_label": "passo 4: la raccolta dati principale",
+      "id": "manuale_operativo_validazione_step4"
     },
     {
       "label": "Passo 5: Analisi Psicometriche",
@@ -1152,9 +1136,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "manuale_operativo_validazione_step5",
       "community": 3,
-      "norm_label": "passo 5: analisi psicometriche"
+      "norm_label": "passo 5: analisi psicometriche",
+      "id": "manuale_operativo_validazione_step5"
     },
     {
       "label": "Passo 6: Costruzione e Caricamento delle Norme Stanine",
@@ -1165,9 +1149,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "manuale_operativo_validazione_step6",
       "community": 3,
-      "norm_label": "passo 6: costruzione e caricamento delle norme stanine"
+      "norm_label": "passo 6: costruzione e caricamento delle norme stanine",
+      "id": "manuale_operativo_validazione_step6"
     },
     {
       "label": "norm_thresholds database table",
@@ -1178,9 +1162,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "norm_thresholds_table",
       "community": 3,
-      "norm_label": "norm_thresholds database table"
+      "norm_label": "norm_thresholds database table",
+      "id": "norm_thresholds_table"
     },
     {
       "label": "formule-validazione.pdf",
@@ -1191,9 +1175,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "formule_validazione_pdf",
       "community": 3,
-      "norm_label": "formule-validazione.pdf"
+      "norm_label": "formule-validazione.pdf",
+      "id": "formule_validazione_pdf"
     },
     {
       "label": "sorgenti-latex/formule-validazione.pdf",
@@ -1204,9 +1188,191 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "sorgenti_latex_formule_validazione_pdf",
       "community": 3,
-      "norm_label": "sorgenti-latex/formule-validazione.pdf"
+      "norm_label": "sorgenti-latex/formule-validazione.pdf",
+      "id": "sorgenti_latex_formule_validazione_pdf"
+    },
+    {
+      "label": "README.md",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": "readme.md",
+      "id": "readme_readme_md"
+    },
+    {
+      "label": "graphify CLI",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": "graphify cli",
+      "id": "readme_graphify"
+    },
+    {
+      "label": "docs/ directory",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": "docs/ directory",
+      "id": "readme_docs"
+    },
+    {
+      "label": "Gemini backend",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": "gemini backend",
+      "id": "readme_gemini"
+    },
+    {
+      "label": ".env file",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": ".env file",
+      "id": "readme_env"
+    },
+    {
+      "label": "graph.json",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": "graph.json",
+      "id": "readme_graph_json"
+    },
+    {
+      "label": "GRAPH_TREE.html",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": "graph_tree.html",
+      "id": "readme_graph_tree_html"
+    },
+    {
+      "label": ".graphify_analysis.json",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": ".graphify_analysis.json",
+      "id": "readme_analysis_json"
+    },
+    {
+      "label": "agent skill version 0.8.17",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": "agent skill version 0.8.17",
+      "id": "readme_version_agent_skill"
+    },
+    {
+      "label": "CLI package version 0.8.25",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": "cli package version 0.8.25",
+      "id": "readme_version_cli"
+    },
+    {
+      "label": "Extraction Summary",
+      "file_type": "rationale",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": "extraction summary",
+      "id": "readme_extraction_summary"
+    },
+    {
+      "label": "Estimated cost $0.3856",
+      "file_type": "rationale",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": "estimated cost $0.3856",
+      "id": "readme_cost"
+    },
+    {
+      "label": "18 communities detected",
+      "file_type": "rationale",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": "18 communities detected",
+      "id": "readme_communities"
+    },
+    {
+      "label": "CounselorBot docs label",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": "counselorbot docs label",
+      "id": "readme_counselorbot_docs"
     }
   ],
   "links": [
@@ -1764,22 +1930,14 @@
       "confidence_score": 1.0,
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/MELOGNO_2018.pdf",
       "source": "melogno_2018_paper",
-      "target": "qsa_questionario_qsa"
+      "target": "qap_questionario"
     },
     {
       "relation": "conceptually_related_to",
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/MELOGNO_2018.pdf",
-      "source": "qsa_questionario_qsa",
-      "target": "qap_questionario"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/MELOGNO_2018.pdf",
-      "source": "melogno_2018_paper",
+      "source": "qsa_qsa",
       "target": "qap_questionario"
     },
     {
@@ -1802,6 +1960,14 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
+      "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/MELOGNO_2018.pdf",
+      "source": "melogno_2018_paper",
+      "target": "qsa_qsa"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
       "source_file": "implementazione/verifica-implementazione.md",
       "source": "verifica_implementazione_doc",
       "target": "counselorbot_app"
@@ -1812,7 +1978,7 @@
       "confidence_score": 1.0,
       "source_file": "implementazione/verifica-implementazione.md",
       "source": "verifica_implementazione_doc",
-      "target": "qsa_questionnaire"
+      "target": "qsa_qsa"
     },
     {
       "relation": "references",
@@ -1868,7 +2034,7 @@
       "confidence_score": 1.0,
       "source_file": "progetto/comunicazioni/mail-olle.md",
       "source": "mail_olle_it",
-      "target": "qsa_questionnaire"
+      "target": "qsa_qsa"
     },
     {
       "relation": "conceptually_related_to",
@@ -1884,7 +2050,7 @@
       "confidence_score": 1.0,
       "source_file": "prompting/live-db-prompt-translation-review.md",
       "source": "live_db_prompt_review",
-      "target": "qsa_questionnaire"
+      "target": "qsa_qsa"
     },
     {
       "relation": "references",
@@ -1901,14 +2067,6 @@
       "source_file": "questionari/item-catalog.md",
       "source": "item_catalog_doc",
       "target": "qsa_qsa"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "questionari/item-catalog.md",
-      "source": "item_catalog_doc",
-      "target": "qsa_questionnaire"
     },
     {
       "relation": "conceptually_related_to",
@@ -2149,8 +2307,197 @@
       "weight": 1.0,
       "source": "sorgenti_latex_formule_validazione_pdf",
       "target": "formule_validazione_pdf"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_readme_md",
+      "target": "readme_analysis_json"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_readme_md",
+      "target": "readme_docs"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_readme_md",
+      "target": "readme_graph_json"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_readme_md",
+      "target": "readme_graph_tree_html"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_readme_md",
+      "target": "readme_graphify"
+    },
+    {
+      "relation": "produces",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_graphify",
+      "target": "readme_analysis_json"
+    },
+    {
+      "relation": "labels",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_graphify",
+      "target": "readme_counselorbot_docs"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_graphify",
+      "target": "readme_docs"
+    },
+    {
+      "relation": "sources",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_graphify",
+      "target": "readme_env"
+    },
+    {
+      "relation": "generates",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_graphify",
+      "target": "readme_extraction_summary"
+    },
+    {
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_graphify",
+      "target": "readme_gemini"
+    },
+    {
+      "relation": "produces",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_graphify",
+      "target": "readme_graph_json"
+    },
+    {
+      "relation": "produces",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_graphify",
+      "target": "readme_graph_tree_html"
+    },
+    {
+      "relation": "has_version",
+      "confidence": "INFERRED",
+      "confidence_score": 0.7,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_graphify",
+      "target": "readme_version_agent_skill"
+    },
+    {
+      "relation": "has_version",
+      "confidence": "INFERRED",
+      "confidence_score": 0.7,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_graphify",
+      "target": "readme_version_cli"
+    },
+    {
+      "relation": "identified_as",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_docs",
+      "target": "readme_counselorbot_docs"
+    },
+    {
+      "relation": "older_than",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_version_agent_skill",
+      "target": "readme_version_cli"
+    },
+    {
+      "relation": "includes",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_extraction_summary",
+      "target": "readme_communities"
+    },
+    {
+      "relation": "includes",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_extraction_summary",
+      "target": "readme_cost"
     }
   ],
-  "hyperedges": [],
-  "built_at_commit": "767a55e284f1ba4751d89ca01239b48c44b00d5a"
+  "hyperedges": []
 }

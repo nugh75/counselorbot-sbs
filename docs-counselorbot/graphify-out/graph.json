@@ -1,181 +1,8 @@
 {
   "directed": false,
   "multigraph": false,
-  "graph": {
-    "hyperedges": [
-      {
-        "id": "combined_analysis_prereq",
-        "label": "Combined Analysis Prerequisite (QSA/QSAr + ZTPI + Savickas)",
-        "nodes": [
-          "combined_analysis",
-          "qsa",
-          "ztpi",
-          "savickas"
-        ],
-        "relation": "participate_in",
-        "confidence": "EXTRACTED",
-        "confidence_score": 1.0,
-        "source_file": "how-to-use-counselorbot-students.md"
-      },
-      {
-        "id": "informational_assistant_kbs",
-        "label": "Informational Assistant dual knowledge base retrieval",
-        "nodes": [
-          "informational_assistant",
-          "kb_competences",
-          "kb_counselorbot",
-          "ollama_embeddings",
-          "graphify_corpus"
-        ],
-        "relation": "participate_in",
-        "confidence": "EXTRACTED",
-        "confidence_score": 1.0,
-        "source_file": "counselorbot-guide-teachers.md"
-      },
-      {
-        "id": "memory_to_context_injection",
-        "label": "Memory subsystems injected into AI context",
-        "nodes": [
-          "session_memory",
-          "strategy_memory",
-          "certified_strategy_memory",
-          "shared_response_memory",
-          "guided_chat"
-        ],
-        "relation": "participate_in",
-        "confidence": "EXTRACTED",
-        "confidence_score": 0.9,
-        "source_file": "technical-pedagogical-description.md"
-      }
-    ]
-  },
+  "graph": {},
   "nodes": [
-    {
-      "label": ".graphify_detect.json",
-      "file_type": "code",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "id": "graphify_detect",
-      "community": 5,
-      "norm_label": ".graphify_detect.json"
-    },
-    {
-      "label": "files",
-      "file_type": "code",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "id": "graphify_detect_files",
-      "community": 6,
-      "norm_label": "files"
-    },
-    {
-      "label": "code",
-      "file_type": "code",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "id": "graphify_detect_files_code",
-      "community": 6,
-      "norm_label": "code"
-    },
-    {
-      "label": "document",
-      "file_type": "code",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "id": "graphify_detect_files_document",
-      "community": 6,
-      "norm_label": "document"
-    },
-    {
-      "label": "paper",
-      "file_type": "code",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "id": "graphify_detect_files_paper",
-      "community": 6,
-      "norm_label": "paper"
-    },
-    {
-      "label": "image",
-      "file_type": "code",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "id": "graphify_detect_files_image",
-      "community": 6,
-      "norm_label": "image"
-    },
-    {
-      "label": "video",
-      "file_type": "code",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "id": "graphify_detect_files_video",
-      "community": 6,
-      "norm_label": "video"
-    },
-    {
-      "label": "total_files",
-      "file_type": "code",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "id": "graphify_detect_total_files",
-      "community": 5,
-      "norm_label": "total_files"
-    },
-    {
-      "label": "total_words",
-      "file_type": "code",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "id": "graphify_detect_total_words",
-      "community": 5,
-      "norm_label": "total_words"
-    },
-    {
-      "label": "needs_graph",
-      "file_type": "code",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "id": "graphify_detect_needs_graph",
-      "community": 5,
-      "norm_label": "needs_graph"
-    },
-    {
-      "label": "warning",
-      "file_type": "code",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "id": "graphify_detect_warning",
-      "community": 5,
-      "norm_label": "warning"
-    },
-    {
-      "label": "skipped_sensitive",
-      "file_type": "code",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "id": "graphify_detect_skipped_sensitive",
-      "community": 5,
-      "norm_label": "skipped_sensitive"
-    },
-    {
-      "label": "graphifyignore_patterns",
-      "file_type": "code",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "id": "graphify_detect_graphifyignore_patterns",
-      "community": 5,
-      "norm_label": "graphifyignore_patterns"
-    },
-    {
-      "label": "scan_root",
-      "file_type": "code",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "id": "graphify_detect_scan_root",
-      "community": 5,
-      "norm_label": "scan_root"
-    },
     {
       "label": "CounselorBot Platform",
       "file_type": "document",
@@ -185,9 +12,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "counselorbot_platform",
-      "community": 0,
-      "norm_label": "counselorbot platform"
+      "community": 3,
+      "norm_label": "counselorbot platform",
+      "id": "counselorbot_platform"
     },
     {
       "label": "Guided Chat",
@@ -198,9 +25,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "guided_chat",
-      "community": 4,
-      "norm_label": "guided chat"
+      "community": 5,
+      "norm_label": "guided chat",
+      "id": "guided_chat"
     },
     {
       "label": "Informational Assistant (/assistente)",
@@ -211,9 +38,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "informational_assistant",
-      "community": 2,
-      "norm_label": "informational assistant (/assistente)"
+      "community": 1,
+      "norm_label": "informational assistant (/assistente)",
+      "id": "informational_assistant"
     },
     {
       "label": "Open Learner Model (/profilo)",
@@ -224,9 +51,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "open_learner_model",
-      "community": 4,
-      "norm_label": "open learner model (/profilo)"
+      "community": 1,
+      "norm_label": "open learner model (/profilo)",
+      "id": "open_learner_model"
     },
     {
       "label": "Student Booklet",
@@ -237,9 +64,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "student_booklet",
-      "community": 4,
-      "norm_label": "student booklet"
+      "community": 1,
+      "norm_label": "student booklet",
+      "id": "student_booklet"
     },
     {
       "label": "Portfolio",
@@ -250,9 +77,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "portfolio",
-      "community": 4,
-      "norm_label": "portfolio"
+      "community": 1,
+      "norm_label": "portfolio",
+      "id": "portfolio"
     },
     {
       "label": "Session History",
@@ -263,9 +90,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "session_history",
       "community": 7,
-      "norm_label": "session history"
+      "norm_label": "session history",
+      "id": "session_history"
     },
     {
       "label": "OpenCode Workspace (/opencode)",
@@ -276,9 +103,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "opencode",
-      "community": 0,
-      "norm_label": "opencode workspace (/opencode)"
+      "community": 3,
+      "norm_label": "opencode workspace (/opencode)",
+      "id": "opencode"
     },
     {
       "label": "pQBL (pure Question-Based Learning)",
@@ -289,9 +116,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "pqbl",
-      "community": 2,
-      "norm_label": "pqbl (pure question-based learning)"
+      "community": 1,
+      "norm_label": "pqbl (pure question-based learning)",
+      "id": "pqbl"
     },
     {
       "label": "Combined Analysis",
@@ -302,9 +129,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "combined_analysis",
-      "community": 0,
-      "norm_label": "combined analysis"
+      "community": 4,
+      "norm_label": "combined analysis",
+      "id": "combined_analysis"
     },
     {
       "label": "QSA \u2014 Learning Strategies Questionnaire",
@@ -315,9 +142,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "qsa",
-      "community": 1,
-      "norm_label": "qsa \u2014 learning strategies questionnaire"
+      "community": 0,
+      "norm_label": "qsa \u2014 learning strategies questionnaire",
+      "id": "qsa"
     },
     {
       "label": "QSAr \u2014 Reduced QSA",
@@ -328,9 +155,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "qsar",
-      "community": 1,
-      "norm_label": "qsar \u2014 reduced qsa"
+      "community": 0,
+      "norm_label": "qsar \u2014 reduced qsa",
+      "id": "qsar"
     },
     {
       "label": "ZTPI \u2014 Zimbardo Time Perspective Inventory",
@@ -341,9 +168,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "ztpi",
-      "community": 0,
-      "norm_label": "ztpi \u2014 zimbardo time perspective inventory"
+      "community": 4,
+      "norm_label": "ztpi \u2014 zimbardo time perspective inventory",
+      "id": "ztpi"
     },
     {
       "label": "QPCS \u2014 Perceived Strategic Competences",
@@ -354,9 +181,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "qpcs",
-      "community": 0,
-      "norm_label": "qpcs \u2014 perceived strategic competences"
+      "community": 3,
+      "norm_label": "qpcs \u2014 perceived strategic competences",
+      "id": "qpcs"
     },
     {
       "label": "QPCC \u2014 Perceived Competences and Beliefs",
@@ -367,9 +194,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "qpcc",
-      "community": 0,
-      "norm_label": "qpcc \u2014 perceived competences and beliefs"
+      "community": 3,
+      "norm_label": "qpcc \u2014 perceived competences and beliefs",
+      "id": "qpcc"
     },
     {
       "label": "QAP \u2014 Career Adaptability Resources",
@@ -380,9 +207,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "qap",
-      "community": 0,
-      "norm_label": "qap \u2014 career adaptability resources"
+      "community": 3,
+      "norm_label": "qap \u2014 career adaptability resources",
+      "id": "qap"
     },
     {
       "label": "Savickas \u2014 Narrative Career Construction Interview",
@@ -393,9 +220,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "savickas",
-      "community": 0,
-      "norm_label": "savickas \u2014 narrative career construction interview"
+      "community": 4,
+      "norm_label": "savickas \u2014 narrative career construction interview",
+      "id": "savickas"
     },
     {
       "label": "AI Counselors",
@@ -406,9 +233,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "ai_counselors",
-      "community": 3,
-      "norm_label": "ai counselors"
+      "community": 2,
+      "norm_label": "ai counselors",
+      "id": "ai_counselors"
     },
     {
       "label": "Knowledge Base: Strategic Competences",
@@ -419,9 +246,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "kb_competences",
-      "community": 2,
-      "norm_label": "knowledge base: strategic competences"
+      "community": 6,
+      "norm_label": "knowledge base: strategic competences",
+      "id": "kb_competences"
     },
     {
       "label": "Knowledge Base: CounselorBot",
@@ -432,9 +259,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "kb_counselorbot",
-      "community": 2,
-      "norm_label": "knowledge base: counselorbot"
+      "community": 1,
+      "norm_label": "knowledge base: counselorbot",
+      "id": "kb_counselorbot"
     },
     {
       "label": "competenzestrategiche.it project",
@@ -445,9 +272,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "competenzestrategiche",
-      "community": 2,
-      "norm_label": "competenzestrategiche.it project"
+      "community": 6,
+      "norm_label": "competenzestrategiche.it project",
+      "id": "competenzestrategiche"
     },
     {
       "label": "Session Memory",
@@ -458,9 +285,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "session_memory",
-      "community": 0,
-      "norm_label": "session memory"
+      "community": 3,
+      "norm_label": "session memory",
+      "id": "session_memory"
     },
     {
       "label": "Strategy Memory (approved_strategies.md)",
@@ -471,9 +298,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "strategy_memory",
-      "community": 4,
-      "norm_label": "strategy memory (approved_strategies.md)"
+      "community": 5,
+      "norm_label": "strategy memory (approved_strategies.md)",
+      "id": "strategy_memory"
     },
     {
       "label": "Certified Strategy Memory",
@@ -484,9 +311,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "certified_strategy_memory",
-      "community": 4,
-      "norm_label": "certified strategy memory"
+      "community": 5,
+      "norm_label": "certified strategy memory",
+      "id": "certified_strategy_memory"
     },
     {
       "label": "Shared Response Memory",
@@ -497,9 +324,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "shared_response_memory",
-      "community": 2,
-      "norm_label": "shared response memory"
+      "community": 1,
+      "norm_label": "shared response memory",
+      "id": "shared_response_memory"
     },
     {
       "label": "Role: Student",
@@ -510,9 +337,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "role_student",
-      "community": 4,
-      "norm_label": "role: student"
+      "community": 1,
+      "norm_label": "role: student",
+      "id": "role_student"
     },
     {
       "label": "Role: Teacher",
@@ -523,9 +350,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "role_teacher",
-      "community": 2,
-      "norm_label": "role: teacher"
+      "community": 1,
+      "norm_label": "role: teacher",
+      "id": "role_teacher"
     },
     {
       "label": "Role: Researcher / Administrator",
@@ -536,9 +363,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "role_researcher_admin",
-      "community": 1,
-      "norm_label": "role: researcher / administrator"
+      "community": 0,
+      "norm_label": "role: researcher / administrator",
+      "id": "role_researcher_admin"
     },
     {
       "label": "ai4auth (proxy forward-auth)",
@@ -549,9 +376,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "ai4auth",
-      "community": 3,
-      "norm_label": "ai4auth (proxy forward-auth)"
+      "community": 2,
+      "norm_label": "ai4auth (proxy forward-auth)",
+      "id": "ai4auth"
     },
     {
       "label": "AI Configuration (console)",
@@ -562,9 +389,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "console_ai_config",
-      "community": 3,
-      "norm_label": "ai configuration (console)"
+      "community": 2,
+      "norm_label": "ai configuration (console)",
+      "id": "console_ai_config"
     },
     {
       "label": "Model Presets (console)",
@@ -575,9 +402,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "console_presets",
-      "community": 3,
-      "norm_label": "model presets (console)"
+      "community": 2,
+      "norm_label": "model presets (console)",
+      "id": "console_presets"
     },
     {
       "label": "Counselors Management (console)",
@@ -588,9 +415,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "console_counselors",
-      "community": 3,
-      "norm_label": "counselors management (console)"
+      "community": 2,
+      "norm_label": "counselors management (console)",
+      "id": "console_counselors"
     },
     {
       "label": "Benchmark (console)",
@@ -601,9 +428,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "console_benchmark",
-      "community": 1,
-      "norm_label": "benchmark (console)"
+      "community": 0,
+      "norm_label": "benchmark (console)",
+      "id": "console_benchmark"
     },
     {
       "label": "Training Dataset (console)",
@@ -614,9 +441,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "console_training_dataset",
-      "community": 1,
-      "norm_label": "training dataset (console)"
+      "community": 0,
+      "norm_label": "training dataset (console)",
+      "id": "console_training_dataset"
     },
     {
       "label": "Validation Export (console)",
@@ -627,9 +454,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "console_validation_export",
-      "community": 1,
-      "norm_label": "validation export (console)"
+      "community": 0,
+      "norm_label": "validation export (console)",
+      "id": "console_validation_export"
     },
     {
       "label": "Research Contacts (console)",
@@ -640,9 +467,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "console_research_contacts",
-      "community": 1,
-      "norm_label": "research contacts (console)"
+      "community": 0,
+      "norm_label": "research contacts (console)",
+      "id": "console_research_contacts"
     },
     {
       "label": "Administration Plans (console)",
@@ -653,9 +480,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "console_administration_plans",
-      "community": 1,
-      "norm_label": "administration plans (console)"
+      "community": 0,
+      "norm_label": "administration plans (console)",
+      "id": "console_administration_plans"
     },
     {
       "label": "Prompt Audit (console)",
@@ -666,9 +493,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "console_prompt_audit",
-      "community": 1,
-      "norm_label": "prompt audit (console)"
+      "community": 0,
+      "norm_label": "prompt audit (console)",
+      "id": "console_prompt_audit"
     },
     {
       "label": "Role Preview (console)",
@@ -679,9 +506,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "console_role_preview",
-      "community": 1,
-      "norm_label": "role preview (console)"
+      "community": 0,
+      "norm_label": "role preview (console)",
+      "id": "console_role_preview"
     },
     {
       "label": "Monitoring & Costs (console)",
@@ -692,9 +519,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "console_monitoring_costs",
-      "community": 1,
-      "norm_label": "monitoring & costs (console)"
+      "community": 0,
+      "norm_label": "monitoring & costs (console)",
+      "id": "console_monitoring_costs"
     },
     {
       "label": "Jemstedt & B\u00e4lter Method",
@@ -705,9 +532,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "jembalter_method",
-      "community": 2,
-      "norm_label": "jemstedt & balter method"
+      "community": 1,
+      "norm_label": "jemstedt & balter method",
+      "id": "jembalter_method"
     },
     {
       "label": "Pellerey SRL Model",
@@ -718,9 +545,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "pellerey_model",
-      "community": 1,
-      "norm_label": "pellerey srl model"
+      "community": 0,
+      "norm_label": "pellerey srl model",
+      "id": "pellerey_model"
     },
     {
       "label": "Technical Architecture Stack",
@@ -731,9 +558,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "tech_arch_stack",
-      "community": 3,
-      "norm_label": "technical architecture stack"
+      "community": 2,
+      "norm_label": "technical architecture stack",
+      "id": "tech_arch_stack"
     },
     {
       "label": "AIService (provider dispatcher)",
@@ -744,9 +571,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "aiservice",
-      "community": 3,
-      "norm_label": "aiservice (provider dispatcher)"
+      "community": 2,
+      "norm_label": "aiservice (provider dispatcher)",
+      "id": "aiservice"
     },
     {
       "label": "GuidedStep (DB-driven steps)",
@@ -757,9 +584,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "guided_step",
-      "community": 4,
-      "norm_label": "guidedstep (db-driven steps)"
+      "community": 5,
+      "norm_label": "guidedstep (db-driven steps)",
+      "id": "guided_step"
     },
     {
       "label": "configs table (DB config)",
@@ -770,9 +597,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "configs_table",
-      "community": 3,
-      "norm_label": "configs table (db config)"
+      "community": 2,
+      "norm_label": "configs table (db config)",
+      "id": "configs_table"
     },
     {
       "label": "PostgreSQL 15 (production)",
@@ -783,9 +610,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "postgres_prod",
-      "community": 3,
-      "norm_label": "postgresql 15 (production)"
+      "community": 2,
+      "norm_label": "postgresql 15 (production)",
+      "id": "postgres_prod"
     },
     {
       "label": "Ollama embeddings",
@@ -796,9 +623,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "ollama_embeddings",
-      "community": 2,
-      "norm_label": "ollama embeddings"
+      "community": 6,
+      "norm_label": "ollama embeddings",
+      "id": "ollama_embeddings"
     },
     {
       "label": "graphify corpus",
@@ -809,9 +636,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "graphify_corpus",
-      "community": 2,
-      "norm_label": "graphify corpus"
+      "community": 6,
+      "norm_label": "graphify corpus",
+      "id": "graphify_corpus"
     },
     {
       "label": "Self-Regulated Learning (SRL) principle",
@@ -822,9 +649,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "srl_principle",
-      "community": 0,
-      "norm_label": "self-regulated learning (srl) principle"
+      "community": 4,
+      "norm_label": "self-regulated learning (srl) principle",
+      "id": "srl_principle"
     },
     {
       "label": "Narrative Career Construction principle",
@@ -835,9 +662,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "narrative_construction_principle",
-      "community": 0,
-      "norm_label": "narrative career construction principle"
+      "community": 4,
+      "norm_label": "narrative career construction principle",
+      "id": "narrative_construction_principle"
     },
     {
       "label": "Test-mode languages (en/es/sv)",
@@ -848,9 +675,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "test_mode_languages",
-      "community": 0,
-      "norm_label": "test-mode languages (en/es/sv)"
+      "community": 3,
+      "norm_label": "test-mode languages (en/es/sv)",
+      "id": "test_mode_languages"
     },
     {
       "label": "Interface languages (it/en/es/fr/de/sv)",
@@ -861,142 +688,12 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "interface_languages",
-      "community": 0,
-      "norm_label": "interface languages (it/en/es/fr/de/sv)"
+      "community": 3,
+      "norm_label": "interface languages (it/en/es/fr/de/sv)",
+      "id": "interface_languages"
     }
   ],
   "links": [
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "graphify_detect",
-      "target": "graphify_detect_files",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "graphify_detect",
-      "target": "graphify_detect_graphifyignore_patterns",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "graphify_detect",
-      "target": "graphify_detect_needs_graph",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "graphify_detect",
-      "target": "graphify_detect_scan_root",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "graphify_detect",
-      "target": "graphify_detect_skipped_sensitive",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "graphify_detect",
-      "target": "graphify_detect_total_files",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "graphify_detect",
-      "target": "graphify_detect_total_words",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "graphify_detect",
-      "target": "graphify_detect_warning",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "graphify_detect_files",
-      "target": "graphify_detect_files_code",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "graphify_detect_files",
-      "target": "graphify_detect_files_document",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "graphify_detect_files",
-      "target": "graphify_detect_files_image",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "graphify_detect_files",
-      "target": "graphify_detect_files_paper",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".graphify_detect.json",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "graphify_detect_files",
-      "target": "graphify_detect_files_video",
-      "confidence_score": 1.0
-    },
     {
       "relation": "references",
       "confidence": "EXTRACTED",
@@ -1708,51 +1405,5 @@
       "target": "interface_languages"
     }
   ],
-  "hyperedges": [
-    {
-      "id": "combined_analysis_prereq",
-      "label": "Combined Analysis Prerequisite (QSA/QSAr + ZTPI + Savickas)",
-      "nodes": [
-        "combined_analysis",
-        "qsa",
-        "ztpi",
-        "savickas"
-      ],
-      "relation": "participate_in",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "how-to-use-counselorbot-students.md"
-    },
-    {
-      "id": "informational_assistant_kbs",
-      "label": "Informational Assistant dual knowledge base retrieval",
-      "nodes": [
-        "informational_assistant",
-        "kb_competences",
-        "kb_counselorbot",
-        "ollama_embeddings",
-        "graphify_corpus"
-      ],
-      "relation": "participate_in",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "counselorbot-guide-teachers.md"
-    },
-    {
-      "id": "memory_to_context_injection",
-      "label": "Memory subsystems injected into AI context",
-      "nodes": [
-        "session_memory",
-        "strategy_memory",
-        "certified_strategy_memory",
-        "shared_response_memory",
-        "guided_chat"
-      ],
-      "relation": "participate_in",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.9,
-      "source_file": "technical-pedagogical-description.md"
-    }
-  ],
-  "built_at_commit": "eed9f42a185b450acbbe01aabc1c251d1bc45d26"
+  "hyperedges": []
 }
