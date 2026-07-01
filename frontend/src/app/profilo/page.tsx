@@ -366,7 +366,7 @@ export default function ProfilePage() {
                         </button>
                         {/* Tooltip */}
                         <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 scale-90 rounded bg-slate-900 px-2.5 py-1 text-xs text-white opacity-0 transition-all group-hover:opacity-100 group-hover:scale-100 whitespace-nowrap shadow-md">
-                            Su di me e libretto
+                            {t('profile.tab.notebook')}
                             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
                         </div>
                     </div>
@@ -386,7 +386,7 @@ export default function ProfilePage() {
                         </button>
                         {/* Tooltip */}
                         <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 scale-90 rounded bg-slate-900 px-2.5 py-1 text-xs text-white opacity-0 transition-all group-hover:opacity-100 group-hover:scale-100 whitespace-nowrap shadow-md">
-                            Portfolio
+                            {t('profile.tab.portfolio')}
                             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
                         </div>
                     </div>
@@ -406,7 +406,7 @@ export default function ProfilePage() {
                         </button>
                         {/* Tooltip */}
                         <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 scale-90 rounded bg-slate-900 px-2.5 py-1 text-xs text-white opacity-0 transition-all group-hover:opacity-100 group-hover:scale-100 whitespace-nowrap shadow-md">
-                            {t('profile.usedTools')}
+                            {t('profile.tab.tools')}
                             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
                         </div>
                     </div>
@@ -417,10 +417,10 @@ export default function ProfilePage() {
             <section className="space-y-4" aria-labelledby="personal-profile-section">
                 <div>
                     <h2 id="personal-profile-section" className="text-lg font-bold text-slate-800">
-                        Su di me
+                        {t('profile.about.title')}
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                        Questa sezione riguarda solo il tuo profilo: non cambia quando scegli una compilazione.
+                        {t('profile.about.subtitle')}
                     </p>
                 </div>
                 <LearnerProfileCard variant="edit" />
@@ -445,7 +445,7 @@ export default function ProfilePage() {
                             {t('profile.myCompilations')}
                         </h2>
                         <p className="mt-1 text-sm text-slate-500">
-                            Cerca e scegli una compilazione: la selezione aggiorna solo il risultato qui sotto.
+                            {t('profile.sessions.subtitle')}
                         </p>
                     </div>
                     <span className="text-xs font-semibold text-slate-400">
@@ -465,7 +465,7 @@ export default function ProfilePage() {
                 ) : (
                     <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.45fr)]">
                         <label className="block">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Compilazione attiva</span>
+                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profile.sessions.active')}</span>
                             <select
                                 value={selectedSession?.session_id || ''}
                                 onChange={(event) => {
@@ -475,7 +475,7 @@ export default function ProfilePage() {
                                 }}
                                 className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                             >
-                                {filteredSessions.length === 0 && <option value="">Nessuna compilazione trovata</option>}
+                                {filteredSessions.length === 0 && <option value="">{t('profile.sessions.noneFiltered')}</option>}
                                 {filteredSessions.map((session) => (
                                     <option key={session.session_id} value={session.session_id}>
                                         {formatSessionOption(session)}
@@ -484,13 +484,13 @@ export default function ProfilePage() {
                             </select>
                         </label>
                         <label className="block">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Cerca</span>
+                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profile.sessions.search')}</span>
                             <div className="mt-1 flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2">
                                 <Search className="h-4 w-4 text-slate-400" />
                                 <input
                                     value={sessionSearch}
                                     onChange={(event) => setSessionSearch(event.target.value)}
-                                    placeholder="Data, strumento o ID"
+                                    placeholder={t('profile.sessions.searchPlaceholder')}
                                     className="min-w-0 flex-1 bg-transparent text-sm outline-none"
                                 />
                             </div>
@@ -502,7 +502,7 @@ export default function ProfilePage() {
             <section className="space-y-6" aria-labelledby="selected-session-details">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <h2 id="selected-session-details" className="text-lg font-bold text-slate-800">
-                        Risultato della compilazione
+                        {t('profile.sessions.resultTitle')}
                     </h2>
                     {selectedSession && (
                         <span className={`px-3 py-0.5 border text-xs font-bold rounded-full uppercase ${getTypeColor(selectedSession.questionnaire_type)}`}>
@@ -662,18 +662,18 @@ export default function ProfilePage() {
                             <div className="space-y-3 bg-white p-4 border border-slate-100 rounded-xl">
                                 <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
                                     <MessageSquare className="w-4 h-4 text-indigo-600" />
-                                    Conversazione registrata
+                                    {t('profile.conversation.title')}
                                 </h3>
                                 
                                 {convLoading && (
                                     <div className="py-6 text-center text-xs text-slate-400">
-                                        Caricamento messaggi...
+                                        {t('profile.conversation.loading')}
                                     </div>
                                 )}
                                 
                                 {!convLoading && conversation && conversation.length === 0 && (
                                     <p className="text-xs text-slate-400 text-center py-4">
-                                        Nessun messaggio presente in questa sessione.
+                                        {t('profile.conversation.empty')}
                                     </p>
                                 )}
                                 
@@ -685,7 +685,7 @@ export default function ProfilePage() {
                                                 className={`flex flex-col ${msg.role === 'student' ? 'items-end' : 'items-start'}`}
                                             >
                                                 <span className="text-[10px] font-semibold text-slate-400 mb-0.5 uppercase tracking-wider">
-                                                    {msg.role === 'student' ? 'Tu (Studente)' : 'CounselorBot'}
+                                                    {msg.role === 'student' ? t('profile.conversation.student') : 'CounselorBot'}
                                                 </span>
                                                 <div
                                                     className={`max-w-[85%] rounded-lg px-3 py-2 text-sm leading-relaxed break-words ${
@@ -716,15 +716,15 @@ export default function ProfilePage() {
             <section className="space-y-4" aria-labelledby="student-booklet-section">
                 <div>
                     <h2 id="student-booklet-section" className="text-lg font-bold text-slate-800">
-                        Libretto dello studente
+                        {t('profile.bookletSection.title')}
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                        Ogni strumento ha il suo libretto: scegli lo strumento, compila, salva e scarica il PDF.
+                        {t('profile.bookletSection.subtitle')}
                     </p>
                 </div>
                 <div className="glass-panel p-5">
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Strumento del libretto</span>
+                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profile.bookletSection.tool')}</span>
                         <select
                             value={selectedBookletType}
                             onChange={(event) => setSelectedBookletType(event.target.value as BookletType)}
@@ -732,7 +732,7 @@ export default function ProfilePage() {
                         >
                             {bookletTypesOptions.map((type) => (
                                 <option key={type} value={type}>
-                                    {bookletTypeOptionLabel(type)}
+                                    {bookletTypeOptionLabel(type, t, tf)}
                                 </option>
                             ))}
                         </select>
@@ -746,10 +746,10 @@ export default function ProfilePage() {
             <section className="space-y-4" aria-labelledby="portfolio-section">
                 <div>
                     <h2 id="portfolio-section" className="text-lg font-bold text-slate-800">
-                        Portfolio
+                        {t('profile.portfolioSection.title')}
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                        Raccogli i tuoi lavori con titolo, descrizione, categoria, data e immagini.
+                        {t('profile.portfolioSection.subtitle')}
                     </p>
                 </div>
                 <PortfolioCard />

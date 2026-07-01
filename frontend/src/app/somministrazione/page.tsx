@@ -76,12 +76,12 @@ const PAGE_COPY = {
     es: {
         badge: 'Administraciones de prueba',
         title: 'Español',
-        intro: 'Selecciona un instrumento para probar su interfaz de administracion.',
+        intro: 'Selecciona un instrumento para probar su interfaz de administración.',
         warningTitle: 'Importante:',
-        warningBody: 'Estas administraciones sirven para probar adaptaciones de instrumentos. El perfil producido tras el envio es una vista experimental, no un resultado validado o normativo.',
-        draft: 'La redaccion de los items y las estructuras factoriales son versiones de trabajo que requieren revision cientifica y linguistica antes de cualquier recogida piloto o de validacion.',
-        items: 'items',
-        open: 'Version espanola de prueba',
+        warningBody: 'Estas administraciones sirven para probar adaptaciones de instrumentos. El perfil producido tras el envío es una vista experimental, no un resultado validado o normativo.',
+        draft: 'La redacción de los ítems y las estructuras factoriales son versiones de trabajo que requieren revisión científica y lingüística antes de cualquier recogida piloto o de validación.',
+        items: 'ítems',
+        open: 'Versión española de prueba',
         back: 'Volver a CounselorBot',
     },
 };

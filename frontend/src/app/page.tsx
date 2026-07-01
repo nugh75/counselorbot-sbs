@@ -397,7 +397,7 @@ export default function Home() {
         return (
             <div className="page-narrow">
                 <div className="glass-panel p-8 text-center text-sm text-slate-500">
-                    Caricamento accesso...
+                    {t('home.auth.loading')}
                 </div>
             </div>
         );
@@ -408,9 +408,9 @@ export default function Home() {
             <div className="page-narrow">
                 <div className="glass-panel p-8 text-center space-y-5">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900">Accesso richiesto</h1>
+                        <h1 className="text-2xl font-bold text-slate-900">{t('home.auth.title')}</h1>
                         <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                            Accedi con il tuo account per usare CounselorBot, scegliere un counselor e salvare il percorso.
+                            {t('home.auth.body')}
                         </p>
                     </div>
                     <a
@@ -418,7 +418,7 @@ export default function Home() {
                         className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700"
                     >
                         <LogIn className="h-4 w-4" />
-                        Accedi a CounselorBot
+                        {t('home.auth.cta')}
                     </a>
                 </div>
             </div>

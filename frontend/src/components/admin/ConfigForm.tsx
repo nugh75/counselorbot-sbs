@@ -42,6 +42,20 @@ interface PromptPreview {
     selected_result?: { session_id: string; username?: string | null; submitted_at?: string | null } | null;
 }
 
+interface ApprovedStrategyOption {
+    id: string;
+    questionnaires?: string[];
+    texts?: Record<string, string>;
+}
+
+interface CertifiedStrategyOption {
+    slug: string;
+    questionnaire_types?: string[];
+    is_active?: boolean;
+    name_it?: string;
+    [key: `name_${string}`]: string | undefined;
+}
+
 type InstrumentSubsection = 'step-prompts' | 'system-prompts' | 'texts' | 'guided-steps';
 
 // --- Constants ---
@@ -731,8 +745,8 @@ function StepPromptsPanel({
     const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
     useEffect(() => { fetchCounselors().then(setCounselors).catch(() => setCounselors([])); }, []);
 
-    const [allApprovedStrategies, setAllApprovedStrategies] = useState<any[]>([]);
-    const [allCertifiedStrategies, setAllCertifiedStrategies] = useState<any[]>([]);
+    const [allApprovedStrategies, setAllApprovedStrategies] = useState<ApprovedStrategyOption[]>([]);
+    const [allCertifiedStrategies, setAllCertifiedStrategies] = useState<CertifiedStrategyOption[]>([]);
     useEffect(() => {
         fetch('/api/admin/approved-strategies')
             .then((res) => (res.ok ? res.json() : null))
@@ -1830,18 +1844,18 @@ export function ConfigForm() {
             <div className="glass-panel p-6 space-y-4">
                 <h3 className="text-lg font-medium text-slate-900 flex items-center gap-2">
                     <Layers className="w-5 h-5 text-indigo-600" />
-                    Placeholder lingua ({'{lang}'}, {'{lang_native}'})
+                    {t('admin.config.placeholder.title')}
                 </h3>
                 <p className="text-xs text-slate-500 max-w-2xl">
-                    Definisci come vengono risolti i placeholder {'{lang}'} (nome inglese) e {'{lang_native}'} (nome nativo) per ogni lingua supportata. Usati nelle direttive globali e nei system prompt.
+                    {t('admin.config.placeholder.desc')}
                 </p>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b border-slate-200">
-                                <th className="text-left py-2 px-3 text-slate-500 font-medium w-24">Codice</th>
-                                <th className="text-left py-2 px-3 text-slate-500 font-medium">{'{lang}'} — Nome inglese</th>
-                                <th className="text-left py-2 px-3 text-slate-500 font-medium">{'{lang_native}'} — Nome nativo</th>
+                                <th className="text-left py-2 px-3 text-slate-500 font-medium w-24">{t('admin.config.placeholder.code')}</th>
+                                <th className="text-left py-2 px-3 text-slate-500 font-medium">{t('admin.config.placeholder.englishName')}</th>
+                                <th className="text-left py-2 px-3 text-slate-500 font-medium">{t('admin.config.placeholder.nativeName')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1860,7 +1874,7 @@ export function ConfigForm() {
                                                         [code]: [e.target.value, prev[code]?.[1] || ''],
                                                     }));
                                                 }}
-                                                placeholder="English name"
+                                                placeholder={t('admin.config.placeholder.englishPlaceholder')}
                                             />
                                         </td>
                                         <td className="py-2 px-3">
@@ -1873,7 +1887,7 @@ export function ConfigForm() {
                                                         [code]: [prev[code]?.[0] || '', e.target.value],
                                                     }));
                                                 }}
-                                                placeholder="Native name"
+                                                placeholder={t('admin.config.placeholder.nativePlaceholder')}
                                             />
                                         </td>
                                     </tr>
@@ -1886,12 +1900,12 @@ export function ConfigForm() {
                     <button
                         onClick={() => {
                             const json = JSON.stringify(placeholderDraft);
-                            handleSaveConfig({ key: 'placeholder_language_mappings', value: json, description: 'Mappatura placeholder lingua' });
+                            handleSaveConfig({ key: 'placeholder_language_mappings', value: json, description: 'Language placeholder mapping' });
                         }}
                         className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
                     >
                         <Save className="w-4 h-4" />
-                        Salva mappatura lingue
+                        {t('admin.config.placeholder.save')}
                     </button>
                 </div>
             </div>
@@ -1907,12 +1921,12 @@ export function ConfigForm() {
                         {t('admin.config.section.directives')}
                     </h3>
                     <p className="text-xs text-slate-500 max-w-2xl">
-                        Queste direttive vengono iniettate in coda a ogni system prompt del counselorbot, per tutti gli strumenti. Lascia vuoto per usare il default hardcoded. Usa {'{lang}'} e {'{lang_native}'} come placeholder nel campo &quot;Direttiva linguaggio&quot; per il nome della lingua.
+                        {t('admin.config.directives.desc')}
                     </p>
                     {[
-                        { key: 'directive_language', label: 'Direttiva linguaggio [LANGUAGE]', hint: 'Usa {lang} e {lang_native}' },
-                        { key: 'directive_register', label: 'Direttiva registro [REGISTER]' },
-                        { key: 'directive_thinking', label: 'Direttiva thinking [THINKING]' },
+                        { key: 'directive_language', label: t('admin.config.directive.language'), hint: t('admin.config.directive.languageHint') },
+                        { key: 'directive_register', label: t('admin.config.directive.register') },
+                        { key: 'directive_thinking', label: t('admin.config.directive.thinking') },
                     ].map((def) => {
                         const currentVal = getConfigValue(def.key);
                         return (
@@ -1931,7 +1945,7 @@ export function ConfigForm() {
                                     className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-sm min-h-[160px] ring-amber-500 outline-none font-mono text-slate-900 focus:ring-2"
                                     value={currentVal}
                                     onChange={(e) => setConfigDraft(def.key, e.target.value, def.label)}
-                                    placeholder="Lascia vuoto per default hardcoded"
+                                    placeholder={t('admin.config.directive.placeholder')}
                                 />
                             </div>
                         );
