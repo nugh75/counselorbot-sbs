@@ -55,7 +55,7 @@ ai4auth forward-auth at the edge (Nginx). Proxy injects `Remote-*` headers → p
 - **QuestionnaireResult**: per-session survey data
 - **StudentBooklet**: per-instrument narrative booklet
 - **Session memory**: on-disk per-session rolling Markdown (`SESSION_MEMORY_DIR`), thread-safe, with expired-session cleanup
-- **Strategy memory**: read-only knowledge base from `knowledge/approved_strategies.md`
+- **Strategy memory**: knowledge base from `knowledge/approved_strategies.md`, optionally overridden by the admin UI in DB config key `approved_strategies_markdown`
 
 ### AI Providers
 `AIService` (`backend/ai_service.py`) dispatches to openai / anthropic / gemini / mistral / openrouter / ollama / llamacpp through a provider registry. Each provider: `call`, `stream`, `call_max`, `stream_max`. `disable_thinking` per-provider. **Error contract**: config/provider failures raise `AIError` — never returned as chat content.
@@ -183,6 +183,15 @@ make prompt-test Q=QSA STEP=intro COUNSELOR=7 STUDENT=barbaraambu RESP_LANG=en  
 | `POST` | `/api/admin/prompt-audit/dry-run` | Build envelope without calling LLM |
 | `POST` | `/api/admin/prompt-audit/live` | Call LLM with current config |
 | `POST` | `/api/admin/prompt-audit/matrix` | Test multiple provider/model combos |
+
+### Admin: Strategy Knowledge
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/admin/approved-strategies` | List generic RAG strategies (`strategy_ids`) |
+| `POST` | `/api/admin/approved-strategies` | Create generic RAG strategy |
+| `PUT` | `/api/admin/approved-strategies/{strategy_id}` | Update generic RAG strategy |
+| `DELETE` | `/api/admin/approved-strategies/{strategy_id}` | Delete generic RAG strategy |
+| `GET/POST/PUT/DELETE` | `/api/admin/certified-strategies` | Manage certified learning strategies |
 
 ### Admin: Guided Steps
 | Method | Endpoint | Description |

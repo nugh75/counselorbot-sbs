@@ -10,6 +10,7 @@ import { CostStats } from '@/components/admin/CostStats';
 import { PresetsPanel } from '@/components/admin/PresetsPanel';
 import { BenchmarkPanel } from '@/components/admin/BenchmarkPanel';
 import { CounselorsPanel } from '@/components/admin/CounselorsPanel';
+import { ApprovedStrategiesPanel } from '@/components/admin/ApprovedStrategiesPanel';
 import { CertifiedStrategiesPanel } from '@/components/admin/CertifiedStrategiesPanel';
 import { SurveyViewer } from '@/components/admin/SurveyViewer';
 import { QuestionnaireResultsViewer } from '@/components/admin/QuestionnaireResultsViewer';
@@ -27,7 +28,7 @@ import { canUseResearchConsole } from '@/lib/roles';
 
 import { cn } from '@/lib/utils';
 
-type AdminTab = 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'certifiedStrategies' | 'assistantQuestions' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'training' | 'pqbl' | 'rolePreview';
+type AdminTab = 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'approvedStrategies' | 'certifiedStrategies' | 'assistantQuestions' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'training' | 'pqbl' | 'rolePreview';
 
 export default function AdminPage() {
     const router = useRouter();
@@ -45,6 +46,7 @@ export default function AdminPage() {
                 { id: 'config', label: t('admin.tab.config'), icon: Settings },
                 { id: 'presets', label: t('admin.tab.presets'), icon: SlidersHorizontal },
                 { id: 'counselors', label: t('admin.tab.counselors'), icon: Users },
+                { id: 'approvedStrategies', label: t('admin.tab.approvedStrategies'), icon: Database },
                 { id: 'certifiedStrategies', label: t('admin.tab.certified'), icon: Award },
                 { id: 'assistantQuestions', label: t('admin.tab.assistantQuestions'), icon: MessageCircleQuestion },
             ],
@@ -210,6 +212,7 @@ export default function AdminPage() {
                         {activeTab === 'presets' && <PresetsPanel />}
                         {activeTab === 'benchmark' && <BenchmarkPanel />}
                         {activeTab === 'counselors' && <CounselorsPanel />}
+                        {activeTab === 'approvedStrategies' && <ApprovedStrategiesPanel />}
                         {activeTab === 'certifiedStrategies' && <CertifiedStrategiesPanel />}
                         {activeTab === 'assistantQuestions' && <AssistantQuestionsPanel />}
                         {activeTab === 'surveys' && <SurveyViewer />}

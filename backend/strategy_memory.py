@@ -16,8 +16,15 @@ from .memory_embeddings import memory_embedder
 
 
 DEFAULT_PATH = Path("knowledge/approved_strategies.md")
+APPROVED_STRATEGIES_CONFIG_KEY = "approved_strategies_markdown"
 MAX_STRATEGY_CONTEXT_CHARS = 1000
 MAX_SHARED_RESPONSE_CHARS = 1200
+STRATEGY_FILE_HEADER = """# Strategie condivise
+
+Questo archivio contiene interventi generici candidati all'uso collettivo.
+Il backend inietta nel contesto solo voci con `status: approved`. I feedback
+sono raccolti separatamente e non inseriscono testi personali in questo file.
+"""
 
 
 class StrategyMemory:
@@ -34,11 +41,12 @@ class StrategyMemory:
         language: str = "it",
         limit: int = 2,
         ai_service=None,
+        markdown_text: str | None = None,
     ) -> List[Dict[str, str]]:
         query_terms = self._terms(f"{phase} {query}")
         questionnaire = (questionnaire_type or "").upper()
         eligible = []
-        for strategy in self._load():
+        for strategy in self.list_records(markdown_text):
             if strategy.get("status", "").lower() != "approved":
                 continue
             accepted = {item.upper() for item in self._csv(strategy.get("questionnaires", ""))}
@@ -87,20 +95,31 @@ class StrategyMemory:
         lines.extend(f"- [{entry['id']}] {entry['text']}" for entry in strategies)
         return "\n".join(lines)[:MAX_STRATEGY_CONTEXT_CHARS]
 
-    def approved_ids(self) -> set[str]:
+    def approved_ids(self, markdown_text: str | None = None) -> set[str]:
         return {
             strategy["id"]
-            for strategy in self._load()
+            for strategy in self.list_records(markdown_text)
             if strategy.get("status", "").lower() == "approved"
         }
 
-    def _load(self) -> List[Dict[str, str]]:
+    def list_records(self, markdown_text: str | None = None) -> List[Dict[str, str]]:
+        if markdown_text is not None:
+            return self.parse_markdown(markdown_text)
         try:
             text = self._path.read_text(encoding="utf-8")
         except OSError:
             return []
+        return self.parse_markdown(text)
+
+    def read_markdown(self) -> str:
+        try:
+            return self._path.read_text(encoding="utf-8")
+        except OSError:
+            return STRATEGY_FILE_HEADER
+
+    def parse_markdown(self, text: str) -> List[Dict[str, str]]:
         records = []
-        for block in re.split(r"(?=^##\s+)", text, flags=re.MULTILINE):
+        for block in re.split(r"(?=^##\s+)", text or "", flags=re.MULTILINE):
             heading = re.match(r"^##\s+([A-Za-z0-9_.-]+)\s*$", block, flags=re.MULTILINE)
             if not heading:
                 continue
@@ -109,6 +128,23 @@ class StrategyMemory:
                 record[key] = value.strip()
             records.append(record)
         return records
+
+    def render_markdown(self, records: List[Dict[str, str]]) -> str:
+        blocks = [STRATEGY_FILE_HEADER.rstrip()]
+        for record in records:
+            strategy_id = str(record.get("id") or "").strip()
+            if not strategy_id:
+                continue
+            lines = [f"## {strategy_id}"]
+            for key in sorted(k for k in record.keys() if k != "id"):
+                value = str(record.get(key) or "").replace("\n", " ").strip()
+                if value:
+                    lines.append(f"- {key}: {value}")
+            blocks.append("\n".join(lines))
+        return "\n\n".join(blocks).rstrip() + "\n"
+
+    def _load(self) -> List[Dict[str, str]]:
+        return self.list_records()
 
     def _csv(self, value: str) -> List[str]:
         return [item.strip() for item in value.split(",") if item.strip()]

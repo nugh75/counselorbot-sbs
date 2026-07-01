@@ -2077,6 +2077,7 @@ const pqblSv: Dict = {
 };
 
 const certifiedIt: Dict = {
+    'admin.tab.approvedStrategies': 'Strategie RAG',
     'admin.tab.certified': 'Strategie certificate',
     'admin.certified.title': 'Strategie di apprendimento certificate',
     'admin.certified.subtitle': 'Catalogo strutturato: nome, fattori collegati e quando raccomandarle. Le voci certificate entrano nel contesto della chat.',
@@ -2107,6 +2108,7 @@ const certifiedIt: Dict = {
 };
 
 const certifiedEn: Dict = {
+    'admin.tab.approvedStrategies': 'RAG strategies',
     'admin.tab.certified': 'Certified strategies',
     'admin.certified.title': 'Certified learning strategies',
     'admin.certified.subtitle': 'Structured catalog: name, linked factors and when to recommend them. Certified entries enter the chat context.',

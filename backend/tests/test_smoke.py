@@ -357,6 +357,11 @@ EXPECTED_ROUTES = {
     ("PUT", "/admin/administration-plans/{plan_id}"),
     ("DELETE", "/admin/administration-plans/{plan_id}"),
     ("GET", "/admin/administration-plans/{plan_id}/responses"),
+    # Strategie RAG approvate
+    ("GET", "/admin/approved-strategies"),
+    ("POST", "/admin/approved-strategies"),
+    ("PUT", "/admin/approved-strategies/{strategy_id}"),
+    ("DELETE", "/admin/approved-strategies/{strategy_id}"),
     # Catalogo strategie certificate
     ("GET", "/admin/certified-strategies"),
     ("POST", "/admin/certified-strategies"),
@@ -671,6 +676,53 @@ def test_counselors_crud_and_public():
     assert pub_it["description"] == "Tutor calmo"
     # delete
     assert client.delete(f"/admin/counselors/{cid}").status_code == 200
+
+
+def test_approved_strategies_crud_and_retrieve_from_db_override():
+    from backend.strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, strategy_memory
+
+    strategy_id = "test-planning-week"
+    client.delete(f"/admin/approved-strategies/{strategy_id}")
+
+    r = client.post("/admin/approved-strategies", json={
+        "id": strategy_id,
+        "status": "approved",
+        "questionnaires": ["QSA"],
+        "keywords": "pianificazione settimana obiettivo",
+        "texts": {
+            "it": "Collegare la riflessione a un obiettivo verificabile entro la settimana.",
+            "en": "Connect reflection to a verifiable goal during the week.",
+        },
+    })
+    assert r.status_code == 200, r.text
+    assert r.json()["id"] == strategy_id
+
+    assert client.post("/admin/approved-strategies", json={"id": strategy_id}).status_code == 409
+
+    r = client.put(f"/admin/approved-strategies/{strategy_id}", json={
+        "status": "approved",
+        "keywords": "pianificazione settimana prossimo passo",
+    })
+    assert r.status_code == 200, r.text
+    assert "prossimo passo" in (r.json()["keywords"] or "")
+
+    db = _TestSession()
+    try:
+        stored = db.query(models.Config).filter(models.Config.key == APPROVED_STRATEGIES_CONFIG_KEY).one()
+        hit = strategy_memory.retrieve(
+            questionnaire_type="QSA",
+            query="devo pianificare il prossimo passo della settimana",
+            language="it",
+            markdown_text=stored.value,
+        )
+        assert any(item["id"] == strategy_id for item in hit)
+    finally:
+        db.close()
+
+    assert client.delete(f"/admin/approved-strategies/{strategy_id}").status_code == 200
+    r = client.get("/admin/approved-strategies")
+    assert r.status_code == 200
+    assert not any(item["id"] == strategy_id for item in r.json()["strategies"])
 
 
 def test_certified_strategies_crud_and_retrieve():
