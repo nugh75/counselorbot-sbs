@@ -433,7 +433,7 @@ def _guided_prompt_markdown(
         prompt_key, system_prompt = _resolve_system_prompt(
             ai_service, step.system_prompt_mode, step.id, db
         )
-        system_prompt = _apply_language_directive(system_prompt, locale)
+        system_prompt = _apply_language_directive(system_prompt, locale, db=db)
         system_prompt = _apply_qsa_factor_directive(
             system_prompt, questionnaire_type, locale
         )

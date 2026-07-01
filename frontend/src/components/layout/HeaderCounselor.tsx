@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useSyncExternalStore, useCallback } from 'react';
+import { useEffect, useState, useRef, useSyncExternalStore } from 'react';
 import { ChevronDown, User } from 'lucide-react';
 import {
     fetchCounselors,
@@ -22,12 +22,13 @@ export function HeaderCounselor() {
     );
     const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
 
-    const load = useCallback(async () => {
-        const list = await fetchCounselors(lang, lang);
-        setCounselors(list);
+    useEffect(() => {
+        let cancelled = false;
+        fetchCounselors(lang, lang)
+            .then((list) => { if (!cancelled) setCounselors(list); })
+            .catch(() => { if (!cancelled) setCounselors([]); });
+        return () => { cancelled = true; };
     }, [lang]);
-
-    useEffect(() => { void load(); }, [load]);
 
     useEffect(() => {
         const onClick = (e: MouseEvent) => {

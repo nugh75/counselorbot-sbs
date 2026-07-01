@@ -91,6 +91,7 @@ class PromptAuditRequest(BaseModel):
     max_tokens: Optional[int] = None
     include_knowledge: bool = True
     include_history: bool = False
+    component_flags: Optional[Dict[str, bool]] = None
 
 
 class PromptAuditMatrixRequest(BaseModel):
