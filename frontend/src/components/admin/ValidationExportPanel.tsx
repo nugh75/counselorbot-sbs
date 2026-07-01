@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Database, Download, Filter, RefreshCw } from 'lucide-react';
+import { useI18n } from '@/lib/i18n-context';
 
 interface Instrument {
     code: string;
@@ -43,6 +44,7 @@ function queryString(filters: { instrument: string; locale: string; version: str
 }
 
 export function ValidationExportPanel() {
+    const { t, lang } = useI18n();
     const [instruments, setInstruments] = useState<Instrument[]>([]);
     const [instrument, setInstrument] = useState('QSA');
     const [locale, setLocale] = useState('es');
@@ -64,9 +66,9 @@ export function ValidationExportPanel() {
                     setInstrument(data[0].code);
                 }
             })
-            .catch(() => setMessage('Errore nel caricamento degli strumenti.'));
+            .catch(() => setMessage(t('admin.validation.error.instruments')));
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [t]);
 
     const load = async () => {
         setLoading(true);
@@ -81,7 +83,7 @@ export function ValidationExportPanel() {
             setSummary(await summaryRes.json());
             setRows(await rowsRes.json());
         } catch {
-            setMessage('Errore nel caricamento del dataset di validazione.');
+            setMessage(t('admin.validation.error.load'));
         } finally {
             setLoading(false);
         }
@@ -101,21 +103,27 @@ export function ValidationExportPanel() {
         return `/somministrazione/${instrument}/${locale || 'es'}${qs ? `?${qs}` : ''}`;
     }, [instrument, locale, version, study]);
     const collectionUrl = typeof window === 'undefined' ? collectionPath : `${window.location.origin}${collectionPath}`;
+    const instrumentLabel = (item: Instrument) => {
+        if (lang === 'it') return item.name_it || item.name_en || item.code;
+        if (lang === 'es') return item.name_es || item.name_en || item.code;
+        if (lang === 'sv') return item.name_sv || item.name_en || item.code;
+        return item.name_en || item.name_it || item.code;
+    };
 
     return (
         <div className="space-y-5">
             <section className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950">
-                Questa sezione prepara il dataset per la validazione psicometrica: salva ed esporta risposte grezze item-per-item, versione dello strumento, lingua, durata e punteggi sintetici. L&apos;analisi statistica resta esterna, ad esempio in R, JASP, SPSS o Mplus.
+                {t('admin.validation.intro')}
             </section>
 
             <section className="rounded-lg border border-slate-200 bg-white p-4">
                 <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
                     <Filter className="h-4 w-4 text-indigo-600" />
-                    Scelte di validazione
+                    {t('admin.validation.choices')}
                 </div>
                 <div className="grid gap-4 md:grid-cols-4">
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase text-slate-500">Strumento</span>
+                        <span className="text-xs font-semibold uppercase text-slate-500">{t('admin.validation.instrument')}</span>
                         <select
                             value={instrument}
                             onChange={(event) => setInstrument(event.target.value)}
@@ -123,13 +131,13 @@ export function ValidationExportPanel() {
                         >
                             {instruments.map((item) => (
                                 <option key={item.code} value={item.code}>
-                                    {item.code} - {item.name_es || item.name_en || item.code}
+                                    {item.code} - {instrumentLabel(item)}
                                 </option>
                             ))}
                         </select>
                     </label>
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase text-slate-500">Lingua</span>
+                        <span className="text-xs font-semibold uppercase text-slate-500">{t('admin.validation.language')}</span>
                         <select
                             value={locale}
                             onChange={(event) => setLocale(event.target.value)}
@@ -137,13 +145,13 @@ export function ValidationExportPanel() {
                         >
                             {LOCALES.map((item) => (
                                 <option key={item || 'all'} value={item}>
-                                    {item || 'tutte'}
+                                    {item || t('admin.validation.allLanguages')}
                                 </option>
                             ))}
                         </select>
                     </label>
                     <label className="block md:col-span-2">
-                        <span className="text-xs font-semibold uppercase text-slate-500">Versione questionario</span>
+                        <span className="text-xs font-semibold uppercase text-slate-500">{t('admin.validation.version')}</span>
                         <input
                             value={version}
                             onChange={(event) => setVersion(event.target.value)}
@@ -152,7 +160,7 @@ export function ValidationExportPanel() {
                         />
                     </label>
                     <label className="block md:col-span-2">
-                        <span className="text-xs font-semibold uppercase text-slate-500">Codice studio opzionale</span>
+                        <span className="text-xs font-semibold uppercase text-slate-500">{t('admin.validation.studyCode')}</span>
                         <input
                             value={study}
                             onChange={(event) => setStudy(event.target.value)}
@@ -168,18 +176,18 @@ export function ValidationExportPanel() {
                         className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                     >
                         <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                        Aggiorna
+                        {t('common.refresh')}
                     </button>
                     <a
                         href={exportUrl}
                         className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
                     >
                         <Download className="h-4 w-4" />
-                        Esporta CSV item-level
+                        {t('admin.validation.exportCsv')}
                     </a>
                 </div>
                 <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
-                    <p className="text-xs font-semibold uppercase text-slate-500">Link raccolta dati</p>
+                    <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.validation.collectionLink')}</p>
                     <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                         <input
                             readOnly
@@ -191,7 +199,7 @@ export function ValidationExportPanel() {
                             onClick={() => navigator.clipboard?.writeText(collectionUrl)}
                             className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                         >
-                            Copia
+                            {t('common.copy')}
                         </button>
                     </div>
                 </div>
@@ -202,47 +210,47 @@ export function ValidationExportPanel() {
                 <div className="rounded-lg border border-slate-200 bg-white p-4">
                     <div className="flex items-center gap-2 text-xs font-semibold uppercase text-slate-500">
                         <Database className="h-4 w-4" />
-                        Risposte
+                        {t('admin.validation.responses')}
                     </div>
                     <p className="mt-2 text-3xl font-bold text-slate-900">{summary?.total ?? 0}</p>
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-white p-4 md:col-span-2">
-                    <p className="text-xs font-semibold uppercase text-slate-500">Versioni</p>
+                    <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.validation.versions')}</p>
                     <p className="mt-2 text-sm text-slate-700">
                         {summary && Object.keys(summary.by_version).length
                             ? Object.entries(summary.by_version).map(([key, value]) => `${key}: ${value}`).join(' · ')
-                            : 'Nessuna versione raccolta'}
+                            : t('admin.validation.noVersions')}
                     </p>
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-white p-4">
-                    <p className="text-xs font-semibold uppercase text-slate-500">Ultima risposta</p>
+                    <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.validation.latestResponse')}</p>
                     <p className="mt-2 text-sm font-medium text-slate-700">
-                        {summary?.latest_submitted_at ? new Date(summary.latest_submitted_at).toLocaleString('it-IT') : '-'}
+                        {summary?.latest_submitted_at ? new Date(summary.latest_submitted_at).toLocaleString(lang) : '-'}
                     </p>
                 </div>
             </section>
 
             <section className="rounded-lg border border-slate-200 bg-white">
                 <div className="border-b border-slate-200 px-4 py-3">
-                    <h2 className="text-sm font-semibold text-slate-900">Ultime risposte grezze</h2>
+                    <h2 className="text-sm font-semibold text-slate-900">{t('admin.validation.latestRaw')}</h2>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b border-slate-100 text-left text-xs uppercase text-slate-500">
-                                <th className="px-4 py-2">Data</th>
-                                <th className="px-4 py-2">Sessione</th>
-                                <th className="px-4 py-2">Strumento</th>
-                                <th className="px-4 py-2">Lingua</th>
-                                <th className="px-4 py-2">Versione</th>
-                                <th className="px-4 py-2">Item</th>
-                                <th className="px-4 py-2">Durata</th>
+                                <th className="px-4 py-2">{t('admin.validation.table.date')}</th>
+                                <th className="px-4 py-2">{t('admin.validation.table.session')}</th>
+                                <th className="px-4 py-2">{t('admin.validation.table.instrument')}</th>
+                                <th className="px-4 py-2">{t('admin.validation.table.language')}</th>
+                                <th className="px-4 py-2">{t('admin.validation.table.version')}</th>
+                                <th className="px-4 py-2">{t('admin.validation.table.items')}</th>
+                                <th className="px-4 py-2">{t('admin.validation.table.duration')}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {rows.map((row) => (
                                 <tr key={row.id} className="border-b border-slate-100">
-                                    <td className="px-4 py-2 text-slate-600">{new Date(row.submitted_at).toLocaleString('it-IT')}</td>
+                                    <td className="px-4 py-2 text-slate-600">{new Date(row.submitted_at).toLocaleString(lang)}</td>
                                     <td className="px-4 py-2 font-mono text-xs text-slate-500">{row.session_id}</td>
                                     <td className="px-4 py-2 font-semibold text-slate-800">{row.instrument_code}</td>
                                     <td className="px-4 py-2">{row.locale}</td>
@@ -254,7 +262,7 @@ export function ValidationExportPanel() {
                             {!rows.length && (
                                 <tr>
                                     <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
-                                        Nessuna risposta grezza trovata per questi filtri.
+                                        {t('admin.validation.empty')}
                                     </td>
                                 </tr>
                             )}

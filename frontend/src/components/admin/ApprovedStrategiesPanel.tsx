@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Check, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react';
+import { useI18n } from '@/lib/i18n-context';
 
 type Lang = 'it' | 'en' | 'es' | 'fr' | 'de' | 'sv';
 
@@ -38,6 +39,7 @@ const EMPTY: FormState = {
 };
 
 export function ApprovedStrategiesPanel() {
+    const { t } = useI18n();
     const [strategies, setStrategies] = useState<ApprovedStrategy[]>([]);
     const [source, setSource] = useState<string>('file');
     const [loading, setLoading] = useState(true);
@@ -59,11 +61,11 @@ export function ApprovedStrategiesPanel() {
             setSource(data.source || 'file');
         } catch (e) {
             console.error('Failed to load approved strategies', e);
-            setError('Impossibile caricare le strategie RAG.');
+            setError(t('admin.approvedStrategies.error.load'));
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [t]);
 
     useEffect(() => { void refresh(); }, [refresh]);
 
@@ -110,7 +112,7 @@ export function ApprovedStrategiesPanel() {
 
     const save = async () => {
         if (!form.id.trim()) {
-            setError('Inserisci un id.');
+            setError(t('admin.approvedStrategies.error.idRequired'));
             return;
         }
         setSaving(true);
@@ -130,14 +132,14 @@ export function ApprovedStrategiesPanel() {
             await refresh();
         } catch (e) {
             console.error('Failed to save approved strategy', e);
-            setError('Salvataggio non riuscito. Controlla id duplicati o campi non validi.');
+            setError(t('admin.approvedStrategies.error.save'));
         } finally {
             setSaving(false);
         }
     };
 
     const remove = async (id: string) => {
-        if (!window.confirm(`Eliminare la strategia ${id}?`)) return;
+        if (!window.confirm(t('admin.approvedStrategies.confirmDelete', { id }))) return;
         setError(null);
         try {
             const res = await fetch(`/api/admin/approved-strategies/${encodeURIComponent(id)}`, { method: 'DELETE' });
@@ -145,7 +147,7 @@ export function ApprovedStrategiesPanel() {
             await refresh();
         } catch (e) {
             console.error('Failed to delete approved strategy', e);
-            setError('Eliminazione non riuscita.');
+            setError(t('admin.approvedStrategies.error.delete'));
         }
     };
 
@@ -156,22 +158,22 @@ export function ApprovedStrategiesPanel() {
         <div className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <label className="flex flex-col text-xs font-medium text-slate-500">
-                    Id strategia
+                    {t('admin.approvedStrategies.field.id')}
                     <input className={inputCls} value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value })} placeholder="qsa-planning-next-step" />
                 </label>
                 <label className="flex flex-col text-xs font-medium text-slate-500">
-                    Stato
+                    {t('admin.approvedStrategies.field.status')}
                     <select className={inputCls} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as FormState['status'] })}>
-                        <option value="approved">Approvata</option>
-                        <option value="draft">Bozza</option>
+                        <option value="approved">{t('admin.approvedStrategies.status.approved')}</option>
+                        <option value="draft">{t('admin.approvedStrategies.status.draft')}</option>
                     </select>
                 </label>
                 <label className="flex flex-col text-xs font-medium text-slate-500">
-                    Questionari
+                    {t('admin.approvedStrategies.field.questionnaires')}
                     <input className={inputCls} value={form.questionnaires} onChange={(e) => setForm({ ...form, questionnaires: e.target.value })} placeholder="QSA, QSAr" />
                 </label>
                 <label className="flex flex-col text-xs font-medium text-slate-500">
-                    Keyword retrieval
+                    {t('admin.approvedStrategies.field.keywords')}
                     <input className={inputCls} value={form.keywords} onChange={(e) => setForm({ ...form, keywords: e.target.value })} placeholder="C2 pianificazione obiettivo" />
                 </label>
             </div>
@@ -189,21 +191,21 @@ export function ApprovedStrategiesPanel() {
                 ))}
             </div>
             <label className="mt-2 flex flex-col text-xs font-medium text-slate-500">
-                Testo strategia ({lang})
+                {t('admin.approvedStrategies.field.text', { lang })}
                 <textarea
                     className={areaCls}
                     value={form.texts[lang] || ''}
                     onChange={(e) => setForm((current) => ({ ...current, texts: { ...current.texts, [lang]: e.target.value } }))}
-                    placeholder="Testo inserito nel blocco KNOWLEDGE quando la strategia viene recuperata."
+                    placeholder={t('admin.approvedStrategies.placeholder.text')}
                 />
             </label>
 
             <div className="mt-4 flex items-center gap-2">
                 <button type="button" disabled={saving} onClick={() => void save()} className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
-                    <Check className="h-4 w-4" /> Salva
+                    <Check className="h-4 w-4" /> {t('common.save')}
                 </button>
                 <button type="button" onClick={cancel} className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 hover:bg-slate-50">
-                    <X className="h-4 w-4" /> Annulla
+                    <X className="h-4 w-4" /> {t('common.cancel')}
                 </button>
             </div>
         </div>
@@ -213,18 +215,18 @@ export function ApprovedStrategiesPanel() {
         <div className="space-y-4">
             <div className="flex flex-wrap items-end justify-between gap-3 rounded-lg border border-slate-200 bg-white p-4">
                 <div>
-                    <h2 className="text-lg font-bold text-slate-900">Strategie RAG approvate</h2>
+                    <h2 className="text-lg font-bold text-slate-900">{t('admin.approvedStrategies.title')}</h2>
                     <p className="text-sm text-slate-500">
-                        Modifica le strategie generiche che possono comparire in <span className="font-mono">strategy_ids</span>. Origine attuale: {source === 'db' ? 'override DB' : 'file versionato'}.
+                        {t('admin.approvedStrategies.subtitle', { source: source === 'db' ? t('admin.approvedStrategies.source.db') : t('admin.approvedStrategies.source.file') })}
                     </p>
                 </div>
                 <div className="flex gap-2">
                     <button type="button" onClick={() => void refresh()} className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 hover:bg-slate-50">
-                        <RefreshCw className="h-4 w-4" /> Aggiorna
+                        <RefreshCw className="h-4 w-4" /> {t('common.refresh')}
                     </button>
                     {editingId === null && (
                         <button type="button" onClick={startNew} className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700">
-                            <Plus className="h-4 w-4" /> Nuova strategia
+                            <Plus className="h-4 w-4" /> {t('admin.approvedStrategies.new')}
                         </button>
                     )}
                 </div>
@@ -237,17 +239,17 @@ export function ApprovedStrategiesPanel() {
                 <table className="w-full text-left text-sm">
                     <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-400">
                         <tr>
-                            <th className="px-3 py-2 font-semibold">Strategia</th>
-                            <th className="px-3 py-2 font-semibold">Questionari</th>
-                            <th className="px-3 py-2 font-semibold">Stato</th>
-                            <th className="px-3 py-2 font-semibold">Keyword</th>
-                            <th className="px-3 py-2 text-right font-semibold">Azioni</th>
+                            <th className="px-3 py-2 font-semibold">{t('admin.approvedStrategies.table.strategy')}</th>
+                            <th className="px-3 py-2 font-semibold">{t('admin.approvedStrategies.table.questionnaires')}</th>
+                            <th className="px-3 py-2 font-semibold">{t('admin.approvedStrategies.table.status')}</th>
+                            <th className="px-3 py-2 font-semibold">{t('admin.approvedStrategies.table.keyword')}</th>
+                            <th className="px-3 py-2 text-right font-semibold">{t('admin.approvedStrategies.table.actions')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {loading && <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-400">Caricamento...</td></tr>}
+                        {loading && <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-400">{t('common.loading')}</td></tr>}
                         {!loading && strategies.length === 0 && editingId !== 'new' && (
-                            <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-400">Nessuna strategia RAG configurata.</td></tr>
+                            <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-400">{t('admin.approvedStrategies.empty')}</td></tr>
                         )}
                         {strategies.map((strategy) => (
                             editingId === strategy.id ? (
@@ -261,14 +263,14 @@ export function ApprovedStrategiesPanel() {
                                     <td className="px-3 py-2 text-xs text-slate-500">{(strategy.questionnaires || []).join(', ') || '-'}</td>
                                     <td className="px-3 py-2">
                                         <span className={`rounded px-2 py-0.5 text-xs font-medium ${strategy.status === 'approved' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                                            {strategy.status === 'approved' ? 'Approvata' : 'Bozza'}
+                                            {strategy.status === 'approved' ? t('admin.approvedStrategies.status.approved') : t('admin.approvedStrategies.status.draft')}
                                         </span>
                                     </td>
                                     <td className="max-w-xs truncate px-3 py-2 text-xs text-slate-500">{strategy.keywords || '-'}</td>
                                     <td className="px-3 py-2">
                                         <div className="flex justify-end gap-1">
-                                            <button type="button" onClick={() => startEdit(strategy)} className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900" aria-label={`Modifica ${strategy.id}`}><Pencil className="h-4 w-4" /></button>
-                                            <button type="button" onClick={() => void remove(strategy.id)} className="rounded p-1.5 text-red-500 hover:bg-red-50" aria-label={`Elimina ${strategy.id}`}><Trash2 className="h-4 w-4" /></button>
+                                            <button type="button" onClick={() => startEdit(strategy)} className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900" aria-label={t('admin.approvedStrategies.editAria', { id: strategy.id })}><Pencil className="h-4 w-4" /></button>
+                                            <button type="button" onClick={() => void remove(strategy.id)} className="rounded p-1.5 text-red-500 hover:bg-red-50" aria-label={t('admin.approvedStrategies.deleteAria', { id: strategy.id })}><Trash2 className="h-4 w-4" /></button>
                                         </div>
                                     </td>
                                 </tr>

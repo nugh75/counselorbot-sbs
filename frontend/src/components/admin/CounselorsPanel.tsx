@@ -201,7 +201,7 @@ export function CounselorsPanel() {
                 <div className="col-span-full">
                     <div className="mb-1 text-xs font-medium text-slate-500">{t('admin.counselors.language')}</div>
                     <div className="flex flex-wrap gap-2">
-                        <button key="*" type="button" onClick={() => toggleLang('*')} className={`rounded-md border px-2 py-1 text-xs font-medium ${form.language.includes('*') ? 'border-indigo-300 bg-indigo-100 text-indigo-700' : 'border-slate-200 bg-white text-slate-500'}`}>{t('admin.counselors.allLanguages') || 'Tutte (*)'}</button>
+                        <button key="*" type="button" onClick={() => toggleLang('*')} className={`rounded-md border px-2 py-1 text-xs font-medium ${form.language.includes('*') ? 'border-indigo-300 bg-indigo-100 text-indigo-700' : 'border-slate-200 bg-white text-slate-500'}`}>{t('admin.counselors.allLanguages')}</button>
                         {LANGUAGES.map((l) => (
                             <button key={l.code} type="button" onClick={() => toggleLang(l.code)} className={`rounded-md border px-2 py-1 text-xs font-medium ${form.language.includes(l.code) ? 'border-indigo-300 bg-indigo-100 text-indigo-700' : 'border-slate-200 bg-white text-slate-500'}`}>{l.label}</button>
                         ))}

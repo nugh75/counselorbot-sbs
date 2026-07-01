@@ -337,7 +337,7 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
     if (locale === 'es' && !backendItemsChecked) {
         return (
             <div lang={locale} className="mx-auto max-w-2xl rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
-                Caricamento della versione spagnola...
+                Cargando la versión española...
             </div>
         );
     }
@@ -345,9 +345,9 @@ export function QuestionnaireRunner({ copy, instrument, locale }: QuestionnaireR
     if (locale === 'es' && backendItemsChecked && backendItems === null) {
         return (
             <div lang={locale} className="mx-auto max-w-2xl space-y-4 rounded-xl border border-amber-300 bg-amber-50 p-6 text-amber-950">
-                <h1 className="text-xl font-bold">Version espanola no configurada</h1>
+                <h1 className="text-xl font-bold">Versión española no configurada</h1>
                 <p className="text-sm leading-relaxed">
-                    La somministrazione in spagnolo richiede che tutti gli item siano compilati nel catalogo admin come <code>text_es</code>. Completa prima la versione spagnola in Admin → Questionari & Scale → Item.
+                    La administración en español requiere que todos los ítems estén completados en el catálogo admin como <code>text_es</code>. Completa primero la versión española en Admin → Cuestionarios y escalas → Ítems.
                 </p>
                 <Link href={QUESTIONNAIRE_SELECTION_HREF} className="inline-flex text-sm font-semibold text-amber-900 underline">
                     {copy.back}

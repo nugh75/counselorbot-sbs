@@ -20,8 +20,15 @@ function isQuestionnaireType(type: BookletType): type is QuestionnaireType {
     return type in QUESTIONNAIRES;
 }
 
-export function bookletTypeOptionLabel(type: BookletType): string {
-    if (isQuestionnaireType(type)) return `${type} · ${QUESTIONNAIRES[type].fullName}`;
+type TranslateFn = (key: string, vars?: Record<string, string | number>) => string;
+type TranslateFallbackFn = (key: string, fallback: string) => string;
+
+export function bookletTypeOptionLabel(type: BookletType, t?: TranslateFn, tf?: TranslateFallbackFn): string {
+    if (isQuestionnaireType(type)) {
+        const fullName = tf ? tf(`q.${type}.fullName`, QUESTIONNAIRES[type].fullName) : QUESTIONNAIRES[type].fullName;
+        return `${type} · ${fullName}`;
+    }
+    if (t) return t(`booklet.type.${type}`);
     return BOOKLET_TYPE_LABEL[type] ?? type;
 }
 
@@ -229,7 +236,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
             setCurrentId(data.id);
             setForm(toBookletData(data.data));
             await refreshList();
-            if (showToast) toast.success('Scheda salvata.');
+            if (showToast) toast.success(t('booklet.saved'));
             return data.id as number;
         } catch (e) {
             console.error('Failed to save booklet', e);
@@ -243,7 +250,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
     const createBooklet = async () => {
         setSaving(true);
         try {
-            const title = `Scheda ${booklets.length + 1}`;
+            const title = t('booklet.defaultTitle', { n: booklets.length + 1 });
             const res = await apiFetch(`/api/user/student-booklets/instrument/${encodeURIComponent(questionnaireType)}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -264,7 +271,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
 
     const deleteBooklet = async () => {
         if (currentId == null) return;
-        if (!window.confirm('Eliminare questa scheda?')) return;
+        if (!window.confirm(t('booklet.confirmDelete'))) return;
         try {
             const res = await apiFetch(`/api/user/student-booklets/id/${currentId}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Delete failed');
@@ -276,7 +283,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
                 setCurrentId(null);
                 setForm(EMPTY_BOOKLET);
             }
-            toast.success('Scheda eliminata.');
+            toast.success(t('booklet.deleted'));
         } catch (e) {
             console.error('Failed to delete booklet', e);
             toast.error(t('toast.error'));
@@ -341,7 +348,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
                     onChange={(event) => setArrayItem(key, index, event.target.value)}
                     className={`${inputClass} mt-0`}
                 >
-                    <option value="">Scegli dallo strumento...</option>
+                    <option value="">{t('booklet.factorChoose')}</option>
                     {factorOptions.map((option) => (
                         <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
@@ -351,14 +358,14 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
                     value={form[key][index]}
                     onChange={(event) => setArrayItem(key, index, event.target.value)}
                     className={`${inputClass} mt-0`}
-                    placeholder="Scrivi un tema o un aspetto emerso"
+                    placeholder={t('booklet.factorPlaceholder')}
                 />
             )}
             <button
                 type="button"
                 onClick={() => removeArrayItem(key, index)}
                 className="shrink-0 rounded-md border border-slate-200 p-2 text-slate-400 hover:bg-slate-50 hover:text-rose-500"
-                aria-label="Rimuovi"
+                aria-label={t('booklet.remove')}
             >
                 <X className="h-4 w-4" />
             </button>
@@ -376,7 +383,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
                 onClick={() => addArrayItem(key)}
                 className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700"
             >
-                <Plus className="h-3.5 w-3.5" /> Aggiungi
+                <Plus className="h-3.5 w-3.5" /> {t('booklet.add')}
             </button>
         </div>
     );
@@ -386,10 +393,10 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h2 className="text-lg font-bold text-slate-800">
-                        Libretto dello studente · {isQuestionnaireType(questionnaireType) ? questionnaireType : BOOKLET_TYPE_LABEL[questionnaireType]}
+                        {t('booklet.title')} · {isQuestionnaireType(questionnaireType) ? questionnaireType : t(`booklet.type.${questionnaireType}`)}
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                        Crea piu schede per lo stesso strumento: ognuna diventa un percorso con obiettivi, strategie e verifiche.
+                        {t('booklet.subtitle')}
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -400,7 +407,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
                         className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                     >
                         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                        Salva
+                        {t('booklet.save')}
                     </button>
                     <button
                         type="button"
@@ -409,7 +416,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
                         className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                     >
                         {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                        Scarica PDF
+                        {t('booklet.downloadPdf')}
                     </button>
                 </div>
             </div>
@@ -426,7 +433,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
                                 : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                         }`}
                     >
-                        {bookletTitle(b, `Scheda ${b.id}`)}
+                        {bookletTitle(b, t('booklet.fallbackTitle', { id: b.id }))}
                     </button>
                 ))}
                 <button
@@ -435,7 +442,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
                     disabled={saving}
                     className="inline-flex items-center gap-1 rounded-full border border-dashed border-indigo-300 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 disabled:opacity-50"
                 >
-                    <Plus className="h-3.5 w-3.5" /> Nuova scheda
+                    <Plus className="h-3.5 w-3.5" /> {t('booklet.new')}
                 </button>
                 {currentId != null && (
                     <button
@@ -443,38 +450,38 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
                         onClick={() => void deleteBooklet()}
                         className="ml-auto inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-rose-50 hover:text-rose-600"
                     >
-                        <Trash2 className="h-3.5 w-3.5" /> Elimina
+                        <Trash2 className="h-3.5 w-3.5" /> {t('booklet.delete')}
                     </button>
                 )}
             </div>
 
             {loading ? (
-                <div className="text-sm text-slate-400">Caricamento libretto...</div>
+                <div className="text-sm text-slate-400">{t('booklet.loading')}</div>
             ) : booklets.length === 0 && currentId == null ? (
                 <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
-                    Nessuna scheda per questo strumento. Crea la prima con &ldquo;Nuova scheda&rdquo; o compila e premi Salva.
+                    {t('booklet.empty')}
                 </div>
             ) : (
                 <div className="space-y-6">
-                    {simpleInput('title', 'Titolo della scheda')}
+                    {simpleInput('title', t('booklet.field.title'))}
 
                     <div className="grid gap-3 md:grid-cols-2">
-                        {factorMulti('strength', 'Punti di forza da valorizzare')}
-                        {factorMulti('growth_area', 'Aree da migliorare')}
+                        {factorMulti('strength', t('booklet.field.strength'))}
+                        {factorMulti('growth_area', t('booklet.field.growth'))}
                     </div>
-                    {textField('motivation', 'Perche e importante per me', 2)}
+                    {textField('motivation', t('booklet.field.motivation'), 2)}
 
                     <div className="grid gap-3 md:grid-cols-2">
-                        {textField('objective', 'Obiettivo: mi propongo di...', 3)}
+                        {textField('objective', t('booklet.field.objective'), 3)}
                         <div className="block">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Strategia: mi impegno a...</span>
+                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('booklet.field.strategy')}</span>
                             {strategies.length > 0 && (
                                 <select
                                     value=""
                                     onChange={(event) => { appendStrategy(event.target.value); event.target.value = ''; }}
                                     className={inputClass}
                                 >
-                                    <option value="">Inserisci una strategia certificata...</option>
+                                    <option value="">{t('booklet.strategy.placeholder')}</option>
                                     {strategies.map((s) => (
                                         <option key={s.slug} value={s.slug}>{s.name}</option>
                                     ))}
@@ -489,51 +496,51 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
                         </div>
                     </div>
                     <div className="grid gap-3 md:grid-cols-2">
-                        {simpleInput('period_start', 'Da', 'date')}
-                        {simpleInput('period_end', 'A', 'date')}
+                        {simpleInput('period_start', t('booklet.field.periodStart'), 'date')}
+                        {simpleInput('period_end', t('booklet.field.periodEnd'), 'date')}
                     </div>
 
                     <div className="grid gap-3 md:grid-cols-2">
                         <label className="block">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Ho rispettato gli impegni?</span>
+                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('booklet.field.commitment')}</span>
                             <select value={form.commitment} onChange={(event) => setValue('commitment', event.target.value)} className={inputClass}>
-                                <option value="">Seleziona...</option>
-                                <option value="Si, del tutto">Si, del tutto</option>
-                                <option value="Si, abbastanza">Si, abbastanza</option>
-                                <option value="No, solo in parte">No, solo in parte</option>
-                                <option value="No, per niente">No, per niente</option>
+                                <option value="">{t('booklet.select')}</option>
+                                <option value="Si, del tutto">{t('booklet.commitment.full')}</option>
+                                <option value="Si, abbastanza">{t('booklet.commitment.enough')}</option>
+                                <option value="No, solo in parte">{t('booklet.commitment.partial')}</option>
+                                <option value="No, per niente">{t('booklet.commitment.none')}</option>
                             </select>
                         </label>
                         <label className="block">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Valutazione finale</span>
+                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('booklet.field.finalSatisfaction')}</span>
                             <select value={form.final_satisfaction} onChange={(event) => setValue('final_satisfaction', event.target.value)} className={inputClass}>
-                                <option value="">Seleziona...</option>
-                                <option value="Molto">Molto</option>
-                                <option value="Abbastanza">Abbastanza</option>
-                                <option value="Poco">Poco</option>
-                                <option value="Per niente">Per niente</option>
+                                <option value="">{t('booklet.select')}</option>
+                                <option value="Molto">{t('booklet.satisfaction.much')}</option>
+                                <option value="Abbastanza">{t('booklet.satisfaction.enough')}</option>
+                                <option value="Poco">{t('booklet.satisfaction.little')}</option>
+                                <option value="Per niente">{t('booklet.satisfaction.none')}</option>
                             </select>
                         </label>
                     </div>
 
                     <div className="grid gap-3 md:grid-cols-3">
-                        {textField('difficulties', 'Difficolta incontrate', 3)}
-                        {textField('improvements', 'Miglioramenti osservati', 3)}
-                        {textField('discovery', 'Cosa ho capito o scoperto', 3)}
+                        {textField('difficulties', t('booklet.field.difficulties'), 3)}
+                        {textField('improvements', t('booklet.field.improvements'), 3)}
+                        {textField('discovery', t('booklet.field.discovery'), 3)}
                     </div>
 
                     <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
-                        <h3 className="text-sm font-bold text-slate-800">Biografia di apprendimento</h3>
+                        <h3 className="text-sm font-bold text-slate-800">{t('booklet.bio.title')}</h3>
                         <div className="grid gap-3 md:grid-cols-4">
-                            {simpleInput('bio_date', 'Data', 'date')}
-                            {simpleInput('bio_context', 'In occasione di')}
-                            {simpleInput('bio_discovery', 'Ho scoperto che')}
-                            {simpleInput('bio_keywords', 'Parole chiave')}
+                            {simpleInput('bio_date', t('booklet.bio.date'), 'date')}
+                            {simpleInput('bio_context', t('booklet.bio.context'))}
+                            {simpleInput('bio_discovery', t('booklet.bio.discovery'))}
+                            {simpleInput('bio_keywords', t('booklet.bio.keywords'))}
                         </div>
                     </div>
 
-                    {textField('student_notes', 'Note studente', 4)}
-                    {textField('final_observations', 'Osservazioni finali', 3)}
+                    {textField('student_notes', t('booklet.field.studentNotes'), 4)}
+                    {textField('final_observations', t('booklet.field.finalObservations'), 3)}
                 </div>
             )}
         </section>

@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from 'react';
 import { CheckCircle2, XCircle, Info, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n-context';
 
 // Toast minimale senza dipendenze: store a livello di modulo + <Toaster/> montato
 // una volta nel layout. Le pagine chiamano toast.success/error(...) al posto di
@@ -52,22 +53,23 @@ const STYLES: Record<ToastType, { box: string; icon: typeof CheckCircle2 }> = {
 };
 
 export function Toaster() {
+    const { t } = useI18n();
     const list = useSyncExternalStore(subscribe, () => items, () => EMPTY);
     if (list.length === 0) return null;
     return (
         <div className="fixed bottom-4 right-4 z-[100] flex w-[min(92vw,22rem)] flex-col gap-2">
-            {list.map((t) => {
-                const s = STYLES[t.type];
+            {list.map((item) => {
+                const s = STYLES[item.type];
                 const Icon = s.icon;
                 return (
                     <div
-                        key={t.id}
+                        key={item.id}
                         role="status"
                         className={cn('flex items-start gap-2 rounded-xl border p-3 text-sm shadow-lg animate-fade-in-up', s.box)}
                     >
                         <Icon className="mt-0.5 h-4 w-4 shrink-0" />
-                        <span className="min-w-0 flex-1">{t.message}</span>
-                        <button onClick={() => dismiss(t.id)} className="shrink-0 opacity-60 hover:opacity-100" aria-label="Chiudi">
+                        <span className="min-w-0 flex-1">{item.message}</span>
+                        <button onClick={() => dismiss(item.id)} className="shrink-0 opacity-60 hover:opacity-100" aria-label={t('common.close')}>
                             <X className="h-4 w-4" />
                         </button>
                     </div>
