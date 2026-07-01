@@ -244,9 +244,24 @@ const PROMPT_LANGUAGES = [
     { code: 'sv', label: 'Svenska' },
 ];
 
-const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<string, string> }> = {
+const PROMPT_COMPONENT_TEXTS: Record<string, {
+    title: string;
+    rag_title: string;
+    strategies_title: string;
+    select_approved_strategies: string;
+    select_certified_strategies: string;
+    certified_strategies_limit: string;
+    no_limit: string;
+    labels: Record<string, string>;
+}> = {
     it: {
         title: 'Componenti passati alla fase',
+        rag_title: 'Fonti di Conoscenza RAG e Risposte',
+        strategies_title: 'Strategie Consigliate',
+        select_approved_strategies: 'Seleziona Strategie Approvate Attive',
+        select_certified_strategies: 'Seleziona Strategie Certificate Attive',
+        certified_strategies_limit: 'Limite strategie certificate',
+        no_limit: 'Nessuna',
         labels: {
             system_prompt: 'Prompt di sistema',
             meta_system_prompt: 'Meta system prompt strumento',
@@ -270,6 +285,12 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
     },
     en: {
         title: 'Components passed to this phase',
+        rag_title: 'RAG Knowledge Sources and Responses',
+        strategies_title: 'Recommended Strategies',
+        select_approved_strategies: 'Select Active Approved Strategies',
+        select_certified_strategies: 'Select Active Certified Strategies',
+        certified_strategies_limit: 'Certified strategies limit',
+        no_limit: 'None',
         labels: {
             system_prompt: 'System prompt',
             meta_system_prompt: 'Instrument meta system prompt',
@@ -293,6 +314,12 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
     },
     es: {
         title: 'Componentes pasados a esta fase',
+        rag_title: 'Fuentes de Conocimiento RAG y Respuestas',
+        strategies_title: 'Estrategias Recomendadas',
+        select_approved_strategies: 'Seleccionar Estrategias Aprobadas Activas',
+        select_certified_strategies: 'Seleccionar Estrategias Certificadas Activas',
+        certified_strategies_limit: 'Límite de estrategias certificadas',
+        no_limit: 'Ninguno',
         labels: {
             system_prompt: 'Prompt de sistema',
             meta_system_prompt: 'Meta prompt de sistema del instrumento',
@@ -316,6 +343,12 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
     },
     fr: {
         title: 'Composants transmis à cette phase',
+        rag_title: 'Sources de Connaissances RAG et Réponses',
+        strategies_title: 'Stratégies Recommandées',
+        select_approved_strategies: 'Sélectionner les Stratégies Approuvées Actives',
+        select_certified_strategies: 'Sélectionner les Stratégies Certifiées Actives',
+        certified_strategies_limit: 'Limite des stratégies certifiées',
+        no_limit: 'Aucune',
         labels: {
             system_prompt: 'Prompt système',
             meta_system_prompt: 'Meta prompt système de l’instrument',
@@ -339,6 +372,12 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
     },
     de: {
         title: 'An diese Phase übergebene Komponenten',
+        rag_title: 'RAG-Wissensquellen und Antworten',
+        strategies_title: 'Empfohlene Strategien',
+        select_approved_strategies: 'Aktive genehmigte Strategien auswählen',
+        select_certified_strategies: 'Aktive zertifizierte Strategien auswählen',
+        certified_strategies_limit: 'Limit für zertifizierte Strategien',
+        no_limit: 'Keine',
         labels: {
             system_prompt: 'System-Prompt',
             meta_system_prompt: 'Instrument-Meta-System-Prompt',
@@ -362,6 +401,12 @@ const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<str
     },
     sv: {
         title: 'Komponenter som skickas till denna fas',
+        rag_title: 'RAG-kunskapskällor och svar',
+        strategies_title: 'Rekommenderade strategier',
+        select_approved_strategies: 'Välj aktiva godkända strategier',
+        select_certified_strategies: 'Välj aktiva certifierade strategier',
+        certified_strategies_limit: 'Gräns för certifierade strategier',
+        no_limit: 'Ingen',
         labels: {
             system_prompt: 'Systemprompt',
             meta_system_prompt: 'Instrumentets meta-systemprompt',
@@ -911,7 +956,7 @@ function StepPromptsPanel({
                         <div className="rounded-lg border border-indigo-100 bg-indigo-50/20 p-4 space-y-3">
                             <h5 className="text-xs font-semibold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
                                 <Layers className="w-3.5 h-3.5 text-indigo-600" />
-                                Fonti di Conoscenza RAG e Risposte
+                                {componentText.rag_title}
                             </h5>
                             <div className="grid gap-2">
                                 {['rag_counselorbot', 'rag_competenzestrategiche', 'rag_questionari', 'shared_responses'].map((name) => (
@@ -927,7 +972,7 @@ function StepPromptsPanel({
                         <div className="rounded-lg border border-emerald-100 bg-emerald-50/20 p-4 space-y-3">
                             <h5 className="text-xs font-semibold uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
                                 <Award className="w-3.5 h-3.5 text-emerald-600" />
-                                Strategie Consigliate
+                                {componentText.strategies_title}
                             </h5>
                             <div className="grid gap-2">
                                 {['approved_strategies', 'certified_strategies'].map((name) => (
@@ -937,14 +982,14 @@ function StepPromptsPanel({
                                     </label>
                                 ))}
                                 <label className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
-                                    <span>Limite strategie certificate</span>
+                                    <span>{componentText.certified_strategies_limit}</span>
                                     <select
                                         className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 disabled:bg-slate-100 disabled:text-slate-400 focus:ring-1 focus:ring-emerald-500 outline-none"
                                         value={certifiedStrategyLimit}
                                         onChange={(event) => updateCertifiedStrategyLimit(Number(event.target.value))}
                                         disabled={!flags.knowledge || !flags.certified_strategies}
                                     >
-                                        <option value={0}>Nessuna</option>
+                                        <option value={0}>{componentText.no_limit}</option>
                                         <option value={1}>1</option>
                                         <option value={2}>2</option>
                                         <option value={3}>3</option>
@@ -954,7 +999,7 @@ function StepPromptsPanel({
 
                             {flags.approved_strategies && eligibleApproved.length > 0 && (
                                 <div className="mt-3 space-y-1.5 border-t border-emerald-100 pt-3">
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700/70 ml-1">Seleziona Strategie Approvate Attive</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700/70 ml-1">{componentText.select_approved_strategies}</p>
                                     <div className="grid gap-1.5 max-h-[160px] overflow-y-auto pr-1">
                                         {eligibleApproved.map((strategy) => (
                                             <label key={strategy.id} className="flex items-start gap-2 rounded-md border border-slate-200 bg-white p-2 text-[11px] text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
@@ -976,7 +1021,7 @@ function StepPromptsPanel({
 
                             {flags.certified_strategies && eligibleCertified.length > 0 && (
                                 <div className="mt-3 space-y-1.5 border-t border-emerald-100 pt-3">
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700/70 ml-1">Seleziona Strategie Certificate Attive</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700/70 ml-1">{componentText.select_certified_strategies}</p>
                                     <div className="grid gap-1.5 max-h-[160px] overflow-y-auto pr-1">
                                         {eligibleCertified.map((strategy) => (
                                             <label key={strategy.slug} className="flex items-start gap-2 rounded-md border border-slate-200 bg-white p-2 text-[11px] text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
