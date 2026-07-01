@@ -3515,6 +3515,37 @@ def test_build_context_envelope_canonical_blocks():
     session_memory.clear(sid)
 
 
+def test_build_context_envelope_component_flags_disable_parts():
+    from backend.api_models import ChatRequest
+    from backend.chat_logic import build_context_envelope
+
+    sid = "component-flags-test"
+    session_memory.clear(sid)
+    db = next(_override_get_db())
+    ai = _FakeAIService(db)
+    request = ChatRequest(message="domanda", questionnaire_type="QSA", language="it")
+    components = {}
+
+    system_final, full_message, history = build_context_envelope(
+        db, ai, request, sid, {"username": "student"},
+        c_persona="PERSONA", system_prompt="SYS",
+        step_label="Step 1", questionnaire_type="QSA",
+        effective_message="domanda", model_scores_context="SCORES",
+        message_scores_context="SCORES", knowledge_context="KNOWLEDGE_BLOCK",
+        component_flags={"system_prompt": False, "step_prompt": False, "scores": False, "knowledge": False, "counselor": False, "history": False},
+        components=components,
+    )
+
+    assert "SYS" not in system_final
+    assert "PERSONA" not in system_final
+    assert "KNOWLEDGE_BLOCK" not in system_final
+    assert "SCORES" not in full_message
+    assert full_message == ""
+    assert history == []
+    assert components["system_prompt"] == ""
+    session_memory.clear(sid)
+
+
 def test_build_context_envelope_counselor_name_placeholder():
     """Il placeholder {{counselor_name}} (persona + intro di sezione) viene
     risolto dal nome del counselor; senza counselor usa il fallback neutro."""

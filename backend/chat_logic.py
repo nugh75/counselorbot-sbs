@@ -3,6 +3,7 @@
 Nessun endpoint qui: solo funzioni di supporto (risoluzione prompt,
 sanitizzazione QSA/ZTPI, contesto recuperato, ecc.) e le costanti correlate.
 Importato dai router in backend/routes/."""
+import json
 import re
 import logging
 import asyncio
@@ -1385,6 +1386,87 @@ def _retrieved_context(
     )
 
 
+PROMPT_COMPONENT_DEFAULTS = {
+    "system_prompt": True,
+    "step_prompt": True,
+    "scores": True,
+    "knowledge": True,
+    "history": True,
+    "counselor": True,
+    "metadata": True,
+    "profile": True,
+    "student_booklet": True,
+}
+
+
+def prompt_component_config_key(questionnaire_type: str, step_id: str) -> str:
+    q = re.sub(r"[^A-Za-z0-9_-]+", "-", (questionnaire_type or "GENERIC").strip().upper())
+    s = re.sub(r"[^A-Za-z0-9_-]+", "-", (step_id or "generic").strip())
+    return f"prompt_components_{q}_{s}"
+
+
+def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None) -> dict[str, bool]:
+    flags = dict(PROMPT_COMPONENT_DEFAULTS)
+    try:
+        key = prompt_component_config_key(questionnaire_type, step_id or "generic")
+        row = db.query(models.Config).filter(models.Config.key == key).first()
+        if row and row.value:
+            saved = json.loads(row.value)
+            if isinstance(saved, dict):
+                for name in flags:
+                    if name in saved:
+                        flags[name] = bool(saved[name])
+    except Exception:
+        pass
+    return flags
+
+
+def _component_enabled(flags: dict[str, bool] | None, name: str) -> bool:
+    if not flags:
+        return True
+    return bool(flags.get(name, True))
+
+
+MAX_BOOKLET_CONTEXT_CHARS = 1800
+
+
+def _render_booklet_data(data, prefix: str = "") -> list[str]:
+    if isinstance(data, dict):
+        lines: list[str] = []
+        for key, value in data.items():
+            lines.extend(_render_booklet_data(value, f"{prefix}{key}."))
+        return lines
+    if isinstance(data, list):
+        lines: list[str] = []
+        for idx, item in enumerate(data, start=1):
+            lines.extend(_render_booklet_data(item, f"{prefix}{idx}."))
+        return lines
+    value = str(data or "").strip()
+    return [f"- {prefix[:-1]}: {value}"[:300]] if value else []
+
+
+def _student_booklet_context(db, username: str, questionnaire_type: str, session_id: str) -> str:
+    if not username or not questionnaire_type:
+        return ""
+    q = db.query(models.StudentBooklet).filter(
+        models.StudentBooklet.username == username,
+        models.StudentBooklet.questionnaire_type == questionnaire_type,
+    )
+    rows = q.order_by(
+        (models.StudentBooklet.session_id == session_id).desc(),
+        models.StudentBooklet.updated_at.desc(),
+        models.StudentBooklet.id.desc(),
+    ).limit(3).all()
+    if not rows:
+        return ""
+    lines = ["## Taccuino dello studente", "Schede più recenti del taccuino/libretto per questo strumento."]
+    for row in rows:
+        title = str((row.data or {}).get("title") or f"Scheda {row.id}").strip()
+        lines.append(f"### {title}")
+        lines.extend(_render_booklet_data(row.data or {}))
+    return "\n".join(lines)[:MAX_BOOKLET_CONTEXT_CHARS]
+
+
 def build_context_envelope(
     db,
     ai_service,
@@ -1406,6 +1488,8 @@ def build_context_envelope(
     include_profile: bool = True,
     include_scores_reference: bool = True,
     create_anonymous_code: bool = True,
+    component_flags: dict[str, bool] | None = None,
+    components: dict | None = None,
 ) -> tuple[str, str, list]:
     """Assembla l'envelope canonico della chat counselor (Fase 5):
     SYSTEM = [PERSONA] [SECTION] [STUDENT] [PROFILE] [KNOWLEDGE]
@@ -1420,6 +1504,22 @@ def build_context_envelope(
     language = request.language or "it"
 
     # --- [SECTION] (già risolto e direttivato dal router) ---
+    if not _component_enabled(component_flags, "system_prompt"):
+        system_prompt = ""
+    if not _component_enabled(component_flags, "step_prompt"):
+        effective_message = ""
+    if not _component_enabled(component_flags, "scores"):
+        message_scores_context = ""
+        include_scores_reference = False
+    if not _component_enabled(component_flags, "knowledge"):
+        knowledge_context = ""
+    if not _component_enabled(component_flags, "profile"):
+        include_profile = False
+    if components is not None:
+        components["system_prompt"] = system_prompt
+        components["step_prompt"] = effective_message
+        components["knowledge"] = knowledge_context
+
     parts_system = [system_prompt] if system_prompt else []
 
     # --- [STUDENT] dati studente da identity + stato sessione distillato ---
@@ -1458,8 +1558,11 @@ def build_context_envelope(
         notes = str(state.get("external_notes") or "").strip()
         if notes:
             student_lines.append(f"- Note condivise: {notes}")
-    if student_lines:
-        parts_system.append("[STUDENT]\n" + "\n".join(student_lines))
+    student_block = "\n".join(student_lines)
+    if components is not None:
+        components["metadata"] = student_block
+    if student_block and _component_enabled(component_flags, "metadata"):
+        parts_system.append("[STUDENT]\n" + student_block)
 
     # --- [PROFILE] modello discente (auto-dichiarato) + PUNTEGGI (riferimento) ---
     username_for_context = identity.get("username", "") if identity else ""
@@ -1481,15 +1584,26 @@ def build_context_envelope(
     else:
         system_prompt_scores = ""
     profile_block = "\n\n".join(s for s in (profile_context, portfolio_context, system_prompt_scores) if s)
+    if components is not None:
+        components["profile"] = profile_block
+        components["scores"] = "\n\n".join(s for s in (message_scores_context, system_prompt_scores) if s)
     if profile_block:
         parts_system.append("[PROFILE]\n" + profile_block)
+
+    booklet_context = _student_booklet_context(db, username_for_context, questionnaire_type, session_id) if _component_enabled(component_flags, "student_booklet") else ""
+    if components is not None:
+        components["student_booklet"] = booklet_context
+    if booklet_context:
+        parts_system.append("[BOOKLET]\n" + booklet_context)
 
     # --- [KNOWLEDGE] grafo + strategie + certificate + votate (da _retrieved_context) ---
     if knowledge_context:
         parts_system.append("[KNOWLEDGE]\n" + knowledge_context)
 
     system_prompt_final = "\n\n".join(parts_system)
-    if c_persona:
+    if components is not None:
+        components["counselor"] = c_persona or ""
+    if c_persona and _component_enabled(component_flags, "counselor"):
         system_prompt_final = f"{c_persona.strip()}\n\n{system_prompt_final}"
     # Placeholder nome counselor: risolto dal campo counselors.name, usato sia nella
     # persona sia negli intro di sezione. Fallback neutro quando nessun counselor e'
@@ -1499,11 +1613,15 @@ def build_context_envelope(
     )
 
     # --- MESSAGES: history verbatim + user corrente (scores scope-ati + msg) ---
-    history = session_memory.get_transcript(session_id) if include_history and include_session_memory else []
-    if message_scores_context:
+    history = session_memory.get_transcript(session_id) if include_history and include_session_memory and _component_enabled(component_flags, "history") else []
+    if message_scores_context and effective_message:
         full_message = f"{message_scores_context}\n\nDOMANDA DELLO STUDENTE:\n{effective_message}"
+    elif message_scores_context:
+        full_message = message_scores_context
     else:
         full_message = effective_message
+    if components is not None:
+        components["history"] = history
 
     return system_prompt_final, full_message, history
 
