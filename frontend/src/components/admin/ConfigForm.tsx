@@ -230,20 +230,114 @@ const PROMPT_LANGUAGES = [
     { code: 'sv', label: 'Svenska' },
 ];
 
-const PROMPT_COMPONENT_LABELS: Record<string, string> = {
-    system_prompt: 'System prompt',
-    guidance: 'Raccomandazioni iniziali',
-    step_prompt: 'Prompt dello step',
-    cognitive_factors: 'Fattori cognitivi',
-    affective_factors: 'Fattori affettivi',
-    other_scores: 'Altri punteggi/profilo',
-    knowledge: 'RAG / knowledge',
-    history: 'Memoria / history',
-    counselor: 'Counselor persona',
-    metadata: 'Metadati fase/studente',
-    profile: 'Profilo / portfolio',
-    student_booklet: 'Taccuino studente',
+const PROMPT_COMPONENT_TEXTS: Record<string, { title: string; labels: Record<string, string> }> = {
+    it: {
+        title: 'Componenti passati alla fase',
+        labels: {
+            system_prompt: 'Prompt di sistema',
+            guidance: 'Raccomandazioni iniziali',
+            step_prompt: 'Prompt dello step',
+            cognitive_factors: 'Fattori cognitivi',
+            affective_factors: 'Fattori affettivi',
+            other_scores: 'Altri punteggi/profilo',
+            knowledge: 'RAG / conoscenza',
+            history: 'Memoria / cronologia',
+            counselor: 'Persona counselor',
+            metadata: 'Metadati fase/studente',
+            profile: 'Profilo / portfolio',
+            student_booklet: 'Taccuino studente',
+        },
+    },
+    en: {
+        title: 'Components passed to this phase',
+        labels: {
+            system_prompt: 'System prompt',
+            guidance: 'Initial recommendations',
+            step_prompt: 'Step prompt',
+            cognitive_factors: 'Cognitive factors',
+            affective_factors: 'Affective factors',
+            other_scores: 'Other scores/profile',
+            knowledge: 'RAG / knowledge',
+            history: 'Memory / history',
+            counselor: 'Counselor persona',
+            metadata: 'Phase/student metadata',
+            profile: 'Profile / portfolio',
+            student_booklet: 'Student notebook',
+        },
+    },
+    es: {
+        title: 'Componentes pasados a esta fase',
+        labels: {
+            system_prompt: 'Prompt de sistema',
+            guidance: 'Recomendaciones iniciales',
+            step_prompt: 'Prompt del paso',
+            cognitive_factors: 'Factores cognitivos',
+            affective_factors: 'Factores afectivos',
+            other_scores: 'Otros puntajes/perfil',
+            knowledge: 'RAG / conocimiento',
+            history: 'Memoria / historial',
+            counselor: 'Persona del orientador',
+            metadata: 'Metadatos fase/estudiante',
+            profile: 'Perfil / portafolio',
+            student_booklet: 'Cuaderno del estudiante',
+        },
+    },
+    fr: {
+        title: 'Composants transmis à cette phase',
+        labels: {
+            system_prompt: 'Prompt système',
+            guidance: 'Recommandations initiales',
+            step_prompt: "Prompt de l’étape",
+            cognitive_factors: 'Facteurs cognitifs',
+            affective_factors: 'Facteurs affectifs',
+            other_scores: 'Autres scores/profil',
+            knowledge: 'RAG / connaissance',
+            history: 'Mémoire / historique',
+            counselor: 'Persona du conseiller',
+            metadata: 'Métadonnées phase/étudiant',
+            profile: 'Profil / portfolio',
+            student_booklet: 'Carnet étudiant',
+        },
+    },
+    de: {
+        title: 'An diese Phase übergebene Komponenten',
+        labels: {
+            system_prompt: 'System-Prompt',
+            guidance: 'Anfangsempfehlungen',
+            step_prompt: 'Schritt-Prompt',
+            cognitive_factors: 'Kognitive Faktoren',
+            affective_factors: 'Affektive Faktoren',
+            other_scores: 'Weitere Werte/Profil',
+            knowledge: 'RAG / Wissen',
+            history: 'Gedächtnis / Verlauf',
+            counselor: 'Counselor-Persona',
+            metadata: 'Phasen-/Studierenden-Metadaten',
+            profile: 'Profil / Portfolio',
+            student_booklet: 'Studierenden-Notizbuch',
+        },
+    },
+    sv: {
+        title: 'Komponenter som skickas till denna fas',
+        labels: {
+            system_prompt: 'Systemprompt',
+            guidance: 'Inledande rekommendationer',
+            step_prompt: 'Stegprompt',
+            cognitive_factors: 'Kognitiva faktorer',
+            affective_factors: 'Affektiva faktorer',
+            other_scores: 'Övriga poäng/profil',
+            knowledge: 'RAG / kunskap',
+            history: 'Minne / historik',
+            counselor: 'Counselor-persona',
+            metadata: 'Fas-/studentmetadata',
+            profile: 'Profil / portfolio',
+            student_booklet: 'Studentens anteckningsbok',
+        },
+    },
 };
+
+function promptComponentText(language: string) {
+    return PROMPT_COMPONENT_TEXTS[language] || PROMPT_COMPONENT_TEXTS.it;
+}
 
 const SYSTEM_PROMPT_KEY_BY_PHASE: Record<string, string> = {
     questions: 'prompt_guided_questions',
@@ -507,6 +601,7 @@ function StepPromptsPanel({
     const finalPrompt = preview?.envelope
         ? `SYSTEM\n${preview.envelope.system_prompt_final || ''}\n\nMESSAGE\n${preview.envelope.full_message || ''}\n\nHISTORY\n${JSON.stringify(preview.envelope.history || [], null, 2)}`
         : '';
+    const componentText = promptComponentText(selectedLanguage);
 
     return (
         <div className="glass-panel p-5 space-y-5">
@@ -550,12 +645,12 @@ function StepPromptsPanel({
             </div>
 
             <div className="rounded-lg border border-slate-200 bg-white p-4">
-                <h4 className="text-sm font-semibold text-slate-800">{t('admin.promptAudit.components')}</h4>
+                <h4 className="text-sm font-semibold text-slate-800">{componentText.title}</h4>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {Object.keys(PROMPT_COMPONENT_DEFAULTS).map((name) => (
                         <label key={name} className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-xs text-slate-700">
                             <input type="checkbox" className="accent-indigo-600" checked={flags[name]} onChange={() => toggleFlag(name)} />
-                            {PROMPT_COMPONENT_LABELS[name] || name}
+                            {componentText.labels[name] || name}
                         </label>
                     ))}
                 </div>
