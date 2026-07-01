@@ -51,6 +51,7 @@ from .routes import presets as presets_routes
 from .routes import benchmark as benchmark_routes
 from .routes import prompt_audit as prompt_audit_routes
 from .routes import counselors as counselors_routes
+from .routes import approved_strategies as approved_strategies_routes
 from .routes import certified_strategies as certified_strategies_routes
 from .routes import research_contacts as research_contacts_routes
 from .routes import administration_plans as administration_plans_routes
@@ -1267,6 +1268,7 @@ app.include_router(presets_routes.router)
 app.include_router(benchmark_routes.router)
 app.include_router(prompt_audit_routes.router)
 app.include_router(counselors_routes.router)
+app.include_router(approved_strategies_routes.router)
 app.include_router(certified_strategies_routes.router)
 app.include_router(research_contacts_routes.router)
 app.include_router(administration_plans_routes.router)

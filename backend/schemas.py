@@ -889,6 +889,32 @@ class CounselorPublic(BaseModel):
         from_attributes = True
 
 
+# --- Strategie RAG approvate (admin, override DB del Markdown versionato) ---
+class ApprovedStrategyBase(BaseModel):
+    id: str
+    status: str = "draft"
+    questionnaires: List[str] = Field(default_factory=list)
+    keywords: Optional[str] = None
+    texts: Dict[str, str] = Field(default_factory=dict)
+
+
+class ApprovedStrategyCreate(ApprovedStrategyBase):
+    pass
+
+
+class ApprovedStrategyUpdate(BaseModel):
+    id: Optional[str] = None
+    status: Optional[str] = None
+    questionnaires: Optional[List[str]] = None
+    keywords: Optional[str] = None
+    texts: Optional[Dict[str, str]] = None
+
+
+class ApprovedStrategiesList(BaseModel):
+    source: str
+    strategies: List[ApprovedStrategyBase]
+
+
 # --- Catalogo strategie certificate (admin) ---
 class CertifiedStrategyBase(BaseModel):
     slug: str

@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from .. import models, schemas, auth, database
 from ..anonymous_codes import get_or_create_anonymous_research_code
 from ..validation_export import build_validation_csv, validation_query, validation_summary
-from ..strategy_memory import shared_response_memory, strategy_memory
+from ..strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_memory, strategy_memory
 from ..pdf_generator import generate_questionnaire_pdf, generate_student_booklet_pdf
 from ..ai_service import AIService
 from .. import scoring_service
@@ -154,7 +154,8 @@ async def submit_survey(survey: schemas.SurveyCreate, db: Session = Depends(get_
 @router.post("/strategy-feedback")
 async def submit_strategy_feedback(feedback: schemas.StrategyFeedbackCreate, db: Session = Depends(get_db)):
     """Registra feedback anonimo e promuove risposte AI utili alla memoria condivisa."""
-    valid_ids = strategy_memory.approved_ids()
+    strategies_config = db.query(models.Config).filter(models.Config.key == APPROVED_STRATEGIES_CONFIG_KEY).first()
+    valid_ids = strategy_memory.approved_ids(strategies_config.value if strategies_config else None)
     accepted = [strategy_id for strategy_id in feedback.strategy_ids if strategy_id in valid_ids]
     for strategy_id in accepted:
         db.add(models.StrategyFeedback(

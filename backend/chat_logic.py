@@ -17,7 +17,7 @@ from . import database
 from .anonymous_codes import code_for_identity
 from .ai_service import AIService
 from .memory_service import session_memory
-from .strategy_memory import shared_response_memory, strategy_memory
+from .strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_memory, strategy_memory
 from .certified_strategy_service import certified_strategy_memory
 from .rag_index import site_rag_index, build_context as rag_build_context
 from .api_models import ChatRequest
@@ -1408,12 +1408,15 @@ def _retrieved_context(
     I dati studente (profilo dichiarato, punteggi, stato sessione, goals/...
     episodi) NON vivono più qui: sono assemblati in `build_context_envelope`
     nei blocchi [STUDENT] e [PROFILE] del system prompt."""
+    strategies_config = db.query(models.Config).filter(models.Config.key == APPROVED_STRATEGIES_CONFIG_KEY).first()
+    approved_strategies_markdown = strategies_config.value if strategies_config else None
     strategies = strategy_memory.retrieve(
         questionnaire_type=questionnaire_type,
         phase=request.phase or "",
         query=query,
         language=request.language or "it",
         ai_service=ai_service,
+        markdown_text=approved_strategies_markdown,
     )
     strategy_context = strategy_memory.render_context(strategies)
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
