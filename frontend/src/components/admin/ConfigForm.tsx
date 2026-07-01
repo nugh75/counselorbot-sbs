@@ -583,8 +583,11 @@ function StepPromptsPanel({
     // ponytail: reuse public /counselors fetch (active only), filter client-side by instrument.
     const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
     useEffect(() => { fetchCounselors().then(setCounselors).catch(() => setCounselors([])); }, []);
+    // Counselors with empty/null questionnaire_types are "available for all instruments"
+    // (matches backend behavior in prompt_audit.py _add_static_warnings).
     const instrumentCounselors = counselors.filter((c) =>
-        (c.questionnaire_types || []).some((t) => normalizedQuestionnaireType(t) === normalizedQuestionnaireType(questionnaireType))
+        !c.questionnaire_types || c.questionnaire_types.length === 0 ||
+        c.questionnaire_types.some((t) => normalizedQuestionnaireType(t) === normalizedQuestionnaireType(questionnaireType))
     );
     const [editingPrompt, setEditingPrompt] = useState<'system' | 'meta' | 'guidance' | 'step' | null>(null);
     const [systemDraft, setSystemDraft] = useState(systemPrompt);
