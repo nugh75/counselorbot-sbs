@@ -27,6 +27,8 @@ from .chat_logic import (
     _apply_thinking_directive,
     _clamp_max_tokens,
     _ensure_required_qsa_factor_codes,
+    get_prompt_component_flags,
+    prompt_component_config_key,
     _is_strategy_questionnaire,
     _phase_factor_codes,
     _qsa_step_score_profile,
@@ -219,6 +221,20 @@ def _add_static_warnings(
             warnings.append({"code": code, "message": "Legacy/risky prompt wording detected."})
 
 
+def _scores_context_from_result(result: models.QuestionnaireResult | None) -> str:
+    if not result:
+        return ""
+    if result.questionnaire_type == "SAVICKAS":
+        return "CONTESTO INTERVISTA SAVICKAS: percorso narrativo qualitativo senza punteggi numerici."
+    scores = result.scores or {}
+    if not isinstance(scores, dict) or not scores:
+        return f"CONTESTO {result.questionnaire_type}: percorso qualitativo senza punteggi numerici."
+    lines = [f"PROFILO {result.questionnaire_type} DELLO STUDENTE:"]
+    for code, value in sorted(scores.items()):
+        lines.append(f"- {code}: {value}/9")
+    return "\n".join(lines)
+
+
 def build_prompt_audit(
     db: Session,
     payload,
@@ -228,6 +244,11 @@ def build_prompt_audit(
     request = ChatRequest(**payload.model_dump(exclude={"include_knowledge", "include_history"}, exclude_none=False))
     request.language = _normalize_language(request.language)
     session_id = request.session_id or f"prompt-audit-{uuid.uuid4()}"
+    result = db.query(models.QuestionnaireResult).filter(models.QuestionnaireResult.session_id == session_id).first() if request.session_id else None
+    if result:
+        request.questionnaire_type = request.questionnaire_type or result.questionnaire_type
+        if not request.scores_context:
+            request.scores_context = _scores_context_from_result(result)
     warnings: list[dict[str, str]] = []
 
     ai_service = ai_service_cls(db)
@@ -243,6 +264,7 @@ def build_prompt_audit(
     else:
         step_label = ""
         questionnaire_type = request.questionnaire_type or ""
+    component_flags = get_prompt_component_flags(db, questionnaire_type, request.phase)
 
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
     system_prompt = _apply_language_directive(system_prompt, request.language)
@@ -258,7 +280,7 @@ def build_prompt_audit(
         _annotate_qsa_factor_codes(request.scores_context, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else request.scores_context
     )
-    if include_analysis_context:
+    if include_analysis_context and component_flags.get("scores", True):
         include_advice = _step_allows_practical_advice(step_mode)
         system_prompt = _apply_current_step_score_profile_directive(
             system_prompt, questionnaire_type, request.language, model_scores_context, required_codes, include_advice
@@ -272,17 +294,19 @@ def build_prompt_audit(
     )
     message_scores_context = (
         _scope_scores_to_codes(model_scores_context, required_codes)
-        if include_analysis_context
+        if include_analysis_context and component_flags.get("scores", True)
         else ""
     )
 
     knowledge_context = ""
     strategy_ids: list[str] = []
     certified_strategy_ids: list[str] = []
-    if include_analysis_context and bool(getattr(payload, "include_knowledge", True)):
-        retrieval_query = f"{step_label} {model_message} {model_scores_context}".strip()
+    if include_analysis_context and bool(getattr(payload, "include_knowledge", True)) and component_flags.get("knowledge", True):
+        scores_enabled = component_flags.get("scores", True)
+        retrieval_query = f"{step_label} {model_message if component_flags.get('step_prompt', True) else ''} {model_scores_context if scores_enabled else ''}".strip()
+        retrieval_request = request if scores_enabled else request.copy(update={"scores_context": ""})
         knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
-            db, session_id, request, questionnaire_type, retrieval_query, ai_service=ai_service
+            db, session_id, retrieval_request, questionnaire_type, retrieval_query, ai_service=ai_service
         )
 
     sanitize_ztpi = _should_sanitize_ztpi_text(request.mode, request.phase)
@@ -292,12 +316,13 @@ def build_prompt_audit(
     else:
         step_label_for_envelope = step_label
 
+    components: dict[str, Any] = {}
     system_prompt_final, full_message, history = build_context_envelope(
         db,
         ai_service,
         request,
         session_id,
-        {},
+        {"username": result.username if result else ""},
         c_persona=c_persona,
         counselor_name=(counselor or {}).get("name"),
         system_prompt=system_prompt,
@@ -311,6 +336,8 @@ def build_prompt_audit(
         include_session_memory=bool(getattr(payload, "include_history", False)),
         include_scores_reference=include_analysis_context,
         create_anonymous_code=False,
+        component_flags=component_flags,
+        components=components,
     )
 
     provider = c_provider or ai_service.config.get("active_provider", "unknown")
@@ -366,12 +393,20 @@ def build_prompt_audit(
             "phase_prompt_key": phase_prompt_key,
         },
         "knowledge": {
-            "included": bool(getattr(payload, "include_knowledge", True)),
+            "included": bool(getattr(payload, "include_knowledge", True)) and component_flags.get("knowledge", True),
             "context_length": len(knowledge_context),
             "strategy_ids": strategy_ids,
             "certified_strategy_ids": certified_strategy_ids,
             "context": knowledge_context,
         },
+        "components": components,
+        "component_flags": component_flags,
+        "component_config_key": prompt_component_config_key(questionnaire_type, request.phase or "generic"),
+        "selected_result": {
+            "session_id": result.session_id,
+            "username": result.username,
+            "submitted_at": result.submitted_at.isoformat() if result.submitted_at else None,
+        } if result else None,
         "warnings": warnings,
     }
 

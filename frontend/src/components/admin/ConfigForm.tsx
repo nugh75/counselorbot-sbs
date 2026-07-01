@@ -23,6 +23,23 @@ interface GuidedStep {
     questionnaire_type: string;
 }
 
+interface QuestionnaireResult {
+    id: number;
+    session_id: string;
+    questionnaire_type: string;
+    username?: string | null;
+    submitted_at: string;
+}
+
+interface PromptPreview {
+    envelope?: { system_prompt_final?: string; full_message?: string; history?: unknown[] };
+    components?: Record<string, unknown>;
+    component_flags?: Record<string, boolean>;
+    component_config_key?: string;
+    knowledge?: { included?: boolean; context_length?: number; strategy_ids?: string[]; certified_strategy_ids?: string[] };
+    selected_result?: { session_id: string; username?: string | null; submitted_at?: string | null } | null;
+}
+
 type InstrumentSubsection = 'step-prompts' | 'system-prompts' | 'texts' | 'guided-steps';
 
 // --- Constants ---
@@ -189,6 +206,30 @@ const SYSTEM_PROMPT_KEY_BY_MODE: Record<string, string> = {
     'qap-summary': 'prompt_qap_summary',
 };
 
+const PROMPT_COMPONENT_DEFAULTS: Record<string, boolean> = {
+    system_prompt: true,
+    step_prompt: true,
+    scores: true,
+    knowledge: true,
+    history: true,
+    counselor: true,
+    metadata: true,
+    profile: true,
+    student_booklet: true,
+};
+
+const PROMPT_COMPONENT_LABELS: Record<string, string> = {
+    system_prompt: 'System prompt',
+    step_prompt: 'Prompt dello step',
+    scores: 'Punteggi / fattori',
+    knowledge: 'RAG / knowledge',
+    history: 'Memoria / history',
+    counselor: 'Counselor persona',
+    metadata: 'Metadati fase/studente',
+    profile: 'Profilo / portfolio',
+    student_booklet: 'Taccuino studente',
+};
+
 const SYSTEM_PROMPT_KEY_BY_PHASE: Record<string, string> = {
     questions: 'prompt_guided_questions',
     intro: 'prompt_intro',
@@ -226,6 +267,24 @@ function textStats(text: string | null | undefined): { chars: number; lines: num
 function promptKeyForStep(step: GuidedStep | undefined): string {
     if (!step) return '';
     return SYSTEM_PROMPT_KEY_BY_PHASE[step.id] || SYSTEM_PROMPT_KEY_BY_MODE[step.system_prompt_mode] || 'prompt_generic';
+}
+
+function promptComponentConfigKey(questionnaireType: string, stepId: string): string {
+    return `prompt_components_${questionnaireType.trim().toUpperCase().replace(/[^A-Za-z0-9_-]+/g, '-')}_${stepId.trim().replace(/[^A-Za-z0-9_-]+/g, '-')}`;
+}
+
+function parseComponentFlags(raw: string): Record<string, boolean> {
+    try {
+        return { ...PROMPT_COMPONENT_DEFAULTS, ...(JSON.parse(raw || '{}') || {}) };
+    } catch {
+        return { ...PROMPT_COMPONENT_DEFAULTS };
+    }
+}
+
+function textValue(value: unknown): string {
+    if (typeof value === 'string') return value;
+    if (value == null) return '';
+    return JSON.stringify(value, null, 2);
 }
 
 function PromptTextBlock({
@@ -267,6 +326,10 @@ function StepPromptsPanel({
     onEditSystemPrompts,
     onEditStep,
     configs,
+    results,
+    selectedSessionId,
+    onSelectSession,
+    onSaveComponentFlags,
     t,
 }: {
     questionnaireType: string;
@@ -276,13 +339,57 @@ function StepPromptsPanel({
     onEditSystemPrompts: () => void;
     onEditStep: () => void;
     configs: ConfigItem[];
+    results: QuestionnaireResult[];
+    selectedSessionId: string;
+    onSelectSession: (sessionId: string) => void;
+    onSaveComponentFlags: (key: string, flags: Record<string, boolean>) => void;
     t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
     const selectedStep = steps.find((step) => step.id === selectedStepId) || steps[0];
     const systemPromptKey = promptKeyForStep(selectedStep);
     const systemPrompt = configs.find((config) => config.key === systemPromptKey)?.value || '';
+    const componentKey = selectedStep ? promptComponentConfigKey(questionnaireType, selectedStep.id) : '';
+    const flags = parseComponentFlags(configs.find((config) => config.key === componentKey)?.value || '');
+    const [preview, setPreview] = useState<PromptPreview | null>(null);
+    const [previewLoading, setPreviewLoading] = useState(false);
     const modeLabel = selectedStep?.system_prompt_mode
         ? t(`admin.mode.${selectedStep.system_prompt_mode}`)
+        : '';
+
+    useEffect(() => {
+        if (!selectedStep) return;
+        let cancelled = false;
+        setPreviewLoading(true);
+        fetch('/api/admin/prompt-audit/dry-run', {
+            method: 'POST',
+            headers: authJsonHeaders(),
+            body: JSON.stringify({
+                questionnaire_type: questionnaireType,
+                language: 'it',
+                phase: selectedStep.id,
+                mode: selectedStep.system_prompt_mode || 'generic',
+                use_phase_prompt: true,
+                session_id: selectedSessionId || undefined,
+                include_knowledge: true,
+                include_history: true,
+            }),
+        })
+            .then((res) => res.ok ? res.json() : null)
+            .then((data) => { if (!cancelled) setPreview(data); })
+            .catch(() => { if (!cancelled) setPreview(null); })
+            .finally(() => { if (!cancelled) setPreviewLoading(false); });
+        return () => { cancelled = true; };
+    }, [questionnaireType, selectedStep?.id, selectedStep?.system_prompt_mode, selectedSessionId, configs.find((config) => config.key === componentKey)?.value]);
+
+    const toggleFlag = (name: string) => {
+        if (!componentKey) return;
+        onSaveComponentFlags(componentKey, { ...flags, [name]: !flags[name] });
+    };
+    const ragSummary = preview?.knowledge
+        ? `RAG: ${preview.knowledge.included ? 'ON' : 'OFF'}\ncontext_length: ${preview.knowledge.context_length || 0}\nstrategy_ids: ${(preview.knowledge.strategy_ids || []).join(', ') || '-'}\ncertified_strategy_ids: ${(preview.knowledge.certified_strategy_ids || []).join(', ') || '-'}`
+        : '';
+    const finalPrompt = preview?.envelope
+        ? `SYSTEM\n${preview.envelope.system_prompt_final || ''}\n\nMESSAGE\n${preview.envelope.full_message || ''}\n\nHISTORY\n${JSON.stringify(preview.envelope.history || [], null, 2)}`
         : '';
 
     return (
@@ -299,77 +406,61 @@ function StepPromptsPanel({
                 </div>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+            <div className="grid gap-4 lg:grid-cols-3">
                 <label className="space-y-2 text-xs font-semibold text-slate-500">
                     {t('admin.promptAudit.stepSelect')}
-                    <select
-                        className="w-full rounded-md border border-slate-300 bg-white p-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500"
-                        value={selectedStep?.id || ''}
-                        onChange={(event) => onSelectStep(event.target.value)}
-                    >
-                        {steps.map((step) => (
-                            <option key={step.id} value={step.id}>
-                                {step.sort_order}. {step.label || step.id}
-                            </option>
-                        ))}
+                    <select className="w-full rounded-md border border-slate-300 bg-white p-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedStep?.id || ''} onChange={(event) => onSelectStep(event.target.value)}>
+                        {steps.map((step) => <option key={step.id} value={step.id}>{step.sort_order}. {step.label || step.id}</option>)}
                     </select>
                 </label>
+                <label className="space-y-2 text-xs font-semibold text-slate-500">
+                    {t('admin.promptAudit.sessionSelect')}
+                    <select className="w-full rounded-md border border-slate-300 bg-white p-3 text-sm font-normal text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={selectedSessionId} onChange={(event) => onSelectSession(event.target.value)}>
+                        <option value="">{t('admin.promptAudit.noSession')}</option>
+                        {results.map((result) => <option key={result.session_id} value={result.session_id}>{result.username || '-'} · {result.session_id} · {new Date(result.submitted_at).toLocaleDateString()}</option>)}
+                    </select>
+                </label>
+                <div className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 sm:grid-cols-3 lg:grid-cols-1">
+                    <div><p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.instrument')}</p><p className="mt-1 font-mono text-slate-800">{questionnaireType}</p></div>
+                    <div><p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.mode')}</p><p className="mt-1 text-slate-800">{modeLabel}</p></div>
+                    <div><p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.promptKey')}</p><p className="mt-1 break-words font-mono text-slate-800">{systemPromptKey || '-'}</p></div>
+                </div>
+            </div>
 
-                <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 sm:grid-cols-3">
-                    <div>
-                        <p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.instrument')}</p>
-                        <p className="mt-1 font-mono text-slate-800">{questionnaireType}</p>
-                    </div>
-                    <div>
-                        <p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.mode')}</p>
-                        <p className="mt-1 text-slate-800">{modeLabel}</p>
-                    </div>
-                    <div>
-                        <p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.promptKey')}</p>
-                        <p className="mt-1 break-words font-mono text-slate-800">{systemPromptKey || '-'}</p>
-                    </div>
+            <div className="rounded-lg border border-slate-200 bg-white p-4">
+                <h4 className="text-sm font-semibold text-slate-800">{t('admin.promptAudit.components')}</h4>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {Object.keys(PROMPT_COMPONENT_DEFAULTS).map((name) => (
+                        <label key={name} className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-xs text-slate-700">
+                            <input type="checkbox" className="accent-indigo-600" checked={flags[name]} onChange={() => toggleFlag(name)} />
+                            {PROMPT_COMPONENT_LABELS[name] || name}
+                        </label>
+                    ))}
                 </div>
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">
-                <PromptTextBlock
-                    title={t('admin.promptAudit.block.systemPrompt')}
-                    subtitle={systemPromptKey}
-                    text={systemPrompt}
-                    emptyLabel={t('admin.promptAudit.empty')}
-                />
-                <PromptTextBlock
-                    title={t('admin.promptAudit.block.stepPrompt')}
-                    subtitle={selectedStep ? selectedStep.id : undefined}
-                    text={selectedStep?.prompt}
-                    emptyLabel={t('admin.promptAudit.empty')}
-                />
+                <PromptTextBlock title={t('admin.promptAudit.block.systemPrompt')} subtitle={systemPromptKey} text={systemPrompt} emptyLabel={t('admin.promptAudit.empty')} />
+                <PromptTextBlock title={t('admin.promptAudit.block.stepPrompt')} subtitle={selectedStep ? selectedStep.id : undefined} text={selectedStep?.prompt} emptyLabel={t('admin.promptAudit.empty')} />
+                <PromptTextBlock title="Punteggi / fattori" text={textValue(preview?.components?.scores)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
+                <PromptTextBlock title="RAG / knowledge" text={ragSummary} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
+                <PromptTextBlock title="Memoria / history" text={textValue(preview?.components?.history)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
+                <PromptTextBlock title="Counselor" text={textValue(preview?.components?.counselor)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
+                <PromptTextBlock title="Metadati" text={textValue(preview?.components?.metadata)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
+                <PromptTextBlock title="Profilo / portfolio" text={textValue(preview?.components?.profile)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
+                <PromptTextBlock title="Taccuino studente" text={textValue(preview?.components?.student_booklet)} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
+                <PromptTextBlock title={t('admin.promptAudit.finalPrompt')} text={finalPrompt} emptyLabel={previewLoading ? 'Loading...' : t('admin.promptAudit.empty')} />
             </div>
 
             <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 p-4 text-xs text-slate-600">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h4 className="flex items-center gap-2 text-sm font-semibold text-indigo-800">
-                            <FileText className="h-4 w-4" />
-                            {t('admin.promptAudit.injectedList')}
-                        </h4>
+                        <h4 className="flex items-center gap-2 text-sm font-semibold text-indigo-800"><FileText className="h-4 w-4" />{t('admin.promptAudit.injectedList')}</h4>
                         <p className="mt-2">{t('admin.promptAudit.onlyPrompts')}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        <button
-                            type="button"
-                            onClick={onEditSystemPrompts}
-                            className="rounded-md border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50"
-                        >
-                            {t('admin.promptAudit.editSystemPrompt')}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={onEditStep}
-                            className="rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
-                        >
-                            {t('admin.promptAudit.editStep')}
-                        </button>
+                        <button type="button" onClick={onEditSystemPrompts} className="rounded-md border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50">{t('admin.promptAudit.editSystemPrompt')}</button>
+                        <button type="button" onClick={onEditStep} className="rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700">{t('admin.promptAudit.editStep')}</button>
                     </div>
                 </div>
             </div>
@@ -407,6 +498,8 @@ export function ConfigForm() {
         system_prompt_mode: 'generic', color_theme: 'blue', questionnaire_type: 'QSA',
     });
     const [promptStepIds, setPromptStepIds] = useState<Record<string, string>>({});
+    const [promptSessionIds, setPromptSessionIds] = useState<Record<string, string>>({});
+    const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
 
     const openSection = (nextSection: string) => {
         setSection(nextSection);
@@ -420,10 +513,11 @@ export function ConfigForm() {
 
     const fetchConfigs = async () => {
         try {
-            const [configRes, envRes, stepsRes] = await Promise.all([
+            const [configRes, envRes, stepsRes, resultsRes] = await Promise.all([
                 fetch('/api/admin/config', { headers: authHeaders() }),
                 fetch('/api/admin/config/env-status', { headers: authHeaders() }),
                 fetch('/api/admin/guided-steps', { headers: authHeaders() }),
+                fetch('/api/admin/questionnaire-results?limit=100', { headers: authHeaders() }),
             ]);
 
             if (configRes.ok) {
@@ -439,6 +533,7 @@ export function ConfigForm() {
 
             if (envRes.ok) setEnvOverrides(await envRes.json());
             if (stepsRes.ok) setGuidedSteps(await stepsRes.json());
+            if (resultsRes.ok) setQuestionnaireResults(await resultsRes.json());
         } catch (error) {
             console.error('Failed to fetch config', error);
         } finally {
@@ -515,6 +610,12 @@ export function ConfigForm() {
     };
 
     const getConfigValue = (key: string) => configs.find(c => c.key === key)?.value || '';
+
+    const saveComponentFlags = (key: string, flags: Record<string, boolean>) => {
+        const value = JSON.stringify(flags);
+        setConfigDraft(key, value, key);
+        handleSaveConfig({ key, value, description: key });
+    };
 
     // Testi rivolti allo studente: salvati per-lingua con chiave suffissata (es. text_..._en).
     // L'italiano usa la chiave base; le altre lingue la chiave suffissata (fallback all'italiano).
@@ -1084,6 +1185,10 @@ export function ConfigForm() {
                                     onEditSystemPrompts={() => setInstrumentSubsection('system-prompts')}
                                     onEditStep={() => setInstrumentSubsection('guided-steps')}
                                     configs={configs}
+                                    results={questionnaireResults.filter((result) => normalizedQuestionnaireType(result.questionnaire_type) === normalizedQuestionnaireType(q.questionnaireType))}
+                                    selectedSessionId={promptSessionIds[q.questionnaireType] || ''}
+                                    onSelectSession={(sessionId) => setPromptSessionIds(prev => ({ ...prev, [q.questionnaireType]: sessionId }))}
+                                    onSaveComponentFlags={saveComponentFlags}
                                     t={t}
                                 />
                             ) : (
