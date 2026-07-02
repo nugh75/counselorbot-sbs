@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, Award, MessageCircleQuestion, PanelLeftClose, PanelLeftOpen, CalendarDays, Eye, FolderOpen } from 'lucide-react';
+import { ArrowLeft, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, Award, MessageCircleQuestion, PanelLeftClose, PanelLeftOpen, CalendarDays, Eye, FolderOpen, Bot } from 'lucide-react';
 import { ConfigForm } from '@/components/admin/ConfigForm';
 import { LogViewer } from '@/components/admin/LogViewer';
 import { CostStats } from '@/components/admin/CostStats';
@@ -21,6 +21,7 @@ import { PqblAdminPanel } from '@/components/admin/PqblAdminPanel';
 import { ResearchContactsPanel } from '@/components/admin/ResearchContactsPanel';
 import { AdministrationPlansPanel } from '@/components/admin/AdministrationPlansPanel';
 import { AssistantQuestionsPanel } from '@/components/admin/AssistantQuestionsPanel';
+import { AssistantAdminPanel } from '@/components/admin/AssistantAdminPanel';
 import { RolePreviewPanel } from '@/components/admin/RolePreviewPanel';
 import { RagDocsPanel } from '@/components/admin/RagDocsPanel';
 import { getRealIdentity } from '@/lib/auth';
@@ -29,7 +30,7 @@ import { canUseResearchConsole } from '@/lib/roles';
 
 import { cn } from '@/lib/utils';
 
-type AdminTab = 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'approvedStrategies' | 'certifiedStrategies' | 'assistantQuestions' | 'ragDocs' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'training' | 'pqbl' | 'rolePreview';
+type AdminTab = 'assistantManager' | 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'approvedStrategies' | 'certifiedStrategies' | 'assistantQuestions' | 'ragDocs' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'training' | 'pqbl' | 'rolePreview';
 
 export default function AdminPage() {
     const router = useRouter();
@@ -44,6 +45,7 @@ export default function AdminPage() {
         {
             title: t('admin.group.aiConfig'),
             items: [
+                { id: 'assistantManager', label: t('admin.tab.assistantManager'), icon: Bot },
                 { id: 'config', label: t('admin.tab.config'), icon: Settings },
                 { id: 'presets', label: t('admin.tab.presets'), icon: SlidersHorizontal },
                 { id: 'counselors', label: t('admin.tab.counselors'), icon: Users },
@@ -208,6 +210,7 @@ export default function AdminPage() {
                     </aside>
 
                     <div className="min-w-0 animate-fade-in-up">
+                        {activeTab === 'assistantManager' && <AssistantAdminPanel onOpenTab={(tab) => setActiveTab(tab)} />}
                         {activeTab === 'config' && <ConfigForm />}
                         {activeTab === 'logs' && <LogViewer />}
                         {activeTab === 'costs' && <CostStats />}
