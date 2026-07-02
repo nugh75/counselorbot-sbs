@@ -9,6 +9,7 @@ import {
     subscribeToCounselor,
     PublicCounselor,
 } from '@/lib/counselor';
+import { getSelectedInstrumentId, subscribeToInstrument } from '@/lib/instrument';
 import { useI18n } from '@/lib/i18n-context';
 
 export function HeaderCounselor() {
@@ -20,6 +21,9 @@ export function HeaderCounselor() {
         getSelectedCounselorId,
         () => null,
     );
+    // Il chip compare solo durante il percorso con uno strumento: fuori (intro,
+    // pagine di servizio) non ha senso scegliere il counselor.
+    const instrumentId = useSyncExternalStore(subscribeToInstrument, getSelectedInstrumentId, () => null);
     const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
 
     useEffect(() => {
@@ -37,6 +41,8 @@ export function HeaderCounselor() {
         document.addEventListener('mousedown', onClick);
         return () => document.removeEventListener('mousedown', onClick);
     }, []);
+
+    if (!instrumentId) return null;
 
     const selected = counselors.find((c) => c.id === selectedId) || null;
 
