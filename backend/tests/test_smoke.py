@@ -335,6 +335,7 @@ EXPECTED_ROUTES = {
     ("POST", "/admin/rag/collections"),
     ("DELETE", "/admin/rag/collections/{slug}"),
     ("GET", "/admin/rag/docs"),
+    ("GET", "/admin/rag/docs/file"),
     ("POST", "/admin/rag/docs"),
     ("DELETE", "/admin/rag/docs"),
     # pQBL da PDF (pure Question-Based Learning)
@@ -2655,6 +2656,19 @@ def test_rag_docs_dynamic_collection_upload_preview_and_delete():
         preview = client.get("/site-chat/document", params={"collection": slug, "source": "intro.md"})
         assert preview.status_code == 200, preview.text
         assert "Contenuto indicizzato" in preview.json()["content"]
+
+        admin_preview = client.get("/admin/rag/docs/file", params={"collection": slug, "source": "intro.md"})
+        assert admin_preview.status_code == 200, admin_preview.text
+        assert "Contenuto indicizzato" in admin_preview.json()["content"]
+
+        download = client.get("/admin/rag/docs/file", params={
+            "collection": slug,
+            "source": "intro.md",
+            "download": "true",
+        })
+        assert download.status_code == 200, download.text
+        assert download.headers["content-disposition"].startswith("attachment;")
+        assert b"Contenuto indicizzato" in download.content
 
         deleted_doc = client.delete(f"/admin/rag/docs?collection={slug}&source=intro.md")
         assert deleted_doc.status_code == 200, deleted_doc.text

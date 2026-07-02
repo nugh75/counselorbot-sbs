@@ -6,7 +6,7 @@
 // - reindicizzazione manuale e stato dell'indice per collezione.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AlertTriangle, Database, FolderPlus, Loader2, RefreshCw, Trash2, Upload } from 'lucide-react';
+import { AlertTriangle, Database, Download, Eye, FolderPlus, Loader2, RefreshCw, Trash2, Upload, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 
 interface RagCollection {
@@ -41,6 +41,16 @@ interface RagDocsResponse {
     docs: RagDoc[];
 }
 
+interface RagPreview {
+    source: string;
+    title: string;
+    kind: 'pdf' | 'markdown';
+    url: string;
+    content?: string;
+    loading: boolean;
+    error?: string;
+}
+
 function fmtSize(bytes: number | null): string {
     if (bytes == null) return '—';
     if (bytes < 1024) return `${bytes} B`;
@@ -51,6 +61,12 @@ function fmtSize(bytes: number | null): string {
 function fmtDate(ts: number | null): string {
     if (!ts) return '—';
     return new Date(ts * 1000).toLocaleDateString();
+}
+
+function docFileUrl(collection: string, source: string, download = false): string {
+    const qs = new URLSearchParams({ collection, source });
+    if (download) qs.set('download', 'true');
+    return `/api/admin/rag/docs/file?${qs.toString()}`;
 }
 
 export function RagDocsPanel() {
@@ -69,6 +85,7 @@ export function RagDocsPanel() {
     const [newId, setNewId] = useState('');
     const [newLabel, setNewLabel] = useState('');
     const [creating, setCreating] = useState(false);
+    const [preview, setPreview] = useState<RagPreview | null>(null);
     const fileRef = useRef<HTMLInputElement>(null);
 
     const loadCollections = useCallback(async () => {
@@ -109,6 +126,7 @@ export function RagDocsPanel() {
 
     useEffect(() => { void loadCollections(); }, [loadCollections]);
     useEffect(() => { if (selected) void loadDocs(selected); }, [selected, loadDocs]);
+    useEffect(() => { setPreview(null); }, [selected]);
 
     const currentCollection = collections.find((c) => c.id === selected);
 
@@ -208,6 +226,39 @@ export function RagDocsPanel() {
             setError(t('admin.rag.error.reindex'));
         } finally {
             setReindexing(false);
+        }
+    };
+
+    const handlePreview = async (doc: RagDoc) => {
+        if (!selected || !doc.on_disk) return;
+        const url = docFileUrl(selected, doc.source);
+        const title = doc.source.split('/').pop() || doc.source;
+        if (doc.source.toLowerCase().endsWith('.pdf')) {
+            setPreview({ source: doc.source, title, kind: 'pdf', url, loading: false });
+            return;
+        }
+        setPreview({ source: doc.source, title, kind: 'markdown', url, loading: true });
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(t('admin.rag.previewUnavailable'));
+            const body = await res.json();
+            setPreview({
+                source: doc.source,
+                title: body.title || title,
+                kind: 'markdown',
+                url,
+                content: body.content || '',
+                loading: false,
+            });
+        } catch (e) {
+            setPreview({
+                source: doc.source,
+                title,
+                kind: 'markdown',
+                url,
+                loading: false,
+                error: e instanceof Error ? e.message : t('admin.rag.previewUnavailable'),
+            });
         }
     };
 
@@ -400,22 +451,88 @@ export function RagDocsPanel() {
                                                 )}
                                             </td>
                                             <td className="py-2">
-                                                {doc.deletable && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => void handleDeleteDoc(doc)}
-                                                        title={t('admin.rag.deleteDoc')}
-                                                        aria-label={t('admin.rag.deleteDoc')}
-                                                        className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </button>
-                                                )}
+                                                <div className="flex items-center gap-1">
+                                                    {doc.on_disk && (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => void handlePreview(doc)}
+                                                                title={t('admin.rag.previewDoc')}
+                                                                aria-label={t('admin.rag.previewDoc')}
+                                                                className="rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
+                                                            >
+                                                                <Eye className="h-4 w-4" />
+                                                            </button>
+                                                            <a
+                                                                href={docFileUrl(selected, doc.source, true)}
+                                                                title={t('admin.rag.downloadDoc')}
+                                                                aria-label={t('admin.rag.downloadDoc')}
+                                                                className="rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
+                                                            >
+                                                                <Download className="h-4 w-4" />
+                                                            </a>
+                                                        </>
+                                                    )}
+                                                    {doc.deletable && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => void handleDeleteDoc(doc)}
+                                                            title={t('admin.rag.deleteDoc')}
+                                                            aria-label={t('admin.rag.deleteDoc')}
+                                                            className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+                    )}
+
+                    {preview && (
+                        <div className="rounded-lg border border-slate-200 bg-white">
+                            <div className="flex items-center gap-2 border-b border-slate-200 px-4 py-3">
+                                <Eye className="h-4 w-4 shrink-0 text-indigo-600" />
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-semibold text-slate-800" title={preview.source}>{preview.title}</p>
+                                    <p className="truncate text-xs text-slate-400">{preview.source}</p>
+                                </div>
+                                <a
+                                    href={docFileUrl(selected, preview.source, true)}
+                                    title={t('admin.rag.downloadDoc')}
+                                    aria-label={t('admin.rag.downloadDoc')}
+                                    className="rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
+                                >
+                                    <Download className="h-4 w-4" />
+                                </a>
+                                <button
+                                    type="button"
+                                    onClick={() => setPreview(null)}
+                                    title={t('admin.rag.closePreview')}
+                                    aria-label={t('admin.rag.closePreview')}
+                                    className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            </div>
+                            <div className="h-[min(70vh,42rem)] overflow-hidden">
+                                {preview.kind === 'pdf' ? (
+                                    <iframe title={preview.title} src={preview.url} className="h-full w-full" />
+                                ) : preview.loading ? (
+                                    <div className="flex h-full items-center justify-center text-sm text-slate-500">
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        {t('admin.rag.previewLoading')}
+                                    </div>
+                                ) : preview.error ? (
+                                    <div className="p-4 text-sm text-red-700">{preview.error}</div>
+                                ) : (
+                                    <pre className="h-full overflow-auto whitespace-pre-wrap p-4 text-sm leading-relaxed text-slate-700">{preview.content}</pre>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>
