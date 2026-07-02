@@ -353,6 +353,7 @@ def _seed_and_migrate():
             ],
             "counselors": [
                 "ADD COLUMN description_i18n JSON",
+                "ADD COLUMN voice_mapping JSON",
             ],
             "research_contacts": [
                 "ADD COLUMN source VARCHAR NOT NULL DEFAULT 'manual'",
@@ -1101,15 +1102,55 @@ def _migrate_counselor_personas_and_intros(db):
 
 # Counselor predefiniti per l'assistente (sintetico/analitico × studente/docente).
 # Usano Ollama. Tutti con show_in_assistant=True, lingua ["*"].
+_FEMALE_VOICES_1 = {
+    "it": "it-IT-IsabellaNeural",
+    "en": "en-US-AriaNeural",
+    "es": "es-ES-ElviraNeural",
+    "fr": "fr-FR-DeniseNeural",
+    "de": "de-DE-KatjaNeural",
+    "sv": "sv-SE-SofieNeural",
+}
+
+_FEMALE_VOICES_2 = {
+    "it": "it-IT-ElsaNeural",
+    "en": "en-US-JennyNeural",
+    "es": "es-ES-LauraNeural",
+    "fr": "fr-FR-EloiseNeural",
+    "de": "de-DE-AmalaNeural",
+    "sv": "sv-SE-HilleviNeural",
+}
+
+_FEMALE_VOICES_3 = {
+    "it": "it-IT-IsabellaNeural",
+    "en": "en-US-MichelleNeural",
+    "es": "es-ES-ElviraNeural",
+    "fr": "fr-FR-DeniseNeural",
+    "de": "de-DE-KatjaNeural",
+    "sv": "sv-SE-SofieNeural",
+}
+
+_MALE_VOICES = {
+    "it": "it-IT-DiegoNeural",
+    "en": "en-US-GuyNeural",
+    "es": "es-ES-AlvaroNeural",
+    "fr": "fr-FR-HenriNeural",
+    "de": "de-DE-ConradNeural",
+    "sv": "sv-SE-MattiasNeural",
+}
+
 _ASSISTANT_COUNSELOR_DEFAULTS = [
     {"slug": "iride", "name": "Iride", "description": "Collega le idee e da' il quadro d'insieme. Per studenti.",
-     "avatar": None, "questionnaire_types": [], "sort_order": 100, "assistant_audience": "studente"},
+     "avatar": None, "questionnaire_types": [], "sort_order": 100, "assistant_audience": "studente",
+     "voice_mapping": _FEMALE_VOICES_1},
     {"slug": "clio", "name": "Clio", "description": "Spiega nel dettaglio passo dopo passo. Per studenti.",
-     "avatar": None, "questionnaire_types": [], "sort_order": 101, "assistant_audience": "studente"},
+     "avatar": None, "questionnaire_types": [], "sort_order": 101, "assistant_audience": "studente",
+     "voice_mapping": _FEMALE_VOICES_2},
     {"slug": "bruno", "name": "Bruno", "description": "Connette framework teorici e implicazioni pratiche. Per docenti.",
-     "avatar": None, "questionnaire_types": [], "sort_order": 102, "assistant_audience": "docente"},
+     "avatar": None, "questionnaire_types": [], "sort_order": 102, "assistant_audience": "docente",
+     "voice_mapping": _MALE_VOICES},
     {"slug": "minerva", "name": "Minerva", "description": "Risposte dettagliate con citazioni da studi e autori. Per docenti.",
-     "avatar": None, "questionnaire_types": [], "sort_order": 103, "assistant_audience": "docente"},
+     "avatar": None, "questionnaire_types": [], "sort_order": 103, "assistant_audience": "docente",
+     "voice_mapping": _FEMALE_VOICES_3},
 ]
 
 
@@ -1140,6 +1181,10 @@ def _seed_assistant_counselors(db):
                 if audience and c.assistant_audience != audience:
                     c.assistant_audience = audience
                     changed = True
+                voice_map = cfg.get("voice_mapping")
+                if voice_map and c.voice_mapping != voice_map:
+                    c.voice_mapping = voice_map
+                    changed = True
             continue
         c = models.Counselor(
             slug=slug, name=cfg["name"], description=cfg["description"],
@@ -1148,6 +1193,7 @@ def _seed_assistant_counselors(db):
             language=["*"], sort_order=cfg["sort_order"],
             is_active=True, show_in_assistant=True,
             assistant_audience=cfg.get("assistant_audience"),
+            voice_mapping=cfg.get("voice_mapping"),
         )
         db.add(c)
         changed = True

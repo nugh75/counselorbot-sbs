@@ -989,14 +989,23 @@ async def upload_qsa_document(
 
 
 @router.post("/tts")
-async def text_to_speech(request: TTSRequest):
+async def text_to_speech(request: TTSRequest, db: Session = Depends(get_db)):
     try:
         clean_text = strip_markdown(request.text)
 
         if len(clean_text) > 5000:
             clean_text = clean_text[:5000] + "... Testo troncato."
 
-        communicate = edge_tts.Communicate(clean_text, request.voice)
+        voice = request.voice
+        if request.counselor_id:
+            counselor = db.query(models.Counselor).filter(models.Counselor.id == request.counselor_id).first()
+            if counselor and counselor.voice_mapping:
+                lang_code = request.voice.split("-")[0].lower()
+                custom_voice = counselor.voice_mapping.get(lang_code)
+                if custom_voice:
+                    voice = custom_voice
+
+        communicate = edge_tts.Communicate(clean_text, voice)
 
         audio_bytes = io.BytesIO()
         async for chunk in communicate.stream():
