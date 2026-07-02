@@ -322,6 +322,27 @@ def test_ztpi_score_profile_scopes_to_allowed_codes():
     assert _apply_current_step_score_profile_directive("BASE", "ZTPI", "it", "", {"T1"}, include_advice=False) == "BASE"
 
 
+def test_rag_filter_drops_other_instrument_chunks():
+    from backend.chat_logic import _filter_rag_results_by_instrument
+
+    results = [
+        {"title": "QPCS it", "source": "questionari/strumenti/QPCS_it.pdf", "text": "1 2 3 4"},
+        {"title": "Guida 2019", "source": "fonti/Guida_2019.pdf", "text": "I sette fattori affettivi del QSA sono A1..A7."},
+        {"title": "Guida 2019", "source": "fonti/Guida_2019.pdf", "text": "Le competenze strategiche aiutano lo studio."},
+        {"title": "Guida 2019", "source": "fonti/Guida_2019.pdf", "text": "Il QSA e il QPCS condividono la scala stanine."},
+    ]
+    # Step QSA: cade solo il chunk QPCS-only; il misto QSA+QPCS resta.
+    kept = _filter_rag_results_by_instrument(results, "QSA")
+    assert [r["title"] for r in kept] == ["Guida 2019", "Guida 2019", "Guida 2019"]
+    # Step QPCC: cadono i chunk QPCS-only, QSA-only e misto QSA+QPCS; resta il generico.
+    kept = _filter_rag_results_by_instrument(results, "QPCC")
+    assert len(kept) == 1 and "competenze strategiche" in kept[0]["text"]
+    # QSAr appartiene alla famiglia QSA.
+    assert len(_filter_rag_results_by_instrument(results, "QSAr")) == 3
+    # Strumento sconosciuto o vuoto: nessun filtro.
+    assert _filter_rag_results_by_instrument(results, "") == results
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0
