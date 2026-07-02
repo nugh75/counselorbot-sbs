@@ -14,6 +14,7 @@ from fastapi import HTTPException
 
 from . import models
 from . import database
+from . import prompt_config
 from .anonymous_codes import code_for_identity
 from .ai_service import AIService
 from .memory_service import session_memory
@@ -391,6 +392,7 @@ def _apply_global_directives(system_prompt: str, language: Optional[str], db=Non
             return row.value.strip()
         return fallback
 
+    context_directive = _read("directive_context", "")
     lang_directive = _read("directive_language", "")
     register_directive = _read("directive_register", "")
     thinking_directive = _read("directive_thinking", "")
@@ -438,7 +440,12 @@ def _apply_global_directives(system_prompt: str, language: Optional[str], db=Non
             "reasoning outside the <think> block."
         )
 
+    if not context_directive:
+        context_directive = prompt_config.DEFAULT_CONTEXT_DIRECTIVE
+
     parts = [system_prompt]
+    if context_directive:
+        parts.append("\n\n" + context_directive)
     if lang_directive:
         parts.append("\n\n" + lang_directive)
     if register_directive:
@@ -991,6 +998,78 @@ def _apply_current_step_factor_scope_directive(system_prompt: str, questionnaire
     )
 
 
+# ZTPI: bande operative del profilo bilanciato per fattore su scala 1-9
+# (ideale_min, ideale_max, vicino_min, vicino_max) — stesse bande del prompt sezione.
+_ZTPI_BANDS: dict[str, tuple[int, int, int, int]] = {
+    "T1": (2, 4, 1, 5),
+    "T2": (5, 7, 4, 8),
+    "T3": (7, 8, 6, 9),
+    "T4": (1, 3, 1, 4),
+    "T5": (5, 7, 4, 8),
+}
+# Etichette di zona nella lingua dello studente (it, altrimenti en come i nomi fattore).
+_ZTPI_ZONE_LABELS: dict[str, dict[str, str]] = {
+    "it": {
+        "in_line": "In linea con il profilo equilibrato",
+        "close": "Vicino al profilo equilibrato",
+        "growth": "Area di crescita",
+    },
+    "en": {
+        "in_line": "In line with the balanced profile",
+        "close": "Close to the balanced profile",
+        "growth": "Area for growth",
+    },
+}
+_ZTPI_SCORE_RE = re.compile(r"\b(T[1-5])\b[^\n\r0-9]{0,80}?([1-9])\s*/\s*9\b", re.IGNORECASE)
+
+
+def _ztpi_zone_for_score(code: str, score: int) -> str:
+    ideal_min, ideal_max, near_min, near_max = _ZTPI_BANDS[code]
+    if ideal_min <= score <= ideal_max:
+        return "in_line"
+    if near_min <= score <= near_max:
+        return "close"
+    return "growth"
+
+
+def _apply_ztpi_step_profile_directive(
+    system_prompt: str,
+    language: Optional[str],
+    scores_context: str,
+    allowed_codes: set[str],
+) -> str:
+    """[CURRENT STEP SCORE PROFILE] per ZTPI: zona di appartenenza gia' risolta
+    rispetto alle bande del profilo bilanciato, cosi' il modello non deve
+    calcolarla (parita' con il QSA)."""
+    if not scores_context or not allowed_codes:
+        return system_prompt
+    lang = _ztpi_lang(language)
+    names = _ZTPI_FACTOR_NAMES[lang]
+    labels = _ZTPI_ZONE_LABELS[lang]
+    allowed = {code.upper() for code in allowed_codes}
+    lines = []
+    for code, raw_score in _ZTPI_SCORE_RE.findall(scores_context):
+        code = code.upper()
+        if code not in allowed or code not in names:
+            continue
+        zone = _ztpi_zone_for_score(code, int(raw_score))
+        lines.append(f"- {code} ({names[code]}): {raw_score}/9 = {labels[zone]}")
+    if not lines:
+        return system_prompt
+    return (
+        f"{system_prompt}\n\n"
+        "[CURRENT STEP SCORE PROFILE]\n"
+        + "\n".join(sorted(lines))
+        + "\n"
+        "The membership zone is already resolved above: state it explicitly in your "
+        "answer using exactly that label, and report the score exactly as written — "
+        "never change numbers or labels. Describe scores outside the ideal range as "
+        "tendencies to work on, in a factual and non-dramatising tone: never suggest "
+        "trauma, pathology or clinical conditions. Discuss ONLY the factors listed "
+        "above; do not mention or explain other time perspectives in this step."
+    )
+
+
 def _apply_current_step_score_profile_directive(
     system_prompt: str,
     questionnaire_type: str,
@@ -999,6 +1078,8 @@ def _apply_current_step_score_profile_directive(
     allowed_codes: set[str],
     include_advice: bool,
 ) -> str:
+    if (questionnaire_type or "").upper() == "ZTPI":
+        return _apply_ztpi_step_profile_directive(system_prompt, language, scores_context, allowed_codes)
     profile = _qsa_step_score_profile(scores_context, questionnaire_type, language, allowed_codes)
     if not profile:
         return system_prompt
@@ -1415,6 +1496,42 @@ def _filter_allowed_strategy_entries(entries: List[dict], allowed_strategy_ids) 
     return [entry for entry in entries if str(entry.get("id", "")).strip() in allowed]
 
 
+# Famiglie di strumenti per il filtro del retrieval. QSA e QSAr condividono
+# teoria e fattori: stessa famiglia. I token sono cercati in titolo+percorso+testo.
+_INSTRUMENT_FAMILIES: dict[str, re.Pattern] = {
+    "QSA": re.compile(r"\bQSA-?r?\b", re.IGNORECASE),
+    "ZTPI": re.compile(r"\bZTPI\b|\bZimbardo\b", re.IGNORECASE),
+    "QPCS": re.compile(r"\bQPCS\b", re.IGNORECASE),
+    "QPCC": re.compile(r"\bQPCC\b", re.IGNORECASE),
+    "QAP": re.compile(r"\bQAP\b", re.IGNORECASE),
+    "SAVICKAS": re.compile(r"\bSavickas\b", re.IGNORECASE),
+}
+
+
+def _instrument_family(questionnaire_type: Optional[str]) -> str:
+    q = (questionnaire_type or "").upper()
+    if q in {"QSA", "QSAR"}:
+        return "QSA"
+    return q if q in _INSTRUMENT_FAMILIES else ""
+
+
+def _filter_rag_results_by_instrument(results: list, questionnaire_type: Optional[str]) -> list:
+    """Scarta i chunk RAG che appartengono a un altro strumento: nominano una o
+    piu' famiglie diverse da quella corrente e mai quella corrente. I chunk senza
+    riferimenti a strumenti (testo generale sulle competenze) passano sempre."""
+    family = _instrument_family(questionnaire_type)
+    if not family or not results:
+        return results
+    kept = []
+    for r in results:
+        haystack = f"{r.get('title', '')} {r.get('source', '')} {r.get('text', '')}"
+        mentioned = {name for name, pattern in _INSTRUMENT_FAMILIES.items() if pattern.search(haystack)}
+        if mentioned and family not in mentioned:
+            continue
+        kept.append(r)
+    return kept
+
+
 def _retrieved_context(
     db,
     session_id: str,
@@ -1497,10 +1614,13 @@ def _retrieved_context(
     if bool(component_flags.get("rag_competenzestrategiche", True)):
         try:
             if query:
-                rag_results = site_rag_index.search(
-                    ai_service, query,
-                    top_k=6, audience="studente",
-                    max_per_source=2, min_score=0.25,
+                rag_results = _filter_rag_results_by_instrument(
+                    site_rag_index.search(
+                        ai_service, query,
+                        top_k=6, audience="studente",
+                        max_per_source=2, min_score=0.25,
+                    ),
+                    questionnaire_type,
                 )
                 if rag_results:
                     graph_context = rag_build_context(rag_results, max_chars=3500)[0]
@@ -1513,10 +1633,13 @@ def _retrieved_context(
     if bool(component_flags.get("rag_counselorbot", False)):
         try:
             if query:
-                cb_results = counselorbot_rag_index.search(
-                    ai_service, query,
-                    top_k=3, audience="studente",
-                    max_per_source=2, min_score=0.25,
+                cb_results = _filter_rag_results_by_instrument(
+                    counselorbot_rag_index.search(
+                        ai_service, query,
+                        top_k=3, audience="studente",
+                        max_per_source=2, min_score=0.25,
+                    ),
+                    questionnaire_type,
                 )
                 if cb_results:
                     counselorbot_context = rag_build_context(cb_results, max_chars=3500)[0]
@@ -1529,10 +1652,13 @@ def _retrieved_context(
     if bool(component_flags.get("rag_questionari", False)):
         try:
             if query:
-                q_results = questionari_rag_index.search(
-                    ai_service, query,
-                    top_k=4, audience="studente",
-                    max_per_source=2, min_score=0.25,
+                q_results = _filter_rag_results_by_instrument(
+                    questionari_rag_index.search(
+                        ai_service, query,
+                        top_k=4, audience="studente",
+                        max_per_source=2, min_score=0.25,
+                    ),
+                    questionnaire_type,
                 )
                 if q_results:
                     questionari_context = rag_build_context(q_results, max_chars=3500)[0]
