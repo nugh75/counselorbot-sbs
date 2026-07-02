@@ -5,7 +5,7 @@
 // - upload/eliminazione di documenti .md/.pdf con reindicizzazione automatica;
 // - reindicizzazione manuale e stato dell'indice per collezione.
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Database, Download, Eye, FolderPlus, Loader2, RefreshCw, Trash2, Upload, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 
@@ -435,104 +435,109 @@ export function RagDocsPanel() {
                                 </thead>
                                 <tbody>
                                     {docs.map((doc) => (
-                                        <tr key={doc.source} className="border-b border-slate-100">
-                                            <td className="py-2 pr-3 text-slate-700 break-all">{doc.source}</td>
-                                            <td className="py-2 pr-3 text-slate-500 whitespace-nowrap">{fmtSize(doc.size)}</td>
-                                            <td className="py-2 pr-3 text-slate-500 whitespace-nowrap">{fmtDate(doc.mtime)}</td>
-                                            <td className="py-2 pr-3 whitespace-nowrap">
-                                                {doc.indexed ? (
-                                                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                                                        {doc.chunks} chunk
-                                                    </span>
-                                                ) : (
-                                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
-                                                        {t('admin.rag.notIndexed')}
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className="py-2">
-                                                <div className="flex items-center gap-1">
-                                                    {doc.on_disk && (
-                                                        <>
+                                        <Fragment key={doc.source}>
+                                            <tr className="border-b border-slate-100">
+                                                <td className="py-2 pr-3 text-slate-700 break-all">{doc.source}</td>
+                                                <td className="py-2 pr-3 text-slate-500 whitespace-nowrap">{fmtSize(doc.size)}</td>
+                                                <td className="py-2 pr-3 text-slate-500 whitespace-nowrap">{fmtDate(doc.mtime)}</td>
+                                                <td className="py-2 pr-3 whitespace-nowrap">
+                                                    {doc.indexed ? (
+                                                        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                                                            {doc.chunks} chunk
+                                                        </span>
+                                                    ) : (
+                                                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+                                                            {t('admin.rag.notIndexed')}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="py-2">
+                                                    <div className="flex items-center gap-1">
+                                                        {doc.on_disk && (
+                                                            <>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => void handlePreview(doc)}
+                                                                    title={t('admin.rag.previewDoc')}
+                                                                    aria-label={t('admin.rag.previewDoc')}
+                                                                    className="rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
+                                                                >
+                                                                    <Eye className="h-4 w-4" />
+                                                                </button>
+                                                                <a
+                                                                    href={docFileUrl(selected, doc.source, true)}
+                                                                    title={t('admin.rag.downloadDoc')}
+                                                                    aria-label={t('admin.rag.downloadDoc')}
+                                                                    className="rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
+                                                                >
+                                                                    <Download className="h-4 w-4" />
+                                                                </a>
+                                                            </>
+                                                        )}
+                                                        {doc.deletable && (
                                                             <button
                                                                 type="button"
-                                                                onClick={() => void handlePreview(doc)}
-                                                                title={t('admin.rag.previewDoc')}
-                                                                aria-label={t('admin.rag.previewDoc')}
-                                                                className="rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
+                                                                onClick={() => void handleDeleteDoc(doc)}
+                                                                title={t('admin.rag.deleteDoc')}
+                                                                aria-label={t('admin.rag.deleteDoc')}
+                                                                className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
                                                             >
-                                                                <Eye className="h-4 w-4" />
+                                                                <Trash2 className="h-4 w-4" />
                                                             </button>
-                                                            <a
-                                                                href={docFileUrl(selected, doc.source, true)}
-                                                                title={t('admin.rag.downloadDoc')}
-                                                                aria-label={t('admin.rag.downloadDoc')}
-                                                                className="rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
-                                                            >
-                                                                <Download className="h-4 w-4" />
-                                                            </a>
-                                                        </>
-                                                    )}
-                                                    {doc.deletable && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => void handleDeleteDoc(doc)}
-                                                            title={t('admin.rag.deleteDoc')}
-                                                            aria-label={t('admin.rag.deleteDoc')}
-                                                            className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {preview?.source === doc.source && (
+                                                <tr className="border-b border-slate-100 bg-slate-50">
+                                                    <td colSpan={5} className="p-0">
+                                                        <div className="m-3 rounded-lg border border-slate-200 bg-white">
+                                                            <div className="flex items-center gap-2 border-b border-slate-200 px-4 py-3">
+                                                                <Eye className="h-4 w-4 shrink-0 text-indigo-600" />
+                                                                <div className="min-w-0 flex-1">
+                                                                    <p className="truncate text-sm font-semibold text-slate-800" title={preview.source}>{preview.title}</p>
+                                                                    <p className="truncate text-xs text-slate-400">{preview.source}</p>
+                                                                </div>
+                                                                <a
+                                                                    href={docFileUrl(selected, preview.source, true)}
+                                                                    title={t('admin.rag.downloadDoc')}
+                                                                    aria-label={t('admin.rag.downloadDoc')}
+                                                                    className="rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
+                                                                >
+                                                                    <Download className="h-4 w-4" />
+                                                                </a>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setPreview(null)}
+                                                                    title={t('admin.rag.closePreview')}
+                                                                    aria-label={t('admin.rag.closePreview')}
+                                                                    className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                                                                >
+                                                                    <X className="h-4 w-4" />
+                                                                </button>
+                                                            </div>
+                                                            <div className="h-[min(70vh,42rem)] overflow-hidden">
+                                                                {preview.kind === 'pdf' ? (
+                                                                    <iframe title={preview.title} src={preview.url} className="h-full w-full" />
+                                                                ) : preview.loading ? (
+                                                                    <div className="flex h-full items-center justify-center text-sm text-slate-500">
+                                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                                        {t('admin.rag.previewLoading')}
+                                                                    </div>
+                                                                ) : preview.error ? (
+                                                                    <div className="p-4 text-sm text-red-700">{preview.error}</div>
+                                                                ) : (
+                                                                    <pre className="h-full overflow-auto whitespace-pre-wrap p-4 text-sm leading-relaxed text-slate-700">{preview.content}</pre>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </Fragment>
                                     ))}
                                 </tbody>
                             </table>
-                        </div>
-                    )}
-
-                    {preview && (
-                        <div className="rounded-lg border border-slate-200 bg-white">
-                            <div className="flex items-center gap-2 border-b border-slate-200 px-4 py-3">
-                                <Eye className="h-4 w-4 shrink-0 text-indigo-600" />
-                                <div className="min-w-0 flex-1">
-                                    <p className="truncate text-sm font-semibold text-slate-800" title={preview.source}>{preview.title}</p>
-                                    <p className="truncate text-xs text-slate-400">{preview.source}</p>
-                                </div>
-                                <a
-                                    href={docFileUrl(selected, preview.source, true)}
-                                    title={t('admin.rag.downloadDoc')}
-                                    aria-label={t('admin.rag.downloadDoc')}
-                                    className="rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
-                                >
-                                    <Download className="h-4 w-4" />
-                                </a>
-                                <button
-                                    type="button"
-                                    onClick={() => setPreview(null)}
-                                    title={t('admin.rag.closePreview')}
-                                    aria-label={t('admin.rag.closePreview')}
-                                    className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-                                >
-                                    <X className="h-4 w-4" />
-                                </button>
-                            </div>
-                            <div className="h-[min(70vh,42rem)] overflow-hidden">
-                                {preview.kind === 'pdf' ? (
-                                    <iframe title={preview.title} src={preview.url} className="h-full w-full" />
-                                ) : preview.loading ? (
-                                    <div className="flex h-full items-center justify-center text-sm text-slate-500">
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        {t('admin.rag.previewLoading')}
-                                    </div>
-                                ) : preview.error ? (
-                                    <div className="p-4 text-sm text-red-700">{preview.error}</div>
-                                ) : (
-                                    <pre className="h-full overflow-auto whitespace-pre-wrap p-4 text-sm leading-relaxed text-slate-700">{preview.content}</pre>
-                                )}
-                            </div>
                         </div>
                     )}
                 </div>
