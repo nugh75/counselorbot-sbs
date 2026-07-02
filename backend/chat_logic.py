@@ -20,6 +20,7 @@ from .ai_service import AIService
 from .memory_service import session_memory
 from .strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_memory, strategy_memory
 from .certified_strategy_service import certified_strategy_memory
+from .guided_step_label_i18n import resolve_step_label
 from .rag_index import site_rag_index, counselorbot_rag_index, questionari_rag_index, build_context as rag_build_context
 from .api_models import ChatRequest
 from .prompt_config import (
@@ -676,6 +677,61 @@ def _phase_factor_codes(db, phase: Optional[str]) -> set[str]:
     if not step or not step.prompt:
         return set()
     return _extract_factor_codes(step.prompt)
+
+
+def _guided_path_context(db, questionnaire_type: str, current_step_id: str | None, language: str) -> str:
+    qtype = (questionnaire_type or "").strip()
+    if not qtype:
+        return ""
+    steps = (
+        db.query(models.GuidedStep)
+        .filter(models.GuidedStep.questionnaire_type == qtype)
+        .order_by(models.GuidedStep.sort_order.asc(), models.GuidedStep.id.asc())
+        .all()
+    )
+    if not steps:
+        return ""
+
+    current_index = next((i for i, step in enumerate(steps) if step.id == current_step_id), None)
+    next_step_id = (
+        steps[current_index + 1].id
+        if current_index is not None and current_index + 1 < len(steps)
+        else None
+    )
+    lines = [
+        "Guided path for this questionnaire. Use it only for navigation and orientation; "
+        "do not analyse later-step content before the matching step starts.",
+    ]
+    for step in steps:
+        marker = ""
+        if step.id == current_step_id:
+            marker = " (current)"
+        elif step.id == next_step_id:
+            marker = " (next)"
+        label = resolve_step_label(step, language or "it")
+        lines.append(f"- sort_order {step.sort_order}: {label} [id: {step.id}]{marker}")
+
+    if current_index is not None:
+        current = steps[current_index]
+        lines.append(f"Current guided step: {resolve_step_label(current, language or 'it')} [id: {current.id}].")
+        if current_index + 1 < len(steps):
+            next_step = steps[current_index + 1]
+            lines.append(f"Next guided step: {resolve_step_label(next_step, language or 'it')} [id: {next_step.id}].")
+        else:
+            lines.append("This is the last configured analysis step; after it the UI moves to reflection questions and conclusion.")
+    else:
+        lines.append("The current phase is outside the configured analysis steps, such as reflection questions or conclusion.")
+
+    lines.append(
+        "If the student asks to continue, go to the next step, move forward, or says they are ready "
+        "for the next step, do not say that you do not know the path. Reply with exactly [[AVANZA_STEP]] "
+        "so the interface advances. Do not explain the marker."
+    )
+    lines.append(
+        "If the student asks what comes next, answer briefly with the next step label. "
+        "Do not reveal or analyse later-step scores before that step starts."
+    )
+    return "\n".join(lines)
 
 
 def _scope_scores_to_codes(scores: str, codes: set[str]) -> str:
@@ -2036,6 +2092,12 @@ def build_context_envelope(
         components["metadata"] = student_block if _component_enabled(component_flags, "metadata") else ""
     if student_block and _component_enabled(component_flags, "metadata"):
         parts_system.append("[STUDENT]\n" + student_block)
+
+    guided_path = _guided_path_context(db, questionnaire_type, step_id or request.phase, language)
+    if components is not None:
+        components["guided_path"] = guided_path if _component_enabled(component_flags, "metadata") else ""
+    if guided_path and _component_enabled(component_flags, "metadata"):
+        parts_system.append("[GUIDED PATH]\n" + guided_path)
 
     # --- [PROFILE] modello discente (auto-dichiarato) + PUNTEGGI (riferimento) ---
     username_for_context = identity.get("username", "") if identity else ""
