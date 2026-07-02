@@ -137,7 +137,7 @@ export default function AdminPage() {
                             <Settings className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                            <h1 className="font-bold text-2xl text-slate-900">Ricerca</h1>
+                            <h1 className="font-bold text-2xl text-slate-900">{t('admin.group.research')}</h1>
                             <p className="text-sm text-slate-500 mt-1">CounselorBot · {activeItem?.label}</p>
                         </div>
                     </div>
@@ -154,15 +154,15 @@ export default function AdminPage() {
                         <div className={cn('mb-3 flex items-center', sidebarCollapsed ? 'justify-center' : 'justify-between')}>
                             {!sidebarCollapsed && (
                                 <div>
-                                    <h2 className="text-sm font-bold text-slate-900">Ricerca</h2>
-                                    <p className="text-xs text-slate-500">Strumenti amministrativi</p>
+                                    <h2 className="text-sm font-bold text-slate-900">{t('admin.group.research')}</h2>
+                                    <p className="text-xs text-slate-500">{t('admin.header.subtitle')}</p>
                                 </div>
                             )}
                             <button
                                 type="button"
                                 onClick={() => setSidebarCollapsed((value) => !value)}
-                                title={sidebarCollapsed ? 'Espandi sidebar' : 'Collassa sidebar'}
-                                aria-label={sidebarCollapsed ? 'Espandi sidebar' : 'Collassa sidebar'}
+                                title={sidebarCollapsed ? t('admin.sidebar.expand') : t('admin.sidebar.collapse')}
+                                aria-label={sidebarCollapsed ? t('admin.sidebar.expand') : t('admin.sidebar.collapse')}
                                 className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                             >
                                 {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
