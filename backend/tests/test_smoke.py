@@ -336,6 +336,7 @@ EXPECTED_ROUTES = {
     ("DELETE", "/admin/rag/collections/{slug}"),
     ("GET", "/admin/rag/docs"),
     ("GET", "/admin/rag/docs/file"),
+    ("GET", "/admin/rag/graph"),
     ("PATCH", "/admin/rag/docs/scope"),
     ("POST", "/admin/rag/docs"),
     ("DELETE", "/admin/rag/docs"),
@@ -2643,6 +2644,19 @@ def test_rag_docs_dynamic_collection_upload_preview_and_delete():
         created = client.post("/admin/rag/collections", json={"id": slug, "label": "Test docs"})
         assert created.status_code == 200, created.text
         assert created.json()["id"] == slug
+        graph_dir = os.path.join(temp_root, slug, "graphify-out")
+        os.makedirs(graph_dir, exist_ok=True)
+        with open(os.path.join(graph_dir, "graph.html"), "w", encoding="utf-8") as f:
+            f.write("<!doctype html><title>Graph OK</title><body>Graph OK</body>")
+
+        admin_collections = client.get("/admin/rag/collections")
+        assert admin_collections.status_code == 200, admin_collections.text
+        test_collection = next(c for c in admin_collections.json() if c["id"] == slug)
+        assert test_collection["graph_available"] is True
+
+        graph = client.get("/admin/rag/graph", params={"collection": slug})
+        assert graph.status_code == 200, graph.text
+        assert "Graph OK" in graph.text
 
         collections = client.get("/site-chat/collections")
         assert collections.status_code == 200, collections.text

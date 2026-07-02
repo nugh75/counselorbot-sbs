@@ -32,6 +32,7 @@ from ..rag_index import (
     delete_dynamic_collection,
     docs_roots_for,
     get_index,
+    graphify_graph_path_for,
     is_dynamic_collection,
     list_collections,
     set_source_scope,
@@ -251,6 +252,24 @@ async def rag_docs_file(
         "title": os.path.splitext(filename)[0],
         "content": content,
     }
+
+
+@router.get("/admin/rag/graph")
+async def rag_graph(
+    collection: str = Query(...),
+    current_user: dict = Depends(auth.get_current_active_admin),
+):
+    """Apre il graph.html prodotto da Graphify per la collezione selezionata."""
+    coll = _require_collection(collection)
+    target = graphify_graph_path_for(coll)
+    if not target:
+        raise HTTPException(status_code=404, detail="Grafico Graphify non trovato")
+    return FileResponse(
+        target,
+        media_type="text/html",
+        filename=f"{coll}-graph.html",
+        content_disposition_type="inline",
+    )
 
 
 @router.patch("/admin/rag/docs/scope")

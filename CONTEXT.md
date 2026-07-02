@@ -167,6 +167,7 @@ make prompt-test Q=QSA STEP=intro COUNSELOR=7 STUDENT=barbaraambu RESP_LANG=en  
 | `DELETE` | `/api/admin/rag/collections/{slug}` | admin | Delete a dynamic RAG collection |
 | `GET` | `/api/admin/rag/docs` | admin | List collection documents with index/scope status |
 | `GET` | `/api/admin/rag/docs/file` | admin | Preview or download a RAG document |
+| `GET` | `/api/admin/rag/graph` | admin | Open the collection Graphify HTML graph |
 | `POST` | `/api/admin/rag/docs` | admin | Upload a Markdown/PDF document and reindex |
 | `PATCH` | `/api/admin/rag/docs/scope` | admin | Include/exclude a document from collection scope and reindex |
 | `DELETE` | `/api/admin/rag/docs` | admin | Delete an uploaded document and reindex |
