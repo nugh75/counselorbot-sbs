@@ -57,6 +57,23 @@ DEFAULT_FACTOR_INTERPLAY_QSAR = (
     "goal of this step; a plain list of single factors is not acceptable."
 )
 
+# Direttiva di metodo per il secondo livello: oltre alla lettura relazionale
+# (FACTOR INTERPLAY), il counselor deve proporre un'ipotesi interpretativa e far
+# riflettere lo studente PRIMA dei consigli pratici. Blocco additivo con propria
+# sentinella (stesso pattern idempotente di FACTOR_INTERPLAY, riusato in
+# main.startup_event per l'upgrade delle righe DB personalizzate).
+SECOND_LEVEL_METHOD_SENTINEL = "[SECOND-LEVEL METHOD]"
+
+DEFAULT_SECOND_LEVEL_METHOD = (
+    "\n\n[SECOND-LEVEL METHOD] After the integrated reading of the factors, always add: "
+    "(1) ONE interpretive hypothesis on the student's way of studying that emerges from "
+    "the combination of these factors (e.g. 'taken together, this suggests that...'), "
+    "going beyond the single scores; "
+    "(2) ONE short reflective question inviting the student to say whether this reading "
+    "matches their experience. The reflective question comes BEFORE any practical advice: "
+    "the goal is to make the student reflect first, not to hand out solutions."
+)
+
 DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL = (
     "Provide second-level analysis of the "
     "macro-dimensions of the study method, relating the factors to one another and "
@@ -64,6 +81,7 @@ DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL = (
     "You are inside an already-started structured analysis sequence: do NOT use opening greetings "
     "(e.g. 'Hi!', 'Great idea', 'Welcome'). Start directly with the requested analysis."
     + DEFAULT_FACTOR_INTERPLAY_QSA
+    + DEFAULT_SECOND_LEVEL_METHOD
 )
 
 DEFAULT_SYSTEM_PROMPT_GUIDED_QUESTIONS = (
@@ -109,6 +127,7 @@ DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL = (
     "of the study method, connecting the relevant results and proposing practical guidance in English. "
     "Avoid diagnoses and do not use opening greetings. Start directly with the requested analysis."
     + DEFAULT_FACTOR_INTERPLAY_QSAR
+    + DEFAULT_SECOND_LEVEL_METHOD
 )
 
 DEFAULT_SYSTEM_PROMPT_QSAR_GENERIC = (
@@ -1241,6 +1260,21 @@ SAVICKAS_INTRO_STEP_PROMPT = (
     "to build a final summary. Do NOT analyse or mention any score yet."
 )
 
+# Pattern attesi del secondo livello (spec analisi di secondo livello): frasi
+# additive riusate sia nei default degli step sia nell'upgrade DB idempotente in
+# main.startup_event (append se il prompt live, anche personalizzato, non le ha).
+SL_MOTIVATION_SYMMETRY_NOTE = (
+    " A2 and A5 are normally symmetrical: high volition pairs with a LOW score in "
+    "lack of perseverance. Check whether the profile respects or breaks this "
+    "symmetry and comment on what it means for the student."
+)
+
+SL_ATTRIBUTION_A6_NOTE = (
+    " Relate the attributional style to A6 (Perceived competence): an internal locus "
+    "of control (high A3, low A4) usually supports a stronger perception of "
+    "competence. Check this pattern on the profile."
+)
+
 DEFAULT_GUIDED_STEPS: List[Dict] = [
     {
         "id": "intro",
@@ -1306,6 +1340,7 @@ DEFAULT_GUIDED_STEPS: List[Dict] = [
             "Second-Level Analysis - Part 3: MOTIVATION AND WILL. "
             "Analyse together the factors: A2 (Volition), A5 (Lack of perseverance), "
             "A6 (Perceived competence). Assess motivational drive and self-confidence."
+            + SL_MOTIVATION_SYMMETRY_NOTE
         ),
         "system_prompt_mode": "second-level",
         "color_theme": "pink",
@@ -1331,7 +1366,7 @@ DEFAULT_GUIDED_STEPS: List[Dict] = [
             "Second-Level Analysis - Part 5: ATTRIBUTIONAL STYLE. "
             "Analyse together the factors: A3 (Attribution to controllable causes), "
             "A4 (Attribution to uncontrollable causes). Assess how the student interprets "
-            "successes and failures."
+            "successes and failures." + SL_ATTRIBUTION_A6_NOTE
         ),
         "system_prompt_mode": "second-level",
         "color_theme": "orange",
@@ -1347,6 +1382,23 @@ DEFAULT_GUIDED_STEPS: List[Dict] = [
         ),
         "system_prompt_mode": "second-level",
         "color_theme": "teal",
+    },
+    {
+        "id": "sl-synthesis",
+        "sort_order": 9,
+        "label": "3.7 Sintesi Integrata",
+        "prompt": (
+            "Second-Level Analysis - Part 7: INTEGRATED SYNTHESIS. "
+            "Consider the WHOLE profile: cognitive factors C1-C7 and affective-motivational "
+            "factors A1-A7. Do NOT re-analyse each factor one by one: identify the 2-3 most "
+            "salient relationships in this profile that CROSS the two areas (e.g. anxiety "
+            "A1/A7 affecting concentration C6; perceived competence A6 sustaining or "
+            "undermining strategies C1/C2; attributional style A3/A4 shaping perseverance "
+            "A5) and build a single integrated picture of HOW the student studies and WHY, "
+            "grounded in the actual scores."
+        ),
+        "system_prompt_mode": "second-level",
+        "color_theme": "indigo",
     },
 ]
 
@@ -1441,6 +1493,23 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
         ),
         "system_prompt_mode": "qsar-second-level",
         "color_theme": "orange",
+        "questionnaire_type": "QSAr",
+    },
+    {
+        "id": "qsar-synthesis",
+        "sort_order": 8,
+        "label": "8. Sintesi Integrata",
+        "prompt": (
+            "Integrated synthesis of the WHOLE QSAr profile: C1r, C2r, C3r, C4r, A1r, A2r, "
+            "A3r, A4r. Do NOT re-analyse each factor one by one: identify the 2-3 most "
+            "salient relationships in this profile that cross the cognitive and affective "
+            "areas (e.g. anxiety A1r affecting attention control C4r; perceived competence "
+            "A4r sustaining volition A2r and self-regulated strategies C2r) and build a "
+            "single integrated picture of how the student studies and why, grounded in the "
+            "actual scores. Respect the inverted direction of C4r and A1r."
+        ),
+        "system_prompt_mode": "qsar-second-level",
+        "color_theme": "indigo",
         "questionnaire_type": "QSAr",
     },
 ]
