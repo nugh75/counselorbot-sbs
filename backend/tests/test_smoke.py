@@ -1560,6 +1560,33 @@ def test_prompt_audit_dry_run_builds_qsa_envelope_without_side_effects():
     assert session_memory.get_summary(session_id) == ""
 
 
+def test_prompt_audit_followup_includes_guided_path_for_next_step():
+    _ensure_guided_steps("QSA")
+    session_id = "prompt-audit-guided-path-followup"
+    session_memory.clear(session_id)
+
+    r = client.post("/admin/prompt-audit/dry-run", json={
+        "questionnaire_type": "QSA",
+        "language": "it",
+        "phase": "cognitive",
+        "mode": "factor-qa",
+        "use_phase_prompt": False,
+        "message": "passiamo avanti al prossimo step",
+        "scores_context": "",
+        "session_id": session_id,
+        "include_knowledge": False,
+        "include_history": False,
+    })
+    assert r.status_code == 200, r.text
+    system_prompt = r.json()["envelope"]["system_prompt_final"]
+    assert "[GUIDED PATH]" in system_prompt
+    assert "1. Fattori Cognitivi [id: cognitive] (current)" in system_prompt
+    assert "2. Fattori Affettivi [id: affective] (next)" in system_prompt
+    assert "Next guided step: 2. Fattori Affettivi [id: affective]." in system_prompt
+    assert "[[AVANZA_STEP]]" in system_prompt
+    assert "do not say that you do not know the path" in system_prompt
+
+
 def test_prompt_audit_component_flags_use_saved_and_payload_values():
     _ensure_guided_steps("QSA")
     step_id = "audit-component-flags"
