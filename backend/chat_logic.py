@@ -657,6 +657,16 @@ _FACTOR_CODE_RE = re.compile(r"\b([CA]\d{1,2}r?|T[1-5])\b", re.IGNORECASE)
 _FACTOR_RANGE_RE = re.compile(r"\b([CA])(\d)\s*[-–]\s*[CA]?(\d)\b", re.IGNORECASE)
 
 
+def _extract_factor_codes(text: str) -> set[str]:
+    """Codici fattore citati in un testo, con espansione dei range (es. C1-C7)."""
+    codes = {m.group(1).upper() for m in _FACTOR_CODE_RE.finditer(text)}
+    for m in _FACTOR_RANGE_RE.finditer(text):
+        letter, a, b = m.group(1).upper(), int(m.group(2)), int(m.group(3))
+        for n in range(min(a, b), max(a, b) + 1):
+            codes.add(f"{letter}{n}")
+    return codes
+
+
 def _phase_factor_codes(db, phase: Optional[str]) -> set[str]:
     """Codici fattore della sezione corrente, ricavati dal prompt dello step guidato.
     Espande i range (es. C1-C7). Set vuoto se sconosciuto → nessuno scoping (fallback)."""
@@ -665,13 +675,7 @@ def _phase_factor_codes(db, phase: Optional[str]) -> set[str]:
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == phase).first()
     if not step or not step.prompt:
         return set()
-    text = step.prompt
-    codes = {m.group(1).upper() for m in _FACTOR_CODE_RE.finditer(text)}
-    for m in _FACTOR_RANGE_RE.finditer(text):
-        letter, a, b = m.group(1).upper(), int(m.group(2)), int(m.group(3))
-        for n in range(min(a, b), max(a, b) + 1):
-            codes.add(f"{letter}{n}")
-    return codes
+    return _extract_factor_codes(step.prompt)
 
 
 def _scope_scores_to_codes(scores: str, codes: set[str]) -> str:

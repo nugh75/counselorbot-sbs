@@ -53,6 +53,11 @@ STEP_LABEL_I18N: Dict[str, Dict[str, str]] = {
         "en": "8. Social Dimension", "es": "8. Dimensión Social", "fr": "8. Dimension Sociale",
         "de": "8. Soziale Dimension", "sv": "8. Social dimension",
     },
+    "sl-synthesis": {
+        "en": "9. Integrated Synthesis", "es": "9. Síntesis Integrada",
+        "fr": "9. Synthèse Intégrée", "de": "9. Integrierte Synthese",
+        "sv": "9. Integrerad syntes",
+    },
     # --- QSAr ---
     "qsar-intro": {
         "en": "0. Introduction", "es": "0. Presentación", "fr": "0. Présentation",
@@ -88,6 +93,11 @@ STEP_LABEL_I18N: Dict[str, Dict[str, str]] = {
     "qsar-attributions": {
         "en": "7. Causal Attributions", "es": "7. Atribuciones Causales", "fr": "7. Attributions Causales",
         "de": "7. Kausalattributionen", "sv": "7. Kausala attributioner",
+    },
+    "qsar-synthesis": {
+        "en": "8. Integrated Synthesis", "es": "8. Síntesis Integrada",
+        "fr": "8. Synthèse Intégrée", "de": "8. Integrierte Synthese",
+        "sv": "8. Integrerad syntes",
     },
     # --- ZTPI (the "T1 - " code prefixes are stripped for students by the endpoint sanitizer) ---
     "ztpi-intro": {
