@@ -1,6 +1,6 @@
 # Telegram chatbot collegato a CounselorBot
 
-> **Stato:** istruzioni / piano per implementazione futura - nessuna modifica al codice applicativo.
+> **Stato:** implementato (branch `feature/telegram-bot`, 2026-07-02). Restano manuali: creazione bot con BotFather, variabili nel `.env` reale, eccezione ai4auth per `/api/telegram/webhook`, `make telegram-set-webhook`.
 > **Data:** 2026-07-02
 > **Ambito:** creare un bot Telegram collegato a CounselorBot, capace di guidare lo studente nella scelta dello strumento, inserimento dei punteggi e analisi guidata dei risultati.
 
