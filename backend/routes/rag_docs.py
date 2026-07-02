@@ -17,6 +17,7 @@ import os
 import re
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
@@ -65,6 +66,15 @@ def _sanitize_filename(name: str) -> str:
     base = os.path.basename(name or "").strip()
     base = re.sub(r"[^\w. \-()]", "_", base, flags=re.UNICODE)
     return base
+
+
+def _resolve_doc_file(collection: str, source: str) -> str | None:
+    for root in docs_roots_for(collection):
+        root_abs = os.path.realpath(root)
+        path = os.path.realpath(os.path.normpath(os.path.join(root, source)))
+        if path.startswith(root_abs + os.sep) and os.path.isfile(path):
+            return path
+    return None
 
 
 def _reindex(db: Session, collection: str):
@@ -128,14 +138,6 @@ async def rag_docs_list(
     upload_dir = upload_dir_for(coll)
     upload_root = os.path.abspath(upload_dir) if upload_dir else None
 
-    def _resolve(source: str):
-        """(abspath, root) del file sorgente, o (None, None)."""
-        for root in roots:
-            p = os.path.abspath(os.path.normpath(os.path.join(root, source)))
-            if p.startswith(os.path.abspath(root) + os.sep) and os.path.isfile(p):
-                return p, root
-        return None, None
-
     docs: dict[str, dict] = {}
     for chunk in index.chunks:
         src = chunk["source"]
@@ -145,11 +147,11 @@ async def rag_docs_list(
         })
         entry["chunks"] += 1
     for src, entry in docs.items():
-        p, _root = _resolve(src)
+        p = _resolve_doc_file(coll, src)
         if p:
             st = os.stat(p)
             entry.update(on_disk=True, size=st.st_size, mtime=int(st.st_mtime))
-            entry["deletable"] = bool(upload_root) and p.startswith(upload_root + os.sep)
+            entry["deletable"] = bool(upload_root) and p.startswith(os.path.realpath(upload_root) + os.sep)
 
     # File presenti nella cartella di upload ma non (ancora) indicizzati.
     if upload_dir and os.path.isdir(upload_dir):
@@ -178,6 +180,52 @@ async def rag_docs_list(
         "upload_dir": upload_dir,
         "stats": index.stats(),
         "docs": sorted(docs.values(), key=lambda d: d["source"]),
+    }
+
+
+@router.get("/admin/rag/docs/file")
+async def rag_docs_file(
+    collection: str = Query(...),
+    source: str = Query(...),
+    download: bool = Query(False),
+    current_user: dict = Depends(auth.get_current_active_admin),
+):
+    """Preview/download admin di un documento RAG su disco.
+
+    Serve solo file reali sotto le root della collezione; niente path arbitrari
+    e niente file generati fuori corpus. Markdown in preview torna come JSON,
+    PDF come file inline. Con download=true torna sempre attachment.
+    """
+    coll = _require_collection(collection)
+    target = _resolve_doc_file(coll, source)
+    if not target:
+        raise HTTPException(status_code=404, detail="Documento non trovato")
+    ext = os.path.splitext(target)[1].lower()
+    if ext not in _ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail="Formato non supportato")
+
+    filename = os.path.basename(target)
+    disposition = "attachment" if download else "inline"
+    if ext == ".pdf" or download:
+        media_type = "application/pdf" if ext == ".pdf" else "text/markdown"
+        return FileResponse(
+            target,
+            media_type=media_type,
+            filename=filename,
+            content_disposition_type=disposition,
+        )
+
+    try:
+        with open(target, encoding="utf-8") as f:
+            content = f.read()
+    except UnicodeDecodeError:
+        with open(target, encoding="utf-8", errors="replace") as f:
+            content = f.read()
+    return {
+        "type": "markdown",
+        "source": source,
+        "title": os.path.splitext(filename)[0],
+        "content": content,
     }
 
 
@@ -242,16 +290,10 @@ async def rag_docs_delete(
     if not upload_dir:
         raise HTTPException(status_code=400, detail="Collezione senza cartella di upload")
     upload_root = os.path.abspath(upload_dir)
-    roots = docs_roots_for(coll)
-    target = None
-    for root in roots:
-        p = os.path.abspath(os.path.normpath(os.path.join(root, source)))
-        if p.startswith(os.path.abspath(root) + os.sep) and os.path.isfile(p):
-            target = p
-            break
+    target = _resolve_doc_file(coll, source)
     if not target:
         raise HTTPException(status_code=404, detail="Documento non trovato")
-    if not target.startswith(upload_root + os.sep):
+    if not target.startswith(os.path.realpath(upload_root) + os.sep):
         raise HTTPException(status_code=403, detail="Il documento non è eliminabile da qui")
     try:
         os.remove(target)
