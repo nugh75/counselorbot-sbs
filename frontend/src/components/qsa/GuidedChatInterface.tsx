@@ -205,24 +205,24 @@ function normalizeLoadedSteps(questionnaireType: string, loadedSteps: StepDef[])
 
 // --- Color theme mapping (string literals for Tailwind scanner) ---
 
-const COLOR_THEMES: Record<string, { headerBg: string; iconBg: string }> = {
-    blue:   { headerBg: 'bg-blue-50',   iconBg: 'bg-blue-500' },
-    purple: { headerBg: 'bg-purple-50', iconBg: 'bg-purple-500' },
-    indigo: { headerBg: 'bg-indigo-50', iconBg: 'bg-indigo-500' },
-    pink:   { headerBg: 'bg-pink-50',   iconBg: 'bg-pink-500' },
-    orange: { headerBg: 'bg-orange-50', iconBg: 'bg-orange-500' },
-    teal:   { headerBg: 'bg-teal-50',   iconBg: 'bg-teal-500' },
-    green:  { headerBg: 'bg-green-50',  iconBg: 'bg-green-500' },
-    red:    { headerBg: 'bg-red-50',    iconBg: 'bg-red-500' },
-    amber:  { headerBg: 'bg-amber-50',  iconBg: 'bg-amber-500' },
-    cyan:   { headerBg: 'bg-cyan-50',   iconBg: 'bg-cyan-500' },
-    slate:  { headerBg: 'bg-slate-50',  iconBg: 'bg-slate-500' },
-    rose:   { headerBg: 'bg-rose-50',   iconBg: 'bg-rose-500' },
+const COLOR_THEMES: Record<string, { headerBg: string; iconBg: string; border: string; text: string; ring: string }> = {
+    blue:   { headerBg: 'bg-blue-50',   iconBg: 'bg-blue-500',   border: 'border-blue-500',   text: 'text-blue-700',   ring: 'ring-blue-500/15' },
+    purple: { headerBg: 'bg-purple-50', iconBg: 'bg-purple-500', border: 'border-purple-500', text: 'text-purple-700', ring: 'ring-purple-500/15' },
+    indigo: { headerBg: 'bg-indigo-50', iconBg: 'bg-indigo-500', border: 'border-indigo-500', text: 'text-indigo-700', ring: 'ring-indigo-500/15' },
+    pink:   { headerBg: 'bg-pink-50',   iconBg: 'bg-pink-500',   border: 'border-pink-500',   text: 'text-pink-700',   ring: 'ring-pink-500/15' },
+    orange: { headerBg: 'bg-orange-50', iconBg: 'bg-orange-500', border: 'border-orange-500', text: 'text-orange-700', ring: 'ring-orange-500/15' },
+    teal:   { headerBg: 'bg-teal-50',   iconBg: 'bg-teal-500',   border: 'border-teal-500',   text: 'text-teal-700',   ring: 'ring-teal-500/15' },
+    green:  { headerBg: 'bg-green-50',  iconBg: 'bg-green-500',  border: 'border-green-500',  text: 'text-green-700',  ring: 'ring-green-500/15' },
+    red:    { headerBg: 'bg-red-50',    iconBg: 'bg-red-500',    border: 'border-red-500',    text: 'text-red-700',    ring: 'ring-red-500/15' },
+    amber:  { headerBg: 'bg-amber-50',  iconBg: 'bg-amber-500',  border: 'border-amber-500',  text: 'text-amber-700',  ring: 'ring-amber-500/15' },
+    cyan:   { headerBg: 'bg-cyan-50',   iconBg: 'bg-cyan-500',   border: 'border-cyan-500',   text: 'text-cyan-700',   ring: 'ring-cyan-500/15' },
+    slate:  { headerBg: 'bg-slate-50',  iconBg: 'bg-slate-500',  border: 'border-slate-500',  text: 'text-slate-700',  ring: 'ring-slate-500/15' },
+    rose:   { headerBg: 'bg-rose-50',   iconBg: 'bg-rose-500',   border: 'border-rose-500',   text: 'text-rose-700',   ring: 'ring-rose-500/15' },
 };
 
-const DEFAULT_COLOR = { headerBg: 'bg-indigo-50', iconBg: 'bg-indigo-600' };
-const QUESTIONS_COLOR = { headerBg: 'bg-green-50', iconBg: 'bg-green-500' };
-const CONCLUSION_COLOR = { headerBg: 'bg-slate-50', iconBg: 'bg-slate-500' };
+const DEFAULT_COLOR = { headerBg: 'bg-indigo-50', iconBg: 'bg-indigo-600', border: 'border-indigo-600', text: 'text-indigo-700', ring: 'ring-indigo-600/15' };
+const QUESTIONS_COLOR = { headerBg: 'bg-green-50', iconBg: 'bg-green-500', border: 'border-green-500', text: 'text-green-700', ring: 'ring-green-500/15' };
+const CONCLUSION_COLOR = { headerBg: 'bg-slate-50', iconBg: 'bg-slate-500', border: 'border-slate-500', text: 'text-slate-700', ring: 'ring-slate-500/15' };
 
 // --- Fixed phases ---
 
@@ -1087,16 +1087,17 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         {sidebarPhases.map((phaseId, idx) => {
                             const isActive = currentPhase === phaseId;
                             const isDone = phases.indexOf(currentPhase) > phases.indexOf(phaseId);
+                            const phaseColors = getPhaseColors(phaseId);
 
                             return (
                                 <div key={phaseId} className={cn(
                                     "flex items-center gap-2 p-2 rounded-lg text-xs transition-colors",
-                                    isActive ? "bg-indigo-50 text-indigo-700 font-medium" : isDone ? "text-green-600" : "text-slate-400"
+                                    isActive ? `${phaseColors.headerBg} ${phaseColors.text} font-medium` : isDone ? phaseColors.text : "text-slate-400"
                                 )}>
                                     <div className={cn(
                                         "w-4 h-4 rounded-full flex items-center justify-center text-[8px] border",
-                                        isActive ? "border-indigo-500 bg-indigo-500 text-white" :
-                                            isDone ? "border-green-500 bg-green-500 text-white" : "border-slate-300"
+                                        isActive ? `${phaseColors.border} ${phaseColors.iconBg} ${phaseColors.ring} text-white ring-4` :
+                                            isDone ? `${phaseColors.border} ${phaseColors.iconBg} text-white` : `${phaseColors.border} bg-white`
                                     )}>
                                         {isDone ? <CheckCircle2 className="w-2.5 h-2.5" /> : idx + 1}
                                     </div>
