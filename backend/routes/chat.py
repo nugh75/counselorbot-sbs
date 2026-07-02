@@ -993,13 +993,31 @@ async def upload_qsa_document(
             os.remove(temp_file_path)
 
 
+TTS_CHUNK_MAX_CHARS = 3000
+
+
+def _split_text_for_tts(text: str, max_len: int = TTS_CHUNK_MAX_CHARS) -> list[str]:
+    """Split text into chunks of at most max_len chars, preferring sentence
+    boundaries (periods), then spaces, so no sentence is cut mid-word."""
+    chunks: list[str] = []
+    remaining = text
+    while len(remaining) > max_len:
+        cut = remaining.rfind(".", 0, max_len)
+        if cut == -1:
+            cut = remaining.rfind(" ", 0, max_len)
+        if cut == -1:
+            cut = max_len - 1
+        chunks.append(remaining[:cut + 1].strip())
+        remaining = remaining[cut + 1:]
+    if remaining.strip():
+        chunks.append(remaining.strip())
+    return chunks
+
+
 @router.post("/tts")
 async def text_to_speech(request: TTSRequest, db: Session = Depends(get_db)):
     try:
         clean_text = strip_markdown(request.text)
-
-        if len(clean_text) > 5000:
-            clean_text = clean_text[:5000] + "... Testo troncato."
 
         voice = request.voice
         if request.counselor_id:
@@ -1010,12 +1028,12 @@ async def text_to_speech(request: TTSRequest, db: Session = Depends(get_db)):
                 if custom_voice:
                     voice = custom_voice
 
-        communicate = edge_tts.Communicate(clean_text, voice)
-
         audio_bytes = io.BytesIO()
-        async for chunk in communicate.stream():
-            if chunk["type"] == "audio":
-                audio_bytes.write(chunk["data"])
+        for text_chunk in _split_text_for_tts(clean_text):
+            communicate = edge_tts.Communicate(text_chunk, voice)
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    audio_bytes.write(chunk["data"])
 
         audio_bytes.seek(0)
 

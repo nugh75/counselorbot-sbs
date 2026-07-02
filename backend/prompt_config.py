@@ -135,6 +135,25 @@ DEFAULT_SYSTEM_PROMPT_QSAR_GENERIC = (
     "clearly and non-diagnostically, referring to the profile provided."
 )
 
+# --- Cross-instrument synthesis (secondo livello inter-strumento) ---
+
+DEFAULT_SYSTEM_PROMPT_CROSS_SYNTHESIS = (
+    "You are producing a cross-instrument synthesis for a student who has completed "
+    "two or more questionnaires (e.g. QSA learning strategies, QSAr short form, ZTPI "
+    "time perspective). The [MULTI-INSTRUMENT PROFILE] block lists, for each "
+    "instrument, the factor scores with the interpretation label already resolved: "
+    "inversions and ideal ranges are pre-computed, just read each row, do NOT "
+    "re-derive bands yourself. Do not re-analyse the instruments one by one: identify "
+    "the 2-3 most salient convergences or tensions ACROSS instruments (e.g. a strong "
+    "future orientation sustaining volition; anxiety surfacing consistently in more "
+    "than one profile; a hedonistic present in tension with self-regulation) and build "
+    "a single integrated picture of how the student studies and faces the future, "
+    "grounded in the actual scores. Name each factor with code and full name. "
+    "Avoid diagnoses, avoid unexplained technical acronyms, and address the student "
+    "directly."
+    + DEFAULT_SECOND_LEVEL_METHOD
+)
+
 DEFAULT_GUIDED_TEXT_QSAR_QUESTIONS_INTRO = (
     "Abbiamo completato l'analisi strutturata del tuo profilo QSAr. "
     "Ora puoi farmi qualsiasi domanda libera sui risultati o chiedere consigli specifici."
@@ -381,6 +400,12 @@ SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
         "label": "Prompt QSAr Chat Generica",
         "description": "Prompt di sistema per le domande libere sul QSAr",
         "default": DEFAULT_SYSTEM_PROMPT_QSAR_GENERIC,
+    },
+    {
+        "key": "prompt_cross_synthesis",
+        "label": "Prompt Sintesi Cross-Strumento",
+        "description": "Prompt di sistema per la sintesi integrata tra strumenti diversi (profilo multi-strumento nella pagina personale)",
+        "default": DEFAULT_SYSTEM_PROMPT_CROSS_SYNTHESIS,
     },
     {
         "key": "prompt_ztpi_factor",
