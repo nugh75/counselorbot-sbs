@@ -300,6 +300,49 @@ def test_score_profile_inverted_note_conditional_on_scope():
     assert "lack of perseverance is a strength" not in out_no_a5
 
 
+def test_ztpi_score_profile_resolves_zone():
+    scores = "PROFILO ZTPI DELLO STUDENTE:\n- T1: 7/9"
+    out = _apply_current_step_score_profile_directive("BASE", "ZTPI", "it", scores, {"T1"}, include_advice=False)
+    assert "[CURRENT STEP SCORE PROFILE]" in out
+    assert "T1 (Passato Negativo): 7/9 = Area di crescita" in out
+    assert "non-dramatising" in out
+    # Zone: 3 = in linea (ideale 2-4), 5 = vicino (near 1-5)
+    out_in = _apply_current_step_score_profile_directive("BASE", "ZTPI", "it", "- T1: 3/9", {"T1"}, include_advice=False)
+    assert "T1 (Passato Negativo): 3/9 = In linea con il profilo equilibrato" in out_in
+    out_close = _apply_current_step_score_profile_directive("BASE", "ZTPI", "it", "- T1: 5/9", {"T1"}, include_advice=False)
+    assert "T1 (Passato Negativo): 5/9 = Vicino al profilo equilibrato" in out_close
+
+
+def test_ztpi_score_profile_scopes_to_allowed_codes():
+    scores = "- T1: 7/9\n- T2: 6/9\n- T4: 2/9"
+    out = _apply_current_step_score_profile_directive("BASE", "ZTPI", "it", scores, {"T4"}, include_advice=False)
+    assert "T4 (Presente Fatalistico): 2/9 = In linea con il profilo equilibrato" in out
+    assert "T1" not in out
+    # Nessun punteggio in scope -> prompt invariato
+    assert _apply_current_step_score_profile_directive("BASE", "ZTPI", "it", "", {"T1"}, include_advice=False) == "BASE"
+
+
+def test_rag_filter_drops_other_instrument_chunks():
+    from backend.chat_logic import _filter_rag_results_by_instrument
+
+    results = [
+        {"title": "QPCS it", "source": "questionari/strumenti/QPCS_it.pdf", "text": "1 2 3 4"},
+        {"title": "Guida 2019", "source": "fonti/Guida_2019.pdf", "text": "I sette fattori affettivi del QSA sono A1..A7."},
+        {"title": "Guida 2019", "source": "fonti/Guida_2019.pdf", "text": "Le competenze strategiche aiutano lo studio."},
+        {"title": "Guida 2019", "source": "fonti/Guida_2019.pdf", "text": "Il QSA e il QPCS condividono la scala stanine."},
+    ]
+    # Step QSA: cade solo il chunk QPCS-only; il misto QSA+QPCS resta.
+    kept = _filter_rag_results_by_instrument(results, "QSA")
+    assert [r["title"] for r in kept] == ["Guida 2019", "Guida 2019", "Guida 2019"]
+    # Step QPCC: cadono i chunk QPCS-only, QSA-only e misto QSA+QPCS; resta il generico.
+    kept = _filter_rag_results_by_instrument(results, "QPCC")
+    assert len(kept) == 1 and "competenze strategiche" in kept[0]["text"]
+    # QSAr appartiene alla famiglia QSA.
+    assert len(_filter_rag_results_by_instrument(results, "QSAr")) == 3
+    # Strumento sconosciuto o vuoto: nessun filtro.
+    assert _filter_rag_results_by_instrument(results, "") == results
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0
