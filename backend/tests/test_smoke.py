@@ -336,6 +336,7 @@ EXPECTED_ROUTES = {
     ("DELETE", "/admin/rag/collections/{slug}"),
     ("GET", "/admin/rag/docs"),
     ("GET", "/admin/rag/docs/file"),
+    ("PATCH", "/admin/rag/docs/scope"),
     ("POST", "/admin/rag/docs"),
     ("DELETE", "/admin/rag/docs"),
     # pQBL da PDF (pure Question-Based Learning)
@@ -2626,6 +2627,12 @@ def test_rag_docs_dynamic_collection_upload_preview_and_delete():
     slug = "testdocs"
     original_root = rag_index.DYNAMIC_ROOT
     original_indexes = dict(rag_index._dynamic_indexes)
+    scope_path = rag_index.SCOPE_CONFIG_PATH
+    try:
+        with open(scope_path, "rb") as f:
+            original_scope = f.read()
+    except FileNotFoundError:
+        original_scope = None
     rag_index.DYNAMIC_ROOT = temp_root
     rag_index._dynamic_indexes.clear()
     main.app.dependency_overrides[auth.get_current_active_admin] = lambda: _identity(
@@ -2651,11 +2658,48 @@ def test_rag_docs_dynamic_collection_upload_preview_and_delete():
         listed = client.get(f"/admin/rag/docs?collection={slug}")
         assert listed.status_code == 200, listed.text
         docs = listed.json()["docs"]
-        assert any(d["source"] == "intro.md" and d["indexed"] and d["deletable"] for d in docs)
+        intro = next(d for d in docs if d["source"] == "intro.md")
+        assert intro["indexed"] and intro["deletable"]
+        assert intro["scope_included"] is True
+        assert intro["scope_forced"] is False
+        assert intro["index_status"] == "indexed"
 
         preview = client.get("/site-chat/document", params={"collection": slug, "source": "intro.md"})
         assert preview.status_code == 200, preview.text
         assert "Contenuto indicizzato" in preview.json()["content"]
+
+        scoped_out = client.patch("/admin/rag/docs/scope", json={
+            "collection": slug,
+            "source": "intro.md",
+            "in_scope": False,
+        })
+        assert scoped_out.status_code == 200, scoped_out.text
+        assert scoped_out.json()["scope"]["in_scope"] is False
+        assert scoped_out.json()["scope"]["forced"] is True
+
+        listed_out = client.get(f"/admin/rag/docs?collection={slug}")
+        assert listed_out.status_code == 200, listed_out.text
+        intro_out = next(d for d in listed_out.json()["docs"] if d["source"] == "intro.md")
+        assert intro_out["scope_included"] is False
+        assert intro_out["scope_forced"] is True
+        assert intro_out["indexed"] is False
+        assert intro_out["index_status"] == "out_of_scope"
+
+        scoped_in = client.patch("/admin/rag/docs/scope", json={
+            "collection": slug,
+            "source": "intro.md",
+            "in_scope": True,
+        })
+        assert scoped_in.status_code == 200, scoped_in.text
+        assert scoped_in.json()["scope"]["in_scope"] is True
+        assert scoped_in.json()["scope"]["forced"] is True
+
+        listed_in = client.get(f"/admin/rag/docs?collection={slug}")
+        assert listed_in.status_code == 200, listed_in.text
+        intro_in = next(d for d in listed_in.json()["docs"] if d["source"] == "intro.md")
+        assert intro_in["scope_included"] is True
+        assert intro_in["indexed"] is True
+        assert intro_in["index_status"] == "indexed"
 
         admin_preview = client.get("/admin/rag/docs/file", params={"collection": slug, "source": "intro.md"})
         assert admin_preview.status_code == 200, admin_preview.text
@@ -2683,6 +2727,15 @@ def test_rag_docs_dynamic_collection_upload_preview_and_delete():
         rag_index._dynamic_indexes.update(original_indexes)
         rag_index.DYNAMIC_ROOT = original_root
         shutil.rmtree(temp_root, ignore_errors=True)
+        if original_scope is None:
+            try:
+                os.remove(scope_path)
+            except OSError:
+                pass
+        else:
+            os.makedirs(os.path.dirname(scope_path), exist_ok=True)
+            with open(scope_path, "wb") as f:
+                f.write(original_scope)
         for suffix in ("rag_index.json", "embeddings.npy", "embed_cache.npz"):
             try:
                 os.remove(os.path.join(rag_index.INDEX_DIR, f"dyn_{slug}_{suffix}"))

@@ -25,6 +25,10 @@ interface RagDoc {
     deletable: boolean;
     size: number | null;
     mtime: number | null;
+    scope_included: boolean;
+    scope_default: boolean;
+    scope_forced: boolean;
+    index_status: 'indexed' | 'out_of_scope' | 'in_scope_not_indexed' | string;
 }
 
 interface RagStats {
@@ -86,6 +90,7 @@ export function RagDocsPanel() {
     const [newLabel, setNewLabel] = useState('');
     const [creating, setCreating] = useState(false);
     const [preview, setPreview] = useState<RagPreview | null>(null);
+    const [scopingSource, setScopingSource] = useState<string | null>(null);
     const fileRef = useRef<HTMLInputElement>(null);
 
     const loadCollections = useCallback(async () => {
@@ -226,6 +231,26 @@ export function RagDocsPanel() {
             setError(t('admin.rag.error.reindex'));
         } finally {
             setReindexing(false);
+        }
+    };
+
+    const handleScope = async (doc: RagDoc, inScope: boolean) => {
+        if (!selected) return;
+        setScopingSource(doc.source);
+        setError(null);
+        try {
+            const res = await fetch('/api/admin/rag/docs/scope', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ collection: selected, source: doc.source, in_scope: inScope }),
+            });
+            if (!res.ok) throw new Error('scope failed');
+            await loadDocs(selected);
+        } catch (e) {
+            console.error('Failed to update doc scope', e);
+            setError(t('admin.rag.error.scope'));
+        } finally {
+            setScopingSource(null);
         }
     };
 
@@ -429,6 +454,7 @@ export function RagDocsPanel() {
                                         <th className="py-2 pr-3 font-semibold">{t('admin.rag.table.doc')}</th>
                                         <th className="py-2 pr-3 font-semibold">{t('admin.rag.table.size')}</th>
                                         <th className="py-2 pr-3 font-semibold">{t('admin.rag.table.mtime')}</th>
+                                        <th className="py-2 pr-3 font-semibold">{t('admin.rag.table.scope')}</th>
                                         <th className="py-2 pr-3 font-semibold">{t('admin.rag.table.chunks')}</th>
                                         <th className="py-2 font-semibold">{t('admin.rag.table.actions')}</th>
                                     </tr>
@@ -441,13 +467,40 @@ export function RagDocsPanel() {
                                                 <td className="py-2 pr-3 text-slate-500 whitespace-nowrap">{fmtSize(doc.size)}</td>
                                                 <td className="py-2 pr-3 text-slate-500 whitespace-nowrap">{fmtDate(doc.mtime)}</td>
                                                 <td className="py-2 pr-3 whitespace-nowrap">
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            type="button"
+                                                            disabled={scopingSource === doc.source}
+                                                            onClick={() => void handleScope(doc, !doc.scope_included)}
+                                                            title={doc.scope_included ? t('admin.rag.scope.exclude') : t('admin.rag.scope.include')}
+                                                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium disabled:opacity-60 ${
+                                                                doc.scope_included
+                                                                    ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                                                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                                            }`}
+                                                        >
+                                                            {scopingSource === doc.source && <Loader2 className="h-3 w-3 animate-spin" />}
+                                                            {doc.scope_included ? t('admin.rag.scope.in') : t('admin.rag.scope.out')}
+                                                        </button>
+                                                        {doc.scope_forced && (
+                                                            <span className="text-[10px] font-medium uppercase tracking-wide text-amber-600">
+                                                                {t('admin.rag.scope.manual')}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="py-2 pr-3 whitespace-nowrap">
                                                     {doc.indexed ? (
                                                         <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
                                                             {doc.chunks} chunk
                                                         </span>
-                                                    ) : (
+                                                    ) : !doc.scope_included ? (
                                                         <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
-                                                            {t('admin.rag.notIndexed')}
+                                                            {t('admin.rag.index.outOfScope')}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                                                            {t('admin.rag.index.inScopeMissing')}
                                                         </span>
                                                     )}
                                                 </td>
@@ -490,7 +543,7 @@ export function RagDocsPanel() {
                                             </tr>
                                             {preview?.source === doc.source && (
                                                 <tr className="border-b border-slate-100 bg-slate-50">
-                                                    <td colSpan={5} className="p-0">
+                                                    <td colSpan={6} className="p-0">
                                                         <div className="m-3 rounded-lg border border-slate-200 bg-white">
                                                             <div className="flex items-center gap-2 border-b border-slate-200 px-4 py-3">
                                                                 <Eye className="h-4 w-4 shrink-0 text-indigo-600" />

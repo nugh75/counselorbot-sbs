@@ -612,37 +612,238 @@ def _plain_signature(docs_dir: str) -> dict[str, str]:
     return sig
 
 
+SCOPE_CONFIG_PATH = os.path.join(INDEX_DIR, "rag_scope.json")
+_scope_lock = threading.Lock()
+
+
+def _normalize_source(source: str) -> str:
+    return (source or "").strip().lstrip("/").replace("\\", "/")
+
+
+def _load_scope_config() -> dict:
+    try:
+        with open(SCOPE_CONFIG_PATH, encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except FileNotFoundError:
+        return {}
+    except Exception as e:
+        logger.warning("Configurazione scope RAG non leggibile: %s", e)
+        return {}
+
+
+def _save_scope_config(data: dict):
+    os.makedirs(INDEX_DIR, exist_ok=True)
+    tmp = SCOPE_CONFIG_PATH + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2, sort_keys=True)
+    os.replace(tmp, SCOPE_CONFIG_PATH)
+
+
+def _scope_entry(data: dict, collection: str) -> dict:
+    entry = data.setdefault(collection, {})
+    include = entry.get("include")
+    exclude = entry.get("exclude")
+    if not isinstance(include, list):
+        entry["include"] = []
+    if not isinstance(exclude, list):
+        entry["exclude"] = []
+    return entry
+
+
+def _scope_sources(collection: str, key: str) -> set[str]:
+    entry = _load_scope_config().get(collection, {})
+    values = entry.get(key, []) if isinstance(entry, dict) else []
+    return {_normalize_source(v) for v in values if _normalize_source(v)}
+
+
+def _scope_signature(collection: str) -> str:
+    entry = _load_scope_config().get(collection, {})
+    payload = json.dumps(entry if isinstance(entry, dict) else {}, sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:12]
+
+
+def default_scope_for(collection: str, source: str) -> bool:
+    """Scope predefinito della collezione, prima dei flag manuali admin."""
+    src = _normalize_source(source).lower()
+    stem = os.path.splitext(os.path.basename(src))[0]
+    ext = os.path.splitext(src)[1]
+    if collection == COLLECTION_COMPETENZE:
+        return ext == ".pdf" and stem in _GUIDE_STEMS
+    if collection == COLLECTION_FRAMEWORK:
+        if "/graphify-out/" in src or "/schede-bibliografiche/" in src:
+            return False
+        return ext == ".pdf" and src.startswith("fonti/") and stem not in _GUIDE_STEMS
+    if collection == COLLECTION_QUESTIONARI:
+        if "/graphify-out/" in src or "/schede-bibliografiche/" in src:
+            return False
+        return ext == ".pdf" and src.startswith("questionari/")
+    return ext in {".md", ".pdf"}
+
+
+def source_in_scope(collection: str, source: str, default_in_scope: bool | None = None) -> bool:
+    src = _normalize_source(source)
+    if not src:
+        return False
+    if src in _scope_sources(collection, "exclude"):
+        return False
+    if src in _scope_sources(collection, "include"):
+        return True
+    return default_scope_for(collection, src) if default_in_scope is None else bool(default_in_scope)
+
+
+def source_scope_state(collection: str, source: str, default_in_scope: bool | None = None) -> dict:
+    src = _normalize_source(source)
+    includes = _scope_sources(collection, "include")
+    excludes = _scope_sources(collection, "exclude")
+    default = default_scope_for(collection, src) if default_in_scope is None else bool(default_in_scope)
+    if src in excludes:
+        return {"in_scope": False, "default": default, "forced": True}
+    if src in includes:
+        return {"in_scope": True, "default": default, "forced": True}
+    return {"in_scope": default, "default": default, "forced": False}
+
+
+def set_source_scope(collection: str, source: str, in_scope: bool) -> dict:
+    src = _normalize_source(source)
+    if not src:
+        raise ValueError("Sorgente non valida")
+    with _scope_lock:
+        data = _load_scope_config()
+        entry = _scope_entry(data, collection)
+        include = {_normalize_source(v) for v in entry.get("include", []) if _normalize_source(v)}
+        exclude = {_normalize_source(v) for v in entry.get("exclude", []) if _normalize_source(v)}
+        include.discard(src)
+        exclude.discard(src)
+        if in_scope:
+            include.add(src)
+        else:
+            exclude.add(src)
+        entry["include"] = sorted(include)
+        entry["exclude"] = sorted(exclude)
+        _save_scope_config(data)
+    return source_scope_state(collection, src)
+
+
+def _resolve_collection_source(collection: str, source: str) -> str | None:
+    src = _normalize_source(source)
+    for root in docs_roots_for(collection):
+        root_abs = os.path.realpath(root)
+        path = os.path.realpath(os.path.normpath(os.path.join(root, src)))
+        if path.startswith(root_abs + os.sep) and os.path.isfile(path):
+            return path
+    return None
+
+
+def _collect_direct_source(collection: str, source: str) -> tuple[list[dict], dict[str, str]]:
+    src = _normalize_source(source)
+    path = _resolve_collection_source(collection, src)
+    if not path:
+        return [], {}
+    ext = os.path.splitext(path)[1].lower()
+    try:
+        st = os.stat(path)
+        sig = {src: f"{st.st_size}:{int(st.st_mtime)}"}
+    except OSError:
+        sig = {src: "f"}
+    if ext == ".md":
+        try:
+            with open(path, encoding="utf-8") as f:
+                text = _normalize_markdown(f.read())
+        except Exception as e:
+            logger.warning("Impossibile leggere sorgente inclusa %s: %s", path, e)
+            return [], sig
+    elif ext == ".pdf":
+        raw = _extract_pdf_text(path)
+        if not raw.strip():
+            logger.info("PDF incluso nello scope ma senza testo estraibile: %s", src)
+            return [], sig
+        text = _normalize_markdown(raw)
+    else:
+        return [], sig
+    title = _first_heading(text) or os.path.splitext(os.path.basename(src))[0].replace("_", " ")
+    chunks = [
+        {"id": f"{src}#forced-{i}", "source": src, "title": title, "text": chunk_text}
+        for i, chunk_text in enumerate(_chunk_markdown(text))
+    ]
+    return chunks, sig
+
+
+def _forced_include_signature(collection: str) -> dict[str, str]:
+    sig: dict[str, str] = {}
+    for source in sorted(_scope_sources(collection, "include")):
+        _chunks, source_sig = _collect_direct_source(collection, source)
+        sig.update(source_sig)
+    return sig
+
+
+def _add_scope_signature(collection: str, sig: dict[str, str]) -> dict[str, str]:
+    out = dict(sig)
+    out.update(_forced_include_signature(collection))
+    out[f"__scope_{collection}__"] = _scope_signature(collection)
+    return out
+
+
+def _collect_forced_include_chunks(collection: str, existing_sources: set[str]) -> tuple[list[dict], dict[str, str]]:
+    chunks: list[dict] = []
+    sig: dict[str, str] = {}
+    for source in sorted(_scope_sources(collection, "include") - existing_sources):
+        extra_chunks, extra_sig = _collect_direct_source(collection, source)
+        chunks.extend(extra_chunks)
+        sig.update(extra_sig)
+    return chunks, sig
+
+
+def _apply_scope(collection: str, chunks: list[dict], sig: dict[str, str], keep) -> tuple[list[dict], dict[str, str]]:
+    filtered = [
+        c for c in chunks
+        if source_in_scope(collection, c.get("source", ""), keep(c.get("source", "")))
+    ]
+    existing_sources = {c["source"] for c in filtered}
+    extra_chunks, extra_sig = _collect_forced_include_chunks(collection, existing_sources)
+    filtered.extend(extra_chunks)
+    scoped_sig = _add_scope_signature(collection, sig)
+    scoped_sig.update(extra_sig)
+    return filtered, scoped_sig
+
+
+def _scoped_corpus_signature(collection: str) -> dict[str, str]:
+    return _add_scope_signature(collection, _corpus_signature())
+
+
+def _collect_scoped_plain(collection: str, docs_dir: str) -> tuple[list[dict], dict[str, str]]:
+    chunks, sig = _collect_plain_corpus(docs_dir)
+    return _apply_scope(collection, chunks, sig, keep=lambda _src: True)
+
+
+def _scoped_plain_signature(collection: str, docs_dir: str) -> dict[str, str]:
+    return _add_scope_signature(collection, _plain_signature(docs_dir))
+
+
 def _collect_guides_only() -> tuple[list[dict], dict[str, str]]:
     """Graphify: solo le guide PDF del progetto competenzestrategiche.it."""
     chunks, sig = _collect_corpus()
-    return _filter_chunks(chunks, sig,
-        keep=lambda src: os.path.splitext(os.path.basename(src))[0].lower() in _GUIDE_STEMS)
+    return _filter_chunks(COLLECTION_COMPETENZE, chunks, sig,
+        keep=lambda src: default_scope_for(COLLECTION_COMPETENZE, src))
 
 
 def _collect_framework() -> tuple[list[dict], dict[str, str]]:
     """Graphify: tutti i PDF/markdown teorici tranne le guide."""
     chunks, sig = _collect_corpus()
-    return _filter_chunks(chunks, sig,
-        keep=lambda src: os.path.splitext(os.path.basename(src))[0].lower() not in _GUIDE_STEMS)
+    return _filter_chunks(COLLECTION_FRAMEWORK, chunks, sig,
+        keep=lambda src: default_scope_for(COLLECTION_FRAMEWORK, src))
 
 
 def _collect_questionari_graphify() -> tuple[list[dict], dict[str, str]]:
     """Graphify: solo i documenti sotto questionari/."""
     chunks, sig = _collect_corpus()
-    return _filter_chunks(chunks, sig,
-        keep=lambda src: src.startswith("questionari/"))
+    return _filter_chunks(COLLECTION_QUESTIONARI, chunks, sig,
+        keep=lambda src: default_scope_for(COLLECTION_QUESTIONARI, src))
 
 
-def _filter_chunks(chunks: list[dict], sig: dict[str, str], keep) -> tuple[list[dict], dict[str, str]]:
+def _filter_chunks(collection: str, chunks: list[dict], sig: dict[str, str], keep) -> tuple[list[dict], dict[str, str]]:
     """Filtra i chunk per prefisso/nome sorgente."""
-    filtered = [c for c in chunks if keep(c.get("source", ""))]
-    # Keep only signature entries for kept sources
-    kept_sources = {c["source"] for c in filtered}
-    filtered_sig = {
-        k: v for k, v in sig.items()
-        if k in kept_sources or k.startswith("__") or k.endswith(".json")
-    }
-    return filtered, filtered_sig
+    return _apply_scope(collection, chunks, sig, keep=keep)
 
 
 def _collect_counselorbot_plus_validazione() -> tuple[list[dict], dict[str, str]]:
@@ -650,13 +851,13 @@ def _collect_counselorbot_plus_validazione() -> tuple[list[dict], dict[str, str]
     chunks_a, sig_a = _collect_plain_corpus(COUNSELORBOT_DOCS_DIR)
     chunks_b, sig_b = _collect_plain_corpus(VALIDAZIONE_DOCS_DIR)
     sig = {**sig_a, **sig_b}
-    return chunks_a + chunks_b, sig
+    return _apply_scope(COLLECTION_COUNSELORBOT, chunks_a + chunks_b, sig, keep=lambda _src: True)
 
 
 def _counselorbot_validazione_signature() -> dict[str, str]:
     sig_a = _plain_signature(COUNSELORBOT_DOCS_DIR)
     sig_b = _plain_signature(VALIDAZIONE_DOCS_DIR)
-    return {**sig_a, **sig_b}
+    return _add_scope_signature(COLLECTION_COUNSELORBOT, {**sig_a, **sig_b})
 
 
 class _EmbeddingCache:
@@ -1001,7 +1202,7 @@ site_rag_index = SiteRagIndex(
     cache_path=CACHE_PATH, lock_path=LOCK_PATH,
     collector=_collect_guides_only,
     graph_loader=_load_graph,
-    signature_fn=_corpus_signature,
+    signature_fn=lambda: _scoped_corpus_signature(COLLECTION_COMPETENZE),
     mode="graphify",
 )
 
@@ -1027,7 +1228,7 @@ framework_rag_index = SiteRagIndex(
     lock_path=FRAMEWORK_LOCK_PATH,
     collector=_collect_framework,
     graph_loader=_load_graph,
-    signature_fn=_corpus_signature,
+    signature_fn=lambda: _scoped_corpus_signature(COLLECTION_FRAMEWORK),
     mode="graphify",
 )
 
@@ -1040,7 +1241,7 @@ questionari_rag_index = SiteRagIndex(
     lock_path=QUESTIONARI_LOCK_PATH,
     collector=_collect_questionari_graphify,
     graph_loader=_load_graph,
-    signature_fn=_corpus_signature,
+    signature_fn=lambda: _scoped_corpus_signature(COLLECTION_QUESTIONARI),
     mode="graphify",
 )
 
@@ -1101,9 +1302,9 @@ def _make_dynamic_index(slug: str) -> "SiteRagIndex":
         emb_path=os.path.join(INDEX_DIR, f"dyn_{slug}_embeddings.npy"),
         cache_path=os.path.join(INDEX_DIR, f"dyn_{slug}_embed_cache.npz"),
         lock_path=os.path.join(INDEX_DIR, f".dyn_{slug}.build.lock"),
-        collector=lambda: _collect_plain_corpus(d),
+        collector=lambda: _collect_scoped_plain(slug, d),
         graph_loader=_empty_graph,
-        signature_fn=lambda: _plain_signature(d),
+        signature_fn=lambda: _scoped_plain_signature(slug, d),
         mode="plain",
     )
 

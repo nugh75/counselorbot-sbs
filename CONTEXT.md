@@ -159,6 +159,18 @@ make prompt-test Q=QSA STEP=intro COUNSELOR=7 STUDENT=barbaraambu RESP_LANG=en  
 | `GET` | `/api/site-chat/status` | admin | Index status |
 | `POST` | `/api/site-chat/reindex` | admin | Rebuild RAG index |
 
+### Admin: RAG Documents
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/admin/rag/collections` | admin | List builtin and dynamic RAG collections |
+| `POST` | `/api/admin/rag/collections` | admin | Create a dynamic RAG collection |
+| `DELETE` | `/api/admin/rag/collections/{slug}` | admin | Delete a dynamic RAG collection |
+| `GET` | `/api/admin/rag/docs` | admin | List collection documents with index/scope status |
+| `GET` | `/api/admin/rag/docs/file` | admin | Preview or download a RAG document |
+| `POST` | `/api/admin/rag/docs` | admin | Upload a Markdown/PDF document and reindex |
+| `PATCH` | `/api/admin/rag/docs/scope` | admin | Include/exclude a document from collection scope and reindex |
+| `DELETE` | `/api/admin/rag/docs` | admin | Delete an uploaded document and reindex |
+
 ### PQBL (Problem/Question-Based Learning)
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|

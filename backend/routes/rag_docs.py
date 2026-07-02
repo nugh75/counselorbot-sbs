@@ -34,6 +34,8 @@ from ..rag_index import (
     get_index,
     is_dynamic_collection,
     list_collections,
+    set_source_scope,
+    source_scope_state,
     upload_dir_for,
 )
 
@@ -48,6 +50,12 @@ _MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB, coerente col limite nginx
 class RagCollectionCreate(BaseModel):
     id: str
     label: str = ""
+
+
+class RagDocScopeUpdate(BaseModel):
+    collection: str
+    source: str
+    in_scope: bool
 
 
 def _admin_username(current_user) -> str | None:
@@ -81,6 +89,20 @@ def _reindex(db: Session, collection: str):
     index = get_index(collection)
     index.build(AIService(db))
     return index.stats()
+
+
+def _apply_doc_scope_status(collection: str, docs: dict[str, dict]):
+    for src, entry in docs.items():
+        scope = source_scope_state(collection, src)
+        entry["scope_included"] = bool(scope["in_scope"])
+        entry["scope_default"] = bool(scope["default"])
+        entry["scope_forced"] = bool(scope["forced"])
+        if entry.get("indexed"):
+            entry["index_status"] = "indexed"
+        elif not scope["in_scope"]:
+            entry["index_status"] = "out_of_scope"
+        else:
+            entry["index_status"] = "in_scope_not_indexed"
 
 
 @router.get("/admin/rag/collections")
@@ -175,6 +197,8 @@ async def rag_docs_list(
                     "size": st.st_size, "mtime": int(st.st_mtime),
                 }
 
+    _apply_doc_scope_status(coll, docs)
+
     return {
         "collection": coll,
         "upload_dir": upload_dir,
@@ -229,6 +253,29 @@ async def rag_docs_file(
     }
 
 
+@router.patch("/admin/rag/docs/scope")
+async def rag_docs_scope(
+    payload: RagDocScopeUpdate,
+    current_user: dict = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Forza un documento dentro/fuori dallo scope della collezione e reindicizza."""
+    coll = _require_collection(payload.collection)
+    target = _resolve_doc_file(coll, payload.source)
+    if not target:
+        raise HTTPException(status_code=404, detail="Documento non trovato")
+    try:
+        scope = set_source_scope(coll, payload.source, payload.in_scope)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    logger.info(
+        "RAG scope: %s %s scope=%s da %s",
+        coll, payload.source, payload.in_scope, _admin_username(current_user),
+    )
+    stats = await run_in_threadpool(_reindex, db, coll)
+    return {"status": "ok", "scope": scope, "stats": stats}
+
+
 @router.post("/admin/rag/docs")
 async def rag_docs_upload(
     collection: str = Query(...),
@@ -270,7 +317,7 @@ async def rag_docs_upload(
             warning = (
                 "La collezione 'competenzestrategiche' indicizza solo le guide "
                 f"({', '.join(sorted(_GUIDE_STEMS))}): questo file è stato salvato "
-                "ma NON verrà indicizzato in questa collezione (lo sarà in 'framework')."
+                "ma parte fuori scope. Usa il flag Scope per includerlo qui."
             )
 
     stats = await run_in_threadpool(_reindex, db, coll)
