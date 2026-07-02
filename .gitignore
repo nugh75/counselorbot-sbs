@@ -28,3 +28,6 @@ graphify-out/
 
 # Runtime session data (root-owned, session/PII) — never commit
 session_memory/
+
+# Dynamic RAG collections uploaded at runtime — never commit
+rag-collections/

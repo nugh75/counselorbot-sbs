@@ -1051,10 +1051,173 @@ RAG_COLLECTIONS = {
     COLLECTION_QUESTIONARI: questionari_rag_index,
 }
 
+# Etichette leggibili per le collezioni predefinite (le dinamiche hanno la
+# label nel loro .collection.json).
+BUILTIN_COLLECTION_LABELS = {
+    COLLECTION_COMPETENZE: "Competenze Strategiche (sito)",
+    COLLECTION_COUNSELORBOT: "CounselorBot (piattaforma)",
+    COLLECTION_FRAMEWORK: "Framework teorico",
+    COLLECTION_QUESTIONARI: "Questionari e strumenti",
+}
+
+
+# ---------------------------------------------------------------------------
+# Collezioni dinamiche (create dall'admin a runtime)
+# ---------------------------------------------------------------------------
+# Ogni collezione dinamica è una sottocartella di DYNAMIC_ROOT contenente
+# .md/.pdf (modalità plain, nessun grafo) più un file meta `.collection.json`
+# ({"id": slug, "label": ...}). Gli indici vivono in INDEX_DIR con prefisso
+# `dyn_<slug>_` e sopravvivono al riavvio come quelli builtin.
+DYNAMIC_ROOT = os.environ.get(
+    "RAG_DYNAMIC_COLLECTIONS_DIR", os.path.join(_REPO_ROOT, "rag-collections")
+)
+_COLLECTION_META_FILE = ".collection.json"
+_SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{1,40}$")
+
+_dynamic_lock = threading.Lock()
+_dynamic_indexes: dict[str, "SiteRagIndex"] = {}
+
+
+def _dynamic_dir(slug: str) -> str:
+    return os.path.join(DYNAMIC_ROOT, slug)
+
+
+def is_valid_slug(slug: str) -> bool:
+    return bool(slug) and bool(_SLUG_RE.match(slug))
+
+
+def is_dynamic_collection(slug: str | None) -> bool:
+    """True se esiste una collezione dinamica con questo slug."""
+    if not slug or slug in RAG_COLLECTIONS or not is_valid_slug(slug):
+        return False
+    return os.path.isdir(_dynamic_dir(slug))
+
+
+def _make_dynamic_index(slug: str) -> "SiteRagIndex":
+    d = _dynamic_dir(slug)
+    return SiteRagIndex(
+        docs_dir=d,
+        index_path=os.path.join(INDEX_DIR, f"dyn_{slug}_rag_index.json"),
+        emb_path=os.path.join(INDEX_DIR, f"dyn_{slug}_embeddings.npy"),
+        cache_path=os.path.join(INDEX_DIR, f"dyn_{slug}_embed_cache.npz"),
+        lock_path=os.path.join(INDEX_DIR, f".dyn_{slug}.build.lock"),
+        collector=lambda: _collect_plain_corpus(d),
+        graph_loader=_empty_graph,
+        signature_fn=lambda: _plain_signature(d),
+        mode="plain",
+    )
+
+
+def get_dynamic_index(slug: str) -> "SiteRagIndex":
+    with _dynamic_lock:
+        idx = _dynamic_indexes.get(slug)
+        if idx is None:
+            idx = _make_dynamic_index(slug)
+            _dynamic_indexes[slug] = idx
+        return idx
+
+
+def _read_collection_label(slug: str) -> str:
+    try:
+        with open(os.path.join(_dynamic_dir(slug), _COLLECTION_META_FILE), encoding="utf-8") as f:
+            return str(json.load(f).get("label") or slug)
+    except Exception:
+        return slug
+
+
+def list_collections() -> list[dict]:
+    """Tutte le collezioni disponibili: builtin + dinamiche."""
+    out = [
+        {"id": cid, "label": BUILTIN_COLLECTION_LABELS.get(cid, cid),
+         "mode": idx.mode, "builtin": True}
+        for cid, idx in RAG_COLLECTIONS.items()
+    ]
+    if os.path.isdir(DYNAMIC_ROOT):
+        for name in sorted(os.listdir(DYNAMIC_ROOT)):
+            if name in RAG_COLLECTIONS or not is_valid_slug(name):
+                continue
+            if not os.path.isdir(_dynamic_dir(name)):
+                continue
+            out.append({"id": name, "label": _read_collection_label(name),
+                        "mode": "plain", "builtin": False})
+    return out
+
+
+def create_dynamic_collection(slug: str, label: str) -> dict:
+    """Crea la cartella + meta di una nuova collezione dinamica.
+
+    Solleva ValueError su slug non valido o già esistente."""
+    if not is_valid_slug(slug):
+        raise ValueError("Slug non valido: minuscole, cifre, '-' o '_', 2-41 caratteri")
+    if slug in RAG_COLLECTIONS or os.path.isdir(_dynamic_dir(slug)):
+        raise ValueError(f"Collezione '{slug}' già esistente")
+    d = _dynamic_dir(slug)
+    os.makedirs(d, exist_ok=True)
+    with open(os.path.join(d, _COLLECTION_META_FILE), "w", encoding="utf-8") as f:
+        json.dump({"id": slug, "label": label or slug, "created_at": time.time()},
+                  f, ensure_ascii=False)
+    return {"id": slug, "label": label or slug, "mode": "plain", "builtin": False}
+
+
+def delete_dynamic_collection(slug: str):
+    """Rimuove cartella documenti + file indice di una collezione dinamica."""
+    import shutil
+    if not is_dynamic_collection(slug):
+        raise ValueError(f"Collezione dinamica '{slug}' non trovata")
+    shutil.rmtree(_dynamic_dir(slug), ignore_errors=True)
+    for p in (
+        os.path.join(INDEX_DIR, f"dyn_{slug}_rag_index.json"),
+        os.path.join(INDEX_DIR, f"dyn_{slug}_embeddings.npy"),
+        os.path.join(INDEX_DIR, f"dyn_{slug}_embed_cache.npz"),
+        os.path.join(INDEX_DIR, f".dyn_{slug}.build.lock"),
+    ):
+        try:
+            os.remove(p)
+        except OSError:
+            pass
+    with _dynamic_lock:
+        _dynamic_indexes.pop(slug, None)
+
+
+def collection_exists(collection: str | None) -> bool:
+    return bool(collection) and (collection in RAG_COLLECTIONS or is_dynamic_collection(collection))
+
+
+def upload_dir_for(collection: str) -> str | None:
+    """Cartella scrivibile in cui l'admin carica i documenti della collezione.
+
+    Per le collezioni graphify i nuovi file sono comunque ingeriti direttamente
+    (pdftotext/markdown) al reindex; il grafo semantico va rigenerato a parte."""
+    if collection == COLLECTION_COUNSELORBOT:
+        return COUNSELORBOT_DOCS_DIR
+    if collection == COLLECTION_QUESTIONARI:
+        return QUESTIONARI_DOCS_DIR
+    if collection in (COLLECTION_FRAMEWORK, COLLECTION_COMPETENZE):
+        return FRAMEWORK_DOCS_DIR
+    if is_dynamic_collection(collection):
+        return _dynamic_dir(collection)
+    return None
+
+
+def docs_roots_for(collection: str) -> list[str]:
+    """Radici a cui sono relativi i `source` dei chunk della collezione."""
+    if collection == COLLECTION_COUNSELORBOT:
+        return [COUNSELORBOT_DOCS_DIR, VALIDAZIONE_DOCS_DIR]
+    if collection in (COLLECTION_FRAMEWORK, COLLECTION_COMPETENZE, COLLECTION_QUESTIONARI):
+        return [DOCS_DIR]
+    if is_dynamic_collection(collection):
+        return [_dynamic_dir(collection)]
+    return [DOCS_DIR]
+
 
 def get_index(collection: str | None) -> "SiteRagIndex":
     """Indice della collezione richiesta (default: competenzestrategiche)."""
-    return RAG_COLLECTIONS.get(collection or COLLECTION_COMPETENZE, site_rag_index)
+    coll = collection or COLLECTION_COMPETENZE
+    if coll in RAG_COLLECTIONS:
+        return RAG_COLLECTIONS[coll]
+    if is_dynamic_collection(coll):
+        return get_dynamic_index(coll)
+    return site_rag_index
 
 
 def _safe_doc_abspath(relpath: str, docs_dir: str = DOCS_DIR) -> str | None:
@@ -1123,6 +1286,8 @@ def get_document_preview(source: str, collection: str = COLLECTION_COMPETENZE):
         if preview:
             return preview
         return _plain_document_preview(source, VALIDAZIONE_DOCS_DIR)
+    if is_dynamic_collection(collection):
+        return _plain_document_preview(source, _dynamic_dir(collection))
     if collection == COLLECTION_FRAMEWORK:
         return _plain_document_preview(source, DOCS_DIR)
     if collection == COLLECTION_QUESTIONARI:

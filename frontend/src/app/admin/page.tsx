@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, Award, MessageCircleQuestion, PanelLeftClose, PanelLeftOpen, CalendarDays, Eye } from 'lucide-react';
+import { ArrowLeft, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, Award, MessageCircleQuestion, PanelLeftClose, PanelLeftOpen, CalendarDays, Eye, FolderOpen } from 'lucide-react';
 import { ConfigForm } from '@/components/admin/ConfigForm';
 import { LogViewer } from '@/components/admin/LogViewer';
 import { CostStats } from '@/components/admin/CostStats';
@@ -22,13 +22,14 @@ import { ResearchContactsPanel } from '@/components/admin/ResearchContactsPanel'
 import { AdministrationPlansPanel } from '@/components/admin/AdministrationPlansPanel';
 import { AssistantQuestionsPanel } from '@/components/admin/AssistantQuestionsPanel';
 import { RolePreviewPanel } from '@/components/admin/RolePreviewPanel';
+import { RagDocsPanel } from '@/components/admin/RagDocsPanel';
 import { getRealIdentity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { canUseResearchConsole } from '@/lib/roles';
 
 import { cn } from '@/lib/utils';
 
-type AdminTab = 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'approvedStrategies' | 'certifiedStrategies' | 'assistantQuestions' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'training' | 'pqbl' | 'rolePreview';
+type AdminTab = 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'approvedStrategies' | 'certifiedStrategies' | 'assistantQuestions' | 'ragDocs' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'training' | 'pqbl' | 'rolePreview';
 
 export default function AdminPage() {
     const router = useRouter();
@@ -49,6 +50,7 @@ export default function AdminPage() {
                 { id: 'approvedStrategies', label: t('admin.tab.approvedStrategies'), icon: Database },
                 { id: 'certifiedStrategies', label: t('admin.tab.certified'), icon: Award },
                 { id: 'assistantQuestions', label: t('admin.tab.assistantQuestions'), icon: MessageCircleQuestion },
+                { id: 'ragDocs', label: t('admin.tab.ragDocs'), icon: FolderOpen },
             ],
         },
         {
@@ -215,6 +217,7 @@ export default function AdminPage() {
                         {activeTab === 'approvedStrategies' && <ApprovedStrategiesPanel />}
                         {activeTab === 'certifiedStrategies' && <CertifiedStrategiesPanel />}
                         {activeTab === 'assistantQuestions' && <AssistantQuestionsPanel />}
+                        {activeTab === 'ragDocs' && <RagDocsPanel />}
                         {activeTab === 'surveys' && <SurveyViewer />}
                         {activeTab === 'results' && <QuestionnaireResultsViewer />}
                         {activeTab === 'questionnaires' && <QuestionnaireEditor />}

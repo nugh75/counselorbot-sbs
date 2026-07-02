@@ -44,6 +44,8 @@ from ..rag_index import (
     get_index,
     build_context,
     get_document_preview,
+    collection_exists,
+    list_collections,
     DEFAULT_TOP_K,
     COLLECTION_COMPETENZE,
     COLLECTION_COUNSELORBOT,
@@ -97,8 +99,8 @@ _AUDIENCE_DEFAULT_PROMPT_COUNSELORBOT = {
 
 
 def _normalize_collection(collection: str | None) -> str:
-    valid = {COLLECTION_COUNSELORBOT, COLLECTION_FRAMEWORK, COLLECTION_QUESTIONARI, COLLECTION_COMPETENZE}
-    return collection if collection in valid else COLLECTION_COMPETENZE
+    # Accetta builtin + collezioni dinamiche create dall'admin.
+    return collection if collection_exists(collection) else COLLECTION_COMPETENZE
 
 
 def _resolve_counselor(db, counselor_id):
@@ -174,6 +176,13 @@ def _resolve_site_prompt(ai_service: AIService, audience: str, collection: str =
         prompt = ai_service.config.get(key, _AUDIENCE_DEFAULT_PROMPT[audience])
         ctx = ai_service.config.get("questionari_chat_context", DEFAULT_QUESTIONARI_CHAT_CONTEXT)
         card = ""
+    elif collection != COLLECTION_COMPETENZE:
+        # Collezione dinamica: prompt di grounding generico, senza contesto
+        # specifico del sito. Config opzionale: rag_chat_context_<slug>.
+        key = SITE_CHAT_MODE_TO_PROMPT_KEY[audience]
+        prompt = ai_service.config.get(key, _AUDIENCE_DEFAULT_PROMPT[audience])
+        ctx = ai_service.config.get(f"rag_chat_context_{collection}", "")
+        card = ""
     else:
         key = SITE_CHAT_MODE_TO_PROMPT_KEY[audience]
         prompt = ai_service.config.get(key, _AUDIENCE_DEFAULT_PROMPT[audience])
@@ -212,6 +221,14 @@ def _retrieval_params(ai_service: AIService):
     except (TypeError, ValueError):
         min_score = 0.2
     return _parse("site_chat_category_weights", {}), _parse("site_chat_audience_weights", {}), max_per_source, min_score
+
+
+@router.get("/site-chat/collections")
+async def site_chat_collections(
+    current_user: dict = Depends(_require_site_chat_user),
+):
+    """Collezioni RAG selezionabili nell'assistente (builtin + dinamiche)."""
+    return list_collections()
 
 
 @router.get("/site-chat/status")
