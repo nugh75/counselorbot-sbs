@@ -20,6 +20,10 @@ from .prompt_config import (
     FACTOR_INTERPLAY_SENTINEL,
     DEFAULT_FACTOR_INTERPLAY_QSA,
     DEFAULT_FACTOR_INTERPLAY_QSAR,
+    SECOND_LEVEL_METHOD_SENTINEL,
+    DEFAULT_SECOND_LEVEL_METHOD,
+    SL_MOTIVATION_SYMMETRY_NOTE,
+    SL_ATTRIBUTION_A6_NOTE,
     DEFAULT_GUIDED_STEPS,
     DEFAULT_QSAR_GUIDED_STEPS,
     DEFAULT_ZTPI_GUIDED_STEPS,
@@ -738,6 +742,44 @@ def _seed_and_migrate():
             cfg_sl = db.query(models.Config).filter(models.Config.key == interplay_key).first()
             if cfg_sl and FACTOR_INTERPLAY_SENTINEL not in (cfg_sl.value or ""):
                 cfg_sl.value = (cfg_sl.value or "").rstrip() + interplay_block
+                legacy_changed = True
+
+        # One-off: direttiva [SECOND-LEVEL METHOD] (ipotesi interpretativa + domanda
+        # riflessiva PRIMA dei consigli) sulle righe DB di secondo livello QSA/QSAr.
+        # Stessa meccanica del blocco precedente: append idempotente via sentinella,
+        # preserva le personalizzazioni admin.
+        for method_key in ("prompt_second_level", "prompt_qsar_second_level"):
+            cfg_sl = db.query(models.Config).filter(models.Config.key == method_key).first()
+            if cfg_sl and SECOND_LEVEL_METHOD_SENTINEL not in (cfg_sl.value or ""):
+                cfg_sl.value = (cfg_sl.value or "").rstrip() + DEFAULT_SECOND_LEVEL_METHOD
+                legacy_changed = True
+
+        # One-off: pattern attesi del secondo livello sui prompt step live
+        # (anche personalizzati): simmetria A2/A5 su sl-motivation, aggancio
+        # A6/locus su sl-attribution. Append additivo idempotente (guardia sul
+        # testo distintivo), non distruttivo: il testo admin resta. Nota: citare
+        # A6 in sl-attribution serve anche allo scoping per step, che deriva i
+        # codici fattore dal prompt.
+        for step_id, guard, note in (
+            ("sl-motivation", "symmetr", SL_MOTIVATION_SYMMETRY_NOTE),
+            ("sl-attribution", "A6", SL_ATTRIBUTION_A6_NOTE),
+        ):
+            step = db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).first()
+            if step and step.prompt and guard.lower() not in step.prompt.lower():
+                step.prompt = step.prompt.rstrip() + note
+                legacy_changed = True
+
+        # One-off: step di sintesi integrata cross-area (QSA sl-synthesis, QSAr
+        # qsar-synthesis). Il seed count-based sopra salta i DB già popolati:
+        # inserimento esplicito se mancante.
+        qsa_step_defaults_by_id = {s["id"]: s for s in DEFAULT_GUIDED_STEPS}
+        qsar_step_defaults_by_id = {s["id"]: s for s in DEFAULT_QSAR_GUIDED_STEPS}
+        for synth_def in (
+            {**qsa_step_defaults_by_id["sl-synthesis"], "questionnaire_type": "QSA"},
+            qsar_step_defaults_by_id["qsar-synthesis"],
+        ):
+            if not db.query(models.GuidedStep).filter(models.GuidedStep.id == synth_def["id"]).first():
+                db.add(models.GuidedStep(**synth_def))
                 legacy_changed = True
 
         if legacy_changed:

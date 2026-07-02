@@ -26,6 +26,7 @@ from backend.chat_logic import (
     _apply_current_step_score_profile_directive,
     _apply_qsa_factor_directive,
     _ensure_required_qsa_factor_codes,
+    _extract_factor_codes,
     _sanitize_qsa_inverted_wording,
     _qsa_assessment_labels,
     _qsa_factor_names,
@@ -34,9 +35,12 @@ from backend.chat_logic import (
     _QSAR_INVERTED_CODES,
 )
 from backend.prompt_config import (
+    DEFAULT_GUIDED_STEPS,
+    DEFAULT_QSAR_GUIDED_STEPS,
     DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL,
     DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL,
     FACTOR_INTERPLAY_SENTINEL,
+    SECOND_LEVEL_METHOD_SENTINEL,
 )
 
 
@@ -187,6 +191,47 @@ def test_second_level_defaults_require_factor_interplay():
     for prompt in (DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL, DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL):
         assert FACTOR_INTERPLAY_SENTINEL in prompt, prompt
         assert "influence each other" in prompt, prompt
+
+
+def test_second_level_defaults_require_method_directive():
+    # Il metodo di secondo livello: ipotesi interpretativa + domanda riflessiva
+    # PRIMA dei consigli pratici, su entrambi i default QSA/QSAr.
+    for prompt in (DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL, DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL):
+        assert SECOND_LEVEL_METHOD_SENTINEL in prompt, prompt
+        assert "interpretive hypothesis" in prompt, prompt
+        assert "reflective question" in prompt, prompt
+
+
+def _default_step_prompts(steps):
+    return {s["id"]: s["prompt"] for s in steps}
+
+
+def test_synthesis_step_covers_all_qsa_factors():
+    # Lo step di sintesi integrata deve vedere tutti i 14 fattori QSA:
+    # lo scoping per step deriva i codici dal prompt (range espansi).
+    prompt = _default_step_prompts(DEFAULT_GUIDED_STEPS)["sl-synthesis"]
+    codes = _extract_factor_codes(prompt)
+    assert {f"C{n}" for n in range(1, 8)} <= codes
+    assert {f"A{n}" for n in range(1, 8)} <= codes
+
+
+def test_qsar_synthesis_step_covers_all_qsar_factors():
+    # Il range regex non espande i codici con suffisso r: il prompt QSAr
+    # deve elencarli esplicitamente, tutti e 8.
+    prompt = _default_step_prompts(DEFAULT_QSAR_GUIDED_STEPS)["qsar-synthesis"]
+    codes = _extract_factor_codes(prompt)
+    assert {"C1R", "C2R", "C3R", "C4R", "A1R", "A2R", "A3R", "A4R"} <= codes
+
+
+def test_motivation_and_attribution_prompts_state_expected_patterns():
+    # 3.3: simmetria attesa A2/A5; 3.5: aggancio locus of control <-> A6.
+    prompts = _default_step_prompts(DEFAULT_GUIDED_STEPS)
+    assert "symmetr" in prompts["sl-motivation"].lower()
+    attribution = prompts["sl-attribution"]
+    assert "A6" in attribution
+    assert "locus of control" in attribution.lower()
+    # A6 nel prompt allarga anche lo scope dello step (score profile incluso).
+    assert "A6" in _extract_factor_codes(attribution)
 
 
 def test_localization_uses_target_language_labels():
