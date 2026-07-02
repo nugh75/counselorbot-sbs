@@ -14,6 +14,8 @@ Con pytest (se installato):
 """
 import os
 import re
+import shutil
+import tempfile
 from urllib.parse import urlsplit, urlunsplit
 
 # Disabilita la traduzione async dei counselor durante i test: usa una propria
@@ -161,6 +163,9 @@ chat_routes.database.SessionLocal = _TestSession
 import backend.routes.site_chat as site_chat_routes
 site_chat_routes.AIService = _FakeAIService
 site_chat_routes.database.SessionLocal = _TestSession
+
+import backend.routes.rag_docs as rag_docs_routes
+rag_docs_routes.AIService = _FakeAIService
 
 # pQBL: mock provider + sessione isolata per il task di generazione in background.
 import backend.routes.pqbl as pqbl_routes
@@ -321,10 +326,17 @@ EXPECTED_ROUTES = {
     ("GET", "/instruments/{code}/rules"),
     ("POST", "/instruments/{code}/score"),
     # Chatbot informativo del sito (RAG)
+    ("GET", "/site-chat/collections"),
     ("GET", "/site-chat/status"),
     ("GET", "/site-chat/document"),
     ("POST", "/site-chat/reindex"),
     ("POST", "/site-chat/stream"),
+    ("GET", "/admin/rag/collections"),
+    ("POST", "/admin/rag/collections"),
+    ("DELETE", "/admin/rag/collections/{slug}"),
+    ("GET", "/admin/rag/docs"),
+    ("POST", "/admin/rag/docs"),
+    ("DELETE", "/admin/rag/docs"),
     # pQBL da PDF (pure Question-Based Learning)
     ("POST", "/pqbl/upload"),
     ("GET", "/pqbl/documents/{document_id}"),
@@ -2604,6 +2616,68 @@ def test_site_chat_document_rejects_unknown_source():
         assert r.status_code == 404, r.text
     finally:
         main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
+def test_rag_docs_dynamic_collection_upload_preview_and_delete():
+    import backend.rag_index as rag_index
+
+    temp_root = tempfile.mkdtemp(prefix="rag-dynamic-test-")
+    slug = "testdocs"
+    original_root = rag_index.DYNAMIC_ROOT
+    original_indexes = dict(rag_index._dynamic_indexes)
+    rag_index.DYNAMIC_ROOT = temp_root
+    rag_index._dynamic_indexes.clear()
+    main.app.dependency_overrides[auth.get_current_active_admin] = lambda: _identity(
+        "admin", "admin@example.test", is_admin=True
+    )
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        created = client.post("/admin/rag/collections", json={"id": slug, "label": "Test docs"})
+        assert created.status_code == 200, created.text
+        assert created.json()["id"] == slug
+
+        collections = client.get("/site-chat/collections")
+        assert collections.status_code == 200, collections.text
+        assert any(c["id"] == slug and c["label"] == "Test docs" for c in collections.json())
+
+        upload = client.post(
+            f"/admin/rag/docs?collection={slug}",
+            files={"file": ("intro.md", b"# Intro\n\nContenuto indicizzato per il test.", "text/markdown")},
+        )
+        assert upload.status_code == 200, upload.text
+        assert upload.json()["stats"]["n_chunks"] >= 1
+
+        listed = client.get(f"/admin/rag/docs?collection={slug}")
+        assert listed.status_code == 200, listed.text
+        docs = listed.json()["docs"]
+        assert any(d["source"] == "intro.md" and d["indexed"] and d["deletable"] for d in docs)
+
+        preview = client.get("/site-chat/document", params={"collection": slug, "source": "intro.md"})
+        assert preview.status_code == 200, preview.text
+        assert "Contenuto indicizzato" in preview.json()["content"]
+
+        deleted_doc = client.delete(f"/admin/rag/docs?collection={slug}&source=intro.md")
+        assert deleted_doc.status_code == 200, deleted_doc.text
+
+        deleted_collection = client.delete(f"/admin/rag/collections/{slug}")
+        assert deleted_collection.status_code == 200, deleted_collection.text
+        assert not any(c["id"] == slug for c in client.get("/admin/rag/collections").json())
+    finally:
+        main.app.dependency_overrides[auth.get_current_active_admin] = _fake_admin
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+        rag_index._dynamic_indexes.clear()
+        rag_index._dynamic_indexes.update(original_indexes)
+        rag_index.DYNAMIC_ROOT = original_root
+        shutil.rmtree(temp_root, ignore_errors=True)
+        for suffix in ("rag_index.json", "embeddings.npy", "embed_cache.npz"):
+            try:
+                os.remove(os.path.join(rag_index.INDEX_DIR, f"dyn_{slug}_{suffix}"))
+            except OSError:
+                pass
+        try:
+            os.remove(os.path.join(rag_index.INDEX_DIR, f".dyn_{slug}.build.lock"))
+        except OSError:
+            pass
 
 
 def test_site_chat_stream_grounded_mocked():

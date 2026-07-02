@@ -56,6 +56,7 @@ from .routes import certified_strategies as certified_strategies_routes
 from .routes import research_contacts as research_contacts_routes
 from .routes import administration_plans as administration_plans_routes
 from .routes import assistant_questions as assistant_questions_routes
+from .routes import rag_docs as rag_docs_routes
 
 
 # Re-export per retro-compatibilità (es. smoke test che importa da backend.main)
@@ -1291,3 +1292,4 @@ app.include_router(certified_strategies_routes.router)
 app.include_router(research_contacts_routes.router)
 app.include_router(administration_plans_routes.router)
 app.include_router(assistant_questions_routes.router)
+app.include_router(rag_docs_routes.router)

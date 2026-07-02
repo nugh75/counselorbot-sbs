@@ -30,11 +30,14 @@ services:
       - AGENT_PTY_SOCKET=${AGENT_PTY_SOCKET:-/run/cloudflared-agent/pty.sock}
       - OPENCODE_CHAT_MODEL=${OPENCODE_CHAT_MODEL:-gemma4:12b}
       - QSA_PDF_STORAGE_DIR=/app/uploads/qsa
+      - RAG_DYNAMIC_COLLECTIONS_DIR=/app/rag-collections
     volumes:
       - ./session_memory:/app/session_memory
       - ./knowledge:/app/knowledge:ro
-      - ./docs:/app/docs:ro
-      - ./docs-counselorbot:/app/docs-counselorbot:ro
+      # docs scrivibili: upload documenti RAG dal pannello admin
+      - ./docs:/app/docs
+      - ./docs-counselorbot:/app/docs-counselorbot
+      - ./rag-collections:/app/rag-collections
       - rag_index:/app/rag_index
       - ./uploads:/app/uploads
       - /run/cloudflared-agent:/run/cloudflared-agent

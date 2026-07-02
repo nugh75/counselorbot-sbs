@@ -26,7 +26,16 @@ const mdComponents: Components = {
 
 type Audience = 'studente' | 'docente';
 // Base di conoscenza selezionabile: contenuti del progetto vs piattaforma CounselorBot.
-type Collection = 'competenzestrategiche' | 'counselorbot' | 'framework' | 'questionari';
+// Le collezioni builtin hanno label i18n e topic dedicati; le dinamiche
+// (create dall'admin nel pannello Documenti RAG) arrivano dal backend.
+type Collection = string;
+const BUILTIN_COLLECTIONS = ['competenzestrategiche', 'framework', 'questionari', 'counselorbot'] as const;
+
+interface CollectionInfo {
+    id: string;
+    label: string;
+    builtin: boolean;
+}
 
 interface Msg {
     role: 'user' | 'assistant';
@@ -74,7 +83,7 @@ const TOPIC_ICONS: Record<string, LucideIcon> = {
 // Matrice topic per (collection, audience). Le(collection) definiscono i
 // set di schede; gli id sono univoci cosi' ognuno ha titolo/body/prompt
 // propri nella i18n (studente e docente hanno argomenti diversi).
-const TOPICS_BY_COLLECTION_AUDIENCE: Record<Collection, Record<Audience, TopicId[]>> = {
+const TOPICS_BY_COLLECTION_AUDIENCE: Record<string, Record<Audience, TopicId[]>> = {
     competenzestrategiche: {
         studente: ['cs_strumenti'],
         docente: ['cs_metodologia'],
@@ -92,7 +101,9 @@ const TOPICS_BY_COLLECTION_AUDIENCE: Record<Collection, Record<Audience, TopicId
         docente: ['q_strumenti', 'q_fattori', 'q_scoring'],
     },
 };
-const firstTopic = (c: Collection, a: Audience): TopicId => TOPICS_BY_COLLECTION_AUDIENCE[c][a][0];
+// Le collezioni dinamiche non hanno topic predefiniti: lista vuota.
+const topicsFor = (c: Collection, a: Audience): TopicId[] => TOPICS_BY_COLLECTION_AUDIENCE[c]?.[a] ?? [];
+const firstTopic = (c: Collection, a: Audience): TopicId => topicsFor(c, a)[0] ?? '';
 
 // Mostra solo il nome leggibile del file citato.
 function sourceLabel(src: string): string {
@@ -126,8 +137,12 @@ export default function AssistentePage() {
     // counselor_id al backend che applichera' la persona al system prompt.
     const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
     const [counselorId, setCounselorId] = useState<number | null>(null);
+    // Collezioni disponibili (builtin + dinamiche), caricate dal backend.
+    const [availableCollections, setAvailableCollections] = useState<CollectionInfo[]>(
+        BUILTIN_COLLECTIONS.map((id) => ({ id, label: id, builtin: true })),
+    );
 
-    const topicIds = TOPICS_BY_COLLECTION_AUDIENCE[collection][audience];
+    const topicIds = topicsFor(collection, audience);
     const topics = topicIds.map((id) => ({
         id,
         icon: TOPIC_ICONS[id],
@@ -135,7 +150,13 @@ export default function AssistentePage() {
         body: t(`assistant.topic.${id}.body`),
         prompt: t(`assistant.topic.${id}.prompt`),
     }));
-    const selectedTopic = topics.find((x) => x.id === selectedTopicId) ?? topics[0];
+    // Puo' essere undefined per le collezioni dinamiche (nessun topic predefinito).
+    const selectedTopic = topics.find((x) => x.id === selectedTopicId) ?? topics[0] ?? null;
+    const currentCollectionInfo = availableCollections.find((c) => c.id === collection);
+    const welcomeKey = currentCollectionInfo?.builtin === false
+        ? 'assistant.welcome.dynamic'
+        : `assistant.welcome.${collection === 'counselorbot' ? 'cb' : 'cs'}${audience}`;
+    const welcomeText = t(welcomeKey, { collection: currentCollectionInfo?.label || collection });
 
     // Se cambio collection o audience e il topic selezionato non e' piu
     // disponibile nella nuova combinazione, ripristina il primo visibile.
@@ -195,6 +216,18 @@ export default function AssistentePage() {
         return () => { active = false; unsub(); };
     }, [lang, audience]);
 
+    // Collezioni RAG disponibili (builtin + create dall'admin).
+    useEffect(() => {
+        let active = true;
+        fetch('/api/site-chat/collections')
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data: CollectionInfo[] | null) => {
+                if (active && Array.isArray(data) && data.length > 0) setAvailableCollections(data);
+            })
+            .catch(() => { /* fallback: builtin */ });
+        return () => { active = false; };
+    }, []);
+
     const scrollToBottom = () => {
         requestAnimationFrame(() => {
             scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -207,6 +240,7 @@ export default function AssistentePage() {
     };
 
     const prepareQuestion = () => {
+        if (!selectedTopic) return; // collezione dinamica senza topic
         // Preferisci le domande dal DB (gestite da admin); fallback alle varianti i18n.
         const fromDb = dbQuestions[selectedTopic.id] ?? [];
         const promptText = selectedTopic.prompt || '';
@@ -385,24 +419,24 @@ export default function AssistentePage() {
                         </div>
                     )}
 
-                    {/* Selettore base di conoscenza: 4 collezioni RAG. */}
+                    {/* Selettore base di conoscenza: collezioni RAG builtin + dinamiche. */}
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1.5">
                             {t('assistant.collection.label')}
                         </p>
                         <div className="grid grid-cols-2 gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
-                            {(['competenzestrategiche', 'framework', 'questionari', 'counselorbot'] as Collection[]).map((c) => (
+                            {availableCollections.map((c) => (
                                 <button
-                                    key={c}
+                                    key={c.id}
                                     type="button"
-                                    onClick={() => chooseCollection(c)}
+                                    onClick={() => chooseCollection(c.id)}
                                     className={`rounded-md px-2 py-1.5 text-xs font-semibold transition-colors ${
-                                        collection === c
+                                        collection === c.id
                                             ? 'bg-white text-indigo-700 shadow-sm ring-1 ring-indigo-200'
                                             : 'text-slate-500 hover:text-slate-800'
                                     }`}
                                 >
-                                    {t(`assistant.collection.${c}`)}
+                                    {c.builtin ? t(`assistant.collection.${c.id}`) : c.label}
                                 </button>
                             ))}
                         </div>
@@ -436,7 +470,7 @@ export default function AssistentePage() {
                     <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-1">
                         {topics.map((topic) => {
                             const Icon = topic.icon;
-                            const active = selectedTopic.id === topic.id;
+                            const active = selectedTopic?.id === topic.id;
                             return (
                                 <button
                                     key={topic.id}
@@ -460,7 +494,7 @@ export default function AssistentePage() {
                     <div ref={scrollRef} className="glass-panel min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
                         {messages.length === 0 && (
                             <div className="flex items-start gap-3 text-slate-600">
-                                <p className="text-sm leading-relaxed pt-1">{t(`assistant.welcome.${collection === 'counselorbot' ? 'cb' : 'cs'}${audience}`)}</p>
+                                <p className="text-sm leading-relaxed pt-1">{welcomeText}</p>
                             </div>
                         )}
 
@@ -531,8 +565,9 @@ export default function AssistentePage() {
                         <button
                             type="button"
                             onClick={prepareQuestion}
+                            disabled={!selectedTopic}
                             title={t('assistant.prepareQuestion')}
-                            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-bold text-slate-500 hover:border-indigo-300 hover:text-indigo-600 transition-colors"
+                            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-bold text-slate-500 transition-colors hover:border-indigo-300 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             ?
                         </button>
