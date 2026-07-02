@@ -621,6 +621,9 @@ const it: Dict = {
     'admin.group.pqbl': 'pQBL',
     'admin.group.preview': 'Anteprima',
     'admin.tab.rolePreview': 'Anteprima ruoli',
+    'admin.header.subtitle': 'Strumenti amministrativi',
+    'admin.sidebar.expand': 'Espandi sidebar',
+    'admin.sidebar.collapse': 'Collassa sidebar',
 };
 
 const en: Dict = {
@@ -1233,6 +1236,9 @@ const en: Dict = {
     'admin.group.pqbl': 'pQBL',
     'admin.group.preview': 'Preview',
     'admin.tab.rolePreview': 'Role preview',
+    'admin.header.subtitle': 'Administrative tools',
+    'admin.sidebar.expand': 'Expand sidebar',
+    'admin.sidebar.collapse': 'Collapse sidebar',
 };
 
 const es: Dict = {
@@ -1729,6 +1735,9 @@ const es: Dict = {
     'admin.group.pqbl': 'pQBL',
     'admin.group.preview': 'Vista previa',
     'admin.tab.rolePreview': 'Vista previa de roles',
+    'admin.header.subtitle': 'Herramientas administrativas',
+    'admin.sidebar.expand': 'Expandir barra lateral',
+    'admin.sidebar.collapse': 'Contraer barra lateral',
 };
 
 const fr: Dict = {
@@ -2225,6 +2234,9 @@ const fr: Dict = {
     'admin.group.pqbl': 'pQBL',
     'admin.group.preview': 'Aperçu',
     'admin.tab.rolePreview': 'Aperçu des rôles',
+    'admin.header.subtitle': 'Outils administratifs',
+    'admin.sidebar.expand': 'Déployer la barre latérale',
+    'admin.sidebar.collapse': 'Replier la barre latérale',
 };
 
 const de: Dict = {
@@ -2721,6 +2733,9 @@ const de: Dict = {
     'admin.group.pqbl': 'pQBL',
     'admin.group.preview': 'Vorschau',
     'admin.tab.rolePreview': 'Rollenvorschau',
+    'admin.header.subtitle': 'Verwaltungswerkzeuge',
+    'admin.sidebar.expand': 'Seitenleiste ausklappen',
+    'admin.sidebar.collapse': 'Seitenleiste einklappen',
 };
 
 const sv: Dict = {
@@ -3217,6 +3232,9 @@ const sv: Dict = {
     'admin.group.pqbl': 'pQBL',
     'admin.group.preview': 'Förhandsvisning',
     'admin.tab.rolePreview': 'Förhandsvisning av roller',
+    'admin.header.subtitle': 'Administrativa verktyg',
+    'admin.sidebar.expand': 'Expandera sidofältet',
+    'admin.sidebar.collapse': 'Fäll ihop sidofältet',
 };
 
 const trainingIt: Dict = {
