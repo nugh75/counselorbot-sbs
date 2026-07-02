@@ -721,14 +721,20 @@ def _should_include_step_analysis_context(system_prompt_mode: Optional[str]) -> 
 
 
 # ponytail: advice-gated modes listed once; add here if a new second-level mode appears
-_ADVICE_PROMPT_MODES = {"second-level", "qsar-second-level", "generic", "qsar-generic"}
+_ADVICE_PROMPT_MODES = {
+    "second-level", "qsar-second-level", "generic", "qsar-generic",
+    # Follow-up in-step: lo studente chiede attivamente, quindi il materiale
+    # pratico certificato è consentito anche dentro gli step fattore.
+    "factor-qa", "qsar-factor-qa",
+}
 
 
 def _step_allows_practical_advice(step_mode: Optional[str]) -> bool:
     """Whether the current step is allowed to emit a practical plan.
 
     `factor`/`qsar-factor` are interpretive-only by design: the prompt SECTION
-    already defers advice. `sl-*` and `generic` produce the practical plan.
+    already defers advice. `sl-*`, `generic` and the in-step follow-up (`*-qa`)
+    produce the practical plan.
     """
     return (step_mode or "").strip().lower() in _ADVICE_PROMPT_MODES
 
@@ -1189,6 +1195,22 @@ _GUIDED_NO_GREETING_SUFFIX = " Do NOT start with greetings. Go straight to the a
 # Modalità discorsive: domande di approfondimento dello studente dentro uno step.
 # Devono usare il prompt mode-based anche se `phase` punta a uno step di analisi.
 _CONVERSATIONAL_MODES = {"factor-qa", "qsar-factor-qa"}
+
+
+def _is_conversational_mode(mode: Optional[str]) -> bool:
+    return (mode or "").strip().lower() in _CONVERSATIONAL_MODES
+
+
+def _conversational_retrieval_tail(session_id: str, max_chars: int = 500) -> str:
+    """Coda dell'ultimo turno assistant, da accodare alla query di retrieval nei
+    follow-up: la domanda dello studente ("puoi approfondire?") spesso non ha
+    contenuto, il tema vero della discussione sta nell'ultima risposta."""
+    if not session_id:
+        return ""
+    for turn in reversed(session_memory.get_transcript(session_id)):
+        if turn.get("role") == "assistant" and (turn.get("content") or "").strip():
+            return turn["content"].strip()[-max_chars:]
+    return ""
 
 # Nomi estesi dei fattori ZTPI per lingua (codice -> nome leggibile).
 _ZTPI_FACTOR_NAMES = {
