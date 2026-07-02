@@ -613,6 +613,14 @@ const it: Dict = {
     'admin.validation.placeholderVersion': 'es. QSA_es_2026_v1',
     'admin.validation.placeholderStudyCode': 'es. QSA_es_2026_validation',
     'admin.counselors.descPlaceholder': 'Descrizione in {lang}...',
+    'admin.group.aiConfig': 'Configurazione AI',
+    'admin.group.satisfaction': 'Questionari di gradimento',
+    'admin.group.research': 'Ricerca',
+    'admin.group.training': 'Training dataset',
+    'admin.group.monitoring': 'Monitoraggio e costi',
+    'admin.group.pqbl': 'pQBL',
+    'admin.group.preview': 'Anteprima',
+    'admin.tab.rolePreview': 'Anteprima ruoli',
 };
 
 const en: Dict = {
@@ -1217,6 +1225,14 @@ const en: Dict = {
     'admin.validation.placeholderVersion': 'e.g. QSA_es_2026_v1',
     'admin.validation.placeholderStudyCode': 'e.g. QSA_es_2026_validation',
     'admin.counselors.descPlaceholder': 'Description in {lang}...',
+    'admin.group.aiConfig': 'AI configuration',
+    'admin.group.satisfaction': 'Satisfaction surveys',
+    'admin.group.research': 'Research',
+    'admin.group.training': 'Training dataset',
+    'admin.group.monitoring': 'Monitoring and costs',
+    'admin.group.pqbl': 'pQBL',
+    'admin.group.preview': 'Preview',
+    'admin.tab.rolePreview': 'Role preview',
 };
 
 const es: Dict = {
@@ -1705,6 +1721,14 @@ const es: Dict = {
     'admin.validation.placeholderVersion': 'p. ej. QSA_es_2026_v1',
     'admin.validation.placeholderStudyCode': 'p. ej. QSA_es_2026_validation',
     'admin.counselors.descPlaceholder': 'Descripción en {lang}...',
+    'admin.group.aiConfig': 'Configuración de IA',
+    'admin.group.satisfaction': 'Cuestionarios de satisfacción',
+    'admin.group.research': 'Investigación',
+    'admin.group.training': 'Dataset de entrenamiento',
+    'admin.group.monitoring': 'Monitorización y costes',
+    'admin.group.pqbl': 'pQBL',
+    'admin.group.preview': 'Vista previa',
+    'admin.tab.rolePreview': 'Vista previa de roles',
 };
 
 const fr: Dict = {
@@ -2193,6 +2217,14 @@ const fr: Dict = {
     'admin.validation.placeholderVersion': 'ex. QSA_es_2026_v1',
     'admin.validation.placeholderStudyCode': 'ex. QSA_es_2026_validation',
     'admin.counselors.descPlaceholder': 'Description en {lang}...',
+    'admin.group.aiConfig': 'Configuration IA',
+    'admin.group.satisfaction': 'Questionnaires de satisfaction',
+    'admin.group.research': 'Recherche',
+    'admin.group.training': 'Dataset d’entraînement',
+    'admin.group.monitoring': 'Suivi et coûts',
+    'admin.group.pqbl': 'pQBL',
+    'admin.group.preview': 'Aperçu',
+    'admin.tab.rolePreview': 'Aperçu des rôles',
 };
 
 const de: Dict = {
@@ -2681,6 +2713,14 @@ const de: Dict = {
     'admin.validation.placeholderVersion': 'z. B. QSA_es_2026_v1',
     'admin.validation.placeholderStudyCode': 'z. B. QSA_es_2026_validation',
     'admin.counselors.descPlaceholder': 'Beschreibung auf {lang}...',
+    'admin.group.aiConfig': 'KI-Konfiguration',
+    'admin.group.satisfaction': 'Zufriedenheitsfragebögen',
+    'admin.group.research': 'Forschung',
+    'admin.group.training': 'Trainingsdatensatz',
+    'admin.group.monitoring': 'Überwachung und Kosten',
+    'admin.group.pqbl': 'pQBL',
+    'admin.group.preview': 'Vorschau',
+    'admin.tab.rolePreview': 'Rollenvorschau',
 };
 
 const sv: Dict = {
@@ -3169,6 +3209,14 @@ const sv: Dict = {
     'admin.validation.placeholderVersion': 't.ex. QSA_es_2026_v1',
     'admin.validation.placeholderStudyCode': 't.ex. QSA_es_2026_validation',
     'admin.counselors.descPlaceholder': 'Beskrivning på {lang}...',
+    'admin.group.aiConfig': 'AI-konfiguration',
+    'admin.group.satisfaction': 'Nöjdhetsenkäter',
+    'admin.group.research': 'Forskning',
+    'admin.group.training': 'Träningsdataset',
+    'admin.group.monitoring': 'Övervakning och kostnader',
+    'admin.group.pqbl': 'pQBL',
+    'admin.group.preview': 'Förhandsvisning',
+    'admin.tab.rolePreview': 'Förhandsvisning av roller',
 };
 
 const trainingIt: Dict = {

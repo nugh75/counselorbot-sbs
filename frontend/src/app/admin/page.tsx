@@ -41,7 +41,7 @@ export default function AdminPage() {
         items: { id: AdminTab; label: string; icon: typeof Settings }[];
     }[] = [
         {
-            title: 'Configurazione AI',
+            title: t('admin.group.aiConfig'),
             items: [
                 { id: 'config', label: t('admin.tab.config'), icon: Settings },
                 { id: 'presets', label: t('admin.tab.presets'), icon: SlidersHorizontal },
@@ -52,13 +52,13 @@ export default function AdminPage() {
             ],
         },
         {
-            title: 'Questionari di gradimento',
+            title: t('admin.group.satisfaction'),
             items: [
                 { id: 'surveys', label: t('admin.tab.surveys'), icon: ClipboardList },
             ],
         },
         {
-            title: 'Ricerca',
+            title: t('admin.group.research'),
             items: [
                 { id: 'results', label: t('admin.tab.results'), icon: BarChart3 },
                 { id: 'questionnaires', label: t('admin.tab.questionnaires'), icon: ListChecks },
@@ -68,13 +68,13 @@ export default function AdminPage() {
             ],
         },
         {
-            title: 'Training dataset',
+            title: t('admin.group.training'),
             items: [
                 { id: 'training', label: t('admin.tab.training'), icon: BrainCircuit },
             ],
         },
         {
-            title: 'Monitoraggio e costi',
+            title: t('admin.group.monitoring'),
             items: [
                 { id: 'logs', label: t('admin.tab.logs'), icon: FileText },
                 { id: 'costs', label: t('admin.tab.costs'), icon: Coins },
@@ -82,15 +82,15 @@ export default function AdminPage() {
             ],
         },
         {
-            title: 'pQBL',
+            title: t('admin.group.pqbl'),
             items: [
                 { id: 'pqbl', label: t('admin.tab.pqbl'), icon: GraduationCap },
             ],
         },
         {
-            title: 'Anteprima',
+            title: t('admin.group.preview'),
             items: [
-                { id: 'rolePreview', label: 'Anteprima ruoli', icon: Eye },
+                { id: 'rolePreview', label: t('admin.tab.rolePreview'), icon: Eye },
             ],
         },
     ];
