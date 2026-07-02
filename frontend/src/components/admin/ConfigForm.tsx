@@ -1501,7 +1501,7 @@ export function ConfigForm() {
         {
             id: 'qsa',
             questionnaireType: 'QSA',
-            title: 'QSA — Questionario Strategie di Apprendimento',
+            title: `QSA — ${t('q.QSA.fullName')}`,
             color: 'blue' as const,
             systemPrompts: [
                 { key: 'prompt_meta_QSA', label: 'Meta system prompt QSA' },
@@ -1522,7 +1522,7 @@ export function ConfigForm() {
         {
             id: 'qsar',
             questionnaireType: 'QSAr',
-            title: 'QSAr — Questionario Strategie di Apprendimento Ridotto',
+            title: `QSAr — ${t('q.QSAr.fullName')}`,
             color: 'sky' as const,
             systemPrompts: [
                 { key: 'prompt_meta_QSAR', label: 'Meta system prompt QSAr' },
@@ -1539,7 +1539,7 @@ export function ConfigForm() {
         {
             id: 'ztpi',
             questionnaireType: 'ZTPI',
-            title: 'ZTPI — Zimbardo Time Perspective Inventory',
+            title: `ZTPI — ${t('q.ZTPI.fullName')}`,
             color: 'emerald' as const,
             systemPrompts: [
                 { key: 'prompt_meta_ZTPI', label: 'Meta system prompt ZTPI' },
@@ -1554,7 +1554,7 @@ export function ConfigForm() {
         {
             id: 'savickas',
             questionnaireType: 'SAVICKAS',
-            title: 'Savickas — Career Construction Interview',
+            title: `Savickas — ${t('q.SAVICKAS.fullName')}`,
             color: 'amber' as const,
             systemPrompts: [
                 { key: 'prompt_meta_SAVICKAS', label: 'Meta system prompt Savickas' },
@@ -1569,7 +1569,7 @@ export function ConfigForm() {
         {
             id: 'qpcs',
             questionnaireType: 'QPCS',
-            title: 'QPCS — Percezione delle Competenze Strategiche',
+            title: `QPCS — ${t('q.QPCS.fullName')}`,
             color: 'purple' as const,
             systemPrompts: [
                 { key: 'prompt_meta_QPCS', label: 'Meta system prompt QPCS' },
@@ -1589,7 +1589,7 @@ export function ConfigForm() {
         {
             id: 'qpcc',
             questionnaireType: 'QPCC',
-            title: 'QPCC — Percezione delle Competenze e Convinzioni',
+            title: `QPCC — ${t('q.QPCC.fullName')}`,
             color: 'indigo' as const,
             systemPrompts: [
                 { key: 'prompt_meta_QPCC', label: 'Meta system prompt QPCC' },
@@ -1609,7 +1609,7 @@ export function ConfigForm() {
         {
             id: 'qap',
             questionnaireType: 'QAP',
-            title: 'QAP — Adattabilità Professionale',
+            title: `QAP — ${t('q.QAP.fullName')}`,
             color: 'green' as const,
             systemPrompts: [
                 { key: 'prompt_meta_QAP', label: 'Meta system prompt QAP' },
