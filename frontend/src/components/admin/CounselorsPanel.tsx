@@ -240,7 +240,7 @@ export function CounselorsPanel() {
                     className={inputCls}
                     value={descForLang(tLang)}
                     onChange={(e) => setDescForLang(tLang, e.target.value)}
-                    placeholder={tLang === 'it' ? 'Descrizione in italiano...' : `Descrizione in ${tLang}...`}
+                    placeholder={t('admin.counselors.descPlaceholder', { lang: tLang })}
                 />
             </div>
 
