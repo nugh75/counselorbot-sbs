@@ -65,6 +65,7 @@ from .routes import administration_plans as administration_plans_routes
 from .routes import assistant_questions as assistant_questions_routes
 from .routes import rag_docs as rag_docs_routes
 from .routes import guided_step_questions as guided_step_questions_routes
+from .routes import telegram as telegram_routes
 
 
 # Re-export per retro-compatibilità (es. smoke test che importa da backend.main)
@@ -1405,3 +1406,4 @@ app.include_router(administration_plans_routes.router)
 app.include_router(assistant_questions_routes.router)
 app.include_router(rag_docs_routes.router)
 app.include_router(guided_step_questions_routes.router)
+app.include_router(telegram_routes.router)

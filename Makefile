@@ -79,3 +79,43 @@ prompt-log-off: ## Disattiva log_full_prompt
 	@docker exec $(PG) psql -U $(PGUSER) -d $(PGDB) -c \
 		"UPDATE configs SET value='false' WHERE key='log_full_prompt';"
 	@echo "log_full_prompt = false"
+
+# --- Telegram bot ---
+.PHONY: telegram-get-me telegram-set-webhook telegram-delete-webhook telegram-info telegram-send-test telegram-logs
+
+telegram-get-me: ## Verifica il token del bot (getMe)
+	@set -a; . ./.env; set +a; \
+	test -n "$$TELEGRAM_BOT_TOKEN" || { echo "TELEGRAM_BOT_TOKEN mancante in .env"; exit 2; }; \
+	curl -s "https://api.telegram.org/bot$$TELEGRAM_BOT_TOKEN/getMe"
+
+telegram-set-webhook: ## Registra il webhook (URL + secret da .env)
+	@set -a; . ./.env; set +a; \
+	test -n "$$TELEGRAM_BOT_TOKEN" || { echo "TELEGRAM_BOT_TOKEN mancante in .env"; exit 2; }; \
+	test -n "$$TELEGRAM_WEBHOOK_SECRET" || { echo "TELEGRAM_WEBHOOK_SECRET mancante in .env"; exit 2; }; \
+	test -n "$$TELEGRAM_PUBLIC_WEBHOOK_URL" || { echo "TELEGRAM_PUBLIC_WEBHOOK_URL mancante in .env"; exit 2; }; \
+	curl -s -X POST "https://api.telegram.org/bot$$TELEGRAM_BOT_TOKEN/setWebhook" \
+		-d "url=$$TELEGRAM_PUBLIC_WEBHOOK_URL" \
+		-d "secret_token=$$TELEGRAM_WEBHOOK_SECRET" \
+		-d 'allowed_updates=["message","callback_query"]' \
+		-d "drop_pending_updates=true"
+
+telegram-delete-webhook: ## Rimuove il webhook
+	@set -a; . ./.env; set +a; \
+	test -n "$$TELEGRAM_BOT_TOKEN" || { echo "TELEGRAM_BOT_TOKEN mancante in .env"; exit 2; }; \
+	curl -s -X POST "https://api.telegram.org/bot$$TELEGRAM_BOT_TOKEN/deleteWebhook" \
+		-d "drop_pending_updates=true"
+
+telegram-info: ## Stato del webhook (getWebhookInfo)
+	@set -a; . ./.env; set +a; \
+	test -n "$$TELEGRAM_BOT_TOKEN" || { echo "TELEGRAM_BOT_TOKEN mancante in .env"; exit 2; }; \
+	curl -s "https://api.telegram.org/bot$$TELEGRAM_BOT_TOKEN/getWebhookInfo"
+
+telegram-send-test: ## Messaggio di prova: make telegram-send-test CHAT_ID=<id>
+	@if [ -z "$(CHAT_ID)" ]; then echo "Uso: make telegram-send-test CHAT_ID=<id>"; exit 2; fi
+	@set -a; . ./.env; set +a; \
+	curl -s -X POST "https://api.telegram.org/bot$$TELEGRAM_BOT_TOKEN/sendMessage" \
+		-d "chat_id=$(CHAT_ID)" \
+		-d "text=Test CounselorBot Telegram OK"
+
+telegram-logs: ## Log del backend (webhook incluso)
+	docker compose logs -f backend

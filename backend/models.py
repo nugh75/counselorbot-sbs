@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Float, Integer, String, Text, DateTime, JSON
+from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text, DateTime, JSON
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -611,3 +611,50 @@ class CertifiedStrategy(Base):
     sort_order = Column(Integer, nullable=False, default=0)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class TelegramAccountLink(Base):
+    """Mapping verificato telegram_user_id -> username CounselorBot."""
+
+    __tablename__ = "telegram_account_links"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, nullable=False, index=True)
+    telegram_user_id = Column(BigInteger, nullable=False, unique=True, index=True)
+    telegram_chat_id = Column(BigInteger, nullable=False)
+    telegram_username = Column(String, nullable=True)
+    linked_at = Column(DateTime(timezone=True), server_default=func.now())
+    revoked_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class TelegramLinkCode(Base):
+    """Codice temporaneo monouso generato dalla web app per /link (salvato hashato)."""
+
+    __tablename__ = "telegram_link_codes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, nullable=False, index=True)
+    code_hash = Column(String, nullable=False, index=True)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    used_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class TelegramConversationState(Base):
+    """Stato corrente della conversazione Telegram di un utente (una riga per utente)."""
+
+    __tablename__ = "telegram_conversation_states"
+
+    id = Column(Integer, primary_key=True, index=True)
+    telegram_user_id = Column(BigInteger, nullable=False, unique=True, index=True)
+    telegram_chat_id = Column(BigInteger, nullable=False)
+    username = Column(String, nullable=False, index=True)
+    state = Column(String, nullable=False, default="idle")  # idle|choose_instrument|enter_scores|confirm_scores|in_step
+    questionnaire_type = Column(String, nullable=True)
+    session_id = Column(String, nullable=True)
+    conversation_id = Column(String, nullable=True)
+    scores = Column(JSON, nullable=True)
+    step_id = Column(String, nullable=True)
+    language = Column(String, nullable=False, default="it")
+    counselor_id = Column(Integer, nullable=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
