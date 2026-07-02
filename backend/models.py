@@ -47,6 +47,7 @@ class GuidedStep(Base):
     id = Column(String, primary_key=True)
     sort_order = Column(Integer, nullable=False)
     label = Column(String, nullable=False)
+    label_i18n = Column(JSON, nullable=True)  # traduzioni {lang: label}, 'it' = colonna label
     prompt = Column(Text, nullable=False)
     system_prompt_mode = Column(String, nullable=False, default="generic")
     color_theme = Column(String, nullable=False, default="blue")

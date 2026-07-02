@@ -26,6 +26,7 @@ from ..qsa_extractor import (
     extract_questionnaire_data,
 )
 from ..guided_text_i18n import SECONDARY_LANGS, resolve_text, QUESTIONS_LABEL, PHASE_WORD
+from ..guided_step_label_i18n import resolve_step_label
 from ..guided_step_questions_seed import FIXED_QUESTIONS_STEP_ID
 from ..prompt_config import (
     DEFAULT_SYSTEM_PROMPT_GENERIC,
@@ -248,7 +249,11 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
         {
             "id": s.id,
             "sort_order": s.sort_order,
-            "label": _sanitize_ztpi_step_label(s.label, lang) if questionnaire_type == "ZTPI" else s.label,
+            "label": (
+                _sanitize_ztpi_step_label(resolve_step_label(s, lang), lang)
+                if questionnaire_type == "ZTPI"
+                else resolve_step_label(s, lang)
+            ),
             "system_prompt_mode": s.system_prompt_mode,
             "color_theme": s.color_theme,
             "suggested_questions": questions_by_step.get(s.id, []),

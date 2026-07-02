@@ -355,6 +355,9 @@ def _seed_and_migrate():
                 "ADD COLUMN description_i18n JSON",
                 "ADD COLUMN voice_mapping JSON",
             ],
+            "guided_steps": [
+                "ADD COLUMN label_i18n JSON",
+            ],
             "research_contacts": [
                 "ADD COLUMN source VARCHAR NOT NULL DEFAULT 'manual'",
                 "ADD COLUMN ext_username VARCHAR",
@@ -776,6 +779,11 @@ def _seed_and_migrate():
         # Idempotente per questionario/step/lingua: non sovrascrive modifiche.
         from .guided_step_questions_seed import seed_guided_step_questions
         seed_guided_step_questions(db, models)
+
+        # Seed traduzioni label step guidati (en/es/fr/de/sv in label_i18n).
+        # Idempotente: riempie solo le lingue mancanti, non sovrascrive.
+        from .guided_step_label_i18n import seed_step_label_i18n
+        seed_step_label_i18n(db, models)
     finally:
         db.close()
 
