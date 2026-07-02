@@ -108,6 +108,7 @@ class GuidedStepBase(BaseModel):
     id: str
     sort_order: int
     label: str
+    label_i18n: Optional[Dict[str, str]] = None
     prompt: str
     system_prompt_mode: str = "generic"
     color_theme: str = "blue"
@@ -118,6 +119,7 @@ class GuidedStepCreate(GuidedStepBase):
 
 class GuidedStepUpdate(BaseModel):
     label: Optional[str] = None
+    label_i18n: Optional[Dict[str, str]] = None
     prompt: Optional[str] = None
     system_prompt_mode: Optional[str] = None
     color_theme: Optional[str] = None
