@@ -12,7 +12,7 @@
       "captured_at": "2020-12-02T17:04:37+01:00",
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "dirigere se stessi 2020",
       "id": "dirigere_se_stessi_2020_document"
     },
@@ -25,7 +25,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "grzadziel convegno 2019",
       "id": "grzadziel_convegno_2019_document"
     },
@@ -38,7 +38,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "guida 2019",
       "id": "guida_2019_document"
     },
@@ -51,7 +51,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "guida 2023",
       "id": "guida_2023_document"
     },
@@ -64,7 +64,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "self-direction",
       "id": "concept_self_direction"
     },
@@ -77,7 +77,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "strategic competencies",
       "id": "concept_strategic_competencies"
     },
@@ -90,7 +90,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "grzadziel",
       "id": "person_grzadziel"
     },
@@ -103,7 +103,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "introduzione volume 2020",
       "id": "introduzione_volume_2020_pdf"
     },
@@ -116,7 +116,7 @@
       "captured_at": null,
       "author": "Margottini",
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "margottini convegno 2019",
       "id": "margottini_convegno_2019_pdf"
     },
@@ -129,7 +129,7 @@
       "captured_at": null,
       "author": "Pellerey",
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "pellerey convegno 2019",
       "id": "pellerey_convegno_2019_pdf"
     },
@@ -142,7 +142,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "readme.md - fonti esterne collegate",
       "id": "readme_md"
     },
@@ -155,7 +155,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "competenze strategiche",
       "id": "competenze_strategiche"
     },
@@ -168,7 +168,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "cnos-fap",
       "id": "cnos_fap"
     },
@@ -181,7 +181,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "roma tre-press",
       "id": "roma_tre_press"
     },
@@ -194,7 +194,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "core.ac.uk pdf (non disponibile)",
       "id": "core_ac_uk_download_322531384"
     },
@@ -207,7 +207,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "margottini",
       "id": "margottini"
     },
@@ -220,7 +220,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "pellerey",
       "id": "pellerey"
     },
@@ -233,7 +233,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "imparare a dirigere se stessi",
       "id": "imparare_a_dirigere_se_stessi"
     },
@@ -246,7 +246,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "promuovere l'autovalutazione di competenze strategiche. aggiornamenti e sviluppi della piattaforma competenzestrategiche.it",
       "id": "piattaforma_comp_strategiche_margottini_epifani"
     },
@@ -259,7 +259,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "portfolio digitale",
       "id": "portfolio_digitale"
     },
@@ -272,7 +272,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "promuovere la crescita nelle competenze strategiche",
       "id": "promuovere_la_crescita_nelle_competenze_strategiche"
     },
@@ -285,7 +285,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "massimo margottini",
       "id": "massimo_margottini"
     },
@@ -298,7 +298,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "filippo epifani",
       "id": "filippo_epifani"
     },
@@ -311,7 +311,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "m. baldacci",
       "id": "baldacci"
     },
@@ -324,7 +324,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "james j. heckman",
       "id": "heckman"
     },
@@ -337,7 +337,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "g. vittadini",
       "id": "vittadini"
     },
@@ -350,7 +350,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 3,
       "norm_label": "autovalutazione",
       "id": "autovalutazione"
     },
@@ -363,7 +363,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "competenze chiave di cittadinanza",
       "id": "competenze_chiave_di_cittadinanza"
     },
@@ -376,7 +376,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "metacognizione",
       "id": "metacognizione"
     },
@@ -389,7 +389,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "motivazione ad apprendere",
       "id": "motivazione_ad_apprendere"
     },
@@ -415,7 +415,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "competenze trasversali",
       "id": "competenze_trasversali"
     },
@@ -428,7 +428,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 8,
       "norm_label": "character skills",
       "id": "character_skills"
     },
@@ -441,7 +441,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "non cognitive skills",
       "id": "non_cognitive_skills"
     },
@@ -454,7 +454,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "general educational development (ged)",
       "id": "ged"
     },
@@ -467,7 +467,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "self-directed learning",
       "id": "self_directed_learning"
     },
@@ -506,7 +506,7 @@
       "captured_at": null,
       "author": "Michele Pellerey",
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "strumenti e metodologie di orientamento formativo e professionale... (scheda bibliografica)",
       "id": "cnos_fap_schede_bibliografiche_strumenti_e_metodologie_document"
     },
@@ -519,7 +519,7 @@
       "captured_at": null,
       "author": "Michele Pellerey et al.",
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "imparare a dirigere se stessi. progettazione e realizzazione di una guida e di uno strumento informatico...",
       "id": "cnos_fap_schede_bibliografiche_imparare_a_dirigere_se_stessi_document"
     },
@@ -532,7 +532,7 @@
       "captured_at": null,
       "author": "Massimo Margottini, Filippo Epifani",
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "promuovere l'autovalutazione di competenze strategiche. aggiornamenti e sviluppi della piattaforma competenzestrategiche.it",
       "id": "cnos_fap_schede_bibliografiche_piattaforma_comp_strategiche_margottini_epifani_document"
     },
@@ -545,7 +545,7 @@
       "captured_at": null,
       "author": "Michele Pellerey",
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "progetto di ricerca-intervento sul ruolo del portfolio digitale...",
       "id": "cnos_fap_schede_bibliografiche_portfolio_digitale_document"
     },
@@ -636,7 +636,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "qpcs (questionario sulle percezioni di competenza e strategie)",
       "id": "concetto_qpcs"
     },
@@ -649,7 +649,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "piattaforma competenzestrategiche.it",
       "id": "concetto_competenzestrategiche_it"
     },
@@ -662,7 +662,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "mahara (piattaforma portfolio digitale)",
       "id": "concetto_mahara"
     },
@@ -675,7 +675,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "qap (questionario di adattamento professionale)",
       "id": "concetto_qap"
     },
@@ -688,7 +688,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "qpcc (questionario percezione di competenza e career)",
       "id": "concetto_qpcc"
     },
@@ -714,7 +714,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "hard skills",
       "id": "concetto_hard_skills"
     },
@@ -727,7 +727,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "iefp (istruzione e formazione professionale)",
       "id": "concetto_iefp"
     },
@@ -740,7 +740,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "character skills (heckman)",
       "id": "concetto_character_skills"
     },
@@ -753,7 +753,7 @@
       "captured_at": null,
       "author": "Enrica Ottone",
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "presentazione del qsa (questionario sulle strategie di apprendimento)",
       "id": "presenta_qsa_convegnisti_document"
     },
@@ -766,7 +766,7 @@
       "captured_at": null,
       "author": "Enrica Ottone",
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "intelligenza artificiale generativa conversazionale per imparare il qsa \u2013 funzione docente",
       "id": "presentazione_chatbot_convegnisti_02_document"
     },
@@ -779,7 +779,7 @@
       "captured_at": null,
       "author": "Enrica Ottone",
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "strumenti e risorse aperte a servizio delle persone: autovalutazione, orientamento, formazione",
       "id": "presentazione_didacta_2023_document"
     },
@@ -792,7 +792,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "convegno internazionale 'dirigere se stessi nello studio e nel lavoro' 13 settembre 2019",
       "id": "abstract_fascicolo_convegno_2019"
     },
@@ -805,7 +805,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "ii convegno internazionale 'dirigere se stessi nello studio e nel lavoro' 24 gennaio 2025",
       "id": "programma_convegno_24gennaio2025_dettagliato_convegno_2025"
     },
@@ -818,7 +818,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "fiera didacta 2023, firenze 8 marzo 2023",
       "id": "presentazione_didacta_2023_fiera_didacta_2023"
     },
@@ -831,7 +831,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "michele pellerey",
       "id": "abstract_fascicolo_pellerey"
     },
@@ -844,7 +844,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "massimo margottini",
       "id": "abstract_fascicolo_margottini"
     },
@@ -857,7 +857,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "enrica ottone",
       "id": "presenta_qsa_convegnisti_ottone"
     },
@@ -870,7 +870,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "francesca rossi",
       "id": "abstract_fascicolo_rossi"
     },
@@ -883,7 +883,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "dariusz grzadziel",
       "id": "programma_convegno_24gennaio2025_dettagliato_grzadziel"
     },
@@ -896,7 +896,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "mario tonini",
       "id": "programma_convegno_24gennaio2025_dettagliato_tonini"
     },
@@ -909,7 +909,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "zimbardo time perspective inventory (ztpi)",
       "id": "abstract_fascicolo_ztpi"
     },
@@ -922,7 +922,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "questionario di percorso di carriera e di studio (qpcs)",
       "id": "abstract_fascicolo_qpcs"
     },
@@ -935,7 +935,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "questionario di adattabilita professionale (qap)",
       "id": "abstract_fascicolo_qap"
     },
@@ -948,7 +948,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "piattaforma competenzestrategiche.it",
       "id": "presentazione_didacta_2023_competenzestrategiche_it"
     },
@@ -961,7 +961,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "asklea ai",
       "id": "presentazione_chatbot_convegnisti_02_asklea_ai"
     },
@@ -974,7 +974,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "eportfolio",
       "id": "presentazione_didacta_2023_eportfolio"
     },
@@ -987,7 +987,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "libretto dello studente",
       "id": "presentazione_didacta_2023_libretto_studente"
     },
@@ -1468,7 +1468,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "apprendo: una possibile alleanza educativa",
       "id": "11_d_m_ardito"
     },
@@ -1481,7 +1481,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 8,
       "norm_label": "mi autovaluto a conclusione del primo ciclo",
       "id": "12_g_marrone_l_romano"
     },
@@ -1494,7 +1494,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "dirigere se stessi nello studio e nel lavoro. competenze strategiche.it: strumenti e applicazioni",
       "id": "dirigere_se_stessi_2020"
     },
@@ -1507,7 +1507,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 0,
       "norm_label": "riflessione nei processi di apprendimento",
       "id": "grzadziel_convegno_2019"
     },
@@ -1520,7 +1520,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "appunti per formatori. guida all'uso della piattaforma www.competenzestrategiche.it",
       "id": "guida_2019"
     },
@@ -1533,7 +1533,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "guida all'uso della piattaforma www.competenzestrategiche.it",
       "id": "guida_2023"
     },
@@ -1546,7 +1546,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 3,
       "norm_label": "introduzione",
       "id": "introduzione_volume_2020"
     },
@@ -1559,7 +1559,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 3,
       "norm_label": "competenzestrategiche.it: strumenti e applicazioni",
       "id": "margottini_convegno_2019"
     },
@@ -1572,7 +1572,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 8,
       "norm_label": "dirigere se stessi nello studio e nel lavoro: riflessioni",
       "id": "pellerey_convegno_2019"
     },
@@ -1598,7 +1598,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "abstract fascicolo",
       "id": "abstract_fascicolo"
     },
@@ -1611,7 +1611,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 3,
       "norm_label": "presenta qsa convegnisti",
       "id": "presenta_qsa_convegnisti"
     },
@@ -1624,7 +1624,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "presentazione chatbot convegnisti 02",
       "id": "presentazione_chatbot_convegnisti_02"
     },
@@ -1637,7 +1637,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "daniele maria ardito",
       "id": "daniele_maria_ardito"
     },
@@ -1650,7 +1650,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 8,
       "norm_label": "graziella marrone",
       "id": "graziella_marrone"
     },
@@ -1663,7 +1663,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 8,
       "norm_label": "lorella romano",
       "id": "lorella_romano"
     },
@@ -1676,7 +1676,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 3,
       "norm_label": "michele pellerey",
       "id": "michele_pellerey"
     },
@@ -1689,7 +1689,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "enrica ottone",
       "id": "enrica_ottone"
     },
@@ -1702,7 +1702,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 0,
       "norm_label": "dariusz grzadziel",
       "id": "dariusz_grzadziel"
     },
@@ -1715,7 +1715,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "alleanza educativa",
       "id": "alleanza_educativa"
     },
@@ -1728,7 +1728,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "apprendere ad apprendere",
       "id": "apprendere_ad_apprendere"
     },
@@ -1741,7 +1741,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 8,
       "norm_label": "apprendimento",
       "id": "apprendimento"
     },
@@ -1754,7 +1754,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 0,
       "norm_label": "apprendimento autoregolato",
       "id": "apprendimento_autoregolato"
     },
@@ -1767,7 +1767,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 0,
       "norm_label": "attribuzioni causali",
       "id": "attribuzioni_causali"
     },
@@ -1793,7 +1793,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 8,
       "norm_label": "autonomia",
       "id": "autonomia"
     },
@@ -1806,7 +1806,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 8,
       "norm_label": "competenza",
       "id": "competenza"
     },
@@ -1819,7 +1819,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 8,
       "norm_label": "coscienziosita",
       "id": "coscienziosita"
     },
@@ -1832,7 +1832,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "didattica",
       "id": "didattica"
     },
@@ -1845,7 +1845,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "imparare a imparare",
       "id": "imparare_a_imparare"
     },
@@ -1858,7 +1858,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "metodologie orientative",
       "id": "metodologie_orientative"
     },
@@ -1871,7 +1871,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 8,
       "norm_label": "miglioramento",
       "id": "miglioramento"
     },
@@ -1884,7 +1884,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 8,
       "norm_label": "orientamento",
       "id": "orientamento"
     },
@@ -1897,7 +1897,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "orientamento scolastico e professionale",
       "id": "orientamento_scolastico_e_professionale"
     },
@@ -1910,7 +1910,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 3,
       "norm_label": "piattaforma digitale",
       "id": "piattaforma_digitale"
     },
@@ -1923,7 +1923,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "piattaforma online",
       "id": "piattaforma_online"
     },
@@ -1936,7 +1936,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 8,
       "norm_label": "progettualita",
       "id": "progettualita"
     },
@@ -1949,7 +1949,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 3,
       "norm_label": "qap",
       "id": "qap"
     },
@@ -1962,7 +1962,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "qpcs",
       "id": "qpcs"
     },
@@ -1975,7 +1975,7 @@
       "captured_at": null,
       "author": "Michele Pellerey",
       "contributor": null,
-      "community": 6,
+      "community": 3,
       "norm_label": "qsa \u2014 questionario sulle strategie di apprendimento",
       "id": "qsa"
     },
@@ -1988,7 +1988,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 8,
       "norm_label": "relazione",
       "id": "relazione"
     },
@@ -2001,7 +2001,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 0,
       "norm_label": "riflessione",
       "id": "riflessione"
     },
@@ -2014,7 +2014,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 0,
       "norm_label": "strategie di studio",
       "id": "strategie_di_studio"
     },
@@ -2027,7 +2027,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "studio",
       "id": "studio"
     },
@@ -2040,7 +2040,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 4,
       "norm_label": "lavoro",
       "id": "lavoro"
     },
@@ -2053,7 +2053,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 0,
       "norm_label": "zimmerman",
       "id": "zimmerman"
     },
@@ -2066,7 +2066,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 3,
       "norm_label": "ztpi \u2014 zimbardo time perspective inventory",
       "id": "ztpi"
     },
@@ -2092,7 +2092,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 3,
       "norm_label": "career adapt-abilities inventory (caas)",
       "id": "qap_caas"
     },
@@ -2105,7 +2105,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 3,
       "norm_label": "career adaptability",
       "id": "qap_career_adaptability"
     },
@@ -2118,7 +2118,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 3,
       "norm_label": "qap \u2013 questionario per l'adattabilita professionale",
       "id": "qap_qap"
     },
@@ -2209,7 +2209,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "adattabilita professionale e competenze strategiche nella scuola e all'universita",
       "id": "margottini_rossi_2019_document"
     },
@@ -2222,7 +2222,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "somministrazione del qsar a un campione clinico di ragazzi con dsa della scuola secondaria di primo grado. riflessioni su un caso",
       "id": "melogno_2018_document"
     },
@@ -2235,7 +2235,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "competenzestrategiche.it: un cantiere aperto di ricerca, azione, formazione",
       "id": "ottone_2023_document"
     },
@@ -2248,7 +2248,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "massimo margottini",
       "id": "margottini_rossi_2019_massimo_margottini"
     },
@@ -2261,7 +2261,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "francesca rossi",
       "id": "margottini_rossi_2019_francesca_rossi"
     },
@@ -2274,7 +2274,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "sergio melogno",
       "id": "melogno_2018_sergio_melogno"
     },
@@ -2287,7 +2287,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "enrica ottone",
       "id": "ottone_2023_enrica_ottone"
     },
@@ -2300,7 +2300,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "competenze strategiche",
       "id": "margottini_rossi_2019_competenze_strategiche"
     },
@@ -2313,7 +2313,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "qsa",
       "id": "margottini_rossi_2019_qsa"
     },
@@ -2326,7 +2326,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "ztpi",
       "id": "margottini_rossi_2019_ztpi"
     },
@@ -2339,7 +2339,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "qap",
       "id": "margottini_rossi_2019_qap"
     },
@@ -2352,7 +2352,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "career adaptability",
       "id": "margottini_rossi_2019_career_adaptability"
     },
@@ -2365,7 +2365,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "qsar",
       "id": "melogno_2018_qsar"
     },
@@ -2378,7 +2378,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "dsa",
       "id": "melogno_2018_dsa"
     },
@@ -2391,7 +2391,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "strategie di apprendimento",
       "id": "melogno_2018_strategie_di_apprendimento"
     },
@@ -2404,7 +2404,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "autovalutazione",
       "id": "melogno_2018_autovalutazione"
     },
@@ -2417,7 +2417,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "competenze strategiche",
       "id": "ottone_2023_competenze_strategiche"
     },
@@ -2430,7 +2430,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "autovalutazione",
       "id": "ottone_2023_autovalutazione"
     },
@@ -2443,7 +2443,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "piattaforma online",
       "id": "ottone_2023_piattaforma_online"
     },
@@ -2456,7 +2456,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "eportfolio",
       "id": "ottone_2023_eportfolio"
     },
@@ -2469,7 +2469,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "qsa",
       "id": "ottone_2023_qsa"
     },
@@ -2482,22 +2482,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 6,
       "norm_label": "moodle",
       "id": "ottone_2023_moodle"
-    },
-    {
-      "label": "Competenzestrategiche.it",
-      "file_type": "concept",
-      "source_file": "sito-competenzestrategiche/studi/schede-bibliografiche/OTTONE_2023.md",
-      "source_location": null,
-      "source_url": "www.competenzestrategiche.it",
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "community": 5,
-      "norm_label": "competenzestrategiche.it",
-      "id": "ottone_2023_competenzestrategiche_it"
     },
     {
       "label": "Promuovere la crescita nelle competenze strategiche che hanno le loro radici nelle dimensioni morali e spirituali della persona (2008)",
@@ -2508,7 +2495,7 @@
       "captured_at": null,
       "author": "Marco Bay; Dariusz Grz\u0105dziel; Michele Pellerey",
       "contributor": null,
-      "community": 8,
+      "community": 0,
       "norm_label": "promuovere la crescita nelle competenze strategiche che hanno le loro radici nelle dimensioni morali e spirituali della persona (2008)",
       "id": "promuovere_crescita_competenze_strategiche_2008"
     },
@@ -2521,7 +2508,7 @@
       "captured_at": null,
       "author": "Michele Pellerey; Marco Bay; Giuseppe Crea; Filippo Epifani; Dariusz Grzadziel; Massimo Margottini; Emad Samir Anis Matta; Sergio Melogno; Enrica Ottone",
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "strumenti e metodologie di orientamento formativo e professionale nel quadro dei processi di apprendimento permanente (2018)",
       "id": "strumenti_metodologie_orientamento_2018"
     },
@@ -2534,7 +2521,7 @@
       "captured_at": null,
       "author": "Enrica Ottone",
       "contributor": null,
-      "community": 6,
+      "community": 3,
       "norm_label": "schede sui fattori del questionario sulle strategie di apprendimento (qsa) \u2014 testo integrale (2017)",
       "id": "schede_fattori_qsa"
     },
@@ -2547,7 +2534,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 0,
       "norm_label": "marco bay",
       "id": "marco_bay"
     },
@@ -2560,7 +2547,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "giuseppe crea",
       "id": "giuseppe_crea"
     },
@@ -2573,7 +2560,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "emad samir anis matta",
       "id": "emad_samir_anis_matta"
     },
@@ -2586,7 +2573,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "sergio melogno",
       "id": "sergio_melogno"
     },
@@ -2612,7 +2599,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 3,
       "norm_label": "apprendo \u2014 strumenti e attivita per promuovere l'apprendimento",
       "id": "apprendo"
     },
@@ -2651,7 +2638,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 0,
       "norm_label": "apprendimento permanente (lifelong learning)",
       "id": "apprendimento_permanente"
     },
@@ -2716,7 +2703,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 0,
       "norm_label": "dimensione spirituale e morale della persona",
       "id": "dimensione_spirituale_morale"
     },
@@ -2729,7 +2716,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "prospettiva temporale",
       "id": "prospettiva_temporale"
     },
@@ -2742,7 +2729,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 0,
       "norm_label": "otto aree di competenza strategica",
       "id": "otto_aree_competenza_strategica"
     },
@@ -2755,7 +2742,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "qsar \u2014 versione ridotta del qsa",
       "id": "qsar"
     },
@@ -2768,7 +2755,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 2,
+      "community": 0,
       "norm_label": "mahara \u2014 portfolio digitale",
       "id": "mahara"
     },
@@ -2781,7 +2768,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 3,
       "norm_label": "counselorbot",
       "id": "counselorbot"
     },
@@ -2794,7 +2781,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 3,
       "norm_label": "catalog 'certified_strategies'",
       "id": "certified_strategies"
     },
@@ -2807,7 +2794,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 3,
       "norm_label": "fattori cognitivi e metacognitivi qsa",
       "id": "fattori_cognitivi_metacognitivi"
     },
@@ -2820,7 +2807,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 6,
+      "community": 3,
       "norm_label": "fattori motivazionali e affettivi qsa",
       "id": "fattori_motivazionali_affettivi"
     },
@@ -2833,7 +2820,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 0,
       "norm_label": "legge 53/2003",
       "id": "legge_53_2003"
     },
@@ -2846,7 +2833,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 0,
       "norm_label": "strategie di lisbona",
       "id": "strategie_lisbona"
     },
@@ -2859,7 +2846,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 0,
       "norm_label": "isfol",
       "id": "isfol"
     },
@@ -2872,7 +2859,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "linked external sources readme",
       "id": "fonti_esterne_collegate_readme"
     },
@@ -2885,7 +2872,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "competenzestrategiche.it site archive readme",
       "id": "sito_competenzestrategiche_readme"
     },
@@ -2898,7 +2885,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "cnos-fap directory",
       "id": "fonti_esterne_collegate_cnos_fap"
     },
@@ -2911,7 +2898,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "roma tre-press directory",
       "id": "fonti_esterne_collegate_roma_tre_press"
     },
@@ -2924,7 +2911,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "unavailable core source",
       "id": "fonti_esterne_collegate_core_source_unavailable"
     },
@@ -2937,7 +2924,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "competenzestrategiche.it",
       "id": "competenzestrategiche_it_site"
     },
@@ -2950,7 +2937,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "guide directory",
       "id": "sito_competenzestrategiche_guide"
     },
@@ -2963,7 +2950,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "guide html directory",
       "id": "sito_competenzestrategiche_guide_html"
     },
@@ -2976,7 +2963,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "strumenti directory",
       "id": "sito_competenzestrategiche_strumenti"
     },
@@ -2989,7 +2976,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "modelli operativi directory",
       "id": "sito_competenzestrategiche_modelli_operativi"
     },
@@ -3002,7 +2989,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "studi directory",
       "id": "sito_competenzestrategiche_studi"
     },
@@ -3015,7 +3002,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "convegni directory",
       "id": "sito_competenzestrategiche_convegni"
     },
@@ -3028,7 +3015,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "qap_it.pdf",
       "id": "sito_competenzestrategiche_qap_it"
     },
@@ -3041,7 +3028,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "qpcc_it.pdf",
       "id": "sito_competenzestrategiche_qpcc_it"
     },
@@ -3054,7 +3041,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "qpcs_it.pdf",
       "id": "sito_competenzestrategiche_qpcs_it"
     },
@@ -3067,7 +3054,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "qsa_it.pdf",
       "id": "sito_competenzestrategiche_qsa_it"
     },
@@ -3080,7 +3067,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "qsar_it.pdf",
       "id": "sito_competenzestrategiche_qsar_it"
     },
@@ -3093,7 +3080,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 4,
+      "community": 5,
       "norm_label": "ztpi_it.pdf",
       "id": "sito_competenzestrategiche_ztpi_it"
     }
@@ -3428,6 +3415,16 @@
       "weight": 1.0,
       "source": "competenze_strategiche",
       "target": "roma_tre_press"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "sito-competenzestrategiche/studi/schede-bibliografiche/OTTONE_2023.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "ottone_2023_document",
+      "target": "competenze_strategiche"
     },
     {
       "relation": "references",
@@ -6708,16 +6705,6 @@
       "weight": 1.0,
       "source": "ottone_2023_document",
       "target": "ottone_2023_competenze_strategiche"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "sito-competenzestrategiche/studi/schede-bibliografiche/OTTONE_2023.md",
-      "source_location": null,
-      "weight": 1.0,
-      "source": "ottone_2023_document",
-      "target": "ottone_2023_competenzestrategiche_it"
     },
     {
       "relation": "conceptually_related_to",
