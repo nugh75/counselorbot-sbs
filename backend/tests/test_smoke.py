@@ -262,6 +262,12 @@ EXPECTED_ROUTES = {
     ("DELETE", "/admin/survey/{survey_id}"),
     ("GET", "/admin/strategy-feedback"),
     ("GET", "/qsa/guided-ui-texts"),
+    ("POST", "/telegram/webhook"),
+    ("POST", "/telegram/link-code"),
+    ("GET", "/telegram/link-status"),
+    ("POST", "/telegram/unlink"),
+    ("GET", "/admin/telegram/links"),
+    ("POST", "/admin/telegram/links/{link_id}/revoke"),
     ("POST", "/chat"),
     ("POST", "/chat/stream"),
     ("POST", "/chat/message"),
@@ -4161,6 +4167,210 @@ def test_retrieved_context_routing_and_strategy_exclusion():
     # Strategies must be empty since they are disabled in flags
     assert strategy_ids == []
     assert certified_strategy_ids == []
+
+
+# --------------------------------------------------------------------------
+# Telegram bot
+# --------------------------------------------------------------------------
+import backend.telegram_state as telegram_state
+
+
+def test_telegram_parse_scores():
+    allowed = ["C1", "C2", "A1"]
+    scores, extra, invalid = telegram_state.parse_scores("c1=7, C2: 5;\nA1 = 3", allowed)
+    assert scores == {"C1": 7, "C2": 5, "A1": 3}
+    assert extra == [] and invalid == []
+
+    scores, extra, invalid = telegram_state.parse_scores("C1=7 X9=4", allowed)
+    assert scores == {"C1": 7} and extra == ["X9"]
+
+    scores, extra, invalid = telegram_state.parse_scores("C1=12 C2=abc", allowed)
+    assert scores == {} and invalid == ["C1=12", "C2=abc"]
+
+    scores, extra, invalid = telegram_state.parse_scores("ciao come va", allowed)
+    assert scores == {} and extra == [] and invalid == []
+
+
+def test_telegram_link_code_flow():
+    from datetime import datetime, timedelta, timezone
+    db = _TestSession()
+    try:
+        code = telegram_state.create_link_code(db, "tg.student")
+        assert len(code) == 6
+        # Il codice e' salvato hashato, mai in chiaro.
+        row = db.query(models.TelegramLinkCode).filter(models.TelegramLinkCode.username == "tg.student").first()
+        assert row.code_hash != code and code not in row.code_hash
+        assert telegram_state.consume_link_code(db, code.lower()) == "tg.student"
+        # Monouso: il secondo consumo fallisce.
+        assert telegram_state.consume_link_code(db, code) is None
+        # Scaduto: rifiutato.
+        expired = telegram_state.create_link_code(db, "tg.student")
+        db.query(models.TelegramLinkCode).filter(models.TelegramLinkCode.used_at.is_(None)).update(
+            {"expires_at": datetime.now(timezone.utc) - timedelta(minutes=1)}
+        )
+        db.commit()
+        assert telegram_state.consume_link_code(db, expired) is None
+    finally:
+        db.close()
+
+
+def test_telegram_link_endpoints_authenticated():
+    main.app.dependency_overrides[auth.get_current_user] = _fake_user_identity
+    try:
+        res = client.post("/telegram/link-code")
+        assert res.status_code == 200
+        assert len(res.json()["code"]) == 6
+        res = client.get("/telegram/link-status")
+        assert res.status_code == 200
+        assert res.json()["linked"] is False
+        res = client.post("/telegram/unlink")
+        assert res.status_code == 200
+    finally:
+        main.app.dependency_overrides.pop(auth.get_current_user, None)
+
+
+def test_telegram_webhook_secret():
+    payload = {"update_id": 1}
+    os.environ["TELEGRAM_BOT_ENABLED"] = "false"
+    assert client.post("/telegram/webhook", json=payload).status_code == 403
+    os.environ["TELEGRAM_BOT_ENABLED"] = "true"
+    os.environ["TELEGRAM_WEBHOOK_SECRET"] = "s3cret_test"
+    try:
+        assert client.post("/telegram/webhook", json=payload).status_code == 403
+        wrong = {"X-Telegram-Bot-Api-Secret-Token": "wrong"}
+        assert client.post("/telegram/webhook", json=payload, headers=wrong).status_code == 403
+        good = {"X-Telegram-Bot-Api-Secret-Token": "s3cret_test"}
+        res = client.post("/telegram/webhook", json=payload, headers=good)
+        assert res.status_code == 200 and res.json() == {"ok": True}
+    finally:
+        os.environ["TELEGRAM_BOT_ENABLED"] = "false"
+        os.environ.pop("TELEGRAM_WEBHOOK_SECRET", None)
+
+
+def test_telegram_conversation_flow():
+    """Percorso completo: /start non collegato -> /link -> QSA -> punteggi -> analisi -> conclusione."""
+    import asyncio
+
+    sent: list[dict] = []
+
+    async def _fake_send(chat_id, text, keyboard=None):
+        sent.append({"chat_id": chat_id, "text": text, "keyboard": keyboard})
+
+    async def _fake_answer(callback_query_id):
+        pass
+
+    real_send = telegram_state.telegram_bot.send_message
+    real_answer = telegram_state.telegram_bot.answer_callback_query
+    telegram_state.telegram_bot.send_message = _fake_send
+    telegram_state.telegram_bot.answer_callback_query = _fake_answer
+
+    TG_USER = 424242
+    TG_CHAT = 424242
+
+    def _msg(text, chat_type="private"):
+        return {"message": {
+            "chat": {"id": TG_CHAT, "type": chat_type},
+            "from": {"id": TG_USER, "first_name": "Tessa", "language_code": "it"},
+            "text": text,
+        }}
+
+    def _cb(data):
+        return {"callback_query": {
+            "id": "cb1",
+            "data": data,
+            "from": {"id": TG_USER, "language_code": "it"},
+            "message": {"chat": {"id": TG_CHAT, "type": "private"}},
+        }}
+
+    async def _run():
+        db = _TestSession()
+        try:
+            # Messaggi da gruppi: ignorati.
+            await telegram_state.process_update(_msg("/start", chat_type="group"))
+            assert sent == []
+
+            # /start senza link: istruzioni /link.
+            await telegram_state.process_update(_msg("/start"))
+            assert "/link" in sent[-1]["text"]
+
+            # Punteggi senza link: rifiutati.
+            await telegram_state.process_update(_msg("C1=5"))
+            assert "/link" in sent[-1]["text"]
+
+            # /link con codice valido.
+            code = telegram_state.create_link_code(db, "tg.student")
+            await telegram_state.process_update(_msg(f"/link {code}"))
+            link = db.query(models.TelegramAccountLink).filter(
+                models.TelegramAccountLink.telegram_user_id == TG_USER
+            ).first()
+            assert link is not None and link.username == "tg.student"
+
+            # Scelta strumento QSA -> richiesta punteggi.
+            await telegram_state.process_update(_msg("/strumenti"))
+            assert sent[-1]["keyboard"] is not None
+            await telegram_state.process_update(_cb("instr:QSA"))
+            assert "C1=7" in sent[-1]["text"]
+
+            # Codici ammessi: dal DB di test (seed minimale) o dal fallback statico.
+            codes = telegram_state.allowed_factor_codes(db, "QSA")
+            assert codes, "nessun codice fattore QSA disponibile"
+
+            if len(codes) > 1:
+                # Punteggi parziali: chiede solo i mancanti.
+                await telegram_state.process_update(_msg(f"{codes[0]}=7"))
+                assert codes[1] in sent[-1]["text"]
+                rest = " ".join(f"{c}=5" for c in codes[1:])
+                await telegram_state.process_update(_msg(rest))
+            else:
+                await telegram_state.process_update(_msg(f"{codes[0]}=7"))
+
+            # Punteggi completi -> recap con conferma.
+            assert f"{codes[0]}=7" in sent[-1]["text"] and sent[-1]["keyboard"] is not None
+
+            # Conferma -> QuestionnaireResult salvato + primo step AI.
+            before = db.query(models.QuestionnaireResult).filter(
+                models.QuestionnaireResult.username == "tg.student"
+            ).count()
+            await telegram_state.process_update(_cb("scores:confirm"))
+            db.expire_all()
+            results = db.query(models.QuestionnaireResult).filter(
+                models.QuestionnaireResult.username == "tg.student"
+            ).all()
+            assert len(results) == before + 1
+            assert results[-1].questionnaire_type == "QSA"
+            assert results[-1].scores[codes[0]] == 7
+            assert "RISPOSTA_TEST" in sent[-1]["text"]
+
+            # Domanda libera nello step: risposta AI, stesso step.
+            await telegram_state.process_update(_msg("Cosa significa il punteggio C1?"))
+            assert "RISPOSTA_TEST" in sent[-1]["text"]
+            state = db.query(models.TelegramConversationState).filter(
+                models.TelegramConversationState.telegram_user_id == TG_USER
+            ).first()
+            db.refresh(state)
+            assert state.state == "in_step"
+
+            # Prossimo passo -> nuovo step AI.
+            await telegram_state.process_update(_cb("step:next"))
+            assert "RISPOSTA_TEST" in sent[-1]["text"]
+
+            # Concludi -> stato idle.
+            await telegram_state.process_update(_cb("step:end"))
+            db.refresh(state)
+            assert state.state == "idle"
+
+            # /unlink -> link revocato.
+            await telegram_state.process_update(_msg("/unlink"))
+            db.refresh(link)
+            assert link.revoked_at is not None
+        finally:
+            db.close()
+
+    try:
+        asyncio.run(_run())
+    finally:
+        telegram_state.telegram_bot.send_message = real_send
+        telegram_state.telegram_bot.answer_callback_query = real_answer
 
 
 # --------------------------------------------------------------------------
