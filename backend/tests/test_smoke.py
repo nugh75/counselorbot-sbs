@@ -662,12 +662,14 @@ def test_counselors_crud_and_public():
     r = client.post("/admin/counselors", json={
         "slug": "marco", "name": "Marco", "description": "Tutor calmo",
         "description_i18n": {"en": "Calm tutor", "es": "Tutor tranquilo"},
+        "voice_mapping": {"it": "it-IT-DiegoNeural", "en": "en-US-GuyNeural"},
         "persona": "Sei Marco, un counselor empatico.", "preset_id": preset_id,
         "questionnaire_types": ["QSA", "ZTPI"], "is_active": True,
     })
     assert r.status_code == 200, r.text
     cid = r.json()["id"]
     assert r.json()["provider"] == "deepseek" and r.json()["model"] == "deepseek-v4-flash"
+    assert r.json()["voice_mapping"] == {"it": "it-IT-DiegoNeural", "en": "en-US-GuyNeural"}
     # slug duplicato -> 409
     assert client.post("/admin/counselors", json={"slug": "marco", "name": "X"}).status_code == 409
     # update
@@ -680,6 +682,7 @@ def test_counselors_crud_and_public():
     assert pub is not None
     assert "persona" not in pub and "preset_id" not in pub
     assert pub["name"] == "Marco T." and "QSA" in (pub["questionnaire_types"] or [])
+    assert pub["voice_mapping"] == {"it": "it-IT-DiegoNeural", "en": "en-US-GuyNeural"}
     # badge origine modello: deepseek e' un'API esterna
     assert pub["model_origin"] == "external"
     # descrizione localizzata via ?lang (fallback all'italiano se manca la lingua)

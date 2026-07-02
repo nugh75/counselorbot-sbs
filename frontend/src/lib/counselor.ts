@@ -6,6 +6,7 @@ export interface PublicCounselor {
     slug: string;
     name: string;
     description?: string | null;
+    voice_mapping?: Record<string, string> | null;
     avatar?: string | null;
     questionnaire_types?: string[] | null;
     language: string[];

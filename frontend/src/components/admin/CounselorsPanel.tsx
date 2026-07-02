@@ -7,6 +7,47 @@ import { LANGUAGES } from '@/lib/i18n';
 
 const QTYPES = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
 
+const AVAILABLE_VOICES_BY_LOCALE = {
+    it: [
+        { value: 'it-IT-IsabellaNeural', label: 'Isabella (Femminile / Female)' },
+        { value: 'it-IT-ElsaNeural', label: 'Elsa (Femminile / Female)' },
+        { value: 'it-IT-DiegoNeural', label: 'Diego (Maschile / Male)' },
+        { value: 'it-IT-GianniNeural', label: 'Gianni (Maschile / Male)' },
+    ],
+    en: [
+        { value: 'en-US-AriaNeural', label: 'Aria (Female)' },
+        { value: 'en-US-JennyNeural', label: 'Jenny (Female)' },
+        { value: 'en-US-MichelleNeural', label: 'Michelle (Female)' },
+        { value: 'en-US-GuyNeural', label: 'Guy (Male)' },
+        { value: 'en-US-AndrewNeural', label: 'Andrew (Male)' },
+        { value: 'en-US-BrianNeural', label: 'Brian (Male)' },
+    ],
+    es: [
+        { value: 'es-ES-ElviraNeural', label: 'Elvira (Femenino / Female)' },
+        { value: 'es-ES-LauraNeural', label: 'Laura (Femenino / Female)' },
+        { value: 'es-ES-AlvaroNeural', label: 'Alvaro (Masculino / Male)' },
+        { value: 'es-ES-ArnauNeural', label: 'Arnau (Masculino / Male)' },
+    ],
+    fr: [
+        { value: 'fr-FR-DeniseNeural', label: 'Denise (Féminin / Female)' },
+        { value: 'fr-FR-EloiseNeural', label: 'Eloise (Féminin / Female)' },
+        { value: 'fr-FR-HenriNeural', label: 'Henri (Masculin / Male)' },
+        { value: 'fr-FR-AlainNeural', label: 'Alain (Masculin / Male)' },
+    ],
+    de: [
+        { value: 'de-DE-KatjaNeural', label: 'Katja (Weiblich / Female)' },
+        { value: 'de-DE-AmalaNeural', label: 'Amala (Weiblich / Female)' },
+        { value: 'de-DE-ConradNeural', label: 'Conrad (Männlich / Male)' },
+        { value: 'de-DE-KillianNeural', label: 'Killian (Männlich / Male)' },
+    ],
+    sv: [
+        { value: 'sv-SE-SofieNeural', label: 'Sofie (Kvinna / Female)' },
+        { value: 'sv-SE-HilleviNeural', label: 'Hillevi (Kvinna / Female)' },
+        { value: 'sv-SE-MattiasNeural', label: 'Mattias (Man / Male)' },
+        { value: 'sv-SE-GustafNeural', label: 'Gustaf (Man / Male)' },
+    ]
+};
+
 interface Preset { id: number; name: string; provider: string; model: string; }
 
 interface Counselor {
@@ -15,6 +56,7 @@ interface Counselor {
     name: string;
     description: string | null;
     description_i18n: Record<string, string> | null;
+    voice_mapping: Record<string, string> | null;
     persona: string | null;
     avatar: string | null;
     preset_id: number | null;
@@ -30,12 +72,13 @@ interface Counselor {
 
 type FormState = {
     slug: string; name: string; description: string; description_i18n: Record<string, string>;
+    voice_mapping: Record<string, string>;
     persona: string; avatar: string;
     preset_id: string; questionnaire_types: string[]; language: string[]; sort_order: string; is_active: boolean; show_in_assistant: boolean; assistant_audience: string;
 };
 
 const EMPTY: FormState = {
-    slug: '', name: '', description: '', description_i18n: {}, persona: '', avatar: '',
+    slug: '', name: '', description: '', description_i18n: {}, voice_mapping: {}, persona: '', avatar: '',
     preset_id: '', questionnaire_types: [], language: ['*'], sort_order: '0', is_active: true, show_in_assistant: false, assistant_audience: '',
 };
 
@@ -72,7 +115,9 @@ export function CounselorsPanel() {
     const startEdit = (c: Counselor) => {
         setForm({
             slug: c.slug, name: c.name, description: c.description || '',
-            description_i18n: c.description_i18n || {}, persona: c.persona || '',
+            description_i18n: c.description_i18n || {},
+            voice_mapping: c.voice_mapping || {},
+            persona: c.persona || '',
             avatar: c.avatar || '', preset_id: c.preset_id != null ? String(c.preset_id) : '',
             questionnaire_types: c.questionnaire_types || [], language: Array.isArray(c.language) ? c.language : ['*'],
             sort_order: String(c.sort_order ?? 0), is_active: c.is_active, show_in_assistant: c.show_in_assistant || false,
@@ -141,6 +186,7 @@ export function CounselorsPanel() {
         slug: form.slug.trim(), name: form.name.trim(),
         description: form.description.trim() || null,
         description_i18n: Object.keys(form.description_i18n).length > 0 ? form.description_i18n : null,
+        voice_mapping: Object.keys(form.voice_mapping).length > 0 ? form.voice_mapping : null,
         persona: form.persona.trim() || null,
         avatar: form.avatar.trim() || null,
         preset_id: form.preset_id === '' ? null : Number(form.preset_id),
@@ -236,12 +282,36 @@ export function CounselorsPanel() {
                         </button>
                     ))}
                 </div>
-                <input
-                    className={inputCls}
-                    value={descForLang(tLang)}
-                    onChange={(e) => setDescForLang(tLang, e.target.value)}
-                    placeholder={t('admin.counselors.descPlaceholder', { lang: tLang })}
-                />
+                <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="flex flex-col text-xs font-medium text-slate-500">
+                        {t('admin.counselors.descriptionLabel') || 'Descrizione'}
+                        <input
+                            className={inputCls}
+                            value={descForLang(tLang)}
+                            onChange={(e) => setDescForLang(tLang, e.target.value)}
+                            placeholder={t('admin.counselors.descPlaceholder', { lang: tLang })}
+                        />
+                    </label>
+                    <label className="flex flex-col text-xs font-medium text-slate-500">
+                        {t('admin.counselors.voice') || 'Voce edge-tts'}
+                        <select
+                            className={inputCls}
+                            value={form.voice_mapping[tLang] || ''}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                setForm((f) => ({
+                                    ...f,
+                                    voice_mapping: { ...f.voice_mapping, [tLang]: val }
+                                }));
+                            }}
+                        >
+                            <option value="">{t('admin.counselors.defaultVoice') || 'Voce predefinita'}</option>
+                            {(AVAILABLE_VOICES_BY_LOCALE[tLang as keyof typeof AVAILABLE_VOICES_BY_LOCALE] || []).map((v) => (
+                                <option key={v.value} value={v.value}>{v.label}</option>
+                            ))}
+                        </select>
+                    </label>
+                </div>
             </div>
 
             <label className="mt-3 flex flex-col text-xs font-medium text-slate-500">{t('admin.counselors.persona')}

@@ -828,6 +828,7 @@ class CounselorBase(BaseModel):
     name: str
     description: Optional[str] = None
     description_i18n: Optional[dict] = None
+    voice_mapping: Optional[dict] = None
     persona: Optional[str] = None
     avatar: Optional[str] = None
     preset_id: Optional[int] = None
@@ -848,6 +849,7 @@ class CounselorUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     description_i18n: Optional[dict] = None
+    voice_mapping: Optional[dict] = None
     persona: Optional[str] = None
     avatar: Optional[str] = None
     preset_id: Optional[int] = None
@@ -876,6 +878,7 @@ class CounselorPublic(BaseModel):
     slug: str
     name: str
     description: Optional[str] = None
+    voice_mapping: Optional[dict] = None
     avatar: Optional[str] = None
     questionnaire_types: Optional[List[str]] = None
     language: List[str] = ["*"]

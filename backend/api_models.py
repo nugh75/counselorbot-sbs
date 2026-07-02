@@ -53,6 +53,7 @@ class MemoryEventRequest(schemas.BaseModel):
 class TTSRequest(schemas.BaseModel):
     text: str
     voice: str = "it-IT-IsabellaNeural"  # Italian female voice
+    counselor_id: Optional[int] = None
 
 
 # --- pQBL da PDF ---

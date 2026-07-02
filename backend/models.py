@@ -557,6 +557,7 @@ class Counselor(Base):
     name = Column(String, nullable=False)
     description = Column(Text, nullable=True)        # breve, mostrata all'utente (sorgente: italiano)
     description_i18n = Column(JSON, nullable=True)   # traduzioni {lang: testo}, generate via Ollama
+    voice_mapping = Column(JSON, nullable=True)      # mapping {lang: voice_name}
     persona = Column(Text, nullable=True)            # prefisso al system prompt
     avatar = Column(String, nullable=True)           # nome icona o url
     preset_id = Column(Integer, nullable=True)       # -> model_presets.id (modello)

@@ -992,7 +992,11 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             const response = await fetch('/api/tts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text, voice: TTS_VOICE_BY_LOCALE[activeLocale] }),
+                body: JSON.stringify({
+                    text,
+                    voice: TTS_VOICE_BY_LOCALE[activeLocale],
+                    counselor_id: getSelectedCounselorId()
+                }),
             });
 
             if (!response.ok) throw new Error('TTS failed');

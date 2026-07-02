@@ -224,6 +224,9 @@ const it: Dict = {
     'admin.counselors.confirmDelete': 'Eliminare questo counselor?',
     'admin.counselors.noPreset': '— nessuno —',
     'admin.counselors.actions': 'Azioni',
+    'admin.counselors.voice': 'Voce edge-tts',
+    'admin.counselors.defaultVoice': 'Voce predefinita',
+    'admin.counselors.descriptionLabel': 'Descrizione',
     'admin.tab.surveys': 'Questionari di gradimento',
     // LogViewer filtri estesi
     'admin.logs.allModels': 'Tutti i modelli',
@@ -845,6 +848,9 @@ const en: Dict = {
     'admin.counselors.confirmDelete': 'Delete this counselor?',
     'admin.counselors.noPreset': '— none —',
     'admin.counselors.actions': 'Actions',
+    'admin.counselors.voice': 'edge-tts voice',
+    'admin.counselors.defaultVoice': 'Default voice',
+    'admin.counselors.descriptionLabel': 'Description',
     'admin.tab.surveys': 'Satisfaction questionnaires',
     // LogViewer extended filters
     'admin.logs.allModels': 'All models',

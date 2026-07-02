@@ -110,6 +110,7 @@ async def create_counselor(
         name=name,
         description=payload.description,
         description_i18n=payload.description_i18n,
+        voice_mapping=payload.voice_mapping,
         persona=payload.persona,
         avatar=payload.avatar,
         preset_id=payload.preset_id,
