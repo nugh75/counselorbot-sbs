@@ -186,6 +186,12 @@ def _ensure_questionnaire_guided_steps(db, questionnaire_type: str) -> None:
         )
     }
 
+    # Seed dei default solo su percorsi vuoti: se il questionario ha già step
+    # (es. percorso dettagliato custom), NON mescolare i default compatti
+    # (creava step duplicati con lo stesso sort_order in QAP/QPCS/QPCC).
+    if existing_ids:
+        return
+
     changed = False
     for step_def in defaults:
         if step_def["id"] in existing_ids:
