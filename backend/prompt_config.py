@@ -14,12 +14,31 @@ DEFAULT_SYSTEM_PROMPT_FACTOR = (
     "(e.g. 'Hi!', 'Great idea', 'Welcome'). Start directly with the requested analysis."
 )
 
+# Direttiva di profondità per i follow-up in-step: i prompt QA storici sono nati
+# per bloccare la ri-analisi del profilo a ogni domanda e hanno over-corretto
+# (risposte corte e superficiali anche quando lo studente chiede di approfondire).
+# Blocco additivo con sentinella (stesso pattern idempotente di FACTOR_INTERPLAY,
+# riusato in main.startup_event sulle righe DB personalizzate).
+QA_DEPTH_SENTINEL = "[DEPTH ON REQUEST]"
+
+DEFAULT_QA_DEPTH_DIRECTIVE = (
+    "\n\n[DEPTH ON REQUEST] When the student asks to go deeper (e.g. 'tell me more', "
+    "'can you expand', or asks WHY or HOW a factor works), a short comment is NOT "
+    "enough. Within the scope rules above, build a substantive answer (roughly "
+    "150-250 words): (1) explain the MECHANISM — why this factor shows up that way "
+    "in studying, drawing on the [KNOWLEDGE] material when present; (2) give ONE "
+    "concrete school-life example consistent with the student's score band; "
+    "(3) close with ONE practical micro-step (from the certified strategies when "
+    "available) or ONE reflective question. Stay conversational: no tables, no "
+    "factor-by-factor lists."
+)
+
 DEFAULT_SYSTEM_PROMPT_FACTOR_QA = (
     "In the follow-up phase of an analysis step already completed, the student asks "
     "a clarifying question. "
     "Your task is to COMMENT on and EXPAND ONLY what has already emerged in the "
     "current conversation: it is a comment on what was already said, not a new analysis. "
-    "Reply in a FOCUSED, conversational and concise way. Binding rules: "
+    "Reply in a FOCUSED, conversational way. Binding rules: "
     "(1) do NOT produce tables unless the student explicitly requests them; "
     "(2) answer ONLY the question asked, referring solely to the factors already discussed "
     "and relevant to the question; "
@@ -29,6 +48,7 @@ DEFAULT_SYSTEM_PROMPT_FACTOR_QA = (
     "the affective factors or later steps, unless the student explicitly asks); "
     "(5) no opening greetings, go straight to the answer. "
     "Clear and professional tone, with practical, targeted suggestions."
+    + DEFAULT_QA_DEPTH_DIRECTIVE
 )
 
 # Direttiva di sintesi per il secondo livello: i counselor tendono a elencare i
@@ -117,9 +137,10 @@ DEFAULT_SYSTEM_PROMPT_QSAR_FACTOR = (
 
 DEFAULT_SYSTEM_PROMPT_QSAR_FACTOR_QA = (
     "In the follow-up phase of an analysis step already completed, answer the "
-    "student's question in a focused and concise way, commenting only on the factors "
+    "student's question in a focused way, commenting only on the factors "
     "already discussed and relevant to the question. Do not produce tables unless explicitly requested, "
     "do not re-analyse the whole profile and do not anticipate other steps. Do not use opening greetings."
+    + DEFAULT_QA_DEPTH_DIRECTIVE
 )
 
 DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL = (

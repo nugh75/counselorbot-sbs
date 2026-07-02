@@ -22,6 +22,8 @@ from .prompt_config import (
     DEFAULT_FACTOR_INTERPLAY_QSAR,
     SECOND_LEVEL_METHOD_SENTINEL,
     DEFAULT_SECOND_LEVEL_METHOD,
+    QA_DEPTH_SENTINEL,
+    DEFAULT_QA_DEPTH_DIRECTIVE,
     SL_MOTIVATION_SYMMETRY_NOTE,
     SL_ATTRIBUTION_A6_NOTE,
     DEFAULT_GUIDED_STEPS,
@@ -753,6 +755,16 @@ def _seed_and_migrate():
             cfg_sl = db.query(models.Config).filter(models.Config.key == method_key).first()
             if cfg_sl and SECOND_LEVEL_METHOD_SENTINEL not in (cfg_sl.value or ""):
                 cfg_sl.value = (cfg_sl.value or "").rstrip() + DEFAULT_SECOND_LEVEL_METHOD
+                legacy_changed = True
+
+        # One-off: direttiva [DEPTH ON REQUEST] sui prompt QA di follow-up in-step
+        # QSA/QSAr: le righe live (personalizzate) sono nate anti-ri-analisi e
+        # producono risposte troppo superficiali quando lo studente chiede di
+        # approfondire. Append idempotente via sentinella, testo admin preservato.
+        for qa_key in ("prompt_factor_qa", "prompt_qsar_factor_qa"):
+            cfg_qa = db.query(models.Config).filter(models.Config.key == qa_key).first()
+            if cfg_qa and QA_DEPTH_SENTINEL not in (cfg_qa.value or ""):
+                cfg_qa.value = (cfg_qa.value or "").rstrip() + DEFAULT_QA_DEPTH_DIRECTIVE
                 legacy_changed = True
 
         # One-off: pattern attesi del secondo livello sui prompt step live

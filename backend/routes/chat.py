@@ -54,8 +54,10 @@ from ..chat_logic import (
     _apply_current_step_score_profile_directive,
     _apply_qsa_factor_directive,
     _clamp_max_tokens,
+    _conversational_retrieval_tail,
     _ensure_questionnaire_guided_steps,
     _ensure_required_qsa_factor_codes,
+    _is_conversational_mode,
     filter_scores_by_components,
     get_prompt_component_flags,
     get_prompt_component_options,
@@ -346,7 +348,10 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             questionnaire_type = step.questionnaire_type
 
     component_flags = get_prompt_component_flags(db, questionnaire_type, request.phase)
-    step_mode = step.system_prompt_mode if step else request.mode
+    # Nei follow-up in-step (`factor-qa`) il mode della richiesta prevale sul
+    # mode dello step: sblocca il materiale pratico certificato (advice) anche
+    # dentro gli step fattore, dove l'analisi resta interpretive-only.
+    step_mode = request.mode if _is_conversational_mode(request.mode) else (step.system_prompt_mode if step else request.mode)
     component_options = get_prompt_component_options(db, questionnaire_type, request.phase, step_mode)
     include_analysis_context = _should_include_step_analysis_context(step_mode)
     phase_codes = _phase_factor_codes(db, request.phase) if include_analysis_context else set()
@@ -385,6 +390,11 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     certified_strategy_ids: list[str] = []
     if component_flags.get("knowledge", True):
         retrieval_query = f"{step_label} {model_message if component_flags.get('step_prompt', True) else ''} {component_scores_context}".strip()
+        # Follow-up in-step: la domanda dello studente spesso non ha contenuto
+        # ("puoi approfondire?") — accoda la coda dell'ultima risposta assistant
+        # così il retrieval trova il materiale del tema in discussione.
+        if _is_conversational_mode(request.mode):
+            retrieval_query = f"{retrieval_query} {_conversational_retrieval_tail(session_id)}".strip()
         retrieval_request = request.copy(update={"scores_context": component_scores_context})
         knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
             db, session_id, retrieval_request, questionnaire_type, retrieval_query,
@@ -580,7 +590,10 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             questionnaire_type = step.questionnaire_type
 
     component_flags = get_prompt_component_flags(db, questionnaire_type, request.phase)
-    step_mode = step.system_prompt_mode if step else request.mode
+    # Nei follow-up in-step (`factor-qa`) il mode della richiesta prevale sul
+    # mode dello step: sblocca il materiale pratico certificato (advice) anche
+    # dentro gli step fattore, dove l'analisi resta interpretive-only.
+    step_mode = request.mode if _is_conversational_mode(request.mode) else (step.system_prompt_mode if step else request.mode)
     component_options = get_prompt_component_options(db, questionnaire_type, request.phase, step_mode)
     include_analysis_context = _should_include_step_analysis_context(step_mode)
     phase_codes = _phase_factor_codes(db, request.phase) if include_analysis_context else set()
@@ -628,6 +641,11 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     certified_strategy_ids: list[str] = []
     if component_flags.get("knowledge", True):
         retrieval_query = f"{step_label} {model_message if component_flags.get('step_prompt', True) else ''} {component_scores_context}".strip()
+        # Follow-up in-step: la domanda dello studente spesso non ha contenuto
+        # ("puoi approfondire?") — accoda la coda dell'ultima risposta assistant
+        # così il retrieval trova il materiale del tema in discussione.
+        if _is_conversational_mode(request.mode):
+            retrieval_query = f"{retrieval_query} {_conversational_retrieval_tail(session_id)}".strip()
         retrieval_request = request.copy(update={"scores_context": component_scores_context})
         knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
             db, session_id, retrieval_request, questionnaire_type, retrieval_query,

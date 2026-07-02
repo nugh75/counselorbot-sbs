@@ -25,8 +25,10 @@ from backend.chat_logic import (
     _annotate_qsa_factor_codes,
     _apply_current_step_score_profile_directive,
     _apply_qsa_factor_directive,
+    _conversational_retrieval_tail,
     _ensure_required_qsa_factor_codes,
     _extract_factor_codes,
+    _is_conversational_mode,
     _sanitize_qsa_inverted_wording,
     _qsa_assessment_labels,
     _qsa_factor_names,
@@ -34,12 +36,16 @@ from backend.chat_logic import (
     _QSA_INVERTED_CODES,
     _QSAR_INVERTED_CODES,
 )
+from backend.memory_service import session_memory
 from backend.prompt_config import (
     DEFAULT_GUIDED_STEPS,
     DEFAULT_QSAR_GUIDED_STEPS,
+    DEFAULT_SYSTEM_PROMPT_FACTOR_QA,
+    DEFAULT_SYSTEM_PROMPT_QSAR_FACTOR_QA,
     DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL,
     DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL,
     FACTOR_INTERPLAY_SENTINEL,
+    QA_DEPTH_SENTINEL,
     SECOND_LEVEL_METHOD_SENTINEL,
 )
 
@@ -257,8 +263,48 @@ def test_step_allows_practical_advice():
     assert _step_allows_practical_advice("generic") is True
     assert _step_allows_practical_advice("qsar-second-level") is True
     assert _step_allows_practical_advice("qsar-generic") is True
+    # follow-up in-step: lo studente chiede attivamente -> advice consentito
+    assert _step_allows_practical_advice("factor-qa") is True
+    assert _step_allows_practical_advice("qsar-factor-qa") is True
     # case-insensitive + whitespace
     assert _step_allows_practical_advice("  Second-Level  ") is True
+
+
+def test_qa_defaults_require_depth_on_request():
+    # I default QA devono imporre profondità su richiesta: meccanismo + esempio
+    # + micro-passo/domanda riflessiva, restando dentro le regole di scope.
+    for prompt in (DEFAULT_SYSTEM_PROMPT_FACTOR_QA, DEFAULT_SYSTEM_PROMPT_QSAR_FACTOR_QA):
+        assert QA_DEPTH_SENTINEL in prompt, prompt
+        assert "MECHANISM" in prompt, prompt
+        assert "example" in prompt, prompt
+        assert "micro-step" in prompt, prompt
+
+
+def test_conversational_mode_detection():
+    assert _is_conversational_mode("factor-qa") is True
+    assert _is_conversational_mode(" QSAR-FACTOR-QA ") is True
+    assert _is_conversational_mode("factor") is False
+    assert _is_conversational_mode(None) is False
+
+
+def test_conversational_retrieval_tail_uses_last_assistant_turn():
+    session_id = "test-qa-tail-session"
+    session_memory.clear(session_id)
+    try:
+        session_memory.record_interaction(
+            session_id,
+            user_message="analizza i miei fattori",
+            transcript_user="analizza i miei fattori",
+            bot_response="C6 (Difficoltà di concentrazione) alto: le distrazioni interrompono lo studio.",
+            questionnaire_type="QSA",
+        )
+        tail = _conversational_retrieval_tail(session_id)
+        assert "concentrazione" in tail.lower()
+        # La coda è limitata: query di retrieval, non un secondo transcript.
+        assert len(_conversational_retrieval_tail(session_id, max_chars=20)) <= 20
+    finally:
+        session_memory.clear(session_id)
+    assert _conversational_retrieval_tail("") == ""
 
 
 def _scores_for_profile():
