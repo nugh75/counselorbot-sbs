@@ -98,21 +98,6 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
 
             <section className="mx-auto max-w-4xl">
                 <h2 className="text-center text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
-                    {t('app.intro.how.title')}
-                </h2>
-                <div className="mt-6 grid gap-8 sm:grid-cols-4">
-                    {howSteps.map((s, i) => (
-                        <div key={s.title}>
-                            <span className="font-mono text-sm font-semibold text-ochre-500">0{i + 1}</span>
-                            <h3 className="mt-2 text-base font-bold text-slate-900">{s.title}</h3>
-                            <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{s.body}</p>
-                        </div>
-                    ))}
-                </div>
-            </section>
-
-            <section className="mx-auto max-w-4xl">
-                <h2 className="text-center text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
                     {t('app.home.contains')}
                 </h2>
                 <div className="mt-6 grid gap-8 sm:grid-cols-3">
@@ -121,6 +106,33 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
                             <span className="block h-0.5 w-10 rounded-full bg-indigo-500" />
                             <h3 className="mt-3 text-base font-bold text-slate-900">{m.title}</h3>
                             <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{m.body}</p>
+                        </div>
+                    ))}
+                </div>
+                <p className="mx-auto mt-8 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
+                    {t('app.intro.langs.pre')}
+                    <a
+                        href="https://www.competenzestrategiche.it/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-indigo-700 hover:underline"
+                    >
+                        competenzestrategiche.it
+                    </a>
+                    {t('app.intro.langs.post')}
+                </p>
+            </section>
+
+            <section className="mx-auto max-w-4xl">
+                <h2 className="text-center text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
+                    {t('app.intro.how.title')}
+                </h2>
+                <div className="mt-6 grid gap-8 sm:grid-cols-4">
+                    {howSteps.map((s, i) => (
+                        <div key={s.title}>
+                            <span className="font-mono text-sm font-semibold text-ochre-500">0{i + 1}</span>
+                            <h3 className="mt-2 text-base font-bold text-slate-900">{s.title}</h3>
+                            <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{s.body}</p>
                         </div>
                     ))}
                 </div>
