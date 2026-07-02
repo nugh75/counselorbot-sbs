@@ -155,7 +155,7 @@ export function ValidationExportPanel() {
                         <input
                             value={version}
                             onChange={(event) => setVersion(event.target.value)}
-                            placeholder="es. QSA_es_2026_v1"
+                            placeholder={t('admin.validation.placeholderVersion')}
                             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                         />
                     </label>
@@ -164,7 +164,7 @@ export function ValidationExportPanel() {
                         <input
                             value={study}
                             onChange={(event) => setStudy(event.target.value)}
-                            placeholder="es. QSA_es_2026_validation"
+                            placeholder={t('admin.validation.placeholderStudyCode')}
                             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                         />
                     </label>
