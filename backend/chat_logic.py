@@ -14,6 +14,7 @@ from fastapi import HTTPException
 
 from . import models
 from . import database
+from . import prompt_config
 from .anonymous_codes import code_for_identity
 from .ai_service import AIService
 from .memory_service import session_memory
@@ -391,6 +392,7 @@ def _apply_global_directives(system_prompt: str, language: Optional[str], db=Non
             return row.value.strip()
         return fallback
 
+    context_directive = _read("directive_context", "")
     lang_directive = _read("directive_language", "")
     register_directive = _read("directive_register", "")
     thinking_directive = _read("directive_thinking", "")
@@ -438,7 +440,12 @@ def _apply_global_directives(system_prompt: str, language: Optional[str], db=Non
             "reasoning outside the <think> block."
         )
 
+    if not context_directive:
+        context_directive = prompt_config.DEFAULT_CONTEXT_DIRECTIVE
+
     parts = [system_prompt]
+    if context_directive:
+        parts.append("\n\n" + context_directive)
     if lang_directive:
         parts.append("\n\n" + lang_directive)
     if register_directive:

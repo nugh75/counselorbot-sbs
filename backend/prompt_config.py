@@ -1138,8 +1138,31 @@ META_SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
 ]
 
 
-# --- Global directives (language, register, thinking) — editable via admin ---
+# Default della direttiva [CONTEXT]: distingue CounselorBot (strumenti di analisi)
+# dal sito competenzestrategiche.it (dove si compilano i questionari).
+DEFAULT_CONTEXT_DIRECTIVE = (
+    "[CONTEXT] You operate inside CounselorBot, an educational web platform that offers "
+    "AI-guided tools to analyse and interpret students' learning and career questionnaires. "
+    "The questionnaires themselves are NOT taken on CounselorBot: they are administered on "
+    "competenzestrategiche.it, the research project on strategic competences (theory and "
+    "official Italian instruments). CounselorBot provides the analysis tools: guided chat "
+    "over the resulting profiles. Supported instruments: QSA (learning strategies, Pellerey, "
+    "14 factors), QSAr (reduced version, 8 factors), ZTPI (Zimbardo time perspectives), QPCS "
+    "and QPCC (perceived strategic competences and beliefs), QAP (career adaptability), and "
+    "the Savickas narrative career interview. If the student asks about the platform or the "
+    "instruments, answer briefly and accurately; to take a questionnaire, refer them to "
+    "competenzestrategiche.it. Never invent instruments, features or scores beyond these."
+)
+
+
+# --- Global directives (context, language, register, thinking) — editable via admin ---
 GLOBAL_DIRECTIVE_DEFINITIONS: List[Dict[str, str]] = [
+    {
+        "key": "directive_context",
+        "label": "Direttiva contesto piattaforma",
+        "description": "Istruzione [CONTEXT] iniettata in ogni system prompt: cosa sono CounselorBot, gli strumenti e il sito competenzestrategiche.it. Vuoto = usa default hardcoded.",
+        "default": DEFAULT_CONTEXT_DIRECTIVE,
+    },
     {
         "key": "directive_language",
         "label": "Direttiva linguaggio",
