@@ -73,7 +73,7 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
     return (
         <div className="space-y-12 py-4">
             <div className="flex flex-col items-center pt-4 text-center">
-                <CompassMark className="h-14 w-14" animated />
+                <CompassMark className="h-16 w-16" animated />
                 <h1 className="font-display mt-6 text-4xl font-bold text-slate-900 sm:text-5xl">CounselorBot</h1>
                 <p className="mt-4 max-w-xl text-lg leading-relaxed text-slate-600">
                     {t('app.intro.subtitle')}
