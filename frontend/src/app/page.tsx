@@ -173,10 +173,22 @@ export default function Home() {
     // Schermata profilo studente separata dalla scelta modalità: true = già rivisto,
     // si passa alla scelta. Auto-skip se la card non ha nulla da mostrare.
     const [profileReviewed, setProfileReviewed] = useState(false);
+    // PDF finale inline: barra di avanzamento durante la preparazione, poi
+    // anteprima in un iframe sotto la card (niente pagina/download separati).
+    const [pdfLoading, setPdfLoading] = useState(false);
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
     useEffect(() => {
         getIdentity().then(setIdentity);
     }, []);
+
+    // Uscendo dalla schermata finale, libera l'object URL del PDF inline.
+    useEffect(() => {
+        if (step !== 'completed' && pdfUrl) {
+            window.URL.revokeObjectURL(pdfUrl);
+            setPdfUrl(null);
+        }
+    }, [step, pdfUrl]);
 
     // Il chip counselor nell'header deve comparire solo DOPO la scelta: sull'intro
     // azzeriamo la selezione persistita da run precedenti, così non si vede in anticipo.
@@ -498,11 +510,12 @@ export default function Home() {
             {/* The selection screen owns its introduction to avoid repeating the page purpose. */}
             {/* method-select e manual-input gestiscono la loro "prima riga" */}
             {/* internamente (BackButton + ForwardButton), come strumenti/counselor. */}
-            {step !== 'intro' && step !== 'questionnaire-select' && step !== 'counselor-select' && step !== 'dashboard' && step !== 'interaction' && step !== 'method-select' && step !== 'manual-input' && step !== 'upload-input' && (
+            {/* 'completed' non mostra il PageHeader: il titolo è già nella card. */}
+            {step !== 'intro' && step !== 'questionnaire-select' && step !== 'counselor-select' && step !== 'dashboard' && step !== 'interaction' && step !== 'method-select' && step !== 'manual-input' && step !== 'upload-input' && step !== 'completed' && (
                 <PageHeader
                     title={getStepTitle()}
                     subtitle={getStepDescription()}
-                    onBack={step !== 'completed' ? goBack : undefined}
+                    onBack={goBack}
                 />
             )}
 
@@ -660,24 +673,23 @@ export default function Home() {
                                     </button>
                                     <button
                                         onClick={async () => {
+                                            // Anteprima inline: prepara il blob e mostralo nell'iframe sotto.
+                                            setPdfLoading(true);
                                             try {
                                                 const res = await apiFetch(`/api/questionnaire-result/${sessionId}/pdf?lang=${lang}`);
                                                 if (!res.ok) throw new Error('PDF download failed');
                                                 const blob = await res.blob();
-                                                const url = window.URL.createObjectURL(blob);
-                                                const a = document.createElement('a');
-                                                a.href = url;
-                                                a.download = `counselorbot_${selectedQuestionnaire?.id || 'questionario'}.pdf`;
-                                                document.body.appendChild(a);
-                                                a.click();
-                                                a.remove();
-                                                window.URL.revokeObjectURL(url);
+                                                if (pdfUrl) window.URL.revokeObjectURL(pdfUrl);
+                                                setPdfUrl(window.URL.createObjectURL(blob));
                                             } catch (e) {
-                                                console.error('Failed to download PDF', e);
+                                                console.error('Failed to load PDF', e);
                                                 toast.error(t('toast.error'));
+                                            } finally {
+                                                setPdfLoading(false);
                                             }
                                         }}
-                                        className="py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center"
+                                        disabled={pdfLoading}
+                                        className="py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center disabled:opacity-60"
                                     >
                                         {t('completed.downloadPdf')}
                                     </button>
@@ -689,10 +701,29 @@ export default function Home() {
                                     </button>
                                 </div>
 
+                                {/* Barra di avanzamento (indeterminata) durante la preparazione del PDF. */}
+                                {pdfLoading && (
+                                    <div className="space-y-1.5">
+                                        <p className="text-xs text-slate-400">{t('completed.pdfPreparing')}</p>
+                                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                                            <div className="h-full w-1/3 animate-indeterminate rounded-full bg-indigo-500" />
+                                        </div>
+                                    </div>
+                                )}
+
                                 <p className="pt-4 border-t border-slate-100 text-sm text-slate-400">
                                     {t('completed.thanks')}
                                 </p>
                             </div>
+
+                            {/* Anteprima PDF inline sotto la card, senza aprire un'altra pagina. */}
+                            {pdfUrl && (
+                                <iframe
+                                    src={pdfUrl}
+                                    title={t('completed.downloadPdf')}
+                                    className="mt-6 w-full h-[75vh] rounded-xl border border-slate-200 bg-white shadow-sm"
+                                />
+                            )}
                         </div>
                     )}
 
