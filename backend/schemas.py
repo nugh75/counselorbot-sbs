@@ -976,3 +976,35 @@ class CertifiedStrategyResponse(CertifiedStrategyBase):
 
     class Config:
         from_attributes = True
+
+
+# --- Domande suggerite per gli step della chat guidata (admin) ---
+class GuidedStepQuestionBase(BaseModel):
+    questionnaire_type: str
+    step_id: str
+    language: str = "it"
+    text: str
+    sort_order: int = 0
+    is_active: bool = True
+
+
+class GuidedStepQuestionCreate(GuidedStepQuestionBase):
+    pass
+
+
+class GuidedStepQuestionUpdate(BaseModel):
+    questionnaire_type: Optional[str] = None
+    step_id: Optional[str] = None
+    language: Optional[str] = None
+    text: Optional[str] = None
+    sort_order: Optional[int] = None
+    is_active: Optional[bool] = None
+
+
+class GuidedStepQuestionResponse(GuidedStepQuestionBase):
+    id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

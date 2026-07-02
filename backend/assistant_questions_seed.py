@@ -326,11 +326,24 @@ DEFAULT_ASSISTANT_QUESTIONS: dict[str, list[str]] = {
 
 def seed_assistant_questions(db, models) -> None:
     """Inserisce le domande di default (it) mancanti. Idempotente."""
+    import os
+    import json
+    translations = {}
+    json_path = os.path.join(os.path.dirname(__file__), "translations_seed.json")
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                translations = json.load(f).get("assistant_questions", {})
+        except Exception:
+            pass
+
     existing = {
         (row.topic, row.language, row.text)
         for row in db.query(models.AssistantQuestion).all()
     }
     inserted = False
+
+    # 1. Seed Italiano
     for topic, questions in DEFAULT_ASSISTANT_QUESTIONS.items():
         for order, text in enumerate(questions):
             if (topic, "it", text) in existing:
@@ -345,5 +358,23 @@ def seed_assistant_questions(db, models) -> None:
                 )
             )
             inserted = True
+
+    # 2. Seed Traduzioni
+    for topic, lang_dict in translations.items():
+        for lang, trans_questions in lang_dict.items():
+            for order, text in enumerate(trans_questions):
+                if (topic, lang, text) in existing:
+                    continue
+                db.add(
+                    models.AssistantQuestion(
+                        topic=topic,
+                        language=lang,
+                        text=text,
+                        sort_order=order,
+                        is_active=True,
+                    )
+                )
+                inserted = True
+
     if inserted:
         db.commit()

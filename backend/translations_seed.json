@@ -1,0 +1,3343 @@
+{
+  "guided_step_questions": {
+    "QSA": {
+      "intro": {
+        "en": [
+          "How does this process work?",
+          "What should I expect from the analysis of my profile?",
+          "Can you explain how we will interpret the results?"
+        ],
+        "es": [
+          "¿Cómo funciona este proceso?",
+          "¿Qué debo esperar del análisis de mi perfil?",
+          "¿Puedes explicarme cómo leeremos los resultados?"
+        ],
+        "fr": [
+          "Comment fonctionne ce parcours ?",
+          "À quoi dois-je m'attendre de l'analyse de mon profil ?",
+          "Peux-tu m'expliquer comment nous lirons les résultats ?"
+        ],
+        "de": [
+          "Wie funktioniert dieser Prozess?",
+          "Was kann ich von der Analyse meines Profils erwarten?",
+          "Können Sie mir erklären, wie wir die Ergebnisse lesen werden?"
+        ],
+        "sv": [
+          "Hur fungerar den här processen?",
+          "Vad bör jag förvänta mig av analysen av min profil?",
+          "Kan du förklara hur vi kommer att tolka resultaten?"
+        ]
+      },
+      "cognitive": {
+        "en": [
+          "Which cognitive factors are most significant in my profile?",
+          "What is my primary strength in studying?",
+          "Which cognitive strategy should I work on first?"
+        ],
+        "es": [
+          "¿Qué factores cognitivos son más importantes en mi perfil?",
+          "¿Cuál es mi principal fortaleza en el estudio?",
+          "¿En qué estrategia cognitiva debería trabajar primero?"
+        ],
+        "fr": [
+          "Quels sont les facteurs cognitifs les plus importants dans mon profil ?",
+          "Quel est mon principal point fort dans l'étude ?",
+          "Sur quelle stratégie cognitive devrais-je travailler en priorité ?"
+        ],
+        "de": [
+          "Welche kognitiven Faktoren sind in meinem Profil am wichtigsten?",
+          "Was ist meine größte Stärke beim Lernen?",
+          "An welcher kognitiven Strategie sollte ich zuerst arbeiten?"
+        ],
+        "sv": [
+          "Vilka kognitiva faktorer är viktigast i min profil?",
+          "Vilken är min främsta styrka när det gäller studier?",
+          "Vilken kognitiv strategi bör jag arbeta med först?"
+        ]
+      },
+      "affective": {
+        "en": [
+          "Which emotional aspects influence my studies the most?",
+          "Is there anything in my profile that might hinder me?",
+          "How can I better manage motivation, anxiety, or perseverance?"
+        ],
+        "es": [
+          "¿Qué aspectos emocionales influyen más en mi estudio?",
+          "¿Hay algo en mi perfil que pueda obstaculizarme?",
+          "¿Cómo puedo gestionar mejor la motivación, la ansiedad o la perseverancia?"
+        ],
+        "fr": [
+          "Quels aspects émotionnels influencent le plus mon étude ?",
+          "Y a-t-il quelque chose dans mon profil qui peut me faire obstacle ?",
+          "Comment puis-je mieux gérer ma motivation, mon anxiété ou ma persévérance ?"
+        ],
+        "de": [
+          "Welche emotionalen Aspekte beeinflussen mein Lernen am stärksten?",
+          "Gibt es etwas in meinem Profil, das mich behindern könnte?",
+          "Wie kann ich Motivation, Angst oder Ausdauer besser bewältigen?"
+        ],
+        "sv": [
+          "Vilka emotionella aspekter påverkar mina studier mest?",
+          "Finns det något i min profil som kan hindra mig?",
+          "Hur kan jag bättre hantera motivation, ångest eller uthållighet?"
+        ]
+      },
+      "sl-elaboration": {
+        "en": [
+          "How can I better organize what I study?",
+          "What role do mind maps, diagrams, and self-questioning play in my profile?",
+          "Can you give me a practical example of a study method that is suitable for me?"
+        ],
+        "es": [
+          "¿Cómo puedo organizar mejor lo que estudio?",
+          "¿Qué papel tienen los mapas, esquemas y la autointerrogación en mi perfil?",
+          "¿Puedes darme un ejemplo práctico de un método de estudio adecuado para mí?"
+        ],
+        "fr": [
+          "Comment puis-je mieux organiser ce que j'étudie ?",
+          "Quel rôle jouent les cartes mentales, les schémas et l'auto-interrogation dans mon profil ?",
+          "Peux-tu me donner un exemple pratique de méthode d'étude adaptée à mon profil ?"
+        ],
+        "de": [
+          "Wie kann ich das, was ich lerne, besser organisieren?",
+          "Welche Rolle spielen Mindmaps, Schemata und Selbstabfragen in meinem Lernprofil?",
+          "Können Sie mir ein praktisches Beispiel für eine Lernmethode geben, die zu mir passt?"
+        ],
+        "sv": [
+          "Hur kan jag organisera det jag studerar på ett bättre sätt?",
+          "Vilken roll spelar tankekartor, scheman och självförhör i min profil?",
+          "Kan du ge mig ett praktiskt exempel på en studiemetod som passar mig?"
+        ]
+      },
+      "sl-selfcontrol": {
+        "en": [
+          "How can I improve my concentration and self-regulation?",
+          "What does this step mean for my way of studying?",
+          "What small habit can I try this week?"
+        ],
+        "es": [
+          "¿Cómo puedo mejorar mi concentración y autorregulación?",
+          "¿Qué significa este paso para mi forma de estudiar?",
+          "¿Qué pequeño hábito puedo intentar esta semana?"
+        ],
+        "fr": [
+          "Comment puis-je améliorer ma concentration et mon autorégulation ?",
+          "Que signifie cette étape pour ma méthode de travail ?",
+          "Quelle petite habitude puis-je essayer cette semaine ?"
+        ],
+        "de": [
+          "Wie kann ich meine Konzentration und Selbstregulation verbessern?",
+          "Was bedeutet dieser Schritt für meine Art zu lernen?",
+          "Welche kleine Gewohnheit kann ich diese Woche ausprobieren?"
+        ],
+        "sv": [
+          "Hur kan jag förbättra min koncentration och självreglering?",
+          "Vad innebär detta steg för mitt sätt att studera?",
+          "Vilken liten vana kan jag prova den här veckan?"
+        ]
+      },
+      "sl-motivation": {
+        "en": [
+          "What does my motivation seem to depend on?",
+          "How can I strengthen my self-confidence?",
+          "What can I do when I lack perseverance?"
+        ],
+        "es": [
+          "¿De qué parece depender mi motivación?",
+          "¿Cómo puedo fortalecer la confianza en mis capacidades?",
+          "¿Qué puedo hacer cuando me falta perseverancia?"
+        ],
+        "fr": [
+          "De quoi ma motivation semble-t-elle dépendre ?",
+          "Comment puis-je renforcer la confiance en mes capacités ?",
+          "Que puis-je faire lorsque la persévérance me manque ?"
+        ],
+        "de": [
+          "Wovon scheint meine Motivation abzuhängen?",
+          "Wie kann ich das Vertrauen in meine Fähigkeiten stärken?",
+          "Was kann ich tun, wenn es mir an Ausdauer mangelt?"
+        ],
+        "sv": [
+          "Vad verkar min motivation bero på?",
+          "Hur kan jag stärka tilltron till min egen förmåga?",
+          "Vad kan jag göra när jag saknar uthållighet?"
+        ]
+      },
+      "sl-emotions": {
+        "en": [
+          "How can I better manage anxiety or emotional interference?",
+          "Which situations might put me at the greatest disadvantage?",
+          "Can you suggest a simple strategy I can use right away?"
+        ],
+        "es": [
+          "¿Cómo puedo gestionar mejor la ansiedad o las interferencias emocionales?",
+          "¿Qué situaciones podrían ponerme en mayor dificultad?",
+          "¿Puedes sugerirme una estrategia sencilla para usar de inmediato?"
+        ],
+        "fr": [
+          "Comment puis-je mieux gérer l'anxiété ou les interférences émotionnelles ?",
+          "Quelles situations pourraient me mettre le plus en difficulté ?",
+          "Peux-tu me suggérer une stratégie simple à utiliser immédiatement ?"
+        ],
+        "de": [
+          "Wie kann ich Angst oder emotionale Störungen besser bewältigen?",
+          "Welche Situationen könnten mich am meisten vor Herausforderungen stellen?",
+          "Können Sie mir eine einfache Strategie vorschlagen, die ich sofort anwenden kann?"
+        ],
+        "sv": [
+          "Hur kan jag bättre hantera ångest eller känslomässiga störningar?",
+          "Vilka situationer skulle kunna innebära störst svårigheter för mig?",
+          "Kan du föreslå en enkel strategi som jag kan använda direkt?"
+        ]
+      },
+      "sl-attribution": {
+        "en": [
+          "How do I interpret successes and difficulties?",
+          "Does this profile show an attributional style that is useful or one that needs improvement?",
+          "How can I interpret mistakes in a more constructive way?"
+        ],
+        "es": [
+          "¿Cómo interpreto los éxitos y las dificultades?",
+          "¿Este perfil muestra un estilo atributivo útil o uno que se puede mejorar?",
+          "¿Cómo puedo interpretar los errores de una manera más constructiva?"
+        ],
+        "fr": [
+          "Comment est-ce que j'interprète mes succès et mes difficultés ?",
+          "Ce profil montre-t-il un style attributionnel utile ou à améliorer ?",
+          "Comment puis-je interpréter mes erreurs de manière plus constructive ?"
+        ],
+        "de": [
+          "Wie interpretiere ich Erfolge und Schwierigkeiten?",
+          "Zeigt dieses Profil einen nützlichen oder einen verbesserungswürdigen Attributionsstil?",
+          "Wie kann ich Fehler konstruktiver deuten?"
+        ],
+        "sv": [
+          "Hur tolkar jag framgångar och svårigheter?",
+          "Visar den här profilen en fördelaktig attributionsstil eller en som behöver förbättras?",
+          "Hur kan jag se på misstag på ett mer konstruktivt sätt?"
+        ]
+      },
+      "sl-social": {
+        "en": [
+          "What role does collaboration play in my profile?",
+          "Can studying with others help me?",
+          "How can I make better use of group work?"
+        ],
+        "es": [
+          "¿Qué papel desempeña la colaboración en mi perfil?",
+          "¿Estudiar con otros puede ayudarme?",
+          "¿Cómo puedo aprovechar mejor el trabajo en grupo?"
+        ],
+        "fr": [
+          "Quel rôle la collaboration joue-t-elle dans mon profil ?",
+          "Étudier avec d'autres peut-il m'aider ?",
+          "Comment puis-je mieux utiliser le travail de groupe ?"
+        ],
+        "de": [
+          "Welche Rolle spielt die Zusammenarbeit in meinem Profil?",
+          "Kann es mir helfen, mit anderen zusammen zu lernen?",
+          "Wie kann ich Gruppenarbeit besser für mich nutzen?"
+        ],
+        "sv": [
+          "Vilken roll spelar samarbete i min profil?",
+          "Kan det hjälpa mig att studera tillsammans med andra?",
+          "Hur kan jag använda grupparbete på ett bättre sätt?"
+        ]
+      },
+      "questions": {
+        "en": [
+          "What is the most important summary of my profile?",
+          "Where do you suggest I start in concrete terms?",
+          "Can you propose a small action plan for me?"
+        ],
+        "es": [
+          "¿Cuál es la síntesis más importante de mi perfil?",
+          "¿Por dónde me aconsejas empezar concretamente?",
+          "¿Puedes proponerme un pequeño plan de acción?"
+        ],
+        "fr": [
+          "Quelle est la synthèse la plus importante de mon profil ?",
+          "Par où me conseilles-tu de commencer concrètement ?",
+          "Peux-tu me proposer un petit plan d'action ?"
+        ],
+        "de": [
+          "Was ist die wichtigste Zusammenfassung meines Profils?",
+          "Wo würdest du mir empfehlen, konkret zu beginnen?",
+          "Kannst du mir einen kleinen Aktionsplan vorschlagen?"
+        ],
+        "sv": [
+          "Vilken är den viktigaste sammanfattningen av min profil?",
+          "Var rekommenderar du att jag börjar rent konkret?",
+          "Kan du föreslå en liten handlingsplan åt mig?"
+        ]
+      }
+    },
+    "QSAr": {
+      "qsar-intro": {
+        "en": [
+          "How does the QSAr process work?",
+          "In what way is the QSAr different from the full QSA?",
+          "How will we use my results in this analysis?"
+        ],
+        "es": [
+          "¿Cómo funciona el proceso QSAr?",
+          "¿En qué se diferencia el QSAr del QSA completo?",
+          "¿Cómo utilizaremos mis resultados en este análisis?"
+        ],
+        "fr": [
+          "Comment fonctionne le parcours QSAr ?",
+          "En quoi le QSAr est-il différent du QSA complet ?",
+          "Comment utiliserons-nous mes résultats dans cette analyse ?"
+        ],
+        "de": [
+          "Wie funktioniert der QSAr-Prozess?",
+          "Inwiefern unterscheidet sich das QSAr vom vollständigen QSA?",
+          "Wie werden wir meine Ergebnisse in dieser Analyse verwenden?"
+        ],
+        "sv": [
+          "Hur fungerar QSAr-processen?",
+          "På vilket sätt skiljer sig QSAr från det fullständiga QSA?",
+          "Hur kommer vi att använda mina resultat i denna analys?"
+        ]
+      },
+      "qsar-cognitive": {
+        "en": [
+          "Which cognitive aspects emerge most clearly from my QSAr?",
+          "Which study strategy already seems to be working?",
+          "Which cognitive factor should I train first?"
+        ],
+        "es": [
+          "¿Qué aspectos cognitivos emergen más de mi QSAr?",
+          "¿Qué estrategia de estudio parece funcionar ya?",
+          "¿Qué factor cognitivo debería entrenar primero?"
+        ],
+        "fr": [
+          "Quels aspects cognitifs ressortent le plus de mon QSAr ?",
+          "Quelle stratégie d'apprentissage semble déjà fonctionner ?",
+          "Quel facteur cognitif devrais-je entraîner en priorité ?"
+        ],
+        "de": [
+          "Welche kognitiven Aspekte gehen am stärksten aus meinem QSAr hervor?",
+          "Welche Lernstrategie scheint bereits zu funktionieren?",
+          "Welchen kognitiven Faktor sollte ich als Erstes trainieren?"
+        ],
+        "sv": [
+          "Vilka kognitiva aspekter framträder tydligast i mitt QSAr?",
+          "Vilken studiestrategi verkar redan fungera?",
+          "Vilken kognitiv faktor bör jag träna på först?"
+        ]
+      },
+      "qsar-affective": {
+        "en": [
+          "What emotional or motivational aspects emerge from my QSAr?",
+          "What could most hinder my studies?",
+          "How can I use these results without labeling myself?"
+        ],
+        "es": [
+          "¿Qué aspectos emocionales o motivacionales surgen de mi QSAr?",
+          "¿Qué es lo que más puede obstaculizar mi estudio?",
+          "¿Cómo puedo utilizar estos resultados sin etiquetarme?"
+        ],
+        "fr": [
+          "Quels aspects émotionnels ou motivationnels ressortent de mon QSAr ?",
+          "Qu'est-ce qui peut le plus entraver mon étude ?",
+          "Comment puis-je utiliser ces résultats sans m'étiqueter ?"
+        ],
+        "de": [
+          "Welche emotionalen oder motivationalen Aspekte gehen aus meinem QSAr hervor?",
+          "Was könnte mein Studium am meisten behindern?",
+          "Wie kann ich diese Ergebnisse nutzen, ohne mich selbst in eine Schublade zu stecken?"
+        ],
+        "sv": [
+          "Vilka emotionella eller motiverande aspekter framgår av mitt QSAr?",
+          "Vad kan hindra mina studier mest?",
+          "Hur kan jag använda dessa resultat utan att sätta etiketter på mig själv?"
+        ]
+      },
+      "qsar-processing": {
+        "en": [
+          "How can I improve my processing and organization?",
+          "What role do diagrams and connections play in my profile?",
+          "Can you suggest a simple method for me to remember better?"
+        ],
+        "es": [
+          "¿Cómo puedo mejorar mi procesamiento y organización?",
+          "¿Qué papel tienen los esquemas y las conexiones en mi perfil?",
+          "¿Puedes proponerme un método sencillo para recordar mejor?"
+        ],
+        "fr": [
+          "Comment puis-je améliorer mon traitement et mon organisation ?",
+          "Quel rôle jouent les schémas et les liens dans mon profil ?",
+          "Peux-tu me proposer une méthode simple pour mieux mémoriser ?"
+        ],
+        "de": [
+          "Wie kann ich meine Informationsverarbeitung und Organisation verbessern?",
+          "Welche Rolle spielen Schemata und Verknüpfungen in meinem Profil?",
+          "Können Sie mir eine einfache Methode vorschlagen, um mir Dinge besser zu merken?"
+        ],
+        "sv": [
+          "Hur kan jag förbättra min bearbetning och organisering?",
+          "Vilken roll spelar scheman och kopplingar i min profil?",
+          "Kan du föreslå en enkel metod för att komma ihåg bättre?"
+        ]
+      },
+      "qsar-selfcontrol": {
+        "en": [
+          "How can I work on self-regulation and attention?",
+          "What short routine can help me stay focused?",
+          "What can I do when I get distracted easily?"
+        ],
+        "es": [
+          "¿Cómo puedo trabajar en mi autorregulación y atención?",
+          "¿Qué rutina breve puede ayudarme a mantener la concentración?",
+          "¿Qué puedo hacer cuando me distraigo con facilidad?"
+        ],
+        "fr": [
+          "Comment puis-je travailler sur mon autorégulation et mon attention ?",
+          "Quelle courte routine peut m'aider à rester concentré ?",
+          "Que puis-je faire lorsque je me laisse facilement distraire ?"
+        ],
+        "de": [
+          "Wie kann ich an meiner Selbstregulation und Aufmerksamkeit arbeiten?",
+          "Welche kurze Routine kann mir helfen, konzentriert zu bleiben?",
+          "Was kann ich tun, wenn ich mich leicht ablenken lasse?"
+        ],
+        "sv": [
+          "Hur kan jag arbeta med självreglering och uppmärksamhet?",
+          "Vilken kort rutin kan hjälpa mig att hålla fokus?",
+          "Vad kan jag göra när jag lätt blir distraherad?"
+        ]
+      },
+      "qsar-motivation": {
+        "en": [
+          "How can I sustain my motivation and confidence?",
+          "What signal tells me that I am losing consistency?",
+          "Can you suggest a realistic goal for this week?"
+        ],
+        "es": [
+          "¿Cómo puedo mantener la motivación y la confianza?",
+          "¿Qué señal me indica que estoy perdiendo la continuidad?",
+          "¿Puedes sugerirme un objetivo realista para esta semana?"
+        ],
+        "fr": [
+          "Comment puis-je soutenir ma motivation et ma confiance ?",
+          "Quel signal m'indique que je perds en continuité ?",
+          "Peux-tu me suggérer un objectif réaliste pour cette semaine ?"
+        ],
+        "de": [
+          "Wie kann ich meine Motivation und mein Selbstvertrauen stärken?",
+          "Welches Anzeichen verrät mir, dass ich meine Kontinuität verliere?",
+          "Kannst du mir ein realistisches Ziel für diese Woche vorschlagen?"
+        ],
+        "sv": [
+          "Hur kan jag upprätthålla motivation och självförtroende?",
+          "Vilken signal talar om för mig att jag håller på att tappa kontinuiteten?",
+          "Kan du föreslå ett realistiskt mål för den här veckan?"
+        ]
+      },
+      "qsar-emotions": {
+        "en": [
+          "How can I manage anxiety during study sessions or exams?",
+          "What emotional strategy could I try right away?",
+          "How do I distinguish a temporary difficulty from a block?"
+        ],
+        "es": [
+          "¿Cómo puedo gestionar la ansiedad durante el estudio o los exámenes?",
+          "¿Qué estrategia emocional podría probar de inmediato?",
+          "¿Cómo distingo una dificultad temporal de un bloqueo?"
+        ],
+        "fr": [
+          "Comment puis-je gérer l'anxiété pendant l'étude ou les examens ?",
+          "Quelle stratégie émotionnelle pourrais-je essayer immédiatement ?",
+          "Comment distinguer une difficulté temporaire d'un blocage ?"
+        ],
+        "de": [
+          "Wie kann ich mit Prüfungs- oder Lernangst umgehen?",
+          "Welche emotionale Strategie könnte ich sofort ausprobieren?",
+          "Wie unterscheide ich eine vorübergehende Schwierigkeit von einer Blockade?"
+        ],
+        "sv": [
+          "Hur kan jag hantera ångest under studier eller prov?",
+          "Vilken emotionell strategi skulle jag kunna prova direkt?",
+          "Hur skiljer jag på en tillfällig svårighet och en blockering?"
+        ]
+      },
+      "qsar-attributions": {
+        "en": [
+          "How do I interpret the causes of my successes and failures?",
+          "Which explanation of my mistakes helps me to improve?",
+          "How can I transform a negative result into a useful step forward?"
+        ],
+        "es": [
+          "¿Cómo interpreto las causas de mis éxitos y fracasos?",
+          "¿Qué explicación de mis errores me ayuda a mejorar?",
+          "¿Cómo puedo transformar un resultado negativo en un paso útil?"
+        ],
+        "fr": [
+          "Comment est-ce que j'interprète les causes de mes succès et de mes échecs ?",
+          "Quelle explication de mes erreurs m'aide à m'améliorer ?",
+          "Comment puis-je transformer un résultat négatif en une étape utile ?"
+        ],
+        "de": [
+          "Wie interpretiere ich die Ursachen meiner Erfolge und Misserfolge?",
+          "Welche Erklärung für meine Fehler hilft mir, mich zu verbessern?",
+          "Wie kann ich ein negatives Ergebnis in einen nützlichen Schritt verwandeln?"
+        ],
+        "sv": [
+          "Hur tolkar jag orsakerna till mina framgångar och motgångar?",
+          "Vilken förklaring till mina misstag hjälper mig att förbättras?",
+          "Hur kan jag förvandla ett negativt resultat till ett användbart steg framåt?"
+        ]
+      },
+      "questions": {
+        "en": [
+          "What is the main message of my QSAr profile?",
+          "Which two practical actions do you recommend for me?",
+          "How can I monitor improvements over the coming weeks?"
+        ],
+        "es": [
+          "¿Cuál es el mensaje principal de mi perfil QSAr?",
+          "¿Qué dos acciones prácticas me recomiendas?",
+          "¿Cómo puedo monitorear las mejoras en las próximas semanas?"
+        ],
+        "fr": [
+          "Quel est le message principal de mon profil QSAr ?",
+          "Quelles sont les deux actions pratiques que vous me conseillez ?",
+          "Comment puis-je suivre mes progrès au cours des prochaines semaines ?"
+        ],
+        "de": [
+          "Was ist die Hauptaussage meines QSAr-Profils?",
+          "Welche zwei praktischen Maßnahmen empfehlen Sie mir?",
+          "Wie kann ich die Verbesserungen in den kommenden Wochen nachverfolgen?"
+        ],
+        "sv": [
+          "Vad är huvudbudskapet i min QSAr-profil?",
+          "Vilka två praktiska åtgärder rekommenderar du?",
+          "Hur kan jag följa upp mina förbättringar under de kommande veckorna?"
+        ]
+      }
+    },
+    "ZTPI": {
+      "ztpi-intro": {
+        "en": [
+          "How does the analysis of time perspective work?",
+          "What does it mean to read my relationship with the past, present, and future?",
+          "How will we use the scores without reducing them to labels?"
+        ],
+        "es": [
+          "¿Cómo funciona el análisis de la perspectiva temporal?",
+          "¿Qué significa leer mi relación con el pasado, el presente y el futuro?",
+          "¿Cómo utilizaremos las puntuaciones sin reducirlas a etiquetas?"
+        ],
+        "fr": [
+          "Comment fonctionne l'analyse de la perspective temporelle ?",
+          "Que signifie lire mon rapport au passé, au présent et au futur ?",
+          "Comment utiliserons-nous les scores sans les réduire à des étiquettes ?"
+        ],
+        "de": [
+          "Wie funktioniert die Analyse der zeitlichen Perspektive?",
+          "Was bedeutet es, meine Beziehung zu Vergangenheit, Gegenwart und Zukunft zu lesen?",
+          "Wie werden wir die Ergebnisse nutzen, ohne sie auf Etiketten zu reduzieren?"
+        ],
+        "sv": [
+          "Hur fungerar analysen av tidsperspektivet?",
+          "Vad innebär det att läsa av min relation till dåtid, nutid och framtid?",
+          "Hur kommer vi att använda poängen utan att reducera dem till etiketter?"
+        ]
+      },
+      "ztpi-t1": {
+        "en": [
+          "What does my relationship with a negative past mean to me?",
+          "How can I prevent memories or regrets from weighing on the present?",
+          "What small step can help me process past difficulties?"
+        ],
+        "es": [
+          "¿Qué significa para mí la relación con el pasado negativo?",
+          "¿Cómo puedo evitar que los recuerdos o arrepentimientos pesen en el presente?",
+          "¿Qué pequeño paso puede ayudarme a reelaborar las dificultades pasadas?"
+        ],
+        "fr": [
+          "Que signifie pour moi la relation avec un passé négatif ?",
+          "Comment puis-je éviter que des souvenirs ou des regrets ne pèsent sur le présent ?",
+          "Quel petit pas peut m'aider à retravailler les difficultés passées ?"
+        ],
+        "de": [
+          "Was bedeutet die Beziehung zu einer negativen Vergangenheit für mich?",
+          "Wie kann ich verhindern, dass Erinnerungen oder Bedauern die Gegenwart belasten?",
+          "Welcher kleine Schritt kann mir helfen, vergangene Schwierigkeiten zu verarbeiten?"
+        ],
+        "sv": [
+          "Vad innebär relationen till det negativa förflutna för mig?",
+          "Hur kan jag undvika att minnen eller ånger tynger ner nuet?",
+          "Vilket litet steg kan hjälpa mig att bearbeta tidigare svårigheter?"
+        ]
+      },
+      "ztpi-t2": {
+        "en": [
+          "What resource can my positive past be within my profile?",
+          "How can I use positive memories without getting stuck in the past?",
+          "Which past experience can support me today?"
+        ],
+        "es": [
+          "¿Qué recurso puede ser el pasado positivo en mi perfil?",
+          "¿Cómo puedo usar los recuerdos positivos sin quedarme estancado en el pasado?",
+          "¿Qué experiencia pasada puede apoyarme hoy?"
+        ],
+        "fr": [
+          "Quelle ressource le passé positif peut-il représenter dans mon profil ?",
+          "Comment puis-je utiliser les souvenirs positifs sans rester bloqué dans le passé ?",
+          "Quelle expérience passée peut me soutenir aujourd'hui ?"
+        ],
+        "de": [
+          "Welche Ressource kann die positive Vergangenheit in meinem Profil darstellen?",
+          "Wie kann ich positive Erinnerungen nutzen, ohne in der Vergangenheit steckenzubleiben?",
+          "Welche vergangene Erfahrung kann mich heute unterstützen?"
+        ],
+        "sv": [
+          "Vilken resurs kan det positiva förflutna vara i min profil?",
+          "Hur kan jag använda positiva minnen utan att fastna i det förflutna?",
+          "Vilken tidigare erfarenhet kan ge mig stöd idag?"
+        ]
+      },
+      "ztpi-t3": {
+        "en": [
+          "What does living well in the present mean for my profile?",
+          "How can I balance immediate pleasure and responsibility?",
+          "When does carpe diem help me, and when does it risk distracting me?"
+        ],
+        "es": [
+          "¿Qué significa vivir bien el presente en mi perfil?",
+          "¿Cómo puedo equilibrar el placer inmediato y la responsabilidad?",
+          "¿Cuándo me ayuda el carpe diem y cuándo corre el riesgo de distraerme?"
+        ],
+        "fr": [
+          "Que signifie vivre pleinement le présent dans mon profil ?",
+          "Comment puis-je équilibrer plaisir immédiat et responsabilités ?",
+          "Quand le carpe diem m'aide-t-il et quand risque-t-il de me distraire ?"
+        ],
+        "de": [
+          "Was bedeutet es, die Gegenwart in meinem Profil gut zu leben?",
+          "Wie kann ich unmittelbares Vergnügen und Verantwortung in Einklang bringen?",
+          "Wann hilft mir das Carpe diem und wann läuft es Gefahr, mich abzulenken?"
+        ],
+        "sv": [
+          "Vad innebär det att leva väl i nuet utifrån min profil?",
+          "Hur kan jag balansera omedelbar njutning och ansvar?",
+          "När hjälper carpe diem mig och när riskerar det att distrahera mig?"
+        ]
+      },
+      "ztpi-t4": {
+        "en": [
+          "What does the fatalistic present indicate in my profile?",
+          "How can I increase the sense of control over my choices?",
+          "What small but concrete action can reduce resignation?"
+        ],
+        "es": [
+          "¿Qué indica el presente fatalista en mi perfil?",
+          "¿Cómo puedo aumentar la sensación de control sobre mis elecciones?",
+          "¿Qué acción pequeña pero concreta puede reducir la resignación?"
+        ],
+        "fr": [
+          "Que signifie le présent fataliste dans mon profil ?",
+          "Comment puis-je accroître le sentiment de contrôle sur mes choix ?",
+          "Quelle action petite mais concrète peut réduire la résignation ?"
+        ],
+        "de": [
+          "Was deutet das fatalistische Zeitprofil in meinem Profil an?",
+          "Wie kann ich das Gefühl der Kontrolle über meine Entscheidungen stärken?",
+          "Welche kleine, aber konkrete Handlung kann die Resignation verringern?"
+        ],
+        "sv": [
+          "Vad indikerar det fatalistiska nuet i min profil?",
+          "Hur kan jag öka känslan av kontroll över mina val?",
+          "Vilken liten men konkret handling kan minska min resignation?"
+        ]
+      },
+      "ztpi-t5": {
+        "en": [
+          "How do I use the future in my motivation?",
+          "Does my orientation toward the future help me or put pressure on me?",
+          "How can I transform a future goal into a step for today?"
+        ],
+        "es": [
+          "¿Cómo utilizo el futuro en mi motivación?",
+          "¿Mi orientación hacia el futuro me ayuda o me presiona?",
+          "¿Cómo puedo transformar un objetivo futuro en un paso de hoy?"
+        ],
+        "fr": [
+          "Comment est-ce que j'utilise le futur dans ma motivation ?",
+          "Mon orientation vers le futur m'aide-t-elle ou me met-elle la pression ?",
+          "Comment puis-je transformer un objectif futur en une étape pour aujourd'hui ?"
+        ],
+        "de": [
+          "Wie nutze ich die Zukunft für meine Motivation?",
+          "Hilft mir meine Zukunftsorientierung oder setzt sie mich unter Druck?",
+          "Wie kann ich ein zukünftiges Ziel in einen heutigen Schritt verwandeln?"
+        ],
+        "sv": [
+          "Hur använder jag framtiden i min motivation?",
+          "Hjälper min framtidsorientering mig eller sätter den press på mig?",
+          "Hur kan jag omvandla ett framtida mål till ett steg i dag?"
+        ]
+      },
+      "ztpi-btp": {
+        "en": [
+          "How balanced is my time perspective?",
+          "Which temporal dimension should I rebalance first?",
+          "Can you propose a strategy for balancing the past, present, and future?"
+        ],
+        "es": [
+          "¿Qué tan equilibrada está mi perspectiva temporal?",
+          "¿Qué dimensión temporal debería reequilibrar primero?",
+          "¿Puedes proponerme una estrategia para equilibrar el pasado, el presente y el futuro?"
+        ],
+        "fr": [
+          "À quel point ma perspective temporelle est-elle équilibrée ?",
+          "Quelle dimension temporelle devrais-je rééquilibrer en premier ?",
+          "Peux-tu me proposer une stratégie pour équilibrer le passé, le présent et le futur ?"
+        ],
+        "de": [
+          "Wie ausgewogen ist meine zeitliche Perspektive?",
+          "Welche zeitliche Dimension sollte ich zuerst wieder ins Gleichgewicht bringen?",
+          "Können Sie mir eine Strategie vorschlagen, um Vergangenheit, Gegenwart und Zukunft in Einklang zu bringen?"
+        ],
+        "sv": [
+          "Hur balanserat är mitt tidsperspektiv?",
+          "Vilken tidsdimension bör jag balansera om först?",
+          "Kan du föreslå en strategi för att balansera dåtid, nutid och framtid?"
+        ]
+      },
+      "questions": {
+        "en": [
+          "What is the overall interpretation of my time profile?",
+          "Which daily habit can help me regain my balance?",
+          "How do I connect this analysis to my study or career choices?"
+        ],
+        "es": [
+          "¿Cuál es la lectura general de mi perfil temporal?",
+          "¿Qué hábito diario puede ayudarme a reequilibrarme?",
+          "¿Cómo conecto este análisis con mis decisiones de estudio u orientación?"
+        ],
+        "fr": [
+          "Quelle est la lecture globale de mon profil temporel ?",
+          "Quelle habitude quotidienne peut m'aider à me rééquilibrer ?",
+          "Comment puis-je relier cette analyse à mes choix d'études ou d'orientation ?"
+        ],
+        "de": [
+          "Wie lautet die Gesamteinschätzung meines Zeitprofils?",
+          "Welche tägliche Gewohnheit kann mir helfen, mein Gleichgewicht wiederzufinden?",
+          "Wie verknüpfe ich diese Analyse mit meinen Studien- oder Orientierungsentscheidungen?"
+        ],
+        "sv": [
+          "Vad är den övergripande tolkningen av min tidsprofil?",
+          "Vilken daglig vana kan hjälpa mig att återfå balansen?",
+          "Hur kopplar jag denna analys till mina studie- eller vägledningsval?"
+        ]
+      }
+    },
+    "SAVICKAS": {
+      "savickas-intro": {
+        "en": [
+          "How does the Savickas interview work?",
+          "What will emerge from the five narrative questions?",
+          "How will we use my answers to discuss career guidance?"
+        ],
+        "es": [
+          "¿Cómo funciona la entrevista de Savickas?",
+          "¿Qué surgirá de las cinco preguntas narrativas?",
+          "¿Cómo utilizaremos mis respuestas para hablar de orientación?"
+        ],
+        "fr": [
+          "Comment fonctionne l'entretien de Savickas ?",
+          "Qu'est-ce qui ressortira des cinq questions narratives ?",
+          "Comment utiliserons-nous mes réponses pour parler d'orientation ?"
+        ],
+        "de": [
+          "Wie funktioniert das Savickas-Interview?",
+          "Was wird sich aus den fünf narrativen Fragen ergeben?",
+          "Wie werden wir meine Antworten nutzen, um über die berufliche Orientierung zu sprechen?"
+        ],
+        "sv": [
+          "Hur fungerar Savickas-intervjun?",
+          "Vad kommer att framgå av de fem narrativa frågorna?",
+          "Hur kommer vi att använda mina svar för att tala om vägledning?"
+        ]
+      },
+      "savickas-patto": {
+        "en": [
+          "Why is a collaboration agreement necessary?",
+          "What kind of answers should I provide?",
+          "Can I answer even if I am not sure?"
+        ],
+        "es": [
+          "¿Por qué es necesario un pacto de colaboración?",
+          "¿Qué tipo de respuestas debería dar?",
+          "¿Puedo responder incluso si no estoy seguro?"
+        ],
+        "fr": [
+          "Pourquoi un pacte de collaboration est-il nécessaire ?",
+          "Quel type de réponses devrais-je donner ?",
+          "Puis-je répondre même si je ne suis pas sûr ?"
+        ],
+        "de": [
+          "Warum ist eine Kooperationsvereinbarung notwendig?",
+          "Welche Art von Antworten sollte ich geben?",
+          "Kann ich auch antworten, wenn ich mir nicht sicher bin?"
+        ],
+        "sv": [
+          "Varför behövs ett samarbetsavtal?",
+          "Vilken typ av svar bör jag ge?",
+          "Kan jag svara även om jag inte är säker?"
+        ]
+      },
+      "savickas-q1": {
+        "en": [
+          "How do I choose the three people I admired?",
+          "Can I include fictional characters?",
+          "What qualities should I observe in my role models?"
+        ],
+        "es": [
+          "¿Cómo elijo a las tres personas que admiraba?",
+          "¿Puedo indicar personajes ficticios?",
+          "¿Qué cualidades debo observar en mis modelos?"
+        ],
+        "fr": [
+          "Comment choisir les trois personnes que j'admire ?",
+          "Puis-je indiquer des personnages fictifs ?",
+          "Quelles qualités dois-je observer chez mes modèles ?"
+        ],
+        "de": [
+          "Wie wähle ich die drei Personen aus, die ich bewundere?",
+          "Darf ich auch fiktive Charaktere angeben?",
+          "Welche Qualitäten sollte ich bei meinen Vorbildern beobachten?"
+        ],
+        "sv": [
+          "Hur väljer jag de tre personer som jag beundrar?",
+          "Kan jag ange fiktiva karaktärer?",
+          "Vilka egenskaper bör jag observera hos mina förebilder?"
+        ]
+      },
+      "savickas-q2": {
+        "en": [
+          "What kind of content can I cite?",
+          "Does what I follow matter more than why I am interested in it?",
+          "How do I connect my interests to my future choices?"
+        ],
+        "es": [
+          "¿Qué tipo de contenidos puedo citar?",
+          "¿Cuenta más lo que sigo o por qué me interesa?",
+          "¿Cómo conecto mis intereses con mis decisiones futuras?"
+        ],
+        "fr": [
+          "Quel type de contenu puis-je citer ?",
+          "Qu'est-ce qui compte le plus : ce que je suis ou la raison pour laquelle cela m'intéresse ?",
+          "Comment puis-je relier mes intérêts à mes choix futurs ?"
+        ],
+        "de": [
+          "Welche Art von Inhalten kann ich zitieren?",
+          "Zählt mehr, was ich verfolge, oder warum es mich interessiert?",
+          "Wie verknüpfe ich meine Interessen mit zukünftigen Entscheidungen?"
+        ],
+        "sv": [
+          "Vilken typ av innehåll kan jag citera?",
+          "Är det viktigare vad jag följer eller varför jag är intresserad av det?",
+          "Hur kopplar jag mina intressen till framtida val?"
+        ]
+      },
+      "savickas-q3": {
+        "en": [
+          "What if I don't have a favorite story?",
+          "Can I talk about a movie, a series, or a game?",
+          "What should I look for in the story I choose?"
+        ],
+        "es": [
+          "¿Y si no tengo una historia favorita?",
+          "¿Puedo hablar de una película, una serie o un juego?",
+          "¿Qué debería observar en la historia que elija?"
+        ],
+        "fr": [
+          "Et si je n'ai pas d'histoire préférée ?",
+          "Puis-je parler d'un film, d'une série ou d'un jeu ?",
+          "Que devrais-je remarquer dans l'histoire que je choisis ?"
+        ],
+        "de": [
+          "Was ist, wenn ich keine Lieblingsgeschichte habe?",
+          "Kann ich über einen Film, eine Serie oder ein Spiel sprechen?",
+          "Worauf sollte ich bei der Geschichte, die ich auswähle, achten?"
+        ],
+        "sv": [
+          "Vad händer om jag inte har en favoritberättelse?",
+          "Kan jag prata om en film, en serie eller ett spel?",
+          "Vad bör jag lägga märke till i den berättelse jag väljer?"
+        ]
+      },
+      "savickas-q4": {
+        "en": [
+          "How do I find my personal motto?",
+          "Can I use a phrase that I did not invent myself?",
+          "How do I know if a phrase truly guides my choices?"
+        ],
+        "es": [
+          "¿Cómo encuentro mi lema personal?",
+          "¿Puedo usar una frase que no haya inventado yo?",
+          "¿Cómo sé si una frase guía realmente mis decisiones?"
+        ],
+        "fr": [
+          "Comment puis-je trouver ma devise personnelle ?",
+          "Puis-je utiliser une phrase que je n'ai pas inventée moi-même ?",
+          "Comment savoir si une phrase guide réellement mes choix ?"
+        ],
+        "de": [
+          "Wie finde ich mein persönliches Motto?",
+          "Darf ich einen Satz verwenden, den ich nicht selbst erfunden habe?",
+          "Wie erkenne ich, ob ein Satz meine Entscheidungen wirklich leitet?"
+        ],
+        "sv": [
+          "Hur hittar jag mitt personliga motto?",
+          "Kan jag använda en fras som jag inte har hittat på själv?",
+          "Hur förstår jag om en fras verkligen vägleder mina val?"
+        ]
+      },
+      "savickas-q5": {
+        "en": [
+          "What is meant by early memories?",
+          "If I do not remember the details well, can I recount what I do know?",
+          "Why must I give a title to each memory?"
+        ],
+        "es": [
+          "¿Qué se entiende por recuerdos tempranos?",
+          "Si no recuerdo bien los detalles, ¿puedo contar lo que sé?",
+          "¿Por qué debo darle un título a cada recuerdo?"
+        ],
+        "fr": [
+          "Qu'entend-on par souvenirs précoces ?",
+          "Si je ne me souviens pas bien des détails, puis-je raconter ce que je sais ?",
+          "Pourquoi dois-je donner un titre à chaque souvenir ?"
+        ],
+        "de": [
+          "Was versteht man unter frühen Erinnerungen?",
+          "Wenn ich mich nicht gut an die Details erinnere, kann ich dann erzählen, was ich weiß?",
+          "Warum muss ich jeder Erinnerung einen Titel geben?"
+        ],
+        "sv": [
+          "Vad menas med tidiga minnen?",
+          "Om jag inte minns detaljerna väl, kan jag berätta det jag vet?",
+          "Varför måste jag ge varje minne en titel?"
+        ]
+      },
+      "savickas-final": {
+        "en": [
+          "What is the central theme that emerges from my story?",
+          "Which future directions seem consistent with my narrative?",
+          "Can you help me transform this summary into a 7/30/90-day plan?"
+        ],
+        "es": [
+          "¿Cuál es el tema central que emerge de mi historia?",
+          "¿Qué direcciones futuras parecen coherentes con mi relato?",
+          "¿Puedes ayudarme a transformar la síntesis en un plan de 7/30/90 días?"
+        ],
+        "fr": [
+          "Quel est le thème central qui émerge de mon histoire ?",
+          "Quelles orientations futures semblent cohérentes avec mon récit ?",
+          "Peux-tu m'aider à transformer cette synthèse en un plan de 7/30/90 jours ?"
+        ],
+        "de": [
+          "Was ist das zentrale Thema, das sich aus meiner Geschichte ergibt?",
+          "Welche zukünftigen Richtungen erscheinen mit meiner Erzählung vereinbar?",
+          "Kannst du mir helfen, die Zusammenfassung in einen 7/30/90-Tage-Plan umzusetzen?"
+        ],
+        "sv": [
+          "Vilket är det centrala temat som framträder i min berättelse?",
+          "Vilka framtida inriktningar verkar stämma överens med min berättelse?",
+          "Kan du hjälpa mig att omvandla sammanfattningen till en 7/30/90-dagarsplan?"
+        ]
+      },
+      "questions": {
+        "en": [
+          "Which part of my story makes me reflect the most?",
+          "Which personal resource emerges from the story that I want to use better?",
+          "What is the first concrete step I can take in the coming days?"
+        ],
+        "es": [
+          "¿Qué parte de mi historia me hace reflexionar más?",
+          "¿Qué recurso personal emerge del relato y quiero utilizar mejor?",
+          "¿Qué primer paso concreto puedo dar en los próximos días?"
+        ],
+        "fr": [
+          "Quelle partie de mon histoire me fait le plus réfléchir ?",
+          "Quelle ressource personnelle émerge du récit et que je souhaite mieux utiliser ?",
+          "Quelle première étape concrète puis-je franchir dans les prochains jours ?"
+        ],
+        "de": [
+          "Welcher Teil meiner Geschichte lässt mich am meisten nachdenken?",
+          "Welche persönliche Ressource geht aus der Erzählung hervor und möchte ich besser nutzen?",
+          "Welchen konkreten ersten Schritt kann ich in den nächsten Tagen unternehmen?"
+        ],
+        "sv": [
+          "Vilken del av min historia får mig att reflektera mest?",
+          "Vilken personlig resurs framträder i berättelsen som jag vill använda bättre?",
+          "Vilket konkret första steg kan jag ta under de kommande dagarna?"
+        ]
+      }
+    },
+    "QPCS": {
+      "qpcs-intro": {
+        "en": [
+          "How does the QPCS process work?",
+          "What are strategic competencies?",
+          "How will we interpret my scores?"
+        ],
+        "es": [
+          "¿Cómo funciona el proceso QPCS?",
+          "¿Qué son las competencias estratégicas?",
+          "¿Cómo interpretaremos mis puntuaciones?"
+        ],
+        "fr": [
+          "Comment fonctionne le parcours QPCS ?",
+          "Que sont les compétences stratégiques ?",
+          "Comment interpréterons-nous mes scores ?"
+        ],
+        "de": [
+          "Wie funktioniert der QPCS-Prozess?",
+          "Was sind strategische Kompetenzen?",
+          "Wie werden wir meine Ergebnisse lesen?"
+        ],
+        "sv": [
+          "Hur fungerar QPCS-processen?",
+          "Vad är strategiska kompetenser?",
+          "Hur kommer vi att läsa mina poäng?"
+        ]
+      },
+      "qpcs-welcome": {
+        "en": [
+          "How does the QPCS process work?",
+          "What are strategic skills?",
+          "How will we interpret my scores?"
+        ],
+        "es": [
+          "¿Cómo funciona el proceso QPCS?",
+          "¿Qué son las competencias estratégicas?",
+          "¿Cómo interpretaremos mis puntuaciones?"
+        ],
+        "fr": [
+          "Comment fonctionne le parcours QPCS ?",
+          "Que sont les compétences stratégiques ?",
+          "Comment interpréterons-nous mes scores ?"
+        ],
+        "de": [
+          "Wie funktioniert der QPCS-Prozess?",
+          "Was sind strategische Kompetenzen?",
+          "Wie werden wir meine Ergebnisse lesen?"
+        ],
+        "sv": [
+          "Hur fungerar QPCS-processen?",
+          "Vad är strategiska kompetenser?",
+          "Hur kommer vi att läsa mina poäng?"
+        ]
+      },
+      "qpcs-factors": {
+        "en": [
+          "Which strategic skills emerge most from my profile?",
+          "Which area should I strengthen first?",
+          "Can you suggest a practical exercise for my skills?"
+        ],
+        "es": [
+          "¿Qué competencias estratégicas emergen más de mi perfil?",
+          "¿Qué área debería fortalecer primero?",
+          "¿Puedes proponerme un ejercicio práctico sobre mis competencias?"
+        ],
+        "fr": [
+          "Quelles compétences stratégiques ressortent le plus de mon profil ?",
+          "Quel domaine devrais-je renforcer en priorité ?",
+          "Peux-tu me proposer un exercice pratique sur mes compétences ?"
+        ],
+        "de": [
+          "Welche strategischen Kompetenzen gehen aus meinem Profil am stärksten hervor?",
+          "Welchen Bereich sollte ich zuerst stärken?",
+          "Können Sie mir eine praktische Übung zu meinen Kompetenzen vorschlagen?"
+        ],
+        "sv": [
+          "Vilka strategiska kompetenser framträder tydligast i min profil?",
+          "Vilket område bör jag stärka först?",
+          "Kan du föreslå en praktisk övning baserad på mina kompetenser?"
+        ]
+      },
+      "qpcs-emozioni": {
+        "en": [
+          "How do I manage my emotions and anxiety in difficult situations?",
+          "What concrete example can I observe to better understand this area?",
+          "What strategy can I try when I feel tension or a fear of making mistakes?"
+        ],
+        "es": [
+          "¿Cómo gestiono las emociones y la ansiedad en situaciones difíciles?",
+          "¿Qué ejemplo concreto puedo observar para entender mejor esta área?",
+          "¿Qué estrategia puedo probar cuando siento tensión o miedo a equivocarme?"
+        ],
+        "fr": [
+          "Comment est-ce que je gère mes émotions et mon anxiété dans les situations difficiles ?",
+          "Quel exemple concret puis-je observer pour mieux comprendre ce domaine ?",
+          "Quelle stratégie puis-je essayer lorsque je ressens de la tension ou la peur de me tromper ?"
+        ],
+        "de": [
+          "Wie gehe ich in schwierigen Situationen mit Emotionen und Angst um?",
+          "Welches konkrete Beispiel kann ich beobachten, um diesen Bereich besser zu verstehen?",
+          "Welche Strategie kann ich ausprobieren, wenn ich Anspannung oder Angst vor Fehlern verspüre?"
+        ],
+        "sv": [
+          "Hur hanterar jag känslor och ångest i svåra situationer?",
+          "Vilket konkret exempel kan jag observera för att bättre förstå detta område?",
+          "Vilken strategi kan jag prova när jag känner spänning eller rädsla för att göra fel?"
+        ]
+      },
+      "qpcs-comunicazione": {
+        "en": [
+          "How can I improve my communication with others?",
+          "In which relational situations do I need this skill the most?",
+          "Can you help me understand how I prepare and monitor what I communicate?"
+        ],
+        "es": [
+          "¿Cómo puedo mejorar mi comunicación con los demás?",
+          "¿En qué situaciones relacionales me resulta más útil esta competencia?",
+          "¿Puedes ayudarme a entender cómo preparo y controlo lo que comunico?"
+        ],
+        "fr": [
+          "Comment puis-je améliorer ma communication avec les autres ?",
+          "Dans quelles situations relationnelles cette compétence m'est-elle le plus utile ?",
+          "Peux-tu m'aider à comprendre comment je prépare et contrôle ce que je communique ?"
+        ],
+        "de": [
+          "Wie kann ich meine Kommunikation mit anderen verbessern?",
+          "In welchen zwischenmenschlichen Situationen benötige ich diese Kompetenz am meisten?",
+          "Kannst du mir helfen zu verstehen, wie ich das, was ich kommuniziere, vorbereite und kontrolliere?"
+        ],
+        "sv": [
+          "Hur kan jag förbättra min kommunikation med andra?",
+          "I vilka relationella situationer behöver jag denna kompetens mest?",
+          "Kan du hjälpa mig att förstå hur jag förbereder och kontrollerar det jag kommunicerar?"
+        ]
+      },
+      "qpcs-volizione": {
+        "en": [
+          "How can I sustain my willpower and perseverance?",
+          "What can I do when a task becomes boring or tiring?",
+          "Which habit would help me follow through with what I start?"
+        ],
+        "es": [
+          "¿Cómo puedo fortalecer mi voluntad y perseverancia?",
+          "¿Qué puedo hacer cuando una tarea se vuelve aburrida o agotadora?",
+          "¿Qué hábito me ayudaría a terminar lo que empiezo?"
+        ],
+        "fr": [
+          "Comment puis-je soutenir ma volonté et ma persévérance ?",
+          "Que puis-je faire lorsqu'une tâche devient ennuyeuse ou fatigante ?",
+          "Quelle habitude m'aiderait à mener à bien ce que je commence ?"
+        ],
+        "de": [
+          "Wie kann ich Willenskraft und Ausdauer stärken?",
+          "Was kann ich tun, wenn eine Aufgabe langweilig oder anstrengend wird?",
+          "Welche Gewohnheit würde mir helfen, das, was ich beginne, auch zu Ende zu führen?"
+        ],
+        "sv": [
+          "Hur kan jag stärka min viljestyrka och uthållighet?",
+          "Vad kan jag göra när en uppgift blir tråkig eller ansträngande?",
+          "Vilken vana skulle hjälpa mig att slutföra det jag påbörjar?"
+        ]
+      },
+      "qpcs-apprendimento": {
+        "en": [
+          "Which learning strategies emerge from my profile?",
+          "How can I better connect new information to what I already know?",
+          "When can collaboration help me learn better?"
+        ],
+        "es": [
+          "¿Qué estrategias de aprendizaje emergen de mi perfil?",
+          "¿Cómo puedo conectar mejor la información nueva con lo que ya sé?",
+          "¿Cuándo puede la colaboración ayudarme a aprender mejor?"
+        ],
+        "fr": [
+          "Quelles stratégies d'apprentissage ressortent de mon profil ?",
+          "Comment puis-je mieux relier les nouvelles informations à ce que je sais déjà ?",
+          "Quand la collaboration peut-elle m'aider à mieux apprendre ?"
+        ],
+        "de": [
+          "Welche Lernstrategien gehen aus meinem Profil hervor?",
+          "Wie kann ich neue Informationen besser mit meinem bereits vorhandenen Wissen verknüpfen?",
+          "Wann kann mir Zusammenarbeit dabei helfen, besser zu lernen?"
+        ],
+        "sv": [
+          "Vilka inlärningsstrategier framträder i min profil?",
+          "Hur kan jag bättre koppla ny information till det jag redan vet?",
+          "När kan samarbete hjälpa mig att lära mig bättre?"
+        ]
+      },
+      "qpcs-fiducia": {
+        "en": [
+          "How can I strengthen my confidence in my skills?",
+          "What is the relationship between this area and my life project?",
+          "What concrete sign tells me that I am becoming more confident?"
+        ],
+        "es": [
+          "¿Cómo puedo fortalecer la confianza en mis competencias?",
+          "¿Qué relación existe entre esta área y mi proyecto de vida?",
+          "¿Qué señal concreta me indica que me estoy volviendo más seguro?"
+        ],
+        "fr": [
+          "Comment puis-je renforcer la confiance en mes compétences ?",
+          "Quel est le lien entre ce domaine et mon projet de vie ?",
+          "Quel signe concret m'indique que je deviens plus sûr de moi ?"
+        ],
+        "de": [
+          "Wie kann ich das Vertrauen in meine Kompetenzen stärken?",
+          "Welche Verbindung besteht zwischen diesem Bereich und meinem Lebensentwurf?",
+          "Welches konkrete Signal zeigt mir, dass ich sicherer werde?"
+        ],
+        "sv": [
+          "Hur kan jag stärka tilliten till min egen kompetens?",
+          "Vilket samband finns det mellan detta område och min livsplan?",
+          "Vilken konkret signal visar mig att jag håller på att bli säkrare?"
+        ]
+      },
+      "qpcs-sintesi": {
+        "en": [
+          "What recurring resources emerge from the QPCS path?",
+          "Which areas of growth should I prioritize addressing?",
+          "Can you transform the summary into a 7/30/90-day plan?"
+        ],
+        "es": [
+          "¿Qué recursos recurrentes emergen del proceso QPCS?",
+          "¿Qué áreas de crecimiento debería abordar con prioridad?",
+          "¿Puedes transformar la síntesis en un plan de 7/30/90 días?"
+        ],
+        "fr": [
+          "Quelles ressources récurrentes émergent du parcours QPCS ?",
+          "Quels domaines de croissance devrais-je aborder en priorité ?",
+          "Peux-tu transformer la synthèse en un plan de 7/30/90 jours ?"
+        ],
+        "de": [
+          "Welche wiederkehrenden Ressourcen ergeben sich aus dem QPCS-Prozess?",
+          "Welche Wachstumsbereiche sollte ich vorrangig angehen?",
+          "Können Sie die Zusammenfassung in einen 7/30/90-Tage-Plan umwandeln?"
+        ],
+        "sv": [
+          "Vilka återkommande resurser framgår av QPCS-processen?",
+          "Vilka tillväxtområden bör jag prioritera?",
+          "Kan du omvandla sammanfattningen till en 7/30/90-dagarsplan?"
+        ]
+      },
+      "questions": {
+        "en": [
+          "What is the summary of my QPCS profile?",
+          "How can I use these skills in my studies or at work?",
+          "What small goal can I set for myself for the coming week?"
+        ],
+        "es": [
+          "¿Cuál es la síntesis de mi perfil QPCS?",
+          "¿Cómo puedo utilizar estas competencias en el estudio o en el trabajo?",
+          "¿Qué pequeño objetivo puedo proponerme para la próxima semana?"
+        ],
+        "fr": [
+          "Quelle est la synthèse de mon profil QPCS ?",
+          "Comment puis-je utiliser ces compétences dans mes études ou au travail ?",
+          "Quel petit objectif puis-je me fixer pour la semaine prochaine ?"
+        ],
+        "de": [
+          "Was ist die Zusammenfassung meines QPCS-Profils?",
+          "Wie kann ich diese Kompetenzen im Studium oder im Beruf einsetzen?",
+          "Welches kleine Ziel kann ich mir für die nächste Woche setzen?"
+        ],
+        "sv": [
+          "Vad är sammanfattningen av min QPCS-profil?",
+          "Hur kan jag använda dessa färdigheter i mina studier eller i mitt arbete?",
+          "Vilket litet mål kan jag sätta upp för mig själv inför nästa vecka?"
+        ]
+      }
+    },
+    "QPCC": {
+      "qpcc-intro": {
+        "en": [
+          "How does the QPCC process work?",
+          "What does it mean to analyze skills and beliefs?",
+          "How will we use my scores in a practical way?"
+        ],
+        "es": [
+          "¿Cómo funciona el proceso QPCC?",
+          "¿Qué significa analizar competencias y creencias?",
+          "¿Cómo utilizaremos mis puntuaciones de manera práctica?"
+        ],
+        "fr": [
+          "Comment fonctionne le parcours QPCC ?",
+          "Que signifie analyser les compétences et les convictions ?",
+          "Comment utiliserons-nous mes scores de manière pratique ?"
+        ],
+        "de": [
+          "Wie funktioniert der QPCC-Prozess?",
+          "Was bedeutet es, Kompetenzen und Überzeugungen zu analysieren?",
+          "Wie werden wir meine Ergebnisse praktisch nutzen?"
+        ],
+        "sv": [
+          "Hur fungerar QPCC-processen?",
+          "Vad innebär det att analysera kompetenser och övertygelser?",
+          "Hur kommer vi att använda mina poäng på ett praktiskt sätt?"
+        ]
+      },
+      "qpcc-welcome": {
+        "en": [
+          "How does the QPCC process work?",
+          "What does it mean to analyze skills and beliefs?",
+          "How will we use my scores in a practical way?"
+        ],
+        "es": [
+          "¿Cómo funciona el proceso QPCC?",
+          "¿Qué significa analizar competencias y creencias?",
+          "¿Cómo utilizaremos mis puntuaciones de manera práctica?"
+        ],
+        "fr": [
+          "Comment fonctionne le parcours QPCC ?",
+          "Que signifie analyser les compétences et les convictions ?",
+          "Comment utiliserons-nous mes scores de manière pratique ?"
+        ],
+        "de": [
+          "Wie funktioniert der QPCC-Prozess?",
+          "Was bedeutet es, Kompetenzen und Überzeugungen zu analysieren?",
+          "Wie werden wir meine Ergebnisse praktisch nutzen?"
+        ],
+        "sv": [
+          "Hur fungerar QPCC-processen?",
+          "Vad innebär det att analysera kompetenser och övertygelser?",
+          "Hur kommer vi att använda mina poäng på ett praktiskt sätt?"
+        ]
+      },
+      "qpcc-factors": {
+        "en": [
+          "Which skills or beliefs emerge the most?",
+          "Which area can best support my choices?",
+          "Which belief about myself should I observe more closely?"
+        ],
+        "es": [
+          "¿Qué competencias o creencias emergen más?",
+          "¿Qué área puede respaldar mejor mis elecciones?",
+          "¿Qué creencia sobre mí mismo debería observar con mayor atención?"
+        ],
+        "fr": [
+          "Quelles compétences ou convictions émergent le plus ?",
+          "Quel domaine peut le mieux soutenir mes choix ?",
+          "Quelle conviction sur moi-même devrais-je observer avec plus d'attention ?"
+        ],
+        "de": [
+          "Welche Kompetenzen oder Überzeugungen treten am stärksten hervor?",
+          "Welcher Bereich kann meine Entscheidungen am besten unterstützen?",
+          "Welche Überzeugung über mich selbst sollte ich genauer betrachten?"
+        ],
+        "sv": [
+          "Vilka färdigheter eller övertygelser framträder mest?",
+          "Vilket område kan bäst stödja mina val?",
+          "Vilken övertygelse om mig själv bör jag observera med större uppmärksamhet?"
+        ]
+      },
+      "qpcc-comunicazione": {
+        "en": [
+          "How do I experience public speaking?",
+          "How can I better prepare for a presentation in front of others?",
+          "What concrete example illustrates my way of communicating?"
+        ],
+        "es": [
+          "¿Cómo vivo la comunicación en público?",
+          "¿Cómo puedo preparar mejor una intervención ante los demás?",
+          "¿Qué ejemplo concreto muestra mi forma de comunicar?"
+        ],
+        "fr": [
+          "Comment est-ce que je vis la communication en public ?",
+          "Comment puis-je mieux préparer une intervention devant les autres ?",
+          "Quel exemple concret illustre ma manière de communiquer ?"
+        ],
+        "de": [
+          "Wie erlebe ich die Kommunikation vor Publikum?",
+          "Wie kann ich einen Vortrag vor anderen besser vorbereiten?",
+          "Welches konkrete Beispiel zeigt meine Art zu kommunizieren?"
+        ],
+        "sv": [
+          "Hur upplever jag att tala inför publik?",
+          "Hur kan jag bättre förbereda ett framförande inför andra?",
+          "Vilket konkret exempel visar mitt sätt att kommunicera?"
+        ]
+      },
+      "qpcc-controllo": {
+        "en": [
+          "How do I manage anxiety and responsibility in decision-making?",
+          "When do I feel the most pressure, and what can I do about it?",
+          "Which strategy helps me maintain control without becoming rigid?"
+        ],
+        "es": [
+          "¿Cómo gestiono la ansiedad y la responsabilidad en la toma de decisiones?",
+          "¿Cuándo siento más presión y qué puedo hacer al respecto?",
+          "¿Qué estrategia me ayuda a mantener el control sin volverme rígido?"
+        ],
+        "fr": [
+          "Comment est-ce que je gère l'anxiété et les responsabilités dans mes prises de décision ?",
+          "Quand est-ce que je ressens le plus de pression et que puis-je faire ?",
+          "Quelle stratégie m'aide à garder le contrôle sans me crisper ?"
+        ],
+        "de": [
+          "Wie gehe ich mit Angst und Verantwortung bei Entscheidungen um?",
+          "Wann verspüre ich den größten Druck und was kann ich dagegen tun?",
+          "Welche Strategie hilft mir, die Kontrolle zu behalten, ohne mich zu versteifen?"
+        ],
+        "sv": [
+          "Hur hanterar jag ångest och ansvar i beslutsfattande?",
+          "När känner jag som mest press och vad kan jag göra åt det?",
+          "Vilken strategi hjälper mig att behålla kontrollen utan att bli stelbent?"
+        ]
+      },
+      "qpcc-volizione": {
+        "en": [
+          "How can I strengthen my volition and self-regulation?",
+          "What helps me organize my work and see it through to completion?",
+          "What routine can I try to be more consistent?"
+        ],
+        "es": [
+          "¿Cómo puedo fortalecer mi volición y autorregulación?",
+          "¿Qué me ayuda a organizar el trabajo y llevarlo a término?",
+          "¿Qué rutina puedo probar para ser más constante?"
+        ],
+        "fr": [
+          "Comment puis-je renforcer ma volition et mon autorégulation ?",
+          "Qu'est-ce qui m'aide à organiser mon travail et à le mener à terme ?",
+          "Quelle routine puis-je essayer pour être plus constant ?"
+        ],
+        "de": [
+          "Wie kann ich meine Volition und Selbstregulation stärken?",
+          "Was hilft mir dabei, meine Arbeit zu organisieren und zum Abschluss zu bringen?",
+          "Welche Routine kann ich ausprobieren, um beständiger zu sein?"
+        ],
+        "sv": [
+          "Hur kan jag stärka min viljestyrka och självreglering?",
+          "Vad hjälper mig att organisera mitt arbete och slutföra det?",
+          "Vilken rutin kan jag prova för att bli mer konsekvent?"
+        ]
+      },
+      "qpcc-elaborazione": {
+        "en": [
+          "How do I process and connect what I learn?",
+          "Can you suggest a strategy for better applying what I study?",
+          "Which method can help me move from understanding to concrete application?"
+        ],
+        "es": [
+          "¿Cómo proceso y conecto lo que aprendo?",
+          "¿Puedes sugerirme una estrategia para aplicar mejor lo que estudio?",
+          "¿Qué método puede ayudarme a pasar de la comprensión al uso concreto?"
+        ],
+        "fr": [
+          "Comment est-ce que je traite et relie ce que j'apprends ?",
+          "Peux-tu me suggérer une stratégie pour mieux appliquer ce que j'étudie ?",
+          "Quelle méthode peut m'aider à passer de la compréhension à l'utilisation concrète ?"
+        ],
+        "de": [
+          "Wie verarbeite und verknüpfe ich das, was ich lerne?",
+          "Können Sie mir eine Strategie vorschlagen, um das Gelernte besser anzuwenden?",
+          "Welche Methode kann mir helfen, vom Verständnis zur konkreten Anwendung zu gelangen?"
+        ],
+        "sv": [
+          "Hur bearbetar och kopplar jag samman det jag lär mig?",
+          "Kan du föreslå en strategi för att bättre tillämpa det jag studerar?",
+          "Vilken metod kan hjälpa mig att gå från förståelse till konkret användning?"
+        ]
+      },
+      "qpcc-convinzioni": {
+        "en": [
+          "What beliefs about myself are emerging from this journey?",
+          "How can I distinguish a useful belief from a limiting one?",
+          "What can I do to strengthen my confidence and motivation?"
+        ],
+        "es": [
+          "¿Qué creencias sobre mí mismo emergen del proceso?",
+          "¿Cómo puedo distinguir una creencia útil de una limitante?",
+          "¿Qué puedo hacer para fortalecer la confianza y la motivación?"
+        ],
+        "fr": [
+          "Quelles croyances sur moi-même émergent de ce parcours ?",
+          "Comment puis-je distinguer une croyance utile d'une croyance limitante ?",
+          "Que puis-je faire pour renforcer ma confiance et ma motivation ?"
+        ],
+        "de": [
+          "Welche Überzeugungen über mich selbst kristallisieren sich im Laufe des Prozesses heraus?",
+          "Wie kann ich zwischen einer nützlichen und einer einschränkenden Überzeugung unterscheiden?",
+          "Was kann ich tun, um mein Vertrauen und meine Motivation zu stärken?"
+        ],
+        "sv": [
+          "Vilka föreställningar om mig själv framträder under processens gång?",
+          "Hur kan jag skilja på en hjälpsam och en begränsande föreställning?",
+          "Vad kan jag göra för att stärka mitt självförtroende och min motivation?"
+        ]
+      },
+      "qpcc-sintesi": {
+        "en": [
+          "Which skills and beliefs emerge as resources?",
+          "Which belief should I monitor over time?",
+          "Can you transform the summary into a 7/30/90-day plan?"
+        ],
+        "es": [
+          "¿Qué competencias y creencias emergen como recursos?",
+          "¿Qué creencia debería monitorear con el tiempo?",
+          "¿Puedes transformar la síntesis en un plan de 7/30/90 días?"
+        ],
+        "fr": [
+          "Quelles compétences et convictions émergent comme des ressources ?",
+          "Quelle conviction devrais-je surveiller au fil du temps ?",
+          "Peux-tu transformer cette synthèse en un plan de 7/30/90 jours ?"
+        ],
+        "de": [
+          "Welche Kompetenzen und Überzeugungen erweisen sich als Ressourcen?",
+          "Welche Überzeugung sollte ich im Laufe der Zeit beobachten?",
+          "Kannst du die Zusammenfassung in einen 7/30/90-Tage-Plan umwandeln?"
+        ],
+        "sv": [
+          "Vilka färdigheter och övertygelser framträder som resurser?",
+          "Vilken övertygelse bör jag följa upp över tid?",
+          "Kan du omvandla sammanfattningen till en 7/30/90-dagarsplan?"
+        ]
+      },
+      "questions": {
+        "en": [
+          "What is the summary of my QPCC profile?",
+          "How do I connect skills and beliefs to my decisions?",
+          "Can you propose a brief plan for me to strengthen an area?"
+        ],
+        "es": [
+          "¿Cuál es la síntesis de mi perfil QPCC?",
+          "¿Cómo conecto mis competencias y convicciones con mis decisiones?",
+          "¿Puedes proponerme un plan breve para fortalecer un área?"
+        ],
+        "fr": [
+          "Quelle est la synthèse de mon profil QPCC ?",
+          "Comment puis-je relier mes compétences et mes convictions à mes décisions ?",
+          "Peux-tu me proposer un plan court pour renforcer un domaine ?"
+        ],
+        "de": [
+          "Was ist die Zusammenfassung meines QPCC-Profils?",
+          "Wie verknüpfe ich Kompetenzen und Überzeugungen mit meinen Entscheidungen?",
+          "Können Sie mir einen kurzen Plan zur Stärkung eines Bereichs vorschlagen?"
+        ],
+        "sv": [
+          "Vad är sammanfattningen av min QPCC-profil?",
+          "Hur kopplar jag kompetenser och övertygelser till mina beslut?",
+          "Kan du föreslå en kort plan för att stärka ett område?"
+        ]
+      }
+    },
+    "QAP": {
+      "qap-intro": {
+        "en": [
+          "How does the QAP process work?",
+          "What does professional adaptability mean?",
+          "How will we interpret the four resources of my profile?"
+        ],
+        "es": [
+          "¿Cómo funciona el proceso QAP?",
+          "¿Qué significa adaptabilidad profesional?",
+          "¿Cómo leeremos los cuatro recursos de mi perfil?"
+        ],
+        "fr": [
+          "Comment fonctionne le parcours QAP ?",
+          "Que signifie l'adaptabilité professionnelle ?",
+          "Comment lirons-nous les quatre ressources de mon profil ?"
+        ],
+        "de": [
+          "Wie funktioniert der QAP-Prozess?",
+          "Was bedeutet berufliche Anpassungsfähigkeit?",
+          "Wie werden wir die vier Ressourcen meines Profils lesen?"
+        ],
+        "sv": [
+          "Hur fungerar QAP-processen?",
+          "Vad innebär professionell anpassningsförmåga?",
+          "Hur kommer vi att läsa de fyra resurserna i min profil?"
+        ]
+      },
+      "qap-welcome": {
+        "en": [
+          "How does the QAP process work?",
+          "What does professional adaptability mean?",
+          "How will we interpret the four resources of my profile?"
+        ],
+        "es": [
+          "¿Cómo funciona el proceso QAP?",
+          "¿Qué significa adaptabilidad profesional?",
+          "¿Cómo leeremos los cuatro recursos de mi perfil?"
+        ],
+        "fr": [
+          "Comment fonctionne le parcours QAP ?",
+          "Que signifie l'adaptabilité professionnelle ?",
+          "Comment lirons-nous les quatre ressources de mon profil ?"
+        ],
+        "de": [
+          "Wie funktioniert der QAP-Prozess?",
+          "Was bedeutet berufliche Anpassungsfähigkeit?",
+          "Wie werden wir die vier Ressourcen meines Profils lesen?"
+        ],
+        "sv": [
+          "Hur fungerar QAP-processen?",
+          "Vad innebär professionell anpassningsförmåga?",
+          "Hur kommer vi att läsa de fyra resurserna i min profil?"
+        ]
+      },
+      "qap-factors": {
+        "en": [
+          "Which adaptability resource is strongest in my profile?",
+          "Which resource should I develop to better navigate my choices?",
+          "Can you give me a concrete example related to my professional future?"
+        ],
+        "es": [
+          "¿Qué recurso de adaptabilidad es más fuerte en mi perfil?",
+          "¿Qué recurso debería desarrollar para afrontar mejor las decisiones?",
+          "¿Puedes darme un ejemplo concreto relacionado con mi futuro profesional?"
+        ],
+        "fr": [
+          "Quelle ressource d'adaptabilité est la plus forte dans mon profil ?",
+          "Quelle ressource devrais-je développer pour mieux aborder mes choix ?",
+          "Peux-tu me donner un exemple concret lié à mon avenir professionnel ?"
+        ],
+        "de": [
+          "Welche Anpassungsfähigkeit ist in meinem Profil am stärksten ausgeprägt?",
+          "Welche Ressource sollte ich entwickeln, um Entscheidungen besser treffen zu können?",
+          "Können Sie mir ein konkretes Beispiel in Bezug auf meine berufliche Zukunft geben?"
+        ],
+        "sv": [
+          "Vilken anpassningsförmåga är starkast i min profil?",
+          "Vilken resurs bör jag utveckla för att bättre kunna hantera val?",
+          "Kan du ge mig ett konkret exempel kopplat till min framtida yrkesbana?"
+        ]
+      },
+      "qap-preoccupazione": {
+        "en": [
+          "To what extent am I thinking about and preparing for my future?",
+          "How can I connect today's choices to tomorrow's possibilities?",
+          "What concrete action can increase my future orientation?"
+        ],
+        "es": [
+          "¿Cuánto estoy pensando y preparando mi futuro?",
+          "¿Cómo puedo conectar las decisiones de hoy con las posibilidades de mañana?",
+          "¿Qué acción concreta puede aumentar mi orientación hacia el futuro?"
+        ],
+        "fr": [
+          "Dans quelle mesure est-ce que je réfléchis à mon avenir et le prépare-je ?",
+          "Comment puis-je relier les choix d'aujourd'hui aux possibilités de demain ?",
+          "Quelle action concrète peut renforcer mon orientation vers l'avenir ?"
+        ],
+        "de": [
+          "Wie sehr denke ich über meine Zukunft nach und bereite sie vor?",
+          "Wie kann ich die Entscheidungen von heute mit den Möglichkeiten von morgen verknüpfen?",
+          "Welche konkrete Handlung kann meine Zukunftsorientierung stärken?"
+        ],
+        "sv": [
+          "Hur mycket tänker jag på och förbereder min framtid?",
+          "Hur kan jag koppla dagens val till morgondagens möjligheter?",
+          "Vilken konkret handling kan öka min framtidsorientering?"
+        ]
+      },
+      "qap-controllo": {
+        "en": [
+          "To what extent do I feel I can control my choices?",
+          "How can I increase my autonomy and decision-making responsibility?",
+          "What small decision can I make to practice control?"
+        ],
+        "es": [
+          "¿Hasta qué punto siento que puedo controlar mis decisiones?",
+          "¿Cómo puedo aumentar mi autonomía y responsabilidad en la toma de decisiones?",
+          "¿Qué pequeña decisión puedo tomar para entrenar mi capacidad de control?"
+        ],
+        "fr": [
+          "Dans quelle mesure ai-je le sentiment de pouvoir contrôler mes choix ?",
+          "Comment puis-je accroître mon autonomie et ma responsabilité décisionnelle ?",
+          "Quelle petite décision puis-je prendre pour exercer mon contrôle ?"
+        ],
+        "de": [
+          "Wie sehr habe ich das Gefühl, meine Entscheidungen kontrollieren zu können?",
+          "Wie kann ich meine Autonomie und meine Entscheidungskompetenz stärken?",
+          "Welche kleine Entscheidung kann ich treffen, um mein Kontrollgefühl zu trainieren?"
+        ],
+        "sv": [
+          "I vilken utsträckning känner jag att jag kan kontrollera mina val?",
+          "Hur kan jag öka min självständighet och mitt beslutsansvar?",
+          "Vilket litet beslut kan jag fatta för att träna upp min kontroll?"
+        ]
+      },
+      "qap-curiosita": {
+        "en": [
+          "To what extent am I exploring alternatives and opportunities?",
+          "How can I become more curious about paths I know little about?",
+          "What concrete exploration can I undertake this week?"
+        ],
+        "es": [
+          "¿Cuánto estoy explorando alternativas y oportunidades?",
+          "¿Cómo puedo ser más curioso hacia caminos que conozco poco?",
+          "¿Qué exploración concreta puedo hacer esta semana?"
+        ],
+        "fr": [
+          "Dans quelle mesure suis-je en train d'explorer des alternatives et des opportunités ?",
+          "Comment puis-je devenir plus curieux à l'égard de parcours que je connais peu ?",
+          "Quelle exploration concrète puis-je entreprendre cette semaine ?"
+        ],
+        "de": [
+          "Inwieweit erkunde ich Alternativen und Möglichkeiten?",
+          "Wie kann ich neugieriger auf Wege werden, die ich kaum kenne?",
+          "Welche konkrete Erkundung kann ich diese Woche unternehmen?"
+        ],
+        "sv": [
+          "I vilken utsträckning utforskar jag alternativ och möjligheter?",
+          "Hur kan jag bli mer nyfiken på vägar som jag känner till dåligt?",
+          "Vilken konkret utforskning kan jag göra den här veckan?"
+        ]
+      },
+      "qap-fiducia": {
+        "en": [
+          "How capable do I feel of facing problems and obstacles?",
+          "How can I strengthen my confidence and problem-solving skills?",
+          "Which past experience shows me that I know how to face difficulties?"
+        ],
+        "es": [
+          "¿Qué tan capaz me siento de enfrentar problemas y obstáculos?",
+          "¿Cómo puedo fortalecer mi confianza y mi capacidad de resolución de problemas?",
+          "¿Qué experiencia pasada me demuestra que sé enfrentar dificultades?"
+        ],
+        "fr": [
+          "Dans quelle mesure est-ce que je me sens capable d'affronter les problèmes et les obstacles ?",
+          "Comment puis-je renforcer ma confiance et ma capacité à résoudre des problèmes ?",
+          "Quelle expérience passée me démontre que je sais faire face aux difficultés ?"
+        ],
+        "de": [
+          "Wie fähig fühle ich mich, Probleme und Hindernisse zu bewältigen?",
+          "Wie kann ich mein Vertrauen und meine Problemlösungsfähigkeiten stärken?",
+          "Welche vergangene Erfahrung zeigt mir, dass ich Schwierigkeiten bewältigen kann?"
+        ],
+        "sv": [
+          "Hur kapabel känner jag mig att hantera problem och hinder?",
+          "Hur kan jag stärka mitt självförtroende och min problemlösningsförmåga?",
+          "Vilken tidigare erfarenhet visar mig att jag kan hantera svårigheter?"
+        ]
+      },
+      "qap-sintesi": {
+        "en": [
+          "Which adaptability resource best supports my future?",
+          "Which resource should I prioritize training?",
+          "Can you transform the summary into a 7/30/90-day plan?"
+        ],
+        "es": [
+          "¿Qué recurso de adaptabilidad respalda más mi futuro?",
+          "¿Qué recurso debería entrenar con prioridad?",
+          "¿Puedes transformar la síntesis en un plan de 7/30/90 días?"
+        ],
+        "fr": [
+          "Quelle ressource d'adaptabilité soutient le plus mon avenir ?",
+          "Quelle ressource devrais-je entraîner en priorité ?",
+          "Peux-tu transformer la synthèse en un plan de 7/30/90 jours ?"
+        ],
+        "de": [
+          "Welche Anpassungsressource unterstützt meine Zukunft am meisten?",
+          "Welche Ressource sollte ich vorrangig trainieren?",
+          "Kannst du die Zusammenfassung in einen 7/30/90-Tage-Plan umwandeln?"
+        ],
+        "sv": [
+          "Vilken anpassningsförmåga stöttar min framtid mest?",
+          "Vilken resurs bör jag prioritera att träna upp?",
+          "Kan du omvandla sammanfattningen till en 7/30/90-dagarsplan?"
+        ]
+      },
+      "questions": {
+        "en": [
+          "What is the summary of my QAP profile?",
+          "How can I better explore future opportunities?",
+          "What concrete action can I take in the next seven days?"
+        ],
+        "es": [
+          "¿Cuál es la síntesis de mi perfil QAP?",
+          "¿Cómo puedo explorar mejor las oportunidades futuras?",
+          "¿Qué acción concreta puedo realizar en los próximos siete días?"
+        ],
+        "fr": [
+          "Quelle est la synthèse de mon profil QAP ?",
+          "Comment puis-je mieux explorer les opportunités futures ?",
+          "Quelle action concrète puis-je entreprendre au cours des sept prochains jours ?"
+        ],
+        "de": [
+          "Was ist die Zusammenfassung meines QAP-Profils?",
+          "Wie kann ich zukünftige Möglichkeiten besser erkunden?",
+          "Welche konkrete Handlung kann ich in den nächsten sieben Tagen unternehmen?"
+        ],
+        "sv": [
+          "Vad är sammanfattningen av min QAP-profil?",
+          "Hur kan jag utforska framtida möjligheter bättre?",
+          "Vilken konkret åtgärd kan jag vidta under de kommande sju dagarna?"
+        ]
+      }
+    }
+  },
+  "assistant_questions": {
+    "cs_strumenti": {
+      "en": [
+        "What is the competenzestrategiche.it project and what tools does it offer?",
+        "Which questionnaires are available on competenzestrategiche.it?",
+        "How can one access the questionnaires on competenzestrategiche.it?",
+        "What is the official guide for using the platform?",
+        "Who is the competenzestrategiche.it project aimed at?",
+        "What distinguishes the QSA from the other questionnaires in the project?",
+        "What are the steps to administer a questionnaire?",
+        "How is a profile obtained after completing a questionnaire?",
+        "What type of report is generated after completion?",
+        "How should the results of a questionnaire be interpreted?",
+        "What support materials does the project offer?",
+        "Where can I find the instructions for completing the questionnaires?",
+        "How does the student booklet work?",
+        "Which tools are also available in foreign languages?",
+        "How do I request access for a school or institution?",
+        "What is the procedure for collective administration?",
+        "What is needed to begin a self-assessment process?",
+        "What are the technical requirements for using the platform?",
+        "How can I contact the project team for assistance?",
+        "Where can I find examples of already completed profiles?"
+      ],
+      "es": [
+        "¿Qué es el proyecto competenzestrategiche.it y qué herramientas ofrece?",
+        "¿Qué cuestionarios están disponibles en competenzestrategiche.it?",
+        "¿Cómo se accede a los cuestionarios en competenzestrategiche.it?",
+        "¿Cuál es la guía oficial para utilizar la plataforma?",
+        "¿A quién se dirige el proyecto competenzestrategiche.it?",
+        "¿Qué distingue al QSA de los otros cuestionarios del proyecto?",
+        "¿Cuáles son los pasos para administrar un cuestionario?",
+        "¿Cómo se obtiene un perfil después de haber completado un cuestionario?",
+        "¿Qué tipo de informe se genera después de la cumplimentación?",
+        "¿Cómo se interpretan los resultados de un cuestionario?",
+        "¿Qué materiales de apoyo ofrece el proyecto?",
+        "¿Dónde encuentro las instrucciones para completar los cuestionarios?",
+        "¿Cómo funciona el cuaderno del estudiante?",
+        "¿Qué herramientas están disponibles también en lengua extranjera?",
+        "¿Cómo se solicita el acceso para una escuela o una institución?",
+        "¿Cuál es el procedimiento para una administración colectiva?",
+        "¿Qué se necesita para iniciar un proceso de autoevaluación?",
+        "¿Cuáles son los requisitos técnicos para usar la plataforma?",
+        "¿Cómo se contacta al equipo del proyecto para recibir asistencia?",
+        "¿Dónde encuentro ejemplos de perfiles ya completados?"
+      ],
+      "fr": [
+        "Qu'est-ce que le projet competenzestrategiche.it et quels outils propose-t-il ?",
+        "Quels questionnaires sont disponibles sur competenzestrategiche.it ?",
+        "Comment accéder aux questionnaires sur competenzestrategiche.it ?",
+        "Quel est le guide officiel pour utiliser la plateforme ?",
+        "À qui s'adresse le projet competenzestrategiche.it ?",
+        "Qu'est-ce qui distingue le QSA des autres questionnaires du projet ?",
+        "Quelles sont les étapes pour administrer un questionnaire ?",
+        "Comment obtient-on un profil après avoir rempli un questionnaire ?",
+        "Quel type de rapport est généré après la saisie ?",
+        "Comment interpréter les résultats d'un questionnaire ?",
+        "Quels supports le projet propose-t-il ?",
+        "Où puis-je trouver les instructions pour remplir les questionnaires ?",
+        "Comment fonctionne le livret de l'étudiant ?",
+        "Quels outils sont également disponibles en langue étrangère ?",
+        "Comment demander l'accès pour une école ou un établissement ?",
+        "Quelle est la procédure pour une passation collective ?",
+        "De quoi a-t-on besoin pour entamer un parcours d'auto-évaluation ?",
+        "Quelles sont les exigences techniques pour utiliser la plateforme ?",
+        "Comment contacter l'équipe du projet pour obtenir de l'aide ?",
+        "Où puis-je trouver des exemples de profils déjà remplis ?"
+      ],
+      "de": [
+        "Was ist das Projekt competenzestrategiche.it und welche Instrumente bietet es an?",
+        "Welche Fragebögen sind auf competenzestrategiche.it verfügbar?",
+        "Wie greift man auf die Fragebögen auf competenzestrategiche.it zu?",
+        "Was ist der offizielle Leitfaden für die Nutzung der Plattform?",
+        "An wen richtet sich das Projekt competenzestrategiche.it?",
+        "Was unterscheidet den QSA von den anderen Fragebögen des Projekts?",
+        "Welche Schritte sind erforderlich, um einen Fragebogen durchzuführen?",
+        "Wie erhält man ein Profil nach dem Ausfüllen eines Fragebogens?",
+        "Welche Art von Bericht wird nach dem Ausfüllen generiert?",
+        "Wie interpretiert man die Ergebnisse eines Fragebogens?",
+        "Welche Unterstützungsmaterialien bietet das Projekt an?",
+        "Wo finde ich die Anleitungen zum Ausfüllen der Fragebögen?",
+        "Wie funktioniert das Schülerheft?",
+        "Welche Instrumente sind auch in Fremdsprachen verfügbar?",
+        "Wie beantragt man den Zugang für eine Schule oder eine Einrichtung?",
+        "Wie ist das Verfahren für eine kollektive Durchführung?",
+        "Was wird benötigt, um einen Selbstevaluierungsprozess zu beginnen?",
+        "Welche technischen Voraussetzungen sind für die Nutzung der Plattform erforderlich?",
+        "Wie kontaktiert man das Projektteam für Unterstützung?",
+        "Wo finde ich Beispiele für bereits ausgefüllte Profile?"
+      ],
+      "sv": [
+        "Vad är projektet competenzestrategiche.it och vilka verktyg erbjuder det?",
+        "Vilka frågeformulär finns tillgängliga på competenzestrategiche.it?",
+        "Hur får man tillgång till frågeformulären på competenzestrategiche.it?",
+        "Vilken är den officiella guiden för att använda plattformen?",
+        "Vem vänder sig projektet competenzestrategiche.it till?",
+        "Vad skiljer QSA från projektets övriga frågeformulär?",
+        "Vilka är stegen för att administrera ett frågeformulär?",
+        "Hur får man en profil efter att ha fyllt i ett frågeformulär?",
+        "Vilken typ av rapport genereras efter ifyllandet?",
+        "Hur tolkar man resultaten från ett frågeformulär?",
+        "Vilket stödmaterial erbjuder projektet?",
+        "Var hittar jag instruktionerna för att fylla i frågeformulären?",
+        "Hur fungerar elevhäftet?",
+        "Vilka verktyg finns även tillgängliga på främmande språk?",
+        "Hur ansöker man om åtkomst för en skola eller en organisation?",
+        "Vad är proceduren för en kollektiv administrering?",
+        "Vad krävs för att påbörja en självutvärderingsprocess?",
+        "Vilka tekniska krav finns för att använda plattformen?",
+        "Hur kontaktar man projektteamet för assistans?",
+        "Var hittar jag exempel på redan ifyllda profiler?"
+      ]
+    },
+    "cs_metodologia": {
+      "en": [
+        "What is the methodology underlying the competenzestrategiche.it project?",
+        "How was the project created and who developed it?",
+        "What are the pedagogical foundations of the tools?",
+        "How does the project fit into the landscape of educational guidance?",
+        "What is the self-assessment of strategic competencies?",
+        "What are the phases of a counseling process using these tools?",
+        "How is the platform integrated into curricular teaching?",
+        "What scientific evidence supports the use of the QSA?",
+        "How is a teacher trained in the use of the tools?",
+        "What are the best practices for administration?",
+        "How is the learning path personalized based on the student's profile?",
+        "What role does the trainer play in the self-assessment process?",
+        "What are the limitations and precautions when using these tools?",
+        "How is the effectiveness of a counseling path measured?",
+        "What skills does the student develop with these tools?",
+        "How does the project fit into the framework of European key competencies?",
+        "What is the theoretical model of reference for strategic competencies?",
+        "How is educational guidance distinguished from professional guidance?",
+        "What synergies exist between the project and the world of vocational training?",
+        "How is the student's progress evaluated over time?"
+      ],
+      "es": [
+        "¿Cuál es la metodología que sustenta el proyecto competenzestrategiche.it?",
+        "¿Cómo nació el proyecto y quién lo desarrolló?",
+        "¿Cuáles son los fundamentos pedagógicos de las herramientas?",
+        "¿Cómo se sitúa el proyecto en el panorama de la orientación?",
+        "¿Qué es la autoevaluación de las competencias estratégicas?",
+        "¿Cuáles son las fases de un proceso de asesoramiento (counseling) con estas herramientas?",
+        "¿Cómo se integra la plataforma en la didáctica curricular?",
+        "¿Qué evidencias científicas respaldan el uso del QSA?",
+        "¿Cómo se forma a un docente en el uso de las herramientas?",
+        "¿Cuáles son las buenas prácticas para la administración?",
+        "¿Cómo se personaliza el itinerario en función del perfil del estudiante?",
+        "¿Qué papel desempeña el formador en el proceso de autoevaluación?",
+        "¿Cuáles son los límites y las precauciones en el uso de las herramientas?",
+        "¿Cómo se mide la eficacia de un proceso de orientación?",
+        "¿Qué competencias desarrolla el estudiante con estas herramientas?",
+        "¿Cómo se integra el proyecto en el marco de las competencias clave europeas?",
+        "¿Cuál es el modelo teórico de referencia para las competencias estratégicas?",
+        "¿Cómo se distingue la orientación formativa de la profesional?",
+        "¿Qué sinergias existen entre el proyecto y el mundo de la formación profesional?",
+        "¿Cómo se evalúan los progresos del estudiante a lo largo del tiempo?"
+      ],
+      "fr": [
+        "Quelle est la méthodologie à la base du projet competenzestrategiche.it ?",
+        "Comment le projet est-il né et qui l'a développé ?",
+        "Quels sont les fondements pédagogiques des outils ?",
+        "Comment le projet se situe-t-il dans le panorama de l'orientation ?",
+        "Qu'est-ce que l'auto-évaluation des compétences stratégiques ?",
+        "Quelles sont les étapes d'un parcours de conseil avec ces outils ?",
+        "Comment la plateforme s'intègre-t-elle dans la didactique curriculaire ?",
+        "Quelles preuves scientifiques soutiennent l'utilisation du QSA ?",
+        "Comment forme-t-on un enseignant à l'utilisation des outils ?",
+        "Quelles sont les bonnes pratiques pour l'administration ?",
+        "Comment personnaliser le parcours en fonction du profil de l'étudiant ?",
+        "Quel est le rôle du formateur dans le processus d'auto-évaluation ?",
+        "Quelles sont les limites et les précautions à prendre lors de l'utilisation des outils ?",
+        "Comment mesure-t-on l'efficacité d'un parcours de conseil ?",
+        "Quelles compétences l'étudiant développe-t-il avec ces outils ?",
+        "Comment le projet s'inscrit-il dans le cadre des compétences clés européennes ?",
+        "Quel est le modèle théorique de référence pour les compétences stratégiques ?",
+        "Comment distingue-t-on l'orientation formative de l'orientation professionnelle ?",
+        "Quelles synergies existent entre le projet et le monde de la formation professionnelle ?",
+        "Comment évalue-t-on les progrès de l'étudiant au fil du temps ?"
+      ],
+      "de": [
+        "Welche Methodik liegt dem Projekt competenzestrategiche.it zugrunde?",
+        "Wie ist das Projekt entstanden und wer hat es entwickelt?",
+        "Was sind die pädagogischen Grundlagen der Instrumente?",
+        "Wie ordnet sich das Projekt in die Bildungs- und Berufsberatung ein?",
+        "Was ist die Selbsteinschätzung strategischer Kompetenzen?",
+        "Welche Phasen umfasst ein Beratungsprozess mit diesen Instrumenten?",
+        "Wie lässt sich die Plattform in den Fachunterricht integrieren?",
+        "Welche wissenschaftlichen Belege stützen den Einsatz des QSA?",
+        "Wie wird eine Lehrkraft in die Nutzung der Instrumente eingearbeitet?",
+        "Was sind die bewährten Verfahren für die Durchführung?",
+        "Wie wird der Lernpfad individuell an das Profil des Studierenden angepasst?",
+        "Welche Rolle spielt der Ausbilder im Prozess der Selbsteinschätzung?",
+        "Welche Grenzen und Vorsichtsmaßnahmen sind bei der Verwendung der Instrumente zu beachten?",
+        "Wie wird die Wirksamkeit eines Beratungsprozesses gemessen?",
+        "Welche Kompetenzen entwickelt der Studierende durch diese Instrumente?",
+        "Wie fügt sich das Projekt in den Rahmen der europäischen Schlüsselkompetenzen ein?",
+        "Was ist das theoretische Referenzmodell für strategische Kompetenzen?",
+        "Wie unterscheidet sich die bildungsorientierte Beratung von der beruflichen Orientierung?",
+        "Welche Synergien bestehen zwischen dem Projekt und der Welt der Berufsbildung?",
+        "Wie werden die Fortschritte des Studierenden im Zeitverlauf bewertet?"
+      ],
+      "sv": [
+        "Vilken metod ligger till grund för projektet competenzestrategiche.it?",
+        "Hur uppstod projektet och vem har utvecklat det?",
+        "Vilka är de pedagogiska grundvalarna för verktygen?",
+        "Hur placerar sig projektet i vägledningslandskapet?",
+        "Vad är självutvärdering av strategiska kompetenser?",
+        "Vilka är faserna i en rådgivningsprocess med dessa verktyg?",
+        "Hur integreras plattformen i den ordinarie undervisningen?",
+        "Vilka vetenskapliga bevis stöder användningen av QSA?",
+        "Hur utbildas en lärare i användningen av verktygen?",
+        "Vilka är god praxis för administrering?",
+        "Hur anpassas utbildningsvägen utifrån studentens profil?",
+        "Vilken roll har utbildaren i självutvärderingsprocessen?",
+        "Vilka begränsningar och försiktighetsåtgärder finns vid användningen av verktygen?",
+        "Hur mäts effektiviteten i en rådgivningsprocess?",
+        "Vilka kompetenser utvecklar studenten med dessa verktyg?",
+        "Hur passar projektet in i ramen för de europeiska nyckelkompetenserna?",
+        "Vilken teoretisk referensmodell används för strategiska kompetenser?",
+        "Hur skiljer sig utbildningsvägledning från yrkesvägledning?",
+        "Vilka synergier finns mellan projektet och den yrkesinriktade utbildningsvärlden?",
+        "Hur utvärderas studentens framsteg över tid?"
+      ]
+    },
+    "fw_teoria": {
+      "en": [
+        "What are strategic competencies according to the Pellerey model?",
+        "What is the difference between cognitive and affective-motivational competencies?",
+        "What is self-regulation in learning?",
+        "What is meant by self-determination in study and work?",
+        "What is the role of metacognition in strategic competencies?",
+        "How are soft skills and strategic competencies connected?",
+        "What is Zimmerman's theory of self-regulated learning?",
+        "What are the phases of the self-regulation process?",
+        "How does time perspective influence career choices?",
+        "What is Savickas' Life Design model?",
+        "What is the relationship between strategic skills and employability?",
+        "What are executive functions and how do they relate to learning?",
+        "What is Heckman's contribution regarding character skills?",
+        "How is professional identity defined from a narrative perspective?",
+        "What are the moral and spiritual dimensions of strategic skills?",
+        "What is Weiner's theory of causal attributions?",
+        "How does self-assessment relate to the development of skills?",
+        "What is the role of the digital portfolio in self-reflection?",
+        "What is meant by lifelong learning?",
+        "What are the eight areas of strategic competence?"
+      ],
+      "es": [
+        "¿Qué son las competencias estratégicas según el modelo de Pellerey?",
+        "¿Cuál es la diferencia entre competencias cognitivas y afectivo-motivacionales?",
+        "¿Qué es la autorregulación en el aprendizaje?",
+        "¿Qué se entiende por autodeterminación en el estudio y en el trabajo?",
+        "¿Cuál es el papel de la metacognición en las competencias estratégicas?",
+        "¿Cómo se relacionan las habilidades blandas (soft skills) y las competencias estratégicas?",
+        "¿Qué es la teoría del aprendizaje autorregulado de Zimmerman?",
+        "¿Cuáles son las fases del proceso de autorregulación?",
+        "¿Cómo influye la perspectiva temporal en las elecciones de carrera?",
+        "¿Qué es el modelo Life Design de Savickas?",
+        "¿Cuál es la relación entre las competencias estratégicas y la empleabilidad?",
+        "¿Qué son las funciones ejecutivas y cómo se relacionan con el aprendizaje?",
+        "¿Cuál es la contribución de Heckman sobre las habilidades del carácter (character skills)?",
+        "¿Cómo se define la identidad profesional desde una perspectiva narrativa?",
+        "¿Cuáles son las dimensiones morales y espirituales de las competencias estratégicas?",
+        "¿Qué es la teoría de las atribuciones causales de Weiner?",
+        "¿Cómo se relaciona la autoevaluación con el desarrollo de las competencias?",
+        "¿Cuál es el papel del portafolio digital en la reflexión sobre uno mismo?",
+        "¿Qué se entiende por aprendizaje permanente (lifelong learning)?",
+        "¿Cuáles son los ocho ámbitos de competencia estratégica?"
+      ],
+      "fr": [
+        "Que sont les compétences stratégiques selon le modèle de Pellerey ?",
+        "Quelle est la différence entre les compétences cognitives et les compétences affectivo-motivationnelles ?",
+        "Qu'est-ce que l'autorégulation dans l'apprentissage ?",
+        "Qu'entend-on par autodétermination dans les études et au travail ?",
+        "Quel est le rôle de la métacognition dans les compétences stratégiques ?",
+        "Comment les soft skills et les compétences stratégiques sont-elles liées ?",
+        "Qu'est-ce que la théorie de l'apprentissage autorégulé de Zimmerman ?",
+        "Quelles sont les phases du processus d'autorégulation ?",
+        "Comment la perspective temporelle influence-t-elle les choix de carrière ?",
+        "Qu'est-ce que le modèle Life Design de Savickas ?",
+        "Quel est le rapport entre les compétences stratégiques et l'employabilité ?",
+        "Que sont les fonctions exécutives et comment sont-elles liées à l'apprentissage ?",
+        "Quel est l'apport de Heckman sur les « character skills » ?",
+        "Comment définit-on l'identité professionnelle dans une perspective narrative ?",
+        "Quelles sont les dimensions morales et spirituelles des compétences stratégiques ?",
+        "Qu'est-ce que la théorie des attributions causales de Weiner ?",
+        "Comment l'auto-évaluation est-elle liée au développement des compétences ?",
+        "Quel est le rôle du portfolio numérique dans la réflexion sur soi ?",
+        "Qu'entend-on par apprentissage tout au long de la vie (lifelong learning) ?",
+        "Quels sont les huit domaines de compétence stratégique ?"
+      ],
+      "de": [
+        "Was sind strategische Kompetenzen nach dem Modell von Pellerey?",
+        "Was ist der Unterschied zwischen kognitiven und affektiv-motivationalen Kompetenzen?",
+        "Was ist Selbstregulation beim Lernen?",
+        "Was versteht man unter Selbstbestimmung im Studium und im Beruf?",
+        "Welche Rolle spielt die Metakognition bei strategischen Kompetenzen?",
+        "Wie hängen Soft Skills und strategische Kompetenzen zusammen?",
+        "Was ist die Theorie des selbstregulierten Lernens nach Zimmerman?",
+        "Welches sind die Phasen des Selbstregulationsprozesses?",
+        "Wie beeinflusst die zeitliche Perspektive die Karriereentscheidungen?",
+        "Was ist das Life-Design-Modell von Savickas?",
+        "Welcher Zusammenhang besteht zwischen strategischen Kompetenzen und Beschäftigungsfähigkeit?",
+        "Was sind exekutive Funktionen und wie hängen sie mit dem Lernen zusammen?",
+        "Welchen Beitrag leistet Heckman zu den sogenannten Character Skills?",
+        "Wie wird die berufliche Identität aus narrativer Sicht definiert?",
+        "Welches sind die moralischen und spirituellen Dimensionen strategischer Kompetenzen?",
+        "Was ist die Theorie der kausalen Attributionen nach Weiner?",
+        "Wie hängt die Selbsteinschätzung mit der Kompetenzentwicklung zusammen?",
+        "Welche Rolle spielt das digitale Portfolio bei der Selbstreflexion?",
+        "Was versteht man unter lebenslangem Lernen (Lifelong Learning)?",
+        "Welches sind die acht Bereiche der strategischen Kompetenz?"
+      ],
+      "sv": [
+        "Vad är strategisk kompetens enligt Pellerey-modellen?",
+        "Vad är skillnaden mellan kognitiv och affektiv-motivationell kompetens?",
+        "Vad är självreglering i lärande?",
+        "Vad menas med självbestämmande i studier och arbete?",
+        "Vilken roll spelar metakognition för strategisk kompetens?",
+        "Hur hänger soft skills och strategisk kompetens ihop?",
+        "Vad är Zimmermans teori om självreglerat lärande?",
+        "Vilka är faserna i självregleringsprocessen?",
+        "Hur påverkar tidsperspektivet karriärval?",
+        "Vad är Savickas Life Design-modell?",
+        "Vad är förhållandet mellan strategisk kompetens och anställningsbarhet?",
+        "Vad är exekutiva funktioner och hur hänger de ihop med lärande?",
+        "Vad är Heckmans bidrag gällande karaktärsegenskaper (character skills)?",
+        "Hur definieras professionell identitet ur ett narrativt perspektiv?",
+        "Vilka är de moraliska och andliga dimensionerna av strategisk kompetens?",
+        "Vad är Weiners teori om kausala attributioner?",
+        "Hur kopplas självutvärdering till kompetensutveckling?",
+        "Vilken roll spelar den digitala portföljen för självreflektion?",
+        "Vad menas med livslångt lärande (lifelong learning)?",
+        "Vilka är de åtta områdena för strategisk kompetens?"
+      ]
+    },
+    "fw_articoli": {
+      "en": [
+        "What recent publications are there on strategic competencies?",
+        "Where can I find the validation studies for the QSA?",
+        "What conferences has the research group organized?",
+        "What results did the CNOS-FAP action-research produce?",
+        "Which articles discuss the adaptation of the ZTPI to the Italian context?",
+        "Where are the proceedings of the 2019 conference published?",
+        "Which studies concern the QSAr in middle school?",
+        "What does the 2020 volume 'Dirigere se stessi' contain?",
+        "Which research links strategic competencies and school dropout?",
+        "Where can I find studies on the digital portfolio and self-assessment?",
+        "Which publications cover the topic of soft skills and career guidance?",
+        "What results did the experimentation with Mahara produce?",
+        "Which studies have validated the QPCC?",
+        "Where are the normative data for the tools documented?",
+        "Which articles describe the competenzestrategiche.it platform?",
+        "What do the 2025 conference proceedings contain?",
+        "Which publications concern the educational use of the tools?",
+        "Where can I find studies comparing the QSA with other questionnaires?",
+        "Which international research papers cite the Pellerey model?",
+        "What studies exist on the effectiveness of counseling pathways?"
+      ],
+      "es": [
+        "¿Qué publicaciones recientes existen sobre las competencias estratégicas?",
+        "¿Dónde puedo encontrar los estudios de validación del QSA?",
+        "¿Qué congresos ha organizado el grupo de investigación?",
+        "¿Qué resultados ha producido la investigación-acción CNOS-FAP?",
+        "¿Qué artículos tratan la adaptación del ZTPI al contexto italiano?",
+        "¿Dónde están publicadas las actas del congreso de 2019?",
+        "¿Qué estudios se refieren al QSAr en la escuela secundaria de primer grado?",
+        "¿Qué contiene el volumen Dirigirse a sí mismo (Dirigere se stessi) de 2020?",
+        "¿Qué investigaciones vinculan las competencias estratégicas y el abandono escolar?",
+        "¿Dónde encuentro los estudios sobre el portafolio digital y la autoevaluación?",
+        "¿Qué publicaciones tratan el tema de las habilidades blandas (soft skills) y la orientación?",
+        "¿Qué resultados ha producido la experimentación con Mahara?",
+        "¿Qué estudios han validado el QPCC?",
+        "¿Dónde están documentados los datos normativos de las herramientas?",
+        "¿Qué artículos describen la plataforma competenzestrategiche.it?",
+        "¿Qué contienen las actas del congreso 2025?",
+        "¿Qué publicaciones se refieren al uso didáctico de las herramientas?",
+        "¿Dónde encuentro estudios que comparen el QSA y otros cuestionarios?",
+        "¿Qué investigaciones internacionales citan el modelo de Pellerey?",
+        "¿Qué estudios existen sobre la eficacia de los procesos de orientación (counseling)?"
+      ],
+      "fr": [
+        "Quelles sont les publications récentes sur les compétences stratégiques ?",
+        "Où puis-je trouver les études de validation du QSA ?",
+        "Quels congrès le groupe de recherche a-t-il organisés ?",
+        "Quels résultats la recherche-action CNOS-FAP a-t-elle produits ?",
+        "Quels articles traitent de l'adaptation du ZTPI au contexte italien ?",
+        "Où les actes du congrès de 2019 sont-ils publiés ?",
+        "Quelles études concernent le QSAr dans l'enseignement secondaire de premier cycle ?",
+        "Que contient le volume Dirigere se stessi de 2020 ?",
+        "Quelles recherches font le lien entre compétences stratégiques et décrochage scolaire ?",
+        "Où puis-je trouver les études sur le portfolio numérique et l'auto-évaluation ?",
+        "Quelles publications traitent du thème des compétences relationnelles (soft skills) et de l'orientation ?",
+        "Quels résultats l'expérimentation avec Mahara a-t-elle produits ?",
+        "Quelles études ont validé le QPCC ?",
+        "Où les données normatives des outils sont-elles documentées ?",
+        "Quels articles décrivent la plateforme competenzestrategiche.it ?",
+        "Que contiennent les actes du congrès 2025 ?",
+        "Quelles publications concernent l'utilisation didactique des outils ?",
+        "Où puis-je trouver des études comparant le QSA et d'autres questionnaires ?",
+        "Quelles recherches internationales citent le modèle de Pellerey ?",
+        "Quelles études existent sur l'efficacité des parcours de conseil (counseling) ?"
+      ],
+      "de": [
+        "Welche aktuellen Publikationen gibt es zu strategischen Kompetenzen?",
+        "Wo finde ich die Validierungsstudien zum QSA?",
+        "Welche Konferenzen hat die Forschungsgruppe organisiert?",
+        "Welche Ergebnisse hat die Aktionsforschung von CNOS-FAP hervorgebracht?",
+        "Welche Artikel behandeln die Anpassung des ZTPI an den italienischen Kontext?",
+        "Wo sind die Tagungsbände der Konferenz von 2019 veröffentlicht?",
+        "Welche Studien befassen sich mit dem QSAr in der Sekundarstufe I?",
+        "Was enthält der Band „Dirigere se stessi“ aus dem Jahr 2020?",
+        "Welche Forschungen verknüpfen strategische Kompetenzen mit Schulabbruch?",
+        "Wo finde ich Studien zum digitalen Portfolio und zur Selbsteinschätzung?",
+        "Welche Publikationen behandeln das Thema Soft Skills und Orientierung?",
+        "Welche Ergebnisse hat die Erprobung mit Mahara hervorgebracht?",
+        "Welche Studien haben den QPCC validiert?",
+        "Wo sind die normativen Daten der Instrumente dokumentiert?",
+        "Welche Artikel beschreiben die Plattform competenzestrategiche.it?",
+        "Was enthalten die Tagungsbände der Konferenz 2025?",
+        "Welche Publikationen befassen sich mit dem didaktischen Einsatz der Instrumente?",
+        "Wo finde ich Studien, die den QSA mit anderen Fragebögen vergleichen?",
+        "Welche internationalen Forschungen zitieren das Modell von Pellerey?",
+        "Welche Studien gibt es zur Wirksamkeit von Beratungsangeboten?"
+      ],
+      "sv": [
+        "Vilka aktuella publikationer finns det om strategisk kompetens?",
+        "Var kan jag hitta valideringsstudierna för QSA?",
+        "Vilka konferenser har forskargruppen anordnat?",
+        "Vilka resultat har aktionsforskningen från CNOS-FAP gett?",
+        "Vilka artiklar behandlar anpassningen av ZTPI till den italienska kontexten?",
+        "Var publiceras konferenshandlingarna från 2019?",
+        "Vilka studier rör QSAr i högstadiet?",
+        "Vad innehåller volymen Dirigere se stessi från 2020?",
+        "Vilken forskning kopplar samman strategisk kompetens och skolavhopp?",
+        "Var hittar jag studier om den digitala portföljen och självutvärdering?",
+        "Vilka publikationer behandlar ämnet soft skills och vägledning?",
+        "Vilka resultat gav experimentet med Mahara?",
+        "Vilka studier har validerat QPCC?",
+        "Var dokumenteras de normativa uppgifterna för verktygen?",
+        "Vilka artiklar beskriver plattformen competenzestrategiche.it?",
+        "Vad innehåller handlingarna från konferensen 2025?",
+        "Vilka publikationer rör den pedagogiska användningen av verktygen?",
+        "Var hittar jag studier som jämför QSA med andra frågeformulär?",
+        "Vilken internationell forskning citerar Pellerey-modellen?",
+        "Vilka studier finns om effektiviteten hos vägledningsprocesser?"
+      ]
+    },
+    "fw_autori": {
+      "en": [
+        "Who is Michele Pellerey and what is his contribution?",
+        "What is Massimo Margottini's role in the project?",
+        "Who is Enrica Ottone and what does she do?",
+        "What is Dariusz Grzadziel's contribution?",
+        "Who is Filippo Epifani and what role does he have in the platform?",
+        "Which authors collaborated on the guide for using the platform?",
+        "Who edited the 2020 volume 'Dirigere se stessi'?",
+        "Which institutions are involved in the project?",
+        "What is the CNOS-FAP and what is its role?",
+        "What is the contribution of Roma Tre University?",
+        "What role does the Pontifical Salesian University play in the project?",
+        "Who are the authors of the studies on soft skills and guidance?",
+        "Which researchers worked on the validation of the tools?",
+        "Who developed the competenzestrategiche.it platform?",
+        "Which authors contributed to the conference proceedings?",
+        "Who are the editors of the 2023 guide?",
+        "Which trainers are accredited to use the tools?",
+        "Who wrote the QSA factor sheets?",
+        "Which Italian authors adapted the ZTPI?",
+        "Who are the contact persons for the action-research in schools?"
+      ],
+      "es": [
+        "¿Quién es Michele Pellerey y cuál es su contribución?",
+        "¿Cuál es el papel de Massimo Margottini en el proyecto?",
+        "¿Quién es Enrica Ottone y a qué se dedica?",
+        "¿Cuál es la contribución de Dariusz Grzadziel?",
+        "¿Quién es Filippo Epifani y qué papel desempeña en la plataforma?",
+        "¿Qué autores han colaborado en la guía de uso de la plataforma?",
+        "¿Quién ha editado el volumen Dirigere se stessi de 2020?",
+        "¿Qué instituciones están involucradas en el proyecto?",
+        "¿Qué es el CNOS-FAP y cuál es su papel?",
+        "¿Cuál es la contribución de la Universidad Roma Tre?",
+        "¿Qué papel desempeña la Universidad Pontificia Salesiana en el proyecto?",
+        "¿Quiénes son los autores de los estudios sobre habilidades blandas y orientación?",
+        "¿Qué investigadores han trabajado en la validación de las herramientas?",
+        "¿Quién desarrolló la plataforma competenzestrategiche.it?",
+        "¿Qué autores han contribuido a las actas de los congresos?",
+        "¿Quiénes son los editores de la guía de 2023?",
+        "¿Qué formadores están acreditados para el uso de las herramientas?",
+        "¿Quién escribió las fichas de factores del QSA?",
+        "¿Qué autores italianos adaptaron el ZTPI?",
+        "¿Quiénes son los referentes para la investigación-acción en las escuelas?"
+      ],
+      "fr": [
+        "Qui est Michele Pellerey et quelle est sa contribution ?",
+        "Quel est le rôle de Massimo Margottini dans le projet ?",
+        "Qui est Enrica Ottone et de quoi s'occupe-t-elle ?",
+        "Quelle est la contribution de Dariusz Grzadziel ?",
+        "Qui est Filippo Epifani et quel rôle joue-t-il dans la plateforme ?",
+        "Quels auteurs ont collaboré au guide d'utilisation de la plateforme ?",
+        "Qui a dirigé l'ouvrage Dirigere se stessi de 2020 ?",
+        "Quelles institutions sont impliquées dans le projet ?",
+        "Qu'est-ce que le CNOS-FAP et quel est son rôle ?",
+        "Quelle est la contribution de l'Université Roma Tre ?",
+        "Quel est le rôle de l'Université Pontificale Salésienne dans le projet ?",
+        "Qui sont les auteurs des études sur les soft skills et l'orientation ?",
+        "Quels chercheurs ont travaillé sur la validation des outils ?",
+        "Qui a développé la plateforme competenzestrategiche.it ?",
+        "Quels auteurs ont contribué aux actes des colloques ?",
+        "Qui sont les coordinateurs du guide de 2023 ?",
+        "Quels formateurs sont accrédités pour l'utilisation des outils ?",
+        "Qui a rédigé les fiches facteurs du QSA ?",
+        "Quels auteurs italiens ont adapté le ZTPI ?",
+        "Qui sont les référents pour la recherche-action dans les écoles ?"
+      ],
+      "de": [
+        "Wer ist Michele Pellerey und was ist sein Beitrag?",
+        "Welche Rolle spielt Massimo Margottini in dem Projekt?",
+        "Wer ist Enrica Ottone und womit befasst sie sich?",
+        "Was ist der Beitrag von Dariusz Grzadziel?",
+        "Wer ist Filippo Epifani und welche Rolle hat er auf der Plattform?",
+        "Welche Autoren haben an der Anleitung zur Nutzung der Plattform mitgewirkt?",
+        "Wer hat den Band „Dirigere se stessi“ aus dem Jahr 2020 herausgegeben?",
+        "Welche Institutionen sind an dem Projekt beteiligt?",
+        "Was ist das CNOS-FAP und welche Rolle spielt es?",
+        "Was ist der Beitrag der Universität Roma Tre?",
+        "Welche Rolle spielt die Università Pontificia Salesiana bei diesem Projekt?",
+        "Wer sind die Autoren der Studien zu Soft Skills und Orientierung?",
+        "Welche Forscher haben an der Validierung der Instrumente gearbeitet?",
+        "Wer hat die Plattform competenzestrategiche.it entwickelt?",
+        "Welche Autoren haben zu den Tagungsbänden beigetragen?",
+        "Wer sind die Herausgeber des Leitfadens von 2023?",
+        "Welche Ausbilder sind für die Nutzung der Instrumente akkreditiert?",
+        "Wer hat die Faktoren-Datenblätter des QSA verfasst?",
+        "Welche italienischen Autoren haben den ZTPI adaptiert?",
+        "Wer sind die Ansprechpartner für die Aktionsforschung an Schulen?"
+      ],
+      "sv": [
+        "Vem är Michele Pellerey och vad är hans bidrag?",
+        "Vilken roll har Massimo Margottini i projektet?",
+        "Vem är Enrica Ottone och vad arbetar hon med?",
+        "Vad är Dariusz Grzadziel bidrag?",
+        "Vem är Filippo Epifani och vilken roll har han i plattformen?",
+        "Vilka författare har samarbetat i guiden för användning av plattformen?",
+        "Vem har redigerat volymen Dirigere se stessi från 2020?",
+        "Vilka institutioner är involverade i projektet?",
+        "Vad är CNOS-FAP och vilken roll har de?",
+        "Vad är Università Roma Tres bidrag?",
+        "Vilken roll har Università Pontificia Salesiana i projektet?",
+        "Vilka är författarna till studierna om soft skills och vägledning?",
+        "Vilka forskare har arbetat med valideringen av verktygen?",
+        "Vem har utvecklat plattformen competenzestrategiche.it?",
+        "Vilka författare har bidragit till konferenshandlingarna?",
+        "Vilka är redaktörerna för guiden från 2023?",
+        "Vilka utbildare är ackrediterade för användning av verktygen?",
+        "Vem har skrivit faktabladen för QSA?",
+        "Vilka italienska författare har anpassat ZTPI?",
+        "Vilka är kontaktpersonerna för forsknings- och interventionsprojektet i skolorna?"
+      ]
+    },
+    "q_strumenti": {
+      "en": [
+        "How is the QSA structured and how many items does it have?",
+        "What is the difference between the QSA and the QSAr?",
+        "How many factors does the QSA have and what are they called?",
+        "What are the cognitive factors of the QSA?",
+        "What are the affective-motivational factors of the QSA?",
+        "How is the ZTPI structured and how many dimensions does it measure?",
+        "What is the response scale for the questionnaires?",
+        "What does the QPCS questionnaire measure?",
+        "Which factors make up the QPCC?",
+        "What does the QAP evaluate and from which model is it derived?",
+        "How many items does the QSAr have and what factors does it measure?",
+        "What is the difference between QPCS and QPCC?",
+        "How does Savickas' narrative interview work?",
+        "At what age can the different questionnaires be administered?",
+        "Which questionnaires are self-administered and which are guided?",
+        "In which languages are the questionnaires available?",
+        "How much time does it take to complete each instrument?",
+        "Which questionnaires have multiple-choice items?",
+        "What distinguishes a self-report questionnaire from an interview?",
+        "Which instruments are suitable for a career guidance process?"
+      ],
+      "es": [
+        "¿Cómo está estructurado el QSA y cuántos ítems tiene?",
+        "¿Cuál es la diferencia entre el QSA y el QSAr?",
+        "¿Cuántos factores tiene el QSA y cómo se llaman?",
+        "¿Cuáles son los factores cognitivos del QSA?",
+        "¿Cuáles son los factores afectivo-motivacionales del QSA?",
+        "¿Cómo está estructurado el ZTPI y cuántas dimensiones mide?",
+        "¿Cuál es la escala de respuesta de los cuestionarios?",
+        "¿Qué mide el cuestionario QPCS?",
+        "¿Qué factores componen el QPCC?",
+        "¿Qué evalúa el QAP y de qué modelo deriva?",
+        "¿Cuántos ítems tiene el QSAr y qué factores mide?",
+        "¿Cuál es la diferencia entre el QPCS y el QPCC?",
+        "¿Cómo funciona la entrevista narrativa de Savickas?",
+        "¿A qué edad se pueden administrar los diferentes cuestionarios?",
+        "¿Qué cuestionarios son autoadministrados y cuáles son guiados?",
+        "¿En qué idiomas están disponibles los cuestionarios?",
+        "¿Cuánto tiempo requiere la cumplimentación de cada instrumento?",
+        "¿Qué cuestionarios tienen ítems de opción múltiple?",
+        "¿Qué distingue a un cuestionario de autoinforme de una entrevista?",
+        "¿Qué instrumentos son adecuados para un proceso de orientación?"
+      ],
+      "fr": [
+        "Comment le QSA est-il structuré et combien d'items comporte-t-il ?",
+        "Quelle est la différence entre le QSA et le QSAr ?",
+        "Combien de facteurs le QSA possède-t-il et comment s'appellent-ils ?",
+        "Quels sont les facteurs cognitifs du QSA ?",
+        "Quels sont les facteurs affectivo-motivationnels du QSA ?",
+        "Comment le ZTPI est-il structuré et combien de dimensions mesure-t-il ?",
+        "Quelle est l'échelle de réponse des questionnaires ?",
+        "Que mesure le questionnaire QPCS ?",
+        "Quels facteurs composent le QPCC ?",
+        "Qu'évalue le QAP et de quel modèle dérive-t-il ?",
+        "Combien d'items le QSAr comporte-t-il et quels facteurs mesure-t-il ?",
+        "Quelle est la différence entre le QPCS et le QPCC ?",
+        "Comment fonctionne l'entretien narratif de Savickas ?",
+        "À quel âge peut-on administrer les différents questionnaires ?",
+        "Quels questionnaires sont auto-administrés et lesquels sont guidés ?",
+        "Dans quelles langues les questionnaires sont-ils disponibles ?",
+        "Combien de temps nécessite le remplissage de chaque outil ?",
+        "Quels questionnaires comportent des items à choix multiples ?",
+        "Qu'est-ce qui distingue un questionnaire d'auto-évaluation (self-report) d'un entretien ?",
+        "Quels outils sont adaptés à un parcours d'orientation ?"
+      ],
+      "de": [
+        "Wie ist der QSA strukturiert und wie viele Items hat er?",
+        "Was ist der Unterschied zwischen QSA und QSAr?",
+        "Wie viele Faktoren hat der QSA und wie heißen sie?",
+        "Welches sind die kognitiven Faktoren des QSA?",
+        "Welches sind die affektiv-motivationalen Faktoren des QSA?",
+        "Wie ist der ZTPI strukturiert und wie viele Dimensionen misst er?",
+        "Was ist die Antwortskala der Fragebögen?",
+        "Was misst der Fragebogen QPCS?",
+        "Welche Faktoren bilden den QPCC?",
+        "Was bewertet der QAP und von welchem Modell leitet er sich ab?",
+        "Wie viele Items hat der QSAr und welche Faktoren misst er?",
+        "Was ist der Unterschied zwischen QPCS und QPCC?",
+        "Wie funktioniert das narrative Interview nach Savickas?",
+        "Ab welchem Alter können die verschiedenen Fragebögen eingesetzt werden?",
+        "Welche Fragebögen sind selbstausgefüllt und welche werden angeleitet?",
+        "In welchen Sprachen sind die Fragebögen verfügbar?",
+        "Wie viel Zeit nimmt das Ausfüllen der einzelnen Instrumente in Anspruch?",
+        "Welche Fragebögen enthalten Multiple-Choice-Fragen?",
+        "Was unterscheidet einen Selbstbeurteilungsfragebogen von einem Interview?",
+        "Welche Instrumente eignen sich für einen Orientierungsprozess?"
+      ],
+      "sv": [
+        "Hur är QSA strukturerat och hur många frågor innehåller det?",
+        "Vad är skillnaden mellan QSA och QSAr?",
+        "Hur många faktorer har QSA och vad kallas de?",
+        "Vilka är de kognitiva faktorerna i QSA?",
+        "Vilka är de affektivt-motivationella faktorerna i QSA?",
+        "Hur är ZTPI strukturerat och hur många dimensioner mäter det?",
+        "Vilken svarsskala används i frågeformulären?",
+        "Vad mäter frågeformuläret QPCS?",
+        "Vilka faktorer utgör QPCC?",
+        "Vad utvärderar QAP och vilken modell härstammar det ifrån?",
+        "Hur många objekt har QSAr och vilka faktorer mäter det?",
+        "Vad är skillnaden mellan QPCS och QPCC?",
+        "Hur fungerar Savickas narrativa intervju?",
+        "Vid vilken ålder kan de olika frågeformulären administreras?",
+        "Vilka frågeformulär är självadministrerade och vilka är guidade?",
+        "På vilka språk finns frågeformulären tillgängliga?",
+        "Hur lång tid tar det att fylla i respektive verktyg?",
+        "Vilka frågeformulär har flervalsfrågor?",
+        "Vad skiljer ett självrapporteringsformulär från en intervju?",
+        "Vilka verktyg är lämpliga för en vägledningsprocess?"
+      ]
+    },
+    "q_fattori": {
+      "en": [
+        "What does factor C1 - Elaborative strategies measure?",
+        "What does self-regulation mean in factor C2?",
+        "What is factor C3 - Disorientation?",
+        "What does C4 - Willingness to collaborate measure?",
+        "What are semantic organizers in factor C5?",
+        "What does factor C6 - Concentration difficulties indicate?",
+        "What is self-questioning in factor C7?",
+        "What does A1 - Basic anxiety measure?",
+        "What is volition in factor A2?",
+        "What are causal attributions in A3?",
+        "What does A4 - Attribution to uncontrollable causes measure?",
+        "What is the lack of perseverance in A5?",
+        "What does A6 - Perception of competence indicate?",
+        "What is emotional interference in A7?",
+        "Which QSA factors are reversed and why?",
+        "How is a high score interpreted in a reversed factor?",
+        "What do the 5 temporal dimensions of the ZTPI mean?",
+        "Which ZTPI dimensions are considered at risk?",
+        "How is an unbalanced ZTPI profile interpreted?",
+        "What does a balanced time perspective mean?"
+      ],
+      "es": [
+        "¿Qué mide el factor C1 - Estrategias de elaboración?",
+        "¿Qué significa autorregulación en el factor C2?",
+        "¿Qué es el factor C3 - Desorientación?",
+        "¿Qué mide el C4 - Disponibilidad para la colaboración?",
+        "¿Qué son los organizadores semánticos en el factor C5?",
+        "¿Qué indica el factor C6 - Dificultad de concentración?",
+        "¿Qué es la autointerrogación en el factor C7?",
+        "¿Qué mide el A1 - Ansiedad básica?",
+        "¿Qué es la volición en el factor A2?",
+        "¿Qué son las atribuciones causales en A3?",
+        "¿Qué mide A4 - Atribución a causas incontrolables?",
+        "¿Qué es la falta de perseverancia en A5?",
+        "¿Qué indica A6 - Percepción de competencia?",
+        "¿Qué es la interferencia emocional en A7?",
+        "¿Qué factores del QSA están invertidos y por qué?",
+        "¿Cómo se interpreta una puntuación alta en un factor invertido?",
+        "¿Qué significan las 5 dimensiones temporales del ZTPI?",
+        "¿Qué dimensiones del ZTPI se consideran de riesgo?",
+        "¿Cómo se interpreta un perfil ZTPI desequilibrado?",
+        "¿Qué significa perspectiva temporal equilibrada?"
+      ],
+      "fr": [
+        "Que mesure le facteur C1 - Stratégies d'élaboration ?",
+        "Que signifie l'autorégulation dans le facteur C2 ?",
+        "Qu'est-ce que le facteur C3 - Désorientation ?",
+        "Que mesure le facteur C4 - Disponibilité à la collaboration ?",
+        "Que sont les organisateurs sémantiques dans le facteur C5 ?",
+        "Qu'indique le facteur C6 - Difficultés de concentration ?",
+        "Qu'est-ce que l'auto-interrogation dans le facteur C7 ?",
+        "Que mesure le facteur A1 - Anxiété de base ?",
+        "Qu'est-ce que la volition dans le facteur A2 ?",
+        "Que sont les attributions causales dans le facteur A3 ?",
+        "Que mesure A4 - Attribution à des causes incontrôlables ?",
+        "Qu'est-ce que le manque de persévérance dans A5 ?",
+        "Qu'indique A6 - Perception de compétence ?",
+        "Qu'est-ce que l'interférence émotionnelle dans A7 ?",
+        "Quels facteurs du QSA sont inversés et pourquoi ?",
+        "Comment interprète-t-on un score élevé dans un facteur inversé ?",
+        "Que signifient les 5 dimensions temporelles du ZTPI ?",
+        "Quelles dimensions du ZTPI sont considérées comme à risque ?",
+        "Comment interprète-t-on un profil ZTPI déséquilibré ?",
+        "Que signifie une perspective temporelle équilibrée ?"
+      ],
+      "de": [
+        "Was misst der Faktor C1 - Elaborationsstrategien?",
+        "Was bedeutet Selbstregulation im Faktor C2?",
+        "Was ist der Faktor C3 - Desorientierung?",
+        "Was misst C4 - Kooperationsbereitschaft?",
+        "Was sind semantische Organisatoren im Faktor C5?",
+        "Was zeigt der Faktor C6 - Konzentrationsschwierigkeiten an?",
+        "Was ist die Selbstbefragung im Faktor C7?",
+        "Was misst A1 - Basisangst?",
+        "Was ist Volition im Faktor A2?",
+        "Was sind kausale Attributionen in A3?",
+        "Was misst A4 – Zuschreibung auf unkontrollierbare Ursachen?",
+        "Was ist der Mangel an Ausdauer in A5?",
+        "Was gibt A6 – Kompetenzwahrnehmung an?",
+        "Was ist die emotionale Interferenz in A7?",
+        "Welche Faktoren des QSA sind invertiert und warum?",
+        "Wie interpretiert man einen hohen Wert bei einem invertierten Faktor?",
+        "Was bedeuten die 5 Zeitdimensionen des ZTPI?",
+        "Welche ZTPI-Dimensionen gelten als riskant?",
+        "Wie interpretiert man ein unausgewogenes ZTPI-Profil?",
+        "Was bedeutet eine ausgewogene Zeitperspektive?"
+      ],
+      "sv": [
+        "Vad mäter faktor C1 - Elaborativa strategier?",
+        "Vad innebär självreglering i faktor C2?",
+        "Vad är faktor C3 - Desorientering?",
+        "Vad mäter C4 - Samarbetsvilja?",
+        "Vad är semantiska organisatorer i faktor C5?",
+        "Vad indikerar faktor C6 - Koncentrationssvårigheter?",
+        "Vad är självförhör i faktor C7?",
+        "Vad mäter A1 - Grundläggande ångest?",
+        "Vad är volition i faktor A2?",
+        "Vad är kausala attributioner i A3?",
+        "Vad mäter A4 - Attribuering till okontrollerbara orsaker?",
+        "Vad är brist på uthållighet i A5?",
+        "Vad indikerar A6 - Uppfattning om kompetens?",
+        "Vad är emotionell interferens i A7?",
+        "Vilka faktorer i QSA är inverterade och varför?",
+        "Hur tolkar man en hög poäng i en inverterad faktor?",
+        "Vad betyder de 5 tidsdimensionerna i ZTPI?",
+        "Vilka ZTPI-dimensioner anses vara riskfyllda?",
+        "Hur tolkar man en obalanserad ZTPI-profil?",
+        "Vad innebär ett balanserat tidsperspektiv?"
+      ]
+    },
+    "q_scoring": {
+      "en": [
+        "How are stanines calculated from raw scores?",
+        "What is the difference between a raw score and a stanine?",
+        "What are the normative ranges for the QSA factors?",
+        "What does it mean when a factor has a stanine between 1 and 3?",
+        "How is a stanine between 7 and 9 interpreted?",
+        "What is the significance of the average range (stanines 4-6)?",
+        "How is the scoring of inverted factors handled?",
+        "Why must inverted factors be interpreted in reverse?",
+        "How is the overall profile calculated from the factors?",
+        "Which psychometric formulas are used for validation?",
+        "What is Cronbach's alpha and why is it important?",
+        "What does McDonald's omega measure?",
+        "What is RMSEA and what does it indicate in a CFA?",
+        "What is the significance of the CFI in validation?",
+        "How are reference norms constructed?",
+        "How many subjects are needed to construct reliable norms?",
+        "How is measurement invariance between groups verified?",
+        "What do convergent and discriminant validity mean?",
+        "How is test-retest reliability evaluated?",
+        "What are the criteria for considering an instrument validated?"
+      ],
+      "es": [
+        "¿Cómo se calculan las estaninas a partir de las puntuaciones brutas?",
+        "¿Cuál es la diferencia entre puntuación bruta y estanina?",
+        "¿Cuáles son los rangos normativos para los factores QSA?",
+        "¿Qué significa que un factor tenga una estanina entre 1 y 3?",
+        "¿Cómo se interpreta una estanina entre 7 y 9?",
+        "¿Cuál es el significado del rango medio (estaninas 4-6)?",
+        "¿Cómo se gestiona la puntuación de los factores invertidos?",
+        "¿Por qué los factores invertidos deben interpretarse a la inversa?",
+        "¿Cómo se calcula el perfil general a partir de los factores?",
+        "¿Qué fórmulas psicométricas se utilizan para la validación?",
+        "¿Qué es el Alfa de Cronbach y por qué es importante?",
+        "¿Qué mide el Omega de McDonald?",
+        "¿Qué es el RMSEA y qué indica en un AFC?",
+        "¿Cuál es el significado del CFI en la validación?",
+        "¿Cómo se construyen las normas de referencia?",
+        "¿Cuántos sujetos se necesitan para construir normas fiables?",
+        "¿Cómo se verifica la invarianza de medición entre grupos?",
+        "¿Qué significan la validez convergente y discriminante?",
+        "¿Cómo se evalúa la fiabilidad test-retest?",
+        "¿Cuáles son los criterios para considerar validado un instrumento?"
+      ],
+      "fr": [
+        "Comment calcule-t-on les stanines à partir des scores bruts ?",
+        "Quelle est la différence entre un score brut et une stanine ?",
+        "Quelles sont les plages normatives pour les facteurs QSA ?",
+        "Que signifie le fait qu'un facteur ait une stanine comprise entre 1 et 3 ?",
+        "Comment interprète-t-on une stanine comprise entre 7 et 9 ?",
+        "Quelle est la signification de la plage moyenne (stanines 4-6) ?",
+        "Comment gère-t-on le scoring des facteurs inversés ?",
+        "Pourquoi les facteurs inversés doivent-ils être interprétés à l'inverse ?",
+        "Comment calcule-t-on le profil global à partir des facteurs ?",
+        "Quelles formules psychométriques utilise-t-on pour la validation ?",
+        "Qu'est-ce que l'alpha de Cronbach et pourquoi est-il important ?",
+        "Que mesure l'oméga de McDonald ?",
+        "Qu'est-ce que le RMSEA et qu'indique-t-il dans une AFC ?",
+        "Quelle est la signification du CFI dans la validation ?",
+        "Comment construit-on les normes de référence ?",
+        "Combien de sujets sont nécessaires pour construire des normes fiables ?",
+        "Comment vérifie-t-on l'invariance de mesure entre les groupes ?",
+        "Que signifient la validité convergente et la validité discriminante ?",
+        "Comment évalue-t-on la fiabilité test-retest ?",
+        "Quels sont les critères pour considérer un instrument comme validé ?"
+      ],
+      "de": [
+        "Wie werden Stanine-Werte aus Rohwerten berechnet?",
+        "Was ist der Unterschied zwischen einem Rohwert und einem Stanine-Wert?",
+        "Was sind die normativen Bereiche für die QSA-Faktoren?",
+        "Was bedeutet es, wenn ein Faktor einen Stanine-Wert zwischen 1 und 3 aufweist?",
+        "Wie interpretiert man einen Stanine-Wert zwischen 7 und 9?",
+        "Was ist die Bedeutung des mittleren Bereichs (Stanine 4-6)?",
+        "Wie wird das Scoring der invertierten Faktoren gehandhabt?",
+        "Warum müssen invertierte Faktoren umgekehrt interpretiert werden?",
+        "Wie wird das Gesamtprofil aus den Faktoren berechnet?",
+        "Welche psychometrischen Formeln werden für die Validierung verwendet?",
+        "Was ist Cronbachs Alpha und warum ist es wichtig?",
+        "Was misst McDonalds Omega?",
+        "Was ist der RMSEA und was gibt er bei einer konfirmatorischen Faktorenanalyse (CFA) an?",
+        "Welche Bedeutung hat der CFI bei der Validierung?",
+        "Wie werden Referenznormen konstruiert?",
+        "Wie viele Probanden werden benötigt, um zuverlässige Normen zu erstellen?",
+        "Wie wird die Messinvarianz zwischen Gruppen überprüft?",
+        "Was bedeuten konvergente und diskriminante Validität?",
+        "Wie wird die Test-Retest-Reliabilität bewertet?",
+        "Welche Kriterien müssen erfüllt sein, um ein Instrument als validiert zu betrachten?"
+      ],
+      "sv": [
+        "Hur beräknas stanine-värden utifrån råpoäng?",
+        "Vad är skillnaden mellan råpoäng och stanine-värde?",
+        "Vilka är normintervallen för QSA-faktorerna?",
+        "Vad innebär det att en faktor har ett stanine-värde mellan 1 och 3?",
+        "Hur tolkar man ett stanine-värde mellan 7 och 9?",
+        "Vad är innebörden av medelintervallet (stanine 4–6)?",
+        "Hur hanteras poängsättningen av inverterade faktorer?",
+        "Varför ska inverterade faktorer tolkas omvänt?",
+        "Hur beräknas den övergripande profilen utifrån faktorerna?",
+        "Vilka psykometriska formler används för validering?",
+        "Vad är Cronbachs alfa och varför är det viktigt?",
+        "Vad mäter McDonalds omega?",
+        "Vad är RMSEA och vad indikerar det i en CFA?",
+        "Vad är innebörden av CFI vid validering?",
+        "Hur konstruerar man referensnormer?",
+        "Hur många försökspersoner behövs för att skapa tillförlitliga normer?",
+        "Hur verifierar man mätinvarians mellan grupper?",
+        "Vad innebär konvergent och diskriminant validitet?",
+        "Hur utvärderar man test-retest-reliabilitet?",
+        "Vilka kriterier krävs för att betrakta ett instrument som validerat?"
+      ]
+    },
+    "cb_piattaforma": {
+      "en": [
+        "What is CounselorBot and how does it work?",
+        "What is the difference between CounselorBot and competenzestrategiche.it?",
+        "How do I access CounselorBot?",
+        "What roles exist on the platform?",
+        "In which languages can I use CounselorBot?",
+        "How does the guided chat with the AI counselor work?",
+        "What is the student profile (open learner model)?",
+        "How can I use the portfolio on CounselorBot?",
+        "What is the purpose of the student record book?",
+        "What is the combined analysis of the questionnaires?",
+        "How does the OpenCode experience work?",
+        "What is pQBL (pure Question-Based Learning)?",
+        "How do I upload a profile from a PDF or photo?",
+        "Is it possible to use the questionnaires in Italian?",
+        "How does the information assistant work?",
+        "What are the differences between the guided chat and the assistant?",
+        "How can I keep track of past sessions?",
+        "Can I delete a session or a profile?",
+        "How does authentication work on the platform?",
+        "What data is saved and for how long?"
+      ],
+      "es": [
+        "¿Qué es CounselorBot y cómo funciona?",
+        "¿Cuál es la diferencia entre CounselorBot y competenzestrategiche.it?",
+        "¿Cómo se accede a CounselorBot?",
+        "¿Qué roles existen en la plataforma?",
+        "¿En qué idiomas puedo usar CounselorBot?",
+        "¿Cómo funciona el chat guiado con el counselor de IA?",
+        "¿Qué es el perfil del estudiante (open learner model)?",
+        "¿Cómo puedo usar el portafolio en CounselorBot?",
+        "¿Para qué sirve la libreta del estudiante?",
+        "¿Qué es el análisis combinado de los cuestionarios?",
+        "¿Cómo funciona la experiencia OpenCode?",
+        "¿Qué es el pQBL (pure Question-Based Learning)?",
+        "¿Cómo se carga un perfil desde un PDF o una foto?",
+        "¿Es posible utilizar los cuestionarios en italiano?",
+        "¿Cómo funciona el asistente informativo?",
+        "¿Cuáles son las diferencias entre el chat guiado y el asistente?",
+        "¿Cómo se realiza el seguimiento de las sesiones pasadas?",
+        "¿Puedo eliminar una sesión o un perfil?",
+        "¿Cómo funciona la autenticación en la plataforma?",
+        "¿Qué datos se guardan y durante cuánto tiempo?"
+      ],
+      "fr": [
+        "Qu'est-ce que CounselorBot et comment fonctionne-t-il ?",
+        "Quelle est la différence entre CounselorBot et competenzestrategiche.it ?",
+        "Comment accéder à CounselorBot ?",
+        "Quels rôles existent sur la plateforme ?",
+        "Dans quelles langues puis-je utiliser CounselorBot ?",
+        "Comment fonctionne le chat guidé avec le conseiller IA ?",
+        "Qu'est-ce que le profil de l'étudiant (modèle d'apprenant ouvert) ?",
+        "Comment puis-je utiliser le portfolio sur CounselorBot ?",
+        "À quoi sert le livret de l'étudiant ?",
+        "Qu'est-ce que l'analyse combinée des questionnaires ?",
+        "Comment fonctionne l'expérience OpenCode ?",
+        "Qu'est-ce que le pQBL (pure Question-Based Learning) ?",
+        "Comment charger un profil à partir d'un PDF ou d'une photo ?",
+        "Est-il possible d'utiliser les questionnaires en italien ?",
+        "Comment fonctionne l'assistant informatif ?",
+        "Quelles sont les différences entre le chat guidé et l'assistant ?",
+        "Comment garder une trace des sessions passées ?",
+        "Puis-je supprimer une session ou un profil ?",
+        "Comment fonctionne l'authentification sur la plateforme ?",
+        "Quelles données sont enregistrées et pour combien de temps ?"
+      ],
+      "de": [
+        "Was ist CounselorBot und wie funktioniert er?",
+        "Was ist der Unterschied zwischen CounselorBot und competenzestrategiche.it?",
+        "Wie greife ich auf CounselorBot zu?",
+        "Welche Rollen gibt es auf der Plattform?",
+        "In welchen Sprachen kann ich CounselorBot nutzen?",
+        "Wie funktioniert der geführte Chat mit dem KI-Berater?",
+        "Was ist das Studentenprofil (Open Learner Model)?",
+        "Wie kann ich das Portfolio auf CounselorBot nutzen?",
+        "Wozu dient das Studienbuch?",
+        "Was ist die kombinierte Analyse der Fragebögen?",
+        "Wie funktioniert die OpenCode-Erfahrung?",
+        "Was ist pQBL (pure Question-Based Learning)?",
+        "Wie lädt man ein Profil aus einem PDF oder Foto hoch?",
+        "Ist es möglich, die Fragebögen auf Italienisch zu verwenden?",
+        "Wie funktioniert der Informationsassistent?",
+        "Was sind die Unterschiede zwischen geführter Chat-Funktion und Assistent?",
+        "Wie behält man den Überblick über vergangene Sitzungen?",
+        "Kann ich eine Sitzung oder ein Profil löschen?",
+        "Wie funktioniert die Authentifizierung auf der Plattform?",
+        "Welche Daten werden gespeichert und wie lange?"
+      ],
+      "sv": [
+        "Vad är CounselorBot och hur fungerar den?",
+        "Vad är skillnaden mellan CounselorBot och competenzestrategiche.it?",
+        "Hur får man tillgång till CounselorBot?",
+        "Vilka roller finns på plattformen?",
+        "På vilka språk kan jag använda CounselorBot?",
+        "Hur fungerar den guidade chatten med AI-rådgivaren?",
+        "Vad är studentprofilen (öppen lärarmodell)?",
+        "Hur kan jag använda portföljen i CounselorBot?",
+        "Vad används studentens loggbok till?",
+        "Vad är den kombinerade analysen av frågeformulären?",
+        "Hur fungerar OpenCode-upplevelsen?",
+        "Vad är pQBL (pure Question-Based Learning)?",
+        "Hur laddar man upp en profil från en PDF eller ett foto?",
+        "Är det möjligt att använda frågeformulären på italienska?",
+        "Hur fungerar informationsassistenten?",
+        "Vilka är skillnaderna mellan guidad chatt och assistent?",
+        "Hur håller man koll på tidigare sessioner?",
+        "Kan jag radera en session eller en profil?",
+        "Hur fungerar autentiseringen på plattformen?",
+        "Vilken data sparas och hur länge?"
+      ]
+    },
+    "cb_strumenti": {
+      "en": [
+        "Which questionnaires can I use on CounselorBot?",
+        "What is the difference between QSA, QSAr, and ZTPI?",
+        "What is the QPCS questionnaire used for?",
+        "What is the QPCC and who is it aimed at?",
+        "What does the QAP measure?",
+        "How does the Savickas interview work on CounselorBot?",
+        "Which questionnaires can I complete directly on the platform?",
+        "How are scores entered manually?",
+        "Can I upload a profile already obtained on competenzestrategiche.it?",
+        "Which tools have the step-by-step guided chat?",
+        "What is the difference between scoring tools and interviews?",
+        "How does the visual results dashboard work?",
+        "What do the colors in the profile chart mean?",
+        "Which tools support PDF uploading?",
+        "Can I complete multiple questionnaires within the same account?",
+        "How do I switch from one questionnaire to another?",
+        "Which tools are available in English, Spanish, and Swedish?",
+        "Can I use CounselorBot for only some questionnaires?",
+        "How do I download the PDF report of my profile?",
+        "Which questionnaires contribute to the combined analysis?"
+      ],
+      "es": [
+        "¿Qué cuestionarios puedo usar en CounselorBot?",
+        "¿Cuál es la diferencia entre QSA, QSAr y ZTPI?",
+        "¿Para qué sirve el cuestionario QPCS?",
+        "¿Qué es el QPCC y a quién va dirigido?",
+        "¿Qué mide el QAP?",
+        "¿Cómo funciona la entrevista de Savickas en CounselorBot?",
+        "¿Qué cuestionarios puedo completar directamente en la plataforma?",
+        "¿Cómo se introducen las puntuaciones manualmente?",
+        "¿Puedo cargar un perfil ya obtenido en competenzestrategiche.it?",
+        "¿Qué herramientas tienen el chat guiado paso a paso?",
+        "¿Cuál es la diferencia entre las herramientas de puntuación y la entrevista?",
+        "¿Cómo funciona el panel visual de resultados?",
+        "¿Qué significan los colores en el gráfico del perfil?",
+        "¿Qué herramientas admiten la carga desde PDF?",
+        "¿Puedo realizar varios cuestionarios en la misma cuenta?",
+        "¿Cómo se cambia de un cuestionario a otro?",
+        "¿Qué herramientas están disponibles en inglés, español y sueco?",
+        "¿Puedo usar CounselorBot solo para algunos cuestionarios?",
+        "¿Cómo se descarga el informe PDF del propio perfil?",
+        "¿Qué cuestionarios contribuyen al análisis combinado?"
+      ],
+      "fr": [
+        "Quels questionnaires puis-je utiliser sur CounselorBot ?",
+        "Quelle est la différence entre le QSA, le QSAr et le ZTPI ?",
+        "À quoi sert le questionnaire QPCS ?",
+        "Qu'est-ce que le QPCC et à qui s'adresse-t-il ?",
+        "Que mesure le QAP ?",
+        "Comment fonctionne l'entretien Savickas sur CounselorBot ?",
+        "Quels questionnaires puis-je remplir directement sur la plateforme ?",
+        "Comment saisir les scores manuellement ?",
+        "Puis-je télécharger un profil déjà obtenu sur competenzestrategiche.it ?",
+        "Quels outils disposent d'un chat guidé étape par étape ?",
+        "Quelle est la différence entre les outils de notation et l'entretien ?",
+        "Comment fonctionne le tableau de bord visuel des résultats ?",
+        "Que signifient les couleurs dans le graphique du profil ?",
+        "Quels outils prennent en charge le téléchargement depuis un PDF ?",
+        "Puis-je effectuer plusieurs questionnaires sur le même compte ?",
+        "Comment passer d'un questionnaire à l'autre ?",
+        "Quels outils sont disponibles en anglais, espagnol et suédois ?",
+        "Puis-je utiliser CounselorBot uniquement pour certains questionnaires ?",
+        "Comment télécharger le rapport PDF de son propre profil ?",
+        "Quels questionnaires contribuent à l'analyse combinée ?"
+      ],
+      "de": [
+        "Welche Fragebögen kann ich auf CounselorBot verwenden?",
+        "Was ist der Unterschied zwischen QSA, QSAr und ZTPI?",
+        "Wozu dient der QPCS-Fragebogen?",
+        "Was ist der QPCC und an wen richtet er sich?",
+        "Was misst der QAP?",
+        "Wie funktioniert das Savickas-Interview auf CounselorBot?",
+        "Welche Fragebögen kann ich direkt auf der Plattform ausfüllen?",
+        "Wie werden die Punktzahlen manuell eingegeben?",
+        "Kann ich ein bereits auf competenzestrategiche.it erstelltes Profil hochladen?",
+        "Welche Instrumente verfügen über einen schrittweisen geführten Chat?",
+        "Was ist der Unterschied zwischen Bewertungsinstrumenten und Interviews?",
+        "Wie funktioniert das visuelle Ergebnis-Dashboard?",
+        "Was bedeuten die Farben im Profil-Diagramm?",
+        "Welche Instrumente unterstützen den PDF-Upload?",
+        "Kann ich mehrere Fragebögen im selben Konto bearbeiten?",
+        "Wie wechsle ich von einem Fragebogen zum anderen?",
+        "Welche Instrumente sind auf Englisch, Spanisch und Schwedisch verfügbar?",
+        "Kann ich CounselorBot nur für bestimmte Fragebögen verwenden?",
+        "Wie lade ich den PDF-Bericht meines Profils herunter?",
+        "Welche Fragebögen tragen zur kombinierten Analyse bei?"
+      ],
+      "sv": [
+        "Vilka frågeformulär kan jag använda på CounselorBot?",
+        "Vad är skillnaden mellan QSA, QSAr och ZTPI?",
+        "Vad används frågeformuläret QPCS till?",
+        "Vad är QPCC och vem riktar det sig till?",
+        "Vad mäter QAP?",
+        "Hur fungerar Savickas-samtalet på CounselorBot?",
+        "Vilka frågeformulär kan jag fylla i direkt på plattformen?",
+        "Hur anger man poäng manuellt?",
+        "Kan jag ladda upp en profil som redan erhållits på competenzestrategiche.it?",
+        "Vilka verktyg har en steg-för-steg-guidad chatt?",
+        "Vad är skillnaden mellan poängbaserade verktyg och intervjuer?",
+        "Hur fungerar den visuella resultatinstrumentpanelen?",
+        "Vad betyder färgerna i profilgrafen?",
+        "Vilka verktyg stöder uppladdning från PDF?",
+        "Kan jag göra flera frågeformulär på samma konto?",
+        "Hur växlar man mellan olika frågeformulär?",
+        "Vilka verktyg finns tillgängliga på engelska, spanska och svenska?",
+        "Kan jag använda CounselorBot endast för vissa frågeformulär?",
+        "Hur laddar man ner PDF-rapporten för sin profil?",
+        "Vilka frågeformulär bidrar till den kombinerade analysen?"
+      ]
+    },
+    "cb_percorso": {
+      "en": [
+        "How do I begin a self-assessment process on CounselorBot?",
+        "What happens after completing a questionnaire?",
+        "How does the chat with the AI counselor work?",
+        "Can I ask open-ended questions during the guided chat?",
+        "How do I move to the next step in the chat?",
+        "Does the counselor remember previous conversations?",
+        "How do I read my profile after the chat?",
+        "What is the purpose of the reflection journal?",
+        "How do I use the portfolio to document my journey?",
+        "What can I upload to my portfolio?",
+        "How do I perform a combined analysis of my results?",
+        "Can I interrupt a session and resume it later?",
+        "What happens if I change counselors during the process?",
+        "How do I choose the counselor best suited to me?",
+        "Can I compare the results of different questionnaires?",
+        "How do I export or save my results?",
+        "What are certified strategies and how do they help me?",
+        "How do I use pQBL to study from my own materials?",
+        "Can I share my profile with a teacher?",
+        "How do I track my progress over time?"
+      ],
+      "es": [
+        "¿Cómo inicio un proceso de autoevaluación en CounselorBot?",
+        "¿Qué sucede después de completar un cuestionario?",
+        "¿Cómo funciona el chat con el consejero de IA?",
+        "¿Puedo hacer preguntas libres durante el chat guiado?",
+        "¿Cómo paso al siguiente paso en el chat?",
+        "¿El consejero recuerda las conversaciones anteriores?",
+        "¿Cómo leo mi perfil después del chat?",
+        "¿Para qué sirve el cuaderno de reflexión?",
+        "¿Cómo uso el portafolio para documentar mi proceso?",
+        "¿Qué puedo cargar en mi portafolio?",
+        "¿Cómo realizo el análisis combinado de mis resultados?",
+        "¿Puedo interrumpir una sesión y retomarla después?",
+        "¿Qué sucede si cambio de orientador durante el proceso?",
+        "¿Cómo elijo al orientador más adecuado para mí?",
+        "¿Puedo comparar los resultados de diferentes cuestionarios?",
+        "¿Cómo exporto o guardo mis resultados?",
+        "¿Qué son las estrategias certificadas y cómo me ayudan?",
+        "¿Cómo uso el pQBL para estudiar con mis materiales?",
+        "¿Puedo compartir mi perfil con un docente?",
+        "¿Cómo sigo mis progresos a lo largo del tiempo?"
+      ],
+      "fr": [
+        "Comment puis-je entamer un processus d'auto-évaluation sur CounselorBot ?",
+        "Que se passe-t-il après avoir rempli un questionnaire ?",
+        "Comment fonctionne le chat avec le conseiller IA ?",
+        "Puis-je poser des questions libres pendant le chat guidé ?",
+        "Comment passer à l'étape suivante dans le chat ?",
+        "Le conseiller se souvient-il des conversations précédentes ?",
+        "Comment puis-je consulter mon profil après le chat ?",
+        "À quoi sert le carnet de réflexion ?",
+        "Comment utiliser le portfolio pour documenter mon parcours ?",
+        "Que puis-je télécharger dans mon portfolio ?",
+        "Comment puis-je effectuer l'analyse combinée de mes résultats ?",
+        "Puis-je interrompre une session et la reprendre plus tard ?",
+        "Que se passe-t-il si je change de conseiller en cours de route ?",
+        "Comment choisir le conseiller le plus adapté à mes besoins ?",
+        "Puis-je comparer les résultats de différents questionnaires ?",
+        "Comment exporter ou enregistrer mes résultats ?",
+        "Que sont les stratégies certifiées et comment m'aident-elles ?",
+        "Comment utiliser le pQBL pour étudier à partir de mes propres supports ?",
+        "Puis-je partager mon profil avec un enseignant ?",
+        "Comment suivre mes progrès dans le temps ?"
+      ],
+      "de": [
+        "Wie beginne ich einen Selbsteinschätzungsprozess auf CounselorBot?",
+        "Was passiert, nachdem ich einen Fragebogen ausgefüllt habe?",
+        "Wie funktioniert der Chat mit dem KI-Berater?",
+        "Kann ich während des geführten Chats freie Fragen stellen?",
+        "Wie gelange ich im Chat zum nächsten Schritt?",
+        "Erinnert sich der Berater an frühere Unterhaltungen?",
+        "Wie lese ich mein Profil nach dem Chat?",
+        "Wozu dient das Reflexionsheft?",
+        "Wie nutze ich das Portfolio, um meinen Weg zu dokumentieren?",
+        "Was kann ich in mein Portfolio hochladen?",
+        "Wie führe ich eine kombinierte Analyse meiner Ergebnisse durch?",
+        "Kann ich eine Sitzung unterbrechen und später fortsetzen?",
+        "Was passiert, wenn ich während des Prozesses den Berater wechsle?",
+        "Wie wähle ich den für mich am besten geeigneten Berater aus?",
+        "Kann ich die Ergebnisse verschiedener Fragebögen vergleichen?",
+        "Wie exportiere oder speichere ich meine Ergebnisse?",
+        "Was sind zertifizierte Strategien und wie helfen sie mir?",
+        "Wie nutze ich pQBL, um mit meinen eigenen Materialien zu lernen?",
+        "Kann ich mein Profil mit einem Dozenten teilen?",
+        "Wie verfolge ich meine Fortschritte im Laufe der Zeit?"
+      ],
+      "sv": [
+        "Hur påbörjar jag en självutvärderingsprocess på CounselorBot?",
+        "Vad händer efter att jag har slutfört ett frågeformulär?",
+        "Hur fungerar chatten med AI-rådgivaren?",
+        "Kan jag ställa fria frågor under den guidade chatten?",
+        "Hur går jag vidare till nästa steg i chatten?",
+        "Kommer rådgivaren ihåg tidigare konversationer?",
+        "Hur läser jag min profil efter chatten?",
+        "Vad är syftet med reflektionsboken?",
+        "Hur använder jag portföljen för att dokumentera min resa?",
+        "Vad kan jag ladda upp i min portfölj?",
+        "Hur gör jag en kombinerad analys av mina resultat?",
+        "Kan jag avbryta en session och återuppta den senare?",
+        "Vad händer om jag byter rådgivare under processens gång?",
+        "Hur väljer jag den rådgivare som passar mig bäst?",
+        "Kan jag jämföra resultaten från olika frågeformulär?",
+        "Hur exporterar eller sparar jag mina resultat?",
+        "Vad är certifierade strategier och hur hjälper de mig?",
+        "Hur använder jag pQBL för att studera utifrån mitt eget material?",
+        "Kan jag dela min profil med en lärare?",
+        "Hur följer jag mina framsteg över tid?"
+      ]
+    },
+    "cb_console": {
+      "en": [
+        "How do I access the administration console?",
+        "What functions does the console have for researchers?",
+        "How are system prompts configured?",
+        "How do I create a new AI counselor?",
+        "How are AI model presets managed?",
+        "How do I view questionnaire results?",
+        "How do I export data for validation?",
+        "How do I create research contacts using QR codes?",
+        "How are administration plans managed?",
+        "How do I monitor costs per AI model?",
+        "How does model benchmarking work?",
+        "How are conversation logs viewed?",
+        "How are retention and PII redaction managed?",
+        "How is the training dataset accessed?",
+        "How are suggested questions for the assistant managed?",
+        "How does the certified strategies panel work?",
+        "How is the monthly budget configured?",
+        "How is the role preview (view-as) used?",
+        "How is the prompt audit accessed?",
+        "How are satisfaction questionnaires managed?"
+      ],
+      "es": [
+        "¿Cómo accedo a la consola de administración?",
+        "¿Qué funciones tiene la consola para los investigadores?",
+        "¿Cómo se configuran los prompts del sistema?",
+        "¿Cómo se crea un nuevo consejero de IA?",
+        "¿Cómo se gestionan los ajustes preestablecidos de los modelos de IA?",
+        "¿Cómo se visualizan los resultados de los cuestionarios?",
+        "¿Cómo se exportan los datos para la validación?",
+        "¿Cómo se crean contactos de investigación con códigos QR?",
+        "¿Cómo se gestionan los planes de administración?",
+        "¿Cómo se monitorean los costos por modelo de IA?",
+        "¿Cómo funciona el benchmark de los modelos?",
+        "¿Cómo se visualizan los registros de las conversaciones?",
+        "¿Cómo se gestiona la retención y la redacción de PII?",
+        "¿Cómo se accede al conjunto de datos de entrenamiento?",
+        "¿Cómo se gestionan las preguntas sugeridas para el asistente?",
+        "¿Cómo funciona el panel de las estrategias certificadas?",
+        "¿Cómo se configura el presupuesto mensual?",
+        "¿Cómo se utiliza la vista previa de rol (view-as)?",
+        "¿Cómo se accede a la auditoría de prompts?",
+        "¿Cómo se gestionan los cuestionarios de satisfacción?"
+      ],
+      "fr": [
+        "Comment accéder à la console d'administration ?",
+        "Quelles fonctions la console propose-t-elle aux chercheurs ?",
+        "Comment configurer les invites système ?",
+        "Comment créer un nouveau conseiller IA ?",
+        "Comment gérer les préréglages des modèles d'IA ?",
+        "Comment visualiser les résultats des questionnaires ?",
+        "Comment exporter les données pour la validation ?",
+        "Comment créer des contacts de recherche avec des codes QR ?",
+        "Comment gérer les plans d'administration ?",
+        "Comment surveiller les coûts par modèle d'IA ?",
+        "Comment fonctionne le benchmark des modèles ?",
+        "Comment visualiser les journaux de conversation ?",
+        "Comment gérer la rétention et la rédaction des PII ?",
+        "Comment accéder au jeu de données d'entraînement ?",
+        "Comment gérer les questions suggérées pour l'assistant ?",
+        "Comment fonctionne le panneau des stratégies certifiées ?",
+        "Comment configurer le budget mensuel ?",
+        "Comment utiliser l'aperçu de rôle (view-as) ?",
+        "Comment accéder à l'audit des prompts ?",
+        "Comment gérer les questionnaires de satisfaction ?"
+      ],
+      "de": [
+        "Wie greife ich auf die Verwaltungskonsole zu?",
+        "Welche Funktionen bietet die Konsole für Forschende?",
+        "Wie werden System-Prompts konfiguriert?",
+        "Wie erstelle ich einen neuen KI-Berater?",
+        "Wie werden die Presets der KI-Modelle verwaltet?",
+        "Wie lassen sich die Ergebnisse der Fragebögen anzeigen?",
+        "Wie werden Daten für die Validierung exportiert?",
+        "Wie erstelle ich Forschungskontakte mittels QR-Code?",
+        "Wie werden die Verabreichungspläne verwaltet?",
+        "Wie werden die Kosten pro KI-Modell überwacht?",
+        "Wie funktioniert das Modell-Benchmarking?",
+        "Wie lassen sich die Konversationsprotokolle einsehen?",
+        "Wie werden die Aufbewahrungsfristen und die PII-Schwärzung verwaltet?",
+        "Wie erhält man Zugriff auf den Trainingsdatensatz?",
+        "Wie werden die vorgeschlagenen Fragen für den Assistenten verwaltet?",
+        "Wie funktioniert das Dashboard für zertifizierte Strategien?",
+        "Wie wird das monatliche Budget konfiguriert?",
+        "Wie verwendet man die Rollenvorschau (View-as)?",
+        "Wie erhält man Zugriff auf das Prompt-Audit?",
+        "Wie werden die Zufriedenheitsumfragen verwaltet?"
+      ],
+      "sv": [
+        "Hur kommer jag åt administrationskonsolen?",
+        "Vilka funktioner har konsolen för forskare?",
+        "Hur konfigurerar man systemprompter?",
+        "Hur skapar man en ny AI-rådgivare?",
+        "Hur hanterar man förinställningar för AI-modeller?",
+        "Hur visar man resultaten från frågeformulären?",
+        "Hur exporterar man data för validering?",
+        "Hur skapar man forskningskontakter med QR-koder?",
+        "Hur hanterar man administrationsplaner?",
+        "Hur övervakar man kostnader per AI-modell?",
+        "Hur fungerar modellernas benchmark?",
+        "Hur visualiserar man konversationsloggar?",
+        "Hur hanteras lagring och redigering av PII?",
+        "Hur får man tillgång till träningsdatasetet?",
+        "Hur hanterar man föreslagna frågor för assistenten?",
+        "Hur fungerar panelen för certifierade strategier?",
+        "Hur konfigurerar man den månatliga budgeten?",
+        "Hur använder man rollförhandsgranskning (view-as)?",
+        "Hur får man tillgång till prompt-revisionen?",
+        "Hur hanterar man nöjdhetsenkäter?"
+      ]
+    },
+    "cb_counselor": {
+      "en": [
+        "What is an AI counselor on CounselorBot?",
+        "How do you create a new counselor?",
+        "Which fields define a counselor?",
+        "How do you connect a counselor to an AI model?",
+        "What is a counselor's persona?",
+        "How do you write an effective persona for a counselor?",
+        "How are questionnaires assigned to a counselor?",
+        "How do you set the languages supported by a counselor?",
+        "How do you activate or deactivate a counselor?",
+        "What is the difference between a local counselor and a cloud counselor?",
+        "How are counselors ordered in the selector?",
+        "How is a counselor's description translated?",
+        "How do you test a counselor before activating it?",
+        "Which counseling styles are available?",
+        "How do you customize the counselor's tone?",
+        "Can I create different counselors for different tools?",
+        "How does the counselor influence the guided chat?",
+        "Which AI models are recommended for counselors?",
+        "How do you disable thinking for a counselor?",
+        "How do you set an avatar for the counselor?"
+      ],
+      "es": [
+        "¿Qué es un counselor de IA en CounselorBot?",
+        "¿Cómo se crea un nuevo counselor?",
+        "¿Qué campos definen a un counselor?",
+        "¿Cómo se conecta un counselor a un modelo de IA?",
+        "¿Qué es la persona de un counselor?",
+        "¿Cómo se escribe una persona eficaz para un counselor?",
+        "¿Cómo se asignan los cuestionarios a un counselor?",
+        "¿Cómo se configuran los idiomas admitidos por un counselor?",
+        "¿Cómo se activa o desactiva un counselor?",
+        "¿Cuál es la diferencia entre un counselor local y uno en la nube?",
+        "¿Cómo se ordenan los counselors en el selector?",
+        "¿Cómo se traduce la descripción de un counselor?",
+        "¿Cómo se prueba un counselor antes de activarlo?",
+        "¿Qué estilos de counseling están disponibles?",
+        "¿Cómo se personaliza el tono del counselor?",
+        "¿Puedo crear counselors diferentes para herramientas diferentes?",
+        "¿Cómo influye el counselor en el chat guiado?",
+        "¿Qué modelos de IA se recomiendan para los counselors?",
+        "¿Cómo se deshabilita el thinking para un counselor?",
+        "¿Cómo se configura un avatar para el counselor?"
+      ],
+      "fr": [
+        "Qu'est-ce qu'un conseiller IA sur CounselorBot ?",
+        "Comment créer un nouveau conseiller ?",
+        "Quels champs définissent un conseiller ?",
+        "Comment connecter un conseiller à un modèle d'IA ?",
+        "Qu'est-ce que la persona d'un conseiller ?",
+        "Comment rédiger une persona efficace pour un conseiller ?",
+        "Comment assigner des questionnaires à un conseiller ?",
+        "Comment définir les langues prises en charge par un conseiller ?",
+        "Comment activer ou désactiver un conseiller ?",
+        "Quelle est la différence entre un conseiller local et un conseiller cloud ?",
+        "Comment les conseillers sont-ils triés dans le sélecteur ?",
+        "Comment traduit-on la description d'un conseiller ?",
+        "Comment teste-t-on un conseiller avant de l'activer ?",
+        "Quels styles de conseil sont disponibles ?",
+        "Comment personnalise-t-on le ton du conseiller ?",
+        "Puis-je créer des conseillers différents pour des outils différents ?",
+        "Comment le conseiller influence-t-il le chat guidé ?",
+        "Quels modèles d'IA sont recommandés pour les conseillers ?",
+        "Comment désactive-t-on la réflexion (thinking) pour un conseiller ?",
+        "Comment définit-on un avatar pour le conseiller ?"
+      ],
+      "de": [
+        "Was ist ein KI-Counselor auf CounselorBot?",
+        "Wie erstellt man einen neuen Counselor?",
+        "Welche Felder definieren einen Counselor?",
+        "Wie verbindet man einen Counselor mit einem KI-Modell?",
+        "Was ist die Persona eines Counselors?",
+        "Wie schreibt man eine effektive Persona für einen Counselor?",
+        "Wie weist man einem Counselor Fragebögen zu?",
+        "Wie legt man die unterstützten Sprachen eines Counselors fest?",
+        "Wie aktiviert oder deaktiviert man einen Counselor?",
+        "Was ist der Unterschied zwischen einem lokalen Counselor und einem Cloud-Counselor?",
+        "Wie werden die Berater im Auswahlmenü sortiert?",
+        "Wie übersetzt man die Beschreibung eines Beraters?",
+        "Wie testet man einen Berater, bevor man ihn aktiviert?",
+        "Welche Beratungsstile stehen zur Verfügung?",
+        "Wie personalisiert man den Tonfall des Beraters?",
+        "Kann ich verschiedene Berater für unterschiedliche Tools erstellen?",
+        "Wie beeinflusst der Berater den geführten Chat?",
+        "Welche KI-Modelle werden für Berater empfohlen?",
+        "Wie deaktiviert man das Thinking für einen Berater?",
+        "Wie legt man einen Avatar für den Berater fest?"
+      ],
+      "sv": [
+        "Vad är en AI-rådgivare på CounselorBot?",
+        "Hur skapar man en ny rådgivare?",
+        "Vilka fält definierar en rådgivare?",
+        "Hur kopplar man en rådgivare till en AI-modell?",
+        "Vad är en rådgivares persona?",
+        "Hur skriver man en effektiv persona för en rådgivare?",
+        "Hur tilldelar man frågeformulär till en rådgivare?",
+        "Hur ställer man in de språk som stöds av en rådgivare?",
+        "Hur aktiverar eller inaktiverar man en rådgivare?",
+        "Vad är skillnaden mellan en lokal rådgivare och en molnbaserad rådgivare?",
+        "Hur sorteras rådgivare i väljaren?",
+        "Hur översätter man beskrivningen av en rådgivare?",
+        "Hur testar man en rådgivare innan den aktiveras?",
+        "Vilka rådgivningsstilar finns tillgängliga?",
+        "Hur anpassar man rådgivarens ton?",
+        "Kan jag skapa olika rådgivare för olika verktyg?",
+        "Hur påverkar rådgivaren den guidade chatten?",
+        "Vilka AI-modeller rekommenderas för rådgivare?",
+        "Hur inaktiverar man \"thinking\" för en rådgivare?",
+        "Hur ställer man in en avatar för rådgivaren?"
+      ]
+    },
+    "cb_guida": {
+      "en": [
+        "How do I organize a counseling session for my students?",
+        "How do I prepare students for the use of questionnaires?",
+        "How do I generate access codes for an administration?",
+        "How do I create an administration plan?",
+        "How do I link researchers to an administration plan?",
+        "How do I monitor student progress?",
+        "How do I access my students' results?",
+        "How do I export data for statistical analysis?",
+        "How do I present results without creating labels?",
+        "How do I integrate CounselorBot into a teaching module?",
+        "How do I use the assistant to prepare questions?",
+        "How do I manage large classes with the platform?",
+        "How do I train other teachers on how to use the tools?",
+        "What support materials are available for teachers?",
+        "How is the role preview function used?",
+        "How do I verify that students have completed the course?",
+        "How do I manage privacy and consent?",
+        "How do I use pQBL to create quizzes from materials?",
+        "How do I evaluate the effectiveness of the counseling process?",
+        "How do I share results with colleagues and parents?"
+      ],
+      "es": [
+        "¿Cómo organizo una sesión de orientación para mis estudiantes?",
+        "¿Cómo preparo a los estudiantes para el uso de los cuestionarios?",
+        "¿Cómo genero códigos de acceso para una administración?",
+        "¿Cómo creo un plan de administración?",
+        "¿Cómo vinculo a los investigadores con un plan de administración?",
+        "¿Cómo monitoreo el progreso de los estudiantes?",
+        "¿Cómo accedo a los resultados de mis estudiantes?",
+        "¿Cómo exporto los datos para el análisis estadístico?",
+        "¿Cómo presento los resultados sin crear etiquetas?",
+        "¿Cómo integro a CounselorBot en un módulo didáctico?",
+        "¿Cómo uso el asistente para preparar las preguntas?",
+        "¿Cómo gestiono clases numerosas con la plataforma?",
+        "¿Cómo formo a otros docentes en el uso de las herramientas?",
+        "¿Qué materiales de apoyo están disponibles para los docentes?",
+        "¿Cómo se usa la función de vista previa de rol?",
+        "¿Cómo verifico que los estudiantes hayan completado el recorrido?",
+        "¿Cómo gestiono la privacidad y el consentimiento?",
+        "¿Cómo uso el pQBL para crear cuestionarios a partir de los materiales?",
+        "¿Cómo evalúo la eficacia del proceso de orientación?",
+        "¿Cómo comparto los resultados con colegas y padres?"
+      ],
+      "fr": [
+        "Comment organiser une séance de conseil pour mes étudiants ?",
+        "Comment préparer les étudiants à l'utilisation des questionnaires ?",
+        "Comment générer des codes d'accès pour une passation ?",
+        "Comment créer un plan de passation ?",
+        "Comment associer des chercheurs à un plan de passation ?",
+        "Comment suivre les progrès des étudiants ?",
+        "Comment accéder aux résultats de mes étudiants ?",
+        "Comment exporter les données pour l'analyse statistique ?",
+        "Comment présenter les résultats sans créer d'étiquettes ?",
+        "Comment intégrer CounselorBot dans un module pédagogique ?",
+        "Comment utiliser l'assistant pour préparer les questions ?",
+        "Comment gérer des classes nombreuses avec la plateforme ?",
+        "Comment former d'autres enseignants à l'utilisation des outils ?",
+        "Quels supports pédagogiques sont disponibles pour les enseignants ?",
+        "Comment utiliser la fonction de prévisualisation de rôle ?",
+        "Comment vérifier que les étudiants ont terminé le parcours ?",
+        "Comment gérer la confidentialité et le consentement ?",
+        "Comment utiliser le pQBL pour créer des quiz à partir des supports ?",
+        "Comment évaluer l'efficacité du parcours de conseil ?",
+        "Comment partager les résultats avec mes collègues et les parents ?"
+      ],
+      "de": [
+        "Wie organisiere ich eine Beratungssitzung für meine Studierenden?",
+        "Wie bereite ich die Studierenden auf die Nutzung von Fragebögen vor?",
+        "Wie generiere ich Zugangscodes für eine Durchführung?",
+        "Wie erstelle ich einen Durchführungsplan?",
+        "Wie verknüpfe ich Forschende mit einem Durchführungsplan?",
+        "Wie überwache ich den Fortschritt der Studierenden?",
+        "Wie greife ich auf die Ergebnisse meiner Studierenden zu?",
+        "Wie exportiere ich die Daten für die statistische Analyse?",
+        "Wie präsentiere ich die Ergebnisse, ohne Etikettierungen vorzunehmen?",
+        "Wie integriere ich CounselorBot in ein Lehrmodul?",
+        "Wie nutze ich den Assistenten zur Vorbereitung von Fragen?",
+        "Wie verwalte ich große Klassen mit der Plattform?",
+        "Wie schule ich andere Lehrkräfte im Umgang mit den Tools?",
+        "Welche Unterstützungsmaterialien stehen Lehrkräften zur Verfügung?",
+        "Wie verwende ich die Rollenvorschau-Funktion?",
+        "Wie überprüfe ich, ob die Studierenden den Kurs abgeschlossen haben?",
+        "Wie gehe ich mit Datenschutz und Einwilligung um?",
+        "Wie nutze ich pQBL, um Quizze aus Materialien zu erstellen?",
+        "Wie bewerte ich die Wirksamkeit des Beratungsprozesses?",
+        "Wie teile ich die Ergebnisse mit Kollegen und Eltern?"
+      ],
+      "sv": [
+        "Hur organiserar jag en rådgivningssession för mina studenter?",
+        "Hur förbereder jag studenterna på att använda frågeformulär?",
+        "Hur genererar jag åtkomstkoder för en administrering?",
+        "Hur skapar jag en administreringsplan?",
+        "Hur kopplar jag forskare till en administreringsplan?",
+        "Hur följer jag upp studenternas framsteg?",
+        "Hur får jag tillgång till mina studenters resultat?",
+        "Hur exporterar jag data för statistisk analys?",
+        "Hur presenterar jag resultat utan att skapa etiketter?",
+        "Hur integrerar jag CounselorBot i en utbildningsmodul?",
+        "Hur använder jag assistenten för att förbereda frågor?",
+        "Hur hanterar jag stora klasser med plattformen?",
+        "Hur utbildar jag andra lärare i användningen av verktygen?",
+        "Vilket stödmaterial finns tillgängligt för lärarna?",
+        "Hur använder man funktionen för rollförhandsgranskning?",
+        "Hur kontrollerar jag att eleverna har slutfört kursen?",
+        "Hur hanterar jag integritet och samtycke?",
+        "Hur använder jag pQBL för att skapa quiz från material?",
+        "Hur utvärderar jag effektiviteten i vägledningsprocessen?",
+        "Hur delar jag resultaten med kollegor och föräldrar?"
+      ]
+    }
+  }
+}
