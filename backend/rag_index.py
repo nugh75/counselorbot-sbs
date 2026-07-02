@@ -1326,11 +1326,34 @@ def _read_collection_label(slug: str) -> str:
         return slug
 
 
+def graphify_graph_path_for(collection: str) -> str | None:
+    """Restituisce il graph.html Graphify della collezione, se esiste."""
+    candidates: list[str] = []
+    if collection in (COLLECTION_COMPETENZE, COLLECTION_FRAMEWORK):
+        candidates.append(os.path.join(FRAMEWORK_DOCS_DIR, "graphify-out", "graph.html"))
+    elif collection == COLLECTION_QUESTIONARI:
+        candidates.extend([
+            os.path.join(QUESTIONARI_DOCS_DIR, "strumenti", "graphify-out", "graph.html"),
+            os.path.join(QUESTIONARI_DOCS_DIR, "graphify-out", "graph.html"),
+        ])
+    elif collection == COLLECTION_COUNSELORBOT:
+        candidates.append(os.path.join(COUNSELORBOT_DOCS_DIR, "graphify-out", "graph.html"))
+    elif is_dynamic_collection(collection):
+        candidates.append(os.path.join(_dynamic_dir(collection), "graphify-out", "graph.html"))
+    if collection in (COLLECTION_COMPETENZE, COLLECTION_FRAMEWORK, COLLECTION_QUESTIONARI):
+        candidates.append(os.path.join(DOCS_DIR, "graphify-out", "graph.html"))
+    for path in candidates:
+        if os.path.isfile(path):
+            return path
+    return None
+
+
 def list_collections() -> list[dict]:
     """Tutte le collezioni disponibili: builtin + dinamiche."""
     out = [
         {"id": cid, "label": BUILTIN_COLLECTION_LABELS.get(cid, cid),
-         "mode": idx.mode, "builtin": True}
+         "mode": idx.mode, "builtin": True,
+         "graph_available": graphify_graph_path_for(cid) is not None}
         for cid, idx in RAG_COLLECTIONS.items()
     ]
     if os.path.isdir(DYNAMIC_ROOT):
@@ -1340,7 +1363,8 @@ def list_collections() -> list[dict]:
             if not os.path.isdir(_dynamic_dir(name)):
                 continue
             out.append({"id": name, "label": _read_collection_label(name),
-                        "mode": "plain", "builtin": False})
+                        "mode": "plain", "builtin": False,
+                        "graph_available": graphify_graph_path_for(name) is not None})
     return out
 
 

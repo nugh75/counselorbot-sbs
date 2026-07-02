@@ -6,7 +6,7 @@
 // - reindicizzazione manuale e stato dell'indice per collezione.
 
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
-import { AlertTriangle, Database, Download, Eye, FolderPlus, Loader2, RefreshCw, Trash2, Upload, X } from 'lucide-react';
+import { AlertTriangle, Database, Download, Eye, FolderPlus, GitBranch, Loader2, RefreshCw, Trash2, Upload, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 
 interface RagCollection {
@@ -15,6 +15,7 @@ interface RagCollection {
     mode: 'graphify' | 'plain' | string;
     builtin: boolean;
     upload_dir?: string | null;
+    graph_available?: boolean;
 }
 
 interface RagDoc {
@@ -71,6 +72,11 @@ function docFileUrl(collection: string, source: string, download = false): strin
     const qs = new URLSearchParams({ collection, source });
     if (download) qs.set('download', 'true');
     return `/api/admin/rag/docs/file?${qs.toString()}`;
+}
+
+function graphUrl(collection: string): string {
+    const qs = new URLSearchParams({ collection });
+    return `/api/admin/rag/graph?${qs.toString()}`;
 }
 
 export function RagDocsPanel() {
@@ -420,6 +426,17 @@ export function RagDocsPanel() {
                                     }}
                                 />
                             </label>
+                            {currentCollection.graph_available && (
+                                <a
+                                    href={graphUrl(currentCollection.id)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
+                                >
+                                    <GitBranch className="h-4 w-4" />
+                                    {t('admin.rag.openGraph')}
+                                </a>
+                            )}
                             <button
                                 type="button"
                                 disabled={reindexing}
