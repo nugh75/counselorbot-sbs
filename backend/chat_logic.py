@@ -1496,6 +1496,42 @@ def _filter_allowed_strategy_entries(entries: List[dict], allowed_strategy_ids) 
     return [entry for entry in entries if str(entry.get("id", "")).strip() in allowed]
 
 
+# Famiglie di strumenti per il filtro del retrieval. QSA e QSAr condividono
+# teoria e fattori: stessa famiglia. I token sono cercati in titolo+percorso+testo.
+_INSTRUMENT_FAMILIES: dict[str, re.Pattern] = {
+    "QSA": re.compile(r"\bQSA-?r?\b", re.IGNORECASE),
+    "ZTPI": re.compile(r"\bZTPI\b|\bZimbardo\b", re.IGNORECASE),
+    "QPCS": re.compile(r"\bQPCS\b", re.IGNORECASE),
+    "QPCC": re.compile(r"\bQPCC\b", re.IGNORECASE),
+    "QAP": re.compile(r"\bQAP\b", re.IGNORECASE),
+    "SAVICKAS": re.compile(r"\bSavickas\b", re.IGNORECASE),
+}
+
+
+def _instrument_family(questionnaire_type: Optional[str]) -> str:
+    q = (questionnaire_type or "").upper()
+    if q in {"QSA", "QSAR"}:
+        return "QSA"
+    return q if q in _INSTRUMENT_FAMILIES else ""
+
+
+def _filter_rag_results_by_instrument(results: list, questionnaire_type: Optional[str]) -> list:
+    """Scarta i chunk RAG che appartengono a un altro strumento: nominano una o
+    piu' famiglie diverse da quella corrente e mai quella corrente. I chunk senza
+    riferimenti a strumenti (testo generale sulle competenze) passano sempre."""
+    family = _instrument_family(questionnaire_type)
+    if not family or not results:
+        return results
+    kept = []
+    for r in results:
+        haystack = f"{r.get('title', '')} {r.get('source', '')} {r.get('text', '')}"
+        mentioned = {name for name, pattern in _INSTRUMENT_FAMILIES.items() if pattern.search(haystack)}
+        if mentioned and family not in mentioned:
+            continue
+        kept.append(r)
+    return kept
+
+
 def _retrieved_context(
     db,
     session_id: str,
@@ -1578,10 +1614,13 @@ def _retrieved_context(
     if bool(component_flags.get("rag_competenzestrategiche", True)):
         try:
             if query:
-                rag_results = site_rag_index.search(
-                    ai_service, query,
-                    top_k=6, audience="studente",
-                    max_per_source=2, min_score=0.25,
+                rag_results = _filter_rag_results_by_instrument(
+                    site_rag_index.search(
+                        ai_service, query,
+                        top_k=6, audience="studente",
+                        max_per_source=2, min_score=0.25,
+                    ),
+                    questionnaire_type,
                 )
                 if rag_results:
                     graph_context = rag_build_context(rag_results, max_chars=3500)[0]
@@ -1594,10 +1633,13 @@ def _retrieved_context(
     if bool(component_flags.get("rag_counselorbot", False)):
         try:
             if query:
-                cb_results = counselorbot_rag_index.search(
-                    ai_service, query,
-                    top_k=3, audience="studente",
-                    max_per_source=2, min_score=0.25,
+                cb_results = _filter_rag_results_by_instrument(
+                    counselorbot_rag_index.search(
+                        ai_service, query,
+                        top_k=3, audience="studente",
+                        max_per_source=2, min_score=0.25,
+                    ),
+                    questionnaire_type,
                 )
                 if cb_results:
                     counselorbot_context = rag_build_context(cb_results, max_chars=3500)[0]
@@ -1610,10 +1652,13 @@ def _retrieved_context(
     if bool(component_flags.get("rag_questionari", False)):
         try:
             if query:
-                q_results = questionari_rag_index.search(
-                    ai_service, query,
-                    top_k=4, audience="studente",
-                    max_per_source=2, min_score=0.25,
+                q_results = _filter_rag_results_by_instrument(
+                    questionari_rag_index.search(
+                        ai_service, query,
+                        top_k=4, audience="studente",
+                        max_per_source=2, min_score=0.25,
+                    ),
+                    questionnaire_type,
                 )
                 if q_results:
                     questionari_context = rag_build_context(q_results, max_chars=3500)[0]
