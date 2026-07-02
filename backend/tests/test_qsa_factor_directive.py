@@ -300,6 +300,28 @@ def test_score_profile_inverted_note_conditional_on_scope():
     assert "lack of perseverance is a strength" not in out_no_a5
 
 
+def test_ztpi_score_profile_resolves_zone():
+    scores = "PROFILO ZTPI DELLO STUDENTE:\n- T1: 7/9"
+    out = _apply_current_step_score_profile_directive("BASE", "ZTPI", "it", scores, {"T1"}, include_advice=False)
+    assert "[CURRENT STEP SCORE PROFILE]" in out
+    assert "T1 (Passato Negativo): 7/9 = Area di crescita" in out
+    assert "non-dramatising" in out
+    # Zone: 3 = in linea (ideale 2-4), 5 = vicino (near 1-5)
+    out_in = _apply_current_step_score_profile_directive("BASE", "ZTPI", "it", "- T1: 3/9", {"T1"}, include_advice=False)
+    assert "T1 (Passato Negativo): 3/9 = In linea con il profilo equilibrato" in out_in
+    out_close = _apply_current_step_score_profile_directive("BASE", "ZTPI", "it", "- T1: 5/9", {"T1"}, include_advice=False)
+    assert "T1 (Passato Negativo): 5/9 = Vicino al profilo equilibrato" in out_close
+
+
+def test_ztpi_score_profile_scopes_to_allowed_codes():
+    scores = "- T1: 7/9\n- T2: 6/9\n- T4: 2/9"
+    out = _apply_current_step_score_profile_directive("BASE", "ZTPI", "it", scores, {"T4"}, include_advice=False)
+    assert "T4 (Presente Fatalistico): 2/9 = In linea con il profilo equilibrato" in out
+    assert "T1" not in out
+    # Nessun punteggio in scope -> prompt invariato
+    assert _apply_current_step_score_profile_directive("BASE", "ZTPI", "it", "", {"T1"}, include_advice=False) == "BASE"
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0

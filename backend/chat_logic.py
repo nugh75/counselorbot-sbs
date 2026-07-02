@@ -998,6 +998,78 @@ def _apply_current_step_factor_scope_directive(system_prompt: str, questionnaire
     )
 
 
+# ZTPI: bande operative del profilo bilanciato per fattore su scala 1-9
+# (ideale_min, ideale_max, vicino_min, vicino_max) — stesse bande del prompt sezione.
+_ZTPI_BANDS: dict[str, tuple[int, int, int, int]] = {
+    "T1": (2, 4, 1, 5),
+    "T2": (5, 7, 4, 8),
+    "T3": (7, 8, 6, 9),
+    "T4": (1, 3, 1, 4),
+    "T5": (5, 7, 4, 8),
+}
+# Etichette di zona nella lingua dello studente (it, altrimenti en come i nomi fattore).
+_ZTPI_ZONE_LABELS: dict[str, dict[str, str]] = {
+    "it": {
+        "in_line": "In linea con il profilo equilibrato",
+        "close": "Vicino al profilo equilibrato",
+        "growth": "Area di crescita",
+    },
+    "en": {
+        "in_line": "In line with the balanced profile",
+        "close": "Close to the balanced profile",
+        "growth": "Area for growth",
+    },
+}
+_ZTPI_SCORE_RE = re.compile(r"\b(T[1-5])\b[^\n\r0-9]{0,80}?([1-9])\s*/\s*9\b", re.IGNORECASE)
+
+
+def _ztpi_zone_for_score(code: str, score: int) -> str:
+    ideal_min, ideal_max, near_min, near_max = _ZTPI_BANDS[code]
+    if ideal_min <= score <= ideal_max:
+        return "in_line"
+    if near_min <= score <= near_max:
+        return "close"
+    return "growth"
+
+
+def _apply_ztpi_step_profile_directive(
+    system_prompt: str,
+    language: Optional[str],
+    scores_context: str,
+    allowed_codes: set[str],
+) -> str:
+    """[CURRENT STEP SCORE PROFILE] per ZTPI: zona di appartenenza gia' risolta
+    rispetto alle bande del profilo bilanciato, cosi' il modello non deve
+    calcolarla (parita' con il QSA)."""
+    if not scores_context or not allowed_codes:
+        return system_prompt
+    lang = _ztpi_lang(language)
+    names = _ZTPI_FACTOR_NAMES[lang]
+    labels = _ZTPI_ZONE_LABELS[lang]
+    allowed = {code.upper() for code in allowed_codes}
+    lines = []
+    for code, raw_score in _ZTPI_SCORE_RE.findall(scores_context):
+        code = code.upper()
+        if code not in allowed or code not in names:
+            continue
+        zone = _ztpi_zone_for_score(code, int(raw_score))
+        lines.append(f"- {code} ({names[code]}): {raw_score}/9 = {labels[zone]}")
+    if not lines:
+        return system_prompt
+    return (
+        f"{system_prompt}\n\n"
+        "[CURRENT STEP SCORE PROFILE]\n"
+        + "\n".join(sorted(lines))
+        + "\n"
+        "The membership zone is already resolved above: state it explicitly in your "
+        "answer using exactly that label, and report the score exactly as written — "
+        "never change numbers or labels. Describe scores outside the ideal range as "
+        "tendencies to work on, in a factual and non-dramatising tone: never suggest "
+        "trauma, pathology or clinical conditions. Discuss ONLY the factors listed "
+        "above; do not mention or explain other time perspectives in this step."
+    )
+
+
 def _apply_current_step_score_profile_directive(
     system_prompt: str,
     questionnaire_type: str,
@@ -1006,6 +1078,8 @@ def _apply_current_step_score_profile_directive(
     allowed_codes: set[str],
     include_advice: bool,
 ) -> str:
+    if (questionnaire_type or "").upper() == "ZTPI":
+        return _apply_ztpi_step_profile_directive(system_prompt, language, scores_context, allowed_codes)
     profile = _qsa_step_score_profile(scores_context, questionnaire_type, language, allowed_codes)
     if not profile:
         return system_prompt
