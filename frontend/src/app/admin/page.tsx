@@ -24,13 +24,14 @@ import { AssistantQuestionsPanel } from '@/components/admin/AssistantQuestionsPa
 import { AssistantAdminPanel } from '@/components/admin/AssistantAdminPanel';
 import { RolePreviewPanel } from '@/components/admin/RolePreviewPanel';
 import { RagDocsPanel } from '@/components/admin/RagDocsPanel';
+import { GuidedStepQuestionsPanel } from '@/components/admin/GuidedStepQuestionsPanel';
 import { getRealIdentity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { canUseResearchConsole } from '@/lib/roles';
 
 import { cn } from '@/lib/utils';
 
-type AdminTab = 'assistantManager' | 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'approvedStrategies' | 'certifiedStrategies' | 'assistantQuestions' | 'ragDocs' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'training' | 'pqbl' | 'rolePreview';
+type AdminTab = 'assistantManager' | 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'approvedStrategies' | 'certifiedStrategies' | 'assistantQuestions' | 'guidedStepQuestions' | 'ragDocs' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'training' | 'pqbl' | 'rolePreview';
 
 export default function AdminPage() {
     const router = useRouter();
@@ -52,6 +53,7 @@ export default function AdminPage() {
                 { id: 'approvedStrategies', label: t('admin.tab.approvedStrategies'), icon: Database },
                 { id: 'certifiedStrategies', label: t('admin.tab.certified'), icon: Award },
                 { id: 'assistantQuestions', label: t('admin.tab.assistantQuestions'), icon: MessageCircleQuestion },
+                { id: 'guidedStepQuestions', label: t('admin.tab.guidedStepQuestions'), icon: MessageCircleQuestion },
                 { id: 'ragDocs', label: t('admin.tab.ragDocs'), icon: FolderOpen },
             ],
         },
@@ -220,6 +222,7 @@ export default function AdminPage() {
                         {activeTab === 'approvedStrategies' && <ApprovedStrategiesPanel />}
                         {activeTab === 'certifiedStrategies' && <CertifiedStrategiesPanel />}
                         {activeTab === 'assistantQuestions' && <AssistantQuestionsPanel />}
+                        {activeTab === 'guidedStepQuestions' && <GuidedStepQuestionsPanel />}
                         {activeTab === 'ragDocs' && <RagDocsPanel />}
                         {activeTab === 'surveys' && <SurveyViewer />}
                         {activeTab === 'results' && <QuestionnaireResultsViewer />}

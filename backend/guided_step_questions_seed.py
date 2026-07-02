@@ -353,9 +353,21 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
 def seed_guided_step_questions(db, models) -> None:
     """Inserisce le domande di default mancanti per questionario/step/lingua."""
 
+    import os
+    import json
+    translations = {}
+    json_path = os.path.join(os.path.dirname(__file__), "translations_seed.json")
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                translations = json.load(f).get("guided_step_questions", {})
+        except Exception:
+            pass
+
     changed = False
     for questionnaire_type, step_questions in DEFAULT_GUIDED_STEP_QUESTIONS.items():
         for step_id, questions in step_questions.items():
+            # 1. Seed Italiano
             existing = (
                 db.query(models.GuidedStepQuestion.id)
                 .filter(
@@ -365,19 +377,46 @@ def seed_guided_step_questions(db, models) -> None:
                 )
                 .first()
             )
-            if existing:
-                continue
-            for order, text in enumerate(questions):
-                db.add(
-                    models.GuidedStepQuestion(
-                        questionnaire_type=questionnaire_type,
-                        step_id=step_id,
-                        language="it",
-                        text=text,
-                        sort_order=order,
-                        is_active=True,
+            if not existing:
+                for order, text in enumerate(questions):
+                    db.add(
+                        models.GuidedStepQuestion(
+                            questionnaire_type=questionnaire_type,
+                            step_id=step_id,
+                            language="it",
+                            text=text,
+                            sort_order=order,
+                            is_active=True,
+                        )
                     )
+                    changed = True
+
+            # 2. Seed Traduzioni
+            lang_dict = translations.get(questionnaire_type, {}).get(step_id, {})
+            for lang, trans_questions in lang_dict.items():
+                existing_trans = (
+                    db.query(models.GuidedStepQuestion.id)
+                    .filter(
+                        models.GuidedStepQuestion.questionnaire_type == questionnaire_type,
+                        models.GuidedStepQuestion.step_id == step_id,
+                        models.GuidedStepQuestion.language == lang,
+                    )
+                    .first()
                 )
-                changed = True
+                if existing_trans:
+                    continue
+                for order, text in enumerate(trans_questions):
+                    db.add(
+                        models.GuidedStepQuestion(
+                            questionnaire_type=questionnaire_type,
+                            step_id=step_id,
+                            language=lang,
+                            text=text,
+                            sort_order=order,
+                            is_active=True,
+                        )
+                    )
+                    changed = True
+
     if changed:
         db.commit()

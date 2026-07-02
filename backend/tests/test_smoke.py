@@ -1137,7 +1137,7 @@ def test_assistant_questions_seed_and_crud():
     assert "Domanda di test inserita da admin?" not in client.get("/assistant-questions?lang=it").json().get("q_strumenti", [])
 
     # Lingua senza righe -> topic omesso (fallback i18n nel frontend)
-    assert client.get("/assistant-questions?lang=de").json() == {}
+    assert client.get("/assistant-questions?lang=zh").json() == {}
 
     # Delete
     assert client.delete(f"/admin/assistant-questions/{qid}").status_code == 200
@@ -1175,7 +1175,43 @@ def test_guided_step_questions_seed_and_public_payload():
 
     en_payload = client.get("/qsa/guided-ui-texts?questionnaire_type=QSA&lang=en").json()
     cognitive = next(s for s in en_payload["guided_steps"] if s["id"] == "cognitive")
-    assert cognitive["suggested_questions"] == []
+    import os
+    json_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "translations_seed.json")
+    if os.path.exists(json_path):
+        assert len(cognitive["suggested_questions"]) >= 3
+    else:
+        assert cognitive["suggested_questions"] == []
+
+
+def test_guided_step_questions_crud():
+    # Create
+    r = client.post("/admin/guided-step-questions", json={
+        "questionnaire_type": "QSA",
+        "step_id": "cognitive",
+        "language": "en",
+        "text": "Do you prefer maps or text?",
+        "sort_order": 99,
+        "is_active": True,
+    })
+    assert r.status_code == 200, r.text
+    qid = r.json()["id"]
+    assert r.json()["text"] == "Do you prefer maps or text?"
+
+    # Compare public endpoint
+    r_public = client.get("/qsa/guided-ui-texts?questionnaire_type=QSA&lang=en")
+    assert r_public.status_code == 200
+    cognitive = next(s for s in r_public.json()["guided_steps"] if s["id"] == "cognitive")
+    assert "Do you prefer maps or text?" in cognitive["suggested_questions"]
+
+    # Update -> deactivate: should disappear from public endpoint
+    r_update = client.put(f"/admin/guided-step-questions/{qid}", json={"is_active": False})
+    assert r_update.status_code == 200
+    r_public2 = client.get("/qsa/guided-ui-texts?questionnaire_type=QSA&lang=en")
+    cognitive2 = next(s for s in r_public2.json()["guided_steps"] if s["id"] == "cognitive")
+    assert "Do you prefer maps or text?" not in cognitive2["suggested_questions"]
+
+    # Delete
+    assert client.delete(f"/admin/guided-step-questions/{qid}").status_code == 200
 
 
 def test_resolve_counselor_helper():
