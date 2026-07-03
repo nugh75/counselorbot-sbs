@@ -661,3 +661,25 @@ class TelegramConversationState(Base):
     language = Column(String, nullable=False, default="it")
     counselor_id = Column(Integer, nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class TeacherNote(Base):
+    """Nota o messaggio del docente sul profilo di uno studente del suo piano.
+
+    kind='note': annotazione (visibile allo studente solo se visible_to_student).
+    kind='message': messaggio allo studente (sempre visibile nel profilo web,
+    recapitato anche via bot Telegram se collegato); la riga e' anche il log
+    dell'invio.
+    """
+
+    __tablename__ = "teacher_notes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    plan_id = Column(Integer, index=True, nullable=False)
+    username = Column(String, index=True, nullable=False)  # studente
+    author_username = Column(String, index=True, nullable=False)
+    kind = Column(String, nullable=False, default="note")  # note | message
+    text = Column(Text, nullable=False)
+    visible_to_student = Column(Boolean, nullable=False, default=False)
+    telegram_delivered = Column(Boolean, nullable=True)  # solo kind=message
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

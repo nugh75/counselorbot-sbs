@@ -125,6 +125,10 @@ BOT_TEXTS = {
         "it": "Sei nel gruppo: {label}.",
         "en": "You joined the group: {label}.",
     },
+    "teacher_message": {
+        "it": "\U0001F4E9 Messaggio dal tuo docente:",
+        "en": "\U0001F4E9 Message from your teacher:",
+    },
     "btn_open_login": {"it": "Accedi e collega", "en": "Log in and link"},
     "btn_new": {"it": "Nuova analisi", "en": "New analysis"},
     "btn_resume": {"it": "Riprendi", "en": "Resume"},

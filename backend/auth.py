@@ -19,6 +19,8 @@ _admin_groups_env = os.environ.get("ADMIN_GROUPS") or os.environ.get("ADMIN_GROU
 ADMIN_GROUPS = {g.strip() for g in _admin_groups_env.split(",") if g.strip()}
 ADMIN_GROUPS.add("admins")
 RESEARCH_GROUP_MARKERS = ("ricerc", "research", "researcher")
+# Speculare a TEACHER_MARKERS in frontend/src/lib/roles.ts
+TEACHER_GROUP_MARKERS = ("docent", "teacher", "educator", "professor", "faculty", "staff")
 FORWARD_AUTH_SHARED_SECRET = os.environ.get("FORWARD_AUTH_SHARED_SECRET", "")
 AI4AUTH_VERIFY_URL = os.environ.get(
     "AI4AUTH_VERIFY_URL", "https://auth.ai4educ.org/api/verify"
@@ -171,5 +173,21 @@ async def get_current_active_admin(identity: dict = Depends(get_current_user)) -
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Accesso riservato ad amministratori e ricercatori",
+        )
+    return identity
+
+
+def is_teacher(groups) -> bool:
+    lowered = [str(g).lower() for g in groups or []]
+    return any(marker in group for group in lowered for marker in TEACHER_GROUP_MARKERS)
+
+
+async def get_current_plan_manager(identity: dict = Depends(get_current_user)) -> dict:
+    """Admin, ricercatori e docenti: gestione piani di somministrazione.
+    La visibilita' per-piano resta scopata in _visible_plan_query."""
+    if not identity["is_admin"] and not identity.get("is_researcher") and not is_teacher(identity.get("groups")):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accesso riservato ad amministratori, ricercatori e docenti",
         )
     return identity

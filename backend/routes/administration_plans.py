@@ -224,7 +224,7 @@ def _replace_researchers(
 
 @router.get("/admin/administration-plans", response_model=List[schemas.AdministrationPlanResponse])
 async def list_administration_plans(
-    current_user=Depends(auth.get_current_active_admin),
+    current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
     plans = (
@@ -238,7 +238,7 @@ async def list_administration_plans(
 @router.post("/admin/administration-plans", response_model=schemas.AdministrationPlanResponse)
 async def create_administration_plan(
     payload: schemas.AdministrationPlanCreate,
-    current_user=Depends(auth.get_current_active_admin),
+    current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
     title = _clean(payload.title)
@@ -271,7 +271,7 @@ async def create_administration_plan(
 async def update_administration_plan(
     plan_id: int,
     payload: schemas.AdministrationPlanUpdate,
-    current_user=Depends(auth.get_current_active_admin),
+    current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
     plan = _require_visible_plan(db, current_user, plan_id)
@@ -304,7 +304,7 @@ async def update_administration_plan(
 @router.delete("/admin/administration-plans/{plan_id}")
 async def delete_administration_plan(
     plan_id: int,
-    current_user=Depends(auth.get_current_active_admin),
+    current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
     plan = _require_visible_plan(db, current_user, plan_id)
@@ -327,7 +327,7 @@ async def delete_administration_plan(
 )
 async def get_administration_plan_responses(
     plan_id: int,
-    current_user=Depends(auth.get_current_active_admin),
+    current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
     plan = _require_visible_plan(db, current_user, plan_id)
@@ -348,3 +348,239 @@ async def get_administration_plan_responses(
         "questionnaire_results": questionnaire_results,
         "validation_responses": validation_responses,
     }
+
+
+# --- Dashboard docente: studenti del piano, transcript, note, messaggi -------
+
+def _serialize_note(note: models.TeacherNote) -> dict:
+    return {
+        "id": note.id,
+        "plan_id": note.plan_id,
+        "username": note.username,
+        "author_username": note.author_username,
+        "kind": note.kind,
+        "text": note.text,
+        "visible_to_student": note.visible_to_student,
+        "telegram_delivered": note.telegram_delivered,
+        "created_at": note.created_at.isoformat() if note.created_at else None,
+    }
+
+
+@router.get("/admin/administration-plans/{plan_id}/students")
+async def get_administration_plan_students(
+    plan_id: int,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Studenti del piano (da risultati taggati), con risultati, learner model e link Telegram."""
+    from .learner_profile import _latest_revision
+
+    plan = _require_visible_plan(db, current_user, plan_id)
+    results = (
+        db.query(models.QuestionnaireResult)
+        .filter(models.QuestionnaireResult.administration_plan_id == plan.id)
+        .order_by(models.QuestionnaireResult.submitted_at.desc())
+        .all()
+    )
+    by_student: dict[str, list[models.QuestionnaireResult]] = {}
+    for result in results:
+        if result.username:
+            by_student.setdefault(result.username, []).append(result)
+
+    students = []
+    for username, rows in sorted(by_student.items()):
+        telegram_link = (
+            db.query(models.TelegramAccountLink)
+            .filter(
+                models.TelegramAccountLink.username == username,
+                models.TelegramAccountLink.revoked_at.is_(None),
+            )
+            .first()
+        )
+        profile = _latest_revision(db, username)
+        students.append({
+            "username": username,
+            "telegram_linked": bool(telegram_link),
+            "learner_profile": profile.data if profile else None,
+            "results": [
+                {
+                    "id": row.id,
+                    "session_id": row.session_id,
+                    "questionnaire_type": row.questionnaire_type,
+                    "scores": row.scores,
+                    "submitted_at": row.submitted_at.isoformat() if row.submitted_at else None,
+                }
+                for row in rows
+            ],
+        })
+    return {"plan_id": plan.id, "students": students}
+
+
+def _require_plan_student(db: Session, plan: models.AdministrationPlan, username: str) -> None:
+    exists = (
+        db.query(models.QuestionnaireResult.id)
+        .filter(
+            models.QuestionnaireResult.administration_plan_id == plan.id,
+            models.QuestionnaireResult.username == username,
+        )
+        .first()
+    )
+    if not exists:
+        raise HTTPException(status_code=404, detail="Studente non trovato in questo piano")
+
+
+@router.get("/admin/administration-plans/{plan_id}/students/{username}/conversation/{session_id}")
+async def get_plan_student_conversation(
+    plan_id: int,
+    username: str,
+    session_id: str,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Transcript di una sessione di uno studente del piano (informativa in pagina gruppo)."""
+    from .survey import _session_conversation_messages
+
+    plan = _require_visible_plan(db, current_user, plan_id)
+    result = (
+        db.query(models.QuestionnaireResult)
+        .filter(
+            models.QuestionnaireResult.administration_plan_id == plan.id,
+            models.QuestionnaireResult.username == username,
+            models.QuestionnaireResult.session_id == session_id,
+        )
+        .first()
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="Sessione non trovata in questo piano")
+    return _session_conversation_messages(db, session_id)
+
+
+@router.get("/admin/administration-plans/{plan_id}/notes")
+async def list_teacher_notes(
+    plan_id: int,
+    username: Optional[str] = None,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    plan = _require_visible_plan(db, current_user, plan_id)
+    query = db.query(models.TeacherNote).filter(models.TeacherNote.plan_id == plan.id)
+    if username:
+        query = query.filter(models.TeacherNote.username == username)
+    notes = query.order_by(models.TeacherNote.created_at.desc()).all()
+    return [_serialize_note(note) for note in notes]
+
+
+@router.post("/admin/administration-plans/{plan_id}/notes")
+async def create_teacher_note(
+    plan_id: int,
+    payload: schemas.TeacherNoteCreate,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    plan = _require_visible_plan(db, current_user, plan_id)
+    text = _clean(payload.text)
+    if not text:
+        raise HTTPException(status_code=400, detail="Testo nota obbligatorio")
+    _require_plan_student(db, plan, payload.username)
+    note = models.TeacherNote(
+        plan_id=plan.id,
+        username=payload.username,
+        author_username=_username(current_user) or "",
+        kind="note",
+        text=text,
+        visible_to_student=bool(payload.visible_to_student),
+    )
+    db.add(note)
+    db.commit()
+    db.refresh(note)
+    return _serialize_note(note)
+
+
+@router.delete("/admin/teacher-notes/{note_id}")
+async def delete_teacher_note(
+    note_id: int,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    note = db.query(models.TeacherNote).filter(models.TeacherNote.id == note_id).first()
+    if not note:
+        raise HTTPException(status_code=404, detail="Nota non trovata")
+    _require_visible_plan(db, current_user, note.plan_id)
+    if not _is_admin(current_user) and note.author_username != _username(current_user):
+        raise HTTPException(status_code=403, detail="Solo l'autore o un admin puo' eliminare la nota")
+    db.delete(note)
+    db.commit()
+    return {"ok": True, "deleted": note_id}
+
+
+@router.post("/admin/administration-plans/{plan_id}/messages")
+async def send_teacher_message(
+    plan_id: int,
+    payload: schemas.TeacherNoteCreate,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Messaggio docente->studente: sempre visibile nel profilo web dello studente,
+    recapitato anche via bot Telegram se lo studente e' collegato."""
+    from .. import telegram_bot, telegram_state
+
+    plan = _require_visible_plan(db, current_user, plan_id)
+    text = _clean(payload.text)
+    if not text:
+        raise HTTPException(status_code=400, detail="Testo messaggio obbligatorio")
+    _require_plan_student(db, plan, payload.username)
+
+    note = models.TeacherNote(
+        plan_id=plan.id,
+        username=payload.username,
+        author_username=_username(current_user) or "",
+        kind="message",
+        text=text,
+        visible_to_student=True,
+    )
+    db.add(note)
+
+    delivered = None
+    link = (
+        db.query(models.TelegramAccountLink)
+        .filter(
+            models.TelegramAccountLink.username == payload.username,
+            models.TelegramAccountLink.revoked_at.is_(None),
+        )
+        .first()
+    )
+    if link and telegram_bot.bot_enabled():
+        state = (
+            db.query(models.TelegramConversationState)
+            .filter(models.TelegramConversationState.telegram_user_id == link.telegram_user_id)
+            .first()
+        )
+        language = state.language if state else "it"
+        header = telegram_state.BOT_TEXTS["teacher_message"].get(language) or telegram_state.BOT_TEXTS["teacher_message"]["en"]
+        try:
+            await telegram_bot.send_message(link.telegram_chat_id, f"{header}\n{text}")
+            delivered = True
+        except Exception:
+            delivered = False
+    note.telegram_delivered = delivered
+    db.commit()
+    db.refresh(note)
+    return _serialize_note(note)
+
+
+@router.get("/user/teacher-notes")
+async def get_my_teacher_notes(
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Note e messaggi del docente visibili allo studente autenticato (web-first)."""
+    notes = (
+        db.query(models.TeacherNote)
+        .filter(
+            models.TeacherNote.username == current_user["username"],
+            models.TeacherNote.visible_to_student.is_(True),
+        )
+        .order_by(models.TeacherNote.created_at.desc())
+        .all()
+    )
+    return [_serialize_note(note) for note in notes]
