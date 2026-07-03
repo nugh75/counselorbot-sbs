@@ -74,6 +74,7 @@ export default function AdminPage() {
                 { id: 'researchContacts', label: t('admin.tab.researchContacts'), icon: Users },
                 { id: 'administrationPlans', label: t('admin.tab.administrationPlans'), icon: CalendarDays },
                 { id: 'groupsClasses', label: 'Gruppi e classi', icon: Users },
+                { id: 'usersSummary', label: 'Utenti e scuole', icon: Users },
             ],
         },
         {
