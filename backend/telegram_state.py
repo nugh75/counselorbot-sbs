@@ -117,6 +117,15 @@ BOT_TEXTS = {
         "it": "Sto preparando la risposta...",
         "en": "Preparing the answer...",
     },
+    "group_login": {
+        "it": "Per partecipare accedi con il bottone qui sotto (puoi entrare anche come ospite anonimo): la pagina ti mostra il codice e ti riporta qui.",
+        "en": "To join, log in with the button below (anonymous guest access works too): the page shows your code and brings you back here.",
+    },
+    "group_enrolled": {
+        "it": "Sei nel gruppo: {label}.",
+        "en": "You joined the group: {label}.",
+    },
+    "btn_open_login": {"it": "Accedi e collega", "en": "Log in and link"},
     "btn_new": {"it": "Nuova analisi", "en": "New analysis"},
     "btn_resume": {"it": "Riprendi", "en": "Resume"},
     "btn_next": {"it": "Prossimo passo", "en": "Next step"},
@@ -145,6 +154,40 @@ def _t(key: str, language: str, **kwargs) -> str:
 def normalize_language(language_code: str | None) -> str:
     from .routes.chat import _normalize_language
     return _normalize_language(language_code)
+
+
+def public_base_url() -> str:
+    """Base pubblica della web app, derivata da TELEGRAM_PUBLIC_WEBHOOK_URL."""
+    import os
+    from urllib.parse import urlsplit
+    raw = os.environ.get("TELEGRAM_PUBLIC_WEBHOOK_URL", "").strip()
+    if not raw:
+        return ""
+    parts = urlsplit(raw)
+    return f"{parts.scheme}://{parts.netloc}"
+
+
+def resolve_group(db: Session, code: str) -> tuple[int | None, int | None, str | None]:
+    """Codice gruppo -> (plan_id, contact_id, label). Prima piano, poi contatto
+    (stessa risoluzione dello study code web in routes/survey.py)."""
+    normalized = (code or "").strip().upper()
+    if not normalized:
+        return None, None, None
+    plan = (
+        db.query(models.AdministrationPlan)
+        .filter(models.AdministrationPlan.code == normalized)
+        .first()
+    )
+    if plan:
+        return plan.id, None, plan.title or plan.code
+    contact = (
+        db.query(models.ResearchContact)
+        .filter(models.ResearchContact.code == normalized, models.ResearchContact.is_active.is_(True))
+        .first()
+    )
+    if contact:
+        return None, contact.id, contact.name or contact.code
+    return None, None, None
 
 
 # --- Link codes -----------------------------------------------------------
@@ -409,11 +452,14 @@ async def _start_flow(db: Session, state: models.TelegramConversationState) -> N
     state.session_id = str(uuid.uuid4())
     state.conversation_id = None
     if state.questionnaire_type in SCORE_QUESTIONNAIRES:
+        link = get_active_link(db, state.telegram_user_id)
         db.add(models.QuestionnaireResult(
             session_id=state.session_id,
             questionnaire_type=state.questionnaire_type,
             scores=state.scores,
             username=state.username,
+            administration_plan_id=link.administration_plan_id if link else None,
+            research_contact_id=link.research_contact_id if link else None,
         ))
     db.commit()
     steps = _steps(db, state.questionnaire_type)
@@ -524,6 +570,45 @@ async def _handle_free_text(db: Session, state: models.TelegramConversationState
     await telegram_bot.send_message(state.telegram_chat_id, response, keyboard=_step_keyboard(state.language))
 
 
+async def _do_link(db: Session, sender: dict, chat_id: int, language: str,
+                   code: str, group_code: str | None = None) -> None:
+    """Consuma un codice /link e collega l'account; opzionale iscrizione gruppo."""
+    user_id = sender.get("id")
+    username = consume_link_code(db, code)
+    if not username:
+        await telegram_bot.send_message(chat_id, _t("link_invalid", language))
+        return
+    link = (
+        db.query(models.TelegramAccountLink)
+        .filter(models.TelegramAccountLink.telegram_user_id == user_id)
+        .first()
+    )
+    if link:
+        link.username = username
+        link.telegram_chat_id = chat_id
+        link.telegram_username = sender.get("username")
+        link.revoked_at = None
+    else:
+        link = models.TelegramAccountLink(
+            username=username,
+            telegram_user_id=user_id,
+            telegram_chat_id=chat_id,
+            telegram_username=sender.get("username"),
+        )
+        db.add(link)
+    group_label = None
+    if group_code:
+        plan_id, contact_id, group_label = resolve_group(db, group_code)
+        if plan_id or contact_id:
+            link.administration_plan_id = plan_id
+            link.research_contact_id = contact_id
+    db.commit()
+    message = _t("link_ok", language)
+    if group_label:
+        message = f"{message}\n{_t('group_enrolled', language, label=group_label)}"
+    await telegram_bot.send_message(chat_id, message)
+
+
 async def _handle_message(db: Session, message: dict) -> None:
     chat = message.get("chat") or {}
     sender = message.get("from") or {}
@@ -545,30 +630,30 @@ async def _handle_message(db: Session, message: dict) -> None:
         if len(parts) < 2:
             await telegram_bot.send_message(chat_id, _t("link_usage", language))
             return
-        username = consume_link_code(db, parts[1])
-        if not username:
-            await telegram_bot.send_message(chat_id, _t("link_invalid", language))
-            return
-        existing = (
-            db.query(models.TelegramAccountLink)
-            .filter(models.TelegramAccountLink.telegram_user_id == user_id)
-            .first()
-        )
-        if existing:
-            existing.username = username
-            existing.telegram_chat_id = chat_id
-            existing.telegram_username = sender.get("username")
-            existing.revoked_at = None
-        else:
-            db.add(models.TelegramAccountLink(
-                username=username,
-                telegram_user_id=user_id,
-                telegram_chat_id=chat_id,
-                telegram_username=sender.get("username"),
-            ))
-        db.commit()
-        await telegram_bot.send_message(chat_id, _t("link_ok", language))
+        await _do_link(db, sender, chat_id, language, parts[1])
         return
+
+    if command == "/start":
+        # Deep link t.me/<bot>?start=<payload>: g_<gruppo> arriva dal link del
+        # docente, l_<codice>[__<gruppo>] dal bottone "torna al bot" della pagina
+        # /telegram-link. Flusso stateless: il gruppo viaggia nel payload.
+        parts = text.split(maxsplit=1)
+        payload = parts[1].strip() if len(parts) > 1 else ""
+        if payload.startswith("g_"):
+            group_code = payload[2:]
+            base = public_base_url()
+            keyboard = None
+            if base:
+                keyboard = [[{
+                    "text": _t("btn_open_login", language),
+                    "url": f"{base}/telegram-link?g={group_code}",
+                }]]
+            await telegram_bot.send_message(chat_id, _t("group_login", language), keyboard=keyboard)
+            return
+        if payload.startswith("l_"):
+            code, _, group_code = payload[2:].partition("__")
+            await _do_link(db, sender, chat_id, language, code, group_code or None)
+            return
 
     if command in ("/aiuto", "/help"):
         await telegram_bot.send_message(chat_id, _t("help", language))

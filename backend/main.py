@@ -290,7 +290,7 @@ def _seed_and_migrate():
         except Exception as e:
             logger.debug(f"questionnaire_results migration skipped/failed: {e}")
 
-        for table in ("questionnaire_results", "validation_responses"):
+        for table in ("questionnaire_results", "validation_responses", "telegram_account_links"):
             for clause in [
                 "ADD COLUMN administration_plan_id INTEGER",
                 "ADD COLUMN research_contact_id INTEGER",

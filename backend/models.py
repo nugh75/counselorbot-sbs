@@ -623,6 +623,9 @@ class TelegramAccountLink(Base):
     telegram_user_id = Column(BigInteger, nullable=False, unique=True, index=True)
     telegram_chat_id = Column(BigInteger, nullable=False)
     telegram_username = Column(String, nullable=True)
+    # Gruppo di somministrazione (deep link g_<codice piano|codice contatto>)
+    administration_plan_id = Column(Integer, index=True, nullable=True)
+    research_contact_id = Column(Integer, index=True, nullable=True)
     linked_at = Column(DateTime(timezone=True), server_default=func.now())
     revoked_at = Column(DateTime(timezone=True), nullable=True)
 

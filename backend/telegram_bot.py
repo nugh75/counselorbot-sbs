@@ -67,6 +67,24 @@ async def send_message(chat_id: int, text: str, keyboard: list[list[dict]] | Non
                 logger.error("Telegram sendMessage errore rete: %s", type(e).__name__)
 
 
+_bot_username_cache: str | None = None
+
+
+async def get_bot_username() -> str:
+    """Username del bot (per i deep link t.me), da getMe, cachato per processo."""
+    global _bot_username_cache
+    if _bot_username_cache:
+        return _bot_username_cache
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(_api_url("getMe"))
+            if response.status_code == 200:
+                _bot_username_cache = (response.json().get("result") or {}).get("username") or ""
+    except httpx.HTTPError as e:
+        logger.error("Telegram getMe errore rete: %s", type(e).__name__)
+    return _bot_username_cache or ""
+
+
 async def answer_callback_query(callback_query_id: str) -> None:
     """Chiude lo spinner del bottone inline (nessun testo)."""
     try:

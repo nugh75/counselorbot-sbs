@@ -37,6 +37,14 @@ async def telegram_webhook(request: Request):
     return {"ok": True}
 
 
+@router.get("/telegram/bot-info")
+async def telegram_bot_info():
+    """Username del bot per costruire i deep link t.me (vuoto se bot spento)."""
+    enabled = telegram_bot.bot_enabled()
+    username = await telegram_bot.get_bot_username() if enabled else ""
+    return {"enabled": enabled, "bot_username": username}
+
+
 @router.post("/telegram/link-code")
 async def create_telegram_link_code(
     current_user: dict = Depends(auth.get_current_user),
