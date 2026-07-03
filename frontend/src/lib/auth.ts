@@ -31,11 +31,11 @@ export interface ViewAsAccount {
 // Profili di prova. Gli username devono combaciare con VIEW_AS_DEMO_ACCOUNTS
 // nel backend (backend/auth.py).
 export const VIEW_AS_ACCOUNTS: ViewAsAccount[] = [
-    { username: 'studente.demo', name: 'Studente di prova 1', role: 'studente', is_researcher: false, groups: ['studenti'] },
-    { username: 'studente.demo2', name: 'Studente di prova 2', role: 'studente', is_researcher: false, groups: ['studenti'] },
-    { username: 'studente.demo3', name: 'Studente di prova 3', role: 'studente', is_researcher: false, groups: ['studenti'] },
-    { username: 'ricercatore.demo', name: 'Ricercatore di prova', role: 'ricercatore', is_researcher: true, groups: ['researchers'] },
-    { username: 'docente.demo', name: 'Docente di prova', role: 'docente', is_researcher: false, groups: ['docenti'] },
+    { username: 'studente.demo', name: 'Alice Bianchi', role: 'studente', is_researcher: false, groups: ['studenti'] },
+    { username: 'studente.demo2', name: 'Marco Verdi', role: 'studente', is_researcher: false, groups: ['studenti'] },
+    { username: 'studente.demo3', name: 'Sofia Romano', role: 'studente', is_researcher: false, groups: ['studenti'] },
+    { username: 'ricercatore.demo', name: 'Dott. Ferrari', role: 'ricercatore', is_researcher: true, groups: ['researchers'] },
+    { username: 'docente.demo', name: 'Prof.ssa Neri', role: 'docente', is_researcher: false, groups: ['docenti'] },
 ];
 
 export function getViewAsAccount(): ViewAsAccount | null {

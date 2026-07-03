@@ -119,11 +119,11 @@ async def get_identity(request: Request) -> dict:
 # possono leggere/scrivere dati di utenti reali. I dati creati durante le prove
 # restano in DB sotto questi username. Speculare a VIEW_AS_ACCOUNTS nel frontend.
 VIEW_AS_DEMO_ACCOUNTS = {
-    "studente.demo": {"is_researcher": False, "groups": ["studenti"]},
-    "studente.demo2": {"is_researcher": False, "groups": ["studenti"]},
-    "studente.demo3": {"is_researcher": False, "groups": ["studenti"]},
-    "ricercatore.demo": {"is_researcher": True, "groups": ["researchers"]},
-    "docente.demo": {"is_researcher": False, "groups": ["docenti"]},
+    "studente.demo": {"is_researcher": False, "groups": ["studenti"], "name": "Alice Bianchi"},
+    "studente.demo2": {"is_researcher": False, "groups": ["studenti"], "name": "Marco Verdi"},
+    "studente.demo3": {"is_researcher": False, "groups": ["studenti"], "name": "Sofia Romano"},
+    "ricercatore.demo": {"is_researcher": True, "groups": ["researchers"], "name": "Dott. Ferrari"},
+    "docente.demo": {"is_researcher": False, "groups": ["docenti"], "name": "Prof.ssa Neri"},
 }
 
 
@@ -132,7 +132,7 @@ def _impersonated_demo_identity(username: str) -> dict:
     return {
         "email": f"{username}@anteprima.local",
         "username": username,
-        "name": username,
+        "name": cfg.get("name", username),
         "groups": list(cfg["groups"]),
         "is_admin": False,
         "is_researcher": cfg["is_researcher"],
