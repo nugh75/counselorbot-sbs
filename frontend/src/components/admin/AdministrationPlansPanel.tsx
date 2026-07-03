@@ -156,8 +156,8 @@ export function AdministrationPlansPanel() {
             }
             if (!plansRes.ok) throw new Error('plans load failed');
             setPlans(await plansRes.json());
-            // I docenti non vedono l'anagrafica contatti (endpoint admin/ricercatori):
-            // il pannello resta usabile con la lista contatti vuota.
+            // Se l'endpoint non e' accessibile (rete o permessi), il pannello resta
+            // usabile con la lista contatti vuota (solo external_name liberi).
             setContacts(contactsRes.ok ? await contactsRes.json() : []);
         } catch (e) {
             console.error('Failed to load administration plans', e);
