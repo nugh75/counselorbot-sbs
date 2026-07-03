@@ -4314,6 +4314,30 @@ def test_plan_manager_dependency_accepts_teachers():
         assert getattr(e, "status_code", None) == 403
 
 
+def test_teacher_can_create_own_group():
+    teacher = {
+        "username": "prof.classi",
+        "email": "prof.classi@example.test",
+        "groups": ["docenti"],
+        "is_admin": False,
+        "is_researcher": False,
+        "authenticated": True,
+    }
+    manager_override = main.app.dependency_overrides.get(auth.get_current_plan_manager)
+    try:
+        main.app.dependency_overrides[auth.get_current_plan_manager] = lambda: teacher
+        r = client.post("/admin/groups", json={"name": "Classe Docente"})
+        assert r.status_code == 200, r.text
+        group = r.json()
+        assert group["owner_username"] == "prof.classi"
+        listed = client.get("/admin/groups")
+        assert listed.status_code == 200, listed.text
+        assert any(row["id"] == group["id"] for row in listed.json())
+        assert client.delete(f"/admin/groups/{group['id']}").status_code == 200
+    finally:
+        main.app.dependency_overrides[auth.get_current_plan_manager] = manager_override
+
+
 def test_teacher_dashboard_notes_and_messages():
     """Piano: studenti da risultati + transcript. Classe: note e messaggi."""
     plan = client.post("/admin/administration-plans", json={

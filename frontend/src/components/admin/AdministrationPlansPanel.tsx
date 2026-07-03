@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Check, Copy, FileText, Link2, MapPin, Pencil, Plus, QrCode, RefreshCw, Search, Trash2, Users, X } from 'lucide-react';
 import QRCode from 'qrcode';
 import { useI18n } from '@/lib/i18n-context';
+import { apiFetch } from '@/lib/auth';
 import { PlanStudentsPanel } from './PlanStudentsPanel';
 
 type LocaleCode = 'en' | 'es' | 'sv';
@@ -146,8 +147,8 @@ export function AdministrationPlansPanel() {
         setMessage('');
         try {
             const [plansRes, contactsRes] = await Promise.all([
-                fetch('/api/admin/administration-plans'),
-                fetch('/api/admin/research-contacts'),
+                apiFetch('/api/admin/administration-plans'),
+                apiFetch('/api/admin/research-contacts'),
             ]);
             if (plansRes.status === 401 || plansRes.status === 403) {
                 window.location.href = '/';
@@ -206,7 +207,7 @@ export function AdministrationPlansPanel() {
     // Classi del docente/admin: agganciabili al piano (gli inviti vivono sulla classe).
     const [groups, setGroups] = useState<{ id: number; name: string; code: string }[]>([]);
     useEffect(() => {
-        fetch('/api/admin/groups')
+        apiFetch('/api/admin/groups')
             .then((res) => (res.ok ? res.json() : []))
             .then((payload) => setGroups(Array.isArray(payload) ? payload : []))
             .catch(() => { /* select classi vuoto */ });
@@ -285,7 +286,7 @@ export function AdministrationPlansPanel() {
         try {
             const url = editingId === 'new' ? '/api/admin/administration-plans' : `/api/admin/administration-plans/${editingId}`;
             const method = editingId === 'new' ? 'POST' : 'PUT';
-            const res = await fetch(url, {
+            const res = await apiFetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
@@ -305,7 +306,7 @@ export function AdministrationPlansPanel() {
         if (!window.confirm(t('admin.ap.confirmDelete', { title: plan.title }))) return;
         setMessage('');
         try {
-            const res = await fetch(`/api/admin/administration-plans/${plan.id}`, { method: 'DELETE' });
+            const res = await apiFetch(`/api/admin/administration-plans/${plan.id}`, { method: 'DELETE' });
             if (res.status === 409) {
                 setMessage(t('admin.ap.error.deleteHasResponses'));
                 return;

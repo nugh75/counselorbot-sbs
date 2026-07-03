@@ -61,7 +61,14 @@ export function Header() {
     }
     if (canUseTeacherAssistant(identity)) {
         // Docenti, ricercatori e admin: gruppi/classi (piani di somministrazione).
-        secondaryItems.push({ key: 'groups', href: '/docente', icon: Users, label: lang === 'it' ? 'I miei gruppi' : 'My groups' });
+        secondaryItems.push({
+            key: 'teacher-panel',
+            href: '/docente',
+            icon: Users,
+            label: canOpenResearchConsole
+                ? (lang === 'it' ? 'Gruppi e classi' : 'Groups and classes')
+                : (lang === 'it' ? 'Pannello docente' : 'Teacher panel'),
+        });
     }
     if (canOpenResearchConsole) {
         secondaryItems.push({ key: 'admin', href: '/admin', icon: Settings, label: t('nav.admin') });

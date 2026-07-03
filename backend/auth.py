@@ -20,7 +20,7 @@ ADMIN_GROUPS = {g.strip() for g in _admin_groups_env.split(",") if g.strip()}
 ADMIN_GROUPS.add("admins")
 RESEARCH_GROUP_MARKERS = ("ricerc", "research", "researcher")
 # Speculare a TEACHER_MARKERS in frontend/src/lib/roles.ts
-TEACHER_GROUP_MARKERS = ("docent", "teacher", "educator", "professor", "faculty", "staff")
+TEACHER_GROUP_MARKERS = ("docent", "insegnant", "teacher", "educator", "professor", "faculty", "staff")
 FORWARD_AUTH_SHARED_SECRET = os.environ.get("FORWARD_AUTH_SHARED_SECRET", "")
 AI4AUTH_VERIFY_URL = os.environ.get(
     "AI4AUTH_VERIFY_URL", "https://auth.ai4educ.org/api/verify"
