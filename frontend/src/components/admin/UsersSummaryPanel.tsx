@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { BookOpen, ClipboardList, FileText, GraduationCap, LogIn, RefreshCw, School, Search, UserCheck, Users } from 'lucide-react';
+import { Building2, RefreshCw, School, Search, UserCheck, Users } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 
@@ -27,9 +27,11 @@ interface GroupEntry {
     id: number;
     code: string;
     name: string;
+    school: string | null;
     owner_username: string;
     is_active: boolean;
     members_count: number;
+    members: { username: string; display_name: string }[];
     created_at: string | null;
 }
 
@@ -56,10 +58,16 @@ const TEXTS: Record<string, Record<string, string>> = {
         memberOf: 'Iscritto a',
         tabsUsers: 'Utenti',
         tabsGroups: 'Classi',
+        tabsSchools: 'Scuole',
         groups: 'Classi',
         owner: 'Proprietario',
         code: 'Codice',
         members: 'Iscritti',
+        school: 'Scuola',
+        noSchool: 'Senza scuola',
+        studentsList: 'Studenti',
+        noStudents: 'Nessuno studente iscritto.',
+        classCol: 'Classe',
         status: 'Stato',
         active: 'Attiva',
         inactive: 'Disattiva',
@@ -94,10 +102,16 @@ const TEXTS: Record<string, Record<string, string>> = {
         memberOf: 'Member of',
         tabsUsers: 'Users',
         tabsGroups: 'Classes',
+        tabsSchools: 'Schools',
         groups: 'Classes',
         owner: 'Owner',
         code: 'Code',
         members: 'Members',
+        school: 'School',
+        noSchool: 'No school',
+        studentsList: 'Students',
+        noStudents: 'No students enrolled.',
+        classCol: 'Class',
         status: 'Status',
         active: 'Active',
         inactive: 'Inactive',
@@ -119,25 +133,13 @@ const TEXTS: Record<string, Record<string, string>> = {
     },
 };
 
-function userRoleBadge(user: UserEntry) {
-    const hasStaffRole = user.in_research_contacts || user.in_plans || user.in_groups || user.in_notes;
-    const isStudent = user.in_results || user.in_memberships;
-    if (hasStaffRole) {
-        return { label: 'Staff', cls: 'bg-indigo-100 text-indigo-700' };
-    }
-    if (isStudent) {
-        return { label: 'Studente', cls: 'bg-emerald-100 text-emerald-700' };
-    }
-    return { label: 'Altro', cls: 'bg-slate-100 text-slate-600' };
-}
-
 export function UsersSummaryPanel() {
     const { lang } = useI18n();
     const texts = TEXTS[lang === 'it' ? 'it' : 'en'] ?? TEXTS.en;
     const [data, setData] = useState<Summary | null>(null);
     const [loading, setLoading] = useState(true);
     const [query, setQuery] = useState('');
-    const [tab, setTab] = useState<'users' | 'groups'>('users');
+    const [tab, setTab] = useState<'users' | 'groups' | 'schools'>('users');
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -157,7 +159,10 @@ export function UsersSummaryPanel() {
         if (!data) return [];
         const q = query.trim().toLowerCase();
         if (!q) return data.users;
-        return data.users.filter((u) => u.username.toLowerCase().includes(q));
+        return data.users.filter((u) =>
+            u.username.toLowerCase().includes(q) ||
+            u.display_name.toLowerCase().includes(q),
+        );
     }, [data, query]);
 
     const filteredGroups = useMemo(() => {
@@ -167,9 +172,25 @@ export function UsersSummaryPanel() {
         return data.groups.filter((g) =>
             g.name.toLowerCase().includes(q) ||
             g.code.toLowerCase().includes(q) ||
-            g.owner_username.toLowerCase().includes(q),
+            g.owner_username.toLowerCase().includes(q) ||
+            (g.school || '').toLowerCase().includes(q),
         );
     }, [data, query]);
+
+    // Classi raggruppate per scuola (null -> bucket "senza scuola" in coda)
+    const schoolBuckets = useMemo(() => {
+        const buckets = new Map<string, GroupEntry[]>();
+        for (const group of filteredGroups) {
+            const key = (group.school || '').trim();
+            if (!buckets.has(key)) buckets.set(key, []);
+            buckets.get(key)!.push(group);
+        }
+        return [...buckets.entries()].sort(([a], [b]) => {
+            if (!a) return 1;
+            if (!b) return -1;
+            return a.localeCompare(b);
+        });
+    }, [filteredGroups]);
 
     const staffUsers = useMemo(() => filteredUsers.filter((u) => u.in_plans || u.in_groups || u.in_notes), [filteredUsers]);
     const studentUsers = useMemo(() => filteredUsers.filter((u) => !u.in_plans && !u.in_groups && !u.in_notes && (u.in_results || u.in_memberships)), [filteredUsers]);
@@ -228,6 +249,14 @@ export function UsersSummaryPanel() {
                 >
                     <School className="mr-1.5 inline h-4 w-4" />
                     {texts.tabsGroups} {data ? `(${data.total_groups})` : ''}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setTab('schools')}
+                    className={`flex-1 rounded-md px-3 py-2 text-sm font-semibold ${tab === 'schools' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                >
+                    <Building2 className="mr-1.5 inline h-4 w-4" />
+                    {texts.tabsSchools}
                 </button>
             </div>
 
@@ -367,6 +396,7 @@ export function UsersSummaryPanel() {
                                                 {texts.code}: <span className="font-mono font-semibold text-slate-600">{group.code}</span>
                                                 {' · '}{texts.owner}: {group.owner_username}
                                                 {' · '}{group.members_count} {texts.members}
+                                                {group.school ? <>{' · '}{texts.school}: {group.school}</> : null}
                                             </p>
                                         </div>
                                         <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${group.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
@@ -379,6 +409,75 @@ export function UsersSummaryPanel() {
                                 </section>
                             ))}
                             {filteredGroups.length === 0 && (
+                                <p className="text-sm text-slate-400">{texts.noGroups}</p>
+                            )}
+                        </div>
+                    )}
+                </>
+            )}
+
+            {tab === 'schools' && (
+                <>
+                    <div className="relative">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <input
+                            type="search"
+                            value={query}
+                            onChange={(event) => setQuery(event.target.value)}
+                            placeholder={texts.searchGroups}
+                            className="h-9 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-800 outline-none focus:border-indigo-400"
+                        />
+                    </div>
+
+                    {loading && <p className="text-sm text-slate-400">{texts.loading}</p>}
+                    {data && !loading && (
+                        <div className="space-y-3">
+                            {schoolBuckets.map(([school, schoolGroups]) => (
+                                <section key={school || '—'} className="rounded-lg border border-slate-200 bg-white p-4">
+                                    <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-800">
+                                        <Building2 className="h-4 w-4 text-slate-500" />
+                                        {school || texts.noSchool}
+                                        <span className="text-xs font-normal text-slate-400">
+                                            ({schoolGroups.length} {texts.groups.toLowerCase()} · {schoolGroups.reduce((n, g) => n + g.members_count, 0)} {texts.members.toLowerCase()})
+                                        </span>
+                                    </h3>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left text-sm">
+                                            <thead>
+                                                <tr className="border-b border-slate-200 text-xs font-semibold uppercase text-slate-500">
+                                                    <th className="px-3 py-2">{texts.classCol}</th>
+                                                    <th className="px-3 py-2">{texts.owner}</th>
+                                                    <th className="px-3 py-2">{texts.studentsList}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {schoolGroups.map((group) => (
+                                                    <tr key={group.id} className="border-b border-slate-100 align-top last:border-0 hover:bg-slate-50">
+                                                        <td className="px-3 py-2.5">
+                                                            <span className="font-medium text-slate-800">{group.name}</span>
+                                                            <span className="block font-mono text-[10px] text-slate-400">{group.code}</span>
+                                                        </td>
+                                                        <td className="px-3 py-2.5 text-slate-600">{group.owner_username}</td>
+                                                        <td className="px-3 py-2.5 text-slate-600">
+                                                            {group.members.length === 0 && <span className="text-slate-400">{texts.noStudents}</span>}
+                                                            {group.members.length > 0 && (
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {group.members.map((member) => (
+                                                                        <span key={member.username} title={member.username} className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+                                                                            {member.display_name}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </section>
+                            ))}
+                            {schoolBuckets.length === 0 && (
                                 <p className="text-sm text-slate-400">{texts.noGroups}</p>
                             )}
                         </div>
