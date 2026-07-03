@@ -50,6 +50,10 @@ Lo studente non digita mai nulla: due tap (login + torna al bot).
   visible_to_student, created_at)`.
 - **Messaggi via bot**: endpoint docente che invia `sendMessage` a uno studente
   del proprio piano collegato a Telegram. Ogni invio loggato.
+- **Web-first (Daniele, 2026-07-03)**: l'interazione docente↔studente vive
+  anche nella web app, non solo su Telegram. Il docente lavora sempre dalla
+  web app; lo studente riceve note/messaggi sia nel proprio profilo web sia
+  via bot (se collegato). Telegram è un canale in più, non l'unico.
 
 ## Fasi
 
