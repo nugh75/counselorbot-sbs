@@ -154,6 +154,7 @@ class _FakeAIService:
 # Applica gli override una sola volta a livello di modulo
 main.app.dependency_overrides[database.get_db] = _override_get_db
 main.app.dependency_overrides[auth.get_current_active_admin] = _fake_admin
+main.app.dependency_overrides[auth.get_current_plan_manager] = _fake_admin
 # Gli endpoint vivono nei router: patch dell'AIService dove viene usato.
 chat_routes.AIService = _FakeAIService
 # Lo stream apre una sessione fresca dopo la risposta: isolala nel DB di test.
@@ -264,6 +265,13 @@ EXPECTED_ROUTES = {
     ("GET", "/qsa/guided-ui-texts"),
     ("POST", "/telegram/webhook"),
     ("GET", "/telegram/bot-info"),
+    ("GET", "/admin/administration-plans/{plan_id}/students"),
+    ("GET", "/admin/administration-plans/{plan_id}/students/{username}/conversation/{session_id}"),
+    ("GET", "/admin/administration-plans/{plan_id}/notes"),
+    ("POST", "/admin/administration-plans/{plan_id}/notes"),
+    ("DELETE", "/admin/teacher-notes/{note_id}"),
+    ("POST", "/admin/administration-plans/{plan_id}/messages"),
+    ("GET", "/user/teacher-notes"),
     ("POST", "/telegram/link-code"),
     ("GET", "/telegram/link-status"),
     ("POST", "/telegram/unlink"),
@@ -1021,16 +1029,16 @@ def test_administration_plan_visibility_for_assigned_researcher():
         "researchers": [{"research_contact_id": alice["id"]}],
     }).json()
 
-    admin_override = main.app.dependency_overrides.get(auth.get_current_active_admin)
+    admin_override = main.app.dependency_overrides.get(auth.get_current_plan_manager)
     try:
-        main.app.dependency_overrides[auth.get_current_active_admin] = lambda: _identity(
+        main.app.dependency_overrides[auth.get_current_plan_manager] = lambda: _identity(
             "alice", "alice@example.test"
         )
         r = client.get("/admin/administration-plans")
         assert r.status_code == 200, r.text
         assert any(row["id"] == plan["id"] for row in r.json())
 
-        main.app.dependency_overrides[auth.get_current_active_admin] = lambda: _identity(
+        main.app.dependency_overrides[auth.get_current_plan_manager] = lambda: _identity(
             "bob", "bob@example.test"
         )
         r = client.get("/admin/administration-plans")
@@ -1038,7 +1046,7 @@ def test_administration_plan_visibility_for_assigned_researcher():
         assert all(row["id"] != plan["id"] for row in r.json())
     finally:
         if admin_override is not None:
-            main.app.dependency_overrides[auth.get_current_active_admin] = admin_override
+            main.app.dependency_overrides[auth.get_current_plan_manager] = admin_override
 
     assert client.delete(f"/admin/administration-plans/{plan['id']}").status_code == 200
     assert client.delete(f"/admin/research-contacts/{alice['id']}").status_code == 200
@@ -4280,6 +4288,96 @@ def test_telegram_bot_info_disabled():
     res = client.get("/telegram/bot-info")
     assert res.status_code == 200
     assert res.json() == {"enabled": False, "bot_username": ""}
+
+
+def test_plan_manager_dependency_accepts_teachers():
+    import asyncio
+    teacher = {"username": "prof", "email": "prof@example.test", "groups": ["docenti"],
+               "is_admin": False, "is_researcher": False, "authenticated": True}
+    assert asyncio.run(auth.get_current_plan_manager(teacher)) is teacher
+    student = {"username": "stud", "email": "", "groups": ["studenti"],
+               "is_admin": False, "is_researcher": False, "authenticated": True}
+    try:
+        asyncio.run(auth.get_current_plan_manager(student))
+        raise AssertionError("studente non deve accedere ai piani")
+    except Exception as e:
+        assert getattr(e, "status_code", None) == 403
+
+
+def test_teacher_dashboard_notes_and_messages():
+    plan = client.post("/admin/administration-plans", json={
+        "title": "Classe Prof",
+        "instrument_code": "QSA",
+        "locale": "en",
+    }).json()
+    db = _TestSession()
+    try:
+        db.add(models.QuestionnaireResult(
+            session_id="sess-teacher-1",
+            questionnaire_type="QSA",
+            scores={"C1": 7},
+            username="alliev.tg",
+            administration_plan_id=plan["id"],
+        ))
+        db.add(models.Log(
+            session_id="sess-teacher-1",
+            action="chat_message",
+            username="alliev.tg",
+            details={"user_input": "Cosa significa C1?", "bot_response": "RISPOSTA_TEST"},
+        ))
+        db.commit()
+    finally:
+        db.close()
+
+    # Studenti del piano
+    r = client.get(f"/admin/administration-plans/{plan['id']}/students")
+    assert r.status_code == 200, r.text
+    students = r.json()["students"]
+    assert len(students) == 1 and students[0]["username"] == "alliev.tg"
+    assert students[0]["telegram_linked"] is False
+    assert students[0]["results"][0]["scores"] == {"C1": 7}
+
+    # Transcript della sessione
+    r = client.get(f"/admin/administration-plans/{plan['id']}/students/alliev.tg/conversation/sess-teacher-1")
+    assert r.status_code == 200
+    roles = [m["role"] for m in r.json()]
+    assert "student" in roles and "counselor" in roles
+
+    # Nota non visibile allo studente
+    note = client.post(f"/admin/administration-plans/{plan['id']}/notes", json={
+        "username": "alliev.tg", "text": "Da seguire su C1", "visible_to_student": False,
+    }).json()
+    assert note["kind"] == "note" and note["visible_to_student"] is False
+
+    # Messaggio: sempre visibile allo studente; bot spento -> telegram_delivered None
+    os.environ["TELEGRAM_BOT_ENABLED"] = "false"
+    message = client.post(f"/admin/administration-plans/{plan['id']}/messages", json={
+        "username": "alliev.tg", "text": "Ottimo lavoro!",
+    }).json()
+    assert message["kind"] == "message" and message["visible_to_student"] is True
+    assert message["telegram_delivered"] is None
+
+    # Studente non del piano: rifiutato
+    r = client.post(f"/admin/administration-plans/{plan['id']}/notes", json={
+        "username": "estraneo", "text": "x",
+    })
+    assert r.status_code == 404
+
+    # Lato studente: vede solo il messaggio, non la nota privata
+    main.app.dependency_overrides[auth.get_current_user] = lambda: _identity(
+        "alliev.tg", "alliev@example.test", is_admin=False, is_researcher=False
+    )
+    try:
+        r = client.get("/user/teacher-notes")
+        assert r.status_code == 200
+        texts = [row["text"] for row in r.json()]
+        assert "Ottimo lavoro!" in texts and "Da seguire su C1" not in texts
+    finally:
+        main.app.dependency_overrides.pop(auth.get_current_user, None)
+
+    # Pulizia note (l'autore/admin puo' eliminarle)
+    assert client.delete(f"/admin/teacher-notes/{note['id']}").status_code == 200
+    assert client.delete(f"/admin/teacher-notes/{message['id']}").status_code == 200
 
 
 def test_telegram_group_deep_link():
