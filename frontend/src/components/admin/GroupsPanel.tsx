@@ -10,6 +10,7 @@ interface StudentGroup {
     id: number;
     code: string;
     name: string;
+    school: string | null;
     owner_username: string;
     is_active: boolean;
     members_count: number;
@@ -23,6 +24,8 @@ const TEXTS = {
         subtitle: 'Le tue classi: gli studenti entrano con il link di invito (web o Telegram) o inserendo il codice classe dal profilo. Aggancia la classe a un piano di somministrazione per taggare i risultati.',
         newGroup: 'Nuova classe',
         namePlaceholder: 'Nome classe (es. 3B Informatica)',
+        schoolPlaceholder: 'Scuola/istituto (opzionale)',
+        school: 'Scuola',
         create: 'Crea',
         cancel: 'Annulla',
         members: 'iscritti',
@@ -52,6 +55,8 @@ const TEXTS = {
         subtitle: 'Your classes: students join via the invitation link (web or Telegram) or by entering the class code from their profile. Attach the class to an administration plan to tag results.',
         newGroup: 'New class',
         namePlaceholder: 'Class name (e.g. 3B Computer Science)',
+        schoolPlaceholder: 'School/institute (optional)',
+        school: 'School',
         create: 'Create',
         cancel: 'Cancel',
         members: 'members',
@@ -84,6 +89,7 @@ export function GroupsPanel() {
     const [groups, setGroups] = useState<StudentGroup[] | null>(null);
     const [creating, setCreating] = useState(false);
     const [newName, setNewName] = useState('');
+    const [newSchool, setNewSchool] = useState('');
     const [busy, setBusy] = useState(false);
     const [message, setMessage] = useState('');
     const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -136,13 +142,17 @@ export function GroupsPanel() {
         setBusy(true);
         setMessage('');
         try {
+            let failed = false;
             for (const username of selected) {
-                await apiFetch(`/api/admin/groups/${groupId}/shares`, {
+                const res = await apiFetch(`/api/admin/groups/${groupId}/shares`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ shared_with_username: username }),
                 });
+                // 409 = gia' condivisa: non e' un errore da mostrare
+                if (!res.ok && res.status !== 409) failed = true;
             }
+            if (failed) setMessage(texts.shareError);
             setSelectedShares((prev) => ({ ...prev, [groupId]: new Set() }));
             await loadShares(groupId);
         } catch {
@@ -201,10 +211,11 @@ export function GroupsPanel() {
             const res = await apiFetch('/api/admin/groups', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: newName.trim() }),
+                body: JSON.stringify({ name: newName.trim(), school: newSchool.trim() || null }),
             });
             if (!res.ok) throw new Error('create failed');
             setNewName('');
+            setNewSchool('');
             setCreating(false);
             load();
         } catch {
@@ -273,6 +284,12 @@ export function GroupsPanel() {
                         placeholder={texts.namePlaceholder}
                         className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                     />
+                    <input
+                        value={newSchool}
+                        onChange={(event) => setNewSchool(event.target.value)}
+                        placeholder={texts.schoolPlaceholder}
+                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    />
                     <div className="flex gap-2">
                         <button
                             type="button"
@@ -284,7 +301,7 @@ export function GroupsPanel() {
                         </button>
                         <button
                             type="button"
-                            onClick={() => { setCreating(false); setNewName(''); }}
+                            onClick={() => { setCreating(false); setNewName(''); setNewSchool(''); }}
                             className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                         >
                             <X className="h-4 w-4" />
@@ -309,6 +326,7 @@ export function GroupsPanel() {
                                     {texts.code}: <span className="font-mono font-semibold text-slate-600">{group.code}</span>
                                     {' - '}{group.members_count} {texts.members}
                                     {' - '}{group.owner_username}
+                                    {group.school ? ` - ${texts.school}: ${group.school}` : ''}
                                 </p>
                             </div>
                             <div className="flex gap-2">
