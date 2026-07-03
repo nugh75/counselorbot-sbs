@@ -1013,3 +1013,10 @@ class GuidedStepQuestionResponse(GuidedStepQuestionBase):
 
     class Config:
         from_attributes = True
+
+
+class TeacherNoteCreate(BaseModel):
+    """Nota o messaggio del docente per uno studente del piano."""
+    username: str
+    text: str
+    visible_to_student: bool = False
