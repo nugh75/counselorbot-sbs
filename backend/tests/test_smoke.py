@@ -272,6 +272,10 @@ EXPECTED_ROUTES = {
     ("DELETE", "/admin/teacher-notes/{note_id}"),
     ("POST", "/admin/administration-plans/{plan_id}/messages"),
     ("GET", "/user/teacher-notes"),
+    ("GET", "/groups/info"),
+    ("POST", "/groups/join"),
+    ("GET", "/user/groups"),
+    ("DELETE", "/user/groups/{membership_id}"),
     ("POST", "/telegram/link-code"),
     ("GET", "/telegram/link-status"),
     ("POST", "/telegram/unlink"),
@@ -4380,6 +4384,111 @@ def test_teacher_dashboard_notes_and_messages():
     assert client.delete(f"/admin/teacher-notes/{message['id']}").status_code == 200
 
 
+def test_group_membership_web_flow():
+    """Iscrizione web al gruppo indipendente dai risultati: join, card studente, nota docente, leave."""
+    plan = client.post("/admin/administration-plans", json={
+        "title": "Classe Web",
+        "instrument_code": "ZTPI",
+        "locale": "en",
+    }).json()
+
+    # Info pubbliche per la pagina invito
+    r = client.get(f"/groups/info?code={plan['code'].lower()}")
+    assert r.status_code == 200 and r.json()["instrument_code"] == "ZTPI"
+    assert client.get("/groups/info?code=NOPE").status_code == 404
+
+    student_override = lambda: _identity("web.student", "web.student@example.test", is_admin=False, is_researcher=False)  # noqa: E731
+    main.app.dependency_overrides[auth.get_current_user] = student_override
+    try:
+        # Join idempotente
+        assert client.post("/groups/join", json={"code": plan["code"]}).status_code == 200
+        assert client.post("/groups/join", json={"code": plan["code"]}).status_code == 200
+        groups = client.get("/user/groups").json()
+        assert len([g for g in groups if g["plan_id"] == plan["id"]]) == 1
+        membership_id = groups[0]["membership_id"]
+    finally:
+        main.app.dependency_overrides.pop(auth.get_current_user, None)
+
+    # Il docente vede l'iscritto anche senza risultati e puo' scrivergli
+    students = client.get(f"/admin/administration-plans/{plan['id']}/students").json()["students"]
+    assert any(s["username"] == "web.student" and s["results"] == [] for s in students)
+    note = client.post(f"/admin/administration-plans/{plan['id']}/notes", json={
+        "username": "web.student", "text": "Benvenuta nel gruppo", "visible_to_student": True,
+    })
+    assert note.status_code == 200
+
+    # Lo studente esce dal gruppo
+    main.app.dependency_overrides[auth.get_current_user] = student_override
+    try:
+        assert client.delete(f"/user/groups/{membership_id}").status_code == 200
+        assert client.get("/user/groups").json() == []
+    finally:
+        main.app.dependency_overrides.pop(auth.get_current_user, None)
+
+
+def test_telegram_counselor_selection():
+    """/counselor mostra la tastiera; couns:<id> imposta il counselor nello stato."""
+    import asyncio
+
+    sent: list[dict] = []
+
+    async def _fake_send(chat_id, text, keyboard=None):
+        sent.append({"chat_id": chat_id, "text": text, "keyboard": keyboard})
+
+    async def _fake_answer(callback_query_id):
+        pass
+
+    real_send = telegram_state.telegram_bot.send_message
+    real_answer = telegram_state.telegram_bot.answer_callback_query
+    telegram_state.telegram_bot.send_message = _fake_send
+    telegram_state.telegram_bot.answer_callback_query = _fake_answer
+
+    TG_USER = 616161
+
+    async def _run():
+        db = _TestSession()
+        try:
+            counselor = models.Counselor(slug="rita-test", name="Rita", is_active=True)
+            db.add(counselor)
+            db.commit()
+            db.refresh(counselor)
+
+            code = telegram_state.create_link_code(db, "tg.couns")
+            await telegram_state.process_update({"message": {
+                "chat": {"id": TG_USER, "type": "private"},
+                "from": {"id": TG_USER, "language_code": "it"},
+                "text": f"/link {code}",
+            }})
+            await telegram_state.process_update({"message": {
+                "chat": {"id": TG_USER, "type": "private"},
+                "from": {"id": TG_USER, "language_code": "it"},
+                "text": "/counselor",
+            }})
+            keyboard = sent[-1]["keyboard"]
+            flat = [button for row in keyboard for button in row]
+            assert any(button["callback_data"] == f"couns:{counselor.id}" for button in flat)
+
+            await telegram_state.process_update({"callback_query": {
+                "id": "cb3", "data": f"couns:{counselor.id}",
+                "from": {"id": TG_USER, "language_code": "it"},
+                "message": {"chat": {"id": TG_USER, "type": "private"}},
+            }})
+            assert "Rita" in sent[-1]["text"]
+            state = db.query(models.TelegramConversationState).filter(
+                models.TelegramConversationState.telegram_user_id == TG_USER
+            ).first()
+            db.refresh(state)
+            assert state.counselor_id == counselor.id
+        finally:
+            db.close()
+
+    try:
+        asyncio.run(_run())
+    finally:
+        telegram_state.telegram_bot.send_message = real_send
+        telegram_state.telegram_bot.answer_callback_query = real_answer
+
+
 def test_telegram_group_deep_link():
     """Deep link g_<piano> -> bottone login; l_<codice>__<piano> -> link + iscrizione + tagging."""
     import asyncio
@@ -4436,6 +4545,13 @@ def test_telegram_group_deep_link():
             assert link is not None and link.username == "tg.gruppo"
             assert link.administration_plan_id == plan.id
             assert "Classe Telegram" in sent[-1]["text"]
+            # Membership creata (indipendente dai risultati) + proposta strumento del piano.
+            membership = db.query(models.PlanMembership).filter(
+                models.PlanMembership.plan_id == plan.id,
+                models.PlanMembership.username == "tg.gruppo",
+            ).first()
+            assert membership is not None and membership.joined_via == "telegram"
+            assert sent[-1]["keyboard"][0][0]["callback_data"] == "instr:QSA"
 
             # Risultato taggato col piano.
             await telegram_state.process_update(_cb("instr:QSA"))
