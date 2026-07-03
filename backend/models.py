@@ -731,6 +731,7 @@ class StudentGroup(Base):
     id = Column(Integer, primary_key=True, index=True)
     code = Column(String, nullable=False, unique=True, index=True)  # GR-XXXXXX, per inviti
     name = Column(String, nullable=False)
+    school = Column(String, nullable=True)  # nome scuola/istituto (testo libero)
     owner_username = Column(String, index=True, nullable=False)  # docente/ricercatore
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

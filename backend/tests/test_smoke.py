@@ -4791,6 +4791,90 @@ def test_telegram_conversation_flow():
         telegram_state.telegram_bot.answer_callback_query = real_answer
 
 
+def test_group_share_flow_case_insensitive():
+    """Condivisione classi: match case-insensitive, visibilita', permessi, aggancio piano."""
+    owner = _identity("prof.owner", "prof.owner@example.test", is_admin=False, is_researcher=False)
+    other = _identity("Prof.Other", "prof.other@example.test", is_admin=False, is_researcher=False)
+    manager_override = main.app.dependency_overrides.get(auth.get_current_plan_manager)
+    try:
+        main.app.dependency_overrides[auth.get_current_plan_manager] = lambda: owner
+        group = client.post("/admin/groups", json={"name": "Classe condivisa", "school": "Liceo Test"}).json()
+        assert group["school"] == "Liceo Test"
+
+        # Non ancora condivisa: l'altro docente non la vede e non puo' condividerla
+        main.app.dependency_overrides[auth.get_current_plan_manager] = lambda: other
+        assert all(row["id"] != group["id"] for row in client.get("/admin/groups").json())
+        r = client.post(f"/admin/groups/{group['id']}/shares", json={"shared_with_username": "x"})
+        assert r.status_code == 404
+
+        # Owner condivide con username in MAIUSCOLO -> salvato lowercase
+        main.app.dependency_overrides[auth.get_current_plan_manager] = lambda: owner
+        r = client.post(f"/admin/groups/{group['id']}/shares", json={"shared_with_username": "PROF.OTHER"})
+        assert r.status_code == 200, r.text
+        share = r.json()
+        assert share["shared_with_username"] == "prof.other"
+        assert client.post(f"/admin/groups/{group['id']}/shares", json={"shared_with_username": "prof.other"}).status_code == 409
+        assert client.post(f"/admin/groups/{group['id']}/shares", json={"shared_with_username": "PROF.OWNER"}).status_code == 400
+
+        # Il destinatario (username con maiuscole) vede la classe e la aggancia a un piano
+        main.app.dependency_overrides[auth.get_current_plan_manager] = lambda: other
+        assert any(row["id"] == group["id"] for row in client.get("/admin/groups").json())
+        r = client.post("/admin/administration-plans", json={
+            "title": "Piano su classe condivisa",
+            "instrument_code": "QSA",
+            "locale": "en",
+            "group_id": group["id"],
+        })
+        assert r.status_code == 200, r.text
+        # Ma non puo' rimuovere la condivisione (non e' owner ne' granter)
+        assert client.delete(f"/admin/groups/{group['id']}/shares/{share['id']}").status_code == 403
+
+        # L'owner la rimuove e la classe torna invisibile all'altro
+        main.app.dependency_overrides[auth.get_current_plan_manager] = lambda: owner
+        assert client.delete(f"/admin/groups/{group['id']}/shares/{share['id']}").status_code == 200
+        main.app.dependency_overrides[auth.get_current_plan_manager] = lambda: other
+        assert all(row["id"] != group["id"] for row in client.get("/admin/groups").json())
+    finally:
+        main.app.dependency_overrides[auth.get_current_plan_manager] = manager_override
+
+
+def test_users_summary_scope():
+    """users-summary: admin vede anche gli studenti, il docente solo staff e classi visibili."""
+    manager_override = main.app.dependency_overrides.get(auth.get_current_plan_manager)
+    db = _TestSession()
+    try:
+        db.add(models.QuestionnaireResult(
+            session_id="sess-users-summary",
+            questionnaire_type="QSA",
+            scores={"C1": 5},
+            username="studente.sum",
+        ))
+        db.commit()
+    finally:
+        db.close()
+    try:
+        admin_id = _identity("admin.sum", "admin.sum@example.test", is_admin=True, is_researcher=False)
+        main.app.dependency_overrides[auth.get_current_plan_manager] = lambda: admin_id
+        payload = client.get("/admin/users-summary").json()
+        by_name = {u["username"]: u for u in payload["users"]}
+        assert "studente.sum" in by_name
+        assert by_name["studente.sum"]["in_results"] and by_name["studente.sum"]["results_count"] == 1
+
+        teacher = _identity("prof.sum", "prof.sum@example.test", is_admin=False, is_researcher=False)
+        main.app.dependency_overrides[auth.get_current_plan_manager] = lambda: teacher
+        group = client.post("/admin/groups", json={"name": "Classe Sum", "school": "IIS Sum"}).json()
+        payload = client.get("/admin/users-summary").json()
+        usernames = {u["username"] for u in payload["users"]}
+        assert "studente.sum" not in usernames  # niente studenti per i docenti
+        assert "prof.sum" in usernames  # se stesso sempre incluso
+        # Solo classi proprie o condivise
+        assert {g["owner_username"] for g in payload["groups"]} == {"prof.sum"}
+        mine = next(g for g in payload["groups"] if g["id"] == group["id"])
+        assert mine["school"] == "IIS Sum" and mine["members"] == []
+    finally:
+        main.app.dependency_overrides[auth.get_current_plan_manager] = manager_override
+
+
 # --------------------------------------------------------------------------
 # Runner senza pytest
 # --------------------------------------------------------------------------
