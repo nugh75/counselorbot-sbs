@@ -66,6 +66,7 @@ from .routes import assistant_questions as assistant_questions_routes
 from .routes import rag_docs as rag_docs_routes
 from .routes import guided_step_questions as guided_step_questions_routes
 from .routes import telegram as telegram_routes
+from .routes import groups as groups_routes
 
 
 # Re-export per retro-compatibilità (es. smoke test che importa da backend.main)
@@ -289,6 +290,101 @@ def _seed_and_migrate():
                 conn.commit()
         except Exception as e:
             logger.debug(f"questionnaire_results migration skipped/failed: {e}")
+
+        for table, clause in [
+            ("administration_plans", "ADD COLUMN group_id INTEGER"),
+            ("teacher_notes", "ADD COLUMN group_id INTEGER"),
+            ("teacher_notes", "ALTER COLUMN plan_id DROP NOT NULL"),
+        ]:
+            try:
+                with database.engine.connect() as conn:
+                    conn.execute(sa_text(f"ALTER TABLE {table} {clause}"))
+                    conn.commit()
+            except Exception as e:
+                logger.debug(f"{table} migration skipped/failed ({clause}): {e}")
+
+        if database.engine.dialect.name == "postgresql":
+            try:
+                with database.engine.connect() as conn:
+                    conn.execute(sa_text(
+                        """
+                        WITH legacy_plans AS (
+                            SELECT
+                                p.id,
+                                CASE
+                                    WHEN p.code LIKE 'AP-%' THEN 'GR-' || substring(p.code from 4)
+                                    ELSE 'GR-' || p.id::text
+                                END AS group_code,
+                                p.title,
+                                COALESCE(NULLIF(p.created_by_username, ''), 'admin') AS owner_username,
+                                (p.status <> 'archived') AS is_active,
+                                p.created_at
+                            FROM administration_plans p
+                            WHERE p.group_id IS NULL
+                              AND EXISTS (
+                                  SELECT 1 FROM plan_memberships pm WHERE pm.plan_id = p.id
+                              )
+                        )
+                        INSERT INTO student_groups (code, name, owner_username, is_active, created_at)
+                        SELECT
+                            lp.group_code,
+                            lp.title,
+                            lp.owner_username,
+                            lp.is_active,
+                            COALESCE(lp.created_at, now())
+                        FROM legacy_plans lp
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM student_groups sg WHERE sg.code = lp.group_code
+                        )
+                        """
+                    ))
+                    conn.execute(sa_text(
+                        """
+                        WITH legacy_plans AS (
+                            SELECT
+                                p.id,
+                                CASE
+                                    WHEN p.code LIKE 'AP-%' THEN 'GR-' || substring(p.code from 4)
+                                    ELSE 'GR-' || p.id::text
+                                END AS group_code
+                            FROM administration_plans p
+                            WHERE p.group_id IS NULL
+                              AND EXISTS (
+                                  SELECT 1 FROM plan_memberships pm WHERE pm.plan_id = p.id
+                              )
+                        )
+                        UPDATE administration_plans p
+                        SET group_id = sg.id
+                        FROM legacy_plans lp
+                        JOIN student_groups sg ON sg.code = lp.group_code
+                        WHERE p.id = lp.id
+                          AND p.group_id IS NULL
+                        """
+                    ))
+                    conn.execute(sa_text(
+                        """
+                        INSERT INTO group_memberships (group_id, username, joined_via, created_at)
+                        SELECT DISTINCT ON (p.group_id, pm.username)
+                            p.group_id,
+                            pm.username,
+                            COALESCE(NULLIF(pm.joined_via, ''), 'web'),
+                            COALESCE(pm.created_at, now())
+                        FROM plan_memberships pm
+                        JOIN administration_plans p ON p.id = pm.plan_id
+                        WHERE p.group_id IS NOT NULL
+                          AND pm.username IS NOT NULL
+                          AND NOT EXISTS (
+                              SELECT 1
+                              FROM group_memberships gm
+                              WHERE gm.group_id = p.group_id
+                                AND gm.username = pm.username
+                          )
+                        ORDER BY p.group_id, pm.username, pm.created_at DESC
+                        """
+                    ))
+                    conn.commit()
+            except Exception as e:
+                logger.debug(f"legacy plan_memberships migration skipped/failed: {e}")
 
         for table in ("questionnaire_results", "validation_responses", "telegram_account_links"):
             for clause in [
@@ -1407,3 +1503,4 @@ app.include_router(assistant_questions_routes.router)
 app.include_router(rag_docs_routes.router)
 app.include_router(guided_step_questions_routes.router)
 app.include_router(telegram_routes.router)
+app.include_router(groups_routes.router)

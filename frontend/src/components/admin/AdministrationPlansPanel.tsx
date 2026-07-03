@@ -31,6 +31,8 @@ interface AdministrationPlan {
     code: string;
     title: string;
     instrument_code: string;
+    group_id: number | null;
+    group_name: string | null;
     locale: LocaleCode;
     scheduled_at: string | null;
     location: string | null;
@@ -45,6 +47,7 @@ interface AdministrationPlan {
 type FormState = {
     title: string;
     instrument_code: string;
+    group_id: string;
     locale: LocaleCode;
     scheduled_at: string;
     location: string;
@@ -57,6 +60,7 @@ type FormState = {
 const EMPTY: FormState = {
     title: '',
     instrument_code: 'QSA',
+    group_id: '',
     locale: 'en',
     scheduled_at: '',
     location: '',
@@ -199,22 +203,14 @@ export function AdministrationPlansPanel() {
         return `${LANDING_BASE}/avvio?${q.toString()}`;
     };
 
-    const [origin, setOrigin] = useState('');
-    useEffect(() => { setOrigin(window.location.origin); }, []);
-    const groupInviteUrl = (plan: AdministrationPlan) => `${origin}/gruppo?g=${plan.code}`;
-
-    const [botUsername, setBotUsername] = useState('');
+    // Classi del docente/admin: agganciabili al piano (gli inviti vivono sulla classe).
+    const [groups, setGroups] = useState<{ id: number; name: string; code: string }[]>([]);
     useEffect(() => {
-        fetch('/api/telegram/bot-info')
-            .then((res) => (res.ok ? res.json() : null))
-            .then((info: { enabled: boolean; bot_username: string } | null) => {
-                if (info?.enabled && info.bot_username) setBotUsername(info.bot_username);
-            })
-            .catch(() => { /* bot spento: nessuna riga Telegram */ });
+        fetch('/api/admin/groups')
+            .then((res) => (res.ok ? res.json() : []))
+            .then((payload) => setGroups(Array.isArray(payload) ? payload : []))
+            .catch(() => { /* select classi vuoto */ });
     }, []);
-
-    const telegramUrl = (plan: AdministrationPlan) =>
-        `https://t.me/${botUsername}?start=g_${plan.code}`;
 
     const [studentsOpenId, setStudentsOpenId] = useState<number | null>(null);
 
@@ -228,6 +224,7 @@ export function AdministrationPlansPanel() {
         setForm({
             title: plan.title,
             instrument_code: plan.instrument_code,
+            group_id: plan.group_id ? String(plan.group_id) : '',
             locale: plan.locale,
             scheduled_at: toDateTimeLocal(plan.scheduled_at),
             location: plan.location || '',
@@ -274,6 +271,7 @@ export function AdministrationPlansPanel() {
         const body = {
             title: form.title.trim(),
             instrument_code: form.instrument_code,
+            group_id: form.group_id ? Number(form.group_id) : null,
             locale: form.locale,
             scheduled_at: toApiDateTime(form.scheduled_at),
             location: optional(form.location),
@@ -419,6 +417,13 @@ export function AdministrationPlansPanel() {
                             {t('admin.ap.instrument')}
                             <select className={inputCls} value={form.instrument_code} onChange={(event) => setForm({ ...form, instrument_code: event.target.value })}>
                                 {INSTRUMENTS.map((instrument) => <option key={instrument} value={instrument}>{instrument}</option>)}
+                            </select>
+                        </label>
+                        <label className="text-xs font-semibold uppercase text-slate-500">
+                            {lang === 'it' ? 'Classe' : 'Class'}
+                            <select className={inputCls} value={form.group_id} onChange={(event) => setForm({ ...form, group_id: event.target.value })}>
+                                <option value="">{lang === 'it' ? '- nessuna classe' : '- no class'}</option>
+                                {groups.map((group) => <option key={group.id} value={String(group.id)}>{group.name} ({group.code})</option>)}
                             </select>
                         </label>
                         <label className="text-xs font-semibold uppercase text-slate-500">
@@ -692,31 +697,10 @@ export function AdministrationPlansPanel() {
                                                 {t('admin.rc.action.link')}
                                             </button>
                                         </div>
-                                        {origin && (
-                                            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-                                                <input readOnly value={groupInviteUrl(plan)} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-700" />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => void copy(`grp-${plan.id}`, groupInviteUrl(plan))}
-                                                    className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                                                >
-                                                    {copiedKey === `grp-${plan.id}` ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
-                                                    {lang === 'it' ? 'Gruppo' : 'Group'}
-                                                </button>
-                                            </div>
-                                        )}
-                                        {botUsername && (
-                                            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-                                                <input readOnly value={telegramUrl(plan)} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-700" />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => void copy(`tg-${plan.id}`, telegramUrl(plan))}
-                                                    className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                                                >
-                                                    {copiedKey === `tg-${plan.id}` ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
-                                                    Telegram
-                                                </button>
-                                            </div>
+                                        {plan.group_name && (
+                                            <p className="mt-2 text-xs text-slate-500">
+                                                {lang === 'it' ? 'Classe' : 'Class'}: <span className="font-semibold">{plan.group_name}</span>
+                                            </p>
                                         )}
                                         <div className="mt-2 flex flex-wrap gap-2">
                                             <button
@@ -747,7 +731,7 @@ export function AdministrationPlansPanel() {
                                     </div>
                                 </div>
                             </div>
-                            {studentsOpenId === plan.id && <PlanStudentsPanel planId={plan.id} />}
+                            {studentsOpenId === plan.id && <PlanStudentsPanel base={`/api/admin/administration-plans/${plan.id}`} />}
                         </section>
                     )
                 ))}

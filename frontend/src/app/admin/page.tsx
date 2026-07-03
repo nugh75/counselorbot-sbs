@@ -20,6 +20,7 @@ import { TrainingDatasetPanel } from '@/components/admin/TrainingDatasetPanel';
 import { PqblAdminPanel } from '@/components/admin/PqblAdminPanel';
 import { ResearchContactsPanel } from '@/components/admin/ResearchContactsPanel';
 import { AdministrationPlansPanel } from '@/components/admin/AdministrationPlansPanel';
+import { GroupsPanel } from '@/components/admin/GroupsPanel';
 import { AssistantQuestionsPanel } from '@/components/admin/AssistantQuestionsPanel';
 import { AssistantAdminPanel } from '@/components/admin/AssistantAdminPanel';
 import { RolePreviewPanel } from '@/components/admin/RolePreviewPanel';
@@ -31,7 +32,7 @@ import { canUseResearchConsole } from '@/lib/roles';
 
 import { cn } from '@/lib/utils';
 
-type AdminTab = 'assistantManager' | 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'approvedStrategies' | 'certifiedStrategies' | 'assistantQuestions' | 'guidedStepQuestions' | 'ragDocs' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'training' | 'pqbl' | 'rolePreview';
+type AdminTab = 'assistantManager' | 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'approvedStrategies' | 'certifiedStrategies' | 'assistantQuestions' | 'guidedStepQuestions' | 'ragDocs' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'groupsClasses' | 'training' | 'pqbl' | 'rolePreview';
 
 export default function AdminPage() {
     const router = useRouter();
@@ -71,6 +72,7 @@ export default function AdminPage() {
                 { id: 'validation', label: t('admin.tab.validation'), icon: Database },
                 { id: 'researchContacts', label: t('admin.tab.researchContacts'), icon: Users },
                 { id: 'administrationPlans', label: t('admin.tab.administrationPlans'), icon: CalendarDays },
+                { id: 'groupsClasses', label: 'Gruppi e classi', icon: Users },
             ],
         },
         {
@@ -229,6 +231,7 @@ export default function AdminPage() {
                         {activeTab === 'questionnaires' && <QuestionnaireEditor />}
                         {activeTab === 'researchContacts' && <ResearchContactsPanel />}
                         {activeTab === 'administrationPlans' && <AdministrationPlansPanel />}
+                        {activeTab === 'groupsClasses' && <GroupsPanel />}
                         {activeTab === 'training' && <TrainingDatasetPanel />}
                         {activeTab === 'pqbl' && <PqblAdminPanel />}
                         {activeTab === 'validation' && <ValidationExportPanel />}

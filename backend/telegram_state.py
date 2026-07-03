@@ -118,8 +118,8 @@ BOT_TEXTS = {
         "en": "Preparing the answer...",
     },
     "group_login": {
-        "it": "Per partecipare accedi con il bottone qui sotto (puoi entrare anche come ospite anonimo): la pagina ti mostra il codice e ti riporta qui.",
-        "en": "To join, log in with the button below (anonymous guest access works too): the page shows your code and brings you back here.",
+        "it": "Per partecipare accedi con il bottone qui sotto (puoi entrare anche come ospite anonimo): la pagina ti mostra il codice e ti riporta qui.\n\nNota: il docente/ricercatore del gruppo puo' vedere i tuoi risultati e le conversazioni con il counselor AI.",
+        "en": "To join, log in with the button below (anonymous guest access works too): the page shows your code and brings you back here.\n\nNote: the group teacher/researcher can see your results and your conversations with the AI counselor.",
     },
     "group_enrolled": {
         "it": "Sei nel gruppo: {label}.",
@@ -189,27 +189,82 @@ def public_base_url() -> str:
     return f"{parts.scheme}://{parts.netloc}"
 
 
-def resolve_group(db: Session, code: str) -> tuple[int | None, int | None, str | None, str | None]:
-    """Codice gruppo -> (plan_id, contact_id, label, instrument_code). Prima piano,
-    poi contatto (stessa risoluzione dello study code web in routes/survey.py)."""
+def resolve_group(db: Session, code: str) -> dict:
+    """Codice invito -> {group_id, plan_id, contact_id, label, instrument}.
+
+    Prima classe (GR-...), poi piano (AP-..., legacy) e contatto ricercatore
+    (stessa risoluzione dello study code web in routes/survey.py). Per la classe
+    lo strumento proposto e' quello del piano attivo agganciato, se esiste.
+    """
+    empty = {"group_id": None, "plan_id": None, "contact_id": None, "label": None, "instrument": None}
     normalized = (code or "").strip().upper()
     if not normalized:
-        return None, None, None, None
+        return empty
+    group = (
+        db.query(models.StudentGroup)
+        .filter(models.StudentGroup.code == normalized, models.StudentGroup.is_active.is_(True))
+        .first()
+    )
+    if group:
+        plan = _active_plan_for_group(db, group.id)
+        return {
+            "group_id": group.id, "plan_id": None, "contact_id": None,
+            "label": group.name or group.code,
+            "instrument": plan.instrument_code if plan else None,
+        }
     plan = (
         db.query(models.AdministrationPlan)
         .filter(models.AdministrationPlan.code == normalized)
         .first()
     )
     if plan:
-        return plan.id, None, plan.title or plan.code, plan.instrument_code
+        return {"group_id": None, "plan_id": plan.id, "contact_id": None,
+                "label": plan.title or plan.code, "instrument": plan.instrument_code}
     contact = (
         db.query(models.ResearchContact)
         .filter(models.ResearchContact.code == normalized, models.ResearchContact.is_active.is_(True))
         .first()
     )
     if contact:
-        return None, contact.id, contact.name or contact.code, None
-    return None, None, None, None
+        return {"group_id": None, "plan_id": None, "contact_id": contact.id,
+                "label": contact.name or contact.code, "instrument": None}
+    return empty
+
+
+def _active_plan_for_group(db: Session, group_id: int, questionnaire_type: str | None = None):
+    """Piano non archiviato agganciato alla classe (opzionale: per strumento)."""
+    query = (
+        db.query(models.AdministrationPlan)
+        .filter(
+            models.AdministrationPlan.group_id == group_id,
+            models.AdministrationPlan.status.in_(("planned", "active")),
+        )
+    )
+    if questionnaire_type:
+        query = query.filter(models.AdministrationPlan.instrument_code == questionnaire_type)
+    return query.order_by(models.AdministrationPlan.created_at.desc()).first()
+
+
+def plan_context_for_result(db: Session, username: str, questionnaire_type: str,
+                            link: models.TelegramAccountLink | None) -> tuple[int | None, int | None]:
+    """(administration_plan_id, research_contact_id) per un nuovo risultato.
+
+    Prima i piani agganciati alle classi dello studente (strumento corrispondente),
+    poi il fallback legacy sul collegamento Telegram.
+    """
+    group_ids = [
+        m.group_id
+        for m in db.query(models.GroupMembership)
+        .filter(models.GroupMembership.username == username)
+        .all()
+    ]
+    for group_id in group_ids:
+        plan = _active_plan_for_group(db, group_id, questionnaire_type)
+        if plan:
+            return plan.id, None
+    if link:
+        return link.administration_plan_id, link.research_contact_id
+    return None, None
 
 
 # --- Link codes -----------------------------------------------------------
@@ -475,13 +530,14 @@ async def _start_flow(db: Session, state: models.TelegramConversationState) -> N
     state.conversation_id = None
     if state.questionnaire_type in SCORE_QUESTIONNAIRES:
         link = get_active_link(db, state.telegram_user_id)
+        plan_id, contact_id = plan_context_for_result(db, state.username, state.questionnaire_type, link)
         db.add(models.QuestionnaireResult(
             session_id=state.session_id,
             questionnaire_type=state.questionnaire_type,
             scores=state.scores,
             username=state.username,
-            administration_plan_id=link.administration_plan_id if link else None,
-            research_contact_id=link.research_contact_id if link else None,
+            administration_plan_id=plan_id,
+            research_contact_id=contact_id,
         ))
     db.commit()
     steps = _steps(db, state.questionnaire_type)
@@ -668,13 +724,16 @@ async def _do_link(db: Session, sender: dict, chat_id: int, language: str,
     group_label = None
     group_instrument = None
     if group_code:
-        plan_id, contact_id, group_label, group_instrument = resolve_group(db, group_code)
-        if plan_id or contact_id:
-            link.administration_plan_id = plan_id
-            link.research_contact_id = contact_id
-        if plan_id:
-            from .routes.administration_plans import ensure_membership
-            ensure_membership(db, plan_id, username, "telegram")
+        invite = resolve_group(db, group_code)
+        group_label = invite["label"]
+        group_instrument = invite["instrument"]
+        if invite["group_id"]:
+            from .routes.groups import ensure_membership
+            ensure_membership(db, invite["group_id"], username, "telegram")
+        elif invite["plan_id"] or invite["contact_id"]:
+            # Legacy: invito diretto con codice piano/contatto (senza classe).
+            link.administration_plan_id = invite["plan_id"]
+            link.research_contact_id = invite["contact_id"]
     db.commit()
     message = _t("link_ok", language)
     keyboard = None

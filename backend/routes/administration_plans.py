@@ -167,12 +167,33 @@ def _serialize_researchers(db: Session, plan_id: int) -> list[dict]:
     return rows
 
 
+def _group_name(db: Session, group_id: Optional[int]) -> Optional[str]:
+    if not group_id:
+        return None
+    group = db.query(models.StudentGroup).filter(models.StudentGroup.id == group_id).first()
+    return group.name if group else None
+
+
+def _validate_group_attach(db: Session, identity, group_id: Optional[int]) -> Optional[int]:
+    """Un non-admin puo' agganciare al piano solo le PROPRIE classi."""
+    if not group_id:
+        return None
+    group = db.query(models.StudentGroup).filter(models.StudentGroup.id == group_id).first()
+    if not group:
+        raise HTTPException(status_code=400, detail="Classe non trovata")
+    if not _is_admin(identity) and group.owner_username != _username(identity):
+        raise HTTPException(status_code=403, detail="Puoi agganciare solo le tue classi")
+    return group.id
+
+
 def _serialize_plan(db: Session, plan: models.AdministrationPlan) -> dict:
     return {
         "id": plan.id,
         "code": plan.code,
         "title": plan.title,
         "instrument_code": plan.instrument_code,
+        "group_id": plan.group_id,
+        "group_name": _group_name(db, plan.group_id),
         "locale": plan.locale,
         "scheduled_at": plan.scheduled_at,
         "location": plan.location,
@@ -252,6 +273,7 @@ async def create_administration_plan(
         code=code,
         title=title,
         instrument_code=(payload.instrument_code or "QSA").strip() or "QSA",
+        group_id=_validate_group_attach(db, current_user, payload.group_id),
         locale=_normalize_locale(payload.locale),
         scheduled_at=payload.scheduled_at,
         location=_clean(payload.location),
@@ -283,6 +305,8 @@ async def update_administration_plan(
         plan.title = title
     if "instrument_code" in updates:
         plan.instrument_code = _clean(updates["instrument_code"]) or "QSA"
+    if "group_id" in updates:
+        plan.group_id = _validate_group_attach(db, current_user, updates["group_id"])
     if "locale" in updates:
         plan.locale = _normalize_locale(updates["locale"])
     if "scheduled_at" in updates:
@@ -308,6 +332,9 @@ async def delete_administration_plan(
     db: Session = Depends(get_db),
 ):
     plan = _require_visible_plan(db, current_user, plan_id)
+    # Non-admin (docenti/ricercatori): elimina solo chi ha creato il piano.
+    if not _is_admin(current_user) and plan.created_by_username != _username(current_user):
+        raise HTTPException(status_code=403, detail="Solo il creatore del piano puo' eliminarlo")
     if _responses_count(db, plan.id):
         raise HTTPException(
             status_code=409,
@@ -349,22 +376,7 @@ async def get_administration_plan_responses(
         "validation_responses": validation_responses,
     }
 
-
-# --- Dashboard docente: studenti del piano, transcript, note, messaggi -------
-
-def _serialize_note(note: models.TeacherNote) -> dict:
-    return {
-        "id": note.id,
-        "plan_id": note.plan_id,
-        "username": note.username,
-        "author_username": note.author_username,
-        "kind": note.kind,
-        "text": note.text,
-        "visible_to_student": note.visible_to_student,
-        "telegram_delivered": note.telegram_delivered,
-        "created_at": note.created_at.isoformat() if note.created_at else None,
-    }
-
+# --- Studenti del piano (risultati + transcript). Note/messaggi: routes/groups.py --
 
 @router.get("/admin/administration-plans/{plan_id}/students")
 async def get_administration_plan_students(
@@ -372,7 +384,7 @@ async def get_administration_plan_students(
     current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
-    """Studenti del piano: iscritti (membership) + chi ha risultati taggati,
+    """Studenti del piano: membri della classe agganciata + chi ha risultati taggati,
     con risultati, learner model e link Telegram."""
     from .learner_profile import _latest_revision
 
@@ -387,14 +399,14 @@ async def get_administration_plan_students(
     for result in results:
         if result.username:
             by_student.setdefault(result.username, []).append(result)
-    # Iscritti senza risultati: compaiono comunque nel gruppo.
-    members = (
-        db.query(models.PlanMembership)
-        .filter(models.PlanMembership.plan_id == plan.id)
-        .all()
-    )
-    for member in members:
-        by_student.setdefault(member.username, [])
+    if plan.group_id:
+        members = (
+            db.query(models.GroupMembership)
+            .filter(models.GroupMembership.group_id == plan.group_id)
+            .all()
+        )
+        for member in members:
+            by_student.setdefault(member.username, [])
 
     students = []
     for username, rows in sorted(by_student.items()):
@@ -425,47 +437,6 @@ async def get_administration_plan_students(
     return {"plan_id": plan.id, "students": students}
 
 
-def _require_plan_student(db: Session, plan: models.AdministrationPlan, username: str) -> None:
-    """Lo studente appartiene al piano se iscritto (membership) O se ha risultati taggati."""
-    member = (
-        db.query(models.PlanMembership.id)
-        .filter(
-            models.PlanMembership.plan_id == plan.id,
-            models.PlanMembership.username == username,
-        )
-        .first()
-    )
-    if member:
-        return
-    exists = (
-        db.query(models.QuestionnaireResult.id)
-        .filter(
-            models.QuestionnaireResult.administration_plan_id == plan.id,
-            models.QuestionnaireResult.username == username,
-        )
-        .first()
-    )
-    if not exists:
-        raise HTTPException(status_code=404, detail="Studente non trovato in questo piano")
-
-
-def ensure_membership(db: Session, plan_id: int, username: str, joined_via: str) -> models.PlanMembership:
-    """Iscrizione idempotente di uno studente a un gruppo."""
-    membership = (
-        db.query(models.PlanMembership)
-        .filter(
-            models.PlanMembership.plan_id == plan_id,
-            models.PlanMembership.username == username,
-        )
-        .first()
-    )
-    if membership:
-        return membership
-    membership = models.PlanMembership(plan_id=plan_id, username=username, joined_via=joined_via)
-    db.add(membership)
-    return membership
-
-
 @router.get("/admin/administration-plans/{plan_id}/students/{username}/conversation/{session_id}")
 async def get_plan_student_conversation(
     plan_id: int,
@@ -490,218 +461,3 @@ async def get_plan_student_conversation(
     if not result:
         raise HTTPException(status_code=404, detail="Sessione non trovata in questo piano")
     return _session_conversation_messages(db, session_id)
-
-
-@router.get("/admin/administration-plans/{plan_id}/notes")
-async def list_teacher_notes(
-    plan_id: int,
-    username: Optional[str] = None,
-    current_user=Depends(auth.get_current_plan_manager),
-    db: Session = Depends(get_db),
-):
-    plan = _require_visible_plan(db, current_user, plan_id)
-    query = db.query(models.TeacherNote).filter(models.TeacherNote.plan_id == plan.id)
-    if username:
-        query = query.filter(models.TeacherNote.username == username)
-    notes = query.order_by(models.TeacherNote.created_at.desc()).all()
-    return [_serialize_note(note) for note in notes]
-
-
-@router.post("/admin/administration-plans/{plan_id}/notes")
-async def create_teacher_note(
-    plan_id: int,
-    payload: schemas.TeacherNoteCreate,
-    current_user=Depends(auth.get_current_plan_manager),
-    db: Session = Depends(get_db),
-):
-    plan = _require_visible_plan(db, current_user, plan_id)
-    text = _clean(payload.text)
-    if not text:
-        raise HTTPException(status_code=400, detail="Testo nota obbligatorio")
-    _require_plan_student(db, plan, payload.username)
-    note = models.TeacherNote(
-        plan_id=plan.id,
-        username=payload.username,
-        author_username=_username(current_user) or "",
-        kind="note",
-        text=text,
-        visible_to_student=bool(payload.visible_to_student),
-    )
-    db.add(note)
-    db.commit()
-    db.refresh(note)
-    return _serialize_note(note)
-
-
-@router.delete("/admin/teacher-notes/{note_id}")
-async def delete_teacher_note(
-    note_id: int,
-    current_user=Depends(auth.get_current_plan_manager),
-    db: Session = Depends(get_db),
-):
-    note = db.query(models.TeacherNote).filter(models.TeacherNote.id == note_id).first()
-    if not note:
-        raise HTTPException(status_code=404, detail="Nota non trovata")
-    _require_visible_plan(db, current_user, note.plan_id)
-    if not _is_admin(current_user) and note.author_username != _username(current_user):
-        raise HTTPException(status_code=403, detail="Solo l'autore o un admin puo' eliminare la nota")
-    db.delete(note)
-    db.commit()
-    return {"ok": True, "deleted": note_id}
-
-
-@router.post("/admin/administration-plans/{plan_id}/messages")
-async def send_teacher_message(
-    plan_id: int,
-    payload: schemas.TeacherNoteCreate,
-    current_user=Depends(auth.get_current_plan_manager),
-    db: Session = Depends(get_db),
-):
-    """Messaggio docente->studente: sempre visibile nel profilo web dello studente,
-    recapitato anche via bot Telegram se lo studente e' collegato."""
-    from .. import telegram_bot, telegram_state
-
-    plan = _require_visible_plan(db, current_user, plan_id)
-    text = _clean(payload.text)
-    if not text:
-        raise HTTPException(status_code=400, detail="Testo messaggio obbligatorio")
-    _require_plan_student(db, plan, payload.username)
-
-    note = models.TeacherNote(
-        plan_id=plan.id,
-        username=payload.username,
-        author_username=_username(current_user) or "",
-        kind="message",
-        text=text,
-        visible_to_student=True,
-    )
-    db.add(note)
-
-    delivered = None
-    link = (
-        db.query(models.TelegramAccountLink)
-        .filter(
-            models.TelegramAccountLink.username == payload.username,
-            models.TelegramAccountLink.revoked_at.is_(None),
-        )
-        .first()
-    )
-    if link and telegram_bot.bot_enabled():
-        state = (
-            db.query(models.TelegramConversationState)
-            .filter(models.TelegramConversationState.telegram_user_id == link.telegram_user_id)
-            .first()
-        )
-        language = state.language if state else "it"
-        header = telegram_state.BOT_TEXTS["teacher_message"].get(language) or telegram_state.BOT_TEXTS["teacher_message"]["en"]
-        try:
-            await telegram_bot.send_message(link.telegram_chat_id, f"{header}\n{text}")
-            delivered = True
-        except Exception:
-            delivered = False
-    note.telegram_delivered = delivered
-    db.commit()
-    db.refresh(note)
-    return _serialize_note(note)
-
-
-@router.get("/user/teacher-notes")
-async def get_my_teacher_notes(
-    current_user: dict = Depends(auth.get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Note e messaggi del docente visibili allo studente autenticato (web-first)."""
-    notes = (
-        db.query(models.TeacherNote)
-        .filter(
-            models.TeacherNote.username == current_user["username"],
-            models.TeacherNote.visible_to_student.is_(True),
-        )
-        .order_by(models.TeacherNote.created_at.desc())
-        .all()
-    )
-    return [_serialize_note(note) for note in notes]
-
-
-# --- Gruppi lato studente ----------------------------------------------------
-
-@router.get("/groups/info")
-async def get_group_info(code: str, db: Session = Depends(get_db)):
-    """Info pubbliche minime su un gruppo (per la pagina di invito)."""
-    plan = (
-        db.query(models.AdministrationPlan)
-        .filter(func.upper(models.AdministrationPlan.code) == code.strip().upper())
-        .first()
-    )
-    if not plan:
-        raise HTTPException(status_code=404, detail="Gruppo non trovato")
-    return {"code": plan.code, "title": plan.title, "instrument_code": plan.instrument_code}
-
-
-@router.post("/groups/join")
-async def join_group(
-    payload: schemas.GroupJoinRequest,
-    current_user: dict = Depends(auth.get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Lo studente autenticato entra nel gruppo con il codice dell'invito del docente."""
-    plan = (
-        db.query(models.AdministrationPlan)
-        .filter(func.upper(models.AdministrationPlan.code) == payload.code.strip().upper())
-        .first()
-    )
-    if not plan:
-        raise HTTPException(status_code=404, detail="Gruppo non trovato")
-    ensure_membership(db, plan.id, current_user["username"], "web")
-    db.commit()
-    return {"plan_id": plan.id, "code": plan.code, "title": plan.title, "instrument_code": plan.instrument_code}
-
-
-@router.get("/user/groups")
-async def get_my_groups(
-    current_user: dict = Depends(auth.get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Gruppi a cui lo studente autenticato e' iscritto."""
-    memberships = (
-        db.query(models.PlanMembership)
-        .filter(models.PlanMembership.username == current_user["username"])
-        .order_by(models.PlanMembership.created_at.desc())
-        .all()
-    )
-    groups = []
-    for membership in memberships:
-        plan = db.query(models.AdministrationPlan).filter(models.AdministrationPlan.id == membership.plan_id).first()
-        if not plan:
-            continue
-        groups.append({
-            "membership_id": membership.id,
-            "plan_id": plan.id,
-            "code": plan.code,
-            "title": plan.title,
-            "instrument_code": plan.instrument_code,
-            "joined_via": membership.joined_via,
-            "joined_at": membership.created_at.isoformat() if membership.created_at else None,
-        })
-    return groups
-
-
-@router.delete("/user/groups/{membership_id}")
-async def leave_group(
-    membership_id: int,
-    current_user: dict = Depends(auth.get_current_user),
-    db: Session = Depends(get_db),
-):
-    membership = (
-        db.query(models.PlanMembership)
-        .filter(
-            models.PlanMembership.id == membership_id,
-            models.PlanMembership.username == current_user["username"],
-        )
-        .first()
-    )
-    if not membership:
-        raise HTTPException(status_code=404, detail="Iscrizione non trovata")
-    db.delete(membership)
-    db.commit()
-    return {"ok": True, "left": membership_id}

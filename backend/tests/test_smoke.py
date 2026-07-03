@@ -267,10 +267,16 @@ EXPECTED_ROUTES = {
     ("GET", "/telegram/bot-info"),
     ("GET", "/admin/administration-plans/{plan_id}/students"),
     ("GET", "/admin/administration-plans/{plan_id}/students/{username}/conversation/{session_id}"),
-    ("GET", "/admin/administration-plans/{plan_id}/notes"),
-    ("POST", "/admin/administration-plans/{plan_id}/notes"),
+    ("GET", "/admin/groups"),
+    ("POST", "/admin/groups"),
+    ("PUT", "/admin/groups/{group_id}"),
+    ("DELETE", "/admin/groups/{group_id}"),
+    ("GET", "/admin/groups/{group_id}/students"),
+    ("GET", "/admin/groups/{group_id}/students/{username}/conversation/{session_id}"),
+    ("GET", "/admin/groups/{group_id}/notes"),
+    ("POST", "/admin/groups/{group_id}/notes"),
     ("DELETE", "/admin/teacher-notes/{note_id}"),
-    ("POST", "/admin/administration-plans/{plan_id}/messages"),
+    ("POST", "/admin/groups/{group_id}/messages"),
     ("GET", "/user/teacher-notes"),
     ("GET", "/groups/info"),
     ("POST", "/groups/join"),
@@ -4309,11 +4315,13 @@ def test_plan_manager_dependency_accepts_teachers():
 
 
 def test_teacher_dashboard_notes_and_messages():
+    """Piano: studenti da risultati + transcript. Classe: note e messaggi."""
     plan = client.post("/admin/administration-plans", json={
         "title": "Classe Prof",
         "instrument_code": "QSA",
         "locale": "en",
     }).json()
+    group = client.post("/admin/groups", json={"name": "Classe Prof A"}).json()
     db = _TestSession()
     try:
         db.add(models.QuestionnaireResult(
@@ -4329,40 +4337,46 @@ def test_teacher_dashboard_notes_and_messages():
             username="alliev.tg",
             details={"user_input": "Cosa significa C1?", "bot_response": "RISPOSTA_TEST"},
         ))
+        db.add(models.GroupMembership(group_id=group["id"], username="alliev.tg", joined_via="teacher"))
         db.commit()
     finally:
         db.close()
 
-    # Studenti del piano
+    # Studenti del piano (da risultati taggati)
     r = client.get(f"/admin/administration-plans/{plan['id']}/students")
     assert r.status_code == 200, r.text
     students = r.json()["students"]
     assert len(students) == 1 and students[0]["username"] == "alliev.tg"
-    assert students[0]["telegram_linked"] is False
     assert students[0]["results"][0]["scores"] == {"C1": 7}
 
-    # Transcript della sessione
+    # Transcript via piano e via classe
     r = client.get(f"/admin/administration-plans/{plan['id']}/students/alliev.tg/conversation/sess-teacher-1")
     assert r.status_code == 200
     roles = [m["role"] for m in r.json()]
     assert "student" in roles and "counselor" in roles
+    r = client.get(f"/admin/groups/{group['id']}/students/alliev.tg/conversation/sess-teacher-1")
+    assert r.status_code == 200 and len(r.json()) == 2
+
+    # Studenti della classe: risultati completi dello studente
+    students = client.get(f"/admin/groups/{group['id']}/students").json()["students"]
+    assert students[0]["username"] == "alliev.tg" and students[0]["results"]
 
     # Nota non visibile allo studente
-    note = client.post(f"/admin/administration-plans/{plan['id']}/notes", json={
+    note = client.post(f"/admin/groups/{group['id']}/notes", json={
         "username": "alliev.tg", "text": "Da seguire su C1", "visible_to_student": False,
     }).json()
     assert note["kind"] == "note" and note["visible_to_student"] is False
 
     # Messaggio: sempre visibile allo studente; bot spento -> telegram_delivered None
     os.environ["TELEGRAM_BOT_ENABLED"] = "false"
-    message = client.post(f"/admin/administration-plans/{plan['id']}/messages", json={
+    message = client.post(f"/admin/groups/{group['id']}/messages", json={
         "username": "alliev.tg", "text": "Ottimo lavoro!",
     }).json()
     assert message["kind"] == "message" and message["visible_to_student"] is True
     assert message["telegram_delivered"] is None
 
-    # Studente non del piano: rifiutato
-    r = client.post(f"/admin/administration-plans/{plan['id']}/notes", json={
+    # Studente non della classe: rifiutato
+    r = client.post(f"/admin/groups/{group['id']}/notes", json={
         "username": "estraneo", "text": "x",
     })
     assert r.status_code == 404
@@ -4385,39 +4399,64 @@ def test_teacher_dashboard_notes_and_messages():
 
 
 def test_group_membership_web_flow():
-    """Iscrizione web al gruppo indipendente dai risultati: join, card studente, nota docente, leave."""
-    plan = client.post("/admin/administration-plans", json={
-        "title": "Classe Web",
-        "instrument_code": "ZTPI",
-        "locale": "en",
-    }).json()
+    """Classe autonoma: join con codice, membro senza risultati, aggancio al piano, leave."""
+    group = client.post("/admin/groups", json={"name": "3B Informatica"}).json()
+    assert group["code"].startswith("GR-")
 
-    # Info pubbliche per la pagina invito
-    r = client.get(f"/groups/info?code={plan['code'].lower()}")
-    assert r.status_code == 200 and r.json()["instrument_code"] == "ZTPI"
-    assert client.get("/groups/info?code=NOPE").status_code == 404
+    # Info pubbliche per la pagina invito (case-insensitive)
+    r = client.get(f"/groups/info?code={group['code'].lower()}")
+    assert r.status_code == 200 and r.json()["name"] == "3B Informatica"
+    assert client.get("/groups/info?code=GR-NOPE").status_code == 404
 
     student_override = lambda: _identity("web.student", "web.student@example.test", is_admin=False, is_researcher=False)  # noqa: E731
     main.app.dependency_overrides[auth.get_current_user] = student_override
     try:
-        # Join idempotente
-        assert client.post("/groups/join", json={"code": plan["code"]}).status_code == 200
-        assert client.post("/groups/join", json={"code": plan["code"]}).status_code == 200
-        groups = client.get("/user/groups").json()
-        assert len([g for g in groups if g["plan_id"] == plan["id"]]) == 1
-        membership_id = groups[0]["membership_id"]
+        # Join idempotente (codice classe dal profilo o dal link invito)
+        assert client.post("/groups/join", json={"code": group["code"]}).status_code == 200
+        assert client.post("/groups/join", json={"code": group["code"]}).status_code == 200
+        my_groups = client.get("/user/groups").json()
+        assert len([g for g in my_groups if g["group_id"] == group["id"]]) == 1
+        membership_id = my_groups[0]["membership_id"]
     finally:
         main.app.dependency_overrides.pop(auth.get_current_user, None)
 
-    # Il docente vede l'iscritto anche senza risultati e puo' scrivergli
+    # Il docente vede l'iscritto anche senza risultati
+    students = client.get(f"/admin/groups/{group['id']}/students").json()["students"]
+    assert any(s["username"] == "web.student" and s["results"] == [] for s in students)
+
+    # Piano agganciato alla classe: lo studente compare tra gli studenti del piano
+    plan = client.post("/admin/administration-plans", json={
+        "title": "Somministrazione 3B",
+        "instrument_code": "ZTPI",
+        "locale": "en",
+        "group_id": group["id"],
+    }).json()
+    assert plan["group_id"] == group["id"] and plan["group_name"] == "3B Informatica"
     students = client.get(f"/admin/administration-plans/{plan['id']}/students").json()["students"]
     assert any(s["username"] == "web.student" and s["results"] == [] for s in students)
-    note = client.post(f"/admin/administration-plans/{plan['id']}/notes", json={
-        "username": "web.student", "text": "Benvenuta nel gruppo", "visible_to_student": True,
-    })
-    assert note.status_code == 200
 
-    # Lo studente esce dal gruppo
+    # Delete piano: un referente non creatore riceve 403
+    alice = client.post("/admin/research-contacts", json={
+        "name": "Alice Del", "email": "alice.del@example.test",
+    }).json()
+    client.put(f"/admin/administration-plans/{plan['id']}", json={
+        "researchers": [{"research_contact_id": alice["id"]}],
+    })
+    manager_override = main.app.dependency_overrides.get(auth.get_current_plan_manager)
+    try:
+        main.app.dependency_overrides[auth.get_current_plan_manager] = lambda: _identity(
+            "alice.del", "alice.del@example.test", is_admin=False, is_researcher=True
+        )
+        assert client.delete(f"/admin/administration-plans/{plan['id']}").status_code == 403
+    finally:
+        main.app.dependency_overrides[auth.get_current_plan_manager] = manager_override
+
+    # Classe agganciata a un piano: non eliminabile finche' il piano esiste
+    assert client.delete(f"/admin/groups/{group['id']}").status_code == 409
+    assert client.delete(f"/admin/administration-plans/{plan['id']}").status_code == 200
+    assert client.delete(f"/admin/research-contacts/{alice['id']}").status_code == 200
+
+    # Lo studente esce dalla classe
     main.app.dependency_overrides[auth.get_current_user] = student_override
     try:
         assert client.delete(f"/user/groups/{membership_id}").status_code == 200
@@ -4490,7 +4529,7 @@ def test_telegram_counselor_selection():
 
 
 def test_telegram_group_deep_link():
-    """Deep link g_<piano> -> bottone login; l_<codice>__<piano> -> link + iscrizione + tagging."""
+    """Deep link g_<classe> -> bottone login; l_<codice>__<classe> -> link + iscrizione + tagging."""
     import asyncio
 
     sent: list[dict] = []
@@ -4526,29 +4565,41 @@ def test_telegram_group_deep_link():
     async def _run():
         db = _TestSession()
         try:
-            plan = models.AdministrationPlan(code="AP-TGTEST", title="Classe Telegram", instrument_code="QSA", locale="en")
+            group = models.StudentGroup(code="GR-TGTEST", name="Classe Telegram", owner_username="prof")
+            db.add(group)
+            db.flush()
+            plan = models.AdministrationPlan(
+                code="AP-TGTEST",
+                title="Somministrazione Telegram",
+                instrument_code="QSA",
+                group_id=group.id,
+                locale="en",
+                status="active",
+            )
             db.add(plan)
             db.commit()
+            db.refresh(group)
             db.refresh(plan)
 
-            # /start g_<piano>: bottone URL verso /telegram-link?g=...
-            await telegram_state.process_update(_msg("/start g_AP-TGTEST"))
+            # /start g_<classe>: bottone URL verso /telegram-link?g=...
+            await telegram_state.process_update(_msg("/start g_GR-TGTEST"))
             keyboard = sent[-1]["keyboard"]
-            assert keyboard and keyboard[0][0]["url"] == "https://counselorbot-sbs.test/telegram-link?g=AP-TGTEST"
+            assert keyboard and keyboard[0][0]["url"] == "https://counselorbot-sbs.test/telegram-link?g=GR-TGTEST"
+            assert "conversazioni" in sent[-1]["text"]
 
-            # /start l_<codice>__<piano>: link account + iscrizione al piano.
+            # /start l_<codice>__<classe>: link account + iscrizione alla classe.
             code = telegram_state.create_link_code(db, "tg.gruppo")
-            await telegram_state.process_update(_msg(f"/start l_{code}__AP-TGTEST"))
+            await telegram_state.process_update(_msg(f"/start l_{code}__GR-TGTEST"))
             link = db.query(models.TelegramAccountLink).filter(
                 models.TelegramAccountLink.telegram_user_id == TG_USER
             ).first()
             assert link is not None and link.username == "tg.gruppo"
-            assert link.administration_plan_id == plan.id
+            assert link.administration_plan_id is None
             assert "Classe Telegram" in sent[-1]["text"]
-            # Membership creata (indipendente dai risultati) + proposta strumento del piano.
-            membership = db.query(models.PlanMembership).filter(
-                models.PlanMembership.plan_id == plan.id,
-                models.PlanMembership.username == "tg.gruppo",
+            # Membership creata (indipendente dai risultati) + proposta strumento del piano agganciato.
+            membership = db.query(models.GroupMembership).filter(
+                models.GroupMembership.group_id == group.id,
+                models.GroupMembership.username == "tg.gruppo",
             ).first()
             assert membership is not None and membership.joined_via == "telegram"
             assert sent[-1]["keyboard"][0][0]["callback_data"] == "instr:QSA"

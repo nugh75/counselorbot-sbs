@@ -81,7 +81,9 @@ function ScoresLine({ scores }: { scores: Record<string, number> | null }) {
     return <span className="font-mono text-xs text-slate-600">{line}</span>;
 }
 
-export function PlanStudentsPanel({ planId }: { planId: number }) {
+// base: prefisso API della dashboard (piano: /api/admin/administration-plans/<id>,
+// classe: /api/admin/groups/<id>). withNotes: note+messaggi (solo classi).
+export function PlanStudentsPanel({ base, withNotes = false }: { base: string; withNotes?: boolean }) {
     const { lang } = useI18n();
     const texts = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
     const [students, setStudents] = useState<PlanStudent[] | null>(null);
@@ -98,8 +100,8 @@ export function PlanStudentsPanel({ planId }: { planId: number }) {
     const load = useCallback(async () => {
         try {
             const [studentsRes, notesRes] = await Promise.all([
-                fetch(`/api/admin/administration-plans/${planId}/students`),
-                fetch(`/api/admin/administration-plans/${planId}/notes`),
+                fetch(`${base}/students`),
+                withNotes ? fetch(`${base}/notes`) : Promise.resolve(new Response('[]')),
             ]);
             if (studentsRes.ok) {
                 const payload = await studentsRes.json() as { students: PlanStudent[] };
@@ -109,7 +111,7 @@ export function PlanStudentsPanel({ planId }: { planId: number }) {
         } catch {
             setFeedback(texts.error);
         }
-    }, [planId, texts.error]);
+    }, [base, withNotes, texts.error]);
 
     useEffect(() => { void load(); }, [load]);
 
@@ -122,7 +124,7 @@ export function PlanStudentsPanel({ planId }: { planId: number }) {
         if (!conversations[sessionId]) {
             try {
                 const res = await fetch(
-                    `/api/admin/administration-plans/${planId}/students/${encodeURIComponent(username)}/conversation/${encodeURIComponent(sessionId)}`,
+                    `${base}/students/${encodeURIComponent(username)}/conversation/${encodeURIComponent(sessionId)}`,
                 );
                 if (res.ok) {
                     const messages = await res.json() as Array<{ role: string; text: string }>;
@@ -137,7 +139,7 @@ export function PlanStudentsPanel({ planId }: { planId: number }) {
         setBusy(true);
         setFeedback('');
         try {
-            const res = await fetch(`/api/admin/administration-plans/${planId}/notes`, {
+            const res = await fetch(`${base}/notes`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, text: noteText, visible_to_student: noteVisible }),
@@ -168,7 +170,7 @@ export function PlanStudentsPanel({ planId }: { planId: number }) {
         setBusy(true);
         setFeedback('');
         try {
-            const res = await fetch(`/api/admin/administration-plans/${planId}/messages`, {
+            const res = await fetch(`${base}/messages`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, text: messageText }),
@@ -208,7 +210,7 @@ export function PlanStudentsPanel({ planId }: { planId: number }) {
                             <span className="font-mono">{student.username}</span>
                             <span className="text-xs font-normal text-slate-400">
                                 {student.results.length} {student.results.length === 1 ? 'test' : 'test'}
-                                {student.telegram_linked ? ` · ${texts.telegram}` : ''}
+                                {student.telegram_linked ? ` - ${texts.telegram}` : ''}
                             </span>
                         </button>
                         {isOpen && (
@@ -235,7 +237,7 @@ export function PlanStudentsPanel({ planId }: { planId: number }) {
                                                     <p className="text-xs font-semibold uppercase text-slate-400">{texts.transcript}</p>
                                                     {(conversations[result.session_id] || []).map((message, index) => (
                                                         <p key={index} className="text-xs text-slate-600">
-                                                            <span className="font-semibold">{message.role === 'student' ? '👤' : '🤖'}</span>{' '}
+                                                            <span className="font-semibold">{message.role === 'student' ? 'Studente' : 'AI'}:</span>{' '}
                                                             {message.text}
                                                         </p>
                                                     ))}
@@ -254,6 +256,7 @@ export function PlanStudentsPanel({ planId }: { planId: number }) {
                                     </div>
                                 )}
 
+                                {withNotes && (
                                 <div>
                                     <p className="flex items-center gap-1 text-xs font-semibold uppercase text-slate-400">
                                         <StickyNote className="h-3.5 w-3.5" /> {texts.notes}
@@ -262,11 +265,11 @@ export function PlanStudentsPanel({ planId }: { planId: number }) {
                                         {studentNotes.map((note) => (
                                             <li key={note.id} className="flex items-start gap-2 text-sm text-slate-700">
                                                 <span className="flex-1">
-                                                    {note.kind === 'message' ? '📩 ' : ''}{note.text}
+                                                    {note.kind === 'message' ? '[messaggio] ' : ''}{note.text}
                                                     <span className="ml-2 text-xs text-slate-400">
                                                         {note.author_username}
-                                                        {note.visible_to_student ? ` · ${texts.visible.toLowerCase()}` : ''}
-                                                        {note.created_at ? ` · ${new Date(note.created_at).toLocaleDateString()}` : ''}
+                                                        {note.visible_to_student ? ` - ${texts.visible.toLowerCase()}` : ''}
+                                                        {note.created_at ? ` - ${new Date(note.created_at).toLocaleDateString()}` : ''}
                                                     </span>
                                                 </span>
                                                 <button
@@ -308,7 +311,9 @@ export function PlanStudentsPanel({ planId }: { planId: number }) {
                                         </div>
                                     </div>
                                 </div>
+                                )}
 
+                                {withNotes && (
                                 <div>
                                     <p className="flex items-center gap-1 text-xs font-semibold uppercase text-slate-400">
                                         <Send className="h-3.5 w-3.5" /> {texts.message}
@@ -332,6 +337,7 @@ export function PlanStudentsPanel({ planId }: { planId: number }) {
                                         </button>
                                     </div>
                                 </div>
+                                )}
                             </div>
                         )}
                     </div>

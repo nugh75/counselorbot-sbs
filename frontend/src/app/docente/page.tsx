@@ -7,6 +7,7 @@ import { getIdentity, type Identity } from '@/lib/auth';
 import { canUseTeacherAssistant } from '@/lib/roles';
 import { useI18n } from '@/lib/i18n-context';
 import { AdministrationPlansPanel } from '@/components/admin/AdministrationPlansPanel';
+import { GroupsPanel } from '@/components/admin/GroupsPanel';
 
 // ponytail: testi inline it/en come il resto della UI docente/Telegram.
 const TEXTS = {
@@ -67,6 +68,9 @@ export default function TeacherPage() {
                 <h1 className="text-2xl font-bold text-slate-800">{texts.title}</h1>
                 <p className="mt-1 text-sm text-slate-500">{texts.subtitle}</p>
                 <div className="mt-6">
+                    <GroupsPanel />
+                </div>
+                <div className="mt-10">
                     <AdministrationPlansPanel />
                 </div>
             </section>
