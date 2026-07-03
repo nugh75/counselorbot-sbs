@@ -154,6 +154,7 @@ class _FakeAIService:
 # Applica gli override una sola volta a livello di modulo
 main.app.dependency_overrides[database.get_db] = _override_get_db
 main.app.dependency_overrides[auth.get_current_active_admin] = _fake_admin
+main.app.dependency_overrides[auth.get_current_plan_manager] = _fake_admin
 # Gli endpoint vivono nei router: patch dell'AIService dove viene usato.
 chat_routes.AIService = _FakeAIService
 # Lo stream apre una sessione fresca dopo la risposta: isolala nel DB di test.
@@ -262,6 +263,30 @@ EXPECTED_ROUTES = {
     ("DELETE", "/admin/survey/{survey_id}"),
     ("GET", "/admin/strategy-feedback"),
     ("GET", "/qsa/guided-ui-texts"),
+    ("POST", "/telegram/webhook"),
+    ("GET", "/telegram/bot-info"),
+    ("GET", "/admin/administration-plans/{plan_id}/students"),
+    ("GET", "/admin/administration-plans/{plan_id}/students/{username}/conversation/{session_id}"),
+    ("GET", "/admin/groups"),
+    ("POST", "/admin/groups"),
+    ("PUT", "/admin/groups/{group_id}"),
+    ("DELETE", "/admin/groups/{group_id}"),
+    ("GET", "/admin/groups/{group_id}/students"),
+    ("GET", "/admin/groups/{group_id}/students/{username}/conversation/{session_id}"),
+    ("GET", "/admin/groups/{group_id}/notes"),
+    ("POST", "/admin/groups/{group_id}/notes"),
+    ("DELETE", "/admin/teacher-notes/{note_id}"),
+    ("POST", "/admin/groups/{group_id}/messages"),
+    ("GET", "/user/teacher-notes"),
+    ("GET", "/groups/info"),
+    ("POST", "/groups/join"),
+    ("GET", "/user/groups"),
+    ("DELETE", "/user/groups/{membership_id}"),
+    ("POST", "/telegram/link-code"),
+    ("GET", "/telegram/link-status"),
+    ("POST", "/telegram/unlink"),
+    ("GET", "/admin/telegram/links"),
+    ("POST", "/admin/telegram/links/{link_id}/revoke"),
     ("POST", "/chat"),
     ("POST", "/chat/stream"),
     ("POST", "/chat/message"),
@@ -1014,16 +1039,16 @@ def test_administration_plan_visibility_for_assigned_researcher():
         "researchers": [{"research_contact_id": alice["id"]}],
     }).json()
 
-    admin_override = main.app.dependency_overrides.get(auth.get_current_active_admin)
+    admin_override = main.app.dependency_overrides.get(auth.get_current_plan_manager)
     try:
-        main.app.dependency_overrides[auth.get_current_active_admin] = lambda: _identity(
+        main.app.dependency_overrides[auth.get_current_plan_manager] = lambda: _identity(
             "alice", "alice@example.test"
         )
         r = client.get("/admin/administration-plans")
         assert r.status_code == 200, r.text
         assert any(row["id"] == plan["id"] for row in r.json())
 
-        main.app.dependency_overrides[auth.get_current_active_admin] = lambda: _identity(
+        main.app.dependency_overrides[auth.get_current_plan_manager] = lambda: _identity(
             "bob", "bob@example.test"
         )
         r = client.get("/admin/administration-plans")
@@ -1031,7 +1056,7 @@ def test_administration_plan_visibility_for_assigned_researcher():
         assert all(row["id"] != plan["id"] for row in r.json())
     finally:
         if admin_override is not None:
-            main.app.dependency_overrides[auth.get_current_active_admin] = admin_override
+            main.app.dependency_overrides[auth.get_current_plan_manager] = admin_override
 
     assert client.delete(f"/admin/administration-plans/{plan['id']}").status_code == 200
     assert client.delete(f"/admin/research-contacts/{alice['id']}").status_code == 200
@@ -1552,6 +1577,33 @@ def test_prompt_audit_dry_run_builds_qsa_envelope_without_side_effects():
     finally:
         db.close()
     assert session_memory.get_summary(session_id) == ""
+
+
+def test_prompt_audit_followup_includes_guided_path_for_next_step():
+    _ensure_guided_steps("QSA")
+    session_id = "prompt-audit-guided-path-followup"
+    session_memory.clear(session_id)
+
+    r = client.post("/admin/prompt-audit/dry-run", json={
+        "questionnaire_type": "QSA",
+        "language": "it",
+        "phase": "cognitive",
+        "mode": "factor-qa",
+        "use_phase_prompt": False,
+        "message": "passiamo avanti al prossimo step",
+        "scores_context": "",
+        "session_id": session_id,
+        "include_knowledge": False,
+        "include_history": False,
+    })
+    assert r.status_code == 200, r.text
+    system_prompt = r.json()["envelope"]["system_prompt_final"]
+    assert "[GUIDED PATH]" in system_prompt
+    assert "1. Fattori Cognitivi [id: cognitive] (current)" in system_prompt
+    assert "2. Fattori Affettivi [id: affective] (next)" in system_prompt
+    assert "Next guided step: 2. Fattori Affettivi [id: affective]." in system_prompt
+    assert "[[AVANZA_STEP]]" in system_prompt
+    assert "do not say that you do not know the path" in system_prompt
 
 
 def test_prompt_audit_component_flags_use_saved_and_payload_values():
@@ -4161,6 +4213,582 @@ def test_retrieved_context_routing_and_strategy_exclusion():
     # Strategies must be empty since they are disabled in flags
     assert strategy_ids == []
     assert certified_strategy_ids == []
+
+
+# --------------------------------------------------------------------------
+# Telegram bot
+# --------------------------------------------------------------------------
+import backend.telegram_state as telegram_state
+
+
+def test_telegram_parse_scores():
+    allowed = ["C1", "C2", "A1"]
+    scores, extra, invalid = telegram_state.parse_scores("c1=7, C2: 5;\nA1 = 3", allowed)
+    assert scores == {"C1": 7, "C2": 5, "A1": 3}
+    assert extra == [] and invalid == []
+
+    scores, extra, invalid = telegram_state.parse_scores("C1=7 X9=4", allowed)
+    assert scores == {"C1": 7} and extra == ["X9"]
+
+    scores, extra, invalid = telegram_state.parse_scores("C1=12 C2=abc", allowed)
+    assert scores == {} and invalid == ["C1=12", "C2=abc"]
+
+    scores, extra, invalid = telegram_state.parse_scores("ciao come va", allowed)
+    assert scores == {} and extra == [] and invalid == []
+
+
+def test_telegram_link_code_flow():
+    from datetime import datetime, timedelta, timezone
+    db = _TestSession()
+    try:
+        code = telegram_state.create_link_code(db, "tg.student")
+        assert len(code) == 6
+        # Il codice e' salvato hashato, mai in chiaro.
+        row = db.query(models.TelegramLinkCode).filter(models.TelegramLinkCode.username == "tg.student").first()
+        assert row.code_hash != code and code not in row.code_hash
+        assert telegram_state.consume_link_code(db, code.lower()) == "tg.student"
+        # Monouso: il secondo consumo fallisce.
+        assert telegram_state.consume_link_code(db, code) is None
+        # Scaduto: rifiutato.
+        expired = telegram_state.create_link_code(db, "tg.student")
+        db.query(models.TelegramLinkCode).filter(models.TelegramLinkCode.used_at.is_(None)).update(
+            {"expires_at": datetime.now(timezone.utc) - timedelta(minutes=1)}
+        )
+        db.commit()
+        assert telegram_state.consume_link_code(db, expired) is None
+    finally:
+        db.close()
+
+
+def test_telegram_link_endpoints_authenticated():
+    main.app.dependency_overrides[auth.get_current_user] = _fake_user_identity
+    try:
+        res = client.post("/telegram/link-code")
+        assert res.status_code == 200
+        assert len(res.json()["code"]) == 6
+        res = client.get("/telegram/link-status")
+        assert res.status_code == 200
+        assert res.json()["linked"] is False
+        res = client.post("/telegram/unlink")
+        assert res.status_code == 200
+    finally:
+        main.app.dependency_overrides.pop(auth.get_current_user, None)
+
+
+def test_telegram_webhook_secret():
+    payload = {"update_id": 1}
+    os.environ["TELEGRAM_BOT_ENABLED"] = "false"
+    assert client.post("/telegram/webhook", json=payload).status_code == 403
+    os.environ["TELEGRAM_BOT_ENABLED"] = "true"
+    os.environ["TELEGRAM_WEBHOOK_SECRET"] = "s3cret_test"
+    try:
+        assert client.post("/telegram/webhook", json=payload).status_code == 403
+        wrong = {"X-Telegram-Bot-Api-Secret-Token": "wrong"}
+        assert client.post("/telegram/webhook", json=payload, headers=wrong).status_code == 403
+        good = {"X-Telegram-Bot-Api-Secret-Token": "s3cret_test"}
+        res = client.post("/telegram/webhook", json=payload, headers=good)
+        assert res.status_code == 200 and res.json() == {"ok": True}
+    finally:
+        os.environ["TELEGRAM_BOT_ENABLED"] = "false"
+        os.environ.pop("TELEGRAM_WEBHOOK_SECRET", None)
+
+
+def test_telegram_bot_info_disabled():
+    os.environ["TELEGRAM_BOT_ENABLED"] = "false"
+    res = client.get("/telegram/bot-info")
+    assert res.status_code == 200
+    assert res.json() == {"enabled": False, "bot_username": ""}
+
+
+def test_plan_manager_dependency_accepts_teachers():
+    import asyncio
+    teacher = {"username": "prof", "email": "prof@example.test", "groups": ["docenti"],
+               "is_admin": False, "is_researcher": False, "authenticated": True}
+    assert asyncio.run(auth.get_current_plan_manager(teacher)) is teacher
+    student = {"username": "stud", "email": "", "groups": ["studenti"],
+               "is_admin": False, "is_researcher": False, "authenticated": True}
+    try:
+        asyncio.run(auth.get_current_plan_manager(student))
+        raise AssertionError("studente non deve accedere ai piani")
+    except Exception as e:
+        assert getattr(e, "status_code", None) == 403
+
+
+def test_teacher_can_create_own_group():
+    teacher = {
+        "username": "prof.classi",
+        "email": "prof.classi@example.test",
+        "groups": ["docenti"],
+        "is_admin": False,
+        "is_researcher": False,
+        "authenticated": True,
+    }
+    manager_override = main.app.dependency_overrides.get(auth.get_current_plan_manager)
+    try:
+        main.app.dependency_overrides[auth.get_current_plan_manager] = lambda: teacher
+        r = client.post("/admin/groups", json={"name": "Classe Docente"})
+        assert r.status_code == 200, r.text
+        group = r.json()
+        assert group["owner_username"] == "prof.classi"
+        listed = client.get("/admin/groups")
+        assert listed.status_code == 200, listed.text
+        assert any(row["id"] == group["id"] for row in listed.json())
+        assert client.delete(f"/admin/groups/{group['id']}").status_code == 200
+    finally:
+        main.app.dependency_overrides[auth.get_current_plan_manager] = manager_override
+
+
+def test_teacher_dashboard_notes_and_messages():
+    """Piano: studenti da risultati + transcript. Classe: note e messaggi."""
+    plan = client.post("/admin/administration-plans", json={
+        "title": "Classe Prof",
+        "instrument_code": "QSA",
+        "locale": "en",
+    }).json()
+    group = client.post("/admin/groups", json={"name": "Classe Prof A"}).json()
+    db = _TestSession()
+    try:
+        db.add(models.QuestionnaireResult(
+            session_id="sess-teacher-1",
+            questionnaire_type="QSA",
+            scores={"C1": 7},
+            username="alliev.tg",
+            administration_plan_id=plan["id"],
+        ))
+        db.add(models.Log(
+            session_id="sess-teacher-1",
+            action="chat_message",
+            username="alliev.tg",
+            details={"user_input": "Cosa significa C1?", "bot_response": "RISPOSTA_TEST"},
+        ))
+        db.add(models.GroupMembership(group_id=group["id"], username="alliev.tg", joined_via="teacher"))
+        db.commit()
+    finally:
+        db.close()
+
+    # Studenti del piano (da risultati taggati)
+    r = client.get(f"/admin/administration-plans/{plan['id']}/students")
+    assert r.status_code == 200, r.text
+    students = r.json()["students"]
+    assert len(students) == 1 and students[0]["username"] == "alliev.tg"
+    assert students[0]["results"][0]["scores"] == {"C1": 7}
+
+    # Transcript via piano e via classe
+    r = client.get(f"/admin/administration-plans/{plan['id']}/students/alliev.tg/conversation/sess-teacher-1")
+    assert r.status_code == 200
+    roles = [m["role"] for m in r.json()]
+    assert "student" in roles and "counselor" in roles
+    r = client.get(f"/admin/groups/{group['id']}/students/alliev.tg/conversation/sess-teacher-1")
+    assert r.status_code == 200 and len(r.json()) == 2
+
+    # Studenti della classe: risultati completi dello studente
+    students = client.get(f"/admin/groups/{group['id']}/students").json()["students"]
+    assert students[0]["username"] == "alliev.tg" and students[0]["results"]
+
+    # Nota non visibile allo studente
+    note = client.post(f"/admin/groups/{group['id']}/notes", json={
+        "username": "alliev.tg", "text": "Da seguire su C1", "visible_to_student": False,
+    }).json()
+    assert note["kind"] == "note" and note["visible_to_student"] is False
+
+    # Messaggio: sempre visibile allo studente; bot spento -> telegram_delivered None
+    os.environ["TELEGRAM_BOT_ENABLED"] = "false"
+    message = client.post(f"/admin/groups/{group['id']}/messages", json={
+        "username": "alliev.tg", "text": "Ottimo lavoro!",
+    }).json()
+    assert message["kind"] == "message" and message["visible_to_student"] is True
+    assert message["telegram_delivered"] is None
+
+    # Studente non della classe: rifiutato
+    r = client.post(f"/admin/groups/{group['id']}/notes", json={
+        "username": "estraneo", "text": "x",
+    })
+    assert r.status_code == 404
+
+    # Lato studente: vede solo il messaggio, non la nota privata
+    main.app.dependency_overrides[auth.get_current_user] = lambda: _identity(
+        "alliev.tg", "alliev@example.test", is_admin=False, is_researcher=False
+    )
+    try:
+        r = client.get("/user/teacher-notes")
+        assert r.status_code == 200
+        texts = [row["text"] for row in r.json()]
+        assert "Ottimo lavoro!" in texts and "Da seguire su C1" not in texts
+    finally:
+        main.app.dependency_overrides.pop(auth.get_current_user, None)
+
+    # Pulizia note (l'autore/admin puo' eliminarle)
+    assert client.delete(f"/admin/teacher-notes/{note['id']}").status_code == 200
+    assert client.delete(f"/admin/teacher-notes/{message['id']}").status_code == 200
+
+
+def test_group_membership_web_flow():
+    """Classe autonoma: join con codice, membro senza risultati, aggancio al piano, leave."""
+    group = client.post("/admin/groups", json={"name": "3B Informatica"}).json()
+    assert group["code"].startswith("GR-")
+
+    # Info pubbliche per la pagina invito (case-insensitive)
+    r = client.get(f"/groups/info?code={group['code'].lower()}")
+    assert r.status_code == 200 and r.json()["name"] == "3B Informatica"
+    assert client.get("/groups/info?code=GR-NOPE").status_code == 404
+
+    student_override = lambda: _identity("web.student", "web.student@example.test", is_admin=False, is_researcher=False)  # noqa: E731
+    main.app.dependency_overrides[auth.get_current_user] = student_override
+    try:
+        # Join idempotente (codice classe dal profilo o dal link invito)
+        assert client.post("/groups/join", json={"code": group["code"]}).status_code == 200
+        assert client.post("/groups/join", json={"code": group["code"]}).status_code == 200
+        my_groups = client.get("/user/groups").json()
+        assert len([g for g in my_groups if g["group_id"] == group["id"]]) == 1
+        membership_id = my_groups[0]["membership_id"]
+    finally:
+        main.app.dependency_overrides.pop(auth.get_current_user, None)
+
+    # Il docente vede l'iscritto anche senza risultati
+    students = client.get(f"/admin/groups/{group['id']}/students").json()["students"]
+    assert any(s["username"] == "web.student" and s["results"] == [] for s in students)
+
+    # Piano agganciato alla classe: lo studente compare tra gli studenti del piano
+    plan = client.post("/admin/administration-plans", json={
+        "title": "Somministrazione 3B",
+        "instrument_code": "ZTPI",
+        "locale": "en",
+        "group_id": group["id"],
+    }).json()
+    assert plan["group_id"] == group["id"] and plan["group_name"] == "3B Informatica"
+    students = client.get(f"/admin/administration-plans/{plan['id']}/students").json()["students"]
+    assert any(s["username"] == "web.student" and s["results"] == [] for s in students)
+
+    # Delete piano: un referente non creatore riceve 403
+    alice = client.post("/admin/research-contacts", json={
+        "name": "Alice Del", "email": "alice.del@example.test",
+    }).json()
+    client.put(f"/admin/administration-plans/{plan['id']}", json={
+        "researchers": [{"research_contact_id": alice["id"]}],
+    })
+    manager_override = main.app.dependency_overrides.get(auth.get_current_plan_manager)
+    try:
+        main.app.dependency_overrides[auth.get_current_plan_manager] = lambda: _identity(
+            "alice.del", "alice.del@example.test", is_admin=False, is_researcher=True
+        )
+        assert client.delete(f"/admin/administration-plans/{plan['id']}").status_code == 403
+    finally:
+        main.app.dependency_overrides[auth.get_current_plan_manager] = manager_override
+
+    # Classe agganciata a un piano: non eliminabile finche' il piano esiste
+    assert client.delete(f"/admin/groups/{group['id']}").status_code == 409
+    assert client.delete(f"/admin/administration-plans/{plan['id']}").status_code == 200
+    assert client.delete(f"/admin/research-contacts/{alice['id']}").status_code == 200
+
+    # Lo studente esce dalla classe
+    main.app.dependency_overrides[auth.get_current_user] = student_override
+    try:
+        assert client.delete(f"/user/groups/{membership_id}").status_code == 200
+        assert client.get("/user/groups").json() == []
+    finally:
+        main.app.dependency_overrides.pop(auth.get_current_user, None)
+
+
+def test_telegram_counselor_selection():
+    """/counselor mostra la tastiera; couns:<id> imposta il counselor nello stato."""
+    import asyncio
+
+    sent: list[dict] = []
+
+    async def _fake_send(chat_id, text, keyboard=None):
+        sent.append({"chat_id": chat_id, "text": text, "keyboard": keyboard})
+
+    async def _fake_answer(callback_query_id):
+        pass
+
+    real_send = telegram_state.telegram_bot.send_message
+    real_answer = telegram_state.telegram_bot.answer_callback_query
+    telegram_state.telegram_bot.send_message = _fake_send
+    telegram_state.telegram_bot.answer_callback_query = _fake_answer
+
+    TG_USER = 616161
+
+    async def _run():
+        db = _TestSession()
+        try:
+            counselor = models.Counselor(slug="rita-test", name="Rita", is_active=True)
+            db.add(counselor)
+            db.commit()
+            db.refresh(counselor)
+
+            code = telegram_state.create_link_code(db, "tg.couns")
+            await telegram_state.process_update({"message": {
+                "chat": {"id": TG_USER, "type": "private"},
+                "from": {"id": TG_USER, "language_code": "it"},
+                "text": f"/link {code}",
+            }})
+            await telegram_state.process_update({"message": {
+                "chat": {"id": TG_USER, "type": "private"},
+                "from": {"id": TG_USER, "language_code": "it"},
+                "text": "/counselor",
+            }})
+            keyboard = sent[-1]["keyboard"]
+            flat = [button for row in keyboard for button in row]
+            assert any(button["callback_data"] == f"couns:{counselor.id}" for button in flat)
+
+            await telegram_state.process_update({"callback_query": {
+                "id": "cb3", "data": f"couns:{counselor.id}",
+                "from": {"id": TG_USER, "language_code": "it"},
+                "message": {"chat": {"id": TG_USER, "type": "private"}},
+            }})
+            assert "Rita" in sent[-1]["text"]
+            state = db.query(models.TelegramConversationState).filter(
+                models.TelegramConversationState.telegram_user_id == TG_USER
+            ).first()
+            db.refresh(state)
+            assert state.counselor_id == counselor.id
+        finally:
+            db.close()
+
+    try:
+        asyncio.run(_run())
+    finally:
+        telegram_state.telegram_bot.send_message = real_send
+        telegram_state.telegram_bot.answer_callback_query = real_answer
+
+
+def test_telegram_group_deep_link():
+    """Deep link g_<classe> -> bottone login; l_<codice>__<classe> -> link + iscrizione + tagging."""
+    import asyncio
+
+    sent: list[dict] = []
+
+    async def _fake_send(chat_id, text, keyboard=None):
+        sent.append({"chat_id": chat_id, "text": text, "keyboard": keyboard})
+
+    async def _fake_answer(callback_query_id):
+        pass
+
+    real_send = telegram_state.telegram_bot.send_message
+    real_answer = telegram_state.telegram_bot.answer_callback_query
+    telegram_state.telegram_bot.send_message = _fake_send
+    telegram_state.telegram_bot.answer_callback_query = _fake_answer
+    os.environ["TELEGRAM_PUBLIC_WEBHOOK_URL"] = "https://counselorbot-sbs.test/api/telegram/webhook"
+
+    TG_USER = 515151
+
+    def _msg(text):
+        return {"message": {
+            "chat": {"id": TG_USER, "type": "private"},
+            "from": {"id": TG_USER, "first_name": "Gino", "language_code": "it"},
+            "text": text,
+        }}
+
+    def _cb(data):
+        return {"callback_query": {
+            "id": "cb2", "data": data,
+            "from": {"id": TG_USER, "language_code": "it"},
+            "message": {"chat": {"id": TG_USER, "type": "private"}},
+        }}
+
+    async def _run():
+        db = _TestSession()
+        try:
+            group = models.StudentGroup(code="GR-TGTEST", name="Classe Telegram", owner_username="prof")
+            db.add(group)
+            db.flush()
+            plan = models.AdministrationPlan(
+                code="AP-TGTEST",
+                title="Somministrazione Telegram",
+                instrument_code="QSA",
+                group_id=group.id,
+                locale="en",
+                status="active",
+            )
+            db.add(plan)
+            db.commit()
+            db.refresh(group)
+            db.refresh(plan)
+
+            # /start g_<classe>: bottone URL verso /telegram-link?g=...
+            await telegram_state.process_update(_msg("/start g_GR-TGTEST"))
+            keyboard = sent[-1]["keyboard"]
+            assert keyboard and keyboard[0][0]["url"] == "https://counselorbot-sbs.test/telegram-link?g=GR-TGTEST"
+            assert "conversazioni" in sent[-1]["text"]
+
+            # /start l_<codice>__<classe>: link account + iscrizione alla classe.
+            code = telegram_state.create_link_code(db, "tg.gruppo")
+            await telegram_state.process_update(_msg(f"/start l_{code}__GR-TGTEST"))
+            link = db.query(models.TelegramAccountLink).filter(
+                models.TelegramAccountLink.telegram_user_id == TG_USER
+            ).first()
+            assert link is not None and link.username == "tg.gruppo"
+            assert link.administration_plan_id is None
+            assert "Classe Telegram" in sent[-1]["text"]
+            # Membership creata (indipendente dai risultati) + proposta strumento del piano agganciato.
+            membership = db.query(models.GroupMembership).filter(
+                models.GroupMembership.group_id == group.id,
+                models.GroupMembership.username == "tg.gruppo",
+            ).first()
+            assert membership is not None and membership.joined_via == "telegram"
+            assert sent[-1]["keyboard"][0][0]["callback_data"] == "instr:QSA"
+
+            # Risultato taggato col piano.
+            await telegram_state.process_update(_cb("instr:QSA"))
+            codes = telegram_state.allowed_factor_codes(db, "QSA")
+            await telegram_state.process_update(_msg(" ".join(f"{c}=5" for c in codes)))
+            await telegram_state.process_update(_cb("scores:confirm"))
+            db.expire_all()
+            result = (
+                db.query(models.QuestionnaireResult)
+                .filter(models.QuestionnaireResult.username == "tg.gruppo")
+                .order_by(models.QuestionnaireResult.id.desc())
+                .first()
+            )
+            assert result is not None
+            assert result.administration_plan_id == plan.id
+
+            # Codice gruppo inesistente: link ok, nessuna iscrizione.
+            code2 = telegram_state.create_link_code(db, "tg.gruppo2")
+            await telegram_state.process_update({"message": {
+                "chat": {"id": 515152, "type": "private"},
+                "from": {"id": 515152, "language_code": "it"},
+                "text": f"/start l_{code2}__NOPE",
+            }})
+            link2 = db.query(models.TelegramAccountLink).filter(
+                models.TelegramAccountLink.telegram_user_id == 515152
+            ).first()
+            assert link2 is not None and link2.administration_plan_id is None
+        finally:
+            db.close()
+
+    try:
+        asyncio.run(_run())
+    finally:
+        telegram_state.telegram_bot.send_message = real_send
+        telegram_state.telegram_bot.answer_callback_query = real_answer
+        os.environ.pop("TELEGRAM_PUBLIC_WEBHOOK_URL", None)
+
+
+def test_telegram_conversation_flow():
+    """Percorso completo: /start non collegato -> /link -> QSA -> punteggi -> analisi -> conclusione."""
+    import asyncio
+
+    sent: list[dict] = []
+
+    async def _fake_send(chat_id, text, keyboard=None):
+        sent.append({"chat_id": chat_id, "text": text, "keyboard": keyboard})
+
+    async def _fake_answer(callback_query_id):
+        pass
+
+    real_send = telegram_state.telegram_bot.send_message
+    real_answer = telegram_state.telegram_bot.answer_callback_query
+    telegram_state.telegram_bot.send_message = _fake_send
+    telegram_state.telegram_bot.answer_callback_query = _fake_answer
+
+    TG_USER = 424242
+    TG_CHAT = 424242
+
+    def _msg(text, chat_type="private"):
+        return {"message": {
+            "chat": {"id": TG_CHAT, "type": chat_type},
+            "from": {"id": TG_USER, "first_name": "Tessa", "language_code": "it"},
+            "text": text,
+        }}
+
+    def _cb(data):
+        return {"callback_query": {
+            "id": "cb1",
+            "data": data,
+            "from": {"id": TG_USER, "language_code": "it"},
+            "message": {"chat": {"id": TG_CHAT, "type": "private"}},
+        }}
+
+    async def _run():
+        db = _TestSession()
+        try:
+            # Messaggi da gruppi: ignorati.
+            await telegram_state.process_update(_msg("/start", chat_type="group"))
+            assert sent == []
+
+            # /start senza link: istruzioni /link.
+            await telegram_state.process_update(_msg("/start"))
+            assert "/link" in sent[-1]["text"]
+
+            # Punteggi senza link: rifiutati.
+            await telegram_state.process_update(_msg("C1=5"))
+            assert "/link" in sent[-1]["text"]
+
+            # /link con codice valido.
+            code = telegram_state.create_link_code(db, "tg.student")
+            await telegram_state.process_update(_msg(f"/link {code}"))
+            link = db.query(models.TelegramAccountLink).filter(
+                models.TelegramAccountLink.telegram_user_id == TG_USER
+            ).first()
+            assert link is not None and link.username == "tg.student"
+
+            # Scelta strumento QSA -> richiesta punteggi.
+            await telegram_state.process_update(_msg("/strumenti"))
+            assert sent[-1]["keyboard"] is not None
+            await telegram_state.process_update(_cb("instr:QSA"))
+            assert "C1=7" in sent[-1]["text"]
+
+            # Codici ammessi: dal DB di test (seed minimale) o dal fallback statico.
+            codes = telegram_state.allowed_factor_codes(db, "QSA")
+            assert codes, "nessun codice fattore QSA disponibile"
+
+            if len(codes) > 1:
+                # Punteggi parziali: chiede solo i mancanti.
+                await telegram_state.process_update(_msg(f"{codes[0]}=7"))
+                assert codes[1] in sent[-1]["text"]
+                rest = " ".join(f"{c}=5" for c in codes[1:])
+                await telegram_state.process_update(_msg(rest))
+            else:
+                await telegram_state.process_update(_msg(f"{codes[0]}=7"))
+
+            # Punteggi completi -> recap con conferma.
+            assert f"{codes[0]}=7" in sent[-1]["text"] and sent[-1]["keyboard"] is not None
+
+            # Conferma -> QuestionnaireResult salvato + primo step AI.
+            before = db.query(models.QuestionnaireResult).filter(
+                models.QuestionnaireResult.username == "tg.student"
+            ).count()
+            await telegram_state.process_update(_cb("scores:confirm"))
+            db.expire_all()
+            results = db.query(models.QuestionnaireResult).filter(
+                models.QuestionnaireResult.username == "tg.student"
+            ).all()
+            assert len(results) == before + 1
+            assert results[-1].questionnaire_type == "QSA"
+            assert results[-1].scores[codes[0]] == 7
+            assert "RISPOSTA_TEST" in sent[-1]["text"]
+
+            # Domanda libera nello step: risposta AI, stesso step.
+            await telegram_state.process_update(_msg("Cosa significa il punteggio C1?"))
+            assert "RISPOSTA_TEST" in sent[-1]["text"]
+            state = db.query(models.TelegramConversationState).filter(
+                models.TelegramConversationState.telegram_user_id == TG_USER
+            ).first()
+            db.refresh(state)
+            assert state.state == "in_step"
+
+            # Prossimo passo -> nuovo step AI.
+            await telegram_state.process_update(_cb("step:next"))
+            assert "RISPOSTA_TEST" in sent[-1]["text"]
+
+            # Concludi -> stato idle.
+            await telegram_state.process_update(_cb("step:end"))
+            db.refresh(state)
+            assert state.state == "idle"
+
+            # /unlink -> link revocato.
+            await telegram_state.process_update(_msg("/unlink"))
+            db.refresh(link)
+            assert link.revoked_at is not None
+        finally:
+            db.close()
+
+    try:
+        asyncio.run(_run())
+    finally:
+        telegram_state.telegram_bot.send_message = real_send
+        telegram_state.telegram_bot.answer_callback_query = real_answer
 
 
 # --------------------------------------------------------------------------

@@ -167,12 +167,33 @@ def _serialize_researchers(db: Session, plan_id: int) -> list[dict]:
     return rows
 
 
+def _group_name(db: Session, group_id: Optional[int]) -> Optional[str]:
+    if not group_id:
+        return None
+    group = db.query(models.StudentGroup).filter(models.StudentGroup.id == group_id).first()
+    return group.name if group else None
+
+
+def _validate_group_attach(db: Session, identity, group_id: Optional[int]) -> Optional[int]:
+    """Un non-admin puo' agganciare al piano solo le PROPRIE classi."""
+    if not group_id:
+        return None
+    group = db.query(models.StudentGroup).filter(models.StudentGroup.id == group_id).first()
+    if not group:
+        raise HTTPException(status_code=400, detail="Classe non trovata")
+    if not _is_admin(identity) and group.owner_username != _username(identity):
+        raise HTTPException(status_code=403, detail="Puoi agganciare solo le tue classi")
+    return group.id
+
+
 def _serialize_plan(db: Session, plan: models.AdministrationPlan) -> dict:
     return {
         "id": plan.id,
         "code": plan.code,
         "title": plan.title,
         "instrument_code": plan.instrument_code,
+        "group_id": plan.group_id,
+        "group_name": _group_name(db, plan.group_id),
         "locale": plan.locale,
         "scheduled_at": plan.scheduled_at,
         "location": plan.location,
@@ -224,7 +245,7 @@ def _replace_researchers(
 
 @router.get("/admin/administration-plans", response_model=List[schemas.AdministrationPlanResponse])
 async def list_administration_plans(
-    current_user=Depends(auth.get_current_active_admin),
+    current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
     plans = (
@@ -238,7 +259,7 @@ async def list_administration_plans(
 @router.post("/admin/administration-plans", response_model=schemas.AdministrationPlanResponse)
 async def create_administration_plan(
     payload: schemas.AdministrationPlanCreate,
-    current_user=Depends(auth.get_current_active_admin),
+    current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
     title = _clean(payload.title)
@@ -252,6 +273,7 @@ async def create_administration_plan(
         code=code,
         title=title,
         instrument_code=(payload.instrument_code or "QSA").strip() or "QSA",
+        group_id=_validate_group_attach(db, current_user, payload.group_id),
         locale=_normalize_locale(payload.locale),
         scheduled_at=payload.scheduled_at,
         location=_clean(payload.location),
@@ -271,7 +293,7 @@ async def create_administration_plan(
 async def update_administration_plan(
     plan_id: int,
     payload: schemas.AdministrationPlanUpdate,
-    current_user=Depends(auth.get_current_active_admin),
+    current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
     plan = _require_visible_plan(db, current_user, plan_id)
@@ -283,6 +305,8 @@ async def update_administration_plan(
         plan.title = title
     if "instrument_code" in updates:
         plan.instrument_code = _clean(updates["instrument_code"]) or "QSA"
+    if "group_id" in updates:
+        plan.group_id = _validate_group_attach(db, current_user, updates["group_id"])
     if "locale" in updates:
         plan.locale = _normalize_locale(updates["locale"])
     if "scheduled_at" in updates:
@@ -304,10 +328,13 @@ async def update_administration_plan(
 @router.delete("/admin/administration-plans/{plan_id}")
 async def delete_administration_plan(
     plan_id: int,
-    current_user=Depends(auth.get_current_active_admin),
+    current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
     plan = _require_visible_plan(db, current_user, plan_id)
+    # Non-admin (docenti/ricercatori): elimina solo chi ha creato il piano.
+    if not _is_admin(current_user) and plan.created_by_username != _username(current_user):
+        raise HTTPException(status_code=403, detail="Solo il creatore del piano puo' eliminarlo")
     if _responses_count(db, plan.id):
         raise HTTPException(
             status_code=409,
@@ -327,7 +354,7 @@ async def delete_administration_plan(
 )
 async def get_administration_plan_responses(
     plan_id: int,
-    current_user=Depends(auth.get_current_active_admin),
+    current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
     plan = _require_visible_plan(db, current_user, plan_id)
@@ -348,3 +375,89 @@ async def get_administration_plan_responses(
         "questionnaire_results": questionnaire_results,
         "validation_responses": validation_responses,
     }
+
+# --- Studenti del piano (risultati + transcript). Note/messaggi: routes/groups.py --
+
+@router.get("/admin/administration-plans/{plan_id}/students")
+async def get_administration_plan_students(
+    plan_id: int,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Studenti del piano: membri della classe agganciata + chi ha risultati taggati,
+    con risultati, learner model e link Telegram."""
+    from .learner_profile import _latest_revision
+
+    plan = _require_visible_plan(db, current_user, plan_id)
+    results = (
+        db.query(models.QuestionnaireResult)
+        .filter(models.QuestionnaireResult.administration_plan_id == plan.id)
+        .order_by(models.QuestionnaireResult.submitted_at.desc())
+        .all()
+    )
+    by_student: dict[str, list[models.QuestionnaireResult]] = {}
+    for result in results:
+        if result.username:
+            by_student.setdefault(result.username, []).append(result)
+    if plan.group_id:
+        members = (
+            db.query(models.GroupMembership)
+            .filter(models.GroupMembership.group_id == plan.group_id)
+            .all()
+        )
+        for member in members:
+            by_student.setdefault(member.username, [])
+
+    students = []
+    for username, rows in sorted(by_student.items()):
+        telegram_link = (
+            db.query(models.TelegramAccountLink)
+            .filter(
+                models.TelegramAccountLink.username == username,
+                models.TelegramAccountLink.revoked_at.is_(None),
+            )
+            .first()
+        )
+        profile = _latest_revision(db, username)
+        students.append({
+            "username": username,
+            "telegram_linked": bool(telegram_link),
+            "learner_profile": profile.data if profile else None,
+            "results": [
+                {
+                    "id": row.id,
+                    "session_id": row.session_id,
+                    "questionnaire_type": row.questionnaire_type,
+                    "scores": row.scores,
+                    "submitted_at": row.submitted_at.isoformat() if row.submitted_at else None,
+                }
+                for row in rows
+            ],
+        })
+    return {"plan_id": plan.id, "students": students}
+
+
+@router.get("/admin/administration-plans/{plan_id}/students/{username}/conversation/{session_id}")
+async def get_plan_student_conversation(
+    plan_id: int,
+    username: str,
+    session_id: str,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Transcript di una sessione di uno studente del piano (informativa in pagina gruppo)."""
+    from .survey import _session_conversation_messages
+
+    plan = _require_visible_plan(db, current_user, plan_id)
+    result = (
+        db.query(models.QuestionnaireResult)
+        .filter(
+            models.QuestionnaireResult.administration_plan_id == plan.id,
+            models.QuestionnaireResult.username == username,
+            models.QuestionnaireResult.session_id == session_id,
+        )
+        .first()
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="Sessione non trovata in questo piano")
+    return _session_conversation_messages(db, session_id)

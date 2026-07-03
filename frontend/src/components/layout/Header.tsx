@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
-import { Bot, ClipboardList, LayoutGrid, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, type LucideIcon } from 'lucide-react';
+import { Bot, ClipboardList, LayoutGrid, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, Users, type LucideIcon } from 'lucide-react';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { HeaderCounselor } from './HeaderCounselor';
 import { HeaderInstrument } from './HeaderInstrument';
@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 import { ai4authLoginUrl, AI4AUTH_LOGOUT_URL, AI4EDUC_PORTAL_URL, AI4EDUC_MANAGER_URL, getIdentity, type Identity } from '@/lib/auth';
 import { getResume, subscribeToResume } from '@/lib/resume';
 import { useI18n } from '@/lib/i18n-context';
-import { canUseAssistant, canUsePersonalPage, canUseResearchConsole } from '@/lib/roles';
+import { canUseAssistant, canUsePersonalPage, canUseResearchConsole, canUseTeacherAssistant } from '@/lib/roles';
 import { useDarkMode } from '@/lib/use-dark-mode';
 
 interface SecondaryItem {
@@ -30,7 +30,7 @@ interface SecondaryItem {
 const SEPARATOR = 'mx-1 h-5 w-px shrink-0 bg-slate-200 dark:bg-slate-700';
 
 export function Header() {
-    const { t } = useI18n();
+    const { t, lang } = useI18n();
     const [identity, setIdentity] = useState<Identity | null | undefined>(undefined);
 
     useEffect(() => {
@@ -58,6 +58,17 @@ export function Header() {
     }
     if (canOpenPersonalPage) {
         secondaryItems.push({ key: 'profile', href: '/profilo', icon: User, label: t('profile.nav') });
+    }
+    if (canUseTeacherAssistant(identity)) {
+        // Docenti, ricercatori e admin: gruppi/classi (piani di somministrazione).
+        secondaryItems.push({
+            key: 'teacher-panel',
+            href: '/docente',
+            icon: Users,
+            label: canOpenResearchConsole
+                ? (lang === 'it' ? 'Gruppi e classi' : 'Groups and classes')
+                : (lang === 'it' ? 'Pannello docente' : 'Teacher panel'),
+        });
     }
     if (canOpenResearchConsole) {
         secondaryItems.push({ key: 'admin', href: '/admin', icon: Settings, label: t('nav.admin') });
