@@ -39,6 +39,28 @@ def _email(identity) -> Optional[str]:
     return str(value).strip() or None
 
 
+def _display_name(identity) -> Optional[str]:
+    value = _identity_get(identity, "name") or ""
+    return str(value).strip() or None
+
+
+def _store_user_display_name(db: Session, identity):
+    """Salva/carica il nome visualizzato per questo utente."""
+    username = _username(identity)
+    if not username:
+        return
+    display_name = _display_name(identity) or username
+    email = _email(identity)
+    existing = db.query(models.UserDisplayName).filter(models.UserDisplayName.username == username).first()
+    if existing:
+        if existing.display_name != display_name or existing.email != email:
+            existing.display_name = display_name
+            existing.email = email
+    else:
+        db.add(models.UserDisplayName(username=username, display_name=display_name, email=email))
+    db.flush()
+
+
 def _clean(value: Optional[str]) -> Optional[str]:
     if value is None:
         return None
@@ -175,14 +197,22 @@ def _group_name(db: Session, group_id: Optional[int]) -> Optional[str]:
 
 
 def _validate_group_attach(db: Session, identity, group_id: Optional[int]) -> Optional[int]:
-    """Un non-admin puo' agganciare al piano solo le PROPRIE classi."""
+    """Un non-admin puo' agganciare al piano solo le PROPRIE classi o quelle condivise."""
     if not group_id:
         return None
     group = db.query(models.StudentGroup).filter(models.StudentGroup.id == group_id).first()
     if not group:
         raise HTTPException(status_code=400, detail="Classe non trovata")
-    if not _is_admin(identity) and group.owner_username != _username(identity):
-        raise HTTPException(status_code=403, detail="Puoi agganciare solo le tue classi")
+    if not _is_admin(identity):
+        username = _username(identity)
+        if group.owner_username == username:
+            return group.id
+        share = db.query(models.GroupShare).filter(
+            models.GroupShare.group_id == group.id,
+            models.GroupShare.shared_with_username == username,
+        ).first()
+        if not share:
+            raise HTTPException(status_code=403, detail="Puoi agganciare solo le tue classi o quelle condivise con te")
     return group.id
 
 
@@ -269,6 +299,7 @@ async def create_administration_plan(
     if db.query(models.AdministrationPlan).filter(models.AdministrationPlan.code == code).first():
         raise HTTPException(status_code=409, detail="Codice piano gia' esistente")
 
+    _store_user_display_name(db, current_user)
     plan = models.AdministrationPlan(
         code=code,
         title=title,

@@ -1040,3 +1040,19 @@ class StudentGroupCreate(BaseModel):
 class StudentGroupUpdate(BaseModel):
     name: Optional[str] = None
     is_active: Optional[bool] = None
+
+
+class GroupShareCreate(BaseModel):
+    """Condivisione di una classe con un altro utente."""
+    shared_with_username: str
+
+
+class GroupShareResponse(BaseModel):
+    id: int
+    group_id: int
+    shared_with_username: str
+    granted_by_username: str
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

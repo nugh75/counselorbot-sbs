@@ -15,6 +15,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 
 from .. import auth, database, models, schemas
 
@@ -34,6 +35,23 @@ def _is_admin(identity) -> bool:
     return bool(identity.get("is_admin") if isinstance(identity, dict) else getattr(identity, "is_admin", False))
 
 
+def _store_user_display_name(db: Session, identity):
+    """Salva/carica il nome visualizzato per questo utente."""
+    username = _username(identity)
+    if not username:
+        return
+    display_name = (identity.get("name") if isinstance(identity, dict) else getattr(identity, "name", None)) or username
+    email = (identity.get("email") if isinstance(identity, dict) else getattr(identity, "email", None)) or ""
+    existing = db.query(models.UserDisplayName).filter(models.UserDisplayName.username == username).first()
+    if existing:
+        if existing.display_name != display_name or existing.email != email:
+            existing.display_name = display_name
+            existing.email = email
+    else:
+        db.add(models.UserDisplayName(username=username, display_name=display_name, email=email))
+    db.flush()
+
+
 def _generate_code(db: Session) -> str:
     for _ in range(20):
         suffix = "".join(secrets.choice(CODE_ALPHABET) for _ in range(6))
@@ -47,7 +65,17 @@ def _visible_group_query(db: Session, identity):
     query = db.query(models.StudentGroup)
     if _is_admin(identity):
         return query
-    return query.filter(models.StudentGroup.owner_username == _username(identity))
+    username = _username(identity)
+    # Proprietario o condivisa
+    shared_ids = db.query(models.GroupShare.group_id).filter(
+        models.GroupShare.shared_with_username == username
+    )
+    return query.filter(
+        or_(
+            models.StudentGroup.owner_username == username,
+            models.StudentGroup.id.in_(shared_ids),
+        )
+    )
 
 
 def _require_visible_group(db: Session, identity, group_id: int) -> models.StudentGroup:
@@ -142,6 +170,7 @@ async def create_group(
         raise HTTPException(status_code=400, detail="Codice classe non valido: formato GR-XXXXXX")
     if db.query(models.StudentGroup).filter(models.StudentGroup.code == code).first():
         raise HTTPException(status_code=409, detail="Codice classe gia' esistente")
+    _store_user_display_name(db, current_user)
     group = models.StudentGroup(code=code, name=name, owner_username=_username(current_user) or "")
     db.add(group)
     db.commit()
@@ -187,6 +216,84 @@ async def delete_group(
     db.delete(group)
     db.commit()
     return {"ok": True, "deleted": group_id}
+
+
+# --- Condivisione classe con altri docenti -----------------------------------
+
+@router.get("/admin/groups/{group_id}/shares")
+async def list_group_shares(
+    group_id: int,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Elenco delle condivisioni di una classe visibile."""
+    _require_visible_group(db, current_user, group_id)
+    shares = (
+        db.query(models.GroupShare)
+        .filter(models.GroupShare.group_id == group_id)
+        .order_by(models.GroupShare.created_at.asc())
+        .all()
+    )
+    return shares
+
+
+@router.post("/admin/groups/{group_id}/shares", response_model=schemas.GroupShareResponse)
+async def create_group_share(
+    group_id: int,
+    payload: schemas.GroupShareCreate,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Condividi una classe con un altro utente (docente o admin).
+    Solo il proprietario o un admin puo' condividere."""
+    group = _require_visible_group(db, current_user, group_id)
+    if not _is_admin(current_user) and group.owner_username != _username(current_user):
+        raise HTTPException(status_code=403, detail="Solo il proprietario della classe o un admin puo' condividerla")
+    shared_with = (payload.shared_with_username or "").strip().lower()
+    if not shared_with:
+        raise HTTPException(status_code=400, detail="Username destinatario obbligatorio")
+    if shared_with == _username(current_user):
+        raise HTTPException(status_code=400, detail="Non puoi condividere la classe con te stesso")
+    # Evita duplicati
+    existing = (
+        db.query(models.GroupShare)
+        .filter(
+            models.GroupShare.group_id == group.id,
+            models.GroupShare.shared_with_username == shared_with,
+        )
+        .first()
+    )
+    if existing:
+        raise HTTPException(status_code=409, detail="Classe gia' condivisa con questo utente")
+    share = models.GroupShare(
+        group_id=group.id,
+        shared_with_username=shared_with,
+        granted_by_username=_username(current_user) or "",
+    )
+    db.add(share)
+    db.commit()
+    db.refresh(share)
+    return share
+
+
+@router.delete("/admin/groups/{group_id}/shares/{share_id}")
+async def delete_group_share(
+    group_id: int,
+    share_id: int,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Rimuovi una condivisione. Solo il proprietario o chi ha condiviso o un admin."""
+    group = _require_visible_group(db, current_user, group_id)
+    share = db.query(models.GroupShare).filter(models.GroupShare.id == share_id, models.GroupShare.group_id == group.id).first()
+    if not share:
+        raise HTTPException(status_code=404, detail="Condivisione non trovata")
+    username = _username(current_user)
+    if not _is_admin(current_user) and group.owner_username != username and share.granted_by_username != username:
+        raise HTTPException(status_code=403, detail="Solo il proprietario, il condividitore o un admin puo' rimuovere la condivisione")
+    db.delete(share)
+    db.commit()
+    return {"ok": True, "deleted": share_id}
 
 
 # --- Dashboard classe: studenti, transcript, note, messaggi ------------------

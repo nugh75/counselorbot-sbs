@@ -41,6 +41,20 @@ class Log(Base):
     cost_usd = Column(Float, nullable=True)
     details = Column(JSON) # e.g., prompt used, score data, message content
 
+class UserDisplayName(Base):
+    """Nome visualizzato per utenti (docenti, ricercatori, admin).
+
+    Popolato automaticamente quando l'utente crea piani, classi o note.
+    """
+
+    __tablename__ = "user_display_names"
+
+    username = Column(String, primary_key=True, index=True)
+    display_name = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class GuidedStep(Base):
     __tablename__ = "guided_steps"
 
@@ -612,6 +626,23 @@ class CertifiedStrategy(Base):
     source_reference = Column(Text, nullable=True)
     sort_order = Column(Integer, nullable=False, default=0)
     is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class GroupShare(Base):
+    """Condivisione di una classe con altri docenti/admin.
+
+    Permette a un docente di condividere la visibilita' della classe con
+    altri docenti, che potranno vedere la classe, i suoi studenti e
+    agganciarla ai propri piani di somministrazione.
+    """
+
+    __tablename__ = "group_shares"
+
+    id = Column(Integer, primary_key=True, index=True)
+    group_id = Column(Integer, index=True, nullable=False)
+    shared_with_username = Column(String, index=True, nullable=False)
+    granted_by_username = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
