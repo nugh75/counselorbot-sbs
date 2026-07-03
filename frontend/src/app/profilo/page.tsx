@@ -16,6 +16,7 @@ import { PortfolioCard } from '@/components/profile/PortfolioCard';
 import { CrossSynthesisCard } from '@/components/profile/CrossSynthesisCard';
 import { TelegramLinkCard } from '@/components/profile/TelegramLinkCard';
 import { TeacherNotesCard } from '@/components/profile/TeacherNotesCard';
+import { MyGroupsCard } from '@/components/profile/MyGroupsCard';
 import {
     ArrowLeft, Trash2, Download, MessageSquare, ShieldAlert, Search,
     BookOpen, Wrench, Folder
@@ -745,6 +746,7 @@ export default function ProfilePage() {
                 </div>
                 <StudentBookletCard questionnaireType={selectedBookletType} lang={lang} />
                 <TeacherNotesCard lang={lang} />
+                <MyGroupsCard lang={lang} />
                 <TelegramLinkCard lang={lang} />
             </section>
             )}
