@@ -15,6 +15,7 @@ import { StudentBookletCard, EVENT_BOOKLET_TYPES, bookletTypeOptionLabel, type B
 import { PortfolioCard } from '@/components/profile/PortfolioCard';
 import { CrossSynthesisCard } from '@/components/profile/CrossSynthesisCard';
 import { TelegramLinkCard } from '@/components/profile/TelegramLinkCard';
+import { TeacherNotesCard } from '@/components/profile/TeacherNotesCard';
 import {
     ArrowLeft, Trash2, Download, MessageSquare, ShieldAlert, Search,
     BookOpen, Wrench, Folder
@@ -743,6 +744,7 @@ export default function ProfilePage() {
                     </label>
                 </div>
                 <StudentBookletCard questionnaireType={selectedBookletType} lang={lang} />
+                <TeacherNotesCard lang={lang} />
                 <TelegramLinkCard lang={lang} />
             </section>
             )}

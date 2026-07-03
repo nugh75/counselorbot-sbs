@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Check, Copy, FileText, Link2, MapPin, Pencil, Plus, QrCode, RefreshCw, Search, Trash2, Users, X } from 'lucide-react';
 import QRCode from 'qrcode';
 import { useI18n } from '@/lib/i18n-context';
+import { PlanStudentsPanel } from './PlanStudentsPanel';
 
 type LocaleCode = 'en' | 'es' | 'sv';
 
@@ -125,7 +126,7 @@ function QrThumb({ value, size = 88 }: { value: string; size?: number }) {
 }
 
 export function AdministrationPlansPanel() {
-    const { t } = useI18n();
+    const { t, lang } = useI18n();
     const [plans, setPlans] = useState<AdministrationPlan[]>([]);
     const [contacts, setContacts] = useState<ResearchContact[]>([]);
     const [loading, setLoading] = useState(true);
@@ -149,9 +150,10 @@ export function AdministrationPlansPanel() {
                 return;
             }
             if (!plansRes.ok) throw new Error('plans load failed');
-            if (!contactsRes.ok) throw new Error('contacts load failed');
             setPlans(await plansRes.json());
-            setContacts(await contactsRes.json());
+            // I docenti non vedono l'anagrafica contatti (endpoint admin/ricercatori):
+            // il pannello resta usabile con la lista contatti vuota.
+            setContacts(contactsRes.ok ? await contactsRes.json() : []);
         } catch (e) {
             console.error('Failed to load administration plans', e);
             setMessage(t('admin.ap.error.load'));
@@ -209,6 +211,8 @@ export function AdministrationPlansPanel() {
 
     const telegramUrl = (plan: AdministrationPlan) =>
         `https://t.me/${botUsername}?start=g_${plan.code}`;
+
+    const [studentsOpenId, setStudentsOpenId] = useState<number | null>(null);
 
     const startNew = () => {
         setForm(EMPTY);
@@ -700,6 +704,14 @@ export function AdministrationPlansPanel() {
                                         <div className="mt-2 flex flex-wrap gap-2">
                                             <button
                                                 type="button"
+                                                onClick={() => setStudentsOpenId(studentsOpenId === plan.id ? null : plan.id)}
+                                                className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                            >
+                                                <Users className="h-4 w-4" />
+                                                {lang === 'it' ? 'Studenti' : 'Students'}
+                                            </button>
+                                            <button
+                                                type="button"
                                                 onClick={() => void downloadQr(plan)}
                                                 className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                                             >
@@ -718,6 +730,7 @@ export function AdministrationPlansPanel() {
                                     </div>
                                 </div>
                             </div>
+                            {studentsOpenId === plan.id && <PlanStudentsPanel planId={plan.id} />}
                         </section>
                     )
                 ))}
