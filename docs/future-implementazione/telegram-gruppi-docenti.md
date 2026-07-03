@@ -1,6 +1,9 @@
 # Telegram: accesso di gruppo e ruolo docente
 
-> **Stato:** piano approvato nelle decisioni chiave, da implementare.
+> **Stato:** implementato (fasi 1-5, branch `feature/telegram-bot`, 2026-07-03).
+> Il docente accede da `/docente`; serve il gruppo ai4auth `docenti` (o marker
+> teacher/educator/professor) e l'associazione al piano (creatore del piano o
+> research_contact con la sua email/username).
 > **Data:** 2026-07-03
 > **Prerequisito:** bot Telegram base attivo (vedi `telegram-chatbot-counselorbot.md`).
 
