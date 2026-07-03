@@ -295,6 +295,7 @@ def _seed_and_migrate():
             ("administration_plans", "ADD COLUMN group_id INTEGER"),
             ("teacher_notes", "ADD COLUMN group_id INTEGER"),
             ("teacher_notes", "ALTER COLUMN plan_id DROP NOT NULL"),
+            ("student_groups", "ADD COLUMN school VARCHAR"),
         ]:
             try:
                 with database.engine.connect() as conn:
@@ -936,35 +937,6 @@ def _seed_and_migrate():
         # Idempotente: riempie solo le lingue mancanti, non sovrascrive.
         from .guided_step_label_i18n import seed_step_label_i18n
         seed_step_label_i18n(db, models)
-
-        # Backfill user_display_names per utenti esistenti (idempotente).
-        # Popola ogni username che non ha ancora un record nella tabella.
-        usernames: set[str] = set()
-        for row in db.query(models.AdministrationPlan.created_by_username).all():
-            if row.created_by_username:
-                usernames.add(row.created_by_username)
-        for row in db.query(models.StudentGroup.owner_username).all():
-            if row.owner_username:
-                usernames.add(row.owner_username)
-        for row in db.query(models.TeacherNote.author_username).all():
-            if row.author_username:
-                usernames.add(row.author_username)
-        for row in db.query(models.QuestionnaireResult.username).filter(models.QuestionnaireResult.username.isnot(None)).all():
-            if row.username:
-                usernames.add(row.username)
-        for row in db.query(models.GroupMembership.username).filter(models.GroupMembership.username.isnot(None)).all():
-            if row.username:
-                usernames.add(row.username)
-        existing = {row.username for row in db.query(models.UserDisplayName.username).all()}
-        new_records = []
-        for u in sorted(usernames):
-            if u not in existing:
-                new_records.append(models.UserDisplayName(username=u, display_name=u))
-        if new_records:
-            db.add_all(new_records)
-            db.commit()
-            logger.info(f"Backfilled {len(new_records)} user display names")
-
     finally:
         db.close()
 

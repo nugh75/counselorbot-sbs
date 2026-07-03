@@ -1035,11 +1035,13 @@ class StudentGroupCreate(BaseModel):
     """Classe/gruppo di studenti del docente."""
     name: str
     code: Optional[str] = None
+    school: Optional[str] = None
 
 
 class StudentGroupUpdate(BaseModel):
     name: Optional[str] = None
     is_active: Optional[bool] = None
+    school: Optional[str] = None
 
 
 class GroupShareCreate(BaseModel):

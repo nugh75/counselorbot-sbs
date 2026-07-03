@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
 from .. import auth, database, models, schemas
+from ..user_names import store_user_display_name
 
 router = APIRouter()
 get_db = database.get_db
@@ -35,23 +36,6 @@ def _is_admin(identity) -> bool:
     return bool(identity.get("is_admin") if isinstance(identity, dict) else getattr(identity, "is_admin", False))
 
 
-def _store_user_display_name(db: Session, identity):
-    """Salva/carica il nome visualizzato per questo utente."""
-    username = _username(identity)
-    if not username:
-        return
-    display_name = (identity.get("name") if isinstance(identity, dict) else getattr(identity, "name", None)) or username
-    email = (identity.get("email") if isinstance(identity, dict) else getattr(identity, "email", None)) or ""
-    existing = db.query(models.UserDisplayName).filter(models.UserDisplayName.username == username).first()
-    if existing:
-        if existing.display_name != display_name or existing.email != email:
-            existing.display_name = display_name
-            existing.email = email
-    else:
-        db.add(models.UserDisplayName(username=username, display_name=display_name, email=email))
-    db.flush()
-
-
 def _generate_code(db: Session) -> str:
     for _ in range(20):
         suffix = "".join(secrets.choice(CODE_ALPHABET) for _ in range(6))
@@ -66,9 +50,9 @@ def _visible_group_query(db: Session, identity):
     if _is_admin(identity):
         return query
     username = _username(identity)
-    # Proprietario o condivisa
+    # Proprietario o condivisa (shared_with_username e' salvato lowercase)
     shared_ids = db.query(models.GroupShare.group_id).filter(
-        models.GroupShare.shared_with_username == username
+        models.GroupShare.shared_with_username == (username or "").lower()
     )
     return query.filter(
         or_(
@@ -94,6 +78,7 @@ def _serialize_group(db: Session, group: models.StudentGroup) -> dict:
         "id": group.id,
         "code": group.code,
         "name": group.name,
+        "school": group.school,
         "owner_username": group.owner_username,
         "is_active": group.is_active,
         "members_count": _members_count(db, group.id),
@@ -170,8 +155,9 @@ async def create_group(
         raise HTTPException(status_code=400, detail="Codice classe non valido: formato GR-XXXXXX")
     if db.query(models.StudentGroup).filter(models.StudentGroup.code == code).first():
         raise HTTPException(status_code=409, detail="Codice classe gia' esistente")
-    _store_user_display_name(db, current_user)
-    group = models.StudentGroup(code=code, name=name, owner_username=_username(current_user) or "")
+    store_user_display_name(db, current_user)
+    school = (payload.school or "").strip() or None
+    group = models.StudentGroup(code=code, name=name, school=school, owner_username=_username(current_user) or "")
     db.add(group)
     db.commit()
     db.refresh(group)
@@ -194,6 +180,8 @@ async def update_group(
         group.name = name
     if "is_active" in updates:
         group.is_active = bool(updates["is_active"])
+    if "school" in updates:
+        group.school = (updates["school"] or "").strip() or None
     db.commit()
     db.refresh(group)
     return _serialize_group(db, group)
@@ -252,7 +240,7 @@ async def create_group_share(
     shared_with = (payload.shared_with_username or "").strip().lower()
     if not shared_with:
         raise HTTPException(status_code=400, detail="Username destinatario obbligatorio")
-    if shared_with == _username(current_user):
+    if shared_with == (_username(current_user) or "").lower():
         raise HTTPException(status_code=400, detail="Non puoi condividere la classe con te stesso")
     # Evita duplicati
     existing = (
