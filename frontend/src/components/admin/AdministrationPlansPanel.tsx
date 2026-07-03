@@ -199,6 +199,10 @@ export function AdministrationPlansPanel() {
         return `${LANDING_BASE}/avvio?${q.toString()}`;
     };
 
+    const [origin, setOrigin] = useState('');
+    useEffect(() => { setOrigin(window.location.origin); }, []);
+    const groupInviteUrl = (plan: AdministrationPlan) => `${origin}/gruppo?g=${plan.code}`;
+
     const [botUsername, setBotUsername] = useState('');
     useEffect(() => {
         fetch('/api/telegram/bot-info')
@@ -688,6 +692,19 @@ export function AdministrationPlansPanel() {
                                                 {t('admin.rc.action.link')}
                                             </button>
                                         </div>
+                                        {origin && (
+                                            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                                                <input readOnly value={groupInviteUrl(plan)} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-700" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => void copy(`grp-${plan.id}`, groupInviteUrl(plan))}
+                                                    className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                                                >
+                                                    {copiedKey === `grp-${plan.id}` ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
+                                                    {lang === 'it' ? 'Gruppo' : 'Group'}
+                                                </button>
+                                            </div>
+                                        )}
                                         {botUsername && (
                                             <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                                                 <input readOnly value={telegramUrl(plan)} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-700" />
