@@ -52,6 +52,17 @@ Gran parte della matrice è già vera. Delta da implementare:
 5. **Test smoke**: delete negato a non-creatore; docente 403 su
    research-contacts e validazione; informativa presente nella pagina invito.
 
+## Backlog aggiuntivo (Daniele, 2026-07-03)
+
+1. **Pagina "Gruppi e classi" in `/admin`**: sezione dedicata a gruppi/classi come
+   concetto proprio, indipendente dal tab "Somministrazioni" (oggi i gruppi vivono
+   solo dentro i piani di somministrazione). Da chiarire in fase di design se la
+   classe resta un piano sotto il cofano o diventa entità autonoma senza strumento
+   associato.
+2. **Sezione "Suggerimenti del docente/ricercatore" in `/profilo`**: evoluzione
+   della card "Dal docente" — spazio esplicito per i suggerimenti che docente o
+   ricercatore lasciano allo studente.
+
 ## Non cambia
 
 - Visibilità per-piano (`_visible_plan_query`): già corretta per i tre ruoli.
