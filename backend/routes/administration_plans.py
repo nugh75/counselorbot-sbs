@@ -372,7 +372,8 @@ async def get_administration_plan_students(
     current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
-    """Studenti del piano (da risultati taggati), con risultati, learner model e link Telegram."""
+    """Studenti del piano: iscritti (membership) + chi ha risultati taggati,
+    con risultati, learner model e link Telegram."""
     from .learner_profile import _latest_revision
 
     plan = _require_visible_plan(db, current_user, plan_id)
@@ -386,6 +387,14 @@ async def get_administration_plan_students(
     for result in results:
         if result.username:
             by_student.setdefault(result.username, []).append(result)
+    # Iscritti senza risultati: compaiono comunque nel gruppo.
+    members = (
+        db.query(models.PlanMembership)
+        .filter(models.PlanMembership.plan_id == plan.id)
+        .all()
+    )
+    for member in members:
+        by_student.setdefault(member.username, [])
 
     students = []
     for username, rows in sorted(by_student.items()):
@@ -417,6 +426,17 @@ async def get_administration_plan_students(
 
 
 def _require_plan_student(db: Session, plan: models.AdministrationPlan, username: str) -> None:
+    """Lo studente appartiene al piano se iscritto (membership) O se ha risultati taggati."""
+    member = (
+        db.query(models.PlanMembership.id)
+        .filter(
+            models.PlanMembership.plan_id == plan.id,
+            models.PlanMembership.username == username,
+        )
+        .first()
+    )
+    if member:
+        return
     exists = (
         db.query(models.QuestionnaireResult.id)
         .filter(
@@ -427,6 +447,23 @@ def _require_plan_student(db: Session, plan: models.AdministrationPlan, username
     )
     if not exists:
         raise HTTPException(status_code=404, detail="Studente non trovato in questo piano")
+
+
+def ensure_membership(db: Session, plan_id: int, username: str, joined_via: str) -> models.PlanMembership:
+    """Iscrizione idempotente di uno studente a un gruppo."""
+    membership = (
+        db.query(models.PlanMembership)
+        .filter(
+            models.PlanMembership.plan_id == plan_id,
+            models.PlanMembership.username == username,
+        )
+        .first()
+    )
+    if membership:
+        return membership
+    membership = models.PlanMembership(plan_id=plan_id, username=username, joined_via=joined_via)
+    db.add(membership)
+    return membership
 
 
 @router.get("/admin/administration-plans/{plan_id}/students/{username}/conversation/{session_id}")
@@ -584,3 +621,87 @@ async def get_my_teacher_notes(
         .all()
     )
     return [_serialize_note(note) for note in notes]
+
+
+# --- Gruppi lato studente ----------------------------------------------------
+
+@router.get("/groups/info")
+async def get_group_info(code: str, db: Session = Depends(get_db)):
+    """Info pubbliche minime su un gruppo (per la pagina di invito)."""
+    plan = (
+        db.query(models.AdministrationPlan)
+        .filter(func.upper(models.AdministrationPlan.code) == code.strip().upper())
+        .first()
+    )
+    if not plan:
+        raise HTTPException(status_code=404, detail="Gruppo non trovato")
+    return {"code": plan.code, "title": plan.title, "instrument_code": plan.instrument_code}
+
+
+@router.post("/groups/join")
+async def join_group(
+    payload: schemas.GroupJoinRequest,
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Lo studente autenticato entra nel gruppo con il codice dell'invito del docente."""
+    plan = (
+        db.query(models.AdministrationPlan)
+        .filter(func.upper(models.AdministrationPlan.code) == payload.code.strip().upper())
+        .first()
+    )
+    if not plan:
+        raise HTTPException(status_code=404, detail="Gruppo non trovato")
+    ensure_membership(db, plan.id, current_user["username"], "web")
+    db.commit()
+    return {"plan_id": plan.id, "code": plan.code, "title": plan.title, "instrument_code": plan.instrument_code}
+
+
+@router.get("/user/groups")
+async def get_my_groups(
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Gruppi a cui lo studente autenticato e' iscritto."""
+    memberships = (
+        db.query(models.PlanMembership)
+        .filter(models.PlanMembership.username == current_user["username"])
+        .order_by(models.PlanMembership.created_at.desc())
+        .all()
+    )
+    groups = []
+    for membership in memberships:
+        plan = db.query(models.AdministrationPlan).filter(models.AdministrationPlan.id == membership.plan_id).first()
+        if not plan:
+            continue
+        groups.append({
+            "membership_id": membership.id,
+            "plan_id": plan.id,
+            "code": plan.code,
+            "title": plan.title,
+            "instrument_code": plan.instrument_code,
+            "joined_via": membership.joined_via,
+            "joined_at": membership.created_at.isoformat() if membership.created_at else None,
+        })
+    return groups
+
+
+@router.delete("/user/groups/{membership_id}")
+async def leave_group(
+    membership_id: int,
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    membership = (
+        db.query(models.PlanMembership)
+        .filter(
+            models.PlanMembership.id == membership_id,
+            models.PlanMembership.username == current_user["username"],
+        )
+        .first()
+    )
+    if not membership:
+        raise HTTPException(status_code=404, detail="Iscrizione non trovata")
+    db.delete(membership)
+    db.commit()
+    return {"ok": True, "left": membership_id}

@@ -1020,3 +1020,8 @@ class TeacherNoteCreate(BaseModel):
     username: str
     text: str
     visible_to_student: bool = False
+
+
+class GroupJoinRequest(BaseModel):
+    """Codice del gruppo (piano) dall'invito del docente."""
+    code: str

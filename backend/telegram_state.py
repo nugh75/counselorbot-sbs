@@ -42,8 +42,8 @@ BOT_TEXTS = {
         "en": "Hi {name}! Do you want to start a new analysis?",
     },
     "help": {
-        "it": "Comandi:\n/start - avvia il bot\n/link CODICE - collega il tuo account\n/unlink - scollega Telegram\n/strumenti - scegli uno strumento\n/nuovo - nuova analisi\n/stato - percorso corrente\n/annulla - annulla il flusso corrente",
-        "en": "Commands:\n/start - start the bot\n/link CODE - link your account\n/unlink - unlink Telegram\n/strumenti - choose an instrument\n/nuovo - new analysis\n/stato - current progress\n/annulla - cancel the current flow",
+        "it": "Comandi:\n/start - avvia il bot\n/link CODICE - collega il tuo account\n/unlink - scollega Telegram\n/strumenti - scegli uno strumento\n/counselor - scegli il counselor\n/nuovo - nuova analisi\n/stato - percorso corrente\n/annulla - annulla il flusso corrente",
+        "en": "Commands:\n/start - start the bot\n/link CODE - link your account\n/unlink - unlink Telegram\n/strumenti - choose an instrument\n/counselor - choose the counselor\n/nuovo - new analysis\n/stato - current progress\n/annulla - cancel the current flow",
     },
     "need_link": {
         "it": "Prima devi collegare il tuo account CounselorBot: genera il codice nella pagina Profilo della web app e invia /link CODICE.",
@@ -70,8 +70,8 @@ BOT_TEXTS = {
         "en": "Choose the instrument:",
     },
     "enter_scores": {
-        "it": "Inviami i punteggi {qtype} (valori 1-9), ad esempio:\n{example}\nFattori attesi: {codes}",
-        "en": "Send me your {qtype} scores (values 1-9), for example:\n{example}\nExpected factors: {codes}",
+        "it": "Inviami i punteggi {qtype} (valori 1-9), ad esempio:\n{example}\n\nFattori attesi:\n{factors}",
+        "en": "Send me your {qtype} scores (values 1-9), for example:\n{example}\n\nExpected factors:\n{factors}",
     },
     "scores_recap": {
         "it": "Ho letto questi punteggi {qtype}:\n{recap}\n\nVuoi salvarli e avviare l'analisi?",
@@ -125,6 +125,24 @@ BOT_TEXTS = {
         "it": "Sei nel gruppo: {label}.",
         "en": "You joined the group: {label}.",
     },
+    "group_instrument": {
+        "it": "Il tuo gruppo usa lo strumento {qtype}. Vuoi iniziare?",
+        "en": "Your group uses the {qtype} instrument. Do you want to start?",
+    },
+    "btn_start_instrument": {"it": "Inizia {qtype}", "en": "Start {qtype}"},
+    "counselor_choose": {
+        "it": "Scegli il counselor che ti accompagna:",
+        "en": "Choose the counselor who guides you:",
+    },
+    "counselor_set": {
+        "it": "Counselor selezionato: {name}.",
+        "en": "Selected counselor: {name}.",
+    },
+    "counselor_line": {
+        "it": "Counselor: {name} (cambia con /counselor)",
+        "en": "Counselor: {name} (change with /counselor)",
+    },
+    "counselor_default": {"it": "predefinito", "en": "default"},
     "teacher_message": {
         "it": "\U0001F4E9 Messaggio dal tuo docente:",
         "en": "\U0001F4E9 Message from your teacher:",
@@ -171,27 +189,27 @@ def public_base_url() -> str:
     return f"{parts.scheme}://{parts.netloc}"
 
 
-def resolve_group(db: Session, code: str) -> tuple[int | None, int | None, str | None]:
-    """Codice gruppo -> (plan_id, contact_id, label). Prima piano, poi contatto
-    (stessa risoluzione dello study code web in routes/survey.py)."""
+def resolve_group(db: Session, code: str) -> tuple[int | None, int | None, str | None, str | None]:
+    """Codice gruppo -> (plan_id, contact_id, label, instrument_code). Prima piano,
+    poi contatto (stessa risoluzione dello study code web in routes/survey.py)."""
     normalized = (code or "").strip().upper()
     if not normalized:
-        return None, None, None
+        return None, None, None, None
     plan = (
         db.query(models.AdministrationPlan)
         .filter(models.AdministrationPlan.code == normalized)
         .first()
     )
     if plan:
-        return plan.id, None, plan.title or plan.code
+        return plan.id, None, plan.title or plan.code, plan.instrument_code
     contact = (
         db.query(models.ResearchContact)
         .filter(models.ResearchContact.code == normalized, models.ResearchContact.is_active.is_(True))
         .first()
     )
     if contact:
-        return None, contact.id, contact.name or contact.code
-    return None, None, None
+        return None, contact.id, contact.name or contact.code, None
+    return None, None, None, None
 
 
 # --- Link codes -----------------------------------------------------------
@@ -498,6 +516,43 @@ async def _finish_flow(db: Session, state: models.TelegramConversationState) -> 
 
 # --- Handler update --------------------------------------------------------
 
+def _counselor_name(db: Session, counselor_id: int | None, language: str) -> str:
+    if counselor_id:
+        counselor = (
+            db.query(models.Counselor)
+            .filter(models.Counselor.id == counselor_id, models.Counselor.is_active.is_(True))
+            .first()
+        )
+        if counselor:
+            return counselor.name
+    return _t("counselor_default", language)
+
+
+def _counselor_keyboard(db: Session, language: str) -> list[list[dict]]:
+    counselors = (
+        db.query(models.Counselor)
+        .filter(models.Counselor.is_active.is_(True))
+        .order_by(models.Counselor.id)
+        .all()
+    )
+    rows: list[list[dict]] = []
+    row: list[dict] = []
+    for counselor in counselors:
+        row.append({"text": counselor.name, "callback_data": f"couns:{counselor.id}"})
+        if len(row) == 2:
+            rows.append(row)
+            row = []
+    if row:
+        rows.append(row)
+    rows.append([{"text": _t("counselor_default", language).capitalize(), "callback_data": "couns:0"}])
+    return rows
+
+
+def _choose_instrument_text(db: Session, state: models.TelegramConversationState, language: str) -> str:
+    counselor = _counselor_name(db, state.counselor_id, language)
+    return f"{_t('choose_instrument', language)}\n{_t('counselor_line', language, name=counselor)}"
+
+
 def _instrument_keyboard() -> list[list[dict]]:
     rows, row = [], []
     for qtype in ALL_QUESTIONNAIRES:
@@ -513,10 +568,20 @@ def _instrument_keyboard() -> list[list[dict]]:
 async def _prompt_scores(db: Session, state: models.TelegramConversationState) -> None:
     qtype = state.questionnaire_type
     codes = allowed_factor_codes(db, qtype)
+    factors = {
+        f.code: f
+        for f in db.query(models.Factor)
+        .filter(models.Factor.instrument_code == qtype)
+        .all()
+    }
+    factor_lines = "\n".join(
+        f"- {code} ({_factor_label(factors.get(code), code, state.language)})"
+        for code in codes
+    )
+    example = SCORE_EXAMPLES.get(qtype) or " ".join(f"{c}=5" for c in codes[:4])
     await telegram_bot.send_message(
         state.telegram_chat_id,
-        _t("enter_scores", state.language, qtype=qtype,
-           example=SCORE_EXAMPLES.get(qtype, ""), codes=" ".join(codes)),
+        _t("enter_scores", state.language, qtype=qtype, example=example, factors=factor_lines),
     )
 
 
@@ -601,16 +666,29 @@ async def _do_link(db: Session, sender: dict, chat_id: int, language: str,
         )
         db.add(link)
     group_label = None
+    group_instrument = None
     if group_code:
-        plan_id, contact_id, group_label = resolve_group(db, group_code)
+        plan_id, contact_id, group_label, group_instrument = resolve_group(db, group_code)
         if plan_id or contact_id:
             link.administration_plan_id = plan_id
             link.research_contact_id = contact_id
+        if plan_id:
+            from .routes.administration_plans import ensure_membership
+            ensure_membership(db, plan_id, username, "telegram")
     db.commit()
     message = _t("link_ok", language)
+    keyboard = None
     if group_label:
         message = f"{message}\n{_t('group_enrolled', language, label=group_label)}"
-    await telegram_bot.send_message(chat_id, message)
+    if group_instrument:
+        # Propone subito lo strumento del gruppo: un tap e si passa ai punteggi
+        # (con l'elenco dei fattori attesi per QUELLO strumento).
+        message = f"{message}\n{_t('group_instrument', language, qtype=group_instrument)}"
+        keyboard = [[{
+            "text": _t("btn_start_instrument", language, qtype=group_instrument),
+            "callback_data": f"instr:{group_instrument}",
+        }]]
+    await telegram_bot.send_message(chat_id, message, keyboard=keyboard)
 
 
 async def _handle_message(db: Session, message: dict) -> None:
@@ -689,18 +767,24 @@ async def _handle_message(db: Session, message: dict) -> None:
         _reset_state(state)
         state.state = "choose_instrument"
         db.commit()
-        await telegram_bot.send_message(chat_id, _t("choose_instrument", language), keyboard=_instrument_keyboard())
+        await telegram_bot.send_message(chat_id, _choose_instrument_text(db, state, language), keyboard=_instrument_keyboard())
+        return
+
+    if command == "/counselor":
+        db.commit()
+        await telegram_bot.send_message(chat_id, _t("counselor_choose", language), keyboard=_counselor_keyboard(db, language))
         return
 
     if command == "/stato":
         db.commit()
+        counselor_line = _t("counselor_line", language, name=_counselor_name(db, state.counselor_id, language))
         if state.state == "in_step" and state.step_id:
             steps = {s.id: s for s in _steps(db, state.questionnaire_type)}
             step = steps.get(state.step_id)
             label = resolve_step_label(step, language) if step else state.step_id
-            await telegram_bot.send_message(chat_id, _t("status", language, qtype=state.questionnaire_type, step=label))
+            await telegram_bot.send_message(chat_id, f"{_t('status', language, qtype=state.questionnaire_type, step=label)}\n{counselor_line}")
         else:
-            await telegram_bot.send_message(chat_id, _t("no_flow", language))
+            await telegram_bot.send_message(chat_id, f"{_t('no_flow', language)}\n{counselor_line}")
         return
 
     if command == "/annulla":
@@ -749,7 +833,18 @@ async def _handle_callback(db: Session, callback: dict) -> None:
         _reset_state(state)
         state.state = "choose_instrument"
         db.commit()
-        await telegram_bot.send_message(chat_id, _t("choose_instrument", language), keyboard=_instrument_keyboard())
+        await telegram_bot.send_message(chat_id, _choose_instrument_text(db, state, language), keyboard=_instrument_keyboard())
+        return
+
+    if data.startswith("couns:"):
+        try:
+            counselor_id = int(data.split(":", 1)[1])
+        except ValueError:
+            return
+        state.counselor_id = counselor_id or None
+        db.commit()
+        name = _counselor_name(db, state.counselor_id, language)
+        await telegram_bot.send_message(chat_id, _t("counselor_set", language, name=name))
         return
 
     if data == "flow:resume":
