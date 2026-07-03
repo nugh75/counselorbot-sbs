@@ -18,6 +18,7 @@ const TEXTS = {
         goProfile: 'Vai al tuo profilo',
         invalid: 'Invito non valido o scaduto. Chiedi al docente un nuovo link.',
         missing: 'Link senza codice gruppo.',
+        privacy: "Nota: il docente/ricercatore del gruppo puo' vedere i tuoi risultati e le conversazioni con il counselor AI.",
     },
     en: {
         title: 'Group invitation',
@@ -28,12 +29,12 @@ const TEXTS = {
         goProfile: 'Go to your profile',
         invalid: 'Invalid or expired invitation. Ask your teacher for a new link.',
         missing: 'The link has no group code.',
+        privacy: 'Note: the group teacher/researcher can see your results and your conversations with the AI counselor.',
     },
 };
 
 interface JoinedGroup {
-    title: string;
-    instrument_code: string;
+    name: string;
 }
 
 function GroupJoinInner() {
@@ -71,11 +72,9 @@ function GroupJoinInner() {
             {group && (
                 <>
                     <p className="text-lg font-semibold text-slate-700">
-                        {texts.joined}: {group.title}
+                        {texts.joined}: {group.name}
                     </p>
-                    <p className="text-sm text-slate-500">
-                        {texts.instrument}: <span className="font-mono font-semibold">{group.instrument_code}</span>
-                    </p>
+                    <p className="max-w-sm text-xs text-slate-400">{texts.privacy}</p>
                     <div className="flex flex-col gap-2 sm:flex-row">
                         <Link
                             href="/strumenti"

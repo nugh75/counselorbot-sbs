@@ -213,6 +213,8 @@ class AdministrationPlan(Base):
     code = Column(String, nullable=False, unique=True, index=True)
     title = Column(String, nullable=False)
     instrument_code = Column(String, index=True, nullable=False)
+    # Classe/gruppo a cui e' rivolta la somministrazione (student_groups.id)
+    group_id = Column(Integer, index=True, nullable=True)
     locale = Column(String, index=True, nullable=False, default="en")
     scheduled_at = Column(DateTime(timezone=True), nullable=True)
     location = Column(String, nullable=True)
@@ -675,7 +677,8 @@ class TeacherNote(Base):
     __tablename__ = "teacher_notes"
 
     id = Column(Integer, primary_key=True, index=True)
-    plan_id = Column(Integer, index=True, nullable=False)
+    plan_id = Column(Integer, index=True, nullable=True)   # legacy: note create sui piani
+    group_id = Column(Integer, index=True, nullable=True)  # classe di riferimento
     username = Column(String, index=True, nullable=False)  # studente
     author_username = Column(String, index=True, nullable=False)
     kind = Column(String, nullable=False, default="note")  # note | message
@@ -685,17 +688,30 @@ class TeacherNote(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
-class PlanMembership(Base):
-    """Appartenenza di uno studente a un gruppo/classe (piano di somministrazione).
+class StudentGroup(Base):
+    """Classe/gruppo di studenti, entita' autonoma del docente.
 
-    Indipendente dai risultati questionario: lo studente entra nel gruppo con il
-    link del docente (web o Telegram) anche prima di compilare qualunque strumento.
+    Indipendente dalle somministrazioni: la classe esiste prima e a prescindere
+    dai questionari; un piano di somministrazione puo' agganciarla (group_id).
     """
 
-    __tablename__ = "plan_memberships"
+    __tablename__ = "student_groups"
 
     id = Column(Integer, primary_key=True, index=True)
-    plan_id = Column(Integer, index=True, nullable=False)
+    code = Column(String, nullable=False, unique=True, index=True)  # GR-XXXXXX, per inviti
+    name = Column(String, nullable=False)
+    owner_username = Column(String, index=True, nullable=False)  # docente/ricercatore
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class GroupMembership(Base):
+    """Appartenenza di uno studente a una classe (link invito o codice classe)."""
+
+    __tablename__ = "group_memberships"
+
+    id = Column(Integer, primary_key=True, index=True)
+    group_id = Column(Integer, index=True, nullable=False)
     username = Column(String, index=True, nullable=False)
     joined_via = Column(String, nullable=False, default="web")  # web | telegram | teacher
     created_at = Column(DateTime(timezone=True), server_default=func.now())

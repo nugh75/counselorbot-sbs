@@ -6,23 +6,39 @@ import { Users, LogOut } from 'lucide-react';
 
 interface MyGroup {
     membership_id: number;
-    plan_id: number;
+    group_id: number;
     code: string;
-    title: string;
-    instrument_code: string;
+    name: string;
     joined_via: string;
     joined_at: string | null;
 }
 
 // ponytail: testi inline it/en come TelegramLinkCard.
 const TEXTS = {
-    it: { title: 'I miei gruppi', leave: 'Esci dal gruppo', via: 'iscritto via' },
-    en: { title: 'My groups', leave: 'Leave the group', via: 'joined via' },
+    it: {
+        title: 'Le mie classi',
+        leave: 'Esci dalla classe',
+        via: 'iscritto via',
+        joinPlaceholder: 'Codice classe (es. GR-ABC123)',
+        join: 'Entra',
+        joinError: 'Codice classe non valido.',
+    },
+    en: {
+        title: 'My classes',
+        leave: 'Leave the class',
+        via: 'joined via',
+        joinPlaceholder: 'Class code (e.g. GR-ABC123)',
+        join: 'Join',
+        joinError: 'Invalid class code.',
+    },
 };
 
 export function MyGroupsCard({ lang }: { lang: string }) {
     const texts = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
     const [groups, setGroups] = useState<MyGroup[]>([]);
+    const [joinCode, setJoinCode] = useState('');
+    const [joinError, setJoinError] = useState(false);
+    const [busy, setBusy] = useState(false);
 
     const load = useCallback(() => {
         apiFetch('/api/user/groups')
@@ -40,7 +56,25 @@ export function MyGroupsCard({ lang }: { lang: string }) {
         } catch { /* riprova dalla card */ }
     };
 
-    if (groups.length === 0) return null;
+    const join = async () => {
+        if (!joinCode.trim()) return;
+        setBusy(true);
+        setJoinError(false);
+        try {
+            const res = await apiFetch('/api/groups/join', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: joinCode.trim() }),
+            });
+            if (!res.ok) throw new Error('join failed');
+            setJoinCode('');
+            load();
+        } catch {
+            setJoinError(true);
+        } finally {
+            setBusy(false);
+        }
+    };
 
     return (
         <section className="glass-panel space-y-3 p-5" aria-labelledby="my-groups-section">
@@ -52,11 +86,10 @@ export function MyGroupsCard({ lang }: { lang: string }) {
                 {groups.map((group) => (
                     <li key={group.membership_id} className="flex items-center gap-2 rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-700">
                         <span className="flex-1">
-                            <span className="font-semibold">{group.title}</span>
-                            <span className="ml-2 font-mono text-xs text-slate-400">{group.instrument_code}</span>
+                            <span className="font-semibold">{group.name}</span>
                             <span className="ml-2 text-xs text-slate-400">
                                 {texts.via} {group.joined_via === 'telegram' ? 'Telegram' : 'web'}
-                                {group.joined_at ? ` · ${new Date(group.joined_at).toLocaleDateString()}` : ''}
+                                {group.joined_at ? ` - ${new Date(group.joined_at).toLocaleDateString()}` : ''}
                             </span>
                         </span>
                         <button
@@ -70,6 +103,23 @@ export function MyGroupsCard({ lang }: { lang: string }) {
                     </li>
                 ))}
             </ul>
+            <div className="flex gap-2">
+                <input
+                    value={joinCode}
+                    onChange={(event) => setJoinCode(event.target.value)}
+                    placeholder={texts.joinPlaceholder}
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-sm"
+                />
+                <button
+                    type="button"
+                    disabled={busy || !joinCode.trim()}
+                    onClick={() => void join()}
+                    className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                >
+                    {texts.join}
+                </button>
+            </div>
+            {joinError && <p className="text-sm text-red-600">{texts.joinError}</p>}
         </section>
     );
 }

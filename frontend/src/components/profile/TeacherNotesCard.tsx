@@ -14,8 +14,8 @@ interface TeacherNote {
 
 // ponytail: testi inline it/en come TelegramLinkCard.
 const TEXTS = {
-    it: { title: 'Dal docente', empty: '' },
-    en: { title: 'From your teacher', empty: '' },
+    it: { title: 'Suggerimenti del docente/ricercatore', empty: '' },
+    en: { title: 'Suggestions from your teacher/researcher', empty: '' },
 };
 
 export function TeacherNotesCard({ lang }: { lang: string }) {
@@ -40,10 +40,10 @@ export function TeacherNotesCard({ lang }: { lang: string }) {
             <ul className="space-y-2">
                 {notes.map((note) => (
                     <li key={note.id} className="rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-700">
-                        {note.kind === 'message' ? '📩 ' : ''}{note.text}
+                        {note.kind === 'message' ? '[messaggio] ' : ''}{note.text}
                         <div className="mt-1 text-xs text-slate-400">
                             {note.author_username}
-                            {note.created_at ? ` · ${new Date(note.created_at).toLocaleDateString()}` : ''}
+                            {note.created_at ? ` - ${new Date(note.created_at).toLocaleDateString()}` : ''}
                         </div>
                     </li>
                 ))}

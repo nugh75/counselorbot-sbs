@@ -1,6 +1,6 @@
 # Distinzione ruoli: docente, ricercatore, amministratore
 
-> **Stato:** piano approvato nelle decisioni chiave (Daniele, 2026-07-03), da implementare.
+> **Stato:** implementato in `feature/telegram-bot` (2026-07-03).
 > **Ambito:** cosa può fare ciascun ruolo su gruppi/piani, dati studenti e strumenti di ricerca.
 > **Prerequisito:** membership gruppi + dashboard docente (vedi `telegram-gruppi-docenti.md`).
 
@@ -31,28 +31,33 @@
 | Console `/admin` (config AI, counselor, prompt, log, costi) | ❌ | solo tab ricerca | ✅ |
 | Gestione/revoca collegamenti Telegram | ❌ | ❌ | ✅ |
 
-## Stato attuale vs target — cosa manca
+## Implementazione completata
 
-Gran parte della matrice è già vera. Delta da implementare:
+Delta chiusi nel progetto `counselorbot-sbs`:
 
-1. **Delete piano ristretto al creatore**: in `delete_administration_plan`
-   aggiungere `created_by_username == user` per i non-admin (oggi basta la
-   visibilità). Admin resta con la sola guardia "senza risposte".
-2. **Informativa transcript** nelle superfici di invito:
-   - pagina web `/gruppo` (riga sotto il titolo del gruppo);
-   - messaggio Telegram `group_login`/`group_enrolled`;
-   - eventualmente landing `/avvio` (repo ai4auth, fuori da questo progetto).
-3. **Verifica gate ricerca**: confermare che export validazione, risultati
-   globali e codici anonimi usino `get_current_active_admin` (admin+ricercatori)
-   e mai `get_current_plan_manager`. Audit rapido dei router `validation`,
-   `survey` (risultati globali), `research_contacts`.
-4. **UI per ruolo in `/docente`**: nascondere ai docenti ciò che fallirebbe
-   comunque a backend (selettore contatti ricercatori nel form piano — già
-   tollerato con lista vuota; nessun'altra superficie ricerca è montata lì).
-5. **Test smoke**: delete negato a non-creatore; docente 403 su
-   research-contacts e validazione; informativa presente nella pagina invito.
+1. **Delete piano ristretto al creatore**: i non-admin possono eliminare solo
+   piani creati da loro e senza risposte; admin conserva la guardia "senza
+   risposte".
+2. **Informativa transcript**: presente nella pagina web `/gruppo` e nel
+   messaggio Telegram `group_login`.
+3. **Gate ricerca verificati**: contatti ricerca, export validazione e risultati
+   globali restano su `get_current_active_admin` (admin+ricercatori), non su
+   `get_current_plan_manager`.
+4. **Classi autonome**: aggiunta pagina "Gruppi e classi" in `/admin` e
+   `/docente`; la classe è entità autonoma, con link web/Telegram e codice
+   inseribile dal profilo studente. I piani di somministrazione possono
+   agganciarsi a una classe.
+5. **Suggerimenti docente/ricercatore nel profilo**: la card studente è stata
+   rinominata e alimentata dai messaggi/note visibili lasciati sulla classe.
+6. **Compatibilità dati legacy**: migrazione idempotente da `plan_memberships`
+   a `student_groups`/`group_memberships` per vecchie iscrizioni legate ai piani.
+7. **Test smoke**: coperti delete non-creatore, classi autonome, join web,
+   transcript, note/messaggi e deep link Telegram.
 
-## Backlog aggiuntivo (Daniele, 2026-07-03)
+Fuori da questo repository resta solo l'eventuale informativa sulla landing
+`/avvio` del repo ai4auth.
+
+## Backlog aggiuntivo (Daniele, 2026-07-03) — completato in questo repo
 
 1. **Pagina "Gruppi e classi" in `/admin`**: sezione dedicata a gruppi/classi come
    concetto proprio, indipendente dal tab "Somministrazioni" (oggi i gruppi vivono
