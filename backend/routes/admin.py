@@ -1458,3 +1458,140 @@ async def admin_delete_norm_threshold(threshold_id: int, current_user: models.Us
     db.delete(db_obj)
     db.commit()
     return {"status": "success"}
+
+
+# --- Users & Groups summary (admin dashboard) --------------------------------
+
+
+@router.get("/admin/users-summary")
+async def admin_users_summary(
+    current_user: models.User = Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Aggregazione di tutti gli utenti e classi presenti nel DB."""
+    # Salva il nome visualizzato dell'utente corrente (da Remote-Name).
+    current_username = (current_user.get("username") or "").strip()
+    current_display_name = current_user.get("name") or current_username
+    current_email = current_user.get("email") or ""
+    if current_username:
+        existing = db.query(models.UserDisplayName).filter(models.UserDisplayName.username == current_username).first()
+        if existing:
+            if existing.display_name != current_display_name or existing.email != current_email:
+                existing.display_name = current_display_name
+                existing.email = current_email
+        else:
+            db.add(models.UserDisplayName(username=current_username, display_name=current_display_name, email=current_email))
+        db.commit()
+
+    users: dict[str, dict] = {}
+
+    # Pre-carica i nomi visualizzati
+    display_names: dict[str, str] = {
+        row.username: row.display_name or row.username
+        for row in db.query(models.UserDisplayName).all()
+    }
+    # Assicura che l'utente corrente sia sempre nella mappa
+    if current_username and current_username not in display_names:
+        display_names[current_username] = current_display_name
+
+    def _ensure(username: str):
+        if username and username not in users:
+            users[username] = {
+                "username": username,
+                "display_name": display_names.get(username, username),
+                "in_plans": False,
+                "in_groups": False,
+                "in_notes": False,
+                "in_results": False,
+                "in_memberships": False,
+                "in_logs": False,
+                "in_research_contacts": False,
+                "research_contact_id": None,
+                "plans_count": 0,
+                "groups_count": 0,
+                "notes_count": 0,
+                "results_count": 0,
+                "memberships_count": 0,
+            }
+
+    def _inc(username: str, field: str):
+        _ensure(username)
+        if field == "plans":
+            users[username]["in_plans"] = True
+            users[username]["plans_count"] += 1
+        elif field == "groups":
+            users[username]["in_groups"] = True
+            users[username]["groups_count"] += 1
+        elif field == "notes":
+            users[username]["in_notes"] = True
+            users[username]["notes_count"] += 1
+        elif field == "results":
+            users[username]["in_results"] = True
+            users[username]["results_count"] += 1
+        elif field == "memberships":
+            users[username]["in_memberships"] = True
+            users[username]["memberships_count"] += 1
+        elif field == "logs":
+            users[username]["in_logs"] = True
+
+    for plan_username, in db.query(models.AdministrationPlan.created_by_username).all():
+        if plan_username:
+            _inc(plan_username, "plans")
+
+    for owner_username, in db.query(models.StudentGroup.owner_username).all():
+        if owner_username:
+            _inc(owner_username, "groups")
+
+    for author_username, in db.query(models.TeacherNote.author_username).all():
+        if author_username:
+            _inc(author_username, "notes")
+
+    for username, in db.query(models.QuestionnaireResult.username).filter(models.QuestionnaireResult.username.isnot(None)).all():
+        if username:
+            _inc(username, "results")
+
+    for username, in db.query(models.GroupMembership.username).filter(models.GroupMembership.username.isnot(None)).all():
+        if username:
+            _inc(username, "memberships")
+
+    for username, in db.query(models.Log.username).filter(models.Log.username.isnot(None)).distinct().all():
+        if username:
+            _inc(username, "logs")
+
+    # Include sempre l'utente corrente, anche se non ha ancora lasciato tracce
+    if current_username:
+        _ensure(current_username)
+
+    # Aggiungi i contatti ricerca come utenti (per condivisione classi)
+    research_contacts_used: set[str] = set()
+    for contact in db.query(models.ResearchContact).filter(models.ResearchContact.is_active.is_(True)).all():
+        rc_username = (contact.email or contact.code or "").strip().lower()
+        if not rc_username or rc_username in research_contacts_used:
+            continue
+        research_contacts_used.add(rc_username)
+        _ensure(rc_username)
+        users[rc_username]["display_name"] = contact.name
+        users[rc_username]["in_research_contacts"] = True
+        users[rc_username]["research_contact_id"] = contact.id
+
+    all_users = sorted(users.values(), key=lambda u: u["username"].lower())
+
+    groups = []
+    for group in db.query(models.StudentGroup).order_by(models.StudentGroup.created_at.desc()).all():
+        members_count = db.query(models.GroupMembership).filter(models.GroupMembership.group_id == group.id).count()
+        groups.append({
+            "id": group.id,
+            "code": group.code,
+            "name": group.name,
+            "owner_username": group.owner_username,
+            "is_active": group.is_active,
+            "members_count": members_count,
+            "created_at": group.created_at.isoformat() if group.created_at else None,
+        })
+
+    return {
+        "users": all_users,
+        "groups": groups,
+        "total_users": len(all_users),
+        "total_groups": len(groups),
+    }

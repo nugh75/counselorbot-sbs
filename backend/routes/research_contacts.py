@@ -65,7 +65,7 @@ def _build_contact(payload: schemas.ResearchContactCreate, db: Session) -> model
 
 @router.get("/admin/research-contacts", response_model=List[schemas.ResearchContactResponse])
 async def list_research_contacts(
-    current_user: models.User = Depends(auth.get_current_active_admin),
+    current_user: models.User = Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
     return (
