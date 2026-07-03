@@ -19,6 +19,8 @@ _admin_groups_env = os.environ.get("ADMIN_GROUPS") or os.environ.get("ADMIN_GROU
 ADMIN_GROUPS = {g.strip() for g in _admin_groups_env.split(",") if g.strip()}
 ADMIN_GROUPS.add("admins")
 RESEARCH_GROUP_MARKERS = ("ricerc", "research", "researcher")
+# Speculare a TEACHER_MARKERS in frontend/src/lib/roles.ts
+TEACHER_GROUP_MARKERS = ("docent", "insegnant", "teacher", "educator", "professor", "faculty", "staff")
 FORWARD_AUTH_SHARED_SECRET = os.environ.get("FORWARD_AUTH_SHARED_SECRET", "")
 AI4AUTH_VERIFY_URL = os.environ.get(
     "AI4AUTH_VERIFY_URL", "https://auth.ai4educ.org/api/verify"
@@ -117,11 +119,11 @@ async def get_identity(request: Request) -> dict:
 # possono leggere/scrivere dati di utenti reali. I dati creati durante le prove
 # restano in DB sotto questi username. Speculare a VIEW_AS_ACCOUNTS nel frontend.
 VIEW_AS_DEMO_ACCOUNTS = {
-    "studente.demo": {"is_researcher": False, "groups": ["studenti"]},
-    "studente.demo2": {"is_researcher": False, "groups": ["studenti"]},
-    "studente.demo3": {"is_researcher": False, "groups": ["studenti"]},
-    "ricercatore.demo": {"is_researcher": True, "groups": ["researchers"]},
-    "docente.demo": {"is_researcher": False, "groups": ["docenti"]},
+    "studente.demo": {"is_researcher": False, "groups": ["studenti"], "name": "Alice Bianchi"},
+    "studente.demo2": {"is_researcher": False, "groups": ["studenti"], "name": "Marco Verdi"},
+    "studente.demo3": {"is_researcher": False, "groups": ["studenti"], "name": "Sofia Romano"},
+    "ricercatore.demo": {"is_researcher": True, "groups": ["researchers"], "name": "Dott. Ferrari"},
+    "docente.demo": {"is_researcher": False, "groups": ["docenti"], "name": "Prof.ssa Neri"},
 }
 
 
@@ -130,7 +132,7 @@ def _impersonated_demo_identity(username: str) -> dict:
     return {
         "email": f"{username}@anteprima.local",
         "username": username,
-        "name": username,
+        "name": cfg.get("name", username),
         "groups": list(cfg["groups"]),
         "is_admin": False,
         "is_researcher": cfg["is_researcher"],
@@ -171,5 +173,21 @@ async def get_current_active_admin(identity: dict = Depends(get_current_user)) -
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Accesso riservato ad amministratori e ricercatori",
+        )
+    return identity
+
+
+def is_teacher(groups) -> bool:
+    lowered = [str(g).lower() for g in groups or []]
+    return any(marker in group for group in lowered for marker in TEACHER_GROUP_MARKERS)
+
+
+async def get_current_plan_manager(identity: dict = Depends(get_current_user)) -> dict:
+    """Admin, ricercatori e docenti: gestione piani di somministrazione.
+    La visibilita' per-piano resta scopata in _visible_plan_query."""
+    if not identity["is_admin"] and not identity.get("is_researcher") and not is_teacher(identity.get("groups")):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accesso riservato ad amministratori, ricercatori e docenti",
         )
     return identity

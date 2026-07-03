@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Check, Copy, FileText, Link2, MapPin, Pencil, Plus, QrCode, RefreshCw, Search, Trash2, Users, X } from 'lucide-react';
 import QRCode from 'qrcode';
 import { useI18n } from '@/lib/i18n-context';
+import { apiFetch } from '@/lib/auth';
+import { PlanStudentsPanel } from './PlanStudentsPanel';
 
 type LocaleCode = 'en' | 'es' | 'sv';
 
@@ -30,6 +32,8 @@ interface AdministrationPlan {
     code: string;
     title: string;
     instrument_code: string;
+    group_id: number | null;
+    group_name: string | null;
     locale: LocaleCode;
     scheduled_at: string | null;
     location: string | null;
@@ -44,6 +48,7 @@ interface AdministrationPlan {
 type FormState = {
     title: string;
     instrument_code: string;
+    group_id: string;
     locale: LocaleCode;
     scheduled_at: string;
     location: string;
@@ -56,6 +61,7 @@ type FormState = {
 const EMPTY: FormState = {
     title: '',
     instrument_code: 'QSA',
+    group_id: '',
     locale: 'en',
     scheduled_at: '',
     location: '',
@@ -125,7 +131,7 @@ function QrThumb({ value, size = 88 }: { value: string; size?: number }) {
 }
 
 export function AdministrationPlansPanel() {
-    const { t } = useI18n();
+    const { t, lang } = useI18n();
     const [plans, setPlans] = useState<AdministrationPlan[]>([]);
     const [contacts, setContacts] = useState<ResearchContact[]>([]);
     const [loading, setLoading] = useState(true);
@@ -141,17 +147,18 @@ export function AdministrationPlansPanel() {
         setMessage('');
         try {
             const [plansRes, contactsRes] = await Promise.all([
-                fetch('/api/admin/administration-plans'),
-                fetch('/api/admin/research-contacts'),
+                apiFetch('/api/admin/administration-plans'),
+                apiFetch('/api/admin/research-contacts'),
             ]);
             if (plansRes.status === 401 || plansRes.status === 403) {
                 window.location.href = '/';
                 return;
             }
             if (!plansRes.ok) throw new Error('plans load failed');
-            if (!contactsRes.ok) throw new Error('contacts load failed');
             setPlans(await plansRes.json());
-            setContacts(await contactsRes.json());
+            // I docenti non vedono l'anagrafica contatti (endpoint admin/ricercatori):
+            // il pannello resta usabile con la lista contatti vuota.
+            setContacts(contactsRes.ok ? await contactsRes.json() : []);
         } catch (e) {
             console.error('Failed to load administration plans', e);
             setMessage(t('admin.ap.error.load'));
@@ -197,6 +204,17 @@ export function AdministrationPlansPanel() {
         return `${LANDING_BASE}/avvio?${q.toString()}`;
     };
 
+    // Classi del docente/admin: agganciabili al piano (gli inviti vivono sulla classe).
+    const [groups, setGroups] = useState<{ id: number; name: string; code: string }[]>([]);
+    useEffect(() => {
+        apiFetch('/api/admin/groups')
+            .then((res) => (res.ok ? res.json() : []))
+            .then((payload) => setGroups(Array.isArray(payload) ? payload : []))
+            .catch(() => { /* select classi vuoto */ });
+    }, []);
+
+    const [studentsOpenId, setStudentsOpenId] = useState<number | null>(null);
+
     const startNew = () => {
         setForm(EMPTY);
         setEditingId('new');
@@ -207,6 +225,7 @@ export function AdministrationPlansPanel() {
         setForm({
             title: plan.title,
             instrument_code: plan.instrument_code,
+            group_id: plan.group_id ? String(plan.group_id) : '',
             locale: plan.locale,
             scheduled_at: toDateTimeLocal(plan.scheduled_at),
             location: plan.location || '',
@@ -253,6 +272,7 @@ export function AdministrationPlansPanel() {
         const body = {
             title: form.title.trim(),
             instrument_code: form.instrument_code,
+            group_id: form.group_id ? Number(form.group_id) : null,
             locale: form.locale,
             scheduled_at: toApiDateTime(form.scheduled_at),
             location: optional(form.location),
@@ -266,7 +286,7 @@ export function AdministrationPlansPanel() {
         try {
             const url = editingId === 'new' ? '/api/admin/administration-plans' : `/api/admin/administration-plans/${editingId}`;
             const method = editingId === 'new' ? 'POST' : 'PUT';
-            const res = await fetch(url, {
+            const res = await apiFetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
@@ -286,7 +306,7 @@ export function AdministrationPlansPanel() {
         if (!window.confirm(t('admin.ap.confirmDelete', { title: plan.title }))) return;
         setMessage('');
         try {
-            const res = await fetch(`/api/admin/administration-plans/${plan.id}`, { method: 'DELETE' });
+            const res = await apiFetch(`/api/admin/administration-plans/${plan.id}`, { method: 'DELETE' });
             if (res.status === 409) {
                 setMessage(t('admin.ap.error.deleteHasResponses'));
                 return;
@@ -398,6 +418,13 @@ export function AdministrationPlansPanel() {
                             {t('admin.ap.instrument')}
                             <select className={inputCls} value={form.instrument_code} onChange={(event) => setForm({ ...form, instrument_code: event.target.value })}>
                                 {INSTRUMENTS.map((instrument) => <option key={instrument} value={instrument}>{instrument}</option>)}
+                            </select>
+                        </label>
+                        <label className="text-xs font-semibold uppercase text-slate-500">
+                            {lang === 'it' ? 'Classe' : 'Class'}
+                            <select className={inputCls} value={form.group_id} onChange={(event) => setForm({ ...form, group_id: event.target.value })}>
+                                <option value="">{lang === 'it' ? '- nessuna classe' : '- no class'}</option>
+                                {groups.map((group) => <option key={group.id} value={String(group.id)}>{group.name} ({group.code})</option>)}
                             </select>
                         </label>
                         <label className="text-xs font-semibold uppercase text-slate-500">
@@ -671,7 +698,20 @@ export function AdministrationPlansPanel() {
                                                 {t('admin.rc.action.link')}
                                             </button>
                                         </div>
+                                        {plan.group_name && (
+                                            <p className="mt-2 text-xs text-slate-500">
+                                                {lang === 'it' ? 'Classe' : 'Class'}: <span className="font-semibold">{plan.group_name}</span>
+                                            </p>
+                                        )}
                                         <div className="mt-2 flex flex-wrap gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setStudentsOpenId(studentsOpenId === plan.id ? null : plan.id)}
+                                                className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                            >
+                                                <Users className="h-4 w-4" />
+                                                {lang === 'it' ? 'Studenti' : 'Students'}
+                                            </button>
                                             <button
                                                 type="button"
                                                 onClick={() => void downloadQr(plan)}
@@ -692,6 +732,7 @@ export function AdministrationPlansPanel() {
                                     </div>
                                 </div>
                             </div>
+                            {studentsOpenId === plan.id && <PlanStudentsPanel base={`/api/admin/administration-plans/${plan.id}`} />}
                         </section>
                     )
                 ))}

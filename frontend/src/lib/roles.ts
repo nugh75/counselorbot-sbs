@@ -1,6 +1,6 @@
 import type { Identity } from './auth';
 
-const TEACHER_MARKERS = ['docente', 'teacher', 'educator', 'professor', 'faculty', 'staff'];
+const TEACHER_MARKERS = ['docent', 'insegnant', 'teacher', 'educator', 'professor', 'faculty', 'staff'];
 const RESEARCH_MARKERS = ['ricerc', 'research', 'researcher'];
 
 function hasGroupMarker(identity: Identity | null | undefined, markers: string[]): boolean {

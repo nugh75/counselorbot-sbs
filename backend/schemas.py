@@ -353,6 +353,7 @@ class AdministrationPlanResearcherResponse(BaseModel):
 class AdministrationPlanBase(BaseModel):
     title: str
     instrument_code: str = "QSA"
+    group_id: Optional[int] = None
     locale: str = "en"
     scheduled_at: Optional[datetime] = None
     location: Optional[str] = None
@@ -368,6 +369,7 @@ class AdministrationPlanCreate(AdministrationPlanBase):
 class AdministrationPlanUpdate(BaseModel):
     title: Optional[str] = None
     instrument_code: Optional[str] = None
+    group_id: Optional[int] = None
     locale: Optional[str] = None
     scheduled_at: Optional[datetime] = None
     location: Optional[str] = None
@@ -381,6 +383,8 @@ class AdministrationPlanResponse(BaseModel):
     code: str
     title: str
     instrument_code: str
+    group_id: Optional[int] = None
+    group_name: Optional[str] = None
     locale: str
     scheduled_at: Optional[datetime] = None
     location: Optional[str] = None
@@ -1013,3 +1017,26 @@ class GuidedStepQuestionResponse(GuidedStepQuestionBase):
 
     class Config:
         from_attributes = True
+
+
+class TeacherNoteCreate(BaseModel):
+    """Nota o messaggio del docente per uno studente del piano."""
+    username: str
+    text: str
+    visible_to_student: bool = False
+
+
+class GroupJoinRequest(BaseModel):
+    """Codice del gruppo (piano) dall'invito del docente."""
+    code: str
+
+
+class StudentGroupCreate(BaseModel):
+    """Classe/gruppo di studenti del docente."""
+    name: str
+    code: Optional[str] = None
+
+
+class StudentGroupUpdate(BaseModel):
+    name: Optional[str] = None
+    is_active: Optional[bool] = None
