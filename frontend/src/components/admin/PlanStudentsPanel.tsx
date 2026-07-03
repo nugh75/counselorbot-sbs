@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useI18n } from '@/lib/i18n-context';
+import { apiFetch } from '@/lib/auth';
 import { ChevronDown, ChevronRight, MessageSquare, RefreshCw, Send, StickyNote, Trash2 } from 'lucide-react';
 
 interface StudentResult {
@@ -100,8 +101,8 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
     const load = useCallback(async () => {
         try {
             const [studentsRes, notesRes] = await Promise.all([
-                fetch(`${base}/students`),
-                withNotes ? fetch(`${base}/notes`) : Promise.resolve(new Response('[]')),
+                apiFetch(`${base}/students`),
+                withNotes ? apiFetch(`${base}/notes`) : Promise.resolve(new Response('[]')),
             ]);
             if (studentsRes.ok) {
                 const payload = await studentsRes.json() as { students: PlanStudent[] };
@@ -123,7 +124,7 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
         setOpenSession(sessionId);
         if (!conversations[sessionId]) {
             try {
-                const res = await fetch(
+                const res = await apiFetch(
                     `${base}/students/${encodeURIComponent(username)}/conversation/${encodeURIComponent(sessionId)}`,
                 );
                 if (res.ok) {
@@ -139,7 +140,7 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
         setBusy(true);
         setFeedback('');
         try {
-            const res = await fetch(`${base}/notes`, {
+            const res = await apiFetch(`${base}/notes`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, text: noteText, visible_to_student: noteVisible }),
@@ -158,7 +159,7 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
     const deleteNote = async (noteId: number) => {
         setBusy(true);
         try {
-            const res = await fetch(`/api/admin/teacher-notes/${noteId}`, { method: 'DELETE' });
+            const res = await apiFetch(`/api/admin/teacher-notes/${noteId}`, { method: 'DELETE' });
             if (res.ok) await load();
         } finally {
             setBusy(false);
@@ -170,7 +171,7 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
         setBusy(true);
         setFeedback('');
         try {
-            const res = await fetch(`${base}/messages`, {
+            const res = await apiFetch(`${base}/messages`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, text: messageText }),

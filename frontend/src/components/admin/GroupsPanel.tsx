@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Check, Link2, Plus, Trash2, Users, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { apiFetch } from '@/lib/auth';
 import { PlanStudentsPanel } from './PlanStudentsPanel';
 
 interface StudentGroup {
@@ -74,7 +75,7 @@ export function GroupsPanel() {
 
     useEffect(() => { setOrigin(window.location.origin); }, []);
     useEffect(() => {
-        fetch('/api/telegram/bot-info')
+        apiFetch('/api/telegram/bot-info')
             .then((res) => (res.ok ? res.json() : null))
             .then((info: { enabled: boolean; bot_username: string } | null) => {
                 if (info?.enabled && info.bot_username) setBotUsername(info.bot_username);
@@ -83,7 +84,7 @@ export function GroupsPanel() {
     }, []);
 
     const load = useCallback(() => {
-        fetch('/api/admin/groups')
+        apiFetch('/api/admin/groups')
             .then((res) => (res.ok ? res.json() : []))
             .then((payload) => setGroups(Array.isArray(payload) ? payload as StudentGroup[] : []))
             .catch(() => setGroups([]));
@@ -103,7 +104,7 @@ export function GroupsPanel() {
         setBusy(true);
         setMessage('');
         try {
-            const res = await fetch('/api/admin/groups', {
+            const res = await apiFetch('/api/admin/groups', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newName.trim() }),
@@ -122,7 +123,7 @@ export function GroupsPanel() {
     const toggleActive = async (group: StudentGroup) => {
         setBusy(true);
         try {
-            const res = await fetch(`/api/admin/groups/${group.id}`, {
+            const res = await apiFetch(`/api/admin/groups/${group.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ is_active: !group.is_active }),
@@ -137,7 +138,7 @@ export function GroupsPanel() {
         setBusy(true);
         setMessage('');
         try {
-            const res = await fetch(`/api/admin/groups/${group.id}`, { method: 'DELETE' });
+            const res = await apiFetch(`/api/admin/groups/${group.id}`, { method: 'DELETE' });
             if (!res.ok) {
                 const payload = await res.json().catch(() => null) as { detail?: string } | null;
                 setMessage(payload?.detail || texts.error);
