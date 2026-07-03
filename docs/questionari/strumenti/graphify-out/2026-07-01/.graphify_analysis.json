@@ -1,0 +1,152 @@
+{
+  "communities": {
+    "0": [
+      "autore_leproni",
+      "autore_margottini",
+      "autore_porfeli",
+      "autore_savickas",
+      "costrutto_career_adaptability",
+      "costrutto_concern",
+      "costrutto_confidence",
+      "costrutto_control",
+      "costrutto_curiosity",
+      "qap_strumento"
+    ],
+    "1": [
+      "autore_boyd",
+      "autore_zimbardo",
+      "costrutto_fatalismo",
+      "costrutto_futuro",
+      "costrutto_passato",
+      "costrutto_presente",
+      "costrutto_prospettiva_temporale",
+      "ztpi_pdf",
+      "ztpi_strumento"
+    ],
+    "2": [
+      "costrutto_ansia_valutazione",
+      "costrutto_autoregolazione",
+      "costrutto_metacognizione",
+      "progetto_counselorbot",
+      "qsa_pdf",
+      "qsa_strumento",
+      "qsar_pdf"
+    ],
+    "3": [
+      "autore_orio",
+      "autore_pellerey",
+      "costrutto_autoefficacia",
+      "qpcc_strumento",
+      "qpcs_strumento"
+    ],
+    "4": [
+      "qap_it_document"
+    ],
+    "5": [
+      "qpcc_it_document"
+    ],
+    "6": [
+      "qpcs_it_document"
+    ]
+  },
+  "cohesion": {
+    "0": 0.2,
+    "1": 0.2222222222222222,
+    "2": 0.2857142857142857,
+    "3": 0.4,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0
+  },
+  "gods": [
+    {
+      "id": "qap_strumento",
+      "label": "Questionario sull'Adattabilit\u00e0 Professionale (QAP)",
+      "degree": 10
+    },
+    {
+      "id": "ztpi_strumento",
+      "label": "Zimbardo Time Perspective Inventory (ZTPI)",
+      "degree": 8
+    },
+    {
+      "id": "qsa_strumento",
+      "label": "Questionario sulle strategie di apprendimento (QSA)",
+      "degree": 7
+    },
+    {
+      "id": "autore_pellerey",
+      "label": "Michele Pellerey",
+      "degree": 4
+    },
+    {
+      "id": "qpcc_strumento",
+      "label": "Questionario di percezione delle proprie competenze e convinzioni (QPCC)",
+      "degree": 3
+    },
+    {
+      "id": "qpcs_strumento",
+      "label": "Questionario di Percezione delle Proprie Competenze Strategiche (QPCS)",
+      "degree": 1
+    },
+    {
+      "id": "autore_savickas",
+      "label": "Mark Savickas",
+      "degree": 1
+    },
+    {
+      "id": "autore_porfeli",
+      "label": "Erik J. Porfeli",
+      "degree": 1
+    },
+    {
+      "id": "autore_margottini",
+      "label": "Massimo Margottini",
+      "degree": 1
+    },
+    {
+      "id": "autore_leproni",
+      "label": "Roberto Leproni",
+      "degree": 1
+    }
+  ],
+  "surprises": [
+    {
+      "source": "Questionario sulle strategie di apprendimento (QSA)",
+      "target": "Michele Pellerey",
+      "source_files": [
+        "schede-bibliografiche/QSA_it.md",
+        "schede-bibliografiche/QAP_it.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "Questionario di percezione delle proprie competenze e convinzioni (QPCC)",
+      "target": "Michele Pellerey",
+      "source_files": [
+        "schede-bibliografiche/QPCC_it.md",
+        "schede-bibliografiche/QAP_it.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "cross-file semantic connection"
+    },
+    {
+      "source": "Questionario di Percezione delle Proprie Competenze Strategiche (QPCS)",
+      "target": "Michele Pellerey",
+      "source_files": [
+        "schede-bibliografiche/QPCS_it.md",
+        "schede-bibliografiche/QAP_it.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "cross-file semantic connection"
+    }
+  ],
+  "tokens": {
+    "input": 97071,
+    "output": 9474
+  }
+}

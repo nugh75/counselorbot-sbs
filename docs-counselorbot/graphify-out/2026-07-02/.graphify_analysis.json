@@ -1,0 +1,196 @@
+{
+  "communities": {
+    "0": [
+      "console_administration_plans",
+      "console_benchmark",
+      "console_monitoring_costs",
+      "console_prompt_audit",
+      "console_research_contacts",
+      "console_role_preview",
+      "console_training_dataset",
+      "console_validation_export",
+      "pellerey_model",
+      "qsa",
+      "qsar",
+      "role_researcher_admin"
+    ],
+    "1": [
+      "informational_assistant",
+      "jembalter_method",
+      "kb_counselorbot",
+      "open_learner_model",
+      "portfolio",
+      "pqbl",
+      "role_student",
+      "role_teacher",
+      "shared_response_memory",
+      "student_booklet"
+    ],
+    "2": [
+      "ai4auth",
+      "ai_counselors",
+      "aiservice",
+      "configs_table",
+      "console_ai_config",
+      "console_counselors",
+      "console_presets",
+      "postgres_prod",
+      "tech_arch_stack"
+    ],
+    "3": [
+      "counselorbot_platform",
+      "interface_languages",
+      "opencode",
+      "qap",
+      "qpcc",
+      "qpcs",
+      "session_memory",
+      "test_mode_languages"
+    ],
+    "4": [
+      "combined_analysis",
+      "narrative_construction_principle",
+      "savickas",
+      "srl_principle",
+      "ztpi"
+    ],
+    "5": [
+      "certified_strategy_memory",
+      "guided_chat",
+      "guided_step",
+      "strategy_memory"
+    ],
+    "6": [
+      "competenzestrategiche",
+      "graphify_corpus",
+      "kb_competences",
+      "ollama_embeddings"
+    ],
+    "7": [
+      "session_history"
+    ]
+  },
+  "cohesion": {
+    "0": 0.18181818181818182,
+    "1": 0.24444444444444444,
+    "2": 0.25,
+    "3": 0.2857142857142857,
+    "4": 0.4,
+    "5": 0.6666666666666666,
+    "6": 0.5,
+    "7": 1.0
+  },
+  "gods": [
+    {
+      "id": "counselorbot_platform",
+      "label": "CounselorBot Platform",
+      "degree": 16
+    },
+    {
+      "id": "role_researcher_admin",
+      "label": "Role: Researcher / Administrator",
+      "degree": 10
+    },
+    {
+      "id": "guided_chat",
+      "label": "Guided Chat",
+      "degree": 8
+    },
+    {
+      "id": "informational_assistant",
+      "label": "Informational Assistant (/assistente)",
+      "degree": 7
+    },
+    {
+      "id": "qsa",
+      "label": "QSA \u2014 Learning Strategies Questionnaire",
+      "degree": 7
+    },
+    {
+      "id": "kb_competences",
+      "label": "Knowledge Base: Strategic Competences",
+      "degree": 5
+    },
+    {
+      "id": "portfolio",
+      "label": "Portfolio",
+      "degree": 4
+    },
+    {
+      "id": "savickas",
+      "label": "Savickas \u2014 Narrative Career Construction Interview",
+      "degree": 4
+    },
+    {
+      "id": "role_student",
+      "label": "Role: Student",
+      "degree": 4
+    },
+    {
+      "id": "console_ai_config",
+      "label": "AI Configuration (console)",
+      "degree": 4
+    }
+  ],
+  "surprises": [
+    {
+      "source": "Guided Chat",
+      "target": "GuidedStep (DB-driven steps)",
+      "source_files": [
+        "counselorbot-platform.md",
+        "technical-pedagogical-description.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories; peripheral node `GuidedStep (DB-driven steps)` unexpectedly reaches hub `Guided Chat`"
+    },
+    {
+      "source": "Benchmark (console)",
+      "target": "QSA \u2014 Learning Strategies Questionnaire",
+      "source_files": [
+        "counselorbot-guide-teachers.md",
+        "counselorbot-platform.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories; peripheral node `Benchmark (console)` unexpectedly reaches hub `QSA \u2014 Learning Strategies Questionnaire`"
+    },
+    {
+      "source": "QSA \u2014 Learning Strategies Questionnaire",
+      "target": "Pellerey SRL Model",
+      "source_files": [
+        "counselorbot-platform.md",
+        "technical-pedagogical-description.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories; peripheral node `Pellerey SRL Model` unexpectedly reaches hub `QSA \u2014 Learning Strategies Questionnaire`"
+    },
+    {
+      "source": "ZTPI \u2014 Zimbardo Time Perspective Inventory",
+      "target": "Self-Regulated Learning (SRL) principle",
+      "source_files": [
+        "counselorbot-platform.md",
+        "technical-pedagogical-description.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "conceptually_related_to",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    },
+    {
+      "source": "AIService (provider dispatcher)",
+      "target": "AI Counselors",
+      "source_files": [
+        "technical-pedagogical-description.md",
+        "counselorbot-platform.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "shares_data_with",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    }
+  ],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}
