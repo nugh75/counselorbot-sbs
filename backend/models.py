@@ -683,3 +683,19 @@ class TeacherNote(Base):
     visible_to_student = Column(Boolean, nullable=False, default=False)
     telegram_delivered = Column(Boolean, nullable=True)  # solo kind=message
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class PlanMembership(Base):
+    """Appartenenza di uno studente a un gruppo/classe (piano di somministrazione).
+
+    Indipendente dai risultati questionario: lo studente entra nel gruppo con il
+    link del docente (web o Telegram) anche prima di compilare qualunque strumento.
+    """
+
+    __tablename__ = "plan_memberships"
+
+    id = Column(Integer, primary_key=True, index=True)
+    plan_id = Column(Integer, index=True, nullable=False)
+    username = Column(String, index=True, nullable=False)
+    joined_via = Column(String, nullable=False, default="web")  # web | telegram | teacher
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
