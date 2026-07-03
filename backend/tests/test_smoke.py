@@ -263,6 +263,7 @@ EXPECTED_ROUTES = {
     ("GET", "/admin/strategy-feedback"),
     ("GET", "/qsa/guided-ui-texts"),
     ("POST", "/telegram/webhook"),
+    ("GET", "/telegram/bot-info"),
     ("POST", "/telegram/link-code"),
     ("GET", "/telegram/link-status"),
     ("POST", "/telegram/unlink"),
@@ -4272,6 +4273,107 @@ def test_telegram_webhook_secret():
     finally:
         os.environ["TELEGRAM_BOT_ENABLED"] = "false"
         os.environ.pop("TELEGRAM_WEBHOOK_SECRET", None)
+
+
+def test_telegram_bot_info_disabled():
+    os.environ["TELEGRAM_BOT_ENABLED"] = "false"
+    res = client.get("/telegram/bot-info")
+    assert res.status_code == 200
+    assert res.json() == {"enabled": False, "bot_username": ""}
+
+
+def test_telegram_group_deep_link():
+    """Deep link g_<piano> -> bottone login; l_<codice>__<piano> -> link + iscrizione + tagging."""
+    import asyncio
+
+    sent: list[dict] = []
+
+    async def _fake_send(chat_id, text, keyboard=None):
+        sent.append({"chat_id": chat_id, "text": text, "keyboard": keyboard})
+
+    async def _fake_answer(callback_query_id):
+        pass
+
+    real_send = telegram_state.telegram_bot.send_message
+    real_answer = telegram_state.telegram_bot.answer_callback_query
+    telegram_state.telegram_bot.send_message = _fake_send
+    telegram_state.telegram_bot.answer_callback_query = _fake_answer
+    os.environ["TELEGRAM_PUBLIC_WEBHOOK_URL"] = "https://counselorbot-sbs.test/api/telegram/webhook"
+
+    TG_USER = 515151
+
+    def _msg(text):
+        return {"message": {
+            "chat": {"id": TG_USER, "type": "private"},
+            "from": {"id": TG_USER, "first_name": "Gino", "language_code": "it"},
+            "text": text,
+        }}
+
+    def _cb(data):
+        return {"callback_query": {
+            "id": "cb2", "data": data,
+            "from": {"id": TG_USER, "language_code": "it"},
+            "message": {"chat": {"id": TG_USER, "type": "private"}},
+        }}
+
+    async def _run():
+        db = _TestSession()
+        try:
+            plan = models.AdministrationPlan(code="AP-TGTEST", title="Classe Telegram", instrument_code="QSA", locale="en")
+            db.add(plan)
+            db.commit()
+            db.refresh(plan)
+
+            # /start g_<piano>: bottone URL verso /telegram-link?g=...
+            await telegram_state.process_update(_msg("/start g_AP-TGTEST"))
+            keyboard = sent[-1]["keyboard"]
+            assert keyboard and keyboard[0][0]["url"] == "https://counselorbot-sbs.test/telegram-link?g=AP-TGTEST"
+
+            # /start l_<codice>__<piano>: link account + iscrizione al piano.
+            code = telegram_state.create_link_code(db, "tg.gruppo")
+            await telegram_state.process_update(_msg(f"/start l_{code}__AP-TGTEST"))
+            link = db.query(models.TelegramAccountLink).filter(
+                models.TelegramAccountLink.telegram_user_id == TG_USER
+            ).first()
+            assert link is not None and link.username == "tg.gruppo"
+            assert link.administration_plan_id == plan.id
+            assert "Classe Telegram" in sent[-1]["text"]
+
+            # Risultato taggato col piano.
+            await telegram_state.process_update(_cb("instr:QSA"))
+            codes = telegram_state.allowed_factor_codes(db, "QSA")
+            await telegram_state.process_update(_msg(" ".join(f"{c}=5" for c in codes)))
+            await telegram_state.process_update(_cb("scores:confirm"))
+            db.expire_all()
+            result = (
+                db.query(models.QuestionnaireResult)
+                .filter(models.QuestionnaireResult.username == "tg.gruppo")
+                .order_by(models.QuestionnaireResult.id.desc())
+                .first()
+            )
+            assert result is not None
+            assert result.administration_plan_id == plan.id
+
+            # Codice gruppo inesistente: link ok, nessuna iscrizione.
+            code2 = telegram_state.create_link_code(db, "tg.gruppo2")
+            await telegram_state.process_update({"message": {
+                "chat": {"id": 515152, "type": "private"},
+                "from": {"id": 515152, "language_code": "it"},
+                "text": f"/start l_{code2}__NOPE",
+            }})
+            link2 = db.query(models.TelegramAccountLink).filter(
+                models.TelegramAccountLink.telegram_user_id == 515152
+            ).first()
+            assert link2 is not None and link2.administration_plan_id is None
+        finally:
+            db.close()
+
+    try:
+        asyncio.run(_run())
+    finally:
+        telegram_state.telegram_bot.send_message = real_send
+        telegram_state.telegram_bot.answer_callback_query = real_answer
+        os.environ.pop("TELEGRAM_PUBLIC_WEBHOOK_URL", None)
 
 
 def test_telegram_conversation_flow():
