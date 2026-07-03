@@ -26,13 +26,14 @@ import { AssistantAdminPanel } from '@/components/admin/AssistantAdminPanel';
 import { RolePreviewPanel } from '@/components/admin/RolePreviewPanel';
 import { RagDocsPanel } from '@/components/admin/RagDocsPanel';
 import { GuidedStepQuestionsPanel } from '@/components/admin/GuidedStepQuestionsPanel';
+import { UsersSummaryPanel } from '@/components/admin/UsersSummaryPanel';
 import { getRealIdentity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { canUseResearchConsole } from '@/lib/roles';
 
 import { cn } from '@/lib/utils';
 
-type AdminTab = 'assistantManager' | 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'approvedStrategies' | 'certifiedStrategies' | 'assistantQuestions' | 'guidedStepQuestions' | 'ragDocs' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'groupsClasses' | 'training' | 'pqbl' | 'rolePreview';
+type AdminTab = 'assistantManager' | 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'approvedStrategies' | 'certifiedStrategies' | 'assistantQuestions' | 'guidedStepQuestions' | 'ragDocs' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'groupsClasses' | 'usersSummary' | 'training' | 'pqbl' | 'rolePreview';
 
 export default function AdminPage() {
     const router = useRouter();
@@ -232,6 +233,7 @@ export default function AdminPage() {
                         {activeTab === 'researchContacts' && <ResearchContactsPanel />}
                         {activeTab === 'administrationPlans' && <AdministrationPlansPanel />}
                         {activeTab === 'groupsClasses' && <GroupsPanel />}
+                        {activeTab === 'usersSummary' && <UsersSummaryPanel />}
                         {activeTab === 'training' && <TrainingDatasetPanel />}
                         {activeTab === 'pqbl' && <PqblAdminPanel />}
                         {activeTab === 'validation' && <ValidationExportPanel />}
