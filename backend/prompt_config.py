@@ -1153,6 +1153,204 @@ MODE_TO_SYSTEM_PROMPT_KEY: Dict[str, str] = {
 }
 
 
+# --- Pellerey framework knowledge blocks (from "Imparare a dirigere se stessi", 2013) ---
+# Injected as [META SYSTEM PROMPT] per-step, reframed from the student's
+# perspective (practical, not theoretical). Grouped by concept; reused across
+# steps that share the same domain.
+
+PELLEREY_SELF_DIRECTION = (
+    "[PELLEREY SELF-DIRECTION]\n"
+    "Directing yourself in study and work means two things working together:\n"
+    "1. SELF-DETERMINATION — choosing what matters to you, finding your own reasons "
+    "and meaning, building a sense of direction. This is about motivation, decisions, "
+    "and purpose.\n"
+    "2. SELF-REGULATION — monitoring how you actually do things, checking whether "
+    "you are on track, adjusting your approach when needed. This is about method, "
+    "control, and persistence.\n"
+    "When both are present, the student can truly direct themselves. When one is "
+    "missing — e.g. strong method but no sense of purpose, or strong motivation but "
+    "no tools to act — things stall. Your job is to help the student see both sides.\n"
+    "Never frame this as a test or judgment: these are habits that can be trained, "
+    "not fixed traits."
+)
+
+PELLEREY_COGNITIVE_PROCESSES = (
+    "[PELLEREY COGNITIVE FRAMEWORK]\n"
+    "The cognitive factors describe HOW the student processes information. Four core "
+    "processes are at play (Pellerey, 2013, cap. 6.1):\n"
+    "- SELECTIVE ATTENTION: the ability to focus on what matters and sustain "
+    "concentration over time. Weakness here often comes from never having been taught "
+    "HOW to focus — it is a skill, not a character flaw.\n"
+    "- ELABORATION: connecting new information to what the student already knows, "
+    "using examples, images, analogies. This is what turns memorisation into understanding.\n"
+    "- ORGANISATION: structuring knowledge into coherent wholes — outlines, concept maps, "
+    "hierarchies. It is about distinguishing what is central from what is peripheral.\n"
+    "- METACOGNITION: awareness of one's own mental processes and the ability to choose "
+    "the right strategy for the task. It is knowing what you know, what you don't, and "
+    "what to do about it.\n"
+    "When you analyse a factor, ground it in one of these processes. Avoid abstract "
+    "labels — describe what the score actually looks like in a real study session."
+)
+
+PELLEREY_AFFECTIVE_PROCESSES = (
+    "[PELLEREY AFFECTIVE FRAMEWORK]\n"
+    "The affective factors describe WHAT MOVES the student and WHAT HOLDS THEM BACK. "
+    "Four core areas (Pellerey, 2013, cap. 6.2):\n"
+    "- ANXIETY: some tension is normal and useful — it activates. Beyond a threshold, it "
+    "blocks cognitive processes and triggers automatic responses. Distinguish between "
+    "baseline anxiety (always present when studying) and situational anxiety (only in "
+    "specific moments like exams).\n"
+    "- VOLITION / PERSEVERANCE: the ability to stick with a task despite fatigue, "
+    "distraction, or low immediate reward. Many students were never explicitly taught "
+    "how to persevere — it is a habit that can be built through practice.\n"
+    "- ATTRIBUTIONAL STYLE: how the student explains successes and failures to themselves. "
+    "Attributing to controllable causes (effort, strategy) leads to renewed effort; "
+    "attributing to uncontrollable causes (luck, fixed ability, task difficulty) leads "
+    "to helplessness. This is not about being 'positive' — it is about accuracy and agency.\n"
+    "- PERCEIVED COMPETENCE: the student's belief about their own ability in a specific "
+    "domain. Low perceived competence + belief that ability is fixed = avoidance and "
+    "low effort. High perceived competence + belief that ability can grow = engagement. "
+    "A success experience in a specific task is the most powerful way to shift this."
+)
+
+PELLEREY_ELABORATION = (
+    "[PELLEREY ELABORATION & ORGANISATION]\n"
+    "Elaboration and organisation are the engine of deep understanding (Pellerey, 2013, "
+    "cap. 6.1.2-6.1.3). The student who elaborates well does not just re-read: they "
+    "connect new content to things they already know, look for examples and counterexamples, "
+    "ask themselves questions, build diagrams and maps. The student who organises well "
+    "can separate what is central from what is secondary.\n"
+    "When these are weak, studying becomes passive: re-reading, highlighting everything, "
+    "copying notes without processing. Help the student see the difference between "
+    "'time spent with the book open' and 'time spent building understanding'.\n"
+    "Concrete micro-actions to suggest: pick one topic and draw a concept map without "
+    "looking at notes; explain a paragraph to an imaginary classmate; turn a textbook "
+    "section into 3 questions and answer them."
+)
+
+PELLEREY_SELFCONTROL = (
+    "[PELLEREY SELF-CONTROL & CONCENTRATION]\n"
+    "Self-control during study is not willpower — it is a set of learnable strategies "
+    "(Pellerey, 2013, cap. 3.2 + 6.1.1). Zimmerman's model describes the action phase: "
+    "self-instruction (talking yourself through a task), use of mental imagery, focusing "
+    "attention, and task-specific strategies. Strong self-regulators also self-observe: "
+    "they notice when they are drifting and correct course.\n"
+    "Common causes of weak self-control: no clear goal for the session (what exactly am I "
+    "trying to achieve in the next 30 minutes?), environment full of distractions, never "
+    "having been taught attention-management techniques.\n"
+    "Concrete micro-actions: set a specific goal before opening the book; use a timer "
+    "(25 minutes focused, 5 break); remove the phone from the room; write down what "
+    "distracted you AFTER the session to spot patterns."
+)
+
+PELLEREY_MOTIVATION = (
+    "[PELLEREY MOTIVATION & WILL]\n"
+    "Motivation is not an on/off switch — it emerges from the interaction of several "
+    "factors (Pellerey, 2013, cap. 2 + 6.2.2 + 6.2.4):\n"
+    "- PERCEIVED COMPETENCE: 'Can I do this?' If the answer is no and the student thinks "
+    "ability is fixed, they won't try. If they think effort can grow ability, they might.\n"
+    "- VOLITION / PERSEVERANCE: the bridge between intention and completion. Many students "
+    "start with good intentions but lack the strategies to persist when it gets hard.\n"
+    "- ORIENTATION: learning-oriented students care about understanding; performance-oriented "
+    "students care about appearing capable. The first group takes on challenges, the second "
+    "avoids risks.\n"
+    "- EXPECTATIONS: what the student expects from their effort. Repeated failure can erode "
+    "expectations even when the student is capable.\n"
+    "When analysing these factors, always connect them: low perceived competence often "
+    "undermines perseverance; a performance orientation amplifies anxiety. Never say "
+    "'you lack motivation' — describe the pattern and name what can be shifted."
+)
+
+PELLEREY_EMOTIONS = (
+    "[PELLEREY EMOTIONAL MANAGEMENT]\n"
+    "Anxiety in studying is not a flaw to be eliminated — it is a signal to be managed "
+    "(Pellerey, 2013, cap. 6.2.1). A moderate level of tension is actually useful: it "
+    "activates energy and focus. The problem arises when anxiety exceeds the optimal "
+    "threshold and starts blocking cognitive processes (concentration, memory retrieval, "
+    "reasoning).\n"
+    "Key distinctions to keep in mind:\n"
+    "- Baseline anxiety (always present when the student faces academic tasks) vs. "
+    "situational anxiety (triggered only by specific events like oral exams or deadlines)."
+    "- Emotional interference: anxiety does not just feel bad — it hijacks working memory, "
+    "making it harder to reason, recall, and focus.\n"
+    "When you address anxiety: never dismiss it ('don't worry', 'just relax'). Acknowledge "
+    "it, help name it ('so this kicks in especially before oral exams?'), and suggest "
+    "one concrete regulation strategy: break the task into smaller chunks, prepare earlier "
+    "to reduce last-minute pressure, practice a simple breathing technique, or talk to "
+    "someone about it. The goal is not zero anxiety — it is manageable anxiety."
+)
+
+PELLEREY_ATTRIBUTION = (
+    "[PELLEREY ATTRIBUTIONAL STYLE]\n"
+    "How a student explains their successes and failures shapes everything that comes next "
+    "(Pellerey, 2013, cap. 6.2.3). Attribution theory identifies four common explanations:\n"
+    "- Ability ('I'm good at this' / 'I'm just not smart enough')\n"
+    "- Effort ('I worked hard' / 'I didn't try enough')\n"
+    "- Luck ('I got lucky' / 'I was unlucky')\n"
+    "- Task difficulty ('It was easy' / 'It was impossible')\n"
+    "The critical dimension is CONTROLLABILITY. Effort and strategy are controllable; "
+    "luck, fixed ability, and task difficulty (as perceived) are not. Students who "
+    "attribute failure to uncontrollable causes tend to feel helpless and reduce effort. "
+    "Students who attribute it to controllable causes tend to try again with a different "
+    "approach.\n"
+    "When analysing attributional style: do not just say 'you attribute to external causes'. "
+    "Help the student see the pattern concretely — 'When something goes well, do you tend "
+    "to think it was luck or your own work? And when it goes badly?' — and guide them "
+    "toward explanations that leave room for action.\n"
+    "Note: some students view intelligence as a fixed trait. If this belief surfaces, it "
+    "is a key leverage point: research shows that understanding intelligence as malleable "
+    "(something that grows with effort) changes attributional patterns and increases "
+    "perseverance."
+)
+
+PELLEREY_SOCIAL = (
+    "[PELLEREY SOCIAL DIMENSION]\n"
+    "Collaboration is one of the seven strategic competence areas identified by the research "
+    "(Pellerey et al., 2013). It is not just 'working in a group' — it includes knowing "
+    "when and how to ask for help, the ability to explain something to a peer, and the "
+    "willingness to contribute to a shared goal.\n"
+    "Students with low collaboration scores may not dislike others — they may simply never "
+    "have experienced productive group work, or they may associate 'group work' with "
+    "carrying others. Help them see what collaboration actually offers: explaining to "
+    "someone else is one of the most powerful ways to learn; others can see what you missed.\n"
+    "Concrete suggestion: start small — study with ONE trusted peer on ONE specific topic, "
+    "with a clear structure (e.g. each explains half, then question each other)."
+)
+
+PELLEREY_SYNTHESIS = (
+    "[PELLEREY INTEGRATED SYNTHESIS]\n"
+    "The goal of the final synthesis is to see the student as a whole, not as a list of "
+    "scores (Pellerey et al., 2013). Strategic competences are not isolated compartments — "
+    "they form what the authors call the person's CHARACTER: the integration of cognitive, "
+    "affective, and social habits.\n"
+    "In this step, look for CROSS-DOMAIN PATTERNS:\n"
+    "- Anxiety (A1/A7) often undermines concentration (C6) and makes self-regulation (C2) "
+    "harder.\n"
+    "- Low perceived competence (A6) often saps volition (A2) even when cognitive strategies "
+    "(C1, C5) are intact.\n"
+    "- An external attributional style (A4 high, A3 low) can erode perseverance (A5) over time.\n"
+    "- Strong collaborative skills (C4) can compensate for organisation weaknesses (C5) when "
+    "the student studies with peers.\n"
+    "Build a single coherent picture: 'Here is how you seem to study, and here is WHY these "
+    "patterns might be connected.' Then invite the student to confirm or correct — it is "
+    "THEIR experience, you are offering a reading, not a diagnosis."
+)
+
+PELLEREY_STRATEGIC_COMPETENCES = (
+    "[PELLEREY STRATEGIC COMPETENCES FRAMEWORK]\n"
+    "Strategic competences are stable habits (dispositions) that a person develops over "
+    "time — they are NOT fixed traits (Pellerey et al., 2013). The research identifies "
+    "seven core areas: understanding and remembering, collaborating, communicating, giving "
+    "meaning and perspective to one's life, managing anxiety, managing oneself in work "
+    "and learning, and facing challenging situations.\n"
+    "Two key ideas to convey when analysing any competence profile:\n"
+    "1. These are HABITS, not labels. Like any habit, they can be strengthened with practice. "
+    "A low score today does not mean a low score forever.\n"
+    "2. They interact. Perceived competence affects perseverance; anxiety affects "
+    "concentration; communication skills affect collaboration. Always look for connections."
+)
+
+
 # --- Instrument-level meta system prompts (injected as [META SYSTEM PROMPT]) ---
 # Empty default: optional extra context an admin can fill per-instrument.
 # Per-step overrides use prompt_meta_{Q}_{STEP_ID} and are created on demand.
@@ -1186,19 +1384,202 @@ META_SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
         "key": "prompt_meta_QPCS",
         "label": "Meta system prompt QPCS",
         "description": "Contesto aggiuntivo iniettato come [META SYSTEM PROMPT] per lo strumento QPCS",
-        "default": "",
+        "default": PELLEREY_STRATEGIC_COMPETENCES,
     },
     {
         "key": "prompt_meta_QPCC",
         "label": "Meta system prompt QPCC",
         "description": "Contesto aggiuntivo iniettato come [META SYSTEM PROMPT] per lo strumento QPCC",
-        "default": "",
+        "default": PELLEREY_STRATEGIC_COMPETENCES,
     },
     {
         "key": "prompt_meta_QAP",
         "label": "Meta system prompt QAP",
         "description": "Contesto aggiuntivo iniettato come [META SYSTEM PROMPT] per lo strumento QAP",
-        "default": "",
+        "default": PELLEREY_STRATEGIC_COMPETENCES,
+    },
+    # QSA per-step meta prompts
+    {
+        "key": "prompt_meta_QSA_intro",
+        "label": "QSA Intro - Contesto Pellerey",
+        "description": "Concetto di auto-direzione per lo step introduttivo QSA",
+        "default": PELLEREY_SELF_DIRECTION,
+    },
+    {
+        "key": "prompt_meta_QSA_cognitive",
+        "label": "QSA Cognitive - Contesto Pellerey",
+        "description": "Framework processi cognitivi (attenzione, elaborazione, organizzazione, metacognizione)",
+        "default": PELLEREY_COGNITIVE_PROCESSES,
+    },
+    {
+        "key": "prompt_meta_QSA_affective",
+        "label": "QSA Affective - Contesto Pellerey",
+        "description": "Framework processi affettivi (ansia, volizione, attribuzioni, percezione di competenza)",
+        "default": PELLEREY_AFFECTIVE_PROCESSES,
+    },
+    {
+        "key": "prompt_meta_QSA_sl-elaboration",
+        "label": "QSA Elaboration - Contesto Pellerey",
+        "description": "Elaborazione e organizzazione: collegare conoscenze, mappe, distinguere centrale da accessorio",
+        "default": PELLEREY_ELABORATION,
+    },
+    {
+        "key": "prompt_meta_QSA_sl-selfcontrol",
+        "label": "QSA Self-control - Contesto Pellerey",
+        "description": "Autocontrollo e concentrazione: strategie apprese, auto-osservazione, gestione distrazioni",
+        "default": PELLEREY_SELFCONTROL,
+    },
+    {
+        "key": "prompt_meta_QSA_sl-motivation",
+        "label": "QSA Motivation - Contesto Pellerey",
+        "description": "Motivazione e volonta': percezione di competenza, perseveranza, orientamento",
+        "default": PELLEREY_MOTIVATION,
+    },
+    {
+        "key": "prompt_meta_QSA_sl-emotions",
+        "label": "QSA Emotions - Contesto Pellerey",
+        "description": "Gestione emotiva: ansia di base vs occasionale, soglia ottimale, regolazione",
+        "default": PELLEREY_EMOTIONS,
+    },
+    {
+        "key": "prompt_meta_QSA_sl-attribution",
+        "label": "QSA Attribution - Contesto Pellerey",
+        "description": "Stile attributivo: cause controllabili vs incontrollabili, impatto su impegno",
+        "default": PELLEREY_ATTRIBUTION,
+    },
+    {
+        "key": "prompt_meta_QSA_sl-social",
+        "label": "QSA Social - Contesto Pellerey",
+        "description": "Dimensione sociale: collaborazione come competenza strategica",
+        "default": PELLEREY_SOCIAL,
+    },
+    {
+        "key": "prompt_meta_QSA_sl-synthesis",
+        "label": "QSA Synthesis - Contesto Pellerey",
+        "description": "Sintesi integrata: il profilo come sistema, interazioni cognitive-affettive",
+        "default": PELLEREY_SYNTHESIS,
+    },
+    # QSAr per-step meta prompts
+    {
+        "key": "prompt_meta_QSAR_qsar-intro",
+        "label": "QSAr Intro - Contesto Pellerey",
+        "description": "Concetto di auto-direzione per lo step introduttivo QSAr",
+        "default": PELLEREY_SELF_DIRECTION,
+    },
+    {
+        "key": "prompt_meta_QSAR_qsar-cognitive",
+        "label": "QSAr Cognitive - Contesto Pellerey",
+        "description": "Framework processi cognitivi per QSAr",
+        "default": PELLEREY_COGNITIVE_PROCESSES,
+    },
+    {
+        "key": "prompt_meta_QSAR_qsar-affective",
+        "label": "QSAr Affective - Contesto Pellerey",
+        "description": "Framework processi affettivi per QSAr",
+        "default": PELLEREY_AFFECTIVE_PROCESSES,
+    },
+    {
+        "key": "prompt_meta_QSAR_qsar-processing",
+        "label": "QSAr Processing - Contesto Pellerey",
+        "description": "Elaborazione e organizzazione per QSAr",
+        "default": PELLEREY_ELABORATION,
+    },
+    {
+        "key": "prompt_meta_QSAR_qsar-selfcontrol",
+        "label": "QSAr Self-control - Contesto Pellerey",
+        "description": "Autoregolazione e attenzione per QSAr",
+        "default": PELLEREY_SELFCONTROL,
+    },
+    {
+        "key": "prompt_meta_QSAR_qsar-motivation",
+        "label": "QSAr Motivation - Contesto Pellerey",
+        "description": "Motivazione e competenza percepita per QSAr",
+        "default": PELLEREY_MOTIVATION,
+    },
+    {
+        "key": "prompt_meta_QSAR_qsar-emotions",
+        "label": "QSAr Emotions - Contesto Pellerey",
+        "description": "Gestione emotiva per QSAr",
+        "default": PELLEREY_EMOTIONS,
+    },
+    {
+        "key": "prompt_meta_QSAR_qsar-attributions",
+        "label": "QSAr Attributions - Contesto Pellerey",
+        "description": "Attribuzioni causali per QSAr",
+        "default": PELLEREY_ATTRIBUTION,
+    },
+    {
+        "key": "prompt_meta_QSAR_qsar-synthesis",
+        "label": "QSAr Synthesis - Contesto Pellerey",
+        "description": "Sintesi integrata per QSAr",
+        "default": PELLEREY_SYNTHESIS,
+    },
+    # ZTPI per-step meta prompts
+    {
+        "key": "prompt_meta_ZTPI_ztpi-intro",
+        "label": "ZTPI Intro - Contesto Pellerey",
+        "description": "Concetto di auto-direzione per ZTPI",
+        "default": PELLEREY_SELF_DIRECTION,
+    },
+    {
+        "key": "prompt_meta_ZTPI_ztpi-t5",
+        "label": "ZTPI Future - Contesto Pellerey",
+        "description": "Prospettiva temporale futura e progetto di vita (Pellerey cap. 7)",
+        "default": (
+            "[PELLEREY SENSE & PERSPECTIVE]\n"
+            "The capacity to give meaning and direction to one's life is a core strategic "
+            "competence (Pellerey et al., 2013). A strong future orientation helps students "
+            "persevere through difficulty because they can connect today's effort to "
+            "tomorrow's goal. When this perspective is weak, school tasks can feel pointless.\n"
+            "Two components matter: (1) having a sense of purpose - some idea of what matters "
+            "and where you want to go; (2) feeling that you are the author of your choices, "
+            "not a pawn moved by others.\n"
+            "When analysing the Future factor, help the student connect it to concrete, "
+            "personal goals - even small, short-term ones. A student who cannot see 5 years "
+            "ahead can still find meaning in 'what do I want to get better at this semester?'"
+        ),
+    },
+    {
+        "key": "prompt_meta_ZTPI_ztpi-btp",
+        "label": "ZTPI BTP - Contesto Pellerey",
+        "description": "Profilo temporale equilibrato e auto-direzione",
+        "default": (
+            "[PELLEREY BALANCED PROFILE]\n"
+            "A balanced time perspective supports self-direction (Pellerey et al., 2013): "
+            "learning from the past without being trapped by it, enjoying the present with "
+            "awareness, and planning for the future with purpose. The goal is not to maximise "
+            "any single perspective but to find an equilibrium where each one supports the "
+            "others. When suggesting strategies, anchor them in the student's real context: "
+            "a student stuck in past negativity may need help reframing past experiences; a "
+            "student too focused on future achievement may need permission to value present "
+            "well-being."
+        ),
+    },
+    # QPCS / QPCC / QAP: instrument-level catch-all (set above) covers all steps.
+    # Per-step keys can be added by admins via UI for specific step IDs as needed.
+    # Savickas meta prompts
+    {
+        "key": "prompt_meta_SAVICKAS_savickas-intro",
+        "label": "Savickas Intro - Contesto Pellerey",
+        "description": "Auto-direzione e senso per l'intro Savickas",
+        "default": PELLEREY_SELF_DIRECTION,
+    },
+    {
+        "key": "prompt_meta_SAVICKAS_savickas-final",
+        "label": "Savickas Summary - Contesto Pellerey",
+        "description": "Senso e prospettiva per la sintesi finale Savickas",
+        "default": (
+            "[PELLEREY SENSE & DIRECTION]\n"
+            "The final summary is not just a recap - it is an opportunity to help the student "
+            "see how their narrative connects to the broader capacity to direct themselves "
+            "(Pellerey et al., 2013). Self-direction has two pillars: having a sense of "
+            "direction (what matters to me?) and feeling like the author of one's choices "
+            "(am I choosing this, or am I being carried?).\n"
+            "When writing the summary, explicitly connect the themes that emerged with these "
+            "two dimensions. If the student has shown clarity about what they value, name it "
+            "as a resource. If they seem uncertain, name it gently as something to explore - "
+            "not as a deficit, but as a natural stage of the journey."
+        ),
     },
 ]
 
