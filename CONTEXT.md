@@ -72,14 +72,30 @@ ai4auth forward-auth at the edge (Nginx). Proxy injects `Remote-*` headers → p
 - **AdministrationPlan / AdministrationPlanResearcher / ResearchContact / AnonymousResearchCode**: research administration of instruments; a plan can attach a group and Telegram deep links
 - **TelegramAccountLink / TelegramLinkCode / TelegramConversationState**: verified Telegram↔username mapping, one-time link codes, per-user bot conversation state machine
 - **UserDisplayName**: cached display name/email for teachers/researchers/admins, auto-populated on plan/group/note creation
-- **Session memory**: on-disk per-session rolling Markdown (`SESSION_MEMORY_DIR`), thread-safe, with expired-session cleanup
+- **Session memory**: on-disk per-session rolling Markdown (`SESSION_MEMORY_DIR`), thread-safe, with expired-session cleanup. Semantic embedding retrieval available via `backend/memory_embeddings.py` (best-effort, falls back to keyword).
 - **Strategy memory**: knowledge base from `knowledge/approved_strategies.md`, optionally overridden by the admin UI in DB config key `approved_strategies_markdown`
+- **SharedChatResponse**: user feedback (helpful/unhelpful) on shared chat responses
+- **NormThreshold**: normative thresholds per instrument (stanine cutoffs)
+- **PqblDocument / PqblQuestion / PqblSession / PqblAttempt**: PQBL (Problem/Question-Based Learning) — uploaded PDFs, generated MCQs, student sessions, answer attempts
+- **ValidationResponse**: psychometric validation data
 
 ### AI Providers
-`AIService` (`backend/ai_service.py`) dispatches to openai / anthropic / gemini / mistral / openrouter / ollama / llamacpp through a provider registry. Each provider: `call`, `stream`, `call_max`, `stream_max`. `disable_thinking` per-provider. **Error contract**: config/provider failures raise `AIError` — never returned as chat content.
+`AIService` (`backend/ai_service.py`) dispatches through a provider registry supporting **13 providers**: openai, anthropic, gemini, mistral, openrouter, ollama, llamacpp, **groq**, **cerebras**, **deepseek**, **together**, **fireworks**, **deepinfra**. Each provider: `call`, `stream`, `call_max`, `stream_max`. `disable_thinking` per-provider, driven by reasoning profiles (`backend/reasoning_profiles.py`). **Error contract**: config/provider failures raise `AIError` — never returned as chat content. Monthly budget fallback (`monthly_budget_usd`) switches to Ollama local model when exceeded.
+
+### RAG System
+Four built-in knowledge collections (plus dynamic collections created via admin UI):
+
+| Collection | Source | Description |
+|-----------|--------|-------------|
+| `competenzestrategiche` | `docs/` (graphify pipeline) | Original site docs |
+| `counselorbot` | `docs-counselorbot/` | Platform-specific docs |
+| `framework` | `docs/fonti/competenze-strategiche/` | Theoretical articles, research papers |
+| `questionari` | `docs/questionari/` | Instrument items, factor structures, scoring |
+
+Site-chat endpoints accept `?collection=` query parameter. Per-collection context and audience-specific prompts configurable via DB keys (`FRAMEWORK_CHAT_CONFIG_DEFINITIONS`, `QUESTIONARI_CHAT_CONFIG_DEFINITIONS`, `COUNSELORBOT_CHAT_CONFIG_DEFINITIONS`).
 
 ### Docker
-Code baked into images (no volume mounts). Any backend/frontend change requires rebuild. When adding a new backend subpackage, add a `COPY` line in `backend/Dockerfile` (copies explicit paths, not whole tree).
+Code baked into images (no volume mounts). Any backend/frontend change requires rebuild. When adding a new backend subpackage, add a `COPY` line in `backend/Dockerfile` (copies explicit paths, not whole tree). Additional copy for JSON seed data: `COPY backend/*.json backend/`.
 
 ### Networks
 Containers on `proxy-network` + `auth-network` (external). Exposed ports: backend `8088` (host-only), frontend `3000` through Nginx proxy.
@@ -208,9 +224,10 @@ make prompt-test Q=QSA STEP=intro COUNSELOR=7 STUDENT=barbaraambu RESP_LANG=en  
 ### Site Chat (public-facing chatbot on landing page)
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| `POST` | `/api/site-chat/stream` | — | SSE chat stream (public) |
-| `GET` | `/api/site-chat/status` | admin | Index status |
-| `POST` | `/api/site-chat/reindex` | admin | Rebuild RAG index |
+| `POST` | `/api/site-chat/stream` | — | SSE chat stream (public). Accepts `?collection=` for multi-collection RAG |
+| `GET` | `/api/site-chat/status` | admin | Index status. Accepts `?collection=` |
+| `GET` | `/api/site-chat/collections` | — | List available knowledge collections |
+| `POST` | `/api/site-chat/reindex` | admin | Rebuild RAG index. Accepts `?collection=` |
 
 ### Admin: RAG Documents
 | Method | Endpoint | Auth | Description |
@@ -303,6 +320,11 @@ make prompt-test Q=QSA STEP=intro COUNSELOR=7 STUDENT=barbaraambu RESP_LANG=en  
 | `GET` | `/api/admin/logs` | Logs with filtering |
 | `GET` | `/api/admin/logs/count` | Log counts |
 | `GET` | `/api/admin/logs/stats` | Aggregated stats |
+| `GET` | `/api/admin/logs/options` | Log filter options (phases, modes, actions) |
+| `GET` | `/api/admin/logs/conversation/{id}` | Logs for a specific conversation |
+| `GET` | `/api/admin/logs/export` | Export filtered logs |
+| `GET` | `/api/admin/logs/retention-status` | Log retention status |
+| `GET` | `/api/admin/logs/pii-report` | PII scan report |
 | `GET` | `/api/admin/cost-stats` | Cost per model/provider |
 | `DELETE` | `/api/admin/logs/session/{id}` | Delete session logs |
 | `POST` | `/api/admin/logs/retention-run` | Run log retention cleanup |
@@ -313,6 +335,7 @@ make prompt-test Q=QSA STEP=intro COUNSELOR=7 STUDENT=barbaraambu RESP_LANG=en  
 | `GET` | `/api/admin/questionnaire-results` | List all results |
 | `GET` | `/api/admin/strategy-feedback` | Strategy feedback summary |
 | `GET/POST/PUT/DELETE` | `/api/admin/counselors` | Counselor management |
+| `POST` | `/api/admin/counselors/{id}/translate` | Auto-translate counselor descriptions (Ollama) |
 | `GET/POST/PUT/DELETE` | `/api/admin/presets` | Model presets |
 | `GET/POST/PUT/DELETE` | `/api/admin/certified-strategies` | Certified strategies |
 | `POST` | `/api/admin/benchmark/run` | Run benchmark |
@@ -348,6 +371,7 @@ backend/
     cross_synthesis.py      Cross-instrument synthesis for a student
     groups.py               Teacher classes/groups, memberships, shares, notes/messages
     telegram.py             Telegram account linking + admin link management
+    approved_strategies.py  Admin CRUD for approved RAG strategies
   chat_logic.py             Prompt resolution, memory retrieval, post-processing
   ai_service.py             Multi-provider AI dispatch + env overrides
   auth.py                   Remote-* header parsing + role checks (admin/teacher/researcher)
@@ -356,6 +380,7 @@ backend/
   user_names.py             Display-name cache helpers (UserDisplayName)
   rag_index.py              Site/RAG embedding index
   memory_service.py         On-disk session memory
+  memory_embeddings.py      Semantic embedding retrieval for session memory
   certified_strategy_service.py  Certified strategy matching
   prompt_config.py          Default Config values (seeded at startup)
   scoring_service.py        Instrument scoring logic
@@ -363,10 +388,29 @@ backend/
   questionnaire_catalog.py  Instrument catalog defaults
   guided_text_i18n.py       Italian default guided text definitions
   guided_step_questions_seed.py  Italian default suggested questions per step
+  guided_step_label_i18n.py i18n labels for guided steps
   anonymous_codes.py        Anonymous research code generation
   models.py                 SQLAlchemy models
   schemas.py                Pydantic schemas
+  api_models.py             Pydantic API request/response models
   database.py               DB connection + session management
+  reasoning_profiles.py     Cross-provider reasoning budget architecture
+  pii.py                    PII redaction for conversation logs
+  pdf_generator.py          Multi-language PDF generation for booklets
+  model_pricing.py          Price table for cost estimation
+  qsa_extractor.py          Local QSA profile extraction from PDFs/images
+  pqbl_generator.py         PQBL skill extraction and MCQ generation
+  benchmark_service.py      In-app benchmark engine
+  prompt_audit.py           Prompt audit engine (shared logic)
+  cross_synthesis.py        Cross-synthesis shared logic
+  training_dataset.py       QSA fine-tuning dataset generation
+  validation_export.py      Psychometric validation CSV export
+  counselor_i18n.py         Counselor auto-translation (Ollama)
+  assistant_questions_seed.py  Seed data for assistant questions
+  certified_strategy_seed.py   Seed data for certified strategies
+  legacy_italian_prompts.py Legacy Italian prompt defaults
+  admin_sync.py             Sync ai4auth admin users as research contacts
+  translations_seed.json    Default translations seed data
   tests/test_smoke.py       Smoke/regression guardrail
 frontend/
   src/app/                  Next.js App Router
@@ -377,6 +421,11 @@ frontend/
     assistente/             Assistant/guided-chat entry
     telegram-link/          Telegram account-linking page
     profilo/                Personal area (Area personale)
+    questionario/           User feedback survey page
+    pqbl/                   PQBL (Problem/Question-Based Learning) page
+    login/                  Auth login (redirects to ai4auth)
+    register/               Registration (redirects to home)
+    strumenti/[id]/         Instrument detail pages
     api/chat/stream/        SSE bypass filesystem route
   src/components/admin/     Admin UI components (ConfigForm, etc.)
   src/lib/
@@ -391,6 +440,7 @@ knowledge/
   approved_strategies.md    Read-only strategy knowledge base
 scripts/
   prompt_test.py            Prompt envelope tester
+  translate_questions.py    Translator for guided step questions
 Makefile                    Prompt testing shortcuts
 ```
 
@@ -413,4 +463,9 @@ Makefile                    Prompt testing shortcuts
 - **Counselor** is an AI persona (`Counselor` model: name, description, `persona` prefix, model preset), not a human login role
 - Classes (`StudentGroup`) are decoupled from questionnaires: they exist before/independently of administrations; an `AdministrationPlan.group_id` optionally attaches one to tag results
 - Telegram bot requires `TELEGRAM_BOT_TOKEN`/webhook secret env config; disabled gracefully when unset (`telegram_bot.bot_enabled()`)
-- **Pellerey meta prompts**: `prompt_config.py` defines `META_SYSTEM_PROMPT_DEFINITIONS` with per-step knowledge blocks from Pellerey et al. (2013) "Imparare a dirigere se stessi", reframed from the student's perspective. Injected as `[META SYSTEM PROMPT]` via `_instrument_meta_system_prompt()` in `chat_logic.py`. Per-step keys take priority over instrument-level (`prompt_meta_QSA_cognitive` > `prompt_meta_QSA`). QPCS/QPCC/QAP use instrument-level catch-all (`PELLEREY_STRATEGIC_COMPETENCES`). Admins can override per-step via UI. Seeded idempotently at startup.
+- **Pellerey meta prompts**: `prompt_config.py` defines `META_SYSTEM_PROMPT_DEFINITIONS` with 13 per-step knowledge blocks from Pellerey et al. (2013) "Imparare a dirigere se stessi", reframed from the student's perspective. Blocks: `PELLEREY_SELF_DIRECTION`, `PELLEREY_COGNITIVE_PROCESSES`, `PELLEREY_AFFECTIVE_PROCESSES`, `PELLEREY_ELABORATION`, `PELLEREY_SELFCONTROL`, `PELLEREY_MOTIVATION`, `PELLEREY_EMOTIONS`, `PELLEREY_ATTRIBUTION`, `PELLEREY_SOCIAL`, `PELLEREY_SYNTHESIS`, `PELLEREY_STRATEGIC_COMPETENCES` (instrument-level catch-all for QPCS/QPCC/QAP), `PELLEREY_SELF_REGULATION_CYCLE`, `PELLEREY_NARRATIVE_IDENTITY`. Injected as `[META SYSTEM PROMPT]` via `_instrument_meta_system_prompt()` in `chat_logic.py`. Per-step keys take priority over instrument-level. Admins can override per-step via UI. Seeded idempotently at startup. ~25 per-step + 3 instrument-level keys (pattern: `prompt_meta_{INSTRUMENT}_{STEP_ID}`).
+- **Global directives**: 5 directive config keys injected into every prompt — `directive_context` (platform identity), `directive_language` (with `{lang}`/`{lang_native}`), `directive_register` (informal tu/du), `directive_thinking` (reasoning block with `<think>` tags), `directive_affirmative` (no negation-started sentences).
+- **Intro prompts**: each instrument has an intro/welcome step ("Presentazione") with dedicated prompt keys (`prompt_intro`, `prompt_qsar_intro`, `prompt_ztpi_intro`, `prompt_savickas_intro`, `prompt_qpcs_welcome`, `prompt_qpcc_welcome`, `prompt_qap_welcome`).
+- **Reasoning profiles**: `backend/reasoning_profiles.py` maps model families (qwen3, deepseek, gemini thinking, claude thinking, o-series) to reasoning budgets and `disable_thinking` behavior — a cross-provider reasoning architecture.
+- **PII redaction**: `log_pii_redact` config key (default: true) — emails, phones, fiscal codes redacted from conversation logs before storage via `backend/pii.py`.
+- **Counselor auto-translation**: `POST /api/admin/counselors/{id}/translate` triggers Ollama-based i18n for counselor descriptions (stored in `description_i18n` JSON field).
