@@ -24,6 +24,13 @@ CounselorBot is an AI-powered web app that helps students analyze learning/caree
 | EVENTO_STUDIO | Significant study events (narrative, no dimensions) | — |
 | EVENTO_PROFESSIONALE | Significant professional events (narrative, no dimensions) | — |
 
+### Glossary (student-facing terminology — use consistently)
+- **Profilo (profile)**: the outcome of a questionnaire from the Competenze Strategiche site — a set of factor scores (`QuestionnaireResult`). "Profilo" refers ONLY to this.
+- **Taccuino (notebook)**: the student's self-declared notes about themselves — the open learner model (`LearnerProfileRevision`, `/user/learner-profile` API). Internal identifiers keep the `learner_profile` name; UI must say taccuino/notebook.
+- **Libretto (booklet)**: per-instrument reflection on a dimension (`StudentBooklet`).
+- **Portfolio**: collection of the student's works (`PortfolioItem`).
+- Per-language pairs (taccuino / libretto): IT taccuino/libretto, EN notebook/booklet, ES cuaderno/cuadernillo, FR carnet/livret, DE Notizbuch/Arbeitsheft, SV anteckningsbok/arbetshäfte. The personal page (`/profilo` route) is labelled "Area personale" (personal area); role-preview identities are "account di prova" (test accounts), not "profili".
+
 ### Core Concepts
 - **Guided path**: ordered `GuidedStep` rows per `questionnaire_type`. Each step has a `prompt` and `system_prompt_mode`. Steps are database-driven, seeded at startup from `prompt_config.py`.
 - **Suggested questions**: `GuidedStepQuestion` rows linked to steps, shown as clickable suggestions in the student chat UI. Defaults in `guided_step_questions_seed.py`.
