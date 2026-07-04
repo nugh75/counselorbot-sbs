@@ -29,6 +29,7 @@ CounselorBot is an AI-powered web app that helps students analyze learning/caree
 - **Taccuino (notebook)**: the student's self-declared notes about themselves — the open learner model (`LearnerProfileRevision`, `/user/learner-profile` API). Internal identifiers keep the `learner_profile` name; UI must say taccuino/notebook.
 - **Libretto (booklet)**: per-instrument reflection on a dimension (`StudentBooklet`).
 - **Portfolio**: collection of the student's works (`PortfolioItem`).
+- **Gruppo/Classe (group/class)**: a teacher's autonomous class (`StudentGroup`), independent of questionnaires. Students join via invite code `GR-XXXXXX` (web `/gruppo?g=CODE`, class code from personal area, or Telegram deep link) → `GroupMembership`. Shared with co-teachers via `GroupShare`. An `AdministrationPlan` can attach a group (`group_id`) to tag results. Teacher notes/messages (`TeacherNote`) live on the group.
 - Per-language pairs (taccuino / libretto): IT taccuino/libretto, EN notebook/booklet, ES cuaderno/cuadernillo, FR carnet/livret, DE Notizbuch/Arbeitsheft, SV anteckningsbok/arbetshäfte. The personal page (`/profilo` route) is labelled "Area personale" (personal area); role-preview identities are "account di prova" (test accounts), not "profili".
 
 ### Core Concepts
@@ -36,11 +37,16 @@ CounselorBot is an AI-powered web app that helps students analyze learning/caree
 - **Suggested questions**: `GuidedStepQuestion` rows linked to steps, shown as clickable suggestions in the student chat UI. Defaults in `guided_step_questions_seed.py`.
 - **Session**: a chat session tied to a `QuestionnaireResult`. Has rolling Markdown conversational memory on disk.
 - **Student-facing chat** vs **Admin panel**: two sides of the same app. Admin edits prompts, API keys, guided steps, counselors live via UI.
+- **Cross-synthesis**: on-demand synthesis across a student's multiple instrument results (`cross_synthesis.py`, `/user/cross-synthesis`).
+- **Telegram bot**: students can link their account (`TelegramAccountLink`) and interact with guided chat over Telegram; group/plan deep links auto-enroll into a class. State machine in `telegram_state.py`, API in `telegram_bot.py`.
 
 ### User Roles
-- **Student**: fills out questionnaires, interacts with guided chat, can view own learner profile and portfolio
-- **Counselor**: can view assigned students' data with restricted access
-- **Admin**: configures prompts, AI providers, guided steps, counselors; views all results
+Roles are derived from ai4auth groups (marker-based, see `backend/auth.py`), not stored per-user.
+- **Student**: fills out questionnaires, interacts with guided chat, can view own learner profile/taccuino, portfolio, groups
+- **Counselor**: an AI persona (`Counselor` model) selectable in chat — a prompt profile, not a login role
+- **Teacher / Docente** (`is_teacher`, group markers `docent/insegnant/teacher/educator/professor/faculty/staff`): owns classes/groups and administration plans, sees own students' results and conversations, writes notes/messages (`/docente` dashboard)
+- **Researcher / Ricercatore** (`is_researcher`, markers `ricerc/research/researcher`): same class/plan capabilities as teacher, plus research contacts and anonymous-code administration
+- **Admin** (member of any `ADMIN_GROUPS` group, env-configurable, defaults include `admins`): configures prompts, AI providers, guided steps, instruments, counselors, RAG; views all results and every group
 
 ## Architecture
 
@@ -53,7 +59,7 @@ Exception: **`/api/chat/stream`** is a filesystem route `frontend/src/app/api/ch
 `/counselorbot` and `/counselorbot/*` redirect to root (app is mounted under that path behind the proxy).
 
 ### Auth
-ai4auth forward-auth at the edge (Nginx). Proxy injects `Remote-*` headers → parsed in `backend/auth.py`. Admin = `admins` group. `frontend/src/lib/auth.ts` reads identity from `/auth/me`.
+ai4auth forward-auth at the edge (Nginx). Proxy injects `Remote-*` headers → parsed in `backend/auth.py`. Roles are marker-based on `Remote-Groups`: admin = any group in `ADMIN_GROUPS` (env `ADMIN_GROUPS`, comma-separated, always includes `admins`); researcher/teacher detected via `RESEARCH_GROUP_MARKERS`/`TEACHER_GROUP_MARKERS`. `frontend/src/lib/auth.ts` reads identity from `/auth/me`. Dev fallback identities exist for role preview (test accounts).
 
 ### Data Model
 - **Config**: key-value DB store for prompts, UI texts, provider/model, API keys. Secrets overridable via env vars (`ENV_KEY_MAP` in `ai_service.py`). Defaults in `prompt_config.py`, seeded at startup without overwriting.
@@ -61,6 +67,11 @@ ai4auth forward-auth at the edge (Nginx). Proxy injects `Remote-*` headers → p
 - **GuidedStepQuestion**: suggested questions per step
 - **QuestionnaireResult**: per-session survey data
 - **StudentBooklet**: per-instrument narrative booklet
+- **StudentGroup / GroupMembership / GroupShare**: teacher classes, student enrollment, and co-teacher sharing (see Glossary → Gruppo/Classe)
+- **TeacherNote**: teacher note (`kind=note`) or message (`kind=message`) about a student, scoped to a group/plan; messages can be delivered via Telegram
+- **AdministrationPlan / AdministrationPlanResearcher / ResearchContact / AnonymousResearchCode**: research administration of instruments; a plan can attach a group and Telegram deep links
+- **TelegramAccountLink / TelegramLinkCode / TelegramConversationState**: verified Telegram↔username mapping, one-time link codes, per-user bot conversation state machine
+- **UserDisplayName**: cached display name/email for teachers/researchers/admins, auto-populated on plan/group/note creation
 - **Session memory**: on-disk per-session rolling Markdown (`SESSION_MEMORY_DIR`), thread-safe, with expired-session cleanup
 - **Strategy memory**: knowledge base from `knowledge/approved_strategies.md`, optionally overridden by the admin UI in DB config key `approved_strategies_markdown`
 
@@ -154,6 +165,41 @@ make prompt-test Q=QSA STEP=intro COUNSELOR=7 STUDENT=barbaraambu RESP_LANG=en  
 |--------|----------|------|-------------|
 | `GET` | `/api/counselors` | student | List available counselors (public info) |
 
+### Groups & Classes (teacher/researcher)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET/POST` | `/api/admin/groups` | teacher | List/create own (or shared) classes |
+| `PUT/DELETE` | `/api/admin/groups/{group_id}` | teacher | Update/delete a class |
+| `GET/POST` | `/api/admin/groups/{group_id}/shares` | teacher | List/add co-teacher shares |
+| `DELETE` | `/api/admin/groups/{group_id}/shares/{share_id}` | teacher | Remove a share |
+| `GET` | `/api/admin/groups/{group_id}/students` | teacher | Class students with results |
+| `GET` | `/api/admin/groups/{group_id}/students/{username}/conversation/{session_id}` | teacher | Student conversation transcript |
+| `GET/POST` | `/api/admin/groups/{group_id}/notes` | teacher | List/create teacher notes |
+| `DELETE` | `/api/admin/teacher-notes/{note_id}` | teacher | Delete a note |
+| `POST` | `/api/admin/groups/{group_id}/messages` | teacher | Send message to a student (web + Telegram) |
+| `GET` | `/api/groups/info` | student | Resolve invite/class code info |
+| `POST` | `/api/groups/join` | student | Join a class by code |
+| `GET` | `/api/user/groups` | student | List own class memberships |
+| `DELETE` | `/api/user/groups/{membership_id}` | student | Leave a class |
+| `GET` | `/api/user/teacher-notes` | student | Notes/messages visible to the student |
+
+### Cross-Synthesis
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/user/cross-synthesis/availability` | student | Whether enough results exist for a synthesis |
+| `POST` | `/api/user/cross-synthesis` | student | Generate a cross-instrument synthesis |
+
+### Telegram
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/api/telegram/webhook` | — | Telegram bot webhook (secret-guarded) |
+| `GET` | `/api/telegram/bot-info` | — | Bot enabled status + username |
+| `POST` | `/api/telegram/link-code` | student | Generate one-time account-link code |
+| `GET` | `/api/telegram/link-status` | student | Current link status |
+| `POST` | `/api/telegram/unlink` | student | Unlink Telegram account |
+| `GET` | `/api/admin/telegram/links` | admin | List account links |
+| `POST` | `/api/admin/telegram/links/{link_id}/revoke` | admin | Revoke a link |
+
 ### Assistant Questions (suggested questions in guided chat)
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
@@ -221,6 +267,8 @@ make prompt-test Q=QSA STEP=intro COUNSELOR=7 STUDENT=barbaraambu RESP_LANG=en  
 | `PUT` | `/api/admin/guided-steps/{id}` | Update step |
 | `DELETE` | `/api/admin/guided-steps/{id}` | Delete step |
 | `PATCH` | `/api/admin/guided-steps/reorder` | Reorder steps |
+| `GET/POST` | `/api/admin/guided-step-questions` | List/create suggested questions |
+| `PUT/DELETE` | `/api/admin/guided-step-questions/{id}` | Update/delete suggested question |
 
 ### Admin: Instruments & Factors
 | Method | Endpoint | Description |
@@ -271,6 +319,7 @@ make prompt-test Q=QSA STEP=intro COUNSELOR=7 STUDENT=barbaraambu RESP_LANG=en  
 | `GET` | `/api/admin/benchmark/runs` | Benchmark history |
 | `GET/POST/PUT/DELETE` | `/api/admin/administration-plans` | Administration plans |
 | `GET/POST/PUT/DELETE` | `/api/admin/research-contacts` | Research contacts |
+| `GET` | `/api/admin/users-summary` | Teachers/researchers/students overview + groups (scoped by visibility) |
 
 ## File Layout
 ```
@@ -294,9 +343,20 @@ backend/
     research_contacts.py    Research contact management
     administration_plans.py Study administration plans
     assistant_questions.py  Suggested questions for guided chat
+    guided_step_questions.py Admin CRUD for suggested questions per step
+    rag_docs.py             Admin RAG collections + document management
+    cross_synthesis.py      Cross-instrument synthesis for a student
+    groups.py               Teacher classes/groups, memberships, shares, notes/messages
+    telegram.py             Telegram account linking + admin link management
   chat_logic.py             Prompt resolution, memory retrieval, post-processing
   ai_service.py             Multi-provider AI dispatch + env overrides
-  auth.py                   Remote-* header parsing + role checks
+  auth.py                   Remote-* header parsing + role checks (admin/teacher/researcher)
+  telegram_bot.py           Telegram Bot API client (send, webhook config)
+  telegram_state.py         Telegram conversation state machine + deep-link enrollment
+  user_names.py             Display-name cache helpers (UserDisplayName)
+  rag_index.py              Site/RAG embedding index
+  memory_service.py         On-disk session memory
+  certified_strategy_service.py  Certified strategy matching
   prompt_config.py          Default Config values (seeded at startup)
   scoring_service.py        Instrument scoring logic
   strategy_memory.py        Read-only knowledge base
@@ -311,6 +371,12 @@ backend/
 frontend/
   src/app/                  Next.js App Router
     admin/                  Admin panel pages
+    docente/                Teacher dashboard (classes, students, notes/messages)
+    gruppo/                 Class invite / join page (?g=CODE)
+    somministrazione/       Administration-plan instrument flow
+    assistente/             Assistant/guided-chat entry
+    telegram-link/          Telegram account-linking page
+    profilo/                Personal area (Area personale)
     api/chat/stream/        SSE bypass filesystem route
   src/components/admin/     Admin UI components (ConfigForm, etc.)
   src/lib/
@@ -344,3 +410,6 @@ Makefile                    Prompt testing shortcuts
 - Log retention: configurable via `logFullRetentionDays` config key, with manual `retention-run` trigger
 - `openai_assistants` functions can auto-generate QSA training examples
 - The `_resolve_system_prompt` function applies: counselor overrides → guided-phase mode → questionnaire-default → fallbacks
+- **Counselor** is an AI persona (`Counselor` model: name, description, `persona` prefix, model preset), not a human login role
+- Classes (`StudentGroup`) are decoupled from questionnaires: they exist before/independently of administrations; an `AdministrationPlan.group_id` optionally attaches one to tag results
+- Telegram bot requires `TELEGRAM_BOT_TOKEN`/webhook secret env config; disabled gracefully when unset (`telegram_bot.bot_enabled()`)
