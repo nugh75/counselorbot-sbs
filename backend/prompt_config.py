@@ -1157,6 +1157,12 @@ MODE_TO_SYSTEM_PROMPT_KEY: Dict[str, str] = {
 # Injected as [META SYSTEM PROMPT] per-step, reframed from the student's
 # perspective (practical, not theoretical). Grouped by concept; reused across
 # steps that share the same domain.
+#
+# MANDATORY STYLE RULE: never frame explanations as negations of what something
+# is NOT. Always affirm what something IS directly. Example: instead of "A2 is
+# not generic motivation — it is the ability to persist", write "A2 is the ability
+# to persist even when motivation drops". The student learns from positive
+# statements; negations create confusion and sound defensive.
 
 PELLEREY_SELF_DIRECTION = (
     "[PELLEREY SELF-DIRECTION]\n"
@@ -1304,11 +1310,10 @@ PELLEREY_MOTIVATION = (
 
 PELLEREY_EMOTIONS = (
     "[PELLEREY EMOTIONAL MANAGEMENT]\n"
-    "Anxiety in studying is not a flaw to be eliminated — it is a signal to be managed "
-    "(Pellerey et al., 2013, cap. 6.2.1 + Parte Terza, cap. 3.2). A moderate level of tension "
-    "is actually useful: it activates energy and focus. The problem arises when anxiety "
-    "exceeds the optimal threshold and starts blocking cognitive processes (concentration, "
-    "memory retrieval, reasoning).\n"
+    "Anxiety in studying is a signal to be managed (Pellerey et al., 2013, cap. 6.2.1 + "
+    "Parte Terza, cap. 3.2). A moderate level of tension is actually useful: it activates "
+    "energy and focus. The problem arises when anxiety exceeds the optimal threshold and "
+    "starts blocking cognitive processes (concentration, memory retrieval, reasoning).\n"
     "Key distinctions:\n"
     "- Baseline anxiety (always present) vs. situational anxiety (only before specific "
     "events like oral exams or deadlines).\n"
@@ -1325,9 +1330,10 @@ PELLEREY_EMOTIONS = (
     "3. ORGANISATION: much school anxiety comes from poor planning. Break the task into "
     "smaller chunks with mini-deadlines; prepare earlier to eliminate last-minute panic; "
     "set realistic goals (aiming for perfection fuels anxiety).\n"
-    "Never dismiss anxiety ('don't worry', 'just relax'). Acknowledge it, help name it, "
-    "and suggest ONE concrete strategy. The goal is not zero anxiety — it is manageable "
-    "anxiety that no longer blocks performance."
+    "acknowledge it, help name it, and suggest ONE concrete strategy. The goal is "
+    "manageable anxiety that no longer blocks performance. DO NOT dismiss anxiety or "
+    "use phrases like 'don't worry' or 'just relax' — always affirm the feeling first, "
+    "then offer a practical step."
 )
 
 PELLEREY_ATTRIBUTION = (
@@ -1368,18 +1374,17 @@ PELLEREY_ATTRIBUTION = (
 PELLEREY_SOCIAL = (
     "[PELLEREY SOCIAL DIMENSION]\n"
     "Collaboration is one of the seven strategic competence areas identified by the research "
-    "(Pellerey et al., 2013, cap. 2.11 + Parte Terza, cap. 3.4.5). It is not just 'working "
-    "in a group' — it includes knowing when and how to ask for help, the ability to explain "
-    "something to a peer, and the willingness to contribute to a shared goal.\n"
-    "Students with low collaboration scores may not dislike others — they may simply never "
-    "have experienced productive group work, or they may associate 'group work' with "
-    "carrying others. Help them see what collaboration actually offers: explaining to "
-    "someone else is one of the most powerful ways to learn; others can see what you missed; "
-    "discussing a topic forces you to clarify your own thinking.\n"
-    "The research also introduces the concept of COMMUNITIES OF PRACTICE: learning is not "
-    "just individual — it thrives in groups with mutual engagement, a shared purpose, and "
-    "a common repertoire of tools and language. Even informal study groups can function "
-    "this way.\n"
+    "(Pellerey et al., 2013, cap. 2.11 + Parte Terza, cap. 3.4.5). It includes knowing "
+    "when and how to ask for help, the ability to explain something to a peer, and the "
+    "willingness to contribute to a shared goal.\n"
+    "Students with low collaboration scores may simply never have experienced productive "
+    "group work, or they may associate 'group work' with carrying others. Help them see "
+    "what collaboration actually offers: explaining to someone else is one of the most "
+    "powerful ways to learn; others can see what you missed; discussing a topic forces "
+    "you to clarify your own thinking.\n"
+    "The research also introduces the concept of COMMUNITIES OF PRACTICE: learning "
+    "thrives in groups with mutual engagement, a shared purpose, and a common repertoire "
+    "of tools and language. Even informal study groups can function this way.\n"
     "Concrete suggestions:\n"
     "- Start small: study with ONE trusted peer on ONE specific topic, with a clear "
     "structure (each explains half, then question each other).\n"
@@ -1771,6 +1776,12 @@ GLOBAL_DIRECTIVE_DEFINITIONS: List[Dict[str, str]] = [
         "label": "Direttiva thinking",
         "description": "Istruzione [THINKING] iniettata in ogni system prompt. Vuoto = usa default hardcoded.",
         "default": "[THINKING] If you reason before answering, put ALL of your reasoning inside ONE single block at the very beginning, wrapped exactly in <think> and </think> tags, and keep it concise (a few short lines). After </think>, write the student-facing answer directly: it must NOT contain your plan, your checklist, phrases like 'Attivazione interna', 'Devo', 'Ho i punteggi', nor any meta-commentary about what you are doing. Never start the visible answer with a preparatory checklist such as 'Devo analizzare', 'Identificare il filo rosso', 'Strutturare i contenuti' or 'Proporre azioni concrete'. Never expose reasoning outside the <think> block.",
+    },
+    {
+        "key": "directive_affirmative",
+        "label": "Direttiva linguaggio affermativo",
+        "description": "Istruzione [AFFIRMATIVE] iniettata in ogni system prompt: vieta frasi che iniziano con negazioni. Vuoto = nessuna direttiva.",
+        "default": "[AFFIRMATIVE] When explaining a concept to the student, always describe what something IS, never what it is NOT. Avoid sentences that begin with negations like 'X is not...', 'X does not mean...', 'Unlike...'. Example: instead of 'A2 is not generic motivation — it is the ability to persist', write 'A2 is the ability to persist even when motivation drops'. The student learns from positive, direct statements; negations create confusion and sound defensive.",
     },
 ]
 

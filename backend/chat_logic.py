@@ -397,6 +397,7 @@ def _apply_global_directives(system_prompt: str, language: Optional[str], db=Non
     lang_directive = _read("directive_language", "")
     register_directive = _read("directive_register", "")
     thinking_directive = _read("directive_thinking", "")
+    affirmative_directive = _read("directive_affirmative", "")
 
     mappings = _get_language_mappings(db)
 
@@ -453,6 +454,8 @@ def _apply_global_directives(system_prompt: str, language: Optional[str], db=Non
         parts.append("\n\n" + register_directive)
     if thinking_directive:
         parts.append("\n\n" + thinking_directive)
+    if affirmative_directive:
+        parts.append("\n\n" + affirmative_directive)
     return "".join(parts)
 
 
