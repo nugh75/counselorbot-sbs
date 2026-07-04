@@ -1377,9 +1377,9 @@ PELLEREY_SOCIAL = (
 PELLEREY_SYNTHESIS = (
     "[PELLEREY INTEGRATED SYNTHESIS]\n"
     "The goal of the final synthesis is to see the student as a whole, not as a list of "
-    "scores (Pellerey et al., 2013, cap. 2.12-2.13). Strategic competences are not isolated "
-    "compartments — they form what the authors call the person's CHARACTER: the integration "
-    "of cognitive, affective, and social habits into a coherent way of being.\n"
+    "scores (Pellerey et al., 2013, cap. 2.2 + 2.12-2.13). Strategic competences are not "
+    "isolated compartments — they form what the authors call the person's CHARACTER: the "
+    "integration of cognitive, affective, and social habits into a coherent way of being.\n"
     "In this step, look for CROSS-DOMAIN PATTERNS:\n"
     "- Anxiety (A1/A7) often undermines concentration (C6) and makes self-regulation (C2) "
     "harder.\n"
@@ -1391,14 +1391,18 @@ PELLEREY_SYNTHESIS = (
     "patterns might be connected.' Ground it in the actual scores, not generalities.\n"
     "Then invite the student to confirm or correct — it is THEIR experience, you are "
     "offering a reading, not a diagnosis.\n"
-    "Two deeper ideas to bring in when appropriate:\n"
+    "Three deeper ideas to bring in when appropriate:\n"
+    "- NARRATIVE IDENTITY: the profile is not just data — it is material for the student's "
+    "story. Help them move from 'What am I?' (the scattered scores) to 'Who am I?' (the "
+    "coherent picture, the direction they want to take). The student is not just the actor "
+    "of their academic life — they can become its author.\n"
     "- CHARACTER is not a fixed thing you have — it is the ongoing integration of your "
     "habits. The profile you see today is a snapshot of this integration in progress.\n"
-    "- TRANSCENDENCE: the authors emphasise that strategic competences developed in one "
-    "context (school) should eventually transfer to others (work, life). Ask the student: "
-    "'Which of these strengths do you already use outside school? Which would you like "
-    "to develop further, not just for grades but for yourself?' This connects the profile "
-    "to the broader capacity for self-direction."
+    "- TRANSCENDENCE: strategic competences developed in one context (school) should "
+    "eventually transfer to others (work, life). Ask the student: 'Which of these strengths "
+    "do you already use outside school? Which would you like to develop further, not just "
+    "for grades but for yourself?' This connects the profile to the broader capacity for "
+    "self-direction."
 )
 
 PELLEREY_STRATEGIC_COMPETENCES = (
@@ -1437,6 +1441,33 @@ PELLEREY_SELF_REGULATION_CYCLE = (
     "poor strategies), or in reflection (never analysing what worked and what didn't)? "
     "A student stuck in a negative cycle needs help breaking it at ONE specific point — "
     "usually the one they have most control over."
+)
+
+PELLEREY_NARRATIVE_IDENTITY = (
+    "[PELLEREY NARRATIVE IDENTITY]\n"
+    "A core idea from the research (Pellerey et al., 2013, cap. 2.2) is that strategic "
+    "competence serves a deeper purpose: helping the person conduct a 'good life' — "
+    "a life with direction, meaning, and coherence. The tool that creates this coherence "
+    "is NARRATION: the story the person tells about themselves.\n"
+    "Key concepts to work with in this step:\n"
+    "1. ACTOR vs AUTHOR: the student is not just an actor in their own life (someone "
+    "things happen to), but also the AUTHOR (someone who can interpret and reshape "
+    "their story). Self-direction means moving from actor to author.\n"
+    "2. NARRATIVE IDENTITY: identity is not a fixed label — it is a story in progress. "
+    "Two questions matter: 'What am I?' (the scattered facts, the scores, the roles) and "
+    "'Who am I?' (the deeper coherence, the direction, the promises I make to myself). "
+    "The second question is where growth happens.\n"
+    "3. LIFE AS A UNIFIED PRACTICE: individual experiences — studying, working, "
+    "relating to others — only make sense when woven into a larger narrative. The "
+    "student's profile is not a list of disconnected scores; it is material for their story.\n"
+    "4. AUTOBIOGRAPHY AS INQUIRY: reflecting on one's own story is not just remembering "
+    "the past — it is searching for the deep plot, the recurring themes, the questions "
+    "that truly matter. Every life story is intertwined with others (family, friends, "
+    "teachers), and this interconnection is a resource, not a complication.\n"
+    "When guiding the student, treat their answers not as data points but as narrative "
+    "material. Help them see patterns, name themes, and connect episodes. The goal is "
+    "not to give them a story — it is to help them discover they already have one, and "
+    "that they can be its author."
 )
 
 
@@ -1657,18 +1688,7 @@ META_SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
         "key": "prompt_meta_SAVICKAS_savickas-final",
         "label": "Savickas Summary - Contesto Pellerey",
         "description": "Senso e prospettiva per la sintesi finale Savickas",
-        "default": (
-            "[PELLEREY SENSE & DIRECTION]\n"
-            "The final summary is not just a recap - it is an opportunity to help the student "
-            "see how their narrative connects to the broader capacity to direct themselves "
-            "(Pellerey et al., 2013). Self-direction has two pillars: having a sense of "
-            "direction (what matters to me?) and feeling like the author of one's choices "
-            "(am I choosing this, or am I being carried?).\n"
-            "When writing the summary, explicitly connect the themes that emerged with these "
-            "two dimensions. If the student has shown clarity about what they value, name it "
-            "as a resource. If they seem uncertain, name it gently as something to explore - "
-            "not as a deficit, but as a natural stage of the journey."
-        ),
+        "default": PELLEREY_NARRATIVE_IDENTITY,
     },
 ]
 
