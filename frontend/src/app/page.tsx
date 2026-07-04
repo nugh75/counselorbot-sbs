@@ -554,10 +554,6 @@ export default function Home() {
                             onSelect={handleMethodSelect}
                             onBack={goBack}
                             questionnaire={selectedQuestionnaire}
-                            hasPreviousData={getCompletedProfiles().some(
-                                (p) => p.questionnaireType === selectedQuestionnaire.id
-                                    && p.scores && Object.keys(p.scores).length > 0,
-                            )}
                         />
                     )}
 

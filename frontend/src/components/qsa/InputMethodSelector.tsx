@@ -28,7 +28,6 @@ interface InputMethodSelectorProps {
     onSelect: (method: Method, resumeData?: { sessionId: string; scores: Record<string, number> }) => void;
     onBack?: () => void;
     questionnaire?: QuestionnaireConfig;
-    hasPreviousData?: boolean;
 }
 
 interface Option {
@@ -38,7 +37,7 @@ interface Option {
     badge?: string;
 }
 
-export function InputMethodSelector({ onSelect, onBack, questionnaire, hasPreviousData = false }: InputMethodSelectorProps) {
+export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMethodSelectorProps) {
     const { t } = useI18n();
     const supportsProfileUpload = questionnaire
         ? ['QSA', 'QSAr', 'QPCS', 'QPCC', 'QAP'].includes(questionnaire.id)
@@ -52,7 +51,7 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire, hasPrevio
 
     useEffect(() => {
         let cancelled = false;
-        if (!questionnaire || !hasPreviousData) {
+        if (!questionnaire) {
             queueMicrotask(() => { if (!cancelled) setSavedResults([]); });
             return () => { cancelled = true; };
         }
@@ -67,7 +66,7 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire, hasPrevio
             })
             .catch(() => { if (!cancelled) setSavedResults([]); });
         return () => { cancelled = true; };
-    }, [questionnaire, hasPreviousData]);
+    }, [questionnaire]);
 
     const options: Option[] = [
         { key: 'manual', title: t('method.manual.title'), desc: manualDescription },
@@ -77,7 +76,7 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire, hasPrevio
             desc: t('method.upload.desc'),
             badge: t('method.upload.badge'),
         }] : []),
-        ...(hasPreviousData ? [{
+        ...(savedResults.length > 0 ? [{
             key: 'resume' as Method,
             title: t('method.resume.title'),
             desc: t('method.resume.desc'),
