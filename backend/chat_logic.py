@@ -1512,7 +1512,7 @@ def _learner_profile_context(db, username: str) -> str:
     if revision is None or not revision.data:
         return ""
     lines = [
-        "## Profilo dichiarato dallo studente",
+        "## Taccuino dello studente (auto-descrizione)",
         "Auto-descrizione dello studente: usala per contestualizzare e, quando utile, "
         "confronta la sua percezione con i punteggi. Non sovrascrive i dati dei questionari.",
     ]
@@ -1969,7 +1969,7 @@ def _student_booklet_context(db, username: str, questionnaire_type: str, session
     ).limit(3).all()
     if not rows:
         return ""
-    lines = ["## Taccuino dello studente", "Schede più recenti del taccuino/libretto per questo strumento."]
+    lines = ["## Libretto dello studente", "Schede più recenti del libretto per questo strumento."]
     for row in rows:
         title = str((row.data or {}).get("title") or f"Scheda {row.id}").strip()
         lines.append(f"### {title}")
