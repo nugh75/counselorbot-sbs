@@ -10,14 +10,14 @@
     "semantic_hash": "c498c7add67e9f3e979c0fa240d919a2"
   },
   "README.md": {
-    "mtime": 1782559999.1913116,
-    "ast_hash": "b6835de30607d25a2070c0b710f7ebaa",
-    "semantic_hash": "b6835de30607d25a2070c0b710f7ebaa"
+    "mtime": 1782854461.560111,
+    "ast_hash": "6f0cdda3cd1b4fafdd8a0e755aef9aab",
+    "semantic_hash": "6f0cdda3cd1b4fafdd8a0e755aef9aab"
   },
   "fonti/competenze-strategiche/fonti-esterne-collegate/README.md": {
-    "mtime": 1782559999.2611268,
-    "ast_hash": "bce523b8f0f90606d7a1db098bfd0961",
-    "semantic_hash": "bce523b8f0f90606d7a1db098bfd0961"
+    "mtime": 1782854851.5563362,
+    "ast_hash": "2b185308fd790eee19675d9f7574f18c",
+    "semantic_hash": "2b185308fd790eee19675d9f7574f18c"
   },
   "fonti/competenze-strategiche/fonti-esterne-collegate/cnos-fap/schede-bibliografiche/Imparare_a_dirigere_se_stessi.md": {
     "mtime": 1782559999.4666939,
@@ -95,9 +95,9 @@
     "semantic_hash": "b8d3fd620178df1c62d6ed2cb78831be"
   },
   "fonti/competenze-strategiche/sito-competenzestrategiche/README.md": {
-    "mtime": 1782559999.5481448,
-    "ast_hash": "406595cf51ebcc45c4e36541645811e4",
-    "semantic_hash": "406595cf51ebcc45c4e36541645811e4"
+    "mtime": 1782854855.234439,
+    "ast_hash": "80325fa9171ec26eeace648bd6680fc7",
+    "semantic_hash": "80325fa9171ec26eeace648bd6680fc7"
   },
   "fonti/competenze-strategiche/sito-competenzestrategiche/convegni/schede-bibliografiche/Abstract_fascicolo.md": {
     "mtime": 1782559999.567538,
@@ -300,9 +300,9 @@
     "semantic_hash": "4887ca6536659a54dd9f37d69191a713"
   },
   "progetto/diario.md": {
-    "mtime": 1782559999.7032897,
-    "ast_hash": "084a4abb882ad9996dff83b7796a5097",
-    "semantic_hash": "084a4abb882ad9996dff83b7796a5097"
+    "mtime": 1782855038.1007378,
+    "ast_hash": "aebc8ca181cabfd6c3bdff4f3d251a39",
+    "semantic_hash": "aebc8ca181cabfd6c3bdff4f3d251a39"
   },
   "progetto/organizzazione/grafo-docs-2026-05-30.md": {
     "mtime": 1782559999.7032897,
@@ -310,9 +310,9 @@
     "semantic_hash": "d8cd4ecc203351d9582869a57ad0c21e"
   },
   "progetto/organizzazione/graphify-docs-2026-05-30/README.md": {
-    "mtime": 1782559999.7032897,
-    "ast_hash": "32d606a67fe3539f33b4206097d2a75d",
-    "semantic_hash": "32d606a67fe3539f33b4206097d2a75d"
+    "mtime": 1782854501.1399093,
+    "ast_hash": "adf1a7b75ab1dd764c95afe4b1ec856e",
+    "semantic_hash": "adf1a7b75ab1dd764c95afe4b1ec856e"
   },
   "progetto/organizzazione/proposta-organizzazione-docs-implementata-2026-05-30.md": {
     "mtime": 1782559999.7032897,
@@ -593,5 +593,10 @@
     "mtime": 1782559999.7149258,
     "ast_hash": "7b1331389d3fba4b5fc364dc8106e482",
     "semantic_hash": "7b1331389d3fba4b5fc364dc8106e482"
+  },
+  "future-implementazione/telegram-chatbot-counselorbot.md": {
+    "mtime": 1783074492.8246562,
+    "ast_hash": "741270f01dd57177eccd1a4f591b1eac",
+    "semantic_hash": "741270f01dd57177eccd1a4f591b1eac"
   }
 }

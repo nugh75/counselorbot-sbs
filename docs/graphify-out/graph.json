@@ -300,7 +300,7 @@
       "label": "Email to Olle (KTH) - English Version",
       "file_type": "document",
       "source_file": "progetto/comunicazioni/mail-olle-en.md",
-      "community": 11,
+      "community": 12,
       "norm_label": "email to olle (kth) - english version",
       "id": "mail_olle_en"
     },
@@ -339,7 +339,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "manuale operativo per la validazione del qsar (en in svezia)",
       "id": "validazione_manuale_operativo_doc"
     },
@@ -352,7 +352,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "confirmatory factor analysis (cfa)",
       "id": "concept_cfa"
     },
@@ -365,7 +365,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "alpha di cronbach",
       "id": "concept_cronbach_alpha"
     },
@@ -378,7 +378,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "omega di mcdonald",
       "id": "concept_mcdonald_omega"
     },
@@ -391,7 +391,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "reverse scoring (inversione delle risposte)",
       "id": "concept_reverse_scoring"
     },
@@ -399,7 +399,7 @@
       "label": "Live DB prompt translation review (IT -> EN)",
       "file_type": "document",
       "source_file": "prompting/live-db-prompt-translation-review.md",
-      "community": 11,
+      "community": 12,
       "norm_label": "live db prompt translation review (it -> en)",
       "id": "live_db_prompt_review"
     },
@@ -464,7 +464,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "validazione psicometrica",
       "id": "concept_validazione"
     },
@@ -477,7 +477,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "validazione dei questionari e costruzione delle stanine",
       "id": "validazione_validazione_questionari_e_stanine_doc"
     },
@@ -490,7 +490,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 13,
       "norm_label": "diario di bordo",
       "id": "readme_diario"
     },
@@ -498,7 +498,7 @@
       "label": "Diario di Bordo / Project Journal",
       "file_type": "document",
       "source_file": "progetto/diario.md",
-      "community": 11,
+      "community": 12,
       "norm_label": "diario di bordo / project journal",
       "id": "diario_progetto"
     },
@@ -524,7 +524,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 13,
       "norm_label": "documentazione counselorbot",
       "id": "readme_counselorbot"
     },
@@ -537,7 +537,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 13,
       "norm_label": "organizzazione docs implementata",
       "id": "readme_organizzazione"
     },
@@ -545,7 +545,7 @@
       "label": "Organizzazione documentazione implementata - 2026-05-30",
       "file_type": "document",
       "source_file": "progetto/organizzazione/proposta-organizzazione-docs-implementata-2026-05-30.md",
-      "community": 11,
+      "community": 12,
       "norm_label": "organizzazione documentazione implementata - 2026-05-30",
       "id": "proposta_organizzazione_doc"
     },
@@ -675,7 +675,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 9,
       "norm_label": "autodirezione (dirigere se stessi)",
       "id": "concept_autodirezione"
     },
@@ -688,7 +688,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "scala stanine (1-9)",
       "id": "concept_stanine"
     },
@@ -766,7 +766,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 0,
       "norm_label": "enrica ottone",
       "id": "author_ottone"
     },
@@ -870,7 +870,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 1,
       "norm_label": "pontificia facolta di scienze dell'educazione auxilium",
       "id": "org_auxilium"
     },
@@ -935,7 +935,7 @@
       "captured_at": null,
       "author": "Michele Pellerey; Massimo Margottini; Enrica Ottone",
       "contributor": null,
-      "community": 8,
+      "community": 0,
       "norm_label": "dirigere se stessi nello studio e nel lavoro (atti convegno 2019, tre-press 2020)",
       "id": "guida_2023_convegno_2019_volume"
     },
@@ -1000,7 +1000,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 0,
       "norm_label": "diagnosi somministrazioni en/sv per ztpi, qap, qpcs, qpcc",
       "id": "validazione_diagnosi_ensv_doc"
     },
@@ -1013,7 +1013,7 @@
       "captured_at": null,
       "author": "Zimbardo, Boyd",
       "contributor": null,
-      "community": 7,
+      "community": 0,
       "norm_label": "zimbardo & boyd, ztpi original publication (1999)",
       "id": "paper_zimbardo_boyd_1999_ztpi"
     },
@@ -1026,7 +1026,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 13,
       "norm_label": "grafo della documentazione",
       "id": "readme_grafo"
     },
@@ -1034,7 +1034,7 @@
       "label": "Grafo della documentazione 2026-05-30",
       "file_type": "document",
       "source_file": "progetto/organizzazione/grafo-docs-2026-05-30.md",
-      "community": 11,
+      "community": 12,
       "norm_label": "grafo della documentazione 2026-05-30",
       "id": "grafo_docs_doc"
     },
@@ -1060,7 +1060,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "progetto validazione qsa/qsar in svedese e inglese",
       "id": "validazione_progetto_validazione_qsa_qsar_sv_en_doc"
     },
@@ -1073,7 +1073,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "invarianza di misura (mgcfa)",
       "id": "concept_invarianza"
     },
@@ -1086,7 +1086,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "separazione research mode / counseling mode",
       "id": "validazione_progetto_research_mode_rationale"
     },
@@ -1099,7 +1099,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "codifica qsar a4/a6 (percezione di competenza)",
       "id": "concept_qsar_a4_a6"
     },
@@ -1112,7 +1112,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 22,
+      "community": 25,
       "norm_label": "dirigere se stessi (2020)",
       "id": "dirigere_se_stessi_2020_document"
     },
@@ -1120,7 +1120,7 @@
       "label": "Verifica Implementazione CounselorBot",
       "file_type": "document",
       "source_file": "implementazione/verifica-implementazione.md",
-      "community": 11,
+      "community": 12,
       "norm_label": "verifica implementazione counselorbot",
       "id": "verifica_implementazione_doc"
     },
@@ -1128,7 +1128,7 @@
       "label": "CounselorBot Application",
       "file_type": "code",
       "source_file": "implementazione/verifica-implementazione.md",
-      "community": 11,
+      "community": 12,
       "norm_label": "counselorbot application",
       "id": "counselorbot_app"
     },
@@ -1136,7 +1136,7 @@
       "label": "Savickas Career Construction Interview",
       "file_type": "concept",
       "source_file": "implementazione/verifica-implementazione.md",
-      "community": 11,
+      "community": 12,
       "norm_label": "savickas career construction interview",
       "id": "savickas_interview"
     },
@@ -1188,7 +1188,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "formulario per la validazione e lo scoring dei questionari",
       "id": "validazione_formule_validazione_doc"
     },
@@ -1201,7 +1201,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "rmsea (root mean square error of approximation)",
       "id": "concept_rmsea"
     },
@@ -1214,7 +1214,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "cfi (comparative fit index)",
       "id": "concept_cfi"
     },
@@ -1227,7 +1227,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "progetto counselorbot",
       "id": "concept_counselorbot_project"
     },
@@ -1253,7 +1253,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "affidabilita (alpha cronbach, omega mcdonald)",
       "id": "concept_affidabilita"
     },
@@ -1262,7 +1262,7 @@
       "file_type": "paper",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/MELOGNO_2018.pdf",
       "author": "Melogno et al.",
-      "community": 14,
+      "community": 18,
       "norm_label": "profilo di competenze strategiche in studenti universitari con dsa",
       "id": "melogno_2018_paper"
     },
@@ -1270,7 +1270,7 @@
       "label": "Disturbi Specifici dell'Apprendimento (DSA)",
       "file_type": "concept",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/MELOGNO_2018.pdf",
-      "community": 14,
+      "community": 18,
       "norm_label": "disturbi specifici dell'apprendimento (dsa)",
       "id": "melogno_2018_dsa"
     },
@@ -1278,7 +1278,7 @@
       "label": "Competenze Strategiche",
       "file_type": "concept",
       "source_file": "fonti/competenze-strategiche/sito-competenzestrategiche/studi/MELOGNO_2018.pdf",
-      "community": 14,
+      "community": 18,
       "norm_label": "competenze strategiche",
       "id": "melogno_2018_competenze_strategiche"
     },
@@ -1382,7 +1382,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 9,
       "norm_label": "teoria del capitale umano / non-cognitive skills",
       "id": "concept_capitale_umano"
     },
@@ -1421,7 +1421,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 9,
       "norm_label": "autodeterminazione",
       "id": "concept_autodeterminazione"
     },
@@ -1434,7 +1434,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 9,
       "norm_label": "autoregolazione",
       "id": "concept_autoregolazione"
     },
@@ -1447,7 +1447,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 9,
       "norm_label": "funzioni esecutive",
       "id": "concept_funzioni_esecutive"
     },
@@ -1460,7 +1460,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 9,
       "norm_label": "george mccloskey",
       "id": "author_mccloskey"
     },
@@ -1473,7 +1473,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 9,
       "norm_label": "james j. heckman",
       "id": "author_heckman"
     },
@@ -1486,7 +1486,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 9,
       "norm_label": "joseph nuttin",
       "id": "author_nuttin"
     },
@@ -1499,7 +1499,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 9,
       "norm_label": "jeffrey greene",
       "id": "author_greene"
     },
@@ -1512,7 +1512,7 @@
       "captured_at": null,
       "author": "Michele Pellerey",
       "contributor": null,
-      "community": 8,
+      "community": 9,
       "norm_label": "dirigere se stessi nello studio e nel lavoro (relazione pellerey, convegno 2019)",
       "id": "pellerey_convegno_2019_pellerey_convegno_2019_paper"
     },
@@ -1681,7 +1681,7 @@
       "captured_at": null,
       "author": "Michele Pellerey",
       "contributor": null,
-      "community": 23,
+      "community": 26,
       "norm_label": "pellerey (a cura di), strumenti e metodologie di orientamento formativo e professionale (cnos-fap 2018)",
       "id": "paper_pellerey_2018_strumenti_metodologie"
     },
@@ -1720,7 +1720,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 9,
       "norm_label": "apprendimento autoregolato (zimmerman)",
       "id": "concept_apprendimento_autoregolato"
     },
@@ -1733,7 +1733,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 9,
       "norm_label": "attribuzioni causali (locus, stabilita, controllabilita)",
       "id": "concept_attribuzioni_causali"
     },
@@ -1759,7 +1759,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 9,
       "norm_label": "barry zimmerman",
       "id": "author_zimmerman"
     },
@@ -1772,7 +1772,7 @@
       "captured_at": null,
       "author": "Dariusz Grzadziel",
       "contributor": null,
-      "community": 8,
+      "community": 9,
       "norm_label": "riflessione nei processi di apprendimento (grzadziel, convegno 2019)",
       "id": "grzadziel_convegno_2019_grzadziel_convegno_2019_paper"
     },
@@ -1910,7 +1910,7 @@
       "label": "Prompt translation review (IT -> EN) - General",
       "file_type": "document",
       "source_file": "prompting/prompt-translations-review.md",
-      "community": 11,
+      "community": 12,
       "norm_label": "prompt translation review (it -> en) - general",
       "id": "prompt_translations_review_doc"
     },
@@ -1918,7 +1918,7 @@
       "label": "Zimbardo Time Perspective Inventory (ZTPI)",
       "file_type": "concept",
       "source_file": "prompting/prompt-translations-review.md",
-      "community": 11,
+      "community": 12,
       "norm_label": "zimbardo time perspective inventory (ztpi)",
       "id": "ztpi_questionnaire"
     },
@@ -1965,7 +1965,7 @@
       "label": "Mail a Olle (KTH) - Versione Italiana",
       "file_type": "document",
       "source_file": "progetto/comunicazioni/mail-olle.md",
-      "community": 11,
+      "community": 12,
       "norm_label": "mail a olle (kth) - versione italiana",
       "id": "mail_olle_it"
     },
@@ -1973,7 +1973,7 @@
       "label": "Questionario sulle Strategie di Apprendimento (QSA)",
       "file_type": "concept",
       "source_file": "progetto/comunicazioni/mail-olle.md",
-      "community": 11,
+      "community": 12,
       "norm_label": "questionario sulle strategie di apprendimento (qsa)",
       "id": "qsa_questionnaire"
     },
@@ -2120,7 +2120,7 @@
         "lingua": "italiano"
       },
       "file_type": "concept",
-      "community": 13,
+      "community": 14,
       "norm_label": "promuovere la crescita nelle competenze strategiche (scheda)",
       "id": "doc_promuovere_crescita_2008"
     },
@@ -2372,7 +2372,7 @@
         "affiliation": "CNOS-FAP"
       },
       "file_type": "concept",
-      "community": 13,
+      "community": 14,
       "norm_label": "marco bay",
       "id": "author_bay"
     },
@@ -2384,7 +2384,7 @@
         "affiliation": "CNOS-FAP"
       },
       "file_type": "concept",
-      "community": 19,
+      "community": 22,
       "norm_label": "giuseppe crea",
       "id": "author_crea"
     },
@@ -2396,7 +2396,7 @@
         "affiliation": "CNOS-FAP"
       },
       "file_type": "concept",
-      "community": 20,
+      "community": 23,
       "norm_label": "emad samir anis matta",
       "id": "author_matta"
     },
@@ -2408,7 +2408,7 @@
         "affiliation": "CNOS-FAP"
       },
       "file_type": "concept",
-      "community": 21,
+      "community": 24,
       "norm_label": "sergio melogno",
       "id": "author_melogno"
     },
@@ -2724,7 +2724,7 @@
         "significance": "secondo di tre rapporti CNOS-FAP, validazione primo questionario autovalutazione"
       },
       "file_type": "concept",
-      "community": 13,
+      "community": 14,
       "norm_label": "promuovere la crescita nelle competenze strategiche (rapporto di ricerca)",
       "id": "publication_promuovere_2008"
     },
@@ -4002,7 +4002,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 13,
+      "community": 14,
       "norm_label": "fonti-esterne-collegate/readme.md",
       "id": "readme_md_fonti_esterne_collegate_readme"
     },
@@ -4015,7 +4015,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 13,
+      "community": 14,
       "norm_label": "cnos-fap publications",
       "id": "readme_md_cnos_fap"
     },
@@ -4028,7 +4028,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 13,
+      "community": 14,
       "norm_label": "roma tre-press publications",
       "id": "readme_md_roma_tre_press"
     },
@@ -4041,7 +4041,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 10,
+      "community": 11,
       "norm_label": "sito-competenzestrategiche/readme.md",
       "id": "readme_md_sito_competenzestrategiche_readme"
     },
@@ -4054,7 +4054,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 10,
+      "community": 11,
       "norm_label": "competenzestrategiche.it site archive",
       "id": "readme_md_site_archive"
     },
@@ -4067,7 +4067,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 10,
+      "community": 11,
       "norm_label": "guide pdfs",
       "id": "readme_md_guide_dir"
     },
@@ -4080,7 +4080,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 10,
+      "community": 11,
       "norm_label": "guide html snapshots",
       "id": "readme_md_guide_html_dir"
     },
@@ -4093,7 +4093,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 10,
+      "community": 11,
       "norm_label": "instruments pdfs",
       "id": "readme_md_strumenti_dir"
     },
@@ -4106,7 +4106,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 10,
+      "community": 11,
       "norm_label": "operating models doc/docx",
       "id": "readme_md_modelli_operativi_dir"
     },
@@ -4119,7 +4119,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 10,
+      "community": 11,
       "norm_label": "articles and contributions",
       "id": "readme_md_studi_dir"
     },
@@ -4132,7 +4132,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 10,
+      "community": 11,
       "norm_label": "conference materials",
       "id": "readme_md_convegni_dir"
     },
@@ -4145,7 +4145,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 10,
+      "community": 11,
       "norm_label": "guida 2023 pdf",
       "id": "readme_md_guida_2023_pdf"
     },
@@ -4158,7 +4158,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 10,
+      "community": 11,
       "norm_label": "grzadziel convegno 2019 pdf",
       "id": "readme_md_grzadziel_convegno_2019_pdf"
     },
@@ -4171,7 +4171,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 10,
+      "community": 11,
       "norm_label": "margottini convegno 2019 pdf",
       "id": "readme_md_margottini_convegno_2019_pdf"
     },
@@ -4184,7 +4184,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 10,
+      "community": 11,
       "norm_label": "pellerey convegno 2019 pdf",
       "id": "readme_md_pellerey_convegno_2019_pdf"
     },
@@ -4197,7 +4197,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 10,
+      "community": 11,
       "norm_label": "qap it pdf",
       "id": "readme_md_qap_it_pdf"
     },
@@ -4808,7 +4808,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 13,
       "norm_label": "documentation organization",
       "id": "readme_docs_organisation"
     },
@@ -4821,7 +4821,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 13,
       "norm_label": "validation",
       "id": "readme_validation"
     },
@@ -4834,7 +4834,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 13,
       "norm_label": "questionnaires",
       "id": "readme_questionnaires"
     },
@@ -4847,7 +4847,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 12,
+      "community": 13,
       "norm_label": "sources",
       "id": "readme_sources"
     },
@@ -4886,7 +4886,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 15,
+      "community": 19,
       "norm_label": "site archive",
       "id": "sito_competenzestrategiche_site_archive"
     },
@@ -4899,7 +4899,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 15,
+      "community": 19,
       "norm_label": "guide",
       "id": "sito_competenzestrategiche_guide"
     },
@@ -4912,7 +4912,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 15,
+      "community": 19,
       "norm_label": "strumenti",
       "id": "sito_competenzestrategiche_strumenti"
     },
@@ -4925,7 +4925,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 9,
+      "community": 10,
       "norm_label": "telegram bot",
       "id": "telegram_chatbot_counselorbot_telegram_bot"
     },
@@ -4938,7 +4938,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 9,
+      "community": 10,
       "norm_label": "counselorbot",
       "id": "telegram_chatbot_counselorbot_counselorbot"
     },
@@ -4951,7 +4951,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 9,
+      "community": 10,
       "norm_label": "botfather",
       "id": "telegram_chatbot_counselorbot_bot_father"
     },
@@ -4964,7 +4964,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 9,
+      "community": 10,
       "norm_label": "qsa",
       "id": "telegram_chatbot_counselorbot_qsa"
     },
@@ -4977,7 +4977,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 9,
+      "community": 10,
       "norm_label": "qsar",
       "id": "telegram_chatbot_counselorbot_qsar"
     },
@@ -4990,7 +4990,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 9,
+      "community": 10,
       "norm_label": "ztpi",
       "id": "telegram_chatbot_counselorbot_ztpi"
     },
@@ -5003,7 +5003,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 9,
+      "community": 10,
       "norm_label": "savickas",
       "id": "telegram_chatbot_counselorbot_savickas"
     },
@@ -5016,7 +5016,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 9,
+      "community": 10,
       "norm_label": "webhook",
       "id": "telegram_chatbot_counselorbot_webhook"
     },
@@ -5029,7 +5029,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 9,
+      "community": 10,
       "norm_label": "questionnaireresult",
       "id": "telegram_chatbot_counselorbot_questionnaire_result"
     },
@@ -5042,7 +5042,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 9,
+      "community": 10,
       "norm_label": "guidedstep",
       "id": "telegram_chatbot_counselorbot_guided_step"
     },
@@ -5055,7 +5055,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 9,
+      "community": 10,
       "norm_label": "aiservice",
       "id": "telegram_chatbot_counselorbot_ai_service"
     },
@@ -5068,7 +5068,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 9,
+      "community": 10,
       "norm_label": "docente",
       "id": "telegram_gruppi_docenti_teacher"
     },
@@ -5081,7 +5081,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 18,
+      "community": 21,
       "norm_label": "studente",
       "id": "telegram_gruppi_docenti_student"
     },
@@ -5094,7 +5094,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 18,
+      "community": 21,
       "norm_label": "ai4auth",
       "id": "telegram_gruppi_docenti_ai4auth"
     },
@@ -5107,7 +5107,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 17,
+      "community": 15,
       "norm_label": "administration plans",
       "id": "telegram_gruppi_docenti_administration_plans"
     },
@@ -5120,7 +5120,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 17,
+      "community": 15,
       "norm_label": "deep link",
       "id": "telegram_gruppi_docenti_deep_link"
     },
@@ -5133,7 +5133,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 9,
+      "community": 10,
       "norm_label": "dashboard",
       "id": "telegram_gruppi_docenti_dashboard"
     },
@@ -5146,7 +5146,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 9,
+      "community": 10,
       "norm_label": "teacher notes",
       "id": "telegram_gruppi_docenti_teacher_notes"
     },
@@ -5211,7 +5211,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 16,
+      "community": 20,
       "norm_label": "graphify",
       "id": "graphify_docs_graphify"
     },
@@ -5224,9 +5224,425 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 16,
+      "community": 20,
       "norm_label": "graph.json",
       "id": "graphify_docs_graph_json"
+    },
+    {
+      "label": "Ruoli Docente Ricercatore Admin",
+      "file_type": "document",
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 16,
+      "norm_label": "ruoli docente ricercatore admin",
+      "id": "ruoli_docente_ricercatore_admin_document"
+    },
+    {
+      "label": "Docente",
+      "file_type": "concept",
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "docente",
+      "id": "ruoli_docente_ricercatore_admin_docente"
+    },
+    {
+      "label": "Ricercatore",
+      "file_type": "concept",
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 17,
+      "norm_label": "ricercatore",
+      "id": "ruoli_docente_ricercatore_admin_ricercatore"
+    },
+    {
+      "label": "Admin",
+      "file_type": "concept",
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "admin",
+      "id": "ruoli_docente_ricercatore_admin_admin"
+    },
+    {
+      "label": "Creare piani/classi",
+      "file_type": "concept",
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "creare piani/classi",
+      "id": "ruoli_docente_ricercatore_admin_creazione_piani"
+    },
+    {
+      "label": "Eliminare piano (condizionato)",
+      "file_type": "concept",
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "eliminare piano (condizionato)",
+      "id": "ruoli_docente_ricercatore_admin_eliminazione_piano"
+    },
+    {
+      "label": "Transcript conversazioni studenti",
+      "file_type": "concept",
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "transcript conversazioni studenti",
+      "id": "ruoli_docente_ricercatore_admin_transcript_conversazioni"
+    },
+    {
+      "label": "Note e messaggi agli studenti",
+      "file_type": "concept",
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "note e messaggi agli studenti",
+      "id": "ruoli_docente_ricercatore_admin_note_messaggi_studenti"
+    },
+    {
+      "label": "Anagrafica contatti ricerca",
+      "file_type": "concept",
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 17,
+      "norm_label": "anagrafica contatti ricerca",
+      "id": "ruoli_docente_ricercatore_admin_anagrafica_ricerca"
+    },
+    {
+      "label": "Export validazione/codici anonimi/risultati globali",
+      "file_type": "concept",
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 17,
+      "norm_label": "export validazione/codici anonimi/risultati globali",
+      "id": "ruoli_docente_ricercatore_admin_export_risultati"
+    },
+    {
+      "label": "Console /admin (config AI, counselor, prompt, log, costi)",
+      "file_type": "concept",
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "console /admin (config ai, counselor, prompt, log, costi)",
+      "id": "ruoli_docente_ricercatore_admin_admin_console"
+    },
+    {
+      "label": "get_current_plan_manager",
+      "file_type": "code",
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "get_current_plan_manager",
+      "id": "ruoli_docente_ricercatore_admin_get_current_plan_manager"
+    },
+    {
+      "label": "get_current_active_admin",
+      "file_type": "code",
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "get_current_active_admin",
+      "id": "ruoli_docente_ricercatore_admin_get_current_active_admin"
+    },
+    {
+      "label": "teacher_notes (tabella)",
+      "file_type": "code",
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "teacher_notes (tabella)",
+      "id": "ruoli_docente_ricercatore_admin_teacher_notes"
+    },
+    {
+      "label": "Delete piano ristretto al creatore (implementazione)",
+      "file_type": "rationale",
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "delete piano ristretto al creatore (implementazione)",
+      "id": "ruoli_docente_ricercatore_admin_delete_piano_ristretto"
+    },
+    {
+      "label": "Informativa transcript (implementazione)",
+      "file_type": "rationale",
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "informativa transcript (implementazione)",
+      "id": "ruoli_docente_ricercatore_admin_informativa_transcript"
+    },
+    {
+      "label": "Classi autonome (implementazione)",
+      "file_type": "rationale",
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "classi autonome (implementazione)",
+      "id": "ruoli_docente_ricercatore_admin_classi_autonome"
+    },
+    {
+      "label": "Gate ricerca verificati (implementazione)",
+      "file_type": "rationale",
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 17,
+      "norm_label": "gate ricerca verificati (implementazione)",
+      "id": "ruoli_docente_ricercatore_admin_gate_ricerca_verificati"
+    },
+    {
+      "label": "Telegram Gruppi Docenti",
+      "file_type": "document",
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 16,
+      "norm_label": "telegram gruppi docenti",
+      "id": "telegram_gruppi_docenti_document"
+    },
+    {
+      "label": "Flusso studente (login e deep link)",
+      "file_type": "concept",
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 15,
+      "norm_label": "flusso studente (login e deep link)",
+      "id": "telegram_gruppi_docenti_flusso_studente"
+    },
+    {
+      "label": "Login ai4auth (account vero/ospite anonimo)",
+      "file_type": "concept",
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 15,
+      "norm_label": "login ai4auth (account vero/ospite anonimo)",
+      "id": "telegram_gruppi_docenti_login_ai4auth"
+    },
+    {
+      "label": "Ruolo docente (Telegram)",
+      "file_type": "concept",
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "ruolo docente (telegram)",
+      "id": "telegram_gruppi_docenti_ruolo_docente"
+    },
+    {
+      "label": "Dashboard docente (sola lettura, profili, punteggi, learner model)",
+      "file_type": "concept",
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "dashboard docente (sola lettura, profili, punteggi, learner model)",
+      "id": "telegram_gruppi_docenti_dashboard_docente"
+    },
+    {
+      "label": "Note docente (tabella teacher_notes)",
+      "file_type": "concept",
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "note docente (tabella teacher_notes)",
+      "id": "telegram_gruppi_docenti_note_docente"
+    },
+    {
+      "label": "Messaggi docente\u2192studente via bot",
+      "file_type": "concept",
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "messaggi docente\u2192studente via bot",
+      "id": "telegram_gruppi_docenti_messaggi_via_bot"
+    },
+    {
+      "label": "Fase 1: Deep link e pagina /telegram-link",
+      "file_type": "concept",
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 15,
+      "norm_label": "fase 1: deep link e pagina /telegram-link",
+      "id": "telegram_gruppi_docenti_fase1"
+    },
+    {
+      "label": "Fase 2: Token di gruppo e iscrizione piano via bot",
+      "file_type": "concept",
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 15,
+      "norm_label": "fase 2: token di gruppo e iscrizione piano via bot",
+      "id": "telegram_gruppi_docenti_fase2"
+    },
+    {
+      "label": "Fase 3: Permessi docente e dashboard sola lettura",
+      "file_type": "concept",
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "fase 3: permessi docente e dashboard sola lettura",
+      "id": "telegram_gruppi_docenti_fase3"
+    },
+    {
+      "label": "Fase 4: Transcript e note docente",
+      "file_type": "concept",
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "fase 4: transcript e note docente",
+      "id": "telegram_gruppi_docenti_fase4"
+    },
+    {
+      "label": "Fase 5: Messaggi docente\u2192studente via bot",
+      "file_type": "concept",
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 7,
+      "norm_label": "fase 5: messaggi docente\u2192studente via bot",
+      "id": "telegram_gruppi_docenti_fase5"
+    },
+    {
+      "label": "Telegram Chatbot Counselorbot (riferimento)",
+      "file_type": "document",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 16,
+      "norm_label": "telegram chatbot counselorbot (riferimento)",
+      "id": "telegram_chatbot_counselorbot_document"
+    },
+    {
+      "label": "ai4auth (sistema autenticazione)",
+      "file_type": "concept",
+      "source_file": null,
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 16,
+      "norm_label": "ai4auth (sistema autenticazione)",
+      "id": "ai4auth_system"
     }
   ],
   "links": [
@@ -11537,6 +11953,16 @@
       "target": "telegram_gruppi_docenti_deep_link"
     },
     {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "telegram_gruppi_docenti_flusso_studente",
+      "target": "telegram_gruppi_docenti_deep_link"
+    },
+    {
       "relation": "references",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
@@ -11545,6 +11971,316 @@
       "weight": 1.0,
       "source": "graphify_docs_graphify",
       "target": "graphify_docs_graph_json"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "ruoli_docente_ricercatore_admin_document",
+      "target": "ai4auth_system"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "ruoli_docente_ricercatore_admin_document",
+      "target": "telegram_gruppi_docenti_document"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "ruoli_docente_ricercatore_admin_docente",
+      "target": "ruoli_docente_ricercatore_admin_creazione_piani"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "ruoli_docente_ricercatore_admin_docente",
+      "target": "ruoli_docente_ricercatore_admin_eliminazione_piano"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "ruoli_docente_ricercatore_admin_docente",
+      "target": "ruoli_docente_ricercatore_admin_note_messaggi_studenti"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "ruoli_docente_ricercatore_admin_docente",
+      "target": "ruoli_docente_ricercatore_admin_transcript_conversazioni"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "ruoli_docente_ricercatore_admin_get_current_plan_manager",
+      "target": "ruoli_docente_ricercatore_admin_docente"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "telegram_gruppi_docenti_ruolo_docente",
+      "target": "ruoli_docente_ricercatore_admin_docente"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "ruoli_docente_ricercatore_admin_ricercatore",
+      "target": "ruoli_docente_ricercatore_admin_anagrafica_ricerca"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "ruoli_docente_ricercatore_admin_ricercatore",
+      "target": "ruoli_docente_ricercatore_admin_export_risultati"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "ruoli_docente_ricercatore_admin_admin",
+      "target": "ruoli_docente_ricercatore_admin_admin_console"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "ruoli_docente_ricercatore_admin_admin",
+      "target": "ruoli_docente_ricercatore_admin_eliminazione_piano"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "ruoli_docente_ricercatore_admin_get_current_active_admin",
+      "target": "ruoli_docente_ricercatore_admin_admin"
+    },
+    {
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "ruoli_docente_ricercatore_admin_classi_autonome",
+      "target": "ruoli_docente_ricercatore_admin_creazione_piani"
+    },
+    {
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "ruoli_docente_ricercatore_admin_delete_piano_ristretto",
+      "target": "ruoli_docente_ricercatore_admin_eliminazione_piano"
+    },
+    {
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "ruoli_docente_ricercatore_admin_informativa_transcript",
+      "target": "ruoli_docente_ricercatore_admin_transcript_conversazioni"
+    },
+    {
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "ruoli_docente_ricercatore_admin_teacher_notes",
+      "target": "ruoli_docente_ricercatore_admin_note_messaggi_studenti"
+    },
+    {
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "ruoli_docente_ricercatore_admin_gate_ricerca_verificati",
+      "target": "ruoli_docente_ricercatore_admin_anagrafica_ricerca"
+    },
+    {
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/ruoli-docente-ricercatore-admin.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "ruoli_docente_ricercatore_admin_gate_ricerca_verificati",
+      "target": "ruoli_docente_ricercatore_admin_export_risultati"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "telegram_gruppi_docenti_document",
+      "target": "telegram_chatbot_counselorbot_document"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "telegram_gruppi_docenti_fase1",
+      "target": "telegram_gruppi_docenti_flusso_studente"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "telegram_gruppi_docenti_fase2",
+      "target": "telegram_gruppi_docenti_flusso_studente"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "telegram_gruppi_docenti_flusso_studente",
+      "target": "telegram_gruppi_docenti_login_ai4auth"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "telegram_gruppi_docenti_fase3",
+      "target": "telegram_gruppi_docenti_ruolo_docente"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "telegram_gruppi_docenti_ruolo_docente",
+      "target": "telegram_gruppi_docenti_dashboard_docente"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "telegram_gruppi_docenti_ruolo_docente",
+      "target": "telegram_gruppi_docenti_messaggi_via_bot"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "telegram_gruppi_docenti_ruolo_docente",
+      "target": "telegram_gruppi_docenti_note_docente"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "telegram_gruppi_docenti_fase3",
+      "target": "telegram_gruppi_docenti_dashboard_docente"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "telegram_gruppi_docenti_fase4",
+      "target": "telegram_gruppi_docenti_dashboard_docente"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "telegram_gruppi_docenti_fase4",
+      "target": "telegram_gruppi_docenti_note_docente"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "future-implementazione/telegram-gruppi-docenti.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "telegram_gruppi_docenti_fase5",
+      "target": "telegram_gruppi_docenti_messaggi_via_bot"
     }
   ],
   "hyperedges": []
