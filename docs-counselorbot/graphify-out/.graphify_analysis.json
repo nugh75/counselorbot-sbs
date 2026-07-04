@@ -1,196 +1,463 @@
 {
   "communities": {
     "0": [
-      "console_administration_plans",
-      "console_benchmark",
-      "console_monitoring_costs",
-      "console_prompt_audit",
-      "console_research_contacts",
-      "console_role_preview",
-      "console_training_dataset",
-      "console_validation_export",
-      "pellerey_model",
-      "qsa",
-      "qsar",
-      "role_researcher_admin"
+      "counselorbot_platform",
+      "docker_compose_deploy",
+      "fastapi_backend",
+      "frontend_error_throw",
+      "frontend_serve_chat_stream",
+      "gdpr_session_deletion",
+      "manual_retention_run",
+      "multilingual_support",
+      "narrative_career_construction_pedagogy",
+      "nextjs_frontend",
+      "nextjs_rewrite_api_routing",
+      "nginx_proxy_manager",
+      "ocr_score_extraction",
+      "open_narrative_questions_chat",
+      "pii_redaction_system",
+      "postgresql_database",
+      "qap_4_factors",
+      "qap_questionnaire",
+      "qpcc_5_factors",
+      "qpcc_questionnaire",
+      "qpcs_5_factors",
+      "qpcs_questionnaire",
+      "qsar_8_factors",
+      "qsar_questionnaire",
+      "retention_days_config",
+      "savickas_interview",
+      "shared_response_anonymization",
+      "shared_response_memory",
+      "startup_seeding_migrations",
+      "time_perspective_pedagogy",
+      "ztpi_5_temporal_perspectives",
+      "ztpi_questionnaire"
     ],
     "1": [
-      "informational_assistant",
-      "jembalter_method",
-      "kb_counselorbot",
-      "open_learner_model",
-      "portfolio",
-      "pqbl",
-      "role_student",
-      "role_teacher",
-      "shared_response_memory",
-      "student_booklet"
+      "admin_console",
+      "administration_plans_panel_admin",
+      "assistant_questions_by_topic_language",
+      "assistant_questions_panel_admin",
+      "benchmark_panel",
+      "benchmark_panel_admin",
+      "certified_strategies_panel_admin",
+      "certified_strategy_attributes",
+      "config_form_admin_panel",
+      "cost_dashboards_by_provider_model",
+      "cost_stats_panel_admin",
+      "db_driven_configuration",
+      "demo_account_impersonation",
+      "editorial_quality_pedagogy",
+      "env_variable_override_system",
+      "factor_codes_linking_strategies",
+      "log_viewer_panel_admin",
+      "per_step_detail_benchmark",
+      "pqbl_admin_panel",
+      "prompt_audit_endpoints",
+      "questionnaire_results_filterable_view",
+      "questionnaire_results_viewer_admin",
+      "research_contacts_panel_admin",
+      "role_preview_feature",
+      "role_preview_panel_admin",
+      "satisfaction_surveys",
+      "strategy_feedback_system",
+      "training_dataset_panel_admin",
+      "validation_dataset_export_csv",
+      "validation_export_panel",
+      "validation_export_panel_admin"
     ],
     "2": [
-      "ai4auth",
-      "ai_counselors",
-      "aiservice",
-      "configs_table",
-      "console_ai_config",
-      "console_counselors",
-      "console_presets",
-      "postgres_prod",
-      "tech_arch_stack"
+      "ai_counselor",
+      "ai_error_handling",
+      "aiservice_module",
+      "anthropic_provider",
+      "counselor_conversation_memory",
+      "counselor_linguistic_register_adaptation",
+      "counselor_non_directiveness_pedagogy",
+      "counselor_persona_placeholder",
+      "counselor_personalization_name",
+      "counselor_step_explanation_chat",
+      "gemini_provider",
+      "hot_editable_counselors_db_driven",
+      "http_502_error_response",
+      "macro_analysis_proposal_chat",
+      "ollama_provider",
+      "openai_provider",
+      "persona_authoring_english",
+      "provider_call_stream_methods",
+      "unified_provider_registry"
     ],
     "3": [
-      "counselorbot_platform",
-      "interface_languages",
-      "opencode",
-      "qap",
-      "qpcc",
-      "qpcs",
-      "session_memory",
-      "test_mode_languages"
+      "certified_vs_interpretive_distinction_chat",
+      "factor_code_expansion_chat",
+      "free_text_questions_chat",
+      "green_band_strength",
+      "guided_chat",
+      "inverted_factors_explicit_language_chat",
+      "inverted_factors_handling",
+      "next_step_button_chat",
+      "progressive_markdown_rendering_chat",
+      "radar_bar_chart_dashboard",
+      "red_band_growth_area",
+      "sse_error_event_emission",
+      "sse_streaming_chat",
+      "yellow_band_moderate_area",
+      "ztpi_label_simplification_chat"
     ],
     "4": [
-      "combined_analysis",
-      "narrative_construction_principle",
-      "savickas",
-      "srl_principle",
-      "ztpi"
+      "final_test_mode_pqbl",
+      "formative_feedback_pqbl",
+      "learning_mode_pqbl",
+      "mcq_bank_generation_pqbl",
+      "parallel_chunking_pqbl",
+      "pdf_upload_pqbl",
+      "per_skill_analytics_pqbl",
+      "pqbl_module",
+      "question_bank_per_document_pqbl",
+      "server_side_answer_verification_pqbl",
+      "skill_extraction_pqbl"
     ],
     "5": [
-      "certified_strategy_memory",
-      "guided_chat",
-      "guided_step",
-      "strategy_memory"
+      "authenticated_websocket_opencode",
+      "opencode_chat_logging",
+      "opencode_headless_api",
+      "opencode_isolated_container",
+      "opencode_live_terminal_pty",
+      "opencode_sandbox_security",
+      "opencode_six_interface_languages",
+      "opencode_working_documents",
+      "opencode_workspace",
+      "workspace_key_websocket_opencode"
     ],
     "6": [
-      "competenzestrategiche",
-      "graphify_corpus",
-      "kb_competences",
-      "ollama_embeddings"
+      "background_cleanup_loop_memory",
+      "disk_based_session_memory",
+      "external_notes_sync_opencode",
+      "last_16_episodes_tracking",
+      "log_retention_loop_memory",
+      "memory_expiration_2_hours",
+      "memory_service_py",
+      "memory_tracking_categories",
+      "session_memory",
+      "thread_safe_memory_service"
     ],
     "7": [
-      "session_history"
+      "certified_advice_directive",
+      "certified_status_filter",
+      "certified_strategy_injection_directive",
+      "certified_strategy_memory",
+      "certified_strategy_service_py",
+      "factor_salience_gating",
+      "is_active_filter_strategies",
+      "match_mode_configuration",
+      "multilingual_auto_translation"
+    ],
+    "8": [
+      "counselor_avatar_attribute",
+      "counselor_is_active_attribute",
+      "counselor_language_attribute",
+      "counselor_linked_preset_attribute",
+      "counselor_slug_name_description",
+      "counselor_sort_order_attribute",
+      "counselor_supported_questionnaires_attribute",
+      "counselors_panel_admin"
+    ],
+    "9": [
+      "research_data_separation_pedagogy",
+      "research_groups_config",
+      "researcher_role",
+      "supplementary_teaching_tool_pedagogy",
+      "teacher_researcher_capabilities",
+      "teacher_role"
+    ],
+    "10": [
+      "administration_plan_attributes",
+      "administration_plan_code_format",
+      "administration_plan_status_values",
+      "administration_plans_panel",
+      "linked_responses_view_admin_plans"
+    ],
+    "11": [
+      "ai4auth_auth",
+      "cookie_verification_auth",
+      "no_client_side_tokens_auth",
+      "shared_secret_verification_auth",
+      "signed_headers_auth"
+    ],
+    "12": [
+      "conversation_log_filters",
+      "conversation_reconstruction_feature",
+      "log_viewer_panel",
+      "pii_report_endpoint",
+      "retention_status_tracking"
+    ],
+    "13": [
+      "cost_monitoring_panel",
+      "monthly_budget_enforcement",
+      "qwen3_5_fallback_model",
+      "run_rate_projection",
+      "usd_eur_rate_config"
+    ],
+    "14": [
+      "factor_mapping_configuration",
+      "instrument_catalog_editor_attributes",
+      "normative_ranges_configuration",
+      "questionnaire_editor_panel",
+      "reverse_scoring_rules_configuration"
+    ],
+    "15": [
+      "approved_strategies_md",
+      "strategy_memory",
+      "strategy_memory_py",
+      "strategy_retrieval_methods"
+    ],
+    "16": [
+      "change_reflection_notes_feature",
+      "historical_profile_review_feature",
+      "revision_history_feature",
+      "student_profile"
+    ],
+    "17": [
+      "competenzestrategiche_it",
+      "informational_assistant",
+      "knowledge_base_counselorbot",
+      "knowledge_base_strategic_competences"
+    ],
+    "18": [
+      "jsonl_export_fine_tuning",
+      "synthetic_qsa_example_generation",
+      "training_dataset_panel",
+      "training_example_approval"
+    ],
+    "19": [
+      "model_preset_attributes",
+      "preset_assignable_to_counselors_benchmarks",
+      "presets_panel_admin",
+      "provider_configured_indicator"
+    ],
+    "20": [
+      "pdf_card_generation_research_contacts",
+      "qr_card_generation_research_contacts",
+      "research_contact_code_format",
+      "research_contacts_panel"
+    ],
+    "21": [
+      "pdf_report_generation",
+      "session_history_feature",
+      "stanine_scores_1_to_9",
+      "student_role"
+    ],
+    "22": [
+      "pellerey_model",
+      "qsa_100_items",
+      "qsa_questionnaire",
+      "self_regulated_learning_pedagogy"
+    ],
+    "23": [
+      "portfolio",
+      "portfolio_context_injection_assistant",
+      "portfolio_context_injection_chat",
+      "portfolio_image_attachments"
+    ],
+    "24": [
+      "evento_professionale_booklet",
+      "evento_studio_booklet",
+      "student_booklet"
+    ],
+    "25": [
+      "admin_groups_config",
+      "administrator_role"
+    ],
+    "26": [
+      "conversational_scaffolding_pedagogy",
+      "guided_steps_db_rows"
+    ],
+    "27": [
+      "combined_analysis"
+    ],
+    "28": [
+      "counselorbot_guide_teachers_md"
+    ],
+    "29": [
+      "counselorbot_platform_md"
+    ],
+    "30": [
+      "critical_thinking_pedagogy"
+    ],
+    "31": [
+      "how_to_use_counselorbot_students_md"
+    ],
+    "32": [
+      "incremental_streaming_providers"
+    ],
+    "33": [
+      "open_learner_model_pedagogy"
+    ],
+    "34": [
+      "pqbl_pedagogy"
+    ],
+    "35": [
+      "single_chunk_streaming_providers"
+    ],
+    "36": [
+      "technical_pedagogical_description_md"
+    ],
+    "37": [
+      "test_mode_administration"
     ]
   },
   "cohesion": {
-    "0": 0.18181818181818182,
-    "1": 0.24444444444444444,
-    "2": 0.25,
-    "3": 0.2857142857142857,
-    "4": 0.4,
-    "5": 0.6666666666666666,
-    "6": 0.5,
-    "7": 1.0
+    "0": 0.0625,
+    "1": 0.06451612903225806,
+    "2": 0.10526315789473684,
+    "3": 0.13333333333333333,
+    "4": 0.18181818181818182,
+    "5": 0.2,
+    "6": 0.2,
+    "7": 0.2222222222222222,
+    "8": 0.25,
+    "9": 0.3333333333333333,
+    "10": 0.4,
+    "11": 0.4,
+    "12": 0.4,
+    "13": 0.4,
+    "14": 0.4,
+    "15": 0.5,
+    "16": 0.5,
+    "17": 0.5,
+    "18": 0.5,
+    "19": 0.5,
+    "20": 0.5,
+    "21": 0.5,
+    "22": 0.5,
+    "23": 0.5,
+    "24": 0.6666666666666666,
+    "25": 1.0,
+    "26": 1.0,
+    "27": 1.0,
+    "28": 1.0,
+    "29": 1.0,
+    "30": 1.0,
+    "31": 1.0,
+    "32": 1.0,
+    "33": 1.0,
+    "34": 1.0,
+    "35": 1.0,
+    "36": 1.0,
+    "37": 1.0
   },
   "gods": [
     {
-      "id": "counselorbot_platform",
-      "label": "CounselorBot Platform",
-      "degree": 16
+      "id": "admin_console",
+      "label": "Administration Console",
+      "degree": 31
     },
     {
-      "id": "role_researcher_admin",
-      "label": "Role: Researcher / Administrator",
-      "degree": 10
+      "id": "counselorbot_platform",
+      "label": "CounselorBot Platform",
+      "degree": 26
+    },
+    {
+      "id": "ai_counselor",
+      "label": "AI Counselor",
+      "degree": 11
+    },
+    {
+      "id": "pqbl_module",
+      "label": "pQBL - Pure Question-Based Learning Module",
+      "degree": 11
+    },
+    {
+      "id": "opencode_workspace",
+      "label": "OpenCode Workspace (/opencode)",
+      "degree": 9
     },
     {
       "id": "guided_chat",
-      "label": "Guided Chat",
+      "label": "Guided Chat Feature",
+      "degree": 9
+    },
+    {
+      "id": "certified_strategy_memory",
+      "label": "Certified Strategy Memory Subsystem",
       "degree": 8
     },
     {
-      "id": "informational_assistant",
-      "label": "Informational Assistant (/assistente)",
+      "id": "aiservice_module",
+      "label": "AIService Module",
+      "degree": 8
+    },
+    {
+      "id": "counselors_panel_admin",
+      "label": "CounselorsPanel Admin (AI counselors)",
+      "degree": 8
+    },
+    {
+      "id": "session_memory",
+      "label": "Session Memory Subsystem",
       "degree": 7
-    },
-    {
-      "id": "qsa",
-      "label": "QSA \u2014 Learning Strategies Questionnaire",
-      "degree": 7
-    },
-    {
-      "id": "kb_competences",
-      "label": "Knowledge Base: Strategic Competences",
-      "degree": 5
-    },
-    {
-      "id": "portfolio",
-      "label": "Portfolio",
-      "degree": 4
-    },
-    {
-      "id": "savickas",
-      "label": "Savickas \u2014 Narrative Career Construction Interview",
-      "degree": 4
-    },
-    {
-      "id": "role_student",
-      "label": "Role: Student",
-      "degree": 4
-    },
-    {
-      "id": "console_ai_config",
-      "label": "AI Configuration (console)",
-      "degree": 4
     }
   ],
   "surprises": [
     {
-      "source": "Guided Chat",
-      "target": "GuidedStep (DB-driven steps)",
+      "source": "CounselorBot Platform",
+      "target": "Docker Compose Deployment",
       "source_files": [
         "counselorbot-platform.md",
         "technical-pedagogical-description.md"
       ],
       "confidence": "EXTRACTED",
-      "relation": "references",
-      "why": "connects across different repos/directories; peripheral node `GuidedStep (DB-driven steps)` unexpectedly reaches hub `Guided Chat`"
+      "relation": "deployed_with",
+      "why": "connects across different repos/directories; peripheral node `Docker Compose Deployment` unexpectedly reaches hub `CounselorBot Platform`"
     },
     {
-      "source": "Benchmark (console)",
-      "target": "QSA \u2014 Learning Strategies Questionnaire",
-      "source_files": [
-        "counselorbot-guide-teachers.md",
-        "counselorbot-platform.md"
-      ],
-      "confidence": "EXTRACTED",
-      "relation": "references",
-      "why": "connects across different repos/directories; peripheral node `Benchmark (console)` unexpectedly reaches hub `QSA \u2014 Learning Strategies Questionnaire`"
-    },
-    {
-      "source": "QSA \u2014 Learning Strategies Questionnaire",
-      "target": "Pellerey SRL Model",
+      "source": "CounselorBot Platform",
+      "target": "FastAPI Backend (Python)",
       "source_files": [
         "counselorbot-platform.md",
         "technical-pedagogical-description.md"
       ],
       "confidence": "EXTRACTED",
-      "relation": "references",
-      "why": "connects across different repos/directories; peripheral node `Pellerey SRL Model` unexpectedly reaches hub `QSA \u2014 Learning Strategies Questionnaire`"
+      "relation": "uses",
+      "why": "connects across different repos/directories; peripheral node `FastAPI Backend (Python)` unexpectedly reaches hub `CounselorBot Platform`"
     },
     {
-      "source": "ZTPI \u2014 Zimbardo Time Perspective Inventory",
-      "target": "Self-Regulated Learning (SRL) principle",
+      "source": "CounselorBot Platform",
+      "target": "Nginx Proxy Manager",
       "source_files": [
         "counselorbot-platform.md",
         "technical-pedagogical-description.md"
       ],
-      "confidence": "INFERRED",
-      "relation": "conceptually_related_to",
-      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+      "confidence": "EXTRACTED",
+      "relation": "deployed_with",
+      "why": "connects across different repos/directories; peripheral node `Nginx Proxy Manager` unexpectedly reaches hub `CounselorBot Platform`"
     },
     {
-      "source": "AIService (provider dispatcher)",
-      "target": "AI Counselors",
+      "source": "AI Counselor",
+      "target": "Counselor Conversation Memory (remembers what you talked about)",
       "source_files": [
-        "technical-pedagogical-description.md",
-        "counselorbot-platform.md"
+        "counselorbot-platform.md",
+        "technical-pedagogical-description.md"
       ],
-      "confidence": "INFERRED",
-      "relation": "shares_data_with",
-      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+      "confidence": "EXTRACTED",
+      "relation": "implements",
+      "why": "connects across different repos/directories; peripheral node `Counselor Conversation Memory (remembers what you talked about)` unexpectedly reaches hub `AI Counselor`"
+    },
+    {
+      "source": "AI Counselor",
+      "target": "Counselor Linguistic Register Adaptation",
+      "source_files": [
+        "counselorbot-platform.md",
+        "technical-pedagogical-description.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "implements",
+      "why": "connects across different repos/directories; peripheral node `Counselor Linguistic Register Adaptation` unexpectedly reaches hub `AI Counselor`"
     }
   ],
   "tokens": {
-    "input": 0,
-    "output": 0
+    "input": 8491,
+    "output": 42747
   }
 }
