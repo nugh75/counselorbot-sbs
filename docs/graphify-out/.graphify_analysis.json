@@ -9,6 +9,7 @@
       "author_leproni",
       "author_margottini",
       "author_orio",
+      "author_ottone",
       "author_pellerey",
       "author_porfeli",
       "author_rossi",
@@ -38,6 +39,7 @@
       "concept_ztpi",
       "convegno_2019_internazionale",
       "fonti_competenze_strategiche_introduzione_volume_2020_doc",
+      "guida_2023_convegno_2019_volume",
       "guida_2023_guida_2023_document",
       "guida_2023_qsar_validazione_2018",
       "guida_2023_savickas_porfeli_2012",
@@ -47,6 +49,7 @@
       "org_cnos_fap",
       "org_roma_tre",
       "org_ups",
+      "paper_zimbardo_boyd_1999_ztpi",
       "publication_abstract_2019",
       "questionari_item_catalog_doc",
       "questionari_strumenti_qap_it_doc",
@@ -64,7 +67,8 @@
       "sito_competenzestrategiche_studi_ottone_2023_doc",
       "strumenti_qsar_it_document",
       "strumenti_ztpi_it_document",
-      "validazione_dettagli_validazione_questionari_doc"
+      "validazione_dettagli_validazione_questionari_doc",
+      "validazione_diagnosi_ensv_doc"
     ],
     "1": [
       "author_ardito",
@@ -103,6 +107,7 @@
       "instrument_qsar",
       "instrument_ztpi",
       "mahara_portfolio",
+      "org_auxilium",
       "pellerey_michele",
       "platform_asklea",
       "platform_competenzestrategiche",
@@ -164,7 +169,6 @@
       "readme_md_validazione_dir"
     ],
     "3": [
-      "author_ottone",
       "concept_imparare_a_imparare",
       "concept_metacognizione",
       "concept_progetto_apprendo",
@@ -192,7 +196,6 @@
       "guida_piattaforma_book_69_guida",
       "modelli_operativi_02_griglia_osservazione_docente_document",
       "modelli_operativi_concept_qsa_factors",
-      "org_auxilium",
       "paper_bay_grzadziel_pellerey_2010",
       "paper_margottini_2018_qsar",
       "paper_ottone_2014_apprendo",
@@ -282,6 +285,28 @@
       "qsa_sara_certified_second_level_audit"
     ],
     "7": [
+      "ruoli_docente_ricercatore_admin_admin",
+      "ruoli_docente_ricercatore_admin_admin_console",
+      "ruoli_docente_ricercatore_admin_classi_autonome",
+      "ruoli_docente_ricercatore_admin_creazione_piani",
+      "ruoli_docente_ricercatore_admin_delete_piano_ristretto",
+      "ruoli_docente_ricercatore_admin_docente",
+      "ruoli_docente_ricercatore_admin_eliminazione_piano",
+      "ruoli_docente_ricercatore_admin_get_current_active_admin",
+      "ruoli_docente_ricercatore_admin_get_current_plan_manager",
+      "ruoli_docente_ricercatore_admin_informativa_transcript",
+      "ruoli_docente_ricercatore_admin_note_messaggi_studenti",
+      "ruoli_docente_ricercatore_admin_teacher_notes",
+      "ruoli_docente_ricercatore_admin_transcript_conversazioni",
+      "telegram_gruppi_docenti_dashboard_docente",
+      "telegram_gruppi_docenti_fase3",
+      "telegram_gruppi_docenti_fase4",
+      "telegram_gruppi_docenti_fase5",
+      "telegram_gruppi_docenti_messaggi_via_bot",
+      "telegram_gruppi_docenti_note_docente",
+      "telegram_gruppi_docenti_ruolo_docente"
+    ],
+    "8": [
       "concept_affidabilita",
       "concept_cfa",
       "concept_cfi",
@@ -294,15 +319,13 @@
       "concept_rmsea",
       "concept_stanine",
       "concept_validazione",
-      "paper_zimbardo_boyd_1999_ztpi",
-      "validazione_diagnosi_ensv_doc",
       "validazione_formule_validazione_doc",
       "validazione_manuale_operativo_doc",
       "validazione_progetto_research_mode_rationale",
       "validazione_progetto_validazione_qsa_qsar_sv_en_doc",
       "validazione_validazione_questionari_e_stanine_doc"
     ],
-    "8": [
+    "9": [
       "author_greene",
       "author_heckman",
       "author_mccloskey",
@@ -316,10 +339,9 @@
       "concept_capitale_umano",
       "concept_funzioni_esecutive",
       "grzadziel_convegno_2019_grzadziel_convegno_2019_paper",
-      "guida_2023_convegno_2019_volume",
       "pellerey_convegno_2019_pellerey_convegno_2019_paper"
     ],
-    "9": [
+    "10": [
       "telegram_chatbot_counselorbot_ai_service",
       "telegram_chatbot_counselorbot_bot_father",
       "telegram_chatbot_counselorbot_counselorbot",
@@ -335,7 +357,7 @@
       "telegram_gruppi_docenti_teacher",
       "telegram_gruppi_docenti_teacher_notes"
     ],
-    "10": [
+    "11": [
       "readme_md_convegni_dir",
       "readme_md_grzadziel_convegno_2019_pdf",
       "readme_md_guida_2023_pdf",
@@ -350,7 +372,7 @@
       "readme_md_strumenti_dir",
       "readme_md_studi_dir"
     ],
-    "11": [
+    "12": [
       "counselorbot_app",
       "diario_progetto",
       "grafo_docs_doc",
@@ -364,7 +386,7 @@
       "verifica_implementazione_doc",
       "ztpi_questionnaire"
     ],
-    "12": [
+    "13": [
       "readme_counselorbot",
       "readme_diario",
       "readme_docs_organisation",
@@ -374,7 +396,7 @@
       "readme_sources",
       "readme_validation"
     ],
-    "13": [
+    "14": [
       "author_bay",
       "doc_promuovere_crescita_2008",
       "publication_promuovere_2008",
@@ -382,69 +404,88 @@
       "readme_md_fonti_esterne_collegate_readme",
       "readme_md_roma_tre_press"
     ],
-    "14": [
+    "15": [
+      "telegram_gruppi_docenti_administration_plans",
+      "telegram_gruppi_docenti_deep_link",
+      "telegram_gruppi_docenti_fase1",
+      "telegram_gruppi_docenti_fase2",
+      "telegram_gruppi_docenti_flusso_studente",
+      "telegram_gruppi_docenti_login_ai4auth"
+    ],
+    "16": [
+      "ai4auth_system",
+      "ruoli_docente_ricercatore_admin_document",
+      "telegram_chatbot_counselorbot_document",
+      "telegram_gruppi_docenti_document"
+    ],
+    "17": [
+      "ruoli_docente_ricercatore_admin_anagrafica_ricerca",
+      "ruoli_docente_ricercatore_admin_export_risultati",
+      "ruoli_docente_ricercatore_admin_gate_ricerca_verificati",
+      "ruoli_docente_ricercatore_admin_ricercatore"
+    ],
+    "18": [
       "melogno_2018_competenze_strategiche",
       "melogno_2018_dsa",
       "melogno_2018_paper"
     ],
-    "15": [
+    "19": [
       "sito_competenzestrategiche_guide",
       "sito_competenzestrategiche_site_archive",
       "sito_competenzestrategiche_strumenti"
     ],
-    "16": [
+    "20": [
       "graphify_docs_graph_json",
       "graphify_docs_graphify"
     ],
-    "17": [
-      "telegram_gruppi_docenti_administration_plans",
-      "telegram_gruppi_docenti_deep_link"
-    ],
-    "18": [
+    "21": [
       "telegram_gruppi_docenti_ai4auth",
       "telegram_gruppi_docenti_student"
     ],
-    "19": [
+    "22": [
       "author_crea"
     ],
-    "20": [
+    "23": [
       "author_matta"
     ],
-    "21": [
+    "24": [
       "author_melogno"
     ],
-    "22": [
+    "25": [
       "dirigere_se_stessi_2020_document"
     ],
-    "23": [
+    "26": [
       "paper_pellerey_2018_strumenti_metodologie"
     ]
   },
   "cohesion": {
-    "0": 0.08283730158730158,
-    "1": 0.07474600870827286,
+    "0": 0.08033362598770852,
+    "1": 0.0726764500349406,
     "2": 0.0641025641025641,
-    "3": 0.0796221322537112,
+    "3": 0.08258258258258258,
     "4": 0.09846153846153846,
     "5": 0.15942028985507245,
     "6": 0.11428571428571428,
-    "7": 0.22807017543859648,
-    "8": 0.18095238095238095,
-    "9": 0.14285714285714285,
-    "10": 0.15384615384615385,
-    "11": 0.18181818181818182,
-    "12": 0.25,
-    "13": 0.3333333333333333,
-    "14": 0.6666666666666666,
-    "15": 0.6666666666666666,
-    "16": 1.0,
-    "17": 1.0,
-    "18": 1.0,
-    "19": 1.0,
+    "7": 0.11052631578947368,
+    "8": 0.2647058823529412,
+    "9": 0.18681318681318682,
+    "10": 0.14285714285714285,
+    "11": 0.15384615384615385,
+    "12": 0.18181818181818182,
+    "13": 0.25,
+    "14": 0.3333333333333333,
+    "15": 0.3333333333333333,
+    "16": 0.5,
+    "17": 0.6666666666666666,
+    "18": 0.6666666666666666,
+    "19": 0.6666666666666666,
     "20": 1.0,
     "21": 1.0,
     "22": 1.0,
-    "23": 1.0
+    "23": 1.0,
+    "24": 1.0,
+    "25": 1.0,
+    "26": 1.0
   },
   "gods": [
     {
@@ -523,17 +564,6 @@
     },
     {
       "source": "Catalogo item - scaffolding multilingue (IT/EN/SV)",
-      "target": "Diagnosi somministrazioni EN/SV per ZTPI, QAP, QPCS, QPCC",
-      "source_files": [
-        "questionari/item-catalog.md",
-        "validazione/diagnosi-somministrazione-ensv.md"
-      ],
-      "confidence": "INFERRED",
-      "relation": "semantically_similar_to",
-      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities; semantically similar concepts with no structural link"
-    },
-    {
-      "source": "Catalogo item - scaffolding multilingue (IT/EN/SV)",
       "target": "Manuale Operativo per la Validazione del QSAr (EN in Svezia)",
       "source_files": [
         "questionari/item-catalog.md",
@@ -553,10 +583,21 @@
       "confidence": "INFERRED",
       "relation": "semantically_similar_to",
       "why": "inferred connection - not explicitly stated in source; crosses file types (paper \u2194 doc); bridges separate communities; semantically similar concepts with no structural link"
+    },
+    {
+      "source": "QSA - Questionario (100 item, versione IT)",
+      "target": "Schede sui fattori del QSA (Apprendo, Ottone)",
+      "source_files": [
+        "questionari/strumenti/QSA_it.pdf",
+        "fonti/competenze-strategiche/sito-competenzestrategiche/guide/Schede_fattori_QSA.pdf"
+      ],
+      "confidence": "INFERRED",
+      "relation": "semantically_similar_to",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; semantically similar concepts with no structural link"
     }
   ],
   "tokens": {
-    "input": 11274,
-    "output": 11287
+    "input": 2750,
+    "output": 11983
   }
 }
