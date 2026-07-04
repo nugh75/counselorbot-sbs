@@ -1,6 +1,8 @@
-"""Modello del discente auto-dichiarato (open learner model).
+"""Taccuino dello studente: modello del discente auto-dichiarato (open learner model).
 
-Append-only: ogni POST crea una revisione; il profilo corrente è l'ultima.
+Nella UI si chiama "taccuino" (da non confondere con il "profilo", che è
+l'esito a fattori dei questionari). Append-only: ogni POST crea una
+revisione; il taccuino corrente è l'ultima.
 Lo studente vede, modifica e cancella il proprio modello (trasparenza).
 """
 

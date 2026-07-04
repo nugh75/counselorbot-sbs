@@ -196,7 +196,7 @@ DEFAULT_ASSISTANT_QUESTIONS: dict[str, list[str]] = {
         "Quali ruoli esistono sulla piattaforma?",
         "In quali lingue posso usare CounselorBot?",
         "Come funziona la chat guidata con il counselor AI?",
-        "Che cos'e' il profilo dello studente (open learner model)?",
+        "Che cos'e' il taccuino dello studente (open learner model)?",
         "Come posso usare il portfolio su CounselorBot?",
         "A cosa serve il libretto dello studente?",
         "Che cos'e' l'analisi combinata dei questionari?",

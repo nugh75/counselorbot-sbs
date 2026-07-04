@@ -21,7 +21,7 @@ interface StudentGroup {
 const TEXTS = {
     it: {
         title: 'Gruppi e classi',
-        subtitle: 'Le tue classi: gli studenti entrano con il link di invito (web o Telegram) o inserendo il codice classe dal profilo. Aggancia la classe a un piano di somministrazione per taggare i risultati.',
+        subtitle: 'Le tue classi: gli studenti entrano con il link di invito (web o Telegram) o inserendo il codice classe dall’area personale. Aggancia la classe a un piano di somministrazione per taggare i risultati.',
         newGroup: 'Nuova classe',
         namePlaceholder: 'Nome classe (es. 3B Informatica)',
         schoolPlaceholder: 'Scuola/istituto (opzionale)',
@@ -52,7 +52,7 @@ const TEXTS = {
     },
     en: {
         title: 'Groups and classes',
-        subtitle: 'Your classes: students join via the invitation link (web or Telegram) or by entering the class code from their profile. Attach the class to an administration plan to tag results.',
+        subtitle: 'Your classes: students join via the invitation link (web or Telegram) or by entering the class code from their personal area. Attach the class to an administration plan to tag results.',
         newGroup: 'New class',
         namePlaceholder: 'Class name (e.g. 3B Computer Science)',
         schoolPlaceholder: 'School/institute (optional)',
