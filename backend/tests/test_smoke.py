@@ -2614,7 +2614,7 @@ def test_chat_intro_envelope_includes_learner_profile_without_scores():
         assert r.status_code == 200, r.text
         envelope = _latest_log_details(session_id).get("envelope")
         assert "[PROFILE]" in envelope["system_prompt_final"]
-        assert "Profilo dichiarato dallo studente" in envelope["system_prompt_final"]
+        assert "Taccuino dello studente (auto-descrizione)" in envelope["system_prompt_final"]
         assert "Capire come organizzare lo studio" in envelope["system_prompt_final"]
         assert "PROFILO QSA" not in envelope["system_prompt_final"]
         assert "PROFILO QSA" not in envelope["full_message"]
@@ -3235,7 +3235,7 @@ def test_learner_profile_revisions_and_history():
         # Il contesto chat include il profilo dichiarato
         with _TestSession() as db:
             section = chat_logic._learner_profile_context(db, "student")
-            assert "Profilo dichiarato dallo studente" in section
+            assert "Taccuino dello studente (auto-descrizione)" in section
             assert "Ansia prima dell'esame" in section
             assert chat_logic._learner_profile_context(db, "") == ""
 
