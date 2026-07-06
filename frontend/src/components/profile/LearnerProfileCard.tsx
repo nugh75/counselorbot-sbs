@@ -11,6 +11,7 @@ import { History, Trash2, Pencil, X } from 'lucide-react';
 import { PencilButton } from '@/components/ui/PencilButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { BackButton } from '@/components/ui/BackButton';
+import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 
 export interface LearnerProfileData {
     context?: string;
@@ -165,11 +166,11 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                 {FIELDS.map((f) => (
                     <label key={f.key} className="block">
                         <span className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">{t(f.labelKey)}</span>
-                        {f.multiline ? (
-                            <textarea
+                        {f.type === 'number' ? (
+                            <input
+                                type="number"
                                 value={form[f.key] || ''}
                                 maxLength={600}
-                                rows={2}
                                 onChange={(e) => {
                                     setValidationError('');
                                     setForm((prev) => ({ ...prev, [f.key]: e.target.value }));
@@ -177,10 +178,10 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                             />
                         ) : (
-                            <input
-                                type={f.type ?? 'text'}
+                            <AutoGrowTextarea
                                 value={form[f.key] || ''}
                                 maxLength={600}
+                                minRows={f.multiline ? 2 : 1}
                                 onChange={(e) => {
                                     setValidationError('');
                                     setForm((prev) => ({ ...prev, [f.key]: e.target.value }));

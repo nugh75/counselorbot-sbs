@@ -14,6 +14,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { stepLabel } from '@/lib/i18n-steps';
 import type { Lang } from '@/lib/i18n';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
+import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 
 // --- Types ---
 
@@ -1368,13 +1369,20 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                 ))}
                             </div>
                         )}
-                        <div className="relative flex items-center gap-2">
-                            <input
-                                type="text"
+                        <div className="relative flex items-end gap-2">
+                            <AutoGrowTextarea
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        void handleSend(e);
+                                    }
+                                }}
                                 placeholder={inputPlaceholder}
                                 disabled={isLoading}
+                                minRows={1}
+                                maxRows={6}
                                 className="min-w-0 flex-1 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50"
                             />
                             <button
