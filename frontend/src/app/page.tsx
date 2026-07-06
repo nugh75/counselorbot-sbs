@@ -138,6 +138,26 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
                 </div>
             </section>
 
+            <section className="mx-auto max-w-4xl">
+                <h2 className="text-center text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
+                    {t('app.tools.title')}
+                </h2>
+                <div className="mt-6 grid gap-8 sm:grid-cols-2">
+                    <div>
+                        <span className="block h-0.5 w-10 rounded-full bg-teal-500" />
+                        <h3 className="mt-3 text-base font-bold text-slate-900">{t('app.tools.notebook.title')}</h3>
+                        <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{t('app.tools.notebook.body')}</p>
+                        <p className="mt-2 text-sm leading-relaxed text-slate-500">{t('app.tools.notebook.access')}</p>
+                    </div>
+                    <div>
+                        <span className="block h-0.5 w-10 rounded-full bg-teal-500" />
+                        <h3 className="mt-3 text-base font-bold text-slate-900">{t('app.tools.assistant.title')}</h3>
+                        <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{t('app.tools.assistant.body')}</p>
+                        <p className="mt-2 text-sm leading-relaxed text-slate-500">{t('app.tools.assistant.access')}</p>
+                    </div>
+                </div>
+            </section>
+
             <section className="mx-auto max-w-2xl text-center">
                 <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
                     {t('app.intro.expect.title')}

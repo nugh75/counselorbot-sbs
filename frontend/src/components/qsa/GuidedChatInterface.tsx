@@ -1,6 +1,6 @@
 'use client';
 
-import { Send, ChevronRight, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
@@ -409,7 +409,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const requestRef = useRef<AbortController | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const lastProcessedPhase = useRef<string | null>(null);
+    const processedPhases = useRef<Set<string>>(new Set());
     const loadedSessionScopeRef = useRef('');
 
     // Derived from questionnaire config
@@ -638,8 +638,11 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     // Phase change handler
     useEffect(() => {
         if (!currentPhase || initialLoading) return;
-        if (lastProcessedPhase.current === currentPhase) return;
-        lastProcessedPhase.current = currentPhase;
+        // Genera l'intro dello step solo alla PRIMA visita: tornando a uno step già
+        // visitato (pulsante "Step precedente") si cambia solo il contesto attivo,
+        // senza rigenerare messaggi o duplicare il banner.
+        if (processedPhases.current.has(currentPhase)) return;
+        processedPhases.current.add(currentPhase);
         setShowAdvanceSuggestion(false);
         setUserMessagesInPhase(0);
 
@@ -797,8 +800,13 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 const { cleanText, shouldAdvance } = extractAdvanceSignal(responseText);
                 updateLast(cleanText);
                 setLastAnalysisFailed(false);
+                // Savickas e QPCS: l'utente decide quando cambiare step. Non avanzare
+                // automaticamente sulla generazione dello step (per Savickas resta valido
+                // solo l'ultimo step).
                 const allowAutoAdvanceOnGenerate =
-                    questionnaireType !== 'SAVICKAS' || step.id === 'savickas-final';
+                    questionnaireType === 'SAVICKAS'
+                        ? step.id === 'savickas-final'
+                        : questionnaireType !== 'QPCS';
                 if (shouldAdvance && allowAutoAdvanceOnGenerate) {
                     await advancePhase();
                 }
@@ -939,9 +947,13 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 dropLast();
             }
             if (shouldAdvance) {
-                // Per Savickas (tranne l'ultimo step): non avanzare automaticamente,
-                // ma mostrare un suggerimento all'utente che può scegliere quando andare avanti
-                if (questionnaireType === 'SAVICKAS' && currentPhase !== 'savickas-final') {
+                // Savickas e QPCS: l'utente decide quando cambiare step. Non avanzare
+                // automaticamente sul marker [[AVANZA_STEP]]; mostra il suggerimento e
+                // lascia che sia l'utente a usare il pulsante "prossimo step".
+                const userDecidesAdvance =
+                    (questionnaireType === 'SAVICKAS' && currentPhase !== 'savickas-final')
+                    || questionnaireType === 'QPCS';
+                if (userDecidesAdvance) {
                     setShowAdvanceSuggestion(true);
                 } else {
                     await advancePhase();
@@ -964,6 +976,22 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         const currentIndex = phases.indexOf(currentPhase);
         if (currentIndex < phases.length - 1) {
             setCurrentPhase(phases[currentIndex + 1]);
+        }
+    };
+
+    // Torna allo step immediatamente precedente e lo RIAPRE (rigenera spiegazione
+    // + risultato + domanda), così la conversazione si riallinea a quell'area.
+    // Rimuovendo target e step corrente da processedPhases se ne consente la
+    // rigenerazione (anche tornando poi avanti).
+    const goToPreviousStep = () => {
+        if (isLoading) return;
+        const currentIndex = phases.indexOf(currentPhase);
+        if (currentIndex > 0) {
+            const target = phases[currentIndex - 1];
+            setShowAdvanceSuggestion(false);
+            processedPhases.current.delete(target);
+            processedPhases.current.delete(currentPhase);
+            setCurrentPhase(target);
         }
     };
 
@@ -1111,6 +1139,17 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             );
                         })}
                     </div>
+
+                    {currentPhase !== FIXED_CONCLUSION_ID && phases.indexOf(currentPhase) > 0 && (
+                        <button
+                            onClick={goToPreviousStep}
+                            disabled={isLoading}
+                            className="w-full mt-2 py-2.5 px-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-md transition-colors flex items-center justify-center gap-1 disabled:opacity-50"
+                        >
+                            <ChevronLeft className="w-3 h-3" />
+                            {t('guided.prevStep')}
+                        </button>
+                    )}
 
                     {currentPhase !== FIXED_CONCLUSION_ID && questionnaireType !== 'SAVICKAS' && (
                         <button
