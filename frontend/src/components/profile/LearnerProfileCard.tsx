@@ -237,14 +237,14 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
             {variant === 'review' && !isIntake && !editing && (
                 <div className="flex items-center gap-3">
                     {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
-                    <PencilButton
-                        onClick={() => setEditing(true)}
-                        label={t('lp.edit')}
-                    />
                     <ForwardButton
                         onClick={() => void save('session_start')}
                         disabled={saving}
                         label={t('lp.confirm')}
+                    />
+                    <PencilButton
+                        onClick={() => setEditing(true)}
+                        label={t('lp.edit')}
                     />
                     {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
                 </div>
