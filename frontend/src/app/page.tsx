@@ -524,7 +524,7 @@ export default function Home() {
 
                     {/* Step: Taccuino (sempre per primo, generale, indipendente dallo strumento) */}
                     {step === 'notebook' && (
-                        <div className="mx-auto max-w-2xl space-y-4">
+                        <div className="space-y-4">
                             <LearnerProfileCard
                                 variant="review"
                                 requireInitial
