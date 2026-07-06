@@ -79,6 +79,23 @@ ai4auth forward-auth at the edge (Nginx). Proxy injects `Remote-*` headers → p
 - **PqblDocument / PqblQuestion / PqblSession / PqblAttempt**: PQBL (Problem/Question-Based Learning) — uploaded PDFs, generated MCQs, student sessions, answer attempts
 - **ValidationResponse**: psychometric validation data
 
+### Prompts: code defaults vs DB (important)
+Prompts live in **two places** with different roles:
+
+- **DB = live, editable copy used at runtime.** System prompts and UI texts are rows in the `configs` table (e.g. `prompt_qpcs_analysis`, `prompt_qpcs_summary`); each guided step's instruction is the `prompt` column of `guided_steps` (with `system_prompt_mode`, label, color). The admin panel edits these DB rows.
+- **`backend/prompt_config.py` = defaults + structure (in code, versioned in git).** It provides three things the DB does not:
+  1. **Seed values** (`SYSTEM_PROMPT_DEFINITIONS`, `DEFAULT_*_GUIDED_STEPS`, guided texts): copied into the DB **at first startup only if missing** — an already-populated DB is **not** overwritten (`main.py` seeds guided steps `if count == 0`).
+  2. **Fallback**: if a config key is missing from the DB at runtime, the code default is used (`SYSTEM_PROMPT_DEFAULTS.get(key, DEFAULT_SYSTEM_PROMPT_GENERIC)` in `chat_logic.py`).
+  3. **Wiring not stored in the DB**: which steps exist / their order, and the **mode → config-key** map `MODE_TO_SYSTEM_PROMPT_KEY` (e.g. `"qpcs-analysis" → "prompt_qpcs_analysis"`).
+
+**Runtime resolution order**: DB value (admin-edited) → code default in `prompt_config.py` → generic prompt.
+
+**Editing rule**: to change a prompt, update **both**:
+- **code** (`prompt_config.py`) → versioned, covers fresh installs and the fallback;
+- **DB** (`configs` / `guided_steps`) → takes effect on the running instance (seed does not touch an existing DB).
+
+Editing only the DB → a fresh install would ship the old text; editing only the code → the running instance is unchanged until the DB is updated. Git versions the code, **not** the DB.
+
 ### AI Providers
 `AIService` (`backend/ai_service.py`) dispatches through a provider registry supporting **13 providers**: openai, anthropic, gemini, mistral, openrouter, ollama, llamacpp, **groq**, **cerebras**, **deepseek**, **together**, **fireworks**, **deepinfra**. Each provider: `call`, `stream`, `call_max`, `stream_max`. `disable_thinking` per-provider, driven by reasoning profiles (`backend/reasoning_profiles.py`). **Error contract**: config/provider failures raise `AIError` — never returned as chat content. Monthly budget fallback (`monthly_budget_usd`) switches to Ollama local model when exceeded.
 
