@@ -1185,7 +1185,7 @@ def test_guided_step_questions_seed_and_public_payload():
         "QSAr": "qsar-cognitive",
         "ZTPI": "ztpi-t1",
         "SAVICKAS": "savickas-q1",
-        "QPCS": "qpcs-factors",
+        "QPCS": "qpcs-emozioni",
         "QPCC": "qpcc-factors",
         "QAP": "qap-factors",
     }
@@ -1378,7 +1378,7 @@ def test_qsar_guided_ui_texts_public():
 
 def test_new_questionnaire_guided_ui_texts_public():
     expected_steps = {
-        "QPCS": ("qpcs-factors", "qpcs-factor"),
+        "QPCS": ("qpcs-emozioni", "qpcs-analysis"),
         "QPCC": ("qpcc-factors", "qpcc-factor"),
         "QAP": ("qap-factors", "qap-factor"),
     }
@@ -1390,7 +1390,7 @@ def test_new_questionnaire_guided_ui_texts_public():
 
 
 def test_existing_extended_guided_modes_resolve_saved_prompt_keys():
-    assert MODE_TO_SYSTEM_PROMPT_KEY["qpcs-interview"] == "prompt_qpcs_interview"
+    assert MODE_TO_SYSTEM_PROMPT_KEY["qpcs-analysis"] == "prompt_qpcs_analysis"
     assert MODE_TO_SYSTEM_PROMPT_KEY["qpcs-summary"] == "prompt_qpcs_summary"
     assert MODE_TO_SYSTEM_PROMPT_KEY["qpcc-interview"] == "prompt_qpcc_interview"
     assert MODE_TO_SYSTEM_PROMPT_KEY["qpcc-summary"] == "prompt_qpcc_summary"
@@ -1404,7 +1404,9 @@ def test_prompt_audit_intro_envelope_is_light_for_all_instruments():
         ("QSAr", "qsar-intro", "PROFILO QSAr DELLO STUDENTE:\n- C1r: 7/9\n- A1r: 8/9"),
         ("ZTPI", "ztpi-intro", "PROFILO ZTPI DELLO STUDENTE:\n- T1: 7/9\n- T2: 5/9"),
         ("SAVICKAS", "savickas-intro", ""),
-        ("QPCS", "qpcs-welcome", "PROFILO QPCS DELLO STUDENTE:\n- S1: 7/9\n- S2: 5/9"),
+        # QPCS uses a qualitative interview path: its first step (qpcs-intro) is an
+        # interview step that intentionally keeps scores internally, so it is not part
+        # of the intro-light (score-free) family tested here.
         ("QPCC", "qpcc-welcome", "PROFILO QPCC DELLO STUDENTE:\n- K1: 7/9\n- K2: 5/9"),
         ("QAP", "qap-welcome", "PROFILO QAP DELLO STUDENTE:\n- AD1: 7/9\n- AD2: 5/9"),
     ]

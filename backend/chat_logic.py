@@ -2154,7 +2154,20 @@ def build_context_envelope(
     # --- MESSAGES: history verbatim + user corrente (scores scope-ati + msg) ---
     history = session_memory.get_transcript(session_id) if include_history and include_session_memory and _component_enabled(component_flags, "history") else []
     if getattr(request, "use_phase_prompt", False):
-        full_message = message_scores_context
+        # QPCS è un dialogo riflessivo: all'ingresso di uno step il prompt di fase
+        # finisce nel system e il turno utente sarebbe solo i punteggi. Così il
+        # modello resta agganciato alla domanda aperta dell'area precedente nella
+        # history (deriva/lag di uno step). Per le modalità QPCS mettiamo la
+        # direttiva dello step ANCHE nel turno utente (segnale attuale, in coda),
+        # così il modello passa in modo netto alla nuova area.
+        if (getattr(request, "mode", "") or "").startswith("qpcs-") and effective_message:
+            full_message = (
+                f"{message_scores_context}\n\n{effective_message}".strip()
+                if message_scores_context
+                else effective_message
+            )
+        else:
+            full_message = message_scores_context
     else:
         if message_scores_context and effective_message:
             full_message = f"{message_scores_context}\n\nDOMANDA DELLO STUDENTE:\n{effective_message}"

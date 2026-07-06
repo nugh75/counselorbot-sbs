@@ -168,7 +168,7 @@ const SYSTEM_PROMPT_MODES = [
     { value: 'qpcs-factor', label: 'QPCS Analisi Fattori' },
     { value: 'qpcc-factor', label: 'QPCC Analisi Fattori' },
     { value: 'qap-factor', label: 'QAP Analisi Risorse' },
-    { value: 'qpcs-interview', label: 'QPCS Percorso Guidato' },
+    { value: 'qpcs-analysis', label: 'QPCS Percorso Guidato' },
     { value: 'qpcs-summary', label: 'QPCS Sintesi' },
     { value: 'qpcc-interview', label: 'QPCC Percorso Guidato' },
     { value: 'qpcc-summary', label: 'QPCC Sintesi' },
@@ -223,7 +223,7 @@ const SYSTEM_PROMPT_KEY_BY_MODE: Record<string, string> = {
     'qpcs-factor': 'prompt_qpcs_factor',
     'qpcc-factor': 'prompt_qpcc_factor',
     'qap-factor': 'prompt_qap_factor',
-    'qpcs-interview': 'prompt_qpcs_interview',
+    'qpcs-analysis': 'prompt_qpcs_analysis',
     'qpcs-summary': 'prompt_qpcs_summary',
     'qpcc-interview': 'prompt_qpcc_interview',
     'qpcc-summary': 'prompt_qpcc_summary',
@@ -1574,8 +1574,8 @@ export function ConfigForm() {
             systemPrompts: [
                 { key: 'prompt_meta_QPCS', label: 'Meta system prompt QPCS' },
                 { key: 'prompt_qpcs_factor', label: 'Prompt Analisi Fattori' },
-                ...(configs.some(c => c.key === 'prompt_qpcs_interview')
-                    ? [{ key: 'prompt_qpcs_interview', label: 'Prompt Percorso Guidato' }]
+                ...(configs.some(c => c.key === 'prompt_qpcs_analysis')
+                    ? [{ key: 'prompt_qpcs_analysis', label: 'Prompt Percorso Guidato' }]
                     : []),
                 ...(configs.some(c => c.key === 'prompt_qpcs_summary')
                     ? [{ key: 'prompt_qpcs_summary', label: 'Prompt Sintesi Finale' }]
