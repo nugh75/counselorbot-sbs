@@ -1,4 +1,4 @@
-# Graph Report - docs-counselorbot  (2026-07-04)
+# Graph Report - /home/nugh75/counselorbot-sbs/docs-counselorbot  (2026-07-06)
 
 ## Corpus Check
 - cluster-only mode — file stats not available
@@ -7,11 +7,6 @@
 - 230 nodes · 210 edges · 38 communities (25 shown, 13 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
-
-## Graph Freshness
-- Built from commit: `088eabf1`
-- Run `git rev-parse HEAD` and compare to check if the graph is stale.
-- Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - [[_COMMUNITY_Platform Architecture and Deployment|Platform Architecture and Deployment]]

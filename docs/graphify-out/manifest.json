@@ -598,5 +598,15 @@
     "mtime": 1783074492.8246562,
     "ast_hash": "741270f01dd57177eccd1a4f591b1eac",
     "semantic_hash": "741270f01dd57177eccd1a4f591b1eac"
+  },
+  "future-implementazione/ruoli-docente-ricercatore-admin.md": {
+    "mtime": 1783074492.8246562,
+    "ast_hash": "55e89053a2717c3c8d8042c8ee355a2c",
+    "semantic_hash": "55e89053a2717c3c8d8042c8ee355a2c"
+  },
+  "future-implementazione/telegram-gruppi-docenti.md": {
+    "mtime": 1783074492.8285527,
+    "ast_hash": "8de335ff20ec13195215ed5f9ae4a4ec",
+    "semantic_hash": "8de335ff20ec13195215ed5f9ae4a4ec"
   }
 }
