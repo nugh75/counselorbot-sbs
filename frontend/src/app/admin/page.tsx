@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, Award, MessageCircleQuestion, PanelLeftClose, PanelLeftOpen, CalendarDays, Eye, FolderOpen, Bot } from 'lucide-react';
+import { ArrowLeft, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, Award, MessageCircleQuestion, PanelLeftClose, PanelLeftOpen, CalendarDays, Eye, FolderOpen, Bot, Download } from 'lucide-react';
 import { ConfigForm } from '@/components/admin/ConfigForm';
 import { LogViewer } from '@/components/admin/LogViewer';
 import { CostStats } from '@/components/admin/CostStats';
@@ -26,6 +26,7 @@ import { AssistantAdminPanel } from '@/components/admin/AssistantAdminPanel';
 import { RolePreviewPanel } from '@/components/admin/RolePreviewPanel';
 import { RagDocsPanel } from '@/components/admin/RagDocsPanel';
 import { GuidedStepQuestionsPanel } from '@/components/admin/GuidedStepQuestionsPanel';
+import { PromptExportPanel } from '@/components/admin/PromptExportPanel';
 import { UsersSummaryPanel } from '@/components/admin/UsersSummaryPanel';
 import { getRealIdentity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
@@ -33,7 +34,7 @@ import { canUseResearchConsole } from '@/lib/roles';
 
 import { cn } from '@/lib/utils';
 
-type AdminTab = 'assistantManager' | 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'approvedStrategies' | 'certifiedStrategies' | 'assistantQuestions' | 'guidedStepQuestions' | 'ragDocs' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'groupsClasses' | 'usersSummary' | 'training' | 'pqbl' | 'rolePreview';
+type AdminTab = 'assistantManager' | 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'approvedStrategies' | 'certifiedStrategies' | 'assistantQuestions' | 'guidedStepQuestions' | 'promptExport' | 'ragDocs' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'groupsClasses' | 'usersSummary' | 'training' | 'pqbl' | 'rolePreview';
 
 export default function AdminPage() {
     const router = useRouter();
@@ -56,6 +57,7 @@ export default function AdminPage() {
                 { id: 'certifiedStrategies', label: t('admin.tab.certified'), icon: Award },
                 { id: 'assistantQuestions', label: t('admin.tab.assistantQuestions'), icon: MessageCircleQuestion },
                 { id: 'guidedStepQuestions', label: t('admin.tab.guidedStepQuestions'), icon: MessageCircleQuestion },
+                { id: 'promptExport', label: 'Prompt (export)', icon: Download },
                 { id: 'ragDocs', label: t('admin.tab.ragDocs'), icon: FolderOpen },
             ],
         },
@@ -227,6 +229,7 @@ export default function AdminPage() {
                         {activeTab === 'certifiedStrategies' && <CertifiedStrategiesPanel />}
                         {activeTab === 'assistantQuestions' && <AssistantQuestionsPanel />}
                         {activeTab === 'guidedStepQuestions' && <GuidedStepQuestionsPanel />}
+                        {activeTab === 'promptExport' && <PromptExportPanel />}
                         {activeTab === 'ragDocs' && <RagDocsPanel />}
                         {activeTab === 'surveys' && <SurveyViewer />}
                         {activeTab === 'results' && <QuestionnaireResultsViewer />}
