@@ -13,7 +13,8 @@ interface LearnerProfileData {
     context?: string;
     goal?: string;
     main_difficulty?: string;
-    tried?: string;
+    strengths?: string;
+    weaknesses?: string;
     notes?: string;
     gender?: string;
     age?: string;
@@ -65,7 +66,8 @@ const PROFILE_FIELDS: { key: keyof LearnerProfileData; labelKey: string }[] = [
     { key: 'context', labelKey: 'profileChanges.field.context' },
     { key: 'goal', labelKey: 'profileChanges.field.goal' },
     { key: 'main_difficulty', labelKey: 'profileChanges.field.difficulty' },
-    { key: 'tried', labelKey: 'profileChanges.field.tried' },
+    { key: 'strengths', labelKey: 'profileChanges.field.strengths' },
+    { key: 'weaknesses', labelKey: 'profileChanges.field.weaknesses' },
     { key: 'notes', labelKey: 'profileChanges.field.notes' },
 ];
 

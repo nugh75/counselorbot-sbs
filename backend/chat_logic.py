@@ -1494,7 +1494,8 @@ _LEARNER_PROFILE_LABELS = {
     "context": "Contesto di studio",
     "goal": "Obiettivo attuale",
     "main_difficulty": "Difficoltà principale percepita",
-    "tried": "Strategie già provate",
+    "strengths": "Punti di forza",
+    "weaknesses": "Punti di debolezza",
     "notes": "Note",
 }
 

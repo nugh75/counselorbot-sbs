@@ -16,7 +16,8 @@ export interface LearnerProfileData {
     context?: string;
     goal?: string;
     main_difficulty?: string;
-    tried?: string;
+    strengths?: string;
+    weaknesses?: string;
     notes?: string;
     gender?: string;
     age?: string;
@@ -42,7 +43,8 @@ const FIELDS: { key: keyof LearnerProfileData; labelKey: string; multiline?: boo
     { key: 'context', labelKey: 'lp.field.context' },
     { key: 'goal', labelKey: 'lp.field.goal' },
     { key: 'main_difficulty', labelKey: 'lp.field.difficulty' },
-    { key: 'tried', labelKey: 'lp.field.tried', multiline: true },
+    { key: 'strengths', labelKey: 'lp.field.strengths', multiline: true },
+    { key: 'weaknesses', labelKey: 'lp.field.weaknesses', multiline: true },
     { key: 'notes', labelKey: 'lp.field.notes', multiline: true },
 ];
 
