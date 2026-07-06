@@ -585,7 +585,7 @@ class ScoreRequest(BaseModel):
 
 # --- Learner profile (modello del discente auto-dichiarato) ---
 
-LEARNER_PROFILE_FIELDS = ("context", "goal", "main_difficulty", "tried", "notes", "gender", "age", "school_class", "school_year")
+LEARNER_PROFILE_FIELDS = ("context", "goal", "main_difficulty", "strengths", "weaknesses", "notes", "gender", "age", "school_class", "school_year")
 LEARNER_PROFILE_MAX_FIELD_CHARS = 600
 
 
@@ -594,7 +594,8 @@ class LearnerProfileSave(BaseModel):
     context: Optional[str] = None
     goal: Optional[str] = None
     main_difficulty: Optional[str] = None
-    tried: Optional[str] = None
+    strengths: Optional[str] = None
+    weaknesses: Optional[str] = None
     notes: Optional[str] = None
     gender: Optional[str] = None
     age: Optional[str] = None
@@ -603,7 +604,7 @@ class LearnerProfileSave(BaseModel):
     source: str = "manual"  # intake|session_start|session_end|manual
     session_id: Optional[str] = None
 
-    @validator("context", "goal", "main_difficulty", "tried", "notes", "gender", "age", "school_class", "school_year", pre=True)
+    @validator("context", "goal", "main_difficulty", "strengths", "weaknesses", "notes", "gender", "age", "school_class", "school_year", pre=True)
     def _trim_and_cap(cls, v):
         if v is None:
             return None
