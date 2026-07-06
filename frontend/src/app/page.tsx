@@ -32,7 +32,7 @@ import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 
 
-type Step = 'intro' | 'counselor-select' | 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'farewell';
+type Step = 'intro' | 'notebook' | 'counselor-select' | 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'farewell';
 
 const STARTABLE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
 
@@ -170,9 +170,6 @@ export default function Home() {
     const [sessionId, setSessionId] = useState<string>('');
     const [pdfToken, setPdfToken] = useState<string | undefined>(undefined);
     const [experience, setExperience] = useState<'standard' | 'opencode' | null>(null);
-    // Schermata profilo studente separata dalla scelta modalità: true = già rivisto,
-    // si passa alla scelta. Auto-skip se la card non ha nulla da mostrare.
-    const [profileReviewed, setProfileReviewed] = useState(false);
     // PDF finale inline: barra di avanzamento durante la preparazione, poi
     // anteprima in un iframe sotto la card (niente pagina/download separati).
     const [pdfLoading, setPdfLoading] = useState(false);
@@ -219,7 +216,6 @@ export default function Home() {
                 setSessionId(r.sessionId);
                 setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
                 setExperience(r.experience);
-                setProfileReviewed(true);
                 setStep('interaction');
                 return;
             }
@@ -231,7 +227,6 @@ export default function Home() {
             setPdfToken(undefined);
             setSessionId('');
             setExperience(null);
-            setProfileReviewed(false);
             setStep('questionnaire-select');
             window.history.replaceState(null, '', window.location.pathname);
             return;
@@ -250,7 +245,6 @@ export default function Home() {
             setSelectedInstrumentId(questionnaire.id);
             setSessionId(resumeSession);
             setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
-            setProfileReviewed(false);
             setExperience(null);
             setStep('counselor-select');
             window.history.replaceState(null, '', window.location.pathname);
@@ -267,7 +261,6 @@ export default function Home() {
         setPdfToken(undefined);
         setSessionId('');
         setExperience(null);
-        setProfileReviewed(false);
         setStep('counselor-select');
         window.history.replaceState(null, '', window.location.pathname);
     }, [identity]);
@@ -295,7 +288,6 @@ export default function Home() {
             }
         }
 
-        setProfileReviewed(false);
         setExperience(null);
         setStep('interaction');
     };
@@ -307,7 +299,6 @@ export default function Home() {
         setPdfToken(undefined);
         setSessionId('');
         setExperience(null);
-        setProfileReviewed(false);
         setStep('counselor-select');
     };
 
@@ -385,7 +376,6 @@ export default function Home() {
             console.error("Failed to save questionnaire result", e);
         }
 
-        setProfileReviewed(false);
         setStep('interaction');
     };
 
@@ -413,7 +403,8 @@ export default function Home() {
     };
 
     const goBack = () => {
-        if (step === 'questionnaire-select') setStep('intro');
+        if (step === 'notebook') setStep('intro');
+        else if (step === 'questionnaire-select') setStep('notebook');
         else if (step === 'counselor-select') setStep('questionnaire-select');
         else if (step === 'method-select') setStep('counselor-select');
         else if (step === 'manual-input' || step === 'upload-input') setStep('method-select');
@@ -490,16 +481,15 @@ export default function Home() {
     }
 
     // Orientamento percorso: mappa lo step interno alle fasi visibili. Il taccuino
-    // si rivede a inizio interaction (prima della chat) → tappa a sé tra Profilo e Conversa.
-    const flowStages = ['CounselorBot', t('flow.select'), t('flow.counselor'), t('flow.input'), t('flow.profile'), t('flow.taccuino'), t('flow.chat'), t('flow.done')];
-    const inTaccuino = step === 'interaction' && experience === null && !profileReviewed;
+    // è la prima tappa (generale, indipendente dallo strumento), subito dopo l'intro.
+    const flowStages = ['CounselorBot', t('flow.taccuino'), t('flow.select'), t('flow.counselor'), t('flow.input'), t('flow.profile'), t('flow.chat'), t('flow.done')];
     const stageIndex =
         step === 'intro' ? 0
-            : step === 'questionnaire-select' ? 1
-                : step === 'counselor-select' ? 2
-                    : step === 'method-select' || step === 'manual-input' || step === 'upload-input' ? 3
-                        : step === 'dashboard' ? 4
-                            : inTaccuino ? 5
+            : step === 'notebook' ? 1
+                : step === 'questionnaire-select' ? 2
+                    : step === 'counselor-select' ? 3
+                        : step === 'method-select' || step === 'manual-input' || step === 'upload-input' ? 4
+                            : step === 'dashboard' ? 5
                                 : step === 'interaction' ? 6
                                     : 7;
 
@@ -511,7 +501,7 @@ export default function Home() {
             {/* method-select e manual-input gestiscono la loro "prima riga" */}
             {/* internamente (BackButton + ForwardButton), come strumenti/counselor. */}
             {/* 'completed' non mostra il PageHeader: il titolo è già nella card. */}
-            {step !== 'intro' && step !== 'questionnaire-select' && step !== 'counselor-select' && step !== 'dashboard' && step !== 'interaction' && step !== 'method-select' && step !== 'manual-input' && step !== 'upload-input' && step !== 'completed' && (
+            {step !== 'intro' && step !== 'notebook' && step !== 'questionnaire-select' && step !== 'counselor-select' && step !== 'dashboard' && step !== 'interaction' && step !== 'method-select' && step !== 'manual-input' && step !== 'upload-input' && step !== 'completed' && (
                 <PageHeader
                     title={getStepTitle()}
                     subtitle={getStepDescription()}
@@ -529,7 +519,20 @@ export default function Home() {
                 >
                     {/* Step: Intro */}
                     {step === 'intro' && (
-                        <IntroScreen onStart={() => setStep('questionnaire-select')} />
+                        <IntroScreen onStart={() => setStep('notebook')} />
+                    )}
+
+                    {/* Step: Taccuino (sempre per primo, generale, indipendente dallo strumento) */}
+                    {step === 'notebook' && (
+                        <div className="mx-auto max-w-2xl space-y-4">
+                            <LearnerProfileCard
+                                variant="review"
+                                requireInitial
+                                onDone={() => setStep('questionnaire-select')}
+                                onUnavailable={() => setStep('questionnaire-select')}
+                                onBack={goBack}
+                            />
+                        </div>
                     )}
 
                     {/* Step: Counselor Selection */}
@@ -585,23 +588,9 @@ export default function Home() {
                     {/* Step: Guided Chat Interaction */}
                     {step === 'interaction' && scores && selectedQuestionnaire && (
                         <div className="space-y-6">
-                            {!(experience === null && !profileReviewed) && (
-                                <BackButton onClick={goBack} label={t('nav.back')} />
-                            )}
-                            {experience === null && !profileReviewed ? (
-                                /* Schermata 1: profilo studente, a tutta pagina. La card guida
-                                   l'avanzamento con la "prima riga" uniforme (back + matita +
-                                   freccia destra) e si auto-salta se non c'è nulla. */
-                                <LearnerProfileCard
-                                    variant="review"
-                                    sessionId={sessionId}
-                                    requireInitial
-                                    onDone={() => setProfileReviewed(true)}
-                                    onUnavailable={() => setProfileReviewed(true)}
-                                    onBack={goBack}
-                                />
-                            ) : experience === null ? (
-                                /* Schermata 2: scelta modalità, compatta (tasti piccoli, affiancati). */
+                            <BackButton onClick={goBack} label={t('nav.back')} />
+                            {experience === null ? (
+                                /* Scelta modalità, compatta (tasti piccoli, affiancati). */
                                 <div className="max-w-md mx-auto">
                                     <div className="glass-panel p-6 text-center space-y-4">
                                         <div>
