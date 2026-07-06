@@ -1204,6 +1204,80 @@ async def admin_reorder_guided_steps(items: List[schemas.ReorderItem], current_u
     return {"status": "success"}
 
 
+# Ordine di presentazione degli strumenti nell'export (gli altri seguono in coda).
+_EXPORT_INSTRUMENT_ORDER = ["QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP"]
+
+
+@router.get("/admin/guided-steps/export")
+async def admin_export_guided_steps_md(current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    """Esporta in un unico file Markdown tutti i prompt degli strumenti.
+
+    Per ogni strumento, in ordine di step: nome, meta, prompt e domande suggerite.
+    """
+    steps = db.query(models.GuidedStep).order_by(models.GuidedStep.sort_order).all()
+    active_questions = (
+        db.query(models.GuidedStepQuestion)
+        .filter(models.GuidedStepQuestion.is_active.is_(True))
+        .order_by(models.GuidedStepQuestion.sort_order)
+        .all()
+    )
+
+    questions_by_step: dict = {}
+    for q in active_questions:
+        questions_by_step.setdefault((q.questionnaire_type, q.step_id), []).append(q)
+
+    steps_by_instrument: dict = {}
+    for step in steps:
+        steps_by_instrument.setdefault(step.questionnaire_type, []).append(step)
+
+    ordered_instruments = [i for i in _EXPORT_INSTRUMENT_ORDER if i in steps_by_instrument]
+    ordered_instruments += [i for i in sorted(steps_by_instrument) if i not in _EXPORT_INSTRUMENT_ORDER]
+
+    exported_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    lines: List[str] = [
+        "# Prompt degli strumenti — CounselorBot",
+        "",
+        f"_Esportato il {exported_at}_",
+        "",
+        f"Strumenti inclusi: {', '.join(ordered_instruments) or '—'}",
+        "",
+    ]
+
+    for instrument in ordered_instruments:
+        instrument_steps = sorted(steps_by_instrument[instrument], key=lambda s: s.sort_order)
+        lines += [f"## {instrument}", "", f"_{len(instrument_steps)} step_", ""]
+        for step in instrument_steps:
+            lines += [
+                f"### {step.sort_order}. {step.label}",
+                "",
+                f"- **id**: `{step.id}`",
+                f"- **questionnaire_type**: {step.questionnaire_type}",
+                f"- **system_prompt_mode**: {step.system_prompt_mode}",
+                f"- **color_theme**: {step.color_theme}",
+                "",
+                "**Prompt:**",
+                "",
+                "```text",
+                (step.prompt or "").rstrip(),
+                "```",
+                "",
+            ]
+            step_questions = questions_by_step.get((step.questionnaire_type, step.id), [])
+            if step_questions:
+                lines += ["**Domande suggerite:**", ""]
+                lines += [f"- ({q.language}) {q.text}" for q in step_questions]
+                lines.append("")
+        lines += ["---", ""]
+
+    markdown = "\n".join(lines)
+    filename = f"counselorbot_prompts_{datetime.now(timezone.utc).strftime('%Y%m%d')}.md"
+    return Response(
+        content=markdown,
+        media_type="text/markdown; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
 # --- Admin Training Dataset Review ---
 
 @router.get("/admin/training-dataset/summary", response_model=schemas.TrainingSummaryResponse)
