@@ -1209,9 +1209,14 @@ _EXPORT_INSTRUMENT_ORDER = ["QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "
 
 
 @router.get("/admin/guided-steps/export")
-async def admin_export_guided_steps_md(current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
-    """Esporta in un unico file Markdown tutti i prompt degli strumenti.
+async def admin_export_guided_steps_md(
+    instrument: Optional[str] = Query(None),
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Esporta in Markdown i prompt degli strumenti.
 
+    Senza ``instrument`` esporta tutti gli strumenti; con ``instrument`` solo quello.
     Per ogni strumento, in ordine di step: nome, meta, prompt e domande suggerite.
     """
     steps = db.query(models.GuidedStep).order_by(models.GuidedStep.sort_order).all()
@@ -1232,6 +1237,11 @@ async def admin_export_guided_steps_md(current_user: models.User = Depends(auth.
 
     ordered_instruments = [i for i in _EXPORT_INSTRUMENT_ORDER if i in steps_by_instrument]
     ordered_instruments += [i for i in sorted(steps_by_instrument) if i not in _EXPORT_INSTRUMENT_ORDER]
+
+    if instrument:
+        if instrument not in steps_by_instrument:
+            raise HTTPException(status_code=404, detail=f"Nessuno step per lo strumento '{instrument}'")
+        ordered_instruments = [instrument]
 
     exported_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     lines: List[str] = [
@@ -1270,7 +1280,8 @@ async def admin_export_guided_steps_md(current_user: models.User = Depends(auth.
         lines += ["---", ""]
 
     markdown = "\n".join(lines)
-    filename = f"counselorbot_prompts_{datetime.now(timezone.utc).strftime('%Y%m%d')}.md"
+    slug = f"_{instrument}" if instrument else ""
+    filename = f"counselorbot_prompts{slug}_{datetime.now(timezone.utc).strftime('%Y%m%d')}.md"
     return Response(
         content=markdown,
         media_type="text/markdown; charset=utf-8",
