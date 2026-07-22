@@ -40,7 +40,9 @@ services:
       - ./rag-collections:/app/rag-collections
       - rag_index:/app/rag_index
       - ./uploads:/app/uploads
-      - /run/cloudflared-agent:/run/cloudflared-agent
+      # Sorgente in /var/lib (disco) e non /run (tmpfs): /run e' svuotata a ogni
+      # avvio WSL e la dir ricreata con un inode nuovo staccava il bind-mount.
+      - /var/lib/cloudflared-agent:/run/cloudflared-agent
       - /home/nugh75/.cache/ai4educ-opencode:/opencode-workspaces
     depends_on:
       - postgres
