@@ -20,6 +20,7 @@ from .ai_service import AIService
 from .memory_service import session_memory
 from .strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_memory, strategy_memory
 from .certified_strategy_service import certified_strategy_memory
+from .skills import engine as skills_engine
 from .guided_step_label_i18n import resolve_step_label
 from .rag_index import site_rag_index, counselorbot_rag_index, questionari_rag_index, build_context as rag_build_context
 from .api_models import ChatRequest
@@ -1637,20 +1638,7 @@ def _retrieved_context(
     if component_flags is None:
         component_flags = PROMPT_COMPONENT_DEFAULTS
 
-    strategies = []
-    if bool(component_flags.get("approved_strategies", True)):
-        strategies_config = db.query(models.Config).filter(models.Config.key == APPROVED_STRATEGIES_CONFIG_KEY).first()
-        approved_strategies_markdown = strategies_config.value if strategies_config else None
-        strategies = strategy_memory.retrieve(
-            questionnaire_type=questionnaire_type,
-            phase=request.phase or "",
-            query=query,
-            language=request.language or "it",
-            ai_service=ai_service,
-            markdown_text=approved_strategies_markdown,
-        )
-        strategies = _filter_allowed_strategy_entries(strategies, component_flags.get("allowed_strategies"))
-    strategy_context = strategy_memory.render_context(strategies)
+    engine_on = skills_engine.enabled(db, questionnaire_type)
 
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
     phase_codes = _phase_factor_codes(db, request.phase)
@@ -1670,19 +1658,62 @@ def _retrieved_context(
         certified_strategy_limit,
         _default_certified_strategy_limit(step_mode),
     )
-    certified = []
-    if bool(component_flags.get("certified_strategies", True)) and certified_limit > 0:
-        certified = certified_strategy_memory.retrieve(
+
+    if engine_on:
+        ctx = skills_engine.build_context(
             db,
+            ai_service,
             questionnaire_type=questionnaire_type,
-            scores_context=certified_scores_context,
-            query=certified_phase_query,
+            step_id=request.phase,
+            step_mode=step_mode,
             language=request.language or "it",
-            limit=certified_limit,
-            ai_service=ai_service,
+            # `query` e' quella generica usata oggi da strategy_memory;
+            # `step_query` quella arricchita usata dal catalogo certificato.
+            query=query,
+            step_query=certified_phase_query,
+            message=request.message or "",
+            scores_context=certified_scores_context,
+            component_flags=dict(component_flags),
+            handler_options={
+                "certified_strategy_limit": certified_limit,
+                "allowed_strategies": component_flags.get("allowed_strategies"),
+            },
         )
-        certified = _filter_allowed_strategy_entries(certified, component_flags.get("allowed_strategies"))
-    certified_context = certified_strategy_memory.render_context(certified, request.language or "it")
+        skills_result = skills_engine.run_skills(ctx, router_enabled=False)
+        knowledge_blocks = skills_result.blocks.get("knowledge", [])
+        strategy_ids = skills_result.ids.get("approved-strategies", [])
+        certified_ids = skills_result.ids.get("certified-advice", [])
+    else:
+        strategies = []
+        if bool(component_flags.get("approved_strategies", True)):
+            strategies_config = db.query(models.Config).filter(models.Config.key == APPROVED_STRATEGIES_CONFIG_KEY).first()
+            approved_strategies_markdown = strategies_config.value if strategies_config else None
+            strategies = strategy_memory.retrieve(
+                questionnaire_type=questionnaire_type,
+                phase=request.phase or "",
+                query=query,
+                language=request.language or "it",
+                ai_service=ai_service,
+                markdown_text=approved_strategies_markdown,
+            )
+            strategies = _filter_allowed_strategy_entries(strategies, component_flags.get("allowed_strategies"))
+        strategy_context = strategy_memory.render_context(strategies)
+        certified = []
+        if bool(component_flags.get("certified_strategies", True)) and certified_limit > 0:
+            certified = certified_strategy_memory.retrieve(
+                db,
+                questionnaire_type=questionnaire_type,
+                scores_context=certified_scores_context,
+                query=certified_phase_query,
+                language=request.language or "it",
+                limit=certified_limit,
+                ai_service=ai_service,
+            )
+            certified = _filter_allowed_strategy_entries(certified, component_flags.get("allowed_strategies"))
+        certified_context = certified_strategy_memory.render_context(certified, request.language or "it")
+        knowledge_blocks = [strategy_context, certified_context]
+        strategy_ids = [strategy["id"] for strategy in strategies]
+        certified_ids = [strategy["id"] for strategy in certified]
 
     learned_responses = []
     if bool(component_flags.get("shared_responses", True)):
@@ -1758,17 +1789,12 @@ def _retrieved_context(
             graph_context,
             counselorbot_context,
             questionari_context,
-            strategy_context,
-            certified_context,
+            *knowledge_blocks,
             learned_context,
         )
         if section
     ]
-    return (
-        "\n\n".join(sections),
-        [strategy["id"] for strategy in strategies],
-        [strategy["id"] for strategy in certified],
-    )
+    return "\n\n".join(sections), strategy_ids, certified_ids
 
 
 PROMPT_COMPONENT_DEFAULTS = {
@@ -2005,6 +2031,7 @@ def build_context_envelope(
     create_anonymous_code: bool = True,
     component_flags: dict[str, bool] | None = None,
     components: dict | None = None,
+    skills_blocks: dict[str, list[str]] | None = None,
 ) -> tuple[str, str, list]:
     """Assembla l'envelope canonico della chat counselor (Fase 5):
     SYSTEM = [PERSONA] [SECTION] [STUDENT] [PROFILE] [KNOWLEDGE]
@@ -2054,6 +2081,10 @@ def build_context_envelope(
         components["meta_system_prompt"] = meta_system_prompt
     if meta_system_prompt:
         parts_system.append("[META SYSTEM PROMPT]\n" + meta_system_prompt)
+
+    # Slot [SECTION] delle skill: predisposto, nessuna skill lo usa nel pilota.
+    for block in (skills_blocks or {}).get("section", []):
+        parts_system.append(block)
 
     # --- [STUDENT] dati studente da identity + stato sessione distillato ---
     student_lines: list[str] = []
@@ -2140,6 +2171,10 @@ def build_context_envelope(
     # --- [KNOWLEDGE] grafo + strategie + certificate + votate (da _retrieved_context) ---
     if knowledge_context:
         parts_system.append("[KNOWLEDGE]\n" + knowledge_context)
+
+    # Slot di coda delle skill: direttive che devono chiudere il system prompt.
+    for block in (skills_blocks or {}).get("directive_tail", []):
+        parts_system.append(block)
 
     system_prompt_final = "\n\n".join(parts_system)
     if components is not None:
