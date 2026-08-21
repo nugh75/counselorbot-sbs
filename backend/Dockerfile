@@ -14,6 +14,7 @@ RUN mkdir backend
 COPY backend/*.py backend/
 COPY backend/*.json backend/
 COPY backend/routes/ backend/routes/
+COPY backend/skills/ backend/skills/
 COPY backend/tests/ backend/tests/
 COPY knowledge/ knowledge/
 

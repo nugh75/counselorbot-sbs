@@ -262,6 +262,14 @@ EXPECTED_ROUTES = {
     ("GET", "/admin/surveys"),
     ("DELETE", "/admin/survey/{survey_id}"),
     ("GET", "/admin/strategy-feedback"),
+    ("GET", "/admin/skills"),
+    ("POST", "/admin/skills"),
+    ("PUT", "/admin/skills/{skill_id}"),
+    ("DELETE", "/admin/skills/{skill_id}"),
+    ("GET", "/admin/skills/handlers"),
+    ("GET", "/admin/skills/step-map"),
+    ("PUT", "/admin/skills/step-map"),
+    ("POST", "/admin/skills/preview"),
     ("GET", "/qsa/guided-ui-texts"),
     ("POST", "/telegram/webhook"),
     ("GET", "/telegram/bot-info"),
@@ -4895,6 +4903,23 @@ def _main():
             failed += 1
     print(f"\n{passed} passed, {failed} failed")
     return 1 if failed else 0
+
+
+
+def test_skills_handler_whitelist():
+    """Un handler non registrato deve essere rifiutato, non salvato."""
+    from backend.skills import handlers as skills_handlers
+
+    assert "certified_strategies" in skills_handlers.handler_names()
+    assert "approved_strategies" in skills_handlers.handler_names()
+
+    res = client.post("/admin/skills", json={
+        "slug": "smoke-broken",
+        "name": "Smoke broken",
+        "handler": "inesistente",
+    })
+    assert res.status_code == 400, res.text
+    assert "handler sconosciuto" in res.json()["detail"]
 
 
 if __name__ == "__main__":

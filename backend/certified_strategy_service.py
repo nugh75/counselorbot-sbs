@@ -267,3 +267,19 @@ class CertifiedStrategyMemory:
 
 
 certified_strategy_memory = CertifiedStrategyMemory()
+
+
+# --- API pubblica riusata dal motore di skill ---------------------------------
+# Il parsing dei punteggi e dei codici fattore resta qui: e' logica di dominio
+# gia' testata. Il motore di skill la consuma da queste due funzioni invece di
+# duplicare le regex.
+
+def factor_tokens(text: str) -> set[str]:
+    """Codici fattore citati nel testo (C6, A2, T1, C4r...), upper-case."""
+    return certified_strategy_memory._factor_tokens(text)
+
+
+def score_bands(questionnaire: str, scores_context: str) -> dict[str, str]:
+    """Mappa codice -> banda (growth/adequate/normal/strength) per QSA/QSAr."""
+    raw = certified_strategy_memory._score_bands((questionnaire or "").upper(), scores_context or "")
+    return {code: info["band"] for code, info in raw.items()}
