@@ -100,3 +100,112 @@ def render(bindings: list[SkillBinding], ctx: SkillContext, total_max_chars: int
         result.blocks.setdefault(skill.slot, []).append(text)
         result.trace.append(entry)
     return result
+
+
+def _config_value(db, key: str, default: str = "") -> str:
+    from .. import models as _models
+
+    row = db.query(_models.Config).filter(_models.Config.key == key).first()
+    return (row.value if row and row.value is not None else default) or default
+
+
+def _config_int(db, key: str, default: int) -> int:
+    try:
+        return int(_config_value(db, key, str(default)))
+    except (TypeError, ValueError):
+        return default
+
+
+def enabled(db, questionnaire_type: str) -> bool:
+    """Il motore gira solo se acceso globalmente e per questo strumento."""
+    import json as _json
+
+    if _config_value(db, "skills_engine_enabled", "false").strip().lower() not in ("1", "true", "yes", "on"):
+        return False
+    try:
+        instruments = _json.loads(_config_value(db, "skills_engine_instruments", "[]") or "[]")
+    except (TypeError, ValueError):
+        return False
+    if not isinstance(instruments, list):
+        return False
+    return (questionnaire_type or "").upper() in {str(i).upper() for i in instruments}
+
+
+def build_context(
+    db,
+    ai_service,
+    *,
+    questionnaire_type: str,
+    step_id: str | None,
+    step_mode: str | None,
+    language: str,
+    query: str,
+    step_query: str,
+    message: str,
+    scores_context: str,
+    component_flags: dict | None = None,
+    handler_options: dict | None = None,
+) -> SkillContext:
+    """Fotografa il turno: i fattori salienti e le bande si calcolano una volta."""
+    return SkillContext(
+        questionnaire_type=questionnaire_type or "",
+        step_id=step_id,
+        step_mode=step_mode,
+        language=language or "it",
+        query=query or "",
+        step_query=step_query or "",
+        message=message or "",
+        scores_context=scores_context or "",
+        salient_factors=handlers.compute_salient_factors(f"{scores_context} {step_query}"),
+        score_bands=handlers.compute_score_bands(questionnaire_type, scores_context),
+        component_flags=dict(component_flags or {}),
+        handler_options=dict(handler_options or {}),
+        db=db,
+        ai_service=ai_service,
+    )
+
+
+def run_skills(ctx: SkillContext, *, router_enabled: bool = True) -> SkillsResult:
+    """Filtra, seleziona e rende le skill agganciate allo step corrente."""
+    from . import conditions as _conditions
+    from .registry import COMPONENT_FLAG_BY_SLUG, bindings_for
+
+    result = SkillsResult()
+    try:
+        bindings = bindings_for(ctx.db, ctx.questionnaire_type, ctx.step_id)
+    except Exception as exc:
+        logger.warning("Caricamento skill fallito: %s", exc)
+        return result
+
+    candidates = []
+    for binding in bindings:
+        flag = COMPONENT_FLAG_BY_SLUG.get(binding.slug)
+        if flag is not None and not bool(ctx.component_flags.get(flag, True)):
+            result.trace.append({"slug": binding.slug, "skipped": f"componente {flag} disattivata"})
+            continue
+        ok, reason = _conditions.match(binding.skill.conditions, ctx)
+        if not ok:
+            result.trace.append({"slug": binding.slug, "skipped": reason})
+            continue
+        # Le opzioni per step configurate dall'admin vincono sui parametri skill.
+        params = dict(binding.params)
+        if binding.slug == "certified-advice" and "certified_strategy_limit" in ctx.handler_options:
+            params["limit"] = ctx.handler_options["certified_strategy_limit"]
+        if "allowed_strategies" in ctx.handler_options:
+            params["allowed_strategies"] = ctx.handler_options["allowed_strategies"]
+        binding.params = params
+        candidates.append(binding)
+
+    if router_enabled:
+        from .router import select
+
+        selected, router_trace = select(candidates, ctx)
+        result.trace.extend(router_trace)
+    else:
+        selected = candidates
+
+    rendered = render(selected, ctx, total_max_chars=_config_int(ctx.db, "skills_total_max_chars", DEFAULT_TOTAL_MAX_CHARS))
+    result.blocks = rendered.blocks
+    result.ids = rendered.ids
+    result.trace.extend(rendered.trace)
+    return result

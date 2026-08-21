@@ -595,10 +595,24 @@ def _seed_and_migrate():
             ("usd_eur_rate", "0.92", "Tasso di cambio USD->EUR per la conversione dei costi nel pannello admin."),
             ("monthly_budget_usd", "0", "Budget mensile in USD; superato il limite si usano solo modelli Ollama locali (0 = nessun limite)."),
             ("budget_fallback_model", "qwen3.5:9b", "Modello Ollama locale usato quando il budget mensile e' superato."),
+            ("skills_engine_enabled", "false", "Motore di skill attivo (true/false). Spento: la chat usa il percorso strategie storico."),
+            ("skills_engine_instruments", "[]", "Lista JSON degli strumenti su cui il motore di skill e' attivo, es. [\"QSA\"]."),
+            ("skills_router_threshold", "3", "Numero di skill opzionali candidate oltre il quale interviene il router LLM."),
+            ("skills_router_model", "", "Modello usato dal router delle skill; vuoto = modello attivo."),
+            ("skills_router_timeout_s", "6", "Timeout in secondi della chiamata di routing delle skill."),
+            ("skills_total_max_chars", "3000", "Tetto complessivo in caratteri dei blocchi prodotti dalle skill."),
         ]:
             if not db.query(models.Config).filter(models.Config.key == key).first():
                 db.add(models.Config(key=key, value=default, description=descr))
                 db.commit()
+
+        # Skill pilota + agganci: append-only, non tocca definizioni esistenti.
+        try:
+            from .skills_seed import seed_skills
+            if seed_skills(db):
+                logger.info("Seed skill completato")
+        except Exception as e:
+            logger.warning(f"Seed skill fallito: {e}")
 
         # Seed text configs (system prompts + static messages) without overwriting
         existing_configs = {cfg.key: cfg for cfg in db.query(models.Config).all()}
