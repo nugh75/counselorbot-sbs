@@ -371,11 +371,13 @@ Su Postgres `counselorbot_test`, come il resto della suite.
 - `backend/tests/test_skills_router.py` — sotto soglia nessuna chiamata LLM;
   sopra soglia il router è invocato; timeout / JSON invalido / slug inventati ⇒
   fallback deterministico; il router non propaga mai eccezioni.
-- `backend/tests/test_skills_parity.py` — golden per QSA, QSAr, ZTPI, QPCS:
-  1. flag off ⇒ `_retrieved_context` produce output identico al comportamento
-     pre-modifica (snapshot committati);
-  2. flag on con i seed di default ⇒ stesso testo e stessi `ids` delle strategie;
-  3. flag on con una skill disattivata ⇒ diff limitato a quel blocco.
+- `backend/tests/test_skills_parity.py` — parità motore acceso / motore spento:
+  1. stesso turno eseguito con flag off e con flag on ⇒ stesso testo e stessi
+     `ids` (equivalenza on/off, non snapshot committati: il ramo off resta il
+     codice attuale intatto, quindi l'uguaglianza on/off dà la parità con il
+     comportamento pre-modifica senza golden da manutenere);
+  2. flag on per uno strumento non in lista ⇒ motore inattivo;
+  3. flag on con un aggancio disattivato ⇒ diff limitato a quel blocco.
 - `backend/tests/test_skills_engine.py` — budget e troncamento, precedenza
   `always` su `optional`, skill senza handler, handler sconosciuto.
 - `backend/tests/test_smoke.py` — esteso con l'endpoint `/admin/skills`.
