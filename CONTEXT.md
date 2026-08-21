@@ -35,6 +35,7 @@ CounselorBot is an AI-powered web app that helps students analyze learning/caree
 ### Core Concepts
 - **Guided path**: ordered `GuidedStep` rows per `questionnaire_type`. Each step has a `prompt` and `system_prompt_mode`. Steps are database-driven, seeded at startup from `prompt_config.py`.
 - **Suggested questions**: `GuidedStepQuestion` rows linked to steps, shown as clickable suggestions in the student chat UI. Defaults in `guided_step_questions_seed.py`.
+- **Skills engine**: `backend/skills/` selects and renders the skills bound to the current step. Deterministic filter on declarative `conditions`, then an LLM router only when the optional candidates exceed `skills_router_threshold` (deterministic fallback on error or timeout). The pilot covers strategy suggestion (`approved-strategies`, `certified-advice`); the historic path in `chat_logic._retrieved_context` stays active while the flag is off.
 - **Session**: a chat session tied to a `QuestionnaireResult`. Has rolling Markdown conversational memory on disk.
 - **Student-facing chat** vs **Admin panel**: two sides of the same app. Admin edits prompts, API keys, guided steps, counselors live via UI.
 - **Cross-synthesis**: on-demand synthesis across a student's multiple instrument results (`cross_synthesis.py`, `/user/cross-synthesis`).
@@ -76,6 +77,7 @@ ai4auth forward-auth at the edge (Nginx). Proxy injects `Remote-*` headers → p
 - **Strategy memory**: knowledge base from `knowledge/approved_strategies.md`, optionally overridden by the admin UI in DB config key `approved_strategies_markdown`
 - **SharedChatResponse**: user feedback (helpful/unhelpful) on shared chat responses
 - **NormThreshold**: normative thresholds per instrument (stanine cutoffs)
+- **Skill / GuidedStepSkill**: declarative skills injected into the chat prompt (conditions, multilingual instructions, optional Python handler) and their binding to instrument/step (`step_id = "*"` = every step). Engine in `backend/skills/`, seed in `backend/skills_seed.py`, API `/admin/skills`. Off by default: `skills_engine_enabled`, `skills_engine_instruments`.
 - **PqblDocument / PqblQuestion / PqblSession / PqblAttempt**: PQBL (Problem/Question-Based Learning) — uploaded PDFs, generated MCQs, student sessions, answer attempts
 - **ValidationResponse**: psychometric validation data
 
