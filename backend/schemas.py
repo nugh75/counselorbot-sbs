@@ -1059,3 +1059,75 @@ class GroupShareResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# --- Skill della chat (admin) ---
+class SkillBase(BaseModel):
+    slug: str
+    name: str
+    description: Optional[str] = None
+    instructions_i18n: Optional[dict] = None
+    conditions: Optional[dict] = None
+    handler: Optional[str] = None
+    handler_params: Optional[dict] = None
+    routing: str = "optional"
+    slot: str = "knowledge"
+    max_chars: int = 1400
+    sort_order: int = 0
+    is_active: bool = True
+    status: str = "draft"
+
+
+class SkillCreate(SkillBase):
+    pass
+
+
+class SkillUpdate(BaseModel):
+    slug: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    instructions_i18n: Optional[dict] = None
+    conditions: Optional[dict] = None
+    handler: Optional[str] = None
+    handler_params: Optional[dict] = None
+    routing: Optional[str] = None
+    slot: Optional[str] = None
+    max_chars: Optional[int] = None
+    sort_order: Optional[int] = None
+    is_active: Optional[bool] = None
+    status: Optional[str] = None
+
+
+class SkillResponse(SkillBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class StepSkillEntry(BaseModel):
+    questionnaire_type: str
+    step_id: str
+    skill_id: int
+    sort_order: int = 0
+    enabled: bool = True
+    override_params: Optional[dict] = None
+
+
+class StepSkillMap(BaseModel):
+    questionnaire_type: str
+    entries: List[StepSkillEntry]
+
+
+class SkillPreviewRequest(BaseModel):
+    questionnaire_type: str
+    step_id: Optional[str] = None
+    language: str = "it"
+    scores_context: str = ""
+    message: str = ""
+
+
+class SkillPreviewResponse(BaseModel):
+    blocks: dict
+    ids: dict
+    trace: List[dict]
