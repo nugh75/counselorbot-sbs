@@ -747,3 +747,51 @@ class GroupMembership(Base):
     username = Column(String, index=True, nullable=False)
     joined_via = Column(String, nullable=False, default="web")  # web | telegram | teacher
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Skill(Base):
+    """Unita' dichiarativa iniettabile nel prompt della chat.
+
+    La definizione e' editabile dall'admin: condizioni di attivazione,
+    istruzioni multilingua, handler Python opzionale per il materiale
+    recuperato. Entra in chat solo se `status == "published"` e `is_active`,
+    ed e' agganciata allo strumento/step da `GuidedStepSkill`.
+    """
+
+    __tablename__ = "skills"
+
+    id = Column(Integer, primary_key=True, index=True)
+    slug = Column(String, unique=True, index=True, nullable=False)
+    name = Column(String, nullable=False)
+    # Letta dal router LLM: descrive quando la skill e' utile.
+    description = Column(Text, nullable=True)
+    instructions_i18n = Column(JSON, nullable=True)   # {"it": "...", "en": "..."}
+    conditions = Column(JSON, nullable=True)          # gating dichiarativo
+    handler = Column(String, nullable=True)           # nome whitelisted
+    handler_params = Column(JSON, nullable=True)
+    routing = Column(String, nullable=False, default="optional")  # always | optional
+    slot = Column(String, nullable=False, default="knowledge")    # section | knowledge | directive_tail
+    max_chars = Column(Integer, nullable=False, default=1400)
+    sort_order = Column(Integer, nullable=False, default=0)
+    is_active = Column(Boolean, nullable=False, default=True)
+    status = Column(String, nullable=False, default="draft")      # draft | published
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class GuidedStepSkill(Base):
+    """Aggancio di una skill a uno step del percorso guidato.
+
+    `step_id == "*"` vale per tutti gli step dello strumento; un aggancio
+    esplicito sullo stesso step vince sul wildcard.
+    """
+
+    __tablename__ = "guided_step_skills"
+
+    id = Column(Integer, primary_key=True, index=True)
+    questionnaire_type = Column(String, nullable=False, index=True)
+    step_id = Column(String, nullable=False, index=True)
+    skill_id = Column(Integer, nullable=False, index=True)
+    sort_order = Column(Integer, nullable=False, default=0)
+    enabled = Column(Boolean, nullable=False, default=True)
+    override_params = Column(JSON, nullable=True)
