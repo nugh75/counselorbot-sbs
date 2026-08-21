@@ -1679,7 +1679,7 @@ def _retrieved_context(
                 "allowed_strategies": component_flags.get("allowed_strategies"),
             },
         )
-        skills_result = skills_engine.run_skills(ctx, router_enabled=False)
+        skills_result = skills_engine.run_skills(ctx)
         knowledge_blocks = skills_result.blocks.get("knowledge", [])
         strategy_ids = skills_result.ids.get("approved-strategies", [])
         certified_ids = skills_result.ids.get("certified-advice", [])
