@@ -1,41 +1,43 @@
 # Graph Report - /home/nugh75/counselorbot-sbs/docs  (2026-08-21)
 
 ## Corpus Check
-- cluster-only mode — file stats not available
+- 2 files · ~1,024,060 words
+- Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 403 nodes · 714 edges · 27 communities (20 shown, 7 thin omitted)
-- Extraction: 73% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 45 edges (avg confidence: 0.83)
-- Token cost: 0 input · 0 output
+- 470 nodes · 862 edges · 28 communities (21 shown, 7 thin omitted)
+- Extraction: 77% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 54 edges (avg confidence: 0.84)
+- Token cost: 136,345 input · 0 output
 
 ## Community Hubs (Navigation)
-- [[_COMMUNITY_QSAQSAr Validation Studies|QSA/QSAr Validation Studies]]
-- [[_COMMUNITY_Competenze Strategiche Platform|Competenze Strategiche Platform]]
-- [[_COMMUNITY_QAP Career Adaptability|QAP Career Adaptability]]
-- [[_COMMUNITY_CounselorBot Admin Console|CounselorBot Admin Console]]
-- [[_COMMUNITY_Ontology Base Concepts|Ontology Base Concepts]]
-- [[_COMMUNITY_QSA Learning Strategy Factors|QSA Learning Strategy Factors]]
-- [[_COMMUNITY_Project Documentation & Tasks|Project Documentation & Tasks]]
-- [[_COMMUNITY_Graphify Documentation Graph|Graphify Documentation Graph]]
-- [[_COMMUNITY_Self-Regulated Learning Theory|Self-Regulated Learning Theory]]
-- [[_COMMUNITY_Apprendo Project Resources|Apprendo Project Resources]]
-- [[_COMMUNITY_Site Archive & Conference PDFs|Site Archive & Conference PDFs]]
-- [[_COMMUNITY_CounselorBot Implementation & Review|CounselorBot Implementation & Review]]
-- [[_COMMUNITY_Soft Skills & Career Orientation|Soft Skills & Career Orientation]]
-- [[_COMMUNITY_CounselorBot Documentation|CounselorBot Documentation]]
-- [[_COMMUNITY_Character Skills Theory|Character Skills Theory]]
-- [[_COMMUNITY_Strategic Competences & DSA|Strategic Competences & DSA]]
-- [[_COMMUNITY_Giuseppe Crea|Giuseppe Crea]]
-- [[_COMMUNITY_Emad Samir Anis Matta|Emad Samir Anis Matta]]
-- [[_COMMUNITY_Sergio Melogno|Sergio Melogno]]
-- [[_COMMUNITY_Dirigere se stessi (2020)|Dirigere se stessi (2020)]]
-- [[_COMMUNITY_Career Orientation Methods|Career Orientation Methods]]
-- [[_COMMUNITY_Community 21|Community 21]]
-- [[_COMMUNITY_Community 22|Community 22]]
-- [[_COMMUNITY_Community 23|Community 23]]
-- [[_COMMUNITY_Community 24|Community 24]]
-- [[_COMMUNITY_Community 25|Community 25]]
-- [[_COMMUNITY_Community 26|Community 26]]
+- [[_COMMUNITY_Skills Engine Design|Skills Engine Design]]
+- [[_COMMUNITY_Bibliography Authors|Bibliography Authors]]
+- [[_COMMUNITY_CNOS-FAP Sources|CNOS-FAP Sources]]
+- [[_COMMUNITY_Project Diary (technical)|Project Diary (technical)]]
+- [[_COMMUNITY_QSA & Metacognition|QSA & Metacognition]]
+- [[_COMMUNITY_Diary Contributors|Diary Contributors]]
+- [[_COMMUNITY_Questionnaire Items|Questionnaire Items]]
+- [[_COMMUNITY_Instrument Documents|Instrument Documents]]
+- [[_COMMUNITY_Teacher & Researcher Roles|Teacher & Researcher Roles]]
+- [[_COMMUNITY_Psychometric Validation|Psychometric Validation]]
+- [[_COMMUNITY_Self-Regulated Learning Authors|Self-Regulated Learning Authors]]
+- [[_COMMUNITY_Telegram Bot Docs|Telegram Bot Docs]]
+- [[_COMMUNITY_Conference & Guide Files|Conference & Guide Files]]
+- [[_COMMUNITY_Project Docs Index|Project Docs Index]]
+- [[_COMMUNITY_Docs README Index|Docs README Index]]
+- [[_COMMUNITY_External Publications|External Publications]]
+- [[_COMMUNITY_Telegram Groups Plan|Telegram Groups Plan]]
+- [[_COMMUNITY_ai4auth Integration Docs|ai4auth Integration Docs]]
+- [[_COMMUNITY_Researcher Data Access|Researcher Data Access]]
+- [[_COMMUNITY_Melogno 2018 Paper|Melogno 2018 Paper]]
+- [[_COMMUNITY_Competenzestrategiche Site|Competenzestrategiche Site]]
+- [[_COMMUNITY_Graphify Docs|Graphify Docs]]
+- [[_COMMUNITY_Telegram Auth Flow|Telegram Auth Flow]]
+- [[_COMMUNITY_Author Crea|Author: Crea]]
+- [[_COMMUNITY_Author Matta|Author: Matta]]
+- [[_COMMUNITY_Author Melogno|Author: Melogno]]
+- [[_COMMUNITY_Dirigere Se Stessi 2020|Dirigere Se Stessi 2020]]
+- [[_COMMUNITY_Pellerey 2018 Paper|Pellerey 2018 Paper]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `QSA (Questionario sulle Strategie di Apprendimento)` - 45 edges
@@ -64,107 +66,120 @@
 ## Import Cycles
 - None detected.
 
-## Communities (27 total, 7 thin omitted)
+## Hyperedges (group relationships)
+- **Pipeline di un turno: contesto, agganci, condizioni, router, rendering** — plans_2026_08_21_skills_engine_engine_build_context, plans_2026_08_21_skills_engine_registry_bindings_for, plans_2026_08_21_skills_engine_conditions_match, plans_2026_08_21_skills_engine_router_select, plans_2026_08_21_skills_engine_engine_render [EXTRACTED 1.00]
+- **Rete di sicurezza: flag, fallire chiuso, fallback, parita'** — plans_2026_08_21_skills_engine_engine_enabled, specs_2026_08_21_skills_engine_design_fail_closed, specs_2026_08_21_skills_engine_design_deterministic_fallback, plans_2026_08_21_skills_engine_test_skills_parity, specs_2026_08_21_skills_engine_design_feature_flag_rollout [INFERRED 0.85]
+- **Ciclo di authoring admin: seed, tabelle, API, pannello, preview** — plans_2026_08_21_skills_engine_seed_skills, plans_2026_08_21_skills_engine_models_skill, plans_2026_08_21_skills_engine_routes_skills, plans_2026_08_21_skills_engine_skillspanel, plans_2026_08_21_skills_engine_preview_endpoint [EXTRACTED 1.00]
 
-### Community 0 - "QSA/QSAr Validation Studies"
-Cohesion: 0.08
-Nodes (68): John N. Boyd, Filippo Epifani, Dariusz Grzadziel, Jean Guichard, John Hattie, Raffaella Leproni, Massimo Margottini, Francesco Orio (+60 more)
+## Communities (28 total, 7 thin omitted)
 
-### Community 1 - "Competenze Strategiche Platform"
+### Community 0 - "Skills Engine Design"
 Cohesion: 0.07
-Nodes (54): Daniele Maria Ardito, Graziella Marrone, Lorella Romano, Mario Tonini, CNOS-FAP (Centro Nazionale Opere Salesiane - Formazione Aggiornamento Professionale), Autovalutazione, Character Skills, Prevenzione Dispersione Scolastica (+46 more)
+Nodes (67): Procedura di attivazione e rollback, handler approved_strategies, build_context_envelope skills_blocks, handler certified_strategies, registry.COMPONENT_FLAG_BY_SLUG, handlers.compute_salient_factors, handlers.compute_score_bands, skills.conditions.match (+59 more)
 
-### Community 2 - "QAP Career Adaptability"
+### Community 1 - "Bibliography Authors"
+Cohesion: 0.08
+Nodes (66): John N. Boyd, Filippo Epifani, Dariusz Grzadziel, Jean Guichard, John Hattie, Raffaella Leproni, Massimo Margottini, Francesco Orio (+58 more)
+
+### Community 2 - "CNOS-FAP Sources"
+Cohesion: 0.07
+Nodes (53): Daniele Maria Ardito, Graziella Marrone, Lorella Romano, Mario Tonini, CNOS-FAP (Centro Nazionale Opere Salesiane - Formazione Aggiornamento Professionale), Autovalutazione, Character Skills, Prevenzione Dispersione Scolastica (+45 more)
+
+### Community 3 - "Project Diary (technical)"
 Cohesion: 0.06
 Nodes (40): Admin console, ChatInterface, Counseling session summaries, Gemini SDK (google-genai), GuidedChatInterface, main.py (1392 lines), PDFUploader, profile-tracker.ts (+32 more)
 
-### Community 3 - "CounselorBot Admin Console"
+### Community 4 - "QSA & Metacognition"
 Cohesion: 0.08
-Nodes (37): Imparare a imparare (competenza chiave di cittadinanza), Metacognizione / autoregolazione dell'apprendimento, Progetto Apprendo (intervento formativo), QSA (Questionario sulle Strategie di Apprendimento), QSA A1 - Ansieta di base, QSA A2 - Volizione, QSA A3 - Attribuzione a cause controllabili, QSA A5 - Mancanza di perseveranza (+29 more)
+Nodes (39): Enrica Ottone, Imparare a imparare (competenza chiave di cittadinanza), Metacognizione / autoregolazione dell'apprendimento, Progetto Apprendo (intervento formativo), QSA (Questionario sulle Strategie di Apprendimento), QSA A1 - Ansieta di base, QSA A2 - Volizione, QSA A3 - Attribuzione a cause controllabili (+31 more)
 
-### Community 4 - "Ontology Base Concepts"
+### Community 5 - "Diary Contributors"
 Cohesion: 0.10
 Nodes (26): M. Begoña Alfageme González, ChatInterface, CounselorBot Project, Project Journal, Google Gemini AI, Graphify CLI Tool, GuidedChatInterface, KTH Royal Institute of Technology (+18 more)
 
-### Community 5 - "QSA Learning Strategy Factors"
+### Community 6 - "Questionnaire Items"
 Cohesion: 0.16
 Nodes (24): instrument, instrument, instrument, instrument, instrument, instrument, system, subsystem (+16 more)
 
-### Community 6 - "Project Documentation & Tasks"
+### Community 7 - "Instrument Documents"
 Cohesion: 0.11
 Nodes (19): Bibliographic card — QAP, Contact with M. Begoña Alfageme González — QSA Spanish validation, Validation formulas (bibliographic card), Validation formulas (LaTeX source), Graphify docs generation README (2026-05-30), Make prompt testing guide, pQBL in CounselorBot, Project Diary / Diario di Bordo (+11 more)
 
-### Community 7 - "Graphify Documentation Graph"
+### Community 8 - "Teacher & Researcher Roles"
 Cohesion: 0.11
 Nodes (20): Admin, Console /admin (config AI, counselor, prompt, log, costi), Classi autonome (implementazione), Creare piani/classi, Delete piano ristretto al creatore (implementazione), Docente, Eliminare piano (condizionato), get_current_active_admin (+12 more)
 
-### Community 8 - "Self-Regulated Learning Theory"
+### Community 9 - "Psychometric Validation"
 Cohesion: 0.26
 Nodes (17): Affidabilita (alpha Cronbach, omega McDonald), Confirmatory Factor Analysis (CFA), CFI (Comparative Fit Index), Progetto CounselorBot, Alpha di Cronbach, Invarianza di misura (MGCFA), Omega di McDonald, Codifica QSAr A4/A6 (percezione di competenza) (+9 more)
 
-### Community 9 - "Apprendo Project Resources"
-Cohesion: 0.19
-Nodes (14): Jeffrey Greene, James J. Heckman, George McCloskey, Joseph Nuttin, Barry Zimmerman, Apprendimento autoregolato (Zimmerman), Attribuzioni causali (locus, stabilita, controllabilita), Autodeterminazione (+6 more)
+### Community 10 - "Self-Regulated Learning Authors"
+Cohesion: 0.18
+Nodes (15): Jeffrey Greene, James J. Heckman, George McCloskey, Joseph Nuttin, Barry Zimmerman, Apprendimento autoregolato (Zimmerman), Attribuzioni causali (locus, stabilita, controllabilita), Autodeterminazione (+7 more)
 
-### Community 10 - "Site Archive & Conference PDFs"
+### Community 11 - "Telegram Bot Docs"
 Cohesion: 0.14
 Nodes (14): AIService, BotFather, CounselorBot, GuidedStep, QSA, QSAr, QuestionnaireResult, Savickas (+6 more)
 
-### Community 11 - "CounselorBot Implementation & Review"
+### Community 12 - "Conference & Guide Files"
 Cohesion: 0.15
 Nodes (13): Conference materials, Grzadziel Convegno 2019 PDF, Guida 2023 PDF, Guide PDFs, Guide HTML snapshots, Margottini Convegno 2019 PDF, Operating models DOC/DOCX, Pellerey Convegno 2019 PDF (+5 more)
 
-### Community 12 - "Soft Skills & Career Orientation"
+### Community 13 - "Project Docs Index"
 Cohesion: 0.18
 Nodes (12): CounselorBot Application, Diario di Bordo / Project Journal, Grafo della documentazione 2026-05-30, Live DB prompt translation review (IT -> EN), Email to Olle (KTH) - English Version, Mail a Olle (KTH) - Versione Italiana, Prompt translation review (IT -> EN) - General, Organizzazione documentazione implementata - 2026-05-30 (+4 more)
 
-### Community 13 - "CounselorBot Documentation"
+### Community 14 - "Docs README Index"
 Cohesion: 0.25
 Nodes (8): Documentazione CounselorBot, Diario di bordo, Documentation Organization, Grafo della documentazione, Organizzazione docs implementata, Questionnaires, Sources, Validation
 
-### Community 14 - "Character Skills Theory"
+### Community 15 - "External Publications"
 Cohesion: 0.33
 Nodes (6): Marco Bay, Promuovere la crescita nelle competenze strategiche (scheda), Promuovere la crescita nelle competenze strategiche (Rapporto di ricerca), CNOS-FAP publications, fonti-esterne-collegate/README.md, Roma TrE-Press publications
 
-### Community 15 - "Strategic Competences & DSA"
+### Community 16 - "Telegram Groups Plan"
 Cohesion: 0.33
 Nodes (6): Administration Plans, Deep Link, Fase 1: Deep link e pagina /telegram-link, Fase 2: Token di gruppo e iscrizione piano via bot, Flusso studente (login e deep link), Login ai4auth (account vero/ospite anonimo)
 
-### Community 16 - "Giuseppe Crea"
+### Community 17 - "ai4auth Integration Docs"
 Cohesion: 0.50
 Nodes (4): ai4auth (sistema autenticazione), Ruoli Docente Ricercatore Admin, Telegram Chatbot Counselorbot (riferimento), Telegram Gruppi Docenti
 
-### Community 17 - "Emad Samir Anis Matta"
+### Community 18 - "Researcher Data Access"
 Cohesion: 0.67
 Nodes (4): Anagrafica contatti ricerca, Export validazione/codici anonimi/risultati globali, Gate ricerca verificati (implementazione), Ricercatore
 
-### Community 18 - "Sergio Melogno"
+### Community 19 - "Melogno 2018 Paper"
 Cohesion: 0.67
 Nodes (3): Competenze Strategiche, Disturbi Specifici dell'Apprendimento (DSA), Profilo di competenze strategiche in studenti universitari con DSA
 
-### Community 19 - "Dirigere se stessi (2020)"
+### Community 20 - "Competenzestrategiche Site"
 Cohesion: 0.67
 Nodes (3): Guide, Site Archive, Strumenti
 
+## Ambiguous Edges - Review These
+- `skills.engine.SkillsResult` → `build_context_envelope skills_blocks`  [AMBIGUOUS]
+  superpowers/plans/2026-08-21-skills-engine.md · relation: shares_data_with
+
 ## Knowledge Gaps
-- **133 isolated node(s):** `QSA C1 - Strategie elaborative`, `QSA C5 - Uso di organizzatori semantici`, `QSA C7 - Autointerrogazione`, `QSA C2 - Autoregolazione`, `QSA C4 - Disponibilita alla collaborazione` (+128 more)
+- **134 isolated node(s):** `QSA C1 - Strategie elaborative`, `QSA C5 - Uso di organizzatori semantici`, `QSA C7 - Autointerrogazione`, `QSA C2 - Autoregolazione`, `QSA C4 - Disponibilita alla collaborazione` (+129 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **7 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Piattaforma Competenzestrategiche.it` connect `Competenze Strategiche Platform` to `QSA/QSAr Validation Studies`, `CounselorBot Admin Console`?**
-  _High betweenness centrality (0.095) - this node is a cross-community bridge._
-- **Why does `QSA (Questionario sulle Strategie di Apprendimento)` connect `CounselorBot Admin Console` to `QSA/QSAr Validation Studies`, `Self-Regulated Learning Theory`, `Soft Skills & Career Orientation`, `Apprendo Project Resources`?**
-  _High betweenness centrality (0.087) - this node is a cross-community bridge._
-- **Why does `Michele Pellerey` connect `QSA/QSAr Validation Studies` to `Apprendo Project Resources`, `CounselorBot Admin Console`, `Competenze Strategiche Platform`?**
-  _High betweenness centrality (0.057) - this node is a cross-community bridge._
+- **What is the exact relationship between `skills.engine.SkillsResult` and `build_context_envelope skills_blocks`?**
+  _Edge tagged AMBIGUOUS (relation: shares_data_with) - confidence is low._
+- **Why does `Piattaforma Competenzestrategiche.it` connect `CNOS-FAP Sources` to `Bibliography Authors`, `QSA & Metacognition`?**
+  _High betweenness centrality (0.070) - this node is a cross-community bridge._
+- **Why does `QSA (Questionario sulle Strategie di Apprendimento)` connect `QSA & Metacognition` to `Bibliography Authors`, `Self-Regulated Learning Authors`, `Project Docs Index`, `Psychometric Validation`?**
+  _High betweenness centrality (0.064) - this node is a cross-community bridge._
+- **Why does `Michele Pellerey` connect `Bibliography Authors` to `Self-Regulated Learning Authors`, `CNOS-FAP Sources`, `QSA & Metacognition`?**
+  _High betweenness centrality (0.042) - this node is a cross-community bridge._
 - **What connects `QSA C1 - Strategie elaborative`, `QSA C5 - Uso di organizzatori semantici`, `QSA C7 - Autointerrogazione` to the rest of the system?**
-  _137 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `QSA/QSAr Validation Studies` be split into smaller, more focused modules?**
-  _Cohesion score 0.08033362598770852 - nodes in this community are weakly interconnected._
-- **Should `Competenze Strategiche Platform` be split into smaller, more focused modules?**
-  _Cohesion score 0.0726764500349406 - nodes in this community are weakly interconnected._
-- **Should `QAP Career Adaptability` be split into smaller, more focused modules?**
-  _Cohesion score 0.0641025641025641 - nodes in this community are weakly interconnected._
+  _138 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `Skills Engine Design` be split into smaller, more focused modules?**
+  _Cohesion score 0.06693803708729082 - nodes in this community are weakly interconnected._
+- **Should `Bibliography Authors` be split into smaller, more focused modules?**
+  _Cohesion score 0.08158508158508158 - nodes in this community are weakly interconnected._
