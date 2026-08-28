@@ -73,7 +73,7 @@ Contenuto di `data`:
 | `current_phase` | stringa | step su cui riaprire |
 | `scores` | oggetto `{codice: numero}` | i punteggi oggi vivono in `localStorage`, servono nello snapshot per il cross-device |
 | `counselor_id` | intero o null | riapre lo stesso counselor |
-| `experience` | `"standard"` \| `"opencode"` | modalità chat |
+| `experience` | `"standard"` \| `"opencode"` | modalità chat; il congelamento è offerto solo in `standard`, il campo serve a riaprire la chat giusta |
 | `locale` | stringa | lingua della sessione |
 | `response_length` | `"short"` \| `"medium"` \| `"long"` | preferenza di lunghezza |
 | `label` | stringa | etichetta leggibile per la lista (strumento + step) |
