@@ -12,10 +12,12 @@ Eseguibile senza pytest:
 Con pytest (se installato):
     pytest backend/tests/test_smoke.py
 """
+import json
 import os
 import re
 import shutil
 import tempfile
+import uuid
 from urllib.parse import urlsplit, urlunsplit
 
 # Disabilita la traduzione async dei counselor durante i test: usa una propria
@@ -335,6 +337,10 @@ EXPECTED_ROUTES = {
     ("POST", "/user/portfolio/{item_id}/images"),
     ("GET", "/user/portfolio/{item_id}/images/{image_id}"),
     ("DELETE", "/user/portfolio/{item_id}/images/{image_id}"),
+    ("POST", "/session/freeze"),
+    ("GET", "/session/frozen"),
+    ("GET", "/session/frozen/{session_id}"),
+    ("DELETE", "/session/frozen/{session_id}"),
     ("GET", "/admin/questionnaire-results"),
     ("GET", "/admin/validation/summary"),
     ("GET", "/admin/validation/responses"),
@@ -803,6 +809,14 @@ def test_certified_strategies_crud_and_retrieve():
             db, questionnaire_type="QSA", scores_context="Fattore C6 (Attenzione): 8/9", query="non riesco a concentrarmi",
         )
         assert any(s["id"] == "focus-c6" for s in hit)
+        excluded = certified_strategy_memory.retrieve(
+            db,
+            questionnaire_type="QSA",
+            scores_context="Fattore C6 (Attenzione): 8/9",
+            query="non riesco a concentrarmi",
+            excluded_ids={"focus-c6"},
+        )
+        assert not any(s["id"] == "focus-c6" for s in excluded)
         miss = certified_strategy_memory.retrieve(
             db, questionnaire_type="QSA", scores_context="Fattore A2: 3/9", query="organizzazione",
         )
@@ -828,6 +842,38 @@ def test_certified_strategies_crud_and_retrieve():
 
     # delete
     assert client.delete(f"/admin/certified-strategies/{sid}").status_code == 200
+
+
+def test_previous_certified_strategy_ids_are_conversation_scoped():
+    from backend.chat_logic import previous_certified_strategy_ids
+
+    conversation_id = f"distribution-{uuid.uuid4()}"
+    db = _TestSession()
+    try:
+        db.add_all([
+            models.Log(
+                session_id="distribution-session",
+                conversation_id=conversation_id,
+                action="chat_message",
+                details={"certified_strategy_ids": ["strategy-a"]},
+            ),
+            models.Log(
+                session_id="distribution-session",
+                conversation_id=conversation_id,
+                action="chat_message",
+                details={"certified_strategy_ids": ["strategy-b", "strategy-a"]},
+            ),
+            models.Log(
+                session_id="distribution-session",
+                conversation_id="another-conversation",
+                action="chat_message",
+                details={"certified_strategy_ids": ["strategy-c"]},
+            ),
+        ])
+        db.commit()
+        assert previous_certified_strategy_ids(db, conversation_id) == {"strategy-a", "strategy-b"}
+    finally:
+        db.close()
 
 
 def test_certified_strategies_qsar_r_suffixed_factor_gating():
@@ -1884,10 +1930,19 @@ def test_prompt_audit_scopes_certified_strategies_to_qsa_second_level_step():
         "max_tokens": 700,
         "include_knowledge": True,
         "include_history": False,
+        "component_flags": {
+            "allowed_strategies": [
+                "test-certified-c1-out-of-step",
+                "test-certified-a4-out-of-step",
+                "test-certified-a6-in-step",
+                "test-certified-a5-in-step",
+            ],
+        },
     })
     assert r.status_code == 200, r.text
     body = r.json()
     certified_ids = body["knowledge"]["certified_strategy_ids"]
+    assert len(certified_ids) == 1
     assert "test-certified-a6-in-step" in certified_ids
     # A5=3 e' una forza nel QSA: una strategia dichiarata per A5 area di
     # crescita non deve entrare come intervento pratico.
@@ -2938,6 +2993,84 @@ def test_clamp_max_tokens():
     assert main._clamp_max_tokens(None) is None
     # valore valido resta entro i limiti (non solleva)
     assert isinstance(main._clamp_max_tokens(1000), int)
+
+
+def _done_sse_event(response):
+    for line in response.text.splitlines():
+        if not line.startswith("data:"):
+            continue
+        event = json.loads(line[5:].strip())
+        if event.get("done"):
+            return event
+    raise AssertionError(f"Evento done mancante: {response.text[-500:]}")
+
+
+def test_response_length_helpers_and_validation():
+    directive = chat_logic._apply_response_length_directive("BASE", "short")
+    assert "no more than 80 words" in directive
+    assert chat_logic._response_length_max_tokens("medium", 900) == 600
+    assert chat_logic._response_length_max_tokens(None, 900) == 900
+
+    source = " ".join(f"parola{i}" for i in range(1, 101))
+    bounded, truncated = chat_logic._limit_visible_words(source, "short")
+    assert truncated is True
+    assert len(chat_logic._VISIBLE_WORD_RE.findall(bounded)) == 80
+    assert bounded.endswith("…")
+    untouched, truncated = chat_logic._limit_visible_words(source, None)
+    assert untouched == source and truncated is False
+
+    invalid = client.post("/chat/stream", json={"message": "ciao", "response_length": "extra"})
+    assert invalid.status_code == 422, invalid.text
+
+
+def test_response_length_is_enforced_on_both_web_streams():
+    original_stream = _FakeAIService.stream_response
+    original_search = site_chat_routes.site_rag_index.search
+    long_answer = " ".join(f"parola{i}" for i in range(1, 121))
+
+    def long_stream(self, *args, **kwargs):
+        _FakeAIService.last_stream_args = {
+            "max_tokens": kwargs.get("max_tokens"),
+            "system_prompt": args[1],
+        }
+        yield {"type": "reasoning", "text": "ragionamento interno non contato " * 100}
+        yield {"type": "content", "text": long_answer}
+
+    _FakeAIService.stream_response = long_stream
+    site_chat_routes.site_rag_index.search = lambda *a, **kw: [
+        {"score": 0.9, "source": "fonti/x.md", "title": "Doc X", "text": "Contenuto di prova."}
+    ]
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        chat_response = client.post("/chat/stream", json={
+            "message": "Rispondi",
+            "mode": "generic",
+            "session_id": "response-length-chat",
+            "response_length": "short",
+        })
+        assert chat_response.status_code == 200, chat_response.text
+        chat_done = _done_sse_event(chat_response)
+        assert len(chat_logic._VISIBLE_WORD_RE.findall(chat_done["response"])) == 80
+        assert chat_done["response"].endswith("…")
+        assert _FakeAIService.last_stream_args["max_tokens"] == 256
+        assert "no more than 80 words" in _FakeAIService.last_stream_args["system_prompt"]
+
+        site_response = client.post("/site-chat/stream", json={
+            "message": "Cos'è il QSA?",
+            "audience": "studente",
+            "session_id": "response-length-site-chat",
+            "response_length": "short",
+        })
+        assert site_response.status_code == 200, site_response.text
+        site_done = _done_sse_event(site_response)
+        assert len(chat_logic._VISIBLE_WORD_RE.findall(site_done["response"])) == 80
+        assert site_done["response"].endswith("…")
+        assert _FakeAIService.last_stream_args["max_tokens"] == 256
+        assert "no more than 80 words" in _FakeAIService.last_stream_args["system_prompt"]
+    finally:
+        _FakeAIService.stream_response = original_stream
+        site_chat_routes.site_rag_index.search = original_search
+        main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
 def test_reasoning_resolve_plan():
@@ -4920,6 +5053,163 @@ def test_skills_handler_whitelist():
     })
     assert res.status_code == 400, res.text
     assert "handler sconosciuto" in res.json()["detail"]
+
+
+def test_frozen_session_round_trip_and_isolation():
+    def _as(username: str, email: str):
+        main.app.dependency_overrides[auth.get_current_user] = lambda: _identity(
+            username, email, is_researcher=False
+        )
+
+    _as("student-a", "a@example.test")
+    try:
+        payload = {
+            "session_id": "frozen-session-1",
+            "questionnaire_type": "QSA",
+            "messages": [
+                {"role": "system", "content": "--- Step 1 ---"},
+                {"role": "user", "content": "Vorrei capire come organizzarmi."},
+                {"role": "assistant", "content": "Partiamo dal tuo profilo.", "responseId": "r-1"},
+            ],
+            "current_phase": "step-1",
+            "scores": {"C1": 7.0},
+            "counselor_id": 3,
+            "experience": "standard",
+            "locale": "it",
+            "response_length": "short",
+            "label": "QSA — Step 1",
+        }
+        r = client.post("/session/freeze", json=payload)
+        assert r.status_code == 200, r.text
+        assert r.json()["session_id"] == "frozen-session-1"
+
+        listed = client.get("/session/frozen")
+        assert listed.status_code == 200, listed.text
+        rows = listed.json()
+        assert [row["session_id"] for row in rows] == ["frozen-session-1"]
+        assert rows[0]["label"] == "QSA — Step 1"
+        assert "messages" not in rows[0]
+
+        detail = client.get("/session/frozen/frozen-session-1")
+        assert detail.status_code == 200, detail.text
+        body = detail.json()
+        assert len(body["messages"]) == 3
+        assert body["messages"][2]["responseId"] == "r-1"
+        assert body["current_phase"] == "step-1"
+        assert body["scores"] == {"C1": 7.0}
+        assert body["counselor_id"] == 3
+        assert body["response_length"] == "short"
+
+        # Ricongelare aggiorna la riga esistente invece di duplicarla.
+        payload["messages"].append({"role": "user", "content": "Riprendo da qui."})
+        payload["current_phase"] = "step-2"
+        assert client.post("/session/freeze", json=payload).status_code == 200
+        again = client.get("/session/frozen")
+        assert len(again.json()) == 1
+        assert client.get("/session/frozen/frozen-session-1").json()["current_phase"] == "step-2"
+
+        # Un altro studente non vede né cancella la sessione del primo.
+        _as("student-b", "b@example.test")
+        assert client.get("/session/frozen").json() == []
+        assert client.get("/session/frozen/frozen-session-1").status_code == 404
+        assert client.delete("/session/frozen/frozen-session-1").status_code == 404
+
+        _as("student-a", "a@example.test")
+
+        # Simula la corsa di due freeze concorrenti: una seconda riga per lo
+        # stesso (username, session_id), inserita direttamente sul DB perche'
+        # non c'e' un vincolo di unicita' a livello di tabella a impedirlo.
+        db = next(_override_get_db())
+        db.add(models.FrozenSession(
+            username="student-a",
+            session_id="frozen-session-1",
+            questionnaire_type="QSA",
+            data={"current_phase": "step-2"},
+        ))
+        db.commit()
+
+        assert client.delete("/session/frozen/frozen-session-1").status_code == 200
+        assert client.get("/session/frozen").json() == []
+    finally:
+        main.app.dependency_overrides.pop(auth.get_current_user, None)
+
+
+def test_frozen_session_rejects_unknown_questionnaire():
+    main.app.dependency_overrides[auth.get_current_user] = _fake_user_identity
+    try:
+        r = client.post("/session/freeze", json={
+            "session_id": "frozen-session-2",
+            "questionnaire_type": "NOPE",
+            "messages": [],
+        })
+        assert r.status_code == 422, r.text
+    finally:
+        main.app.dependency_overrides.pop(auth.get_current_user, None)
+
+
+def test_frozen_session_routes_require_authentication():
+    override = main.app.dependency_overrides.pop(auth.get_current_user, None)
+    try:
+        payload = {
+            "session_id": "unauth-frozen",
+            "questionnaire_type": "QSA",
+            "messages": [],
+        }
+        assert client.post("/session/freeze", json=payload).status_code == 401
+        assert client.get("/session/frozen").status_code == 401
+        assert client.get("/session/frozen/unauth-frozen").status_code == 401
+        assert client.delete("/session/frozen/unauth-frozen").status_code == 401
+    finally:
+        if override is not None:
+            main.app.dependency_overrides[auth.get_current_user] = override
+
+
+def test_frozen_session_freeze_collapses_duplicate_rows():
+    """Ramo di collasso in freeze_session: sostituto applicativo del vincolo
+    di unicita' mancante a livello di tabella. Simula la corsa di due freeze
+    concorrenti inserendo una seconda riga per lo stesso (username, session_id)
+    direttamente sul DB, poi verifica che un nuovo POST /session/freeze le
+    collassi in una sola riga con il payload aggiornato."""
+    main.app.dependency_overrides[auth.get_current_user] = lambda: _identity(
+        "student-c", "c@example.test", is_researcher=False
+    )
+    try:
+        payload = {
+            "session_id": "frozen-session-dup",
+            "questionnaire_type": "QSA",
+            "messages": [{"role": "user", "content": "Prima versione."}],
+            "current_phase": "step-1",
+            "scores": {"C1": 5.0},
+            "label": "QSA — Step 1",
+        }
+        assert client.post("/session/freeze", json=payload).status_code == 200
+
+        db = next(_override_get_db())
+        db.add(models.FrozenSession(
+            username="student-c",
+            session_id="frozen-session-dup",
+            questionnaire_type="QSA",
+            data={"current_phase": "step-1", "messages": payload["messages"]},
+        ))
+        db.commit()
+
+        payload["messages"].append({"role": "assistant", "content": "Nuova risposta dopo il collasso."})
+        payload["current_phase"] = "step-2"
+        r = client.post("/session/freeze", json=payload)
+        assert r.status_code == 200, r.text
+
+        rows = client.get("/session/frozen").json()
+        assert len(rows) == 1
+        assert rows[0]["session_id"] == "frozen-session-dup"
+        assert rows[0]["current_phase"] == "step-2"
+
+        detail = client.get("/session/frozen/frozen-session-dup").json()
+        assert [m["content"] for m in detail["messages"]] == [
+            "Prima versione.",
+            "Nuova risposta dopo il collasso.",
+        ]
+    finally:
+        main.app.dependency_overrides.pop(auth.get_current_user, None)
 
 
 if __name__ == "__main__":

@@ -191,6 +191,8 @@ def run_skills(ctx: SkillContext, *, router_enabled: bool = True) -> SkillsResul
         params = dict(binding.params)
         if binding.slug == "certified-advice" and "certified_strategy_limit" in ctx.handler_options:
             params["limit"] = ctx.handler_options["certified_strategy_limit"]
+        if binding.slug == "certified-advice" and "excluded_strategy_ids" in ctx.handler_options:
+            params["excluded_strategy_ids"] = ctx.handler_options["excluded_strategy_ids"]
         if "allowed_strategies" in ctx.handler_options:
             params["allowed_strategies"] = ctx.handler_options["allowed_strategies"]
         binding.params = params

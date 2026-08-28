@@ -12,6 +12,7 @@ import { canUseAssistant, canUseTeacherAssistant } from '@/lib/roles';
 import { useI18n } from '@/lib/i18n-context';
 import { fetchAssistantQuestions, type AssistantQuestionsByTopic } from '@/lib/assistant-questions';
 import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId, subscribeToCounselor, type PublicCounselor } from '@/lib/counselor';
+import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 
 // Tabelle con bordi + scroll orizzontale per una lettura pulita dei documenti.
 const mdComponents: Components = {
@@ -121,6 +122,7 @@ export default function AssistentePage() {
     const [collection, setCollection] = useState<Collection>('competenzestrategiche');
     const [messages, setMessages] = useState<Msg[]>([]);
     const [input, setInput] = useState('');
+    const [responseLength, setResponseLength] = useState<ResponseLength>('medium');
     const [loading, setLoading] = useState(false);
     const [sessionId, setSessionId] = useState<string | undefined>(undefined);
     const [conversationId, setConversationId] = useState<string | undefined>(undefined);
@@ -272,7 +274,7 @@ export default function AssistentePage() {
 
         try {
             const result = await streamChat(
-                { message: question, audience, session_id: sessionId, conversation_id: conversationId, language: lang, collection, counselor_id: counselorId ?? undefined },
+                { message: question, audience, session_id: sessionId, conversation_id: conversationId, language: lang, collection, counselor_id: counselorId ?? undefined, response_length: responseLength },
                 (full) => updateLast(full),
                 undefined,
                 undefined,
@@ -561,7 +563,14 @@ export default function AssistentePage() {
                     </div>
 
                     {/* Input */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="mb-2 flex justify-end">
+                        <ResponseLengthSelector
+                            value={responseLength}
+                            onChange={setResponseLength}
+                            disabled={loading}
+                        />
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
                         <button
                             type="button"
                             onClick={prepareQuestion}

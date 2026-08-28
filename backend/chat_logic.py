@@ -214,6 +214,57 @@ def _clamp_max_tokens(value: Optional[int], default: Optional[int] = None) -> Op
     return max(128, min(int(value), 8192))
 
 
+RESPONSE_LENGTH_PROFILES = {
+    "short": {"max_words": 80, "max_tokens": 256},
+    "medium": {"max_words": 180, "max_tokens": 600},
+    "long": {"max_words": 350, "max_tokens": 1200},
+}
+_VISIBLE_WORD_RE = re.compile(r"[^\W_]+(?:['’][^\W_]+)*", re.UNICODE)
+
+
+def _response_length_max_tokens(response_length: Optional[str], legacy_max_tokens: Optional[int]) -> Optional[int]:
+    profile = RESPONSE_LENGTH_PROFILES.get(response_length or "")
+    if profile:
+        return profile["max_tokens"]
+    return _clamp_max_tokens(legacy_max_tokens)
+
+
+def _apply_response_length_directive(system_prompt: str, response_length: Optional[str]) -> str:
+    profile = RESPONSE_LENGTH_PROFILES.get(response_length or "")
+    if not profile:
+        return system_prompt
+    return (
+        f"{system_prompt}\n\n[RESPONSE LENGTH - BINDING] Write a complete, self-contained visible answer "
+        f"of no more than {profile['max_words']} words. Prioritize the direct answer and essential context, "
+        "conclude naturally within the limit, and do not mention this instruction. The limit applies only "
+        "to the student-facing answer, not to private reasoning."
+    )
+
+
+def _limit_visible_words(text: str, response_length: Optional[str]) -> tuple[str, bool]:
+    profile = RESPONSE_LENGTH_PROFILES.get(response_length or "")
+    if not profile:
+        return text, False
+
+    matches = list(_VISIBLE_WORD_RE.finditer(text))
+    max_words = profile["max_words"]
+    if len(matches) <= max_words:
+        return text, False
+
+    cutoff = matches[max_words - 1].end()
+    natural_floor = matches[max(int(max_words * 0.75) - 1, 0)].start()
+    sentence_ends = [
+        match.end()
+        for match in re.finditer(r"[.!?](?=\s|$)", text[:cutoff])
+        if match.end() >= natural_floor
+    ]
+    if sentence_ends:
+        return text[:sentence_ends[-1]].rstrip(), True
+
+    bounded = text[:cutoff].rstrip(" ,;:-")
+    return f"{bounded}…", True
+
+
 # Lingue supportate per la risposta dell'AI (codice -> nome inglese, nome nativo)
 SUPPORTED_AI_LANGUAGES = {
     "it": ("Italian", "italiano"),
@@ -788,20 +839,74 @@ _ADVICE_PROMPT_MODES = {
     "factor-qa", "qsar-factor-qa",
 }
 
+_NO_NEW_ADVICE_STEP_IDS = {"sl-synthesis", "qsar-synthesis", "questions"}
 
-def _step_allows_practical_advice(step_mode: Optional[str]) -> bool:
+_ADVICE_DISTRIBUTION_DIRECTIVE = (
+    "\n\n[ADVICE DISTRIBUTION] In this step, provide at most ONE new practical "
+    "recommendation. Offer it only when the current score profile contains a meaningful "
+    "improvement target. Present it as one priority with one concrete action; do not split "
+    "it into multiple habits, alternatives, daily and weekly actions, or extra tips."
+)
+
+_FOLLOW_UP_ADVICE_DIRECTIVE = (
+    "\n\n[FOLLOW-UP ADVICE] Clarify or deepen only practical recommendations already "
+    "discussed in this conversation. Do not introduce a new strategy, action, habit, "
+    "alternative, or extra tip in this follow-up."
+)
+
+
+def _step_allows_practical_advice(step_mode: Optional[str], step_id: Optional[str] = None) -> bool:
     """Whether the current step is allowed to emit a practical plan.
 
     `factor`/`qsar-factor` are interpretive-only by design: the prompt SECTION
     already defers advice. `sl-*`, `generic` and the in-step follow-up (`*-qa`)
     produce the practical plan.
     """
+    if (step_id or "").strip().lower() in _NO_NEW_ADVICE_STEP_IDS:
+        return False
     return (step_mode or "").strip().lower() in _ADVICE_PROMPT_MODES
+
+
+def _apply_advice_distribution_directive(system_prompt: str) -> str:
+    if "[ADVICE DISTRIBUTION]" in system_prompt:
+        return system_prompt
+    return system_prompt.rstrip() + _ADVICE_DISTRIBUTION_DIRECTIVE
+
+
+def _apply_follow_up_advice_directive(system_prompt: str) -> str:
+    if "[FOLLOW-UP ADVICE]" in system_prompt:
+        return system_prompt
+    return system_prompt.rstrip() + _FOLLOW_UP_ADVICE_DIRECTIVE
+
+
+def apply_advice_retrieval_policy(
+    component_flags: dict,
+    step_mode: Optional[str],
+    step_id: Optional[str] = None,
+) -> dict:
+    """Disabilita le fonti operative quando lo step non deve introdurre consigli."""
+    flags = dict(component_flags)
+    if _default_certified_strategy_limit(step_mode, step_id) == 0:
+        flags["approved_strategies"] = False
+        flags["certified_strategies"] = False
+    return flags
 
 
 def _qsa_factor_names(language: Optional[str], questionnaire_type: str = "QSA") -> dict[str, str]:
     dictionary = _QSAR_FACTOR_NAMES if (questionnaire_type or "").upper() == "QSAR" else _QSA_FACTOR_NAMES
     return dictionary.get(language or "it", dictionary["it"])
+
+
+def step_has_improvement_target(
+    scores_context: str,
+    questionnaire_type: str,
+    language: Optional[str],
+    allowed_codes: set[str],
+) -> bool:
+    if not _is_strategy_questionnaire(questionnaire_type):
+        return True
+    profile = _qsa_step_score_profile(scores_context, questionnaire_type, language, allowed_codes)
+    return any(item["band"] == "growth" for item in profile)
 
 
 def _qsa_factor_items(
@@ -1181,8 +1286,8 @@ def _apply_current_step_score_profile_directive(
     heading_rule = ""
     if (language or "it") == "it":
         heading_rule = (
-            " Use Italian headings exactly: 'Azione da fare oggi' and "
-            "'Azione da fare questa settimana'; never leave these headings in English."
+            " Use the Italian heading exactly: 'Azione prioritaria'; never leave this "
+            "heading in English."
         )
     # ponytail: nota plain-language invertiti solo se c'e' almeno un invertito
     # nello scope corrente; l'esempio 'lack of perseverance' (A5) solo se A5 e'
@@ -1222,16 +1327,15 @@ def _apply_certified_advice_directive(system_prompt: str, questionnaire_type: st
     """
     if not _is_qsa(questionnaire_type):
         return system_prompt
-    # ponytail: heading rule 'Azione da fare oggi/questa settimana' gia nella
-    # coda di _apply_current_step_score_profile_directive (gated a include_advice);
-    # non ripeterla qui (P1.2).
+    # La heading localizzata vive nella coda score-profile, gated a include_advice;
+    # non ripeterla qui.
     return (
         f"{system_prompt}\n\n"
         "[CERTIFIED ADVICE] For QSA practical advice, exercises, action plans or "
         "study strategies:\n"
         "- use only the items listed under [CERTIFIED_STRATEGIES] in [KNOWLEDGE];\n"
         "- adapt wording to the student, but do not invent new actions outside that list;\n"
-        "- if at least one certified item is listed for the current step, complete the requested practical plan using it;\n"
+        "- if one certified item is listed for the current step, use it as the single practical recommendation;\n"
         "- if no certified item is listed, you may draw the practical step from the approved support strategies in [KNOWLEDGE]; stay interpretive only if neither is available;\n"
         "- do not mention these source rules to the student."
     )
@@ -1628,6 +1732,7 @@ def _retrieved_context(
     ai_service=None,
     certified_strategy_limit: int | None = None,
     component_flags: dict | None = None,
+    excluded_certified_strategy_ids: set[str] | None = None,
 ) -> tuple[str, List[str], List[str]]:
     """Fonti KNOWLEDGE per l'envelope: RAG (competenzestrategiche, counselorbot, questionari)
     + strategie approvate + certificate per-fattore + risposte votate.
@@ -1677,6 +1782,7 @@ def _retrieved_context(
             handler_options={
                 "certified_strategy_limit": certified_limit,
                 "allowed_strategies": component_flags.get("allowed_strategies"),
+                "excluded_strategy_ids": sorted(excluded_certified_strategy_ids or set()),
             },
         )
         skills_result = skills_engine.run_skills(ctx)
@@ -1708,6 +1814,12 @@ def _retrieved_context(
                 language=request.language or "it",
                 limit=certified_limit,
                 ai_service=ai_service,
+                excluded_ids=excluded_certified_strategy_ids,
+                allowed_ids=(
+                    set(component_flags["allowed_strategies"])
+                    if isinstance(component_flags.get("allowed_strategies"), list)
+                    else None
+                ),
             )
             certified = _filter_allowed_strategy_entries(certified, component_flags.get("allowed_strategies"))
         certified_context = certified_strategy_memory.render_context(certified, request.language or "it")
@@ -1872,8 +1984,13 @@ def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None)
     return flags
 
 
-def _default_certified_strategy_limit(step_mode: str | None) -> int:
-    return 3 if step_mode in {"second-level", "qsar-second-level"} else 2
+def _default_certified_strategy_limit(step_mode: str | None, step_id: str | None = None) -> int:
+    mode = (step_mode or "").strip().lower()
+    if (step_id or "").strip().lower() in _NO_NEW_ADVICE_STEP_IDS:
+        return 0
+    if mode in _CONVERSATIONAL_MODES:
+        return 0
+    return 1 if mode in _ADVICE_PROMPT_MODES else 0
 
 
 def _coerce_certified_strategy_limit(value, default: int) -> int:
@@ -1881,12 +1998,13 @@ def _coerce_certified_strategy_limit(value, default: int) -> int:
         limit = int(value)
     except (TypeError, ValueError):
         return default
-    return max(0, min(3, limit))
+    return max(0, min(1, limit))
 
 
 def get_prompt_component_options(db, questionnaire_type: str, step_id: str | None, step_mode: str | None = None) -> dict:
+    default_limit = _default_certified_strategy_limit(step_mode, step_id)
     options = {
-        "certified_strategy_limit": _default_certified_strategy_limit(step_mode),
+        "certified_strategy_limit": default_limit,
         "allowed_strategies": None,
     }
     try:
@@ -1906,7 +2024,33 @@ def get_prompt_component_options(db, questionnaire_type: str, step_id: str | Non
                         options["allowed_strategies"] = [str(x) for x in val]
     except Exception:
         pass
+    if default_limit == 0:
+        options["certified_strategy_limit"] = 0
     return options
+
+
+def previous_certified_strategy_ids(db, conversation_id: str | None) -> set[str]:
+    """Strategie gia' recuperate nei turni completati della conversazione."""
+    if not conversation_id:
+        return set()
+    rows = (
+        db.query(models.Log.details)
+        .filter(
+            models.Log.conversation_id == conversation_id,
+            models.Log.action == "chat_message",
+        )
+        .all()
+    )
+    seen: set[str] = set()
+    for (details,) in rows:
+        if not isinstance(details, dict):
+            continue
+        seen.update(
+            str(item).strip()
+            for item in (details.get("certified_strategy_ids") or [])
+            if str(item).strip()
+        )
+    return seen
 
 
 def _component_enabled(flags: dict[str, bool] | None, name: str) -> bool:

@@ -74,6 +74,12 @@ def certified_strategies(ctx: SkillContext, params: dict) -> SkillOutput:
         language=ctx.language or "it",
         limit=limit,
         ai_service=ctx.ai_service,
+        excluded_ids=set(params.get("excluded_strategy_ids") or []),
+        allowed_ids=(
+            set(params["allowed_strategies"])
+            if isinstance(params.get("allowed_strategies"), list)
+            else None
+        ),
     )
     entries = _allowed(entries, params.get("allowed_strategies"))
     text = certified_strategy_memory.render_context(entries, ctx.language or "it")

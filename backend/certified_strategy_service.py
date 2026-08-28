@@ -63,6 +63,8 @@ class CertifiedStrategyMemory:
         language: str = "it",
         limit: int = 2,
         ai_service=None,
+        excluded_ids: set[str] | None = None,
+        allowed_ids: set[str] | None = None,
     ) -> List[Dict[str, str]]:
         questionnaire = (questionnaire_type or "").upper()
         rows = (
@@ -84,9 +86,17 @@ class CertifiedStrategyMemory:
         # come intervento se quel fattore e' una forza nel profilo corrente.
         salient = self._factor_tokens(f"{scores_context} {query}")
         score_bands = self._score_bands(questionnaire, scores_context)
+        excluded = {str(item).strip() for item in (excluded_ids or set()) if str(item).strip()}
+        allowed = None if allowed_ids is None else {
+            str(item).strip() for item in allowed_ids if str(item).strip()
+        }
         profile_alignment: dict[int, dict[str, str]] = {}
         eligible = []
         for row in rows:
+            if row.slug in excluded:
+                continue
+            if allowed is not None and row.slug not in allowed:
+                continue
             scope = {item.upper() for item in (row.questionnaire_types or [])}
             if scope and questionnaire and questionnaire not in scope:
                 continue
