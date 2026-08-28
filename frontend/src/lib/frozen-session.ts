@@ -65,6 +65,7 @@ export async function getFrozenSession(sessionId: string): Promise<FrozenSession
     return (await res.json()) as FrozenSessionDetail;
 }
 
-export async function deleteFrozenSession(sessionId: string): Promise<void> {
-    await apiFetch(`/api/session/frozen/${encodeURIComponent(sessionId)}`, { method: 'DELETE' });
+export async function deleteFrozenSession(sessionId: string): Promise<boolean> {
+    const res = await apiFetch(`/api/session/frozen/${encodeURIComponent(sessionId)}`, { method: 'DELETE' });
+    return res.ok;
 }
