@@ -702,7 +702,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
         try {
             const result = await streamChat({
-                message: 'Based on the profile results and the discussion so far, ask the student exactly three open reflective questions. The questions must help the student reason about what emerged, what surprised them, and one concrete strategy or first step. Do not restart the questionnaire, do not re-run the analysis, and do not answer the questions yourself.',
+                message: 'Based on the profile results and the discussion so far, ask the student exactly three open reflective questions. The questions must help the student reason about what emerged, what surprised them, and one concrete strategy or first step already discussed during the path. Do not introduce a new strategy, restart the questionnaire, re-run the analysis, or answer the questions yourself.',
                 memory_message: '',
                 internal_message: true,
                 mode: 'generic',

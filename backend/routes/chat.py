@@ -48,7 +48,10 @@ from ..prompt_config import (
 )
 from ..chat_logic import (
     _annotate_qsa_factor_codes,
+    apply_advice_retrieval_policy,
     _apply_global_directives,
+    _apply_advice_distribution_directive,
+    _apply_follow_up_advice_directive,
     _apply_response_length_directive,
     _apply_certified_advice_directive,
     _apply_current_step_factor_scope_directive,
@@ -62,6 +65,8 @@ from ..chat_logic import (
     filter_scores_by_components,
     get_prompt_component_flags,
     get_prompt_component_options,
+    previous_certified_strategy_ids,
+    step_has_improvement_target,
     _is_strategy_questionnaire,
     _phase_factor_codes,
     _resolve_system_prompt,
@@ -351,10 +356,10 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             questionnaire_type = step.questionnaire_type
 
     component_flags = get_prompt_component_flags(db, questionnaire_type, request.phase)
-    # Nei follow-up in-step (`factor-qa`) il mode della richiesta prevale sul
-    # mode dello step: sblocca il materiale pratico certificato (advice) anche
-    # dentro gli step fattore, dove l'analisi resta interpretive-only.
+    # Nei follow-up in-step il mode della richiesta prevale sul mode dello step:
+    # puo' approfondire un consiglio gia' emerso senza recuperarne uno nuovo.
     step_mode = request.mode if _is_conversational_mode(request.mode) else (step.system_prompt_mode if step else request.mode)
+    component_flags = apply_advice_retrieval_policy(component_flags, step_mode, request.phase)
     component_options = get_prompt_component_options(db, questionnaire_type, request.phase, step_mode)
     include_analysis_context = _should_include_step_analysis_context(step_mode)
     phase_codes = _phase_factor_codes(db, request.phase) if include_analysis_context else set()
@@ -367,12 +372,25 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     )
     component_scores_context = filter_scores_by_components(model_scores_context, questionnaire_type, component_flags)
     if include_analysis_context and component_scores_context:
-        include_advice = _step_allows_practical_advice(step_mode)
+        allows_advice = _step_allows_practical_advice(step_mode, request.phase)
+        is_follow_up = _is_conversational_mode(step_mode)
+        include_advice = allows_advice and not is_follow_up and step_has_improvement_target(
+            component_scores_context, questionnaire_type, request.language, phase_codes
+        )
         system_prompt = _apply_current_step_score_profile_directive(
             system_prompt, questionnaire_type, request.language, component_scores_context, phase_codes, include_advice
         )
         if include_advice:
+            system_prompt = _apply_advice_distribution_directive(system_prompt)
             system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type)
+        elif is_follow_up and allows_advice:
+            system_prompt = _apply_follow_up_advice_directive(system_prompt)
+        else:
+            component_flags = apply_advice_retrieval_policy(component_flags, "factor", request.phase)
+            component_options["certified_strategy_limit"] = 0
+    elif include_analysis_context and _is_strategy_questionnaire(questionnaire_type):
+        component_flags = apply_advice_retrieval_policy(component_flags, "factor", request.phase)
+        component_options["certified_strategy_limit"] = 0
     model_message = (
         _annotate_qsa_factor_codes(effective_message, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else effective_message
@@ -404,6 +422,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             ai_service=ai_service,
             certified_strategy_limit=component_options["certified_strategy_limit"],
             component_flags=component_flags,
+            excluded_certified_strategy_ids=previous_certified_strategy_ids(db, conversation_id),
         )
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         knowledge_context = _sanitize_ztpi_user_text(knowledge_context, request.language)
@@ -595,10 +614,10 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             questionnaire_type = step.questionnaire_type
 
     component_flags = get_prompt_component_flags(db, questionnaire_type, request.phase)
-    # Nei follow-up in-step (`factor-qa`) il mode della richiesta prevale sul
-    # mode dello step: sblocca il materiale pratico certificato (advice) anche
-    # dentro gli step fattore, dove l'analisi resta interpretive-only.
+    # Nei follow-up in-step il mode della richiesta prevale sul mode dello step:
+    # puo' approfondire un consiglio gia' emerso senza recuperarne uno nuovo.
     step_mode = request.mode if _is_conversational_mode(request.mode) else (step.system_prompt_mode if step else request.mode)
+    component_flags = apply_advice_retrieval_policy(component_flags, step_mode, request.phase)
     component_options = get_prompt_component_options(db, questionnaire_type, request.phase, step_mode)
     include_analysis_context = _should_include_step_analysis_context(step_mode)
     phase_codes = _phase_factor_codes(db, request.phase) if include_analysis_context else set()
@@ -611,12 +630,25 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     )
     component_scores_context = filter_scores_by_components(model_scores_context, questionnaire_type, component_flags)
     if include_analysis_context and component_scores_context:
-        include_advice = _step_allows_practical_advice(step_mode)
+        allows_advice = _step_allows_practical_advice(step_mode, request.phase)
+        is_follow_up = _is_conversational_mode(step_mode)
+        include_advice = allows_advice and not is_follow_up and step_has_improvement_target(
+            component_scores_context, questionnaire_type, request.language, phase_codes
+        )
         system_prompt = _apply_current_step_score_profile_directive(
             system_prompt, questionnaire_type, request.language, component_scores_context, phase_codes, include_advice
         )
         if include_advice:
+            system_prompt = _apply_advice_distribution_directive(system_prompt)
             system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type)
+        elif is_follow_up and allows_advice:
+            system_prompt = _apply_follow_up_advice_directive(system_prompt)
+        else:
+            component_flags = apply_advice_retrieval_policy(component_flags, "factor", request.phase)
+            component_options["certified_strategy_limit"] = 0
+    elif include_analysis_context and _is_strategy_questionnaire(questionnaire_type):
+        component_flags = apply_advice_retrieval_policy(component_flags, "factor", request.phase)
+        component_options["certified_strategy_limit"] = 0
     model_message = (
         _annotate_qsa_factor_codes(effective_message, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else effective_message
@@ -657,6 +689,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             ai_service=ai_service,
             certified_strategy_limit=component_options["certified_strategy_limit"],
             component_flags=component_flags,
+            excluded_certified_strategy_ids=previous_certified_strategy_ids(db, conversation_id),
         )
     sanitize = _should_sanitize_ztpi_text(request.mode, request.phase)
     if sanitize:

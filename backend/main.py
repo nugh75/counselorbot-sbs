@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import asyncio
+import json
 import logging
 import os
 import re
@@ -22,6 +23,8 @@ from .prompt_config import (
     DEFAULT_FACTOR_INTERPLAY_QSAR,
     SECOND_LEVEL_METHOD_SENTINEL,
     DEFAULT_SECOND_LEVEL_METHOD,
+    SYNTHESIS_ADVICE_SENTINEL,
+    SYNTHESIS_ADVICE_DIRECTIVE,
     QA_DEPTH_SENTINEL,
     DEFAULT_QA_DEPTH_DIRECTIVE,
     SL_MOTIVATION_SYMMETRY_NOTE,
@@ -906,6 +909,33 @@ def _seed_and_migrate():
         ):
             if not db.query(models.GuidedStep).filter(models.GuidedStep.id == synth_def["id"]).first():
                 db.add(models.GuidedStep(**synth_def))
+                legacy_changed = True
+
+        # Distribuzione consigli: gli step tematici possono recuperare al massimo
+        # una nuova strategia; sintesi e step interpretativi non ne recuperano.
+        for step in db.query(models.GuidedStep).filter(
+            models.GuidedStep.questionnaire_type.in_(("QSA", "QSAr"))
+        ).all():
+            config_key = f"prompt_components_{step.questionnaire_type.upper()}_{step.id}"
+            cfg = db.query(models.Config).filter(models.Config.key == config_key).first()
+            if cfg and cfg.value:
+                try:
+                    saved = json.loads(cfg.value)
+                except (TypeError, ValueError):
+                    saved = None
+                if isinstance(saved, dict):
+                    current_limit = saved.get("certified_strategy_limit")
+                    is_thematic = step.system_prompt_mode in {"second-level", "qsar-second-level"}
+                    target_limit = 0 if step.id in {"sl-synthesis", "qsar-synthesis"} or not is_thematic else 1
+                    if isinstance(current_limit, (int, float)) and current_limit > target_limit:
+                        saved["certified_strategy_limit"] = target_limit
+                        cfg.value = json.dumps(saved, ensure_ascii=True, separators=(",", ":"))
+                        legacy_changed = True
+
+        for synthesis_id in ("sl-synthesis", "qsar-synthesis"):
+            step = db.query(models.GuidedStep).filter(models.GuidedStep.id == synthesis_id).first()
+            if step and SYNTHESIS_ADVICE_SENTINEL not in (step.prompt or ""):
+                step.prompt = (step.prompt or "").rstrip() + SYNTHESIS_ADVICE_DIRECTIVE
                 legacy_changed = True
 
         if legacy_changed:
