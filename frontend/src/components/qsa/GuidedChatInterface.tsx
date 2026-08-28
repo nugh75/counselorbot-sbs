@@ -17,6 +17,7 @@ import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { toast } from '@/components/ui/Toast';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { freezeSession, type FrozenSessionDetail } from '@/lib/frozen-session';
 
 // --- Types ---
@@ -1452,16 +1453,17 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             </div>
                         )}
                         <div className="mb-2 flex items-center justify-end gap-1.5">
-                            <button
-                                type="button"
-                                onClick={() => void handleFreeze()}
-                                disabled={isLoading || !sessionId}
-                                title={t('frozen.freeze')}
-                                aria-label={t('frozen.freeze')}
-                                className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                <Snowflake className="h-4 w-4" />
-                            </button>
+                            <Tooltip content={t('frozen.freeze')} side="top">
+                                <button
+                                    type="button"
+                                    onClick={() => void handleFreeze()}
+                                    disabled={isLoading || !sessionId}
+                                    aria-label={t('frozen.freeze')}
+                                    className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    <Snowflake className="h-4 w-4" />
+                                </button>
+                            </Tooltip>
                             <ResponseLengthSelector
                                 value={responseLength}
                                 onChange={setResponseLength}
