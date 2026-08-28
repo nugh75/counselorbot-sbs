@@ -337,6 +337,10 @@ EXPECTED_ROUTES = {
     ("POST", "/user/portfolio/{item_id}/images"),
     ("GET", "/user/portfolio/{item_id}/images/{image_id}"),
     ("DELETE", "/user/portfolio/{item_id}/images/{image_id}"),
+    ("POST", "/session/freeze"),
+    ("GET", "/session/frozen"),
+    ("GET", "/session/frozen/{session_id}"),
+    ("DELETE", "/session/frozen/{session_id}"),
     ("GET", "/admin/questionnaire-results"),
     ("GET", "/admin/validation/summary"),
     ("GET", "/admin/validation/responses"),
@@ -5049,6 +5053,85 @@ def test_skills_handler_whitelist():
     })
     assert res.status_code == 400, res.text
     assert "handler sconosciuto" in res.json()["detail"]
+
+
+def test_frozen_session_round_trip_and_isolation():
+    def _as(username: str, email: str):
+        main.app.dependency_overrides[auth.get_current_user] = lambda: _identity(
+            username, email, is_researcher=False
+        )
+
+    _as("student-a", "a@example.test")
+    try:
+        payload = {
+            "session_id": "frozen-session-1",
+            "questionnaire_type": "QSA",
+            "messages": [
+                {"role": "system", "content": "--- Step 1 ---"},
+                {"role": "user", "content": "Vorrei capire come organizzarmi."},
+                {"role": "assistant", "content": "Partiamo dal tuo profilo.", "responseId": "r-1"},
+            ],
+            "current_phase": "step-1",
+            "scores": {"C1": 7.0},
+            "counselor_id": 3,
+            "experience": "standard",
+            "locale": "it",
+            "response_length": "short",
+            "label": "QSA — Step 1",
+        }
+        r = client.post("/session/freeze", json=payload)
+        assert r.status_code == 200, r.text
+        assert r.json()["session_id"] == "frozen-session-1"
+
+        listed = client.get("/session/frozen")
+        assert listed.status_code == 200, listed.text
+        rows = listed.json()
+        assert [row["session_id"] for row in rows] == ["frozen-session-1"]
+        assert rows[0]["label"] == "QSA — Step 1"
+        assert "messages" not in rows[0]
+
+        detail = client.get("/session/frozen/frozen-session-1")
+        assert detail.status_code == 200, detail.text
+        body = detail.json()
+        assert len(body["messages"]) == 3
+        assert body["messages"][2]["responseId"] == "r-1"
+        assert body["current_phase"] == "step-1"
+        assert body["scores"] == {"C1": 7.0}
+        assert body["counselor_id"] == 3
+        assert body["response_length"] == "short"
+
+        # Ricongelare aggiorna la riga esistente invece di duplicarla.
+        payload["messages"].append({"role": "user", "content": "Riprendo da qui."})
+        payload["current_phase"] = "step-2"
+        assert client.post("/session/freeze", json=payload).status_code == 200
+        again = client.get("/session/frozen")
+        assert len(again.json()) == 1
+        assert client.get("/session/frozen/frozen-session-1").json()["current_phase"] == "step-2"
+
+        # Un altro studente non vede né cancella la sessione del primo.
+        _as("student-b", "b@example.test")
+        assert client.get("/session/frozen").json() == []
+        assert client.get("/session/frozen/frozen-session-1").status_code == 404
+        assert client.delete("/session/frozen/frozen-session-1").status_code == 404
+
+        _as("student-a", "a@example.test")
+        assert client.delete("/session/frozen/frozen-session-1").status_code == 200
+        assert client.get("/session/frozen").json() == []
+    finally:
+        main.app.dependency_overrides.pop(auth.get_current_user, None)
+
+
+def test_frozen_session_rejects_unknown_questionnaire():
+    main.app.dependency_overrides[auth.get_current_user] = _fake_user_identity
+    try:
+        r = client.post("/session/freeze", json={
+            "session_id": "frozen-session-2",
+            "questionnaire_type": "NOPE",
+            "messages": [],
+        })
+        assert r.status_code == 422, r.text
+    finally:
+        main.app.dependency_overrides.pop(auth.get_current_user, None)
 
 
 if __name__ == "__main__":
