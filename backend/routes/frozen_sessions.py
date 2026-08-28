@@ -59,20 +59,30 @@ async def freeze_session(
     current_user: dict = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Congela la sessione: upsert dello snapshot per (username, session_id)."""
+    """Congela la sessione: upsert dello snapshot per (username, session_id).
+
+    Non c'e' un vincolo di unicita' a livello di DB (la tabella e' gia' stata
+    creata senza), quindi due freeze concorrenti per lo stesso session_id
+    possono entrambi non trovare la riga esistente e inserirne una a testa.
+    Qui si collassano eventuali righe duplicate sulla prima: la corsa si
+    autocorregge al freeze successivo invece di lasciare righe orfane.
+    """
     username = current_user["username"]
     data = payload.model_dump(exclude={"session_id", "questionnaire_type"})
-    row = (
+    rows = (
         db.query(models.FrozenSession)
         .filter(
             models.FrozenSession.username == username,
             models.FrozenSession.session_id == payload.session_id,
         )
-        .first()
+        .all()
     )
-    if row:
+    if rows:
+        row, extras = rows[0], rows[1:]
         row.questionnaire_type = payload.questionnaire_type
         row.data = data
+        for extra in extras:
+            db.delete(extra)
     else:
         row = models.FrozenSession(
             username=username,
@@ -116,8 +126,23 @@ async def delete_frozen_session(
     current_user: dict = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Rimuove lo snapshot: percorso concluso o ripresa scartata."""
-    row = _owned(db, session_id, current_user)
-    db.delete(row)
+    """Rimuove lo snapshot: percorso concluso o ripresa scartata.
+
+    Cancella tutte le righe per (username, session_id), non solo la prima:
+    se una corsa in freeze_session ha lasciato un duplicato, DELETE non deve
+    farlo riapparire in GET /session/frozen.
+    """
+    rows = (
+        db.query(models.FrozenSession)
+        .filter(
+            models.FrozenSession.username == current_user["username"],
+            models.FrozenSession.session_id == session_id,
+        )
+        .all()
+    )
+    if not rows:
+        raise HTTPException(status_code=404, detail="Sessione congelata non trovata")
+    for row in rows:
+        db.delete(row)
     db.commit()
     return {"status": "deleted", "session_id": session_id}

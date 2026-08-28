@@ -5115,6 +5115,19 @@ def test_frozen_session_round_trip_and_isolation():
         assert client.delete("/session/frozen/frozen-session-1").status_code == 404
 
         _as("student-a", "a@example.test")
+
+        # Simula la corsa di due freeze concorrenti: una seconda riga per lo
+        # stesso (username, session_id), inserita direttamente sul DB perche'
+        # non c'e' un vincolo di unicita' a livello di tabella a impedirlo.
+        db = next(_override_get_db())
+        db.add(models.FrozenSession(
+            username="student-a",
+            session_id="frozen-session-1",
+            questionnaire_type="QSA",
+            data={"current_phase": "step-2"},
+        ))
+        db.commit()
+
         assert client.delete("/session/frozen/frozen-session-1").status_code == 200
         assert client.get("/session/frozen").json() == []
     finally:
