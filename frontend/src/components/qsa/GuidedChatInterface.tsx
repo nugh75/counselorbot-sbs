@@ -1,6 +1,6 @@
 'use client';
 
-import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown, Snowflake } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
@@ -16,6 +16,8 @@ import type { Lang } from '@/lib/i18n';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
+import { toast } from '@/components/ui/Toast';
+import { freezeSession } from '@/lib/frozen-session';
 
 // --- Types ---
 
@@ -36,6 +38,7 @@ interface GuidedChatInterfaceProps {
     sessionId: string;
     locale?: string;
     scoresContextOverride?: string;
+    onFrozen?: () => void;
 }
 
 interface ChatMessage {
@@ -375,7 +378,7 @@ const markdownComponents: Components = {
 
 // --- Main Component ---
 
-export function GuidedChatInterface({ scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride }: GuidedChatInterfaceProps) {
+export function GuidedChatInterface({ scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen }: GuidedChatInterfaceProps) {
     const { t, tf, lang: contextLang } = useI18n();
     const activeLocale = normalizeLocale(locale || contextLang);
     const [steps, setSteps] = useState<StepDef[]>([]);
@@ -1059,6 +1062,30 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         }
     };
 
+    // Congela la sessione: salva lo stato visibile lato server e lascia che il
+    // chiamante chiuda la chat. Lo studente la riprende da qualsiasi dispositivo.
+    const handleFreeze = async () => {
+        if (isLoading) return;
+        try {
+            await freezeSession({
+                session_id: sessionId,
+                questionnaire_type: questionnaireType,
+                messages,
+                current_phase: currentPhase,
+                scores,
+                counselor_id: getSelectedCounselorId(),
+                experience: 'standard',
+                locale: activeLocale,
+                response_length: responseLength,
+                label: `${questionnaireType} — ${getPhaseLabel(currentPhase)}`,
+            });
+            toast.success(t('frozen.frozen'));
+            onFrozen?.();
+        } catch {
+            toast.error(t('toast.error'));
+        }
+    };
+
     // Loading state
     if (initialLoading) {
         return (
@@ -1414,7 +1441,17 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                 ))}
                             </div>
                         )}
-                        <div className="mb-2 flex justify-end">
+                        <div className="mb-2 flex items-center justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() => void handleFreeze()}
+                                disabled={isLoading || !sessionId}
+                                title={t('frozen.freeze')}
+                                className="flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 transition-colors hover:border-indigo-300 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                <Snowflake className="h-3.5 w-3.5" />
+                                {t('frozen.freeze')}
+                            </button>
                             <ResponseLengthSelector
                                 value={responseLength}
                                 onChange={setResponseLength}
