@@ -12,6 +12,7 @@ Eseguibile senza pytest:
 Con pytest (se installato):
     pytest backend/tests/test_smoke.py
 """
+import json
 import os
 import re
 import shutil
@@ -2938,6 +2939,84 @@ def test_clamp_max_tokens():
     assert main._clamp_max_tokens(None) is None
     # valore valido resta entro i limiti (non solleva)
     assert isinstance(main._clamp_max_tokens(1000), int)
+
+
+def _done_sse_event(response):
+    for line in response.text.splitlines():
+        if not line.startswith("data:"):
+            continue
+        event = json.loads(line[5:].strip())
+        if event.get("done"):
+            return event
+    raise AssertionError(f"Evento done mancante: {response.text[-500:]}")
+
+
+def test_response_length_helpers_and_validation():
+    directive = chat_logic._apply_response_length_directive("BASE", "short")
+    assert "no more than 80 words" in directive
+    assert chat_logic._response_length_max_tokens("medium", 900) == 600
+    assert chat_logic._response_length_max_tokens(None, 900) == 900
+
+    source = " ".join(f"parola{i}" for i in range(1, 101))
+    bounded, truncated = chat_logic._limit_visible_words(source, "short")
+    assert truncated is True
+    assert len(chat_logic._VISIBLE_WORD_RE.findall(bounded)) == 80
+    assert bounded.endswith("…")
+    untouched, truncated = chat_logic._limit_visible_words(source, None)
+    assert untouched == source and truncated is False
+
+    invalid = client.post("/chat/stream", json={"message": "ciao", "response_length": "extra"})
+    assert invalid.status_code == 422, invalid.text
+
+
+def test_response_length_is_enforced_on_both_web_streams():
+    original_stream = _FakeAIService.stream_response
+    original_search = site_chat_routes.site_rag_index.search
+    long_answer = " ".join(f"parola{i}" for i in range(1, 121))
+
+    def long_stream(self, *args, **kwargs):
+        _FakeAIService.last_stream_args = {
+            "max_tokens": kwargs.get("max_tokens"),
+            "system_prompt": args[1],
+        }
+        yield {"type": "reasoning", "text": "ragionamento interno non contato " * 100}
+        yield {"type": "content", "text": long_answer}
+
+    _FakeAIService.stream_response = long_stream
+    site_chat_routes.site_rag_index.search = lambda *a, **kw: [
+        {"score": 0.9, "source": "fonti/x.md", "title": "Doc X", "text": "Contenuto di prova."}
+    ]
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        chat_response = client.post("/chat/stream", json={
+            "message": "Rispondi",
+            "mode": "generic",
+            "session_id": "response-length-chat",
+            "response_length": "short",
+        })
+        assert chat_response.status_code == 200, chat_response.text
+        chat_done = _done_sse_event(chat_response)
+        assert len(chat_logic._VISIBLE_WORD_RE.findall(chat_done["response"])) == 80
+        assert chat_done["response"].endswith("…")
+        assert _FakeAIService.last_stream_args["max_tokens"] == 256
+        assert "no more than 80 words" in _FakeAIService.last_stream_args["system_prompt"]
+
+        site_response = client.post("/site-chat/stream", json={
+            "message": "Cos'è il QSA?",
+            "audience": "studente",
+            "session_id": "response-length-site-chat",
+            "response_length": "short",
+        })
+        assert site_response.status_code == 200, site_response.text
+        site_done = _done_sse_event(site_response)
+        assert len(chat_logic._VISIBLE_WORD_RE.findall(site_done["response"])) == 80
+        assert site_done["response"].endswith("…")
+        assert _FakeAIService.last_stream_args["max_tokens"] == 256
+        assert "no more than 80 words" in _FakeAIService.last_stream_args["system_prompt"]
+    finally:
+        _FakeAIService.stream_response = original_stream
+        site_chat_routes.site_rag_index.search = original_search
+        main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
 def test_reasoning_resolve_plan():

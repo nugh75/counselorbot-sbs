@@ -20,10 +20,15 @@ from sqlalchemy.orm import Session
 
 from .. import auth, database, models, model_pricing
 from ..ai_service import AIService, AIError
-from ..chat_logic import _apply_language_directive
+from ..chat_logic import (
+    _apply_language_directive,
+    _apply_response_length_directive,
+    _limit_visible_words,
+    _response_length_max_tokens,
+)
 from .. import pii
 from ..api_models import SiteChatRequest
-from ..chat_logic import _clamp_max_tokens, conversation_id_for, log_error, _portfolio_context
+from ..chat_logic import conversation_id_for, log_error, _portfolio_context
 from ..memory_service import session_memory
 from ..strategy_memory import shared_response_memory
 from ..prompt_config import (
@@ -309,7 +314,8 @@ async def site_chat_stream(
     c_persona, c_name = _resolve_counselor(db, request.counselor_id)
     if c_persona:
         system_prompt = f"{c_persona.strip()}\n\n{system_prompt}"
-    max_tokens = _clamp_max_tokens(request.max_tokens)
+    system_prompt = _apply_response_length_directive(system_prompt, request.response_length)
+    max_tokens = _response_length_max_tokens(request.response_length, request.max_tokens)
     top_k = _top_k(ai_service)
     question = (request.message or "").strip()
     student_context = (request.student_context or "").strip()[:6000]
@@ -372,6 +378,7 @@ async def site_chat_stream(
                     "model": model,
                     "n_results": len(results) if results else 0,
                     "usage": usage,
+                    "response_length": request.response_length,
                     "cost_usd": cost_usd,
                 }, "question", "answer"),
             )
@@ -446,9 +453,18 @@ async def site_chat_stream(
                     yield f"data: {_json.dumps({'reasoning': text})}\n\n"
                     continue
                 chunks.append(text)
-                yield f"data: {_json.dumps({'delta': text, 'display': _strip_fonte_tokens(''.join(chunks))})}\n\n"
+                display_response, truncated = _limit_visible_words(
+                    _strip_fonte_tokens("".join(chunks)), request.response_length
+                )
+                event = {"display": display_response}
+                if request.response_length is None:
+                    event["delta"] = text
+                yield f"data: {_json.dumps(event)}\n\n"
+                if truncated:
+                    break
 
             answer = _strip_fonte_tokens("".join(chunks))
+            answer, _ = _limit_visible_words(answer, request.response_length)
             response_id = _log_and_persist(answer, sources, usage_info)
             yield f"data: {_json.dumps({'done': True, 'response': answer, 'session_id': session_id, 'conversation_id': conversation_id, 'sources': sources, 'response_id': response_id})}\n\n"
         except Exception as e:

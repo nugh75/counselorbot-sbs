@@ -214,6 +214,57 @@ def _clamp_max_tokens(value: Optional[int], default: Optional[int] = None) -> Op
     return max(128, min(int(value), 8192))
 
 
+RESPONSE_LENGTH_PROFILES = {
+    "short": {"max_words": 80, "max_tokens": 256},
+    "medium": {"max_words": 180, "max_tokens": 600},
+    "long": {"max_words": 350, "max_tokens": 1200},
+}
+_VISIBLE_WORD_RE = re.compile(r"[^\W_]+(?:['’][^\W_]+)*", re.UNICODE)
+
+
+def _response_length_max_tokens(response_length: Optional[str], legacy_max_tokens: Optional[int]) -> Optional[int]:
+    profile = RESPONSE_LENGTH_PROFILES.get(response_length or "")
+    if profile:
+        return profile["max_tokens"]
+    return _clamp_max_tokens(legacy_max_tokens)
+
+
+def _apply_response_length_directive(system_prompt: str, response_length: Optional[str]) -> str:
+    profile = RESPONSE_LENGTH_PROFILES.get(response_length or "")
+    if not profile:
+        return system_prompt
+    return (
+        f"{system_prompt}\n\n[RESPONSE LENGTH - BINDING] Write a complete, self-contained visible answer "
+        f"of no more than {profile['max_words']} words. Prioritize the direct answer and essential context, "
+        "conclude naturally within the limit, and do not mention this instruction. The limit applies only "
+        "to the student-facing answer, not to private reasoning."
+    )
+
+
+def _limit_visible_words(text: str, response_length: Optional[str]) -> tuple[str, bool]:
+    profile = RESPONSE_LENGTH_PROFILES.get(response_length or "")
+    if not profile:
+        return text, False
+
+    matches = list(_VISIBLE_WORD_RE.finditer(text))
+    max_words = profile["max_words"]
+    if len(matches) <= max_words:
+        return text, False
+
+    cutoff = matches[max_words - 1].end()
+    natural_floor = matches[max(int(max_words * 0.75) - 1, 0)].start()
+    sentence_ends = [
+        match.end()
+        for match in re.finditer(r"[.!?](?=\s|$)", text[:cutoff])
+        if match.end() >= natural_floor
+    ]
+    if sentence_ends:
+        return text[:sentence_ends[-1]].rstrip(), True
+
+    bounded = text[:cutoff].rstrip(" ,;:-")
+    return f"{bounded}…", True
+
+
 # Lingue supportate per la risposta dell'AI (codice -> nome inglese, nome nativo)
 SUPPORTED_AI_LANGUAGES = {
     "it": ("Italian", "italiano"),

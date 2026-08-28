@@ -1,6 +1,6 @@
 """Modelli Pydantic delle richieste API (estratti da main.py per evitare
 import circolari tra i router e la logica di chat)."""
-from typing import Optional
+from typing import Literal, Optional
 
 from . import schemas
 
@@ -16,6 +16,7 @@ class ChatRequest(schemas.BaseModel):
     use_phase_prompt: bool = False
     language: Optional[str] = None  # 'it' (default), 'en', 'es', 'fr', 'de', 'sv'
     max_tokens: Optional[int] = None
+    response_length: Optional[Literal["short", "medium", "long"]] = None
     memory_message: Optional[str] = None  # Solo testo reale dell'utente, senza istruzioni interne
     internal_message: bool = False  # Istruzione tecnica: non mostrarla come input studente nei log/PDF
     counselor_id: Optional[int] = None  # se valorizzato: persona + provider/model dal counselor
@@ -28,6 +29,7 @@ class SiteChatRequest(schemas.BaseModel):
     session_id: Optional[str] = None
     conversation_id: Optional[str] = None
     max_tokens: Optional[int] = None
+    response_length: Optional[Literal["short", "medium", "long"]] = None
     language: Optional[str] = "it"  # lingua della risposta (it|en|es|fr|de|sv)
     collection: str = "competenzestrategiche"  # base di conoscenza: builtin o collezione dinamica (slug)
     counselor_id: Optional[int] = None  # counselor AI opzionale per la persona nel system prompt
