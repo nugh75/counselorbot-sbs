@@ -789,18 +789,24 @@ class FrozenSessionMessage(BaseModel):
     def _cap_content(cls, v):
         return str(v or "")[:FROZEN_SESSION_MAX_CONTENT_CHARS]
 
+    @validator("reasoning", pre=True)
+    def _cap_reasoning(cls, v):
+        if v is None:
+            return None
+        return str(v)[:FROZEN_SESSION_MAX_CONTENT_CHARS]
+
 
 class FrozenSessionCreate(BaseModel):
     session_id: str
     questionnaire_type: str
     messages: List[FrozenSessionMessage] = Field(default_factory=list)
-    current_phase: str = ""
+    current_phase: str = Field(default="", max_length=200)
     scores: Dict[str, float] = Field(default_factory=dict)
     counselor_id: Optional[int] = None
     experience: Optional[str] = None
-    locale: Optional[str] = None
+    locale: Optional[str] = Field(default=None, max_length=16)
     response_length: Optional[str] = None
-    label: Optional[str] = None
+    label: Optional[str] = Field(default=None, max_length=200)
 
     @validator("session_id", pre=True)
     def _require_session_id(cls, v):

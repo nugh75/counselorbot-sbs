@@ -5147,6 +5147,71 @@ def test_frozen_session_rejects_unknown_questionnaire():
         main.app.dependency_overrides.pop(auth.get_current_user, None)
 
 
+def test_frozen_session_routes_require_authentication():
+    override = main.app.dependency_overrides.pop(auth.get_current_user, None)
+    try:
+        payload = {
+            "session_id": "unauth-frozen",
+            "questionnaire_type": "QSA",
+            "messages": [],
+        }
+        assert client.post("/session/freeze", json=payload).status_code == 401
+        assert client.get("/session/frozen").status_code == 401
+        assert client.get("/session/frozen/unauth-frozen").status_code == 401
+        assert client.delete("/session/frozen/unauth-frozen").status_code == 401
+    finally:
+        if override is not None:
+            main.app.dependency_overrides[auth.get_current_user] = override
+
+
+def test_frozen_session_freeze_collapses_duplicate_rows():
+    """Ramo di collasso in freeze_session: sostituto applicativo del vincolo
+    di unicita' mancante a livello di tabella. Simula la corsa di due freeze
+    concorrenti inserendo una seconda riga per lo stesso (username, session_id)
+    direttamente sul DB, poi verifica che un nuovo POST /session/freeze le
+    collassi in una sola riga con il payload aggiornato."""
+    main.app.dependency_overrides[auth.get_current_user] = lambda: _identity(
+        "student-c", "c@example.test", is_researcher=False
+    )
+    try:
+        payload = {
+            "session_id": "frozen-session-dup",
+            "questionnaire_type": "QSA",
+            "messages": [{"role": "user", "content": "Prima versione."}],
+            "current_phase": "step-1",
+            "scores": {"C1": 5.0},
+            "label": "QSA — Step 1",
+        }
+        assert client.post("/session/freeze", json=payload).status_code == 200
+
+        db = next(_override_get_db())
+        db.add(models.FrozenSession(
+            username="student-c",
+            session_id="frozen-session-dup",
+            questionnaire_type="QSA",
+            data={"current_phase": "step-1", "messages": payload["messages"]},
+        ))
+        db.commit()
+
+        payload["messages"].append({"role": "assistant", "content": "Nuova risposta dopo il collasso."})
+        payload["current_phase"] = "step-2"
+        r = client.post("/session/freeze", json=payload)
+        assert r.status_code == 200, r.text
+
+        rows = client.get("/session/frozen").json()
+        assert len(rows) == 1
+        assert rows[0]["session_id"] == "frozen-session-dup"
+        assert rows[0]["current_phase"] == "step-2"
+
+        detail = client.get("/session/frozen/frozen-session-dup").json()
+        assert [m["content"] for m in detail["messages"]] == [
+            "Prima versione.",
+            "Nuova risposta dopo il collasso.",
+        ]
+    finally:
+        main.app.dependency_overrides.pop(auth.get_current_user, None)
+
+
 if __name__ == "__main__":
     import sys
     sys.exit(_main())

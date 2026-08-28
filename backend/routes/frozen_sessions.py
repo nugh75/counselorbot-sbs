@@ -111,7 +111,11 @@ async def list_frozen_sessions(
     return [_summary(row) for row in rows]
 
 
-@router.get("/session/frozen/{session_id}", response_model=schemas.FrozenSessionDetail)
+@router.get(
+    "/session/frozen/{session_id}",
+    response_model=schemas.FrozenSessionDetail,
+    response_model_exclude_none=True,
+)
 async def get_frozen_session(
     session_id: str,
     current_user: dict = Depends(auth.get_current_user),
