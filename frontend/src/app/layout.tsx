@@ -6,6 +6,7 @@ import { RolePreviewBanner } from '@/components/layout/RolePreviewBanner';
 import { ViewAsFetchPatch } from '@/components/layout/ViewAsFetchPatch';
 import { I18nProvider } from '@/lib/i18n-context';
 import { Toaster } from '@/components/ui/Toast';
+import { TooltipProvider } from '@/components/ui/Tooltip';
 
 // Tre ruoli tipografici. Body = Inter (invariato). Display = Bricolage Grotesque,
 // grottesco contemporaneo, usato con parsimonia su titoli/wordmark. Mono = IBM Plex
@@ -36,13 +37,15 @@ export default function RootLayout({
             </head>
             <body className={`${inter.variable} ${display.variable} ${mono.variable} min-h-screen bg-slate-50 text-slate-900 selection:bg-indigo-100 selection:text-indigo-900`}>
                 <I18nProvider>
-                    <ViewAsFetchPatch />
-                    <Header />
-                    <main className="pt-20 px-4 pb-12">
-                        {children}
-                    </main>
-                    <RolePreviewBanner />
-                    <Toaster />
+                    <TooltipProvider delayDuration={300}>
+                        <ViewAsFetchPatch />
+                        <Header />
+                        <main className="pt-20 px-4 pb-12">
+                            {children}
+                        </main>
+                        <RolePreviewBanner />
+                        <Toaster />
+                    </TooltipProvider>
                 </I18nProvider>
             </body>
         </html>
