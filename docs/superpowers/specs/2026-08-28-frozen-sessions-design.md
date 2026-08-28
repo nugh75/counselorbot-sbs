@@ -91,12 +91,12 @@ chiama `/api/session/...`.
 
 | metodo | path | comportamento |
 |---|---|---|
-| `POST` | `/session/freeze` | upsert dello snapshot per `(username, session_id)`; risponde con `{status, session_id, updated_at}` |
+| `POST` | `/session/freeze` | upsert dello snapshot per `(username, session_id)`; risponde con il riepilogo della sessione (`FrozenSessionSummary`) |
 | `GET` | `/session/frozen` | lista delle sessioni congelate dell'utente: `session_id`, `questionnaire_type`, `label`, `current_phase`, `updated_at` — senza `messages`, per non caricare l'header |
 | `GET` | `/session/frozen/{session_id}` | snapshot completo; 404 se non appartiene all'utente |
 | `DELETE` | `/session/frozen/{session_id}` | rimuove lo snapshot (fine percorso o scarto esplicito) |
 
-Modelli di richiesta e risposta in `backend/api_models.py`, accanto agli altri.
+Modelli di richiesta e risposta in `backend/schemas.py`, accanto agli altri.
 `questionnaire_type` è validato contro gli strumenti noti; `messages` è
 limitato in dimensione per evitare payload abnormi.
 
