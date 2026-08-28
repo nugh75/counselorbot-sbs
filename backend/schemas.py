@@ -769,6 +769,77 @@ class PortfolioItemResponse(BaseModel):
     updated_at: Optional[datetime] = None
 
 
+# --- Sessioni guidate congelate ---
+
+FROZEN_SESSION_TYPES = {"QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP"}
+FROZEN_SESSION_MAX_MESSAGES = 400
+FROZEN_SESSION_MAX_CONTENT_CHARS = 20000
+
+
+class FrozenSessionMessage(BaseModel):
+    role: str
+    content: str
+    reasoning: Optional[str] = None
+    strategyIds: Optional[List[str]] = None
+    responseId: Optional[str] = None
+    feedbackPhase: Optional[str] = None
+    feedback: Optional[bool] = None
+
+    @validator("content", pre=True)
+    def _cap_content(cls, v):
+        return str(v or "")[:FROZEN_SESSION_MAX_CONTENT_CHARS]
+
+
+class FrozenSessionCreate(BaseModel):
+    session_id: str
+    questionnaire_type: str
+    messages: List[FrozenSessionMessage] = Field(default_factory=list)
+    current_phase: str = ""
+    scores: Dict[str, float] = Field(default_factory=dict)
+    counselor_id: Optional[int] = None
+    experience: Optional[str] = None
+    locale: Optional[str] = None
+    response_length: Optional[str] = None
+    label: Optional[str] = None
+
+    @validator("session_id", pre=True)
+    def _require_session_id(cls, v):
+        text = str(v or "").strip()
+        if not text:
+            raise ValueError("session_id is required")
+        return text
+
+    @validator("questionnaire_type", pre=True)
+    def _known_questionnaire(cls, v):
+        text = str(v or "").strip()
+        if text not in FROZEN_SESSION_TYPES:
+            raise ValueError("unsupported questionnaire_type")
+        return text
+
+    @validator("messages")
+    def _cap_messages(cls, v):
+        if len(v) > FROZEN_SESSION_MAX_MESSAGES:
+            raise ValueError("too many messages")
+        return v
+
+
+class FrozenSessionSummary(BaseModel):
+    session_id: str
+    questionnaire_type: str
+    label: Optional[str] = None
+    current_phase: str = ""
+    experience: Optional[str] = None
+    updated_at: Optional[datetime] = None
+
+
+class FrozenSessionDetail(FrozenSessionSummary):
+    messages: List[FrozenSessionMessage] = Field(default_factory=list)
+    scores: Dict[str, float] = Field(default_factory=dict)
+    counselor_id: Optional[int] = None
+    locale: Optional[str] = None
+    response_length: Optional[str] = None
+
+
 # --- Model presets (provider + modello + parametri riusabili) ---
 class ModelPresetBase(BaseModel):
     name: str
