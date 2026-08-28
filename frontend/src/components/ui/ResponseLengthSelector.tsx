@@ -14,24 +14,43 @@ interface ResponseLengthSelectorProps {
 
 export function ResponseLengthSelector({ value, onChange, disabled = false }: ResponseLengthSelectorProps) {
     const { t } = useI18n();
-    const index = Math.max(OPTIONS.indexOf(value), 0);
 
     return (
-        <div className="flex items-center gap-2 text-xs text-slate-500">
-            <span className="whitespace-nowrap">{t('responseLength.label')}</span>
-            <input
-                type="range"
-                min={0}
-                max={OPTIONS.length - 1}
-                step={1}
-                value={index}
-                disabled={disabled}
-                onChange={(e) => onChange(OPTIONS[Number(e.target.value)])}
-                aria-label={t('responseLength.label')}
-                aria-valuetext={t(`responseLength.${value}`)}
-                className="h-1 w-20 cursor-pointer accent-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-            />
-            <span className="w-12 whitespace-nowrap font-medium text-slate-700">{t(`responseLength.${value}`)}</span>
+        <div
+            role="radiogroup"
+            aria-label={t('responseLength.label')}
+            className="inline-flex items-center rounded-md border border-slate-200 bg-white p-0.5"
+        >
+            {OPTIONS.map((option, index) => {
+                const optionLabel = t(`responseLength.${option}`);
+                const active = option === value;
+                return (
+                    <button
+                        key={option}
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        aria-label={`${t('responseLength.label')}: ${optionLabel}`}
+                        title={optionLabel}
+                        disabled={disabled}
+                        onClick={() => onChange(option)}
+                        className={`flex h-7 w-7 flex-col items-center justify-center gap-0.5 rounded transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                            active
+                                ? 'bg-slate-700 text-white'
+                                : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
+                        }`}
+                    >
+                        {[0, 1, 2].map((line) => (
+                            <span
+                                key={line}
+                                aria-hidden="true"
+                                className="block h-px rounded-full bg-current"
+                                style={{ width: `${8 + index * 3 - line}px` }}
+                            />
+                        ))}
+                    </button>
+                );
+            })}
         </div>
     );
 }
