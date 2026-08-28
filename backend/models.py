@@ -512,6 +512,25 @@ class PortfolioItem(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class FrozenSession(Base):
+    """Sessione guidata congelata dallo studente.
+
+    Una riga per (username, session_id): ricongelare aggiorna lo snapshot.
+    `data` contiene lo stato visibile della chat (messaggi, step, punteggi,
+    counselor, lingua) per riprendere il percorso da qualsiasi dispositivo.
+    """
+
+    __tablename__ = "frozen_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, nullable=False, index=True)
+    session_id = Column(String, nullable=False, index=True)
+    questionnaire_type = Column(String, nullable=False, index=True)
+    data = Column(JSON, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class ModelPreset(Base):
     """Preset riusabile = bundle provider + modello + parametri.
 

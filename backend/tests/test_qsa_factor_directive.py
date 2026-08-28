@@ -22,10 +22,14 @@ os.environ.setdefault("COUNSELOR_TRANSLATE_DISABLED", "1")
 os.environ.setdefault("ADMIN_SYNC_DISABLED", "1")
 
 from backend.chat_logic import (
+    apply_advice_retrieval_policy,
     _annotate_qsa_factor_codes,
+    _apply_advice_distribution_directive,
+    _apply_follow_up_advice_directive,
     _apply_current_step_score_profile_directive,
     _apply_qsa_factor_directive,
     _conversational_retrieval_tail,
+    _default_certified_strategy_limit,
     _ensure_required_qsa_factor_codes,
     _extract_factor_codes,
     _is_conversational_mode,
@@ -33,6 +37,7 @@ from backend.chat_logic import (
     _qsa_assessment_labels,
     _qsa_factor_names,
     _step_allows_practical_advice,
+    step_has_improvement_target,
     _QSA_INVERTED_CODES,
     _QSAR_INVERTED_CODES,
 )
@@ -47,6 +52,7 @@ from backend.prompt_config import (
     FACTOR_INTERPLAY_SENTINEL,
     QA_DEPTH_SENTINEL,
     SECOND_LEVEL_METHOD_SENTINEL,
+    SYNTHESIS_ADVICE_SENTINEL,
 )
 
 
@@ -115,7 +121,7 @@ def test_current_step_score_profile_marks_targets_and_resources():
     assert "A6 (Percezione di competenza): 3/9 = Area di crescita" in out
     assert "Primary improvement targets: A6 (Percezione di competenza)" in out
     assert "Strength/resource factors: A5 (Mancanza di perseveranza)" in out
-    assert "Azione da fare oggi" in out
+    assert "Azione prioritaria" in out
 
 
 def test_qsar_inverted_codes_use_inverted_bands():
@@ -229,6 +235,17 @@ def test_qsar_synthesis_step_covers_all_qsar_factors():
     assert {"C1R", "C2R", "C3R", "C4R", "A1R", "A2R", "A3R", "A4R"} <= codes
 
 
+def test_synthesis_steps_do_not_introduce_new_advice():
+    prompts = {
+        **_default_step_prompts(DEFAULT_GUIDED_STEPS),
+        **_default_step_prompts(DEFAULT_QSAR_GUIDED_STEPS),
+    }
+    for step_id in ("sl-synthesis", "qsar-synthesis"):
+        assert SYNTHESIS_ADVICE_SENTINEL in prompts[step_id]
+        assert "Do not introduce a new study strategy" in prompts[step_id]
+        assert _step_allows_practical_advice("second-level", step_id) is False
+
+
 def test_motivation_and_attribution_prompts_state_expected_patterns():
     # 3.3: simmetria attesa A2/A5; 3.5: aggancio locus of control <-> A6.
     prompts = _default_step_prompts(DEFAULT_GUIDED_STEPS)
@@ -287,6 +304,47 @@ def test_conversational_mode_detection():
     assert _is_conversational_mode(None) is False
 
 
+def test_certified_strategy_budget_is_distributed_across_steps():
+    assert _default_certified_strategy_limit("second-level", "sl-motivation") == 1
+    assert _default_certified_strategy_limit("qsar-second-level", "qsar-emotions") == 1
+    assert _default_certified_strategy_limit("factor", "cognitive") == 0
+    assert _default_certified_strategy_limit("factor-qa", "sl-motivation") == 0
+    assert _default_certified_strategy_limit("second-level", "sl-synthesis") == 0
+
+
+def test_non_advice_steps_disable_strategy_sources():
+    enabled = {"approved_strategies": True, "certified_strategies": True, "knowledge": True}
+    factor = apply_advice_retrieval_policy(enabled, "factor", "cognitive")
+    follow_up = apply_advice_retrieval_policy(enabled, "factor-qa", "sl-motivation")
+    thematic = apply_advice_retrieval_policy(enabled, "second-level", "sl-motivation")
+    assert factor["approved_strategies"] is False and factor["certified_strategies"] is False
+    assert follow_up["approved_strategies"] is False and follow_up["certified_strategies"] is False
+    assert thematic["approved_strategies"] is True and thematic["certified_strategies"] is True
+
+
+def test_advice_distribution_directive_is_binding_and_idempotent():
+    out = _apply_advice_distribution_directive("BASE")
+    assert "at most ONE new practical recommendation" in out
+    assert "one priority with one concrete action" in out
+    assert _apply_advice_distribution_directive(out) == out
+
+
+def test_follow_up_cannot_introduce_another_recommendation():
+    out = _apply_follow_up_advice_directive("BASE")
+    assert "only practical recommendations already discussed" in out
+    assert "Do not introduce a new strategy" in out
+    assert _apply_follow_up_advice_directive(out) == out
+
+
+def test_advice_requires_an_actual_improvement_target():
+    assert step_has_improvement_target(
+        "- C2: 2/9\n- C3: 2/9", "QSA", "it", {"C2", "C3"}
+    ) is True
+    assert step_has_improvement_target(
+        "- C2: 6/9\n- C3: 2/9", "QSA", "it", {"C2", "C3"}
+    ) is False
+
+
 def test_conversational_retrieval_tail_uses_last_assistant_turn():
     session_id = "test-qa-tail-session"
     session_memory.clear(session_id)
@@ -338,7 +396,9 @@ def test_score_profile_second_level_step_keeps_advice_tail():
     assert "[CURRENT STEP SCORE PROFILE]" in out
     assert "Primary improvement targets: A6 (Percezione di competenza)" in out
     assert "Practical advice must focus" in out
-    assert "Azione da fare oggi" in out
+    assert "Azione prioritaria" in out
+    assert "Azione da fare oggi" not in out
+    assert "Azione da fare questa settimana" not in out
 
 
 # --- P0.2: certified-advice fallback --------------------------------------
@@ -354,8 +414,7 @@ def test_certified_advice_fallback_to_approved_support_strategies():
     assert "stay interpretive only if neither is available" in out
     # P1.1: bullet "keep advice scoped" rimosso (scope già dichiarato da [CURRENT STEP FACTORS])
     assert "keep advice scoped" not in out
-    # P1.2: heading rule 'Azione da fare oggi/questa settimana' tolta da certified-advice
-    # (rimane solo nella coda di _apply_current_step_score_profile_directive, gated a include_advice)
+    # Il vecchio schema oggi/settimana non deve riapparire: moltiplicava le azioni.
     assert "Azione da fare oggi" not in out
     assert "Azione da fare questa settimana" not in out
 

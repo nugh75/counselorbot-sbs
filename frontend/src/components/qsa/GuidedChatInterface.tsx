@@ -1,6 +1,6 @@
 'use client';
 
-import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown, Snowflake } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
@@ -15,6 +15,9 @@ import { stepLabel } from '@/lib/i18n-steps';
 import type { Lang } from '@/lib/i18n';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
+import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
+import { toast } from '@/components/ui/Toast';
+import { freezeSession, type FrozenSessionDetail } from '@/lib/frozen-session';
 
 // --- Types ---
 
@@ -35,6 +38,8 @@ interface GuidedChatInterfaceProps {
     sessionId: string;
     locale?: string;
     scoresContextOverride?: string;
+    onFrozen?: () => void;
+    frozenSnapshot?: FrozenSessionDetail | null;
 }
 
 interface ChatMessage {
@@ -374,13 +379,14 @@ const markdownComponents: Components = {
 
 // --- Main Component ---
 
-export function GuidedChatInterface({ scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride }: GuidedChatInterfaceProps) {
+export function GuidedChatInterface({ scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, frozenSnapshot }: GuidedChatInterfaceProps) {
     const { t, tf, lang: contextLang } = useI18n();
     const activeLocale = normalizeLocale(locale || contextLang);
     const [steps, setSteps] = useState<StepDef[]>([]);
     const [phases, setPhases] = useState<string[]>([]);
     const [currentPhase, setCurrentPhase] = useState<string>('');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [responseLength, setResponseLength] = useState<ResponseLength>('medium');
     const [input, setInput] = useState('');
     const [conversationId, setConversationId] = useState<string | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(false);
@@ -524,37 +530,46 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 const sessionScope = `${questionnaireType}:${sessionId}`;
                 const shouldRestoreSession = loadedSessionScopeRef.current !== sessionScope;
 
-                // Check if we can resume the session state from backend memory
-                try {
-                    const memRes = await fetch(`/api/memory/user/${sessionId}`);
-                    if (memRes.ok) {
-                        const memData = await memRes.json();
-                        const restoredPhase = memData.current_phase as string | undefined;
-                        if (restoredPhase && phaseOrder.includes(restoredPhase) && shouldRestoreSession) {
-                            const restoredQuestionsLabel = data.label_guided_questions || t('guided.questionsLabel');
-                            const restoredConclusionLabel = data.label_guided_conclusion || t('guided.conclusionLabel');
-                            setCurrentPhase(restoredPhase);
-                            setMessages([
-                                {
-                                    role: 'system',
-                                    content: t('guided.resumed', { step:
-                                        restoredPhase === FIXED_QUESTIONS_ID
-                                            ? restoredQuestionsLabel
-                                            : restoredPhase === FIXED_CONCLUSION_ID
-                                            ? restoredConclusionLabel
-                                            : normalizedSteps.find((s: StepDef) => s.id === restoredPhase)?.label || restoredPhase
-                                    })
-                                }
-                            ]);
+                if (frozenSnapshot && frozenSnapshot.session_id === sessionId && shouldRestoreSession && phaseOrder.includes(frozenSnapshot.current_phase)) {
+                    // Ripristino da snapshot congelato: ha precedenza sulla memoria di sessione.
+                    setCurrentPhase(frozenSnapshot.current_phase);
+                    setMessages(frozenSnapshot.messages as ChatMessage[]);
+                    if (frozenSnapshot.response_length) {
+                        setResponseLength(frozenSnapshot.response_length);
+                    }
+                } else {
+                    // Check if we can resume the session state from backend memory
+                    try {
+                        const memRes = await fetch(`/api/memory/user/${sessionId}`);
+                        if (memRes.ok) {
+                            const memData = await memRes.json();
+                            const restoredPhase = memData.current_phase as string | undefined;
+                            if (restoredPhase && phaseOrder.includes(restoredPhase) && shouldRestoreSession) {
+                                const restoredQuestionsLabel = data.label_guided_questions || t('guided.questionsLabel');
+                                const restoredConclusionLabel = data.label_guided_conclusion || t('guided.conclusionLabel');
+                                setCurrentPhase(restoredPhase);
+                                setMessages([
+                                    {
+                                        role: 'system',
+                                        content: t('guided.resumed', { step:
+                                            restoredPhase === FIXED_QUESTIONS_ID
+                                                ? restoredQuestionsLabel
+                                                : restoredPhase === FIXED_CONCLUSION_ID
+                                                ? restoredConclusionLabel
+                                                : normalizedSteps.find((s: StepDef) => s.id === restoredPhase)?.label || restoredPhase
+                                        })
+                                    }
+                                ]);
+                            } else if (phaseOrder.length > 0 && shouldRestoreSession) {
+                                setCurrentPhase(phaseOrder[0]);
+                            }
                         } else if (phaseOrder.length > 0 && shouldRestoreSession) {
                             setCurrentPhase(phaseOrder[0]);
                         }
-                    } else if (phaseOrder.length > 0 && shouldRestoreSession) {
-                        setCurrentPhase(phaseOrder[0]);
-                    }
-                } catch {
-                    if (phaseOrder.length > 0 && shouldRestoreSession) {
-                        setCurrentPhase(phaseOrder[0]);
+                    } catch {
+                        if (phaseOrder.length > 0 && shouldRestoreSession) {
+                            setCurrentPhase(phaseOrder[0]);
+                        }
                     }
                 }
                 loadedSessionScopeRef.current = sessionScope;
@@ -586,7 +601,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
         loadData();
         return () => { isMounted = false; };
-    }, [questionnaireType, sessionId, activeLocale, t]);
+    }, [questionnaireType, sessionId, activeLocale, t, frozenSnapshot]);
 
     // Helpers for current phase
     const getStepDef = (phaseId: string): StepDef | undefined => steps.find(s => s.id === phaseId);
@@ -700,7 +715,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
         try {
             const result = await streamChat({
-                message: 'Based on the profile results and the discussion so far, ask the student exactly three open reflective questions. The questions must help the student reason about what emerged, what surprised them, and one concrete strategy or first step. Do not restart the questionnaire, do not re-run the analysis, and do not answer the questions yourself.',
+                message: 'Based on the profile results and the discussion so far, ask the student exactly three open reflective questions. The questions must help the student reason about what emerged, what surprised them, and one concrete strategy or first step already discussed during the path. Do not introduce a new strategy, restart the questionnaire, re-run the analysis, or answer the questions yourself.',
                 memory_message: '',
                 internal_message: true,
                 mode: 'generic',
@@ -711,6 +726,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 questionnaire_type: questionnaireType,
                 language: activeLocale,
                 max_tokens: 500,
+                response_length: responseLength,
                 counselor_id: getSelectedCounselorId(),
             }, (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
             if (result.conversation_id) setConversationId(result.conversation_id);
@@ -748,6 +764,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         questionnaire_type: questionnaireType,
                         language: activeLocale,
                         max_tokens: 700,
+                        response_length: responseLength,
                         counselor_id: getSelectedCounselorId(),
                     };
                 }
@@ -762,6 +779,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     questionnaire_type: questionnaireType,
                     language: activeLocale,
                     max_tokens: 700,
+                    response_length: responseLength,
                     counselor_id: getSelectedCounselorId(),
                 };
             };
@@ -924,6 +942,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 questionnaire_type: questionnaireType,
                 language: activeLocale,
                 max_tokens: 900,
+                response_length: responseLength,
                 counselor_id: getSelectedCounselorId(),
             };
             if (scoresContextOverride) {
@@ -1050,6 +1069,30 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             setPlayingMessageIdx(null);
         } finally {
             setIsAudioLoading(false);
+        }
+    };
+
+    // Congela la sessione: salva lo stato visibile lato server e lascia che il
+    // chiamante chiuda la chat. Lo studente la riprende da qualsiasi dispositivo.
+    const handleFreeze = async () => {
+        if (isLoading) return;
+        try {
+            await freezeSession({
+                session_id: sessionId,
+                questionnaire_type: questionnaireType,
+                messages,
+                current_phase: currentPhase,
+                scores,
+                counselor_id: getSelectedCounselorId(),
+                experience: 'standard',
+                locale: activeLocale,
+                response_length: responseLength,
+                label: `${questionnaireType} — ${getPhaseLabel(currentPhase)}`,
+            });
+            toast.success(t('frozen.frozen'));
+            onFrozen?.();
+        } catch {
+            toast.error(t('toast.error'));
         }
     };
 
@@ -1408,6 +1451,23 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                 ))}
                             </div>
                         )}
+                        <div className="mb-2 flex items-center justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() => void handleFreeze()}
+                                disabled={isLoading || !sessionId}
+                                title={t('frozen.freeze')}
+                                className="flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 transition-colors hover:border-indigo-300 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                <Snowflake className="h-3.5 w-3.5" />
+                                {t('frozen.freeze')}
+                            </button>
+                            <ResponseLengthSelector
+                                value={responseLength}
+                                onChange={setResponseLength}
+                                disabled={isLoading}
+                            />
+                        </div>
                         <div className="relative flex items-end gap-2">
                             <AutoGrowTextarea
                                 value={input}
