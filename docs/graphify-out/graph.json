@@ -1,55 +1,7 @@
 {
   "directed": false,
   "multigraph": false,
-  "graph": {
-    "hyperedges": [
-      {
-        "id": "skills_engine_turn_pipeline",
-        "label": "Pipeline di un turno: contesto, agganci, condizioni, router, rendering",
-        "nodes": [
-          "plans_2026_08_21_skills_engine_engine_build_context",
-          "plans_2026_08_21_skills_engine_registry_bindings_for",
-          "plans_2026_08_21_skills_engine_conditions_match",
-          "plans_2026_08_21_skills_engine_router_select",
-          "plans_2026_08_21_skills_engine_engine_render"
-        ],
-        "relation": "form",
-        "confidence": "EXTRACTED",
-        "confidence_score": 1.0,
-        "source_file": "superpowers/plans/2026-08-21-skills-engine.md"
-      },
-      {
-        "id": "skills_engine_safety_net",
-        "label": "Rete di sicurezza: flag, fallire chiuso, fallback, parita'",
-        "nodes": [
-          "plans_2026_08_21_skills_engine_engine_enabled",
-          "specs_2026_08_21_skills_engine_design_fail_closed",
-          "specs_2026_08_21_skills_engine_design_deterministic_fallback",
-          "plans_2026_08_21_skills_engine_test_skills_parity",
-          "specs_2026_08_21_skills_engine_design_feature_flag_rollout"
-        ],
-        "relation": "participate_in",
-        "confidence": "INFERRED",
-        "confidence_score": 0.85,
-        "source_file": "superpowers/specs/2026-08-21-skills-engine-design.md"
-      },
-      {
-        "id": "skills_admin_authoring_loop",
-        "label": "Ciclo di authoring admin: seed, tabelle, API, pannello, preview",
-        "nodes": [
-          "plans_2026_08_21_skills_engine_seed_skills",
-          "plans_2026_08_21_skills_engine_models_skill",
-          "plans_2026_08_21_skills_engine_routes_skills",
-          "plans_2026_08_21_skills_engine_skillspanel",
-          "plans_2026_08_21_skills_engine_preview_endpoint"
-        ],
-        "relation": "form",
-        "confidence": "EXTRACTED",
-        "confidence_score": 1.0,
-        "source_file": "superpowers/plans/2026-08-21-skills-engine.md"
-      }
-    ]
-  },
+  "graph": {},
   "nodes": [
     {
       "label": "Schede sui fattori del QSA (Apprendo, Ottone)",
@@ -5702,9 +5654,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Oggi la decisione su quando iniettare materiale nel prompt e' hardcoded in Python e sparsa fra chat_logic.py (2192 righe), certified_strategy_service.py e strategy_memory.py: ogni nuovo strumento o step richiede codice, l'admin non puo' comporre il flusso e il comportamento non e' ispezionabile. Il motore introduce unita' dichiarative editabili dall'admin, condizionate al contesto del turno e agganciabili agli step.",
-      "id": "specs_2026_08_21_skills_engine_design_skills_engine",
       "community": 0,
-      "norm_label": "skills engine (design)"
+      "norm_label": "skills engine (design)",
+      "id": "specs_2026_08_21_skills_engine_design_skills_engine"
     },
     {
       "label": "Skill ibrida: dichiarativa in DB + handler Python",
@@ -5716,9 +5668,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Il 90% dei casi e' 'quando iniettare questo testo' e sta bene in una riga DB; il resto (parsing punteggi, retrieval) richiede codice, quindi resta in handler Python whitelisted.",
-      "id": "specs_2026_08_21_skills_engine_design_hybrid_skill_model",
       "community": 0,
-      "norm_label": "skill ibrida: dichiarativa in db + handler python"
+      "norm_label": "skill ibrida: dichiarativa in db + handler python",
+      "id": "specs_2026_08_21_skills_engine_design_hybrid_skill_model"
     },
     {
       "label": "Selezione: regole deterministiche + router LLM sul residuo",
@@ -5730,9 +5682,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Le skill strutturali devono essere riproducibili (regole); la scelta fra molte skill opzionali beneficia del contesto conversazionale, quindi solo quel residuo passa dall'LLM.",
-      "id": "specs_2026_08_21_skills_engine_design_rule_plus_llm_selection",
       "community": 0,
-      "norm_label": "selezione: regole deterministiche + router llm sul residuo"
+      "norm_label": "selezione: regole deterministiche + router llm sul residuo",
+      "id": "specs_2026_08_21_skills_engine_design_rule_plus_llm_selection"
     },
     {
       "label": "Pilota limitato al suggerimento di strategie",
@@ -5744,9 +5696,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Valida l'architettura su un caso reale con rischio contenuto. Restano fuori dal primo giro: migrazione di _apply_*/_sanitize_* di chat_logic, skill come tool LLM (function calling), skill di post-processing della risposta, skill create da non admin.",
-      "id": "specs_2026_08_21_skills_engine_design_strategies_pilot",
       "community": 0,
-      "norm_label": "pilota limitato al suggerimento di strategie"
+      "norm_label": "pilota limitato al suggerimento di strategie",
+      "id": "specs_2026_08_21_skills_engine_design_strategies_pilot"
     },
     {
       "label": "Rollout con feature flag e test di parita'",
@@ -5758,9 +5710,9 @@
       "author": null,
       "contributor": null,
       "rationale": "I prompt sono in produzione e personalizzati in DB: serve rollback immediato. Flag off di default, attivazione per singolo strumento, parita' verificata dal test on/off.",
-      "id": "specs_2026_08_21_skills_engine_design_feature_flag_rollout",
       "community": 0,
-      "norm_label": "rollout con feature flag e test di parita'"
+      "norm_label": "rollout con feature flag e test di parita'",
+      "id": "specs_2026_08_21_skills_engine_design_feature_flag_rollout"
     },
     {
       "label": "Separazione regex di policy / regex di parsing",
@@ -5772,9 +5724,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Le regex non spariscono: quelle di policy ('questa strategia vale solo per aree di crescita') diventano conditions dichiarative editabili dall'admin; quelle di parsing (_SCORE_RE, estrazione codici fattore, banding) restano codice Python dentro gli handler dove sono testabili in isolamento.",
-      "id": "specs_2026_08_21_skills_engine_design_policy_vs_parsing_regex",
       "community": 0,
-      "norm_label": "separazione regex di policy / regex di parsing"
+      "norm_label": "separazione regex di policy / regex di parsing",
+      "id": "specs_2026_08_21_skills_engine_design_policy_vs_parsing_regex"
     },
     {
       "label": "Tabella Skill",
@@ -5786,9 +5738,9 @@
       "author": null,
       "contributor": null,
       "rationale": "instructions_i18n usa il pattern JSON di GuidedStep.label_i18n e non le colonne per lingua di CertifiedStrategy perche' le lingue supportate sono sei e crescono. Solo status='published' + is_active entra in chat.",
-      "id": "specs_2026_08_21_skills_engine_design_skill_table",
       "community": 0,
-      "norm_label": "tabella skill"
+      "norm_label": "tabella skill",
+      "id": "specs_2026_08_21_skills_engine_design_skill_table"
     },
     {
       "label": "Tabella GuidedStepSkill",
@@ -5800,9 +5752,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Aggancio esplicito skill-step con FK logiche (nessun Alembic nel progetto) e vincolo di unicita' applicativo su (questionnaire_type, step_id, skill_id); override_params sovrascrive handler_params per quel passo.",
-      "id": "specs_2026_08_21_skills_engine_design_guided_step_skill_table",
       "community": 0,
-      "norm_label": "tabella guidedstepskill"
+      "norm_label": "tabella guidedstepskill",
+      "id": "specs_2026_08_21_skills_engine_design_guided_step_skill_table"
     },
     {
       "label": "Formato dichiarativo conditions",
@@ -5814,9 +5766,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Chiavi tutte opzionali (assente = nessun vincolo), AND fra chiavi diverse e OR dentro una lista: questionnaire_types, step_modes, step_ids, factor_bands.any_of, min_salient_factors, languages, requires_scores.",
-      "id": "specs_2026_08_21_skills_engine_design_conditions_format",
       "community": 0,
-      "norm_label": "formato dichiarativo conditions"
+      "norm_label": "formato dichiarativo conditions",
+      "id": "specs_2026_08_21_skills_engine_design_conditions_format"
     },
     {
       "label": "Fallire chiuso su condizione sconosciuta",
@@ -5828,9 +5780,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Una chiave di condizione non riconosciuta non attiva la skill e logga un warning: fallire chiuso evita che un errore di battitura dell'admin inietti materiale in tutti i turni.",
-      "id": "specs_2026_08_21_skills_engine_design_fail_closed",
       "community": 0,
-      "norm_label": "fallire chiuso su condizione sconosciuta"
+      "norm_label": "fallire chiuso su condizione sconosciuta",
+      "id": "specs_2026_08_21_skills_engine_design_fail_closed"
     },
     {
       "label": "SkillContext (design)",
@@ -5842,9 +5794,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Dataclass immutabile costruita una volta per turno da chat_logic; salient_factors e score_bands si calcolano una sola volta riusando _factor_tokens e _score_bands di certified_strategy_service invece di duplicarli.",
-      "id": "specs_2026_08_21_skills_engine_design_skill_context",
       "community": 0,
-      "norm_label": "skillcontext (design)"
+      "norm_label": "skillcontext (design)",
+      "id": "specs_2026_08_21_skills_engine_design_skill_context"
     },
     {
       "label": "SkillOutput (design)",
@@ -5856,9 +5808,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Porta text gia' reso, ids del materiale usato e meta diagnostico: gli ids alimentano logging e feedback sulle risposte senza cambiare la firma di ritorno di _retrieved_context.",
-      "id": "specs_2026_08_21_skills_engine_design_skill_output",
       "community": 0,
-      "norm_label": "skilloutput (design)"
+      "norm_label": "skilloutput (design)",
+      "id": "specs_2026_08_21_skills_engine_design_skill_output"
     },
     {
       "label": "Registry handler a decoratore con whitelist",
@@ -5870,9 +5822,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Skill.handler accetta solo nomi registrati: un nome sconosciuto disattiva la skill e logga un errore invece di eseguire codice arbitrario scelto dall'admin.",
-      "id": "specs_2026_08_21_skills_engine_design_handler_whitelist",
       "community": 0,
-      "norm_label": "registry handler a decoratore con whitelist"
+      "norm_label": "registry handler a decoratore con whitelist",
+      "id": "specs_2026_08_21_skills_engine_design_handler_whitelist"
     },
     {
       "label": "Precedenza dei parametri handler",
@@ -5884,9 +5836,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Merge in ordine crescente Skill.handler_params -> GuidedStepSkill.override_params -> ctx.handler_options (certified_strategy_limit, allowed_strategies): le opzioni per step vincono perche' sono gia' oggi la fonte di verita' configurata dall'admin per quel passo.",
-      "id": "specs_2026_08_21_skills_engine_design_param_merge_precedence",
       "community": 0,
-      "norm_label": "precedenza dei parametri handler"
+      "norm_label": "precedenza dei parametri handler",
+      "id": "specs_2026_08_21_skills_engine_design_param_merge_precedence"
     },
     {
       "label": "Router delle skill",
@@ -5898,9 +5850,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Le always passano sempre; le optional passano tutte finche' sono sotto soglia, oltre la soglia un prompt minimo (slug + description + messaggio studente + step) chiede un array JSON di al massimo K slug. Gli slug non presenti fra le candidate vengono scartati.",
-      "id": "specs_2026_08_21_skills_engine_design_router",
       "community": 0,
-      "norm_label": "router delle skill"
+      "norm_label": "router delle skill",
+      "id": "specs_2026_08_21_skills_engine_design_router"
     },
     {
       "label": "Fallback deterministico del router",
@@ -5912,9 +5864,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Qualunque errore, timeout o output non parsabile degrada su ranking memory_embedder sulle description troncato a K, e in ultima istanza sulle prime K per sort_order: il router non solleva mai eccezioni verso il turno di chat.",
-      "id": "specs_2026_08_21_skills_engine_design_deterministic_fallback",
       "community": 0,
-      "norm_label": "fallback deterministico del router"
+      "norm_label": "fallback deterministico del router",
+      "id": "specs_2026_08_21_skills_engine_design_deterministic_fallback"
     },
     {
       "label": "Budget e troncamento dei blocchi skill",
@@ -5926,9 +5878,9 @@
       "author": null,
       "contributor": null,
       "rationale": "L'envelope e' gia' lungo: ogni skill e' troncata a max_chars e la somma a skills_total_max_chars (default 3000), con precedenza always sulle optional poi sort_order; il taglio avviene a confine di riga, mai a meta' parola.",
-      "id": "specs_2026_08_21_skills_engine_design_budget",
       "community": 0,
-      "norm_label": "budget e troncamento dei blocchi skill"
+      "norm_label": "budget e troncamento dei blocchi skill",
+      "id": "specs_2026_08_21_skills_engine_design_budget"
     },
     {
       "label": "Integrazione nell'envelope e slot",
@@ -5940,9 +5892,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Punto di innesto unico in _retrieved_context: con motore attivo strategy_context e certified_context arrivano dallo slot knowledge e i seed hanno sort_order tali da riprodurre l'ordine attuale. Gli slot section (dopo [META SYSTEM PROMPT]) e directive_tail (in coda a parts_system) sono predisposti per le fasi successive.",
-      "id": "specs_2026_08_21_skills_engine_design_envelope_integration",
       "community": 0,
-      "norm_label": "integrazione nell'envelope e slot"
+      "norm_label": "integrazione nell'envelope e slot",
+      "id": "specs_2026_08_21_skills_engine_design_envelope_integration"
     },
     {
       "label": "Precedenza degli spegnimenti",
@@ -5954,9 +5906,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Ordine invariato e precedente al motore: component_flags['knowledge'] spegne tutto il blocco, poi i flag per componente (mappatura slug -> flag in registry.py), poi allowed_strategies applicato dentro l'handler, poi le conditions della skill, infine il router.",
-      "id": "specs_2026_08_21_skills_engine_design_flag_precedence",
       "community": 0,
-      "norm_label": "precedenza degli spegnimenti"
+      "norm_label": "precedenza degli spegnimenti",
+      "id": "specs_2026_08_21_skills_engine_design_flag_precedence"
     },
     {
       "label": "Chiavi di configurazione del motore",
@@ -5968,9 +5920,9 @@
       "author": null,
       "contributor": null,
       "rationale": "skills_engine_enabled (false), skills_engine_instruments ([]), skills_router_threshold (3), skills_router_model (''), skills_router_timeout_s (6), skills_total_max_chars (3000). Il motore e' attivo per un turno solo se il flag globale e' vero E lo strumento e' in lista.",
-      "id": "specs_2026_08_21_skills_engine_design_config_keys",
       "community": 0,
-      "norm_label": "chiavi di configurazione del motore"
+      "norm_label": "chiavi di configurazione del motore",
+      "id": "specs_2026_08_21_skills_engine_design_config_keys"
     },
     {
       "label": "Seed append-only delle skill",
@@ -5982,9 +5934,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Crea le righe mancanti per slug e non sovrascrive mai (stessa regola dei prompt degli step, personalizzati in DB). Le conditions dei seed sono vuote di proposito: il gating vive dentro certified_strategy_memory.retrieve (_factors_satisfied, _profile_alignment) e restarci; aggiungere condizioni al seed cambierebbe il comportamento e romperebbe la parita'.",
-      "id": "specs_2026_08_21_skills_engine_design_seed",
       "community": 0,
-      "norm_label": "seed append-only delle skill"
+      "norm_label": "seed append-only delle skill",
+      "id": "specs_2026_08_21_skills_engine_design_seed"
     },
     {
       "label": "API admin /admin/skills",
@@ -5996,9 +5948,9 @@
       "author": null,
       "contributor": null,
       "rationale": "CRUD skill, elenco handler whitelisted per la select della UI, matrice step x skill (GET/PUT step-map) e preview; DELETE rifiutata se la skill e' agganciata a step.",
-      "id": "specs_2026_08_21_skills_engine_design_admin_api",
       "community": 0,
-      "norm_label": "api admin /admin/skills"
+      "norm_label": "api admin /admin/skills",
+      "id": "specs_2026_08_21_skills_engine_design_admin_api"
     },
     {
       "label": "Preview di attivazione delle skill",
@@ -6010,9 +5962,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Strumento diagnostico principale: rende ispezionabile dal pannello la decisione del motore, router incluso, mostrando skill attivate, testo reso e motivo di ogni esclusione prima di salvare.",
-      "id": "specs_2026_08_21_skills_engine_design_preview",
       "community": 0,
-      "norm_label": "preview di attivazione delle skill"
+      "norm_label": "preview di attivazione delle skill",
+      "id": "specs_2026_08_21_skills_engine_design_preview"
     },
     {
       "label": "Pannello admin Skill (design)",
@@ -6024,9 +5976,9 @@
       "author": null,
       "contributor": null,
       "rationale": null,
-      "id": "specs_2026_08_21_skills_engine_design_admin_ui",
       "community": 0,
-      "norm_label": "pannello admin skill (design)"
+      "norm_label": "pannello admin skill (design)",
+      "id": "specs_2026_08_21_skills_engine_design_admin_ui"
     },
     {
       "label": "Piano di test del motore skill",
@@ -6038,9 +5990,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Su Postgres counselorbot_test come il resto della suite: conditions, router, parita', budget/ordinamento, piu' lo smoke esteso all'endpoint /admin/skills.",
-      "id": "specs_2026_08_21_skills_engine_design_test_plan",
       "community": 0,
-      "norm_label": "piano di test del motore skill"
+      "norm_label": "piano di test del motore skill",
+      "id": "specs_2026_08_21_skills_engine_design_test_plan"
     },
     {
       "label": "Test di parita' motore acceso/spento",
@@ -6052,9 +6004,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Equivalenza on/off invece di snapshot golden committati: il ramo off resta il codice attuale intatto, quindi l'uguaglianza on/off da' la parita' con il comportamento pre-modifica senza golden da manutenere.",
-      "id": "specs_2026_08_21_skills_engine_design_parity_test",
       "community": 0,
-      "norm_label": "test di parita' motore acceso/spento"
+      "norm_label": "test di parita' motore acceso/spento",
+      "id": "specs_2026_08_21_skills_engine_design_parity_test"
     },
     {
       "label": "backend/chat_logic.py",
@@ -6066,9 +6018,9 @@
       "author": null,
       "contributor": null,
       "rationale": "2192 righe di direttive per strumento costruite con regex e string surgery (_apply_qsa_factor_directive, _annotate_qsa_factor_codes, _sanitize_qsa_inverted_wording, _apply_ztpi_step_profile_directive, _sanitize_ztpi_user_text, _apply_certified_advice_directive, _apply_scores_reference, _apply_current_step_factor_scope_directive): e' il file che il motore deve smettere di far crescere.",
-      "id": "specs_2026_08_21_skills_engine_design_chat_logic",
       "community": 0,
-      "norm_label": "backend/chat_logic.py"
+      "norm_label": "backend/chat_logic.py",
+      "id": "specs_2026_08_21_skills_engine_design_chat_logic"
     },
     {
       "label": "_retrieved_context()",
@@ -6080,9 +6032,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Compone graph_context, counselorbot_context, questionari_context, strategy_context, certified_context, learned_context e ritorna (text, strategy_ids, certified_ids): firma invariata anche con il motore attivo.",
-      "id": "specs_2026_08_21_skills_engine_design_retrieved_context",
       "community": 0,
-      "norm_label": "_retrieved_context()"
+      "norm_label": "_retrieved_context()",
+      "id": "specs_2026_08_21_skills_engine_design_retrieved_context"
     },
     {
       "label": "backend/certified_strategy_service.py",
@@ -6094,9 +6046,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Gating delle strategie certificate con _TARGET_BAND_PATTERNS, _SCORE_RE, _factor_tokens, _profile_alignment: il parsing resta qui e viene riusato dal motore, il gating resta dentro retrieve.",
-      "id": "specs_2026_08_21_skills_engine_design_certified_strategy_service",
       "community": 0,
-      "norm_label": "backend/certified_strategy_service.py"
+      "norm_label": "backend/certified_strategy_service.py",
+      "id": "specs_2026_08_21_skills_engine_design_certified_strategy_service"
     },
     {
       "label": "backend/strategy_memory.py",
@@ -6108,9 +6060,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Knowledge base Markdown delle strategie approvate con ranking keyword/embedding.",
-      "id": "specs_2026_08_21_skills_engine_design_strategy_memory",
       "community": 0,
-      "norm_label": "backend/strategy_memory.py"
+      "norm_label": "backend/strategy_memory.py",
+      "id": "specs_2026_08_21_skills_engine_design_strategy_memory"
     },
     {
       "label": "Piano di implementazione del motore di skill",
@@ -6122,9 +6074,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Sei task, un commit per task, sul branch feature/skills-engine. Nessun Alembic: le tabelle nuove nascono da create_all allo startup. Con motore spento l'output di _retrieved_context deve restare identico byte per byte.",
-      "id": "plans_2026_08_21_skills_engine_plan",
       "community": 0,
-      "norm_label": "piano di implementazione del motore di skill"
+      "norm_label": "piano di implementazione del motore di skill",
+      "id": "plans_2026_08_21_skills_engine_plan"
     },
     {
       "label": "package backend/skills/",
@@ -6136,9 +6088,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Quattro responsabilita' separate: valutazione condizioni (puro), handler Python whitelisted (I/O verso i servizi strategie), router (regole + LLM con fallback), engine (esecuzione, budget, rendering).",
-      "id": "plans_2026_08_21_skills_engine_skills_package",
       "community": 0,
-      "norm_label": "package backend/skills/"
+      "norm_label": "package backend/skills/",
+      "id": "plans_2026_08_21_skills_engine_skills_package"
     },
     {
       "label": "models.Skill",
@@ -6150,9 +6102,9 @@
       "author": null,
       "contributor": null,
       "rationale": null,
-      "id": "plans_2026_08_21_skills_engine_models_skill",
       "community": 0,
-      "norm_label": "models.skill"
+      "norm_label": "models.skill",
+      "id": "plans_2026_08_21_skills_engine_models_skill"
     },
     {
       "label": "models.GuidedStepSkill",
@@ -6164,9 +6116,9 @@
       "author": null,
       "contributor": null,
       "rationale": "step_id == '*' vale per tutti gli step dello strumento; un aggancio esplicito sullo stesso step vince sul wildcard.",
-      "id": "plans_2026_08_21_skills_engine_models_guidedstepskill",
       "community": 0,
-      "norm_label": "models.guidedstepskill"
+      "norm_label": "models.guidedstepskill",
+      "id": "plans_2026_08_21_skills_engine_models_guidedstepskill"
     },
     {
       "label": "skills.context.SkillOutput",
@@ -6178,9 +6130,9 @@
       "author": null,
       "contributor": null,
       "rationale": null,
-      "id": "plans_2026_08_21_skills_engine_skilloutput",
       "community": 0,
-      "norm_label": "skills.context.skilloutput"
+      "norm_label": "skills.context.skilloutput",
+      "id": "plans_2026_08_21_skills_engine_skilloutput"
     },
     {
       "label": "skills.conditions.match",
@@ -6192,9 +6144,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Funzione pura che ritorna (attiva, motivo): il motivo vuoto quando attiva, altrimenti spiega l'esclusione ed e' mostrato nella preview admin. Chiavi fuori da KNOWN_CONDITION_KEYS => non attiva + warning.",
-      "id": "plans_2026_08_21_skills_engine_conditions_match",
       "community": 0,
-      "norm_label": "skills.conditions.match"
+      "norm_label": "skills.conditions.match",
+      "id": "plans_2026_08_21_skills_engine_conditions_match"
     },
     {
       "label": "skills.handlers registry",
@@ -6206,9 +6158,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Decoratore @handler(name) + _HANDLERS dict, get_handler e handler_names: solo i nomi registrati sono accettati in Skill.handler.",
-      "id": "plans_2026_08_21_skills_engine_handlers_registry",
       "community": 0,
-      "norm_label": "skills.handlers registry"
+      "norm_label": "skills.handlers registry",
+      "id": "plans_2026_08_21_skills_engine_handlers_registry"
     },
     {
       "label": "handler certified_strategies",
@@ -6220,9 +6172,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Incapsula certified_strategy_memory.retrieve + filtro whitelist + render_context, usando la query arricchita di step e punteggi (step_query) come fa oggi il catalogo certificato.",
-      "id": "plans_2026_08_21_skills_engine_certified_strategies_handler",
       "community": 0,
-      "norm_label": "handler certified_strategies"
+      "norm_label": "handler certified_strategies",
+      "id": "plans_2026_08_21_skills_engine_certified_strategies_handler"
     },
     {
       "label": "handler approved_strategies",
@@ -6234,9 +6186,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Legge Config[approved_strategies_markdown] e chiama strategy_memory.retrieve, che accetta phase (non step_id): si passa lo step corrente come oggi in _retrieved_context con request.phase.",
-      "id": "plans_2026_08_21_skills_engine_approved_strategies_handler",
       "community": 0,
-      "norm_label": "handler approved_strategies"
+      "norm_label": "handler approved_strategies",
+      "id": "plans_2026_08_21_skills_engine_approved_strategies_handler"
     },
     {
       "label": "handlers.compute_salient_factors",
@@ -6248,9 +6200,9 @@
       "author": null,
       "contributor": null,
       "rationale": null,
-      "id": "plans_2026_08_21_skills_engine_compute_salient_factors",
       "community": 0,
-      "norm_label": "handlers.compute_salient_factors"
+      "norm_label": "handlers.compute_salient_factors",
+      "id": "plans_2026_08_21_skills_engine_compute_salient_factors"
     },
     {
       "label": "handlers.compute_score_bands",
@@ -6262,9 +6214,9 @@
       "author": null,
       "contributor": null,
       "rationale": null,
-      "id": "plans_2026_08_21_skills_engine_compute_score_bands",
       "community": 0,
-      "norm_label": "handlers.compute_score_bands"
+      "norm_label": "handlers.compute_score_bands",
+      "id": "plans_2026_08_21_skills_engine_compute_score_bands"
     },
     {
       "label": "certified_strategy_service.factor_tokens",
@@ -6276,9 +6228,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Wrapper pubblico su _factor_tokens: il parsing dei codici fattore resta logica di dominio gia' testata nel servizio, il motore la consuma invece di duplicare le regex.",
-      "id": "plans_2026_08_21_skills_engine_factor_tokens",
       "community": 0,
-      "norm_label": "certified_strategy_service.factor_tokens"
+      "norm_label": "certified_strategy_service.factor_tokens",
+      "id": "plans_2026_08_21_skills_engine_factor_tokens"
     },
     {
       "label": "certified_strategy_service.score_bands",
@@ -6290,9 +6242,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Wrapper pubblico su _score_bands che appiattisce la mappa codice -> banda (growth/adequate/normal/strength) per QSA/QSAr.",
-      "id": "plans_2026_08_21_skills_engine_score_bands",
       "community": 0,
-      "norm_label": "certified_strategy_service.score_bands"
+      "norm_label": "certified_strategy_service.score_bands",
+      "id": "plans_2026_08_21_skills_engine_score_bands"
     },
     {
       "label": "skills.registry.bindings_for",
@@ -6304,9 +6256,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Solo le skill agganciate girano, nessuna attivazione implicita: carica gli agganci per (strumento, step) e wildcard, l'esplicito vince sul wildcard, poi filtra le skill published + is_active e unisce handler_params con override_params.",
-      "id": "plans_2026_08_21_skills_engine_registry_bindings_for",
       "community": 0,
-      "norm_label": "skills.registry.bindings_for"
+      "norm_label": "skills.registry.bindings_for",
+      "id": "plans_2026_08_21_skills_engine_registry_bindings_for"
     },
     {
       "label": "skills.registry.SkillBinding",
@@ -6318,9 +6270,9 @@
       "author": null,
       "contributor": null,
       "rationale": null,
-      "id": "plans_2026_08_21_skills_engine_skillbinding",
       "community": 0,
-      "norm_label": "skills.registry.skillbinding"
+      "norm_label": "skills.registry.skillbinding",
+      "id": "plans_2026_08_21_skills_engine_skillbinding"
     },
     {
       "label": "registry.COMPONENT_FLAG_BY_SLUG",
@@ -6332,9 +6284,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Mappa approved-strategies -> approved_strategies e certified-advice -> certified_strategies: le vecchie spunte per componente del pannello prompt continuano a valere e precedono le condizioni.",
-      "id": "plans_2026_08_21_skills_engine_component_flag_by_slug",
       "community": 0,
-      "norm_label": "registry.component_flag_by_slug"
+      "norm_label": "registry.component_flag_by_slug",
+      "id": "plans_2026_08_21_skills_engine_component_flag_by_slug"
     },
     {
       "label": "skills.engine.render",
@@ -6346,9 +6298,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Non solleva mai: handler sconosciuto o handler in errore diventano una voce di trace e un blocco mancante, perche' un turno di chat non deve fallire per una skill. Ordina always prima delle optional, poi sort_order e slug; concatena istruzioni e materiale dell'handler.",
-      "id": "plans_2026_08_21_skills_engine_engine_render",
       "community": 0,
-      "norm_label": "skills.engine.render"
+      "norm_label": "skills.engine.render",
+      "id": "plans_2026_08_21_skills_engine_engine_render"
     },
     {
       "label": "skills.engine.truncate",
@@ -6360,9 +6312,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Taglia al confine di riga piu' vicino sotto il limite, mai a meta' parola.",
-      "id": "plans_2026_08_21_skills_engine_engine_truncate",
       "community": 0,
-      "norm_label": "skills.engine.truncate"
+      "norm_label": "skills.engine.truncate",
+      "id": "plans_2026_08_21_skills_engine_engine_truncate"
     },
     {
       "label": "skills.engine.SkillsResult",
@@ -6374,9 +6326,9 @@
       "author": null,
       "contributor": null,
       "rationale": "blocks (slot -> blocchi nell'ordine di iniezione), ids (slug -> identificatori del materiale, per log e feedback), trace (diagnostica per la preview admin).",
-      "id": "plans_2026_08_21_skills_engine_skillsresult",
       "community": 0,
-      "norm_label": "skills.engine.skillsresult"
+      "norm_label": "skills.engine.skillsresult",
+      "id": "plans_2026_08_21_skills_engine_skillsresult"
     },
     {
       "label": "skills.engine.enabled",
@@ -6388,9 +6340,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Doppio interruttore: skills_engine_enabled globale piu' appartenenza dello strumento a skills_engine_instruments (JSON); qualunque valore non parsabile => motore spento.",
-      "id": "plans_2026_08_21_skills_engine_engine_enabled",
       "community": 0,
-      "norm_label": "skills.engine.enabled"
+      "norm_label": "skills.engine.enabled",
+      "id": "plans_2026_08_21_skills_engine_engine_enabled"
     },
     {
       "label": "skills.engine.build_context",
@@ -6402,9 +6354,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Fotografa il turno una volta sola: fattori salienti e bande si calcolano qui, non dentro ogni skill.",
-      "id": "plans_2026_08_21_skills_engine_engine_build_context",
       "community": 0,
-      "norm_label": "skills.engine.build_context"
+      "norm_label": "skills.engine.build_context",
+      "id": "plans_2026_08_21_skills_engine_engine_build_context"
     },
     {
       "label": "skills.engine.run_skills",
@@ -6416,9 +6368,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Ordine: component flags per slug, poi conditions.match, poi override delle opzioni per step (certified_strategy_limit, allowed_strategies vincono sui parametri skill), poi router, poi render con il budget da skills_total_max_chars. Errore in caricamento => risultato vuoto, mai eccezione.",
-      "id": "plans_2026_08_21_skills_engine_engine_run_skills",
       "community": 0,
-      "norm_label": "skills.engine.run_skills"
+      "norm_label": "skills.engine.run_skills",
+      "id": "plans_2026_08_21_skills_engine_engine_run_skills"
     },
     {
       "label": "skills.router.select",
@@ -6430,9 +6382,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Le always bypassano il router; sotto soglia nessuna chiamata LLM e trace vuoto; sopra soglia calcola comunque il fallback (prime K per sort_order, slug) prima di tentare l'LLM.",
-      "id": "plans_2026_08_21_skills_engine_router_select",
       "community": 0,
-      "norm_label": "skills.router.select"
+      "norm_label": "skills.router.select",
+      "id": "plans_2026_08_21_skills_engine_router_select"
     },
     {
       "label": "skills.router._llm_select",
@@ -6444,9 +6396,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Ritorna None per segnalare il fallback (ai_service assente, eccezione, risposta non parsabile, timeout). Il timeout e' applicato avvolgendo call_model in un ThreadPoolExecutor con future.result(timeout=skills_router_timeout_s) perche' AIService.call_model non espone un timeout per chiamata.",
-      "id": "plans_2026_08_21_skills_engine_llm_select",
       "community": 0,
-      "norm_label": "skills.router._llm_select"
+      "norm_label": "skills.router._llm_select",
+      "id": "plans_2026_08_21_skills_engine_llm_select"
     },
     {
       "label": "skills_seed.seed_skills",
@@ -6458,9 +6410,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Idempotente e append-only per slug: crea le due skill pilota e gli agganci wildcard su QSA, QSAr, ZTPI, QPCS, QPCC, QAP, SAVICKAS. Conditions vuote di proposito per non rompere la parita'.",
-      "id": "plans_2026_08_21_skills_engine_seed_skills",
       "community": 0,
-      "norm_label": "skills_seed.seed_skills"
+      "norm_label": "skills_seed.seed_skills",
+      "id": "plans_2026_08_21_skills_engine_seed_skills"
     },
     {
       "label": "ramo motore in _retrieved_context",
@@ -6472,9 +6424,9 @@
       "author": null,
       "contributor": null,
       "rationale": "step, phase_codes, certified_scores_context, certified_phase_query, step_mode e certified_limit vengono spostati prima del ramo senza cambiarne il contenuto; il ramo else conserva intatto il codice attuale, cosi' la parita' on/off equivale alla parita' con il comportamento pre-modifica.",
-      "id": "plans_2026_08_21_skills_engine_retrieved_context_branch",
       "community": 0,
-      "norm_label": "ramo motore in _retrieved_context"
+      "norm_label": "ramo motore in _retrieved_context",
+      "id": "plans_2026_08_21_skills_engine_retrieved_context_branch"
     },
     {
       "label": "build_context_envelope skills_blocks",
@@ -6486,9 +6438,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Parametro keyword-only skills_blocks che appende lo slot section dopo [META SYSTEM PROMPT] e directive_tail in coda a parts_system: predisposto ma non passato da nessun chiamante nel pilota, quindi il comportamento resta identico.",
-      "id": "plans_2026_08_21_skills_engine_build_context_envelope",
       "community": 0,
-      "norm_label": "build_context_envelope skills_blocks"
+      "norm_label": "build_context_envelope skills_blocks",
+      "id": "plans_2026_08_21_skills_engine_build_context_envelope"
     },
     {
       "label": "wiring in backend/main.py",
@@ -6500,9 +6452,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Sei chiavi config nuove nella lista di tuple, chiamata a seed_skills protetta da try/except (un seed fallito non deve bloccare lo startup) e include_router di skills_routes. Nota: la spec collocava le chiavi in backend/prompt_config.py, il piano le aggiunge in main.py.",
-      "id": "plans_2026_08_21_skills_engine_main_config_seed",
       "community": 0,
-      "norm_label": "wiring in backend/main.py"
+      "norm_label": "wiring in backend/main.py",
+      "id": "plans_2026_08_21_skills_engine_main_config_seed"
     },
     {
       "label": "backend/routes/skills.py",
@@ -6514,9 +6466,9 @@
       "author": null,
       "contributor": null,
       "rationale": "CRUD protetto da get_current_active_admin con validazione whitelist di routing, slot, status e handler; DELETE rifiutata (409) se la skill e' agganciata a step; PUT step-map riscrive la matrice per strumento.",
-      "id": "plans_2026_08_21_skills_engine_routes_skills",
       "community": 0,
-      "norm_label": "backend/routes/skills.py"
+      "norm_label": "backend/routes/skills.py",
+      "id": "plans_2026_08_21_skills_engine_routes_skills"
     },
     {
       "label": "POST /admin/skills/preview",
@@ -6528,9 +6480,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Costruisce un SkillContext sintetico (component_flags e handler_options vuoti) ed esegue run_skills restituendo blocks, ids e trace.",
-      "id": "plans_2026_08_21_skills_engine_preview_endpoint",
       "community": 0,
-      "norm_label": "post /admin/skills/preview"
+      "norm_label": "post /admin/skills/preview",
+      "id": "plans_2026_08_21_skills_engine_preview_endpoint"
     },
     {
       "label": "SkillsPanel.tsx",
@@ -6542,9 +6494,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Editor skill con JSON validato lato client per conditions e handler_params, select degli handler popolata da /admin/skills/handlers, matrice agganci wildcard per strumento e pannello preview; nuovo tab 'skills' nel gruppo aiConfig di admin/page.tsx.",
-      "id": "plans_2026_08_21_skills_engine_skillspanel",
       "community": 0,
-      "norm_label": "skillspanel.tsx"
+      "norm_label": "skillspanel.tsx",
+      "id": "plans_2026_08_21_skills_engine_skillspanel"
     },
     {
       "label": "test_skills_conditions.py",
@@ -6556,9 +6508,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Test puri senza rete ne' DB, eseguibili sia con pytest sia con python -m grazie al runner __main__ usato dagli altri test del progetto.",
-      "id": "plans_2026_08_21_skills_engine_test_skills_conditions",
       "community": 0,
-      "norm_label": "test_skills_conditions.py"
+      "norm_label": "test_skills_conditions.py",
+      "id": "plans_2026_08_21_skills_engine_test_skills_conditions"
     },
     {
       "label": "test_skills_engine.py",
@@ -6570,9 +6522,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Usa SimpleNamespace al posto delle righe models.Skill per restare senza DB; copre troncamento, fallback i18n, handler mancante, eccezione dell'handler, budget per skill e complessivo, raggruppamento per slot.",
-      "id": "plans_2026_08_21_skills_engine_test_skills_engine",
       "community": 0,
-      "norm_label": "test_skills_engine.py"
+      "norm_label": "test_skills_engine.py",
+      "id": "plans_2026_08_21_skills_engine_test_skills_engine"
     },
     {
       "label": "test_skills_router.py",
@@ -6584,9 +6536,9 @@
       "author": null,
       "contributor": null,
       "rationale": "FakeConfigDB e RecordingService finti: verifica che sotto soglia non ci sia chiamata LLM, che gli slug inventati siano scartati e che errore, JSON invalido, ai_service assente e timeout degradino sul fallback deterministico.",
-      "id": "plans_2026_08_21_skills_engine_test_skills_router",
       "community": 0,
-      "norm_label": "test_skills_router.py"
+      "norm_label": "test_skills_router.py",
+      "id": "plans_2026_08_21_skills_engine_test_skills_router"
     },
     {
       "label": "test_skills_parity.py",
@@ -6598,9 +6550,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Test su Postgres di test con RAG disattivato dai component flags per non toccare la rete: stesso turno con flag off e on deve dare stesso testo e stessi ids; strumento fuori lista => motore inattivo; aggancio disattivato => diff limitato a quel blocco.",
-      "id": "plans_2026_08_21_skills_engine_test_skills_parity",
       "community": 0,
-      "norm_label": "test_skills_parity.py"
+      "norm_label": "test_skills_parity.py",
+      "id": "plans_2026_08_21_skills_engine_test_skills_parity"
     },
     {
       "label": "test_smoke.py esteso",
@@ -6612,9 +6564,9 @@
       "author": null,
       "contributor": null,
       "rationale": "EXPECTED_ROUTES esteso agli otto endpoint /admin/skills piu' un test che verifica il rifiuto (400) di un handler non registrato.",
-      "id": "plans_2026_08_21_skills_engine_test_smoke",
       "community": 0,
-      "norm_label": "test_smoke.py esteso"
+      "norm_label": "test_smoke.py esteso",
+      "id": "plans_2026_08_21_skills_engine_test_smoke"
     },
     {
       "label": "Procedura di attivazione e rollback",
@@ -6626,9 +6578,9 @@
       "author": null,
       "contributor": null,
       "rationale": "Il motore resta spento finche' un admin non lo accende: flag true, lista strumenti, preview su uno step reale, conversazione di prova con confronto del prompt loggato (log_full_prompt attivo di default), poi estensione agli altri strumenti. Rollback = flag a false, nessun dato perso.",
-      "id": "plans_2026_08_21_skills_engine_activation_procedure",
       "community": 0,
-      "norm_label": "procedura di attivazione e rollback"
+      "norm_label": "procedura di attivazione e rollback",
+      "id": "plans_2026_08_21_skills_engine_activation_procedure"
     }
   ],
   "links": [
@@ -14749,52 +14701,5 @@
       "target": "plans_2026_08_21_skills_engine_skillspanel"
     }
   ],
-  "hyperedges": [
-    {
-      "id": "skills_engine_turn_pipeline",
-      "label": "Pipeline di un turno: contesto, agganci, condizioni, router, rendering",
-      "nodes": [
-        "plans_2026_08_21_skills_engine_engine_build_context",
-        "plans_2026_08_21_skills_engine_registry_bindings_for",
-        "plans_2026_08_21_skills_engine_conditions_match",
-        "plans_2026_08_21_skills_engine_router_select",
-        "plans_2026_08_21_skills_engine_engine_render"
-      ],
-      "relation": "form",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "superpowers/plans/2026-08-21-skills-engine.md"
-    },
-    {
-      "id": "skills_engine_safety_net",
-      "label": "Rete di sicurezza: flag, fallire chiuso, fallback, parita'",
-      "nodes": [
-        "plans_2026_08_21_skills_engine_engine_enabled",
-        "specs_2026_08_21_skills_engine_design_fail_closed",
-        "specs_2026_08_21_skills_engine_design_deterministic_fallback",
-        "plans_2026_08_21_skills_engine_test_skills_parity",
-        "specs_2026_08_21_skills_engine_design_feature_flag_rollout"
-      ],
-      "relation": "participate_in",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "source_file": "superpowers/specs/2026-08-21-skills-engine-design.md"
-    },
-    {
-      "id": "skills_admin_authoring_loop",
-      "label": "Ciclo di authoring admin: seed, tabelle, API, pannello, preview",
-      "nodes": [
-        "plans_2026_08_21_skills_engine_seed_skills",
-        "plans_2026_08_21_skills_engine_models_skill",
-        "plans_2026_08_21_skills_engine_routes_skills",
-        "plans_2026_08_21_skills_engine_skillspanel",
-        "plans_2026_08_21_skills_engine_preview_endpoint"
-      ],
-      "relation": "form",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "superpowers/plans/2026-08-21-skills-engine.md"
-    }
-  ],
-  "built_at_commit": "e1fdc314500b42321646cfe524726b8c6023f6af"
+  "hyperedges": []
 }
