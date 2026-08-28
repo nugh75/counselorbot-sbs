@@ -21,6 +21,10 @@ export function HeaderResume() {
     const [frozen, setFrozen] = useState<FrozenSessionSummary[]>([]);
     const [open, setOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+    const localResume = hasLocalResume ? getResume() : null;
+    const resumeWithReload = (href: string) => {
+        window.location.assign(href);
+    };
 
     useEffect(() => {
         let alive = true;
@@ -55,11 +59,13 @@ export function HeaderResume() {
         return () => document.removeEventListener('mousedown', onClick);
     }, []);
 
-    if (!hasLocalResume && frozen.length === 0) return null;
+    const resumeCount = frozen.length + (localResume ? 1 : 0);
 
-    // Più di una sessione congelata: scelta esplicita da un piccolo menu, non un
-    // link diretto (non sappiamo quale riprendere).
-    if (frozen.length > 1) {
+    if (resumeCount === 0) return null;
+
+    // Quando ci sono più punti di ripresa (snapshot server e/o chat locale),
+    // mostrali tutti: non possiamo scegliere silenziosamente al posto dell'utente.
+    if (resumeCount > 1) {
         return (
             <div className="relative" ref={menuRef}>
                 <Tooltip content={t('frozen.resumeTitle')}>
@@ -83,12 +89,29 @@ export function HeaderResume() {
                             <Link
                                 key={row.session_id}
                                 href={`/?frozen=${encodeURIComponent(row.session_id)}`}
-                                onClick={() => setOpen(false)}
+                                onClick={(event) => {
+                                    event.preventDefault();
+                                    setOpen(false);
+                                    resumeWithReload(`/?frozen=${encodeURIComponent(row.session_id)}`);
+                                }}
                                 className="block truncate px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
                             >
                                 {row.label || row.questionnaire_type}
                             </Link>
                         ))}
+                        {localResume && (
+                            <Link
+                                href="/?resume=1"
+                                onClick={(event) => {
+                                    event.preventDefault();
+                                    setOpen(false);
+                                    resumeWithReload('/?resume=1');
+                                }}
+                                className="block truncate border-t border-slate-100 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                            >
+                                {t('header.resume')} · {localResume.instrument}
+                            </Link>
+                        )}
                     </div>
                 )}
             </div>
@@ -102,7 +125,16 @@ export function HeaderResume() {
 
     return (
         <Tooltip content={label}>
-            <Link href={href} className="console-topbar-icon" aria-label={label} title={label}>
+            <Link
+                href={href}
+                onClick={(event) => {
+                    event.preventDefault();
+                    resumeWithReload(href);
+                }}
+                className="console-topbar-icon"
+                aria-label={label}
+                title={label}
+            >
                 <RotateCcw className="h-4 w-4" />
             </Link>
         </Tooltip>

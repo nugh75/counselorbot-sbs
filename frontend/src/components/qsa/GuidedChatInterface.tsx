@@ -1451,16 +1451,16 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                 ))}
                             </div>
                         )}
-                        <div className="mb-2 flex items-center justify-end gap-3">
+                        <div className="mb-2 flex items-center justify-end gap-1.5">
                             <button
                                 type="button"
                                 onClick={() => void handleFreeze()}
                                 disabled={isLoading || !sessionId}
                                 title={t('frozen.freeze')}
-                                className="flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 transition-colors hover:border-indigo-300 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                aria-label={t('frozen.freeze')}
+                                className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                                <Snowflake className="h-3.5 w-3.5" />
-                                {t('frozen.freeze')}
+                                <Snowflake className="h-4 w-4" />
                             </button>
                             <ResponseLengthSelector
                                 value={responseLength}
