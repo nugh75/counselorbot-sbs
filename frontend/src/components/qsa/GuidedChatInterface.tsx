@@ -15,6 +15,7 @@ import { stepLabel } from '@/lib/i18n-steps';
 import type { Lang } from '@/lib/i18n';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
+import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 
 // --- Types ---
 
@@ -381,6 +382,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const [phases, setPhases] = useState<string[]>([]);
     const [currentPhase, setCurrentPhase] = useState<string>('');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [responseLength, setResponseLength] = useState<ResponseLength>('medium');
     const [input, setInput] = useState('');
     const [conversationId, setConversationId] = useState<string | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(false);
@@ -924,6 +926,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 questionnaire_type: questionnaireType,
                 language: activeLocale,
                 max_tokens: 900,
+                response_length: responseLength,
                 counselor_id: getSelectedCounselorId(),
             };
             if (scoresContextOverride) {
@@ -1408,6 +1411,13 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                 ))}
                             </div>
                         )}
+                        <div className="mb-2 flex justify-end">
+                            <ResponseLengthSelector
+                                value={responseLength}
+                                onChange={setResponseLength}
+                                disabled={isLoading}
+                            />
+                        </div>
                         <div className="relative flex items-end gap-2">
                             <AutoGrowTextarea
                                 value={input}
