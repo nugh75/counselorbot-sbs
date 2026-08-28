@@ -1,13 +1,12 @@
-# Graph Report - /home/nugh75/counselorbot-sbs/docs  (2026-08-21)
+# Graph Report - /home/nugh75/counselorbot-sbs/docs  (2026-08-28)
 
 ## Corpus Check
-- 2 files · ~1,024,060 words
-- Verdict: corpus is large enough that graph structure adds value.
+- cluster-only mode — file stats not available
 
 ## Summary
 - 470 nodes · 862 edges · 28 communities (21 shown, 7 thin omitted)
 - Extraction: 77% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 54 edges (avg confidence: 0.84)
-- Token cost: 136,345 input · 0 output
+- Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
 - [[_COMMUNITY_Skills Engine Design|Skills Engine Design]]
@@ -65,11 +64,6 @@
 
 ## Import Cycles
 - None detected.
-
-## Hyperedges (group relationships)
-- **Pipeline di un turno: contesto, agganci, condizioni, router, rendering** — plans_2026_08_21_skills_engine_engine_build_context, plans_2026_08_21_skills_engine_registry_bindings_for, plans_2026_08_21_skills_engine_conditions_match, plans_2026_08_21_skills_engine_router_select, plans_2026_08_21_skills_engine_engine_render [EXTRACTED 1.00]
-- **Rete di sicurezza: flag, fallire chiuso, fallback, parita'** — plans_2026_08_21_skills_engine_engine_enabled, specs_2026_08_21_skills_engine_design_fail_closed, specs_2026_08_21_skills_engine_design_deterministic_fallback, plans_2026_08_21_skills_engine_test_skills_parity, specs_2026_08_21_skills_engine_design_feature_flag_rollout [INFERRED 0.85]
-- **Ciclo di authoring admin: seed, tabelle, API, pannello, preview** — plans_2026_08_21_skills_engine_seed_skills, plans_2026_08_21_skills_engine_models_skill, plans_2026_08_21_skills_engine_routes_skills, plans_2026_08_21_skills_engine_skillspanel, plans_2026_08_21_skills_engine_preview_endpoint [EXTRACTED 1.00]
 
 ## Communities (28 total, 7 thin omitted)
 
