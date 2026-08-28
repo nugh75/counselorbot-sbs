@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { RotateCcw } from 'lucide-react';
 import { getResume, subscribeToResume } from '@/lib/resume';
-import { listFrozenSessions, type FrozenSessionSummary } from '@/lib/frozen-session';
+import { listFrozenSessions, subscribeToFrozenSessions, type FrozenSessionSummary } from '@/lib/frozen-session';
 import { useI18n } from '@/lib/i18n-context';
 import { Tooltip } from '@/components/ui/Tooltip';
 
@@ -24,10 +24,26 @@ export function HeaderResume() {
 
     useEffect(() => {
         let alive = true;
-        listFrozenSessions()
-            .then((rows) => { if (alive) setFrozen(rows); })
-            .catch(() => { if (alive) setFrozen([]); });
-        return () => { alive = false; };
+        const load = () => {
+            listFrozenSessions()
+                .then((rows) => {
+                    if (!alive) return;
+                    // Due freeze concorrenti (uvicorn multi-worker) possono inserire due
+                    // righe per lo stesso session_id prima che il collasso lato server le
+                    // veda: dedup qui, tenendo la prima (ordine updated_at decrescente).
+                    const seen = new Set<string>();
+                    const deduped = rows.filter((row) => {
+                        if (seen.has(row.session_id)) return false;
+                        seen.add(row.session_id);
+                        return true;
+                    });
+                    setFrozen(deduped);
+                })
+                .catch(() => { if (alive) setFrozen([]); });
+        };
+        load();
+        const unsubscribe = subscribeToFrozenSessions(load);
+        return () => { alive = false; unsubscribe(); };
     }, []);
 
     // Più sessioni congelate: chiudi il menu al click fuori.

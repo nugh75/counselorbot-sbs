@@ -225,11 +225,14 @@ export default function Home() {
 
         // Ripresa di una sessione congelata: lo stato arriva dal server, non da localStorage.
         const frozenParam = params.get('frozen');
-        if (frozenParam && frozenParam !== 'list') {
+        if (frozenParam) {
             window.history.replaceState(null, '', window.location.pathname);
             void (async () => {
                 const snapshot = await getFrozenSession(frozenParam);
-                if (!snapshot) return;
+                if (!snapshot) {
+                    toast.error(t('toast.error'));
+                    return;
+                }
                 const q = QUESTIONNAIRES[snapshot.questionnaire_type as QuestionnaireType];
                 if (!q) return;
                 setSelectedQuestionnaire(q);
