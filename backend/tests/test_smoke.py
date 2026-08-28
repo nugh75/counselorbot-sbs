@@ -17,6 +17,7 @@ import os
 import re
 import shutil
 import tempfile
+import uuid
 from urllib.parse import urlsplit, urlunsplit
 
 # Disabilita la traduzione async dei counselor durante i test: usa una propria
@@ -804,6 +805,14 @@ def test_certified_strategies_crud_and_retrieve():
             db, questionnaire_type="QSA", scores_context="Fattore C6 (Attenzione): 8/9", query="non riesco a concentrarmi",
         )
         assert any(s["id"] == "focus-c6" for s in hit)
+        excluded = certified_strategy_memory.retrieve(
+            db,
+            questionnaire_type="QSA",
+            scores_context="Fattore C6 (Attenzione): 8/9",
+            query="non riesco a concentrarmi",
+            excluded_ids={"focus-c6"},
+        )
+        assert not any(s["id"] == "focus-c6" for s in excluded)
         miss = certified_strategy_memory.retrieve(
             db, questionnaire_type="QSA", scores_context="Fattore A2: 3/9", query="organizzazione",
         )
@@ -829,6 +838,38 @@ def test_certified_strategies_crud_and_retrieve():
 
     # delete
     assert client.delete(f"/admin/certified-strategies/{sid}").status_code == 200
+
+
+def test_previous_certified_strategy_ids_are_conversation_scoped():
+    from backend.chat_logic import previous_certified_strategy_ids
+
+    conversation_id = f"distribution-{uuid.uuid4()}"
+    db = _TestSession()
+    try:
+        db.add_all([
+            models.Log(
+                session_id="distribution-session",
+                conversation_id=conversation_id,
+                action="chat_message",
+                details={"certified_strategy_ids": ["strategy-a"]},
+            ),
+            models.Log(
+                session_id="distribution-session",
+                conversation_id=conversation_id,
+                action="chat_message",
+                details={"certified_strategy_ids": ["strategy-b", "strategy-a"]},
+            ),
+            models.Log(
+                session_id="distribution-session",
+                conversation_id="another-conversation",
+                action="chat_message",
+                details={"certified_strategy_ids": ["strategy-c"]},
+            ),
+        ])
+        db.commit()
+        assert previous_certified_strategy_ids(db, conversation_id) == {"strategy-a", "strategy-b"}
+    finally:
+        db.close()
 
 
 def test_certified_strategies_qsar_r_suffixed_factor_gating():
@@ -1885,10 +1926,19 @@ def test_prompt_audit_scopes_certified_strategies_to_qsa_second_level_step():
         "max_tokens": 700,
         "include_knowledge": True,
         "include_history": False,
+        "component_flags": {
+            "allowed_strategies": [
+                "test-certified-c1-out-of-step",
+                "test-certified-a4-out-of-step",
+                "test-certified-a6-in-step",
+                "test-certified-a5-in-step",
+            ],
+        },
     })
     assert r.status_code == 200, r.text
     body = r.json()
     certified_ids = body["knowledge"]["certified_strategy_ids"]
+    assert len(certified_ids) == 1
     assert "test-certified-a6-in-step" in certified_ids
     # A5=3 e' una forza nel QSA: una strategia dichiarata per A5 area di
     # crescita non deve entrare come intervento pratico.

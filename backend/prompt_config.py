@@ -84,6 +84,15 @@ DEFAULT_FACTOR_INTERPLAY_QSAR = (
 # main.startup_event per l'upgrade delle righe DB personalizzate).
 SECOND_LEVEL_METHOD_SENTINEL = "[SECOND-LEVEL METHOD]"
 
+SYNTHESIS_ADVICE_SENTINEL = "[SYNTHESIS ADVICE]"
+
+SYNTHESIS_ADVICE_DIRECTIVE = (
+    "\n\n[SYNTHESIS ADVICE] This synthesis consolidates the path already completed. "
+    "Do not introduce a new study strategy or a new action. If useful, identify at "
+    "most ONE priority among the actions already discussed and explain briefly why it "
+    "deserves attention first."
+)
+
 DEFAULT_SECOND_LEVEL_METHOD = (
     "\n\n[SECOND-LEVEL METHOD] After the integrated reading of the factors, always add: "
     "(1) ONE interpretive hypothesis on the student's way of studying that emerges from "
@@ -108,7 +117,8 @@ DEFAULT_SYSTEM_PROMPT_GUIDED_QUESTIONS = (
     "In the final reflection phase, help the student reason about the profile or "
     "narrative path already discussed. If the incoming message is an internal request "
     "to start the phase, ask exactly three concise open reflective questions about "
-    "what emerged, what surprised the student, and one concrete strategy or first step. "
+    "what emerged, what surprised the student, and one concrete strategy or first step "
+    "already discussed during the path. "
     "If the student answers, respond to that answer and continue the reflection."
 )
 
@@ -2035,6 +2045,7 @@ DEFAULT_GUIDED_STEPS: List[Dict] = [
             "undermining strategies C1/C2; attributional style A3/A4 shaping perseverance "
             "A5) and build a single integrated picture of HOW the student studies and WHY, "
             "grounded in the actual scores."
+            + SYNTHESIS_ADVICE_DIRECTIVE
         ),
         "system_prompt_mode": "second-level",
         "color_theme": "indigo",
@@ -2146,6 +2157,7 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
             "A4r sustaining volition A2r and self-regulated strategies C2r) and build a "
             "single integrated picture of how the student studies and why, grounded in the "
             "actual scores. Respect the inverted direction of C4r and A1r."
+            + SYNTHESIS_ADVICE_DIRECTIVE
         ),
         "system_prompt_mode": "qsar-second-level",
         "color_theme": "indigo",

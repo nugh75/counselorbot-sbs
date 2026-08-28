@@ -18,6 +18,9 @@ from .anonymous_codes import code_for_identity
 from .api_models import ChatRequest
 from .chat_logic import (
     _annotate_qsa_factor_codes,
+    apply_advice_retrieval_policy,
+    _apply_advice_distribution_directive,
+    _apply_follow_up_advice_directive,
     _apply_certified_advice_directive,
     _apply_current_step_factor_scope_directive,
     _apply_current_step_score_profile_directive,
@@ -25,9 +28,12 @@ from .chat_logic import (
     _apply_qsa_factor_directive,
     _clamp_max_tokens,
     _ensure_required_qsa_factor_codes,
+    _is_conversational_mode,
     filter_scores_by_components,
     get_prompt_component_flags,
     get_prompt_component_options,
+    previous_certified_strategy_ids,
+    step_has_improvement_target,
     prompt_component_config_key,
     prompt_meta_config_key,
     _is_strategy_questionnaire,
@@ -266,12 +272,14 @@ def build_prompt_audit(
     else:
         step_label = ""
         questionnaire_type = request.questionnaire_type or ""
+    step_mode = request.mode if _is_conversational_mode(request.mode) else (step.system_prompt_mode if step else request.mode)
     component_flags = get_prompt_component_flags(db, questionnaire_type, request.phase)
+    component_flags = apply_advice_retrieval_policy(component_flags, step_mode, request.phase)
     component_options = get_prompt_component_options(
         db,
         questionnaire_type,
         request.phase,
-        step.system_prompt_mode if step else request.mode,
+        step_mode,
     )
     payload_flags = getattr(payload, "component_flags", None)
     if isinstance(payload_flags, dict):
@@ -280,7 +288,7 @@ def build_prompt_audit(
                 component_flags[name] = bool(payload_flags[name])
         if "certified_strategy_limit" in payload_flags:
             try:
-                component_options["certified_strategy_limit"] = max(0, min(3, int(payload_flags["certified_strategy_limit"])))
+                component_options["certified_strategy_limit"] = max(0, min(1, int(payload_flags["certified_strategy_limit"])))
             except (TypeError, ValueError):
                 pass
         if "allowed_strategies" in payload_flags:
@@ -288,10 +296,10 @@ def build_prompt_audit(
             if isinstance(val, list):
                 component_flags["allowed_strategies"] = [str(x) for x in val]
                 component_options["allowed_strategies"] = [str(x) for x in val]
+    component_flags = apply_advice_retrieval_policy(component_flags, step_mode, request.phase)
 
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
     system_prompt = _apply_global_directives(system_prompt, request.language, db)
-    step_mode = step.system_prompt_mode if step else request.mode
     include_analysis_context = _should_include_step_analysis_context(step_mode)
     required_codes = _phase_factor_codes(db, request.phase) if include_analysis_context else set()
     if include_analysis_context:
@@ -304,12 +312,25 @@ def build_prompt_audit(
     )
     component_scores_context = filter_scores_by_components(model_scores_context, questionnaire_type, component_flags)
     if include_analysis_context and component_scores_context:
-        include_advice = _step_allows_practical_advice(step_mode)
+        allows_advice = _step_allows_practical_advice(step_mode, request.phase)
+        is_follow_up = _is_conversational_mode(step_mode)
+        include_advice = allows_advice and not is_follow_up and step_has_improvement_target(
+            component_scores_context, questionnaire_type, request.language, required_codes
+        )
         system_prompt = _apply_current_step_score_profile_directive(
             system_prompt, questionnaire_type, request.language, component_scores_context, required_codes, include_advice
         )
         if include_advice:
+            system_prompt = _apply_advice_distribution_directive(system_prompt)
             system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type)
+        elif is_follow_up and allows_advice:
+            system_prompt = _apply_follow_up_advice_directive(system_prompt)
+        else:
+            component_flags = apply_advice_retrieval_policy(component_flags, "factor", request.phase)
+            component_options["certified_strategy_limit"] = 0
+    elif include_analysis_context and _is_strategy_questionnaire(questionnaire_type):
+        component_flags = apply_advice_retrieval_policy(component_flags, "factor", request.phase)
+        component_options["certified_strategy_limit"] = 0
     model_message = (
         _annotate_qsa_factor_codes(effective_message, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else effective_message
@@ -330,6 +351,7 @@ def build_prompt_audit(
             db, session_id, retrieval_request, questionnaire_type, retrieval_query, ai_service=ai_service,
             certified_strategy_limit=component_options["certified_strategy_limit"],
             component_flags=component_flags,
+            excluded_certified_strategy_ids=previous_certified_strategy_ids(db, request.conversation_id),
         )
 
     sanitize_ztpi = _should_sanitize_ztpi_text(request.mode, request.phase)
