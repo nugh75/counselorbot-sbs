@@ -44,6 +44,22 @@ export interface FrozenSessionSnapshot {
     label: string;
 }
 
+// Notifica l'header (che monta una sola volta e non rivede il fetch iniziale)
+// quando l'elenco delle sessioni congelate cambia, così l'icona "Riprendi"
+// compare/scompare senza reload. Stesso pattern di `lib/resume.ts`.
+const FROZEN_SESSIONS_EVENT = 'frozen-sessions-change';
+
+export function notifyFrozenSessionsChanged(): void {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new Event(FROZEN_SESSIONS_EVENT));
+}
+
+export function subscribeToFrozenSessions(onChange: () => void): () => void {
+    if (typeof window === 'undefined') return () => {};
+    window.addEventListener(FROZEN_SESSIONS_EVENT, onChange);
+    return () => window.removeEventListener(FROZEN_SESSIONS_EVENT, onChange);
+}
+
 export async function freezeSession(snapshot: FrozenSessionSnapshot): Promise<void> {
     const res = await apiFetch('/api/session/freeze', {
         method: 'POST',
@@ -51,6 +67,7 @@ export async function freezeSession(snapshot: FrozenSessionSnapshot): Promise<vo
         body: JSON.stringify(snapshot),
     });
     if (!res.ok) throw new Error(`Freeze fallito (${res.status})`);
+    notifyFrozenSessionsChanged();
 }
 
 export async function listFrozenSessions(): Promise<FrozenSessionSummary[]> {
@@ -67,5 +84,6 @@ export async function getFrozenSession(sessionId: string): Promise<FrozenSession
 
 export async function deleteFrozenSession(sessionId: string): Promise<boolean> {
     const res = await apiFetch(`/api/session/frozen/${encodeURIComponent(sessionId)}`, { method: 'DELETE' });
+    if (res.ok) notifyFrozenSessionsChanged();
     return res.ok;
 }

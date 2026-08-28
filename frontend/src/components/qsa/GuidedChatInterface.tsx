@@ -530,7 +530,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 const sessionScope = `${questionnaireType}:${sessionId}`;
                 const shouldRestoreSession = loadedSessionScopeRef.current !== sessionScope;
 
-                if (frozenSnapshot && shouldRestoreSession && phaseOrder.includes(frozenSnapshot.current_phase)) {
+                if (frozenSnapshot && frozenSnapshot.session_id === sessionId && shouldRestoreSession && phaseOrder.includes(frozenSnapshot.current_phase)) {
                     // Ripristino da snapshot congelato: ha precedenza sulla memoria di sessione.
                     setCurrentPhase(frozenSnapshot.current_phase);
                     setMessages(frozenSnapshot.messages as ChatMessage[]);
