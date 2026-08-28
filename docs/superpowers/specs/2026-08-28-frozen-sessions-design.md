@@ -85,12 +85,16 @@ Nuovo modulo `backend/routes/frozen_sessions.py`, registrato in
 `auth.get_current_user` e filtrano per `username` dell'identità: nessuno può
 leggere o cancellare la sessione di un altro.
 
+I router del backend sono registrati senza prefisso `/api`: il proxy del
+frontend lo aggiunge. I path qui sotto sono quelli lato backend; il frontend
+chiama `/api/session/...`.
+
 | metodo | path | comportamento |
 |---|---|---|
-| `POST` | `/api/session/freeze` | upsert dello snapshot per `(username, session_id)`; risponde con `{status, session_id, updated_at}` |
-| `GET` | `/api/session/frozen` | lista delle sessioni congelate dell'utente: `session_id`, `questionnaire_type`, `label`, `current_phase`, `updated_at` — senza `messages`, per non caricare l'header |
-| `GET` | `/api/session/frozen/{session_id}` | snapshot completo; 404 se non appartiene all'utente |
-| `DELETE` | `/api/session/frozen/{session_id}` | rimuove lo snapshot (fine percorso o scarto esplicito) |
+| `POST` | `/session/freeze` | upsert dello snapshot per `(username, session_id)`; risponde con `{status, session_id, updated_at}` |
+| `GET` | `/session/frozen` | lista delle sessioni congelate dell'utente: `session_id`, `questionnaire_type`, `label`, `current_phase`, `updated_at` — senza `messages`, per non caricare l'header |
+| `GET` | `/session/frozen/{session_id}` | snapshot completo; 404 se non appartiene all'utente |
+| `DELETE` | `/session/frozen/{session_id}` | rimuove lo snapshot (fine percorso o scarto esplicito) |
 
 Modelli di richiesta e risposta in `backend/api_models.py`, accanto agli altri.
 `questionnaire_type` è validato contro gli strumenti noti; `messages` è
@@ -101,11 +105,12 @@ limitato in dimensione per evitare payload abnormi.
 **Congelamento** — in
 [GuidedChatInterface](../../../frontend/src/components/qsa/GuidedChatInterface.tsx),
 accanto ai controlli di step: pulsante "Congela sessione" che invia lo
-snapshot, mostra conferma e chiude la chat tornando alla home. Nascosto se
-l'identità non è autenticata (resta la ripresa locale di oggi).
+snapshot, mostra conferma e chiude la chat tornando alla home. Nessun controllo
+di autenticazione nel componente: la pagina è già interamente dietro il gate di
+identità, quindi la chat guidata è raggiungibile solo da utenti loggati.
 
 **Ripresa** — [HeaderResume](../../../frontend/src/components/layout/HeaderResume.tsx)
-interroga `GET /api/session/frozen` e mostra l'icona quando c'è almeno una
+interroga `GET /api/session/frozen` (proxy verso `/session/frozen`) e mostra l'icona quando c'è almeno una
 sessione congelata, con fallback al punto locale in `localStorage`. Con più
 sessioni, un menu di scelta; con una sola, apertura diretta.
 
