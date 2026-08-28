@@ -17,7 +17,7 @@ import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { toast } from '@/components/ui/Toast';
-import { freezeSession } from '@/lib/frozen-session';
+import { freezeSession, type FrozenSessionDetail } from '@/lib/frozen-session';
 
 // --- Types ---
 
@@ -39,6 +39,7 @@ interface GuidedChatInterfaceProps {
     locale?: string;
     scoresContextOverride?: string;
     onFrozen?: () => void;
+    frozenSnapshot?: FrozenSessionDetail | null;
 }
 
 interface ChatMessage {
@@ -378,7 +379,7 @@ const markdownComponents: Components = {
 
 // --- Main Component ---
 
-export function GuidedChatInterface({ scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen }: GuidedChatInterfaceProps) {
+export function GuidedChatInterface({ scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, frozenSnapshot }: GuidedChatInterfaceProps) {
     const { t, tf, lang: contextLang } = useI18n();
     const activeLocale = normalizeLocale(locale || contextLang);
     const [steps, setSteps] = useState<StepDef[]>([]);
@@ -529,37 +530,46 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 const sessionScope = `${questionnaireType}:${sessionId}`;
                 const shouldRestoreSession = loadedSessionScopeRef.current !== sessionScope;
 
-                // Check if we can resume the session state from backend memory
-                try {
-                    const memRes = await fetch(`/api/memory/user/${sessionId}`);
-                    if (memRes.ok) {
-                        const memData = await memRes.json();
-                        const restoredPhase = memData.current_phase as string | undefined;
-                        if (restoredPhase && phaseOrder.includes(restoredPhase) && shouldRestoreSession) {
-                            const restoredQuestionsLabel = data.label_guided_questions || t('guided.questionsLabel');
-                            const restoredConclusionLabel = data.label_guided_conclusion || t('guided.conclusionLabel');
-                            setCurrentPhase(restoredPhase);
-                            setMessages([
-                                {
-                                    role: 'system',
-                                    content: t('guided.resumed', { step:
-                                        restoredPhase === FIXED_QUESTIONS_ID
-                                            ? restoredQuestionsLabel
-                                            : restoredPhase === FIXED_CONCLUSION_ID
-                                            ? restoredConclusionLabel
-                                            : normalizedSteps.find((s: StepDef) => s.id === restoredPhase)?.label || restoredPhase
-                                    })
-                                }
-                            ]);
+                if (frozenSnapshot && shouldRestoreSession && phaseOrder.includes(frozenSnapshot.current_phase)) {
+                    // Ripristino da snapshot congelato: ha precedenza sulla memoria di sessione.
+                    setCurrentPhase(frozenSnapshot.current_phase);
+                    setMessages(frozenSnapshot.messages as ChatMessage[]);
+                    if (frozenSnapshot.response_length) {
+                        setResponseLength(frozenSnapshot.response_length);
+                    }
+                } else {
+                    // Check if we can resume the session state from backend memory
+                    try {
+                        const memRes = await fetch(`/api/memory/user/${sessionId}`);
+                        if (memRes.ok) {
+                            const memData = await memRes.json();
+                            const restoredPhase = memData.current_phase as string | undefined;
+                            if (restoredPhase && phaseOrder.includes(restoredPhase) && shouldRestoreSession) {
+                                const restoredQuestionsLabel = data.label_guided_questions || t('guided.questionsLabel');
+                                const restoredConclusionLabel = data.label_guided_conclusion || t('guided.conclusionLabel');
+                                setCurrentPhase(restoredPhase);
+                                setMessages([
+                                    {
+                                        role: 'system',
+                                        content: t('guided.resumed', { step:
+                                            restoredPhase === FIXED_QUESTIONS_ID
+                                                ? restoredQuestionsLabel
+                                                : restoredPhase === FIXED_CONCLUSION_ID
+                                                ? restoredConclusionLabel
+                                                : normalizedSteps.find((s: StepDef) => s.id === restoredPhase)?.label || restoredPhase
+                                        })
+                                    }
+                                ]);
+                            } else if (phaseOrder.length > 0 && shouldRestoreSession) {
+                                setCurrentPhase(phaseOrder[0]);
+                            }
                         } else if (phaseOrder.length > 0 && shouldRestoreSession) {
                             setCurrentPhase(phaseOrder[0]);
                         }
-                    } else if (phaseOrder.length > 0 && shouldRestoreSession) {
-                        setCurrentPhase(phaseOrder[0]);
-                    }
-                } catch {
-                    if (phaseOrder.length > 0 && shouldRestoreSession) {
-                        setCurrentPhase(phaseOrder[0]);
+                    } catch {
+                        if (phaseOrder.length > 0 && shouldRestoreSession) {
+                            setCurrentPhase(phaseOrder[0]);
+                        }
                     }
                 }
                 loadedSessionScopeRef.current = sessionScope;
@@ -591,7 +601,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
         loadData();
         return () => { isMounted = false; };
-    }, [questionnaireType, sessionId, activeLocale, t]);
+    }, [questionnaireType, sessionId, activeLocale, t, frozenSnapshot]);
 
     // Helpers for current phase
     const getStepDef = (phaseId: string): StepDef | undefined => steps.find(s => s.id === phaseId);
