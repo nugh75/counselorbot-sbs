@@ -28,6 +28,7 @@ import { apiFetch, ai4authLoginUrl, getIdentity, type Identity } from '@/lib/aut
 import { getSelectedCounselorId, setSelectedCounselorId } from '@/lib/counselor';
 import { setSelectedInstrumentId } from '@/lib/instrument';
 import { getResume, setResume } from '@/lib/resume';
+import { deleteFrozenSession, getFrozenSession, type FrozenSessionDetail } from '@/lib/frozen-session';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 
@@ -194,6 +195,7 @@ export default function Home() {
     // anteprima in un iframe sotto la card (niente pagina/download separati).
     const [pdfLoading, setPdfLoading] = useState(false);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+    const [frozenSnapshot, setFrozenSnapshot] = useState<FrozenSessionDetail | null>(null);
 
     useEffect(() => {
         getIdentity().then(setIdentity);
@@ -220,6 +222,30 @@ export default function Home() {
         if (identity === undefined || !identity?.authenticated) return;
 
         const params = new URLSearchParams(window.location.search);
+
+        // Ripresa di una sessione congelata: lo stato arriva dal server, non da localStorage.
+        const frozenParam = params.get('frozen');
+        if (frozenParam) {
+            window.history.replaceState(null, '', window.location.pathname);
+            void (async () => {
+                const snapshot = await getFrozenSession(frozenParam);
+                if (!snapshot) {
+                    toast.error(t('toast.error'));
+                    return;
+                }
+                const q = QUESTIONNAIRES[snapshot.questionnaire_type as QuestionnaireType];
+                if (!q) return;
+                setSelectedQuestionnaire(q);
+                setSelectedInstrumentId(snapshot.questionnaire_type);
+                if (snapshot.counselor_id != null) setSelectedCounselorId(snapshot.counselor_id);
+                setSessionId(snapshot.session_id);
+                setScores(snapshot.scores || {});
+                setExperience('standard');
+                setFrozenSnapshot(snapshot);
+                setStep('interaction');
+            })();
+            return;
+        }
 
         // Riprendi la sessione interrotta (pulsante header): torna dritto alla chat.
         if (params.get('resume')) {
@@ -409,6 +435,8 @@ export default function Home() {
 
     const handleInteractionComplete = () => {
         setResume(null);
+        if (sessionId) void deleteFrozenSession(sessionId);
+        setFrozenSnapshot(null);
         setStep('completed');
     };
 
@@ -643,6 +671,12 @@ export default function Home() {
                                     onComplete={handleInteractionComplete}
                                     sessionId={sessionId}
                                     locale={lang}
+                                    frozenSnapshot={frozenSnapshot}
+                                    onFrozen={() => {
+                                        setResume(null);
+                                        setFrozenSnapshot(null);
+                                        setStep('questionnaire-select');
+                                    }}
                                 />
                             ) : (
                                 <OpenCodeExperience
