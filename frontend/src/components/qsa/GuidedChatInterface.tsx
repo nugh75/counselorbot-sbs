@@ -713,6 +713,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 questionnaire_type: questionnaireType,
                 language: activeLocale,
                 max_tokens: 500,
+                response_length: responseLength,
                 counselor_id: getSelectedCounselorId(),
             }, (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
             if (result.conversation_id) setConversationId(result.conversation_id);
@@ -750,6 +751,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         questionnaire_type: questionnaireType,
                         language: activeLocale,
                         max_tokens: 700,
+                        response_length: responseLength,
                         counselor_id: getSelectedCounselorId(),
                     };
                 }
@@ -764,6 +766,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     questionnaire_type: questionnaireType,
                     language: activeLocale,
                     max_tokens: 700,
+                    response_length: responseLength,
                     counselor_id: getSelectedCounselorId(),
                 };
             };
