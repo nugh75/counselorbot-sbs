@@ -28,7 +28,7 @@ import { apiFetch, ai4authLoginUrl, getIdentity, type Identity } from '@/lib/aut
 import { getSelectedCounselorId, setSelectedCounselorId } from '@/lib/counselor';
 import { setSelectedInstrumentId } from '@/lib/instrument';
 import { getResume, setResume } from '@/lib/resume';
-import { getFrozenSession, type FrozenSessionDetail } from '@/lib/frozen-session';
+import { deleteFrozenSession, getFrozenSession, type FrozenSessionDetail } from '@/lib/frozen-session';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 
@@ -432,6 +432,8 @@ export default function Home() {
 
     const handleInteractionComplete = () => {
         setResume(null);
+        if (sessionId) void deleteFrozenSession(sessionId);
+        setFrozenSnapshot(null);
         setStep('completed');
     };
 
