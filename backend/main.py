@@ -1005,6 +1005,7 @@ def _seed_and_migrate():
         sync_admins_async()
     except Exception as e:  # noqa: BLE001
         logger.debug(f"admin sync not started: {e}")
+    finally:
         if lock_conn is not None:
             try:
                 lock_conn.exec_driver_sql("SELECT pg_advisory_unlock(91234)")
