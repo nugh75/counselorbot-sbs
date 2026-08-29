@@ -17,9 +17,12 @@ def _plain(text: str) -> str:
 
 _PATTERNS = {
     "compare": re.compile(
-        r"\b(confront|compar|differen|rispetto\s+a|precedent|previous|versus|"
+        # "rispetto a" da solo e' troppo largo ("mi sento perso rispetto al
+        # risultato"): richiede un termine di paragone esplicito.
+        r"\b(confront|compar|differen|precedent|previous|versus|"
         r"anterior|precedente|comparer|difference|vergleich|unterschied|fruher|"
-        r"jamfor|skillnad|tidigare)"
+        r"jamfor|skillnad|tidigare|"
+        r"rispetto\s+a(?:l|lla|llo|gli|i|d)?\s+(?:precedent|prim|scors|altr|second|ultim|vecchi))"
     ),
     "reading": re.compile(
         r"\b(lettur|libro|articol|bibliograf|fonte|fonti|read|book|article|source|"
@@ -30,10 +33,21 @@ _PATTERNS = {
         r"piano\s+d.azione|recommend|advice|what\s+can\s+i\s+do|how\s+can\s+i\s+improve|"
         r"consej|recomend|conseil|empfehl|rat\b|rad\b)"
     ),
+    # Oltre alle domande esplicite di significato, il chiarimento copre anche il
+    # disorientamento: "mi sento perso", "non so da dove partire", "non mi torna".
     "clarify": re.compile(
         r"\b(cosa\s+significa|che\s+significa|non\s+capisco|aiutami\s+a\s+capire|"
         r"confus|mi\s+rappresenta|sorprend|perche|meaning|what\s+does|understand|"
-        r"confus|reflect|significa|entender|comprendre|bedeutet|verstehen|betyder|forsta)"
+        r"reflect|significa|entend|comprendre|bedeutet|verstehen|betyder|forsta|"
+        r"cosa\s+vuol\s+dire|che\s+vuol\s+dire|in\s+che\s+senso|"
+        r"non\s+mi\s+e\s+chiar|non\s+mi\s+torna|non\s+mi\s+ritrovo|"
+        r"mi\s+sento\s+(?:\S+\s+){0,2}pers[oa]|sono\s+pers[oa]\b|spaesat|disorientat|smarrit|"
+        r"non\s+so\s+da\s+dove|da\s+dove\s+(?:parto|comincio|inizio)|"
+        r"lost\b|unclear|make\s+sense|where\s+do\s+i\s+(?:start|begin)|"
+        r"perdid|por\s+donde\s+empez|no\s+se\s+por\s+donde|"
+        r"perdu|pas\s+clair|par\s+ou\s+commencer|"
+        r"verloren|unklar|wo\s+(?:soll\s+)?ich\s+anfangen|"
+        r"vilse|oklar|var\s+ska\s+jag\s+borja)"
     ),
 }
 

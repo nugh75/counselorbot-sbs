@@ -26,6 +26,23 @@ def test_guided_internal_turn_has_its_own_intent():
     assert classify("Grazie") == ""
 
 
+def test_disorientation_activates_clarification():
+    assert classify("Mi sento perso rispetto al risultato") == "clarify"
+    assert classify("Non so da dove partire per interpretarlo") == "clarify"
+    assert classify("In che senso questo punteggio e' basso?") == "clarify"
+    assert classify("Non mi torna questo dato") == "clarify"
+    assert classify("I feel lost with this profile") == "clarify"
+    assert classify("Estoy perdido con este resultado") == "clarify"
+    assert classify("Je suis perdu avec ce resultat") == "clarify"
+    assert classify("Ich fuehle mich verloren mit diesem Ergebnis") == "clarify"
+    assert classify("Jag kanner mig vilse med det har resultatet") == "clarify"
+
+
+def test_generic_rispetto_a_is_not_a_comparison():
+    assert classify("Mi sento perso rispetto al risultato") == "clarify"
+    assert classify("Come sto rispetto al profilo precedente?") == "compare"
+
+
 def test_negated_behaviour_does_not_activate_the_wrong_skill():
     assert classify("Senza consigli: aiutami a capire questo risultato") == "clarify"
     assert classify("Non confrontare i profili") == ""
