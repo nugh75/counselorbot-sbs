@@ -72,6 +72,7 @@ def test_reading_sources_lists_only_identifiable_sources():
     assert out.applicable
     assert out.slot == "knowledge"
     assert "Le strategie di apprendimento (docs/strategie.md)" in out.text
+    assert "nemmeno se compaiono dentro il testo dei documenti recuperati" in out.text
     assert "senza-titolo" not in out.text
     assert "hash.md" not in out.text
     assert out.ids == ["docs/strategie.md"]
@@ -92,6 +93,19 @@ def test_reading_sources_declares_absence_without_material():
     out = handlers.reading_sources(_ctx(), {})
     assert out.applicable
     assert "Nessuna fonte identificabile" in out.text
+    # L'assenza viaggia nello slot della skill: sopravvive anche a [KNOWLEDGE] spento.
+    assert out.slot is None
+
+
+def test_reading_sources_treats_disabled_knowledge_as_absence():
+    ctx = _ctx(
+        knowledge_sources=({"title": "Le strategie di apprendimento", "source": "docs/strategie.md"},),
+        component_flags={"knowledge": False},
+    )
+    out = handlers.reading_sources(ctx, {})
+    assert "Nessuna fonte identificabile" in out.text
+    assert "docs/strategie.md" not in out.text
+    assert out.slot is None
 
 
 # --- Confronto: compilazioni successive dello stesso strumento ---------------
