@@ -5055,6 +5055,179 @@ def test_skills_handler_can_be_cleared():
     assert updated.json()["handler"] is None
 
 
+def test_skills_advice_policy_seeds_certified_advice_as_the_only_source():
+    """Il seed esposto dall'API admin abilita una sola fonte di consigli."""
+    from backend.skills_seed import SEEDED_INSTRUMENTS, seed_skills
+
+    db = _TestSession()
+    try:
+        seed_skills(db)
+    finally:
+        db.close()
+
+    listed = client.get("/admin/skills")
+    assert listed.status_code == 200, listed.text
+    by_slug = {skill["slug"]: skill for skill in listed.json()}
+    assert by_slug["approved-strategies"]["is_active"] is False
+    assert by_slug["certified-advice"]["is_active"] is True
+    assert by_slug["certified-advice"]["status"] == "published"
+    instructions = by_slug["certified-advice"]["instructions_i18n"]["it"]
+    assert "azione concreta" in instructions
+    assert "non forzare" in instructions
+
+    for questionnaire_type in SEEDED_INSTRUMENTS:
+        mapped = client.get(
+            "/admin/skills/step-map",
+            params={"questionnaire_type": questionnaire_type},
+        )
+        assert mapped.status_code == 200, mapped.text
+        enabled_ids = {
+            entry["skill_id"] for entry in mapped.json()["entries"] if entry["enabled"]
+        }
+        assert enabled_ids == {by_slug["certified-advice"]["id"]}
+
+
+def test_skills_chat_uses_certified_advice_only_for_every_supported_instrument():
+    from backend.skills_seed import SEEDED_INSTRUMENTS, apply_certified_advice_policy
+
+    _ensure_guided_steps("QSA")
+    _ensure_guided_steps("QSAr")
+    db = _TestSession()
+    try:
+        apply_certified_advice_policy(db)
+    finally:
+        db.close()
+
+    strategy_slug = "smoke-chat-certified-advice"
+    created = client.post("/admin/certified-strategies", json={
+        "slug": strategy_slug,
+        "name_it": "Definisci il prossimo passo",
+        "recommended_when_it": "Quando lo studente chiede un consiglio concreto",
+        "description_it": "Scegli un'azione piccola e verificabile.",
+        "factor_codes": [],
+        "questionnaire_types": list(SEEDED_INSTRUMENTS),
+        "keywords": "consiglio concreto prossimo passo",
+        "status": "certified",
+        "is_active": True,
+    })
+    assert created.status_code == 200, created.text
+
+    for questionnaire_type in SEEDED_INSTRUMENTS:
+        guided_case = {
+            "QSA": {
+                "mode": "second-level",
+                "phase": "sl-motivation",
+                "scores_context": "PROFILO QSA DELLO STUDENTE:\n- A6: 3/9",
+            },
+            "QSAr": {
+                "mode": "qsar-second-level",
+                "phase": "qsar-motivation",
+                "scores_context": "PROFILO QSAr DELLO STUDENTE:\n- A2r: 3/9",
+            },
+        }.get(questionnaire_type, {
+            "mode": "generic",
+            "phase": None,
+            "scores_context": "",
+        })
+        response = client.post("/chat", json={
+            "message": "Dammi un consiglio concreto per il prossimo passo",
+            "mode": guided_case["mode"],
+            "phase": guided_case["phase"],
+            "use_phase_prompt": guided_case["phase"] is not None,
+            "session_id": f"skills-policy-{questionnaire_type.lower()}",
+            "questionnaire_type": questionnaire_type,
+            "language": "it",
+            "scores_context": guided_case["scores_context"],
+        })
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["strategy_ids"] == []
+        assert len(body["certified_strategy_ids"]) == 1, (
+            questionnaire_type,
+            body,
+        )
+
+
+def test_skills_advice_policy_migrates_an_existing_installation_once():
+    from backend.skills_seed import (
+        CERTIFIED_ADVICE_POLICY_MARKER,
+        SEEDED_INSTRUMENTS,
+        apply_certified_advice_policy,
+        seed_skills,
+    )
+
+    db = _TestSession()
+    try:
+        seed_skills(db)
+        approved = db.query(models.Skill).filter_by(slug="approved-strategies").one()
+        certified = db.query(models.Skill).filter_by(slug="certified-advice").one()
+        approved.is_active = True
+        certified.instructions_i18n = {}
+        for key, value in (
+            ("skills_engine_enabled", "false"),
+            ("skills_engine_instruments", "[]"),
+        ):
+            row = db.query(models.Config).filter_by(key=key).first()
+            if row is None:
+                db.add(models.Config(key=key, value=value))
+            else:
+                row.value = value
+        db.query(models.Config).filter_by(key=CERTIFIED_ADVICE_POLICY_MARKER).delete()
+        db.add(models.GuidedStepSkill(
+            questionnaire_type="QSA",
+            step_id="*",
+            skill_id=approved.id,
+            sort_order=40,
+            enabled=True,
+        ))
+        db.commit()
+
+        assert apply_certified_advice_policy(db) is True
+    finally:
+        db.close()
+
+    configs = {row["key"]: row["value"] for row in client.get("/admin/config").json()}
+    assert configs["skills_engine_enabled"] == "true"
+    assert json.loads(configs["skills_engine_instruments"]) == list(SEEDED_INSTRUMENTS)
+
+    listed = {skill["slug"]: skill for skill in client.get("/admin/skills").json()}
+    assert listed["approved-strategies"]["is_active"] is False
+    assert "azione concreta" in listed["certified-advice"]["instructions_i18n"]["it"]
+    for questionnaire_type in SEEDED_INSTRUMENTS:
+        entries = client.get(
+            "/admin/skills/step-map",
+            params={"questionnaire_type": questionnaire_type},
+        ).json()["entries"]
+        assert all(
+            not entry["enabled"]
+            for entry in entries
+            if entry["skill_id"] == listed["approved-strategies"]["id"]
+        )
+        assert any(
+            entry["enabled"] and entry["skill_id"] == listed["certified-advice"]["id"]
+            for entry in entries
+        )
+
+    # Dopo la migrazione, un riavvio non deve annullare una scelta dell'admin.
+    assert client.post("/admin/config", json={
+        "key": "skills_engine_enabled",
+        "value": "false",
+    }).status_code == 200
+    db = _TestSession()
+    try:
+        assert apply_certified_advice_policy(db) is False
+    finally:
+        db.close()
+    configs = {row["key"]: row["value"] for row in client.get("/admin/config").json()}
+    assert configs["skills_engine_enabled"] == "false"
+
+    # Ripristina il contratto per gli altri test del modulo.
+    assert client.post("/admin/config", json={
+        "key": "skills_engine_enabled",
+        "value": "true",
+    }).status_code == 200
+
+
 def test_skills_handler_whitelist():
     """Un handler non registrato deve essere rifiutato, non salvato."""
     from backend.skills import handlers as skills_handlers
@@ -5088,6 +5261,70 @@ def test_skills_preview_reports_live_activation_state():
 
     assert res.status_code == 200, res.text
     assert res.json()["engine_enabled"] is False
+
+
+def test_skills_preview_policy_is_active_for_every_supported_instrument():
+    from backend.skills_seed import SEEDED_INSTRUMENTS, seed_skill_configs
+
+    db = _TestSession()
+    try:
+        seed_skill_configs(db)
+    finally:
+        db.close()
+
+    created = client.post("/admin/certified-strategies", json={
+        "slug": "smoke-all-instruments-advice",
+        "name_it": "Un passo verificabile",
+        "recommended_when_it": "Quando lo studente chiede un consiglio concreto",
+        "description_it": "Scegli un'azione piccola e verificane l'esito.",
+        "factor_codes": [],
+        "questionnaire_types": list(SEEDED_INSTRUMENTS),
+        "keywords": "consiglio concreto",
+        "status": "certified",
+        "is_active": True,
+    })
+    assert created.status_code == 200, created.text
+
+    for questionnaire_type in SEEDED_INSTRUMENTS:
+        preview = client.post("/admin/skills/preview", json={
+            "questionnaire_type": questionnaire_type,
+            "language": "it",
+            "scores_context": "",
+            "message": "",
+        })
+        assert preview.status_code == 200, preview.text
+        body = preview.json()
+        assert body["engine_enabled"] is True
+        assert "[CERTIFIED_STRATEGIES]" in "\n".join(body["blocks"]["knowledge"])
+        assert all(entry.get("slug") != "approved-strategies" for entry in body["trace"])
+
+
+def test_skills_preview_preserves_advice_after_the_editorial_contract():
+    sentinel = "CHIUSURA-CONSIGLIO-VERIFICABILE"
+    created = client.post("/admin/certified-strategies", json={
+        "slug": "smoke-long-certified-advice",
+        "name_it": "Consiglio certificato esteso",
+        "recommended_when_it": "Quando serve un piano dettagliato ma circoscritto.",
+        "description_it": ("Definisci un passo osservabile e sostenibile. " * 12) + sentinel,
+        "factor_codes": [],
+        "questionnaire_types": ["QAP"],
+        "keywords": "piano dettagliato",
+        "status": "certified",
+        "sort_order": -100,
+        "is_active": True,
+    })
+    assert created.status_code == 200, created.text
+
+    preview = client.post("/admin/skills/preview", json={
+        "questionnaire_type": "QAP",
+        "language": "it",
+        "scores_context": "",
+        "message": "",
+    })
+    assert preview.status_code == 200, preview.text
+    knowledge = "\n".join(preview.json()["blocks"]["knowledge"])
+    assert "## Contratto per i consigli allo studente" in knowledge
+    assert sentinel in knowledge
 
 
 def test_skills_step_map_put_reaches_static_route():

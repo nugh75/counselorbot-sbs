@@ -1,9 +1,9 @@
-"""Parita' motore acceso / motore spento per il blocco strategie.
+"""Contratto di rollout del motore skill per il blocco strategie.
 
 Test su DB Postgres DEDICATO (`counselorbot_test`, stessa istanza dell'app):
 costruisce una strategia certificata, poi confronta l'output di
-`_retrieved_context` con `skills_engine_enabled` spento e acceso. Devono
-coincidere: il pilota migra il *dove* vive la logica, non il comportamento.
+`_retrieved_context` con `skills_engine_enabled` spento e acceso. Il percorso
+nuovo deve conservare la strategia certificata ed escludere la fonte approvata.
 
 Il RAG e' disattivato dai component flags, cosi' il test non tocca la rete.
 
@@ -114,7 +114,7 @@ def _run(db) -> tuple:
     )
 
 
-def test_engine_on_matches_engine_off():
+def test_engine_on_uses_certified_advice_only():
     db = _TestSession()
     try:
         _ensure_certified(db)
@@ -127,11 +127,14 @@ def test_engine_on_matches_engine_off():
         _set_config(db, "skills_engine_instruments", json.dumps(["QSA"]))
         on_text, on_strategy_ids, on_certified_ids = _run(db)
 
-        assert on_text == off_text, f"testo diverso:\n--- off ---\n{off_text}\n--- on ---\n{on_text}"
-        assert on_strategy_ids == off_strategy_ids
+        assert off_strategy_ids, "setup: il percorso storico non contiene strategie approvate"
+        assert on_strategy_ids == []
         assert on_certified_ids == off_certified_ids
-        # Il caso deve essere significativo: almeno una strategia certificata.
         assert on_certified_ids, "nessuna strategia certificata recuperata: test cieco"
+        assert "## Strategie di supporto approvate" in off_text
+        assert "## Strategie di supporto approvate" not in on_text
+        assert "## Contratto per i consigli allo studente" in on_text
+        assert "[CERTIFIED_STRATEGIES]" in on_text
     finally:
         _set_config(db, "skills_engine_enabled", "false")
         _set_config(db, "skills_engine_instruments", "[]")
