@@ -36,6 +36,23 @@ WIDE_READING_SOURCE = (
 )
 
 
+QPCS_SOURCE = (
+    "Pellerey, Questionario di Percezione delle proprie Competenze Strategiche "
+    "(QPCS); scheda docs/questionari/strumenti/schede-bibliografiche/QPCS_it.md."
+)
+
+QPCC_SOURCE = (
+    "Pellerey & Orio (2001), Questionario di percezione delle proprie competenze "
+    "e convinzioni (QPCC), Ed. Lavoro; scheda "
+    "docs/questionari/strumenti/schede-bibliografiche/QPCC_it.md."
+)
+
+QAP_SOURCE = (
+    "Savickas & Porfeli, Career Adapt-Abilities Scale (CAAS); adattamento "
+    "italiano QAP (Pellerey, Margottini, Leproni); scheda "
+    "docs/questionari/strumenti/schede-bibliografiche/QAP_it.md."
+)
+
 DEFAULT_CERTIFIED_STRATEGIES: list[dict[str, Any]] = [
     {
         "slug": "qsa-elaborative-links",
@@ -527,6 +544,231 @@ DEFAULT_CERTIFIED_STRATEGIES: list[dict[str, Any]] = [
         "certified_by": "Import fonti competenze strategiche",
         "source_reference": "Savickas, Career Construction Interview / Life Design.",
         "sort_order": 112,
+    },
+    {
+        "slug": "qpcs-emotion-regulation",
+        "name_it": "Routine per la tensione prima della prova",
+        "recommended_when_it": "Quando S1 (gestione delle emozioni) e' un'area di crescita.",
+        "description_it": (
+            "Preparare una routine breve e ripetibile prima di una verifica: respirazione "
+            "lenta, riordino del materiale e una frase che riporti l'attenzione al compito "
+            "invece che al giudizio; dopo la prova annotare quanto la tensione ha inciso "
+            "davvero sul risultato."
+        ),
+        "factor_codes": ["S1"],
+        "questionnaire_types": ["QPCS"],
+        "keywords": "S1 emozioni ansia tensione prova respirazione routine",
+        "certified_by": "Import fonti competenze strategiche",
+        "source_reference": QPCS_SOURCE,
+        "sort_order": 120,
+    },
+    {
+        "slug": "qpcs-ask-and-explain",
+        "name_it": "Chiedere aiuto e rispiegare",
+        "recommended_when_it": "Quando S2 (competenza comunicativa) e' un'area di crescita.",
+        "description_it": (
+            "Allenare la comunicazione su un compito reale: preparare in anticipo una domanda "
+            "precisa da rivolgere al docente o a un compagno e provare a rispiegare a voce un "
+            "concetto appena studiato, notando dove la spiegazione si inceppa."
+        ),
+        "factor_codes": ["S2"],
+        "questionnaire_types": ["QPCS"],
+        "keywords": "S2 comunicazione chiedere aiuto spiegare gruppo ascolto",
+        "certified_by": "Import fonti competenze strategiche",
+        "source_reference": QPCS_SOURCE,
+        "sort_order": 121,
+    },
+    {
+        "slug": "qpcs-perseverance-microsteps",
+        "name_it": "Passi brevi e punto di ripresa",
+        "recommended_when_it": "Quando S3 (volonta' e perseveranza) e' un'area di crescita.",
+        "description_it": (
+            "Scomporre il compito lungo in passi da venti-venticinque minuti, ciascuno con un "
+            "obiettivo dichiarato, e decidere in anticipo il punto da cui riprendere dopo "
+            "l'interruzione, cosi' la ripartenza non dipende dalla motivazione del momento."
+        ),
+        "factor_codes": ["S3"],
+        "questionnaire_types": ["QPCS"],
+        "keywords": "S3 perseveranza volonta tempo scadenze passi obiettivi",
+        "certified_by": "Import fonti competenze strategiche",
+        "source_reference": QPCS_SOURCE,
+        "sort_order": 122,
+    },
+    {
+        "slug": "qpcs-strategy-mix",
+        "name_it": "Variare le strategie e distribuirle nel tempo",
+        "recommended_when_it": "Quando S4 (strategie e collaborazione) e' un'area di crescita.",
+        "description_it": (
+            "Alternare le strategie in base al materiale invece di rileggere sempre: recupero "
+            "attivo dai propri appunti, ripasso distribuito a distanza di giorni e una "
+            "revisione condivisa con un compagno per verificare cio' che si e' capito."
+        ),
+        "factor_codes": ["S4"],
+        "questionnaire_types": ["QPCS"],
+        "keywords": "S4 strategie studio appunti ripasso collaborazione gruppo",
+        "certified_by": "Import fonti competenze strategiche",
+        "source_reference": f"{QPCS_SOURCE} {EVIDENCE_SOURCE}",
+        "sort_order": 123,
+    },
+    {
+        "slug": "qpcs-life-project-step",
+        "name_it": "Dal progetto lontano al passo della settimana",
+        "recommended_when_it": "Quando S5 (fiducia e progetto di vita) e' un'area di crescita.",
+        "description_it": (
+            "Tradurre un obiettivo formativo lontano in un passo verificabile entro la "
+            "settimana, collegandolo a una capacita' che lo studente si riconosce gia', e "
+            "fissare come capira' di averlo compiuto."
+        ),
+        "factor_codes": ["S5"],
+        "questionnaire_types": ["QPCS"],
+        "keywords": "S5 fiducia progetto di vita futuro obiettivi decisione",
+        "certified_by": "Import fonti competenze strategiche",
+        "source_reference": QPCS_SOURCE,
+        "sort_order": 124,
+    },
+    {
+        "slug": "qpcc-public-speaking-rehearsal",
+        "name_it": "Esporre per gradi",
+        "recommended_when_it": "Quando K1 (parlare in pubblico) e' un'area di crescita.",
+        "description_it": (
+            "Preparare l'esposizione per gradi: una scaletta di tre punti, una prova a voce "
+            "alta da soli, poi una davanti a una persona di fiducia, spostando l'attenzione "
+            "dal timore del giudizio al messaggio da far arrivare."
+        ),
+        "factor_codes": ["K1"],
+        "questionnaire_types": ["QPCC"],
+        "keywords": "K1 parlare in pubblico esposizione presentazione ansia da prestazione",
+        "certified_by": "Import fonti competenze strategiche",
+        "source_reference": QPCC_SOURCE,
+        "sort_order": 130,
+    },
+    {
+        "slug": "qpcc-pressure-and-responsibility",
+        "name_it": "Separare cio' che dipende da se'",
+        "recommended_when_it": "Quando K2 (gestione dell'ansia e responsabilita') e' un'area di crescita.",
+        "description_it": (
+            "Davanti a una decisione che pesa, distinguere per iscritto cio' che dipende dalla "
+            "propria scelta da cio' che non dipende, agire solo sulla prima colonna e fissare "
+            "quando la decisione verra' rivista."
+        ),
+        "factor_codes": ["K2"],
+        "questionnaire_types": ["QPCC"],
+        "keywords": "K2 ansia pressione responsabilita decisioni stress controllo",
+        "certified_by": "Import fonti competenze strategiche",
+        "source_reference": QPCC_SOURCE,
+        "sort_order": 131,
+    },
+    {
+        "slug": "qpcc-goal-monitoring",
+        "name_it": "Obiettivo della settimana e verifica",
+        "recommended_when_it": "Quando K3 (volonta' e autoregolazione) e' un'area di crescita.",
+        "description_it": (
+            "Fissare un obiettivo verificabile per la settimana e un momento fisso di "
+            "verifica in cui annotare che cosa ha funzionato, che cosa va cambiato e quale "
+            "sara' l'aggiustamento concreto."
+        ),
+        "factor_codes": ["K3"],
+        "questionnaire_types": ["QPCC"],
+        "keywords": "K3 autoregolazione obiettivi priorita monitoraggio riflessione",
+        "certified_by": "Import fonti competenze strategiche",
+        "source_reference": QPCC_SOURCE,
+        "sort_order": 132,
+    },
+    {
+        "slug": "qpcc-elaboration-links",
+        "name_it": "Collegare, esemplificare, verificare",
+        "recommended_when_it": "Quando K4 (strategie di elaborazione) e' un'area di crescita.",
+        "description_it": (
+            "Collegare il nuovo contenuto a qualcosa di gia' noto con un esempio proprio e "
+            "un'analogia, poi verificare la comprensione riformulandolo senza guardare il "
+            "testo e controllando solo dopo."
+        ),
+        "factor_codes": ["K4"],
+        "questionnaire_types": ["QPCC"],
+        "keywords": "K4 elaborazione collegamenti esempi analogie comprensione",
+        "certified_by": "Import fonti competenze strategiche",
+        "source_reference": f"{QPCC_SOURCE} {EVIDENCE_SOURCE}",
+        "sort_order": 133,
+    },
+    {
+        "slug": "qpcc-effort-attribution",
+        "name_it": "Cercare le cause su cui si puo' agire",
+        "recommended_when_it": "Quando K5 (convinzioni su di se') e' un'area di crescita.",
+        "description_it": (
+            "Rileggere un risultato recente cercando le cause modificabili — preparazione, "
+            "strategia usata, tempo disponibile — invece delle sole abilita' considerate "
+            "stabili, e indicare la variabile su cui intervenire alla prossima occasione."
+        ),
+        "factor_codes": ["K5"],
+        "questionnaire_types": ["QPCC"],
+        "keywords": "K5 convinzioni autoefficacia attribuzione impegno abilita fiducia",
+        "certified_by": "Import fonti competenze strategiche",
+        "source_reference": QPCC_SOURCE,
+        "sort_order": 134,
+    },
+    {
+        "slug": "qap-concern-future-timeline",
+        "name_it": "Rendere il futuro pensabile",
+        "recommended_when_it": "Quando AD1 (preoccupazione per il futuro) e' un'area di crescita.",
+        "description_it": (
+            "Costruire una linea del tempo breve: dove si vorrebbe essere fra un anno e quali "
+            "due passi, a partire dalle scelte di adesso, lo rendono possibile; poi collocarli "
+            "nel calendario."
+        ),
+        "factor_codes": ["AD1"],
+        "questionnaire_types": ["QAP"],
+        "keywords": "AD1 preoccupazione futuro pianificazione scelte carriera",
+        "certified_by": "Import fonti competenze strategiche",
+        "source_reference": QAP_SOURCE,
+        "sort_order": 140,
+    },
+    {
+        "slug": "qap-control-own-decision",
+        "name_it": "Riprendere in mano una decisione",
+        "recommended_when_it": "Quando AD2 (controllo) e' un'area di crescita.",
+        "description_it": (
+            "Riformulare come scelta propria una decisione finora delegata ad altri: motivo, "
+            "alternative considerate e responsabilita' che si accetta, senza attribuire "
+            "l'esito solo alle circostanze."
+        ),
+        "factor_codes": ["AD2"],
+        "questionnaire_types": ["QAP"],
+        "keywords": "AD2 controllo decisioni autonomia responsabilita convinzioni",
+        "certified_by": "Import fonti competenze strategiche",
+        "source_reference": QAP_SOURCE,
+        "sort_order": 141,
+    },
+    {
+        "slug": "qap-curiosity-exploration",
+        "name_it": "Esplorare prima di scegliere",
+        "recommended_when_it": "Quando AD3 (curiosita') e' un'area di crescita.",
+        "description_it": (
+            "Raccogliere informazioni di prima mano su due percorsi possibili — una persona da "
+            "intervistare, un'esperienza da osservare — e confrontarle su criteri scelti dallo "
+            "studente, prima di restringere il campo."
+        ),
+        "factor_codes": ["AD3"],
+        "questionnaire_types": ["QAP"],
+        "keywords": "AD3 curiosita esplorazione alternative informazioni opportunita",
+        "certified_by": "Import fonti competenze strategiche",
+        "source_reference": QAP_SOURCE,
+        "sort_order": 142,
+    },
+    {
+        "slug": "qap-confidence-mastery",
+        "name_it": "Fiducia costruita su prove concrete",
+        "recommended_when_it": "Quando AD4 (fiducia) e' un'area di crescita.",
+        "description_it": (
+            "Scegliere un compito appena sopra il livello attuale, portarlo a termine con cura "
+            "e annotare l'ostacolo superato: la fiducia si appoggia su prove verificabili, non "
+            "su incoraggiamenti generici."
+        ),
+        "factor_codes": ["AD4"],
+        "questionnaire_types": ["QAP"],
+        "keywords": "AD4 fiducia autoefficacia ostacoli problemi competenza",
+        "certified_by": "Import fonti competenze strategiche",
+        "source_reference": QAP_SOURCE,
+        "sort_order": 143,
     },
 ]
 
