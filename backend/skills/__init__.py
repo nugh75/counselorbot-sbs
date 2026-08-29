@@ -5,7 +5,7 @@ istruzioni multilingua e un `handler` Python opzionale per il materiale che va
 recuperato (strategie certificate, knowledge base approvata). Gli agganci agli
 step vivono in `models.GuidedStepSkill`.
 """
-from . import conditions, engine, handlers, registry, router
+from . import conditions, engine, handlers, intents, registry, router
 from .context import SkillContext, SkillOutput
 
 __all__ = [
@@ -14,6 +14,7 @@ __all__ = [
     "conditions",
     "engine",
     "handlers",
+    "intents",
     "registry",
     "router",
 ]

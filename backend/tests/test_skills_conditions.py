@@ -62,6 +62,12 @@ def test_languages():
     assert match({"languages": ["en"]}, _ctx(language="it"))[0] is False
 
 
+def test_intents():
+    assert match({"intents": ["clarify", "reflect"]}, _ctx(intent="clarify"))[0] is True
+    ok, reason = match({"intents": ["advice"]}, _ctx(intent="reading"))
+    assert ok is False and "intenzione" in reason
+
+
 def test_requires_scores():
     assert match({"requires_scores": True}, _ctx())[0] is True
     assert match({"requires_scores": True}, _ctx(scores_context="  "))[0] is False
@@ -90,7 +96,7 @@ def test_conditions_are_anded():
 def test_known_keys_are_documented():
     assert KNOWN_CONDITION_KEYS == frozenset({
         "questionnaire_types", "step_modes", "step_ids",
-        "factor_bands", "min_salient_factors", "languages", "requires_scores",
+        "factor_bands", "min_salient_factors", "languages", "requires_scores", "intents",
     })
 
 

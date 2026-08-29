@@ -15,6 +15,9 @@ class SkillContext:
     step_id: str | None = None
     step_mode: str | None = None
     language: str = "it"
+    # Comportamento primario richiesto: advice|reading|compare|clarify|guided.
+    intent: str = ""
+    session_id: str = ""
     # Query di retrieval generica, come la riceve `_retrieved_context`.
     query: str = ""
     # Query arricchita con label e prompt dello step piu' i punteggi della fase:
@@ -28,6 +31,8 @@ class SkillContext:
     score_bands: Mapping[str, str] = field(default_factory=dict)
     component_flags: Mapping[str, Any] = field(default_factory=dict)
     handler_options: Mapping[str, Any] = field(default_factory=dict)
+    # Ultimo risultato strutturato per strumento, sempre dello stesso utente.
+    profile_results: tuple[Mapping[str, Any], ...] = ()
     db: Any = None
     ai_service: Any = None
 
@@ -40,3 +45,10 @@ class SkillOutput:
     # Identificatori del materiale usato (slug strategie): finiscono nei log.
     ids: list[str] = field(default_factory=list)
     meta: dict = field(default_factory=dict)
+    # Un handler puo' dichiarare che la skill non e' applicabile: in tal caso
+    # vengono scartate anche le istruzioni statiche della skill.
+    applicable: bool = True
+    reason: str = ""
+    # Se valorizzato, il materiale del handler va in uno slot diverso dalle
+    # istruzioni (es. dati in knowledge, comportamento in directive_tail).
+    slot: str | None = None

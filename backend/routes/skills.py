@@ -16,7 +16,7 @@ from ..skills import handlers as skills_handlers
 router = APIRouter()
 get_db = database.get_db
 
-_ALLOWED_ROUTING = {"always", "optional"}
+_ALLOWED_ROUTING = {"always", "support", "primary", "optional"}
 _ALLOWED_SLOTS = {"section", "knowledge", "directive_tail"}
 _ALLOWED_STATUS = {"draft", "published"}
 
@@ -210,6 +210,7 @@ async def preview_skills(
     result = skills_engine.run_skills(ctx)
     return schemas.SkillPreviewResponse(
         engine_enabled=skills_engine.enabled(db, payload.questionnaire_type),
+        intent=ctx.intent,
         blocks=result.blocks,
         ids=result.ids,
         trace=result.trace,

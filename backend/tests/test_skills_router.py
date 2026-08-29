@@ -94,6 +94,30 @@ def test_below_threshold_no_llm_call():
     assert trace == []
 
 
+def test_primary_skills_are_mutually_exclusive_even_below_threshold():
+    service = RecordingService('["reading"]')
+    candidates = [
+        _binding("advice", routing="primary", sort_order=1),
+        _binding("reading", routing="primary", sort_order=2),
+    ]
+    selected, trace = select(candidates, _ctx(service))
+    assert service.calls == 1
+    assert [b.slug for b in selected] == ["reading"]
+    assert trace[0]["group"] == "primary"
+
+
+def test_one_primary_and_support_can_run_together():
+    service = RecordingService('[]')
+    candidates = [
+        _binding("grounding", routing="support"),
+        _binding("clarify", routing="primary"),
+    ]
+    selected, trace = select(candidates, _ctx(service))
+    assert service.calls == 0
+    assert [b.slug for b in selected] == ["grounding", "clarify"]
+    assert trace == []
+
+
 def test_above_threshold_llm_selects():
     service = RecordingService('["c", "e"]')
     candidates = [_binding(s) for s in ("b", "c", "d", "e")]

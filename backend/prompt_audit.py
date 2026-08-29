@@ -16,6 +16,7 @@ from . import models, model_pricing, pii
 from .ai_service import AIError, AIService
 from .anonymous_codes import code_for_identity
 from .api_models import ChatRequest
+from .skills import engine as skills_engine
 from .chat_logic import (
     _annotate_qsa_factor_codes,
     apply_advice_retrieval_policy,
@@ -344,14 +345,22 @@ def build_prompt_audit(
     knowledge_context = ""
     strategy_ids: list[str] = []
     certified_strategy_ids: list[str] = []
-    if bool(getattr(payload, "include_knowledge", True)) and component_flags.get("knowledge", True):
+    skills_blocks: dict[str, list[str]] = {}
+    include_knowledge = bool(getattr(payload, "include_knowledge", True))
+    if (
+        include_knowledge and component_flags.get("knowledge", True)
+    ) or skills_engine.enabled(db, questionnaire_type):
         retrieval_query = f"{step_label} {model_message if component_flags.get('step_prompt', True) else ''} {component_scores_context}".strip()
         retrieval_request = request.copy(update={"scores_context": component_scores_context})
-        knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
+        retrieval_flags = dict(component_flags)
+        if not include_knowledge:
+            retrieval_flags["knowledge"] = False
+        knowledge_context, strategy_ids, certified_strategy_ids, skills_blocks = _retrieved_context(
             db, session_id, retrieval_request, questionnaire_type, retrieval_query, ai_service=ai_service,
             certified_strategy_limit=component_options["certified_strategy_limit"],
-            component_flags=component_flags,
+            component_flags=retrieval_flags,
             excluded_certified_strategy_ids=previous_certified_strategy_ids(db, request.conversation_id),
+            username=result.username if result else "",
         )
 
     sanitize_ztpi = _should_sanitize_ztpi_text(request.mode, request.phase)
@@ -384,6 +393,7 @@ def build_prompt_audit(
         create_anonymous_code=False,
         component_flags=component_flags,
         components=components,
+        skills_blocks=skills_blocks,
     )
 
     provider = c_provider or ai_service.config.get("active_provider", "unknown")

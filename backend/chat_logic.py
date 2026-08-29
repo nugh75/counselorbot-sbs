@@ -21,6 +21,7 @@ from .memory_service import session_memory
 from .strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_memory, strategy_memory
 from .certified_strategy_service import certified_strategy_memory
 from .skills import engine as skills_engine
+from .skills import intents as skills_intents
 from .guided_step_label_i18n import resolve_step_label
 from .rag_index import site_rag_index, counselorbot_rag_index, questionari_rag_index, build_context as rag_build_context
 from .api_models import ChatRequest
@@ -1733,7 +1734,8 @@ def _retrieved_context(
     certified_strategy_limit: int | None = None,
     component_flags: dict | None = None,
     excluded_certified_strategy_ids: set[str] | None = None,
-) -> tuple[str, List[str], List[str]]:
+    username: str = "",
+) -> tuple[str, List[str], List[str], dict[str, list[str]]]:
     """Fonti KNOWLEDGE per l'envelope: RAG (competenzestrategiche, counselorbot, questionari)
     + strategie approvate + certificate per-fattore + risposte votate.
 
@@ -1742,8 +1744,10 @@ def _retrieved_context(
     nei blocchi [STUDENT] e [PROFILE] del system prompt."""
     if component_flags is None:
         component_flags = PROMPT_COMPONENT_DEFAULTS
+    knowledge_enabled = bool(component_flags.get("knowledge", True))
 
     engine_on = skills_engine.enabled(db, questionnaire_type)
+    skills_blocks: dict[str, list[str]] = {}
 
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
     phase_codes = _phase_factor_codes(db, request.phase)
@@ -1763,6 +1767,8 @@ def _retrieved_context(
         certified_strategy_limit,
         _default_certified_strategy_limit(step_mode),
     )
+    if not knowledge_enabled:
+        certified_limit = 0
 
     if engine_on:
         ctx = skills_engine.build_context(
@@ -1784,8 +1790,15 @@ def _retrieved_context(
                 "allowed_strategies": component_flags.get("allowed_strategies"),
                 "excluded_strategy_ids": sorted(excluded_certified_strategy_ids or set()),
             },
+            intent=skills_intents.classify(
+                request.message or "",
+                guided=bool(request.internal_message or (request.use_phase_prompt and not (request.message or "").strip())),
+            ),
+            session_id=session_id,
+            username=username,
         )
         skills_result = skills_engine.run_skills(ctx)
+        skills_blocks = skills_result.blocks
         knowledge_blocks = skills_result.blocks.get("knowledge", [])
         strategy_ids = skills_result.ids.get("approved-strategies", [])
         certified_ids = skills_result.ids.get("certified-advice", [])
@@ -1828,7 +1841,7 @@ def _retrieved_context(
         certified_ids = [strategy["id"] for strategy in certified]
 
     learned_responses = []
-    if bool(component_flags.get("shared_responses", True)):
+    if knowledge_enabled and bool(component_flags.get("shared_responses", True)):
         learned_responses = shared_response_memory.retrieve(
             db,
             questionnaire_type=questionnaire_type,
@@ -1840,7 +1853,7 @@ def _retrieved_context(
 
     # RAG: Guide Competenzestrategiche.it
     graph_context = ""
-    if bool(component_flags.get("rag_competenzestrategiche", True)):
+    if knowledge_enabled and bool(component_flags.get("rag_competenzestrategiche", True)):
         try:
             if query:
                 rag_results = _filter_rag_results_by_instrument(
@@ -1859,7 +1872,7 @@ def _retrieved_context(
 
     # RAG: Documenti CounselorBot (docs-counselorbot)
     counselorbot_context = ""
-    if bool(component_flags.get("rag_counselorbot", False)):
+    if knowledge_enabled and bool(component_flags.get("rag_counselorbot", False)):
         try:
             if query:
                 cb_results = _filter_rag_results_by_instrument(
@@ -1878,7 +1891,7 @@ def _retrieved_context(
 
     # RAG: Materiali Questionari e strumenti
     questionari_context = ""
-    if bool(component_flags.get("rag_questionari", False)):
+    if knowledge_enabled and bool(component_flags.get("rag_questionari", False)):
         try:
             if query:
                 q_results = _filter_rag_results_by_instrument(
@@ -1901,12 +1914,12 @@ def _retrieved_context(
             graph_context,
             counselorbot_context,
             questionari_context,
-            *knowledge_blocks,
+            *(knowledge_blocks if knowledge_enabled else []),
             learned_context,
         )
         if section
     ]
-    return "\n\n".join(sections), strategy_ids, certified_ids
+    return "\n\n".join(sections), strategy_ids, certified_ids, skills_blocks
 
 
 PROMPT_COMPONENT_DEFAULTS = {

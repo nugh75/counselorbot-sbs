@@ -21,6 +21,7 @@ KNOWN_CONDITION_KEYS = frozenset({
     "min_salient_factors",
     "languages",
     "requires_scores",
+    "intents",
 })
 
 
@@ -52,6 +53,10 @@ def match(conditions: dict | None, ctx: SkillContext) -> tuple[bool, str]:
     values = conditions.get("languages")
     if values and (ctx.language or "it").strip().lower() not in {str(v).strip().lower() for v in values}:
         return False, "lingua non ammessa"
+
+    values = conditions.get("intents")
+    if values and (ctx.intent or "").strip().lower() not in {str(v).strip().lower() for v in values}:
+        return False, "intenzione non ammessa"
 
     if conditions.get("requires_scores") and not (ctx.scores_context or "").strip():
         return False, "punteggi assenti nel turno"
