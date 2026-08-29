@@ -5039,6 +5039,22 @@ def _main():
 
 
 
+def test_skills_handler_can_be_cleared():
+    """Un PUT esplicito con handler null deve rimuovere l'handler esistente."""
+    created = client.post("/admin/skills", json={
+        "slug": "smoke-clear-handler",
+        "name": "Smoke clear handler",
+        "handler": "approved_strategies",
+    })
+    assert created.status_code == 200, created.text
+    skill_id = created.json()["id"]
+
+    updated = client.put(f"/admin/skills/{skill_id}", json={"handler": None})
+
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["handler"] is None
+
+
 def test_skills_handler_whitelist():
     """Un handler non registrato deve essere rifiutato, non salvato."""
     from backend.skills import handlers as skills_handlers
@@ -5053,6 +5069,70 @@ def test_skills_handler_whitelist():
     })
     assert res.status_code == 400, res.text
     assert "handler sconosciuto" in res.json()["detail"]
+
+
+def test_skills_preview_reports_live_activation_state():
+    for key, value in (
+        ("skills_engine_enabled", "false"),
+        ("skills_engine_instruments", "[]"),
+    ):
+        saved = client.post("/admin/config", json={"key": key, "value": value})
+        assert saved.status_code == 200, saved.text
+
+    res = client.post("/admin/skills/preview", json={
+        "questionnaire_type": "QSA",
+        "language": "it",
+        "scores_context": "C6: 8/9",
+        "message": "come mi organizzo?",
+    })
+
+    assert res.status_code == 200, res.text
+    assert res.json()["engine_enabled"] is False
+
+
+def test_skills_step_map_put_reaches_static_route():
+    """La route statica step-map non deve essere catturata da {skill_id}."""
+    created = client.post("/admin/skills", json={
+        "slug": "smoke-step-map",
+        "name": "Smoke step map",
+        "status": "published",
+    })
+    assert created.status_code == 200, created.text
+    skill_id = created.json()["id"]
+
+    res = client.put("/admin/skills/step-map", json={
+        "questionnaire_type": "QSA",
+        "entries": [{
+            "questionnaire_type": "QSA",
+            "step_id": "*",
+            "skill_id": skill_id,
+            "sort_order": 0,
+            "enabled": True,
+        }],
+    })
+
+    assert res.status_code == 200, res.text
+    assert res.json()["entries"][0]["skill_id"] == skill_id
+
+
+def test_skills_step_map_rejects_unknown_skill_without_replacing_map():
+    before = client.get("/admin/skills/step-map", params={"questionnaire_type": "QSA"})
+    assert before.status_code == 200, before.text
+
+    res = client.put("/admin/skills/step-map", json={
+        "questionnaire_type": "QSA",
+        "entries": [{
+            "questionnaire_type": "QSA",
+            "step_id": "*",
+            "skill_id": 999999,
+            "sort_order": 0,
+            "enabled": True,
+        }],
+    })
+
+    assert res.status_code == 400, res.text
+    after = client.get("/admin/skills/step-map", params={"questionnaire_type": "QSA"})
+    assert after.json() == before.json()
 
 
 def test_frozen_session_round_trip_and_isolation():

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X, Play } from 'lucide-react';
 
 interface Skill {
@@ -29,6 +29,11 @@ interface StepSkillEntry {
     override_params: Record<string, unknown> | null;
 }
 
+interface GuidedStep {
+    id: string;
+    label: string;
+}
+
 type FormState = {
     slug: string; name: string; description: string;
     instructionsIt: string; conditions: string; handler: string; handlerParams: string;
@@ -50,29 +55,53 @@ export function SkillsPanel() {
     const [handlers, setHandlers] = useState<string[]>([]);
     const [instrument, setInstrument] = useState('QSA');
     const [stepMap, setStepMap] = useState<StepSkillEntry[]>([]);
+    const [guidedSteps, setGuidedSteps] = useState<GuidedStep[]>([]);
+    const [previewStep, setPreviewStep] = useState('');
     const [editingId, setEditingId] = useState<number | 'new' | null>(null);
     const [form, setForm] = useState<FormState>(EMPTY);
     const [error, setError] = useState('');
     const [previewMessage, setPreviewMessage] = useState('');
     const [previewScores, setPreviewScores] = useState('C6: 8/9');
-    const [preview, setPreview] = useState<{ blocks: Record<string, string[]>; trace: Record<string, unknown>[] } | null>(null);
+    const [preview, setPreview] = useState<{
+        engine_enabled: boolean;
+        blocks: Record<string, string[]>;
+        trace: Record<string, unknown>[];
+    } | null>(null);
 
-    const load = useCallback(async () => {
+    const load = async () => {
         const [sr, hr] = await Promise.all([
             fetch('/api/admin/skills'),
             fetch('/api/admin/skills/handlers'),
         ]);
         if (sr.ok) setSkills(await sr.json());
         if (hr.ok) setHandlers((await hr.json()).handlers ?? []);
+    };
+
+    useEffect(() => {
+        let cancelled = false;
+        void Promise.all([
+            fetch('/api/admin/skills'),
+            fetch('/api/admin/skills/handlers'),
+        ]).then(async ([skillsResponse, handlersResponse]) => {
+            if (cancelled) return;
+            if (skillsResponse.ok) setSkills(await skillsResponse.json());
+            if (handlersResponse.ok) setHandlers((await handlersResponse.json()).handlers ?? []);
+        });
+        return () => { cancelled = true; };
     }, []);
 
-    const loadStepMap = useCallback(async (qt: string) => {
-        const res = await fetch(`/api/admin/skills/step-map?questionnaire_type=${encodeURIComponent(qt)}`);
-        if (res.ok) setStepMap((await res.json()).entries ?? []);
-    }, []);
-
-    useEffect(() => { load(); }, [load]);
-    useEffect(() => { loadStepMap(instrument); }, [instrument, loadStepMap]);
+    useEffect(() => {
+        let cancelled = false;
+        void Promise.all([
+            fetch(`/api/admin/skills/step-map?questionnaire_type=${encodeURIComponent(instrument)}`),
+            fetch(`/api/qsa/guided-ui-texts?questionnaire_type=${encodeURIComponent(instrument)}&lang=it`),
+        ]).then(async ([mapResponse, stepsResponse]) => {
+            if (cancelled) return;
+            if (mapResponse.ok) setStepMap((await mapResponse.json()).entries ?? []);
+            if (stepsResponse.ok) setGuidedSteps((await stepsResponse.json()).guided_steps ?? []);
+        });
+        return () => { cancelled = true; };
+    }, [instrument]);
 
     const startEdit = (skill: Skill) => {
         setEditingId(skill.id);
@@ -99,9 +128,15 @@ export function SkillsPanel() {
             setError('Condizioni o parametri: JSON non valido');
             return;
         }
+        const existingSkill = typeof editingId === 'number'
+            ? skills.find((skill) => skill.id === editingId)
+            : undefined;
+        const instructionsI18n = { ...(existingSkill?.instructions_i18n ?? {}) };
+        if (form.instructionsIt) instructionsI18n.it = form.instructionsIt;
+        else delete instructionsI18n.it;
         const body = {
             slug: form.slug.trim(), name: form.name.trim(), description: form.description,
-            instructions_i18n: form.instructionsIt ? { it: form.instructionsIt } : {},
+            instructions_i18n: instructionsI18n,
             conditions, handler: form.handler || null, handler_params: handlerParams,
             routing: form.routing, slot: form.slot,
             max_chars: Number(form.maxChars) || 1400, sort_order: Number(form.sortOrder) || 0,
@@ -140,6 +175,7 @@ export function SkillsPanel() {
             body: JSON.stringify({ questionnaire_type: instrument, entries }),
         });
         if (res.ok) setStepMap((await res.json()).entries ?? []);
+        else setError((await res.json()).detail ?? 'Salvataggio agganci fallito');
     };
 
     const runPreview = async () => {
@@ -147,11 +183,14 @@ export function SkillsPanel() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                questionnaire_type: instrument, step_id: null, language: 'it',
+                questionnaire_type: instrument,
+                step_id: previewStep || null,
+                language: 'it',
                 scores_context: previewScores, message: previewMessage,
             }),
         });
         if (res.ok) setPreview(await res.json());
+        else setError((await res.json()).detail ?? 'Preview fallita');
     };
 
     return (
@@ -266,7 +305,10 @@ export function SkillsPanel() {
             <div className="space-y-3 rounded-lg border p-4">
                 <div className="flex items-center gap-3">
                     <h3 className="font-medium">Agganci per strumento</h3>
-                    <select className="rounded border px-2 py-1 text-sm" value={instrument} onChange={(e) => setInstrument(e.target.value)}>
+                    <select className="rounded border px-2 py-1 text-sm" value={instrument} onChange={(e) => {
+                        setInstrument(e.target.value);
+                        setPreviewStep('');
+                    }}>
                         {INSTRUMENTS.map((i) => <option key={i} value={i}>{i}</option>)}
                     </select>
                 </div>
@@ -286,7 +328,14 @@ export function SkillsPanel() {
 
             <div className="space-y-3 rounded-lg border p-4">
                 <h3 className="font-medium">Preview</h3>
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-3 md:grid-cols-3">
+                    <label className="text-sm">Step
+                        <select className="mt-1 w-full rounded border px-2 py-1" value={previewStep}
+                            onChange={(e) => setPreviewStep(e.target.value)}>
+                            <option value="">Nessuno / wildcard</option>
+                            {guidedSteps.map((step) => <option key={step.id} value={step.id}>{step.label}</option>)}
+                        </select>
+                    </label>
                     <label className="text-sm">Messaggio dello studente
                         <input className="mt-1 w-full rounded border px-2 py-1" value={previewMessage}
                             onChange={(e) => setPreviewMessage(e.target.value)} />
@@ -301,6 +350,11 @@ export function SkillsPanel() {
                 </button>
                 {preview && (
                     <div className="space-y-2">
+                        <p className={`rounded px-3 py-2 text-sm ${preview.engine_enabled ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-900'}`}>
+                            {preview.engine_enabled
+                                ? `Motore skill attivo per ${instrument}.`
+                                : `Anteprima simulata: il motore skill non è attivo per ${instrument}.`}
+                        </p>
                         <pre className="overflow-x-auto rounded bg-muted p-3 text-xs">{JSON.stringify(preview.trace, null, 2)}</pre>
                         {Object.entries(preview.blocks).map(([slot, blocks]) => (
                             <div key={slot}>

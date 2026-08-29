@@ -101,6 +101,26 @@ def test_total_budget_drops_late_blocks():
     assert result.trace[1]["skipped"] == "budget complessivo esaurito"
 
 
+def test_total_budget_does_not_report_ids_for_dropped_block():
+    @handlers.handler("_test_budget_ids")
+    def _with_ids(ctx, params):
+        return SkillOutput(text="y" * 40, ids=["not-injected"])
+
+    first = _binding("a", instructions_i18n={"it": "x" * 40}, sort_order=1)
+    second = _binding(
+        "b",
+        instructions_i18n={},
+        handler="_test_budget_ids",
+        sort_order=2,
+    )
+
+    result = engine.render([first, second], _ctx(), total_max_chars=45)
+
+    assert result.blocks["knowledge"] == ["x" * 40]
+    assert result.ids == {}
+    assert result.trace[1]["skipped"] == "budget complessivo esaurito"
+
+
 def test_blocks_are_grouped_by_slot_and_sorted():
     a = _binding("a", slot="section", sort_order=2)
     b = _binding("b", slot="section", sort_order=1)
