@@ -187,6 +187,7 @@ def build_context(
     intent: str | None = None,
     session_id: str = "",
     username: str = "",
+    knowledge_sources: list[dict] | None = None,
 ) -> SkillContext:
     """Fotografa il turno: i fattori salienti e le bande si calcolano una volta."""
     from .intents import classify
@@ -211,10 +212,13 @@ def build_context(
         component_flags=dict(component_flags or {}),
         handler_options=dict(handler_options or {}),
         profile_results=(
-            handlers.load_profile_results(db, session_id, username, language)
+            handlers.load_profile_results(
+                db, session_id, username, language, questionnaire_type=questionnaire_type or ""
+            )
             if resolved_intent == "compare"
             else ()
         ),
+        knowledge_sources=tuple(knowledge_sources or ()),
         db=db,
         ai_service=ai_service,
     )

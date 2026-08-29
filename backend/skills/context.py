@@ -33,6 +33,9 @@ class SkillContext:
     handler_options: Mapping[str, Any] = field(default_factory=dict)
     # Ultimo risultato strutturato per strumento, sempre dello stesso utente.
     profile_results: tuple[Mapping[str, Any], ...] = ()
+    # Fonti RAG recuperate per questo turno ({title, source}): sono l'unico
+    # materiale citabile da una skill di lettura.
+    knowledge_sources: tuple[Mapping[str, Any], ...] = ()
     db: Any = None
     ai_service: Any = None
 

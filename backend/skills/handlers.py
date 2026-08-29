@@ -9,6 +9,7 @@ attivazione stanno invece in `conditions.py`, dichiarative.
 from __future__ import annotations
 
 import logging
+import re
 from typing import Callable
 
 from sqlalchemy import func
@@ -53,8 +54,25 @@ def compute_score_bands(questionnaire_type: str, scores_context: str) -> dict[st
     return score_bands(questionnaire_type, scores_context)
 
 
-def load_profile_results(db, session_id: str, username: str, language: str) -> tuple[dict, ...]:
-    """Ultimo risultato con punteggi per strumento, limitato allo stesso utente."""
+# Compilazioni conservate per ogni strumento: l'ultima e la precedente, cosi'
+# un confronto temporale (QSA di oggi vs QSA di prima) diventa possibile.
+PROFILE_RESULTS_PER_INSTRUMENT = 2
+# Tetto complessivo dei profili passati alla skill di confronto.
+PROFILE_RESULTS_MAX = 8
+
+
+def load_profile_results(
+    db,
+    session_id: str,
+    username: str,
+    language: str,
+    questionnaire_type: str = "",
+    per_instrument: int = PROFILE_RESULTS_PER_INSTRUMENT,
+    limit: int = PROFILE_RESULTS_MAX,
+) -> tuple[dict, ...]:
+    """Risultati con punteggi dello stesso utente: per ogni strumento l'ultima
+    compilazione e le precedenti fino a `per_instrument`, cosi' il confronto puo'
+    essere anche temporale. Lo strumento corrente viene per primo."""
     if db is None:
         return ()
     owner = (username or "").strip()
@@ -72,17 +90,33 @@ def load_profile_results(db, session_id: str, username: str, language: str) -> t
         .order_by(models.QuestionnaireResult.submitted_at.desc(), models.QuestionnaireResult.id.desc())
         .all()
     )
+    # `rows` e' gia' ordinato dal piu' recente: la posizione dentro lo strumento
+    # e' quindi anche la sua eta' (0 = attuale, 1 = precedente).
     latest = []
-    seen = set()
+    occurrences: dict[int, int] = {}
+    per_type: dict[str, int] = {}
     for row in rows:
         qtype = str(row.questionnaire_type or "").strip()
-        if not qtype or qtype.upper() in seen or not isinstance(row.scores, dict) or not row.scores:
+        if not qtype or not isinstance(row.scores, dict) or not row.scores:
             continue
-        seen.add(qtype.upper())
+        key = qtype.upper()
+        rank = per_type.get(key, 0)
+        if rank >= max(1, per_instrument):
+            continue
+        per_type[key] = rank + 1
+        occurrences[row.id] = rank
         latest.append(row)
 
     if not latest:
         return ()
+
+    current = (questionnaire_type or "").strip().upper()
+    latest.sort(key=lambda row: (
+        0 if str(row.questionnaire_type or "").upper() == current else 1,
+        occurrences[row.id],
+    ))
+    latest = latest[:max(1, limit)]
+
     factors = db.query(models.Factor).filter(
         models.Factor.instrument_code.in_([row.questionnaire_type for row in latest])
     ).all()
@@ -94,6 +128,10 @@ def load_profile_results(db, session_id: str, username: str, language: str) -> t
 
     return tuple({
         "questionnaire_type": row.questionnaire_type,
+        # "current" = compilazione piu' recente di quello strumento, "previous"
+        # (e oltre) = compilazioni anteriori dello stesso questionario.
+        "occurrence": "current" if occurrences[row.id] == 0 else "previous",
+        "occurrence_rank": occurrences[row.id],
         "submitted_at": row.submitted_at.date().isoformat() if row.submitted_at else "",
         "scores": tuple(
             {
@@ -183,9 +221,82 @@ def profile_comparison(ctx: SkillContext, params: dict) -> SkillOutput:
             f"Profili strutturati disponibili: {len(profiles)}. "
             "Non eseguire un confronto fittizio: chiedi quale secondo risultato confrontare."
         )
-    for profile in profiles[:7]:
+    repeated = sorted({
+        str(profile.get("questionnaire_type", "")).upper()
+        for profile in profiles
+        if profile.get("occurrence") == "previous"
+    })
+    if repeated:
+        lines.append(
+            "Confronto temporale disponibile per: "
+            f"{', '.join(repeated)}. Per questi strumenti confronta la compilazione "
+            "attuale con quella precedente dello stesso questionario."
+        )
+    for profile in profiles[:PROFILE_RESULTS_MAX]:
         date = f" ({profile.get('submitted_at')})" if profile.get("submitted_at") else ""
-        lines.append(f"## {profile.get('questionnaire_type', 'Profilo')}{date}")
+        occurrence = "precedente" if profile.get("occurrence") == "previous" else "attuale"
+        lines.append(
+            f"## {profile.get('questionnaire_type', 'Profilo')}{date} "
+            f"— compilazione {occurrence}"
+        )
         for score in profile.get("scores", ()):
             lines.append(f"- {score['code']} ({score['label']}): {score['value']}")
     return SkillOutput(text="\n".join(lines), slot="knowledge")
+
+
+# Un titolo utile ha lettere e non e' un hash o un identificatore di chunk.
+_HASHLIKE_TITLE = re.compile(r"^[0-9a-f]{6,}$")
+
+
+def _identifiable_source(entry) -> bool:
+    """Vero se la fonte ha titolo e documento realmente citabili."""
+    title = str((entry or {}).get("title") or "").strip()
+    source = str((entry or {}).get("source") or "").strip()
+    if not title or not source:
+        return False
+    if sum(1 for char in title if char.isalpha()) < 4:
+        return False
+    return not _HASHLIKE_TITLE.match(title.casefold().replace(" ", ""))
+
+
+@handler("reading_sources")
+def reading_sources(ctx: SkillContext, params: dict) -> SkillOutput:
+    """Whitelist delle fonti citabili nel turno: validazione strutturale delle
+    letture, cosi' il divieto di inventare riferimenti non resta solo una
+    direttiva al modello."""
+    limit = int(params.get("limit", 6) or 6)
+    entries: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    for item in ctx.knowledge_sources or ():
+        if not _identifiable_source(item):
+            continue
+        source = str(item.get("source")).strip()
+        if source in seen:
+            continue
+        seen.add(source)
+        entries.append((str(item.get("title")).strip(), source))
+        if len(entries) >= limit:
+            break
+
+    if not entries:
+        return SkillOutput(
+            text=(
+                "[READING_SOURCES]\n"
+                "Nessuna fonte identificabile e' disponibile in questo turno: "
+                "dichiara l'assenza e proponi un tema da cercare, senza citare "
+                "titoli, autori o link che non compaiano qui."
+            ),
+            slot="knowledge",
+        )
+
+    lines = [
+        "[READING_SOURCES]",
+        "Uniche fonti citabili in questo turno (titolo — documento). "
+        "Non citare titoli, autori, DOI o link che non compaiano in questo elenco.",
+    ]
+    lines.extend(f"- {title} ({source})" for title, source in entries)
+    return SkillOutput(
+        text="\n".join(lines),
+        ids=[source for _, source in entries],
+        slot="knowledge",
+    )

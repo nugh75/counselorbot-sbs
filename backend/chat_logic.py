@@ -1770,6 +1770,77 @@ def _retrieved_context(
     if not knowledge_enabled:
         certified_limit = 0
 
+    # RAG: eseguito prima delle skill, cosi' una skill di lettura puo' citare
+    # soltanto le fonti realmente recuperate in questo turno.
+    rag_sources: list[dict] = []
+
+    def _collect_sources(results) -> None:
+        for item in results or []:
+            rag_sources.append({
+                "title": str(item.get("title") or "").strip(),
+                "source": str(item.get("source") or "").strip(),
+            })
+
+    # RAG: Guide Competenzestrategiche.it
+    graph_context = ""
+    if knowledge_enabled and bool(component_flags.get("rag_competenzestrategiche", True)):
+        try:
+            if query:
+                rag_results = _filter_rag_results_by_instrument(
+                    site_rag_index.search(
+                        ai_service, query,
+                        top_k=6, audience="studente",
+                        max_per_source=2, min_score=0.25,
+                    ),
+                    questionnaire_type,
+                )
+                _collect_sources(rag_results)
+                if rag_results:
+                    graph_context = rag_build_context(rag_results, max_chars=3500)[0]
+        except Exception as e:
+            logger.warning(f"RAG competenzestrategiche non disponibile: {e}")
+            graph_context = ""
+
+    # RAG: Documenti CounselorBot (docs-counselorbot)
+    counselorbot_context = ""
+    if knowledge_enabled and bool(component_flags.get("rag_counselorbot", False)):
+        try:
+            if query:
+                cb_results = _filter_rag_results_by_instrument(
+                    counselorbot_rag_index.search(
+                        ai_service, query,
+                        top_k=3, audience="studente",
+                        max_per_source=2, min_score=0.25,
+                    ),
+                    questionnaire_type,
+                )
+                _collect_sources(cb_results)
+                if cb_results:
+                    counselorbot_context = rag_build_context(cb_results, max_chars=3500)[0]
+        except Exception as e:
+            logger.warning(f"RAG counselorbot non disponibile: {e}")
+            counselorbot_context = ""
+
+    # RAG: Materiali Questionari e strumenti
+    questionari_context = ""
+    if knowledge_enabled and bool(component_flags.get("rag_questionari", False)):
+        try:
+            if query:
+                q_results = _filter_rag_results_by_instrument(
+                    questionari_rag_index.search(
+                        ai_service, query,
+                        top_k=4, audience="studente",
+                        max_per_source=2, min_score=0.25,
+                    ),
+                    questionnaire_type,
+                )
+                _collect_sources(q_results)
+                if q_results:
+                    questionari_context = rag_build_context(q_results, max_chars=3500)[0]
+        except Exception as e:
+            logger.warning(f"RAG questionari non disponibile: {e}")
+            questionari_context = ""
+
     if engine_on:
         ctx = skills_engine.build_context(
             db,
@@ -1796,6 +1867,7 @@ def _retrieved_context(
             ),
             session_id=session_id,
             username=username,
+            knowledge_sources=rag_sources,
         )
         skills_result = skills_engine.run_skills(ctx)
         skills_blocks = skills_result.blocks
@@ -1850,63 +1922,6 @@ def _retrieved_context(
             language=request.language or "it",
         )
     learned_context = shared_response_memory.render_context(learned_responses)
-
-    # RAG: Guide Competenzestrategiche.it
-    graph_context = ""
-    if knowledge_enabled and bool(component_flags.get("rag_competenzestrategiche", True)):
-        try:
-            if query:
-                rag_results = _filter_rag_results_by_instrument(
-                    site_rag_index.search(
-                        ai_service, query,
-                        top_k=6, audience="studente",
-                        max_per_source=2, min_score=0.25,
-                    ),
-                    questionnaire_type,
-                )
-                if rag_results:
-                    graph_context = rag_build_context(rag_results, max_chars=3500)[0]
-        except Exception as e:
-            logger.warning(f"RAG competenzestrategiche non disponibile: {e}")
-            graph_context = ""
-
-    # RAG: Documenti CounselorBot (docs-counselorbot)
-    counselorbot_context = ""
-    if knowledge_enabled and bool(component_flags.get("rag_counselorbot", False)):
-        try:
-            if query:
-                cb_results = _filter_rag_results_by_instrument(
-                    counselorbot_rag_index.search(
-                        ai_service, query,
-                        top_k=3, audience="studente",
-                        max_per_source=2, min_score=0.25,
-                    ),
-                    questionnaire_type,
-                )
-                if cb_results:
-                    counselorbot_context = rag_build_context(cb_results, max_chars=3500)[0]
-        except Exception as e:
-            logger.warning(f"RAG counselorbot non disponibile: {e}")
-            counselorbot_context = ""
-
-    # RAG: Materiali Questionari e strumenti
-    questionari_context = ""
-    if knowledge_enabled and bool(component_flags.get("rag_questionari", False)):
-        try:
-            if query:
-                q_results = _filter_rag_results_by_instrument(
-                    questionari_rag_index.search(
-                        ai_service, query,
-                        top_k=4, audience="studente",
-                        max_per_source=2, min_score=0.25,
-                    ),
-                    questionnaire_type,
-                )
-                if q_results:
-                    questionari_context = rag_build_context(q_results, max_chars=3500)[0]
-        except Exception as e:
-            logger.warning(f"RAG questionari non disponibile: {e}")
-            questionari_context = ""
 
     sections = [
         section
