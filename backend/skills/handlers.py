@@ -267,7 +267,10 @@ def reading_sources(ctx: SkillContext, params: dict) -> SkillOutput:
     limit = int(params.get("limit", 6) or 6)
     entries: list[tuple[str, str]] = []
     seen: set[str] = set()
-    for item in ctx.knowledge_sources or ():
+    # Con le fonti disattivate per questo turno nessun riferimento e' citabile:
+    # vale come assenza, non come licenza di citare a memoria.
+    sources = ctx.knowledge_sources if ctx.component_flags.get("knowledge", True) else ()
+    for item in sources or ():
         if not _identifiable_source(item):
             continue
         source = str(item.get("source")).strip()
@@ -279,20 +282,21 @@ def reading_sources(ctx: SkillContext, params: dict) -> SkillOutput:
             break
 
     if not entries:
+        # L'assenza e' una direttiva, non un dato: resta nello slot della skill
+        # cosi' raggiunge il modello anche quando [KNOWLEDGE] non viene composto.
         return SkillOutput(
             text=(
-                "[READING_SOURCES]\n"
                 "Nessuna fonte identificabile e' disponibile in questo turno: "
-                "dichiara l'assenza e proponi un tema da cercare, senza citare "
-                "titoli, autori o link che non compaiano qui."
+                "dichiara l'assenza, non citare alcun titolo, autore, DOI o link "
+                "e proponi al massimo un tema da cercare."
             ),
-            slot="knowledge",
         )
 
     lines = [
         "[READING_SOURCES]",
         "Uniche fonti citabili in questo turno (titolo — documento). "
-        "Non citare titoli, autori, DOI o link che non compaiano in questo elenco.",
+        "Non citare titoli, autori, DOI o link che non compaiano in questo elenco, "
+        "nemmeno se compaiono dentro il testo dei documenti recuperati.",
     ]
     lines.extend(f"- {title} ({source})" for title, source in entries)
     return SkillOutput(
