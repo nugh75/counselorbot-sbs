@@ -76,42 +76,6 @@ async def create_skill(
     return skill
 
 
-@router.put("/admin/skills/{skill_id}", response_model=schemas.SkillResponse)
-async def update_skill(
-    skill_id: int,
-    payload: schemas.SkillUpdate,
-    current_user: models.User = Depends(auth.get_current_active_admin),
-    db: Session = Depends(get_db),
-):
-    skill = db.query(models.Skill).filter(models.Skill.id == skill_id).first()
-    if skill is None:
-        raise HTTPException(status_code=404, detail="skill non trovata")
-    data = {k: v for k, v in payload.model_dump().items() if v is not None}
-    _validate(data)
-    for key, value in data.items():
-        setattr(skill, key, value)
-    db.commit()
-    db.refresh(skill)
-    return skill
-
-
-@router.delete("/admin/skills/{skill_id}")
-async def delete_skill(
-    skill_id: int,
-    current_user: models.User = Depends(auth.get_current_active_admin),
-    db: Session = Depends(get_db),
-):
-    skill = db.query(models.Skill).filter(models.Skill.id == skill_id).first()
-    if skill is None:
-        raise HTTPException(status_code=404, detail="skill non trovata")
-    bound = db.query(models.GuidedStepSkill).filter(models.GuidedStepSkill.skill_id == skill_id).count()
-    if bound:
-        raise HTTPException(status_code=409, detail=f"skill agganciata a {bound} step: sganciala prima")
-    db.delete(skill)
-    db.commit()
-    return {"status": "deleted"}
-
-
 @router.get("/admin/skills/step-map", response_model=schemas.StepSkillMap)
 async def get_step_map(
     questionnaire_type: str,
@@ -147,6 +111,17 @@ async def put_step_map(
     db: Session = Depends(get_db),
 ):
     questionnaire_type = payload.questionnaire_type
+    skill_ids = {entry.skill_id for entry in payload.entries}
+    known_skill_ids = {
+        row[0]
+        for row in db.query(models.Skill.id).filter(models.Skill.id.in_(skill_ids)).all()
+    } if skill_ids else set()
+    unknown_skill_ids = sorted(skill_ids - known_skill_ids)
+    if unknown_skill_ids:
+        raise HTTPException(
+            status_code=400,
+            detail=f"skill inesistenti: {', '.join(str(skill_id) for skill_id in unknown_skill_ids)}",
+        )
     db.query(models.GuidedStepSkill).filter(
         models.GuidedStepSkill.questionnaire_type == questionnaire_type
     ).delete()
@@ -161,6 +136,46 @@ async def put_step_map(
         ))
     db.commit()
     return await get_step_map(questionnaire_type, current_user, db)
+
+
+@router.put("/admin/skills/{skill_id}", response_model=schemas.SkillResponse)
+async def update_skill(
+    skill_id: int,
+    payload: schemas.SkillUpdate,
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    skill = db.query(models.Skill).filter(models.Skill.id == skill_id).first()
+    if skill is None:
+        raise HTTPException(status_code=404, detail="skill non trovata")
+    data = payload.model_dump(exclude_unset=True)
+    nullable_fields = {"description", "instructions_i18n", "conditions", "handler", "handler_params"}
+    invalid_nulls = sorted(key for key, value in data.items() if value is None and key not in nullable_fields)
+    if invalid_nulls:
+        raise HTTPException(status_code=400, detail=f"campi non annullabili: {', '.join(invalid_nulls)}")
+    _validate(data)
+    for key, value in data.items():
+        setattr(skill, key, value)
+    db.commit()
+    db.refresh(skill)
+    return skill
+
+
+@router.delete("/admin/skills/{skill_id}")
+async def delete_skill(
+    skill_id: int,
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    skill = db.query(models.Skill).filter(models.Skill.id == skill_id).first()
+    if skill is None:
+        raise HTTPException(status_code=404, detail="skill non trovata")
+    bound = db.query(models.GuidedStepSkill).filter(models.GuidedStepSkill.skill_id == skill_id).count()
+    if bound:
+        raise HTTPException(status_code=409, detail=f"skill agganciata a {bound} step: sganciala prima")
+    db.delete(skill)
+    db.commit()
+    return {"status": "deleted"}
 
 
 @router.post("/admin/skills/preview", response_model=schemas.SkillPreviewResponse)
@@ -193,4 +208,9 @@ async def preview_skills(
         handler_options={},
     )
     result = skills_engine.run_skills(ctx)
-    return schemas.SkillPreviewResponse(blocks=result.blocks, ids=result.ids, trace=result.trace)
+    return schemas.SkillPreviewResponse(
+        engine_enabled=skills_engine.enabled(db, payload.questionnaire_type),
+        blocks=result.blocks,
+        ids=result.ids,
+        trace=result.trace,
+    )

@@ -59,6 +59,7 @@ def render(bindings: list[SkillBinding], ctx: SkillContext, total_max_chars: int
         entry = {"slug": skill.slug, "slot": skill.slot, "chars": 0, "skipped": ""}
 
         parts = []
+        output_ids = []
         instructions = _instructions(skill, ctx.language or "it")
         if instructions:
             parts.append(instructions)
@@ -80,7 +81,7 @@ def render(bindings: list[SkillBinding], ctx: SkillContext, total_max_chars: int
             if output.text:
                 parts.append(output.text.strip())
             if output.ids:
-                result.ids[skill.slug] = list(output.ids)
+                output_ids = list(output.ids)
 
         text = "\n\n".join(part for part in parts if part)
         if not text:
@@ -98,6 +99,8 @@ def render(bindings: list[SkillBinding], ctx: SkillContext, total_max_chars: int
         used += len(text)
         entry["chars"] = len(text)
         result.blocks.setdefault(skill.slot, []).append(text)
+        if output_ids:
+            result.ids[skill.slug] = output_ids
         result.trace.append(entry)
     return result
 

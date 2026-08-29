@@ -66,27 +66,34 @@ def _llm_select(optional: list[SkillBinding], ctx: SkillContext, limit: int) -> 
         f"Scegli al massimo {limit} identificatori."
     )
 
+    pool = None
     try:
         provider = ctx.ai_service.config.get("active_provider", "openai")
         model = _config_value(ctx.db, "skills_router_model", "") or ctx.ai_service.config.get("model_name", "")
         timeout_s = _config_int(ctx.db, "skills_router_timeout_s", 6)
-        with ThreadPoolExecutor(max_workers=1) as pool:
-            future = pool.submit(
-                ctx.ai_service.call_model,
-                provider=provider,
-                model=model,
-                user_message=user_message,
-                system_prompt=ROUTER_SYSTEM_PROMPT,
-                max_tokens=200,
-            )
-            try:
-                reply = future.result(timeout=timeout_s)
-            except FutureTimeout:
-                logger.warning("Router skill: timeout dopo %ss, uso il fallback", timeout_s)
-                return None
+        pool = ThreadPoolExecutor(max_workers=1)
+        future = pool.submit(
+            ctx.ai_service.call_model,
+            provider=provider,
+            model=model,
+            user_message=user_message,
+            system_prompt=ROUTER_SYSTEM_PROMPT,
+            max_tokens=200,
+        )
+        try:
+            reply = future.result(timeout=timeout_s)
+        except FutureTimeout:
+            logger.warning("Router skill: timeout dopo %ss, uso il fallback", timeout_s)
+            future.cancel()
+            pool.shutdown(wait=False, cancel_futures=True)
+            pool = None
+            return None
     except Exception as exc:
         logger.warning("Router skill non disponibile, uso il fallback: %s", exc)
         return None
+    finally:
+        if pool is not None:
+            pool.shutdown(wait=True)
 
     slugs = _parse_slugs(reply)
     if slugs is None:

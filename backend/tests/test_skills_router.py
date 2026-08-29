@@ -144,9 +144,12 @@ def test_slow_service_times_out_to_fallback():
 
     ctx = _ctx(SlowService('["c"]'), config={"skills_router_timeout_s": "1"})
     candidates = [_binding(s, sort_order=i) for i, s in enumerate(("b", "c", "d", "e"))]
+    started = time.monotonic()
     selected, trace = select(candidates, ctx)
+    elapsed = time.monotonic() - started
     assert trace[0]["router"] == "fallback"
     assert [b.slug for b in selected] == ["b", "c", "d"]
+    assert elapsed < 1.5, f"timeout configurato a 1s, ritorno dopo {elapsed:.3f}s"
 
 
 def test_empty_candidates():
