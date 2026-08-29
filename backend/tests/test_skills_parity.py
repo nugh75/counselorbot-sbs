@@ -121,11 +121,11 @@ def test_engine_on_uses_certified_advice_only():
         seed_skills(db)
 
         _set_config(db, "skills_engine_enabled", "false")
-        off_text, off_strategy_ids, off_certified_ids = _run(db)
+        off_text, off_strategy_ids, off_certified_ids, _off_blocks = _run(db)
 
         _set_config(db, "skills_engine_enabled", "true")
         _set_config(db, "skills_engine_instruments", json.dumps(["QSA"]))
-        on_text, on_strategy_ids, on_certified_ids = _run(db)
+        on_text, on_strategy_ids, on_certified_ids, on_blocks = _run(db)
 
         assert off_strategy_ids, "setup: il percorso storico non contiene strategie approvate"
         assert on_strategy_ids == []
@@ -133,7 +133,9 @@ def test_engine_on_uses_certified_advice_only():
         assert on_certified_ids, "nessuna strategia certificata recuperata: test cieco"
         assert "## Strategie di supporto approvate" in off_text
         assert "## Strategie di supporto approvate" not in on_text
-        assert "## Contratto per i consigli allo studente" in on_text
+        assert "## Contratto per i consigli allo studente" in "\n".join(
+            on_blocks["directive_tail"]
+        )
         assert "[CERTIFIED_STRATEGIES]" in on_text
     finally:
         _set_config(db, "skills_engine_enabled", "false")
@@ -164,7 +166,7 @@ def test_disabled_binding_removes_only_its_block():
         _set_config(db, "skills_engine_enabled", "true")
         _set_config(db, "skills_engine_instruments", json.dumps(["QSA"]))
 
-        full_text, _, full_certified_ids = _run(db)
+        full_text, _, full_certified_ids, _full_blocks = _run(db)
         assert full_certified_ids, "setup: nessuna strategia certificata"
 
         skill = db.query(models.Skill).filter(models.Skill.slug == "certified-advice").first()
@@ -177,7 +179,7 @@ def test_disabled_binding_removes_only_its_block():
         binding.enabled = False
         db.commit()
         try:
-            reduced_text, _, reduced_certified_ids = _run(db)
+            reduced_text, _, reduced_certified_ids, _reduced_blocks = _run(db)
         finally:
             binding.enabled = True
             db.commit()

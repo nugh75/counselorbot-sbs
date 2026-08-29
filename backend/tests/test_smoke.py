@@ -2100,7 +2100,7 @@ def test_retrieved_context_respects_allowed_strategies_whitelist():
                 questionnaire_type="QSA",
                 language="it",
             )
-            context, strategy_ids, certified_ids = _retrieved_context(
+            context, strategy_ids, certified_ids, _skills_blocks = _retrieved_context(
                 db,
                 session_id="test-allowed-strategies",
                 request=request,
@@ -4344,7 +4344,7 @@ def test_retrieved_context_routing_and_strategy_exclusion():
     # 2. Test _retrieved_context routing logic using these flags
     # We toggle knowledge to True to test RAG retrieval with these flags
     flags["knowledge"] = True
-    knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
+    knowledge_context, strategy_ids, certified_strategy_ids, _skills_blocks = _retrieved_context(
         db,
         session_id="test-routing",
         request=request,
@@ -5055,8 +5055,8 @@ def test_skills_handler_can_be_cleared():
     assert updated.json()["handler"] is None
 
 
-def test_skills_advice_policy_seeds_certified_advice_as_the_only_source():
-    """Il seed esposto dall'API admin abilita una sola fonte di consigli."""
+def test_skills_policy_seeds_four_distinct_behaviours():
+    """Il seed abilita i quattro comportamenti, con una sola fonte di consigli."""
     from backend.skills_seed import SEEDED_INSTRUMENTS, seed_skills
 
     db = _TestSession()
@@ -5070,6 +5070,7 @@ def test_skills_advice_policy_seeds_certified_advice_as_the_only_source():
     by_slug = {skill["slug"]: skill for skill in listed.json()}
     assert by_slug["approved-strategies"]["is_active"] is False
     assert by_slug["certified-advice"]["is_active"] is True
+    assert by_slug["certified-advice"]["routing"] == "primary"
     assert by_slug["certified-advice"]["status"] == "published"
     instructions = by_slug["certified-advice"]["instructions_i18n"]["it"]
     assert "azione concreta" in instructions
@@ -5084,7 +5085,175 @@ def test_skills_advice_policy_seeds_certified_advice_as_the_only_source():
         enabled_ids = {
             entry["skill_id"] for entry in mapped.json()["entries"] if entry["enabled"]
         }
-        assert enabled_ids == {by_slug["certified-advice"]["id"]}
+        assert enabled_ids == {
+            by_slug[slug]["id"]
+            for slug in (
+                "certified-advice",
+                "profile-wayfinder",
+                "reading-guide",
+                "profile-comparison",
+            )
+        }
+
+
+def test_skills_preview_selects_one_behaviour_from_student_intent():
+    cases = (
+        ("Non capisco cosa significa A6", "clarify", "Chiarificazione riflessiva", "profile-wayfinder"),
+        ("Suggeriscimi una lettura sul profilo", "reading", "Guida a letture", "reading-guide"),
+        ("Confronta questo profilo con il precedente", "compare", "Confronto riflessivo", "profile-comparison"),
+    )
+    for message, intent, marker, selected_slug in cases:
+        response = client.post("/admin/skills/preview", json={
+            "questionnaire_type": "QSA",
+            "language": "it",
+            "scores_context": "A6: 3/9",
+            "message": message,
+        })
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["intent"] == intent
+        rendered = "\n".join(
+            block for blocks in body["blocks"].values() for block in blocks
+        )
+        assert marker in rendered
+        active = [
+            entry["slug"] for entry in body["trace"]
+            if entry.get("slug") and not entry.get("skipped")
+        ]
+        assert active == [selected_slug], body["trace"]
+
+
+def test_skills_behaviour_reaches_the_prompt_without_rag_knowledge():
+    """La direttiva comportamentale non dipende dal toggle del materiale RAG."""
+    from backend.skills_seed import SEEDED_INSTRUMENTS, seed_skills
+
+    db = _TestSession()
+    try:
+        seed_skills(db)
+    finally:
+        db.close()
+    _set_config("skills_engine_enabled", "true")
+    _set_config("skills_engine_instruments", json.dumps(list(SEEDED_INSTRUMENTS)))
+
+    response = client.post("/admin/prompt-audit/dry-run", json={
+        "questionnaire_type": "QAP",
+        "language": "it",
+        "mode": "generic",
+        "message": "Non capisco cosa significa questo risultato",
+        "include_knowledge": False,
+        "include_history": False,
+    })
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    system_prompt = body["envelope"]["system_prompt_final"]
+    assert "## Chiarificazione riflessiva del profilo" in system_prompt
+    assert "## Contratto per i consigli allo studente" not in system_prompt
+    assert body["knowledge"]["included"] is False
+    assert body["knowledge"]["context"] == ""
+
+
+def test_skills_profile_comparison_uses_only_the_same_students_results():
+    """Il confronto riceve profili persistiti dello stesso utente, non esempi inventati."""
+    from backend.skills_seed import SEEDED_INSTRUMENTS, seed_skills
+
+    session_id = "skills-comparison-current"
+    db = _TestSession()
+    try:
+        seed_skills(db)
+        db.add_all([
+            models.QuestionnaireResult(
+                session_id=session_id,
+                questionnaire_type="QAP",
+                scores={"P1": 6.0},
+                username="skills.compare.student",
+            ),
+            models.QuestionnaireResult(
+                session_id="skills-comparison-previous",
+                questionnaire_type="QPCS",
+                scores={"C1": 4.5},
+                username="SKILLS.COMPARE.STUDENT",
+            ),
+            models.QuestionnaireResult(
+                session_id="skills-comparison-other-user",
+                questionnaire_type="ZTPI",
+                scores={"T1": 9.0},
+                username="someone.else",
+            ),
+        ])
+        db.commit()
+    finally:
+        db.close()
+    _set_config("skills_engine_enabled", "true")
+    _set_config("skills_engine_instruments", json.dumps(list(SEEDED_INSTRUMENTS)))
+
+    response = client.post("/admin/prompt-audit/dry-run", json={
+        "session_id": session_id,
+        "questionnaire_type": "QAP",
+        "language": "it",
+        "mode": "generic",
+        "message": "Confronta questo profilo con quello precedente",
+        "include_knowledge": True,
+        "include_history": False,
+    })
+
+    assert response.status_code == 200, response.text
+    system_prompt = response.json()["envelope"]["system_prompt_final"]
+    assert "## Confronto riflessivo dei profili" in system_prompt
+    assert "[COMPARABLE_PROFILES]" in system_prompt
+    assert "## QAP" in system_prompt
+    assert "## QPCS" in system_prompt
+    assert "## ZTPI" not in system_prompt
+
+
+def test_skills_specialized_policy_repairs_existing_bindings_once():
+    from backend.skills_seed import (
+        SEEDED_INSTRUMENTS,
+        SPECIALIZED_SKILLS_POLICY_MARKER,
+        apply_specialized_skills_policy,
+        seed_skills,
+    )
+
+    db = _TestSession()
+    try:
+        seed_skills(db)
+        db.query(models.Config).filter_by(key=SPECIALIZED_SKILLS_POLICY_MARKER).delete()
+        wayfinder = db.query(models.Skill).filter_by(slug="profile-wayfinder").one()
+        wayfinder.routing = "optional"
+        binding = db.query(models.GuidedStepSkill).filter_by(
+            questionnaire_type="ZTPI",
+            step_id="*",
+            skill_id=wayfinder.id,
+        ).one()
+        binding.enabled = False
+        binding.sort_order = 999
+        db.commit()
+
+        assert apply_specialized_skills_policy(db) is True
+        db.refresh(wayfinder)
+        db.refresh(binding)
+        assert wayfinder.routing == "primary"
+        assert wayfinder.slot == "directive_tail"
+        assert binding.enabled is True
+        assert binding.sort_order == wayfinder.sort_order
+        assert apply_specialized_skills_policy(db) is False
+
+        for slug in (
+            "certified-advice",
+            "profile-wayfinder",
+            "reading-guide",
+            "profile-comparison",
+        ):
+            skill = db.query(models.Skill).filter_by(slug=slug).one()
+            bound = db.query(models.GuidedStepSkill).filter(
+                models.GuidedStepSkill.skill_id == skill.id,
+                models.GuidedStepSkill.step_id == "*",
+                models.GuidedStepSkill.questionnaire_type.in_(SEEDED_INSTRUMENTS),
+                models.GuidedStepSkill.enabled.is_(True),
+            ).count()
+            assert bound == len(SEEDED_INSTRUMENTS)
+    finally:
+        db.close()
 
 
 def test_skills_chat_uses_certified_advice_only_for_every_supported_instrument():
@@ -5290,7 +5459,7 @@ def test_skills_preview_policy_is_active_for_every_supported_instrument():
             "questionnaire_type": questionnaire_type,
             "language": "it",
             "scores_context": "",
-            "message": "",
+            "message": "Dammi un consiglio concreto",
         })
         assert preview.status_code == 200, preview.text
         body = preview.json()
@@ -5308,7 +5477,7 @@ def test_skills_preview_preserves_advice_after_the_editorial_contract():
         "description_it": ("Definisci un passo osservabile e sostenibile. " * 12) + sentinel,
         "factor_codes": [],
         "questionnaire_types": ["QAP"],
-        "keywords": "piano dettagliato",
+        "keywords": "consiglio piano dettagliato circoscritto verificabile",
         "status": "certified",
         "sort_order": -100,
         "is_active": True,
@@ -5319,11 +5488,13 @@ def test_skills_preview_preserves_advice_after_the_editorial_contract():
         "questionnaire_type": "QAP",
         "language": "it",
         "scores_context": "",
-        "message": "",
+        "message": "Consigliami un piano dettagliato e circoscritto",
     })
     assert preview.status_code == 200, preview.text
-    knowledge = "\n".join(preview.json()["blocks"]["knowledge"])
-    assert "## Contratto per i consigli allo studente" in knowledge
+    body = preview.json()
+    knowledge = "\n".join(body["blocks"]["knowledge"])
+    directive = "\n".join(body["blocks"]["directive_tail"])
+    assert "## Contratto per i consigli allo studente" in directive
     assert sentinel in knowledge
 
 

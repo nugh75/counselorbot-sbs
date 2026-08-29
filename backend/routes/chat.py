@@ -20,6 +20,7 @@ from .. import pii
 from ..api_models import ChatRequest, QsaAuditRequest, TTSRequest
 from ..memory_service import session_memory
 from ..strategy_memory import shared_response_memory
+from ..skills import engine as skills_engine
 from ..qsa_extractor import (
     DEFAULT_OCR_MODEL,
     DEFAULT_PARSER_MODEL,
@@ -409,7 +410,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     knowledge_context = ""
     strategy_ids: list[str] = []
     certified_strategy_ids: list[str] = []
-    if component_flags.get("knowledge", True):
+    skills_blocks: dict[str, list[str]] = {}
+    if component_flags.get("knowledge", True) or skills_engine.enabled(db, questionnaire_type):
         retrieval_query = f"{step_label} {model_message if component_flags.get('step_prompt', True) else ''} {component_scores_context}".strip()
         # Follow-up in-step: la domanda dello studente spesso non ha contenuto
         # ("puoi approfondire?") — accoda la coda dell'ultima risposta assistant
@@ -417,12 +419,13 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         if _is_conversational_mode(request.mode):
             retrieval_query = f"{retrieval_query} {_conversational_retrieval_tail(session_id)}".strip()
         retrieval_request = request.copy(update={"scores_context": component_scores_context})
-        knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
+        knowledge_context, strategy_ids, certified_strategy_ids, skills_blocks = _retrieved_context(
             db, session_id, retrieval_request, questionnaire_type, retrieval_query,
             ai_service=ai_service,
             certified_strategy_limit=component_options["certified_strategy_limit"],
             component_flags=component_flags,
             excluded_certified_strategy_ids=previous_certified_strategy_ids(db, conversation_id),
+            username=identity.get("username", "") if identity else "",
         )
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         knowledge_context = _sanitize_ztpi_user_text(knowledge_context, request.language)
@@ -446,6 +449,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         model_scores_context=model_scores_context, message_scores_context=message_scores_context,
         knowledge_context=knowledge_context, include_scores_reference=include_analysis_context,
         component_flags=component_flags,
+        skills_blocks=skills_blocks,
     )
 
     # 4. Get AI Response (KNOWLEDGE nel system, continuity nella history -> no summary).
@@ -676,7 +680,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     knowledge_context = ""
     strategy_ids: list[str] = []
     certified_strategy_ids: list[str] = []
-    if component_flags.get("knowledge", True):
+    skills_blocks: dict[str, list[str]] = {}
+    if component_flags.get("knowledge", True) or skills_engine.enabled(db, questionnaire_type):
         retrieval_query = f"{step_label} {model_message if component_flags.get('step_prompt', True) else ''} {component_scores_context}".strip()
         # Follow-up in-step: la domanda dello studente spesso non ha contenuto
         # ("puoi approfondire?") — accoda la coda dell'ultima risposta assistant
@@ -684,12 +689,13 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         if _is_conversational_mode(request.mode):
             retrieval_query = f"{retrieval_query} {_conversational_retrieval_tail(session_id)}".strip()
         retrieval_request = request.copy(update={"scores_context": component_scores_context})
-        knowledge_context, strategy_ids, certified_strategy_ids = _retrieved_context(
+        knowledge_context, strategy_ids, certified_strategy_ids, skills_blocks = _retrieved_context(
             db, session_id, retrieval_request, questionnaire_type, retrieval_query,
             ai_service=ai_service,
             certified_strategy_limit=component_options["certified_strategy_limit"],
             component_flags=component_flags,
             excluded_certified_strategy_ids=previous_certified_strategy_ids(db, conversation_id),
+            username=identity.get("username", "") if identity else "",
         )
     sanitize = _should_sanitize_ztpi_text(request.mode, request.phase)
     if sanitize:
@@ -709,6 +715,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         model_scores_context=model_scores_context, message_scores_context=message_scores_context,
         knowledge_context=knowledge_context, include_scores_reference=include_analysis_context,
         component_flags=component_flags,
+        skills_blocks=skills_blocks,
     )
 
     provider = c_provider or ai_service.config.get('active_provider', 'unknown')

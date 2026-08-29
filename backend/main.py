@@ -605,17 +605,20 @@ def _seed_and_migrate():
                 db.add(models.Config(key=key, value=default, description=descr))
                 db.commit()
 
-        # Skill certificata + agganci: append-only, non tocca definizioni esistenti.
+        # Skill comportamentali + agganci; le policy una tantum allineano gli
+        # impianti esistenti senza sovrascrivere le successive scelte admin.
         try:
             from .skills_seed import (
                 apply_certified_advice_policy,
+                apply_specialized_skills_policy,
                 seed_skill_configs,
                 seed_skills,
             )
             configs_changed = seed_skill_configs(db)
             skills_changed = seed_skills(db)
             policy_changed = apply_certified_advice_policy(db)
-            if configs_changed or skills_changed or policy_changed:
+            specialized_changed = apply_specialized_skills_policy(db)
+            if configs_changed or skills_changed or policy_changed or specialized_changed:
                 logger.info("Seed skill completato")
         except Exception as e:
             logger.warning(f"Seed skill fallito: {e}")

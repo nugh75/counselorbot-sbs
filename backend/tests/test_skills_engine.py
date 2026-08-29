@@ -70,6 +70,54 @@ def test_handler_output_is_appended_after_instructions():
     assert result.ids["echo"] == ["x1"]
 
 
+def test_non_applicable_handler_drops_its_instructions_too():
+    @handlers.handler("_test_not_applicable")
+    def _not_applicable(ctx, params):
+        return SkillOutput(applicable=False, reason="nessun materiale pertinente")
+
+    result = engine.render(
+        [_binding("conditional", handler="_test_not_applicable")],
+        _ctx(),
+        total_max_chars=3000,
+    )
+    assert result.blocks == {}
+    assert result.trace[0]["skipped"] == "nessun materiale pertinente"
+
+
+def test_handler_can_put_material_in_a_different_slot_from_instructions():
+    @handlers.handler("_test_split_slots")
+    def _split_slots(ctx, params):
+        return SkillOutput(text="dati strutturati", slot="knowledge")
+
+    binding = _binding(
+        "comparison",
+        handler="_test_split_slots",
+        slot="directive_tail",
+        instructions_i18n={"it": "regole confronto"},
+    )
+    result = engine.render([binding], _ctx(), total_max_chars=3000)
+    assert result.blocks["directive_tail"] == ["regole confronto"]
+    assert result.blocks["knowledge"] == ["dati strutturati"]
+
+
+def test_split_slot_directive_is_dropped_when_its_material_does_not_fit():
+    @handlers.handler("_test_split_budget")
+    def _split_budget(ctx, params):
+        return SkillOutput(text="dati necessari", ids=["not-injected"], slot="knowledge")
+
+    binding = _binding(
+        "budgeted",
+        handler="_test_split_budget",
+        slot="directive_tail",
+        instructions_i18n={"it": "direttiva lunga"},
+        max_chars=10,
+    )
+    result = engine.render([binding], _ctx(), total_max_chars=3000)
+    assert result.blocks == {}
+    assert result.ids == {}
+    assert result.trace[0]["skipped"] == "materiale escluso dal budget della skill"
+
+
 def test_unknown_handler_is_skipped_not_raised():
     binding = _binding("broken", handler="does_not_exist")
     result = engine.render([binding], _ctx(), total_max_chars=3000)

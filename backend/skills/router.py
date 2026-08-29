@@ -1,8 +1,8 @@
 """Selezione delle skill: regole prima, LLM solo sul residuo.
 
-Le skill `always` passano sempre: sono le direttive strutturali, devono essere
-riproducibili. Le `optional` passano tutte finche' sono poche; oltre la soglia
-un router LLM sceglie le piu' pertinenti al messaggio dello studente.
+Le skill `always` e `support` passano sempre. Le `primary` sono comportamenti
+alternativi: ne passa al massimo una, anche quando sono soltanto due. Le vecchie
+`optional` mantengono il comportamento a soglia per compatibilita'.
 Qualunque problema (servizio assente, timeout, risposta non parsabile) degrada
 sul fallback deterministico: prime K per sort_order.
 """
@@ -35,20 +35,35 @@ def select(candidates: list[SkillBinding], ctx: SkillContext) -> tuple[list[Skil
     if not candidates:
         return [], []
 
-    always = [b for b in candidates if b.skill.routing == "always"]
-    optional = [b for b in candidates if b.skill.routing != "always"]
+    structural = [b for b in candidates if b.skill.routing in {"always", "support"}]
+    primary = [b for b in candidates if b.skill.routing == "primary"]
+    optional = [b for b in candidates if b.skill.routing not in {"always", "support", "primary"}]
+
+    trace = []
+    selected_primary = primary
+    if len(primary) > 1:
+        fallback = sorted(primary, key=lambda b: (b.sort_order, b.slug))[:1]
+        chosen = _llm_select(primary, ctx, 1)
+        if chosen is None:
+            selected_primary = fallback
+            trace.append({"router": "fallback", "group": "primary", "chosen": [b.slug for b in fallback]})
+        else:
+            selected_primary = chosen
+            trace.append({"router": "llm", "group": "primary", "chosen": [b.slug for b in chosen]})
 
     from .engine import _config_int
 
     threshold = _config_int(ctx.db, "skills_router_threshold", 3)
     if len(optional) <= threshold:
-        return always + optional, []
+        return structural + selected_primary + optional, trace
 
     fallback = sorted(optional, key=lambda b: (b.sort_order, b.slug))[:threshold]
     chosen = _llm_select(optional, ctx, threshold)
     if chosen is None:
-        return always + fallback, [{"router": "fallback", "chosen": [b.slug for b in fallback]}]
-    return always + chosen, [{"router": "llm", "chosen": [b.slug for b in chosen]}]
+        trace.append({"router": "fallback", "group": "optional", "chosen": [b.slug for b in fallback]})
+        return structural + selected_primary + fallback, trace
+    trace.append({"router": "llm", "group": "optional", "chosen": [b.slug for b in chosen]})
+    return structural + selected_primary + chosen, trace
 
 
 def _llm_select(optional: list[SkillBinding], ctx: SkillContext, limit: int) -> list[SkillBinding] | None:

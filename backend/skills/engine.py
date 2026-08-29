@@ -42,12 +42,12 @@ def _instructions(skill, language: str) -> str:
     data = skill.instructions_i18n or {}
     if not isinstance(data, dict):
         return ""
-    return (data.get(language) or data.get("it") or "").strip()
+    return (data.get(language) or data.get("en") or data.get("it") or "").strip()
 
 
 def _render_order(binding: SkillBinding) -> tuple:
     # Le skill strutturali (`always`) hanno la precedenza sul budget complessivo.
-    return (0 if binding.skill.routing == "always" else 1, binding.sort_order, binding.slug)
+    return (0 if binding.skill.routing in {"always", "support"} else 1, binding.sort_order, binding.slug)
 
 
 def render(bindings: list[SkillBinding], ctx: SkillContext, total_max_chars: int = DEFAULT_TOTAL_MAX_CHARS) -> SkillsResult:
@@ -60,9 +60,7 @@ def render(bindings: list[SkillBinding], ctx: SkillContext, total_max_chars: int
 
         parts = []
         output_ids = []
-        instructions = _instructions(skill, ctx.language or "it")
-        if instructions:
-            parts.append(instructions)
+        output = SkillOutput()
 
         if skill.handler:
             fn = handlers.get_handler(skill.handler)
@@ -78,27 +76,65 @@ def render(bindings: list[SkillBinding], ctx: SkillContext, total_max_chars: int
                 logger.warning("Skill %s: %s", skill.slug, entry["skipped"])
                 result.trace.append(entry)
                 continue
-            if output.text:
-                parts.append(output.text.strip())
-            if output.ids:
-                output_ids = list(output.ids)
+            if not output.applicable:
+                entry["skipped"] = output.reason or "skill non applicabile"
+                result.trace.append(entry)
+                continue
 
-        text = "\n\n".join(part for part in parts if part)
-        if not text:
+        instructions = _instructions(skill, ctx.language or "it")
+        if instructions:
+            parts.append(instructions)
+        if output.text:
+            parts.append(output.text.strip())
+        if output.ids:
+            output_ids = list(output.ids)
+
+        # Normalmente istruzioni e materiale condividono lo slot e restano un
+        # unico blocco. Un handler puo' separare dati e direttiva.
+        segments: list[tuple[str, str]] = []
+        output_slot = output.slot or skill.slot
+        if output.text and output_slot != skill.slot:
+            if instructions:
+                segments.append((skill.slot, instructions))
+            segments.append((output_slot, output.text.strip()))
+        else:
+            text = "\n\n".join(part for part in parts if part)
+            if text:
+                segments.append((skill.slot, text))
+
+        if not segments:
             entry["skipped"] = "nessun contenuto"
             result.trace.append(entry)
             continue
 
-        text = truncate(text, int(skill.max_chars or 0) or len(text))
+        skill_limit = int(skill.max_chars or 0) or sum(len(text) for _, text in segments)
+        limited_segments = []
+        skill_used = 0
+        for slot, text in segments:
+            limited = truncate(text, max(0, skill_limit - skill_used))
+            if limited:
+                limited_segments.append((slot, limited))
+                skill_used += len(limited)
+        if output.text and output_slot != skill.slot:
+            rendered_output = next(
+                (text for slot, text in limited_segments if slot == output_slot),
+                "",
+            )
+            minimum_useful_output = min(len(output.text.strip()), 64)
+            if len(rendered_output) < minimum_useful_output:
+                entry["skipped"] = "materiale escluso dal budget della skill"
+                result.trace.append(entry)
+                continue
         remaining = total_max_chars - used
-        if len(text) > remaining:
+        if not limited_segments or skill_used > remaining:
             entry["skipped"] = "budget complessivo esaurito"
             result.trace.append(entry)
             continue
 
-        used += len(text)
-        entry["chars"] = len(text)
-        result.blocks.setdefault(skill.slot, []).append(text)
+        used += skill_used
+        entry["chars"] = skill_used
+        for slot, text in limited_segments:
+            result.blocks.setdefault(slot, []).append(text)
         if output_ids:
             result.ids[skill.slug] = output_ids
         result.trace.append(entry)
@@ -148,13 +184,24 @@ def build_context(
     scores_context: str,
     component_flags: dict | None = None,
     handler_options: dict | None = None,
+    intent: str | None = None,
+    session_id: str = "",
+    username: str = "",
 ) -> SkillContext:
     """Fotografa il turno: i fattori salienti e le bande si calcolano una volta."""
+    from .intents import classify
+
+    resolved_intent = intent if intent is not None else classify(
+        message,
+        guided=bool(step_id and not (message or "").strip()),
+    )
     return SkillContext(
         questionnaire_type=questionnaire_type or "",
         step_id=step_id,
         step_mode=step_mode,
         language=language or "it",
+        intent=resolved_intent,
+        session_id=session_id or "",
         query=query or "",
         step_query=step_query or "",
         message=message or "",
@@ -163,6 +210,11 @@ def build_context(
         score_bands=handlers.compute_score_bands(questionnaire_type, scores_context),
         component_flags=dict(component_flags or {}),
         handler_options=dict(handler_options or {}),
+        profile_results=(
+            handlers.load_profile_results(db, session_id, username, language)
+            if resolved_intent == "compare"
+            else ()
+        ),
         db=db,
         ai_service=ai_service,
     )

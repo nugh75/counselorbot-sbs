@@ -1206,6 +1206,7 @@ class SkillPreviewRequest(BaseModel):
 
 class SkillPreviewResponse(BaseModel):
     engine_enabled: bool
+    intent: str = ""
     blocks: dict
     ids: dict
     trace: List[dict]

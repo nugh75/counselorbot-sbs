@@ -64,6 +64,7 @@ export function SkillsPanel() {
     const [previewScores, setPreviewScores] = useState('C6: 8/9');
     const [preview, setPreview] = useState<{
         engine_enabled: boolean;
+        intent: string;
         blocks: Record<string, string[]>;
         trace: Record<string, unknown>[];
     } | null>(null);
@@ -249,6 +250,8 @@ export function SkillsPanel() {
                             <select className="mt-1 w-full rounded border px-2 py-1" value={form.routing}
                                 onChange={(e) => setForm({ ...form, routing: e.target.value })}>
                                 <option value="optional">optional</option>
+                                <option value="primary">primary (una per turno)</option>
+                                <option value="support">support</option>
                                 <option value="always">always</option>
                             </select>
                         </label>
@@ -354,6 +357,9 @@ export function SkillsPanel() {
                             {preview.engine_enabled
                                 ? `Motore skill attivo per ${instrument}.`
                                 : `Anteprima simulata: il motore skill non è attivo per ${instrument}.`}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                            Intenzione rilevata: <span className="font-mono">{preview.intent || '(nessuna)'}</span>
                         </p>
                         <pre className="overflow-x-auto rounded bg-muted p-3 text-xs">{JSON.stringify(preview.trace, null, 2)}</pre>
                         {Object.entries(preview.blocks).map(([slot, blocks]) => (
