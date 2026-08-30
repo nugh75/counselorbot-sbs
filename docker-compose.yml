@@ -23,7 +23,7 @@ services:
       - RAG_INDEX_DIR=/app/rag_index
       - COUNSELORBOT_DOCS_DIR=/app/docs-counselorbot
       - QSA_OCR_MODEL=${QSA_OCR_MODEL:-glm-ocr:latest}
-      - QSA_PARSER_MODEL=${QSA_PARSER_MODEL:-gemma4:e2b}
+      - QSA_PARSER_MODEL=${QSA_PARSER_MODEL:-qwen3.8:latest}
       - OPENCODE_WORKSPACE_ROOT=/opencode-workspaces
       - OPENCODE_WORKSPACE_HOST_ROOT=${OPENCODE_WORKSPACE_HOST_ROOT:-/home/nugh75/.cache/ai4educ-opencode}
       - AGENT_SOCKET=${AGENT_SOCKET:-/run/cloudflared-agent/agent.sock}
