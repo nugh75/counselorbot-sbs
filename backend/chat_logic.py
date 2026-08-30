@@ -838,6 +838,11 @@ _ADVICE_PROMPT_MODES = {
     # Follow-up in-step: lo studente chiede attivamente, quindi il materiale
     # pratico certificato è consentito anche dentro gli step fattore.
     "factor-qa", "qsar-factor-qa",
+    # Sintesi degli altri strumenti ("Sintesi e Piano d'Azione"): lo step chiede
+    # esplicitamente un piano pratico, quindi deve poter attingere al catalogo
+    # certificato invece di far improvvisare il modello. Gli step di analisi e
+    # intervista restano interpretativi, come `factor` nel QSA.
+    "qpcs-summary", "qpcc-summary", "qap-summary", "savickas-summary",
 }
 
 _NO_NEW_ADVICE_STEP_IDS = {"sl-synthesis", "qsar-synthesis", "questions"}
