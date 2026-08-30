@@ -177,6 +177,15 @@ def _is_excluded(relpath: str) -> bool:
     return any(rp.startswith(prefix) for prefix in EXCLUDED_PREFIXES)
 
 
+def _is_build_artifact(relpath: str) -> bool:
+    """Output della pipeline graphify (report di build, snapshot datati): non e'
+    conoscenza di dominio e va tenuto fuori dalle collezioni plain. Usato sia da
+    _collect_plain_corpus sia da _plain_signature: devono filtrare allo stesso
+    modo, altrimenti la firma non combacia e l'indice si ricostruisce ogni volta."""
+    rp = relpath.replace("\\", "/").lstrip("/")
+    return rp.startswith("graphify-out/") or "/graphify-out/" in rp
+
+
 def _hash8_from_converted_name(filename: str) -> str:
     """`Nome_<hash8>.md` → `<hash8>` (8 hex). Stringa vuota se non combacia."""
     m = re.search(r"_([0-9a-f]{8})\.md$", filename)
@@ -562,6 +571,8 @@ def _collect_plain_corpus(docs_dir: str) -> tuple[list[dict], dict[str, str]]:
             low = fn.lower()
             abspath = os.path.join(root, fn)
             relpath = os.path.relpath(abspath, docs_dir).replace("\\", "/")
+            if _is_build_artifact(relpath):
+                continue
             if low.endswith(".md"):
                 try:
                     with open(abspath, encoding="utf-8") as f:
@@ -603,6 +614,8 @@ def _plain_signature(docs_dir: str) -> dict[str, str]:
                 if not (low.endswith(".md") or low.endswith(".pdf")):
                     continue
                 relpath = os.path.relpath(os.path.join(root, fn), docs_dir).replace("\\", "/")
+                if _is_build_artifact(relpath):
+                    continue
                 try:
                     st = os.stat(os.path.join(root, fn))
                     sig[relpath] = f"{st.st_size}:{int(st.st_mtime)}" if low.endswith(".pdf") else str(int(st.st_mtime))
