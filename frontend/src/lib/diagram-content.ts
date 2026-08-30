@@ -21,7 +21,8 @@ export interface DiagramSpec {
 
 export type DiagramContentSegment =
     | { kind: 'markdown'; content: string }
-    | { kind: 'diagram'; spec: DiagramSpec };
+    | { kind: 'diagram'; spec: DiagramSpec }
+    | { kind: 'provider-error' };
 
 const DIAGRAM_TYPES = new Set<DiagramType>(['flow', 'relation', 'cycle', 'hierarchy']);
 const DIAGRAM_FENCE_RE = /```diagram\s*([\s\S]*?)```/gi;
@@ -50,6 +51,20 @@ function parseDiagramJson(raw: string): DiagramSpec | null {
         return isDiagramSpec(value) ? value : null;
     } catch {
         return null;
+    }
+}
+
+function isProviderErrorJson(raw: string): boolean {
+    try {
+        const value: unknown = JSON.parse(raw);
+        if (!value || typeof value !== 'object') return false;
+        const candidate = value as { message?: unknown; error?: unknown };
+        const detail = typeof candidate.message === 'string'
+            ? candidate.message
+            : typeof candidate.error === 'string' ? candidate.error : '';
+        return /model tried to call unavailable tool|rate limit|too many requests/i.test(detail);
+    } catch {
+        return false;
     }
 }
 
@@ -93,8 +108,16 @@ function splitBareDiagrams(text: string): DiagramContentSegment[] {
         if (start < 0) break;
         const end = findObjectEnd(text, start);
         if (end < 0) break;
-        const spec = parseDiagramJson(text.slice(start, end + 1));
+        const rawObject = text.slice(start, end + 1);
+        const spec = parseDiagramJson(rawObject);
         if (!spec) {
+            if (isProviderErrorJson(rawObject)) {
+                appendMarkdown(segments, text.slice(emittedCursor, start));
+                segments.push({ kind: 'provider-error' });
+                emittedCursor = end + 1;
+                searchCursor = end + 1;
+                continue;
+            }
             searchCursor = start + 1;
             continue;
         }
@@ -130,6 +153,17 @@ export function splitDiagramContent(content: string): DiagramContentSegment[] {
         else segments.push(segment);
     }
     return segments.length ? segments : [{ kind: 'markdown', content }];
+}
+
+export function diagramContentForSpeech(content: string): string {
+    return splitDiagramContent(content)
+        .map((segment) => {
+            if (segment.kind === 'markdown') return segment.content;
+            if (segment.kind === 'provider-error') return '';
+            return `${segment.spec.title}. ${segment.spec.nodes.map((node) => node.label).join('. ')}.`;
+        })
+        .join('\n\n')
+        .trim();
 }
 
 export function completeDiagramEdges(spec: DiagramSpec): DiagramSpec {

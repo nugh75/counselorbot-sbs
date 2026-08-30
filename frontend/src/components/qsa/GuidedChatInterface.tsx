@@ -1,6 +1,6 @@
 'use client';
 
-import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown, Snowflake } from 'lucide-react';
+import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
@@ -20,7 +20,7 @@ import { toast } from '@/components/ui/Toast';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
 import { freezeSession, type FrozenSessionDetail } from '@/lib/frozen-session';
-import { splitDiagramContent } from '@/lib/diagram-content';
+import { diagramContentForSpeech, splitDiagramContent } from '@/lib/diagram-content';
 
 // --- Types ---
 
@@ -380,10 +380,19 @@ const markdownComponents: Components = {
     strong: (props) => <strong className="font-semibold text-slate-900" {...omitMarkdownNode(props)} />,
 };
 
-function GuidedMessageContent({ content, locale }: { content: string; locale: string }) {
+function GuidedMessageContent({ content, locale, errorMessage }: { content: string; locale: string; errorMessage: string }) {
     return splitDiagramContent(content).map((segment, index) => (
         segment.kind === 'diagram' ? (
             <DiagramBlock key={`diagram-${index}`} spec={segment.spec} locale={locale} />
+        ) : segment.kind === 'provider-error' ? (
+            <div
+                key={`error-${index}`}
+                className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900"
+                role="alert"
+            >
+                <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>{errorMessage}</span>
+            </div>
         ) : (
             <ReactMarkdown
                 key={`markdown-${index}`}
@@ -1405,7 +1414,11 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                 )}
                                                 {msg.content.trim() ? (
                                                     <div className="min-w-0 max-w-full overflow-x-auto rounded-lg border border-slate-200/80 bg-white">
-                                                        <GuidedMessageContent content={msg.content} locale={activeLocale} />
+                                                        <GuidedMessageContent
+                                                            content={msg.content}
+                                                            locale={activeLocale}
+                                                            errorMessage={t('guided.stepConnError')}
+                                                        />
                                                     </div>
                                                 ) : !msg.reasoning ? (
                                                     <span className="flex items-center gap-2 text-slate-400 italic">
@@ -1419,8 +1432,9 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
                                     {msg.role === 'assistant' && msg.content.trim() && (
                                         <div className="flex items-center gap-1">
+                                            {diagramContentForSpeech(msg.content) && (
                                             <button
-                                                onClick={() => handlePlayTTS(msg.content, idx)}
+                                                onClick={() => handlePlayTTS(diagramContentForSpeech(msg.content), idx)}
                                                 disabled={isAudioLoading}
                                                 className={cn(
                                                     "flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium transition-colors border",
@@ -1438,6 +1452,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                 )}
                                                 {playingMessageIdx === idx ? t('guided.stopListen') : t('guided.listen')}
                                             </button>
+                                            )}
                                             {(!!msg.strategyIds?.length || !!msg.responseId) && (
                                                 <>
                                                     <button
