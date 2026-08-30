@@ -24,6 +24,7 @@ from sqlalchemy.orm import sessionmaker
 
 from backend import database, models
 from backend.certified_strategy_seed import DEFAULT_CERTIFIED_STRATEGIES
+from backend.chat_logic import _default_certified_strategy_limit, _step_allows_practical_advice
 from backend.questionnaire_catalog import INSTRUMENT_CATALOG_DEFAULTS
 from backend.skills import handlers
 from backend.skills.context import SkillContext
@@ -174,6 +175,28 @@ def test_profile_history_keeps_previous_compilation_of_same_instrument():
         ).delete()
         db.commit()
         db.close()
+
+
+# --- Politica dei consigli per step -----------------------------------------
+
+def test_synthesis_steps_can_deliver_certified_advice():
+    """Gli step "Sintesi e Piano d'Azione" chiedono un piano: il catalogo deve
+    essere disponibile, altrimenti il modello lo improvvisa."""
+    for step_mode in ("qpcs-summary", "qpcc-summary", "qap-summary", "savickas-summary"):
+        assert _default_certified_strategy_limit(step_mode) == 1, step_mode
+        assert _step_allows_practical_advice(step_mode) is True, step_mode
+
+
+def test_analysis_and_interview_steps_stay_interpretive():
+    for step_mode in ("factor", "qsar-factor", "qpcs-analysis", "qpcc-interview",
+                      "qap-interview", "savickas-interview", "ztpi-factor", "ztpi-btp", "intro"):
+        assert _default_certified_strategy_limit(step_mode) == 0, step_mode
+        assert _step_allows_practical_advice(step_mode) is False, step_mode
+
+
+def test_qsa_synthesis_still_introduces_no_new_advice():
+    assert _default_certified_strategy_limit("second-level", "sl-synthesis") == 0
+    assert _default_certified_strategy_limit("second-level", "qsa-c1") == 1
 
 
 # --- Catalogo certificato e traduzioni --------------------------------------
