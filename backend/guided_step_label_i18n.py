@@ -299,6 +299,47 @@ STEP_LABEL_I18N: Dict[str, Dict[str, str]] = {
         "fr": "1. Analyse des Ressources", "de": "1. Ressourcenanalyse",
         "sv": "1. Resursanalys",
     },
+    # --- Idea ---
+    "idea-intro": {
+        "en": "0. What we are talking about", "es": "0. De qué hablamos",
+        "fr": "0. De quoi parlons-nous", "de": "0. Worum es geht",
+        "sv": "0. Vad vi talar om",
+    },
+    "idea-statement": {
+        "en": "1. The idea in one sentence", "es": "1. La idea en una frase",
+        "fr": "1. L'idée en une phrase", "de": "1. Die Idee in einem Satz",
+        "sv": "1. Idén i en mening",
+    },
+    "idea-assumptions": {
+        "en": "2. What I take for granted", "es": "2. Qué doy por sentado",
+        "fr": "2. Ce que je tiens pour acquis", "de": "2. Was ich voraussetze",
+        "sv": "2. Vad jag tar för givet",
+    },
+    "idea-evidence": {
+        "en": "3. What I am basing this on", "es": "3. En qué me baso",
+        "fr": "3. Sur quoi je m'appuie", "de": "3. Worauf ich mich stütze",
+        "sv": "3. Vad jag bygger på",
+    },
+    "idea-alternatives": {
+        "en": "4. How else it could be seen", "es": "4. Cómo podría verse de otro modo",
+        "fr": "4. Comment le voir autrement", "de": "4. Wie man es anders sehen könnte",
+        "sv": "4. Hur det kan ses annorlunda",
+    },
+    "idea-implications": {
+        "en": "5. Where it leads", "es": "5. Adónde lleva",
+        "fr": "5. Où cela mène", "de": "5. Wohin es führt",
+        "sv": "5. Vart det leder",
+    },
+    "idea-question": {
+        "en": "6. Is it the right question?", "es": "6. ¿Es la pregunta correcta?",
+        "fr": "6. Est-ce la bonne question ?", "de": "6. Ist es die richtige Frage?",
+        "sv": "6. Är det rätt fråga?",
+    },
+    "idea-synthesis": {
+        "en": "7. Map and next step", "es": "7. Mapa y próximo paso",
+        "fr": "7. Carte et prochaine étape", "de": "7. Karte und nächster Schritt",
+        "sv": "7. Karta och nästa steg",
+    },
 }
 
 
