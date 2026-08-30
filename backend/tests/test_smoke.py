@@ -5104,8 +5104,8 @@ def test_skills_english_policy_canonicalizes_existing_rows_once():
         db.close()
 
 
-def test_skills_policy_seeds_four_distinct_behaviours():
-    """Il seed abilita i quattro comportamenti, con una sola fonte di consigli."""
+def test_skills_policy_seeds_the_primary_behaviours():
+    """Il seed abilita i comportamenti primari, con una sola fonte di consigli."""
     from backend.skills_seed import SEEDED_INSTRUMENTS, seed_skills
 
     db = _TestSession()
@@ -5141,8 +5141,30 @@ def test_skills_policy_seeds_four_distinct_behaviours():
                 "profile-wayfinder",
                 "reading-guide",
                 "profile-comparison",
+                "web-lookup",
             )
         }
+
+
+def test_web_lookup_is_seeded_but_stays_off_until_configured():
+    """La skill di consultazione esterna e' agganciata, non accesa."""
+    from backend.skills_seed import seed_skill_configs, seed_skills
+
+    db = _TestSession()
+    try:
+        seed_skills(db)
+        seed_skill_configs(db)
+        flag = db.query(models.Config).filter(models.Config.key == "web_lookup_enabled").one()
+        assert flag.value == "false", "la rete in chat non si accende da sola"
+    finally:
+        db.close()
+
+    by_slug = {skill["slug"]: skill for skill in client.get("/admin/skills").json()}
+    skill = by_slug["web-lookup"]
+    assert skill["routing"] == "primary"
+    assert skill["conditions"] == {"intents": ["factual"]}
+    assert skill["handler"] == "web_lookup_sources"
+    assert "not recommendations" in skill["instructions_i18n"]["en"]
 
 
 def test_skills_preview_selects_one_behaviour_from_student_intent():

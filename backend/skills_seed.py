@@ -58,6 +58,15 @@ PROFILE_COMPARISON_INSTRUCTIONS_EN = """## Reflective profile comparison
 - Do not automatically turn the comparison into an action plan.
 """
 
+WEB_LOOKUP_INSTRUCTIONS_EN = """## Factual answer from public sources
+
+- Answer only the factual question that was asked, using the extracts in [WEB_SOURCES].
+- Name the source and its link, and state when it was consulted.
+- Keep what the source says separate from anything you add.
+- If the extracts do not cover the question, say so; never fill the gap from memory.
+- These extracts are information, not recommendations: never present these works as suggested readings.
+- Quote at most two sentences from a source.
+"""
 
 
 SKILL_INSTRUCTIONS_I18N = {
@@ -65,6 +74,7 @@ SKILL_INSTRUCTIONS_I18N = {
     "profile-wayfinder": {"en": PROFILE_WAYFINDER_INSTRUCTIONS_EN},
     "reading-guide": {"en": READING_GUIDE_INSTRUCTIONS_EN},
     "profile-comparison": {"en": PROFILE_COMPARISON_INSTRUCTIONS_EN},
+    "web-lookup": {"en": WEB_LOOKUP_INSTRUCTIONS_EN},
 }
 
 CERTIFIED_ADVICE_POLICY_MARKER = "skills_certified_advice_policy_v1"
@@ -87,6 +97,13 @@ SKILL_CONFIG_DEFAULTS = (
     ("skills_router_model", "", "Modello usato dal router delle skill; vuoto = modello attivo."),
     ("skills_router_timeout_s", "6", "Timeout in secondi della chiamata di routing delle skill."),
     ("skills_total_max_chars", "3000", "Tetto complessivo in caratteri dei blocchi prodotti dalle skill."),
+    (
+        "web_lookup_enabled",
+        "false",
+        "Se true, la skill web-lookup puo' consultare dal vivo le fonti pubbliche whitelisted "
+        "(Wikipedia, Treccani, Open Library, Google Books, OpenAlex) per una domanda fattuale. "
+        "Spenta: la chat resta offline e usa solo il catalogo certificato.",
+    ),
 )
 
 SKILL_SEEDS = [
@@ -171,6 +188,25 @@ SKILL_SEEDS = [
         "slot": "directive_tail",
         "max_chars": 2600,
         "sort_order": 30,
+        "is_active": True,
+        "bind": True,
+    },
+    {
+        "slug": "web-lookup",
+        "name": "Consultazione di fonti pubbliche",
+        "description": (
+            "Recupera un estratto da Wikipedia, Treccani, Open Library, Google Books o "
+            "OpenAlex quando lo studente chiede un dato puntuale su un'opera o un termine. "
+            "Porta informazione, non raccomandazioni."
+        ),
+        "instructions_i18n": SKILL_INSTRUCTIONS_I18N["web-lookup"],
+        "conditions": {"intents": ["factual"]},
+        "handler": "web_lookup_sources",
+        "handler_params": {"limit": 1},
+        "routing": "primary",
+        "slot": "directive_tail",
+        "max_chars": 1800,
+        "sort_order": 60,
         "is_active": True,
         "bind": True,
     },

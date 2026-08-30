@@ -26,6 +26,7 @@ services:
       - QSA_PARSER_MODEL=${QSA_PARSER_MODEL:-qwen3.8:latest}
       - OPENCODE_WORKSPACE_ROOT=/opencode-workspaces
       - OPENCODE_WORKSPACE_HOST_ROOT=${OPENCODE_WORKSPACE_HOST_ROOT:-/home/nugh75/.cache/ai4educ-opencode}
+      - GOOGLE_BOOKS_API_KEY=${GOOGLE_BOOKS_API_KEY:-}
       - AGENT_SOCKET=${AGENT_SOCKET:-/run/cloudflared-agent/agent.sock}
       - AGENT_PTY_SOCKET=${AGENT_PTY_SOCKET:-/run/cloudflared-agent/pty.sock}
       - OPENCODE_CHAT_MODEL=${OPENCODE_CHAT_MODEL:-gemma4:12b}
