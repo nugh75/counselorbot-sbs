@@ -5490,6 +5490,11 @@ def test_skills_preview_policy_is_active_for_every_supported_instrument():
     finally:
         db.close()
 
+    # Il test precedente spegne il motore per verificare lo stato live: qui
+    # serve acceso, e il seed non sovrascrive le righe di config esistenti.
+    _set_config("skills_engine_enabled", "true")
+    _set_config("skills_engine_instruments", json.dumps(list(SEEDED_INSTRUMENTS)))
+
     created = client.post("/admin/certified-strategies", json={
         "slug": "smoke-all-instruments-advice",
         "name_it": "Un passo verificabile",
