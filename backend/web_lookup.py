@@ -214,6 +214,18 @@ def _title_core(title: str) -> set[str]:
     return _words(core)
 
 
+_SEQUEL_MARKER = re.compile(r"\b(\d{1,2}|ii|iii|iv|v|vi)$")
+
+
+def _sequel_marker(title: str) -> str:
+    """Numero finale del titolo: "Inside Out 2" -> "2", "Inside Out" -> ""."""
+    core = re.sub(r"\(.*?\)", " ", title or "").strip()
+    core = re.split(r"[:;—–]", core)[0].strip()
+    plain = _plain_keep_shape(core).strip()
+    match = _SEQUEL_MARKER.search(plain)
+    return match.group(1) if match else ""
+
+
 def _title_matches(found: str, expected) -> bool:
     """Vero se il titolo trovato e' quell'opera, non un'altra cosa che le somiglia.
 
@@ -232,6 +244,10 @@ def _title_matches(found: str, expected) -> bool:
         if not core or not wanted:
             if _slug(found) == _slug(candidate):
                 return True
+            continue
+        # Un seguito non e' l'opera: "Inside Out 2" non racconta "Inside Out",
+        # e il numero finale sfugge al confronto per parole.
+        if _sequel_marker(found) != _sequel_marker(candidate):
             continue
         # Sottoinsieme, senza soglia sulla lunghezza: un titolo trovato piu'
         # corto e' quasi sempre lo stesso titolo senza sottotitolo ("Mindset"

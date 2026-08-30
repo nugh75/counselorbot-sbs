@@ -311,6 +311,22 @@ def test_treccani_falls_back_to_the_vocabulary_for_a_word():
         _restore()
 
 
+def test_a_sequel_is_not_the_synopsis_of_the_original():
+    """Le fonti rispondono volentieri col film piu' recente della serie."""
+    sequel = {
+        "type": "standard", "title": "Inside Out 2",
+        "extract": "Film d'animazione del 2024 diretto da Kelsey Mann.",
+        "content_urls": {"desktop": {"page": "https://it.wikipedia.org/wiki/Inside_Out_2"}},
+    }
+    _install(_Responses(json_map={"/page/summary/": sequel}))
+    try:
+        assert web_lookup.synopsis_for({"title": "Inside Out", "kind": "film"}, lang="it") is None
+        # La voce di catalogo che e' davvero il seguito lo accetta.
+        assert web_lookup.synopsis_for({"title": "Inside Out 2", "kind": "film"}, lang="it") is not None
+    finally:
+        _restore()
+
+
 def test_a_subtitle_or_a_qualifier_still_counts_as_the_same_work():
     page = dict(WIKI_SUMMARY, title="Mindset: The New Psychology of Success")
     _install(_Responses(json_map={"/page/summary/": page}))
