@@ -1,7 +1,7 @@
 """Client minimale per la Telegram Bot API (httpx, nessuna libreria esterna).
 
 Solo le chiamate usate dal bot CounselorBot: sendMessage (con inline keyboard
-opzionale) e answerCallbackQuery. I messaggi lunghi vengono spezzati sotto il
+opzionale), sendPhoto per i diagrammi e answerCallbackQuery. I messaggi lunghi vengono spezzati sotto il
 limite Telegram di 4096 caratteri.
 """
 import logging
@@ -65,6 +65,26 @@ async def send_message(chat_id: int, text: str, keyboard: list[list[dict]] | Non
                     logger.error("Telegram sendMessage fallita: HTTP %s", response.status_code)
             except httpx.HTTPError as e:
                 logger.error("Telegram sendMessage errore rete: %s", type(e).__name__)
+
+
+async def send_photo(chat_id: int, image: bytes, caption: str = "") -> None:
+    """Invia un'immagine (i diagrammi della chat arrivano qui come PNG)."""
+    if not image:
+        return
+    data: dict = {"chat_id": str(chat_id)}
+    if caption:
+        data["caption"] = caption[:1024]
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            response = await client.post(
+                _api_url("sendPhoto"),
+                data=data,
+                files={"photo": ("diagram.png", image, "image/png")},
+            )
+            if response.status_code != 200:
+                logger.error("Telegram sendPhoto fallita: HTTP %s", response.status_code)
+    except httpx.HTTPError as e:
+        logger.error("Telegram sendPhoto errore rete: %s", type(e).__name__)
 
 
 _bot_username_cache: str | None = None

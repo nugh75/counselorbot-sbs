@@ -73,6 +73,7 @@ from .routes import telegram as telegram_routes
 from .routes import groups as groups_routes
 from .routes import frozen_sessions as frozen_sessions_routes
 from .routes import skills as skills_routes
+from .routes import diagram as diagram_routes
 
 
 # Re-export per retro-compatibilità (es. smoke test che importa da backend.main)
@@ -1581,6 +1582,7 @@ app.include_router(certified_strategies_routes.router)
 app.include_router(certified_readings_routes.router)
 app.include_router(research_contacts_routes.router)
 app.include_router(skills_routes.router)
+app.include_router(diagram_routes.router)
 app.include_router(administration_plans_routes.router)
 app.include_router(assistant_questions_routes.router)
 app.include_router(rag_docs_routes.router)
