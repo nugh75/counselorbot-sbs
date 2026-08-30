@@ -35,6 +35,7 @@ interface AdministrationPlan {
     group_id: number | null;
     group_name: string | null;
     locale: LocaleCode;
+    school_level: string | null;
     scheduled_at: string | null;
     location: string | null;
     notes: string | null;
@@ -50,6 +51,7 @@ type FormState = {
     instrument_code: string;
     group_id: string;
     locale: LocaleCode;
+    school_level: string;
     scheduled_at: string;
     location: string;
     notes: string;
@@ -63,6 +65,7 @@ const EMPTY: FormState = {
     instrument_code: 'QSA',
     group_id: '',
     locale: 'en',
+    school_level: '',
     scheduled_at: '',
     location: '',
     notes: '',
@@ -200,6 +203,7 @@ export function AdministrationPlansPanel() {
             study: plan.code,
             instrument: plan.instrument_code,
             locale: plan.locale,
+            school_level: plan.school_level ?? '',
         });
         return `${LANDING_BASE}/avvio?${q.toString()}`;
     };
@@ -227,6 +231,7 @@ export function AdministrationPlansPanel() {
             instrument_code: plan.instrument_code,
             group_id: plan.group_id ? String(plan.group_id) : '',
             locale: plan.locale,
+            school_level: plan.school_level ?? '',
             scheduled_at: toDateTimeLocal(plan.scheduled_at),
             location: plan.location || '',
             notes: plan.notes || '',
@@ -274,6 +279,7 @@ export function AdministrationPlansPanel() {
             instrument_code: form.instrument_code,
             group_id: form.group_id ? Number(form.group_id) : null,
             locale: form.locale,
+            school_level: form.school_level || null,
             scheduled_at: toApiDateTime(form.scheduled_at),
             location: optional(form.location),
             notes: optional(form.notes),
@@ -431,6 +437,16 @@ export function AdministrationPlansPanel() {
                             {t('admin.ap.language')}
                             <select className={inputCls} value={form.locale} onChange={(event) => setForm({ ...form, locale: event.target.value as LocaleCode })}>
                                 {LOCALES.map((locale) => <option key={locale.value} value={locale.value}>{locale.label}</option>)}
+                            </select>
+                        </label>
+                        <label className="text-xs font-semibold uppercase text-slate-500">
+                            {t('admin.readings.audience')}
+                            <select className={inputCls} value={form.school_level}
+                                onChange={(event) => setForm({ ...form, school_level: event.target.value })}>
+                                <option value="">—</option>
+                                <option value="secondaria">{t('admin.readings.levelSecondaria')}</option>
+                                <option value="universita">{t('admin.readings.levelUniversita')}</option>
+                                <option value="adulti">{t('admin.readings.levelAdulti')}</option>
                             </select>
                         </label>
                         <label className="text-xs font-semibold uppercase text-slate-500">

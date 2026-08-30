@@ -5,6 +5,9 @@
 export type ReadingsDict = Record<string, string>;
 
 export const readingsIt: ReadingsDict = {
+    'admin.readings.levelSecondaria': 'Secondaria',
+    'admin.readings.levelUniversita': 'Universita',
+    'admin.readings.levelAdulti': 'Adulti',
     'admin.tab.readings': 'Catalogo letture',
     'admin.readings.title': 'Letture, film e materiali certificati',
     'admin.readings.subtitle': 'Catalogo approvato: si aggancia ai temi della conversazione, non ai codici fattore. Le voci certificate sono le uniche che il bot puo consigliare.',
@@ -48,6 +51,9 @@ export const readingsIt: ReadingsDict = {
 };
 
 export const readingsEn: ReadingsDict = {
+    'admin.readings.levelSecondaria': 'Secondary',
+    'admin.readings.levelUniversita': 'University',
+    'admin.readings.levelAdulti': 'Adults',
     'admin.tab.readings': 'Reading catalog',
     'admin.readings.title': 'Certified readings, films and material',
     'admin.readings.subtitle': 'Approved catalog: it attaches to the themes of the conversation, not to factor codes. Only certified entries can be recommended by the bot.',
@@ -91,6 +97,9 @@ export const readingsEn: ReadingsDict = {
 };
 
 export const readingsEs: ReadingsDict = {
+    'admin.readings.levelSecondaria': 'Secundaria',
+    'admin.readings.levelUniversita': 'Universidad',
+    'admin.readings.levelAdulti': 'Adultos',
     'admin.tab.readings': 'Catalogo de lecturas',
     'admin.readings.title': 'Lecturas, peliculas y materiales certificados',
     'admin.readings.subtitle': 'Catalogo aprobado: se vincula a los temas de la conversacion, no a los codigos de factor. Solo las entradas certificadas puede recomendarlas el bot.',
@@ -134,6 +143,9 @@ export const readingsEs: ReadingsDict = {
 };
 
 export const readingsFr: ReadingsDict = {
+    'admin.readings.levelSecondaria': 'Secondaire',
+    'admin.readings.levelUniversita': 'Universite',
+    'admin.readings.levelAdulti': 'Adultes',
     'admin.tab.readings': 'Catalogue de lectures',
     'admin.readings.title': 'Lectures, films et materiels certifies',
     'admin.readings.subtitle': 'Catalogue approuve : il se rattache aux themes de la conversation, pas aux codes de facteur. Seules les entrees certifiees peuvent etre recommandees.',
@@ -177,6 +189,9 @@ export const readingsFr: ReadingsDict = {
 };
 
 export const readingsDe: ReadingsDict = {
+    'admin.readings.levelSecondaria': 'Sekundarstufe',
+    'admin.readings.levelUniversita': 'Hochschule',
+    'admin.readings.levelAdulti': 'Erwachsene',
     'admin.tab.readings': 'Lesekatalog',
     'admin.readings.title': 'Zertifizierte Lektueren, Filme und Materialien',
     'admin.readings.subtitle': 'Freigegebener Katalog: er knuepft an die Themen des Gespraechs an, nicht an Faktorcodes. Nur zertifizierte Eintraege darf der Bot empfehlen.',
@@ -220,6 +235,9 @@ export const readingsDe: ReadingsDict = {
 };
 
 export const readingsSv: ReadingsDict = {
+    'admin.readings.levelSecondaria': 'Gymnasium',
+    'admin.readings.levelUniversita': 'Universitet',
+    'admin.readings.levelAdulti': 'Vuxna',
     'admin.tab.readings': 'Laeskatalog',
     'admin.readings.title': 'Certifierade laesningar, filmer och material',
     'admin.readings.subtitle': 'Godkaend katalog: den kopplas till samtalets teman, inte till faktorkoder. Bara certifierade poster far boten rekommendera.',

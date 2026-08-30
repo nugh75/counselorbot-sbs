@@ -230,6 +230,8 @@ class AdministrationPlan(Base):
     # Classe/gruppo a cui e' rivolta la somministrazione (student_groups.id)
     group_id = Column(Integer, index=True, nullable=True)
     locale = Column(String, index=True, nullable=False, default="en")
+    # Fascia dei partecipanti al piano: secondaria | universita | adulti.
+    school_level = Column(String, nullable=True)
     scheduled_at = Column(DateTime(timezone=True), nullable=True)
     location = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
@@ -803,6 +805,9 @@ class StudentGroup(Base):
     code = Column(String, nullable=False, unique=True, index=True)  # GR-XXXXXX, per inviti
     name = Column(String, nullable=False)
     school = Column(String, nullable=True)  # nome scuola/istituto (testo libero)
+    # Fascia della classe: secondaria | universita | adulti. Serve a filtrare le
+    # letture certificate quando lo studente non ha compilato il taccuino.
+    school_level = Column(String, nullable=True)
     owner_username = Column(String, index=True, nullable=False)  # docente/ricercatore
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

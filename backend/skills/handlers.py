@@ -285,8 +285,18 @@ def _certified_readings_block(ctx: SkillContext, params: dict) -> str:
         limit=int(params.get("catalog_limit", 2) or 2),
         ai_service=ctx.ai_service,
         allow_sensitive=allow_sensitive,
+        audience_band=ctx.audience_band,
     )
-    return certified_reading_memory.render_context(entries, ctx.language or "it")
+    block = certified_reading_memory.render_context(entries, ctx.language or "it")
+    if block and ctx.audience_band is None and any(entry.get("audience") for entry in entries):
+        # Senza fascia nota il filtro non ha potuto lavorare: la decisione passa
+        # al turno, chiedendo allo studente a che punto degli studi si trova.
+        block += (
+            "\nNon sappiamo a che punto degli studi sia lo studente e alcune di "
+            "queste opere hanno un pubblico dichiarato: chiediglielo in una riga "
+            "prima di proporne una, e scegli di conseguenza."
+        )
+    return block
 
 
 @handler("reading_sources")

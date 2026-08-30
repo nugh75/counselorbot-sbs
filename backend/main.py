@@ -302,6 +302,10 @@ def _seed_and_migrate():
             ("teacher_notes", "ADD COLUMN group_id INTEGER"),
             ("teacher_notes", "ALTER COLUMN plan_id DROP NOT NULL"),
             ("student_groups", "ADD COLUMN school VARCHAR"),
+            # Fascia della classe e del piano: filtra le letture certificate per
+            # eta' quando lo studente non ha compilato il taccuino.
+            ("student_groups", "ADD COLUMN school_level VARCHAR"),
+            ("administration_plans", "ADD COLUMN school_level VARCHAR"),
         ]:
             try:
                 with database.engine.connect() as conn:

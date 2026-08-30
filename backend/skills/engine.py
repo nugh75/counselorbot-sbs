@@ -170,6 +170,17 @@ def enabled(db, questionnaire_type: str) -> bool:
     return (questionnaire_type or "").upper() in {str(i).upper() for i in instruments}
 
 
+def _audience_band(db, username: str) -> str | None:
+    """Fascia dello studente; un errore qui non deve rompere il turno."""
+    from ..reading_audience import resolve_audience_band
+
+    try:
+        return resolve_audience_band(db, username)
+    except Exception as exc:
+        logger.warning("Fascia di pubblico non risolta: %s", exc)
+        return None
+
+
 def build_context(
     db,
     ai_service,
@@ -219,6 +230,7 @@ def build_context(
             else ()
         ),
         knowledge_sources=tuple(knowledge_sources or ()),
+        audience_band=_audience_band(db, username),
         db=db,
         ai_service=ai_service,
     )

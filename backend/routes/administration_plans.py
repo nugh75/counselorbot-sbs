@@ -10,6 +10,7 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models, schemas
+from ..reading_audience import AUDIENCE_BANDS
 from ..user_names import store_user_display_name
 
 router = APIRouter()
@@ -45,6 +46,14 @@ def _clean(value: Optional[str]) -> Optional[str]:
         return None
     text = str(value).strip()
     return text or None
+
+
+def _valid_level(value) -> str | None:
+    """Fascia dei partecipanti: filtra le letture certificate per eta'."""
+    level = (value or "").strip() or None
+    if level and level not in AUDIENCE_BANDS:
+        raise HTTPException(status_code=400, detail=f"Fascia non valida: usa una fra {list(AUDIENCE_BANDS)}")
+    return level
 
 
 def _normalize_locale(value: Optional[str]) -> str:
@@ -204,6 +213,7 @@ def _serialize_plan(db: Session, plan: models.AdministrationPlan) -> dict:
         "group_id": plan.group_id,
         "group_name": _group_name(db, plan.group_id),
         "locale": plan.locale,
+        "school_level": plan.school_level,
         "scheduled_at": plan.scheduled_at,
         "location": plan.location,
         "notes": plan.notes,
@@ -285,6 +295,7 @@ async def create_administration_plan(
         instrument_code=(payload.instrument_code or "QSA").strip() or "QSA",
         group_id=_validate_group_attach(db, current_user, payload.group_id),
         locale=_normalize_locale(payload.locale),
+        school_level=_valid_level(payload.school_level),
         scheduled_at=payload.scheduled_at,
         location=_clean(payload.location),
         notes=_clean(payload.notes),
@@ -319,6 +330,8 @@ async def update_administration_plan(
         plan.group_id = _validate_group_attach(db, current_user, updates["group_id"])
     if "locale" in updates:
         plan.locale = _normalize_locale(updates["locale"])
+    if "school_level" in updates:
+        plan.school_level = _valid_level(updates["school_level"])
     if "scheduled_at" in updates:
         plan.scheduled_at = updates["scheduled_at"]
     if "location" in updates:
