@@ -156,6 +156,18 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
                         <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{t('app.tools.assistant.body')}</p>
                         <p className="mt-2 text-sm leading-relaxed text-slate-500">{t('app.tools.assistant.access')}</p>
                     </div>
+                    <div>
+                        <span className="block h-0.5 w-10 rounded-full bg-teal-500" />
+                        <h3 className="mt-3 text-base font-bold text-slate-900">{t('app.tools.readings.title')}</h3>
+                        <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{t('app.tools.readings.body')}</p>
+                        <p className="mt-2 text-sm leading-relaxed text-slate-500">{t('app.tools.readings.access')}</p>
+                    </div>
+                    <div>
+                        <span className="block h-0.5 w-10 rounded-full bg-teal-500" />
+                        <h3 className="mt-3 text-base font-bold text-slate-900">{t('app.tools.diagrams.title')}</h3>
+                        <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{t('app.tools.diagrams.body')}</p>
+                        <p className="mt-2 text-sm leading-relaxed text-slate-500">{t('app.tools.diagrams.access')}</p>
+                    </div>
                 </div>
             </section>
 
