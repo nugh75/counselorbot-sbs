@@ -1,7 +1,7 @@
 // Questionnaire Configuration
 // This file defines all available questionnaires and their configurations
 
-export type QuestionnaireType = 'QSA' | 'QSAr' | 'QPCS' | 'QPCC' | 'ZTPI' | 'QAP' | 'SAVICKAS';
+export type QuestionnaireType = 'QSA' | 'QSAr' | 'QPCS' | 'QPCC' | 'ZTPI' | 'QAP' | 'SAVICKAS' | 'IDEA';
 
 export interface QuestionnaireConfig {
     id: QuestionnaireType;
@@ -160,6 +160,18 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         invertedFactors: [],
         color: 'bg-emerald-500',
         icon: 'compass',
+        agentOnly: true,
+    },
+    IDEA: {
+        id: 'IDEA',
+        name: 'Idea',
+        fullName: 'Idea',
+        description: 'Chat libera che mette a fuoco un’idea ancora informe, costruendo una mappa che cresce con la conversazione',
+        factorPrefix: [],
+        factors: [],
+        invertedFactors: [],
+        color: 'bg-teal-500',
+        icon: 'lightbulb',
         agentOnly: true,
     },
     QAP: {

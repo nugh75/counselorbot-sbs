@@ -104,8 +104,11 @@ nella sessione. Tre chiavi di config editabili dall'admin:
 - `prompt_idea_variant_research` — docente o ricercatore: disegno di ricerca,
   domanda di ricerca, unità didattica.
 
-La variante di default segue il ruolo di `auth`; lo studente può scegliere fra
-le due sue all'avvio.
+La variante si sceglie all'avvio della chat, fra tre pastiglie sopra il primo
+messaggio, e vale per tutta la sessione. Il default è "studio o carriera" per
+tutti: l'identità del client espone `is_researcher` ma non il ruolo docente, e
+un default indovinato a metà è peggio di uno dichiarato. Variante assente o
+sconosciuta lato server: vale l'idea libera, la più prudente delle tre.
 
 ## La mappa persistente
 
