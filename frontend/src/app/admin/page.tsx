@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, Award, MessageCircleQuestion, Wand2, PanelLeftClose, PanelLeftOpen, CalendarDays, Eye, FolderOpen, Bot, Download } from 'lucide-react';
+import { ArrowLeft, BookOpen, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, Award, MessageCircleQuestion, Wand2, PanelLeftClose, PanelLeftOpen, CalendarDays, Eye, FolderOpen, Bot, Download } from 'lucide-react';
 import { ConfigForm } from '@/components/admin/ConfigForm';
 import { LogViewer } from '@/components/admin/LogViewer';
 import { CostStats } from '@/components/admin/CostStats';
@@ -11,6 +11,7 @@ import { PresetsPanel } from '@/components/admin/PresetsPanel';
 import { BenchmarkPanel } from '@/components/admin/BenchmarkPanel';
 import { CounselorsPanel } from '@/components/admin/CounselorsPanel';
 import { ApprovedStrategiesPanel } from '@/components/admin/ApprovedStrategiesPanel';
+import { CertifiedReadingsPanel } from '@/components/admin/CertifiedReadingsPanel';
 import { CertifiedStrategiesPanel } from '@/components/admin/CertifiedStrategiesPanel';
 import { SkillsPanel } from '@/components/admin/SkillsPanel';
 import { SurveyViewer } from '@/components/admin/SurveyViewer';
@@ -35,7 +36,7 @@ import { canUseResearchConsole } from '@/lib/roles';
 
 import { cn } from '@/lib/utils';
 
-type AdminTab = 'assistantManager' | 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'approvedStrategies' | 'certifiedStrategies' | 'skills' | 'assistantQuestions' | 'guidedStepQuestions' | 'promptExport' | 'ragDocs' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'groupsClasses' | 'usersSummary' | 'training' | 'pqbl' | 'rolePreview';
+type AdminTab = 'assistantManager' | 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'approvedStrategies' | 'certifiedStrategies' | 'certifiedReadings' | 'skills' | 'assistantQuestions' | 'guidedStepQuestions' | 'promptExport' | 'ragDocs' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'groupsClasses' | 'usersSummary' | 'training' | 'pqbl' | 'rolePreview';
 
 export default function AdminPage() {
     const router = useRouter();
@@ -56,6 +57,7 @@ export default function AdminPage() {
                 { id: 'counselors', label: t('admin.tab.counselors'), icon: Users },
                 { id: 'approvedStrategies', label: t('admin.tab.approvedStrategies'), icon: Database },
                 { id: 'certifiedStrategies', label: t('admin.tab.certified'), icon: Award },
+                { id: 'certifiedReadings', label: t('admin.tab.readings'), icon: BookOpen },
                 { id: 'skills', label: 'Skill', icon: Wand2 },
                 { id: 'assistantQuestions', label: t('admin.tab.assistantQuestions'), icon: MessageCircleQuestion },
                 { id: 'guidedStepQuestions', label: t('admin.tab.guidedStepQuestions'), icon: MessageCircleQuestion },
@@ -229,6 +231,7 @@ export default function AdminPage() {
                         {activeTab === 'counselors' && <CounselorsPanel />}
                         {activeTab === 'approvedStrategies' && <ApprovedStrategiesPanel />}
                         {activeTab === 'certifiedStrategies' && <CertifiedStrategiesPanel />}
+                        {activeTab === 'certifiedReadings' && <CertifiedReadingsPanel />}
                         {activeTab === 'skills' && <SkillsPanel />}
                         {activeTab === 'assistantQuestions' && <AssistantQuestionsPanel />}
                         {activeTab === 'guidedStepQuestions' && <GuidedStepQuestionsPanel />}
