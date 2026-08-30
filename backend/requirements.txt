@@ -22,4 +22,4 @@ numpy
 pypdf
 pymupdf
 pymupdf4llm
-
+pytest
