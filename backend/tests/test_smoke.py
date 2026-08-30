@@ -5230,6 +5230,73 @@ def test_skills_behaviour_reaches_the_prompt_without_rag_knowledge():
     assert body["knowledge"]["context"] == ""
 
 
+def test_explicit_reading_request_receives_certified_catalog_when_rag_is_off():
+    """Il catalogo editoriale richiesto esplicitamente non dipende dal RAG."""
+    from backend.skills_seed import SEEDED_INSTRUMENTS, seed_skills
+
+    _ensure_guided_steps("QSA")
+    reading_slug = "smoke-rag-off-certified-reading"
+    config_keys = ("skills_engine_enabled", "skills_engine_instruments")
+    original_configs = {}
+    db = _TestSession()
+    try:
+        for key in config_keys:
+            row = db.query(models.Config).filter(models.Config.key == key).first()
+            original_configs[key] = row.value if row else None
+        seed_skills(db)
+        db.query(models.CertifiedReading).filter_by(slug=reading_slug).delete()
+        db.add(models.CertifiedReading(
+            slug=reading_slug,
+            kind="essay",
+            title="Lettura certificata di prova",
+            creators=["Autrice verificata"],
+            themes=["organizzazione-e-tempo"],
+            available_languages=["it"],
+            why_i18n={"it": "Aiuta a organizzare lo studio."},
+            status="certified",
+            is_active=True,
+        ))
+        db.commit()
+    finally:
+        db.close()
+    _set_config("skills_engine_enabled", "true")
+    _set_config("skills_engine_instruments", json.dumps(list(SEEDED_INSTRUMENTS)))
+
+    try:
+        response = client.post("/admin/prompt-audit/dry-run", json={
+            "questionnaire_type": "QSA",
+            "language": "it",
+            "phase": "cognitive",
+            "mode": "factor-qa",
+            "message": "Puoi darmi dei consigli di lettura?",
+            "scores_context": "C3: 8/9\nC6: 9/9",
+            "include_knowledge": True,
+            "include_history": False,
+            "component_flags": {"knowledge": False},
+        })
+
+        assert response.status_code == 200, response.text
+        body = response.json()
+        system_prompt = body["envelope"]["system_prompt_final"]
+        assert body["knowledge"]["included"] is False
+        assert "[CERTIFIED_READINGS]" in system_prompt
+        assert "Lettura certificata di prova" in system_prompt
+        assert "[READING_SOURCES]" not in system_prompt
+    finally:
+        db = _TestSession()
+        try:
+            db.query(models.CertifiedReading).filter_by(slug=reading_slug).delete()
+            for key, original_value in original_configs.items():
+                row = db.query(models.Config).filter(models.Config.key == key).first()
+                if row and original_value is None:
+                    db.delete(row)
+                elif row:
+                    row.value = original_value
+            db.commit()
+        finally:
+            db.close()
+
+
 def test_skills_profile_comparison_uses_only_the_same_students_results():
     """Il confronto riceve profili persistiti dello stesso utente, non esempi inventati."""
     from backend.skills_seed import SEEDED_INSTRUMENTS, seed_skills
