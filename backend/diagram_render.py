@@ -20,10 +20,16 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 logger = logging.getLogger(__name__)
 
-DIAGRAM_TYPES = ("flow", "relation", "cycle", "hierarchy")
+DIAGRAM_TYPES = ("flow", "relation", "cycle", "hierarchy", "mindmap")
 
 MAX_NODES = 8
 MAX_EDGES = 12
+# La mappa dello strumento Idea cresce a ogni turno della sessione: il tetto
+# del diagramma-illustrazione, che accompagna una singola spiegazione, non le
+# basta. Il limite resta per tipo, non globale.
+TYPE_LIMITS = {"mindmap": (24, 30)}
+MAX_NODES_ANY = max(MAX_NODES, *(nodes for nodes, _ in TYPE_LIMITS.values()))
+MAX_EDGES_ANY = max(MAX_EDGES, *(edges for _, edges in TYPE_LIMITS.values()))
 MAX_LABEL = 80
 MAX_EDGE_LABEL = 40
 MAX_TITLE = 80
@@ -40,6 +46,44 @@ DIAGRAM_ICONS = (
     "heart", "idea", "question", "shield", "target",
 )
 ICON_DIR = Path(__file__).with_name("diagram_icons")
+
+# Ruolo argomentativo del nodo: dice che lavoro fa dentro il ragionamento, non
+# solo cosa contiene. Serve alla mappa di Idea, dove un nodo di testo libero
+# non direbbe niente. Il ruolo sceglie l'icona quando il modello non ne indica
+# una. Vocabolario in inglese come il resto del contratto verso il modello.
+NODE_ROLES = {
+    "idea": "idea",
+    "assumption": "brain",
+    "evidence": "check",
+    "alternative": "compass",
+    "implication": "target",
+    "open-question": "question",
+    "constraint": "shield",
+    "step": "clock",
+}
+
+# Il ruolo letto a voce: la descrizione testuale deve dire perche' un nodo sta
+# nella mappa, non solo che c'e'.
+ROLE_WORDS = {
+    "it": {"idea": "idea", "assumption": "assunto", "evidence": "evidenza",
+           "alternative": "alternativa", "implication": "implicazione",
+           "open-question": "domanda aperta", "constraint": "vincolo", "step": "passo"},
+    "en": {"idea": "idea", "assumption": "assumption", "evidence": "evidence",
+           "alternative": "alternative", "implication": "implication",
+           "open-question": "open question", "constraint": "constraint", "step": "step"},
+    "es": {"idea": "idea", "assumption": "supuesto", "evidence": "evidencia",
+           "alternative": "alternativa", "implication": "implicacion",
+           "open-question": "pregunta abierta", "constraint": "limite", "step": "paso"},
+    "fr": {"idea": "idee", "assumption": "presuppose", "evidence": "preuve",
+           "alternative": "alternative", "implication": "implication",
+           "open-question": "question ouverte", "constraint": "contrainte", "step": "etape"},
+    "de": {"idea": "Idee", "assumption": "Annahme", "evidence": "Beleg",
+           "alternative": "Alternative", "implication": "Folge",
+           "open-question": "offene Frage", "constraint": "Grenze", "step": "Schritt"},
+    "sv": {"idea": "ide", "assumption": "antagande", "evidence": "belagg",
+           "alternative": "alternativ", "implication": "foljd",
+           "open-question": "oppen fraga", "constraint": "begransning", "step": "steg"},
+}
 
 # Palette derivata dai token del reskin (frontend/src/app/globals.css):
 # petrol per la struttura, ocra per l'unico nodo accentato.
@@ -131,6 +175,7 @@ class DiagramNode(BaseModel):
     label: str = Field(min_length=1, max_length=MAX_LABEL)
     accent: bool = False
     icon: str | None = Field(default=None, max_length=24)
+    role: str | None = Field(default=None, max_length=24)
 
     @field_validator("icon", mode="before")
     @classmethod
@@ -141,6 +186,22 @@ class DiagramNode(BaseModel):
             return None
         cleaned = value.strip().lower()
         return cleaned if cleaned in DIAGRAM_ICONS else None
+
+    @field_validator("role", mode="before")
+    @classmethod
+    def _known_role_or_none(cls, value):
+        if not isinstance(value, str):
+            return None
+        cleaned = value.strip().lower()
+        return cleaned if cleaned in NODE_ROLES else None
+
+    @model_validator(mode="after")
+    def _icon_from_role(self) -> "DiagramNode":
+        # Il ruolo basta: chi lo dichiara non deve anche scegliere l'icona.
+        # Un'icona esplicita resta comunque l'ultima parola.
+        if self.icon is None and self.role:
+            self.icon = NODE_ROLES[self.role]
+        return self
 
 
 class DiagramEdge(BaseModel):
@@ -155,10 +216,10 @@ class DiagramEdge(BaseModel):
 class DiagramSpec(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    type: Literal["flow", "relation", "cycle", "hierarchy"]
+    type: Literal["flow", "relation", "cycle", "hierarchy", "mindmap"]
     title: str = Field(min_length=1, max_length=MAX_TITLE)
-    nodes: list[DiagramNode] = Field(min_length=2, max_length=MAX_NODES)
-    edges: list[DiagramEdge] = Field(min_length=1, max_length=MAX_EDGES)
+    nodes: list[DiagramNode] = Field(min_length=2, max_length=MAX_NODES_ANY)
+    edges: list[DiagramEdge] = Field(min_length=1, max_length=MAX_EDGES_ANY)
 
     @field_validator("title")
     @classmethod
@@ -170,6 +231,11 @@ class DiagramSpec(BaseModel):
 
     @model_validator(mode="after")
     def _coherent(self) -> "DiagramSpec":
+        max_nodes, max_edges = TYPE_LIMITS.get(self.type, (MAX_NODES, MAX_EDGES))
+        if len(self.nodes) > max_nodes:
+            raise ValueError(f"troppi nodi per un diagramma {self.type}: massimo {max_nodes}")
+        if len(self.edges) > max_edges:
+            raise ValueError(f"troppi archi per un diagramma {self.type}: massimo {max_edges}")
         ids = [node.id for node in self.nodes]
         if len(set(ids)) != len(ids):
             raise ValueError("identificatori di nodo duplicati")
@@ -193,11 +259,13 @@ def parse_spec(raw: dict | str) -> DiagramSpec:
 
 
 def engine_for(diagram_type: str) -> str:
-    """Motore graphviz per tipo: il ciclo va in cerchio, la mappa a molle."""
+    """Motore graphviz per tipo: il ciclo in cerchio, la mappa mentale a raggiera."""
     if diagram_type == "cycle":
         return "circo"
     if diagram_type == "relation":
         return "neato"
+    if diagram_type == "mindmap":
+        return "twopi"
     return "dot"
 
 
@@ -308,6 +376,18 @@ def to_dot(spec: DiagramSpec, *, theme: str = "light", embed_title: bool = False
     elif spec.type == "relation":
         # neato: piu' distanza fra nodi (sep) e attorno agli archi (esep).
         graph_attrs += ['overlap="false"', 'sep="+22"', 'esep="+10"', 'splines="true"']
+    elif spec.type == "mindmap":
+        # twopi: anelli concentrici attorno alla radice. La radice e' il nodo
+        # accentato, cioe' l'idea; senza accento vale il primo nodo, perche'
+        # una mappa senza centro non e' una mappa mentale.
+        root = next((node.id for node in spec.nodes if node.accent), spec.nodes[0].id)
+        graph_attrs += [
+            f'root="{_escape(root)}"',
+            'overlap="false"',
+            'ranksep="1.7 equally"',
+            'sep="+20"',
+            'splines="curved"',
+        ]
     else:
         graph_attrs += ['rankdir="TB"', 'nodesep="0.5"', 'ranksep="0.75"', 'splines="spline"']
 
@@ -405,8 +485,15 @@ def legend_entries(spec: DiagramSpec, lang: str = "it") -> list[tuple[str, str]]
 
 def describe(spec: DiagramSpec, lang: str = "it") -> str:
     """Descrizione a parole dello stesso contenuto: accessibilita', TTS, PDF."""
-    verbs = CONNECTORS.get((lang or "it").lower()[:2], CONNECTORS["en"])
-    by_id = {node.id: node.label for node in spec.nodes}
+    code = (lang or "it").lower()[:2]
+    verbs = CONNECTORS.get(code, CONNECTORS["en"])
+    roles = ROLE_WORDS.get(code, ROLE_WORDS["en"])
+    # Il ruolo entra nella descrizione: chi ascolta deve sapere se un nodo e'
+    # un assunto o un'evidenza, che il disegno dice con l'icona.
+    by_id = {
+        node.id: f"{node.label} ({roles[node.role]})" if node.role else node.label
+        for node in spec.nodes
+    }
     relations = []
     for edge in spec.edges:
         verb = edge.label.strip() if edge.label and edge.label.strip() else verbs[edge.kind]
