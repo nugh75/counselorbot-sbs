@@ -50,12 +50,13 @@ def test_unclosed_block_is_left_alone():
     assert cleaned.endswith(partial)
 
 
-def test_strip_for_speech_replaces_block_with_words():
+def test_strip_for_speech_removes_diagram_entirely():
     spoken = strip_for_speech(f"Guarda.\n{BLOCK}", lang="it")
     assert "```" not in spoken
     assert "{" not in spoken
-    assert "Circolo" in spoken
-    assert "innesca" in spoken
+    assert spoken == "Guarda."
+    assert "Circolo" not in spoken
+    assert "innesca" not in spoken
 
 
 if __name__ == "__main__":

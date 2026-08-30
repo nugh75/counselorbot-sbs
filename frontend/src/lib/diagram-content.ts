@@ -158,10 +158,10 @@ export function splitDiagramContent(content: string): DiagramContentSegment[] {
 export function diagramContentForSpeech(content: string): string {
     return splitDiagramContent(content)
         .map((segment) => {
-            if (segment.kind === 'markdown') return segment.content;
-            if (segment.kind === 'provider-error') return '';
-            return `${segment.spec.title}. ${segment.spec.nodes.map((node) => node.label).join('. ')}.`;
+            if (segment.kind === 'markdown') return segment.content.trim();
+            return '';
         })
+        .filter(Boolean)
         .join('\n\n')
         .trim();
 }

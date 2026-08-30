@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 import re
 
-from .diagram_render import DiagramSpec, DiagramSpecError, describe, parse_spec
+from .diagram_render import DiagramSpec, DiagramSpecError, parse_spec
 
 logger = logging.getLogger(__name__)
 
@@ -36,18 +36,11 @@ def extract(text: str) -> tuple[str, list[DiagramSpec]]:
 
 
 def strip_for_speech(text: str, lang: str = "it") -> str:
-    """Sostituisce ogni blocco con la sua descrizione a parole."""
+    """Rimuove i diagrammi: il TTS legge soltanto la prosa del messaggio."""
     if not text or "```diagram" not in text:
         return text or ""
-
-    def _replace(match: re.Match) -> str:
-        try:
-            spec = parse_spec(match.group(1))
-        except DiagramSpecError:
-            return ""
-        return describe(spec, lang)
-
-    return _tidy(BLOCK_RE.sub(_replace, text))
+    del lang  # mantenuto nel contratto per compatibilita' con i chiamanti.
+    return _tidy(BLOCK_RE.sub("", text))
 
 
 def _tidy(text: str) -> str:
