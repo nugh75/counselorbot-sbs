@@ -648,6 +648,58 @@ class CertifiedStrategy(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+
+class CertifiedReading(Base):
+    """Catalogo di letture, film e altri materiali certificati dall'admin.
+
+    Parallelo a `CertifiedStrategy` ma con una chiave d'aggancio diversa: una
+    strategia si lega a un codice fattore, una lettura si lega a un TEMA
+    (`reading_themes.READING_THEMES`). I codici fattore restano possibili ma
+    facoltativi, perche' un romanzo o un film non mappano su un costrutto.
+
+    I testi sono in un unico campo JSON per lingua (sei lingue), non una colonna
+    per lingua: il catalogo delle strategie ha colonne solo per it/en/es/sv e su
+    francese e tedesco ricade sull'italiano.
+    """
+
+    __tablename__ = "certified_readings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    slug = Column(String, unique=True, index=True, nullable=False)
+    # essay | fiction | film | documentary | series | article | podcast | video
+    kind = Column(String, nullable=False, default="essay")
+    title = Column(String, nullable=False)            # titolo con cui e' conosciuta in italiano
+    original_title = Column(String, nullable=True)    # titolo originale, se diverso
+    creators = Column(JSON, nullable=True)            # ["Autrice", "Regista", ...]
+    year = Column(Integer, nullable=True)
+    publisher = Column(String, nullable=True)         # editore, produzione, rivista
+    identifiers = Column(JSON, nullable=True)         # {"isbn": ..., "doi": ..., "openalex": ...}
+
+    themes = Column(JSON, nullable=True)              # ["ansia-e-prestazione", ...] chiave d'aggancio
+    factor_codes = Column(JSON, nullable=True)        # opzionale: ["A1", "S1"]
+    questionnaire_types = Column(JSON, nullable=True) # opzionale: limita a certi strumenti
+    audience = Column(JSON, nullable=True)            # ["secondaria", "universita", "adulti"]
+    available_languages = Column(JSON, nullable=True) # lingue in cui l'opera esiste
+
+    # {lang: testo} per it/en/es/fr/de/sv
+    summary_i18n = Column(JSON, nullable=True)        # cosa aiuta a capire, una frase
+    why_i18n = Column(JSON, nullable=True)            # perche' e' pertinente a quel tema
+
+    is_sensitive = Column(Boolean, nullable=False, default=False)
+    content_warning = Column(Text, nullable=True)     # obbligatorio quando is_sensitive
+    where_to_find = Column(Text, nullable=True)       # biblioteca, editore; mai copie pirata
+
+    source_reference = Column(Text, nullable=True)    # da dove viene la raccomandazione
+    certified_by = Column(String, nullable=True)
+    # esito della verifica bibliografica: {"source": "openalex", "checked_at": ..., "match": true}
+    verification = Column(JSON, nullable=True)
+    status = Column(String, nullable=False, default="draft")   # draft | certified
+    is_active = Column(Boolean, nullable=False, default=True)
+    sort_order = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class GroupShare(Base):
     """Condivisione di una classe con altri docenti/admin.
 

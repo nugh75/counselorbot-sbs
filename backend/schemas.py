@@ -1028,6 +1028,71 @@ class CertifiedStrategyBase(BaseModel):
     is_active: bool = True
 
 
+
+# --- Catalogo letture certificate ---------------------------------------------
+
+class CertifiedReadingBase(BaseModel):
+    slug: str
+    kind: str = "essay"
+    title: str
+    original_title: Optional[str] = None
+    creators: Optional[List[str]] = None
+    year: Optional[int] = None
+    publisher: Optional[str] = None
+    identifiers: Optional[Dict[str, Any]] = None
+    themes: Optional[List[str]] = None
+    factor_codes: Optional[List[str]] = None
+    questionnaire_types: Optional[List[str]] = None
+    audience: Optional[List[str]] = None
+    available_languages: Optional[List[str]] = None
+    summary_i18n: Optional[Dict[str, str]] = None
+    why_i18n: Optional[Dict[str, str]] = None
+    is_sensitive: bool = False
+    content_warning: Optional[str] = None
+    where_to_find: Optional[str] = None
+    source_reference: Optional[str] = None
+    certified_by: Optional[str] = None
+    status: str = "draft"
+    is_active: bool = True
+    sort_order: int = 0
+
+
+class CertifiedReadingCreate(CertifiedReadingBase):
+    pass
+
+
+class CertifiedReadingUpdate(BaseModel):
+    kind: Optional[str] = None
+    title: Optional[str] = None
+    original_title: Optional[str] = None
+    creators: Optional[List[str]] = None
+    year: Optional[int] = None
+    publisher: Optional[str] = None
+    identifiers: Optional[Dict[str, Any]] = None
+    themes: Optional[List[str]] = None
+    factor_codes: Optional[List[str]] = None
+    questionnaire_types: Optional[List[str]] = None
+    audience: Optional[List[str]] = None
+    available_languages: Optional[List[str]] = None
+    summary_i18n: Optional[Dict[str, str]] = None
+    why_i18n: Optional[Dict[str, str]] = None
+    is_sensitive: Optional[bool] = None
+    content_warning: Optional[str] = None
+    where_to_find: Optional[str] = None
+    source_reference: Optional[str] = None
+    certified_by: Optional[str] = None
+    status: Optional[str] = None
+    is_active: Optional[bool] = None
+    sort_order: Optional[int] = None
+
+
+class CertifiedReadingResponse(CertifiedReadingBase):
+    id: int
+    verification: Optional[Dict[str, Any]] = None
+
+    class Config:
+        from_attributes = True
+
 class CertifiedStrategyCreate(CertifiedStrategyBase):
     pass
 

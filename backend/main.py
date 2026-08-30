@@ -62,6 +62,7 @@ from .routes import benchmark as benchmark_routes
 from .routes import prompt_audit as prompt_audit_routes
 from .routes import counselors as counselors_routes
 from .routes import approved_strategies as approved_strategies_routes
+from .routes import certified_readings as certified_readings_routes
 from .routes import certified_strategies as certified_strategies_routes
 from .routes import research_contacts as research_contacts_routes
 from .routes import administration_plans as administration_plans_routes
@@ -600,6 +601,7 @@ def _seed_and_migrate():
             ("usd_eur_rate", "0.92", "Tasso di cambio USD->EUR per la conversione dei costi nel pannello admin."),
             ("monthly_budget_usd", "0", "Budget mensile in USD; superato il limite si usano solo modelli Ollama locali (0 = nessun limite)."),
             ("budget_fallback_model", "muse-glimmer:30b", "Modello Ollama locale usato quando il budget mensile e' superato."),
+            ("readings_allow_sensitive", "false", "Se true, le letture marcate sensibili possono essere proposte allo studente quando e' lui a nominare quel tema. Spenta: restano solo nel catalogo admin."),
         ]:
             if not db.query(models.Config).filter(models.Config.key == key).first():
                 db.add(models.Config(key=key, value=default, description=descr))
@@ -974,6 +976,13 @@ def _seed_and_migrate():
         from .certified_strategy_seed import seed_certified_strategies
         if seed_certified_strategies(db, models):
             logger.info("Seeded certified strategies catalog")
+
+        # Seed del catalogo letture. Le voci nascono in bozza: entrano in chat
+        # solo quando un admin le certifica dopo la verifica bibliografica.
+        from .certified_reading_seed import seed_certified_readings
+        inserted = seed_certified_readings(db, models)
+        if inserted:
+            logger.info("Seeded certified readings catalog: %s voci in bozza", inserted)
 
         # Seed domande suggerite dell'assistente docenti (it). Idempotente:
         # salta se la tabella contiene già righe.
@@ -1551,6 +1560,7 @@ app.include_router(prompt_audit_routes.router)
 app.include_router(counselors_routes.router)
 app.include_router(approved_strategies_routes.router)
 app.include_router(certified_strategies_routes.router)
+app.include_router(certified_readings_routes.router)
 app.include_router(research_contacts_routes.router)
 app.include_router(skills_routes.router)
 app.include_router(administration_plans_routes.router)
