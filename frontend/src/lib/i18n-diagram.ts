@@ -6,6 +6,7 @@ import type { Lang } from './i18n';
 import type { DiagramEdgeKind } from './diagram-content';
 
 type KindDict = Record<DiagramEdgeKind, string>;
+type FullscreenAction = 'open' | 'close';
 
 const it: KindDict = {
     drives: 'porta a',
@@ -57,7 +58,21 @@ const sv: KindDict = {
 
 const EDGE_KIND_DICTS: Record<Lang, KindDict> = { it, en, es, fr, de, sv };
 
+const FULLSCREEN_LABELS: Record<Lang, Record<FullscreenAction, string>> = {
+    it: { open: 'Apri il diagramma a schermo intero', close: 'Chiudi lo schermo intero' },
+    en: { open: 'Open diagram full screen', close: 'Close full screen' },
+    es: { open: 'Abrir el diagrama a pantalla completa', close: 'Cerrar pantalla completa' },
+    fr: { open: 'Ouvrir le diagramme en plein écran', close: 'Fermer le plein écran' },
+    de: { open: 'Diagramm im Vollbild öffnen', close: 'Vollbild schließen' },
+    sv: { open: 'Öppna diagrammet i helskärmsläge', close: 'Stäng helskärmsläget' },
+};
+
 export function edgeKindLabel(kind: DiagramEdgeKind, lang: string): string {
     const dict = EDGE_KIND_DICTS[(lang || 'it').slice(0, 2) as Lang] ?? en;
     return dict[kind];
+}
+
+export function diagramFullscreenLabel(action: FullscreenAction, lang: string): string {
+    const dict = FULLSCREEN_LABELS[(lang || 'it').slice(0, 2) as Lang] ?? FULLSCREEN_LABELS.en;
+    return dict[action];
 }
