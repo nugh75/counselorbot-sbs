@@ -394,13 +394,14 @@ function GuidedMessageContent({ content, locale, errorMessage }: { content: stri
                 <span>{errorMessage}</span>
             </div>
         ) : (
-            <ReactMarkdown
-                key={`markdown-${index}`}
-                remarkPlugins={[remarkGfm]}
-                components={markdownComponents}
-            >
-                {segment.content}
-            </ReactMarkdown>
+            <div key={`markdown-${index}`} className="min-w-0 max-w-full overflow-x-auto">
+                <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={markdownComponents}
+                >
+                    {segment.content}
+                </ReactMarkdown>
+            </div>
         )
     ));
 }
@@ -1373,7 +1374,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 </div>
 
                 {/* Messages */}
-                <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-6">
+                <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 space-y-6">
                     {messages.map((msg, idx) => (
                         <div key={idx} className={cn(
                             "flex min-w-0 animate-in fade-in slide-in-from-bottom-2 duration-300",
@@ -1413,7 +1414,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                     </div>
                                                 )}
                                                 {msg.content.trim() ? (
-                                                    <div className="min-w-0 max-w-full overflow-x-auto rounded-lg border border-slate-200/80 bg-white">
+                                                    <div className="min-w-0 max-w-full overflow-hidden rounded-lg border border-slate-200/80 bg-white">
                                                         <GuidedMessageContent
                                                             content={msg.content}
                                                             locale={activeLocale}

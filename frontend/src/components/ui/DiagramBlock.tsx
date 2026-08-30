@@ -58,7 +58,7 @@ function KindSample({ kind }: { kind: DiagramEdgeKind }) {
 function DiagramLegend({ kinds, locale }: { kinds: DiagramEdgeKind[]; locale: string }) {
     if (kinds.length === 0) return null;
     return (
-        <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-slate-200 px-3 py-2 text-xs text-slate-600">
+        <ul className="flex w-full min-w-0 max-w-full flex-wrap items-center gap-x-4 gap-y-1 border-t border-slate-200 px-3 py-2 text-xs text-slate-600">
             {kinds.map((kind) => (
                 <li key={kind} className="flex items-center gap-1.5">
                     <KindSample kind={kind} />
@@ -145,7 +145,7 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
 
     // Il fondo della card e' lo stesso colore della pastiglia sotto le etichette del disegno.
     return (
-        <figure className="my-2 overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <figure className="my-2 w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white">
             <figcaption className="flex items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800">
                 <span className="flex min-w-0 items-center gap-2">
                     <GitBranch className="h-4 w-4 shrink-0 text-[#17747a]" aria-hidden="true" />
@@ -166,9 +166,11 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                 ) : null}
             </figcaption>
             {imageUrl ? (
-                // Il renderer restituisce un SVG gia' accessibile e dimensionato dal backend.
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={imageUrl} alt={description} className="mx-auto block h-auto max-h-[26rem] w-full p-3" />
+                <div className="flex w-full min-w-0 max-w-full justify-center overflow-hidden p-3">
+                    {/* Il diagramma si riduce entro la card; la misura naturale resta disponibile in fullscreen. */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={imageUrl} alt={description} className="block h-auto max-h-[26rem] w-auto max-w-full object-contain" />
+                </div>
             ) : failed ? (
                 <ol className="grid gap-2 p-3 sm:grid-cols-2" aria-label={spec.title}>
                     {spec.nodes.map((node, index) => (
