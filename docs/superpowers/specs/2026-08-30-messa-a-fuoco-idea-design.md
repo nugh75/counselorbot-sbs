@@ -47,23 +47,27 @@ Il difetto da evitare è una mappa di testo libero: bolle che dicono qualcosa ma
 non fanno niente. Ogni nodo porta un **ruolo argomentativo** dal vocabolario
 chiuso, ed è il ruolo a decidere icona e trattamento visivo:
 
-| ruolo | icona | cosa contiene |
-|---|---|---|
-| `idea` | `idea` | l'idea centrale, in una frase. Unico nodo accentato |
-| `assunto` | `brain` | ciò che si dà per scontato senza averlo verificato |
-| `evidenza` | `check` | un fatto, un dato, un'esperienza a sostegno |
-| `alternativa` | `compass` | un'altra lettura possibile della stessa cosa |
-| `implicazione` | `target` | ciò che seguirebbe se l'idea reggesse |
-| `domanda-aperta` | `question` | ciò che non si sa ancora, e che decide |
-| `vincolo` | `shield` | un limite reale: tempo, risorse, regole |
-| `passo` | `clock` | la prossima cosa concreta da fare |
+Il vocabolario è in inglese come il resto del contratto verso il modello
+(`kind` degli archi, nomi delle icone, istruzioni delle skill); la colonna
+italiana è solo la parola che l'utente sente leggere.
+
+| ruolo | letto come | icona | cosa contiene |
+|---|---|---|---|
+| `idea` | idea | `idea` | l'idea centrale, in una frase. Unico nodo accentato |
+| `assumption` | assunto | `brain` | ciò che si dà per scontato senza averlo verificato |
+| `evidence` | evidenza | `check` | un fatto, un dato, un'esperienza a sostegno |
+| `alternative` | alternativa | `compass` | un'altra lettura possibile della stessa cosa |
+| `implication` | implicazione | `target` | ciò che seguirebbe se l'idea reggesse |
+| `open-question` | domanda aperta | `question` | ciò che non si sa ancora, e che decide |
+| `constraint` | vincolo | `shield` | un limite reale: tempo, risorse, regole |
+| `step` | passo | `clock` | la prossima cosa concreta da fare |
 
 I cinque tipi di arco esistenti (`drives`, `strengthens`, `weakens`,
 `feedback`, `link`) bastano e non si toccano.
 
 Il criterio di "a fuoco" diventa così verificabile e mostrabile allo studente:
-c'è un nodo `idea`, almeno un `assunto` reso esplicito, almeno una
-`domanda-aperta` e almeno un `passo`. Finché mancano, la sessione non è chiusa.
+c'è un nodo `idea`, almeno un `assumption` reso esplicito, almeno una
+`open-question` e almeno uno `step`. Finché mancano, la sessione non è chiusa.
 
 ## Percorso: step liberi
 
@@ -128,7 +132,7 @@ silenzio.
 
 ```
 {"type":"idea-patch",
- "add_nodes":[{"id":"a3","label":"Non so se ho tempo","role":"vincolo"}],
+ "add_nodes":[{"id":"a3","label":"Non so se ho tempo","role":"constraint"}],
  "add_edges":[{"from":"a3","to":"idea","kind":"weakens"}],
  "update":[{"id":"idea","label":"Fare la tesi sulla dispersione"}],
  "remove":["a1"]}
