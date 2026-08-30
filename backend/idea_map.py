@@ -234,3 +234,53 @@ def history(db: Session, username: str, session_id: str) -> list[models.IdeaMapR
         .order_by(models.IdeaMapRevision.id.asc())
         .all()
     )
+
+
+def map_context(spec: DiagramSpec | None) -> str:
+    """La mappa corrente come la vede il modello.
+
+    Senza questo blocco la skill parla di una mappa che nel prompt non esiste:
+    il modello non sa cosa c'e' gia', non puo' riferirsi agli id, e finisce per
+    non mandare niente o per rifare da capo nodi che ci sono gia'.
+    Inglese come il resto del contratto verso il modello.
+    """
+    if spec is None:
+        return (
+            "The map is empty. Your next `idea` block creates it: at least two "
+            "nodes and one edge, one node with \"role\":\"idea\" and "
+            "\"accent\":true, plus a short \"title\"."
+        )
+
+    lines = [f'Title: {spec.title}', "Nodes already on the map (use these ids; do not repeat them):"]
+    for node in spec.nodes:
+        role = f" [{node.role}]" if node.role else ""
+        centre = " (centre)" if node.accent else ""
+        lines.append(f"- {node.id}{role}{centre}: {node.label}")
+    lines.append("Links:")
+    for edge in spec.edges:
+        label = f' "{edge.label}"' if edge.label else ""
+        lines.append(f"- {edge.source} -{edge.kind}->{label} {edge.target}")
+
+    absent = missing_roles(spec)
+    if absent:
+        lines.append(
+            "Still missing before the idea can be called focused: " + ", ".join(absent) + "."
+        )
+    else:
+        lines.append("All four roles are present: the idea can be called focused.")
+    lines.append(
+        "Send a patch that adds what this turn brought. Do not resend what is "
+        "already here, and do not rename an id."
+    )
+    return "\n".join(lines)
+
+
+def map_context_for(db: Session, username: str, session_id: str) -> str:
+    """Blocco [IDEA MAP] per l'envelope della chat.
+
+    Senza utente o sessione (anteprima admin, prompt test) il blocco non
+    sparisce: descrive una mappa vuota. Il modello deve vedere il bersaglio su
+    cui la skill gli chiede di agire anche quando non c'e' ancora niente.
+    """
+    spec = current_map(db, username, session_id) if (username and session_id) else None
+    return map_context(spec)

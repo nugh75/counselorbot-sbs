@@ -23,6 +23,7 @@ from .certified_strategy_service import certified_strategy_memory
 from .skills import engine as skills_engine
 from .skills import intents as skills_intents
 from .guided_step_label_i18n import STEP_LABEL_I18N, resolve_step_label
+from .idea_map import IDEA_INSTRUMENT, map_context_for
 from .rag_index import site_rag_index, counselorbot_rag_index, questionari_rag_index, build_context as rag_build_context
 from .api_models import ChatRequest
 from .prompt_config import (
@@ -1759,7 +1760,13 @@ def _retrieved_context(
     nei blocchi [STUDENT] e [PROFILE] del system prompt."""
     if component_flags is None:
         component_flags = PROMPT_COMPONENT_DEFAULTS
-    knowledge_enabled = bool(component_flags.get("knowledge", True))
+    # Idea non ha un questionario dietro: la guida di competenzestrategiche.it
+    # e il catalogo delle strategie non c'entrano con un'idea da mettere a
+    # fuoco, e occuperebbero il contesto che serve alla mappa.
+    knowledge_enabled = (
+        bool(component_flags.get("knowledge", True))
+        and questionnaire_type != IDEA_INSTRUMENT
+    )
 
     engine_on = skills_engine.enabled(db, questionnaire_type)
     skills_blocks: dict[str, list[str]] = {}
@@ -2387,6 +2394,16 @@ def build_context_envelope(
         components["student_booklet"] = booklet_context
     if booklet_context:
         parts_system.append("[BOOKLET]\n" + booklet_context)
+
+    # --- [IDEA MAP] la mappa che la sessione sta costruendo ---
+    # Sta in fondo, vicino alle istruzioni della skill: e' la cosa su cui il
+    # modello deve agire in questo turno, non uno sfondo.
+    if questionnaire_type == IDEA_INSTRUMENT:
+        idea_map_block = map_context_for(db, username_for_context, session_id)
+        if components is not None:
+            components["idea_map"] = idea_map_block
+        if idea_map_block:
+            parts_system.append("[IDEA MAP]\n" + idea_map_block)
 
     # --- [KNOWLEDGE] grafo + strategie + certificate + votate (da _retrieved_context) ---
     if knowledge_context:

@@ -278,9 +278,11 @@ DEFAULT_SYSTEM_PROMPT_IDEA = (
     "make the person answer the easier one and lose the other. "
     "Work on what they actually said, never on what you assume they meant: when "
     "a word could mean two things, ask which one before building on it. "
-    "After each answer, restate in one sentence what you understood and update "
-    "the shared map, so the person sees the idea take shape instead of only "
-    "being questioned. "
+    "After each answer, restate in one sentence what you understood, then update "
+    "the shared map: every reply that adds anything MUST end with one fenced "
+    "`idea` block holding the patch described in your instructions, and nothing "
+    "after it. The map under [IDEA MAP] is what the person sees; a reply without "
+    "the block leaves it unchanged and leaves them with only questions. "
     "Do not give advice, reading suggestions or a plan unless the person asks "
     "for one; an idea that is still forming does not need solutions yet. "
     "Say plainly when something they said is unclear or when two things they "
@@ -2495,7 +2497,7 @@ DEFAULT_IDEA_GUIDED_STEPS: List[Dict] = [
             "idea into focus, that you will ask one question at a time, and that a map of "
             "the idea grows beside the conversation and belongs to the person. "
             "Say that they can move between the steps freely and stop whenever they want. "
-            "Then ask what the idea is, even roughly, even badly said."
+            "Then ask what the idea is, even roughly, even badly said. As soon as they say what the idea is, put it on the map with role `idea` and the accent."
         ),
         "system_prompt_mode": "idea-focus",
         "color_theme": "teal",
@@ -2509,7 +2511,7 @@ DEFAULT_IDEA_GUIDED_STEPS: List[Dict] = [
             "Clarification. Work with the person until the idea fits in ONE sentence that "
             "they recognise as theirs. Ask what they mean by the vaguest word they used. "
             "Ask for an example of the idea working, and one of it not working. "
-            "Put the sentence on the map as the central node."
+            "Put the sentence on the map as the central node. The sentence goes on the map as the `idea` node; anything else they name goes with the role that fits it."
         ),
         "system_prompt_mode": "idea-focus",
         "color_theme": "cyan",
@@ -2523,7 +2525,7 @@ DEFAULT_IDEA_GUIDED_STEPS: List[Dict] = [
             "Assumptions. Find what the idea takes for granted without having checked it: "
             "about other people, about time and resources, about how things work. "
             "Name one assumption you can hear in what they said and ask whether it holds. "
-            "Ask what would have to be true for the idea to work at all."
+            "Ask what would have to be true for the idea to work at all. Every assumption they recognise as theirs goes on the map with role `assumption`."
         ),
         "system_prompt_mode": "idea-focus",
         "color_theme": "amber",
@@ -2537,7 +2539,7 @@ DEFAULT_IDEA_GUIDED_STEPS: List[Dict] = [
             "Evidence and reasoning. Ask what the idea rests on: something they saw, did, "
             "read, or were told. Keep what they experienced separate from what they suppose. "
             "When a reason does not support the claim it is attached to, say so and ask what "
-            "would support it instead."
+            "would support it instead. What they actually saw, did or read goes on the map with role `evidence`; what only holds it back goes as `constraint`."
         ),
         "system_prompt_mode": "idea-focus",
         "color_theme": "green",
@@ -2551,7 +2553,7 @@ DEFAULT_IDEA_GUIDED_STEPS: List[Dict] = [
             "Alternative viewpoints. Offer one reading of the same facts that differs from "
             "theirs, and ask what speaks against it. Ask who would disagree with the idea "
             "and what that person would say. Do not argue for the alternative: put it on "
-            "the map and let them weigh it."
+            "the map and let them weigh it. The reading they take seriously goes on the map with role `alternative`."
         ),
         "system_prompt_mode": "idea-focus",
         "color_theme": "purple",
@@ -2564,7 +2566,7 @@ DEFAULT_IDEA_GUIDED_STEPS: List[Dict] = [
         "prompt": (
             "Implications and consequences. Ask what would follow if the idea held: what "
             "changes, for whom, at what cost. Ask what they would have to give up. "
-            "Follow a consequence one step further than they do, then check it with them."
+            "Follow a consequence one step further than they do, then check it with them. What would follow goes on the map with role `implication`; what it would cost goes as `constraint`."
         ),
         "system_prompt_mode": "idea-focus",
         "color_theme": "blue",
@@ -2578,7 +2580,7 @@ DEFAULT_IDEA_GUIDED_STEPS: List[Dict] = [
             "Question the question. Ask whether the thing they came in with is really what "
             "they need to decide, or whether a different question sits underneath it. "
             "Ask what would change if the answer turned out to be no. If a better question "
-            "has emerged during the session, say it plainly and ask whether it is theirs."
+            "has emerged during the session, say it plainly and ask whether it is theirs. A question that turns out to decide something goes on the map with role `open-question`."
         ),
         "system_prompt_mode": "idea-focus",
         "color_theme": "rose",
@@ -2592,7 +2594,7 @@ DEFAULT_IDEA_GUIDED_STEPS: List[Dict] = [
             "Closing. Read the map back in a few sentences: the idea, what it assumes, what "
             "still stands open, what it would cost. Name what is still missing from the four "
             "things a focused idea needs. Then ask for ONE concrete next step they could take "
-            "this week, and put it on the map. Do not add new questions here."
+            "this week, and put it on the map. Do not add new questions here. The action they name goes on the map with role `step`."
         ),
         "system_prompt_mode": "idea-focus",
         "color_theme": "teal",
