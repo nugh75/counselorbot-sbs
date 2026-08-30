@@ -509,7 +509,7 @@ export function RagDocsPanel() {
                                                 <td className="py-2 pr-3 whitespace-nowrap">
                                                     {doc.indexed ? (
                                                         <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                                                            {doc.chunks} chunk
+                                                            {t('admin.rag.chunkCount').replace('{count}', String(doc.chunks))}
                                                         </span>
                                                     ) : !doc.scope_included ? (
                                                         <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">

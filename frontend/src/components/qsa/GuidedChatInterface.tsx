@@ -239,13 +239,13 @@ const STEP_ADVANCE_MARKER = '[[AVANZA_STEP]]';
 
 // --- Sidebar section labels per prefix ---
 
-const PREFIX_SIDEBAR: Record<string, { label: string; colorClass: string }> = {
-    C: { label: 'Cognitive', colorClass: 'text-blue-600' },
-    A: { label: 'Affettive', colorClass: 'text-purple-600' },
-    T: { label: 'Prospettiva Temporale', colorClass: 'text-amber-600' },
-    S: { label: 'Competenze Strategiche', colorClass: 'text-purple-600' },
-    K: { label: 'Competenze e Convinzioni', colorClass: 'text-indigo-600' },
-    AD: { label: 'Adattabilità Professionale', colorClass: 'text-green-600' },
+const PREFIX_SIDEBAR: Record<string, string> = {
+    C: 'text-blue-600',
+    A: 'text-purple-600',
+    T: 'text-amber-600',
+    S: 'text-purple-600',
+    K: 'text-indigo-600',
+    AD: 'text-green-600',
 };
 
 // --- Score formatters per questionnaire type ---
@@ -433,7 +433,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         return questionnaire.factorPrefix.map(prefix => ({
             prefix,
             label: PREFIX_SIDEBAR[prefix] ? t(`sidebar.${prefix}`) : prefix,
-            colorClass: PREFIX_SIDEBAR[prefix]?.colorClass || 'text-slate-600',
+            colorClass: PREFIX_SIDEBAR[prefix] || 'text-slate-600',
             entries: Object.entries(scores)
                 .filter(([k]) => k.startsWith(prefix))
                 .sort(([a], [b]) => a.localeCompare(b)),

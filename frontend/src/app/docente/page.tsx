@@ -9,7 +9,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { AdministrationPlansPanel } from '@/components/admin/AdministrationPlansPanel';
 import { GroupsPanel } from '@/components/admin/GroupsPanel';
 
-// ponytail: testi inline it/en come il resto della UI docente/Telegram.
+// Local copy is complete for every supported interface language.
 const TEXTS = {
     it: {
         title: 'I miei gruppi',
@@ -24,6 +24,34 @@ const TEXTS = {
         forbidden: 'This page is reserved for teachers, researchers and administrators.',
         back: 'Back to CounselorBot',
         loading: 'Checking access...',
+    },
+    es: {
+        title: 'Mis grupos',
+        subtitle: 'Planes de administración de tus grupos: enlaces de invitación (web y Telegram), estudiantes, perfiles, notas y mensajes.',
+        forbidden: 'Esta página está reservada a docentes, investigadores y administradores.',
+        back: 'Volver a CounselorBot',
+        loading: 'Comprobando el acceso...',
+    },
+    fr: {
+        title: 'Mes groupes',
+        subtitle: 'Plans de passation de vos groupes : liens d’invitation (web et Telegram), étudiants, profils, notes et messages.',
+        forbidden: 'Cette page est réservée aux enseignants, chercheurs et administrateurs.',
+        back: 'Retour à CounselorBot',
+        loading: 'Vérification de l’accès...',
+    },
+    de: {
+        title: 'Meine Gruppen',
+        subtitle: 'Durchführungspläne für Ihre Gruppen: Einladungslinks (Web und Telegram), Lernende, Profile, Notizen und Nachrichten.',
+        forbidden: 'Diese Seite ist Lehrkräften, Forschenden und Administratoren vorbehalten.',
+        back: 'Zurück zu CounselorBot',
+        loading: 'Zugriff wird geprüft...',
+    },
+    sv: {
+        title: 'Mina grupper',
+        subtitle: 'Genomförandeplaner för dina grupper: inbjudningslänkar (webb och Telegram), studenter, profiler, anteckningar och meddelanden.',
+        forbidden: 'Den här sidan är endast för lärare, forskare och administratörer.',
+        back: 'Tillbaka till CounselorBot',
+        loading: 'Kontrollerar åtkomst...',
     },
 };
 

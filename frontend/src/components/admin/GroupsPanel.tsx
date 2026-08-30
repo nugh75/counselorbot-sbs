@@ -18,7 +18,7 @@ interface StudentGroup {
     created_at: string | null;
 }
 
-// ponytail: testi inline it/en come il resto della UI gruppi/Telegram.
+// Local copy is complete for every supported interface language.
 const TEXTS = {
     it: {
         title: 'Gruppi e classi',
@@ -93,6 +93,66 @@ const TEXTS = {
         shareSelectUsers: 'Select users to add',
         shareAlreadyShared: 'already shared',
         shareNoUsers: 'No users available.',
+    },
+    es: {
+        title: 'Grupos y clases',
+        subtitle: 'Tus clases: los estudiantes entran mediante el enlace de invitación (web o Telegram) o introduciendo el código de clase desde su área personal. Vincula la clase a un plan de administración para etiquetar los resultados.',
+        newGroup: 'Nueva clase', namePlaceholder: 'Nombre de la clase (p. ej., 3B Informática)',
+        schoolPlaceholder: 'Escuela o centro (opcional)', school: 'Escuela', levelLabel: 'Nivel', levelNone: 'Nivel no indicado',
+        levelSecondaria: 'Secundaria', levelUniversita: 'Universidad', levelAdulti: 'Adultos',
+        levelHint: 'Filtra las lecturas recomendadas: sin un nivel, el bot pregunta al estudiante en qué etapa de sus estudios se encuentra.',
+        create: 'Crear', cancel: 'Cancelar', members: 'miembros', inactive: 'inactiva', webLink: 'Enlace de invitación',
+        telegramLink: 'Enlace de Telegram', code: 'Código de clase', students: 'Estudiantes', deactivate: 'Desactivar',
+        activate: 'Reactivar', deleteGroup: 'Eliminar', empty: 'Aún no hay clases. Crea una y comparte el enlace con tus estudiantes.',
+        privacy: 'Los estudiantes que se unen ven el aviso: el docente o investigador de la clase puede consultar los resultados y las conversaciones.',
+        error: 'La operación ha fallado.', shareTitle: 'Compartida con', shareBtn: 'Añadir seleccionados', sharedWith: 'Compartida con',
+        removeShare: 'Quitar', noShares: 'No compartida con nadie.', shareError: 'No se pudo compartir.',
+        shareSelectUsers: 'Selecciona usuarios para añadir', shareAlreadyShared: 'ya compartida', shareNoUsers: 'No hay usuarios disponibles.',
+    },
+    fr: {
+        title: 'Groupes et classes',
+        subtitle: 'Vos classes : les étudiants rejoignent la classe grâce au lien d’invitation (web ou Telegram) ou en saisissant le code depuis leur espace personnel. Associez la classe à un plan de passation pour étiqueter les résultats.',
+        newGroup: 'Nouvelle classe', namePlaceholder: 'Nom de la classe (ex. 3B Informatique)',
+        schoolPlaceholder: 'École ou établissement (facultatif)', school: 'École', levelLabel: 'Niveau', levelNone: 'Niveau non indiqué',
+        levelSecondaria: 'Secondaire', levelUniversita: 'Université', levelAdulti: 'Adultes',
+        levelHint: 'Filtre les lectures recommandées : sans niveau, le bot demande à l’étudiant où il en est dans ses études.',
+        create: 'Créer', cancel: 'Annuler', members: 'membres', inactive: 'inactive', webLink: 'Lien d’invitation',
+        telegramLink: 'Lien Telegram', code: 'Code de classe', students: 'Étudiants', deactivate: 'Désactiver',
+        activate: 'Réactiver', deleteGroup: 'Supprimer', empty: 'Aucune classe. Créez-en une et partagez le lien avec vos étudiants.',
+        privacy: 'Les étudiants qui rejoignent la classe voient l’avis : l’enseignant ou le chercheur peut consulter les résultats et les conversations.',
+        error: 'L’opération a échoué.', shareTitle: 'Partagée avec', shareBtn: 'Ajouter la sélection', sharedWith: 'Partagée avec',
+        removeShare: 'Retirer', noShares: 'Partagée avec personne.', shareError: 'Échec du partage.',
+        shareSelectUsers: 'Sélectionnez les utilisateurs à ajouter', shareAlreadyShared: 'déjà partagée', shareNoUsers: 'Aucun utilisateur disponible.',
+    },
+    de: {
+        title: 'Gruppen und Klassen',
+        subtitle: 'Ihre Klassen: Lernende treten über den Einladungslink (Web oder Telegram) oder durch Eingabe des Klassencodes in ihrem persönlichen Bereich bei. Verknüpfen Sie die Klasse mit einem Durchführungsplan, um Ergebnisse zuzuordnen.',
+        newGroup: 'Neue Klasse', namePlaceholder: 'Klassenname (z. B. 3B Informatik)',
+        schoolPlaceholder: 'Schule oder Einrichtung (optional)', school: 'Schule', levelLabel: 'Stufe', levelNone: 'Keine Stufe angegeben',
+        levelSecondaria: 'Sekundarstufe', levelUniversita: 'Universität', levelAdulti: 'Erwachsene',
+        levelHint: 'Filtert empfohlene Lektüren: Ohne Stufe fragt der Bot die Lernenden nach ihrem Ausbildungsstand.',
+        create: 'Erstellen', cancel: 'Abbrechen', members: 'Mitglieder', inactive: 'inaktiv', webLink: 'Einladungslink',
+        telegramLink: 'Telegram-Link', code: 'Klassencode', students: 'Lernende', deactivate: 'Deaktivieren',
+        activate: 'Reaktivieren', deleteGroup: 'Löschen', empty: 'Noch keine Klassen. Erstellen Sie eine und teilen Sie den Link mit den Lernenden.',
+        privacy: 'Beitretende Lernende sehen den Hinweis: Die Lehrkraft oder Forschungsperson der Klasse kann Ergebnisse und Unterhaltungen einsehen.',
+        error: 'Der Vorgang ist fehlgeschlagen.', shareTitle: 'Geteilt mit', shareBtn: 'Ausgewählte hinzufügen', sharedWith: 'Geteilt mit',
+        removeShare: 'Entfernen', noShares: 'Mit niemandem geteilt.', shareError: 'Teilen fehlgeschlagen.',
+        shareSelectUsers: 'Hinzuzufügende Benutzer auswählen', shareAlreadyShared: 'bereits geteilt', shareNoUsers: 'Keine Benutzer verfügbar.',
+    },
+    sv: {
+        title: 'Grupper och klasser',
+        subtitle: 'Dina klasser: studenter går med via inbjudningslänken (webb eller Telegram) eller genom att ange klasskoden i sin personliga vy. Koppla klassen till en genomförandeplan för att märka resultaten.',
+        newGroup: 'Ny klass', namePlaceholder: 'Klassnamn (t.ex. 3B Datavetenskap)',
+        schoolPlaceholder: 'Skola eller lärosäte (valfritt)', school: 'Skola', levelLabel: 'Nivå', levelNone: 'Ingen nivå angiven',
+        levelSecondaria: 'Gymnasienivå', levelUniversita: 'Universitet', levelAdulti: 'Vuxna',
+        levelHint: 'Filtrerar rekommenderad läsning: utan nivå frågar boten studenten var i utbildningen hen befinner sig.',
+        create: 'Skapa', cancel: 'Avbryt', members: 'medlemmar', inactive: 'inaktiv', webLink: 'Inbjudningslänk',
+        telegramLink: 'Telegram-länk', code: 'Klasskod', students: 'Studenter', deactivate: 'Inaktivera',
+        activate: 'Återaktivera', deleteGroup: 'Ta bort', empty: 'Inga klasser ännu. Skapa en och dela länken med dina studenter.',
+        privacy: 'Studenter som går med ser informationen: klassens lärare eller forskare kan se resultat och samtal.',
+        error: 'Åtgärden misslyckades.', shareTitle: 'Delad med', shareBtn: 'Lägg till valda', sharedWith: 'Delad med',
+        removeShare: 'Ta bort', noShares: 'Inte delad med någon.', shareError: 'Delningen misslyckades.',
+        shareSelectUsers: 'Välj användare att lägga till', shareAlreadyShared: 'redan delad', shareNoUsers: 'Inga användare tillgängliga.',
     },
 };
 

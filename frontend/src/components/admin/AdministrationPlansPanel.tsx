@@ -134,7 +134,7 @@ function QrThumb({ value, size = 88 }: { value: string; size?: number }) {
 }
 
 export function AdministrationPlansPanel() {
-    const { t, lang } = useI18n();
+    const { t } = useI18n();
     const [plans, setPlans] = useState<AdministrationPlan[]>([]);
     const [contacts, setContacts] = useState<ResearchContact[]>([]);
     const [loading, setLoading] = useState(true);
@@ -427,9 +427,9 @@ export function AdministrationPlansPanel() {
                             </select>
                         </label>
                         <label className="text-xs font-semibold uppercase text-slate-500">
-                            {lang === 'it' ? 'Classe' : 'Class'}
+                            {t('admin.ap.class')}
                             <select className={inputCls} value={form.group_id} onChange={(event) => setForm({ ...form, group_id: event.target.value })}>
-                                <option value="">{lang === 'it' ? '- nessuna classe' : '- no class'}</option>
+                                <option value="">{t('admin.ap.noClass')}</option>
                                 {groups.map((group) => <option key={group.id} value={String(group.id)}>{group.name} ({group.code})</option>)}
                             </select>
                         </label>
@@ -716,7 +716,7 @@ export function AdministrationPlansPanel() {
                                         </div>
                                         {plan.group_name && (
                                             <p className="mt-2 text-xs text-slate-500">
-                                                {lang === 'it' ? 'Classe' : 'Class'}: <span className="font-semibold">{plan.group_name}</span>
+                                                {t('admin.ap.class')}: <span className="font-semibold">{plan.group_name}</span>
                                             </p>
                                         )}
                                         <div className="mt-2 flex flex-wrap gap-2">
@@ -726,7 +726,7 @@ export function AdministrationPlansPanel() {
                                                 className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                                             >
                                                 <Users className="h-4 w-4" />
-                                                {lang === 'it' ? 'Studenti' : 'Students'}
+                                                {t('admin.ap.students')}
                                             </button>
                                             <button
                                                 type="button"

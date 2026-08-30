@@ -10,7 +10,7 @@ interface LinkStatus {
     linked_at: string | null;
 }
 
-// ponytail: testi inline it/en (fallback en), come i testi del bot; niente chiavi i18n per ora.
+// Local copy is complete for every supported interface language.
 const TEXTS = {
     it: {
         title: 'Telegram',
@@ -31,6 +31,30 @@ const TEXTS = {
         codeHint: 'Send this code to the bot within 10 minutes with:',
         unlink: 'Unlink Telegram',
         error: 'Operation failed, please retry.',
+    },
+    es: {
+        title: 'Telegram', subtitle: 'Vincula Telegram para usar CounselorBot también desde el bot.',
+        linked: 'Telegram vinculado', notLinked: 'Telegram no vinculado', generate: 'Generar código',
+        codeHint: 'Envía este código al bot antes de 10 minutos con:', unlink: 'Desvincular Telegram',
+        error: 'La operación ha fallado. Inténtalo de nuevo.',
+    },
+    fr: {
+        title: 'Telegram', subtitle: 'Associez Telegram pour utiliser CounselorBot également depuis le bot.',
+        linked: 'Telegram associé', notLinked: 'Telegram non associé', generate: 'Générer un code',
+        codeHint: 'Envoyez ce code au bot dans les 10 minutes avec :', unlink: 'Dissocier Telegram',
+        error: 'L’opération a échoué. Réessayez.',
+    },
+    de: {
+        title: 'Telegram', subtitle: 'Verknüpfen Sie Telegram, um CounselorBot auch über den Bot zu nutzen.',
+        linked: 'Telegram verknüpft', notLinked: 'Telegram nicht verknüpft', generate: 'Code erstellen',
+        codeHint: 'Senden Sie diesen Code innerhalb von 10 Minuten mit folgendem Befehl an den Bot:', unlink: 'Telegram trennen',
+        error: 'Der Vorgang ist fehlgeschlagen. Versuchen Sie es erneut.',
+    },
+    sv: {
+        title: 'Telegram', subtitle: 'Länka Telegram för att använda CounselorBot även via boten.',
+        linked: 'Telegram länkat', notLinked: 'Telegram inte länkat', generate: 'Skapa kod',
+        codeHint: 'Skicka den här koden till boten inom 10 minuter med:', unlink: 'Koppla från Telegram',
+        error: 'Åtgärden misslyckades. Försök igen.',
     },
 };
 

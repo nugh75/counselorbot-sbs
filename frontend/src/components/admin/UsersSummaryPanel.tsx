@@ -131,11 +131,55 @@ const TEXTS: Record<string, Record<string, string>> = {
         studenti: 'Students',
         altri: 'Others',
     },
+    es: {
+        title: 'Usuarios y clases', subtitle: 'Lista de todos los usuarios que han interactuado con la aplicación y de todas las clases creadas.',
+        totalUsers: 'Usuarios totales', totalGroups: 'Clases totales', refresh: 'Actualizar', username: 'Nombre de usuario', role: 'Rol',
+        groupsOwned: 'Clases', plansCreated: 'Planes', notesWritten: 'Notas', resultsSubmitted: 'Resultados', memberOf: 'Miembro de',
+        tabsUsers: 'Usuarios', tabsGroups: 'Clases', tabsSchools: 'Escuelas', groups: 'Clases', owner: 'Propietario', code: 'Código',
+        members: 'Miembros', school: 'Escuela', noSchool: 'Sin escuela', studentsList: 'Estudiantes', noStudents: 'No hay estudiantes inscritos.',
+        classCol: 'Clase', status: 'Estado', active: 'Activa', inactive: 'Inactiva', created: 'Creada el', search: 'Buscar usuario...',
+        searchGroups: 'Buscar clase...', noUsers: 'No se encontraron usuarios.', noGroups: 'No se encontraron clases.', loading: 'Cargando...',
+        inPlans: 'Planes', inGroups: 'Clases', inNotes: 'Notas', inResults: 'Resultados', inMemberships: 'Inscripciones', inLogs: 'Registros',
+        docentiRicercatori: 'Docentes / Investigadores', studenti: 'Estudiantes', altri: 'Otros',
+    },
+    fr: {
+        title: 'Utilisateurs et classes', subtitle: 'Liste de tous les utilisateurs ayant interagi avec l’application et de toutes les classes créées.',
+        totalUsers: 'Nombre total d’utilisateurs', totalGroups: 'Nombre total de classes', refresh: 'Actualiser', username: 'Nom d’utilisateur', role: 'Rôle',
+        groupsOwned: 'Classes', plansCreated: 'Plans', notesWritten: 'Notes', resultsSubmitted: 'Résultats', memberOf: 'Membre de',
+        tabsUsers: 'Utilisateurs', tabsGroups: 'Classes', tabsSchools: 'Écoles', groups: 'Classes', owner: 'Propriétaire', code: 'Code',
+        members: 'Membres', school: 'École', noSchool: 'Sans école', studentsList: 'Étudiants', noStudents: 'Aucun étudiant inscrit.',
+        classCol: 'Classe', status: 'État', active: 'Active', inactive: 'Inactive', created: 'Créée le', search: 'Rechercher un utilisateur...',
+        searchGroups: 'Rechercher une classe...', noUsers: 'Aucun utilisateur trouvé.', noGroups: 'Aucune classe trouvée.', loading: 'Chargement...',
+        inPlans: 'Plans', inGroups: 'Classes', inNotes: 'Notes', inResults: 'Résultats', inMemberships: 'Inscriptions', inLogs: 'Journaux',
+        docentiRicercatori: 'Enseignants / Chercheurs', studenti: 'Étudiants', altri: 'Autres',
+    },
+    de: {
+        title: 'Benutzer und Klassen', subtitle: 'Liste aller Benutzer, die mit der Anwendung interagiert haben, und aller erstellten Klassen.',
+        totalUsers: 'Benutzer insgesamt', totalGroups: 'Klassen insgesamt', refresh: 'Aktualisieren', username: 'Benutzername', role: 'Rolle',
+        groupsOwned: 'Klassen', plansCreated: 'Pläne', notesWritten: 'Notizen', resultsSubmitted: 'Ergebnisse', memberOf: 'Mitglied von',
+        tabsUsers: 'Benutzer', tabsGroups: 'Klassen', tabsSchools: 'Schulen', groups: 'Klassen', owner: 'Eigentümer', code: 'Code',
+        members: 'Mitglieder', school: 'Schule', noSchool: 'Keine Schule', studentsList: 'Lernende', noStudents: 'Keine Lernenden eingeschrieben.',
+        classCol: 'Klasse', status: 'Status', active: 'Aktiv', inactive: 'Inaktiv', created: 'Erstellt am', search: 'Benutzer suchen...',
+        searchGroups: 'Klasse suchen...', noUsers: 'Keine Benutzer gefunden.', noGroups: 'Keine Klassen gefunden.', loading: 'Wird geladen...',
+        inPlans: 'Pläne', inGroups: 'Klassen', inNotes: 'Notizen', inResults: 'Ergebnisse', inMemberships: 'Mitgliedschaften', inLogs: 'Protokolle',
+        docentiRicercatori: 'Lehrkräfte / Forschende', studenti: 'Lernende', altri: 'Andere',
+    },
+    sv: {
+        title: 'Användare och klasser', subtitle: 'Lista över alla användare som har interagerat med appen och alla skapade klasser.',
+        totalUsers: 'Totalt antal användare', totalGroups: 'Totalt antal klasser', refresh: 'Uppdatera', username: 'Användarnamn', role: 'Roll',
+        groupsOwned: 'Klasser', plansCreated: 'Planer', notesWritten: 'Anteckningar', resultsSubmitted: 'Resultat', memberOf: 'Medlem i',
+        tabsUsers: 'Användare', tabsGroups: 'Klasser', tabsSchools: 'Skolor', groups: 'Klasser', owner: 'Ägare', code: 'Kod',
+        members: 'Medlemmar', school: 'Skola', noSchool: 'Ingen skola', studentsList: 'Studenter', noStudents: 'Inga studenter inskrivna.',
+        classCol: 'Klass', status: 'Status', active: 'Aktiv', inactive: 'Inaktiv', created: 'Skapad den', search: 'Sök användare...',
+        searchGroups: 'Sök klass...', noUsers: 'Inga användare hittades.', noGroups: 'Inga klasser hittades.', loading: 'Laddar...',
+        inPlans: 'Planer', inGroups: 'Klasser', inNotes: 'Anteckningar', inResults: 'Resultat', inMemberships: 'Medlemskap', inLogs: 'Loggar',
+        docentiRicercatori: 'Lärare / Forskare', studenti: 'Studenter', altri: 'Övriga',
+    },
 };
 
 export function UsersSummaryPanel() {
     const { lang } = useI18n();
-    const texts = TEXTS[lang === 'it' ? 'it' : 'en'] ?? TEXTS.en;
+    const texts = TEXTS[lang] ?? TEXTS.en;
     const [data, setData] = useState<Summary | null>(null);
     const [loading, setLoading] = useState(true);
     const [query, setQuery] = useState('');
@@ -404,7 +448,7 @@ export function UsersSummaryPanel() {
                                         </span>
                                     </div>
                                     {group.created_at && (
-                                        <p className="mt-2 text-xs text-slate-400">{texts.created}: {new Date(group.created_at).toLocaleDateString(lang === 'it' ? 'it-IT' : 'en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}</p>
+                                        <p className="mt-2 text-xs text-slate-400">{texts.created}: {new Date(group.created_at).toLocaleDateString(lang, { year: 'numeric', month: '2-digit', day: '2-digit' })}</p>
                                     )}
                                 </section>
                             ))}

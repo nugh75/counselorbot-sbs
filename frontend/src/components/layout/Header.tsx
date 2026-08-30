@@ -30,7 +30,7 @@ interface SecondaryItem {
 const SEPARATOR = 'mx-1 h-5 w-px shrink-0 bg-slate-200 dark:bg-slate-700';
 
 export function Header() {
-    const { t, lang } = useI18n();
+    const { t } = useI18n();
     const [identity, setIdentity] = useState<Identity | null | undefined>(undefined);
 
     useEffect(() => {
@@ -65,9 +65,7 @@ export function Header() {
             key: 'teacher-panel',
             href: '/docente',
             icon: Users,
-            label: canOpenResearchConsole
-                ? (lang === 'it' ? 'Gruppi e classi' : 'Groups and classes')
-                : (lang === 'it' ? 'Pannello docente' : 'Teacher panel'),
+            label: t(canOpenResearchConsole ? 'nav.groupsClasses' : 'nav.teacherPanel'),
         });
     }
     if (canOpenResearchConsole) {

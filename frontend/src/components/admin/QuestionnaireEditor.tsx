@@ -283,8 +283,8 @@ export function QuestionnaireEditor() {
                             <select value={meta.status}
                                 onChange={(e) => setMeta({ ...meta, status: e.target.value })}
                                 className="mt-1 rounded-md border border-slate-300 px-3 py-2 text-sm">
-                                <option value="experimental">experimental</option>
-                                <option value="validated">validated</option>
+                                <option value="experimental">{t('admin.q.status.experimental')}</option>
+                                <option value="validated">{t('admin.q.status.validated')}</option>
                             </select>
                         </label>
                     </div>
@@ -306,7 +306,7 @@ export function QuestionnaireEditor() {
                                     <th className="py-2 pr-2">{t('admin.q.dimension')}</th>
                                     <th className="py-2 pr-2">{t('admin.q.orientation')}</th>
                                     <th className="py-2 pr-2">{t('admin.q.inverted')}</th>
-                                    <th className="py-2 pr-2">{t('admin.q.label')} (it/en/es/sv)</th>
+                                    <th className="py-2 pr-2">{t('admin.q.label')} ({t('admin.q.availableLocales')})</th>
                                     <th className="py-2"></th>
                                 </tr>
                             </thead>
