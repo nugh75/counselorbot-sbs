@@ -12,6 +12,7 @@ from ..anonymous_codes import get_or_create_anonymous_research_code
 from ..validation_export import build_validation_csv, validation_query, validation_summary
 from ..strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_memory, strategy_memory
 from ..pdf_generator import generate_questionnaire_pdf, generate_student_booklet_pdf
+from ..diagram_blocks import strip_for_speech
 from ..ai_service import AIService
 from .. import scoring_service
 
@@ -781,7 +782,8 @@ def _generate_pdf_summary(
         return cached
 
     conversation = "\n".join(
-        f"{('Student' if msg.get('role') == 'student' else 'Counselor')}: {msg.get('text', '').strip()}"
+        f"{('Student' if msg.get('role') == 'student' else 'Counselor')}: "
+        f"{strip_for_speech(msg.get('text', ''), lang=lang).strip()}"
         for msg in messages
         if msg.get("text")
     )[:_PDF_SUMMARY_MAX_CONVERSATION_CHARS]
