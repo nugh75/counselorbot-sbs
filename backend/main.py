@@ -137,8 +137,16 @@ def _migrate_guided_completion_home_texts(db):
 
     return changed
 
-# Create Database Tables
-models.Base.metadata.create_all(bind=database.engine)
+# Create Database Tables.
+# I worker uvicorn partono insieme e chiamano tutti questa riga: quando una
+# tabella e' nuova, uno la crea e gli altri sbattono sul vincolo di unicita' del
+# catalogo Postgres. La tabella c'e' comunque, quindi l'errore va ignorato dopo
+# aver verificato che non resti nulla da creare.
+try:
+    models.Base.metadata.create_all(bind=database.engine)
+except Exception as exc:  # pragma: no cover - dipende dalla concorrenza dei worker
+    logger.info("create_all in concorrenza con un altro worker: %s", exc)
+    models.Base.metadata.create_all(bind=database.engine, checkfirst=True)
 
 
 @asynccontextmanager
