@@ -1,5 +1,10 @@
 export type DiagramType = 'flow' | 'relation' | 'cycle' | 'hierarchy';
 
+// Tipo di relazione dell'arco: decide il tratto con cui il backend lo disegna.
+export type DiagramEdgeKind = 'drives' | 'strengthens' | 'weakens' | 'feedback' | 'link';
+
+export const DIAGRAM_EDGE_KINDS: DiagramEdgeKind[] = ['drives', 'strengthens', 'weakens', 'feedback', 'link'];
+
 export interface DiagramNode {
     id: string;
     label: string;
@@ -10,6 +15,7 @@ export interface DiagramEdge {
     from: string;
     to: string;
     label?: string;
+    kind?: DiagramEdgeKind;
 }
 
 export interface DiagramSpec {
@@ -164,6 +170,13 @@ export function diagramContentForSpeech(content: string): string {
         .filter(Boolean)
         .join('\n\n')
         .trim();
+}
+
+export function diagramEdgeKinds(spec: DiagramSpec): DiagramEdgeKind[] {
+    const used = new Set<DiagramEdgeKind>(
+        (spec.edges ?? []).map((edge) => edge.kind ?? 'drives'),
+    );
+    return used.size > 1 ? DIAGRAM_EDGE_KINDS.filter((kind) => used.has(kind)) : [];
 }
 
 export function completeDiagramEdges(spec: DiagramSpec): DiagramSpec {

@@ -13,6 +13,7 @@ import pytest
 from backend.diagram_render import (
     DiagramSpecError,
     describe,
+    legend_entries,
     parse_spec,
     render,
     to_dot,
@@ -160,6 +161,75 @@ def test_render_png_has_png_signature():
 def test_render_rejects_unknown_format():
     with pytest.raises(DiagramSpecError):
         render(parse_spec(CYCLE), fmt="pdf")
+
+
+MIXED = {
+    "type": "relation",
+    "title": "Cosa sostiene la concentrazione",
+    "nodes": [
+        {"id": "c", "label": "Concentrazione", "accent": True},
+        {"id": "s", "label": "Sonno regolare"},
+        {"id": "n", "label": "Ansia da prestazione"},
+    ],
+    "edges": [
+        {"from": "s", "to": "c", "label": "sostiene", "kind": "strengthens"},
+        {"from": "n", "to": "c", "kind": "weakens"},
+    ],
+}
+
+
+def test_edge_kind_defaults_to_drives():
+    spec = parse_spec(CYCLE)
+    assert {edge.kind for edge in spec.edges} == {"drives"}
+
+
+def test_parse_rejects_unknown_kind():
+    with pytest.raises(DiagramSpecError):
+        parse_spec({**CYCLE, "edges": [{"from": "a", "to": "b", "kind": "blocca"}]})
+
+
+def test_dot_draws_weakening_edge_dashed_with_tee():
+    dot = to_dot(parse_spec(MIXED))
+    weakening = [line for line in dot.splitlines() if '"n" -> "c"' in line][0]
+    assert 'style="dashed"' in weakening
+    assert 'arrowhead="tee"' in weakening
+
+
+def test_dot_draws_strengthening_edge_thicker():
+    dot = to_dot(parse_spec(MIXED))
+    strengthening = [line for line in dot.splitlines() if '"s" -> "c"' in line][0]
+    assert 'penwidth="2.6"' in strengthening
+    assert "#41707a" in strengthening          # petrol piu' fondo: legame che sostiene
+
+
+def test_edge_label_sits_on_an_opaque_chip():
+    # La pastiglia col colore della superficie impedisce all'arco di tagliare il testo.
+    dot = to_dot(parse_spec(MIXED))
+    assert 'BGCOLOR="#ffffff"' in dot
+    assert ">sostiene<" in dot
+
+
+def test_legend_lists_only_the_kinds_in_use():
+    assert legend_entries(parse_spec(MIXED), "it") == [
+        ("strengthens", "rafforza"),
+        ("weakens", "ostacola"),
+    ]
+
+
+def test_legend_is_empty_when_every_edge_is_the_same():
+    assert legend_entries(parse_spec(CYCLE), "it") == []
+
+
+def test_describe_uses_the_kind_when_the_edge_has_no_label():
+    text = describe(parse_spec(MIXED), lang="it")
+    assert "Ansia da prestazione ostacola Concentrazione" in text
+
+
+def test_embedded_title_carries_the_legend():
+    dot = to_dot(parse_spec(MIXED), embed_title=True, lang="it")
+    assert "Cosa sostiene la concentrazione" in dot
+    assert "rafforza" in dot and "ostacola" in dot
+    assert to_dot(parse_spec(CYCLE), embed_title=True, lang="it").count("rafforza") == 0
 
 
 if __name__ == "__main__":

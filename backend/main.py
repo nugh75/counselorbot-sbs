@@ -629,6 +629,7 @@ def _seed_and_migrate():
         try:
             from .skills_seed import (
                 apply_certified_advice_policy,
+                apply_diagram_edge_kinds_policy,
                 apply_english_skill_instructions_policy,
                 apply_reading_and_translations_policy,
                 apply_specialized_skills_policy,
@@ -641,7 +642,9 @@ def _seed_and_migrate():
             specialized_changed = apply_specialized_skills_policy(db)
             i18n_changed = apply_reading_and_translations_policy(db)
             english_changed = apply_english_skill_instructions_policy(db)
-            if configs_changed or skills_changed or policy_changed or specialized_changed or i18n_changed or english_changed:
+            diagram_changed = apply_diagram_edge_kinds_policy(db)
+            if (configs_changed or skills_changed or policy_changed or specialized_changed
+                    or i18n_changed or english_changed or diagram_changed):
                 logger.info("Seed skill completato")
         except Exception as e:
             logger.warning(f"Seed skill fallito: {e}")

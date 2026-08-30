@@ -7,6 +7,7 @@ Come per i prompt degli step, il seed non aggiorna mai una riga esistente.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 
@@ -84,16 +85,25 @@ CONCEPT_DIAGRAM_INSTRUCTIONS_EN = """## Concept diagram
           {"id":"b","label":"Ansia","accent":true},
           {"id":"c","label":"Rimando"}],
  "edges":[{"from":"a","to":"b","label":"innesca"},
-          {"from":"b","to":"c"},{"from":"c","to":"a"}]}
+          {"from":"b","to":"c"},
+          {"from":"c","to":"a","kind":"feedback"}]}
 ```
 
 - `type`: `flow`, `cycle`, `relation` or `hierarchy`.
 - 2-8 nodes, at most 12 edges; node label <= 40 chars, edge label <= 24,
   title <= 80.
 - `accent: true` on at most one node: the point the student can act on.
+- `kind` on an edge names the relation; leave it out for a plain step forward:
+  - `drives` (default): A produces B, the next step or the consequence.
+  - `strengthens`: A supports or reinforces B.
+  - `weakens`: A hinders, brakes or disturbs B.
+  - `feedback`: B returns on A and closes the loop.
+  - `link`: they belong together, no direction, no cause.
+  Pick the one that is true: each kind is drawn with its own stroke, so a wrong
+  kind tells the student something false.
 - Labels in the student's language, in the student's own words; never scores,
   factor codes or identifiers.
-- Data only: no colours, no coordinates, no rendering syntax.
+- Data only: no colours, no thickness, no coordinates, no rendering syntax.
 """
 
 
@@ -110,6 +120,10 @@ CERTIFIED_ADVICE_POLICY_MARKER = "skills_certified_advice_policy_v1"
 SPECIALIZED_SKILLS_POLICY_MARKER = "skills_specialized_behaviors_v1"
 READING_AND_TRANSLATIONS_POLICY_MARKER = "skills_reading_sources_and_i18n_v1"
 ENGLISH_SKILL_INSTRUCTIONS_POLICY_MARKER = "skills_english_instructions_v1"
+DIAGRAM_EDGE_KINDS_POLICY_MARKER = "skills_diagram_edge_kinds_v1"
+# Contratto del diagramma prima dei tipi di arco: serve a riconoscere le
+# installazioni ancora sul testo di serie, che sono le uniche da aggiornare.
+CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V1_MD5 = "8a3890a53e860a50876501193da698bf"
 
 SKILL_CONFIG_DEFAULTS = (
     (
@@ -253,7 +267,7 @@ SKILL_SEEDS = [
         "handler_params": {},
         "routing": "optional",
         "slot": "directive_tail",
-        "max_chars": 1200,
+        "max_chars": 1800,
         "sort_order": 35,
         "is_active": True,
         "bind": True,
@@ -434,6 +448,40 @@ def apply_english_skill_instructions_policy(db) -> bool:
     ))
     db.commit()
     return True
+
+
+def apply_diagram_edge_kinds_policy(db) -> bool:
+    """Insegna i tipi di arco al contratto del diagramma, una sola volta.
+
+    Tocca solo le installazioni ferme al testo di serie: se l'admin ha riscritto
+    le istruzioni, il suo testo resta e la migrazione si limita a segnarsi come
+    fatta.
+    """
+    marker = db.query(models.Config).filter(
+        models.Config.key == DIAGRAM_EDGE_KINDS_POLICY_MARKER
+    ).first()
+    if marker is not None:
+        return False
+
+    seed_skills(db)
+    skill = db.query(models.Skill).filter(models.Skill.slug == "concept-diagram").first()
+    updated = False
+    if skill is not None:
+        current = (skill.instructions_i18n or {}).get("en", "")
+        if hashlib.md5(current.encode("utf-8")).hexdigest() == CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V1_MD5:
+            skill.instructions_i18n = {"en": CONCEPT_DIAGRAM_INSTRUCTIONS_EN}
+            skill.max_chars = 1800
+            updated = True
+        else:
+            logger.info("concept-diagram personalizzata dall'admin: contratto lasciato com'e'")
+
+    db.add(models.Config(
+        key=DIAGRAM_EDGE_KINDS_POLICY_MARKER,
+        value="applied",
+        description="Migrazione una tantum: tipi di arco nel contratto del diagramma.",
+    ))
+    db.commit()
+    return updated
 
 
 def seed_skills(db) -> bool:
