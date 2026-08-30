@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Check } from 'lucide-react';
-import { QuestionnaireConfig } from '@/lib/questionnaires';
+import { QuestionnaireConfig, supportsProfileUpload } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
@@ -39,9 +39,7 @@ interface Option {
 
 export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMethodSelectorProps) {
     const { t } = useI18n();
-    const supportsProfileUpload = questionnaire
-        ? ['QSA', 'QSAr', 'QPCS', 'QPCC', 'QAP'].includes(questionnaire.id)
-        : false;
+    const hasProfileUpload = questionnaire ? supportsProfileUpload(questionnaire.id) : false;
     const manualDescription = questionnaire
         ? t('method.manual.descTpl', { name: questionnaire.name, codes: questionnaire.factors.map(f => f.code).join(', ') })
         : t('method.manual.descNoQ');
@@ -70,7 +68,7 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
 
     const options: Option[] = [
         { key: 'manual', title: t('method.manual.title'), desc: manualDescription },
-        ...(supportsProfileUpload ? [{
+        ...(hasProfileUpload ? [{
             key: 'upload' as Method,
             title: t('method.upload.title'),
             desc: t('method.upload.desc'),

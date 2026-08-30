@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { QUESTIONNAIRES, QuestionnaireConfig, QuestionnaireType } from '@/lib/questionnaires';
+import { QUESTIONNAIRES, QuestionnaireConfig, QuestionnaireType, supportsProfileUpload } from '@/lib/questionnaires';
 import { QuestionnaireSelector } from '@/components/questionnaire/QuestionnaireSelector';
 import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
 import { InputMethodSelector } from '@/components/qsa/InputMethodSelector';
@@ -26,6 +26,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { addCompletedProfile, getCompletedProfiles } from '@/lib/profile-tracker';
 import { apiFetch, ai4authLoginUrl, getIdentity, type Identity } from '@/lib/auth';
 import { getSelectedCounselorId, setSelectedCounselorId } from '@/lib/counselor';
+import { getExperiencePref, getInputMethodPref, setExperiencePref, setInputMethodPref } from '@/lib/session-prefs';
 import { setSelectedInstrumentId } from '@/lib/instrument';
 import { getResume, setResume } from '@/lib/resume';
 import { deleteFrozenSession, getFrozenSession, type FrozenSessionDetail } from '@/lib/frozen-session';
@@ -34,6 +35,15 @@ import { ForwardButton } from '@/components/ui/ForwardButton';
 
 
 type Step = 'intro' | 'notebook' | 'counselor-select' | 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'farewell';
+
+// Compilazioni già salvate: servono a sapere se c'è qualcosa da riusare prima
+// di saltare la scelta del metodo di inserimento.
+interface SavedResult {
+    session_id: string;
+    questionnaire_type: string;
+    scores: Record<string, number> | null;
+    submitted_at: string;
+}
 
 const STARTABLE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
 
@@ -208,10 +218,21 @@ export default function Home() {
     const [pdfLoading, setPdfLoading] = useState(false);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [frozenSnapshot, setFrozenSnapshot] = useState<FrozenSessionDetail | null>(null);
+    const [savedResults, setSavedResults] = useState<SavedResult[] | null>(null);
 
     useEffect(() => {
         getIdentity().then(setIdentity);
     }, []);
+
+    useEffect(() => {
+        if (!identity?.authenticated) return;
+        let alive = true;
+        apiFetch('/api/user/questionnaire-results')
+            .then((res) => (res.ok ? res.json() : []))
+            .then((rows: unknown) => { if (alive) setSavedResults(Array.isArray(rows) ? (rows as SavedResult[]) : []); })
+            .catch(() => { if (alive) setSavedResults([]); });
+        return () => { alive = false; };
+    }, [identity]);
 
     // Uscendo dalla schermata finale, libera l'object URL del PDF inline.
     useEffect(() => {
@@ -221,11 +242,11 @@ export default function Home() {
         }
     }, [step, pdfUrl]);
 
-    // Il chip counselor nell'header deve comparire solo DOPO la scelta: sull'intro
-    // azzeriamo la selezione persistita da run precedenti, così non si vede in anticipo.
+    // Sull'intro nessuno strumento è ancora in corso: il chip nell'header non
+    // deve mostrarne uno rimasto da un percorso precedente. Il counselor invece
+    // resta scelto: è la preferenza che evita di ripetere la fase ogni volta.
     useEffect(() => {
         if (step === 'intro') {
-            setSelectedCounselorId(null);
             setSelectedInstrumentId(null);
         }
     }, [step]);
@@ -346,7 +367,15 @@ export default function Home() {
             }
         }
 
-        setExperience(null);
+        beginInteraction(newSessionId, questionnaire.id);
+    };
+
+    // Apre la chat con la modalità già scelta in passato; senza preferenza la
+    // schermata di scelta compare come prima.
+    const beginInteraction = (sid: string, instrument: string) => {
+        const pref = getExperiencePref();
+        setExperience(pref);
+        if (pref) setResume({ instrument, sessionId: sid, experience: pref, counselorId: getSelectedCounselorId() });
         setStep('interaction');
     };
 
@@ -357,28 +386,52 @@ export default function Home() {
         setPdfToken(undefined);
         setSessionId('');
         setExperience(null);
+        // Counselor già scelto in passato: la fase resta nella catena (ci si
+        // torna con "indietro"), ma non la si ripete a ogni strumento.
+        if (getSelectedCounselorId() != null) {
+            void proceedAfterCounselor(questionnaire, null);
+            return;
+        }
         setStep('counselor-select');
     };
 
-    const continueAfterCounselorSelection = async () => {
-        if (!selectedQuestionnaire) {
+    // Passo successivo alla scelta del counselor. Prende lo strumento come
+    // argomento perché viene chiamata anche subito dopo averlo selezionato,
+    // quando lo stato non è ancora aggiornato.
+    const proceedAfterCounselor = async (questionnaire: QuestionnaireConfig | null, currentScores: Record<string, number> | null) => {
+        if (!questionnaire) {
             setStep('questionnaire-select');
             return;
         }
-        if (isAgentOnly(selectedQuestionnaire)) {
-            await startAgentOnlyQuestionnaire(selectedQuestionnaire);
+        if (isAgentOnly(questionnaire)) {
+            await startAgentOnlyQuestionnaire(questionnaire);
             return;
         }
-        setStep(scores !== null ? 'dashboard' : 'method-select');
+        if (currentScores !== null) {
+            setStep('dashboard');
+            return;
+        }
+        // Il metodo ricordato vale solo quando non c'è nulla da riusare: con
+        // compilazioni salvate la scelta "riprendi un profilo" vive solo lì.
+        const method = getInputMethodPref();
+        const hasSaved = savedResults?.some((r) => r.questionnaire_type === questionnaire.id) ?? true;
+        const usable = method === 'upload' ? supportsProfileUpload(questionnaire.id) : method === 'manual';
+        if (method && usable && !hasSaved) {
+            setStep(method === 'manual' ? 'manual-input' : 'upload-input');
+            return;
+        }
+        setStep('method-select');
     };
 
     const handleMethodSelect = (method: 'manual' | 'upload' | 'resume', resumeData?: { sessionId: string; scores: Record<string, number> }) => {
-        if (method === 'resume' && resumeData) {
+        if (method === 'resume') {
+            if (!resumeData) return;
             setScores(resumeData.scores);
             setSessionId(resumeData.sessionId);
             setStep('dashboard');
             return;
         }
+        setInputMethodPref(method);
         setStep(method === 'manual' ? 'manual-input' : 'upload-input');
     };
 
@@ -434,12 +487,14 @@ export default function Home() {
             console.error("Failed to save questionnaire result", e);
         }
 
-        setStep('interaction');
+        beginInteraction(newSessionId, qType);
     };
 
-    // Scelta modalità chat: apre la chat e registra il punto di ripresa (header "Riprendi").
+    // Scelta modalità chat: apre la chat, la ricorda per i prossimi strumenti e
+    // registra il punto di ripresa (header "Riprendi").
     const chooseExperience = (exp: 'standard' | 'opencode') => {
         setExperience(exp);
+        setExperiencePref(exp);
         if (selectedQuestionnaire) {
             setResume({ instrument: selectedQuestionnaire.id, sessionId, experience: exp, counselorId: getSelectedCounselorId() });
         }
@@ -458,7 +513,6 @@ export default function Home() {
         setSelectedQuestionnaire(null);
         setPdfToken(undefined);
         setExperience(null);
-        setSelectedCounselorId(null);
         setStep('intro');
     };
 
@@ -601,7 +655,7 @@ export default function Home() {
                             questionnaireName={selectedQuestionnaire?.name}
                             onBack={goBack}
                             onContinue={() => {
-                                void continueAfterCounselorSelection();
+                                void proceedAfterCounselor(selectedQuestionnaire, scores);
                             }}
                         />
                     )}
@@ -799,10 +853,7 @@ export default function Home() {
                                         {t('farewell.feedback')}
                                     </a>
                                     <button
-                                        onClick={() => {
-                                            setSelectedCounselorId(null);
-                                            setStep('intro');
-                                        }}
+                                        onClick={() => setStep('intro')}
                                         className="w-full py-3.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded-md transition-colors"
                                     >
                                         {t('farewell.home')}

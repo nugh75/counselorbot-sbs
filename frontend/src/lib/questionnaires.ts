@@ -181,3 +181,10 @@ export const QUESTIONNAIRE_LIST = Object.values(QUESTIONNAIRES);
 export function getQuestionnaire(id: QuestionnaireType): QuestionnaireConfig {
     return QUESTIONNAIRES[id];
 }
+
+// Instruments whose site profile can be uploaded as PDF instead of typing the scores.
+const PROFILE_UPLOAD_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'QPCS', 'QPCC', 'QAP'];
+
+export function supportsProfileUpload(id: QuestionnaireType): boolean {
+    return PROFILE_UPLOAD_QUESTIONNAIRES.includes(id);
+}
