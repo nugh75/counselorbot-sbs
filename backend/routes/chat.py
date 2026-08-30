@@ -18,6 +18,7 @@ from ..anonymous_codes import code_for_identity
 from ..ai_service import AIService, AIError
 from .. import pii
 from ..api_models import ChatRequest, QsaAuditRequest, TTSRequest
+from ..diagram_blocks import strip_for_speech
 from ..memory_service import session_memory
 from ..strategy_memory import shared_response_memory
 from ..skills import engine as skills_engine
@@ -1121,7 +1122,9 @@ def _split_text_for_tts(text: str, max_len: int = TTS_CHUNK_MAX_CHARS) -> list[s
 @router.post("/tts")
 async def text_to_speech(request: TTSRequest, db: Session = Depends(get_db)):
     try:
-        clean_text = strip_markdown(request.text)
+        # I blocchi ```diagram sono esclusivamente visivi e non entrano nel TTS.
+        spoken = strip_for_speech(request.text, lang=(request.voice or 'it')[:2])
+        clean_text = strip_markdown(spoken)
 
         voice = request.voice
         if request.counselor_id:

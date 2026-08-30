@@ -13,10 +13,13 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
 from . import database, models
 from .api_models import ChatRequest
 from .chat_logic import _ensure_questionnaire_guided_steps, strip_markdown
+from .diagram_blocks import extract as extract_diagrams
+from .diagram_render import DiagramSpecError, render as render_diagram
 from .guided_step_label_i18n import resolve_step_label
 from .qsa_extractor import QUESTIONNAIRE_FACTORS
 from . import telegram_bot
@@ -508,6 +511,27 @@ def _step_keyboard(language: str) -> list[list[dict]]:
     ]]
 
 
+async def _send_answer(chat_id: int, text: str, language: str,
+                       keyboard: list[list[dict]] | None = None) -> None:
+    """Manda la risposta del modello e, se contiene diagrammi, le immagini PNG.
+
+    Telegram non ha un tema per le immagini caricate: il PNG usa sempre la
+    palette chiara, con il titolo dentro l'immagine perche' qui non c'e' la card
+    che lo mostra accanto.
+    """
+    cleaned, specs = extract_diagrams(text)
+    await telegram_bot.send_message(chat_id, cleaned or text, keyboard=keyboard)
+    for spec in specs:
+        try:
+            image = await run_in_threadpool(
+                render_diagram, spec, theme="light", fmt="png", embed_title=True, lang=language,
+            )
+        except DiagramSpecError as exc:
+            logger.info("Diagramma non inviato su Telegram: %s", exc)
+            continue
+        await telegram_bot.send_photo(chat_id, image, caption=spec.title)
+
+
 async def _run_step(db: Session, state: models.TelegramConversationState, step: models.GuidedStep) -> None:
     state.state = "in_step"
     state.step_id = step.id
@@ -522,7 +546,7 @@ async def _run_step(db: Session, state: models.TelegramConversationState, step: 
     if text is None:
         await telegram_bot.send_message(state.telegram_chat_id, _t("ai_error", state.language), keyboard=_step_keyboard(state.language))
         return
-    await telegram_bot.send_message(state.telegram_chat_id, text, keyboard=_step_keyboard(state.language))
+    await _send_answer(state.telegram_chat_id, text, state.language, _step_keyboard(state.language))
 
 
 async def _start_flow(db: Session, state: models.TelegramConversationState) -> None:
@@ -692,7 +716,7 @@ async def _handle_free_text(db: Session, state: models.TelegramConversationState
     if response is None:
         await telegram_bot.send_message(state.telegram_chat_id, _t("ai_error", state.language), keyboard=_step_keyboard(state.language))
         return
-    await telegram_bot.send_message(state.telegram_chat_id, response, keyboard=_step_keyboard(state.language))
+    await _send_answer(state.telegram_chat_id, response, state.language, _step_keyboard(state.language))
 
 
 async def _do_link(db: Session, sender: dict, chat_id: int, language: str,

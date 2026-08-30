@@ -69,12 +69,41 @@ WEB_LOOKUP_INSTRUCTIONS_EN = """## Factual answer from public sources
 """
 
 
+CONCEPT_DIAGRAM_INSTRUCTIONS_EN = """## Concept diagram
+
+- Draw only when the answer holds parts in relation: a process, a loop that
+  feeds itself, linked concepts, a whole split into parts. Never to summarise
+  prose, and never two turns in a row.
+- Always draw when the student asks for a scheme, a map or a diagram.
+- The diagram supports the explanation: keep answering in words too.
+- Emit one fenced block marked `diagram` holding a single JSON object:
+
+```diagram
+{"type":"cycle","title":"Circolo dell'evitamento",
+ "nodes":[{"id":"a","label":"Compito difficile"},
+          {"id":"b","label":"Ansia","accent":true},
+          {"id":"c","label":"Rimando"}],
+ "edges":[{"from":"a","to":"b","label":"innesca"},
+          {"from":"b","to":"c"},{"from":"c","to":"a"}]}
+```
+
+- `type`: `flow`, `cycle`, `relation` or `hierarchy`.
+- 2-8 nodes, at most 12 edges; node label <= 40 chars, edge label <= 24,
+  title <= 80.
+- `accent: true` on at most one node: the point the student can act on.
+- Labels in the student's language, in the student's own words; never scores,
+  factor codes or identifiers.
+- Data only: no colours, no coordinates, no rendering syntax.
+"""
+
+
 SKILL_INSTRUCTIONS_I18N = {
     "certified-advice": {"en": CERTIFIED_ADVICE_INSTRUCTIONS_EN},
     "profile-wayfinder": {"en": PROFILE_WAYFINDER_INSTRUCTIONS_EN},
     "reading-guide": {"en": READING_GUIDE_INSTRUCTIONS_EN},
     "profile-comparison": {"en": PROFILE_COMPARISON_INSTRUCTIONS_EN},
     "web-lookup": {"en": WEB_LOOKUP_INSTRUCTIONS_EN},
+    "concept-diagram": {"en": CONCEPT_DIAGRAM_INSTRUCTIONS_EN},
 }
 
 CERTIFIED_ADVICE_POLICY_MARKER = "skills_certified_advice_policy_v1"
@@ -208,6 +237,24 @@ SKILL_SEEDS = [
         "slot": "directive_tail",
         "max_chars": 1800,
         "sort_order": 60,
+        "is_active": True,
+        "bind": True,
+    },
+    {
+        "slug": "concept-diagram",
+        "name": "Diagramma concettuale",
+        "description": (
+            "Disegna un diagramma quando la risposta contiene un processo, un ciclo, "
+            "una gerarchia o concetti in relazione, o quando lo studente chiede uno schema."
+        ),
+        "instructions_i18n": SKILL_INSTRUCTIONS_I18N["concept-diagram"],
+        "conditions": {},
+        "handler": None,
+        "handler_params": {},
+        "routing": "optional",
+        "slot": "directive_tail",
+        "max_chars": 1200,
+        "sort_order": 35,
         "is_active": True,
         "bind": True,
     },
