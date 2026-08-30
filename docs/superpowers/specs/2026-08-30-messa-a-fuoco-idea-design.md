@@ -1,8 +1,8 @@
-# Messa a fuoco di un'idea — design
+# Idea — strumento di messa a fuoco
 
 Data: 2026-08-30
 Branch: `feature/idea-focus`
-Codice strumento proposto: `IDEA`
+Strumento: `IDEA` — nome visibile in tutte le lingue: Idea
 
 ## Problema
 
@@ -213,10 +213,25 @@ Docker: rebuild backend e frontend, poi stato container e log.
 - Telegram: lo strumento nasce sul web. La patch è già server-side, quindi
   l'estensione resta possibile senza rifare niente.
 
-## Punti ancora aperti
+## Nome e collocazione (fissati 2026-08-30)
 
-1. Nome dello strumento verso lo studente. `IDEA` è il codice; la parola
-   italiana visibile va scelta e fissata nelle sei lingue insieme alle altre
-   (profilo, taccuino, libretto, portfolio).
-2. Se la variante ricerca debba stare sotto `/docente` invece che nella home
-   degli strumenti.
+Lo strumento si chiama **Idea**, sia come codice (`IDEA`) sia verso l'utente.
+Nessun secondo nome: la parola è già la cosa, e regge in tutte e sei le lingue
+senza traduzione forzata. Voci nuove del glossario di `CONTEXT.md`:
+
+| concetto | it | en | es | fr | de | sv |
+|---|---|---|---|---|---|---|
+| lo strumento | Idea | Idea | Idea | Idée | Idee | Idé |
+| l'artefatto che produce | mappa | map | mapa | carte | Karte | karta |
+
+- **Idea** = strumento a chat libera che mette a fuoco un'idea ancora informe.
+  Non è un questionario e non produce punteggi.
+- **mappa** = l'artefatto della sessione Idea (`IdeaMapRevision`), una sola per
+  sessione, che cresce a ogni turno. Distinta da *profilo* (esiti), *taccuino*
+  (auto-descrizione), *libretto* (riflessione per strumento) e *portfolio*
+  (lavori). Una mappa finita può diventare una voce del portfolio.
+
+Tutte e tre le varianti stanno **nella home degli strumenti**, non sotto
+`/docente`: la variante ricerca si offre a chi ha il ruolo docente o
+ricercatore, ma dalla stessa porta delle altre. `/docente` resta la dashboard
+di classi e piani.
