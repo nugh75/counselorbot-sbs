@@ -5058,6 +5058,52 @@ def test_skills_handler_can_be_cleared():
     assert updated.json()["handler"] is None
 
 
+def test_skills_api_rejects_non_english_instructions():
+    response = client.post("/admin/skills", json={
+        "slug": "smoke-non-english-instructions",
+        "name": "Invalid localized instructions",
+        "instructions_i18n": {"it": "Istruzione non ammessa"},
+    })
+    assert response.status_code == 400, response.text
+    assert "English only" in response.json()["detail"]
+
+
+def test_skills_english_policy_canonicalizes_existing_rows_once():
+    from backend.skills_seed import (
+        ENGLISH_SKILL_INSTRUCTIONS_POLICY_MARKER,
+        apply_english_skill_instructions_policy,
+        seed_skills,
+    )
+
+    db = _TestSession()
+    custom_slug = "smoke-custom-english-policy"
+    try:
+        seed_skills(db)
+        db.query(models.Config).filter_by(key=ENGLISH_SKILL_INSTRUCTIONS_POLICY_MARKER).delete()
+        certified = db.query(models.Skill).filter_by(slug="certified-advice").one()
+        certified.instructions_i18n = {"it": "vecchia istruzione", "en": "stale English"}
+        custom = db.query(models.Skill).filter_by(slug=custom_slug).first()
+        if custom is None:
+            custom = models.Skill(
+                slug=custom_slug,
+                name="Custom English policy",
+                instructions_i18n={"en": "Keep this contract", "fr": "Supprimer ceci"},
+            )
+            db.add(custom)
+        db.commit()
+
+        assert apply_english_skill_instructions_policy(db) is True
+        assert apply_english_skill_instructions_policy(db) is False
+        assert set(certified.instructions_i18n) == {"en"}
+        assert "Student advice contract" in certified.instructions_i18n["en"]
+        db.refresh(custom)
+        assert custom.instructions_i18n == {"en": "Keep this contract"}
+    finally:
+        db.query(models.Skill).filter_by(slug=custom_slug).delete()
+        db.commit()
+        db.close()
+
+
 def test_skills_policy_seeds_four_distinct_behaviours():
     """Il seed abilita i quattro comportamenti, con una sola fonte di consigli."""
     from backend.skills_seed import SEEDED_INSTRUMENTS, seed_skills
@@ -5075,9 +5121,9 @@ def test_skills_policy_seeds_four_distinct_behaviours():
     assert by_slug["certified-advice"]["is_active"] is True
     assert by_slug["certified-advice"]["routing"] == "primary"
     assert by_slug["certified-advice"]["status"] == "published"
-    instructions = by_slug["certified-advice"]["instructions_i18n"]["it"]
-    assert "azione concreta" in instructions
-    assert "non forzare" in instructions
+    instructions = by_slug["certified-advice"]["instructions_i18n"]["en"]
+    assert "concrete, bounded and verifiable action" in instructions
+    assert "do not force advice" in instructions
 
     for questionnaire_type in SEEDED_INSTRUMENTS:
         mapped = client.get(
@@ -5364,7 +5410,7 @@ def test_skills_advice_policy_migrates_an_existing_installation_once():
 
     listed = {skill["slug"]: skill for skill in client.get("/admin/skills").json()}
     assert listed["approved-strategies"]["is_active"] is False
-    assert "azione concreta" in listed["certified-advice"]["instructions_i18n"]["it"]
+    assert "concrete, bounded and verifiable action" in listed["certified-advice"]["instructions_i18n"]["en"]
     for questionnaire_type in SEEDED_INSTRUMENTS:
         entries = client.get(
             "/admin/skills/step-map",

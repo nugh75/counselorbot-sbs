@@ -829,7 +829,7 @@ class Skill(Base):
     """Unita' dichiarativa iniettabile nel prompt della chat.
 
     La definizione e' editabile dall'admin: condizioni di attivazione,
-    istruzioni multilingua, handler Python opzionale per il materiale
+    istruzioni in inglese, handler Python opzionale per il materiale
     recuperato. Entra in chat solo se `status == "published"` e `is_active`,
     ed e' agganciata allo strumento/step da `GuidedStepSkill`.
     """
@@ -841,7 +841,7 @@ class Skill(Base):
     name = Column(String, nullable=False)
     # Letta dal router LLM: descrive quando la skill e' utile.
     description = Column(Text, nullable=True)
-    instructions_i18n = Column(JSON, nullable=True)   # {"it": "...", "en": "..."}
+    instructions_i18n = Column(JSON, nullable=True)   # English-only contract: {"en": "..."}
     conditions = Column(JSON, nullable=True)          # gating dichiarativo
     handler = Column(String, nullable=True)           # nome whitelisted
     handler_params = Column(JSON, nullable=True)

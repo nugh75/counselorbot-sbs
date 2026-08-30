@@ -133,7 +133,7 @@ def test_engine_on_uses_certified_advice_only():
         assert on_certified_ids, "nessuna strategia certificata recuperata: test cieco"
         assert "## Strategie di supporto approvate" in off_text
         assert "## Strategie di supporto approvate" not in on_text
-        assert "## Contratto per i consigli allo studente" in "\n".join(
+        assert "## Student advice contract" in "\n".join(
             on_blocks["directive_tail"]
         )
         assert "[CERTIFIED_STRATEGIES]" in on_text

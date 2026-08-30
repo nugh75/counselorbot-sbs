@@ -1,5 +1,10 @@
 # Skills Engine Implementation Plan
 
+> **Aggiornamento 2026-08-30:** il contratto linguistico originario è stato
+> sostituito: le istruzioni delle skill sono archiviate, validate e iniettate
+> esclusivamente in inglese (`{"en": ...}`). Gli esempi multilingua sottostanti
+> restano documentazione storica del piano, non descrivono il comportamento live.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Sostituire il suggerimento di strategie hardcoded in `chat_logic` con un motore di skill dichiarative, editabili dall'admin, agganciabili agli step del percorso guidato e selezionabili da regole più un router LLM.
