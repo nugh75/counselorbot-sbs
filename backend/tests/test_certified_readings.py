@@ -23,6 +23,7 @@ from backend import database, models
 from backend.certified_reading_seed import SEED_CERTIFIED_READINGS, seed_certified_readings
 from backend.certified_reading_service import certified_reading_memory
 from backend.reading_audience import band_from_age, band_from_text, most_protective, resolve_audience_band
+from backend.reading_frame import READING_FRAME, frame
 from backend.reading_themes import READING_THEMES, themes_from_factors, themes_from_text
 from backend.reading_verification import verify_reading
 from backend.skills import handlers
@@ -375,6 +376,52 @@ def test_a_synopsis_without_provenance_cannot_be_certified():
     _guard_certification(row)  # con la fonte dichiarata passa
 
 
+# --- cornice del blocco ------------------------------------------------------
+
+def test_the_frame_speaks_the_language_of_the_turn():
+    db = _TestSession()
+    try:
+        _reading(db, "cornice", synopsis_i18n={"en": "A man looks back on his life."},
+                 synopsis_source={"source": "wikipedia", "url": "https://en.wikipedia.org/wiki/X"},
+                 why_i18n={"it": "perche' si'", "en": "because it fits"})
+        out = certified_reading_memory.retrieve(db, themes={"ansia-e-prestazione"}, language="en")
+        block = certified_reading_memory.render_context(out, "en")
+        assert "What it is about: A man looks back" in block
+        assert "Why: because it fits" in block
+        assert "Approved catalogue" in block
+        # Il tag resta un marcatore per il motore, non una frase da tradurre.
+        assert "[CERTIFIED_READINGS]" in block
+        assert "Di cosa parla" not in block and "Perche'" not in block
+
+        italian = certified_reading_memory.render_context(
+            certified_reading_memory.retrieve(db, themes={"ansia-e-prestazione"}, language="it"), "it")
+        assert "Perche': perche' si'" in italian
+    finally:
+        db.query(models.CertifiedReading).delete()
+        db.commit(); db.close()
+
+
+def test_every_interface_language_has_a_complete_frame():
+    expected = set(READING_FRAME["en"])
+    for language in ("it", "en", "es", "fr", "de", "sv"):
+        missing = expected - set(READING_FRAME[language])
+        assert not missing, f"{language} senza {missing}"
+        assert all(READING_FRAME[language][key].strip() for key in expected), language
+    # Una lingua non prevista ricade sull'inglese, non su una lingua a caso.
+    assert frame("pt") is READING_FRAME["en"]
+
+
+def test_the_absence_of_sources_is_declared_in_the_turn_language():
+    db = _TestSession()
+    try:
+        ctx = _ctx(db=db, language="en", message="suggest me a reading",
+                   component_flags={"knowledge": True})
+        assert "No identifiable source" in handlers.reading_sources(ctx, {}).text
+    finally:
+        db.query(models.CertifiedReading).delete()
+        db.commit(); db.close()
+
+
 def test_verification_admits_it_cannot_check_a_film():
     result = verify_reading({"title": "Il posto delle fragole", "kind": "film", "year": 1957})
     assert result["match"] is None
@@ -392,5 +439,8 @@ if __name__ == "__main__":
         except AssertionError as exc:
             failed += 1
             print(f"FAIL {test.__name__}: {exc}")
+        except Exception as exc:  # un errore non-assert non deve interrompere la suite
+            failed += 1
+            print(f"ERROR {test.__name__}: {type(exc).__name__}: {exc}")
     print(f"\n{len(tests) - failed}/{len(tests)} passed")
     raise SystemExit(1 if failed else 0)
