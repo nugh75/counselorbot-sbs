@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from .. import auth, database, models, schemas
 from ..reading_themes import READING_THEMES
 from ..reading_verification import verify_reading
+from .. import web_lookup
 
 router = APIRouter()
 get_db = database.get_db
@@ -49,6 +50,12 @@ def _guard_certification(row: models.CertifiedReading) -> None:
         raise HTTPException(status_code=400, detail="Serve il motivo della raccomandazione in italiano o inglese")
     if row.is_sensitive and not (row.content_warning or "").strip():
         raise HTTPException(status_code=400, detail="Materiale sensibile senza avvertenza: aggiungi content_warning")
+    synopsis = row.synopsis_i18n or {}
+    if any((text or "").strip() for text in synopsis.values()):
+        # Una sinossi arriva da qualche parte: senza URL nessuno puo' risalire a
+        # quale fonte l'ha scritta ne' quando e' stata presa.
+        if not str((row.synopsis_source or {}).get("url") or "").strip():
+            raise HTTPException(status_code=400, detail="Sinossi senza provenienza: aggiungi synopsis_source.url")
 
 
 @router.get("/admin/certified-readings", response_model=List[schemas.CertifiedReadingResponse])
@@ -130,6 +137,31 @@ async def verify_certified_reading(
     db.commit()
     db.refresh(row)
     return row
+
+
+@router.post("/admin/certified-readings/{reading_id}/synopsis-draft")
+async def draft_certified_reading_synopsis(
+    reading_id: int,
+    lang: str = "it",
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Propone una sinossi presa da una fonte pubblica, senza salvarla.
+
+    La scrittura resta un gesto dell'admin: la bozza torna al pannello con la
+    sua provenienza, e da li' viene corretta e approvata.
+    """
+    row = _fetch(db, reading_id)
+    result = web_lookup.synopsis_for({
+        "title": row.title, "original_title": row.original_title,
+        "kind": row.kind, "creators": row.creators or [],
+    }, lang=lang)
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Nessuna fonte affidabile ha una voce per questo titolo: scrivi la sinossi a mano",
+        )
+    return result.as_dict()
 
 
 @router.delete("/admin/certified-readings/{reading_id}")

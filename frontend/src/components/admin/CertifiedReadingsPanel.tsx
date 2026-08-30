@@ -12,6 +12,15 @@ const INSTRUMENTS = ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP', 'SAVICKAS'] a
 
 interface Theme { code: string; label: string; factors: string[]; }
 
+/** Provenienza della sinossi: senza URL la voce non puo' essere certificata. */
+interface SynopsisSource {
+    source?: string;
+    url?: string;
+    retrieved_at?: string;
+    license?: string;
+    approved_by?: string | null;
+}
+
 interface Reading {
     id: number;
     slug: string;
@@ -29,6 +38,8 @@ interface Reading {
     available_languages: string[] | null;
     summary_i18n: Record<string, string> | null;
     why_i18n: Record<string, string> | null;
+    synopsis_i18n: Record<string, string> | null;
+    synopsis_source: SynopsisSource | null;
     is_sensitive: boolean;
     content_warning: string | null;
     where_to_find: string | null;
@@ -46,6 +57,7 @@ type FormState = {
     themes: string[]; factor_codes: string; questionnaire_types: string[];
     audience: string[]; available_languages: string[];
     summary_i18n: Record<string, string>; why_i18n: Record<string, string>;
+    synopsis_i18n: Record<string, string>; synopsis_source: SynopsisSource;
     is_sensitive: boolean; content_warning: string; where_to_find: string;
     source_reference: string; certified_by: string; status: string;
     is_active: boolean; sort_order: string;
@@ -57,6 +69,7 @@ const EMPTY: FormState = {
     themes: [], factor_codes: '', questionnaire_types: [],
     audience: ['secondaria'], available_languages: ['it'],
     summary_i18n: {}, why_i18n: {},
+    synopsis_i18n: {}, synopsis_source: {},
     is_sensitive: false, content_warning: '', where_to_find: '',
     source_reference: '', certified_by: '', status: 'draft',
     is_active: true, sort_order: '0',
@@ -75,6 +88,7 @@ export function CertifiedReadingsPanel() {
     const [lang, setLang] = useState<Lang>('it');
     const [saving, setSaving] = useState(false);
     const [verifyingId, setVerifyingId] = useState<number | null>(null);
+    const [fetchingSynopsis, setFetchingSynopsis] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const refresh = useCallback(async () => {
@@ -120,6 +134,8 @@ export function CertifiedReadingsPanel() {
             available_languages: row.available_languages ?? [],
             summary_i18n: row.summary_i18n ?? {},
             why_i18n: row.why_i18n ?? {},
+            synopsis_i18n: row.synopsis_i18n ?? {},
+            synopsis_source: row.synopsis_source ?? {},
             is_sensitive: row.is_sensitive,
             content_warning: row.content_warning ?? '',
             where_to_find: row.where_to_find ?? '',
@@ -158,6 +174,8 @@ export function CertifiedReadingsPanel() {
             available_languages: form.available_languages,
             summary_i18n: form.summary_i18n,
             why_i18n: form.why_i18n,
+            synopsis_i18n: form.synopsis_i18n,
+            synopsis_source: Object.keys(form.synopsis_source).length ? form.synopsis_source : null,
             is_sensitive: form.is_sensitive,
             content_warning: form.content_warning.trim() || null,
             where_to_find: form.where_to_find.trim() || null,
@@ -203,6 +221,35 @@ export function CertifiedReadingsPanel() {
             console.error('Failed to verify reading', e);
         } finally {
             setVerifyingId(null);
+        }
+    };
+
+    /** Chiede una bozza di sinossi alle fonti; non salva nulla: l'admin approva a mano. */
+    const fetchSynopsis = async () => {
+        if (typeof editingId !== 'number') return;
+        setFetchingSynopsis(true);
+        setError(null);
+        try {
+            const res = await fetch(`/api/admin/certified-readings/${editingId}/synopsis-draft?lang=${lang}`, { method: 'POST' });
+            const payload = await res.json().catch(() => null);
+            if (!res.ok || !payload?.text) {
+                setError(payload?.detail ?? t('admin.readings.synopsisNotFound'));
+                return;
+            }
+            setForm((prev) => ({
+                ...prev,
+                synopsis_i18n: { ...prev.synopsis_i18n, [lang]: payload.text },
+                synopsis_source: {
+                    source: payload.source, url: payload.url,
+                    retrieved_at: payload.retrieved_at, license: payload.license,
+                    approved_by: null,
+                },
+            }));
+        } catch (e) {
+            console.error('Failed to fetch synopsis draft', e);
+            setError(t('admin.readings.synopsisNotFound'));
+        } finally {
+            setFetchingSynopsis(false);
         }
     };
 
@@ -339,6 +386,38 @@ export function CertifiedReadingsPanel() {
                     <textarea className={areaCls} value={form.why_i18n[lang] ?? ''}
                         onChange={(e) => setForm({ ...form, why_i18n: { ...form.why_i18n, [lang]: e.target.value } })} />
                 </label>
+            </div>
+
+            {/* Sinossi: di cosa parla l'opera. Viene da una fonte, e la fonte si dichiara. */}
+            <div className="mt-3 rounded-md border border-slate-200 bg-white/70 p-3">
+                <div className="flex items-start justify-between gap-2">
+                    <div className="text-xs font-medium text-slate-500">{t('admin.readings.synopsis')}</div>
+                    {typeof editingId === 'number' && (
+                        <button type="button" onClick={() => void fetchSynopsis()} disabled={fetchingSynopsis}
+                            className="inline-flex h-7 items-center gap-1 rounded-md border border-slate-200 bg-white px-2 text-[11px] font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50">
+                            <Search className="h-3.5 w-3.5" />{t('admin.readings.synopsisFetch')}
+                        </button>
+                    )}
+                </div>
+                <p className="mt-1 text-[11px] text-slate-400">{t('admin.readings.synopsisHint')}</p>
+                <textarea className={`${areaCls} mt-2`} value={form.synopsis_i18n[lang] ?? ''}
+                    onChange={(e) => setForm({ ...form, synopsis_i18n: { ...form.synopsis_i18n, [lang]: e.target.value } })} />
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.readings.synopsisSource')}
+                        <input className={inputCls} value={form.synopsis_source.source ?? ''}
+                            onChange={(e) => setForm({ ...form, synopsis_source: { ...form.synopsis_source, source: e.target.value } })} />
+                    </label>
+                    <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.readings.synopsisUrl')}
+                        <input className={inputCls} value={form.synopsis_source.url ?? ''}
+                            onChange={(e) => setForm({ ...form, synopsis_source: { ...form.synopsis_source, url: e.target.value } })} />
+                    </label>
+                </div>
+                {form.synopsis_source.retrieved_at && (
+                    <p className="mt-1 text-[11px] text-slate-400">
+                        {t('admin.readings.synopsisRetrieved')}: {form.synopsis_source.retrieved_at}
+                        {form.synopsis_source.license ? ` — ${form.synopsis_source.license}` : ''}
+                    </p>
+                )}
             </div>
 
             {/* Materiale sensibile */}

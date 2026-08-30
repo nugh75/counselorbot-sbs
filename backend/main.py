@@ -477,6 +477,10 @@ def _seed_and_migrate():
                 "ADD COLUMN source VARCHAR NOT NULL DEFAULT 'manual'",
                 "ADD COLUMN ext_username VARCHAR",
             ],
+            "certified_readings": [
+                "ADD COLUMN synopsis_i18n JSON",
+                "ADD COLUMN synopsis_source JSON",
+            ],
         }.items():
             for clause in columns:
                 try:

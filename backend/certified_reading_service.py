@@ -26,7 +26,10 @@ from . import models
 from .memory_embeddings import memory_embedder
 from .reading_audience import audience_allows
 
-MAX_READING_CONTEXT_CHARS = 1600
+MAX_READING_CONTEXT_CHARS = 2000
+# La sinossi dice di cosa parla l'opera. Entra corta: il blocco deve restare
+# leggibile accanto a "perche'" e all'avvertenza.
+MAX_SYNOPSIS_CHARS = 220
 
 KIND_LABELS = {
     "essay": {"it": "saggio", "en": "essay"},
@@ -135,6 +138,7 @@ class CertifiedReadingMemory:
             "themes": sorted(matched_themes) or list(row.themes or []),
             "summary": self._i18n(row.summary_i18n, language),
             "why": self._i18n(row.why_i18n, language),
+            "synopsis": self._clip(self._i18n(row.synopsis_i18n, language), MAX_SYNOPSIS_CHARS),
             "languages": list(row.available_languages or []),
             "where": row.where_to_find or "",
             "audience": list(row.audience or []),
@@ -158,6 +162,8 @@ class CertifiedReadingMemory:
             if entry["year"]:
                 head += f" ({entry['year']})"
             lines.append(head)
+            if entry.get("synopsis"):
+                lines.append(f"    Di cosa parla: {entry['synopsis']}")
             if entry["why"]:
                 lines.append(f"    Perche': {entry['why']}")
             elif entry["summary"]:
@@ -169,6 +175,14 @@ class CertifiedReadingMemory:
             if entry["warning"]:
                 lines.append(f"    Avvertenza da riportare: {entry['warning']}")
         return "\n".join(lines)[:MAX_READING_CONTEXT_CHARS]
+
+    def _clip(self, text: str, limit: int) -> str:
+        """Taglia sull'ultimo spazio utile, per non troncare a meta' parola."""
+        text = (text or "").strip()
+        if len(text) <= limit:
+            return text
+        cut = text[:limit].rsplit(" ", 1)[0].rstrip(" ,;:")
+        return f"{cut}..."
 
     def _i18n(self, data, language: str) -> str:
         if not isinstance(data, dict):

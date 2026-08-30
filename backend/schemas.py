@@ -1050,6 +1050,8 @@ class CertifiedReadingBase(BaseModel):
     available_languages: Optional[List[str]] = None
     summary_i18n: Optional[Dict[str, str]] = None
     why_i18n: Optional[Dict[str, str]] = None
+    synopsis_i18n: Optional[Dict[str, str]] = None
+    synopsis_source: Optional[Dict[str, Any]] = None
     is_sensitive: bool = False
     content_warning: Optional[str] = None
     where_to_find: Optional[str] = None
@@ -1079,6 +1081,8 @@ class CertifiedReadingUpdate(BaseModel):
     available_languages: Optional[List[str]] = None
     summary_i18n: Optional[Dict[str, str]] = None
     why_i18n: Optional[Dict[str, str]] = None
+    synopsis_i18n: Optional[Dict[str, str]] = None
+    synopsis_source: Optional[Dict[str, Any]] = None
     is_sensitive: Optional[bool] = None
     content_warning: Optional[str] = None
     where_to_find: Optional[str] = None

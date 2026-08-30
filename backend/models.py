@@ -686,6 +686,9 @@ class CertifiedReading(Base):
     # {lang: testo} per it/en/es/fr/de/sv
     summary_i18n = Column(JSON, nullable=True)        # cosa aiuta a capire, una frase
     why_i18n = Column(JSON, nullable=True)            # perche' e' pertinente a quel tema
+    synopsis_i18n = Column(JSON, nullable=True)       # di cosa parla l'opera, non a cosa serve
+    # provenienza della sinossi: {"source", "url", "retrieved_at", "license", "approved_by"}
+    synopsis_source = Column(JSON, nullable=True)
 
     is_sensitive = Column(Boolean, nullable=False, default=False)
     content_warning = Column(Text, nullable=True)     # obbligatorio quando is_sensitive

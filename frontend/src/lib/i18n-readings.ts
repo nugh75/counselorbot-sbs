@@ -48,6 +48,13 @@ export const readingsIt: ReadingsDict = {
     'admin.readings.cancel': 'Annulla',
     'admin.readings.confirmDelete': 'Eliminare questa voce dal catalogo?',
     'admin.readings.sensitiveHint': 'Il materiale sensibile raggiunge lo studente solo se la configurazione readings_allow_sensitive e accesa e se e lui a nominare quel tema.',
+    'admin.readings.synopsis': 'Sinossi (di cosa parla l opera)',
+    'admin.readings.synopsisHint': 'Racconta il contenuto dell opera, non a cosa serve. Per certificarla serve l URL della fonte.',
+    'admin.readings.synopsisFetch': 'Recupera dalla fonte',
+    'admin.readings.synopsisSource': 'Fonte della sinossi',
+    'admin.readings.synopsisUrl': 'URL della fonte',
+    'admin.readings.synopsisRetrieved': 'Recuperata il',
+    'admin.readings.synopsisNotFound': 'Nessuna fonte affidabile ha una voce per questo titolo: scrivi la sinossi a mano.',
 };
 
 export const readingsEn: ReadingsDict = {
@@ -94,6 +101,13 @@ export const readingsEn: ReadingsDict = {
     'admin.readings.cancel': 'Cancel',
     'admin.readings.confirmDelete': 'Delete this entry from the catalog?',
     'admin.readings.sensitiveHint': 'Sensitive material reaches a student only when readings_allow_sensitive is on and the student names that theme.',
+    'admin.readings.synopsis': 'Synopsis (what the work is about)',
+    'admin.readings.synopsisHint': 'Describes the content of the work, not what it is useful for. The source URL is required to certify it.',
+    'admin.readings.synopsisFetch': 'Fetch from source',
+    'admin.readings.synopsisSource': 'Synopsis source',
+    'admin.readings.synopsisUrl': 'Source URL',
+    'admin.readings.synopsisRetrieved': 'Retrieved on',
+    'admin.readings.synopsisNotFound': 'No reliable source has an entry for this title: write the synopsis by hand.',
 };
 
 export const readingsEs: ReadingsDict = {
@@ -140,6 +154,13 @@ export const readingsEs: ReadingsDict = {
     'admin.readings.cancel': 'Cancelar',
     'admin.readings.confirmDelete': 'Eliminar esta entrada del catalogo?',
     'admin.readings.sensitiveHint': 'El material sensible llega al estudiante solo si readings_allow_sensitive esta activado y es el estudiante quien nombra ese tema.',
+    'admin.readings.synopsis': 'Sinopsis (de que trata la obra)',
+    'admin.readings.synopsisHint': 'Describe el contenido de la obra, no para que sirve. Para certificarla hace falta la URL de la fuente.',
+    'admin.readings.synopsisFetch': 'Recuperar de la fuente',
+    'admin.readings.synopsisSource': 'Fuente de la sinopsis',
+    'admin.readings.synopsisUrl': 'URL de la fuente',
+    'admin.readings.synopsisRetrieved': 'Recuperada el',
+    'admin.readings.synopsisNotFound': 'Ninguna fuente fiable tiene una entrada para este titulo: escribe la sinopsis a mano.',
 };
 
 export const readingsFr: ReadingsDict = {
@@ -186,6 +207,13 @@ export const readingsFr: ReadingsDict = {
     'admin.readings.cancel': 'Annuler',
     'admin.readings.confirmDelete': 'Supprimer cette entree du catalogue ?',
     'admin.readings.sensitiveHint': 'Le materiel sensible n atteint l eleve que si readings_allow_sensitive est active et si c est l eleve qui nomme ce theme.',
+    'admin.readings.synopsis': 'Synopsis (de quoi parle l oeuvre)',
+    'admin.readings.synopsisHint': 'Decrit le contenu de l oeuvre, pas son utilite. L URL de la source est requise pour la certifier.',
+    'admin.readings.synopsisFetch': 'Recuperer depuis la source',
+    'admin.readings.synopsisSource': 'Source du synopsis',
+    'admin.readings.synopsisUrl': 'URL de la source',
+    'admin.readings.synopsisRetrieved': 'Recupere le',
+    'admin.readings.synopsisNotFound': 'Aucune source fiable n a de notice pour ce titre : ecris le synopsis a la main.',
 };
 
 export const readingsDe: ReadingsDict = {
@@ -232,6 +260,13 @@ export const readingsDe: ReadingsDict = {
     'admin.readings.cancel': 'Abbrechen',
     'admin.readings.confirmDelete': 'Diesen Eintrag aus dem Katalog loeschen?',
     'admin.readings.sensitiveHint': 'Sensibles Material erreicht Lernende nur, wenn readings_allow_sensitive aktiv ist und sie dieses Thema selbst nennen.',
+    'admin.readings.synopsis': 'Inhaltsangabe (worum es im Werk geht)',
+    'admin.readings.synopsisHint': 'Beschreibt den Inhalt des Werks, nicht seinen Nutzen. Fuer die Zertifizierung ist die Quellen-URL noetig.',
+    'admin.readings.synopsisFetch': 'Aus der Quelle holen',
+    'admin.readings.synopsisSource': 'Quelle der Inhaltsangabe',
+    'admin.readings.synopsisUrl': 'URL der Quelle',
+    'admin.readings.synopsisRetrieved': 'Abgerufen am',
+    'admin.readings.synopsisNotFound': 'Keine verlaessliche Quelle hat einen Eintrag zu diesem Titel: schreibe die Inhaltsangabe von Hand.',
 };
 
 export const readingsSv: ReadingsDict = {
@@ -278,4 +313,11 @@ export const readingsSv: ReadingsDict = {
     'admin.readings.cancel': 'Avbryt',
     'admin.readings.confirmDelete': 'Ta bort den haer posten fraan katalogen?',
     'admin.readings.sensitiveHint': 'Kaensligt material naar en student bara om readings_allow_sensitive aer paa och studenten sjaelv naemner temat.',
+    'admin.readings.synopsis': 'Synopsis (vad verket handlar om)',
+    'admin.readings.synopsisHint': 'Beskriver verkets innehaall, inte vad det aer bra foer. URL till kaellan kraevs foer att certifiera.',
+    'admin.readings.synopsisFetch': 'Haemta fraan kaellan',
+    'admin.readings.synopsisSource': 'Synopsisens kaella',
+    'admin.readings.synopsisUrl': 'Kaellans URL',
+    'admin.readings.synopsisRetrieved': 'Haemtad den',
+    'admin.readings.synopsisNotFound': 'Ingen paalitlig kaella har en post foer denna titel: skriv synopsis foer hand.',
 };
