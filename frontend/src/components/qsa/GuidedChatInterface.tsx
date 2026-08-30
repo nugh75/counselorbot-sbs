@@ -18,7 +18,9 @@ import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { toast } from '@/components/ui/Toast';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { DiagramBlock } from '@/components/ui/DiagramBlock';
 import { freezeSession, type FrozenSessionDetail } from '@/lib/frozen-session';
+import { splitDiagramContent } from '@/lib/diagram-content';
 
 // --- Types ---
 
@@ -377,6 +379,22 @@ const markdownComponents: Components = {
     li: (props) => <li className="leading-relaxed" {...omitMarkdownNode(props)} />,
     strong: (props) => <strong className="font-semibold text-slate-900" {...omitMarkdownNode(props)} />,
 };
+
+function GuidedMessageContent({ content, locale }: { content: string; locale: string }) {
+    return splitDiagramContent(content).map((segment, index) => (
+        segment.kind === 'diagram' ? (
+            <DiagramBlock key={`diagram-${index}`} spec={segment.spec} locale={locale} />
+        ) : (
+            <ReactMarkdown
+                key={`markdown-${index}`}
+                remarkPlugins={[remarkGfm]}
+                components={markdownComponents}
+            >
+                {segment.content}
+            </ReactMarkdown>
+        )
+    ));
+}
 
 // --- Main Component ---
 
@@ -1387,12 +1405,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                 )}
                                                 {msg.content.trim() ? (
                                                     <div className="min-w-0 max-w-full overflow-x-auto rounded-lg border border-slate-200/80 bg-white">
-                                                        <ReactMarkdown
-                                                            remarkPlugins={[remarkGfm]}
-                                                            components={markdownComponents}
-                                                        >
-                                                            {msg.content}
-                                                        </ReactMarkdown>
+                                                        <GuidedMessageContent content={msg.content} locale={activeLocale} />
                                                     </div>
                                                 ) : !msg.reasoning ? (
                                                     <span className="flex items-center gap-2 text-slate-400 italic">
