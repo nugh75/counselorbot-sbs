@@ -5700,6 +5700,111 @@ def test_skills_step_map_rejects_unknown_skill_without_replacing_map():
     assert after.json() == before.json()
 
 
+def _set_idea_feature(value: str) -> None:
+    db = _TestSession()
+    try:
+        row = db.query(models.Config).filter(models.Config.key == "feature_idea_focus").first()
+        if row is None:
+            db.add(models.Config(key="feature_idea_focus", value=value, description="test"))
+        else:
+            row.value = value
+        db.commit()
+    finally:
+        db.close()
+
+
+def test_idea_map_is_closed_until_the_feature_is_on():
+    _set_idea_feature("false")
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    try:
+        r = client.get("/idea/map", params={"session_id": "idea-off"})
+        assert r.status_code == 404, r.text
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+
+
+def test_idea_map_grows_by_patches_and_keeps_its_stages():
+    _set_idea_feature("true")
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    session_id = "idea-map-round-trip"
+    try:
+        empty = client.get("/idea/map", params={"session_id": session_id})
+        assert empty.status_code == 200, empty.text
+        assert empty.json()["spec"] is None
+        assert empty.json()["missing_roles"] == ["idea", "assumption", "open-question", "step"]
+
+        first = client.post("/idea/map/patch", json={
+            "session_id": session_id,
+            "title": "Tesi sulla dispersione",
+            "patch": {
+                "title": "Tesi sulla dispersione",
+                "add_nodes": [
+                    {"id": "idea", "label": "Tesi sulla dispersione", "role": "idea", "accent": True},
+                    {"id": "a1", "label": "I dati sono accessibili", "role": "assumption"},
+                ],
+                "add_edges": [{"from": "idea", "to": "a1", "kind": "link"}],
+            },
+        })
+        assert first.status_code == 200, first.text
+        assert first.json()["missing_roles"] == ["open-question", "step"]
+
+        second = client.post("/idea/map/patch", json={
+            "session_id": session_id,
+            "patch": {
+                "add_nodes": [
+                    {"id": "q1", "label": "Quale scuola?", "role": "open-question"},
+                    {"id": "s1", "label": "Scrivere l'indice", "role": "step"},
+                ],
+                "add_edges": [{"from": "idea", "to": "q1"}, {"from": "idea", "to": "s1"}],
+            },
+        })
+        assert second.status_code == 200, second.text
+        assert second.json()["complete"] is True
+
+        current = client.get("/idea/map", params={"session_id": session_id})
+        assert [node["id"] for node in current.json()["spec"]["nodes"]] == ["idea", "a1", "q1", "s1"]
+
+        stages = client.get("/idea/map/history", params={"session_id": session_id})
+        assert [row["nodes"] for row in stages.json()] == [2, 4]
+
+        broken = client.post("/idea/map/patch", json={
+            "session_id": session_id,
+            "patch": {"remove": ["idea", "a1", "q1"]},
+        })
+        assert broken.status_code == 422, broken.text
+        after = client.get("/idea/map", params={"session_id": session_id})
+        assert len(after.json()["spec"]["nodes"]) == 4
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        _set_idea_feature("false")
+
+
+def test_idea_map_is_private_to_whoever_drew_it():
+    _set_idea_feature("true")
+    main.app.dependency_overrides[auth.get_identity_view_as] = lambda: _identity(
+        "idea-owner", "owner@example.test", is_researcher=False
+    )
+    try:
+        client.post("/idea/map/patch", json={
+            "session_id": "idea-private",
+            "patch": {
+                "add_nodes": [
+                    {"id": "idea", "label": "La mia idea", "role": "idea", "accent": True},
+                    {"id": "n1", "label": "Un vincolo", "role": "constraint"},
+                ],
+                "add_edges": [{"from": "idea", "to": "n1"}],
+            },
+        })
+        main.app.dependency_overrides[auth.get_identity_view_as] = lambda: _identity(
+            "idea-stranger", "stranger@example.test", is_researcher=False
+        )
+        denied = client.get("/idea/map", params={"session_id": "idea-private", "username": "idea-owner"})
+        assert denied.status_code == 403, denied.text
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        _set_idea_feature("false")
+
+
 def test_frozen_session_round_trip_and_isolation():
     def _as(username: str, email: str):
         main.app.dependency_overrides[auth.get_current_user] = lambda: _identity(

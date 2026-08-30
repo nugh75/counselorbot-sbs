@@ -177,7 +177,7 @@ READING_AND_TRANSLATIONS_POLICY_MARKER = "skills_reading_sources_and_i18n_v1"
 ENGLISH_SKILL_INSTRUCTIONS_POLICY_MARKER = "skills_english_instructions_v1"
 DIAGRAM_EDGE_KINDS_POLICY_MARKER = "skills_diagram_edge_kinds_v1"
 DIAGRAM_ICONS_POLICY_MARKER = "skills_diagram_icons_v1"
-IDEA_FOCUS_POLICY_MARKER = "skills_idea_focus_v1"
+IDEA_FOCUS_POLICY_MARKER = "skills_idea_focus_v2"
 # Contratto del diagramma prima dei tipi di arco: serve a riconoscere le
 # installazioni ancora sul testo di serie, che sono le uniche da aggiornare.
 CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V1_MD5 = "8a3890a53e860a50876501193da698bf"
@@ -451,7 +451,7 @@ def apply_specialized_skills_policy(db) -> bool:
         skill.sort_order = seed["sort_order"]
         skill.is_active = True
         skill.status = "published"
-        for questionnaire_type in seed.get("bind_instruments", SEEDED_INSTRUMENTS):
+        for questionnaire_type in SEEDED_INSTRUMENTS:
             binding = db.query(models.GuidedStepSkill).filter(
                 models.GuidedStepSkill.questionnaire_type == questionnaire_type,
                 models.GuidedStepSkill.step_id == "*",
@@ -620,6 +620,22 @@ def apply_idea_focus_policy(db) -> bool:
             row.value = json.dumps(current + ["IDEA"])
             updated = True
 
+    # `idea-focus` vale solo per Idea: agganciata altrove imporrebbe il
+    # contratto della mappa alle chat degli altri strumenti.
+    skill = db.query(models.Skill).filter(models.Skill.slug == "idea-focus").first()
+    if skill is not None:
+        stray = (
+            db.query(models.GuidedStepSkill)
+            .filter(
+                models.GuidedStepSkill.skill_id == skill.id,
+                models.GuidedStepSkill.questionnaire_type != "IDEA",
+            )
+            .all()
+        )
+        for binding in stray:
+            db.delete(binding)
+            updated = True
+
     db.add(models.Config(
         key=IDEA_FOCUS_POLICY_MARKER,
         value="applied",
@@ -653,7 +669,7 @@ def seed_skills(db) -> bool:
         if not seed.get("bind", True):
             continue
 
-        for questionnaire_type in SEEDED_INSTRUMENTS:
+        for questionnaire_type in seed.get("bind_instruments", SEEDED_INSTRUMENTS):
             exists = (
                 db.query(models.GuidedStepSkill)
                 .filter(
