@@ -91,7 +91,7 @@ class AIService:
             self.monthly_budget_usd = float(self.config.get('monthly_budget_usd', 0) or 0)
         except (TypeError, ValueError):
             self.monthly_budget_usd = 0.0
-        self.budget_fallback_model = (self.config.get('budget_fallback_model') or 'qwen3.5:9b').strip()
+        self.budget_fallback_model = (self.config.get('budget_fallback_model') or 'muse-glimmer:30b').strip()
         self._budget_locked_cache = None  # calcolato pigramente una volta per istanza
         # Contesto ampio: con thinking attivo num_predict puo' essere alto e non deve
         # essere strozzato dal contesto (prompt + reasoning + risposta).
@@ -207,7 +207,7 @@ class AIService:
         Lascia invariati i provider gia' locali. Non tocca il benchmark
         (che usa call_model, percorso esplicito dell'admin)."""
         if provider != 'ollama' and self._budget_is_locked():
-            fallback = self.budget_fallback_model or 'qwen3.5:9b'
+            fallback = self.budget_fallback_model or 'muse-glimmer:30b'
             logger.info(f"Budget mensile superato: fallback {provider}/{model} -> ollama/{fallback}")
             return 'ollama', fallback
         return provider, model
@@ -344,7 +344,7 @@ class AIService:
             "gemini": "gemini-2.0-flash",
             "openrouter": "meta-llama/llama-3.3-70b-instruct:free",
             "mistral": "mistral-small-latest",
-            "ollama": "qwen3.5:9b",
+            "ollama": "muse-glimmer:30b",
             "llamacpp": "default",
             "groq": "llama-3.3-70b-versatile",
             "cerebras": "llama-3.3-70b",

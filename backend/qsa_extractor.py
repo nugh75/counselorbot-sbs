@@ -25,7 +25,7 @@ if not logger.handlers:
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
 DEFAULT_OCR_MODEL = "glm-ocr:latest"
-DEFAULT_PARSER_MODEL = "gemma4:e2b"
+DEFAULT_PARSER_MODEL = "muse-glimmer:30b"
 MAX_PDF_PAGES = 6
 QSA_FACTORS = tuple(f"C{index}" for index in range(1, 8)) + tuple(
     f"A{index}" for index in range(1, 8)
@@ -264,6 +264,9 @@ def _parse_scores(
                     },
                 ],
                 "stream": False,
+                # I modelli locali disponibili ragionano di default: qui l'output
+                # e' vincolato a uno schema JSON, il pensiero non serve e ritarda.
+                "think": False,
                 "format": _scores_schema(expected_factors),
                 "options": {"temperature": 0},
             },

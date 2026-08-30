@@ -3725,8 +3725,10 @@ def test_questionnaire_pdf_download_generates_cached_ai_summary():
 
 
 def test_qsa_extractor_rejects_incomplete_scores():
+    # OCR: modello vision dedicato. Parser: modello di chat locale, con thinking
+    # spento nella chiamata perche' l'output e' vincolato a uno schema JSON.
     assert DEFAULT_OCR_MODEL == "glm-ocr:latest"
-    assert DEFAULT_PARSER_MODEL == "gemma4:e2b"
+    assert DEFAULT_PARSER_MODEL == "muse-glimmer:30b"
     valid = {f"C{index}": index for index in range(1, 8)}
     valid.update({f"A{index}": index for index in range(1, 8)})
     assert _validate_scores(valid) == valid

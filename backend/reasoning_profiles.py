@@ -32,6 +32,10 @@ class ReasoningProfile:
     can_disable: bool         # il reasoning si puo' spegnere via API/prompt
     reasoning_budget: int     # token di ragionamento concessi quando attivo
     answer_headroom: int      # token riservati alla risposta oltre al ragionamento
+    # Alcuni modelli emettono un canale interno ANCHE con il pensiero spento: se
+    # il cap arriva prima che il canale visibile si chiuda, la risposta torna
+    # vuota. Minimo di output da garantire in quel caso. 0 = nessun minimo.
+    no_think_floor: int = 0
 
 
 @dataclass(frozen=True)
@@ -85,6 +89,12 @@ _PATTERNS: list[tuple[re.Pattern, ReasoningProfile]] = [
      ReasoningProfile("openai-o", True, True, 8000, 2000)),
     (re.compile(r"qwen-?3|qwq|qwen.*think"),
      ReasoningProfile("qwen3", True, True, 5000, 1800)),
+    # muse-glimmer (Ollama): ragiona di default e Ollama separa `thinking` da
+    # `content`; `think: false` lo spegne. Misurato ~1200 caratteri di pensiero
+    # su una domanda banale, quindi con num_predict basso la risposta visibile
+    # esce vuota: serve un budget esplicito.
+    (re.compile(r"muse-?glimmer|glimmer"),
+     ReasoningProfile("muse-glimmer", True, True, 4000, 1800, no_think_floor=1800)),
     (re.compile(r"gemini-2\.5|gemini-3|gemini.*think"),
      ReasoningProfile("gemini-thinking", True, True, 6000, 2000)),
     (re.compile(r"claude.*(thinking|3[\.-]7|sonnet-4|opus-4|haiku-4|sonnet-?4|4[\.-]5)"),
@@ -139,9 +149,14 @@ def resolve_plan(
     requested = requested_max_tokens if requested_max_tokens is not None else fallback_max_tokens
     profile = classify(model)
 
-    # Reasoning disattivato esplicitamente: passa il budget richiesto cosi' com'e'.
+    # Reasoning disattivato esplicitamente: passa il budget richiesto cosi' com'e',
+    # tranne per i modelli con un `no_think_floor` dichiarato (misurato su
+    # muse-glimmer:30b: num_predict 500 -> risposta vuota, 2000 -> completa).
     if disable_thinking:
-        return ReasoningPlan(enabled=False, reasoning_budget=0, max_tokens=requested)
+        total = requested
+        if requested and profile is not None and profile.no_think_floor:
+            total = max(int(requested), profile.no_think_floor)
+        return ReasoningPlan(enabled=False, reasoning_budget=0, max_tokens=total)
 
     # Modello noto e non-reasoning: nessun gonfiaggio, nessun budget.
     if profile is not None and not profile.is_reasoning:
