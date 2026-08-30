@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Bot, ClipboardList, LayoutGrid, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, Users, type LucideIcon } from 'lucide-react';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -14,10 +14,10 @@ import { CompassMark } from '@/components/ui/CompassMark';
 import { LANGUAGES } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { ai4authLoginUrl, AI4AUTH_LOGOUT_URL, AI4EDUC_PORTAL_URL, AI4EDUC_MANAGER_URL, getIdentity, type Identity } from '@/lib/auth';
-import { getResume, subscribeToResume } from '@/lib/resume';
 import { useI18n } from '@/lib/i18n-context';
 import { canUseAssistant, canUsePersonalPage, canUseResearchConsole, canUseTeacherAssistant } from '@/lib/roles';
 import { useDarkMode } from '@/lib/use-dark-mode';
+import { LOCAL_RESUME_HREF, resumeHref, useResumeEntries, type ResumeEntries } from '@/lib/use-resume-entries';
 
 interface SecondaryItem {
     key: string;
@@ -32,6 +32,9 @@ const SEPARATOR = 'mx-1 h-5 w-px shrink-0 bg-slate-200 dark:bg-slate-700';
 export function Header() {
     const { t } = useI18n();
     const [identity, setIdentity] = useState<Identity | null | undefined>(undefined);
+    // Le voci "Riprendi" vivono qui e servono due rendering: l'icona su schermi
+    // >= sm e il menu mobile. Un solo fetch, lo stesso elenco.
+    const resumeEntries = useResumeEntries();
 
     useEffect(() => {
         getIdentity().then(setIdentity);
@@ -102,6 +105,7 @@ export function Header() {
                             <>
                                 <MobileHeaderMenu
                                     items={secondaryItems}
+                                    resumeEntries={resumeEntries}
                                     label={t('header.menu')}
                                     accountLabel={accountLabel}
                                     authHref={authHref}
@@ -176,9 +180,10 @@ export function Header() {
 
                         <span className={cn(SEPARATOR, 'hidden sm:block')} />
 
-                        {/* Riprendi la sessione interrotta (se presente). */}
+                        {/* Riprendi la sessione interrotta (se presente). Su mobile la
+                            stessa lista sta nel menu: qui l'icona affollerebbe la barra. */}
                         <div className="hidden sm:block">
-                            <HeaderResume />
+                            <HeaderResume entries={resumeEntries} />
                         </div>
 
                         {/* Set minimo sempre disponibile: feedback, tema, lingua. */}
@@ -200,6 +205,7 @@ export function Header() {
 
 function MobileHeaderMenu({
     items,
+    resumeEntries,
     label,
     accountLabel,
     authHref,
@@ -209,6 +215,7 @@ function MobileHeaderMenu({
     servicesLabel,
 }: {
     items: SecondaryItem[];
+    resumeEntries: ResumeEntries;
     label: string;
     accountLabel?: string;
     authHref: string;
@@ -221,11 +228,7 @@ function MobileHeaderMenu({
     const dark = useDarkMode();
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
-    const hasResume = useSyncExternalStore(
-        subscribeToResume,
-        () => (getResume() ? '1' : null),
-        () => null,
-    );
+    const { frozen, localResume, count: resumeCount } = resumeEntries;
     const currentLanguage = LANGUAGES.find((l) => l.code === lang) || LANGUAGES[0];
 
     useEffect(() => {
@@ -245,6 +248,10 @@ function MobileHeaderMenu({
     }, [open]);
 
     const close = () => setOpen(false);
+    // Ricarica invece di navigare: la home legge lo snapshot dai query param al mount.
+    const resumeWithReload = (href: string) => {
+        window.location.assign(href);
+    };
     const toggleTheme = () => {
         const next = !dark;
         document.documentElement.classList.toggle('dark', next);
@@ -297,11 +304,45 @@ function MobileHeaderMenu({
                             </Link>
                         );
                     })}
-                    {hasResume && (
-                        <Link role="menuitem" href="/?resume=1" className={itemClass} onClick={close}>
-                            <RotateCcw className="h-4 w-4 shrink-0" />
-                            <span className="truncate">{t('header.resume')}</span>
-                        </Link>
+                    {/* Sessioni congelate + chat locale interrotta: su mobile questa è
+                        l'unica porta, l'icona "Riprendi" della topbar non c'è. */}
+                    {resumeCount > 0 && (
+                        <div className="border-y border-slate-100 py-1 dark:border-slate-700">
+                            <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                {t('frozen.resumeTitle')}
+                            </div>
+                            {frozen.map((row) => (
+                                <Link
+                                    key={row.session_id}
+                                    role="menuitem"
+                                    href={resumeHref(row)}
+                                    className={itemClass}
+                                    onClick={(event) => {
+                                        event.preventDefault();
+                                        close();
+                                        resumeWithReload(resumeHref(row));
+                                    }}
+                                >
+                                    <RotateCcw className="h-4 w-4 shrink-0" />
+                                    <span className="truncate">{row.label || row.questionnaire_type}</span>
+                                </Link>
+                            ))}
+                            {localResume && (
+                                <Link
+                                    role="menuitem"
+                                    href={LOCAL_RESUME_HREF}
+                                    className={itemClass}
+                                    onClick={(event) => {
+                                        event.preventDefault();
+                                        close();
+                                        resumeWithReload(LOCAL_RESUME_HREF);
+                                    }}
+                                >
+                                    <RotateCcw className="h-4 w-4 shrink-0" />
+                                    <span className="truncate">{t('header.resume')} · {localResume.instrument}</span>
+                                </Link>
+                            )}
+                        </div>
                     )}
                     <Link role="menuitem" href="/questionario" className={itemClass} onClick={close}>
                         <ClipboardList className="h-4 w-4 shrink-0" />
