@@ -490,7 +490,7 @@ export function QuestionnaireResultsViewer() {
                                                                             <div className="flex items-center gap-1.5 mt-1">
                                                                                 <span className="text-lg font-bold">{value}</span>
                                                                                 <span className="text-xs text-slate-400">/9</span>
-                                                                                {inverted && <span className="text-xs text-slate-400">(inv.)</span>}
+                                                                                {inverted && <span className="text-xs text-slate-400">({t('admin.results.invertedAbbr')})</span>}
                                                                             </div>
                                                                         </div>
                                                                     );

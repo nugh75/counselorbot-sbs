@@ -31,7 +31,7 @@ interface TeacherNote {
     created_at: string | null;
 }
 
-// ponytail: testi inline it/en come il resto della UI Telegram.
+// Local copy is complete for every supported interface language.
 const TEXTS = {
     it: {
         students: 'Studenti',
@@ -51,6 +51,7 @@ const TEXTS = {
         error: 'Operazione non riuscita.',
         loading: 'Carico...',
         deleteNote: 'Elimina',
+        tests: 'test', studentRole: 'Studente',
     },
     en: {
         students: 'Students',
@@ -70,6 +71,39 @@ const TEXTS = {
         error: 'Operation failed.',
         loading: 'Loading...',
         deleteNote: 'Delete',
+        tests: 'tests', studentRole: 'Student',
+    },
+    es: {
+        students: 'Estudiantes', empty: 'Ningún estudiante tiene aún resultados en este plan.', telegram: 'Telegram vinculado',
+        profile: 'Cuaderno del estudiante (modelo del alumno)', transcript: 'Conversación', notes: 'Notas',
+        notePlaceholder: 'Nueva nota sobre el estudiante...', visible: 'Visible para el estudiante', addNote: 'Guardar nota',
+        message: 'Mensaje al estudiante', messagePlaceholder: 'Escribe un mensaje: el estudiante lo verá en su área personal web y en Telegram si está vinculado.',
+        send: 'Enviar', sent: 'Enviado', sentTelegram: 'Enviado (también por Telegram)', error: 'La operación ha fallado.',
+        loading: 'Cargando...', deleteNote: 'Eliminar', tests: 'pruebas', studentRole: 'Estudiante',
+    },
+    fr: {
+        students: 'Étudiants', empty: 'Aucun étudiant n’a encore de résultats dans ce plan.', telegram: 'Telegram associé',
+        profile: 'Carnet de l’étudiant (modèle de l’apprenant)', transcript: 'Conversation', notes: 'Notes',
+        notePlaceholder: 'Nouvelle note sur l’étudiant...', visible: 'Visible par l’étudiant', addNote: 'Enregistrer la note',
+        message: 'Message à l’étudiant', messagePlaceholder: 'Écrivez un message : l’étudiant le verra dans son espace personnel web et sur Telegram s’il est associé.',
+        send: 'Envoyer', sent: 'Envoyé', sentTelegram: 'Envoyé (également sur Telegram)', error: 'L’opération a échoué.',
+        loading: 'Chargement...', deleteNote: 'Supprimer', tests: 'tests', studentRole: 'Étudiant',
+    },
+    de: {
+        students: 'Lernende', empty: 'Für diesen Plan liegen noch keine Ergebnisse von Lernenden vor.', telegram: 'Telegram verknüpft',
+        profile: 'Notizbuch der lernenden Person (Lernendenmodell)', transcript: 'Unterhaltung', notes: 'Notizen',
+        notePlaceholder: 'Neue Notiz zur lernenden Person...', visible: 'Für die lernende Person sichtbar', addNote: 'Notiz speichern',
+        message: 'Nachricht an die lernende Person', messagePlaceholder: 'Schreiben Sie eine Nachricht: Sie wird im persönlichen Webbereich und bei Verknüpfung auch auf Telegram angezeigt.',
+        send: 'Senden', sent: 'Gesendet', sentTelegram: 'Gesendet (auch über Telegram)', error: 'Der Vorgang ist fehlgeschlagen.',
+        loading: 'Wird geladen...', deleteNote: 'Löschen', tests: 'Tests', studentRole: 'Lernende Person',
+    },
+    sv: {
+        students: 'Studenter', empty: 'Ingen student har ännu resultat i den här planen.', telegram: 'Telegram länkat',
+        profile: 'Studentens anteckningsbok (studentmodell)', transcript: 'Samtal', notes: 'Anteckningar',
+        notePlaceholder: 'Ny anteckning om studenten...', visible: 'Synlig för studenten', addNote: 'Spara anteckning',
+        message: 'Meddelande till studenten', messagePlaceholder: 'Skriv ett meddelande: studenten ser det i sin personliga webbvy och på Telegram om kontot är länkat.',
+        send: 'Skicka', sent: 'Skickat', sentTelegram: 'Skickat (även via Telegram)', error: 'Åtgärden misslyckades.',
+        loading: 'Laddar...', deleteNote: 'Ta bort', tests: 'test', studentRole: 'Student',
     },
 };
 
@@ -210,7 +244,7 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                             {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                             <span className="font-mono">{student.username}</span>
                             <span className="text-xs font-normal text-slate-400">
-                                {student.results.length} {student.results.length === 1 ? 'test' : 'test'}
+                                {student.results.length} {texts.tests}
                                 {student.telegram_linked ? ` - ${texts.telegram}` : ''}
                             </span>
                         </button>
@@ -238,7 +272,7 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                                                     <p className="text-xs font-semibold uppercase text-slate-400">{texts.transcript}</p>
                                                     {(conversations[result.session_id] || []).map((message, index) => (
                                                         <p key={index} className="text-xs text-slate-600">
-                                                            <span className="font-semibold">{message.role === 'student' ? 'Studente' : 'AI'}:</span>{' '}
+                                                            <span className="font-semibold">{message.role === 'student' ? texts.studentRole : 'AI'}:</span>{' '}
                                                             {message.text}
                                                         </p>
                                                     ))}

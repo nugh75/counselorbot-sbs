@@ -13,7 +13,7 @@ interface MyGroup {
     joined_at: string | null;
 }
 
-// ponytail: testi inline it/en come TelegramLinkCard.
+// Local copy is complete for every supported interface language.
 const TEXTS = {
     it: {
         title: 'Le mie classi',
@@ -30,6 +30,22 @@ const TEXTS = {
         joinPlaceholder: 'Class code (e.g. GR-ABC123)',
         join: 'Join',
         joinError: 'Invalid class code.',
+    },
+    es: {
+        title: 'Mis clases', leave: 'Salir de la clase', via: 'inscrito mediante',
+        joinPlaceholder: 'Código de clase (p. ej., GR-ABC123)', join: 'Entrar', joinError: 'Código de clase no válido.',
+    },
+    fr: {
+        title: 'Mes classes', leave: 'Quitter la classe', via: 'inscrit via',
+        joinPlaceholder: 'Code de classe (ex. GR-ABC123)', join: 'Rejoindre', joinError: 'Code de classe non valide.',
+    },
+    de: {
+        title: 'Meine Klassen', leave: 'Klasse verlassen', via: 'beigetreten über',
+        joinPlaceholder: 'Klassencode (z. B. GR-ABC123)', join: 'Beitreten', joinError: 'Ungültiger Klassencode.',
+    },
+    sv: {
+        title: 'Mina klasser', leave: 'Lämna klassen', via: 'gick med via',
+        joinPlaceholder: 'Klasskod (t.ex. GR-ABC123)', join: 'Gå med', joinError: 'Ogiltig klasskod.',
     },
 };
 

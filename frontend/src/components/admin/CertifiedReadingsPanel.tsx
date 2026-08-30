@@ -181,14 +181,14 @@ export function CertifiedReadingsPanel() {
             );
             if (!res.ok) {
                 const detail = await res.json().catch(() => null);
-                setError(detail?.detail ?? 'save failed');
+                setError(detail?.detail ?? t('admin.readings.error.save'));
                 return;
             }
             cancel();
             await refresh();
         } catch (e) {
             console.error('Failed to save reading', e);
-            setError('save failed');
+            setError(t('admin.readings.error.save'));
         } finally {
             setSaving(false);
         }
@@ -437,11 +437,11 @@ export function CertifiedReadingsPanel() {
                                             className="rounded-md border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50 disabled:opacity-50">
                                             <Search className="h-4 w-4" />
                                         </button>
-                                        <button type="button" onClick={() => startEdit(row)} aria-label="edit"
+                                        <button type="button" onClick={() => startEdit(row)} aria-label={t('admin.readings.edit')}
                                             className="rounded-md border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50">
                                             <Pencil className="h-4 w-4" />
                                         </button>
-                                        <button type="button" onClick={() => void remove(row.id)} aria-label="delete"
+                                        <button type="button" onClick={() => void remove(row.id)} aria-label={t('admin.readings.delete')}
                                             className="rounded-md border border-slate-200 p-1.5 text-red-500 hover:bg-red-50">
                                             <Trash2 className="h-4 w-4" />
                                         </button>

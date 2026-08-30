@@ -173,10 +173,10 @@ export function PresetsPanel() {
                                 ) : (
                                     <input className={inputCls} value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} placeholder="deepseek-v4-flash" />
                                 )}
-                                <button type="button" title={modelsLoading ? '…' : 'Reload'} onClick={() => void fetchModels(form.provider)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
+                                <button type="button" title={modelsLoading ? '…' : t('admin.presets.reloadModels')} onClick={() => void fetchModels(form.provider)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
                                     <RefreshCw className={`h-4 w-4 ${modelsLoading ? 'animate-spin' : ''}`} />
                                 </button>
-                                <button type="button" title={manualModel ? 'Lista' : 'Manuale'} onClick={() => setManualModel((v) => !v)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
+                                <button type="button" title={manualModel ? t('admin.presets.useList') : t('admin.presets.useManual')} onClick={() => setManualModel((v) => !v)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
                                     {manualModel ? <List className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
                                 </button>
                             </div>

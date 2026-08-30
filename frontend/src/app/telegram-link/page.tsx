@@ -6,7 +6,7 @@ import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { Send } from 'lucide-react';
 
-// ponytail: testi inline it/en come TelegramLinkCard; niente chiavi i18n.
+// Local copy is complete for every supported interface language.
 const TEXTS = {
     it: {
         title: 'Collega Telegram',
@@ -25,6 +25,30 @@ const TEXTS = {
         back: 'Back to the bot',
         expires: 'The code is valid for 10 minutes.',
         error: 'Could not generate the code. Reload the page.',
+    },
+    es: {
+        title: 'Vincular Telegram', loading: 'Generando tu código...',
+        ready: 'Código listo. Pulsa el botón para volver al bot: la vinculación se realizará automáticamente.',
+        manual: 'O envía al bot:', back: 'Volver al bot', expires: 'El código es válido durante 10 minutos.',
+        error: 'No se pudo generar el código. Recarga la página.',
+    },
+    fr: {
+        title: 'Associer Telegram', loading: 'Génération de votre code...',
+        ready: 'Code prêt. Touchez le bouton pour revenir au bot : l’association se fera automatiquement.',
+        manual: 'Ou envoyez au bot :', back: 'Retour au bot', expires: 'Le code est valable pendant 10 minutes.',
+        error: 'Impossible de générer le code. Rechargez la page.',
+    },
+    de: {
+        title: 'Telegram verknüpfen', loading: 'Code wird erstellt...',
+        ready: 'Code bereit. Tippen Sie auf die Schaltfläche, um zum Bot zurückzukehren; die Verknüpfung erfolgt automatisch.',
+        manual: 'Oder an den Bot senden:', back: 'Zurück zum Bot', expires: 'Der Code ist 10 Minuten gültig.',
+        error: 'Der Code konnte nicht erstellt werden. Laden Sie die Seite neu.',
+    },
+    sv: {
+        title: 'Länka Telegram', loading: 'Skapar din kod...',
+        ready: 'Koden är klar. Tryck på knappen för att gå tillbaka till boten; länkningen sker automatiskt.',
+        manual: 'Eller skicka till boten:', back: 'Tillbaka till boten', expires: 'Koden är giltig i 10 minuter.',
+        error: 'Det gick inte att skapa koden. Ladda om sidan.',
     },
 };
 

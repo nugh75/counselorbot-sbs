@@ -78,15 +78,15 @@ const PROVIDERS: Record<string, { label: string; models: string[] }> = {
         models: ['mistral-large-latest', 'mistral-medium', 'mistral-small']
     },
     groq: {
-        label: 'Groq (veloce)',
+        label: 'Groq',
         models: ['llama-3.3-70b-versatile', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3-32b', 'llama-3.1-8b-instant']
     },
     cerebras: {
-        label: 'Cerebras (veloce)',
+        label: 'Cerebras',
         models: ['llama-3.3-70b', 'qwen-3-32b', 'gpt-oss-120b', 'llama3.1-8b']
     },
     deepseek: {
-        label: 'DeepSeek (diretto)',
+        label: 'DeepSeek',
         models: ['deepseek-v4-flash', 'deepseek-v4-pro', 'deepseek-chat', 'deepseek-reasoner']
     },
     together: {
@@ -116,7 +116,7 @@ const PROVIDERS: Record<string, { label: string; models: string[] }> = {
         ]
     },
     llamacpp: {
-        label: 'llama.cpp / llama-swap (Local)',
+        label: 'llama.cpp / llama-swap',
         models: [
             'default',
             'qwen3',
@@ -127,7 +127,7 @@ const PROVIDERS: Record<string, { label: string; models: string[] }> = {
         ]
     },
     ollama: {
-        label: 'Ollama (Local)',
+        label: 'Ollama',
         models: [
             'qwen3.5:9b',
             'gemma4:e4b',
@@ -586,6 +586,7 @@ function PromptTextBlock({
     text: string | null | undefined;
     emptyLabel: string;
 }) {
+    const { t } = useI18n();
     const value = text || '';
     const stats = textStats(value);
     return (
@@ -596,7 +597,7 @@ function PromptTextBlock({
                     {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
                 </div>
                 <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500">
-                    {stats.chars} char · {stats.lines} righe
+                    {stats.chars} {t('admin.config.chars')} · {stats.lines} {t('admin.config.lines')}
                 </span>
             </div>
             <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words p-4 text-xs leading-relaxed text-slate-700">
@@ -635,6 +636,7 @@ function EditablePromptTextBlock({
     saveLabel: string;
     cancelLabel: string;
 }) {
+    const { t } = useI18n();
     const value = editing ? draft : (text || '');
     const stats = textStats(value);
     return (
@@ -646,7 +648,7 @@ function EditablePromptTextBlock({
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500">
-                        {stats.chars} char · {stats.lines} righe
+                        {stats.chars} {t('admin.config.chars')} · {stats.lines} {t('admin.config.lines')}
                     </span>
                     {!editing && (
                         <button type="button" onClick={onEdit} className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-indigo-600" title={editLabel}>
@@ -1626,7 +1628,17 @@ export function ConfigForm() {
                 { key: 'text_qap_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
             ],
         },
-    ];
+    ].map((config) => ({
+        ...config,
+        systemPrompts: config.systemPrompts.map((item) => ({
+            ...item,
+            label: t(`admin.config.label.${item.key}`),
+        })),
+        texts: config.texts.map((item) => ({
+            ...item,
+            label: t(`admin.config.label.${item.key}`),
+        })),
+    }));
 
     const colorMap = {
         blue: { border: 'border-blue-400', bg: 'bg-blue-50', title: 'text-blue-700', dot: 'bg-blue-500', ring: 'focus:ring-blue-500', subBg: 'bg-blue-100/50', subTitle: 'text-blue-600' },

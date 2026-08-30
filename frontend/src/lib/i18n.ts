@@ -25,6 +25,8 @@ type Dict = Record<string, string>;
 const it: Dict = {
     // nav
     'nav.admin': 'Admin',
+    'nav.groupsClasses': 'Gruppi e classi',
+    'nav.teacherPanel': 'Pannello docente',
     'nav.adminLogin': 'Accesso admin',
     'nav.logout': 'Logout',
     'nav.login': 'Login',
@@ -177,6 +179,8 @@ const it: Dict = {
     'counselor.origin.external.hint': 'Basato su un’API esterna (servizio a pagamento)',
     'counselor.group.local': 'Counselor locali',
     'counselor.group.external': 'Counselor cloud',
+    'counselor.pick': 'Scegli counselor',
+    'counselor.deselect': 'Deseleziona counselor',
     // app overview
     'app.overview.kicker': 'Che cos’è CounselorBot',
     'app.overview.title': 'Tre modi per usare CounselorBot',
@@ -465,6 +469,7 @@ const it: Dict = {
     'guided.stopListen': 'Stop Lettura',
     'guided.feedback.helpful': 'Risposta utile',
     'guided.feedback.notHelpful': 'Risposta non utile',
+    'guided.feedback.thanks': 'Grazie!',
     'guided.connError': 'Errore di connessione.',
     'guided.stepError': "Non sono riuscito a completare questo passaggio per un problema temporaneo. Usa il pulsante 'Ripeti passaggio' per rilanciare lo step.",
     'guided.stepConnError': "Errore di connessione durante questo passaggio. Usa il pulsante 'Ripeti passaggio' per riprovare.",
@@ -835,6 +840,8 @@ const it: Dict = {
 
 const en: Dict = {
     'nav.admin': 'Admin',
+    'nav.groupsClasses': 'Groups and classes',
+    'nav.teacherPanel': 'Teacher panel',
     'nav.adminLogin': 'Admin access',
     'nav.logout': 'Logout',
     'nav.login': 'Login',
@@ -982,6 +989,8 @@ const en: Dict = {
     'counselor.origin.external.hint': 'Powered by an external API (paid service)',
     'counselor.group.local': 'Local counselors',
     'counselor.group.external': 'Cloud counselors',
+    'counselor.pick': 'Choose counselor',
+    'counselor.deselect': 'Deselect counselor',
     'app.overview.kicker': 'What CounselorBot is',
     'app.overview.title': 'Three ways to use CounselorBot',
     'app.overview.body': 'CounselorBot supports reflection on learning, guidance and study choices. First choose the tool, then choose the AI counselor you want to work with.',
@@ -1258,6 +1267,7 @@ const en: Dict = {
     'guided.stopListen': 'Stop Reading',
     'guided.feedback.helpful': 'Helpful answer',
     'guided.feedback.notHelpful': 'Not helpful',
+    'guided.feedback.thanks': 'Thank you!',
     'guided.connError': 'Connection error.',
     'guided.stepError': "I couldn't complete this step due to a temporary problem. Use the 'Repeat step' button to restart it.",
     'guided.stepConnError': "Connection error during this step. Use the 'Repeat step' button to try again.",
@@ -1627,6 +1637,8 @@ const en: Dict = {
 
 const es: Dict = {
     'nav.admin': 'Admin',
+    'nav.groupsClasses': 'Grupos y clases',
+    'nav.teacherPanel': 'Panel docente',
     'nav.adminLogin': 'Acceso admin',
     'nav.logout': 'Salir',
     'nav.login': 'Acceder',
@@ -1774,6 +1786,8 @@ const es: Dict = {
     'counselor.origin.external.hint': 'Basado en una API externa (servicio de pago)',
     'counselor.group.local': 'Counselor locales',
     'counselor.group.external': 'Counselor en la nube',
+    'counselor.pick': 'Elegir counselor',
+    'counselor.deselect': 'Deseleccionar counselor',
     'app.overview.kicker': 'Qué es CounselorBot',
     'app.overview.title': 'Tres formas de usar CounselorBot',
     'app.overview.body': 'CounselorBot acompaña la reflexión sobre estudio, orientación y aprendizaje. Primero eliges la herramienta y después eliges el counselor de IA con quien trabajar.',
@@ -2094,6 +2108,7 @@ const es: Dict = {
     'guided.stopListen': 'Detener Lectura',
     'guided.feedback.helpful': 'Respuesta útil',
     'guided.feedback.notHelpful': 'Respuesta no útil',
+    'guided.feedback.thanks': '¡Gracias!',
     'guided.connError': 'Error de conexión.',
     'guided.stepError': "No he podido completar este paso por un problema temporal. Usa el botón 'Repetir paso' para reiniciarlo.",
     'guided.stepConnError': "Error de conexión durante este paso. Usa el botón 'Repetir paso' para intentarlo de nuevo.",
@@ -2418,6 +2433,8 @@ const es: Dict = {
 
 const fr: Dict = {
     'nav.admin': 'Admin',
+    'nav.groupsClasses': 'Groupes et classes',
+    'nav.teacherPanel': 'Espace enseignant',
     'nav.adminLogin': 'Accès admin',
     'nav.logout': 'Déconnexion',
     'nav.login': 'Connexion',
@@ -2565,6 +2582,8 @@ const fr: Dict = {
     'counselor.origin.external.hint': 'Basé sur une API externe (service payant)',
     'counselor.group.local': 'Counselors locaux',
     'counselor.group.external': 'Counselors cloud',
+    'counselor.pick': 'Choisir le counselor',
+    'counselor.deselect': 'Désélectionner le counselor',
     'app.overview.kicker': 'Ce qu’est CounselorBot',
     'app.overview.title': 'Trois façons d’utiliser CounselorBot',
     'app.overview.body': "CounselorBot accompagne la réflexion sur l'étude, l'orientation et l'apprentissage. Choisissez d'abord l'outil, puis le counselor IA avec lequel travailler.",
@@ -2885,6 +2904,7 @@ const fr: Dict = {
     'guided.stopListen': 'Arrêter la Lecture',
     'guided.feedback.helpful': 'Réponse utile',
     'guided.feedback.notHelpful': 'Réponse non utile',
+    'guided.feedback.thanks': 'Merci !',
     'guided.connError': 'Erreur de connexion.',
     'guided.stepError': "Je n'ai pas pu terminer cette étape en raison d'un problème temporaire. Utilisez le bouton 'Répéter l'étape' pour la relancer.",
     'guided.stepConnError': "Erreur de connexion pendant cette étape. Utilisez le bouton 'Répéter l'étape' pour réessayer.",
@@ -3209,6 +3229,8 @@ const fr: Dict = {
 
 const de: Dict = {
     'nav.admin': 'Admin',
+    'nav.groupsClasses': 'Gruppen und Klassen',
+    'nav.teacherPanel': 'Lehrkräftebereich',
     'nav.adminLogin': 'Admin-Zugang',
     'nav.logout': 'Abmelden',
     'nav.login': 'Anmelden',
@@ -3356,6 +3378,8 @@ const de: Dict = {
     'counselor.origin.external.hint': 'Basiert auf einer externen API (kostenpflichtiger Dienst)',
     'counselor.group.local': 'Lokale Counselor',
     'counselor.group.external': 'Cloud-Counselor',
+    'counselor.pick': 'Counselor auswählen',
+    'counselor.deselect': 'Counselor abwählen',
     'app.overview.kicker': 'Was CounselorBot ist',
     'app.overview.title': 'Drei Arten, CounselorBot zu nutzen',
     'app.overview.body': 'CounselorBot unterstützt die Reflexion über Lernen, Orientierung und Studienentscheidungen. Wählen Sie zuerst das Instrument und dann den KI-Counselor, mit dem Sie arbeiten möchten.',
@@ -3676,6 +3700,7 @@ const de: Dict = {
     'guided.stopListen': 'Lesen Stoppen',
     'guided.feedback.helpful': 'Hilfreiche Antwort',
     'guided.feedback.notHelpful': 'Nicht hilfreiche Antwort',
+    'guided.feedback.thanks': 'Vielen Dank!',
     'guided.connError': 'Verbindungsfehler.',
     'guided.stepError': "Ich konnte diesen Schritt wegen eines vorübergehenden Problems nicht abschließen. Nutzen Sie die Schaltfläche 'Schritt wiederholen', um ihn neu zu starten.",
     'guided.stepConnError': "Verbindungsfehler während dieses Schritts. Nutzen Sie die Schaltfläche 'Schritt wiederholen', um es erneut zu versuchen.",
@@ -4000,6 +4025,8 @@ const de: Dict = {
 
 const sv: Dict = {
     'nav.admin': 'Admin',
+    'nav.groupsClasses': 'Grupper och klasser',
+    'nav.teacherPanel': 'Lärarpanel',
     'nav.adminLogin': 'Adminåtkomst',
     'nav.logout': 'Logga ut',
     'nav.login': 'Logga in',
@@ -4147,6 +4174,8 @@ const sv: Dict = {
     'counselor.origin.external.hint': 'Drivs av ett externt API (betaltjänst)',
     'counselor.group.local': 'Lokala counselors',
     'counselor.group.external': 'Moln-counselors',
+    'counselor.pick': 'Välj counselor',
+    'counselor.deselect': 'Avmarkera counselor',
     'app.overview.kicker': 'Vad CounselorBot är',
     'app.overview.title': 'Tre sätt att använda CounselorBot',
     'app.overview.body': 'CounselorBot stödjer reflektion om studier, vägledning och lärande. Välj först verktyg och sedan den AI-counselor du vill arbeta med.',
@@ -4467,6 +4496,7 @@ const sv: Dict = {
     'guided.stopListen': 'Stoppa Uppläsning',
     'guided.feedback.helpful': 'Hjälpsamt svar',
     'guided.feedback.notHelpful': 'Inte hjälpsamt svar',
+    'guided.feedback.thanks': 'Tack!',
     'guided.connError': 'Anslutningsfel.',
     'guided.stepError': "Jag kunde inte slutföra detta steg på grund av ett tillfälligt problem. Använd knappen 'Upprepa steg' för att starta om det.",
     'guided.stepConnError': "Anslutningsfel under detta steg. Använd knappen 'Upprepa steg' för att försöka igen.",

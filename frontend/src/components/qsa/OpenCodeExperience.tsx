@@ -527,7 +527,7 @@ export function OpenCodeExperience({
                                                             <ThumbsDown className="w-3.5 h-3.5" />
                                                         </button>
                                                         {message.feedback !== undefined && (
-                                                            <span className="text-xs text-slate-400 ml-1">Grazie!</span>
+                                                            <span className="text-xs text-slate-400 ml-1">{t('guided.feedback.thanks')}</span>
                                                         )}
                                                     </div>
                                                 )}

@@ -223,7 +223,7 @@ export function BenchmarkPanel() {
                         {runs.map((r) => (
                             <button key={r.id} type="button" onClick={() => void loadRun(r.run_id)} className="flex w-full items-center justify-between py-2 text-left text-sm hover:bg-slate-50">
                                 <span className="font-mono text-xs text-slate-600">{r.run_id}</span>
-                                <span className="text-xs text-slate-400">{(r.summary || []).length} modelli</span>
+                                <span className="text-xs text-slate-400">{(r.summary || []).length} {t('admin.bench.models')}</span>
                                 <span className={`rounded px-2 py-0.5 text-xs font-medium ${r.status === 'done' ? 'bg-emerald-100 text-emerald-700' : r.status === 'error' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>{r.status}</span>
                             </button>
                         ))}
