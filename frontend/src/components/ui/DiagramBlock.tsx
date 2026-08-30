@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { GitBranch, Loader2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { GitBranch, Loader2, Maximize2, X } from 'lucide-react';
 import { completeDiagramEdges, diagramEdgeKinds, type DiagramEdgeKind, type DiagramSpec } from '@/lib/diagram-content';
-import { edgeKindLabel } from '@/lib/i18n-diagram';
+import { diagramFullscreenLabel, edgeKindLabel } from '@/lib/i18n-diagram';
 import { useDarkMode } from '@/lib/use-dark-mode';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 interface DiagramBlockProps {
     spec: DiagramSpec;
@@ -53,11 +55,28 @@ function KindSample({ kind }: { kind: DiagramEdgeKind }) {
     );
 }
 
+function DiagramLegend({ kinds, locale }: { kinds: DiagramEdgeKind[]; locale: string }) {
+    if (kinds.length === 0) return null;
+    return (
+        <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-slate-200 px-3 py-2 text-xs text-slate-600">
+            {kinds.map((kind) => (
+                <li key={kind} className="flex items-center gap-1.5">
+                    <KindSample kind={kind} />
+                    <span>{edgeKindLabel(kind, locale)}</span>
+                </li>
+            ))}
+        </ul>
+    );
+}
+
 export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
     const isDark = useDarkMode();
     const normalizedSpecJson = JSON.stringify(completeDiagramEdges(spec));
     const renderKey = `${isDark ? 'dark' : 'light'}:${locale}:${normalizedSpecJson}`;
     const [renderState, setRenderState] = useState<RenderState>({ key: '', imageUrl: null, failed: false });
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const expandButtonRef = useRef<HTMLButtonElement>(null);
+    const closeButtonRef = useRef<HTMLButtonElement>(null);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -95,19 +114,56 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
         };
     }, [isDark, locale, normalizedSpecJson, renderKey]);
 
+    useEffect(() => {
+        if (!isFullscreen) return;
+        const originButton = expandButtonRef.current;
+        const previousOverflow = document.body.style.overflow;
+        const close = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') setIsFullscreen(false);
+            if (event.key === 'Tab') {
+                event.preventDefault();
+                closeButtonRef.current?.focus();
+            }
+        };
+        document.body.style.overflow = 'hidden';
+        document.addEventListener('keydown', close);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            document.removeEventListener('keydown', close);
+            originButton?.focus();
+        };
+    }, [isFullscreen]);
+
     const description = `${spec.title}: ${spec.nodes.map((node) => node.label).join('; ')}`;
     // La legenda compare solo se i tratti sono piu' d'uno: un tratto solo non ha nulla da spiegare.
     const legendKinds = diagramEdgeKinds(completeDiagramEdges(spec));
     const isCurrentRender = renderState.key === renderKey;
     const imageUrl = isCurrentRender ? renderState.imageUrl : null;
     const failed = isCurrentRender && renderState.failed;
+    const openFullscreenLabel = diagramFullscreenLabel('open', locale);
+    const closeFullscreenLabel = diagramFullscreenLabel('close', locale);
 
     // Il fondo della card e' lo stesso colore della pastiglia sotto le etichette del disegno.
     return (
         <figure className="my-2 overflow-hidden rounded-xl border border-slate-200 bg-white">
-            <figcaption className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800">
-                <GitBranch className="h-4 w-4 shrink-0 text-[#17747a]" aria-hidden="true" />
-                <span>{spec.title}</span>
+            <figcaption className="flex items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800">
+                <span className="flex min-w-0 items-center gap-2">
+                    <GitBranch className="h-4 w-4 shrink-0 text-[#17747a]" aria-hidden="true" />
+                    <span className="truncate">{spec.title}</span>
+                </span>
+                {imageUrl ? (
+                    <Tooltip content={openFullscreenLabel}>
+                        <button
+                            ref={expandButtonRef}
+                            type="button"
+                            onClick={() => setIsFullscreen(true)}
+                            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white hover:text-[#17747a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17747a] focus-visible:ring-offset-2"
+                            aria-label={openFullscreenLabel}
+                        >
+                            <Maximize2 className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                    </Tooltip>
+                ) : null}
             </figcaption>
             {imageUrl ? (
                 // Il renderer restituisce un SVG gia' accessibile e dimensionato dal backend.
@@ -131,15 +187,44 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                     <span className="sr-only">{spec.title}</span>
                 </div>
             )}
-            {imageUrl && legendKinds.length > 0 ? (
-                <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-slate-200 px-3 py-2 text-xs text-slate-600">
-                    {legendKinds.map((kind) => (
-                        <li key={kind} className="flex items-center gap-1.5">
-                            <KindSample kind={kind} />
-                            <span>{edgeKindLabel(kind, locale)}</span>
-                        </li>
-                    ))}
-                </ul>
+            {imageUrl ? <DiagramLegend kinds={legendKinds} locale={locale} /> : null}
+            {isFullscreen && imageUrl ? createPortal(
+                <div
+                    className="fixed inset-0 z-[80] flex bg-slate-950/75 p-2 backdrop-blur-sm sm:p-4"
+                    onMouseDown={(event) => {
+                        if (event.currentTarget === event.target) setIsFullscreen(false);
+                    }}
+                >
+                    <section
+                        className="mx-auto flex h-full w-full max-w-[96rem] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label={spec.title}
+                    >
+                        <header className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3">
+                            <span className="flex min-w-0 items-center gap-2 font-semibold text-slate-800">
+                                <GitBranch className="h-5 w-5 shrink-0 text-[#17747a]" aria-hidden="true" />
+                                <span className="truncate">{spec.title}</span>
+                            </span>
+                            <button
+                                ref={closeButtonRef}
+                                type="button"
+                                onClick={() => setIsFullscreen(false)}
+                                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17747a] focus-visible:ring-offset-2"
+                                aria-label={closeFullscreenLabel}
+                                autoFocus
+                            >
+                                <X className="h-5 w-5" aria-hidden="true" />
+                            </button>
+                        </header>
+                        <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-3 sm:p-6">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={imageUrl} alt={description} className="block h-full max-h-full w-full max-w-full object-contain" />
+                        </div>
+                        <DiagramLegend kinds={legendKinds} locale={locale} />
+                    </section>
+                </div>,
+                document.body,
             ) : null}
         </figure>
     );
