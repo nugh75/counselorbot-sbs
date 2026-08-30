@@ -20,6 +20,7 @@ class ChatRequest(schemas.BaseModel):
     memory_message: Optional[str] = None  # Solo testo reale dell'utente, senza istruzioni interne
     internal_message: bool = False  # Istruzione tecnica: non mostrarla come input studente nei log/PDF
     counselor_id: Optional[int] = None  # se valorizzato: persona + provider/model dal counselor
+    idea_variant: Optional[str] = None  # strumento Idea: student-path|student-open|research
 
 
 class SiteChatRequest(schemas.BaseModel):
