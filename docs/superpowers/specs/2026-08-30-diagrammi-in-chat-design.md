@@ -41,14 +41,15 @@ Il modello scrive nel testo un blocco recintato `diagram` con JSON:
 ```
 {"type":"cycle","title":"Circolo dell'evitamento",
  "nodes":[{"id":"a","label":"Compito difficile"},
-          {"id":"b","label":"Ansia","accent":true}],
+          {"id":"b","label":"Ansia","icon":"heart","accent":true}],
  "edges":[{"from":"a","to":"b","label":"innesca"}]}
 ```
 
 - `type` ∈ `flow | relation | cycle | hierarchy`
 - `title` obbligatorio, ≤ 80 caratteri
-- `nodes`: 2–8 elementi, `label` ≤ 40 caratteri, `accent` opzionale (max 1)
-- `edges`: 1–12 elementi, `label` opzionale ≤ 24 caratteri
+- `nodes`: 2–8 elementi, `label` ≤ 80 caratteri, `accent` opzionale (max 1),
+  `icon` opzionale dal vocabolario chiuso del renderer
+- `edges`: 1–12 elementi, `label` opzionale ≤ 40 caratteri
 - label nella lingua dell'utente
 - il diagramma accompagna la spiegazione, non la sostituisce
 
@@ -207,3 +208,21 @@ seguita da una parola sola), bordo 2.0 sul nodo accentato.
 `skills_diagram_edge_kinds_v1`) riscrive il contratto della skill
 `concept-diagram` solo dove è ancora quello di serie, riconosciuto per hash: se
 l'admin lo ha modificato, il suo testo resta.
+
+## Robustezza, icone e schermo intero (2026-08-30, terza passata)
+
+Il frontend accettava label che il backend rifiutava oltre 40 caratteri: la
+risposta `422` attivava la lista numerata di emergenza e faceva sparire tutti
+gli archi. Il limite condiviso sale a 80 caratteri per i nodi e 40 per gli
+archi; copre anche le etichette reali dei profili senza troncarle.
+
+Ogni nodo può dichiarare una `icon` scelta da `book`, `brain`, `check`, `clock`,
+`compass`, `heart`, `idea`, `question`, `shield`, `target`. Nomi estranei sono
+ignorati perché una decorazione non deve invalidare il contenuto. Gli asset
+canonici sono SVG locali; Graphviz usa copie PNG per il raster, mentre la
+risposta web sostituisce quelle immagini con i tracciati SVG inline. Non ci
+sono URL esterni né nomi di file controllati dal modello.
+
+La card mostra un comando di espansione quando l'SVG è pronto. Apre lo stesso
+disegno in un dialog a tutta viewport, con legenda, chiusura esplicita, tasto
+Esc, blocco dello scroll sottostante e ritorno del focus al comando di origine.
