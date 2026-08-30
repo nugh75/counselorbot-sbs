@@ -55,10 +55,11 @@ def main() -> int:
             if args.limit and touched >= args.limit:
                 break
             current = dict(row.synopsis_i18n or {})
-            # Una voce e' coperta quando ha un testo in una qualsiasi lingua:
-            # la fonte decide in quale, e il render ricade sull'inglese.
-            covered = any((text or "").strip() for text in current.values())
-            wanted = [] if covered and not args.overwrite else list(langs)
+            # Per lingua: `--lang en` riempie l'inglese anche su una voce che ha
+            # gia' l'italiano. La fonte poi decide in quale lingua risponde, e il
+            # testo viene archiviato sotto quella.
+            wanted = [lang for lang in langs
+                      if args.overwrite or not (current.get(lang) or "").strip()]
             if not wanted:
                 skipped += 1
                 continue
