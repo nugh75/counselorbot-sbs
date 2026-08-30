@@ -13,6 +13,7 @@ import re
 import shutil
 import subprocess
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
@@ -23,13 +24,22 @@ DIAGRAM_TYPES = ("flow", "relation", "cycle", "hierarchy")
 
 MAX_NODES = 8
 MAX_EDGES = 12
-MAX_LABEL = 40
-MAX_EDGE_LABEL = 24
+MAX_LABEL = 80
+MAX_EDGE_LABEL = 40
 MAX_TITLE = 80
 
 RENDER_TIMEOUT_S = 5
 # Larghezza di riga per mandare a capo le etichette lunghe dentro il nodo.
 WRAP_AT = 18
+
+# Vocabolario chiuso: il modello sceglie il significato, il renderer conserva
+# il controllo sui file letti e sull'aspetto. Gli SVG sono la fonte; le copie
+# PNG servono soltanto a Graphviz per Telegram/PDF.
+DIAGRAM_ICONS = (
+    "book", "brain", "check", "clock", "compass",
+    "heart", "idea", "question", "shield", "target",
+)
+ICON_DIR = Path(__file__).with_name("diagram_icons")
 
 # Palette derivata dai token del reskin (frontend/src/app/globals.css):
 # petrol per la struttura, ocra per l'unico nodo accentato.
@@ -43,6 +53,7 @@ PALETTE = {
         "accent_text": "#5a3211",
         "edge": "#64748b",
         "edge_strong": "#41707a",
+        "icon": "#17747a",
         "title": "#0f172a",
         "surface": "#ffffff",
         "raster_bg": "#ffffff",
@@ -56,6 +67,7 @@ PALETTE = {
         "accent_text": "#f3dcbe",
         "edge": "#94a3b8",
         "edge_strong": "#7fb3b6",
+        "icon": "#9acbcd",
         "title": "#f1f5f9",
         "surface": "#1e293b",
         "raster_bg": "#1e293b",
@@ -118,6 +130,17 @@ class DiagramNode(BaseModel):
     id: str = Field(min_length=1, max_length=40)
     label: str = Field(min_length=1, max_length=MAX_LABEL)
     accent: bool = False
+    icon: str | None = Field(default=None, max_length=24)
+
+    @field_validator("icon", mode="before")
+    @classmethod
+    def _known_icon_or_none(cls, value):
+        # Un nome inventato dal modello non deve far fallire tutto il disegno:
+        # l'icona e' decorativa, nodi e relazioni restano la fonte di verita'.
+        if not isinstance(value, str):
+            return None
+        cleaned = value.strip().lower()
+        return cleaned if cleaned in DIAGRAM_ICONS else None
 
 
 class DiagramEdge(BaseModel):
@@ -212,13 +235,36 @@ def _wrap(label: str) -> str:
     return "\\n".join(_escape(line) for line in lines)
 
 
+def _node_label(node: DiagramNode, colors: dict, theme: str) -> str:
+    """Etichetta Graphviz con icona vettoriale e testo, se richiesta."""
+    if not node.icon:
+        return f'"{_wrap(node.label)}"'
+
+    icon_path = ICON_DIR / f"{node.icon}-{theme}.png"
+    if not icon_path.is_file():
+        logger.warning("Icona diagramma non disponibile: %s", icon_path.name)
+        return f'"{_wrap(node.label)}"'
+
+    text_color = colors["accent_text"] if node.accent else colors["node_text"]
+    wrapped = "<BR/>".join(_xml_escape(line) for line in _lines_at(node.label, WRAP_AT))
+    return (
+        '<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0">'
+        '<TR><TD FIXEDSIZE="TRUE" WIDTH="24" HEIGHT="24">'
+        f'<IMG SRC="{_xml_escape(str(icon_path))}" SCALE="TRUE"/>'
+        '</TD><TD WIDTH="8"></TD><TD ALIGN="LEFT">'
+        f'<FONT COLOR="{text_color}">{wrapped}</FONT>'
+        '</TD></TR></TABLE>>'
+    )
+
+
 def _edge_label_chip(text: str, colors: dict, font_size: str = "10") -> str:
     """Etichetta su pastiglia opaca: l'arco non taglia piu' le lettere."""
     return (
         '<<TABLE BORDER="0" CELLBORDER="0" CELLPADDING="3" CELLSPACING="0" '
         f'BGCOLOR="{colors["surface"]}" STYLE="ROUNDED">'
         f'<TR><TD><FONT COLOR="{colors["edge"]}" POINT-SIZE="{font_size}">'
-        f"{_xml_escape(text)}</FONT></TD></TR></TABLE>>"
+        f"{'<BR/>'.join(_xml_escape(line) for line in _lines_at(text, 20))}"
+        "</FONT></TD></TR></TABLE>>"
     )
 
 
@@ -247,7 +293,8 @@ def _title_block(spec: DiagramSpec, colors: dict, lang: str) -> str:
 def to_dot(spec: DiagramSpec, *, theme: str = "light", embed_title: bool = False,
            raster: bool = False, lang: str = "it") -> str:
     """Traduce lo spec in sorgente DOT gia' tematizzato."""
-    colors = PALETTE.get(theme, PALETTE["light"])
+    resolved_theme = theme if theme in PALETTE else "light"
+    colors = PALETTE[resolved_theme]
     background = colors["raster_bg"] if raster else "transparent"
 
     graph_attrs = [
@@ -291,7 +338,7 @@ def to_dot(spec: DiagramSpec, *, theme: str = "light", embed_title: bool = False
     ]
 
     for node in spec.nodes:
-        attrs = [f'label="{_wrap(node.label)}"']
+        attrs = [f'label={_node_label(node, colors, resolved_theme)}']
         if node.accent:
             # Bordo piu' spesso: il nodo su cui si puo' agire si vede per primo.
             attrs += [
@@ -344,13 +391,48 @@ def describe(spec: DiagramSpec, lang: str = "it") -> str:
 
 _SVG_TAG_RE = re.compile(r"<svg\b[^>]*>", re.IGNORECASE)
 _SVG_SIZE_RE = re.compile(r'\s(?:width|height)="[^"]*"', re.IGNORECASE)
+_SVG_IMAGE_RE = re.compile(r"<image\b[^>]*/>", re.IGNORECASE)
+_SVG_ATTR_RE = re.compile(r'([\w:-]+)="([^"]*)"')
+_ICON_FILE_RE = re.compile(r"^([a-z-]+)-(light|dark)\.png$")
 
 
-def _inline_ready(svg: str, spec: DiagramSpec, lang: str) -> str:
+@lru_cache(maxsize=32)
+def _icon_svg_inner(name: str) -> str:
+    source = (ICON_DIR / f"{name}.svg").read_text(encoding="utf-8")
+    match = re.search(r"<svg\b[^>]*>(.*)</svg>\s*$", source, re.DOTALL | re.IGNORECASE)
+    if not match:
+        return ""
+    return match.group(1)
+
+
+def _inline_icon_image(tag: str, colors: dict) -> str:
+    """Sostituisce il PNG tecnico di Graphviz con il vero SVG inline sul web."""
+    attrs = dict(_SVG_ATTR_RE.findall(tag))
+    href = attrs.get("xlink:href") or attrs.get("href") or ""
+    match = _ICON_FILE_RE.match(Path(href).name)
+    if not match or match.group(1) not in DIAGRAM_ICONS:
+        return tag
+    inner = _icon_svg_inner(match.group(1))
+    if not inner:
+        return tag
+    geometry = " ".join(
+        f'{key}="{attrs[key]}"' for key in ("x", "y", "width", "height") if key in attrs
+    )
+    return (
+        f'<svg {geometry} viewBox="0 0 24 24" fill="none" '
+        f'stroke="{colors["icon"]}" stroke-width="2" stroke-linecap="round" '
+        f'stroke-linejoin="round" aria-hidden="true">{inner}</svg>'
+    )
+
+
+def _inline_ready(svg: str, spec: DiagramSpec, lang: str, theme: str) -> str:
     """Prologo XML via, dimensioni al CSS, titolo e descrizione per gli screen reader."""
     start = svg.find("<svg")
     if start > 0:
         svg = svg[start:]
+
+    colors = PALETTE.get(theme, PALETTE["light"])
+    svg = _SVG_IMAGE_RE.sub(lambda match: _inline_icon_image(match.group(0), colors), svg)
 
     match = _SVG_TAG_RE.search(svg)
     if not match:
@@ -419,7 +501,7 @@ def _render_cached(spec_json: str, theme: str, fmt: str, embed_title: bool, lang
         raise DiagramSpecError(f"graphviz ha rifiutato il diagramma: {detail}") from exc
 
     if fmt == "svg":
-        return _inline_ready(completed.stdout.decode("utf-8"), spec, lang).encode("utf-8")
+        return _inline_ready(completed.stdout.decode("utf-8"), spec, lang, theme).encode("utf-8")
     return completed.stdout
 
 

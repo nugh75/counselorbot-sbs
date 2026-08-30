@@ -2,13 +2,17 @@ export type DiagramType = 'flow' | 'relation' | 'cycle' | 'hierarchy';
 
 // Tipo di relazione dell'arco: decide il tratto con cui il backend lo disegna.
 export type DiagramEdgeKind = 'drives' | 'strengthens' | 'weakens' | 'feedback' | 'link';
+export type DiagramIcon = 'book' | 'brain' | 'check' | 'clock' | 'compass' | 'heart' | 'idea' | 'question' | 'shield' | 'target';
 
 export const DIAGRAM_EDGE_KINDS: DiagramEdgeKind[] = ['drives', 'strengthens', 'weakens', 'feedback', 'link'];
+export const DIAGRAM_ICONS: DiagramIcon[] = ['book', 'brain', 'check', 'clock', 'compass', 'heart', 'idea', 'question', 'shield', 'target'];
+const DIAGRAM_ICON_SET = new Set<string>(DIAGRAM_ICONS);
 
 export interface DiagramNode {
     id: string;
     label: string;
     accent?: boolean;
+    icon?: DiagramIcon;
 }
 
 export interface DiagramEdge {
@@ -54,7 +58,18 @@ function isDiagramSpec(value: unknown): value is DiagramSpec {
 function parseDiagramJson(raw: string): DiagramSpec | null {
     try {
         const value: unknown = JSON.parse(raw);
-        return isDiagramSpec(value) ? value : null;
+        if (!isDiagramSpec(value)) return null;
+        return {
+            ...value,
+            // Un nome icona inventato non deve rompere il diagramma: il backend
+            // applica la stessa allowlist e il nodo resta leggibile senza icona.
+            nodes: value.nodes.map((node) => ({
+                ...node,
+                icon: typeof node.icon === 'string' && DIAGRAM_ICON_SET.has(node.icon)
+                    ? node.icon as DiagramIcon
+                    : undefined,
+            })),
+        };
     } catch {
         return null;
     }
