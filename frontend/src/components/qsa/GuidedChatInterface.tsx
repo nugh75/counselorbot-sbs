@@ -1263,7 +1263,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     return (
         <div className="grid gap-4 lg:h-chat lg:grid-cols-4 lg:gap-6">
             {/* Left Sidebar */}
-            <div className="space-y-4 custom-scrollbar lg:col-span-1 lg:overflow-y-auto lg:pr-2">
+            <div className="order-3 space-y-4 custom-scrollbar lg:order-1 lg:col-span-1 lg:overflow-y-auto lg:pr-2">
                 {/* Phase Progress */}
                 <div className="glass-panel overflow-hidden">
                     <button
@@ -1363,7 +1363,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             </div>
 
             {/* Chat Area */}
-            <div className="flex min-h-chat min-w-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm lg:col-span-3 lg:h-full lg:min-h-0">
+            <div className="order-1 flex min-h-chat min-w-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm lg:order-2 lg:col-span-3 lg:h-full lg:min-h-0">
                 {/* Header */}
                 <div className={cn("flex min-w-0 items-center gap-3 border-b border-slate-100 p-4", currentColors.headerBg)}>
                     <div className="min-w-0">
@@ -1504,13 +1504,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     <div ref={messagesEndRef} />
                 </div>
 
-                {/* Su mobile la navigazione resta accanto alla conversazione, non sopra i pannelli dati. */}
-                {hasStepNavigation && (
-                    <div className="border-t border-slate-100 bg-slate-50/90 p-2.5 lg:hidden">
-                        {renderStepNavigation(true)}
-                    </div>
-                )}
-
                 {/* Input Area */}
                 {currentPhase === FIXED_CONCLUSION_ID ? (
                     <div className="flex justify-center border-t border-slate-100 bg-slate-50 p-3 sm:p-4">
@@ -1614,6 +1607,13 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     </form>
                 )}
             </div>
+
+            {/* Su mobile la navigazione sta sotto la conversazione, sopra i pannelli dati collassati. */}
+            {hasStepNavigation && (
+                <div className="order-2 rounded-lg border border-slate-200 bg-slate-50/90 p-2.5 lg:hidden">
+                    {renderStepNavigation(true)}
+                </div>
+            )}
         </div>
     );
 }
