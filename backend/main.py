@@ -72,6 +72,7 @@ from .routes import guided_step_questions as guided_step_questions_routes
 from .routes import telegram as telegram_routes
 from .routes import groups as groups_routes
 from .routes import frozen_sessions as frozen_sessions_routes
+from .routes import idea_map as idea_map_routes
 from .routes import skills as skills_routes
 from .routes import diagram as diagram_routes
 
@@ -619,6 +620,7 @@ def _seed_and_migrate():
             ("monthly_budget_usd", "0", "Budget mensile in USD; superato il limite si usano solo modelli Ollama locali (0 = nessun limite)."),
             ("budget_fallback_model", "muse-glimmer:30b", "Modello Ollama locale usato quando il budget mensile e' superato."),
             ("readings_allow_sensitive", "false", "Se true, le letture marcate sensibili possono essere proposte allo studente quando e' lui a nominare quel tema. Spenta: restano solo nel catalogo admin."),
+            ("feature_idea_focus", "false", "Strumento Idea (chat libera che mette a fuoco un'idea costruendo una mappa). Spento: non compare fra gli strumenti e gli endpoint della mappa rispondono 404."),
         ]:
             if not db.query(models.Config).filter(models.Config.key == key).first():
                 db.add(models.Config(key=key, value=default, description=descr))
@@ -632,6 +634,7 @@ def _seed_and_migrate():
                 apply_diagram_edge_kinds_policy,
                 apply_diagram_icons_policy,
                 apply_english_skill_instructions_policy,
+                apply_idea_focus_policy,
                 apply_reading_and_translations_policy,
                 apply_specialized_skills_policy,
                 seed_skill_configs,
@@ -645,9 +648,10 @@ def _seed_and_migrate():
             english_changed = apply_english_skill_instructions_policy(db)
             diagram_changed = apply_diagram_edge_kinds_policy(db)
             diagram_icons_changed = apply_diagram_icons_policy(db)
+            idea_changed = apply_idea_focus_policy(db)
             if (configs_changed or skills_changed or policy_changed or specialized_changed
                     or i18n_changed or english_changed or diagram_changed
-                    or diagram_icons_changed):
+                    or diagram_icons_changed or idea_changed):
                 logger.info("Seed skill completato")
         except Exception as e:
             logger.warning(f"Seed skill fallito: {e}")
@@ -1596,3 +1600,4 @@ app.include_router(guided_step_questions_routes.router)
 app.include_router(telegram_routes.router)
 app.include_router(groups_routes.router)
 app.include_router(frozen_sessions_routes.router)
+app.include_router(idea_map_routes.router)

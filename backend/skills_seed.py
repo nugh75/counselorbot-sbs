@@ -18,6 +18,10 @@ logger = logging.getLogger(__name__)
 # Strumenti che ricevono il materiale certificato nella chat guidata.
 SEEDED_INSTRUMENTS = ("QSA", "QSAr", "ZTPI", "QPCS", "QPCC", "QAP", "SAVICKAS")
 
+# Idea usa il motore di skill ma non il materiale certificato: monta solo la
+# propria skill, percio' sta qui e non in SEEDED_INSTRUMENTS.
+ENGINE_INSTRUMENTS = SEEDED_INSTRUMENTS + ("IDEA",)
+
 CERTIFIED_ADVICE_INSTRUCTIONS_EN = """## Student advice contract
 
 - Use only the certified strategies supplied in the context block.
@@ -111,6 +115,52 @@ CONCEPT_DIAGRAM_INSTRUCTIONS_EN = """## Concept diagram
 """
 
 
+IDEA_FOCUS_INSTRUCTIONS_EN = """## The map of the idea
+
+The map is the point of this session, not decoration: it is what the person
+takes away. It is ONE map that grows with the conversation, never redrawn from
+scratch, so send a patch and let the server merge it.
+
+- Emit one fenced block marked `idea` after every turn that adds something.
+  Send nothing when the turn added nothing; an empty patch is not a patch.
+- Never mention the block, the JSON or the map's internals to the person. Speak
+  about the map in words: "I have added what you just said about time".
+
+```idea
+{"add_nodes":[{"id":"t1","label":"Non so se ho tempo","role":"constraint"}],
+ "add_edges":[{"from":"t1","to":"idea","kind":"weakens"}],
+ "update":[{"id":"idea","label":"Fare la tesi sulla dispersione"}]}
+```
+
+- The FIRST patch of a session must stand on its own: at least two nodes and one
+  edge, one node with `"role":"idea"` and `"accent":true`. Add `"title"` once,
+  the idea in a few words.
+- `id` is stable for the whole session: never rename an id, never reuse one for
+  something else. Re-adding an existing id updates that node.
+- `role` says what work the node does in the reasoning, from this closed list:
+  - `idea`: the idea itself, one sentence. Exactly one, and it carries the accent.
+  - `assumption`: something taken for granted and not yet checked.
+  - `evidence`: a fact, a datum, an experience the idea rests on.
+  - `alternative`: another way to read the same thing.
+  - `implication`: what would follow if the idea held.
+  - `open-question`: what is not known yet and decides something.
+  - `constraint`: a real limit — time, money, rules, other people.
+  - `step`: a concrete next action.
+  A node without a role is allowed but says less; prefer to give one.
+- `kind` on an edge: `drives` (default, A produces B), `strengthens` (A supports
+  B), `weakens` (A hinders B), `feedback` (B returns on A), `link` (they belong
+  together, no direction). Pick the true one: each is drawn differently.
+- `update` changes only the fields it names. Use it when the person sharpens
+  something they already said, instead of adding a near-duplicate node.
+- `remove` ONLY when the person says that something is wrong or no longer
+  theirs. Never to tidy the map, never because you would draw it differently.
+- Labels in the person's own words and language, at most 80 characters. The map
+  holds their idea, not your summary of it.
+- At most 24 nodes: when the map is full, sharpen what is there instead of
+  adding more.
+"""
+
+
 SKILL_INSTRUCTIONS_I18N = {
     "certified-advice": {"en": CERTIFIED_ADVICE_INSTRUCTIONS_EN},
     "profile-wayfinder": {"en": PROFILE_WAYFINDER_INSTRUCTIONS_EN},
@@ -118,6 +168,7 @@ SKILL_INSTRUCTIONS_I18N = {
     "profile-comparison": {"en": PROFILE_COMPARISON_INSTRUCTIONS_EN},
     "web-lookup": {"en": WEB_LOOKUP_INSTRUCTIONS_EN},
     "concept-diagram": {"en": CONCEPT_DIAGRAM_INSTRUCTIONS_EN},
+    "idea-focus": {"en": IDEA_FOCUS_INSTRUCTIONS_EN},
 }
 
 CERTIFIED_ADVICE_POLICY_MARKER = "skills_certified_advice_policy_v1"
@@ -126,6 +177,7 @@ READING_AND_TRANSLATIONS_POLICY_MARKER = "skills_reading_sources_and_i18n_v1"
 ENGLISH_SKILL_INSTRUCTIONS_POLICY_MARKER = "skills_english_instructions_v1"
 DIAGRAM_EDGE_KINDS_POLICY_MARKER = "skills_diagram_edge_kinds_v1"
 DIAGRAM_ICONS_POLICY_MARKER = "skills_diagram_icons_v1"
+IDEA_FOCUS_POLICY_MARKER = "skills_idea_focus_v2"
 # Contratto del diagramma prima dei tipi di arco: serve a riconoscere le
 # installazioni ancora sul testo di serie, che sono le uniche da aggiornare.
 CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V1_MD5 = "8a3890a53e860a50876501193da698bf"
@@ -141,7 +193,7 @@ SKILL_CONFIG_DEFAULTS = (
     ),
     (
         "skills_engine_instruments",
-        json.dumps(list(SEEDED_INSTRUMENTS)),
+        json.dumps(list(ENGINE_INSTRUMENTS)),
         "Lista JSON degli strumenti su cui il motore di skill e' attivo.",
     ),
     ("skills_router_threshold", "3", "Numero di skill opzionali candidate oltre il quale interviene il router LLM."),
@@ -279,6 +331,25 @@ SKILL_SEEDS = [
         "sort_order": 35,
         "is_active": True,
         "bind": True,
+    },
+    {
+        "slug": "idea-focus",
+        "name": "Mappa dell'idea",
+        "description": (
+            "Fa crescere la mappa unica della sessione Idea: a ogni turno il modello "
+            "manda una patch, il server la fonde con la mappa corrente."
+        ),
+        "instructions_i18n": SKILL_INSTRUCTIONS_I18N["idea-focus"],
+        "conditions": {},
+        "handler": None,
+        "handler_params": {},
+        "routing": "always",
+        "slot": "directive_tail",
+        "max_chars": 3000,
+        "sort_order": 40,
+        "is_active": True,
+        "bind": True,
+        "bind_instruments": ("IDEA",),
     },
 ]
 
@@ -522,6 +593,58 @@ def apply_diagram_icons_policy(db) -> bool:
     return updated
 
 
+def apply_idea_focus_policy(db) -> bool:
+    """Aggiunge IDEA agli strumenti serviti dal motore, una sola volta.
+
+    Il valore di `skills_engine_instruments` e' gia' scritto negli impianti
+    esistenti, percio' il seed non lo tocca: qui si accoda soltanto lo
+    strumento nuovo, senza rimuovere le scelte dell'admin sugli altri.
+    """
+    marker = db.query(models.Config).filter(
+        models.Config.key == IDEA_FOCUS_POLICY_MARKER
+    ).first()
+    if marker is not None:
+        return False
+
+    seed_skills(db)
+    row = db.query(models.Config).filter(
+        models.Config.key == "skills_engine_instruments"
+    ).first()
+    updated = False
+    if row is not None:
+        try:
+            current = json.loads(row.value or "[]")
+        except (TypeError, ValueError):
+            current = []
+        if isinstance(current, list) and "IDEA" not in current:
+            row.value = json.dumps(current + ["IDEA"])
+            updated = True
+
+    # `idea-focus` vale solo per Idea: agganciata altrove imporrebbe il
+    # contratto della mappa alle chat degli altri strumenti.
+    skill = db.query(models.Skill).filter(models.Skill.slug == "idea-focus").first()
+    if skill is not None:
+        stray = (
+            db.query(models.GuidedStepSkill)
+            .filter(
+                models.GuidedStepSkill.skill_id == skill.id,
+                models.GuidedStepSkill.questionnaire_type != "IDEA",
+            )
+            .all()
+        )
+        for binding in stray:
+            db.delete(binding)
+            updated = True
+
+    db.add(models.Config(
+        key=IDEA_FOCUS_POLICY_MARKER,
+        value="applied",
+        description="Migrazione una tantum: strumento Idea servito dal motore di skill.",
+    ))
+    db.commit()
+    return updated
+
+
 def seed_skills(db) -> bool:
     """Crea le skill mancanti e i loro agganci wildcard. Idempotente."""
     changed = False
@@ -530,7 +653,7 @@ def seed_skills(db) -> bool:
         if skill is None:
             model_values = {
                 key: value for key, value in seed.items()
-                if key not in {"bind", "is_active"}
+                if key not in {"bind", "bind_instruments", "is_active"}
             }
             skill = models.Skill(
                 status="published",
@@ -546,7 +669,7 @@ def seed_skills(db) -> bool:
         if not seed.get("bind", True):
             continue
 
-        for questionnaire_type in SEEDED_INSTRUMENTS:
+        for questionnaire_type in seed.get("bind_instruments", SEEDED_INSTRUMENTS):
             exists = (
                 db.query(models.GuidedStepSkill)
                 .filter(

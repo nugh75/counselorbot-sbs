@@ -34,6 +34,7 @@ from .prompt_config import (
     DEFAULT_QPCS_GUIDED_STEPS,
     DEFAULT_QPCC_GUIDED_STEPS,
     DEFAULT_QAP_GUIDED_STEPS,
+    DEFAULT_IDEA_GUIDED_STEPS,
     GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
     MODE_TO_SYSTEM_PROMPT_KEY,
     SYSTEM_PROMPT_DEFAULTS,
@@ -174,6 +175,7 @@ def _ensure_questionnaire_guided_steps(db, questionnaire_type: str) -> None:
         "QPCS": DEFAULT_QPCS_GUIDED_STEPS,
         "QPCC": DEFAULT_QPCC_GUIDED_STEPS,
         "QAP": DEFAULT_QAP_GUIDED_STEPS,
+        "IDEA": DEFAULT_IDEA_GUIDED_STEPS,
     }
 
     if questionnaire_type not in defaults_by_type:

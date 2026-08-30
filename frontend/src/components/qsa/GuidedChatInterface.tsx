@@ -19,6 +19,8 @@ import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/Res
 import { toast } from '@/components/ui/Toast';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
+import { IdeaMapPanel } from '@/components/qsa/IdeaMapPanel';
+import type { IdeaVariant } from '@/lib/idea-map';
 import { freezeSession, type FrozenSessionDetail } from '@/lib/frozen-session';
 import { diagramContentForSpeech, splitDiagramContent } from '@/lib/diagram-content';
 
@@ -413,6 +415,11 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const activeLocale = normalizeLocale(locale || contextLang);
     const [steps, setSteps] = useState<StepDef[]>([]);
     const [phases, setPhases] = useState<string[]>([]);
+    // Strumento Idea: la variante decide di che materia si parla, la versione
+    // dice al pannello che la mappa e' cambiata.
+    const isIdea = questionnaireType === 'IDEA';
+    const [ideaVariant, setIdeaVariant] = useState<IdeaVariant>('student-path');
+    const [ideaMapVersion, setIdeaMapVersion] = useState(0);
     const [currentPhase, setCurrentPhase] = useState<string>('');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [responseLength, setResponseLength] = useState<ResponseLength>('medium');
@@ -759,9 +766,11 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 max_tokens: 500,
                 response_length: responseLength,
                 counselor_id: getSelectedCounselorId(),
+                idea_variant: isIdea ? ideaVariant : undefined,
             }, (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
             if (result.conversation_id) setConversationId(result.conversation_id);
             setLastFeedbackTargets(result.strategy_ids, result.response_id);
+            if (isIdea) setIdeaMapVersion((value) => value + 1);
             if (!result.response?.trim()) dropLast();
         } catch {
             if (!controller.signal.aborted) dropLast();
@@ -797,6 +806,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         max_tokens: 700,
                         response_length: responseLength,
                         counselor_id: getSelectedCounselorId(),
+                        idea_variant: isIdea ? ideaVariant : undefined,
                     };
                 }
                 return {
@@ -812,6 +822,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     max_tokens: 700,
                     response_length: responseLength,
                     counselor_id: getSelectedCounselorId(),
+                    idea_variant: isIdea ? ideaVariant : undefined,
                 };
             };
 
@@ -839,6 +850,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 responseText = result.response || '';
                 if (result.conversation_id) setConversationId(result.conversation_id);
                 setLastFeedbackTargets(result.strategy_ids, result.response_id);
+                if (isIdea) setIdeaMapVersion((value) => value + 1);
                 streamOk = true;
             } catch {
                 if (controller.signal.aborted) return;
@@ -975,6 +987,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 max_tokens: 900,
                 response_length: responseLength,
                 counselor_id: getSelectedCounselorId(),
+                idea_variant: isIdea ? ideaVariant : undefined,
             };
             if (scoresContextOverride) {
                 chatPayload.scores_context = scoresContextOverride;
@@ -988,6 +1001,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             const { response } = result;
             if (result.conversation_id) setConversationId(result.conversation_id);
             setLastFeedbackTargets(result.strategy_ids, result.response_id);
+            if (isIdea) setIdeaMapVersion((value) => value + 1);
 
             // Sul testo completo applica il segnale di avanzamento
             const { cleanText, shouldAdvance } = extractAdvanceSignal(response || '');
@@ -1375,6 +1389,36 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
                 {/* Messages */}
                 <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 space-y-6">
+                    {isIdea && (
+                        <div className="space-y-3">
+                            <IdeaMapPanel sessionId={sessionId} version={ideaMapVersion} locale={activeLocale} variant={ideaVariant} />
+                            {messages.length <= 1 && (
+                                <fieldset className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                                    <legend className="px-1 text-xs font-medium text-slate-600">
+                                        {t('idea.variant.question')}
+                                    </legend>
+                                    <div className="flex flex-wrap gap-2 pt-1">
+                                        {(['student-path', 'student-open', 'research'] as const).map((variant) => (
+                                            <button
+                                                key={variant}
+                                                type="button"
+                                                onClick={() => setIdeaVariant(variant)}
+                                                aria-pressed={ideaVariant === variant}
+                                                className={cn(
+                                                    'rounded-full border px-3 py-1 text-xs transition',
+                                                    ideaVariant === variant
+                                                        ? 'border-teal-500 bg-teal-50 text-teal-800'
+                                                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300',
+                                                )}
+                                            >
+                                                {t(`idea.variant.${variant === 'student-path' ? 'studyPath' : variant === 'student-open' ? 'open' : 'research'}`)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </fieldset>
+                            )}
+                        </div>
+                    )}
                     {messages.map((msg, idx) => (
                         <div key={idx} className={cn(
                             "flex min-w-0 animate-in fade-in slide-in-from-bottom-2 duration-300",

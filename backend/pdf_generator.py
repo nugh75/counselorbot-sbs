@@ -981,3 +981,88 @@ def generate_student_booklet_pdf(
     pdf.output(pdf_bytes)
     pdf_bytes.seek(0)
     return pdf_bytes
+
+
+# --- Strumento Idea: la mappa e le sue tappe ---------------------------------
+
+IDEA_PDF_TEXT = {
+    "it": {"title": "Mappa dell'idea", "map": "La mappa", "words": "La mappa a parole",
+           "history": "Come e' cresciuta", "missing": "Manca ancora", "step": "Tappa"},
+    "en": {"title": "Map of the idea", "map": "The map", "words": "The map in words",
+           "history": "How it grew", "missing": "Still missing", "step": "Stage"},
+    "es": {"title": "Mapa de la idea", "map": "El mapa", "words": "El mapa en palabras",
+           "history": "Como ha crecido", "missing": "Todavia falta", "step": "Etapa"},
+    "fr": {"title": "Carte de l'idee", "map": "La carte", "words": "La carte en mots",
+           "history": "Comment elle a grandi", "missing": "Il manque encore", "step": "Etape"},
+    "de": {"title": "Karte der Idee", "map": "Die Karte", "words": "Die Karte in Worten",
+           "history": "Wie sie gewachsen ist", "missing": "Es fehlt noch", "step": "Etappe"},
+    "sv": {"title": "Idens karta", "map": "Kartan", "words": "Kartan i ord",
+           "history": "Hur den vaxte", "missing": "Det saknas", "step": "Steg"},
+}
+
+
+def generate_idea_map_pdf(
+    spec: DiagramSpec,
+    history: list[DiagramSpec] | None = None,
+    missing: list[str] | None = None,
+    username: str | None = None,
+    session_id: str | None = None,
+    language: str | None = None,
+) -> BytesIO:
+    """Mappa finale, la sua descrizione a parole e le tappe che l'hanno fatta.
+
+    Le tappe intermedie servono a vedere il pensiero muoversi: senza, il PDF
+    direbbe dove si e' arrivati ma non che ci si e' arrivati cambiando idea.
+    """
+    lang = _normalize_lang(language)
+    ui = UI_TEXT[lang]
+    text = IDEA_PDF_TEXT.get(lang, IDEA_PDF_TEXT["en"])
+
+    pdf = ResultPDF(title=f"CounselorBot - {text['title']}", page_label=ui["page"])
+    pdf.alias_nb_pages()
+    pdf.set_auto_page_break(auto=True, margin=18)
+    pdf.add_page()
+    content_w = pdf.w - pdf.l_margin - pdf.r_margin
+
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.set_text_color(*APP_TEXT)
+    pdf.multi_cell(content_w, 7, _latin1(spec.title), new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(80, 80, 90)
+    if username:
+        pdf.cell(0, 6, _latin1(f"Account: {username}"), new_x="LMARGIN", new_y="NEXT")
+    if session_id:
+        pdf.cell(0, 6, _latin1(f"{ui['session']}: {session_id[:16]}..."), new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(3)
+
+    _section_heading(pdf, text["map"], content_w)
+    _diagram_card(pdf, spec, content_w, lang)
+
+    _section_heading(pdf, text["words"], content_w)
+    _text_card(pdf, describe(spec, lang), content_w, fill=APP_SURFACE, border=APP_BORDER)
+
+    if missing:
+        _text_card(
+            pdf,
+            f"{text['missing']}: " + ", ".join(missing),
+            content_w,
+            fill=APP_PRIMARY_SOFT,
+            border=APP_PRIMARY_BORDER,
+        )
+
+    earlier = [step for step in (history or []) if step is not spec]
+    if earlier:
+        _section_heading(pdf, text["history"], content_w)
+        for index, step in enumerate(earlier, start=1):
+            _text_card(
+                pdf,
+                f"{text['step']} {index} - {describe(step, lang)}",
+                content_w,
+                fill=APP_SURFACE,
+                border=APP_BORDER,
+            )
+
+    pdf_bytes = BytesIO()
+    pdf.output(pdf_bytes)
+    pdf_bytes.seek(0)
+    return pdf_bytes

@@ -13,6 +13,7 @@ import pytest
 from backend.diagram_render import (
     DiagramSpecError,
     describe,
+    engine_for,
     legend_entries,
     parse_spec,
     render,
@@ -286,6 +287,78 @@ def test_embedded_title_carries_the_legend():
     assert "Cosa sostiene la concentrazione" in dot
     assert "rafforza" in dot and "ostacola" in dot
     assert to_dot(parse_spec(CYCLE), embed_title=True, lang="it").count("rafforza") == 0
+
+
+# --- mappa di Idea: tipo `mindmap`, limiti piu' larghi, ruoli dei nodi ---
+
+def _mindmap(node_count: int) -> dict:
+    nodes = [{"id": "idea", "label": "Fare la tesi", "role": "idea", "accent": True}]
+    nodes += [{"id": f"n{i}", "label": f"Nodo {i}"} for i in range(1, node_count)]
+    return {
+        "type": "mindmap",
+        "title": "Idea in costruzione",
+        "nodes": nodes,
+        "edges": [{"from": "idea", "to": f"n{i}"} for i in range(1, node_count)],
+    }
+
+
+def test_mindmap_is_drawn_radially():
+    assert engine_for("mindmap") == "twopi"
+    dot = to_dot(parse_spec(_mindmap(4)))
+    assert 'root="idea"' in dot
+    assert 'overlap="false"' in dot
+
+
+def test_mindmap_accepts_more_nodes_than_an_illustration():
+    spec = parse_spec(_mindmap(24))
+    assert len(spec.nodes) == 24
+
+
+def test_mindmap_still_has_a_ceiling():
+    with pytest.raises(DiagramSpecError):
+        parse_spec(_mindmap(25))
+
+
+def test_other_types_keep_the_narrow_ceiling():
+    wide = _mindmap(12)
+    wide["type"] = "flow"
+    with pytest.raises(DiagramSpecError):
+        parse_spec(wide)
+
+
+def test_role_picks_the_icon_when_none_is_given():
+    spec = parse_spec(_mindmap(3))
+    assert spec.nodes[0].icon == "idea"
+
+
+def test_explicit_icon_wins_over_the_role():
+    raw = _mindmap(3)
+    raw["nodes"][0]["icon"] = "compass"
+    assert parse_spec(raw).nodes[0].icon == "compass"
+
+
+def test_unknown_role_is_dropped_like_an_unknown_icon():
+    raw = _mindmap(3)
+    raw["nodes"][1]["role"] = "inventato"
+    node = parse_spec(raw).nodes[1]
+    assert node.role is None and node.icon is None
+
+
+def test_a_spec_without_roles_stays_valid():
+    assert parse_spec(CYCLE).nodes[0].role is None
+
+
+def test_description_names_the_role():
+    raw = _mindmap(3)
+    raw["nodes"][1]["role"] = "constraint"
+    text = describe(parse_spec(raw), lang="it")
+    assert "Nodo 1 (vincolo)" in text
+
+
+@pytest.mark.skipif(not HAS_DOT, reason="graphviz non installato")
+def test_render_mindmap_svg():
+    svg = render(parse_spec(_mindmap(10)), fmt="svg").decode("utf-8")
+    assert svg.startswith("<svg") or "<svg" in svg[:400]
 
 
 if __name__ == "__main__":
