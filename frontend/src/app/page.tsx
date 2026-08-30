@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QUESTIONNAIRES, QuestionnaireConfig, QuestionnaireType, supportsProfileUpload } from '@/lib/questionnaires';
 import { QuestionnaireSelector } from '@/components/questionnaire/QuestionnaireSelector';
@@ -11,6 +11,7 @@ import { PDFUploader } from '@/components/qsa/PDFUploader';
 import { ProfileVisualization } from '@/components/qsa/ProfileVisualization';
 import { GuidedChatInterface } from '@/components/qsa/GuidedChatInterface';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
+import { ReturningHome } from '@/components/home/ReturningHome';
 import dynamic from 'next/dynamic';
 
 const OpenCodeExperience = dynamic(
@@ -34,7 +35,7 @@ import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 
 
-type Step = 'intro' | 'notebook' | 'counselor-select' | 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'farewell';
+type Step = 'intro' | 'base' | 'notebook' | 'counselor-select' | 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'farewell';
 
 // Compilazioni già salvate: servono a sapere se c'è qualcosa da riusare prima
 // di saltare la scelta del metodo di inserimento.
@@ -219,6 +220,14 @@ export default function Home() {
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [frozenSnapshot, setFrozenSnapshot] = useState<FrozenSessionDetail | null>(null);
     const [savedResults, setSavedResults] = useState<SavedResult[] | null>(null);
+    const [notebookUpdatedAt, setNotebookUpdatedAt] = useState<string | null | undefined>(undefined);
+    // Schermata iniziale decisa: un link diretto (?frozen, ?start, ...) la
+    // rivendica subito, altrimenti si sceglie fra intro e percorso quando i
+    // dati dello studente sono arrivati.
+    const [ready, setReady] = useState(false);
+    // Revisione del taccuino: una volta per giro, da qualunque schermata si parta.
+    const [notebookReviewed, setNotebookReviewed] = useState(false);
+    const entryClaimed = useRef(false);
 
     useEffect(() => {
         getIdentity().then(setIdentity);
@@ -231,6 +240,10 @@ export default function Home() {
             .then((res) => (res.ok ? res.json() : []))
             .then((rows: unknown) => { if (alive) setSavedResults(Array.isArray(rows) ? (rows as SavedResult[]) : []); })
             .catch(() => { if (alive) setSavedResults([]); });
+        apiFetch('/api/user/learner-profile')
+            .then((res) => (res.ok ? res.json() : null))
+            .then((rev: { created_at?: string } | null) => { if (alive) setNotebookUpdatedAt(rev?.created_at ?? null); })
+            .catch(() => { if (alive) setNotebookUpdatedAt(null); });
         return () => { alive = false; };
     }, [identity]);
 
@@ -246,10 +259,23 @@ export default function Home() {
     // deve mostrarne uno rimasto da un percorso precedente. Il counselor invece
     // resta scelto: è la preferenza che evita di ripetere la fase ogni volta.
     useEffect(() => {
-        if (step === 'intro') {
+        if (step === 'intro' || step === 'base') {
             setSelectedInstrumentId(null);
         }
     }, [step]);
+
+    // Un link diretto porta già dove deve: la scelta fra presentazione e
+    // percorso non deve sovrascriverlo.
+    const claimEntry = () => {
+        entryClaimed.current = true;
+        setReady(true);
+    };
+
+    // Dove si torna a percorso finito: al percorso se c'è una storia, alla
+    // presentazione se è la prima volta.
+    const homeStep = (): Step => (
+        (savedResults && savedResults.length > 0) || notebookUpdatedAt ? 'base' : 'intro'
+    );
 
     useEffect(() => {
         if (identity === undefined || !identity?.authenticated) return;
@@ -259,15 +285,17 @@ export default function Home() {
         // Ripresa di una sessione congelata: lo stato arriva dal server, non da localStorage.
         const frozenParam = params.get('frozen');
         if (frozenParam) {
+            entryClaimed.current = true;
             window.history.replaceState(null, '', window.location.pathname);
             void (async () => {
                 const snapshot = await getFrozenSession(frozenParam);
                 if (!snapshot) {
                     toast.error(t('toast.error'));
+                    setReady(true);
                     return;
                 }
                 const q = QUESTIONNAIRES[snapshot.questionnaire_type as QuestionnaireType];
-                if (!q) return;
+                if (!q) { setReady(true); return; }
                 setSelectedQuestionnaire(q);
                 setSelectedInstrumentId(snapshot.questionnaire_type);
                 if (snapshot.counselor_id != null) setSelectedCounselorId(snapshot.counselor_id);
@@ -276,6 +304,7 @@ export default function Home() {
                 setExperience('standard');
                 setFrozenSnapshot(snapshot);
                 setStep('interaction');
+                setReady(true);
             })();
             return;
         }
@@ -296,6 +325,7 @@ export default function Home() {
                 setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
                 setExperience(r.experience);
                 setStep('interaction');
+                claimEntry();
                 return;
             }
         }
@@ -308,6 +338,7 @@ export default function Home() {
             setExperience(null);
             setStep('questionnaire-select');
             window.history.replaceState(null, '', window.location.pathname);
+            claimEntry();
             return;
         }
 
@@ -327,6 +358,7 @@ export default function Home() {
             setExperience(null);
             setStep('counselor-select');
             window.history.replaceState(null, '', window.location.pathname);
+            claimEntry();
             return;
         }
 
@@ -342,7 +374,18 @@ export default function Home() {
         setExperience(null);
         setStep('counselor-select');
         window.history.replaceState(null, '', window.location.pathname);
+        claimEntry();
     }, [identity]);
+
+    // Nessun link diretto: chi ha già un percorso alle spalle entra dal
+    // percorso, chi arriva per la prima volta dalla presentazione.
+    useEffect(() => {
+        if (ready || entryClaimed.current) return;
+        if (!identity?.authenticated) return;
+        if (savedResults === null || notebookUpdatedAt === undefined) return;
+        setStep(savedResults.length > 0 || notebookUpdatedAt ? 'base' : 'intro');
+        setReady(true);
+    }, [ready, identity, savedResults, notebookUpdatedAt]);
 
     const startAgentOnlyQuestionnaire = async (questionnaire: QuestionnaireConfig) => {
         const existingSessionId = sessionId;
@@ -379,6 +422,9 @@ export default function Home() {
         setStep('interaction');
     };
 
+    // Avvio di uno strumento, dal selettore o dalla schermata del percorso. Il
+    // taccuino resta la prima tappa di ogni giro (è lì che si registra la
+    // revisione di inizio sessione), ma una volta sola.
     const handleQuestionnaireSelect = (questionnaire: QuestionnaireConfig) => {
         setSelectedQuestionnaire(questionnaire);
         setSelectedInstrumentId(questionnaire.id);
@@ -386,10 +432,27 @@ export default function Home() {
         setPdfToken(undefined);
         setSessionId('');
         setExperience(null);
+        if (!notebookReviewed) {
+            setStep('notebook');
+            return;
+        }
         // Counselor già scelto in passato: la fase resta nella catena (ci si
         // torna con "indietro"), ma non la si ripete a ogni strumento.
         if (getSelectedCounselorId() != null) {
             void proceedAfterCounselor(questionnaire, null);
+            return;
+        }
+        setStep('counselor-select');
+    };
+
+    const continueAfterNotebook = () => {
+        setNotebookReviewed(true);
+        if (!selectedQuestionnaire) {
+            setStep('questionnaire-select');
+            return;
+        }
+        if (getSelectedCounselorId() != null) {
+            void proceedAfterCounselor(selectedQuestionnaire, scores);
             return;
         }
         setStep('counselor-select');
@@ -513,13 +576,14 @@ export default function Home() {
         setSelectedQuestionnaire(null);
         setPdfToken(undefined);
         setExperience(null);
-        setStep('intro');
+        setNotebookReviewed(false);
+        setStep(homeStep());
     };
 
     const goBack = () => {
-        if (step === 'notebook') setStep('intro');
+        if (step === 'notebook') setStep(homeStep());
         else if (step === 'questionnaire-select') setStep('notebook');
-        else if (step === 'counselor-select') setStep('questionnaire-select');
+        else if (step === 'counselor-select') setStep(selectedQuestionnaire ? 'questionnaire-select' : homeStep());
         else if (step === 'method-select') setStep('counselor-select');
         else if (step === 'manual-input' || step === 'upload-input') setStep('method-select');
         else if (step === 'dashboard') setStep('manual-input');
@@ -594,6 +658,29 @@ export default function Home() {
         );
     }
 
+    if (!ready) {
+        return (
+            <div className="page-narrow">
+                <div className="glass-panel p-8 text-center text-sm text-slate-500">
+                    {t('home.auth.loading')}
+                </div>
+            </div>
+        );
+    }
+
+    // Ultima compilazione per strumento: alimenta lo stato nella schermata
+    // percorso e il badge nel selettore.
+    const lastCompiledAt = (savedResults ?? []).reduce<Partial<Record<QuestionnaireType, string>>>((acc, row) => {
+        const type = row.questionnaire_type as QuestionnaireType;
+        if (!QUESTIONNAIRES[type]) return acc;
+        const current = acc[type];
+        if (!current || new Date(row.submitted_at).getTime() > new Date(current).getTime()) {
+            acc[type] = row.submitted_at;
+        }
+        return acc;
+    }, {});
+    const completedTypes = Object.keys(lastCompiledAt) as QuestionnaireType[];
+
     // Orientamento percorso: mappa lo step interno alle fasi visibili. Il taccuino
     // è la prima tappa (generale, indipendente dallo strumento), subito dopo l'intro.
     const flowStages = ['CounselorBot', t('flow.taccuino'), t('flow.select'), t('flow.counselor'), t('flow.input'), t('flow.profile'), t('flow.chat'), t('flow.done')];
@@ -609,13 +696,13 @@ export default function Home() {
 
     return (
         <div className="page-wide space-y-8">
-            {step !== 'intro' && <FlowStepper steps={flowStages} current={stageIndex} />}
+            {step !== 'intro' && step !== 'base' && <FlowStepper steps={flowStages} current={stageIndex} />}
 
             {/* The selection screen owns its introduction to avoid repeating the page purpose. */}
             {/* method-select e manual-input gestiscono la loro "prima riga" */}
             {/* internamente (BackButton + ForwardButton), come strumenti/counselor. */}
             {/* 'completed' non mostra il PageHeader: il titolo è già nella card. */}
-            {step !== 'intro' && step !== 'notebook' && step !== 'questionnaire-select' && step !== 'counselor-select' && step !== 'dashboard' && step !== 'interaction' && step !== 'method-select' && step !== 'manual-input' && step !== 'upload-input' && step !== 'completed' && (
+            {step !== 'intro' && step !== 'base' && step !== 'notebook' && step !== 'questionnaire-select' && step !== 'counselor-select' && step !== 'dashboard' && step !== 'interaction' && step !== 'method-select' && step !== 'manual-input' && step !== 'upload-input' && step !== 'completed' && (
                 <PageHeader
                     title={getStepTitle()}
                     subtitle={getStepDescription()}
@@ -636,14 +723,27 @@ export default function Home() {
                         <IntroScreen onStart={() => setStep('notebook')} />
                     )}
 
+                    {/* Step: percorso — schermata iniziale di chi è già passato di qui */}
+                    {step === 'base' && (
+                        <ReturningHome
+                            lastCompiledAt={lastCompiledAt}
+                            notebookUpdatedAt={notebookUpdatedAt ?? null}
+                            onStartInstrument={handleQuestionnaireSelect}
+                            onBrowseInstruments={() => setStep('questionnaire-select')}
+                            onReviewNotebook={() => setStep('notebook')}
+                            onChangeCounselor={() => setStep('counselor-select')}
+                            onOpenIntro={() => setStep('intro')}
+                        />
+                    )}
+
                     {/* Step: Taccuino (sempre per primo, generale, indipendente dallo strumento) */}
                     {step === 'notebook' && (
                         <div className="space-y-4">
                             <LearnerProfileCard
                                 variant="review"
                                 requireInitial
-                                onDone={() => setStep('questionnaire-select')}
-                                onUnavailable={() => setStep('questionnaire-select')}
+                                onDone={continueAfterNotebook}
+                                onUnavailable={continueAfterNotebook}
                                 onBack={goBack}
                             />
                         </div>
@@ -662,7 +762,7 @@ export default function Home() {
 
                     {/* Step: Questionnaire Selection */}
                     {step === 'questionnaire-select' && (
-                        <QuestionnaireSelector onSelect={handleQuestionnaireSelect} onBack={goBack} />
+                        <QuestionnaireSelector onSelect={handleQuestionnaireSelect} onBack={goBack} completed={completedTypes} />
                     )}
 
                     {/* Step: Input Method Selection */}
@@ -853,7 +953,7 @@ export default function Home() {
                                         {t('farewell.feedback')}
                                     </a>
                                     <button
-                                        onClick={() => setStep('intro')}
+                                        onClick={() => setStep(homeStep())}
                                         className="w-full py-3.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded-md transition-colors"
                                     >
                                         {t('farewell.home')}
