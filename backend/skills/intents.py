@@ -28,6 +28,20 @@ _PATTERNS = {
         r"\b(lettur|libro|articol|bibliograf|fonte|fonti|read|book|article|source|"
         r"lectura|livro|lecture|livre|lesen|buch|quelle|lasa|bok|kalla)"
     ),
+    # Domanda fattuale circoscritta su un'opera o un termine: "di cosa parla",
+    # "chi l'ha scritto", "in che anno". E' l'unico caso in cui ha senso uscire
+    # a consultare una fonte esterna.
+    "factual": re.compile(
+        r"\b(di\s+(?:cosa|che)\s+(?:parla|tratta)|qual\s+e\s+la\s+trama|la\s+trama\s+di|"
+        r"chi\s+(?:ha\s+scritto|ha\s+diretto|l\s?.?\s?ha\s+scritto)|chi\s+e\s+l.?\s?autore|"
+        r"in\s+che\s+anno|quando\s+e\s+(?:uscito|stato\s+pubblicato|stato\s+girato)|"
+        r"what\s+(?:is|s)\s+it\s+about|what\s+is\s+the\s+plot|the\s+plot\s+of|"
+        r"who\s+(?:wrote|directed)\b|what\s+year|when\s+was\s+it\s+published|when\s+did\s+it\s+come\s+out|"
+        r"de\s+que\s+trata|quien\s+(?:escribio|dirigio)|en\s+que\s+ano|cuando\s+se\s+publico|"
+        r"de\s+quoi\s+parle|qui\s+a\s+(?:ecrit|realise)|en\s+quelle\s+annee|quand\s+est\s+sorti|"
+        r"worum\s+geht\s+es|in\s+welchem\s+jahr|wann\s+erschien|"
+        r"vad\s+handlar|vem\s+(?:skrev|regisserade)|nar\s+kom)"
+    ),
     "advice": re.compile(
         r"\b(consigl|cosa\s+posso\s+fare|come\s+faccio|come\s+(?:mi|posso)\s+organizz|come\s+posso\s+miglior|azione\s+concreta|"
         r"piano\s+d.azione|recommend|advice|what\s+can\s+i\s+do|how\s+can\s+i\s+improve|"
@@ -61,6 +75,12 @@ _NEGATED_PATTERNS = {
         r"non\s+(?:suggerirmi|consigliarmi)\s+(?:lettur|libr|articol|font)|"
         r"senza\s+(?:lettur|libr|articol|font)|(?:do\s+not|don't)\s+(?:recommend|suggest)\s+(?:a\s+)?(?:book|reading|source))"
     ),
+    # Una domanda su di se' non e' una domanda su un'opera: "di cosa parla il
+    # mio risultato" resta dentro il profilo, non esce a cercare in rete.
+    "factual": re.compile(
+        r"\b(?:mio|mia|miei|questo|questa)\s+(?:profil|punteggi|risultat|dat[oi]|taccuin|libretto)|"
+        r"\bmy\s+(?:profile|score|result)|\bthis\s+(?:score|result|profile)"
+    ),
     "advice": re.compile(
         r"\b(?:non\s+(?:voglio\s+)?consigl|non\s+(?:darmi|datemi|consigliarmi)|"
         r"senza\s+consigl|(?:do\s+not|don't)\s+(?:give|offer|recommend|suggest)\b(?:\s+me)?|without\s+advice)"
@@ -69,13 +89,15 @@ _NEGATED_PATTERNS = {
 
 
 def classify(message: str, *, guided: bool = False) -> str:
-    """Ritorna compare|reading|advice|clarify|guided oppure stringa vuota.
+    """Ritorna compare|factual|reading|advice|clarify|guided oppure stringa vuota.
 
     L'ordine e' intenzionale: un confronto o una lettura possono contenere la
-    parola "strategia/consiglio", ma restano comportamenti piu' specifici.
+    parola "strategia/consiglio", ma restano comportamenti piu' specifici. La
+    domanda fattuale precede la lettura perche' "di cosa parla quel libro" chiede
+    un dato su un'opera, non una nuova raccomandazione.
     """
     text = _plain(message)
-    for intent in ("compare", "reading", "advice", "clarify"):
+    for intent in ("compare", "factual", "reading", "advice", "clarify"):
         negated = _NEGATED_PATTERNS.get(intent)
         if _PATTERNS[intent].search(text) and not (negated and negated.search(text)):
             return intent

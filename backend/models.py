@@ -702,6 +702,24 @@ class CertifiedReading(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class WebLookupCache(Base):
+    """Memoria delle consultazioni esterne.
+
+    La stessa domanda non ricompra la stessa pagina: senza cache una sinossi
+    richiesta due volte sono due chiamate di rete dentro un turno di chat.
+    """
+
+    __tablename__ = "web_lookup_cache"
+
+    id = Column(Integer, primary_key=True, index=True)
+    cache_key = Column(String, unique=True, index=True, nullable=False)
+    query = Column(Text, nullable=False)
+    language = Column(String, nullable=False, default="it")
+    sources = Column(JSON, nullable=True)     # fonti interrogate, in ordine
+    payload = Column(JSON, nullable=True)     # lista di LookupResult serializzati
+    fetched_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 class GroupShare(Base):
     """Condivisione di una classe con altri docenti/admin.
 

@@ -98,6 +98,21 @@ def redact(text: Optional[str]) -> Optional[str]:
         return text
 
 
+def redact_always(text: Optional[str]) -> Optional[str]:
+    """Come `redact`, ma ignora il flag di config.
+
+    Serve quando il testo esce dal sistema — una query verso una fonte esterna —
+    dove la redazione non e' una preferenza di logging ma una condizione.
+    """
+    if not isinstance(text, str) or not text:
+        return text
+    try:
+        return _redact_cf(_redact_phone(_redact_email(text)))
+    except Exception as e:  # pragma: no cover - difensivo
+        logger.warning("PII redaction failed (returning original): %s", e)
+        return text
+
+
 def redact_details(details: dict, *fields: str) -> dict:
     """Redige in-place i `fields` specificati dentro un dict `details`.
 

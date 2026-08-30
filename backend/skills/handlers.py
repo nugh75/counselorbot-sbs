@@ -22,6 +22,7 @@ from ..certified_strategy_service import (
 )
 from ..certified_reading_service import certified_reading_memory
 from ..reading_themes import themes_from_factors, themes_from_text
+from .. import web_lookup
 from ..strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, strategy_memory
 from .context import SkillContext, SkillOutput
 
@@ -261,6 +262,11 @@ def _identifiable_source(entry) -> bool:
     return not _HASHLIKE_TITLE.match(title.casefold().replace(" ", ""))
 
 
+def _config_true(db, key: str) -> bool:
+    row = db.query(models.Config).filter(models.Config.key == key).first()
+    return str(getattr(row, "value", "false")).strip().lower() in ("1", "true", "yes", "on")
+
+
 def _certified_readings_block(ctx: SkillContext, params: dict) -> str:
     """Voci del catalogo approvato pertinenti al turno.
 
@@ -270,10 +276,7 @@ def _certified_readings_block(ctx: SkillContext, params: dict) -> str:
         return ""
     explicit = themes_from_text(ctx.message)
     implicit = themes_from_text(ctx.step_query or ctx.query) | themes_from_factors(ctx.salient_factors)
-    row = ctx.db.query(models.Config).filter(
-        models.Config.key == "readings_allow_sensitive"
-    ).first()
-    allow_sensitive = str(getattr(row, "value", "false")).strip().lower() in ("1", "true", "yes", "on")
+    allow_sensitive = _config_true(ctx.db, "readings_allow_sensitive")
     entries = certified_reading_memory.retrieve(
         ctx.db,
         themes=implicit,
@@ -351,5 +354,57 @@ def reading_sources(ctx: SkillContext, params: dict) -> SkillOutput:
     return SkillOutput(
         text=text,
         ids=[source for _, source in entries],
+        slot="knowledge",
+    )
+
+
+# Rete dentro un turno di chat: un budget stretto e dichiarato. Il contatore vive
+# nel processo, quindi si azzera al riavvio: e' un tetto di cortesia verso le
+# fonti, non un controllo di sicurezza.
+WEB_LOOKUP_MAX_PER_SESSION = 5
+_web_lookup_calls: dict[str, int] = {}
+
+
+@handler("web_lookup_sources")
+def web_lookup_sources(ctx: SkillContext, params: dict) -> SkillOutput:
+    """Estratti da fonti pubbliche affidabili per una domanda fattuale.
+
+    Porta informazione, non raccomandazioni: le opere consigliabili restano
+    quelle del catalogo certificato. Spenta per default (`web_lookup_enabled`),
+    esce solo con l'entita' cercata, mai col messaggio grezzo dello studente.
+    """
+    if ctx.db is None:
+        return SkillOutput(applicable=False, reason="nessun database")
+    if not _config_true(ctx.db, "web_lookup_enabled"):
+        return SkillOutput(applicable=False, reason="web_lookup_enabled spenta")
+
+    query = web_lookup.scrub_query(ctx.message)
+    if len(query) < 3:
+        return SkillOutput(applicable=False, reason="nessuna entita' da cercare")
+
+    session = ctx.session_id or "anon"
+    if _web_lookup_calls.get(session, 0) >= WEB_LOOKUP_MAX_PER_SESSION:
+        return SkillOutput(applicable=False, reason="budget di consultazioni esaurito per la sessione")
+    if len(_web_lookup_calls) > 5000:
+        _web_lookup_calls.clear()
+    _web_lookup_calls[session] = _web_lookup_calls.get(session, 0) + 1
+
+    sources = params.get("sources") or list(web_lookup.SOURCES)
+    results = web_lookup.cached_lookup(
+        ctx.db, query,
+        sources=[str(s) for s in sources],
+        lang=ctx.language or "it",
+        limit=int(params.get("limit", 1) or 1),
+    )
+    if not results:
+        return SkillOutput(
+            text=(
+                "Nessuna fonte affidabile ha una voce per questa domanda: dillo "
+                "in una riga, non rispondere a memoria e non citare titoli o link."
+            ),
+        )
+    return SkillOutput(
+        text=web_lookup.render_block(results),
+        ids=[item.url for item in results],
         slot="knowledge",
     )

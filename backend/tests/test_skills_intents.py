@@ -43,6 +43,20 @@ def test_generic_rispetto_a_is_not_a_comparison():
     assert classify("Come sto rispetto al profilo precedente?") == "compare"
 
 
+def test_a_factual_question_about_a_work_is_not_a_reading_request():
+    assert classify("Di cosa parla Mindset?") == "factual"
+    assert classify("Chi ha scritto Il posto delle fragole?") == "factual"
+    assert classify("Who wrote Grit?") == "factual"
+    assert classify("De que trata Wonder?") == "factual"
+    # La richiesta di una lettura resta una richiesta di lettura.
+    assert classify("Consigliami un libro per approfondire") == "reading"
+
+
+def test_a_question_about_oneself_never_becomes_a_web_lookup():
+    assert classify("Di cosa parla il mio risultato?") != "factual"
+    assert classify("Non capisco cosa significa questo risultato") == "clarify"
+
+
 def test_negated_behaviour_does_not_activate_the_wrong_skill():
     assert classify("Senza consigli: aiutami a capire questo risultato") == "clarify"
     assert classify("Non confrontare i profili") == ""
