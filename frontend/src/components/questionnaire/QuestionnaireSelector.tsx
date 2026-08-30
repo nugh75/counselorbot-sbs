@@ -24,9 +24,12 @@ const STRATEGIC_COMPETENCES_URLS: Partial<Record<QuestionnaireType, string>> = {
 interface QuestionnaireSelectorProps {
     onSelect: (questionnaire: QuestionnaireConfig) => void;
     onBack?: () => void;
+    // Strumenti già compilati dallo studente: la card lo dice, così non si
+    // rifà una scelta senza sapere cosa c'è già.
+    completed?: QuestionnaireType[];
 }
 
-export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelectorProps) {
+export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: QuestionnaireSelectorProps) {
     const { t, lang, setLang } = useI18n();
     const router = useRouter();
     const [expanded, setExpanded] = useState<string | null>(null);
@@ -102,6 +105,11 @@ export function QuestionnaireSelector({ onSelect, onBack }: QuestionnaireSelecto
                         {hasInAppAdministration && (
                             <span className="px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold rounded-full">
                                 {t('selector.experimentalBadge')}
+                            </span>
+                        )}
+                        {completed.includes(q.id) && (
+                            <span className="px-2 py-0.5 bg-teal-50 text-teal-700 text-[10px] font-bold rounded-full">
+                                {t('selector.badge.done')}
                             </span>
                         )}
                     </div>
