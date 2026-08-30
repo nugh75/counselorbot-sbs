@@ -10,7 +10,7 @@ import { toast } from '@/components/ui/Toast';
 import { useI18n } from '@/lib/i18n-context';
 
 // Ordine di presentazione degli strumenti (gli altri seguono in coda).
-const INSTRUMENT_ORDER = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
+const INSTRUMENT_ORDER = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', 'IDEA'];
 
 interface GuidedStep {
     questionnaire_type: string;

@@ -55,6 +55,36 @@ Roles are derived from ai4auth groups (marker-based, see `backend/auth.py`), not
 
 ## Architecture
 
+### Adding an instrument: the lists to touch
+
+Instrument membership is not stored in one place: it lives in hardcoded lists
+scattered across both sides. Forgetting one raises no error — the instrument
+just disappears from that part of the app, which is how `IDEA` first shipped
+invisible. When adding an instrument, walk this list:
+
+| Where | Constant | Effect if missed |
+|---|---|---|
+| `frontend/src/lib/questionnaires.ts` | `QuestionnaireType`, `QUESTIONNAIRES` | the instrument does not exist |
+| `frontend/src/components/questionnaire/QuestionnaireSelector.tsx` | `ACTIVE_QUESTIONNAIRES` | shown as "coming soon", not selectable |
+| `frontend/src/app/page.tsx` | `STARTABLE_QUESTIONNAIRES` | deep link `?q=` ignored |
+| `frontend/src/components/home/ReturningHome.tsx` | `STARTABLE` | returning students cannot start it |
+| `frontend/src/app/strumenti/[id]/page.tsx` | `AVAILABLE_INSTRUMENTS` | `/strumenti/<id>` 404s |
+| `backend/chat_logic.py` | `_ensure_questionnaire_guided_steps` | no guided steps are ever seeded |
+| `backend/routes/memory.py` | `MEMORY_QUESTIONNAIRE_TYPES` | the session memory drops every turn |
+| `backend/schemas.py` | `FROZEN_SESSION_TYPES` | freezing a session fails |
+| `backend/skills_seed.py` | `ENGINE_INSTRUMENTS` (+ `SEEDED_INSTRUMENTS` only if it should get certified material) | the skills engine skips it |
+| admin panels | `SkillsPanel`, `CounselorsPanel`, `LogViewer`, `PromptExportPanel`, `routes/admin.py:_EXPORT_INSTRUMENT_ORDER` | invisible to the admin, so unconfigurable |
+
+Scored instruments also need `test-administrations.ts`, the administration and
+research panels, `telegram_state.SCORE_QUESTIONNAIRES` and the booklet lists;
+an agent-led one does not. `test_smoke.test_every_gate_that_would_silently_exclude_idea_lets_it_through`
+holds the backend half of this.
+
+Guided-step labels are translated at startup by `seed_step_label_i18n`; steps
+created lazily on first request get their `label_i18n` in
+`_ensure_questionnaire_guided_steps` instead.
+
+
 ### Request path
 Frontend reaches backend via Next.js rewrite in `frontend/next.config.ts`:
 `/api/:path*` → `http://backend:8000/:path*`

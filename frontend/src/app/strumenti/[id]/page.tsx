@@ -9,7 +9,7 @@ import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
 import { getTestAdministration, AdministrationLocale } from '@/lib/test-administrations';
 import { useI18n } from '@/lib/i18n-context';
 
-const AVAILABLE_INSTRUMENTS: QuestionnaireType[] = ['QSA', 'QSAr', 'QPCS', 'QPCC', 'ZTPI', 'QAP', 'SAVICKAS'];
+const AVAILABLE_INSTRUMENTS: QuestionnaireType[] = ['QSA', 'QSAr', 'QPCS', 'QPCC', 'ZTPI', 'QAP', 'SAVICKAS', 'IDEA'];
 const STRATEGIC_COMPETENCES_URLS: Partial<Record<QuestionnaireType, string>> = {
     QSA: 'https://www.competenzestrategiche.it/QSA/',
     QSAr: 'https://www.competenzestrategiche.it/QSAr/',

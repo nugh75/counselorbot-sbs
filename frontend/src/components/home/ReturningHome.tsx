@@ -14,7 +14,7 @@ import { fetchCounselors, getSelectedCounselorId, subscribeToCounselor } from '@
 import { clearFlowPrefs, getExperiencePref, getInputMethodPref, subscribeToFlowPrefs } from '@/lib/session-prefs';
 import { LOCAL_RESUME_HREF, resumeHref, useResumeEntries } from '@/lib/use-resume-entries';
 
-const STARTABLE: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
+const STARTABLE: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', 'IDEA'];
 
 interface Props {
     // Ultima compilazione per strumento, in ISO; assente = mai compilato.

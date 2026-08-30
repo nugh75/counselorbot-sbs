@@ -774,7 +774,7 @@ class PortfolioItemResponse(BaseModel):
 
 # --- Sessioni guidate congelate ---
 
-FROZEN_SESSION_TYPES = {"QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP"}
+FROZEN_SESSION_TYPES = {"QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP", "IDEA"}
 FROZEN_SESSION_MAX_MESSAGES = 400
 FROZEN_SESSION_MAX_CONTENT_CHARS = 20000
 

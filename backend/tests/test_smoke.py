@@ -5713,6 +5713,40 @@ def _set_idea_feature(value: str) -> None:
         db.close()
 
 
+def test_every_gate_that_would_silently_exclude_idea_lets_it_through():
+    """L'appartenenza di uno strumento vive in liste sparse, non in un posto solo.
+
+    Dimenticarne una non rompe niente: lo strumento semplicemente sparisce da
+    quel pezzo di app. Questa e' la rete sotto quel silenzio.
+    """
+    from backend.chat_logic import _ensure_questionnaire_guided_steps  # noqa: F401
+    from backend.prompt_config import DEFAULT_IDEA_GUIDED_STEPS, MODE_TO_SYSTEM_PROMPT_KEY
+    from backend.routes.memory import MEMORY_QUESTIONNAIRE_TYPES
+    from backend.schemas import FROZEN_SESSION_TYPES
+    from backend.skills_seed import ENGINE_INSTRUMENTS, SEEDED_INSTRUMENTS
+
+    assert "IDEA" in MEMORY_QUESTIONNAIRE_TYPES, "la memoria di sessione scarterebbe i turni di Idea"
+    assert "IDEA" in FROZEN_SESSION_TYPES, "congelare una sessione Idea fallirebbe"
+    assert "IDEA" in ENGINE_INSTRUMENTS, "il motore di skill non servirebbe Idea"
+    assert "IDEA" not in SEEDED_INSTRUMENTS, "Idea non riceve il materiale certificato degli altri"
+    assert MODE_TO_SYSTEM_PROMPT_KEY["idea-focus"] == "prompt_idea_focus"
+    assert len(DEFAULT_IDEA_GUIDED_STEPS) == 8
+
+    _ensure_guided_steps("IDEA")
+    db = _TestSession()
+    try:
+        steps = (
+            db.query(models.GuidedStep)
+            .filter(models.GuidedStep.questionnaire_type == "IDEA")
+            .all()
+        )
+        assert len(steps) == 8, "gli step di Idea non sono stati seminati"
+        for step in steps:
+            assert (step.label_i18n or {}).get("sv"), f"{step.id} senza traduzioni"
+    finally:
+        db.close()
+
+
 def test_idea_map_is_closed_until_the_feature_is_on():
     _set_idea_feature("false")
     main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity

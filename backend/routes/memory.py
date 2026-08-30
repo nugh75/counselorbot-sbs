@@ -10,7 +10,7 @@ from ..memory_service import session_memory
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-MEMORY_QUESTIONNAIRE_TYPES = {"QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP"}
+MEMORY_QUESTIONNAIRE_TYPES = {"QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP", "IDEA"}
 
 
 @router.get("/memory/status/{session_id}")
