@@ -50,7 +50,7 @@ class FakeConfigDB:
 
 def _binding(slug, routing="optional", sort_order=0):
     skill = SimpleNamespace(
-        slug=slug, name=slug, description=f"descrizione {slug}", instructions_i18n={"it": slug},
+        slug=slug, name=slug, description=f"descrizione {slug}", instructions_i18n={"en": slug},
         conditions=None, handler=None, handler_params=None, routing=routing,
         slot="knowledge", max_chars=1400, sort_order=sort_order, is_active=True, status="published",
     )

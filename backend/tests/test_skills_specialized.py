@@ -271,13 +271,10 @@ def test_certified_catalog_slugs_are_unique():
     assert len(slugs) == len(set(slugs))
 
 
-def test_skill_instructions_are_translated_not_duplicated():
+def test_skill_instructions_are_english_only():
     for slug, instructions in SKILL_INSTRUCTIONS_I18N.items():
-        assert set(instructions) == {"it", "en", "es", "fr", "de", "sv"}, slug
-        english = instructions["en"]
-        for language in ("es", "fr", "de", "sv"):
-            assert instructions[language].strip(), f"{slug}/{language} vuoto"
-            assert instructions[language] != english, f"{slug}/{language} riusa l'inglese"
+        assert set(instructions) == {"en"}, slug
+        assert instructions["en"].strip(), f"{slug}/en empty"
 
 
 if __name__ == "__main__":

@@ -42,7 +42,8 @@ def _instructions(skill, language: str) -> str:
     data = skill.instructions_i18n or {}
     if not isinstance(data, dict):
         return ""
-    return (data.get(language) or data.get("en") or data.get("it") or "").strip()
+    value = data.get("en")
+    return value.strip() if isinstance(value, str) else ""
 
 
 def _render_order(binding: SkillBinding) -> tuple:

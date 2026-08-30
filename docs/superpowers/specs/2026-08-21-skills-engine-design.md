@@ -67,7 +67,7 @@ nascono da `models.Base.metadata.create_all` allo startup (`backend/main.py:135`
 | `slug` | String unique index | identificatore stabile, es. `certified-advice` |
 | `name` | String | etichetta admin |
 | `description` | Text | **letta dal router LLM**: descrive quando la skill è utile |
-| `instructions_i18n` | JSON | `{"it": "...markdown...", "en": ...}`; `it` è la sorgente |
+| `instructions_i18n` | JSON | contratto solo inglese: `{"en": "...markdown..."}` |
 | `conditions` | JSON | gating dichiarativo, vedi §4.3 |
 | `handler` | String nullable | nome whitelisted, es. `certified_strategies` |
 | `handler_params` | JSON | es. `{"limit": 2}` |
@@ -79,8 +79,8 @@ nascono da `models.Base.metadata.create_all` allo startup (`backend/main.py:135`
 | `status` | String | `draft` \| `published`; solo `published` + `is_active` entra in chat |
 | `created_at` / `updated_at` | DateTime | |
 
-`instructions_i18n` usa il pattern JSON di `GuidedStep.label_i18n`, non le colonne
-per lingua di `CertifiedStrategy`: le lingue supportate sono sei e crescono.
+`instructions_i18n` conserva una forma JSON per compatibilità, ma accetta solo la
+chiave `en`. La lingua dell'interfaccia e della risposta resta indipendente.
 
 ### `GuidedStepSkill`
 
@@ -210,8 +210,8 @@ Gli handler del pilota incapsulano le chiamate esistenti:
   `strategy_memory.retrieve(...)` + `_filter_allowed_strategy_entries` +
   `render_context(...)`.
 
-Una skill senza `handler` è puramente testuale: rende `instructions_i18n[lang]`
-con fallback `it`.
+Una skill senza `handler` è puramente testuale: rende esclusivamente
+`instructions_i18n["en"]`.
 
 Una skill con `handler` **e** istruzioni concatena istruzioni e output
 dell'handler, nell'ordine: istruzioni, poi materiale.

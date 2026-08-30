@@ -22,7 +22,7 @@ from backend.skills.registry import SkillBinding
 
 def _skill(slug, **kwargs):
     data = dict(
-        slug=slug, name=slug, description="", instructions_i18n={"it": f"istruzioni {slug}"},
+        slug=slug, name=slug, description="", instructions_i18n={"en": f"instructions {slug}"},
         conditions=None, handler=None, handler_params=None, routing="always",
         slot="knowledge", max_chars=1400, sort_order=0, is_active=True, status="published",
     )
@@ -49,14 +49,14 @@ def test_truncate_cuts_on_line_boundary():
 
 def test_text_only_skill_renders_instructions():
     result = engine.render([_binding("intro")], _ctx(), total_max_chars=3000)
-    assert result.blocks["knowledge"] == ["istruzioni intro"]
+    assert result.blocks["knowledge"] == ["instructions intro"]
     assert result.ids == {}
 
 
-def test_instructions_fall_back_to_italian():
-    binding = _binding("intro", instructions_i18n={"it": "solo italiano"})
+def test_instructions_always_use_english():
+    binding = _binding("intro", instructions_i18n={"en": "English only", "it": "solo italiano"})
     result = engine.render([binding], _ctx(language="sv"), total_max_chars=3000)
-    assert result.blocks["knowledge"] == ["solo italiano"]
+    assert result.blocks["knowledge"] == ["English only"]
 
 
 def test_handler_output_is_appended_after_instructions():
@@ -66,7 +66,7 @@ def test_handler_output_is_appended_after_instructions():
 
     binding = _binding("echo", handler="_test_echo", handler_params={"n": 7})
     result = engine.render([binding], _ctx(), total_max_chars=3000)
-    assert result.blocks["knowledge"] == ["istruzioni echo\n\nmateriale 7"]
+    assert result.blocks["knowledge"] == ["instructions echo\n\nmateriale 7"]
     assert result.ids["echo"] == ["x1"]
 
 
@@ -93,10 +93,10 @@ def test_handler_can_put_material_in_a_different_slot_from_instructions():
         "comparison",
         handler="_test_split_slots",
         slot="directive_tail",
-        instructions_i18n={"it": "regole confronto"},
+        instructions_i18n={"en": "comparison rules"},
     )
     result = engine.render([binding], _ctx(), total_max_chars=3000)
-    assert result.blocks["directive_tail"] == ["regole confronto"]
+    assert result.blocks["directive_tail"] == ["comparison rules"]
     assert result.blocks["knowledge"] == ["dati strutturati"]
 
 
@@ -109,7 +109,7 @@ def test_split_slot_directive_is_dropped_when_its_material_does_not_fit():
         "budgeted",
         handler="_test_split_budget",
         slot="directive_tail",
-        instructions_i18n={"it": "direttiva lunga"},
+        instructions_i18n={"en": "long directive"},
         max_chars=10,
     )
     result = engine.render([binding], _ctx(), total_max_chars=3000)
@@ -136,14 +136,14 @@ def test_handler_exception_is_swallowed():
 
 
 def test_per_skill_max_chars():
-    binding = _binding("long", instructions_i18n={"it": "a" * 50}, max_chars=10)
+    binding = _binding("long", instructions_i18n={"en": "a" * 50}, max_chars=10)
     result = engine.render([binding], _ctx(), total_max_chars=3000)
     assert result.blocks["knowledge"] == ["a" * 10]
 
 
 def test_total_budget_drops_late_blocks():
-    first = _binding("a", instructions_i18n={"it": "x" * 40}, sort_order=1)
-    second = _binding("b", instructions_i18n={"it": "y" * 40}, sort_order=2)
+    first = _binding("a", instructions_i18n={"en": "x" * 40}, sort_order=1)
+    second = _binding("b", instructions_i18n={"en": "y" * 40}, sort_order=2)
     result = engine.render([first, second], _ctx(), total_max_chars=45)
     assert result.blocks["knowledge"] == ["x" * 40]
     assert result.trace[1]["skipped"] == "budget complessivo esaurito"
@@ -154,7 +154,7 @@ def test_total_budget_does_not_report_ids_for_dropped_block():
     def _with_ids(ctx, params):
         return SkillOutput(text="y" * 40, ids=["not-injected"])
 
-    first = _binding("a", instructions_i18n={"it": "x" * 40}, sort_order=1)
+    first = _binding("a", instructions_i18n={"en": "x" * 40}, sort_order=1)
     second = _binding(
         "b",
         instructions_i18n={},
@@ -174,8 +174,8 @@ def test_blocks_are_grouped_by_slot_and_sorted():
     b = _binding("b", slot="section", sort_order=1)
     c = _binding("c", slot="directive_tail", sort_order=1)
     result = engine.render([a, b, c], _ctx(), total_max_chars=3000)
-    assert result.blocks["section"] == ["istruzioni b", "istruzioni a"]
-    assert result.blocks["directive_tail"] == ["istruzioni c"]
+    assert result.blocks["section"] == ["instructions b", "instructions a"]
+    assert result.blocks["directive_tail"] == ["instructions c"]
 
 
 def test_handler_names_are_sorted_and_include_pilot_handlers():

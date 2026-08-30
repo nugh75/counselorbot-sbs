@@ -22,6 +22,18 @@ _ALLOWED_STATUS = {"draft", "published"}
 
 
 def _validate(payload_dict: dict) -> None:
+    instructions = payload_dict.get("instructions_i18n")
+    if instructions is not None:
+        if not isinstance(instructions, dict):
+            raise HTTPException(status_code=400, detail="skill instructions must be an object")
+        unsupported = sorted(set(instructions) - {"en"})
+        if unsupported:
+            raise HTTPException(
+                status_code=400,
+                detail=f"skill instructions must use English only; unsupported keys: {', '.join(unsupported)}",
+            )
+        if "en" in instructions and not isinstance(instructions["en"], str):
+            raise HTTPException(status_code=400, detail="English skill instructions must be text")
     routing = payload_dict.get("routing")
     if routing is not None and routing not in _ALLOWED_ROUTING:
         raise HTTPException(status_code=400, detail=f"routing non valido: {routing}")
