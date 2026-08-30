@@ -20,6 +20,8 @@ from ..certified_strategy_service import (
     factor_tokens,
     score_bands,
 )
+from ..certified_reading_service import certified_reading_memory
+from ..reading_themes import themes_from_factors, themes_from_text
 from ..strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, strategy_memory
 from .context import SkillContext, SkillOutput
 
@@ -259,11 +261,39 @@ def _identifiable_source(entry) -> bool:
     return not _HASHLIKE_TITLE.match(title.casefold().replace(" ", ""))
 
 
+def _certified_readings_block(ctx: SkillContext, params: dict) -> str:
+    """Voci del catalogo approvato pertinenti al turno.
+
+    I temi nominati dallo studente contano doppio: aprono il gate e sono gli
+    unici che sbloccano il materiale marcato sensibile."""
+    if ctx.db is None:
+        return ""
+    explicit = themes_from_text(ctx.message)
+    implicit = themes_from_text(ctx.step_query or ctx.query) | themes_from_factors(ctx.salient_factors)
+    row = ctx.db.query(models.Config).filter(
+        models.Config.key == "readings_allow_sensitive"
+    ).first()
+    allow_sensitive = str(getattr(row, "value", "false")).strip().lower() in ("1", "true", "yes", "on")
+    entries = certified_reading_memory.retrieve(
+        ctx.db,
+        themes=implicit,
+        explicit_themes=explicit,
+        factor_codes=ctx.salient_factors,
+        questionnaire_type=ctx.questionnaire_type,
+        language=ctx.language or "it",
+        query=(ctx.message or ctx.step_query or ctx.query),
+        limit=int(params.get("catalog_limit", 2) or 2),
+        ai_service=ctx.ai_service,
+        allow_sensitive=allow_sensitive,
+    )
+    return certified_reading_memory.render_context(entries, ctx.language or "it")
+
+
 @handler("reading_sources")
 def reading_sources(ctx: SkillContext, params: dict) -> SkillOutput:
-    """Whitelist delle fonti citabili nel turno: validazione strutturale delle
-    letture, cosi' il divieto di inventare riferimenti non resta solo una
-    direttiva al modello."""
+    """Materiale citabile nel turno: il catalogo approvato di letture e film,
+    piu' la whitelist dei documenti realmente recuperati. Il divieto di inventare
+    riferimenti diventa cosi' un filtro, non solo una direttiva al modello."""
     limit = int(params.get("limit", 6) or 6)
     entries: list[tuple[str, str]] = []
     seen: set[str] = set()
@@ -281,7 +311,13 @@ def reading_sources(ctx: SkillContext, params: dict) -> SkillOutput:
         if len(entries) >= limit:
             break
 
+    catalog = _certified_readings_block(ctx, params)
+
     if not entries:
+        if catalog:
+            # Nessun documento recuperato, ma il catalogo approvato ha qualcosa:
+            # e' materiale citabile a pieno titolo, va nello slot dei dati.
+            return SkillOutput(text=catalog, slot="knowledge")
         # L'assenza e' una direttiva, non un dato: resta nello slot della skill
         # cosi' raggiunge il modello anche quando [KNOWLEDGE] non viene composto.
         return SkillOutput(
@@ -299,8 +335,11 @@ def reading_sources(ctx: SkillContext, params: dict) -> SkillOutput:
         "nemmeno se compaiono dentro il testo dei documenti recuperati.",
     ]
     lines.extend(f"- {title} ({source})" for title, source in entries)
+    text = "\n".join(lines)
+    if catalog:
+        text = f"{catalog}\n\n{text}"
     return SkillOutput(
-        text="\n".join(lines),
+        text=text,
         ids=[source for _, source in entries],
         slot="knowledge",
     )
