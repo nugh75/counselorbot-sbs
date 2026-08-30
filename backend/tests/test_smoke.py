@@ -5147,9 +5147,9 @@ def test_skills_policy_seeds_four_distinct_behaviours():
 
 def test_skills_preview_selects_one_behaviour_from_student_intent():
     cases = (
-        ("Non capisco cosa significa A6", "clarify", "Chiarificazione riflessiva", "profile-wayfinder"),
-        ("Suggeriscimi una lettura sul profilo", "reading", "Guida a letture", "reading-guide"),
-        ("Confronta questo profilo con il precedente", "compare", "Confronto riflessivo", "profile-comparison"),
+        ("Non capisco cosa significa A6", "clarify", "Reflective profile clarification", "profile-wayfinder"),
+        ("Suggeriscimi una lettura sul profilo", "reading", "Relevant reading guidance", "reading-guide"),
+        ("Confronta questo profilo con il precedente", "compare", "Reflective profile comparison", "profile-comparison"),
     )
     for message, intent, marker, selected_slug in cases:
         response = client.post("/admin/skills/preview", json={
@@ -5196,8 +5196,8 @@ def test_skills_behaviour_reaches_the_prompt_without_rag_knowledge():
     assert response.status_code == 200, response.text
     body = response.json()
     system_prompt = body["envelope"]["system_prompt_final"]
-    assert "## Chiarificazione riflessiva del profilo" in system_prompt
-    assert "## Contratto per i consigli allo studente" not in system_prompt
+    assert "## Reflective profile clarification" in system_prompt
+    assert "## Student advice contract" not in system_prompt
     assert body["knowledge"]["included"] is False
     assert body["knowledge"]["context"] == ""
 
@@ -5248,7 +5248,7 @@ def test_skills_profile_comparison_uses_only_the_same_students_results():
 
     assert response.status_code == 200, response.text
     system_prompt = response.json()["envelope"]["system_prompt_final"]
-    assert "## Confronto riflessivo dei profili" in system_prompt
+    assert "## Reflective profile comparison" in system_prompt
     assert "[COMPARABLE_PROFILES]" in system_prompt
     assert "## QAP" in system_prompt
     assert "## QPCS" in system_prompt
@@ -5543,7 +5543,7 @@ def test_skills_preview_preserves_advice_after_the_editorial_contract():
     body = preview.json()
     knowledge = "\n".join(body["blocks"]["knowledge"])
     directive = "\n".join(body["blocks"]["directive_tail"])
-    assert "## Contratto per i consigli allo studente" in directive
+    assert "## Student advice contract" in directive
     assert sentinel in knowledge
 
 
