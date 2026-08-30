@@ -10,7 +10,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 
-const ACTIVE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
+const ACTIVE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', 'IDEA'];
 const ADMINISTRATION_LANGS = ['en', 'es', 'sv'] as const;
 const STRATEGIC_COMPETENCES_URLS: Partial<Record<QuestionnaireType, string>> = {
     QSA: 'https://www.competenzestrategiche.it/QSA/',
@@ -42,7 +42,10 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
     const upcoming = QUESTIONNAIRE_LIST.filter((q) => !ACTIVE_QUESTIONNAIRES.includes(q.id));
     // Competenze Strategiche = strumenti con assessment sul sito / in-app; Interviste = agentOnly (Savickas).
     const csQuestionnaires = active.filter((q) => !q.agentOnly);
-    const interviews = active.filter((q) => q.agentOnly);
+    // Idea non e' un'intervista e non ha un questionario dietro: sta per conto
+    // suo, e resta disponibile anche nelle lingue in cui i questionari non ci sono.
+    const focusTools = active.filter((q) => q.id === 'IDEA');
+    const interviews = active.filter((q) => q.agentOnly && q.id !== 'IDEA');
     const isItalian = lang === 'it';
     const isAdministrationLang = ADMINISTRATION_LANGS.includes(lang as 'en' | 'es' | 'sv');
     const isUnavailableQuestionnaireLang = lang === 'fr' || lang === 'de';
@@ -212,6 +215,16 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
                     >
                         {t('selector.unavailable.switchEnglish')}
                     </button>
+                </section>
+            )}
+
+            {/* 0. Mettere a fuoco un'idea */}
+            {focusTools.length > 0 && (
+                <section className="space-y-4">
+                    <h2 className="text-xl font-bold text-slate-900">{t('selector.section.focus')}</h2>
+                    <div className="grid md:grid-cols-2 gap-3">
+                        {focusTools.map(renderCard)}
+                    </div>
                 </section>
             )}
 
