@@ -1122,8 +1122,7 @@ def _split_text_for_tts(text: str, max_len: int = TTS_CHUNK_MAX_CHARS) -> list[s
 @router.post("/tts")
 async def text_to_speech(request: TTSRequest, db: Session = Depends(get_db)):
     try:
-        # I blocchi ```diagram non si leggono: al loro posto va la descrizione
-        # a parole dello stesso diagramma.
+        # I blocchi ```diagram sono esclusivamente visivi e non entrano nel TTS.
         spoken = strip_for_speech(request.text, lang=(request.voice or 'it')[:2])
         clean_text = strip_markdown(spoken)
 
