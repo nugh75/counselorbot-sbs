@@ -473,6 +473,33 @@ def test_a_film_with_the_same_title_is_not_the_synopsis_of_a_book():
         _restore()
 
 
+def test_an_entry_that_never_names_the_author_is_not_the_work():
+    """"Cosmo" di Sagan cadeva sulla voce filosofica del termine "cosmo"."""
+    concept = {
+        "type": "standard", "title": "Cosmo",
+        "extract": "Con il termine cosmo in filosofia s'intende un sistema ordinato o armonico.",
+        "content_urls": {"desktop": {"page": "https://it.wikipedia.org/wiki/Cosmo"}},
+    }
+    _install(_Responses(json_map={"/page/summary/": concept}))
+    try:
+        assert web_lookup.synopsis_for({
+            "title": "Cosmo", "original_title": "Cosmos", "kind": "essay",
+            "creators": ["Carl Sagan"],
+        }, lang="it", sources=["wikipedia"]) is None
+    finally:
+        _restore()
+
+    book = dict(concept, title="Wonder (romanzo)",
+                extract="Wonder e' il romanzo d'esordio di R. J. Palacio, pubblicato nel 2012.")
+    _install(_Responses(json_map={"/page/summary/": book}))
+    try:
+        assert web_lookup.synopsis_for({
+            "title": "Wonder", "kind": "fiction", "creators": ["R. J. Palacio"],
+        }, lang="it", sources=["wikipedia"]) is not None
+    finally:
+        _restore()
+
+
 def test_an_article_starts_from_openalex():
     responses = _install(_Responses(json_map={"api.openalex.org": {"results": []}}))
     try:
