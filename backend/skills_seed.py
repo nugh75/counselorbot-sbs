@@ -81,18 +81,22 @@ CONCEPT_DIAGRAM_INSTRUCTIONS_EN = """## Concept diagram
 
 ```diagram
 {"type":"cycle","title":"Circolo dell'evitamento",
- "nodes":[{"id":"a","label":"Compito difficile"},
-          {"id":"b","label":"Ansia","accent":true},
-          {"id":"c","label":"Rimando"}],
+ "nodes":[{"id":"a","label":"Compito difficile","icon":"target"},
+          {"id":"b","label":"Ansia","icon":"heart","accent":true},
+          {"id":"c","label":"Rimando","icon":"clock"}],
  "edges":[{"from":"a","to":"b","label":"innesca"},
           {"from":"b","to":"c"},
           {"from":"c","to":"a","kind":"feedback"}]}
 ```
 
 - `type`: `flow`, `cycle`, `relation` or `hierarchy`.
-- 2-8 nodes, at most 12 edges; node label <= 40 chars, edge label <= 24,
+- 2-8 nodes, at most 12 edges; node label <= 80 chars, edge label <= 40,
   title <= 80.
 - `accent: true` on at most one node: the point the student can act on.
+- Give each node a fitting `icon` when possible, chosen only from this closed
+  list: `book`, `brain`, `check`, `clock`, `compass`, `heart`, `idea`,
+  `question`, `shield`, `target`. Omit it if none is honest; never invent a
+  name. The icon clarifies the label but never replaces it.
 - `kind` on an edge names the relation; leave it out for a plain step forward:
   - `drives` (default): A produces B, the next step or the consequence.
   - `strengthens`: A supports or reinforces B.
@@ -121,9 +125,13 @@ SPECIALIZED_SKILLS_POLICY_MARKER = "skills_specialized_behaviors_v1"
 READING_AND_TRANSLATIONS_POLICY_MARKER = "skills_reading_sources_and_i18n_v1"
 ENGLISH_SKILL_INSTRUCTIONS_POLICY_MARKER = "skills_english_instructions_v1"
 DIAGRAM_EDGE_KINDS_POLICY_MARKER = "skills_diagram_edge_kinds_v1"
+DIAGRAM_ICONS_POLICY_MARKER = "skills_diagram_icons_v1"
 # Contratto del diagramma prima dei tipi di arco: serve a riconoscere le
 # installazioni ancora sul testo di serie, che sono le uniche da aggiornare.
 CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V1_MD5 = "8a3890a53e860a50876501193da698bf"
+# Contratto standard immediatamente precedente alle icone e ai limiti piu'
+# tolleranti. Serve a non sovrascrivere le personalizzazioni dell'admin.
+CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V2_MD5 = "a3271155da66f68747a0114872c5fabf"
 
 SKILL_CONFIG_DEFAULTS = (
     (
@@ -267,7 +275,7 @@ SKILL_SEEDS = [
         "handler_params": {},
         "routing": "optional",
         "slot": "directive_tail",
-        "max_chars": 1800,
+        "max_chars": 2400,
         "sort_order": 35,
         "is_active": True,
         "bind": True,
@@ -479,6 +487,36 @@ def apply_diagram_edge_kinds_policy(db) -> bool:
         key=DIAGRAM_EDGE_KINDS_POLICY_MARKER,
         value="applied",
         description="Migrazione una tantum: tipi di arco nel contratto del diagramma.",
+    ))
+    db.commit()
+    return updated
+
+
+def apply_diagram_icons_policy(db) -> bool:
+    """Aggiunge icone e limiti robusti al contratto standard, una sola volta."""
+    marker = db.query(models.Config).filter(
+        models.Config.key == DIAGRAM_ICONS_POLICY_MARKER
+    ).first()
+    if marker is not None:
+        return False
+
+    seed_skills(db)
+    skill = db.query(models.Skill).filter(models.Skill.slug == "concept-diagram").first()
+    updated = False
+    if skill is not None:
+        current = (skill.instructions_i18n or {}).get("en", "")
+        current_hash = hashlib.md5(current.encode("utf-8")).hexdigest()
+        if current_hash == CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V2_MD5:
+            skill.instructions_i18n = {"en": CONCEPT_DIAGRAM_INSTRUCTIONS_EN}
+            skill.max_chars = 2400
+            updated = True
+        elif current != CONCEPT_DIAGRAM_INSTRUCTIONS_EN:
+            logger.info("concept-diagram personalizzata dall'admin: icone non imposte")
+
+    db.add(models.Config(
+        key=DIAGRAM_ICONS_POLICY_MARKER,
+        value="applied",
+        description="Migrazione una tantum: icone SVG e limiti robusti nei diagrammi.",
     ))
     db.commit()
     return updated

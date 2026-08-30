@@ -63,9 +63,27 @@ def test_parse_rejects_too_many_nodes():
 def test_parse_rejects_long_label():
     with pytest.raises(DiagramSpecError):
         parse_spec({**CYCLE, "nodes": [
-            {"id": "a", "label": "x" * 41},
+            {"id": "a", "label": "x" * 81},
             {"id": "b", "label": "B"},
         ], "edges": [{"from": "a", "to": "b"}]})
+
+
+def test_parse_accepts_real_profile_label_over_old_limit():
+    label = "Percezione di competenza (A6 (Percezione di competenza))"
+    spec = parse_spec({**CYCLE, "nodes": [
+        {"id": "a", "label": "Sedia interna: sforzo, strategia", "icon": "brain"},
+        {"id": "b", "label": label, "icon": "shield"},
+    ], "edges": [{"from": "a", "to": "b", "kind": "strengthens"}]})
+    assert spec.nodes[1].label == label
+    assert spec.nodes[1].icon == "shield"
+
+
+def test_unknown_icon_is_ignored_without_losing_the_diagram():
+    spec = parse_spec({**CYCLE, "nodes": [
+        {"id": "a", "label": "A", "icon": "invented-by-model"},
+        {"id": "b", "label": "B"},
+    ], "edges": [{"from": "a", "to": "b"}]})
+    assert spec.nodes[0].icon is None
 
 
 def test_parse_rejects_edge_to_unknown_node():
@@ -207,6 +225,29 @@ def test_edge_label_sits_on_an_opaque_chip():
     dot = to_dot(parse_spec(MIXED))
     assert 'BGCOLOR="#ffffff"' in dot
     assert ">sostiene<" in dot
+
+
+def test_dot_uses_the_local_icon_asset():
+    spec = parse_spec({**CYCLE, "nodes": [
+        {"id": "a", "label": "Obiettivo", "icon": "target"},
+        {"id": "b", "label": "Verifica", "icon": "check"},
+    ], "edges": [{"from": "a", "to": "b"}]})
+    dot = to_dot(spec, theme="dark")
+    assert "target-dark.png" in dot
+    assert "check-dark.png" in dot
+    assert "<IMG SRC=" in dot
+
+
+@pytest.mark.skipif(not HAS_DOT, reason="graphviz non installato")
+def test_render_svg_inlines_the_vector_icon():
+    spec = parse_spec({**CYCLE, "nodes": [
+        {"id": "a", "label": "Obiettivo", "icon": "target"},
+        {"id": "b", "label": "Verifica", "icon": "check"},
+    ], "edges": [{"from": "a", "to": "b"}]})
+    svg = render(spec, theme="light", fmt="svg").decode("utf-8")
+    assert "diagram_icons" not in svg
+    assert 'stroke="#17747a"' in svg
+    assert svg.count("<svg") >= 3  # radice + le due icone inline
 
 
 def test_legend_lists_only_the_kinds_in_use():

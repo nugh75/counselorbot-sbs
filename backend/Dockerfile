@@ -19,6 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN mkdir backend
 COPY backend/*.py backend/
 COPY backend/*.json backend/
+COPY backend/diagram_icons/ backend/diagram_icons/
 COPY backend/routes/ backend/routes/
 COPY backend/skills/ backend/skills/
 COPY backend/tests/ backend/tests/
