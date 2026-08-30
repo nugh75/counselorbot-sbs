@@ -5,7 +5,13 @@ WORKDIR /app
 # Copy requirements first for caching
 COPY backend/requirements.txt .
 
-RUN apt-get update && apt-get install -y poppler-utils && rm -rf /var/lib/apt/lists/*
+# graphviz: rendering dei diagrammi concettuali della chat (SVG per il web,
+# PNG per Telegram e PDF). I font servono a rasterizzare il PNG: Inter e'
+# quello dell'interfaccia, DejaVu resta il fallback se il pacchetto manca.
+RUN apt-get update \
+    && apt-get install -y poppler-utils graphviz fonts-dejavu-core \
+    && (apt-get install -y fonts-inter || echo "fonts-inter non disponibile: resta DejaVu") \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir -r requirements.txt
 

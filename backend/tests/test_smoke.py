@@ -428,6 +428,8 @@ EXPECTED_ROUTES = {
     ("POST", "/admin/assistant-questions"),
     ("PUT", "/admin/assistant-questions/{question_id}"),
     ("DELETE", "/admin/assistant-questions/{question_id}"),
+    ("POST", "/diagram/render"),
+    ("POST", "/diagram/from-message"),
 }
 
 
@@ -5142,6 +5144,7 @@ def test_skills_policy_seeds_the_primary_behaviours():
                 "reading-guide",
                 "profile-comparison",
                 "web-lookup",
+                "concept-diagram",
             )
         }
 
@@ -5192,7 +5195,9 @@ def test_skills_preview_selects_one_behaviour_from_student_intent():
             entry["slug"] for entry in body["trace"]
             if entry.get("slug") and not entry.get("skipped")
         ]
-        assert active == [selected_slug], body["trace"]
+        # Il comportamento primario resta unico; la skill strutturale dei
+        # diagrammi lo accompagna e decide poi nel prompt se visualizzare.
+        assert active == [selected_slug, "concept-diagram"], body["trace"]
 
 
 def test_skills_behaviour_reaches_the_prompt_without_rag_knowledge():
@@ -5775,6 +5780,69 @@ def test_frozen_session_freeze_collapses_duplicate_rows():
         ]
     finally:
         main.app.dependency_overrides.pop(auth.get_current_user, None)
+
+
+# --------------------------------------------------------------------------
+# Diagrammi concettuali: la skill `concept-diagram` e' l'interruttore
+# --------------------------------------------------------------------------
+
+_DIAGRAM_SPEC = {
+    "type": "flow",
+    "title": "Come studio un capitolo",
+    "nodes": [
+        {"id": "a", "label": "Leggere"},
+        {"id": "b", "label": "Schematizzare", "accent": True},
+    ],
+    "edges": [{"from": "a", "to": "b", "label": "poi"}],
+}
+
+
+def _set_diagram_skill(active: bool):
+    db = _TestSession()
+    try:
+        skill = db.query(models.Skill).filter(models.Skill.slug == "concept-diagram").first()
+        if skill is None:
+            skill = models.Skill(
+                slug="concept-diagram",
+                name="Diagramma concettuale",
+                instructions_i18n={"en": "..."},
+                routing="optional",
+                slot="directive_tail",
+                status="published",
+                is_active=active,
+            )
+            db.add(skill)
+        else:
+            skill.is_active = active
+            skill.status = "published"
+        db.commit()
+    finally:
+        db.close()
+
+
+def test_diagram_endpoint_absent_when_skill_is_off():
+    _set_diagram_skill(False)
+    r = client.post("/diagram/render", json={"spec": _DIAGRAM_SPEC})
+    assert r.status_code == 404, r.text
+
+
+def test_diagram_endpoint_rejects_invalid_spec():
+    _set_diagram_skill(True)
+    r = client.post("/diagram/render", json={"spec": {"type": "gantt", "title": "x"}})
+    assert r.status_code == 422, r.text
+
+
+def test_diagram_endpoint_renders_svg_when_graphviz_present():
+    _set_diagram_skill(True)
+    r = client.post("/diagram/render", json={"spec": _DIAGRAM_SPEC, "theme": "dark"})
+    if not shutil.which("dot"):
+        assert r.status_code == 422       # graphviz assente: errore pulito, non 500
+        return
+    assert r.status_code == 200, r.text
+    assert r.headers["content-type"].startswith("image/svg+xml")
+    body = r.text
+    assert body.startswith("<svg")
+    assert "#103f42" in body               # palette scura
 
 
 if __name__ == "__main__":
