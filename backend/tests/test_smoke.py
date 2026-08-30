@@ -5146,18 +5146,19 @@ def test_skills_policy_seeds_the_primary_behaviours():
         }
 
 
-def test_web_lookup_is_seeded_but_stays_off_until_configured():
-    """La skill di consultazione esterna e' agganciata, non accesa."""
-    from backend.skills_seed import seed_skill_configs, seed_skills
+def test_web_lookup_answers_factual_questions_from_public_sources():
+    """La skill di consultazione esterna e' agganciata, attiva e revocabile."""
+    from backend.skills_seed import SKILL_CONFIG_DEFAULTS, seed_skills
 
     db = _TestSession()
     try:
         seed_skills(db)
-        seed_skill_configs(db)
-        flag = db.query(models.Config).filter(models.Config.key == "web_lookup_enabled").one()
-        assert flag.value == "false", "la rete in chat non si accende da sola"
     finally:
         db.close()
+
+    defaults = {key: value for key, value, _ in SKILL_CONFIG_DEFAULTS}
+    # Accesa di default, ma resta una config: l'admin puo' spegnerla dal pannello.
+    assert defaults["web_lookup_enabled"] == "true"
 
     by_slug = {skill["slug"]: skill for skill in client.get("/admin/skills").json()}
     skill = by_slug["web-lookup"]

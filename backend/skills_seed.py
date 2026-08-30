@@ -99,9 +99,10 @@ SKILL_CONFIG_DEFAULTS = (
     ("skills_total_max_chars", "3000", "Tetto complessivo in caratteri dei blocchi prodotti dalle skill."),
     (
         "web_lookup_enabled",
-        "false",
-        "Se true, la skill web-lookup puo' consultare dal vivo le fonti pubbliche whitelisted "
-        "(Wikipedia, Treccani, Open Library, Google Books, OpenAlex) per una domanda fattuale. "
+        "true",
+        "Se true, la skill web-lookup consulta dal vivo le fonti pubbliche whitelisted "
+        "(Wikipedia, Treccani, Open Library, Google Books, OpenAlex) quando lo studente fa una "
+        "domanda puntuale su un'opera, una persona o un termine, invece di rispondere a memoria. "
         "Spenta: la chat resta offline e usa solo il catalogo certificato.",
     ),
 )

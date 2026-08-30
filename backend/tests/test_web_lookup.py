@@ -205,6 +205,19 @@ def test_quoted_text_becomes_the_query():
     assert web_lookup.scrub_query('di cosa parla "Il posto delle fragole"?') == "Il posto delle fragole"
 
 
+def test_the_question_opener_is_dropped_so_the_source_gets_the_entity():
+    assert web_lookup.scrub_query("Cos'e' la metacognizione?") == "metacognizione"
+    assert web_lookup.scrub_query("Che cosa e' la resilienza?") == "resilienza"
+    assert web_lookup.scrub_query("Chi era Vygotskij?") == "Vygotskij"
+    assert web_lookup.scrub_query("What is metacognition?") == "metacognition"
+    assert web_lookup.scrub_query("Who wrote Grit?") == "Grit"
+    assert web_lookup.scrub_query("Was ist Metakognition?") == "Metakognition"
+    assert web_lookup.scrub_query("Spiegami cos'e' la zona di sviluppo prossimale") == \
+        "zona di sviluppo prossimale"
+    # Un titolo gia' nudo resta com'e'.
+    assert web_lookup.scrub_query("Mindset") == "Mindset"
+
+
 def test_a_long_message_is_capped():
     assert len(web_lookup.scrub_query("parola " * 100)) <= web_lookup.MAX_QUERY_CHARS
 
@@ -221,7 +234,7 @@ def test_the_author_page_is_not_accepted_as_the_work():
         assert web_lookup.lookup(
             "Il posto delle fragole", sources=["wikipedia"],
             expect_titles=["Il posto delle fragole"]) == []
-        # Senza titolo atteso (domanda fattuale) il controllo non si applica.
+        # Chiedendo proprio dell'autore, la sua pagina e' la risposta giusta.
         assert len(web_lookup.lookup("Ingmar Bergman", sources=["wikipedia"])) == 1
     finally:
         _restore()
@@ -236,6 +249,64 @@ def test_a_homonym_that_lengthens_the_title_is_refused():
     _install(_Responses(json_map={"/page/summary/": page}))
     try:
         assert web_lookup.lookup("Wonder", sources=["wikipedia"], expect_titles=["Wonder"]) == []
+    finally:
+        _restore()
+
+
+def test_a_free_question_still_checks_that_the_entry_is_the_one_asked_for():
+    """Wikipedia puo' redirigere: "Mindset" ha risposto "The Witch (film 2015)"."""
+    unrelated = {
+        "type": "standard", "title": "The Witch (film 2015)",
+        "extract": "The Witch e' un film del 2015 diretto da Robert Eggers.",
+        "content_urls": {"desktop": {"page": "https://it.wikipedia.org/wiki/The_Witch"}},
+    }
+    _install(_Responses(json_map={"/page/summary/": unrelated, "list=search": {"query": {"search": []}}}))
+    try:
+        assert web_lookup.lookup("Mindset", sources=["wikipedia"]) == []
+    finally:
+        _restore()
+
+    # La voce puo' essere piu' specifica della domanda: quella passa.
+    fuller = {
+        "type": "standard", "title": "Lev Semenovic Vygotskij",
+        "extract": "Psicologo e pedagogista sovietico.",
+        "content_urls": {"desktop": {"page": "https://it.wikipedia.org/wiki/Lev_Vygotskij"}},
+    }
+    _install(_Responses(json_map={"/page/summary/": fuller}))
+    try:
+        assert len(web_lookup.lookup("Vygotskij", sources=["wikipedia"])) == 1
+    finally:
+        _restore()
+
+
+def test_a_morphological_variant_still_counts_as_the_entry_asked_for():
+    """Si chiede "procrastinare", la voce si chiama "Procrastinazione"."""
+    page = {
+        "type": "standard", "title": "Procrastinazione",
+        "extract": "Tendenza a rimandare cio' che si dovrebbe fare.",
+        "content_urls": {"desktop": {"page": "https://it.wikipedia.org/wiki/Procrastinazione"}},
+    }
+    _install(_Responses(json_map={"/page/summary/": page}))
+    try:
+        assert len(web_lookup.lookup("procrastinare", sources=["wikipedia"])) == 1
+    finally:
+        _restore()
+
+
+def test_treccani_falls_back_to_the_vocabulary_for_a_word():
+    vocab = (
+        '<html><script id="__NEXT_DATA__" type="application/json">'
+        + json.dumps({"props": {"pageProps": {"data": {
+            "title": "procrastinare", "content": "<p>Rimandare a domani.</p>"}}}})
+        + "</script></html>"
+    )
+    responses = _install(_Responses(text_map={"/vocabolario/": vocab}))
+    try:
+        results = web_lookup.lookup("procrastinare", sources=["treccani"], lang="it")
+        assert results and results[0].text == "Rimandare a domani."
+        assert "/vocabolario/" in results[0].url
+        # L'enciclopedia resta il primo tentativo.
+        assert "/enciclopedia/" in responses.calls[0]
     finally:
         _restore()
 

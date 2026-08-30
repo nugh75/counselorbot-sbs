@@ -28,10 +28,13 @@ _PATTERNS = {
         r"\b(lettur|libro|articol|bibliograf|fonte|fonti|read|book|article|source|"
         r"lectura|livro|lecture|livre|lesen|buch|quelle|lasa|bok|kalla)"
     ),
-    # Domanda fattuale circoscritta su un'opera o un termine: "di cosa parla",
-    # "chi l'ha scritto", "in che anno". E' l'unico caso in cui ha senso uscire
-    # a consultare una fonte esterna.
+    # Domanda puntuale su qualcosa che sta fuori dal profilo: un'opera, una
+    # persona, un termine. Copre sia la richiesta su un'opera ("di cosa parla",
+    # "chi l'ha scritto") sia quella enciclopedica ("cos'e' la metacognizione",
+    # "chi era Vygotskij"). E' l'unico caso in cui ha senso uscire a consultare
+    # una fonte: il modello non deve rispondere a memoria su un dato verificabile.
     "factual": re.compile(
+        # opera: trama, autore, anno
         r"\b(di\s+(?:cosa|che)\s+(?:parla|tratta)|qual\s+e\s+la\s+trama|la\s+trama\s+di|"
         r"chi\s+(?:ha\s+scritto|ha\s+diretto|l\s?.?\s?ha\s+scritto)|chi\s+e\s+l.?\s?autore|"
         r"in\s+che\s+anno|quando\s+e\s+(?:uscito|stato\s+pubblicato|stato\s+girato)|"
@@ -40,7 +43,25 @@ _PATTERNS = {
         r"de\s+que\s+trata|quien\s+(?:escribio|dirigio)|en\s+que\s+ano|cuando\s+se\s+publico|"
         r"de\s+quoi\s+parle|qui\s+a\s+(?:ecrit|realise)|en\s+quelle\s+annee|quand\s+est\s+sorti|"
         r"worum\s+geht\s+es|in\s+welchem\s+jahr|wann\s+erschien|"
-        r"vad\s+handlar|vem\s+(?:skrev|regisserade)|nar\s+kom)"
+        r"vad\s+handlar|vem\s+(?:skrev|regisserade)|nar\s+kom|"
+        # voce enciclopedica: definizione di un termine, identita' di una persona
+        r"(?:che\s+)?cos\W?\s*e\b|che\s+cosa\s+e\b|"
+        r"chi\s+(?:e|era|sono|erano)\s+\w|"
+        r"quando\s+(?:e\s+)?(?:nato|nata|morto|morta|vissut)|dove\s+si\s+trova|"
+        r"what\s+(?:is|are|was|were)\s+(?:a|an|the)?\s*\w|who\s+(?:is|was|were)\s+\w|"
+        r"que\s+es\b|quien\s+(?:es|fue|era)\s+\w|"
+        r"qu\W?est-ce\s+que|qui\s+(?:est|etait)\s+\w|"
+        r"was\s+ist\b|wer\s+(?:ist|war)\s+\w|"
+        r"vad\s+ar\b|vem\s+(?:ar|var)\s+\w|"
+        # "cosa significa X" e' una voce di dizionario solo quando X e' un
+        # termine e la frase finisce li'. "Cosa significa che sono nella fascia
+        # bassa?" resta una domanda sul proprio profilo.
+        r"cosa\s+(?:significa|vuol\s+dire)\s+(?:l[ao]\W?\s*)?[a-z]{4,}(?:\s+[a-z]{4,})?\s*\??\s*$|"
+        r"what\s+does\s+[a-z]{4,}(?:\s+[a-z]{4,})?\s+mean|"
+        r"que\s+significa\s+(?:l[ao]s?\s+)?[a-z]{4,}(?:\s+[a-z]{4,})?\s*\??\s*$|"
+        r"que\s+veut\s+dire\s+(?:l[ae]\W?\s*)?[a-z]{4,}(?:\s+[a-z]{4,})?\s*\??\s*$|"
+        r"was\s+bedeutet\s+[a-z]{4,}(?:\s+[a-z]{4,})?\s*\??\s*$|"
+        r"vad\s+betyder\s+[a-z]{4,}(?:\s+[a-z]{4,})?\s*\??\s*$)"
     ),
     "advice": re.compile(
         r"\b(consigl|cosa\s+posso\s+fare|come\s+faccio|come\s+(?:mi|posso)\s+organizz|come\s+posso\s+miglior|azione\s+concreta|"
@@ -75,11 +96,20 @@ _NEGATED_PATTERNS = {
         r"non\s+(?:suggerirmi|consigliarmi)\s+(?:lettur|libr|articol|font)|"
         r"senza\s+(?:lettur|libr|articol|font)|(?:do\s+not|don't)\s+(?:recommend|suggest)\s+(?:a\s+)?(?:book|reading|source))"
     ),
-    # Una domanda su di se' non e' una domanda su un'opera: "di cosa parla il
-    # mio risultato" resta dentro il profilo, non esce a cercare in rete.
+    # Una domanda su di se' non e' una domanda enciclopedica: il profilo, i
+    # punteggi e i codici fattore restano dentro la chiarificazione riflessiva e
+    # non escono mai a cercare in rete. "Cosa significa A6" non e' una voce di
+    # enciclopedia; "cosa significa metacognizione" si'.
     "factual": re.compile(
-        r"\b(?:mio|mia|miei|questo|questa)\s+(?:profil|punteggi|risultat|dat[oi]|taccuin|libretto)|"
-        r"\bmy\s+(?:profile|score|result)|\bthis\s+(?:score|result|profile)"
+        r"\b(?:mio|mia|miei|mie|questo|questa|quel|quella)\s+"
+        r"(?:profil|punteggi|risultat|dat[oi]|taccuin|libretto|fattor|scala|dimension)|"
+        r"\bmy\s+(?:profile|score|result|notebook)|\bthis\s+(?:score|result|profile|factor)|"
+        r"\bdieses\s+ergebnis|\bmein\s+(?:profil|ergebnis)|"
+        r"\beste\s+resultado|\bmi\s+(?:perfil|resultado)|"
+        r"\bce\s+resultat|\bmon\s+(?:profil|resultat)|"
+        r"\b(?:detta|mitt)\s+resultat|"
+        # codici fattore: A6, C1, T3, AD4, C1r
+        r"\b(?:a|c|s|k|t|ad|qsa)\s?\d{1,2}r?\b"
     ),
     "advice": re.compile(
         r"\b(?:non\s+(?:voglio\s+)?consigl|non\s+(?:darmi|datemi|consigliarmi)|"
