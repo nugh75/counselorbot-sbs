@@ -235,7 +235,7 @@ def test_a_film_is_also_looked_up_with_the_encyclopedia_qualifier():
     """"Lady Bird" da solo non ha una voce: la voce e' "Lady Bird (film)"."""
     page = {
         "type": "standard", "title": "Lady Bird (film)",
-        "extract": "Film del 2017 scritto e diretto da Greta Gerwig.",
+        "extract": "Lady Bird e' un film del 2017 scritto e diretto da Greta Gerwig.",
         "content_urls": {"desktop": {"page": "https://it.wikipedia.org/wiki/Lady_Bird_(film)"}},
     }
 
@@ -404,7 +404,7 @@ def test_a_sequel_is_not_the_synopsis_of_the_original():
     """Le fonti rispondono volentieri col film piu' recente della serie."""
     sequel = {
         "type": "standard", "title": "Inside Out 2",
-        "extract": "Film d'animazione del 2024 diretto da Kelsey Mann.",
+        "extract": "Inside Out 2 e' un film d'animazione del 2024 diretto da Kelsey Mann.",
         "content_urls": {"desktop": {"page": "https://it.wikipedia.org/wiki/Inside_Out_2"}},
     }
     _install(_Responses(json_map={"/page/summary/": sequel}))
@@ -437,7 +437,7 @@ def test_a_subtitle_or_a_qualifier_still_counts_as_the_same_work():
 def test_a_film_is_looked_up_by_title_before_its_director():
     page = {
         "type": "standard", "title": "Smultronstallet",
-        "extract": "Un anziano professore ripercorre la propria vita.",
+        "extract": "Smultronstallet e' un film del 1957 diretto da Ingmar Bergman.",
         "content_urls": {"desktop": {"page": "https://it.wikipedia.org/wiki/Smultronstallet"}},
     }
     responses = _install(_Responses(json_map={"/page/summary/": page}))
@@ -449,6 +449,23 @@ def test_a_film_is_looked_up_by_title_before_its_director():
         assert result is not None
         # Prima il titolo originale da solo: col regista vince la sua biografia.
         assert "Bergman" not in responses.calls[0]
+    finally:
+        _restore()
+
+
+def test_an_entry_about_another_kind_of_thing_is_not_the_film():
+    """"Persepolis" prendeva la capitale achemenide invece del film."""
+    city = {
+        "type": "standard", "title": "Persepolis",
+        "extract": "Persepolis was the ceremonial capital of the Achaemenid Empire.",
+        "content_urls": {"desktop": {"page": "https://en.wikipedia.org/wiki/Persepolis"}},
+    }
+    _install(_Responses(json_map={"/page/summary/": city}))
+    try:
+        assert web_lookup.synopsis_for({
+            "title": "Persepolis", "kind": "film", "year": 2007,
+            "creators": ["Marjane Satrapi"],
+        }, lang="en") is None
     finally:
         _restore()
 
@@ -622,5 +639,8 @@ if __name__ == "__main__":
         except AssertionError as exc:
             failed += 1
             print(f"FAIL {test.__name__}: {exc}")
+        except Exception as exc:  # un errore non-assert non deve interrompere la suite
+            failed += 1
+            print(f"ERROR {test.__name__}: {type(exc).__name__}: {exc}")
     print(f"\n{len(tests) - failed}/{len(tests)} passed")
     raise SystemExit(1 if failed else 0)

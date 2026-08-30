@@ -657,20 +657,31 @@ def lookup(
 # per accorgersi di aver preso l'opera sbagliata.
 _SCREEN_KINDS = {"film", "documentary", "series", "video"}
 _SCREEN_DECLARATION = re.compile(
-    r"\b(e['\u2019]?\s+un\s+film|e['\u2019]?\s+una\s+serie|film\s+d[i']\s?animazione|"
-    r"is\s+a\s+(?:\d{4}\s+)?(?:american\s+|british\s+|italian\s+)?(?:animated\s+)?(?:film|movie)|"
-    r"is\s+an?\s+.{0,20}television\s+series)",
+    r"\b(e['\u2019]?\s+un(?:a)?\s+(?:film|serie|documentario|miniserie)|"
+    r"film\s+d[i']\s?animazione|"
+    r"is\s+an?\s+[\w\s,'-]{0,60}?(?:film|movie|documentary|miniseries|"
+    r"television\s+series|tv\s+series))",
     re.IGNORECASE,
 )
 
 
-def _wrong_medium(text: str, kind: str) -> bool:
-    """Vero se l'estratto descrive un film ma la voce di catalogo non lo e'."""
-    if (kind or "").lower() in _SCREEN_KINDS:
-        return False
-    plain = unicodedata.normalize("NFKD", (text or "")[:200])
+def _declares_screen_work(text: str) -> bool:
+    plain = unicodedata.normalize("NFKD", (text or "")[:220])
     plain = "".join(c for c in plain if not unicodedata.combining(c))
     return bool(_SCREEN_DECLARATION.search(plain))
+
+
+def _medium_conflict(text: str, kind: str) -> bool:
+    """Vero quando l'estratto e il tipo della voce non parlano della stessa cosa.
+
+    Vale nei due sensi, e servono entrambi: un film omonimo non e' la sinossi di
+    un saggio ("Il paradosso del tempo"), e la capitale achemenide non e' la
+    sinossi del film "Persepolis".
+    """
+    declares_screen = _declares_screen_work(text)
+    if (kind or "").lower() in _SCREEN_KINDS:
+        return not declares_screen
+    return declares_screen
 
 
 def _creator_is_named(text: str, title: str, creators) -> bool:
@@ -735,8 +746,9 @@ def synopsis_for(
             results = lookup(query, sources=(source,), lang=lang, limit=1, expect_titles=titles)
             if not results:
                 continue
-            if _wrong_medium(results[0].text, kind):
-                logger.info("web_lookup: %s descrive un film, ma '%s' non lo e'", source, query)
+            if _medium_conflict(results[0].text, kind):
+                logger.info("web_lookup: %s ha risposto su un altro tipo di opera per '%s'",
+                            source, query)
                 continue
             # Solo per le opere scritte: la voce di un film e' gia' protetta dal
             # qualificatore e dal controllo del medium, e il suo estratto puo'
