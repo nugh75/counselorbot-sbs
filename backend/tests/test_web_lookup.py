@@ -194,6 +194,95 @@ def test_google_books_is_not_called_without_a_key():
         _restore()
 
 
+def test_a_work_with_a_doi_is_resolved_not_searched():
+    responses = _install(_Responses(json_map={
+        "openalex.org/works/doi:": {"title": "States of curiosity",
+                                    "doi": "https://doi.org/10.1016/j.neuron.2014.08.060",
+                                    "abstract_inverted_index": {"Curiosity": [0], "helps": [1]}},
+    }))
+    try:
+        result = web_lookup.synopsis_for({
+            "title": "States of Curiosity Modulate Hippocampus-Dependent Learning",
+            "kind": "article", "identifiers": {"doi": "10.1016/j.neuron.2014.08.060"},
+        }, lang="it")
+        assert result is not None and result.text == "Curiosity helps"
+        assert "works/doi:" in responses.calls[0], "il DOI si risolve, non si cerca per titolo"
+    finally:
+        _restore()
+
+
+def test_europe_pmc_covers_the_abstracts_openalex_cannot_redistribute():
+    _install(_Responses(json_map={
+        "api.openalex.org": {"results": [{"title": "X", "doi": "https://doi.org/10.1/x",
+                                          "abstract_inverted_index": {}}]},
+        "europepmc": {"resultList": {"result": [{
+            "title": "States of curiosity", "doi": "10.1016/j.neuron.2014.08.060",
+            "abstractText": "People find it easier to learn about topics that interest them.",
+        }]}},
+    }))
+    try:
+        result = web_lookup.synopsis_for({
+            "title": "States of curiosity", "kind": "article",
+            "identifiers": {"doi": "10.1016/j.neuron.2014.08.060"},
+        }, lang="it")
+        assert result is not None and result.source == "europepmc"
+        assert result.url == "https://doi.org/10.1016/j.neuron.2014.08.060"
+    finally:
+        _restore()
+
+
+def test_a_film_is_also_looked_up_with_the_encyclopedia_qualifier():
+    """"Lady Bird" da solo non ha una voce: la voce e' "Lady Bird (film)"."""
+    page = {
+        "type": "standard", "title": "Lady Bird (film)",
+        "extract": "Film del 2017 scritto e diretto da Greta Gerwig.",
+        "content_urls": {"desktop": {"page": "https://it.wikipedia.org/wiki/Lady_Bird_(film)"}},
+    }
+
+    def get_json(url):
+        # Le parentesi arrivano percent-encoded nell'URL della voce.
+        if "Lady_Bird_%28film" in url:
+            return page
+        return None
+
+    web_lookup._get_json = get_json
+    try:
+        result = web_lookup.synopsis_for({
+            "title": "Lady Bird", "kind": "film", "year": 2017, "creators": ["Greta Gerwig"],
+        }, lang="it")
+        assert result is not None and result.title == "Lady Bird (film)"
+    finally:
+        _restore()
+
+
+# --- lingua e pulizia del testo ----------------------------------------------
+
+def test_the_stored_language_is_the_one_the_source_answered_in():
+    _install(_Responses(json_map={
+        "search.json": {"docs": [{"key": "/works/OL1W", "title": "Diario di scuola"}]},
+        "/works/OL1W.json": {"description":
+            "Un livre de plus sur l ecole, alors ? Non, pas sur l ecole ! Sur le cancre, "
+            "sur la douleur de ne pas comprendre et sur les enfants qui ne savent pas."},
+    }))
+    try:
+        result = web_lookup.lookup("Diario di scuola", sources=["openlibrary"], lang="it")[0]
+        # Richiesta in italiano, risposta in francese: si archivia come francese.
+        assert result.language == "fr"
+    finally:
+        _restore()
+
+    _install(_Responses(json_map={"/page/summary/": WIKI_SUMMARY}))
+    try:
+        assert web_lookup.lookup("Mindset", sources=["wikipedia"], lang="it")[0].language == "it"
+    finally:
+        _restore()
+
+
+def test_catalog_noise_is_stripped_from_the_description():
+    assert web_lookup.clean_description("**Bold** text [2] more") == "Bold text more"
+    assert web_lookup.clean_description("Real text\n----\nsource: publisher") == "Real text"
+
+
 # --- query -------------------------------------------------------------------
 
 def test_the_query_leaves_without_personal_data():
