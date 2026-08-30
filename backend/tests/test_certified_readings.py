@@ -323,6 +323,58 @@ def test_the_seed_is_consistent_and_idempotent():
         db.commit(); db.close()
 
 
+# --- sinossi -----------------------------------------------------------------
+
+def test_the_synopsis_tells_the_student_what_the_work_is_about():
+    db = _TestSession()
+    try:
+        _reading(db, "sinossi",
+                 synopsis_i18n={"it": "Un uomo anziano ripercorre la propria vita in un viaggio in auto."},
+                 synopsis_source={"source": "wikipedia", "url": "https://it.wikipedia.org/wiki/X"})
+        out = certified_reading_memory.retrieve(
+            db, themes={"ansia-e-prestazione"}, language="it")
+        block = certified_reading_memory.render_context(out)
+        assert "Di cosa parla: Un uomo anziano" in block
+        # La sinossi non prende il posto del motivo della raccomandazione.
+        assert "Perche':" in block
+    finally:
+        db.query(models.CertifiedReading).delete()
+        db.commit(); db.close()
+
+
+def test_a_long_synopsis_is_clipped_before_reaching_the_prompt():
+    db = _TestSession()
+    try:
+        _reading(db, "sinossi-lunga", synopsis_i18n={"it": "parola " * 200})
+        out = certified_reading_memory.retrieve(
+            db, themes={"ansia-e-prestazione"}, language="it")
+        assert len(out[0]["synopsis"]) <= 224
+        assert out[0]["synopsis"].endswith("...")
+    finally:
+        db.query(models.CertifiedReading).delete()
+        db.commit(); db.close()
+
+
+def test_a_synopsis_without_provenance_cannot_be_certified():
+    from fastapi import HTTPException
+
+    from backend.routes.certified_readings import _guard_certification
+
+    row = models.CertifiedReading(
+        slug="x", kind="essay", title="T", themes=["ansia-e-prestazione"],
+        why_i18n={"it": "perche' si'"}, status="certified",
+        synopsis_i18n={"it": "Racconta qualcosa."},
+    )
+    try:
+        _guard_certification(row)
+        raise AssertionError("una sinossi senza URL non deve poter essere certificata")
+    except HTTPException as exc:
+        assert "provenienza" in exc.detail
+
+    row.synopsis_source = {"url": "https://it.wikipedia.org/wiki/T"}
+    _guard_certification(row)  # con la fonte dichiarata passa
+
+
 def test_verification_admits_it_cannot_check_a_film():
     result = verify_reading({"title": "Il posto delle fragole", "kind": "film", "year": 1957})
     assert result["match"] is None
