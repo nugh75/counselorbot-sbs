@@ -22,6 +22,7 @@ from sqlalchemy.orm import sessionmaker
 from backend import database, models
 from backend.certified_reading_seed import SEED_CERTIFIED_READINGS, seed_certified_readings
 from backend.certified_reading_service import certified_reading_memory
+from backend.reading_audience import band_from_age, band_from_text, most_protective, resolve_audience_band
 from backend.reading_themes import READING_THEMES, themes_from_factors, themes_from_text
 from backend.reading_verification import verify_reading
 from backend.skills import handlers
@@ -229,6 +230,70 @@ def test_absence_is_still_declared_when_nothing_matches():
         assert "Nessuna fonte identificabile" in out.text
     finally:
         db.close()
+
+
+# --- fascia di pubblico ------------------------------------------------------
+
+def test_the_band_comes_from_age_and_from_free_text():
+    assert band_from_age(16) == "secondaria"
+    assert band_from_age("22") == "universita"
+    assert band_from_age(50) == "adulti"
+    assert band_from_age("non lo dico") is None
+    assert band_from_text("quinta liceo scientifico") == "secondaria"
+    assert band_from_text("3rd Year, National PhD Programme") == "universita"
+    assert band_from_text("mi piace studiare") is None
+
+
+def test_contradicting_signals_resolve_to_the_most_protective():
+    assert most_protective(["adulti", "secondaria"]) == "secondaria"
+    assert most_protective(["adulti", "universita"]) == "universita"
+    assert most_protective([None, None]) is None
+
+
+def test_a_reading_does_not_cross_into_another_band():
+    db = _TestSession()
+    try:
+        _reading(db, "per-adulti", audience=["adulti"])
+        _reading(db, "per-tutti", audience=[])
+        out = certified_reading_memory.retrieve(
+            db, themes={"ansia-e-prestazione"}, language="it", limit=5, audience_band="secondaria")
+        assert [e["id"] for e in out] == [f"{PREFIX}-per-tutti"]
+        # Fascia ignota: nessun filtro, la decisione passa al turno.
+        both = certified_reading_memory.retrieve(
+            db, themes={"ansia-e-prestazione"}, language="it", limit=5)
+        assert len(both) == 2
+    finally:
+        db.query(models.CertifiedReading).delete()
+        db.commit(); db.close()
+
+
+def test_without_a_band_the_model_is_told_to_ask():
+    db = _TestSession()
+    try:
+        _reading(db, "con-pubblico", audience=["universita"])
+        ctx = _ctx(db=db, message="ho ansia prima della verifica", component_flags={"knowledge": True})
+        assert "chiediglielo" in handlers.reading_sources(ctx, {}).text
+    finally:
+        db.query(models.CertifiedReading).delete()
+        db.commit(); db.close()
+
+
+def test_the_band_is_read_from_the_learner_profile():
+    db = _TestSession()
+    user = f"{PREFIX}-studente"
+    try:
+        db.add(models.LearnerProfileRevision(username=user, data={"age": 16, "school_year": "quarta"}))
+        db.commit()
+        assert resolve_audience_band(db, user) == "secondaria"
+        # Eta' adulta ma percorso scolastico: vince il segnale piu' protettivo.
+        db.add(models.LearnerProfileRevision(username=user, data={"age": 40, "school_class": "liceo"}))
+        db.commit()
+        assert resolve_audience_band(db, user) == "secondaria"
+        assert resolve_audience_band(db, "chi-non-esiste") is None
+    finally:
+        db.query(models.LearnerProfileRevision).filter(
+            models.LearnerProfileRevision.username == user).delete()
+        db.commit(); db.close()
 
 
 # --- seme e verifica ---------------------------------------------------------

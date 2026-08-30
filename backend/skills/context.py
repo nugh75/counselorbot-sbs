@@ -36,6 +36,10 @@ class SkillContext:
     # Fonti RAG recuperate per questo turno ({title, source}): sono l'unico
     # materiale citabile da una skill di lettura.
     knowledge_sources: tuple[Mapping[str, Any], ...] = ()
+    # Fascia dello studente (secondaria|universita|adulti) ricavata dai dati che
+    # ha gia' fornito. None = non ricavabile: nessun filtro, ma il modello deve
+    # chiederlo prima di proporre una lettura.
+    audience_band: str | None = None
     db: Any = None
     ai_service: Any = None
 

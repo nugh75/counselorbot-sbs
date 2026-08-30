@@ -355,6 +355,7 @@ class AdministrationPlanBase(BaseModel):
     instrument_code: str = "QSA"
     group_id: Optional[int] = None
     locale: str = "en"
+    school_level: Optional[str] = None
     scheduled_at: Optional[datetime] = None
     location: Optional[str] = None
     notes: Optional[str] = None
@@ -368,6 +369,7 @@ class AdministrationPlanCreate(AdministrationPlanBase):
 
 class AdministrationPlanUpdate(BaseModel):
     title: Optional[str] = None
+    school_level: Optional[str] = None
     instrument_code: Optional[str] = None
     group_id: Optional[int] = None
     locale: Optional[str] = None
@@ -386,6 +388,7 @@ class AdministrationPlanResponse(BaseModel):
     group_id: Optional[int] = None
     group_name: Optional[str] = None
     locale: str
+    school_level: Optional[str] = None
     scheduled_at: Optional[datetime] = None
     location: Optional[str] = None
     notes: Optional[str] = None
@@ -1179,12 +1182,14 @@ class StudentGroupCreate(BaseModel):
     name: str
     code: Optional[str] = None
     school: Optional[str] = None
+    school_level: Optional[str] = None
 
 
 class StudentGroupUpdate(BaseModel):
     name: Optional[str] = None
     is_active: Optional[bool] = None
     school: Optional[str] = None
+    school_level: Optional[str] = None
 
 
 class GroupShareCreate(BaseModel):

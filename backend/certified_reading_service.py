@@ -10,7 +10,10 @@ Regole non negoziabili implementate qui:
   - una voce marcata sensibile non raggiunge mai lo studente per default: serve
     che l'admin accenda `readings_allow_sensitive`, e anche allora entra solo se
     e' lo studente ad aver nominato quel tema, portando con se' l'avvertenza;
-  - la lingua in cui l'opera esiste viene dichiarata, non nascosta.
+  - la lingua in cui l'opera esiste viene dichiarata, non nascosta;
+  - una voce con un pubblico dichiarato non raggiunge una fascia diversa; quando
+    la fascia non e' ricavabile il filtro non scatta, e la direttiva chiede al
+    modello di domandarlo prima di proporre.
 """
 from __future__ import annotations
 
@@ -21,6 +24,7 @@ from sqlalchemy.orm import Session
 
 from . import models
 from .memory_embeddings import memory_embedder
+from .reading_audience import audience_allows
 
 MAX_READING_CONTEXT_CHARS = 1600
 
@@ -50,6 +54,7 @@ class CertifiedReadingMemory:
         limit: int = 2,
         ai_service=None,
         allow_sensitive: bool = False,
+        audience_band: str | None = None,
     ) -> list[dict]:
         wanted = {str(t) for t in themes}
         explicit = {str(t) for t in explicit_themes}
@@ -77,6 +82,8 @@ class CertifiedReadingMemory:
                 continue
             matched_themes = row_themes & wanted
             if not matched_themes and not (row_codes & salient):
+                continue
+            if not audience_allows(row.audience, audience_band):
                 continue
             if row.is_sensitive and not (allow_sensitive and (row_themes & explicit)):
                 # Doppia condizione: l'admin deve averlo abilitato E il tema deve
@@ -130,6 +137,7 @@ class CertifiedReadingMemory:
             "why": self._i18n(row.why_i18n, language),
             "languages": list(row.available_languages or []),
             "where": row.where_to_find or "",
+            "audience": list(row.audience or []),
             "warning": (row.content_warning or "") if row.is_sensitive else "",
         }
 

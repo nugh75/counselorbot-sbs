@@ -11,6 +11,7 @@ interface StudentGroup {
     code: string;
     name: string;
     school: string | null;
+    school_level: string | null;
     owner_username: string;
     is_active: boolean;
     members_count: number;
@@ -26,6 +27,12 @@ const TEXTS = {
         namePlaceholder: 'Nome classe (es. 3B Informatica)',
         schoolPlaceholder: 'Scuola/istituto (opzionale)',
         school: 'Scuola',
+        levelLabel: 'Fascia',
+        levelNone: 'Fascia non indicata',
+        levelSecondaria: 'Secondaria',
+        levelUniversita: 'Universita',
+        levelAdulti: 'Adulti',
+        levelHint: 'Filtra le letture consigliate: senza fascia il bot chiede allo studente a che punto degli studi si trova.',
         create: 'Crea',
         cancel: 'Annulla',
         members: 'iscritti',
@@ -57,6 +64,12 @@ const TEXTS = {
         namePlaceholder: 'Class name (e.g. 3B Computer Science)',
         schoolPlaceholder: 'School/institute (optional)',
         school: 'School',
+        levelLabel: 'Level',
+        levelNone: 'No level set',
+        levelSecondaria: 'Secondary',
+        levelUniversita: 'University',
+        levelAdulti: 'Adults',
+        levelHint: 'Filters the readings the bot may suggest: with no level it asks the student where they are in their studies.',
         create: 'Create',
         cancel: 'Cancel',
         members: 'members',
@@ -90,6 +103,7 @@ export function GroupsPanel() {
     const [creating, setCreating] = useState(false);
     const [newName, setNewName] = useState('');
     const [newSchool, setNewSchool] = useState('');
+    const [newLevel, setNewLevel] = useState('');
     const [busy, setBusy] = useState(false);
     const [message, setMessage] = useState('');
     const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -203,6 +217,20 @@ export function GroupsPanel() {
         setTimeout(() => setCopiedKey(null), 1500);
     };
 
+    const updateLevel = async (groupId: number, level: string) => {
+        try {
+            const res = await apiFetch(`/api/admin/groups/${groupId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ school_level: level || null }),
+            });
+            if (!res.ok) throw new Error('update failed');
+            load();
+        } catch {
+            setMessage(texts.error);
+        }
+    };
+
     const create = async () => {
         if (!newName.trim()) return;
         setBusy(true);
@@ -211,11 +239,12 @@ export function GroupsPanel() {
             const res = await apiFetch('/api/admin/groups', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: newName.trim(), school: newSchool.trim() || null }),
+                body: JSON.stringify({ name: newName.trim(), school: newSchool.trim() || null, school_level: newLevel || null }),
             });
             if (!res.ok) throw new Error('create failed');
             setNewName('');
             setNewSchool('');
+            setNewLevel('');
             setCreating(false);
             load();
         } catch {
@@ -290,6 +319,18 @@ export function GroupsPanel() {
                         placeholder={texts.schoolPlaceholder}
                         className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                     />
+                    <select
+                        value={newLevel}
+                        onChange={(event) => setNewLevel(event.target.value)}
+                        title={texts.levelHint}
+                        aria-label={texts.levelLabel}
+                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm sm:w-48"
+                    >
+                        <option value="">{texts.levelNone}</option>
+                        <option value="secondaria">{texts.levelSecondaria}</option>
+                        <option value="universita">{texts.levelUniversita}</option>
+                        <option value="adulti">{texts.levelAdulti}</option>
+                    </select>
                     <div className="flex gap-2">
                         <button
                             type="button"
@@ -327,6 +368,19 @@ export function GroupsPanel() {
                                     {' - '}{group.members_count} {texts.members}
                                     {' - '}{group.owner_username}
                                     {group.school ? ` - ${texts.school}: ${group.school}` : ''}
+                                    {' - '}
+                                    <select
+                                        value={group.school_level ?? ''}
+                                        aria-label={texts.levelLabel}
+                                        title={texts.levelHint}
+                                        onChange={(event) => void updateLevel(group.id, event.target.value)}
+                                        className="rounded border border-slate-200 bg-white px-1 py-0.5 text-xs text-slate-600"
+                                    >
+                                        <option value="">{texts.levelNone}</option>
+                                        <option value="secondaria">{texts.levelSecondaria}</option>
+                                        <option value="universita">{texts.levelUniversita}</option>
+                                        <option value="adulti">{texts.levelAdulti}</option>
+                                    </select>
                                 </p>
                             </div>
                             <div className="flex gap-2">

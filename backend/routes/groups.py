@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
 from .. import auth, database, models, schemas
+from ..reading_audience import AUDIENCE_BANDS
 from ..user_names import store_user_display_name
 
 router = APIRouter()
@@ -73,12 +74,22 @@ def _members_count(db: Session, group_id: int) -> int:
     return db.query(models.GroupMembership).filter(models.GroupMembership.group_id == group_id).count()
 
 
+
+def _valid_level(value) -> str | None:
+    """Fascia della classe: serve a filtrare le letture certificate per eta'."""
+    level = (value or "").strip() or None
+    if level and level not in AUDIENCE_BANDS:
+        raise HTTPException(status_code=400, detail=f"Fascia non valida: usa una fra {list(AUDIENCE_BANDS)}")
+    return level
+
+
 def _serialize_group(db: Session, group: models.StudentGroup) -> dict:
     return {
         "id": group.id,
         "code": group.code,
         "name": group.name,
         "school": group.school,
+        "school_level": group.school_level,
         "owner_username": group.owner_username,
         "is_active": group.is_active,
         "members_count": _members_count(db, group.id),
@@ -157,7 +168,9 @@ async def create_group(
         raise HTTPException(status_code=409, detail="Codice classe gia' esistente")
     store_user_display_name(db, current_user)
     school = (payload.school or "").strip() or None
-    group = models.StudentGroup(code=code, name=name, school=school, owner_username=_username(current_user) or "")
+    level = _valid_level(payload.school_level)
+    group = models.StudentGroup(code=code, name=name, school=school, school_level=level,
+                                owner_username=_username(current_user) or "")
     db.add(group)
     db.commit()
     db.refresh(group)
@@ -182,6 +195,8 @@ async def update_group(
         group.is_active = bool(updates["is_active"])
     if "school" in updates:
         group.school = (updates["school"] or "").strip() or None
+    if "school_level" in updates:
+        group.school_level = _valid_level(updates["school_level"])
     db.commit()
     db.refresh(group)
     return _serialize_group(db, group)
