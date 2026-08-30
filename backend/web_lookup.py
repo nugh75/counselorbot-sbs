@@ -673,7 +673,28 @@ def _wrong_medium(text: str, kind: str) -> bool:
     return bool(_SCREEN_DECLARATION.search(plain))
 
 
-def synopsis_for(reading: dict, lang: str = "it") -> LookupResult | None:
+def _creator_is_named(text: str, title: str, creators) -> bool:
+    """Vero se la voce nomina almeno un autore dell'opera.
+
+    Una pagina enciclopedica su un'opera nomina quasi sempre chi l'ha fatta.
+    Senza questo controllo il titolo di un saggio finisce sulla voce del
+    concetto omonimo: "Cosmo" di Sagan diventa la voce filosofica "cosmo".
+    """
+    surnames = [
+        _plain_keep_shape(str(name).split()[-1])
+        for name in (creators or []) if str(name).strip()
+    ]
+    if not surnames:
+        return True
+    haystack = _plain_keep_shape(f"{title} {text}")
+    return any(len(surname) > 2 and surname in haystack for surname in surnames)
+
+
+def synopsis_for(
+    reading: dict,
+    lang: str = "it",
+    sources: tuple[str, ...] | list[str] | None = None,
+) -> LookupResult | None:
     """Bozza di sinossi per una voce del catalogo.
 
     Cerca col titolo originale quando c'e' (le fonti indicizzano quello) e
@@ -706,7 +727,7 @@ def synopsis_for(reading: dict, lang: str = "it") -> LookupResult | None:
     if creators:
         queries.append(f"{titles[0]} {creators[0]}")
     queries = list(dict.fromkeys(queries))
-    sources = list(SOURCES_BY_KIND.get(str(reading.get("kind") or "essay"), ("wikipedia",)))
+    sources = list(sources or SOURCES_BY_KIND.get(str(reading.get("kind") or "essay"), ("wikipedia",)))
     if (lang or "it").startswith("it") and "treccani" not in sources:
         sources.append("treccani")
     for query in queries:
@@ -716,6 +737,14 @@ def synopsis_for(reading: dict, lang: str = "it") -> LookupResult | None:
                 continue
             if _wrong_medium(results[0].text, kind):
                 logger.info("web_lookup: %s descrive un film, ma '%s' non lo e'", source, query)
+                continue
+            # Solo per le opere scritte: la voce di un film e' gia' protetta dal
+            # qualificatore e dal controllo del medium, e il suo estratto puo'
+            # essere troppo corto per nominare la regia.
+            if kind not in _SCREEN_KINDS and not _creator_is_named(
+                    results[0].text, results[0].title, creators):
+                logger.info("web_lookup: %s ha risposto '%s' senza nominare l'autore",
+                            source, results[0].title)
                 continue
             return results[0]
     return None
