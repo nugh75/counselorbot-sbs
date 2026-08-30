@@ -215,9 +215,14 @@ def test_dot_draws_weakening_edge_dashed_with_tee():
 
 def test_dot_draws_strengthening_edge_thicker():
     dot = to_dot(parse_spec(MIXED))
-    strengthening = [line for line in dot.splitlines() if '"s" -> "c"' in line][0]
-    assert 'penwidth="2.6"' in strengthening
-    assert "#41707a" in strengthening          # petrol piu' fondo: legame che sostiene
+    strengthening = [
+        line for line in dot.splitlines()
+        if '"s" -> "__diagram_edge_label_0"' in line
+        or '"__diagram_edge_label_0" -> "c"' in line
+    ]
+    assert len(strengthening) == 2
+    assert all('penwidth="2.6"' in line for line in strengthening)
+    assert all("#41707a" in line for line in strengthening)  # petrol piu' fondo
 
 
 def test_edge_label_sits_on_an_opaque_chip():
@@ -225,6 +230,16 @@ def test_edge_label_sits_on_an_opaque_chip():
     dot = to_dot(parse_spec(MIXED))
     assert 'BGCOLOR="#ffffff"' in dot
     assert ">sostiene<" in dot
+
+
+def test_relation_edge_label_reserves_a_real_gap_in_the_arc():
+    dot = to_dot(parse_spec(MIXED))
+    # Con neato una normale edge label puo' coprire il tratto. Un nodo-spaziatore
+    # divide invece l'arco in due e rende geometricamente impossibile l'incrocio.
+    assert '"__diagram_edge_label_0" [shape=plain' in dot
+    assert '"s" -> "__diagram_edge_label_0"' in dot
+    assert '"__diagram_edge_label_0" -> "c"' in dot
+    assert '"s" -> "c" [label=' not in dot
 
 
 def test_dot_uses_the_local_icon_asset():

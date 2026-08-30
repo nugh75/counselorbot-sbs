@@ -349,16 +349,41 @@ def to_dot(spec: DiagramSpec, *, theme: str = "light", embed_title: bool = False
             ]
         lines.append(f'  "{_escape(node.id)}" [{", ".join(attrs)}];')
 
-    for edge in spec.edges:
+    used_ids = {node.id for node in spec.nodes}
+    for edge_index, edge in enumerate(spec.edges):
         attrs: list[str] = []
-        if edge.label:
-            attrs.append(f"label={_edge_label_chip(edge.label, colors)}")
         style = EDGE_STYLE[edge.kind]
         for key, value in style.items():
             if key == "color_key":
                 attrs.append(f'color="{colors[value]}"')
             else:
                 attrs.append(f'{key}="{value}"')
+
+        if edge.label and spec.type == "relation":
+            # `neato` posiziona le normali edge label sopra il tracciato: la
+            # pastiglia nasconde la linea, ma il tipo di arco diventa ambiguo.
+            # Un piccolo nodo intermedio riserva invece spazio vero e divide il
+            # tratto in due segmenti che terminano ai bordi dell'etichetta.
+            label_id = f"__diagram_edge_label_{edge_index}"
+            while label_id in used_ids:
+                label_id += "_"
+            used_ids.add(label_id)
+            lines.append(
+                f'  "{label_id}" [shape=plain, style="", margin="0", width="0", '
+                f'height="0", label={_edge_label_chip(edge.label, colors)}];'
+            )
+            first_attrs = [*attrs, 'dir="none"', 'len="1.35"', 'weight="3"']
+            second_attrs = [*attrs, 'len="1.35"', 'weight="3"']
+            lines.append(
+                f'  "{_escape(edge.source)}" -> "{label_id}" [{", ".join(first_attrs)}];'
+            )
+            lines.append(
+                f'  "{label_id}" -> "{_escape(edge.target)}" [{", ".join(second_attrs)}];'
+            )
+            continue
+
+        if edge.label:
+            attrs.insert(0, f"label={_edge_label_chip(edge.label, colors)}")
         rendered = f" [{', '.join(attrs)}]" if attrs else ""
         lines.append(f'  "{_escape(edge.source)}" -> "{_escape(edge.target)}"{rendered};')
 
