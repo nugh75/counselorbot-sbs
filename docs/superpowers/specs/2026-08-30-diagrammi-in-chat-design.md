@@ -166,3 +166,44 @@ poi verifica stato container e log.
 - Diagrammi quantitativi (grafici a barre, radar): già coperti da recharts/plotly.
 - Editing del diagramma da parte dello studente.
 - Persistenza di immagini: la fonte di verità resta il blocco nel messaggio.
+
+## Revisione grafica (2026-08-30, seconda passata)
+
+Alla prova sui disegni veri sono emersi tre difetti: `circo` e `neato` piazzano
+l'etichetta a metà arco senza riservarle spazio (la linea taglia il testo, o il
+testo finisce sul bordo di un nodo), ogni relazione aveva lo stesso tratto, e a
+11/9 pt con nodi vicini le etichette si toccavano.
+
+**Etichette leggibili.** L'etichetta di un arco è una label HTML con
+`BGCOLOR` = superficie: una pastiglia opaca sotto il testo, che l'arco non
+attraversa più. La superficie è la stessa del fondo della card e dello sfondo
+del PNG (`#ffffff` / `#1e293b`), perciò la pastiglia resta invisibile.
+`DiagramBlock` passa da `bg-slate-50/70` a `bg-white`: la vecchia classe con
+opacità non era intercettata dalla remap dark di `globals.css`, e in tema scuro
+la card restava chiara sotto un SVG scuro.
+
+**Un tratto per significato.** Gli archi hanno un campo `kind`:
+
+| kind | tratto | significato |
+|---|---|---|
+| `drives` (default) | linea piena, freccia | A produce B |
+| `strengthens` | linea piena spessa, petrol fondo | A sostiene o potenzia B |
+| `weakens` | tratteggio, punta a T | A ostacola o frena B |
+| `feedback` | tratteggio fine, `constraint=false` | B ritorna su A e chiude l'anello |
+| `link` | punteggiato, senza freccia | legame senza direzione |
+
+Il default mantiene validi gli spec già prodotti. Il tratto non resta muto:
+`describe()` traduce il tipo in parole per screen reader, TTS e PDF, la card
+mostra la legenda a piè di disegno e il PNG (Telegram, export) la porta sotto il
+titolo, con i glifi di `EDGE_GLYPH`. La legenda compare solo se i tipi usati
+sono più d'uno.
+
+**Respiro.** Testo 12/10 pt, `ranksep .75` e `nodesep .5` per `dot`,
+`mindist 1.5` e archi curvi per `circo`, `sep +22` / `esep +10` / `len 1.9` per
+`neato`, margini del nodo più larghi, a capo bilanciato (niente riga piena
+seguita da una parola sola), bordo 2.0 sul nodo accentato.
+
+**Migrazione.** `apply_diagram_edge_kinds_policy` (marker
+`skills_diagram_edge_kinds_v1`) riscrive il contratto della skill
+`concept-diagram` solo dove è ancora quello di serie, riconosciuto per hash: se
+l'admin lo ha modificato, il suo testo resta.

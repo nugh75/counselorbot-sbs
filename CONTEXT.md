@@ -116,6 +116,8 @@ Four built-in knowledge collections (plus dynamic collections created via admin 
 
 Site-chat endpoints accept `?collection=` query parameter. Per-collection context and audience-specific prompts configurable via DB keys (`FRAMEWORK_CHAT_CONFIG_DEFINITIONS`, `QUESTIONARI_CHAT_CONFIG_DEFINITIONS`, `COUNSELORBOT_CHAT_CONFIG_DEFINITIONS`).
 
+Plain collections skip any `graphify-out/` path (`_is_build_artifact`): those are build reports, not domain knowledge, and 59 dated snapshots used to make up 89% of the `counselorbot` corpus. The filter lives in both `_collect_plain_corpus` and `_plain_signature` — they must stay symmetric, otherwise the signature never matches and the index rebuilds on every query. Scanned PDFs with no text layer are skipped silently (only a log line): `sito-competenzestrategiche/studi/MELOGNO_2018.pdf` is one, a 21 MB print-to-PDF scan.
+
 ### Docker
 Code baked into images (no volume mounts). Any backend/frontend change requires rebuild. When adding a new backend subpackage, add a `COPY` line in `backend/Dockerfile` (copies explicit paths, not whole tree). Additional copy for JSON seed data: `COPY backend/*.json backend/`.
 

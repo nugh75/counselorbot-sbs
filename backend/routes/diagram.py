@@ -34,9 +34,13 @@ SPEC_ONLY_SYSTEM_PROMPT = (
     "and nothing else: no prose, no code fence. Schema: "
     '{"type":"flow|relation|cycle|hierarchy","title":"<= 80 chars",'
     '"nodes":[{"id":"a","label":"<= 40 chars","accent":false}],'
-    '"edges":[{"from":"a","to":"b","label":"<= 24 chars"}]}. '
+    '"edges":[{"from":"a","to":"b","label":"<= 24 chars","kind":"drives"}]}. '
     "Use 2 to 8 nodes and at most 12 edges. Mark at most one node with accent:true: "
-    "the one the reader should act on. Write every label in the language of the text "
+    "the one the reader should act on. On each edge, kind names the relation and is "
+    "drawn with its own stroke: drives (A produces B, the default), strengthens "
+    "(A supports B), weakens (A hinders B), feedback (B returns on A and closes the "
+    "loop), link (they belong together, no direction). Choose the one the text "
+    "actually states. Write every label in the language of the text "
     "you are given. Keep only what the text actually says."
 )
 

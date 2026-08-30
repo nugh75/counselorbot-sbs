@@ -42,7 +42,9 @@ PALETTE = {
         "accent_stroke": "#dca055",
         "accent_text": "#5a3211",
         "edge": "#64748b",
+        "edge_strong": "#41707a",
         "title": "#0f172a",
+        "surface": "#ffffff",
         "raster_bg": "#ffffff",
     },
     "dark": {
@@ -53,21 +55,56 @@ PALETTE = {
         "accent_stroke": "#dca055",
         "accent_text": "#f3dcbe",
         "edge": "#94a3b8",
+        "edge_strong": "#7fb3b6",
         "title": "#f1f5f9",
+        "surface": "#1e293b",
         "raster_bg": "#1e293b",
     },
 }
 
 FONT_FAMILY = "Inter,DejaVu Sans,sans-serif"
 
-# Connettore usato dalla descrizione testuale (screen reader, TTS, PDF).
+# Tipi di arco: ogni tratto dice una cosa sola.
+#   drives      linea piena, freccia          A produce B
+#   strengthens linea piena spessa            A rafforza B (piu' spesso = piu' forte)
+#   weakens     tratteggio, punta a T         A ostacola B
+#   feedback    tratteggio fine, freccia      B ritorna su A e chiude l'anello
+#   link        punteggiato, senza freccia    legame senza direzione
+EDGE_KINDS = ("drives", "strengthens", "weakens", "feedback", "link")
+
+# Glifi della legenda incorporata nel PNG (Telegram, PDF): stesso ordine di
+# EDGE_KINDS, disegnati con i caratteri disponibili in DejaVu Sans.
+EDGE_GLYPH = {
+    "drives": "\u2500\u2500\u25b8",
+    "strengthens": "\u2501\u2501\u25b8",
+    "weakens": "\u254c\u254c\u22a3",
+    "feedback": "\u2504\u2504\u25b8",
+    "link": "\u2508\u2508",
+}
+
+EDGE_STYLE = {
+    "drives": {"penwidth": "1.5"},
+    "strengthens": {"penwidth": "2.6", "color_key": "edge_strong"},
+    "weakens": {"penwidth": "1.5", "style": "dashed", "arrowhead": "tee"},
+    "feedback": {"penwidth": "1.2", "style": "dashed", "arrowhead": "vee", "constraint": "false"},
+    "link": {"penwidth": "1.3", "style": "dotted", "dir": "none"},
+}
+
+# Connettori della descrizione testuale (screen reader, TTS, PDF): un verbo per
+# tipo di arco, cosi' chi non vede il tratteggio legge comunque il significato.
 CONNECTORS = {
-    "it": "porta a",
-    "en": "leads to",
-    "es": "lleva a",
-    "fr": "mene a",
-    "de": "fuhrt zu",
-    "sv": "leder till",
+    "it": {"drives": "porta a", "strengthens": "rafforza", "weakens": "ostacola",
+           "feedback": "torna su", "link": "e' legato a"},
+    "en": {"drives": "leads to", "strengthens": "strengthens", "weakens": "hinders",
+           "feedback": "feeds back into", "link": "is linked to"},
+    "es": {"drives": "lleva a", "strengthens": "refuerza", "weakens": "dificulta",
+           "feedback": "vuelve a", "link": "esta ligado a"},
+    "fr": {"drives": "mene a", "strengthens": "renforce", "weakens": "entrave",
+           "feedback": "revient sur", "link": "est lie a"},
+    "de": {"drives": "fuhrt zu", "strengthens": "starkt", "weakens": "behindert",
+           "feedback": "wirkt zuruck auf", "link": "ist verbunden mit"},
+    "sv": {"drives": "leder till", "strengthens": "starker", "weakens": "hindrar",
+           "feedback": "aterverkar pa", "link": "hanger ihop med"},
 }
 
 
@@ -89,6 +126,7 @@ class DiagramEdge(BaseModel):
     source: str = Field(min_length=1, alias="from")
     target: str = Field(min_length=1, alias="to")
     label: str | None = Field(default=None, max_length=MAX_EDGE_LABEL)
+    kind: Literal["drives", "strengthens", "weakens", "feedback", "link"] = "drives"
 
 
 class DiagramSpec(BaseModel):
@@ -144,25 +182,70 @@ def _escape(text: str) -> str:
     return text.replace("\\", "\\\\").replace('"', '\\"')
 
 
-def _wrap(label: str) -> str:
-    """Manda a capo le etichette lunghe: nodi alti e stretti, non righe infinite."""
-    words = label.split()
+def _lines_at(label: str, width: int) -> list[str]:
     lines: list[str] = []
     current = ""
-    for word in words:
+    for word in label.split():
         candidate = f"{current} {word}".strip()
-        if len(candidate) > WRAP_AT and current:
+        if len(candidate) > width and current:
             lines.append(current)
             current = word
         else:
             current = candidate
     if current:
         lines.append(current)
+    return lines
+
+
+def _wrap(label: str) -> str:
+    """Manda a capo le etichette lunghe e bilancia le righe.
+
+    A parita' di numero di righe si sceglie la larghezza minore: niente riga
+    lunga seguita da una parola sola, che nel nodo si legge male.
+    """
+    lines = _lines_at(label, WRAP_AT)
+    for width in range(WRAP_AT - 1, WRAP_AT - 8, -1):
+        shorter = _lines_at(label, width)
+        if len(shorter) > len(lines):
+            break
+        lines = shorter
     return "\\n".join(_escape(line) for line in lines)
 
 
+def _edge_label_chip(text: str, colors: dict, font_size: str = "10") -> str:
+    """Etichetta su pastiglia opaca: l'arco non taglia piu' le lettere."""
+    return (
+        '<<TABLE BORDER="0" CELLBORDER="0" CELLPADDING="3" CELLSPACING="0" '
+        f'BGCOLOR="{colors["surface"]}" STYLE="ROUNDED">'
+        f'<TR><TD><FONT COLOR="{colors["edge"]}" POINT-SIZE="{font_size}">'
+        f"{_xml_escape(text)}</FONT></TD></TR></TABLE>>"
+    )
+
+
+def _title_block(spec: DiagramSpec, colors: dict, lang: str) -> str:
+    """Titolo del disegno e, se i tratti sono piu' d'uno, la legenda che li spiega.
+
+    Serve alle immagini che viaggiano da sole (Telegram, PDF): nel web il titolo
+    sta nell'intestazione della card e la legenda sotto il disegno.
+    """
+    rows = [
+        f'<TR><TD><FONT POINT-SIZE="15" COLOR="{colors["title"]}">'
+        f"{_xml_escape(spec.title)}</FONT></TD></TR>"
+    ]
+    entries = legend_entries(spec, lang)
+    if entries:
+        legend = "&#160;&#160;&#160;".join(
+            f"{EDGE_GLYPH[kind]} {_xml_escape(verb)}" for kind, verb in entries
+        )
+        rows.append(
+            f'<TR><TD><FONT POINT-SIZE="9" COLOR="{colors["edge"]}">{legend}</FONT></TD></TR>'
+        )
+    return ('<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">'
+            + "".join(rows) + "</TABLE>>")
+
+
 def to_dot(spec: DiagramSpec, *, theme: str = "light", embed_title: bool = False,
-           raster: bool = False) -> str:
+           raster: bool = False, lang: str = "it") -> str:
     """Traduce lo spec in sorgente DOT gia' tematizzato."""
     colors = PALETTE.get(theme, PALETTE["light"])
     background = colors["raster_bg"] if raster else "transparent"
@@ -170,63 +253,91 @@ def to_dot(spec: DiagramSpec, *, theme: str = "light", embed_title: bool = False
     graph_attrs = [
         f'bgcolor="{background}"',
         f'fontname="{FONT_FAMILY}"',
-        'pad="0.35"',
-        'nodesep="0.45"',
-        'ranksep="0.55"',
-        'splines="spline"',
+        'pad="0.4"',
+    ]
+    if spec.type == "cycle":
+        # circo: cerchio piu' largo e archi curvi, cosi' le etichette respirano.
+        graph_attrs += ['mindist="1.5"', 'splines="curved"']
+    elif spec.type == "relation":
+        # neato: piu' distanza fra nodi (sep) e attorno agli archi (esep).
+        graph_attrs += ['overlap="false"', 'sep="+22"', 'esep="+10"', 'splines="true"']
+    else:
+        graph_attrs += ['rankdir="TB"', 'nodesep="0.5"', 'ranksep="0.75"', 'splines="spline"']
+
+    if embed_title:
+        graph_attrs += [f"label={_title_block(spec, colors, lang)}", 'labelloc="t"']
+
+    edge_defaults = [
+        f'color="{colors["edge"]}"',
+        f'fontcolor="{colors["edge"]}"',
+        f'fontname="{FONT_FAMILY}"',
+        'fontsize="10"',
+        'arrowsize="0.8"',
+        'penwidth="1.5"',
     ]
     if spec.type == "relation":
-        graph_attrs.append('overlap="false"')
-    if spec.type == "hierarchy":
-        graph_attrs.append('rankdir="TB"')
-    if embed_title:
-        graph_attrs += [
-            f'label="{_escape(spec.title)}"',
-            'labelloc="t"',
-            'fontsize="14"',
-            f'fontcolor="{colors["title"]}"',
-        ]
+        edge_defaults.append('len="1.9"')
 
     lines = [
         "digraph diagram {",
         f"  graph [{', '.join(graph_attrs)}];",
         (
             "  node [shape=box, style=\"rounded,filled\", "
-            f'fontname="{FONT_FAMILY}", fontsize="11", margin="0.20,0.14", penwidth="1.2", '
+            f'fontname="{FONT_FAMILY}", fontsize="12", margin="0.24,0.16", penwidth="1.2", '
             f'fillcolor="{colors["node_fill"]}", color="{colors["node_stroke"]}", '
             f'fontcolor="{colors["node_text"]}"];'
         ),
-        (
-            f'  edge [color="{colors["edge"]}", fontcolor="{colors["edge"]}", '
-            f'fontname="{FONT_FAMILY}", fontsize="9", arrowsize="0.7", penwidth="1.1"];'
-        ),
+        f"  edge [{', '.join(edge_defaults)}];",
     ]
 
     for node in spec.nodes:
         attrs = [f'label="{_wrap(node.label)}"']
         if node.accent:
+            # Bordo piu' spesso: il nodo su cui si puo' agire si vede per primo.
             attrs += [
                 f'fillcolor="{colors["accent_fill"]}"',
                 f'color="{colors["accent_stroke"]}"',
                 f'fontcolor="{colors["accent_text"]}"',
+                'penwidth="2.0"',
             ]
         lines.append(f'  "{_escape(node.id)}" [{", ".join(attrs)}];')
 
     for edge in spec.edges:
-        attrs = f' [label="{_escape(edge.label)}"]' if edge.label else ""
-        lines.append(f'  "{_escape(edge.source)}" -> "{_escape(edge.target)}"{attrs};')
+        attrs: list[str] = []
+        if edge.label:
+            attrs.append(f"label={_edge_label_chip(edge.label, colors)}")
+        style = EDGE_STYLE[edge.kind]
+        for key, value in style.items():
+            if key == "color_key":
+                attrs.append(f'color="{colors[value]}"')
+            else:
+                attrs.append(f'{key}="{value}"')
+        rendered = f" [{', '.join(attrs)}]" if attrs else ""
+        lines.append(f'  "{_escape(edge.source)}" -> "{_escape(edge.target)}"{rendered};')
 
     lines.append("}")
     return "\n".join(lines)
 
 
+def legend_entries(spec: DiagramSpec, lang: str = "it") -> list[tuple[str, str]]:
+    """Tipi di arco effettivamente usati, per la legenda della card e del PDF.
+
+    Vuota quando il diagramma usa un solo tipo: nessun tratto da spiegare.
+    """
+    verbs = CONNECTORS.get((lang or "it").lower()[:2], CONNECTORS["en"])
+    used = {edge.kind for edge in spec.edges}
+    if len(used) < 2:
+        return []
+    return [(kind, verbs[kind]) for kind in EDGE_KINDS if kind in used]
+
+
 def describe(spec: DiagramSpec, lang: str = "it") -> str:
     """Descrizione a parole dello stesso contenuto: accessibilita', TTS, PDF."""
-    connector = CONNECTORS.get((lang or "it").lower()[:2], CONNECTORS["en"])
+    verbs = CONNECTORS.get((lang or "it").lower()[:2], CONNECTORS["en"])
     by_id = {node.id: node.label for node in spec.nodes}
     relations = []
     for edge in spec.edges:
-        verb = edge.label.strip() if edge.label and edge.label.strip() else connector
+        verb = edge.label.strip() if edge.label and edge.label.strip() else verbs[edge.kind]
         relations.append(f"{by_id[edge.source]} {verb} {by_id[edge.target]}")
     return f"{spec.title}: " + "; ".join(relations) + "."
 
@@ -284,7 +395,8 @@ def render(spec: DiagramSpec, *, theme: str = "light", fmt: str = "svg",
 @lru_cache(maxsize=256)
 def _render_cached(spec_json: str, theme: str, fmt: str, embed_title: bool, lang: str) -> bytes:
     spec = DiagramSpec.model_validate_json(spec_json)
-    dot_source = to_dot(spec, theme=theme, embed_title=embed_title, raster=(fmt == "png"))
+    dot_source = to_dot(spec, theme=theme, embed_title=embed_title, raster=(fmt == "png"),
+                        lang=lang)
     engine = engine_for(spec.type)
     if shutil.which(engine) is None:
         raise DiagramSpecError(f"motore graphviz non disponibile: {engine}")
