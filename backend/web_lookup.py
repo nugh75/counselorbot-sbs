@@ -140,16 +140,62 @@ def _slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", plain).strip("-")
 
 
+# Apertura interrogativa da togliere: alle fonti serve l'entita', non la
+# domanda. "Cos'e' la metacognizione?" -> "metacognizione".
+_QUESTION_LEAD = re.compile(
+    r"^\s*(?:mi\s+)?(?:sai\s+dire|puoi\s+dirmi|spiegami|dimmi|"
+    r"tell\s+me|explain)?\s*"
+    r"(?:(?:che\s+)?cos\W?\s*e\b|che\s+cosa\s+e\b|"
+    r"cosa\s+(?:significa|vuol\s+dire)|"
+    r"di\s+(?:cosa|che)\s+(?:parla|tratta)|la\s+trama\s+di|qual\s+e\s+la\s+trama\s+di|"
+    r"chi\s+(?:e|era|sono|erano|ha\s+scritto|ha\s+diretto)|"
+    r"in\s+che\s+anno\s+e\s+(?:uscito|uscita)|quando\s+e\s+(?:uscito|uscita|nato|nata|morto|morta)|"
+    r"what\s+(?:is|are|was|were)|who\s+(?:is|was|were|wrote|directed)|what\s+does|"
+    r"que\s+es|que\s+significa|quien\s+(?:es|fue|era|escribio)|de\s+que\s+trata|"
+    r"qu\W?est-ce\s+que|qui\s+(?:est|etait|a\s+ecrit)|que\s+veut\s+dire|de\s+quoi\s+parle|"
+    r"was\s+ist|was\s+bedeutet|wer\s+(?:ist|war)|worum\s+geht\s+es\s+in|"
+    r"vad\s+(?:ar|betyder)|vem\s+(?:ar|var|skrev)|vad\s+handlar)\b",
+    re.IGNORECASE,
+)
+_LEADING_ARTICLE = re.compile(
+    r"^\s*(?:il|lo|la|i|gli|le|un|uno|una|the|an?|el|los|las|les|der|die|das|den|det)\s+"
+    r"|^\s*l\W\s*",
+    re.IGNORECASE,
+)
+
+
+def _plain_keep_shape(text: str) -> str:
+    """Minuscole senza accenti, stessa lunghezza: gli indici restano validi."""
+    normalized = unicodedata.normalize("NFKD", (text or "").casefold())
+    return "".join(c for c in normalized if not unicodedata.combining(c))
+
+
 def scrub_query(text: str) -> str:
-    """Query pronta a uscire: niente PII, niente messaggi lunghi.
+    """Query pronta a uscire: l'entita' cercata, senza PII e senza la domanda.
 
     Il testo fra virgolette, quando c'e', e' l'unica parte che interessa: e'
-    quasi sempre il titolo dell'opera o il termine su cui verte la domanda.
+    quasi sempre il titolo dell'opera. Altrimenti si toglie l'apertura
+    interrogativa, perche' una fonte cerca "metacognizione", non "cos'e' la
+    metacognizione?".
     """
     text = (text or "").strip()
     quoted = re.search(r"[\"«“']([^\"»”']{3,80})[\"»”']", text)
     if quoted:
         text = quoted.group(1)
+    else:
+        plain = _plain_keep_shape(text)
+        lead = _QUESTION_LEAD.match(plain)
+        if lead and len(text) > lead.end():
+            # Gli indici valgono anche sull'originale: la normalizzazione non
+            # cambia il numero di caratteri.
+            text = text[lead.end():].strip()
+            # "cos'e'" lascia l'apostrofo di chiusura: e' la convenzione ASCII
+            # usata in tutto il progetto per gli accenti.
+            text = text.lstrip(" '\u2019\"")
+            article = _LEADING_ARTICLE.match(_plain_keep_shape(text))
+            if article and len(text) > article.end():
+                text = text[article.end():].strip()
+        text = text.strip(" \t?!.,;:")
     text = redact_always(text) or ""
     text = re.sub(r"\s+", " ", text).strip()
     return text[:MAX_QUERY_CHARS]
@@ -193,6 +239,40 @@ def _title_matches(found: str, expected) -> bool:
         if core <= wanted:
             return True
     return False
+
+
+def _same_root(a: str, b: str) -> bool:
+    """Due parole con la stessa radice: basta un prefisso comune di 6 lettere."""
+    if a == b:
+        return True
+    shared = 0
+    for ca, cb in zip(a, b):
+        if ca != cb:
+            break
+        shared += 1
+    return shared >= 6
+
+
+def _title_covers_query(found: str, query: str) -> bool:
+    """Vero se il titolo trovato contiene cio' che era stato chiesto.
+
+    Controllo piu' morbido di `_title_matches`, per le domande libere dove non
+    esiste un titolo atteso: la voce puo' essere piu' specifica della domanda
+    ("Vygotskij" -> "Lev Semenovic Vygotskij"), ma non puo' parlare d'altro
+    ("Mindset" -> "The Witch"). Senza questo controllo una redirezione
+    inattesa dell'enciclopedia diventa una risposta sicura di se' e sbagliata.
+    """
+    asked = _words(query)
+    found_words = _words(found)
+    if not asked or not found_words:
+        return True
+    # Confronto tollerante alla morfologia: si chiede "procrastinare" e la voce
+    # si chiama "procrastinazione".
+    hits = sum(1 for word in asked if any(_same_root(word, other) for other in found_words))
+    # Contenimento sul piu' corto dei due: la domanda puo' portare parole in
+    # piu' ("mindset dweck libro" -> voce "Mindset") e la voce puo' essere piu'
+    # completa della domanda ("Vygotskij" -> "Lev Semenovic Vygotskij").
+    return hits / min(len(asked), len(found_words)) >= 0.6
 
 
 def _allowed(source: str, url: str) -> bool:
@@ -288,6 +368,12 @@ def _treccani(query: str, lang: str) -> LookupResult | None:
     del lang  # Treccani e' una fonte italiana: la lingua non cambia l'endpoint.
     url = f"https://www.treccani.it/enciclopedia/{_slug(query)}/"
     data = _treccani_page(url)
+    if not (data and data.get("content")):
+        # Una domanda di significato vive nel vocabolario, non nell'enciclopedia.
+        vocab_url = f"https://www.treccani.it/vocabolario/{_slug(query)}/"
+        vocab = _treccani_page(vocab_url)
+        if vocab and vocab.get("content"):
+            url, data = vocab_url, vocab
     if not (data and data.get("content")):
         # Treccani risponde a una voce inesistente con 200 e una pagina generica:
         # l'assenza di `content` significa "non trovata", non errore.
@@ -439,8 +525,10 @@ def lookup(
             continue
         if not (result and result.text):
             continue
-        if not _title_matches(result.title, expect_titles):
-            logger.info("web_lookup: %s ha risposto '%s', non e' l'opera cercata",
+        related = (_title_matches(result.title, expect_titles) if expect_titles
+                   else _title_covers_query(result.title, query))
+        if not related:
+            logger.info("web_lookup: %s ha risposto '%s', non e' cio' che era stato chiesto",
                         source, result.title)
             continue
         found.append(result)
@@ -501,10 +589,15 @@ def synopsis_for(reading: dict, lang: str = "it") -> LookupResult | None:
 
 # --- cache -------------------------------------------------------------------
 
+# Cambia quando cambiano le regole di validazione: le risposte gia' in cache
+# sono state accettate dalle regole vecchie e vanno ricalcolate.
+_CACHE_VERSION = 2
+
+
 def _cache_key(query: str, sources, lang: str) -> str:
     import hashlib
 
-    payload = f"{lang}|{','.join(sources)}|{query.casefold()}"
+    payload = f"v{_CACHE_VERSION}|{lang}|{','.join(sources)}|{query.casefold()}"
     return hashlib.sha1(payload.encode("utf-8")).hexdigest()
 
 

@@ -52,9 +52,27 @@ def test_a_factual_question_about_a_work_is_not_a_reading_request():
     assert classify("Consigliami un libro per approfondire") == "reading"
 
 
+def test_an_encyclopedic_question_reaches_the_lookup_in_every_language():
+    assert classify("Cos'e' la metacognizione?") == "factual"
+    assert classify("Chi era Vygotskij?") == "factual"
+    assert classify("Cosa significa procrastinare") == "factual"
+    assert classify("What is metacognition?") == "factual"
+    assert classify("Who was Piaget?") == "factual"
+    assert classify("Que es la resiliencia?") == "factual"
+    assert classify("Qu'est-ce que la resilience?") == "factual"
+    assert classify("Was ist Metakognition?") == "factual"
+    assert classify("Vad ar metakognition?") == "factual"
+
+
 def test_a_question_about_oneself_never_becomes_a_web_lookup():
     assert classify("Di cosa parla il mio risultato?") != "factual"
     assert classify("Non capisco cosa significa questo risultato") == "clarify"
+    # Un codice fattore non e' una voce di enciclopedia.
+    assert classify("Non capisco cosa significa A6") == "clarify"
+    assert classify("Cosa significa questo punteggio?") == "clarify"
+    # Nemmeno una domanda di significato che continua oltre il termine.
+    assert classify("Cosa significa che sono nella fascia bassa?") == "clarify"
+    assert classify("Was bedeutet dieses Ergebnis?") == "clarify"
 
 
 def test_negated_behaviour_does_not_activate_the_wrong_skill():
