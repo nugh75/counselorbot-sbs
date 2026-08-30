@@ -341,6 +341,11 @@ EXPECTED_ROUTES = {
     ("GET", "/session/frozen"),
     ("GET", "/session/frozen/{session_id}"),
     ("DELETE", "/session/frozen/{session_id}"),
+    # Strumento Idea: mappa cumulativa della sessione
+    ("GET", "/idea/map"),
+    ("GET", "/idea/map/history"),
+    ("POST", "/idea/map/patch"),
+    ("GET", "/idea/map/image"),
     ("GET", "/admin/questionnaire-results"),
     ("GET", "/admin/validation/summary"),
     ("GET", "/admin/validation/responses"),
