@@ -64,7 +64,7 @@ Exception: **`/api/chat/stream`** is a filesystem route `frontend/src/app/api/ch
 ai4auth forward-auth at the edge (Nginx). Proxy injects `Remote-*` headers → parsed in `backend/auth.py`. Roles are marker-based on `Remote-Groups`: admin = any group in `ADMIN_GROUPS` (env `ADMIN_GROUPS`, comma-separated, always includes `admins`); researcher/teacher detected via `RESEARCH_GROUP_MARKERS`/`TEACHER_GROUP_MARKERS`. `frontend/src/lib/auth.ts` reads identity from `/auth/me`. Dev fallback identities exist for role preview (test accounts).
 
 ### Data Model
-- **Config**: key-value DB store for prompts, UI texts, provider/model, API keys. Secrets overridable via env vars (`ENV_KEY_MAP` in `ai_service.py`). Defaults in `prompt_config.py`, seeded at startup without overwriting.
+- **Config**: key-value DB store for prompts, UI texts, provider/model, API keys. Every key in `ENV_KEY_MAP` (`ai_service.py`) — API keys, `ollama_ip`, `ollama_num_ctx`, `ollama_keep_alive`, `qsa_ocr_model`, `qsa_parser_model` — is owned by the environment, not by the database: the env value wins at runtime and startup rewrites the Config row to match, so editing those in the admin panel or in SQL has no lasting effect. Change them in `.env` (or the compose default) and recreate the container. Defaults in `prompt_config.py`, seeded at startup without overwriting.
 - **GuidedStep**: per `questionnaire_type`, ordered steps with `prompt` + `system_prompt_mode`
 - **GuidedStepQuestion**: suggested questions per step
 - **QuestionnaireResult**: per-session survey data

@@ -25,7 +25,7 @@ if not logger.handlers:
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
 DEFAULT_OCR_MODEL = "glm-ocr:latest"
-DEFAULT_PARSER_MODEL = "muse-glimmer:30b"
+DEFAULT_PARSER_MODEL = "qwen3.8:latest"
 MAX_PDF_PAGES = 6
 QSA_FACTORS = tuple(f"C{index}" for index in range(1, 8)) + tuple(
     f"A{index}" for index in range(1, 8)
