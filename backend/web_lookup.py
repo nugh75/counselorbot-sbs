@@ -52,6 +52,7 @@ ALLOWED_HOSTS = {
     "openlibrary": ("openlibrary.org",),
     "googlebooks": ("books.google.com", "books.google.it", "google.com"),
     "openalex": ("openalex.org", "doi.org"),
+    "europepmc": ("europepmc.org", "doi.org"),
 }
 SOURCES = tuple(ALLOWED_HOSTS)
 
@@ -61,6 +62,7 @@ LICENSES = {
     "openlibrary": "Open Library (Internet Archive)",
     "googlebooks": "Google Books",  # richiede GOOGLE_BOOKS_API_KEY
     "openalex": "OpenAlex, CC0",
+    "europepmc": "Europe PMC, abstract ad accesso aperto",
 }
 
 # Per ogni tipo di opera, le fonti che hanno davvero una voce. L'ordine e' quello
@@ -76,7 +78,7 @@ SOURCES_BY_KIND = {
     "podcast": ("wikipedia",),
     "fiction": ("openlibrary", "wikipedia", "googlebooks"),
     "essay": ("openlibrary", "openalex", "wikipedia", "googlebooks"),
-    "article": ("openalex", "wikipedia"),
+    "article": ("openalex", "europepmc", "wikipedia"),
 }
 
 
@@ -91,6 +93,10 @@ class LookupResult:
     retrieved_at: str = ""
     license: str = ""
     query: str = ""
+    # Lingua in cui la fonte ha risposto: Wikipedia segue la richiesta, i
+    # cataloghi bibliografici rispondono in inglese comunque. Chi salva il testo
+    # deve metterlo sotto questa lingua, non sotto quella richiesta.
+    language: str = "en"
 
     def as_dict(self) -> dict:
         return {
@@ -101,6 +107,7 @@ class LookupResult:
             "retrieved_at": self.retrieved_at,
             "license": self.license,
             "query": self.query,
+            "language": self.language,
         }
 
 
@@ -119,6 +126,49 @@ def html_to_text(fragment: str) -> str:
     parser = _TextExtractor()
     parser.feed(fragment or "")
     return re.sub(r"\s+", " ", "".join(parser.parts)).strip()
+
+
+# Parole molto frequenti e poco ambigue fra le sei lingue dell'interfaccia.
+_STOPWORDS = {
+    "it": {"di", "che", "non", "per", "una", "come", "sono", "nel", "alla", "gli", "dei", "suo"},
+    "en": {"the", "and", "with", "that", "this", "from", "his", "her", "which", "about", "have"},
+    "es": {"que", "los", "las", "una", "por", "con", "para", "como", "pero", "sus", "vida"},
+    "fr": {"les", "des", "une", "sur", "pas", "que", "qui", "dans", "pour", "est", "plus", "alors"},
+    "de": {"und", "der", "die", "das", "nicht", "mit", "sich", "ist", "auf", "den", "ein"},
+    "sv": {"och", "att", "det", "som", "med", "for", "inte", "har", "den", "till", "pa"},
+}
+
+
+def guess_language(text: str, default: str = "en") -> str:
+    """Lingua del testo fra le sei supportate, o `default` se non si distingue.
+
+    Serve a non archiviare come inglese una descrizione che la fonte ha in
+    francese: Open Library e Google Books rispondono nella lingua dell'edizione.
+    """
+    words = [w for w in re.split(r"[^a-z]+", _plain_keep_shape(text)) if w]
+    if len(words) < 12:
+        return default
+    counts = {lang: sum(1 for w in words if w in stop) for lang, stop in _STOPWORDS.items()}
+    best = max(counts, key=lambda lang: counts[lang])
+    runner_up = max((c for lang, c in counts.items() if lang != best), default=0)
+    # Serve un margine: due lingue vicine si contendono le stesse parole corte.
+    return best if counts[best] >= 3 and counts[best] > runner_up else default
+
+
+# Rumore tipico delle descrizioni di catalogo: grassetti markdown, note fra
+# parentesi quadre ereditate da Wikipedia, riga di attribuzione finale.
+_DESCRIPTION_NOISE = (
+    (re.compile(r"\*\*+"), ""),
+    (re.compile(r"\[\d{1,3}\]"), ""),
+    (re.compile(r"\s*-{4,}.*$", re.DOTALL), ""),
+    (re.compile(r"\s*\(\[source\]\[\d+\]\)", re.IGNORECASE), ""),
+)
+
+
+def clean_description(text: str) -> str:
+    for pattern, replacement in _DESCRIPTION_NOISE:
+        text = pattern.sub(replacement, text or "")
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def shorten(text: str, limit: int = MAX_TEXT_CHARS) -> str:
@@ -353,7 +403,7 @@ def _wikipedia(query: str, lang: str) -> LookupResult | None:
     return LookupResult(
         source="wikipedia", title=data.get("title") or query,
         text=shorten(data["extract"]), url=url,
-        retrieved_at=_now(), license=LICENSES["wikipedia"], query=query,
+        retrieved_at=_now(), license=LICENSES["wikipedia"], query=query, language=lang,
     )
 
 
@@ -410,7 +460,7 @@ def _treccani(query: str, lang: str) -> LookupResult | None:
     return LookupResult(
         source="treccani", title=html_to_text(data.get("title") or "") or query,
         text=shorten(text), url=url,
-        retrieved_at=_now(), license=LICENSES["treccani"], query=query,
+        retrieved_at=_now(), license=LICENSES["treccani"], query=query, language="it",
     )
 
 
@@ -435,10 +485,14 @@ def _openlibrary(query: str, lang: str) -> LookupResult | None:
     url = f"https://openlibrary.org{key}"
     if not _allowed("openlibrary", url):
         return None
+    description = clean_description(description)
+    if not description:
+        return None
     return LookupResult(
         source="openlibrary", title=docs[0].get("title") or query,
-        text=shorten(description.strip()), url=url,
+        text=shorten(description), url=url,
         retrieved_at=_now(), license=LICENSES["openlibrary"], query=query,
+        language=guess_language(description),
     )
 
 
@@ -461,10 +515,12 @@ def _googlebooks(query: str, lang: str) -> LookupResult | None:
     url = str(info.get("infoLink") or "")
     if not description or not _allowed("googlebooks", url):
         return None
+    description = clean_description(description)
     return LookupResult(
         source="googlebooks", title=info.get("title") or query,
         text=shorten(description), url=url,
         retrieved_at=_now(), license=LICENSES["googlebooks"], query=query,
+        language=guess_language(description),
     )
 
 
@@ -479,12 +535,26 @@ def _abstract_from_inverted_index(index: dict) -> str:
     return " ".join(word for _, word in sorted(positions))
 
 
+_DOI_RE = re.compile(r"\b(10\.\d{4,9}/\S+)\s*$")
+
+
+def _as_doi(query: str) -> str:
+    """Il DOI dentro la query, se la query e' un DOI: si risolve, non si cerca."""
+    match = _DOI_RE.search((query or "").strip())
+    return match.group(1).rstrip(".,;") if match else ""
+
+
 def _openalex(query: str, lang: str) -> LookupResult | None:
     del lang
-    data = _get_json(
-        f"https://api.openalex.org/works?per_page=1&search={urllib.parse.quote(query)}"
-    )
-    results = (data or {}).get("results") or []
+    doi = _as_doi(query)
+    if doi:
+        work = _get_json(f"https://api.openalex.org/works/doi:{urllib.parse.quote(doi)}")
+        results = [work] if work else []
+    else:
+        data = _get_json(
+            f"https://api.openalex.org/works?per_page=1&search={urllib.parse.quote(query)}"
+        )
+        results = (data or {}).get("results") or []
     if not results:
         return None
     work = results[0]
@@ -501,12 +571,43 @@ def _openalex(query: str, lang: str) -> LookupResult | None:
     )
 
 
+def _europepmc(query: str, lang: str) -> LookupResult | None:
+    """Abstract ad accesso aperto: copre i lavori che OpenAlex lascia senza."""
+    del lang
+    doi = _as_doi(query)
+    term = f'DOI:"{doi}"' if doi else query
+    data = _get_json(
+        "https://www.ebi.ac.uk/europepmc/webservices/rest/search?format=json&resultType=core"
+        f"&pageSize=1&query={urllib.parse.quote(term)}"
+    )
+    results = ((data or {}).get("resultList") or {}).get("result") or []
+    if not results:
+        return None
+    record = results[0]
+    abstract = str(record.get("abstractText") or "").strip()
+    if not abstract:
+        return None
+    record_doi = str(record.get("doi") or doi or "").strip()
+    if record_doi:
+        url = f"https://doi.org/{record_doi}"
+    else:
+        url = f"https://europepmc.org/article/{record.get('source', 'MED')}/{record.get('id', '')}"
+    if not _allowed("europepmc", url):
+        return None
+    return LookupResult(
+        source="europepmc", title=record.get("title") or query,
+        text=shorten(html_to_text(abstract)), url=url,
+        retrieved_at=_now(), license=LICENSES["europepmc"], query=query,
+    )
+
+
 _FETCHERS = {
     "wikipedia": _wikipedia,
     "treccani": _treccani,
     "openlibrary": _openlibrary,
     "googlebooks": _googlebooks,
     "openalex": _openalex,
+    "europepmc": _europepmc,
 }
 
 
@@ -584,13 +685,30 @@ def synopsis_for(reading: dict, lang: str = "it") -> LookupResult | None:
     if not titles:
         return None
     creators = reading.get("creators") or []
+    kind = str(reading.get("kind") or "essay")
+    year = reading.get("year")
     # Il titolo da solo per primo: aggiungere l'autore fa vincere la sua
     # biografia nei risultati di ricerca. L'autore resta un ripiego.
-    queries = list(dict.fromkeys(titles + ([f"{titles[0]} {creators[0]}"] if creators else [])))
+    queries = list(titles)
+    doi = str((reading.get("identifiers") or {}).get("doi") or "").strip()
+    if doi:
+        # Un lavoro con un identificatore non si cerca per titolo: si risolve.
+        queries.insert(0, doi)
+    if kind in _SCREEN_KINDS:
+        # Le enciclopedie disambiguano i film col qualificatore, e un titolo
+        # nudo finisce sull'omonimo o sul seguito: "Lady Bird" -> "Lady Bird
+        # (film)", "Inside Out" -> "Inside Out (film 2015)".
+        for title in list(titles):
+            queries.append(f"{title} (film)")
+            if year:
+                queries.append(f"{title} (film {year})")
+                queries.append(f"{title} ({year} film)")
+    if creators:
+        queries.append(f"{titles[0]} {creators[0]}")
+    queries = list(dict.fromkeys(queries))
     sources = list(SOURCES_BY_KIND.get(str(reading.get("kind") or "essay"), ("wikipedia",)))
     if (lang or "it").startswith("it") and "treccani" not in sources:
         sources.append("treccani")
-    kind = str(reading.get("kind") or "essay")
     for query in queries:
         for source in sources:
             results = lookup(query, sources=(source,), lang=lang, limit=1, expect_titles=titles)

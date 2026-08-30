@@ -55,7 +55,10 @@ def main() -> int:
             if args.limit and touched >= args.limit:
                 break
             current = dict(row.synopsis_i18n or {})
-            wanted = [lang for lang in langs if args.overwrite or not (current.get(lang) or "").strip()]
+            # Una voce e' coperta quando ha un testo in una qualsiasi lingua:
+            # la fonte decide in quale, e il render ricade sull'inglese.
+            covered = any((text or "").strip() for text in current.values())
+            wanted = [] if covered and not args.overwrite else list(langs)
             if not wanted:
                 skipped += 1
                 continue
@@ -71,8 +74,12 @@ def main() -> int:
                     print(f"  [{lang}] {row.slug}: nessuna fonte")
                     continue
                 found_any = True
-                current[lang] = result.text
-                print(f"  [{lang}] {row.slug}: {result.source} — {result.url}")
+                # Il testo va sotto la lingua in cui la fonte ha risposto: i
+                # cataloghi bibliografici rispondono in inglese anche a una
+                # richiesta italiana, e archiviarlo come italiano sarebbe falso.
+                stored_lang = result.language or lang
+                current[stored_lang] = result.text
+                print(f"  [{lang}->{stored_lang}] {row.slug}: {result.source} — {result.url}")
                 if not args.dry_run:
                     row.synopsis_i18n = current
                     row.synopsis_source = {

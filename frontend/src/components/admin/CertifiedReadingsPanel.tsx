@@ -236,15 +236,19 @@ export function CertifiedReadingsPanel() {
                 setError(payload?.detail ?? t('admin.readings.synopsisNotFound'));
                 return;
             }
+            // La fonte decide la lingua: Wikipedia segue quella chiesta, i
+            // cataloghi bibliografici rispondono in inglese comunque.
+            const found: string = payload.language || lang;
             setForm((prev) => ({
                 ...prev,
-                synopsis_i18n: { ...prev.synopsis_i18n, [lang]: payload.text },
+                synopsis_i18n: { ...prev.synopsis_i18n, [found]: payload.text },
                 synopsis_source: {
                     source: payload.source, url: payload.url,
                     retrieved_at: payload.retrieved_at, license: payload.license,
                     approved_by: null,
                 },
             }));
+            if (found !== lang) setLang(found as Lang);
         } catch (e) {
             console.error('Failed to fetch synopsis draft', e);
             setError(t('admin.readings.synopsisNotFound'));
