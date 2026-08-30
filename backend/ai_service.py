@@ -1,6 +1,7 @@
 import os
 import logging
 import json
+import re
 from datetime import datetime, timezone
 from functools import partial
 
@@ -15,6 +16,22 @@ from . import models
 from .reasoning_profiles import DISABLED_PLAN, ReasoningPlan, resolve_plan
 
 logger = logging.getLogger(__name__)
+
+_JSON_RESPONSE_DIRECTIVE_RE = re.compile(
+    r"(?<!not )(?<!never )\b(?:return|respond|answer)\s+"
+    r"(?:(?:only|with|a|single|raw|valid|strict)\s+){0,5}json\b",
+    re.IGNORECASE,
+)
+
+
+def _requests_json_response(system_prompt: str, user_message: str) -> bool:
+    """True solo quando l'intera risposta e' richiesta esplicitamente in JSON.
+
+    La semplice presenza della parola ``JSON`` non basta: una chat puo' contenere
+    istruzioni per un blocco JSON incorporato, come i diagrammi concettuali, pur
+    dovendo restituire una normale risposta discorsiva.
+    """
+    return bool(_JSON_RESPONSE_DIRECTIVE_RE.search(f"{system_prompt}\n{user_message}"))
 
 
 class AIError(Exception):
@@ -668,7 +685,7 @@ class AIService:
         }
         # Estrazione JSON (parser QSA): mai reasoning, altrimenti il `think` puo'
         # rompere/rallentare l'output strutturato. Forza think off a prescindere.
-        is_json = "json" in system_prompt.lower() or "json" in user_message.lower()
+        is_json = _requests_json_response(system_prompt, user_message)
         if self.disable_thinking or is_json:
             payload["think"] = False
         else:
@@ -859,7 +876,7 @@ class AIService:
                 "num_predict": max_tokens or 4096,
             },
         }
-        is_json = "json" in system_prompt.lower() or "json" in user_message.lower()
+        is_json = _requests_json_response(system_prompt, user_message)
         if is_json:
             payload["think"] = False
             payload["format"] = "json"
