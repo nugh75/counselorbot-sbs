@@ -889,10 +889,11 @@ def apply_advice_retrieval_policy(
     component_flags: dict,
     step_mode: Optional[str],
     step_id: Optional[str] = None,
+    advice_requested: bool = False,
 ) -> dict:
     """Disabilita le fonti operative quando lo step non deve introdurre consigli."""
     flags = dict(component_flags)
-    if _default_certified_strategy_limit(step_mode, step_id) == 0:
+    if _default_certified_strategy_limit(step_mode, step_id, advice_requested) == 0:
         flags["approved_strategies"] = False
         flags["certified_strategies"] = False
     return flags
@@ -2017,13 +2018,40 @@ def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None)
     return flags
 
 
-def _default_certified_strategy_limit(step_mode: str | None, step_id: str | None = None) -> int:
+def _default_certified_strategy_limit(
+    step_mode: str | None,
+    step_id: str | None = None,
+    advice_requested: bool = False,
+) -> int:
     mode = (step_mode or "").strip().lower()
     if (step_id or "").strip().lower() in _NO_NEW_ADVICE_STEP_IDS:
+        # Veto per step: la sintesi ricapitola, non introduce consigli nuovi,
+        # nemmeno su richiesta esplicita.
         return 0
+    if advice_requested:
+        # Follow-up in cui lo studente chiede esplicitamente un consiglio: una
+        # sola strategia certificata, cosi' la risposta resta tracciabile al
+        # catalogo invece di essere improvvisata.
+        return 1
     if mode in _CONVERSATIONAL_MODES:
         return 0
     return 1 if mode in _ADVICE_PROMPT_MODES else 0
+
+
+def is_advice_follow_up(request) -> bool:
+    """Turno di follow-up dentro uno step in cui lo studente chiede un consiglio.
+
+    Un follow-up e' un messaggio libero dello studente su uno step gia' avviato:
+    `phase` valorizzata, nessun prompt di step da eseguire e testo reale. La
+    richiesta di consiglio la riconosce il classificatore delle skill."""
+    if not str(getattr(request, "phase", "") or "").strip():
+        return False
+    if getattr(request, "use_phase_prompt", False) or getattr(request, "internal_message", False):
+        return False
+    message = str(getattr(request, "message", "") or "").strip()
+    if not message:
+        return False
+    return skills_intents.classify(message) == "advice"
 
 
 def _coerce_certified_strategy_limit(value, default: int) -> int:
@@ -2034,8 +2062,14 @@ def _coerce_certified_strategy_limit(value, default: int) -> int:
     return max(0, min(1, limit))
 
 
-def get_prompt_component_options(db, questionnaire_type: str, step_id: str | None, step_mode: str | None = None) -> dict:
-    default_limit = _default_certified_strategy_limit(step_mode, step_id)
+def get_prompt_component_options(
+    db,
+    questionnaire_type: str,
+    step_id: str | None,
+    step_mode: str | None = None,
+    advice_requested: bool = False,
+) -> dict:
+    default_limit = _default_certified_strategy_limit(step_mode, step_id, advice_requested)
     options = {
         "certified_strategy_limit": default_limit,
         "allowed_strategies": None,
