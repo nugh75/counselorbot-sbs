@@ -3,7 +3,7 @@
 Eseguibile senza pytest:
     docker exec counselorbot_backend python -m backend.tests.test_diagram_blocks
 """
-from backend.diagram_blocks import extract, strip_for_speech
+from backend.diagram_blocks import extract, segments, strip_for_speech
 
 BLOCK = (
     "```diagram\n"
@@ -33,6 +33,22 @@ def test_block_is_removed_and_parsed():
 def test_multiple_blocks_are_all_parsed():
     _, specs = extract(f"{BLOCK}\ntesto\n{BLOCK}")
     assert len(specs) == 2
+
+
+def test_bare_diagram_matches_the_web_parser():
+    bare = BLOCK.removeprefix("```diagram\n").removesuffix("```")
+    cleaned, specs = extract(f"Prima.\n{bare}\nDopo.")
+    assert cleaned == "Prima.\n\nDopo."
+    assert len(specs) == 1
+    assert specs[0].title == "Circolo"
+
+
+def test_segments_preserve_the_diagram_position():
+    parts = segments(f"Prima.\n\n{BLOCK}\n\nDopo.")
+    assert len(parts) == 3
+    assert parts[0] == "Prima.\n\n"
+    assert parts[1].title == "Circolo"
+    assert parts[2] == "\n\nDopo."
 
 
 def test_invalid_block_is_dropped_without_raising():

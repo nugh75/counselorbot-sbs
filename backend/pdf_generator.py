@@ -1,11 +1,38 @@
-"""Generazione PDF dei risultati questionario (multilingua, senza testo sovrapposto)."""
-from io import BytesIO
+"""Generazione PDF dei risultati questionario con identita' visiva CounselorBot."""
 from datetime import datetime
+from io import BytesIO
+import logging
+from pathlib import Path
 
 from fpdf import FPDF
+from fpdf.enums import MethodReturnValue
+from PIL import Image
+
+from .diagram_blocks import segments as diagram_segments
+from .diagram_render import DiagramSpec, DiagramSpecError, describe, render as render_diagram
+
+logger = logging.getLogger(__name__)
 
 SUPPORTED_LANGS = ("it", "en", "es", "fr", "de", "sv")
 DEFAULT_LANG = "it"
+
+# Stessi token della UI web (frontend/src/app/globals.css) e del renderer.
+APP_PRIMARY = (21, 94, 99)          # --console-primary
+APP_PRIMARY_SOFT = (233, 242, 242)  # --console-primary-soft
+APP_PRIMARY_BORDER = (105, 171, 173)
+APP_ACCENT = (220, 160, 85)
+APP_ACCENT_SOFT = (250, 241, 227)
+APP_PAGE = (248, 250, 252)
+APP_SURFACE = (255, 255, 255)
+APP_TEXT = (15, 23, 42)
+APP_TEXT_MUTED = (100, 116, 139)
+APP_BORDER = (226, 232, 240)
+
+INTER_FONTS = {
+    "": Path("/usr/share/fonts/opentype/inter/Inter-Regular.otf"),
+    "B": Path("/usr/share/fonts/opentype/inter/Inter-SemiBold.otf"),
+    "I": Path("/usr/share/fonts/opentype/inter/Inter-Italic.otf"),
+}
 
 # Fattori invertiti (punteggio basso = Forza). I codici non cambiano per lingua.
 INVERTED_CODES = {"C3", "C6", "A1", "A4", "A5", "A7", "C4r", "A1r", "T1", "T4"}
@@ -386,17 +413,55 @@ class ResultPDF(FPDF):
         super().__init__()
         self._title = title
         self._page_label = page_label
+        self._app_font = "Helvetica"
+        try:
+            if all(path.is_file() for path in INTER_FONTS.values()):
+                for style, path in INTER_FONTS.items():
+                    self.add_font("Inter", style, path)
+                self._app_font = "Inter"
+        except Exception as exc:  # pragma: no cover - fallback per host senza font
+            logger.warning("Font Inter non disponibile nel PDF: %s", exc)
+
+    def set_font(self, family=None, style="", size=0):
+        if family == "Helvetica":
+            family = self._app_font
+        return super().set_font(family, style, size)
+
+    def _brand_mark(self, x: float, y: float, size: float = 12) -> None:
+        self.set_fill_color(*APP_PRIMARY)
+        self.rect(x, y, size, size, style="F", round_corners=True, corner_radius=2.2)
+        self.set_draw_color(255, 255, 255)
+        self.set_line_width(0.35)
+        self.ellipse(x + 2.1, y + 2.1, size - 4.2, size - 4.2)
+        cx, cy = x + size / 2, y + size / 2
+        self.set_fill_color(*APP_ACCENT)
+        self.polygon([(cx + 0.2, y + 2.0), (cx + 2.0, cy), (cx - 0.6, cy - 0.5)], style="F")
+        self.set_fill_color(255, 255, 255)
+        self.polygon([(cx - 0.2, y + size - 2.0), (cx - 2.0, cy), (cx + 0.6, cy + 0.5)], style="F")
 
     def header(self):
-        self.set_font("Helvetica", "B", 16)
-        self.set_text_color(25, 25, 30)
-        self.cell(0, 10, _latin1(self._title), new_x="LMARGIN", new_y="NEXT", align="C")
-        self.ln(4)
+        x, y = self.l_margin, 8
+        content_w = self.w - self.l_margin - self.r_margin
+        self.set_fill_color(*APP_SURFACE)
+        self.set_draw_color(*APP_BORDER)
+        self.rect(x, y, content_w, 18, style="DF", round_corners=True, corner_radius=3)
+        self._brand_mark(x + 3, y + 3)
+        self.set_xy(x + 18, y + 3.1)
+        self.set_font("Helvetica", "B", 12)
+        self.set_text_color(*APP_TEXT)
+        self.cell(content_w - 21, 5, "CounselorBot", new_x="LMARGIN", new_y="NEXT")
+        self.set_x(x + 18)
+        self.set_font("Helvetica", "", 7.5)
+        self.set_text_color(*APP_TEXT_MUTED)
+        self.cell(content_w - 21, 4, _latin1(self._title), new_x="LMARGIN", new_y="NEXT")
+        self.set_y(31)
 
     def footer(self):
         self.set_y(-15)
-        self.set_font("Helvetica", "I", 8)
-        self.set_text_color(120, 120, 130)
+        self.set_draw_color(*APP_BORDER)
+        self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
+        self.set_font("Helvetica", "", 8)
+        self.set_text_color(*APP_TEXT_MUTED)
         self.cell(0, 10, f"{self._page_label} {self.page_no()}/{{nb}}", align="C")
 
 
@@ -425,27 +490,130 @@ def _strip_markdown(text: str) -> str:
     return text
 
 
+def _ensure_space(pdf: FPDF, height: float) -> None:
+    if pdf.get_y() + height > pdf.h - pdf.b_margin:
+        pdf.add_page()
+
+
+def _section_heading(pdf: FPDF, title: str, content_w: float) -> None:
+    _ensure_space(pdf, 12)
+    x, y = pdf.l_margin, pdf.get_y()
+    pdf.set_fill_color(*APP_PRIMARY_SOFT)
+    pdf.set_draw_color(*APP_PRIMARY_BORDER)
+    pdf.rect(x, y, content_w, 9, style="DF", round_corners=True, corner_radius=2.2)
+    pdf.set_xy(x + 4, y + 1)
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.set_text_color(*APP_PRIMARY)
+    pdf.cell(content_w - 8, 7, _latin1(title), new_x="LMARGIN", new_y="NEXT")
+    pdf.set_y(y + 12)
+
+
+def _text_card(
+    pdf: FPDF,
+    text: str,
+    content_w: float,
+    *,
+    fill: tuple[int, int, int],
+    border: tuple[int, int, int],
+    text_color: tuple[int, int, int] = APP_TEXT,
+    inset: float = 0,
+) -> None:
+    cleaned = _latin1(_strip_markdown(text)).strip()
+    if not cleaned:
+        return
+    card_w = content_w - inset
+    pdf.set_font("Helvetica", "", 9.5)
+    height = float(pdf.multi_cell(
+        card_w,
+        5,
+        cleaned,
+        dry_run=True,
+        output=MethodReturnValue.HEIGHT,
+        padding=(3, 4),
+    ))
+    _ensure_space(pdf, height + 2)
+    x, y = pdf.l_margin + inset, pdf.get_y()
+    pdf.set_fill_color(*fill)
+    pdf.set_draw_color(*border)
+    pdf.rect(x, y, card_w, height, style="DF", round_corners=True, corner_radius=2.5)
+    pdf.set_xy(x, y)
+    pdf.set_text_color(*text_color)
+    pdf.multi_cell(
+        card_w,
+        5,
+        cleaned,
+        new_x="LMARGIN",
+        new_y="NEXT",
+        padding=(3, 4),
+    )
+    pdf.set_y(y + height + 2)
+
+
+def _diagram_card(pdf: FPDF, spec: DiagramSpec, content_w: float, lang: str) -> None:
+    """Inserisce il PNG tematico nello stesso punto occupato dal blocco in chat."""
+    try:
+        payload = render_diagram(spec, theme="light", fmt="png", embed_title=True, lang=lang)
+        with Image.open(BytesIO(payload)) as image:
+            pixel_w, pixel_h = image.size
+    except (DiagramSpecError, OSError) as exc:
+        logger.warning("Diagramma non inserito nel PDF (%s): %s", spec.title, exc)
+        _text_card(
+            pdf,
+            describe(spec, lang),
+            content_w,
+            fill=APP_PRIMARY_SOFT,
+            border=APP_PRIMARY_BORDER,
+        )
+        return
+
+    max_w = content_w - 10
+    max_h = 118.0
+    image_w = max_w
+    image_h = image_w * pixel_h / pixel_w
+    if image_h > max_h:
+        image_h = max_h
+        image_w = image_h * pixel_w / pixel_h
+    frame_w, frame_h = image_w + 8, image_h + 8
+    _ensure_space(pdf, frame_h + 3)
+    x = pdf.l_margin + (content_w - frame_w) / 2
+    y = pdf.get_y()
+    pdf.set_fill_color(*APP_SURFACE)
+    pdf.set_draw_color(*APP_BORDER)
+    pdf.rect(x, y, frame_w, frame_h, style="DF", round_corners=True, corner_radius=3)
+    stream = BytesIO(payload)
+    pdf.image(
+        stream,
+        x=x + 4,
+        y=y + 4,
+        w=image_w,
+        h=image_h,
+        alt_text=describe(spec, lang),
+    )
+    pdf.set_y(y + frame_h + 3)
+
+
 def _render_summary(pdf, summary_text: str, ui: dict[str, str], content_w: float):
     """Renderizza la sintesi AI della discussione prima della trascrizione."""
-    if pdf.get_y() > pdf.h - 70:
-        pdf.add_page()
-    pdf.set_font("Helvetica", "B", 12)
-    pdf.set_text_color(25, 25, 30)
-    pdf.cell(0, 8, _latin1(ui["summary"]), new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(2)
-    pdf.set_font("Helvetica", "", 10)
-    pdf.set_text_color(40, 40, 50)
-    pdf.multi_cell(content_w, 5, _latin1(_strip_markdown(summary_text)), new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(4)
+    _section_heading(pdf, ui["summary"], content_w)
+    _text_card(
+        pdf,
+        summary_text,
+        content_w,
+        fill=APP_ACCENT_SOFT,
+        border=APP_ACCENT,
+    )
 
 
-def _render_conversation(pdf, messages: list[dict], ui: dict[str, str], content_w: float):
-    """Renderizza i turni studente/counselor come testo a capo automatico."""
+def _render_conversation(
+    pdf,
+    messages: list[dict],
+    ui: dict[str, str],
+    content_w: float,
+    lang: str,
+):
+    """Renderizza turni e diagrammi con card coerenti con la chat web."""
     pdf.add_page()
-    pdf.set_font("Helvetica", "B", 12)
-    pdf.set_text_color(25, 25, 30)
-    pdf.cell(0, 8, _latin1(ui["conversation"]), new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(3)
+    _section_heading(pdf, ui["conversation"], content_w)
 
     for msg in messages:
         role = msg.get("role", "")
@@ -453,14 +621,34 @@ def _render_conversation(pdf, messages: list[dict], ui: dict[str, str], content_
         if not text:
             continue
         label = ui["counselor"] if role == "counselor" else ui["student"]
-        pdf.set_font("Helvetica", "B", 10)
-        pdf.set_text_color(60, 60, 130 if role == "counselor" else 90)
-        pdf.cell(0, 6, _latin1(label), new_x="LMARGIN", new_y="NEXT")
-        pdf.set_x(pdf.l_margin)
-        pdf.set_font("Helvetica", "", 10)
-        pdf.set_text_color(40, 40, 50)
-        pdf.multi_cell(content_w, 5, _latin1(_strip_markdown(text)), new_x="LMARGIN", new_y="NEXT")
-        pdf.ln(3)
+        _ensure_space(pdf, 10)
+        pdf.set_font("Helvetica", "B", 8.5)
+        pdf.set_text_color(*(APP_PRIMARY if role == "counselor" else APP_TEXT_MUTED))
+        pdf.cell(0, 5, _latin1(label), new_x="LMARGIN", new_y="NEXT")
+
+        for part in diagram_segments(text):
+            if isinstance(part, DiagramSpec):
+                _diagram_card(pdf, part, content_w, lang)
+            elif part.strip():
+                if role == "counselor":
+                    _text_card(
+                        pdf,
+                        part,
+                        content_w,
+                        fill=APP_PRIMARY_SOFT,
+                        border=APP_PRIMARY_BORDER,
+                        text_color=(14, 53, 57),
+                    )
+                else:
+                    _text_card(
+                        pdf,
+                        part,
+                        content_w,
+                        fill=APP_PAGE,
+                        border=APP_BORDER,
+                        inset=10,
+                    )
+        pdf.ln(1)
 
 
 def generate_questionnaire_pdf(
@@ -487,18 +675,24 @@ def generate_questionnaire_pdf(
     pdf.add_page()
     content_w = pdf.w - pdf.l_margin - pdf.r_margin
 
-    # Sottointestazione
-    pdf.set_font("Helvetica", "", 10)
-    pdf.set_text_color(80, 80, 90)
-    pdf.cell(0, 7, _latin1(f"{ui['type']}: {questionnaire_type}"), new_x="LMARGIN", new_y="NEXT")
+    # Metadati in una card, come le superfici informative dell'app.
+    metadata = [f"{ui['type']}: {questionnaire_type}"]
     if submitted_at:
         try:
             dt = datetime.fromisoformat(submitted_at)
-            pdf.cell(0, 7, _latin1(f"{ui['date']}: {dt.strftime('%d/%m/%Y %H:%M')}"), new_x="LMARGIN", new_y="NEXT")
+            metadata.append(f"{ui['date']}: {dt.strftime('%d/%m/%Y %H:%M')}")
         except (ValueError, TypeError):
             pass
-    pdf.cell(0, 7, _latin1(f"{ui['session']}: {session_id[:16]}..."), new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(6)
+    metadata.append(f"{ui['session']}: {session_id[:16]}...")
+    _text_card(
+        pdf,
+        "\n".join(metadata),
+        content_w,
+        fill=APP_SURFACE,
+        border=APP_BORDER,
+        text_color=APP_TEXT_MUTED,
+    )
+    pdf.ln(2)
 
     has_inverted = False
 
@@ -514,10 +708,7 @@ def generate_questionnaire_pdf(
         has_factor_info = any(code in trans for code in scores)
 
         if has_factor_info:
-            pdf.set_font("Helvetica", "B", 12)
-            pdf.set_text_color(25, 25, 30)
-            pdf.cell(0, 8, _latin1(ui["by_factor"]), new_x="LMARGIN", new_y="NEXT")
-            pdf.ln(2)
+            _section_heading(pdf, ui["by_factor"], content_w)
 
             for code, value in scores.items():
                 value_int = int(round(float(value)))
@@ -552,10 +743,7 @@ def generate_questionnaire_pdf(
                 pdf.multi_cell(content_w - 4, 5, _latin1(desc), new_x="LMARGIN", new_y="NEXT")
                 pdf.ln(3)
         else:
-            pdf.set_font("Helvetica", "", 11)
-            pdf.set_text_color(80, 80, 90)
-            pdf.cell(0, 8, _latin1(ui["scores"]), new_x="LMARGIN", new_y="NEXT")
-            pdf.ln(2)
+            _section_heading(pdf, ui["scores"], content_w)
             for code, value in scores.items():
                 value_int = int(round(float(value)))
                 pdf.set_font("Helvetica", "", 10)
@@ -563,13 +751,8 @@ def generate_questionnaire_pdf(
                 pdf.cell(0, 7, _latin1(f"{code}: {value_int}/9"), new_x="LMARGIN", new_y="NEXT")
 
     # Legenda
-    pdf.ln(6)
-    pdf.set_draw_color(200, 200, 210)
-    pdf.line(pdf.l_margin, pdf.get_y(), pdf.w - pdf.r_margin, pdf.get_y())
-    pdf.ln(4)
-    pdf.set_font("Helvetica", "B", 9)
-    pdf.set_text_color(80, 80, 90)
-    pdf.cell(0, 6, _latin1(ui["legend"]), new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(3)
+    _section_heading(pdf, ui["legend"], content_w)
 
     legend_items = [
         (ui["strength"], (34, 197, 94)),
@@ -595,7 +778,7 @@ def generate_questionnaire_pdf(
     if summary_text and summary_text.strip():
         _render_summary(pdf, summary_text.strip(), ui, content_w)
     if messages:
-        _render_conversation(pdf, messages, ui, content_w)
+        _render_conversation(pdf, messages, ui, content_w, lang)
 
     pdf_bytes = BytesIO()
     pdf.output(pdf_bytes)
