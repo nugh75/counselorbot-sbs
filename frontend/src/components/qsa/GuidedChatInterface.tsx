@@ -397,6 +397,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const [isAudioLoading, setIsAudioLoading] = useState(false);
     const [showAdvanceSuggestion, setShowAdvanceSuggestion] = useState(false);
     const [userMessagesInPhase, setUserMessagesInPhase] = useState(0);
+    const [isPathPanelOpen, setIsPathPanelOpen] = useState(false);
+    const [isScoresPanelOpen, setIsScoresPanelOpen] = useState(false);
     // Indici dei messaggi con il box "Ragionamento" collassato (toggle per nasconderlo).
     const [hiddenReasoning, setHiddenReasoning] = useState<Set<number>>(new Set());
     const toggleReasoning = (idx: number) => setHiddenReasoning(prev => {
@@ -1148,17 +1150,114 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 ? t('guided.hint.savickas')
                 : t('guided.hint.analysis')
             : t('guided.hint.free');
+    const showPreviousStep = currentPhase !== FIXED_CONCLUSION_ID && phases.indexOf(currentPhase) > 0;
+    const showStandardAdvance = currentPhase !== FIXED_CONCLUSION_ID && questionnaireType !== 'SAVICKAS';
+    const showSavickasAdvance = currentPhase !== FIXED_CONCLUSION_ID
+        && questionnaireType === 'SAVICKAS'
+        && currentPhase !== 'savickas-patto'
+        && (showAdvanceSuggestion || userMessagesInPhase >= 3);
+    const showRepeatStep = lastAnalysisFailed && isAnalysisStep(currentPhase);
+    const hasStepNavigation = showPreviousStep || showStandardAdvance || showSavickasAdvance || showRepeatStep;
+
+    const renderStepNavigation = (mobile: boolean) => (
+        <div className={cn(mobile ? "grid grid-cols-[auto_minmax(0,1fr)] gap-2" : "space-y-2")}>
+            {showPreviousStep && (
+                <button
+                    type="button"
+                    onClick={goToPreviousStep}
+                    disabled={isLoading}
+                    aria-label={t('guided.prevStep')}
+                    className={cn(
+                        "border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50",
+                        mobile
+                            ? "flex h-11 w-11 items-center justify-center rounded-lg"
+                            : "flex w-full items-center justify-center gap-1 rounded-md px-3 py-2.5 text-xs font-semibold",
+                    )}
+                >
+                    <ChevronLeft className={cn(mobile ? "h-5 w-5" : "h-3 w-3")} />
+                    {!mobile && t('guided.prevStep')}
+                </button>
+            )}
+
+            {showStandardAdvance && (
+                <button
+                    type="button"
+                    onClick={() => void advancePhase()}
+                    disabled={isLoading}
+                    className={cn(
+                        "flex items-center justify-center gap-1 bg-indigo-600 font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-50",
+                        mobile
+                            ? cn("h-11 min-w-0 rounded-lg px-4 text-sm", !showPreviousStep && "col-span-2")
+                            : "w-full rounded-md px-3 py-2.5 text-xs",
+                    )}
+                >
+                    <span className="truncate">
+                        {currentPhase === FIXED_QUESTIONS_ID ? t('guided.concludeSession') : t('guided.nextStep')}
+                    </span>
+                    <ChevronRight className={cn("shrink-0", mobile ? "h-4 w-4" : "h-3 w-3")} />
+                </button>
+            )}
+
+            {showSavickasAdvance && (
+                <button
+                    type="button"
+                    onClick={() => void advancePhase()}
+                    disabled={isLoading}
+                    className={cn(
+                        "flex items-center justify-center gap-1 bg-green-600 font-bold text-white shadow-sm transition-colors hover:bg-green-700 disabled:opacity-50",
+                        mobile
+                            ? cn("h-11 min-w-0 rounded-lg px-4 text-sm", !showPreviousStep && "col-span-2")
+                            : "w-full rounded-lg px-3 py-2.5 text-xs",
+                    )}
+                >
+                    <span className="truncate">{t('guided.nextTopic')}</span>
+                    <ChevronRight className={cn("shrink-0", mobile ? "h-4 w-4" : "h-3 w-3")} />
+                </button>
+            )}
+
+            {showRepeatStep && (
+                <button
+                    type="button"
+                    onClick={repeatCurrentStep}
+                    disabled={isLoading}
+                    className={cn(
+                        "bg-amber-600 font-bold text-white shadow-sm transition-colors hover:bg-amber-700 disabled:opacity-50",
+                        mobile
+                            ? "col-span-2 min-h-11 rounded-lg px-4 py-2.5 text-sm"
+                            : "w-full rounded-lg px-3 py-2.5 text-xs",
+                    )}
+                >
+                    {t('guided.repeatStep')}
+                </button>
+            )}
+        </div>
+    );
 
     return (
         <div className="grid gap-4 lg:h-chat lg:grid-cols-4 lg:gap-6">
             {/* Left Sidebar */}
             <div className="space-y-4 custom-scrollbar lg:col-span-1 lg:overflow-y-auto lg:pr-2">
                 {/* Phase Progress */}
-                <div className="glass-panel p-4 space-y-3">
-                    <div className="flex justify-between items-center">
-                        <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">{t('guided.path')}</h3>
+                <div className="glass-panel overflow-hidden">
+                    <button
+                        type="button"
+                        onClick={() => setIsPathPanelOpen(open => !open)}
+                        aria-expanded={isPathPanelOpen}
+                        aria-controls="guided-path-panel"
+                        className="flex w-full items-center gap-3 p-4 text-left lg:hidden"
+                    >
+                        <h3 className="min-w-0 flex-1 text-sm font-semibold uppercase tracking-wider text-slate-700">{t('guided.path')}</h3>
                         <span className="text-xs text-slate-500">{currentStepIndex}/{totalSteps}</span>
-                    </div>
+                        <ChevronRight className={cn("h-4 w-4 text-slate-400 transition-transform", isPathPanelOpen && "rotate-90")} />
+                    </button>
+                    <div
+                        id="guided-path-panel"
+                        className={cn("space-y-3 px-4 pb-4 lg:block lg:p-4", !isPathPanelOpen && "hidden lg:block")}
+                    >
+                        <div className="hidden items-center justify-between lg:flex">
+                            <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">{t('guided.path')}</h3>
+                            <span className="text-xs text-slate-500">{currentStepIndex}/{totalSteps}</span>
+                        </div>
 
                     <div className="space-y-2">
                         {sidebarPhases.map((phaseId, idx) => {
@@ -1184,76 +1283,54 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         })}
                     </div>
 
-                    {currentPhase !== FIXED_CONCLUSION_ID && phases.indexOf(currentPhase) > 0 && (
-                        <button
-                            onClick={goToPreviousStep}
-                            disabled={isLoading}
-                            className="w-full mt-2 py-2.5 px-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-md transition-colors flex items-center justify-center gap-1 disabled:opacity-50"
-                        >
-                            <ChevronLeft className="w-3 h-3" />
-                            {t('guided.prevStep')}
-                        </button>
-                    )}
-
-                    {currentPhase !== FIXED_CONCLUSION_ID && questionnaireType !== 'SAVICKAS' && (
-                        <button
-                            onClick={() => void advancePhase()}
-                            disabled={isLoading}
-                            className="w-full mt-2 py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-md transition-colors flex items-center justify-center gap-1 disabled:opacity-50 shadow-sm"
-                        >
-                            {currentPhase === FIXED_QUESTIONS_ID ? t('guided.concludeSession') : t('guided.nextStep')}
-                            <ChevronRight className="w-3 h-3" />
-                        </button>
-                    )}
-
-                    {currentPhase !== FIXED_CONCLUSION_ID && questionnaireType === 'SAVICKAS' && currentPhase !== 'savickas-patto' && (showAdvanceSuggestion || userMessagesInPhase >= 3) && (
-                        <button
-                            onClick={() => void advancePhase()}
-                            disabled={isLoading}
-                            className="w-full mt-2 py-2.5 px-3 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1 disabled:opacity-50 shadow-sm"
-                        >
-                            {t('guided.nextTopic')}
-                            <ChevronRight className="w-3 h-3" />
-                        </button>
-                    )}
-
-                    {lastAnalysisFailed && isAnalysisStep(currentPhase) && (
-                        <button
-                            onClick={repeatCurrentStep}
-                            disabled={isLoading}
-                            className="w-full mt-2 py-2.5 px-3 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-50 shadow-sm"
-                        >
-                            {t('guided.repeatStep')}
-                        </button>
-                    )}
+                        <div className="hidden lg:block">
+                            {renderStepNavigation(false)}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Scores Display */}
                 {hasScoreEntries && (
-                    <div className="glass-panel p-4 space-y-3">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                            <BarChart3 className="w-4 h-4" />
-                            {t('guided.scores')}
-                        </div>
-
-                        {scoreGroups.map((group, idx) => (
-                            <div key={group.prefix} className={cn("space-y-1.5", idx > 0 && "pt-2 border-t border-slate-100")}>
-                                <div className={cn("text-[10px] font-medium uppercase", group.colorClass)}>{group.label}</div>
-                                {group.entries.map(([code, score]) => (
-                                    <CompactScoreBar
-                                        key={code}
-                                        code={code}
-                                        factorName={tf(
-                                            `factor.${code}.name`,
-                                            questionnaire.factors.find((factor) => factor.code === code)?.name || code,
-                                        )}
-                                        score={score}
-                                        invertedSet={invertedSet}
-                                        questionnaireType={questionnaireType}
-                                    />
-                                ))}
+                    <div className="glass-panel overflow-hidden">
+                        <button
+                            type="button"
+                            onClick={() => setIsScoresPanelOpen(open => !open)}
+                            aria-expanded={isScoresPanelOpen}
+                            aria-controls="guided-scores-panel"
+                            className="flex w-full items-center gap-2 p-4 text-left lg:hidden"
+                        >
+                            <BarChart3 className="h-4 w-4 text-slate-600" />
+                            <span className="min-w-0 flex-1 text-sm font-semibold text-slate-700">{t('guided.scores')}</span>
+                            <ChevronRight className={cn("h-4 w-4 text-slate-400 transition-transform", isScoresPanelOpen && "rotate-90")} />
+                        </button>
+                        <div
+                            id="guided-scores-panel"
+                            className={cn("space-y-3 px-4 pb-4 lg:block lg:p-4", !isScoresPanelOpen && "hidden lg:block")}
+                        >
+                            <div className="hidden items-center gap-2 text-sm font-semibold text-slate-700 lg:flex">
+                                <BarChart3 className="w-4 h-4" />
+                                {t('guided.scores')}
                             </div>
-                        ))}
+
+                            {scoreGroups.map((group, idx) => (
+                                <div key={group.prefix} className={cn("space-y-1.5", idx > 0 && "pt-2 border-t border-slate-100")}>
+                                    <div className={cn("text-[10px] font-medium uppercase", group.colorClass)}>{group.label}</div>
+                                    {group.entries.map(([code, score]) => (
+                                        <CompactScoreBar
+                                            key={code}
+                                            code={code}
+                                            factorName={tf(
+                                                `factor.${code}.name`,
+                                                questionnaire.factors.find((factor) => factor.code === code)?.name || code,
+                                            )}
+                                            score={score}
+                                            invertedSet={invertedSet}
+                                            questionnaireType={questionnaireType}
+                                        />
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>
@@ -1398,6 +1475,13 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     )}
                     <div ref={messagesEndRef} />
                 </div>
+
+                {/* Su mobile la navigazione resta accanto alla conversazione, non sopra i pannelli dati. */}
+                {hasStepNavigation && (
+                    <div className="border-t border-slate-100 bg-slate-50/90 p-2.5 lg:hidden">
+                        {renderStepNavigation(true)}
+                    </div>
+                )}
 
                 {/* Input Area */}
                 {currentPhase === FIXED_CONCLUSION_ID ? (
