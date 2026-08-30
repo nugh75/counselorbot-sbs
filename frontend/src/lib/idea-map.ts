@@ -46,3 +46,24 @@ export function ideaMapImageUrl(
     });
     return `/api/idea/map/image?${params.toString()}`;
 }
+
+export function ideaMapPdfUrl(sessionId: string, lang: string): string {
+    const params = new URLSearchParams({ session_id: sessionId, lang });
+    return `/api/idea/map/pdf?${params.toString()}`;
+}
+
+// Tenere la mappa: nel portfolio come lavoro, nel taccuino come riga di
+// auto-descrizione. Il taccuino non accetta la variante ricerca.
+export async function keepIdeaMap(
+    target: 'portfolio' | 'notebook',
+    sessionId: string,
+    lang: string,
+    variant: IdeaVariant,
+): Promise<boolean> {
+    const response = await apiFetch(`/api/idea/map/${target}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, lang, variant }),
+    });
+    return response.ok;
+}
