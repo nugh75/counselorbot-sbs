@@ -33,6 +33,7 @@ from .chat_logic import (
     filter_scores_by_components,
     get_prompt_component_flags,
     get_prompt_component_options,
+    is_advice_follow_up,
     previous_certified_strategy_ids,
     step_has_improvement_target,
     prompt_component_config_key,
@@ -275,12 +276,23 @@ def build_prompt_audit(
         questionnaire_type = request.questionnaire_type or ""
     step_mode = request.mode if _is_conversational_mode(request.mode) else (step.system_prompt_mode if step else request.mode)
     component_flags = get_prompt_component_flags(db, questionnaire_type, request.phase)
-    component_flags = apply_advice_retrieval_policy(component_flags, step_mode, request.phase)
+    advice_requested = is_advice_follow_up(request)
+    component_flags = apply_advice_retrieval_policy(
+        component_flags, step_mode, request.phase, advice_requested=advice_requested
+    )
     component_options = get_prompt_component_options(
         db,
         questionnaire_type,
         request.phase,
         step_mode,
+        advice_requested=advice_requested,
+    )
+    # La richiesta apre il catalogo solo se l'admin non lo ha spento per questo
+    # step: la configurazione per step resta l'ultima parola.
+    advice_requested = (
+        advice_requested
+        and component_options["certified_strategy_limit"] > 0
+        and bool(component_flags.get("certified_strategies", True))
     )
     payload_flags = getattr(payload, "component_flags", None)
     if isinstance(payload_flags, dict):
@@ -297,7 +309,9 @@ def build_prompt_audit(
             if isinstance(val, list):
                 component_flags["allowed_strategies"] = [str(x) for x in val]
                 component_options["allowed_strategies"] = [str(x) for x in val]
-    component_flags = apply_advice_retrieval_policy(component_flags, step_mode, request.phase)
+    component_flags = apply_advice_retrieval_policy(
+        component_flags, step_mode, request.phase, advice_requested=advice_requested
+    )
 
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
     system_prompt = _apply_global_directives(system_prompt, request.language, db)
@@ -315,8 +329,10 @@ def build_prompt_audit(
     if include_analysis_context and component_scores_context:
         allows_advice = _step_allows_practical_advice(step_mode, request.phase)
         is_follow_up = _is_conversational_mode(step_mode)
-        include_advice = allows_advice and not is_follow_up and step_has_improvement_target(
-            component_scores_context, questionnaire_type, request.language, required_codes
+        include_advice = advice_requested or (
+            allows_advice and not is_follow_up and step_has_improvement_target(
+                component_scores_context, questionnaire_type, request.language, required_codes
+            )
         )
         system_prompt = _apply_current_step_score_profile_directive(
             system_prompt, questionnaire_type, request.language, component_scores_context, required_codes, include_advice
@@ -329,7 +345,7 @@ def build_prompt_audit(
         else:
             component_flags = apply_advice_retrieval_policy(component_flags, "factor", request.phase)
             component_options["certified_strategy_limit"] = 0
-    elif include_analysis_context and _is_strategy_questionnaire(questionnaire_type):
+    elif include_analysis_context and _is_strategy_questionnaire(questionnaire_type) and not advice_requested:
         component_flags = apply_advice_retrieval_policy(component_flags, "factor", request.phase)
         component_options["certified_strategy_limit"] = 0
     model_message = (

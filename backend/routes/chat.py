@@ -50,6 +50,7 @@ from ..prompt_config import (
 from ..chat_logic import (
     _annotate_qsa_factor_codes,
     apply_advice_retrieval_policy,
+    is_advice_follow_up,
     _apply_global_directives,
     _apply_advice_distribution_directive,
     _apply_follow_up_advice_directive,
@@ -360,8 +361,22 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     # Nei follow-up in-step il mode della richiesta prevale sul mode dello step:
     # puo' approfondire un consiglio gia' emerso senza recuperarne uno nuovo.
     step_mode = request.mode if _is_conversational_mode(request.mode) else (step.system_prompt_mode if step else request.mode)
-    component_flags = apply_advice_retrieval_policy(component_flags, step_mode, request.phase)
-    component_options = get_prompt_component_options(db, questionnaire_type, request.phase, step_mode)
+    # Follow-up in cui lo studente chiede un consiglio: il catalogo certificato
+    # si apre anche negli step interpretativi, cosi' la risposta resta tracciabile.
+    advice_requested = is_advice_follow_up(request)
+    component_flags = apply_advice_retrieval_policy(
+        component_flags, step_mode, request.phase, advice_requested=advice_requested
+    )
+    component_options = get_prompt_component_options(
+        db, questionnaire_type, request.phase, step_mode, advice_requested=advice_requested
+    )
+    # La richiesta apre il catalogo solo se l'admin non lo ha spento per questo
+    # step: la configurazione per step resta l'ultima parola.
+    advice_requested = (
+        advice_requested
+        and component_options["certified_strategy_limit"] > 0
+        and bool(component_flags.get("certified_strategies", True))
+    )
     include_analysis_context = _should_include_step_analysis_context(step_mode)
     phase_codes = _phase_factor_codes(db, request.phase) if include_analysis_context else set()
     if include_analysis_context:
@@ -375,8 +390,10 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     if include_analysis_context and component_scores_context:
         allows_advice = _step_allows_practical_advice(step_mode, request.phase)
         is_follow_up = _is_conversational_mode(step_mode)
-        include_advice = allows_advice and not is_follow_up and step_has_improvement_target(
-            component_scores_context, questionnaire_type, request.language, phase_codes
+        include_advice = advice_requested or (
+            allows_advice and not is_follow_up and step_has_improvement_target(
+                component_scores_context, questionnaire_type, request.language, phase_codes
+            )
         )
         system_prompt = _apply_current_step_score_profile_directive(
             system_prompt, questionnaire_type, request.language, component_scores_context, phase_codes, include_advice
@@ -389,7 +406,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         else:
             component_flags = apply_advice_retrieval_policy(component_flags, "factor", request.phase)
             component_options["certified_strategy_limit"] = 0
-    elif include_analysis_context and _is_strategy_questionnaire(questionnaire_type):
+    elif include_analysis_context and _is_strategy_questionnaire(questionnaire_type) and not advice_requested:
         component_flags = apply_advice_retrieval_policy(component_flags, "factor", request.phase)
         component_options["certified_strategy_limit"] = 0
     model_message = (
@@ -621,8 +638,22 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     # Nei follow-up in-step il mode della richiesta prevale sul mode dello step:
     # puo' approfondire un consiglio gia' emerso senza recuperarne uno nuovo.
     step_mode = request.mode if _is_conversational_mode(request.mode) else (step.system_prompt_mode if step else request.mode)
-    component_flags = apply_advice_retrieval_policy(component_flags, step_mode, request.phase)
-    component_options = get_prompt_component_options(db, questionnaire_type, request.phase, step_mode)
+    # Follow-up in cui lo studente chiede un consiglio: il catalogo certificato
+    # si apre anche negli step interpretativi, cosi' la risposta resta tracciabile.
+    advice_requested = is_advice_follow_up(request)
+    component_flags = apply_advice_retrieval_policy(
+        component_flags, step_mode, request.phase, advice_requested=advice_requested
+    )
+    component_options = get_prompt_component_options(
+        db, questionnaire_type, request.phase, step_mode, advice_requested=advice_requested
+    )
+    # La richiesta apre il catalogo solo se l'admin non lo ha spento per questo
+    # step: la configurazione per step resta l'ultima parola.
+    advice_requested = (
+        advice_requested
+        and component_options["certified_strategy_limit"] > 0
+        and bool(component_flags.get("certified_strategies", True))
+    )
     include_analysis_context = _should_include_step_analysis_context(step_mode)
     phase_codes = _phase_factor_codes(db, request.phase) if include_analysis_context else set()
     if include_analysis_context:
@@ -636,8 +667,10 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     if include_analysis_context and component_scores_context:
         allows_advice = _step_allows_practical_advice(step_mode, request.phase)
         is_follow_up = _is_conversational_mode(step_mode)
-        include_advice = allows_advice and not is_follow_up and step_has_improvement_target(
-            component_scores_context, questionnaire_type, request.language, phase_codes
+        include_advice = advice_requested or (
+            allows_advice and not is_follow_up and step_has_improvement_target(
+                component_scores_context, questionnaire_type, request.language, phase_codes
+            )
         )
         system_prompt = _apply_current_step_score_profile_directive(
             system_prompt, questionnaire_type, request.language, component_scores_context, phase_codes, include_advice
@@ -650,7 +683,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         else:
             component_flags = apply_advice_retrieval_policy(component_flags, "factor", request.phase)
             component_options["certified_strategy_limit"] = 0
-    elif include_analysis_context and _is_strategy_questionnaire(questionnaire_type):
+    elif include_analysis_context and _is_strategy_questionnaire(questionnaire_type) and not advice_requested:
         component_flags = apply_advice_retrieval_policy(component_flags, "factor", request.phase)
         component_options["certified_strategy_limit"] = 0
     model_message = (

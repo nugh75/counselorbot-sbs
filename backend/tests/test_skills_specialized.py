@@ -16,6 +16,7 @@ os.environ.setdefault("ADMIN_SYNC_DISABLED", "1")
 
 import uuid
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 from urllib.parse import urlsplit, urlunsplit
 
 import psycopg2
@@ -24,7 +25,12 @@ from sqlalchemy.orm import sessionmaker
 
 from backend import database, models
 from backend.certified_strategy_seed import DEFAULT_CERTIFIED_STRATEGIES
-from backend.chat_logic import _default_certified_strategy_limit, _step_allows_practical_advice
+from backend.chat_logic import (
+    _default_certified_strategy_limit,
+    _step_allows_practical_advice,
+    apply_advice_retrieval_policy,
+    is_advice_follow_up,
+)
 from backend.questionnaire_catalog import INSTRUMENT_CATALOG_DEFAULTS
 from backend.skills import handlers
 from backend.skills.context import SkillContext
@@ -192,6 +198,41 @@ def test_analysis_and_interview_steps_stay_interpretive():
                       "qap-interview", "savickas-interview", "ztpi-factor", "ztpi-btp", "intro"):
         assert _default_certified_strategy_limit(step_mode) == 0, step_mode
         assert _step_allows_practical_advice(step_mode) is False, step_mode
+
+
+def _follow_up(message: str, phase: str = "cognitive"):
+    return SimpleNamespace(phase=phase, use_phase_prompt=False, internal_message=False, message=message)
+
+
+def test_advice_request_in_a_follow_up_opens_the_catalog():
+    """Lo studente chiede un consiglio dentro uno step interpretativo: una sola
+    strategia certificata, cosi' la risposta non e' improvvisata."""
+    request = _follow_up("Puoi darmi un consiglio concreto su come migliorare?")
+    assert is_advice_follow_up(request) is True
+    assert _default_certified_strategy_limit("factor", "cognitive", True) == 1
+    assert _default_certified_strategy_limit("qpcs-analysis", "qpcs-emozioni", True) == 1
+    flags = apply_advice_retrieval_policy(
+        {"certified_strategies": True}, "factor", "cognitive", advice_requested=True
+    )
+    assert flags["certified_strategies"] is True
+
+
+def test_only_an_explicit_advice_request_opens_the_catalog():
+    assert is_advice_follow_up(_follow_up("Puoi spiegarmi meglio cosa significa?")) is False
+    assert is_advice_follow_up(_follow_up("")) is False
+    # Turno tecnico del percorso guidato: non e' un follow-up dello studente.
+    assert is_advice_follow_up(SimpleNamespace(
+        phase="cognitive", use_phase_prompt=True, internal_message=False, message="analizza"
+    )) is False
+    # Fuori da uno step la policy della chat libera vale gia' di suo.
+    assert is_advice_follow_up(_follow_up("Dammi un consiglio", phase="")) is False
+    flags = apply_advice_retrieval_policy({"certified_strategies": True}, "factor", "cognitive")
+    assert flags["certified_strategies"] is False
+
+
+def test_synthesis_veto_survives_an_explicit_advice_request():
+    for step_id in ("sl-synthesis", "qsar-synthesis", "questions"):
+        assert _default_certified_strategy_limit("second-level", step_id, True) == 0
 
 
 def test_qsa_synthesis_still_introduces_no_new_advice():
