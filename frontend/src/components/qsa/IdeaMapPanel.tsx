@@ -1,17 +1,27 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Download, Loader2, Maximize2, RefreshCw, X } from 'lucide-react';
+import { BookMarked, Download, FileText, FolderPlus, Loader2, Maximize2, RefreshCw, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useI18n } from '@/lib/i18n-context';
 import { useDarkMode } from '@/lib/use-dark-mode';
-import { fetchIdeaMap, ideaMapImageUrl, type IdeaMapState, type IdeaRole } from '@/lib/idea-map';
+import { toast } from '@/components/ui/Toast';
+import {
+    fetchIdeaMap,
+    ideaMapImageUrl,
+    ideaMapPdfUrl,
+    keepIdeaMap,
+    type IdeaMapState,
+    type IdeaRole,
+    type IdeaVariant,
+} from '@/lib/idea-map';
 
 interface IdeaMapPanelProps {
     sessionId: string;
     // Cambia a ogni turno concluso: e' il segnale per rileggere la mappa.
     version: number;
     locale: string;
+    variant: IdeaVariant;
 }
 
 // Le quattro gambe del ragionamento, nell'ordine in cui il percorso le chiede.
@@ -26,12 +36,13 @@ const MISSING_KEY: Record<IdeaRole, string> = {
     step: 'idea.role.step',
 };
 
-export function IdeaMapPanel({ sessionId, version, locale }: IdeaMapPanelProps) {
+export function IdeaMapPanel({ sessionId, version, locale, variant }: IdeaMapPanelProps) {
     const { t } = useI18n();
     const isDark = useDarkMode();
     const [state, setState] = useState<IdeaMapState | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isKeeping, setIsKeeping] = useState(false);
 
     const reload = useCallback(async () => {
         setIsLoading(true);
@@ -54,6 +65,17 @@ export function IdeaMapPanel({ sessionId, version, locale }: IdeaMapPanelProps) 
         document.addEventListener('keydown', close);
         return () => document.removeEventListener('keydown', close);
     }, [isFullscreen]);
+
+    const keep = async (target: 'portfolio' | 'notebook') => {
+        setIsKeeping(true);
+        try {
+            const ok = await keepIdeaMap(target, sessionId, locale, variant);
+            if (ok) toast.success(t('idea.keep.saved'));
+            else toast.error(t('toast.error'));
+        } finally {
+            setIsKeeping(false);
+        }
+    };
 
     const revisionId = state?.revision_id ?? null;
     const theme = isDark ? 'dark' : 'light';
@@ -124,6 +146,38 @@ export function IdeaMapPanel({ sessionId, version, locale }: IdeaMapPanelProps) 
                 <p className="border-t border-slate-200 px-3 py-2 text-xs text-teal-700">
                     {t('idea.map.complete')}
                 </p>
+            )}
+
+            {imageUrl && (
+                <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 px-3 py-2">
+                    <a
+                        href={ideaMapPdfUrl(sessionId, locale)}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:border-slate-300"
+                    >
+                        <FileText className="h-3.5 w-3.5" aria-hidden="true" />
+                        {t('idea.keep.pdf')}
+                    </a>
+                    <button
+                        type="button"
+                        disabled={isKeeping}
+                        onClick={() => void keep('portfolio')}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:border-slate-300 disabled:opacity-50"
+                    >
+                        <FolderPlus className="h-3.5 w-3.5" aria-hidden="true" />
+                        {t('idea.keep.portfolio')}
+                    </button>
+                    {variant !== 'research' && (
+                        <button
+                            type="button"
+                            disabled={isKeeping}
+                            onClick={() => void keep('notebook')}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:border-slate-300 disabled:opacity-50"
+                        >
+                            <BookMarked className="h-3.5 w-3.5" aria-hidden="true" />
+                            {t('idea.keep.notebook')}
+                        </button>
+                    )}
+                </div>
             )}
 
             {isFullscreen && imageUrl && typeof document !== 'undefined' && createPortal(

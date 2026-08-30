@@ -1391,7 +1391,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 space-y-6">
                     {isIdea && (
                         <div className="space-y-3">
-                            <IdeaMapPanel sessionId={sessionId} version={ideaMapVersion} locale={activeLocale} />
+                            <IdeaMapPanel sessionId={sessionId} version={ideaMapVersion} locale={activeLocale} variant={ideaVariant} />
                             {messages.length <= 1 && (
                                 <fieldset className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                                     <legend className="px-1 text-xs font-medium text-slate-600">
