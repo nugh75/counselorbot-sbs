@@ -19,6 +19,7 @@ from ..ai_service import AIService, AIError
 from .. import pii
 from ..api_models import ChatRequest, QsaAuditRequest, TTSRequest
 from ..diagram_blocks import strip_for_speech
+from ..idea_map import IDEA_INSTRUMENT, IdeaMapError, apply_and_store, extract_patch
 from ..memory_service import session_memory
 from ..strategy_memory import shared_response_memory
 from ..skills import engine as skills_engine
@@ -314,6 +315,55 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
     return result
 
 
+IDEA_VARIANT_KEYS = {
+    "student-path": "prompt_idea_variant_student_path",
+    "student-open": "prompt_idea_variant_student_open",
+    "research": "prompt_idea_variant_research",
+}
+
+
+def _apply_idea_variant_directive(system_prompt: str, ai_service, request) -> str:
+    """Aggiunge la direttiva della variante scelta all'avvio della sessione Idea.
+
+    Variante ignota o assente: vale quella piu' prudente, l'idea libera, che non
+    aggancia il percorso di studio ne' legge niente di psicologico.
+    """
+    if (request.questionnaire_type or "") != IDEA_INSTRUMENT:
+        return system_prompt
+    key = IDEA_VARIANT_KEYS.get(request.idea_variant or "", IDEA_VARIANT_KEYS["student-open"])
+    directive = ai_service.config.get(key, SYSTEM_PROMPT_DEFAULTS.get(key, ""))
+    if not directive or directive.strip() in system_prompt:
+        return system_prompt
+    return system_prompt.rstrip() + "\n\n" + directive.strip()
+
+
+def _apply_idea_patch(response_content: str, *, questionnaire_type: str, username: str | None,
+                      session_id: str, step_id: str | None) -> tuple[str, int | None]:
+    """Toglie la patch della mappa dal testo e la fonde nella mappa di sessione.
+
+    Il blocco non deve arrivare allo studente ne' finire nella memoria della
+    sessione: e' l'istruzione con cui il modello disegna, non una sua frase.
+    """
+    if questionnaire_type != IDEA_INSTRUMENT or not username:
+        return response_content, None
+    cleaned, patch = extract_patch(response_content)
+    if patch is None:
+        return cleaned, None
+    map_db = database.SessionLocal()
+    try:
+        revision = apply_and_store(
+            map_db, username, session_id, patch, source="turn", step_id=step_id
+        )
+        return cleaned, revision.id
+    except IdeaMapError as exc:
+        # Patch fuori contratto: la mappa resta quella di prima e la risposta
+        # resta leggibile. La sessione non si interrompe per un disegno.
+        logger.info("Patch della mappa Idea non applicata (%s): %s", session_id, exc)
+        return cleaned, None
+    finally:
+        map_db.close()
+
+
 @router.post("/chat")
 async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db), identity: dict = Depends(auth.get_identity_view_as)):
     session_id = request.session_id or str(uuid.uuid4())
@@ -330,6 +380,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
     system_prompt = _apply_global_directives(system_prompt, request.language, db)
     system_prompt = _apply_response_length_directive(system_prompt, request.response_length)
+    system_prompt = _apply_idea_variant_directive(system_prompt, ai_service, request)
     effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)
 
     # 1b. Reset memoria se inizia una nuova analisi guidata (primo step)
@@ -496,6 +547,13 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
                 response_content, questionnaire_type, request.language, _phase_factor_codes(db, request.phase)
             )
     response_content, _ = _limit_visible_words(response_content, request.response_length)
+    response_content, idea_revision_id = _apply_idea_patch(
+        response_content,
+        questionnaire_type=questionnaire_type,
+        username=identity.get("username"),
+        session_id=session_id,
+        step_id=request.phase,
+    )
 
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         step_label = _sanitize_ztpi_step_label(step_label, request.language)
@@ -580,6 +638,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         "strategy_ids": strategy_ids,
         "certified_strategy_ids": certified_strategy_ids,
         "response_id": response_id,
+        "idea_revision_id": idea_revision_id,
     }
 
 
@@ -608,6 +667,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
     system_prompt = _apply_global_directives(system_prompt, request.language, db)
     system_prompt = _apply_response_length_directive(system_prompt, request.response_length)
+    system_prompt = _apply_idea_variant_directive(system_prompt, ai_service, request)
     effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)
 
     is_first_step = False
@@ -859,6 +919,13 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     response_content, questionnaire_type, request.language, _phase_factor_codes(db, request.phase)
                 )
             response_content, _ = _limit_visible_words(response_content, request.response_length)
+            response_content, idea_revision_id = _apply_idea_patch(
+                response_content,
+                questionnaire_type=questionnaire_type,
+                username=identity.get("username"),
+                session_id=session_id,
+                step_id=request.phase,
+            )
             if not response_content.strip():
                 raise AIError(
                     "Il provider AI ha terminato lo stream senza contenuto visibile. "
@@ -895,7 +962,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
 
             response_id = _log_stream(response_content, usage_info)
 
-            yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': certified_strategy_ids, 'response_id': response_id})}\n\n"
+            yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': certified_strategy_ids, 'response_id': response_id, 'idea_revision_id': idea_revision_id})}\n\n"
         except Exception as e:
             logger.error(f"Errore stream chat session {session_id}: {e}")
             try:

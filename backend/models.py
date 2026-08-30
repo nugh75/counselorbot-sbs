@@ -892,3 +892,22 @@ class GuidedStepSkill(Base):
     sort_order = Column(Integer, nullable=False, default=0)
     enabled = Column(Boolean, nullable=False, default=True)
     override_params = Column(JSON, nullable=True)
+
+
+class IdeaMapRevision(Base):
+    """Mappa della sessione Idea, append-only.
+
+    La revisione piu' recente per `session_id` e' la mappa corrente; le
+    precedenti sono lo storico del pensiero e restano leggibili. Non si
+    modifica una revisione: se ne aggiunge un'altra.
+    """
+
+    __tablename__ = "idea_map_revisions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, nullable=False, index=True)
+    session_id = Column(String, nullable=False, index=True)
+    spec = Column(JSON, nullable=False)
+    source = Column(String, nullable=False, default="turn")  # turn|manual|synthesis
+    step_id = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

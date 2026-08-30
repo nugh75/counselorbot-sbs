@@ -23,12 +23,15 @@ CounselorBot is an AI-powered web app that helps students analyze learning/caree
 | QAP | Career adaptability | — |
 | EVENTO_STUDIO | Significant study events (narrative, no dimensions) | — |
 | EVENTO_PROFESSIONALE | Significant professional events (narrative, no dimensions) | — |
+| IDEA | Free chat that brings one idea into focus, building a cumulative map (no questionnaire, no scores) | — |
 
 ### Glossary (student-facing terminology — use consistently)
 - **Profilo (profile)**: the outcome of a questionnaire from the Competenze Strategiche site — a set of factor scores (`QuestionnaireResult`). "Profilo" refers ONLY to this.
 - **Taccuino (notebook)**: the student's self-declared notes about themselves — the open learner model (`LearnerProfileRevision`, `/user/learner-profile` API). Internal identifiers keep the `learner_profile` name; UI must say taccuino/notebook.
 - **Libretto (booklet)**: per-instrument reflection on a dimension (`StudentBooklet`).
 - **Portfolio**: collection of the student's works (`PortfolioItem`).
+- **Idea**: the free-chat instrument that brings a still-shapeless idea into focus (code `IDEA`). Same name in every language except FR *Idée*, DE *Idee*, SV *Idé*.
+- **Mappa (map)**: the artefact an Idea session produces (`IdeaMapRevision`) — one per session, growing every turn. EN map, ES mapa, FR carte, DE Karte, SV karta. It is none of profilo/taccuino/libretto/portfolio, though a finished map can become a portfolio work.
 - **Gruppo/Classe (group/class)**: a teacher's autonomous class (`StudentGroup`), independent of questionnaires. Students join via invite code `GR-XXXXXX` (web `/gruppo?g=CODE`, class code from personal area, or Telegram deep link) → `GroupMembership`. Shared with co-teachers via `GroupShare`. An `AdministrationPlan` can attach a group (`group_id`) to tag results. Teacher notes/messages (`TeacherNote`) live on the group.
 - Per-language pairs (taccuino / libretto): IT taccuino/libretto, EN notebook/booklet, ES cuaderno/cuadernillo, FR carnet/livret, DE Notizbuch/Arbeitsheft, SV anteckningsbok/arbetshäfte. The personal page (`/profilo` route) is labelled "Area personale" (personal area); role-preview identities are "account di prova" (test accounts), not "profili".
 
@@ -82,6 +85,7 @@ ai4auth forward-auth at the edge (Nginx). Proxy injects `Remote-*` headers → p
 - **WebLookupCache**: memoria delle consultazioni esterne (`web_lookup_cache`, TTL 30 giorni), cosi' la stessa sinossi non ricompra la stessa pagina. Client in `backend/web_lookup.py`: whitelist chiusa di fonti (Wikipedia, Treccani — enciclopedia e vocabolario, Open Library, Google Books, OpenAlex, Europe PMC — che copre gli abstract che OpenAlex non puo' ridistribuire), URL ricontrollato contro i domini ammessi, query ripulita dalle PII anche a redazione dei log spenta e ridotta all'entita' cercata (l'apertura interrogativa viene tolta: "cos'e' la metacognizione?" esce come "metacognizione"), titolo trovato validato: contro il titolo atteso per una sinossi (scarta la pagina dell'autore e l'omonimo che allunga il titolo), contro la domanda stessa per una ricerca libera, con tolleranza morfologica ("procrastinare" trova "Procrastinazione") — senza quel secondo controllo una redirezione dell'enciclopedia diventa una risposta sicura di se' e sbagliata ("Mindset" rispondeva "The Witch"). Piu' il controllo del medium: un film omonimo non diventa la sinossi di un saggio. La chiave di cache porta una versione, cosi' una regola corretta non lascia in memoria per trenta giorni le risposte accettate da quella vecchia. Google Books richiede `GOOGLE_BOOKS_API_KEY`: senza chiave la fonte viene saltata. Una voce con DOI si risolve, non si cerca per titolo; un film viene ritentato col qualificatore dell'enciclopedia ("Lady Bird (film)", "Inside Out (film 2015)") perche' il titolo nudo finisce sull'omonimo o sul seguito. Il testo viene ripulito dal rumore di catalogo (grassetti, note `[2]`, riga di attribuzione) e archiviato sotto la lingua in cui la fonte ha risposto, non sotto quella richiesta: Open Library risponde nella lingua dell'edizione. CLI: `python -m backend.web_lookup "<query>" --source wikipedia --lang it`.
 - **Skill / GuidedStepSkill**: declarative skills injected into the chat prompt (conditions, multilingual instructions, optional Python handler) and their binding to instrument/step (`step_id = "*"` = every step). Engine in `backend/skills/`, intent rules in `backend/skills/intents.py`, seed and one-time rollout policies in `backend/skills_seed.py` (`skills_certified_advice_policy_v1`, `skills_specialized_behaviors_v1`, `skills_reading_sources_and_i18n_v1` — each applied once, never overwriting admin edits), API `/admin/skills`. The admin preview exposes the detected intent. Enabled by default for QSA, QSAr, ZTPI, QPCS, QPCC, QAP and SAVICKAS; the admin can still disable the global flag as a rollback.
 - **PqblDocument / PqblQuestion / PqblSession / PqblAttempt**: PQBL (Problem/Question-Based Learning) — uploaded PDFs, generated MCQs, student sessions, answer attempts
+- **IdeaMapRevision**: the map of an Idea session, append-only. The newest row per `session_id` is the current map, earlier ones are the history of the thinking. The model never rewrites the map: it emits a patch (`add_nodes`/`add_edges`/`update`/`remove`) in a fenced ```idea block, `backend/idea_map.py` merges it and writes a new revision, and the block is stripped from the reply before it reaches the student, the transcript or the session memory. A node carries a `role` from a closed vocabulary (idea, assumption, evidence, alternative, implication, open-question, constraint, step) which decides its icon and is spoken in the textual description; an idea counts as focused when idea + assumption + open-question + step are all on the map. Drawn as the `mindmap` diagram type (Graphviz `twopi`, ceiling 24 nodes / 30 edges instead of the 8/12 of an in-chat illustration). Behind config `feature_idea_focus`, which ships off. The skill `idea-focus` carries the patch contract and binds to IDEA alone — `concept-diagram` forbids replacing prose with a drawing, the opposite of what Idea does, so the two must never share a prompt.
 - **ValidationResponse**: psychometric validation data
 
 ### Prompts: code defaults vs DB (important)
@@ -156,6 +160,13 @@ make prompt-test Q=QSA STEP=intro COUNSELOR=7 STUDENT=barbaraambu RESP_LANG=en  
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | `GET` | `/api/qsa/guided-ui-texts?questionnaire_type=QSA&lang=it` | — | Get guided steps + suggested questions for student UI |
+| `GET` | `/api/idea/map?session_id=…` | student | Current Idea map + which of the four roles it still lacks |
+| `GET` | `/api/idea/map/history?session_id=…` | student | Stages of the map |
+| `POST` | `/api/idea/map/patch` | student | Apply a patch by hand (the chat applies its own server-side) |
+| `GET` | `/api/idea/map/image?session_id=…&theme=&format=` | student | Draw the map (SVG or PNG) |
+| `GET` | `/api/idea/map/pdf?session_id=…` | student | Map, description and stages as PDF |
+| `POST` | `/api/idea/map/portfolio` | student | Keep the map as a portfolio work |
+| `POST` | `/api/idea/map/notebook` | student | Add one line about the idea to the notebook |
 | `POST` | `/api/chat` | student | Non-streaming chat turn |
 | `POST` | `/api/chat/stream` | student | SSE streaming chat turn (filesystem route) |
 | `POST` | `/api/chat/message` | student | Chat message logging |
