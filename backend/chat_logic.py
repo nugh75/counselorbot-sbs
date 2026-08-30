@@ -22,7 +22,7 @@ from .strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_mem
 from .certified_strategy_service import certified_strategy_memory
 from .skills import engine as skills_engine
 from .skills import intents as skills_intents
-from .guided_step_label_i18n import resolve_step_label
+from .guided_step_label_i18n import STEP_LABEL_I18N, resolve_step_label
 from .rag_index import site_rag_index, counselorbot_rag_index, questionari_rag_index, build_context as rag_build_context
 from .api_models import ChatRequest
 from .prompt_config import (
@@ -204,6 +204,13 @@ def _ensure_questionnaire_guided_steps(db, questionnaire_type: str) -> None:
             continue
         payload = dict(step_def)
         payload["questionnaire_type"] = questionnaire_type
+        # Le traduzioni delle etichette sono seminate all'avvio; uno step creato
+        # dopo, alla prima richiesta dello strumento, resterebbe solo in
+        # italiano nelle altre cinque lingue.
+        if not payload.get("label_i18n"):
+            translations = STEP_LABEL_I18N.get(step_def["id"])
+            if translations:
+                payload["label_i18n"] = dict(translations)
         db.add(models.GuidedStep(**payload))
         changed = True
 
