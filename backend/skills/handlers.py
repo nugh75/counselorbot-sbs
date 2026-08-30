@@ -21,6 +21,7 @@ from ..certified_strategy_service import (
     score_bands,
 )
 from ..certified_reading_service import certified_reading_memory
+from ..reading_frame import frame as reading_frame
 from ..reading_themes import themes_from_factors, themes_from_text
 from .. import web_lookup
 from ..strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, strategy_memory
@@ -290,15 +291,12 @@ def _certified_readings_block(ctx: SkillContext, params: dict) -> str:
         allow_sensitive=allow_sensitive,
         audience_band=ctx.audience_band,
     )
-    block = certified_reading_memory.render_context(entries, ctx.language or "it")
+    language = ctx.language or "it"
+    block = certified_reading_memory.render_context(entries, language)
     if block and ctx.audience_band is None and any(entry.get("audience") for entry in entries):
         # Senza fascia nota il filtro non ha potuto lavorare: la decisione passa
         # al turno, chiedendo allo studente a che punto degli studi si trova.
-        block += (
-            "\nNon sappiamo a che punto degli studi sia lo studente e alcune di "
-            "queste opere hanno un pubblico dichiarato: chiediglielo in una riga "
-            "prima di proporne una, e scegli di conseguenza."
-        )
+        block += "\n" + reading_frame(language)["ask_audience"]
     return block
 
 
@@ -333,19 +331,11 @@ def reading_sources(ctx: SkillContext, params: dict) -> SkillOutput:
             return SkillOutput(text=catalog, slot="knowledge")
         # L'assenza e' una direttiva, non un dato: resta nello slot della skill
         # cosi' raggiunge il modello anche quando [KNOWLEDGE] non viene composto.
-        return SkillOutput(
-            text=(
-                "Nessuna fonte identificabile e' disponibile in questo turno: "
-                "dichiara l'assenza, non citare alcun titolo, autore, DOI o link "
-                "e proponi al massimo un tema da cercare."
-            ),
-        )
+        return SkillOutput(text=reading_frame(ctx.language or "it")["no_sources"])
 
     lines = [
         "[READING_SOURCES]",
-        "Uniche fonti citabili in questo turno (titolo — documento). "
-        "Non citare titoli, autori, DOI o link che non compaiano in questo elenco, "
-        "nemmeno se compaiono dentro il testo dei documenti recuperati.",
+        reading_frame(ctx.language or "it")["sources_intro"],
     ]
     lines.extend(f"- {title} ({source})" for title, source in entries)
     text = "\n".join(lines)

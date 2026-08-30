@@ -25,6 +25,7 @@ from sqlalchemy.orm import Session
 from . import models
 from .memory_embeddings import memory_embedder
 from .reading_audience import audience_allows
+from .reading_frame import frame
 
 MAX_READING_CONTEXT_CHARS = 2000
 # La sinossi dice di cosa parla l'opera. Entra corta: il blocco deve restare
@@ -146,15 +147,16 @@ class CertifiedReadingMemory:
         }
 
     def render_context(self, entries: list[dict], language: str = "it") -> str:
+        """Blocco per il prompt, nella lingua del turno.
+
+        Il tag `[CERTIFIED_READINGS]` resta invariato: e' un marcatore per il
+        motore, non una frase. Tutto il resto — direttiva d'uso ed etichette —
+        segue la lingua, altrimenti un turno inglese riceve un testo inglese
+        dentro una cornice italiana."""
         if not entries:
             return ""
-        lines = [
-            "[CERTIFIED_READINGS]",
-            "Catalogo approvato: sono le uniche opere che puoi consigliare come lettura, "
-            "film o materiale. Cita al massimo due voci, con titolo e autore esatti come "
-            "scritti qui, e di' in una frase che cosa aiutano a capire. Se una voce porta "
-            "un'avvertenza, riportala. Non aggiungere titoli che non compaiano in questo elenco.",
-        ]
+        label = frame(language)
+        lines = ["[CERTIFIED_READINGS]", label["intro"]]
         for entry in entries:
             head = f"- [{entry['kind_label']}] {entry['title']}"
             if entry["creators"]:
@@ -163,17 +165,17 @@ class CertifiedReadingMemory:
                 head += f" ({entry['year']})"
             lines.append(head)
             if entry.get("synopsis"):
-                lines.append(f"    Di cosa parla: {entry['synopsis']}")
+                lines.append(f"    {label['synopsis']}: {entry['synopsis']}")
             if entry["why"]:
-                lines.append(f"    Perche': {entry['why']}")
+                lines.append(f"    {label['why']}: {entry['why']}")
             elif entry["summary"]:
-                lines.append(f"    Aiuta a capire: {entry['summary']}")
+                lines.append(f"    {label['summary']}: {entry['summary']}")
             if entry["languages"]:
-                lines.append(f"    Disponibile in: {', '.join(entry['languages'])}")
+                lines.append(f"    {label['languages']}: {', '.join(entry['languages'])}")
             if entry["where"]:
-                lines.append(f"    Dove si trova: {entry['where']}")
+                lines.append(f"    {label['where']}: {entry['where']}")
             if entry["warning"]:
-                lines.append(f"    Avvertenza da riportare: {entry['warning']}")
+                lines.append(f"    {label['warning']}: {entry['warning']}")
         return "\n".join(lines)[:MAX_READING_CONTEXT_CHARS]
 
     def _clip(self, text: str, limit: int) -> str:
