@@ -152,7 +152,17 @@ function splitBareDiagrams(text: string): DiagramContentSegment[] {
     return segments;
 }
 
-export function splitDiagramContent(content: string): DiagramContentSegment[] {
+// La patch della mappa di Idea non e' un messaggio: il server la fonde nella
+// mappa e la toglie dal testo salvato. Durante lo streaming, pero', il blocco
+// arriva al browser mentre si scrive, e anche non chiuso: qui sparisce.
+const IDEA_PATCH_FENCE_RE = /```idea\s*[\s\S]*?(?:```|$)/gi;
+
+export function stripIdeaPatches(content: string): string {
+    return content.replace(IDEA_PATCH_FENCE_RE, '');
+}
+
+export function splitDiagramContent(rawContent: string): DiagramContentSegment[] {
+    const content = stripIdeaPatches(rawContent);
     const segments: DiagramContentSegment[] = [];
     let cursor = 0;
 

@@ -46,7 +46,7 @@ interface SavedResult {
     submitted_at: string;
 }
 
-const STARTABLE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
+const STARTABLE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', 'IDEA'];
 
 // Agent-only questionnaires skip the score-input flow and go straight to the AI-led
 // guided chat. Currently only Savickas is agent-only.
