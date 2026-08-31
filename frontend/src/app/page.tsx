@@ -714,7 +714,7 @@ export default function Home() {
 
     return (
         <div className="page-wide space-y-8">
-            {step !== 'intro' && step !== 'base' && <FlowStepper steps={flowStages} current={stageIndex} />}
+            {step !== 'intro' && step !== 'base' && !(step === 'counselor-select' && counselorOpenedFromHome) && <FlowStepper steps={flowStages} current={stageIndex} />}
 
             {/* The selection screen owns its introduction to avoid repeating the page purpose. */}
             {/* method-select e manual-input gestiscono la loro "prima riga" */}
@@ -774,12 +774,7 @@ export default function Home() {
                             questionnaireName={selectedQuestionnaire?.name}
                             questionnaireType={selectedQuestionnaire?.id}
                             onBack={goBack}
-                            onContinue={() => {
-                                if (counselorOpenedFromHome) {
-                                    setCounselorOpenedFromHome(false);
-                                    setStep(homeStep());
-                                    return;
-                                }
+                            onContinue={counselorOpenedFromHome ? undefined : () => {
                                 void proceedAfterCounselor(selectedQuestionnaire, scores);
                             }}
                         />
