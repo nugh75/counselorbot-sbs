@@ -933,3 +933,30 @@ class IdeaReference(Base):
     text = Column(Text, nullable=False)
     truncated = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class ContentLanguageVersion(Base):
+    """Stato di certificazione di un contenuto in una lingua.
+
+    Autorita' sullo STATO, non sul contenuto: il testo resta nella sua tabella.
+    Tenere separate le due cose evita che una promozione riscriva un testo o che
+    una correzione di testo cambi in silenzio uno stato di certificazione.
+    """
+
+    __tablename__ = "content_language_versions"
+    __table_args__ = (
+        UniqueConstraint("content_type", "content_key", "locale", name="uq_content_language_version"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    content_type = Column(String, nullable=False, index=True)   # instrument | certified_strategy | ...
+    content_key = Column(String, nullable=False, index=True)    # codice strumento, slug, ...
+    locale = Column(String, nullable=False, index=True)
+    status = Column(String, nullable=False, default="draft")
+    source = Column(String, nullable=True)                      # human | published:<rif> | llm:<modello>
+    version_label = Column(String, nullable=True)               # aggancia le validation_responses
+    approved_by = Column(String, nullable=True)
+    approved_at = Column(DateTime(timezone=True), nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
