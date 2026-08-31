@@ -49,7 +49,15 @@ export interface IdeaNextStep {
     node_id?: string;
     statuses: Record<string, string>;
     flaws: Record<string, string>;
+    turns_used: number;
+    budget: number;
+    pace_stops: number[];
 }
+
+// Quanto dura una sessione, in scambi. 0 = finche' serve. L'app non puo'
+// misurare i minuti, puo' contare i turni.
+export const IDEA_PACE_STOPS = [8, 16, 30, 0] as const;
+export const IDEA_PACE_DEFAULT = 16;
 
 // Il percorso non e' una sequenza: quale passo tocca dipende da cosa manca
 // alla mappa, e quello lo sa il server.
@@ -57,8 +65,9 @@ export async function fetchIdeaNextStep(
     sessionId: string,
     lang: string,
     variant: IdeaVariant,
+    budget = 0,
 ): Promise<IdeaNextStep | null> {
-    const params = new URLSearchParams({ session_id: sessionId, lang, variant });
+    const params = new URLSearchParams({ session_id: sessionId, lang, variant, budget: String(budget) });
     const response = await apiFetch(`/api/idea/next-step?${params.toString()}`);
     if (!response.ok) return null;
     return response.json() as Promise<IdeaNextStep>;

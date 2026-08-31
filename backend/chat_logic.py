@@ -23,6 +23,8 @@ from .certified_strategy_service import certified_strategy_memory
 from .skills import engine as skills_engine
 from .skills import intents as skills_intents
 from .guided_step_label_i18n import STEP_LABEL_I18N, resolve_step_label
+from sqlalchemy import func
+
 from .idea_map import IDEA_INSTRUMENT, map_context_for
 from .rag_index import site_rag_index, counselorbot_rag_index, questionari_rag_index, build_context as rag_build_context
 from .api_models import ChatRequest
@@ -2234,6 +2236,29 @@ def _student_booklet_context(db, username: str, questionnaire_type: str, session
     return "\n".join(lines)[:MAX_BOOKLET_CONTEXT_CHARS]
 
 
+def _idea_turns_used(db, session_id: str) -> int:
+    """Scambi gia' fatti in questa sessione di Idea.
+
+    Si contano i turni registrati, non le revisioni della mappa: un turno che
+    non ha prodotto una patch e' comunque tempo speso, ed e' proprio quello che
+    la durata deve tenere in conto.
+    """
+    try:
+        return int(
+            db.query(func.count(models.Log.id))
+            .filter(
+                models.Log.session_id == session_id,
+                models.Log.questionnaire_type == IDEA_INSTRUMENT,
+                models.Log.action == "chat_message",
+            )
+            .scalar()
+            or 0
+        )
+    except Exception as exc:  # pragma: no cover - il passo non deve fermare la chat
+        logger.debug("Conteggio turni Idea non riuscito: %s", exc)
+        return 0
+
+
 def build_context_envelope(
     db,
     ai_service,
@@ -2410,6 +2435,8 @@ def build_context_envelope(
         idea_map_block = map_context_for(
             db, username_for_context, session_id,
             message=request.message or "", lang=language,
+            turns_used=_idea_turns_used(db, session_id),
+            budget=getattr(request, "idea_budget", None),
         )
         if components is not None:
             components["idea_map"] = idea_map_block

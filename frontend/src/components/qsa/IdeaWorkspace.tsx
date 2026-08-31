@@ -7,7 +7,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { IdeaBranchTree } from '@/components/qsa/IdeaBranchTree';
 import { IdeaConclusion } from '@/components/qsa/IdeaConclusion';
 import { IdeaMapPanel } from '@/components/qsa/IdeaMapPanel';
-import type { IdeaNextStep, IdeaVariant } from '@/lib/idea-map';
+import { IDEA_PACE_STOPS, type IdeaNextStep, type IdeaVariant } from '@/lib/idea-map';
 
 interface IdeaWorkspaceProps {
     sessionId: string;
@@ -15,6 +15,9 @@ interface IdeaWorkspaceProps {
     locale: string;
     variant: IdeaVariant;
     move: IdeaNextStep | null;
+    // Quanti scambi si vuole che duri. 0 = finche' serve.
+    budget: number;
+    onBudgetChange: (budget: number) => void;
     onFocusMoved: () => void;
 }
 
@@ -22,7 +25,7 @@ interface IdeaWorkspaceProps {
 // allontanavano a ogni turno, e la mappa e' la cosa che deve restare sempre a
 // portata. Collassabile perche' su uno schermo piccolo la conversazione viene
 // prima.
-export function IdeaWorkspace({ sessionId, version, locale, variant, move, onFocusMoved }: IdeaWorkspaceProps) {
+export function IdeaWorkspace({ sessionId, version, locale, variant, move, budget, onBudgetChange, onFocusMoved }: IdeaWorkspaceProps) {
     const { t } = useI18n();
     // Aperto di default: la mappa e' la cosa che deve stare sotto gli occhi.
     const [open, setOpen] = useState(true);
@@ -75,6 +78,35 @@ export function IdeaWorkspace({ sessionId, version, locale, variant, move, onFoc
             </button>
 
             <div id="idea-workspace" className={cn('border-t border-slate-200', !open && 'hidden')}>
+                {/* La durata si cambia anche a meta' strada: ci si accorge di
+                    avere meno tempo mentre si parla, non prima. */}
+                <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-4 py-2.5">
+                    <label htmlFor="idea-pace" className="text-xs font-medium text-slate-600">
+                        {t('idea.pace.label')}
+                    </label>
+                    <input
+                        id="idea-pace"
+                        type="range"
+                        min={0}
+                        max={IDEA_PACE_STOPS.length - 1}
+                        step={1}
+                        value={Math.max(0, IDEA_PACE_STOPS.indexOf(budget as never))}
+                        onChange={(event) => onBudgetChange(IDEA_PACE_STOPS[Number(event.target.value)])}
+                        className="h-1.5 w-40 cursor-pointer accent-teal-700"
+                        aria-valuetext={budget === 0 ? t('idea.pace.unlimited') : `${budget}`}
+                    />
+                    <span className="text-xs text-slate-500">
+                        {budget === 0
+                            ? t('idea.pace.unlimited')
+                            : `${move?.turns_used ?? 0} / ${budget} ${t('idea.pace.turns')}`}
+                    </span>
+                    {budget > 0 && (move?.turns_used ?? 0) >= budget * 0.75 && (
+                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-800">
+                            {t('idea.pace.nearingEnd')}
+                        </span>
+                    )}
+                </div>
+
                 <div className="grid gap-0 lg:grid-cols-3">
                     <div className="border-b border-slate-200 lg:border-b-0 lg:border-r">
                         <h4 className="px-3 pt-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
