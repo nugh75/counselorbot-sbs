@@ -15,6 +15,7 @@ from typing import Dict, List
 from sqlalchemy.orm import Session
 
 from . import models
+from .i18n_fields import localized
 from .memory_embeddings import memory_embedder
 
 MAX_CERTIFIED_CONTEXT_CHARS = 1400
@@ -268,9 +269,16 @@ class CertifiedStrategyMemory:
         return 0
 
     def _localized(self, row: models.CertifiedStrategy, prefix: str, language: str) -> str:
+        """Testo nella lingua del turno, con ripiego sull'italiano.
+
+        Il ripiego resta di proposito: toglierlo significherebbe non consegnare
+        nessun consiglio certificato nelle lingue non ancora tradotte, e l'app
+        peggiorerebbe invece di migliorare. Lo stato per lingua e' nel registro
+        `content_language_versions`: quando le traduzioni saranno riviste e
+        certificate, il cancello potra' sostituire questo ripiego.
+        """
         lang = language or "it"
-        value = getattr(row, f"{prefix}_{lang}", None) or getattr(row, f"{prefix}_it", None)
-        return (value or "").strip()
+        return (localized(row, prefix, lang) or localized(row, prefix, "it") or "").strip()
 
     def _terms(self, text: str) -> set[str]:
         return set(re.findall(r"[A-Za-zÀ-ÿ0-9]{2,}", (text or "").casefold()))
