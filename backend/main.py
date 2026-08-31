@@ -620,6 +620,7 @@ def _seed_and_migrate():
             ("monthly_budget_usd", "0", "Budget mensile in USD; superato il limite si usano solo modelli Ollama locali (0 = nessun limite)."),
             ("budget_fallback_model", "muse-glimmer:30b", "Modello Ollama locale usato quando il budget mensile e' superato."),
             ("readings_allow_sensitive", "false", "Se true, le letture marcate sensibili possono essere proposte allo studente quando e' lui a nominare quel tema. Spenta: restano solo nel catalogo admin."),
+            ("counselor_restricted_instruments", '["IDEA"]', "Strumenti a invito: un counselor li serve solo se li elenca nei suoi questionari. Per gli altri strumenti, lista vuota continua a valere 'tutti'."),
             ("feature_idea_focus", "false", "Strumento Idea (chat libera che mette a fuoco un'idea costruendo una mappa). Spento: non compare fra gli strumenti e gli endpoint della mappa rispondono 404."),
         ]:
             if not db.query(models.Config).filter(models.Config.key == key).first():
