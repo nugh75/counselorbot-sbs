@@ -12,6 +12,7 @@ import json
 import logging
 
 from . import models
+from .skills.engine import DEFAULT_TOTAL_MAX_CHARS
 
 logger = logging.getLogger(__name__)
 
@@ -189,6 +190,10 @@ DIAGRAM_EDGE_KINDS_POLICY_MARKER = "skills_diagram_edge_kinds_v1"
 DIAGRAM_ICONS_POLICY_MARKER = "skills_diagram_icons_v1"
 IDEA_FOCUS_POLICY_MARKER = "skills_idea_focus_v2"
 IDEA_WAYFINDER_POLICY_MARKER = "skills_idea_wayfinder_v1"
+SKILLS_BUDGET_POLICY_MARKER = "skills_total_budget_4500_v1"
+# Valore di serie prima dell'allargamento: le installazioni ferme li' sono
+# le uniche da aggiornare.
+PREVIOUS_TOTAL_MAX_CHARS = "3000"
 # Contratto della mappa prima della diagnosi wayfinder: riconosce le
 # installazioni ancora sul testo di serie, le uniche da aggiornare.
 IDEA_FOCUS_INSTRUCTIONS_EN_V1_MD5 = "b324b198d0f5f90d660819c980b43848"
@@ -213,7 +218,7 @@ SKILL_CONFIG_DEFAULTS = (
     ("skills_router_threshold", "3", "Numero di skill opzionali candidate oltre il quale interviene il router LLM."),
     ("skills_router_model", "", "Modello usato dal router delle skill; vuoto = modello attivo."),
     ("skills_router_timeout_s", "6", "Timeout in secondi della chiamata di routing delle skill."),
-    ("skills_total_max_chars", "3000", "Tetto complessivo in caratteri dei blocchi prodotti dalle skill."),
+    ("skills_total_max_chars", str(DEFAULT_TOTAL_MAX_CHARS), "Tetto complessivo in caratteri dei blocchi prodotti dalle skill."),
     (
         "web_lookup_enabled",
         "true",
@@ -683,6 +688,38 @@ def apply_idea_wayfinder_policy(db) -> bool:
         key=IDEA_WAYFINDER_POLICY_MARKER,
         value="applied",
         description="Migrazione una tantum: diagnosi wayfinder nel contratto della mappa Idea.",
+    ))
+    db.commit()
+    return updated
+
+
+def apply_skills_budget_policy(db) -> bool:
+    """Allarga il budget complessivo delle skill, una sola volta.
+
+    Il valore e' gia' scritto negli impianti esistenti, percio' il seed non lo
+    tocca. Qui si alza solo dove e' rimasto quello di serie: chi l'ha regolato
+    a mano sa perche' l'ha fatto.
+    """
+    marker = db.query(models.Config).filter(
+        models.Config.key == SKILLS_BUDGET_POLICY_MARKER
+    ).first()
+    if marker is not None:
+        return False
+
+    row = db.query(models.Config).filter(
+        models.Config.key == "skills_total_max_chars"
+    ).first()
+    updated = False
+    if row is not None and str(row.value).strip() == PREVIOUS_TOTAL_MAX_CHARS:
+        row.value = str(DEFAULT_TOTAL_MAX_CHARS)
+        updated = True
+    elif row is not None:
+        logger.info("skills_total_max_chars regolato dall'admin (%s): non toccato", row.value)
+
+    db.add(models.Config(
+        key=SKILLS_BUDGET_POLICY_MARKER,
+        value="applied",
+        description="Migrazione una tantum: budget complessivo delle skill portato a 4500.",
     ))
     db.commit()
     return updated
