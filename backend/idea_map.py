@@ -20,7 +20,10 @@ from sqlalchemy.orm import Session
 
 from . import models
 from .diagram_render import (
+    NODE_FLAWS,
     NODE_ROLES,
+    NODE_STATUSES,
+    TASK_TYPES,
     DiagramEdge,
     DiagramNode,
     DiagramSpec,
@@ -33,10 +36,86 @@ logger = logging.getLogger(__name__)
 IDEA_INSTRUMENT = "IDEA"
 FEATURE_KEY = "feature_idea_focus"
 
-# Una mappa e' "a fuoco" quando il ragionamento ha tutte e quattro le gambe:
-# di cosa parliamo, cosa sto dando per scontato, cosa non so ancora, cosa
-# faccio adesso. Finche' ne manca una, la sessione non e' chiusa.
+# Senza un tipo di lavoro dichiarato valgono le quattro gambe generiche: di
+# cosa parliamo, cosa do per scontato, cosa non so ancora, cosa faccio adesso.
 REQUIRED_ROLES = ("idea", "assumption", "open-question", "step")
+
+# Un albero piu' profondo di questo non e' messa a fuoco, e' procrastinazione
+# strutturata: idea -> task -> sotto-task, e basta.
+MAX_TASK_DEPTH = 2
+
+# Cosa deve produrre il lavoro decide quando l'idea e' a fuoco. `required` sono
+# i ruoli che devono comparire nel ramo di quel task; `pivot` e' la domanda che
+# in quel genere di lavoro manca sempre, e che il percorso deve fare almeno una
+# volta prima di poter chiudere.
+TASK_PROFILES: dict[str, dict] = {
+    # --- deve produrre un'affermazione da difendere ---
+    "thesis-chapter": {
+        "family": "claim",
+        "required": ("idea", "evidence", "alternative"),
+        "pivot": "what do you have to convince the reader to believe?",
+    },
+    "article": {
+        "family": "claim",
+        "required": ("idea", "evidence", "alternative"),
+        "pivot": "what does the field currently hold that you are changing?",
+    },
+    "position": {
+        "family": "claim",
+        "required": ("idea", "evidence", "alternative"),
+        "pivot": "who is right if you are wrong?",
+    },
+    # --- deve produrre una domanda a cui rispondere ---
+    "research-question": {
+        "family": "question",
+        "required": ("idea", "open-question", "constraint"),
+        "pivot": "what would you see, if it were false?",
+    },
+    "systematic-review": {
+        "family": "question",
+        "required": ("idea", "open-question", "constraint"),
+        "pivot": "what does NOT go in, and why? Take one borderline case and decide it.",
+    },
+    # --- deve produrre un disegno da eseguire ---
+    "empirical-study": {
+        "family": "design",
+        "required": ("idea", "implication", "constraint", "step"),
+        "pivot": "compared to what?",
+    },
+    "teaching-unit": {
+        "family": "design",
+        "required": ("idea", "implication", "constraint", "step"),
+        "pivot": "how do you tell that they have learnt it?",
+    },
+    "intervention": {
+        "family": "design",
+        "required": ("idea", "implication", "constraint", "step"),
+        "pivot": "and if nothing changes?",
+    },
+    # --- deve produrre una scelta ---
+    "study-path": {
+        "family": "choice",
+        "required": ("idea", "alternative", "decision"),
+        "pivot": "what do you lose by choosing well?",
+    },
+    "personal-project": {
+        "family": "choice",
+        "required": ("idea", "alternative", "decision"),
+        "pivot": "who notices, if you do it?",
+    },
+}
+
+
+def required_roles(task_type: str | None) -> tuple[str, ...]:
+    """I ruoli che quel genere di lavoro deve avere per dirsi a fuoco."""
+    profile = TASK_PROFILES.get(task_type or "")
+    return tuple(profile["required"]) if profile else REQUIRED_ROLES
+
+
+def pivot_question(task_type: str | None) -> str:
+    """La domanda che in quel lavoro manca sempre."""
+    profile = TASK_PROFILES.get(task_type or "")
+    return profile["pivot"] if profile else ""
 
 # Il modello scrive la patch in un blocco recintato, come gia' fa per i
 # diagrammi. Solo i blocchi chiusi: durante lo streaming il fence aperto resta
@@ -55,6 +134,11 @@ class NodeUpdate(BaseModel):
     label: str | None = Field(default=None, min_length=1, max_length=80)
     role: str | None = Field(default=None, max_length=24)
     accent: bool | None = None
+    status: str | None = Field(default=None, max_length=16)
+    flaw: str | None = Field(default=None, max_length=16)
+    task_type: str | None = Field(default=None, max_length=24)
+    closed: bool | None = None
+    conclusion: str | None = Field(default=None, max_length=120)
 
 
 class IdeaPatch(BaseModel):
@@ -64,10 +148,10 @@ class IdeaPatch(BaseModel):
 
     type: Literal["idea-patch"] = "idea-patch"
     title: str | None = Field(default=None, max_length=80)
-    add_nodes: list[DiagramNode] = Field(default_factory=list, max_length=24)
-    add_edges: list[DiagramEdge] = Field(default_factory=list, max_length=30)
-    update: list[NodeUpdate] = Field(default_factory=list, max_length=24)
-    remove: list[str] = Field(default_factory=list, max_length=24)
+    add_nodes: list[DiagramNode] = Field(default_factory=list, max_length=32)
+    add_edges: list[DiagramEdge] = Field(default_factory=list, max_length=44)
+    update: list[NodeUpdate] = Field(default_factory=list, max_length=32)
+    remove: list[str] = Field(default_factory=list, max_length=32)
 
     def is_empty(self) -> bool:
         return not (self.add_nodes or self.add_edges or self.update or self.remove or self.title)
@@ -132,6 +216,18 @@ def apply_patch(current: DiagramSpec | None, patch: IdeaPatch, *,
             node.icon = NODE_ROLES.get(node.role) if node.role else node.icon
         if change.accent is not None:
             node.accent = change.accent
+        if change.status is not None:
+            node.status = change.status if change.status in NODE_STATUSES else None
+        if change.flaw is not None:
+            # Stringa vuota = il modello dichiara risolto il difetto che aveva
+            # marcato lui. I due calcolati tornano comunque dal server.
+            node.flaw = change.flaw if change.flaw in NODE_FLAWS else None
+        if change.task_type is not None:
+            node.task_type = change.task_type if change.task_type in TASK_TYPES else None
+        if change.closed is not None:
+            node.closed = change.closed
+        if change.conclusion is not None:
+            node.conclusion = change.conclusion
 
     if patch.remove:
         dropped = set(patch.remove)
@@ -156,7 +252,7 @@ def apply_patch(current: DiagramSpec | None, patch: IdeaPatch, *,
         node.accent = False
 
     try:
-        return parse_spec({
+        merged = parse_spec({
             "type": "mindmap",
             "title": title,
             "nodes": [node.model_dump() for node in nodes],
@@ -165,13 +261,194 @@ def apply_patch(current: DiagramSpec | None, patch: IdeaPatch, *,
     except DiagramSpecError as exc:
         raise IdeaMapError(str(exc)) from exc
 
+    merged = _limit_task_depth(merged)
+    return with_computed_flaws(merged)
 
-def missing_roles(spec: DiagramSpec | None) -> list[str]:
-    """Cosa manca perche' l'idea si possa dire a fuoco."""
+
+def _limit_task_depth(spec: DiagramSpec) -> DiagramSpec:
+    """Un task oltre la profondita' massima diventa un passo.
+
+    Non si scarta il nodo: quel pezzo di lavoro esiste davvero. A quella
+    profondita' pero' non e' un progetto da mettere a fuoco, e' l'azione
+    successiva, e chiamarlo cosi' e' piu' onesto che aprirgli un ramo.
+    """
+    changed = False
+    nodes = []
+    for node in spec.nodes:
+        copy = node.model_copy(deep=True)
+        if copy.role == "task" and task_depth(spec, copy.id) > MAX_TASK_DEPTH:
+            logger.info("Task %s oltre la profondita' massima: diventa un passo", copy.id)
+            copy.role = "step"
+            copy.icon = NODE_ROLES["step"]
+            copy.task_type = None
+            changed = True
+        nodes.append(copy)
+    return spec.model_copy(update={"nodes": nodes}) if changed else spec
+
+
+# --- l'albero: chi sta sotto chi ---------------------------------------------
+
+def _adjacency(spec: DiagramSpec) -> dict[str, set[str]]:
+    """Grafo non orientato: per la struttura conta il legame, non il verso."""
+    links: dict[str, set[str]] = {node.id: set() for node in spec.nodes}
+    for edge in spec.edges:
+        if edge.source in links and edge.target in links:
+            links[edge.source].add(edge.target)
+            links[edge.target].add(edge.source)
+    return links
+
+
+def root_id(spec: DiagramSpec) -> str | None:
+    """La radice: il nodo accentato, altrimenti il primo con ruolo idea."""
+    for node in spec.nodes:
+        if node.accent:
+            return node.id
+    for node in spec.nodes:
+        if node.role == "idea":
+            return node.id
+    return spec.nodes[0].id if spec.nodes else None
+
+
+def _is_task_node(node) -> bool:
+    return node.role in ("idea", "task")
+
+
+def _levels(spec: DiagramSpec) -> dict[str, int]:
+    """Distanza in archi dalla radice; assente = irraggiungibile."""
+    start = root_id(spec)
+    if start is None:
+        return {}
+    links = _adjacency(spec)
+    seen = {start: 0}
+    queue = [start]
+    while queue:
+        current = queue.pop(0)
+        for neighbour in sorted(links.get(current, ())):
+            if neighbour not in seen:
+                seen[neighbour] = seen[current] + 1
+                queue.append(neighbour)
+    return seen
+
+
+def owning_task(spec: DiagramSpec) -> dict[str, str]:
+    """A quale task appartiene ogni nodo: il task-antenato piu' vicino.
+
+    Un nodo concettuale lavora per il ramo in cui sta, e i ruoli obbligatori si
+    contano dentro quel ramo, non su tutta la mappa.
+    """
+    start = root_id(spec)
+    if start is None:
+        return {}
+    by_id = {node.id: node for node in spec.nodes}
+    links = _adjacency(spec)
+    owner = {start: start}
+    queue = [start]
+    while queue:
+        current = queue.pop(0)
+        for neighbour in sorted(links.get(current, ())):
+            if neighbour in owner:
+                continue
+            node = by_id[neighbour]
+            owner[neighbour] = neighbour if _is_task_node(node) else owner[current]
+            queue.append(neighbour)
+    return owner
+
+
+def task_depth(spec: DiagramSpec, node_id: str) -> int:
+    """Quanti task si attraversano dalla radice a quel nodo. Radice = 0."""
+    start = root_id(spec)
+    if start is None or node_id not in {node.id for node in spec.nodes}:
+        return 0
+    by_id = {node.id: node for node in spec.nodes}
+    links = _adjacency(spec)
+    # BFS che porta dietro il conto dei task attraversati.
+    seen = {start}
+    queue = [(start, 0)]
+    while queue:
+        current, depth = queue.pop(0)
+        if current == node_id:
+            return depth
+        for neighbour in sorted(links.get(current, ())):
+            if neighbour in seen:
+                continue
+            seen.add(neighbour)
+            queue.append((neighbour, depth + (1 if _is_task_node(by_id[neighbour]) else 0)))
+    return 0
+
+
+def open_tasks(spec: DiagramSpec) -> list[str]:
+    """Rami aperti, radice compresa: ogni task non ancora chiuso."""
+    return [node.id for node in spec.nodes if _is_task_node(node) and not node.closed]
+
+
+# --- i difetti che il server vede da solo ------------------------------------
+
+def computed_flaws(spec: DiagramSpec) -> dict[str, str]:
+    """`orphaned` e `unsupported`: topologia, non interpretazione.
+
+    Calcolarli qui li rende non negoziabili. Un modello lasciato a giudicare
+    se un'affermazione e' sostenuta finisce per decidere di si'.
+    """
+    found: dict[str, str] = {}
+    reachable = _levels(spec)
+    by_id = {node.id: node for node in spec.nodes}
+    links = _adjacency(spec)
+    start = root_id(spec)
+
+    for node in spec.nodes:
+        if node.id != start and node.id not in reachable:
+            found[node.id] = "orphaned"
+            continue
+        if node.role in ("idea", "implication"):
+            supported = any(
+                by_id[neighbour].role == "evidence"
+                for neighbour in links.get(node.id, ())
+                if neighbour in by_id
+            )
+            if not supported:
+                found[node.id] = "unsupported"
+    return found
+
+
+def with_computed_flaws(spec: DiagramSpec) -> DiagramSpec:
+    """Riscrive i difetti calcolabili, lasciando al modello gli altri tre."""
+    found = computed_flaws(spec)
+    nodes = []
+    for node in spec.nodes:
+        copy = node.model_copy(deep=True)
+        if node.id in found:
+            copy.flaw = found[node.id]
+        elif copy.flaw in ("orphaned", "unsupported"):
+            # Il difetto calcolato non c'e' piu': toglierlo e' parte del calcolo.
+            copy.flaw = None
+        nodes.append(copy)
+    return spec.model_copy(update={"nodes": nodes})
+
+
+def missing_roles(spec: DiagramSpec | None, task_node_id: str | None = None) -> list[str]:
+    """Cosa manca a quel ramo perche' si possa dire a fuoco.
+
+    Senza `task_node_id` vale la radice. I ruoli si contano dentro il ramo del
+    task, non su tutta la mappa: un'evidenza raccolta per un altro lavoro non
+    sostiene questo.
+    """
     if spec is None:
         return list(REQUIRED_ROLES)
-    present = {node.role for node in spec.nodes if node.role}
-    return [role for role in REQUIRED_ROLES if role not in present]
+    target = task_node_id or root_id(spec)
+    by_id = {node.id: node for node in spec.nodes}
+    owner = owning_task(spec)
+    task_node = by_id.get(target or "")
+    needed = required_roles(getattr(task_node, "task_type", None))
+    present = {
+        node.role
+        for node in spec.nodes
+        if node.role and (owner.get(node.id) == target or node.id == target)
+    }
+    # Il nodo task e' l'affermazione reggente del suo ramo: soddisfa `idea`
+    # senza doverne ospitare un secondo.
+    if task_node is not None and task_node.role == "task":
+        present.add("idea")
+    return [role for role in needed if role not in present]
 
 
 # --- persistenza -----------------------------------------------------------
@@ -237,39 +514,107 @@ def history(db: Session, username: str, session_id: str) -> list[models.IdeaMapR
 
 
 def map_context(spec: DiagramSpec | None) -> str:
-    """La mappa corrente come la vede il modello.
+    """La mappa corrente come la vede il modello, piu' la mossa da fare.
 
     Senza questo blocco la skill parla di una mappa che nel prompt non esiste:
     il modello non sa cosa c'e' gia', non puo' riferirsi agli id, e finisce per
-    non mandare niente o per rifare da capo nodi che ci sono gia'.
-    Inglese come il resto del contratto verso il modello.
+    non mandare niente. Inglese come il resto del contratto verso il modello.
     """
     if spec is None:
         return (
             "The map is empty. Your next `idea` block creates it: at least two "
-            "nodes and one edge, one node with \"role\":\"idea\" and "
-            "\"accent\":true, plus a short \"title\"."
+            "nodes and one edge, one node with \"role\":\"idea\", "
+            "\"accent\":true and the \"task_type\" of the work, plus a short "
+            "\"title\". If the kind of work is not clear yet, ask for it first."
         )
 
-    lines = [f'Title: {spec.title}', "Nodes already on the map (use these ids; do not repeat them):"]
+    focus = current_focus(spec)
+    by_id = {node.id: node for node in spec.nodes}
+    owner = owning_task(spec)
+    focus_node = by_id.get(focus or "")
+
+    lines = [f"Title: {spec.title}"]
+    if focus_node is not None:
+        task_type = focus_node.task_type or "not declared yet"
+        lines.append(
+            f"Branch in hand: {focus_node.id} ({focus_node.label}) - kind of work: {task_type}."
+        )
+
+    lines.append("Nodes on the map (use these ids; never rename one):")
     for node in spec.nodes:
-        role = f" [{node.role}]" if node.role else ""
-        centre = " (centre)" if node.accent else ""
-        lines.append(f"- {node.id}{role}{centre}: {node.label}")
+        marks = []
+        if node.role:
+            marks.append(node.role)
+        if node.task_type:
+            marks.append(node.task_type)
+        if node.status:
+            marks.append(f"status: {node.status}")
+        if node.flaw:
+            marks.append(f"FLAW: {node.flaw}")
+        if node.closed:
+            marks.append("closed")
+        if node.accent:
+            marks.append("centre")
+        where = "" if owner.get(node.id) in (None, focus) else f" [in branch {owner[node.id]}]"
+        suffix = f" ({', '.join(marks)})" if marks else ""
+        conclusion = f" -> {node.conclusion}" if node.closed and node.conclusion else ""
+        lines.append(f"- {node.id}{suffix}{where}: {node.label}{conclusion}")
+
     lines.append("Links:")
     for edge in spec.edges:
         label = f' "{edge.label}"' if edge.label else ""
         lines.append(f"- {edge.source} -{edge.kind}->{label} {edge.target}")
 
-    absent = missing_roles(spec)
-    if absent:
-        lines.append(
-            "Still missing before the idea can be called focused: " + ", ".join(absent) + "."
-        )
-    else:
-        lines.append("All four roles are present: the idea can be called focused.")
+    move = next_move(spec)
+    lines.append("")
     lines.append(
-        "Send a patch that adds what this turn brought. Do not resend what is "
+        "FIRST, ALWAYS: record what the person just said. If their message "
+        "opens something else - a new piece of work, a correction, a different "
+        "direction - follow them and put it on the map. What the branch is "
+        "missing can wait: it is a default for when they give no direction, "
+        "never a rail to push them back onto.\n"
+        "A NEW BRANCH starts whenever they name work that has to be settled "
+        "before the idea can be - \"first I have to...\", \"I need to check...\", "
+        "\"before that I must...\". That is not a constraint and not a step: add "
+        "a node with `\"role\":\"task\"` and its own `task_type`, link it to the "
+        "branch it came from, and hang everything that follows off THAT node, "
+        "not off the idea."
+    )
+    lines.append(f"IF THEY GAVE NO DIRECTION, WHAT THIS TURN IS FOR: {move['detail']}.")
+    lines.append(
+        "Never open two turns in a row with the same diagnosis: if you have "
+        "already said it and it is still there, work on something else and "
+        "come back to it."
+    )
+    if move.get("reason") == "flaw":
+        lines.append(
+            f"Say it plainly first - what the person wrote as "
+            f"\"{by_id[move['node_id']].label}\" is {move.get('flaw')} - then ask "
+            "the question that repairs it. Say it in THEIR words: never utter a "
+            "node id, and never the English term itself."
+        )
+    elif move.get("reason") == "missing-role":
+        lines.append(
+            f"The branch still needs a node with role `{move.get('role')}`: "
+            "ask the question that produces it, do not invent it yourself."
+        )
+    elif move.get("reason") == "ready-to-close":
+        pivot = move.get("pivot") or ""
+        lines.append(
+            "Before proposing to close, ask the pivot question of this kind of "
+            f"work at least once: \"{pivot}\" Then read back what has been "
+            "settled and ASK whether to close the branch. Only when the person "
+            "agrees, send `closed: true` with a one-sentence `conclusion`. "
+            "Never close on your own."
+        )
+    elif move.get("reason") == "task-unknown":
+        lines.append(
+            "Ask what kind of work this is, in plain words, and set `task_type` "
+            "on the branch node from the closed list."
+        )
+
+    lines.append(
+        "Send a patch with what this turn brought. Do not resend what is "
         "already here, and do not rename an id."
     )
     return "\n".join(lines)
@@ -284,3 +629,100 @@ def map_context_for(db: Session, username: str, session_id: str) -> str:
     """
     spec = current_map(db, username, session_id) if (username and session_id) else None
     return map_context(spec)
+
+
+# --- il percorso derivato ----------------------------------------------------
+
+# Quale step produce quale ruolo, e quale step affronta quale difetto. E' tutto
+# cio' che serve per derivare l'albero: non c'e' un ordine, c'e' una mancanza.
+STEP_FOR_ROLE = {
+    "idea": "idea-statement",
+    "assumption": "idea-assumptions",
+    "evidence": "idea-evidence",
+    "alternative": "idea-alternatives",
+    "implication": "idea-implications",
+    "constraint": "idea-implications",
+    "open-question": "idea-question",
+    "step": "idea-synthesis",
+    "decision": "idea-synthesis",
+}
+
+STEP_FOR_FLAW = {
+    "unsupported": "idea-evidence",
+    "orphaned": "idea-statement",
+    "duplicate": "idea-statement",
+    "overloaded": "idea-statement",
+    "premature": "idea-assumptions",
+}
+
+
+def branch_flaws(spec: DiagramSpec, task_node_id: str) -> list[tuple[str, str]]:
+    """Difetti aperti dentro un ramo: (id del nodo, difetto)."""
+    owner = owning_task(spec)
+    return [
+        (node.id, node.flaw)
+        for node in spec.nodes
+        if node.flaw and (owner.get(node.id) == task_node_id or node.id == task_node_id)
+    ]
+
+
+def closure_ready(spec: DiagramSpec, task_node_id: str) -> bool:
+    """Le condizioni osservabili ci sono: il server puo' proporre la chiusura.
+
+    Proporre, non chiudere: il server vede solo la forma. Chi decide se
+    l'obiettivo e' raggiunto e' la persona, dopo che il modello le ha
+    rileggibilmente esposto cosa si e' stabilito.
+    """
+    return not missing_roles(spec, task_node_id) and not branch_flaws(spec, task_node_id)
+
+
+def current_focus(spec: DiagramSpec) -> str | None:
+    """Il ramo su cui si lavora: il task aperto piu' profondo.
+
+    Un ramo alla volta. Gli altri restano sulla mappa ma dormienti, altrimenti
+    la conversazione si sfilaccia su tre lavori insieme.
+    """
+    open_ids = open_tasks(spec)
+    if not open_ids:
+        return None
+    return max(open_ids, key=lambda node_id: (task_depth(spec, node_id), node_id))
+
+
+def next_move(spec: DiagramSpec | None) -> dict:
+    """Quale step fare adesso, e perche'.
+
+    Il prossimo step non e' il successivo: e' quello che ripara cio' che al
+    ramo in lavorazione manca.
+    """
+    if spec is None:
+        return {"step_id": "idea-intro", "focus": None, "reason": "no-map",
+                "detail": "there is no map yet"}
+
+    focus = current_focus(spec)
+    if focus is None:
+        return {"step_id": "idea-synthesis", "focus": root_id(spec), "reason": "all-closed",
+                "detail": "every branch is closed"}
+
+    by_id = {node.id: node for node in spec.nodes}
+    node = by_id.get(focus)
+
+    if node is not None and not node.task_type:
+        return {"step_id": "idea-intro", "focus": focus, "reason": "task-unknown",
+                "detail": "the kind of work is not declared yet"}
+
+    flaws = branch_flaws(spec, focus)
+    if flaws:
+        node_id, flaw = flaws[0]
+        return {"step_id": STEP_FOR_FLAW[flaw], "focus": focus, "reason": "flaw",
+                "flaw": flaw, "node_id": node_id,
+                "detail": f"node {node_id} is {flaw}"}
+
+    absent = missing_roles(spec, focus)
+    if absent:
+        role = absent[0]
+        return {"step_id": STEP_FOR_ROLE[role], "focus": focus, "reason": "missing-role",
+                "role": role, "detail": f"the branch has no {role}"}
+
+    return {"step_id": "idea-synthesis", "focus": focus, "reason": "ready-to-close",
+            "pivot": pivot_question(getattr(node, "task_type", None)),
+            "detail": "the branch has what it needs: propose closing it"}

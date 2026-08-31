@@ -18,9 +18,14 @@ from .. import auth, database, models
 from ..diagram_render import DiagramSpecError, describe, render, spec_fingerprint
 from ..pdf_generator import generate_idea_map_pdf
 from .portfolio import PORTFOLIO_STORAGE_DIR
+from ..idea_lexicon import flaw_word, register_for_variant, status_word, task_label
 from ..idea_map import (
     FEATURE_KEY,
     IDEA_INSTRUMENT,
+    closure_ready,
+    current_focus,
+    next_move,
+    pivot_question,
     IdeaMapError,
     apply_and_store,
     current_map,
@@ -83,14 +88,17 @@ def read_map(
     owner = _readable_owner(identity, username)
     revision = current_revision(db, owner, session_id)
     spec = current_map(db, owner, session_id)
+    focus = None if spec is None else current_focus(spec)
     return {
         "session_id": session_id,
         "revision_id": getattr(revision, "id", None),
         "updated_at": getattr(revision, "created_at", None),
         "spec": None if spec is None else spec.model_dump(by_alias=True),
         "description": None if spec is None else describe(spec),
-        "missing_roles": missing_roles(spec),
-        "complete": spec is not None and not missing_roles(spec),
+        "missing_roles": missing_roles(spec, focus),
+        "complete": spec is not None and bool(focus) and closure_ready(spec, focus),
+        "focus": focus,
+        "task_type": _task_type_of(spec, focus),
     }
 
 
@@ -328,3 +336,63 @@ def map_to_notebook(
     db.commit()
     db.refresh(revision)
     return {"revision_id": revision.id, "notes": data["notes"]}
+
+
+def _task_type_of(spec, node_id: str | None) -> str | None:
+    if spec is None or not node_id:
+        return None
+    for node in spec.nodes:
+        if node.id == node_id:
+            return node.task_type
+    return None
+
+
+@router.get("/idea/next-step")
+def read_next_step(
+    session_id: str = Query(min_length=1),
+    lang: str = "it",
+    variant: str = "student-open",
+    username: str | None = None,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    """Quale step tocca adesso e perche'.
+
+    Il percorso non e' una sequenza: il prossimo step e' quello che ripara cio'
+    che al ramo in lavorazione manca. La navigazione sta qui e non nel client
+    perche' dipende dallo stato della mappa, che vive sul server.
+    """
+    _require_feature(db)
+    owner = _readable_owner(identity, username)
+    spec = current_map(db, owner, session_id)
+    move = next_move(spec)
+    register = register_for_variant(variant)
+
+    # La ragione in parole: registro accademico per chi fa ricerca, comune per
+    # gli altri. La diagnosi sotto e' la stessa.
+    reason_text = ""
+    if move.get("reason") == "flaw":
+        reason_text = flaw_word(move["flaw"], lang, register)
+    elif move.get("reason") == "missing-role":
+        reason_text = move["role"]
+    elif move.get("reason") == "ready-to-close":
+        reason_text = move.get("pivot", "")
+
+    focus = move.get("focus")
+    task_type = _task_type_of(spec, focus)
+    return {
+        **move,
+        "reason_text": reason_text,
+        "task_label": task_label(task_type, lang) if task_type else None,
+        "pivot": move.get("pivot") or (pivot_question(task_type) if task_type else ""),
+        "statuses": {
+            node.id: status_word(node.status, lang, register)
+            for node in (spec.nodes if spec else [])
+            if node.status
+        },
+        "flaws": {
+            node.id: flaw_word(node.flaw, lang, register)
+            for node in (spec.nodes if spec else [])
+            if node.flaw
+        },
+    }

@@ -27,7 +27,7 @@ MAX_EDGES = 12
 # La mappa dello strumento Idea cresce a ogni turno della sessione: il tetto
 # del diagramma-illustrazione, che accompagna una singola spiegazione, non le
 # basta. Il limite resta per tipo, non globale.
-TYPE_LIMITS = {"mindmap": (24, 30)}
+TYPE_LIMITS = {"mindmap": (32, 44)}
 MAX_NODES_ANY = max(MAX_NODES, *(nodes for nodes, _ in TYPE_LIMITS.values()))
 MAX_EDGES_ANY = max(MAX_EDGES, *(edges for _, edges in TYPE_LIMITS.values()))
 MAX_LABEL = 80
@@ -60,29 +60,62 @@ NODE_ROLES = {
     "open-question": "question",
     "constraint": "shield",
     "step": "clock",
+    # Un task e' un pezzo di lavoro che si apre e si chiude: il libro sta per il
+    # corpo di lavoro, non per la lettura.
+    "task": "book",
+    # La decisione e' l'unico nodo che non riguarda cio' che sai ma cio' a cui
+    # tieni: e' l'unica icona dei dieci che non parla di conoscenza.
+    "decision": "heart",
 }
+
+# Quanto quel pezzo e' a fuoco, dal vocabolario di wayfinder ridotto a quattro
+# gradini. Non e' un giudizio sul contenuto: dice a che punto e' la messa a
+# fuoco, e si vede come intensita' del riempimento.
+NODE_STATUSES = ("mentioned", "defined", "delimited", "related")
+# Frazione della tinta piena per ogni gradino: un nodo appena nominato e'
+# pallido, uno messo in relazione e' pieno.
+STATUS_INTENSITY = {"mentioned": 0.28, "defined": 0.52, "delimited": 0.76, "related": 1.0}
+
+# Cosa non regge. `orphaned` e `unsupported` li calcola il server dalla forma
+# del grafo; gli altri tre richiedono di leggere il senso e li marca il modello.
+NODE_FLAWS = ("orphaned", "unsupported", "duplicate", "overloaded", "premature")
+
+# I task hanno un tipo, che decide i loro ruoli obbligatori e il loro
+# obiettivo. Lo porta anche il nodo idea, che e' la radice dell'albero.
+TASK_TYPES = (
+    "thesis-chapter", "article", "position",
+    "research-question", "systematic-review",
+    "empirical-study", "teaching-unit", "intervention",
+    "study-path", "personal-project",
+)
 
 # Il ruolo letto a voce: la descrizione testuale deve dire perche' un nodo sta
 # nella mappa, non solo che c'e'.
 ROLE_WORDS = {
     "it": {"idea": "idea", "assumption": "assunto", "evidence": "evidenza",
            "alternative": "alternativa", "implication": "implicazione",
-           "open-question": "domanda aperta", "constraint": "vincolo", "step": "passo"},
+           "open-question": "domanda aperta", "constraint": "vincolo", "step": "passo",
+           "task": "lavoro", "decision": "decisione"},
     "en": {"idea": "idea", "assumption": "assumption", "evidence": "evidence",
            "alternative": "alternative", "implication": "implication",
-           "open-question": "open question", "constraint": "constraint", "step": "step"},
+           "open-question": "open question", "constraint": "constraint", "step": "step",
+           "task": "task", "decision": "decision"},
     "es": {"idea": "idea", "assumption": "supuesto", "evidence": "evidencia",
            "alternative": "alternativa", "implication": "implicacion",
-           "open-question": "pregunta abierta", "constraint": "limite", "step": "paso"},
+           "open-question": "pregunta abierta", "constraint": "limite", "step": "paso",
+           "task": "trabajo", "decision": "decision"},
     "fr": {"idea": "idee", "assumption": "presuppose", "evidence": "preuve",
            "alternative": "alternative", "implication": "implication",
-           "open-question": "question ouverte", "constraint": "contrainte", "step": "etape"},
+           "open-question": "question ouverte", "constraint": "contrainte", "step": "etape",
+           "task": "travail", "decision": "decision"},
     "de": {"idea": "Idee", "assumption": "Annahme", "evidence": "Beleg",
            "alternative": "Alternative", "implication": "Folge",
-           "open-question": "offene Frage", "constraint": "Grenze", "step": "Schritt"},
+           "open-question": "offene Frage", "constraint": "Grenze", "step": "Schritt",
+           "task": "Arbeit", "decision": "Entscheidung"},
     "sv": {"idea": "ide", "assumption": "antagande", "evidence": "belagg",
            "alternative": "alternativ", "implication": "foljd",
-           "open-question": "oppen fraga", "constraint": "begransning", "step": "steg"},
+           "open-question": "oppen fraga", "constraint": "begransning", "step": "steg",
+           "task": "arbete", "decision": "beslut"},
 }
 
 # Palette derivata dai token del reskin (frontend/src/app/globals.css):
@@ -101,6 +134,7 @@ PALETTE = {
         "title": "#0f172a",
         "surface": "#ffffff",
         "raster_bg": "#ffffff",
+        "flaw": "#b45309",
     },
     "dark": {
         "node_fill": "#103f42",
@@ -115,6 +149,7 @@ PALETTE = {
         "title": "#f1f5f9",
         "surface": "#1e293b",
         "raster_bg": "#1e293b",
+        "flaw": "#f0b060",
     },
 }
 
@@ -126,7 +161,8 @@ FONT_FAMILY = "Inter,DejaVu Sans,sans-serif"
 #   weakens     tratteggio, punta a T         A ostacola B
 #   feedback    tratteggio fine, freccia      B ritorna su A e chiude l'anello
 #   link        punteggiato, senza freccia    legame senza direzione
-EDGE_KINDS = ("drives", "strengthens", "weakens", "feedback", "link")
+#   unclear     puntinato pallido, senza freccia   il legame c'e' ma non e' detto
+EDGE_KINDS = ("drives", "strengthens", "weakens", "feedback", "link", "unclear")
 
 # Glifi della legenda incorporata nel PNG (Telegram, PDF): stesso ordine di
 # EDGE_KINDS, disegnati con i caratteri disponibili in DejaVu Sans.
@@ -136,6 +172,7 @@ EDGE_GLYPH = {
     "weakens": "\u254c\u254c\u22a3",
     "feedback": "\u2504\u2504\u25b8",
     "link": "\u2508\u2508",
+    "unclear": "\u2508?\u2508",
 }
 
 EDGE_STYLE = {
@@ -144,25 +181,50 @@ EDGE_STYLE = {
     "weakens": {"penwidth": "1.5", "style": "dashed", "arrowhead": "tee"},
     "feedback": {"penwidth": "1.2", "style": "dashed", "arrowhead": "vee", "constraint": "false"},
     "link": {"penwidth": "1.3", "style": "dotted", "dir": "none"},
+    "unclear": {"penwidth": "1.0", "style": "dotted", "dir": "none", "color_key": "flaw"},
 }
 
 # Connettori della descrizione testuale (screen reader, TTS, PDF): un verbo per
 # tipo di arco, cosi' chi non vede il tratteggio legge comunque il significato.
 CONNECTORS = {
     "it": {"drives": "porta a", "strengthens": "rafforza", "weakens": "ostacola",
-           "feedback": "torna su", "link": "e' legato a"},
+           "feedback": "torna su", "link": "e' legato a", "unclear": "ha un legame non detto con"},
     "en": {"drives": "leads to", "strengthens": "strengthens", "weakens": "hinders",
-           "feedback": "feeds back into", "link": "is linked to"},
+           "feedback": "feeds back into", "link": "is linked to", "unclear": "has an unstated link with"},
     "es": {"drives": "lleva a", "strengthens": "refuerza", "weakens": "dificulta",
-           "feedback": "vuelve a", "link": "esta ligado a"},
+           "feedback": "vuelve a", "link": "esta ligado a", "unclear": "tiene un vinculo no dicho con"},
     "fr": {"drives": "mene a", "strengthens": "renforce", "weakens": "entrave",
-           "feedback": "revient sur", "link": "est lie a"},
+           "feedback": "revient sur", "link": "est lie a", "unclear": "a un lien non dit avec"},
     "de": {"drives": "fuhrt zu", "strengthens": "starkt", "weakens": "behindert",
-           "feedback": "wirkt zuruck auf", "link": "ist verbunden mit"},
+           "feedback": "wirkt zuruck auf", "link": "ist verbunden mit", "unclear": "hat eine ungesagte Verbindung zu"},
     "sv": {"drives": "leder till", "strengthens": "starker", "weakens": "hindrar",
-           "feedback": "aterverkar pa", "link": "hanger ihop med"},
+           "feedback": "aterverkar pa", "link": "hanger ihop med", "unclear": "har en osagd koppling till"},
 }
 
+
+# Il difetto letto a voce. Registro piano: `describe` serve a screen reader,
+# TTS e PDF, dove la parola esatta di wayfinder ("unita' sovraccarica") direbbe
+# meno di quella comune. Il registro accademico vive in `idea_lexicon`.
+FLAW_WORDS = {
+    "it": {"orphaned": "sta da solo", "unsupported": "non e' sostenuto",
+           "duplicate": "ripete un altro nodo", "overloaded": "fa due cose insieme",
+           "premature": "arriva troppo presto"},
+    "en": {"orphaned": "stands alone", "unsupported": "is unsupported",
+           "duplicate": "repeats another node", "overloaded": "does two things at once",
+           "premature": "comes too early"},
+    "es": {"orphaned": "esta solo", "unsupported": "no esta sostenido",
+           "duplicate": "repite otro nodo", "overloaded": "hace dos cosas a la vez",
+           "premature": "llega demasiado pronto"},
+    "fr": {"orphaned": "reste seul", "unsupported": "n'est pas etaye",
+           "duplicate": "repete un autre noeud", "overloaded": "fait deux choses a la fois",
+           "premature": "arrive trop tot"},
+    "de": {"orphaned": "steht allein", "unsupported": "ist nicht gestutzt",
+           "duplicate": "wiederholt einen anderen Knoten", "overloaded": "tut zwei Dinge zugleich",
+           "premature": "kommt zu fruh"},
+    "sv": {"orphaned": "star ensam", "unsupported": "saknar stod",
+           "duplicate": "upprepar en annan nod", "overloaded": "gor tva saker samtidigt",
+           "premature": "kommer for tidigt"},
+}
 
 class DiagramSpecError(ValueError):
     """Spec non conforme al contratto dichiarato al modello."""
@@ -176,6 +238,13 @@ class DiagramNode(BaseModel):
     accent: bool = False
     icon: str | None = Field(default=None, max_length=24)
     role: str | None = Field(default=None, max_length=24)
+    status: str | None = Field(default=None, max_length=16)
+    flaw: str | None = Field(default=None, max_length=16)
+    # Solo per i nodi `task` e per la radice `idea`: che genere di lavoro e',
+    # se e' concluso e cosa ha stabilito.
+    task_type: str | None = Field(default=None, max_length=24)
+    closed: bool = False
+    conclusion: str | None = Field(default=None, max_length=120)
 
     @field_validator("icon", mode="before")
     @classmethod
@@ -195,6 +264,30 @@ class DiagramNode(BaseModel):
         cleaned = value.strip().lower()
         return cleaned if cleaned in NODE_ROLES else None
 
+    @field_validator("status", mode="before")
+    @classmethod
+    def _known_status_or_none(cls, value):
+        if not isinstance(value, str):
+            return None
+        cleaned = value.strip().lower()
+        return cleaned if cleaned in NODE_STATUSES else None
+
+    @field_validator("flaw", mode="before")
+    @classmethod
+    def _known_flaw_or_none(cls, value):
+        if not isinstance(value, str):
+            return None
+        cleaned = value.strip().lower()
+        return cleaned if cleaned in NODE_FLAWS else None
+
+    @field_validator("task_type", mode="before")
+    @classmethod
+    def _known_task_or_none(cls, value):
+        if not isinstance(value, str):
+            return None
+        cleaned = value.strip().lower()
+        return cleaned if cleaned in TASK_TYPES else None
+
     @model_validator(mode="after")
     def _icon_from_role(self) -> "DiagramNode":
         # Il ruolo basta: chi lo dichiara non deve anche scegliere l'icona.
@@ -210,7 +303,7 @@ class DiagramEdge(BaseModel):
     source: str = Field(min_length=1, alias="from")
     target: str = Field(min_length=1, alias="to")
     label: str | None = Field(default=None, max_length=MAX_EDGE_LABEL)
-    kind: Literal["drives", "strengthens", "weakens", "feedback", "link"] = "drives"
+    kind: Literal["drives", "strengthens", "weakens", "feedback", "link", "unclear"] = "drives"
 
 
 class DiagramSpec(BaseModel):
@@ -303,18 +396,37 @@ def _wrap(label: str) -> str:
     return "\\n".join(_escape(line) for line in lines)
 
 
+def _blend(colour: str, towards: str, ratio: float) -> str:
+    """Miscela due colori esadecimali: ratio 1 = `colour` pieno, 0 = `towards`."""
+    try:
+        a = [int(colour[i:i + 2], 16) for i in (1, 3, 5)]
+        b = [int(towards[i:i + 2], 16) for i in (1, 3, 5)]
+    except (ValueError, IndexError):
+        return colour
+    mixed = [round(x * ratio + y * (1 - ratio)) for x, y in zip(a, b)]
+    return "#" + "".join(f"{value:02x}" for value in mixed)
+
+
+def _display_label(node: DiagramNode) -> str:
+    """Etichetta come si legge nel disegno: un task chiuso porta la sua conclusione."""
+    if node.closed and node.conclusion:
+        return f"{node.label} \u2014 {node.conclusion}"
+    return node.label
+
+
 def _node_label(node: DiagramNode, colors: dict, theme: str) -> str:
     """Etichetta Graphviz con icona vettoriale e testo, se richiesta."""
+    text = _display_label(node)
     if not node.icon:
-        return f'"{_wrap(node.label)}"'
+        return f'"{_wrap(text)}"'
 
     icon_path = ICON_DIR / f"{node.icon}-{theme}.png"
     if not icon_path.is_file():
         logger.warning("Icona diagramma non disponibile: %s", icon_path.name)
-        return f'"{_wrap(node.label)}"'
+        return f'"{_wrap(text)}"'
 
     text_color = colors["accent_text"] if node.accent else colors["node_text"]
-    wrapped = "<BR/>".join(_xml_escape(line) for line in _lines_at(node.label, WRAP_AT))
+    wrapped = "<BR/>".join(_xml_escape(line) for line in _lines_at(text, WRAP_AT))
     return (
         '<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0">'
         '<TR><TD FIXEDSIZE="TRUE" WIDTH="24" HEIGHT="24">'
@@ -419,14 +531,38 @@ def to_dot(spec: DiagramSpec, *, theme: str = "light", embed_title: bool = False
 
     for node in spec.nodes:
         attrs = [f'label={_node_label(node, colors, resolved_theme)}']
-        if node.accent:
-            # Bordo piu' spesso: il nodo su cui si puo' agire si vede per primo.
-            attrs += [
-                f'fillcolor="{colors["accent_fill"]}"',
-                f'color="{colors["accent_stroke"]}"',
-                f'fontcolor="{colors["accent_text"]}"',
-                'penwidth="2.0"',
-            ]
+        fill = colors["accent_fill"] if node.accent else colors["node_fill"]
+        stroke = colors["accent_stroke"] if node.accent else colors["node_stroke"]
+        text_colour = colors["accent_text"] if node.accent else colors["node_text"]
+        style = ["rounded", "filled"]
+        penwidth = "2.0" if node.accent else "1.2"
+
+        # Lo status si vede come intensita': un nodo appena nominato e' pallido,
+        # uno messo in relazione e' pieno. Non serve leggere per capire cosa e'
+        # ancora fumoso.
+        if node.status:
+            ratio = STATUS_INTENSITY[node.status]
+            fill = _blend(fill, colors["surface"], ratio)
+            stroke = _blend(stroke, colors["surface"], max(ratio, 0.45))
+
+        # Un difetto si vede prima di essere letto: bordo tratteggiato, colore
+        # d'allerta. Il nome del difetto vive nella descrizione testuale.
+        if node.flaw:
+            style.append("dashed")
+            stroke = colors["flaw"]
+
+        # Un ramo concluso porta il doppio bordo: si distingue da uno pieno
+        # senza rubare l'accento, che resta uno solo.
+        if node.closed:
+            attrs.append('peripheries="2"')
+
+        attrs += [
+            f'fillcolor="{fill}"',
+            f'color="{stroke}"',
+            f'fontcolor="{text_colour}"',
+            f'style="{",".join(style)}"',
+            f'penwidth="{penwidth}"',
+        ]
         lines.append(f'  "{_escape(node.id)}" [{", ".join(attrs)}];')
 
     used_ids = {node.id for node in spec.nodes}
@@ -490,10 +626,17 @@ def describe(spec: DiagramSpec, lang: str = "it") -> str:
     roles = ROLE_WORDS.get(code, ROLE_WORDS["en"])
     # Il ruolo entra nella descrizione: chi ascolta deve sapere se un nodo e'
     # un assunto o un'evidenza, che il disegno dice con l'icona.
-    by_id = {
-        node.id: f"{node.label} ({roles[node.role]})" if node.role else node.label
-        for node in spec.nodes
-    }
+    flaws = FLAW_WORDS.get(code, FLAW_WORDS["en"])
+
+    def _mention(node: DiagramNode) -> str:
+        # Un difetto taciuto e' un difetto invisibile per chi ascolta invece di
+        # guardare: entra nella descrizione, non solo nel tratteggio.
+        marks = [roles[node.role]] if node.role else []
+        if node.flaw:
+            marks.append(flaws[node.flaw])
+        return f"{node.label} ({', '.join(marks)})" if marks else node.label
+
+    by_id = {node.id: _mention(node) for node in spec.nodes}
     relations = []
     for edge in spec.edges:
         verb = edge.label.strip() if edge.label and edge.label.strip() else verbs[edge.kind]
