@@ -4,8 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X, Languages } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 
-type Lang = 'it' | 'en' | 'es' | 'sv';
-const LANGS: Lang[] = ['it', 'en', 'es', 'sv'];
+// Le sei lingue dell'app: i testi vivono in campi JSON, non in colonne fisse.
+type Lang = 'it' | 'en' | 'es' | 'fr' | 'de' | 'sv';
+const LANGS: Lang[] = ['it', 'en', 'es', 'fr', 'de', 'sv'];
+type I18nMap = Record<string, string> | null;
 
 interface Instrument { code: string; name_it: string | null; }
 interface Factor { id: number; instrument_code: string; code: string; label_it: string | null; }
@@ -16,6 +18,7 @@ interface CertifiedStrategy {
     name_it: string | null; name_en: string | null; name_es: string | null; name_sv: string | null;
     recommended_when_it: string | null; recommended_when_en: string | null; recommended_when_es: string | null; recommended_when_sv: string | null;
     description_it: string | null; description_en: string | null; description_es: string | null; description_sv: string | null;
+    name_i18n: I18nMap; recommended_when_i18n: I18nMap; description_i18n: I18nMap;
     factor_codes: string[] | null;
     match_mode: string;
     questionnaire_types: string[] | null;
@@ -29,9 +32,9 @@ interface CertifiedStrategy {
 
 type FormState = {
     slug: string;
-    name_it: string; name_en: string; name_es: string; name_sv: string;
-    recommended_when_it: string; recommended_when_en: string; recommended_when_es: string; recommended_when_sv: string;
-    description_it: string; description_en: string; description_es: string; description_sv: string;
+    name_i18n: Record<string, string>;
+    recommended_when_i18n: Record<string, string>;
+    description_i18n: Record<string, string>;
     factor_codes: string[];
     match_mode: string;
     keywords: string;
@@ -44,12 +47,24 @@ type FormState = {
 
 const EMPTY: FormState = {
     slug: '',
-    name_it: '', name_en: '', name_es: '', name_sv: '',
-    recommended_when_it: '', recommended_when_en: '', recommended_when_es: '', recommended_when_sv: '',
-    description_it: '', description_en: '', description_es: '', description_sv: '',
+    name_i18n: {}, recommended_when_i18n: {}, description_i18n: {},
     factor_codes: [], match_mode: 'any', keywords: '', status: 'draft',
     certified_by: '', source_reference: '', sort_order: '0', is_active: true,
 };
+
+// Convivenza JSON / colonne vecchie: il JSON vince, la colonna resta leggibile.
+// Rispecchia backend/i18n_fields.py.
+function mergedField(s: CertifiedStrategy, field: 'name' | 'recommended_when' | 'description'): Record<string, string> {
+    const bag = s as unknown as Record<string, unknown>;
+    const out: Record<string, string> = {};
+    for (const l of ['it', 'en', 'es', 'sv']) {
+        const legacy = bag[`${field}_${l}`] as string | null | undefined;
+        if (legacy) out[l] = legacy;
+    }
+    const json = bag[`${field}_i18n`] as I18nMap;
+    if (json) for (const [l, v] of Object.entries(json)) { if (v) out[l] = v; }
+    return out;
+}
 
 export function CertifiedStrategiesPanel() {
     const { t } = useI18n();
@@ -106,9 +121,9 @@ export function CertifiedStrategiesPanel() {
     const startEdit = (s: CertifiedStrategy) => {
         setForm({
             slug: s.slug,
-            name_it: s.name_it || '', name_en: s.name_en || '', name_es: s.name_es || '', name_sv: s.name_sv || '',
-            recommended_when_it: s.recommended_when_it || '', recommended_when_en: s.recommended_when_en || '', recommended_when_es: s.recommended_when_es || '', recommended_when_sv: s.recommended_when_sv || '',
-            description_it: s.description_it || '', description_en: s.description_en || '', description_es: s.description_es || '', description_sv: s.description_sv || '',
+            name_i18n: mergedField(s, 'name'),
+            recommended_when_i18n: mergedField(s, 'recommended_when'),
+            description_i18n: mergedField(s, 'description'),
             factor_codes: s.factor_codes || [], match_mode: s.match_mode || 'any',
             keywords: s.keywords || '', status: s.status || 'draft',
             certified_by: s.certified_by || '', source_reference: s.source_reference || '',
@@ -126,9 +141,14 @@ export function CertifiedStrategiesPanel() {
 
     const buildBody = () => ({
         slug: form.slug.trim(),
-        name_it: form.name_it.trim() || null, name_en: form.name_en.trim() || null, name_es: form.name_es.trim() || null, name_sv: form.name_sv.trim() || null,
-        recommended_when_it: form.recommended_when_it.trim() || null, recommended_when_en: form.recommended_when_en.trim() || null, recommended_when_es: form.recommended_when_es.trim() || null, recommended_when_sv: form.recommended_when_sv.trim() || null,
-        description_it: form.description_it.trim() || null, description_en: form.description_en.trim() || null, description_es: form.description_es.trim() || null, description_sv: form.description_sv.trim() || null,
+        name_i18n: form.name_i18n,
+        recommended_when_i18n: form.recommended_when_i18n,
+        description_i18n: form.description_i18n,
+        // La colonna italiana resta la sorgente per la traduzione Ollama finche'
+        // le colonne per lingua esistono.
+        name_it: form.name_i18n.it?.trim() || null,
+        recommended_when_it: form.recommended_when_i18n.it?.trim() || null,
+        description_it: form.description_i18n.it?.trim() || null,
         factor_codes: form.factor_codes,
         match_mode: form.match_mode,
         questionnaire_types: derivedQTypes,
@@ -159,7 +179,7 @@ export function CertifiedStrategiesPanel() {
 
     // Traduci con Ollama: salva prima (per avere un id), poi chiama /translate e ricarica nel form.
     const translate = async () => {
-        if (!form.slug.trim() || !form.name_it.trim()) return;
+        if (!form.slug.trim() || !form.name_i18n.it?.trim()) return;
         setTranslating(true);
         try {
             const isNew = editingId === 'new';
@@ -191,7 +211,17 @@ export function CertifiedStrategiesPanel() {
 
     const inputCls = 'h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-sky-400';
     const areaCls = 'min-h-[70px] w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700 outline-none focus:border-sky-400';
-    const fkey = <K extends string>(base: K) => `${base}_${lang}` as keyof FormState;
+    const fieldValue = (field: 'name_i18n' | 'recommended_when_i18n' | 'description_i18n') =>
+        form[field][lang] ?? '';
+    // Una lingua svuotata esce dalla mappa: "non tradotto" e "tradotto in vuoto"
+    // devono restare distinguibili.
+    const setField = (field: 'name_i18n' | 'recommended_when_i18n' | 'description_i18n', value: string) =>
+        setForm((previous) => {
+            const next = { ...previous[field] };
+            if (value.trim()) next[lang] = value;
+            else delete next[lang];
+            return { ...previous, [field]: next };
+        });
 
     const renderForm = () => (
         <div className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
@@ -223,19 +253,19 @@ export function CertifiedStrategiesPanel() {
                         <button key={l} type="button" onClick={() => setLang(l)} className={`rounded-md border px-2 py-1 text-xs font-medium uppercase ${lang === l ? 'border-indigo-300 bg-indigo-100 text-indigo-700' : 'border-slate-200 bg-white text-slate-500'}`}>{l}</button>
                     ))}
                 </div>
-                <button type="button" disabled={translating || !form.name_it.trim() || !form.slug.trim()} onClick={() => void translate()} className="inline-flex h-8 items-center gap-2 rounded-md border border-indigo-200 bg-white px-3 text-xs font-medium text-indigo-700 hover:bg-indigo-50 disabled:opacity-50">
+                <button type="button" disabled={translating || !form.name_i18n.it?.trim() || !form.slug.trim()} onClick={() => void translate()} className="inline-flex h-8 items-center gap-2 rounded-md border border-indigo-200 bg-white px-3 text-xs font-medium text-indigo-700 hover:bg-indigo-50 disabled:opacity-50">
                     <Languages className="h-4 w-4" />{t('admin.certified.translate')}
                 </button>
             </div>
             <div className="mt-2 space-y-3">
                 <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.certified.name')}
-                    <input className={inputCls} value={form[fkey('name')] as string} onChange={(e) => setForm({ ...form, [fkey('name')]: e.target.value })} />
+                    <input className={inputCls} value={fieldValue('name_i18n')} onChange={(e) => setField('name_i18n', e.target.value)} />
                 </label>
                 <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.certified.recommendedWhen')}
-                    <textarea className={areaCls} value={form[fkey('recommended_when')] as string} onChange={(e) => setForm({ ...form, [fkey('recommended_when')]: e.target.value })} />
+                    <textarea className={areaCls} value={fieldValue('recommended_when_i18n')} onChange={(e) => setField('recommended_when_i18n', e.target.value)} />
                 </label>
                 <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.certified.howTo')}
-                    <textarea className={areaCls} value={form[fkey('description')] as string} onChange={(e) => setForm({ ...form, [fkey('description')]: e.target.value })} />
+                    <textarea className={areaCls} value={fieldValue('description_i18n')} onChange={(e) => setField('description_i18n', e.target.value)} />
                 </label>
             </div>
 

@@ -100,14 +100,19 @@ export function ValidationExportPanel() {
         if (version.trim()) params.set('version', version.trim());
         if (study.trim()) params.set('study', study.trim());
         const qs = params.toString();
-        return `/somministrazione/${instrument}/${locale || 'es'}${qs ? `?${qs}` : ''}`;
-    }, [instrument, locale, version, study]);
+        // La lingua non sta piu' nell'URL: la sceglie l'interfaccia di chi compila.
+        return `/somministrazione/${instrument}${qs ? `?${qs}` : ''}`;
+    }, [instrument, version, study]);
     const collectionUrl = typeof window === 'undefined' ? collectionPath : `${window.location.origin}${collectionPath}`;
+    // Nome nella lingua dell'interfaccia, dal campo JSON con ripiego sulle
+    // colonne vecchie. Rispecchia backend/i18n_fields.py.
     const instrumentLabel = (item: Instrument) => {
-        if (lang === 'it') return item.name_it || item.name_en || item.code;
-        if (lang === 'es') return item.name_es || item.name_en || item.code;
-        if (lang === 'sv') return item.name_sv || item.name_en || item.code;
-        return item.name_en || item.name_it || item.code;
+        const bag = item as unknown as Record<string, unknown>;
+        const json = bag.name_i18n as Record<string, string> | null | undefined;
+        return json?.[lang]
+            || (bag[`name_${lang}`] as string | null | undefined)
+            || item.name_en
+            || item.code;
     };
 
     return (
