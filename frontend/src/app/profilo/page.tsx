@@ -46,6 +46,8 @@ export default function ProfilePage() {
     const [selectedSession, setSelectedSession] = useState<QuestionnaireResult | null>(null);
     const [conversation, setConversation] = useState<Array<{ role: string; text: string }> | null>(null);
     const [convLoading, setConvLoading] = useState(false);
+    const [sessionSummary, setSessionSummary] = useState<string | null>(null);
+    const [summaryLoading, setSummaryLoading] = useState(false);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
@@ -116,24 +118,44 @@ export default function ProfilePage() {
     useEffect(() => {
         if (!selectedSession) {
             setConversation(null);
+            setSessionSummary(null);
             return;
         }
         setConvLoading(true);
+        setSummaryLoading(true);
         setConversation(null);
+        setSessionSummary(null);
+
+        let active = true;
         apiFetch(`/api/user/questionnaire-result/${selectedSession.session_id}/conversation`)
-            .then((res) => {
-                if (res.ok) return res.json();
-                throw new Error('Failed to fetch conversation');
-            })
-            .then((data) => {
-                setConversation(data as Array<{ role: string; text: string }>);
+            .then(async (res) => {
+                if (!res.ok) throw new Error('Failed to fetch conversation');
+                const data = await res.json();
+                if (active) setConversation(data as Array<{ role: string; text: string }>);
             })
             .catch((err) => {
+                if (!active) return;
                 console.error("Error loading conversation:", err);
             })
             .finally(() => {
-                setConvLoading(false);
+                if (active) setConvLoading(false);
             });
+
+        apiFetch(`/api/user/questionnaire-result/${selectedSession.session_id}/summary`)
+            .then(async (res) => {
+                if (!res.ok) throw new Error('Failed to fetch summary');
+                const data = await res.json();
+                if (active) setSessionSummary((data as { summary?: string | null }).summary ?? null);
+            })
+            .catch((err) => {
+                if (!active) return;
+                console.error("Error loading summary:", err);
+            })
+            .finally(() => {
+                if (active) setSummaryLoading(false);
+            });
+
+        return () => { active = false; };
     }, [selectedSession]);
 
     const handleDelete = async (sessionId: string) => {
@@ -467,7 +489,19 @@ export default function ProfilePage() {
                         </Link>
                     </div>
                 ) : (
-                    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.45fr)]">
+                    <div className="grid gap-3 lg:grid-cols-[minmax(260px,0.45fr)_minmax(0,1fr)]">
+                        <label className="block">
+                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profile.sessions.search')}</span>
+                            <div className="mt-1 flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2">
+                                <Search className="h-4 w-4 text-slate-400" />
+                                <input
+                                    value={sessionSearch}
+                                    onChange={(event) => setSessionSearch(event.target.value)}
+                                    placeholder={t('profile.sessions.searchPlaceholder')}
+                                    className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+                                />
+                            </div>
+                        </label>
                         <label className="block">
                             <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profile.sessions.active')}</span>
                             <select
@@ -486,18 +520,6 @@ export default function ProfilePage() {
                                     </option>
                                 ))}
                             </select>
-                        </label>
-                        <label className="block">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profile.sessions.search')}</span>
-                            <div className="mt-1 flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2">
-                                <Search className="h-4 w-4 text-slate-400" />
-                                <input
-                                    value={sessionSearch}
-                                    onChange={(event) => setSessionSearch(event.target.value)}
-                                    placeholder={t('profile.sessions.searchPlaceholder')}
-                                    className="min-w-0 flex-1 bg-transparent text-sm outline-none"
-                                />
-                            </div>
                         </label>
                     </div>
                 )}
@@ -571,8 +593,26 @@ export default function ProfilePage() {
                                 </div>
                             </div>
 
+                            {/* The final guided response is the synthesis for every instrument. */}
+                            <div className="space-y-3 bg-white p-4 border border-slate-100 rounded-xl">
+                                <h3 className="text-sm font-bold text-slate-700">{t('profile.sessionSummary.title')}</h3>
+                                {summaryLoading ? (
+                                    <div className="py-4 text-center text-xs text-slate-400">
+                                        {t('profile.sessionSummary.loading')}
+                                    </div>
+                                ) : sessionSummary ? (
+                                    <div className="prose prose-sm max-w-none text-slate-700 prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-li:my-0">
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{sessionSummary}</ReactMarkdown>
+                                    </div>
+                                ) : (
+                                    <p className="py-2 text-sm text-slate-500">
+                                        {t('profile.sessionSummary.pending')}
+                                    </p>
+                                )}
+                            </div>
+
                             {/* Render Scores Visual Chart if quantitative */}
-                            {selectedSession.questionnaire_type !== 'SAVICKAS' && selectedSession.scores && (
+                            {chartData.length > 0 && (
                                 <div className="space-y-3 bg-white p-4 border border-slate-100 rounded-xl">
                                     <h3 className="text-sm font-bold text-slate-700">{t('profile.factorBreakdown')}</h3>
                                     
@@ -605,16 +645,7 @@ export default function ProfilePage() {
                             )}
 
                             {/* Detailed Grid of Factors */}
-                            {selectedSession.questionnaire_type === 'SAVICKAS' ? (
-                                <div className="space-y-4 text-center py-8">
-                                    <div className="max-w-md mx-auto space-y-2">
-                                        <h3 className="font-bold text-slate-800">{t('profile.savickasTitle')}</h3>
-                                        <p className="text-sm text-slate-500 leading-relaxed">
-                                            {t('profile.savickasDesc')}
-                                        </p>
-                                    </div>
-                                </div>
-                            ) : selectedSession.scores ? (
+                            {chartData.length > 0 && selectedSession.scores ? (
                                 <div className="space-y-3">
                                     <h3 className="text-sm font-bold text-slate-700">{t('profile.factorEvaluation')}</h3>
                                     
