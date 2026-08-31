@@ -14,8 +14,15 @@ from typing import Dict, List, Optional
 from sqlalchemy.orm import Session
 
 from . import models
+from .content_version_service import served_locales, status_map
+from .content_versions import APP_LOCALES
+from .i18n_fields import localized
 
-SUPPORTED_LOCALES = ("it", "en", "es", "sv")
+# Le lingue ammesse sono quelle dell'interfaccia. Quali siano somministrabili per
+# uno strumento lo dice il registro (`content_language_versions`), non una tupla
+# scritta a mano: era quella a far sollevare ScoringError per francese e tedesco
+# prima ancora che si potesse porre la domanda sui contenuti.
+SUPPORTED_LOCALES = APP_LOCALES
 
 # Copy di banda/interpretazione (portata da test-scoring.ts TEXT). Testo generico,
 # non dato per-strumento: resta qui per rendere il backend autosufficiente.
@@ -92,6 +99,42 @@ _TEXT = {
             "higher": "Presencia declarada más alta de esta dimensión.",
         },
     },
+    "fr": {
+        "band": {"lower": "Fréquence plus faible", "moderate": "Fréquence modérée", "higher": "Fréquence plus élevée"},
+        "resource": {
+            "lower": "Recours déclaré plus faible à cette stratégie ou ressource.",
+            "moderate": "Recours déclaré modéré à cette stratégie ou ressource.",
+            "higher": "Recours déclaré plus élevé à cette stratégie ou ressource.",
+        },
+        "difficulty": {
+            "lower": "Fréquence déclarée plus faible de cette difficulté.",
+            "moderate": "Fréquence déclarée modérée de cette difficulté.",
+            "higher": "Fréquence déclarée plus élevée de cette difficulté.",
+        },
+        "neutral": {
+            "lower": "Présence déclarée plus faible de cette dimension.",
+            "moderate": "Présence déclarée modérée de cette dimension.",
+            "higher": "Présence déclarée plus élevée de cette dimension.",
+        },
+    },
+    "de": {
+        "band": {"lower": "Geringere Häufigkeit", "moderate": "Mittlere Häufigkeit", "higher": "Höhere Häufigkeit"},
+        "resource": {
+            "lower": "Geringere berichtete Nutzung dieser Strategie oder Ressource.",
+            "moderate": "Mittlere berichtete Nutzung dieser Strategie oder Ressource.",
+            "higher": "Höhere berichtete Nutzung dieser Strategie oder Ressource.",
+        },
+        "difficulty": {
+            "lower": "Geringere berichtete Häufigkeit dieser Schwierigkeit.",
+            "moderate": "Mittlere berichtete Häufigkeit dieser Schwierigkeit.",
+            "higher": "Höhere berichtete Häufigkeit dieser Schwierigkeit.",
+        },
+        "neutral": {
+            "lower": "Geringeres berichtetes Vorhandensein dieser Dimension.",
+            "moderate": "Mittleres berichtetes Vorhandensein dieser Dimension.",
+            "higher": "Höheres berichtetes Vorhandensein dieser Dimension.",
+        },
+    },
 }
 
 
@@ -99,8 +142,46 @@ class ScoringError(ValueError):
     """Input non valido per il calcolo del profilo (strumento/locale/risposte)."""
 
 
+class LocaleUnavailable(ScoringError):
+    """Lingua nota all'app ma non ancora somministrabile per questo strumento.
+
+    Distinta da una lingua inesistente: qui la risposta giusta e' "non ancora",
+    con lo stato e le lingue disponibili, non "non esiste".
+    """
+
+    def __init__(self, instrument_code: str, locale: str, status: str, available: List[str]):
+        super().__init__(
+            f"{instrument_code}: la lingua {locale} non e' somministrabile (stato {status})"
+        )
+        self.locale = locale
+        self.status = status
+        self.available = available
+
+
+def _assert_locale_available(db: Session, instrument_code: str, locale: str) -> str:
+    """Rifiuta una lingua sconosciuta o non ancora somministrabile. Ritorna lo stato."""
+    if locale not in APP_LOCALES:
+        raise ScoringError(f"Locale non supportato: {locale}")
+    statuses = status_map(db, "instrument", instrument_code)
+    if not statuses:
+        # Strumento creato dopo l'avvio (pannello admin, seed di un test): le righe
+        # di registro si derivano alla prima richiesta, come gli step guidati.
+        # Senza questo, uno strumento nuovo resterebbe non somministrabile in
+        # nessuna lingua fino al riavvio, e nulla lo direbbe.
+        from .content_versions_seed import derive_instrument_versions
+
+        derive_instrument_versions(db)
+        statuses = status_map(db, "instrument", instrument_code)
+    available = served_locales(db, "instrument", instrument_code)
+    if locale not in available:
+        raise LocaleUnavailable(instrument_code, locale, statuses.get(locale, "draft"), available)
+    return statuses[locale]
+
+
 def _label_for(factor: models.Factor, locale: str) -> str:
-    return getattr(factor, f"label_{locale}", None) or factor.label_en or factor.code
+    # Nessun ripiego sull'inglese: un fattore senza etichetta nella lingua servita
+    # mostra il codice, che e' neutro. L'inglese sarebbe una schermata mista.
+    return localized(factor, "label", locale) or factor.code
 
 
 def _experimental_band(average: float) -> str:
@@ -131,14 +212,15 @@ def compute_profile(
 
     answers: {item_number: valore}. Ritorna dict con metadati + lista risultati per fattore.
     """
-    if locale not in SUPPORTED_LOCALES:
-        raise ScoringError(f"Locale non supportato: {locale}")
-
     instrument = db.query(models.Instrument).filter(
         models.Instrument.code == instrument_code
     ).first()
     if not instrument:
         raise ScoringError(f"Strumento sconosciuto: {instrument_code}")
+
+    # Un codice sbagliato resta "strumento sconosciuto"; una lingua non ancora
+    # somministrabile e' un'altra risposta, e arriva solo dopo.
+    _assert_locale_available(db, instrument_code, locale)
 
     factors = (
         db.query(models.Factor)
@@ -183,7 +265,7 @@ def compute_profile(
         norms_by_factor.setdefault(n.factor_code, []).append(n)
     has_norms = bool(norms_all)
 
-    copy = _TEXT[locale]
+    copy = _TEXT.get(locale) or _TEXT["en"]
     results = []
     for factor in factors:
         fitems = items_by_factor.get(factor.code, [])
@@ -248,13 +330,12 @@ def get_rules(db: Session, instrument_code: str, locale: str) -> dict:
 
     Include metadati strumento, scala, fattori e item (testo nella locale richiesta).
     """
-    if locale not in SUPPORTED_LOCALES:
-        raise ScoringError(f"Locale non supportato: {locale}")
     instrument = db.query(models.Instrument).filter(
         models.Instrument.code == instrument_code
     ).first()
     if not instrument:
         raise ScoringError(f"Strumento sconosciuto: {instrument_code}")
+    locale_status = _assert_locale_available(db, instrument_code, locale)
 
     factors = (
         db.query(models.Factor)
@@ -283,7 +364,7 @@ def get_rules(db: Session, instrument_code: str, locale: str) -> dict:
     return {
         "instrument": {
             "code": instrument.code,
-            "name": getattr(instrument, f"name_{locale}", None) or instrument.name_en,
+            "name": localized(instrument, "name", locale) or instrument.code,
             "response_scale_min": instrument.response_scale_min,
             "response_scale_max": instrument.response_scale_max,
             "response_labels": labels,
@@ -291,6 +372,8 @@ def get_rules(db: Session, instrument_code: str, locale: str) -> dict:
             "status": instrument.status,
         },
         "uses_validated_norms": has_norms,
+        "locale_status": locale_status,
+        "available_locales": served_locales(db, "instrument", instrument.code),
         "factors": [
             {
                 "code": f.code,
@@ -315,7 +398,7 @@ def get_rules(db: Session, instrument_code: str, locale: str) -> dict:
                 "factor_code": it.factor_code,
                 "reverse_scoring": it.reverse_scoring,
                 "active": it.active,
-                "text": getattr(it, f"text_{locale}", None),
+                "text": localized(it, "text", locale),
             }
             for it in items
         ],

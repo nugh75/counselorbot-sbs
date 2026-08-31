@@ -368,6 +368,103 @@ def test_certified_strategies_get_an_italian_registry_row():
         db.close()
 
 
+# --- cancello di somministrazione -------------------------------------------
+
+from backend import scoring_service  # noqa: E402
+
+
+def _instrument_with_english_items(db, code):
+    db.add(models.Instrument(code=code, name_en="Test instrument",
+                             response_scale_min=1, response_scale_max=4))
+    db.add(models.Factor(instrument_code=code, code="C1", label_en="Elaborative",
+                         orientation="resource"))
+    db.add(models.QuestionnaireItem(instrument_code=code, item_number=1,
+                                    factor_code="C1", text_en="english item"))
+    db.commit()
+    derive_instrument_versions(db)
+
+
+def test_supported_locales_covers_the_six_app_languages():
+    assert set(scoring_service.SUPPORTED_LOCALES) == set(APP_LOCALES)
+
+
+def test_a_language_without_items_is_refused_with_its_status():
+    db = _TestSession()
+    try:
+        code = f"{PREFIX}-GATE"
+        _instrument_with_english_items(db, code)
+        try:
+            scoring_service.get_rules(db, code, "de")
+        except scoring_service.LocaleUnavailable as exc:
+            assert exc.status == "draft"
+            assert "en" in exc.available
+            return
+        raise AssertionError("il tedesco senza item non deve essere somministrabile")
+    finally:
+        db.close()
+
+
+def test_the_language_that_has_items_is_served():
+    db = _TestSession()
+    try:
+        code = f"{PREFIX}-OK"
+        _instrument_with_english_items(db, code)
+        rules = scoring_service.get_rules(db, code, "en")
+        assert rules["items"][0]["text"] == "english item"
+        assert rules["factors"][0]["label"] == "Elaborative"
+        assert rules["locale_status"] == "pilot"
+    finally:
+        db.close()
+
+
+def test_no_locale_ever_serves_another_language_text():
+    db = _TestSession()
+    try:
+        code = f"{PREFIX}-MIX"
+        db.add(models.Instrument(code=code, response_scale_min=1, response_scale_max=4))
+        db.add(models.Factor(instrument_code=code, code="C1", label_en="Elaborative"))
+        db.add(models.QuestionnaireItem(instrument_code=code, item_number=1,
+                                        factor_code="C1",
+                                        text_i18n={"en": "english item", "sv": "svenskt item"}))
+        db.commit()
+        derive_instrument_versions(db)
+        en = scoring_service.get_rules(db, code, "en")["items"][0]["text"]
+        sv = scoring_service.get_rules(db, code, "sv")["items"][0]["text"]
+        assert en != sv, "due lingue non possono servire lo stesso testo"
+    finally:
+        db.close()
+
+
+def test_a_locale_outside_the_app_is_a_plain_scoring_error():
+    db = _TestSession()
+    try:
+        code = f"{PREFIX}-PT"
+        _instrument_with_english_items(db, code)
+        try:
+            scoring_service.get_rules(db, code, "pt")
+        except scoring_service.LocaleUnavailable:
+            raise AssertionError("una lingua inesistente non e' 'non ancora disponibile'")
+        except scoring_service.ScoringError:
+            return
+        raise AssertionError("una lingua fuori dall'app deve essere rifiutata")
+    finally:
+        db.close()
+
+
+def test_scoring_refuses_an_unavailable_locale_before_computing():
+    db = _TestSession()
+    try:
+        code = f"{PREFIX}-SCORE"
+        _instrument_with_english_items(db, code)
+        try:
+            scoring_service.compute_profile(db, code, "fr", {1: 3})
+        except scoring_service.LocaleUnavailable:
+            return
+        raise AssertionError("non si calcola un profilo in una lingua non somministrabile")
+    finally:
+        db.close()
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0
