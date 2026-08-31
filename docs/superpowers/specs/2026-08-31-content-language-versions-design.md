@@ -3,7 +3,7 @@
 | Campo | Valore |
 |---|---|
 | Data | 2026-08-31 |
-| Stato | Design approvato, sotto-progetto 1 in implementazione |
+| Stato | Sotto-progetto 1 completato |
 | Branch | `feature/content-language-versions` |
 | Sotto-progetti | 1. Fondamenta · 2. Tool in tutte le lingue · 3. Strumenti FR/DE/ES |
 
