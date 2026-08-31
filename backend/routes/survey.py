@@ -20,10 +20,10 @@ router = APIRouter()
 get_db = database.get_db
 logger = logging.getLogger(__name__)
 
-# Strumenti del libretto: i 7 questionari + due libretti narrativi senza dimensioni
+# Strumenti del libretto: i questionari e Idea + due libretti narrativi senza dimensioni
 # (eventi significativi), in cui forza/area sono testo libero come per Savickas.
 STUDENT_BOOKLET_TYPES = (
-    "QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP",
+    "QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP", "IDEA",
     "EVENTO_STUDIO", "EVENTO_PROFESSIONALE",
 )
 
