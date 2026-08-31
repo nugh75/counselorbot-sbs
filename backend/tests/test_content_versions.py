@@ -263,8 +263,13 @@ def test_backfill_moves_legacy_columns_into_json_and_is_idempotent():
 # --- derivazione degli stati iniziali ---------------------------------------
 
 from backend.content_versions_seed import (  # noqa: E402
+    assistant_question_key,
+    derive_assistant_question_versions,
     derive_instrument_versions,
+    derive_guided_step_question_versions,
+    derive_reading_versions,
     derive_strategy_versions,
+    guided_step_question_key,
 )
 
 
@@ -356,14 +361,88 @@ def test_certified_strategies_get_an_italian_registry_row():
         slug = f"{PREFIX}-strategia"
         db.add(models.CertifiedStrategy(
             slug=slug, name_it="Ripasso distribuito", description_it="Come si fa",
+            name_i18n={"it": "Ripasso distribuito", "fr": "Revision espacee"},
+            description_i18n={"it": "Come si fa", "fr": "Comment faire"},
             status="certified", is_active=True,
         ))
         db.commit()
         derive_strategy_versions(db)
         statuses = cvs.status_map(db, "certified_strategy", slug)
         assert statuses["it"] == "certified"
-        # le altre lingue non hanno testo: restano bozza, non nascono certificate
+        # Il testo non italiano esistente richiede comunque una certificazione
+        # esplicita della singola lingua.
+        assert statuses["fr"] == "translated"
         assert statuses["de"] == "draft"
+    finally:
+        db.close()
+
+
+def test_certified_readings_get_a_registry_row_for_every_app_language():
+    db = _TestSession()
+    try:
+        slug = f"{PREFIX}-lettura"
+        db.add(models.CertifiedReading(
+            slug=slug,
+            title="Una lettura",
+            why_i18n={"it": "Pertinente", "en": "Relevant"},
+            summary_i18n={"it": "Sintesi", "en": "Summary"},
+            synopsis_i18n={"it": "Sinossi", "en": "Synopsis"},
+            status="certified",
+            is_active=True,
+        ))
+        db.commit()
+
+        derive_reading_versions(db)
+        statuses = cvs.status_map(db, "certified_reading", slug)
+        assert set(statuses) == set(APP_LOCALES)
+        assert statuses["it"] == "certified"
+        assert statuses["en"] == "certified"
+        assert statuses["de"] == "draft"
+    finally:
+        db.close()
+
+
+def test_guided_questions_share_one_version_key_across_the_six_languages():
+    db = _TestSession()
+    try:
+        questionnaire = f"{PREFIX}-GUIDED"
+        for locale in APP_LOCALES:
+            db.add(models.GuidedStepQuestion(
+                questionnaire_type=questionnaire,
+                step_id="intro",
+                language=locale,
+                text=f"{locale} question",
+                sort_order=0,
+                is_active=True,
+            ))
+        db.commit()
+
+        derive_guided_step_question_versions(db)
+        key = guided_step_question_key(questionnaire, "intro", 0)
+        statuses = cvs.status_map(db, "guided_step_question", key)
+        assert statuses == {locale: "certified" for locale in APP_LOCALES}
+    finally:
+        db.close()
+
+
+def test_assistant_questions_share_one_version_key_across_the_six_languages():
+    db = _TestSession()
+    try:
+        topic = f"{PREFIX}-TOPIC"
+        for locale in APP_LOCALES:
+            db.add(models.AssistantQuestion(
+                topic=topic,
+                language=locale,
+                text=f"{locale} question",
+                sort_order=0,
+                is_active=True,
+            ))
+        db.commit()
+
+        derive_assistant_question_versions(db)
+        key = assistant_question_key(topic, 0)
+        statuses = cvs.status_map(db, "assistant_question", key)
+        assert statuses == {locale: "certified" for locale in APP_LOCALES}
     finally:
         db.close()
 

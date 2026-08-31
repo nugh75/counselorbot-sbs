@@ -48,6 +48,7 @@ from backend.qsa_extractor import (
     _validate_scores,
 )
 from backend.strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_memory
+from backend.content_versions_seed import derive_strategy_versions
 
 
 # --- DB Postgres dedicato ai test (stessa istanza, db separato) ---
@@ -944,6 +945,7 @@ def test_certified_strategy_seed_is_idempotent_and_retrievable():
         assert inserted == len(expected_slugs - before_slugs)
         assert db.query(models.CertifiedStrategy).count() == before_count + inserted
         assert seed_certified_strategies(db, models) == 0
+        derive_strategy_versions(db)
 
         after_slugs = {row.slug for row in db.query(models.CertifiedStrategy).all()}
         assert expected_slugs.issubset(after_slugs)
@@ -1961,6 +1963,7 @@ def test_prompt_audit_scopes_certified_strategies_to_qsa_second_level_step():
                 is_active=True,
             ))
         db.commit()
+        derive_strategy_versions(db)
     finally:
         db.close()
 
@@ -2038,6 +2041,7 @@ def test_prompt_audit_certified_strategy_limit_can_disable_injection():
         else:
             db.add(models.Config(key=config_key, value='{"certified_strategy_limit": 0}', description=config_key))
         db.commit()
+        derive_strategy_versions(db)
     finally:
         db.close()
 
@@ -2138,6 +2142,7 @@ def test_retrieved_context_respects_allowed_strategies_whitelist():
                 description="test approved strategies",
             ))
         db.commit()
+        derive_strategy_versions(db)
     finally:
         db.close()
 
@@ -3632,6 +3637,9 @@ def test_certified_strategies_for_student_endpoint():
             "slug": "booklet-focus-qsa", "name_it": "Tecnica del focus",
             "description_it": "Riduci le distrazioni durante lo studio.",
             "recommended_when_it": "Quando C6 e' un'area di crescita.",
+            "name_i18n": {"it": "Tecnica del focus", "fr": "Technique de concentration"},
+            "description_i18n": {"it": "Riduci le distrazioni durante lo studio.", "fr": "Reduis les distractions."},
+            "recommended_when_i18n": {"it": "Quando C6 e' un'area di crescita.", "fr": "Lorsque C6 est a ameliorer."},
             "factor_codes": ["C6"], "questionnaire_types": ["QSA"], "status": "certified",
         })
         assert r.status_code == 200, r.text
@@ -3640,6 +3648,33 @@ def test_certified_strategies_for_student_endpoint():
             hit = client.get("/user/certified-strategies?questionnaire_type=QSA&lang=it")
             assert hit.status_code == 200, hit.text
             assert any(s["slug"] == "booklet-focus-qsa" and s["name"] == "Tecnica del focus" for s in hit.json())
+
+            # Il JSON francese non entra finche' la relativa versione non e'
+            # certificata; prima si mantiene il ripiego italiano certificato.
+            fr_before = client.get("/user/certified-strategies?questionnaire_type=QSA&lang=fr")
+            fr_entry = next(s for s in fr_before.json() if s["slug"] == "booklet-focus-qsa")
+            assert fr_entry["name"] == "Tecnica del focus"
+
+            versions = client.get(
+                "/admin/content-versions?content_type=certified_strategy&content_key=booklet-focus-qsa&locale=fr"
+            ).json()
+            assert len(versions) == 1
+            version_id = versions[0]["id"]
+            assert versions[0]["status"] == "translated"
+            assert client.post(
+                f"/admin/content-versions/{version_id}/promote", json={"target_status": "certified"}
+            ).status_code == 200
+            catalog = client.get("/admin/certified-strategies").json()
+            catalog_entry = next(s for s in catalog if s["slug"] == "booklet-focus-qsa")
+            assert catalog_entry["status"] == "certified", catalog_entry
+            assert catalog_entry["questionnaire_types"] == ["QSA"], catalog_entry
+            assert catalog_entry["name_i18n"]["fr"] == "Technique de concentration", catalog_entry
+            fr_after = client.get("/user/certified-strategies?questionnaire_type=QSA&lang=fr")
+            assert fr_after.status_code == 200, fr_after.text
+            fr_matches = [s for s in fr_after.json() if s["slug"] == "booklet-focus-qsa"]
+            assert len(fr_matches) == 1, fr_after.text
+            fr_entry = fr_matches[0]
+            assert fr_entry["name"] == "Technique de concentration"
 
             # Fuori scope: non compare per ZTPI.
             other = client.get("/user/certified-strategies?questionnaire_type=ZTPI&lang=it")

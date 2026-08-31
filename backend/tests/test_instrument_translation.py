@@ -63,7 +63,10 @@ def _translator(targets, calls=None):
 
 def _instrument(db, code, item_texts):
     db.add(models.Instrument(code=code, name_en="Test instrument",
-                             response_scale_min=1, response_scale_max=4))
+                             response_scale_min=1, response_scale_max=4,
+                             response_labels={
+                                 "en": ["Never", "Sometimes", "Often", "Always"],
+                             }))
     db.add(models.Factor(instrument_code=code, code="C1", label_en="Elaborative strategies",
                          orientation="resource"))
     for number, text in enumerate(item_texts, start=1):
@@ -91,6 +94,21 @@ def test_items_factors_and_name_all_get_the_target_languages():
 
         instrument = db.query(models.Instrument).filter(models.Instrument.code == code).first()
         assert instrument.name_i18n["fr"].startswith("[fr]")
+    finally:
+        db.close()
+
+
+def test_response_scale_labels_are_translated_with_the_instrument():
+    db = _TestSession()
+    try:
+        code = f"{PREFIX}-LABELS"
+        _instrument(db, code, ["only item"])
+        translate_instrument(db, code, targets=["fr"], translate=_translator({"fr"}))
+
+        instrument = db.query(models.Instrument).filter(models.Instrument.code == code).first()
+        assert instrument.response_labels["fr"] == [
+            "[fr] Never", "[fr] Sometimes", "[fr] Often", "[fr] Always",
+        ]
     finally:
         db.close()
 

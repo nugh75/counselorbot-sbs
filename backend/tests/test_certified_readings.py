@@ -22,6 +22,7 @@ from sqlalchemy.orm import sessionmaker
 from backend import database, models
 from backend.certified_reading_seed import SEED_CERTIFIED_READINGS, seed_certified_readings
 from backend.certified_reading_service import certified_reading_memory
+from backend.content_versions_seed import derive_reading_versions
 from backend.reading_audience import band_from_age, band_from_text, most_protective, resolve_audience_band
 from backend.reading_frame import READING_FRAME, frame
 from backend.reading_themes import READING_THEMES, themes_from_factors, themes_from_text
@@ -52,6 +53,15 @@ _engine = create_engine(_test_url)
 _TestSession = sessionmaker(bind=_engine, autoflush=False, autocommit=False)
 database.Base.metadata.create_all(bind=_engine)
 
+# Il modulo e' eseguibile anche dopo le altre suite sullo stesso DB dedicato:
+# parte senza letture o stati residui che altererebbero ranking e limit.
+with _TestSession() as _cleanup_db:
+    _cleanup_db.query(models.ContentLanguageVersion).filter(
+        models.ContentLanguageVersion.content_type == "certified_reading"
+    ).delete(synchronize_session=False)
+    _cleanup_db.query(models.CertifiedReading).delete(synchronize_session=False)
+    _cleanup_db.commit()
+
 PREFIX = f"t{uuid.uuid4().hex[:6]}"
 
 
@@ -66,6 +76,7 @@ def _reading(db, slug, **kwargs):
     row = models.CertifiedReading(**data)
     db.add(row)
     db.commit()
+    derive_reading_versions(db)
     return row
 
 

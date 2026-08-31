@@ -15,6 +15,7 @@ import uuid
 from urllib.parse import urlsplit, urlunsplit
 
 import psycopg2
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -25,7 +26,13 @@ from backend.certified_translation import (
     translate_readings,
     translate_strategies,
 )
-from backend.content_versions_seed import derive_strategy_versions, ensure_i18n_columns
+from backend.certified_strategy_service import certified_strategy_memory
+from backend.certified_reading_service import certified_reading_memory
+from backend.content_versions_seed import (
+    derive_reading_versions,
+    derive_strategy_versions,
+    ensure_i18n_columns,
+)
 
 TEST_DB_NAME = "counselorbot_test"
 _prod = urlsplit(os.environ["DATABASE_URL"])
@@ -94,6 +101,31 @@ def _reading(db, slug, **kwargs):
     return row
 
 
+@pytest.fixture(autouse=True)
+def _cleanup_translation_rows():
+    """Le righe create qui (prefisso PREFIX) non devono inquinare gli altri file.
+
+    Ogni file di test ricrea il DB `counselorbot_test` solo all'import; in un
+    singolo processo pytest l'esecuzione dei file successivi (letture, smoke)
+    vede quindi le righe lasciate qui. Il prefisso e' unico per processo.
+    """
+    yield
+    db = _TestSession()
+    try:
+        db.query(models.CertifiedStrategy).filter(
+            models.CertifiedStrategy.slug.like(f"{PREFIX}%")
+        ).delete(synchronize_session=False)
+        db.query(models.CertifiedReading).filter(
+            models.CertifiedReading.slug.like(f"{PREFIX}%")
+        ).delete(synchronize_session=False)
+        db.query(models.ContentLanguageVersion).filter(
+            models.ContentLanguageVersion.content_key.like(f"{PREFIX}%")
+        ).delete(synchronize_session=False)
+        db.commit()
+    finally:
+        db.close()
+
+
 # --- strategie ---------------------------------------------------------------
 
 def test_translation_fills_every_target_language():
@@ -138,6 +170,61 @@ def test_a_machine_translation_is_registered_as_translated_not_certified():
         assert statuses["it"] == "certified"
         version = cvs.get_version(db, "certified_strategy", row.slug, "de")
         assert version.source == "llm:qwen3.8"
+    finally:
+        db.close()
+
+
+def test_a_partial_tool_translation_stays_draft():
+    db = _TestSession()
+    row = None
+    try:
+        row = _strategy(db, "partial")
+        derive_strategy_versions(db)
+
+        def partial(text: str) -> dict[str, str]:
+            return {"fr": "Nom francais"} if text == "Ripasso distribuito" else {}
+
+        translate_strategies(db, translate=partial, model_label="partial-model")
+        version = cvs.get_version(db, "certified_strategy", row.slug, "fr")
+        assert version.status == "draft"
+        assert version.source == "llm:partial-model"
+    finally:
+        if row is not None:
+            db.query(models.ContentLanguageVersion).filter(
+                models.ContentLanguageVersion.content_type == "certified_strategy",
+                models.ContentLanguageVersion.content_key == row.slug,
+            ).delete(synchronize_session=False)
+            db.delete(row)
+            db.commit()
+        db.close()
+
+
+def test_chat_uses_only_a_certified_language_and_falls_back_to_certified_italian():
+    db = _TestSession()
+    try:
+        row = _strategy(db, "gate")
+        derive_strategy_versions(db)
+        translate_strategies(db, translate=_fake_translator(), model_label="qwen3.8")
+
+        before_review = certified_strategy_memory.retrieve(
+            db,
+            questionnaire_type="QSA",
+            language="fr",
+            allowed_ids={row.slug},
+            limit=1,
+        )
+        assert before_review[0]["name"] == "Ripasso distribuito"
+
+        version = cvs.get_version(db, "certified_strategy", row.slug, "fr")
+        cvs.promote(db, version, "certified", approved_by="reviewer")
+        after_review = certified_strategy_memory.retrieve(
+            db,
+            questionnaire_type="QSA",
+            language="fr",
+            allowed_ids={row.slug},
+            limit=1,
+        )
+        assert after_review[0]["name"] == "[fr] Ripasso distribuito"
     finally:
         db.close()
 
@@ -203,6 +290,38 @@ def test_readings_register_their_language_status():
         translate_readings(db, translate=_fake_translator(), model_label="qwen3.8")
         statuses = cvs.status_map(db, "certified_reading", row.slug)
         assert statuses["fr"] == "translated"
+    finally:
+        db.close()
+
+
+def test_reading_chat_uses_only_certified_language_text():
+    db = _TestSession()
+    try:
+        row = _reading(db, "reading-gate", synopsis_i18n={"it": "Sinossi italiana"})
+        derive_reading_versions(db)
+        translate_readings(db, translate=_fake_translator(), model_label="qwen3.8")
+
+        before_review = certified_reading_memory.retrieve(
+            db,
+            themes=["ansia-e-prestazione"],
+            language="fr",
+            audience_band="secondaria",
+            limit=100,
+        )
+        entry = next(item for item in before_review if item["id"] == row.slug)
+        assert entry["synopsis"] == "Sinossi italiana"
+
+        version = cvs.get_version(db, "certified_reading", row.slug, "fr")
+        cvs.promote(db, version, "certified", approved_by="reviewer")
+        after_review = certified_reading_memory.retrieve(
+            db,
+            themes=["ansia-e-prestazione"],
+            language="fr",
+            audience_band="secondaria",
+            limit=100,
+        )
+        entry = next(item for item in after_review if item["id"] == row.slug)
+        assert entry["synopsis"] == "[fr] Sinossi italiana"
     finally:
         db.close()
 
