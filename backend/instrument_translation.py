@@ -119,6 +119,41 @@ def _fill(row, field: str, source: str, targets: List[str], translate: Translato
     return written
 
 
+def _fill_response_labels(
+    instrument: models.Instrument,
+    source: str,
+    targets: List[str],
+    translate: Translator,
+    force: bool,
+) -> set[str]:
+    """Traduce ogni gradino della scala senza ripiegare su un'altra lingua."""
+    current = dict(instrument.response_labels or {})
+    source_labels = current.get(source) or []
+    if not source_labels:
+        return set()
+    wanted = [lang for lang in targets if force or not current.get(lang)]
+    if not wanted:
+        return set()
+
+    produced: dict[str, list[str]] = {lang: [] for lang in wanted}
+    for label in source_labels:
+        translated = translate(str(label), source, wanted)
+        for lang in wanted:
+            value = (translated.get(lang) or "").strip()
+            if value:
+                produced[lang].append(value)
+
+    written = {
+        lang for lang, labels in produced.items()
+        if len(labels) == len(source_labels)
+    }
+    for lang in written:
+        current[lang] = produced[lang]
+    if written:
+        instrument.response_labels = current
+    return written
+
+
 def refresh_instrument_status(db: Session, code: str, locales: List[str]) -> None:
     """Ricalcola `draft`/`translated` dalla copertura degli item.
 
@@ -136,12 +171,28 @@ def refresh_instrument_status(db: Session, code: str, locales: List[str]) -> Non
     )
     if not items:
         return
+    instrument = db.query(models.Instrument).filter(models.Instrument.code == code).first()
+    factors = db.query(models.Factor).filter(models.Factor.instrument_code == code).all()
     beyond = INSTRUMENT_STATUSES.index("translated")
     for locale in locales:
         existing = get_version(db, "instrument", code, locale)
         if existing and INSTRUMENT_STATUSES.index(existing.status) > beyond:
             continue
-        covered = all(localized(item, "text", locale) for item in items)
+        labels = (instrument.response_labels or {}).get(locale) if instrument else None
+        expected_labels = (
+            instrument.response_scale_max - instrument.response_scale_min + 1
+            if instrument else 0
+        )
+        covered = bool(
+            instrument
+            and localized(instrument, "name", locale)
+            and labels
+            and len(labels) == expected_labels
+            and all(str(label).strip() for label in labels)
+            and factors
+            and all(localized(factor, "label", locale) for factor in factors)
+            and all(localized(item, "text", locale) for item in items)
+        )
         status = "translated" if covered else "draft"
         if existing and existing.status == status:
             continue
@@ -169,6 +220,7 @@ def translate_instrument(
 
     written_langs: set[str] = set()
     written_langs |= _fill(instrument, "name", source, targets, translate, force)
+    written_langs |= _fill_response_labels(instrument, source, targets, translate, force)
 
     factors = db.query(models.Factor).filter(models.Factor.instrument_code == code).all()
     for factor in factors:
