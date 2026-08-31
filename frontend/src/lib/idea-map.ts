@@ -8,18 +8,60 @@ export type IdeaVariant = 'student-path' | 'student-open' | 'research';
 export const IDEA_ROLES = [
     'idea', 'assumption', 'evidence', 'alternative',
     'implication', 'open-question', 'constraint', 'step',
+    'decision', 'task',
 ] as const;
 
 export type IdeaRole = typeof IDEA_ROLES[number];
+
+export interface IdeaMapNode {
+    id: string;
+    label: string;
+    role?: IdeaRole;
+    status?: string;
+    flaw?: string;
+    task_type?: string;
+    closed?: boolean;
+    conclusion?: string;
+}
 
 export interface IdeaMapState {
     session_id: string;
     revision_id: number | null;
     updated_at: string | null;
-    spec: unknown | null;
+    spec: { title: string; nodes: IdeaMapNode[] } | null;
     description: string | null;
     missing_roles: IdeaRole[];
     complete: boolean;
+    focus: string | null;
+    task_type: string | null;
+}
+
+export interface IdeaNextStep {
+    step_id: string;
+    focus: string | null;
+    reason: 'no-map' | 'task-unknown' | 'flaw' | 'missing-role' | 'ready-to-close' | 'all-closed';
+    detail: string;
+    reason_text: string;
+    task_label: string | null;
+    pivot: string;
+    role?: string;
+    flaw?: string;
+    node_id?: string;
+    statuses: Record<string, string>;
+    flaws: Record<string, string>;
+}
+
+// Il percorso non e' una sequenza: quale passo tocca dipende da cosa manca
+// alla mappa, e quello lo sa il server.
+export async function fetchIdeaNextStep(
+    sessionId: string,
+    lang: string,
+    variant: IdeaVariant,
+): Promise<IdeaNextStep | null> {
+    const params = new URLSearchParams({ session_id: sessionId, lang, variant });
+    const response = await apiFetch(`/api/idea/next-step?${params.toString()}`);
+    if (!response.ok) return null;
+    return response.json() as Promise<IdeaNextStep>;
 }
 
 export async function fetchIdeaMap(sessionId: string): Promise<IdeaMapState | null> {

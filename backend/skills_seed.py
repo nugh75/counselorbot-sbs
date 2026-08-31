@@ -117,49 +117,57 @@ CONCEPT_DIAGRAM_INSTRUCTIONS_EN = """## Concept diagram
 
 IDEA_FOCUS_INSTRUCTIONS_EN = """## The map of the idea
 
-The map is the point of this session, not decoration: it is what the person
-takes away. It is ONE map that grows with the conversation, never redrawn from
-scratch, so send a patch and let the server merge it.
+ONE map grows with the conversation. Send a patch; the server merges it.
+[IDEA MAP] holds the map and, under WHAT THIS TURN IS FOR, the single thing
+this turn must do. Do that; do not run the whole path.
 
-- Emit one fenced block marked `idea` after every turn that adds something.
-  Send nothing when the turn added nothing; an empty patch is not a patch.
-- Never mention the block, the JSON or the map's internals to the person. Speak
-  about the map in words: "I have added what you just said about time".
+- One fenced `idea` block after every turn that adds something; nothing when it
+  adds nothing. Never mention the block or the JSON to the person.
+- Node ids, role names, status names and flaw names are machine words: they
+  NEVER appear in what you say. "idea-1 is unsupported" is a leak; "nothing
+  you have told me yet holds this up" is the same thing said to a person.
+- First patch: two nodes, one edge, one node with `"role":"idea"`,
+  `"accent":true`, the work's `"task_type"`, plus a short `"title"`.
+- `id` never changes and is never reused. Re-adding an id updates that node.
 
 ```idea
-{"add_nodes":[{"id":"t1","label":"Non so se ho tempo","role":"constraint"}],
+{"add_nodes":[{"id":"t1","label":"Non so se ho tempo","role":"constraint","status":"mentioned"}],
  "add_edges":[{"from":"t1","to":"idea","kind":"weakens"}],
- "update":[{"id":"idea","label":"Fare la tesi sulla dispersione"}]}
+ "update":[{"id":"idea","status":"defined"}]}
 ```
 
-- The FIRST patch of a session must stand on its own: at least two nodes and one
-  edge, one node with `"role":"idea"` and `"accent":true`. Add `"title"` once,
-  the idea in a few words.
-- `id` is stable for the whole session: never rename an id, never reuse one for
-  something else. Re-adding an existing id updates that node.
-- `role` says what work the node does in the reasoning, from this closed list:
-  - `idea`: the idea itself, one sentence. Exactly one, and it carries the accent.
-  - `assumption`: something taken for granted and not yet checked.
-  - `evidence`: a fact, a datum, an experience the idea rests on.
-  - `alternative`: another way to read the same thing.
-  - `implication`: what would follow if the idea held.
-  - `open-question`: what is not known yet and decides something.
-  - `constraint`: a real limit — time, money, rules, other people.
-  - `step`: a concrete next action.
-  A node without a role is allowed but says less; prefer to give one.
-- `kind` on an edge: `drives` (default, A produces B), `strengthens` (A supports
-  B), `weakens` (A hinders B), `feedback` (B returns on A), `link` (they belong
-  together, no direction). Pick the true one: each is drawn differently.
-- `update` changes only the fields it names. Use it when the person sharpens
-  something they already said, instead of adding a near-duplicate node.
-- `remove` ONLY when the person says that something is wrong or no longer
-  theirs. Never to tidy the map, never because you would draw it differently.
-- Labels in the person's own words and language, at most 80 characters. The map
-  holds their idea, not your summary of it.
-- At most 24 nodes: when the map is full, sharpen what is there instead of
-  adding more.
-"""
+`role`: `idea` (one sentence, carries the accent) - `assumption` (taken for
+granted) - `evidence` (fact, datum, experience) - `alternative` (another
+reading) - `implication` (what would follow) - `open-question` (unknown, and it
+decides) - `constraint` (real limit) - `step` (concrete action) - `decision`
+(a choice only they can make) - `task` (work that needs focusing of its own).
 
+`status`, how far into focus: `mentioned` -> `defined` -> `delimited` ->
+`related`. Raise it only when they actually said something that raises it.
+
+`flaw`, what does not hold: `duplicate` (two nodes, one job), `overloaded`
+(one node, two jobs), `premature` (used before explained). Clear it when they
+repair it. NEVER set `orphaned` or `unsupported`: the server computes those,
+and overriding them only hides them.
+
+`task_type`, one of: `thesis-chapter`, `article`, `position`,
+`research-question`, `systematic-review`, `empirical-study`, `teaching-unit`,
+`intervention`, `study-path`, `personal-project`.
+
+**Branches.** A `task` node is work that came out of the reasoning and must be
+settled before the main idea can be: "first I have to see what already exists"
+is a `systematic-review`, not a note. It carries its own `task_type` and end.
+
+**Ending one.** When [IDEA MAP] says the branch is ready: ask that work's pivot
+question, read back what was settled, and ASK whether to close. Only if they
+agree, send `"closed":true` with a one-sentence `"conclusion"`. Never close by
+yourself. `"closed":false` reopens.
+
+`kind` on an edge: `drives` (default) - `strengthens` - `weakens` - `feedback`
+- `link` (no direction) - `unclear` (related, relation not yet said).
+`update` changes only what it names. `remove` only when they say it is wrong.
+Labels in their words, their language, 80 characters.
+"""
 
 SKILL_INSTRUCTIONS_I18N = {
     "certified-advice": {"en": CERTIFIED_ADVICE_INSTRUCTIONS_EN},
@@ -178,6 +186,10 @@ ENGLISH_SKILL_INSTRUCTIONS_POLICY_MARKER = "skills_english_instructions_v1"
 DIAGRAM_EDGE_KINDS_POLICY_MARKER = "skills_diagram_edge_kinds_v1"
 DIAGRAM_ICONS_POLICY_MARKER = "skills_diagram_icons_v1"
 IDEA_FOCUS_POLICY_MARKER = "skills_idea_focus_v2"
+IDEA_WAYFINDER_POLICY_MARKER = "skills_idea_wayfinder_v1"
+# Contratto della mappa prima della diagnosi wayfinder: riconosce le
+# installazioni ancora sul testo di serie, le uniche da aggiornare.
+IDEA_FOCUS_INSTRUCTIONS_EN_V1_MD5 = "b324b198d0f5f90d660819c980b43848"
 # Contratto del diagramma prima dei tipi di arco: serve a riconoscere le
 # installazioni ancora sul testo di serie, che sono le uniche da aggiornare.
 CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V1_MD5 = "8a3890a53e860a50876501193da698bf"
@@ -345,7 +357,7 @@ SKILL_SEEDS = [
         "handler_params": {},
         "routing": "always",
         "slot": "directive_tail",
-        "max_chars": 3000,
+        "max_chars": 2900,
         "sort_order": 40,
         "is_active": True,
         "bind": True,
@@ -640,6 +652,35 @@ def apply_idea_focus_policy(db) -> bool:
         key=IDEA_FOCUS_POLICY_MARKER,
         value="applied",
         description="Migrazione una tantum: strumento Idea servito dal motore di skill.",
+    ))
+    db.commit()
+    return updated
+
+
+def apply_idea_wayfinder_policy(db) -> bool:
+    """Porta il contratto della mappa alla diagnosi wayfinder, una sola volta."""
+    marker = db.query(models.Config).filter(
+        models.Config.key == IDEA_WAYFINDER_POLICY_MARKER
+    ).first()
+    if marker is not None:
+        return False
+
+    seed_skills(db)
+    skill = db.query(models.Skill).filter(models.Skill.slug == "idea-focus").first()
+    updated = False
+    if skill is not None:
+        current = (skill.instructions_i18n or {}).get("en", "")
+        if hashlib.md5(current.encode("utf-8")).hexdigest() == IDEA_FOCUS_INSTRUCTIONS_EN_V1_MD5:
+            skill.instructions_i18n = {"en": IDEA_FOCUS_INSTRUCTIONS_EN}
+            skill.max_chars = 2900
+            updated = True
+        elif current != IDEA_FOCUS_INSTRUCTIONS_EN:
+            logger.info("idea-focus personalizzata dall'admin: diagnosi non imposta")
+
+    db.add(models.Config(
+        key=IDEA_WAYFINDER_POLICY_MARKER,
+        value="applied",
+        description="Migrazione una tantum: diagnosi wayfinder nel contratto della mappa Idea.",
     ))
     db.commit()
     return updated
