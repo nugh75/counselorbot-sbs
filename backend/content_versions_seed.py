@@ -11,7 +11,9 @@ from sqlalchemy import text as sa_text
 from sqlalchemy.orm import Session
 
 from . import models
-from .i18n_fields import merged_i18n
+from .content_version_service import get_version, upsert_version
+from .content_versions import APP_LOCALES
+from .i18n_fields import locales_with_text, merged_i18n
 
 logger = logging.getLogger(__name__)
 
@@ -75,3 +77,89 @@ def backfill_i18n_columns(db: Session) -> int:
         db.commit()
         logger.info("backfill i18n: %d righe travasate", touched)
     return touched
+
+
+def _instrument_locales_with_items(db: Session, code: str) -> set[str]:
+    items = (
+        db.query(models.QuestionnaireItem)
+        .filter(
+            models.QuestionnaireItem.instrument_code == code,
+            models.QuestionnaireItem.active == True,  # noqa: E712
+        )
+        .all()
+    )
+    found: set[str] = set()
+    for item in items:
+        found |= locales_with_text(item, "text")
+    return found
+
+
+def _validated_norm_locales(db: Session, code: str) -> set[str]:
+    rows = (
+        db.query(models.NormThreshold)
+        .filter(
+            models.NormThreshold.instrument_code == code,
+            models.NormThreshold.status == "validated",
+        )
+        .all()
+    )
+    return {r.locale for r in rows}
+
+
+def derive_instrument_versions(db: Session) -> int:
+    """Stato iniziale di ogni (strumento, lingua), dedotto dai dati presenti.
+
+    Nessun indovinello: una lingua senza item e' bozza; una lingua con item ma
+    senza norme validate e' `pilot`, che e' esattamente il comportamento di oggi
+    (somministrabile con avviso sperimentale e stanine non normate); con norme
+    validate e' `validated`. Non tocca mai una riga esistente: una promozione
+    decisa da un admin vale piu' di una deduzione.
+    """
+    created = 0
+    for instrument in db.query(models.Instrument).all():
+        with_items = _instrument_locales_with_items(db, instrument.code)
+        with_norms = _validated_norm_locales(db, instrument.code)
+        for locale in APP_LOCALES:
+            if get_version(db, "instrument", instrument.code, locale) is not None:
+                continue
+            if locale not in with_items:
+                status = "draft"
+            elif locale in with_norms:
+                status = "validated"
+            else:
+                status = "pilot"
+            upsert_version(
+                db, "instrument", instrument.code, locale,
+                status=status, source="derived",
+                notes="stato dedotto dai dati alla migrazione",
+            )
+            created += 1
+    return created
+
+
+def derive_strategy_versions(db: Session) -> int:
+    """Stato iniziale di ogni (strategia, lingua).
+
+    Una strategia gia' `certified` lo e' nelle lingue in cui ha testo; nelle
+    altre e' bozza. Il seed e' italiano, quindi in pratica nasce certificata solo
+    in italiano.
+    """
+    created = 0
+    for strategy in db.query(models.CertifiedStrategy).all():
+        with_text = locales_with_text(strategy, "description") | locales_with_text(strategy, "name")
+        for locale in APP_LOCALES:
+            if get_version(db, "certified_strategy", strategy.slug, locale) is not None:
+                continue
+            if locale in with_text and strategy.status == "certified":
+                status = "certified"
+            elif locale in with_text:
+                status = "translated"
+            else:
+                status = "draft"
+            upsert_version(
+                db, "certified_strategy", strategy.slug, locale,
+                status=status, source="derived",
+                notes="stato dedotto dai dati alla migrazione",
+            )
+            created += 1
+    return created

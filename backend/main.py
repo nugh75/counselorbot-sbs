@@ -1058,10 +1058,18 @@ def _seed_and_migrate():
         from .guided_step_label_i18n import seed_step_label_i18n
         seed_step_label_i18n(db, models)
 
-        # Travaso dei testi nelle colonne JSON. Dopo il seed del catalogo, cosi'
-        # anche uno strumento appena seminato entra nei campi i18n. Idempotente.
-        from .content_versions_seed import backfill_i18n_columns
+        # Travaso dei testi nelle colonne JSON e stato di certificazione iniziale
+        # per lingua. Dopo il seed del catalogo, cosi' anche uno strumento appena
+        # seminato entra nei campi i18n e nel registro. Entrambi idempotenti.
+        from .content_versions_seed import (
+            backfill_i18n_columns,
+            derive_instrument_versions,
+            derive_strategy_versions,
+        )
         backfill_i18n_columns(db)
+        derived = derive_instrument_versions(db) + derive_strategy_versions(db)
+        if derived:
+            logger.info("Derived %d content language versions", derived)
     finally:
         db.close()
 
