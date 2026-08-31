@@ -1,4 +1,4 @@
-# Graph Report - /home/nugh75/counselorbot-sbs/docs  (2026-08-30)
+# Graph Report - /home/nugh75/counselorbot-sbs/docs  (2026-08-31)
 
 ## Corpus Check
 - cluster-only mode — file stats not available

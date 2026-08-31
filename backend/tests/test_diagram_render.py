@@ -310,13 +310,13 @@ def test_mindmap_is_drawn_radially():
 
 
 def test_mindmap_accepts_more_nodes_than_an_illustration():
-    spec = parse_spec(_mindmap(24))
-    assert len(spec.nodes) == 24
+    spec = parse_spec(_mindmap(32))
+    assert len(spec.nodes) == 32
 
 
 def test_mindmap_still_has_a_ceiling():
     with pytest.raises(DiagramSpecError):
-        parse_spec(_mindmap(25))
+        parse_spec(_mindmap(33))
 
 
 def test_other_types_keep_the_narrow_ceiling():

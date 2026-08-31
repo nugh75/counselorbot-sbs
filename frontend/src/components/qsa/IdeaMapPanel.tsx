@@ -12,6 +12,7 @@ import {
     ideaMapPdfUrl,
     keepIdeaMap,
     type IdeaMapState,
+    type IdeaNextStep,
     type IdeaRole,
     type IdeaVariant,
 } from '@/lib/idea-map';
@@ -22,6 +23,9 @@ interface IdeaMapPanelProps {
     version: number;
     locale: string;
     variant: IdeaVariant;
+    // Cosa il server dice che questo turno deve riparare. Null finche' non e'
+    // arrivata la prima risposta.
+    move: IdeaNextStep | null;
 }
 
 // Le quattro gambe del ragionamento, nell'ordine in cui il percorso le chiede.
@@ -34,9 +38,11 @@ const MISSING_KEY: Record<IdeaRole, string> = {
     'open-question': 'idea.role.openQuestion',
     constraint: 'idea.role.constraint',
     step: 'idea.role.step',
+    decision: 'idea.role.decision',
+    task: 'idea.role.task',
 };
 
-export function IdeaMapPanel({ sessionId, version, locale, variant }: IdeaMapPanelProps) {
+export function IdeaMapPanel({ sessionId, version, locale, variant, move }: IdeaMapPanelProps) {
     const { t } = useI18n();
     const isDark = useDarkMode();
     const [state, setState] = useState<IdeaMapState | null>(null);
@@ -77,6 +83,9 @@ export function IdeaMapPanel({ sessionId, version, locale, variant }: IdeaMapPan
         }
     };
 
+    // I difetti non stanno dentro il disegno: il tratteggio si vede, il nome no.
+    const flawed = (state?.spec?.nodes ?? []).filter((node) => node.flaw);
+
     const revisionId = state?.revision_id ?? null;
     const theme = isDark ? 'dark' : 'light';
     const imageUrl = revisionId === null
@@ -88,6 +97,9 @@ export function IdeaMapPanel({ sessionId, version, locale, variant }: IdeaMapPan
             <header className="flex items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2">
                 <h3 className="min-w-0 truncate text-sm font-semibold text-slate-800">
                     {t('idea.map.title')}
+                    {move?.task_label && (
+                        <span className="ml-2 font-normal text-slate-500">· {move.task_label}</span>
+                    )}
                 </h3>
                 <div className="flex shrink-0 items-center gap-1">
                     <button
@@ -136,6 +148,17 @@ export function IdeaMapPanel({ sessionId, version, locale, variant }: IdeaMapPan
                 <p className="px-3 py-4 text-sm text-slate-500">{t('idea.map.empty')}</p>
             )}
 
+            {flawed.length > 0 && (
+                <ul className="border-t border-slate-200 px-3 py-2 text-xs text-amber-800">
+                    {flawed.map((node) => (
+                        <li key={node.id} className="flex gap-1.5 py-0.5">
+                            <span className="font-medium">{node.label}:</span>
+                            <span>{move?.flaws?.[node.id] ?? node.flaw}</span>
+                        </li>
+                    ))}
+                </ul>
+            )}
+
             {state && state.missing_roles.length > 0 && (
                 <div className="border-t border-slate-200 px-3 py-2 text-xs text-slate-600">
                     <span className="font-medium">{t('idea.map.missing')}</span>{' '}
@@ -144,7 +167,7 @@ export function IdeaMapPanel({ sessionId, version, locale, variant }: IdeaMapPan
             )}
             {state?.complete && (
                 <p className="border-t border-slate-200 px-3 py-2 text-xs text-teal-700">
-                    {t('idea.map.complete')}
+                    {t('idea.map.readyToClose')}
                 </p>
             )}
 
