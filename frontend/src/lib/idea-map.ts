@@ -122,6 +122,8 @@ export interface IdeaBranch {
     missing_roles: IdeaRole[];
     flaws: number;
     is_focus: boolean;
+    // Questo lavoro finisce con qualcosa da fare o con qualcosa da capire.
+    wants_plan: boolean;
 }
 
 // L'albero dei rami: la chat e' una riga sola, i rami esistono solo nella
@@ -131,6 +133,16 @@ export async function fetchIdeaBranches(sessionId: string, lang: string): Promis
     const response = await apiFetch(`/api/idea/branches?${params.toString()}`);
     if (!response.ok) return [];
     return response.json() as Promise<IdeaBranch[]>;
+}
+
+// Un'idea chiusa non e' un'idea finita: si torna, si cambia, si richiude.
+export async function reopenIdeaBranch(sessionId: string, nodeId: string): Promise<boolean> {
+    const response = await apiFetch('/api/idea/reopen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, node_id: nodeId }),
+    });
+    return response.ok;
 }
 
 export async function moveIdeaFocus(sessionId: string, nodeId: string): Promise<boolean> {

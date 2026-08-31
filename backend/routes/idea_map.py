@@ -30,7 +30,9 @@ from ..idea_map import (
     current_focus,
     next_move,
     pivot_question,
+    reopen,
     set_focus,
+    wants_plan,
     IdeaMapError,
     apply_and_store,
     current_map,
@@ -414,6 +416,28 @@ class FocusRequest(BaseModel):
     node_id: str = Field(min_length=1, max_length=40)
 
 
+@router.post("/idea/reopen")
+def reopen_branch(
+    request: FocusRequest,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    """Riapre un ramo chiuso e ci sposta il lavoro.
+
+    Un'idea chiusa non e' un'idea finita: si torna, si cambia, si richiude.
+    """
+    _require_feature(db)
+    owner = _owner(identity)
+    try:
+        revision = reopen(db, owner, request.session_id, request.node_id)
+    except IdeaMapError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    spec = current_map(db, owner, request.session_id)
+    move = next_move(spec, request.node_id)
+    return {"revision_id": revision.id, "focus": request.node_id,
+            "step_id": move["step_id"], "reason": move["reason"]}
+
+
 @router.get("/idea/branches")
 def read_branches(
     session_id: str = Query(min_length=1),
@@ -433,6 +457,7 @@ def read_branches(
     rows = branches(spec, chosen_focus(db, owner, session_id))
     for row in rows:
         row["task_label"] = task_label(row["task_type"], lang) if row["task_type"] else None
+        row["wants_plan"] = wants_plan(row["task_type"])
     return rows
 
 
