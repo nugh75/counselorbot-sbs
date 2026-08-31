@@ -172,6 +172,17 @@ Per le strategie certificate: ogni riga con `status == "certified"` genera una
 riga di registro `(certified_strategy, slug, it, certified)`, perché il seed è
 italiano. Le altre lingue non nascono.
 
+**Quando il cancello dei tool si accende.** Oggi
+`certified_strategy_service._localized` ripiega sull'italiano per qualunque
+lingua. In una chat tedesca arriva testo italiano: è il difetto da chiudere. Ma
+accendere il cancello nel sotto-progetto 1, prima che le traduzioni esistano,
+toglierebbe i consigli certificati a ogni lingua diversa dall'italiano senza
+darne di nuovi — l'app peggiorerebbe nell'intervallo. Quindi: il sotto-progetto
+1 scrive il registro e lascia il ripiego attivo; il cancello dei tool si accende
+nel sotto-progetto 2, nello stesso momento in cui le traduzioni entrano. Il
+cancello degli **strumenti** invece si accende subito, perché lì «non offerto» è
+già meglio dell'attuale «item inglesi sotto cornice spagnola».
+
 ### 3.5 `SUPPORTED_LOCALES` derivato
 
 Sparisce la tupla scritta a mano. Le lingue ammesse dall'app sono le sei
