@@ -5777,6 +5777,54 @@ def test_idea_never_carries_a_scores_line_into_the_prompt():
         main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
 
 
+def test_an_invite_only_instrument_only_admits_the_counselors_that_name_it():
+    """`questionnaire_types` vuoto vale "tutti" - tranne sugli strumenti a invito.
+
+    Serve a non dover scrivere gli altri sette strumenti su ogni counselor per
+    escluderne uno, e a non rifarlo a ogni strumento nuovo.
+    """
+    db = _TestSession()
+    try:
+        db.add_all([
+            models.Counselor(slug="scope-open", name="Aperto", persona="x",
+                             questionnaire_types=[], is_active=True),
+            models.Counselor(slug="scope-invited", name="Invitato", persona="x",
+                             questionnaire_types=["IDEA"], is_active=True),
+        ])
+        db.commit()
+    finally:
+        db.close()
+
+    try:
+        on_idea = {c["slug"]: c["suitable"] for c in client.get(
+            "/counselors", params={"questionnaire_type": "IDEA"}).json()}
+        assert on_idea["scope-invited"] is True
+        assert on_idea["scope-open"] is False, "vuoto non deve valere su uno strumento a invito"
+
+        on_qsa = {c["slug"]: c["suitable"] for c in client.get(
+            "/counselors", params={"questionnaire_type": "QSA"}).json()}
+        assert on_qsa["scope-open"] is True, "vuoto continua a valere tutti fuori dagli inviti"
+        assert on_qsa["scope-invited"] is False, "chi dichiara IDEA non serve gli altri strumenti"
+
+        # I non adatti non spariscono: servono a proporre le alternative.
+        listed = client.get("/counselors", params={"questionnaire_type": "IDEA"}).json()
+        assert {"scope-open", "scope-invited"} <= {c["slug"] for c in listed}
+        assert listed[0]["suitable"] is True, "gli adatti stanno in cima"
+
+        # Senza strumento richiesto nessuno viene escluso.
+        plain = {c["slug"]: c["suitable"] for c in client.get("/counselors").json()}
+        assert plain["scope-open"] is True and plain["scope-invited"] is True
+    finally:
+        db = _TestSession()
+        try:
+            db.query(models.Counselor).filter(
+                models.Counselor.slug.in_(["scope-open", "scope-invited"])
+            ).delete(synchronize_session=False)
+            db.commit()
+        finally:
+            db.close()
+
+
 def test_idea_map_is_closed_until_the_feature_is_on():
     _set_idea_feature("false")
     main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity

@@ -974,6 +974,10 @@ class CounselorPublic(BaseModel):
     assistant_audience: Optional[str] = None
     # "local" (Ollama/llama.cpp) | "external" (API a pagamento). Derivato dal preset.
     model_origin: Optional[str] = None
+    # Adatto allo strumento chiesto in `?questionnaire_type=`. Senza quel
+    # parametro sono adatti tutti. I non adatti non vengono nascosti: servono a
+    # spiegare perche' quello scelto non va e quali si possono usare.
+    suitable: bool = True
 
     class Config:
         from_attributes = True

@@ -14,6 +14,9 @@ export interface PublicCounselor {
     show_in_assistant?: boolean;
     assistant_audience?: string | null;
     model_origin?: 'local' | 'external' | null;
+    // Adatto allo strumento chiesto. I non adatti arrivano lo stesso: servono
+    // a dire perche' quello scelto non va e quali si possono usare.
+    suitable?: boolean;
 }
 
 const KEY = 'counselorbot_selected_counselor';
@@ -44,11 +47,16 @@ export function subscribeToCounselor(onChange: () => void): () => void {
     };
 }
 
-export async function fetchCounselors(lang?: string, languageFilter?: string): Promise<PublicCounselor[]> {
+export async function fetchCounselors(
+    lang?: string,
+    languageFilter?: string,
+    questionnaireType?: string,
+): Promise<PublicCounselor[]> {
     try {
         const params = new URLSearchParams();
         if (lang) params.set('lang', lang);
         if (languageFilter) params.set('language', languageFilter);
+        if (questionnaireType) params.set('questionnaire_type', questionnaireType);
         const qs = params.toString();
         const url = qs ? `/api/counselors?${qs}` : '/api/counselors';
         const res = await fetch(url);
