@@ -309,6 +309,7 @@ EXPECTED_ROUTES = {
     ("POST", "/tts"),
     ("POST", "/questionnaire-result"),
     ("GET", "/user/questionnaire-results"),
+    ("GET", "/user/questionnaire-result/{session_id}/summary"),
     ("GET", "/user/learner-profile"),
     ("POST", "/user/learner-profile"),
     ("GET", "/user/learner-profile/history"),
@@ -3370,6 +3371,59 @@ def test_questionnaire_result_user_history_and_delete():
         r = client.delete("/questionnaire-result/student-owned-result")
         assert r.status_code == 200, r.text
     finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
+def test_questionnaire_result_summary_uses_final_guided_step_for_every_instrument():
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    session_ids = []
+    try:
+        for questionnaire_type in ("IDEA", "QSA"):
+            _ensure_guided_steps(questionnaire_type)
+            session_id = f"summary-{questionnaire_type.lower()}-{uuid.uuid4().hex[:8]}"
+            session_ids.append(session_id)
+            with _TestSession() as db:
+                final_step = (
+                    db.query(models.GuidedStep)
+                    .filter(models.GuidedStep.questionnaire_type == questionnaire_type)
+                    .order_by(models.GuidedStep.sort_order.desc(), models.GuidedStep.id.desc())
+                    .first()
+                )
+                assert final_step is not None
+                db.add(models.QuestionnaireResult(
+                    session_id=session_id,
+                    questionnaire_type=questionnaire_type,
+                    scores={} if questionnaire_type == "IDEA" else {"C1": 7},
+                    username="student",
+                ))
+                db.add_all([
+                    models.Log(
+                        session_id=session_id,
+                        action="chat_message",
+                        questionnaire_type=questionnaire_type,
+                        phase=final_step.id,
+                        details={"bot_response": f"Sintesi finale {questionnaire_type}"},
+                    ),
+                    models.Log(
+                        session_id=session_id,
+                        action="chat_message",
+                        questionnaire_type=questionnaire_type,
+                        phase="not-the-final-step",
+                        details={"bot_response": "Messaggio successivo non sintetico"},
+                    ),
+                ])
+                db.commit()
+
+            response = client.get(f"/user/questionnaire-result/{session_id}/summary")
+            assert response.status_code == 200, response.text
+            assert response.json() == {"summary": f"Sintesi finale {questionnaire_type}"}
+    finally:
+        with _TestSession() as db:
+            db.query(models.Log).filter(models.Log.session_id.in_(session_ids)).delete(synchronize_session=False)
+            db.query(models.QuestionnaireResult).filter(
+                models.QuestionnaireResult.session_id.in_(session_ids)
+            ).delete(synchronize_session=False)
+            db.commit()
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
