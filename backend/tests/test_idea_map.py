@@ -382,6 +382,37 @@ def test_a_branch_the_model_opened_itself_is_left_alone():
     assert next(n for n in spec.nodes if n.id == "t9").task_type == "systematic-review"
 
 
+def test_the_branch_is_picked_by_the_words_the_person_used():
+    patch = parse_patch({
+        "add_nodes": [
+            {"id": "q", "label": "Perimetro dell'articolo", "role": "open-question"},
+            {"id": "w", "label": "Verificare se esistono dati raccolti", "role": "constraint"},
+        ],
+        "add_edges": [{"from": "q", "to": "idea"}, {"from": "w", "to": "idea"}],
+    })
+    spec = apply_patch(
+        _base(), patch, promote_prior_work=True,
+        prior_work_message="Prima dovrei verificare se esistono dati raccolti su questo",
+    )
+    roles = {n.id: n.role for n in spec.nodes}
+    assert roles["w"] == "task" and roles["q"] == "open-question"
+
+
+def test_nothing_is_promoted_when_no_node_echoes_the_person():
+    patch = parse_patch({
+        "add_nodes": [
+            {"id": "a", "label": "Tempo scarso", "role": "constraint"},
+            {"id": "b", "label": "Motivazione", "role": "assumption"},
+        ],
+        "add_edges": [{"from": "a", "to": "idea"}, {"from": "b", "to": "idea"}],
+    })
+    spec = apply_patch(
+        _base(), patch, promote_prior_work=True,
+        prior_work_message="Prima devo parlare con la vicepreside",
+    )
+    assert not [n for n in spec.nodes if n.role == "task"]
+
+
 if __name__ == "__main__":
     import sys
 
