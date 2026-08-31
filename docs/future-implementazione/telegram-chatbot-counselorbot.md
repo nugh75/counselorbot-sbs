@@ -96,6 +96,13 @@ Note:
 - `TELEGRAM_PUBLIC_WEBHOOK_URL` usa `/api/...` per passare dal frontend Next.js al backend tramite rewrite.
 - Nel backend la route reale puo' essere `/telegram/webhook`; pubblicamente diventera' `/api/telegram/webhook`.
 - Se `ai4auth` protegge tutto il dominio, va configurata un'eccezione solo per `/api/telegram/webhook`.
+- Il vhost nginx del dominio e' generato dalla console ai4educ: ogni rigenerazione riscrive il file e **perde** l'eccezione, Telegram torna a ricevere `302` verso la pagina di login e il bot smette di rispondere. Dopo ogni rigenerazione rilanciare lo script idempotente:
+
+```bash
+sudo bash scripts/ensure_telegram_webhook_nginx.sh
+```
+
+  Sintomo della regressione: `make telegram-info` mostra `"Wrong response from the webhook: 302 Found"` e un `pending_update_count` che cresce.
 
 Aggiornare anche `.env.example` con placeholder, non con segreti reali:
 
