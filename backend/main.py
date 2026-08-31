@@ -491,6 +491,9 @@ def _seed_and_migrate():
                 "ADD COLUMN synopsis_i18n JSON",
                 "ADD COLUMN synopsis_source JSON",
             ],
+            "idea_map_revisions": [
+                "ADD COLUMN focus_id VARCHAR",
+            ],
         }.items():
             for clause in columns:
                 try:

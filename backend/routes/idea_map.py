@@ -22,10 +22,13 @@ from ..idea_lexicon import flaw_word, register_for_variant, status_word, task_la
 from ..idea_map import (
     FEATURE_KEY,
     IDEA_INSTRUMENT,
+    branches,
+    chosen_focus,
     closure_ready,
     current_focus,
     next_move,
     pivot_question,
+    set_focus,
     IdeaMapError,
     apply_and_store,
     current_map,
@@ -88,7 +91,7 @@ def read_map(
     owner = _readable_owner(identity, username)
     revision = current_revision(db, owner, session_id)
     spec = current_map(db, owner, session_id)
-    focus = None if spec is None else current_focus(spec)
+    focus = None if spec is None else next_move(spec, chosen_focus(db, owner, session_id))["focus"]
     return {
         "session_id": session_id,
         "revision_id": getattr(revision, "id", None),
@@ -365,7 +368,7 @@ def read_next_step(
     _require_feature(db)
     owner = _readable_owner(identity, username)
     spec = current_map(db, owner, session_id)
-    move = next_move(spec)
+    move = next_move(spec, chosen_focus(db, owner, session_id))
     register = register_for_variant(variant)
 
     # La ragione in parole: registro accademico per chi fa ricerca, comune per
@@ -396,3 +399,49 @@ def read_next_step(
             if node.flaw
         },
     }
+
+
+class FocusRequest(BaseModel):
+    session_id: str = Field(min_length=1, max_length=120)
+    node_id: str = Field(min_length=1, max_length=40)
+
+
+@router.get("/idea/branches")
+def read_branches(
+    session_id: str = Query(min_length=1),
+    lang: str = "it",
+    username: str | None = None,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    """L'albero dei rami, per navigarlo.
+
+    La chat e' una riga sola: senza questo, i rami esistono nella mappa ma non
+    c'e' modo di vederli ne' di tornare su.
+    """
+    _require_feature(db)
+    owner = _readable_owner(identity, username)
+    spec = current_map(db, owner, session_id)
+    rows = branches(spec, chosen_focus(db, owner, session_id))
+    for row in rows:
+        row["task_label"] = task_label(row["task_type"], lang) if row["task_type"] else None
+    return rows
+
+
+@router.post("/idea/focus")
+def move_focus(
+    request: FocusRequest,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    """Sposta il lavoro su un altro ramo."""
+    _require_feature(db)
+    owner = _owner(identity)
+    try:
+        revision = set_focus(db, owner, request.session_id, request.node_id)
+    except IdeaMapError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    spec = current_map(db, owner, request.session_id)
+    move = next_move(spec, request.node_id)
+    return {"revision_id": revision.id, "focus": request.node_id, "step_id": move["step_id"],
+            "reason": move["reason"], "detail": move["detail"]}
