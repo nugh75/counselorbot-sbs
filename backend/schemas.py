@@ -575,6 +575,27 @@ class NormThresholdResponse(NormThresholdBase):
         from_attributes = True
 
 
+class ContentLanguageVersionResponse(BaseModel):
+    """Stato di certificazione di un contenuto in una lingua."""
+
+    id: int
+    content_type: str
+    content_key: str
+    locale: str
+    status: str
+    source: Optional[str] = None
+    version_label: Optional[str] = None
+    approved_by: Optional[str] = None
+    notes: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ContentVersionPromoteRequest(BaseModel):
+    target_status: str
+
+
 class ScoreRequest(BaseModel):
     session_id: str
     locale: str
