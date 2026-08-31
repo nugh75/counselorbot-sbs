@@ -1014,6 +1014,7 @@ def generate_idea_map_pdf(
     username: str | None = None,
     session_id: str | None = None,
     language: str | None = None,
+    description: str | None = None,
 ) -> BytesIO:
     """Mappa finale, la sua descrizione a parole e le tappe che l'hanno fatta.
 
@@ -1048,7 +1049,8 @@ def generate_idea_map_pdf(
     _diagram_card(pdf, spec, content_w, lang)
 
     _section_heading(pdf, text["words"], content_w)
-    _text_card(pdf, describe(spec, lang), content_w, fill=APP_SURFACE, border=APP_BORDER)
+    _text_card(pdf, description if description is not None else describe(spec, lang),
+               content_w, fill=APP_SURFACE, border=APP_BORDER)
 
     if missing:
         _text_card(

@@ -18,6 +18,7 @@ from starlette.concurrency import run_in_threadpool
 
 from .. import auth, database, models
 from ..diagram_render import DiagramSpecError, describe, render, spec_fingerprint
+from ..idea_synthesis import synthesis_for
 from ..pdf_generator import generate_idea_map_pdf
 from .portfolio import PORTFOLIO_STORAGE_DIR
 from ..idea_lexicon import flaw_word, register_for_variant, status_word, task_label
@@ -330,6 +331,7 @@ def map_pdf(
         username=owner,
         session_id=session_id,
         language=lang,
+        description=synthesis_for(db, spec, lang),
     )
     return StreamingResponse(
         stream,
@@ -355,7 +357,7 @@ def _keep_in_portfolio(db: Session, owner: str, spec, lang: str) -> dict:
     item = models.PortfolioItem(
         username=owner,
         title=effective_title(spec),
-        description=describe(spec, lang),
+        description=synthesis_for(db, spec, lang),
         category="idea",
         item_date=date.today().isoformat(),
         images=[],
@@ -615,7 +617,7 @@ def conclude(
     return {
         "session_id": request.session_id,
         "title": effective_title(spec),
-        "description": describe(spec, request.lang),
+        "description": synthesis_for(db, spec, request.lang),
         "kept": kept,
         "pdf_url": f"/api/idea/map/pdf?session_id={request.session_id}&lang={request.lang}",
     }

@@ -185,6 +185,10 @@ import backend.routes.prompt_audit as prompt_audit_routes
 prompt_audit_routes.AIService = _FakeAIService
 main.app.dependency_overrides[prompt_audit_routes.require_prompt_audit_access] = _fake_admin
 
+# Sintesi finale di Idea: il modello riscrive la descrizione della mappa.
+import backend.idea_synthesis as idea_synthesis_module
+idea_synthesis_module.AIService = _FakeAIService
+
 client = TestClient(main.app)
 
 
