@@ -17,6 +17,8 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Callout } from '@/components/ui/Callout';
 import { StickyActions } from '@/components/ui/StickyActions';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
+import { clearPqblProgress, loadPqblProgress, savePqblProgress } from '@/lib/pqbl-progress';
+import type { Lang } from '@/lib/i18n';
 
 type Phase = 'setup' | 'generating' | 'onboarding' | 'quiz' | 'summary' | 'final' | 'finalResults';
 
@@ -33,7 +35,7 @@ interface PqblDocumentInfo {
     status: string;
     error_detail: string | null;
     filename: string | null;
-    language: string;
+    language: Lang;
     size: number;
     n_questions: number;
     n_total: number;
@@ -61,6 +63,24 @@ interface FinalResultRow {
     feedback: string;
 }
 interface FinalResult { score: number; total: number; results: FinalResultRow[]; }
+
+interface PersistedPqblProgress {
+    version: 1;
+    language: Lang;
+    phase: Phase;
+    size: number;
+    documentInfo: PqblDocumentInfo | null;
+    questions: PqblQuestion[];
+    currentIndex: number;
+    optionResults: Record<string, AnswerResult>;
+    lastSelected: string;
+    summary: SessionSummary | null;
+    sessionId: string;
+    finalSessionId: string;
+    finalQuestions: PqblQuestion[];
+    finalAnswers: Record<number, string>;
+    finalResult: FinalResult | null;
+}
 
 const SESSION_SIZES = [10, 20, 30] as const;
 const POLL_INTERVAL_MS = 4000;
@@ -94,11 +114,16 @@ export default function PqblPage() {
     const [finalAnswers, setFinalAnswers] = useState<Record<number, string>>({});
     const [finalResult, setFinalResult] = useState<FinalResult | null>(null);
     const [finalWarning, setFinalWarning] = useState(false);
+    const [resumeReady, setResumeReady] = useState(false);
+    const [restoredProgress, setRestoredProgress] = useState(false);
+    const [pollingFailed, setPollingFailed] = useState(false);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const quizPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const questionsLenRef = useRef(0);
-    const sessionIdRef = useRef('');
+    const sessionLanguageRef = useRef(lang);
+    const pollingFailuresRef = useRef(0);
+    const restoreAttemptedRef = useRef(false);
 
     const stopPolling = useCallback(() => {
         if (pollRef.current) {
@@ -112,13 +137,16 @@ export default function PqblPage() {
             quizPollRef.current = null;
         }
     }, []);
-    useEffect(() => { stopPolling(); stopQuizPolling(); }, [stopPolling, stopQuizPolling]);
+    useEffect(() => () => { stopPolling(); stopQuizPolling(); }, [stopPolling, stopQuizPolling]);
 
     const startPolling = useCallback((documentId: string) => {
         stopPolling();
+        pollingFailuresRef.current = 0;
+        setPollingFailed(false);
         pollRef.current = setInterval(async () => {
             try {
-                const info = await fetchJson<PqblDocumentInfo>(`/api/pqbl/documents/${documentId}?lang=${lang}`);
+                const info = await fetchJson<PqblDocumentInfo>(`/api/pqbl/documents/${documentId}?lang=${sessionLanguageRef.current}`);
+                pollingFailuresRef.current = 0;
                 setDocumentInfo(info);  // aggiorna progress ogni tick
                 if (info.status === 'ready') {
                     stopPolling();
@@ -129,14 +157,106 @@ export default function PqblPage() {
                     setPhase('setup');
                 }
             } catch {
-                // errore transitorio di rete: il prossimo tick riprova
+                pollingFailuresRef.current += 1;
+                if (pollingFailuresRef.current >= 3) {
+                    stopPolling();
+                    setPollingFailed(true);
+                }
             }
         }, POLL_INTERVAL_MS);
-    }, [stopPolling, t, lang]);
+    }, [stopPolling, t]);
+
+    const startQuizPolling = useCallback((documentId: string, activeSessionId: string) => {
+        stopQuizPolling();
+        quizPollRef.current = setInterval(async () => {
+            try {
+                const doc = await fetchJson<PqblDocumentInfo>(`/api/pqbl/documents/${documentId}?lang=${sessionLanguageRef.current}`);
+                setDocumentInfo(doc);
+                const currentLen = questionsLenRef.current;
+                if (doc.n_questions > currentLen) {
+                    const updated = await fetchJson<{ questions: PqblQuestion[] }>(
+                        `/api/pqbl/sessions/${activeSessionId}/questions`,
+                    );
+                    setQuestions(updated.questions);
+                    questionsLenRef.current = updated.questions.length;
+                }
+                if (doc.chunks_done >= doc.chunks_total) stopQuizPolling();
+            } catch {
+                // The saved questions remain usable; the next tick retries.
+            }
+        }, 6000);
+    }, [stopQuizPolling]);
+
+    useEffect(() => {
+        if (restoreAttemptedRef.current) return;
+        restoreAttemptedRef.current = true;
+        const saved = loadPqblProgress<PersistedPqblProgress>();
+        if (saved?.version === 1 && saved.phase !== 'setup') {
+            sessionLanguageRef.current = saved.language || lang;
+            setPhase(saved.phase);
+            setSize(saved.size);
+            setDocumentInfo(saved.documentInfo);
+            setQuestions(saved.questions);
+            questionsLenRef.current = saved.questions.length;
+            setCurrentIndex(saved.currentIndex);
+            setOptionResults(saved.optionResults);
+            setLastSelected(saved.lastSelected);
+            setSummary(saved.summary);
+            setSessionId(saved.sessionId);
+            setFinalSessionId(saved.finalSessionId);
+            setFinalQuestions(saved.finalQuestions);
+            setFinalAnswers(saved.finalAnswers);
+            setFinalResult(saved.finalResult);
+            setRestoredProgress(true);
+            if (saved.phase === 'generating' && saved.documentInfo?.document_id) {
+                startPolling(saved.documentInfo.document_id);
+            }
+            if (
+                saved.phase === 'quiz'
+                && saved.documentInfo
+                && saved.sessionId
+                && saved.documentInfo.chunks_done < saved.documentInfo.chunks_total
+            ) {
+                startQuizPolling(saved.documentInfo.document_id, saved.sessionId);
+            }
+        }
+        setResumeReady(true);
+    }, [lang, startPolling, startQuizPolling]);
+
+    useEffect(() => {
+        if (!resumeReady) return;
+        if (phase === 'setup' && !documentInfo) {
+            clearPqblProgress();
+            return;
+        }
+        savePqblProgress({
+            version: 1,
+            language: sessionLanguageRef.current,
+            phase,
+            size,
+            documentInfo,
+            questions,
+            currentIndex,
+            optionResults,
+            lastSelected,
+            summary,
+            sessionId,
+            finalSessionId,
+            finalQuestions,
+            finalAnswers,
+            finalResult,
+        } satisfies PersistedPqblProgress);
+    }, [
+        resumeReady, phase, size, documentInfo, questions, currentIndex,
+        optionResults, lastSelected, summary, sessionId, finalSessionId,
+        finalQuestions, finalAnswers, finalResult,
+    ]);
 
     const startUpload = async (file: File) => {
         setError('');
         setIsUploading(true);
+        setRestoredProgress(false);
+        sessionLanguageRef.current = lang;
         try {
             const formData = new FormData();
             formData.append('file', file);
@@ -148,7 +268,7 @@ export default function PqblPage() {
                 '/api/pqbl/upload', { method: 'POST', body: formData },
             );
             if (data.status === 'ready') {
-                const info = await fetchJson<PqblDocumentInfo>(`/api/pqbl/documents/${data.document_id}?lang=${lang}`);
+                const info = await fetchJson<PqblDocumentInfo>(`/api/pqbl/documents/${data.document_id}?lang=${sessionLanguageRef.current}`);
                 setDocumentInfo(info);
                 setPhase('onboarding');
             } else {
@@ -190,7 +310,6 @@ export default function PqblPage() {
             const data = await fetchJson<{ questions: PqblQuestion[] }>(
                 `/api/pqbl/sessions/${created.session_id}/questions`,
             );
-            sessionIdRef.current = created.session_id;
             setSessionId(created.session_id);
             const qs = data.questions;
             setQuestions(qs);
@@ -199,26 +318,9 @@ export default function PqblPage() {
             setOptionResults({});
             setLastSelected('');
 
-            // Se ci sono ancora chunk in generazione, poll per nuove domande
+            // Se ci sono ancora chunk in generazione, poll per nuove domande.
             if (documentInfo.chunks_done < documentInfo.chunks_total) {
-                const docId = documentInfo.document_id;
-                quizPollRef.current = setInterval(async () => {
-                    try {
-                        const doc = await fetchJson<PqblDocumentInfo>(`/api/pqbl/documents/${docId}?lang=${lang}`);
-                        setDocumentInfo(doc);
-                        const currentLen = questionsLenRef.current;
-                        if (doc.n_questions > currentLen) {
-                            const updated = await fetchJson<{ questions: PqblQuestion[] }>(
-                                `/api/pqbl/sessions/${sessionIdRef.current}/questions`,
-                            );
-                            setQuestions(updated.questions);
-                            questionsLenRef.current = updated.questions.length;
-                        }
-                        if (doc.chunks_done >= doc.chunks_total) {
-                            stopQuizPolling();
-                        }
-                    } catch { /* transitorio */ }
-                }, 6000);
+                startQuizPolling(documentInfo.document_id, created.session_id);
             }
 
             setPhase('quiz');
@@ -321,6 +423,9 @@ export default function PqblPage() {
         setFinalAnswers({});
         setFinalResult(null);
         setError('');
+        setRestoredProgress(false);
+        setPollingFailed(false);
+        clearPqblProgress();
     };
 
     const formatTime = (seconds: number) => {
@@ -335,6 +440,36 @@ export default function PqblPage() {
     return (
         <div className="page-narrow space-y-6">
             <PageHeader title={t('pqbl.title')} subtitle={t('pqbl.subtitle')} backHref="/" />
+
+            {restoredProgress && (
+                <div className="flex flex-wrap items-center gap-3 rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-950" role="status">
+                    <span>{t('pqbl.resume.restored')}</span>
+                    <button type="button" onClick={restart} className="font-semibold underline underline-offset-2">
+                        {t('pqbl.resume.restart')}
+                    </button>
+                </div>
+            )}
+
+            {restoredProgress && lang !== sessionLanguageRef.current && (
+                <Callout variant="info" title={t('pqbl.resume.languageTitle')}>
+                    {t('pqbl.resume.languageBody')}
+                </Callout>
+            )}
+
+            {pollingFailed && documentInfo?.document_id && (
+                <Callout variant="warning" title={t('pqbl.connection.title')}>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <span>{t('pqbl.connection.body')}</span>
+                        <button
+                            type="button"
+                            onClick={() => startPolling(documentInfo.document_id)}
+                            className="font-semibold underline underline-offset-2"
+                        >
+                            {t('pqbl.connection.retry')}
+                        </button>
+                    </div>
+                </Callout>
+            )}
 
             {error && (
                 <Callout variant="danger" title={`${t('pqbl.error.title')}:`}>{error}</Callout>
