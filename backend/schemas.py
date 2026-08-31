@@ -445,6 +445,7 @@ class InstrumentBase(BaseModel):
     name_en: Optional[str] = None
     name_es: Optional[str] = None
     name_sv: Optional[str] = None
+    name_i18n: Optional[Dict[str, Any]] = None
     response_scale_min: int = 1
     response_scale_max: int = 4
     response_labels: Optional[Dict[str, Any]] = None
@@ -461,6 +462,7 @@ class InstrumentUpdate(BaseModel):
     name_en: Optional[str] = None
     name_es: Optional[str] = None
     name_sv: Optional[str] = None
+    name_i18n: Optional[Dict[str, Any]] = None
     response_scale_min: Optional[int] = None
     response_scale_max: Optional[int] = None
     response_labels: Optional[Dict[str, Any]] = None
@@ -488,6 +490,8 @@ class FactorBase(BaseModel):
     description_en: Optional[str] = None
     description_es: Optional[str] = None
     description_sv: Optional[str] = None
+    label_i18n: Optional[Dict[str, Any]] = None
+    description_i18n: Optional[Dict[str, Any]] = None
 
 
 class FactorCreate(FactorBase):
@@ -508,6 +512,8 @@ class FactorUpdate(BaseModel):
     description_en: Optional[str] = None
     description_es: Optional[str] = None
     description_sv: Optional[str] = None
+    label_i18n: Optional[Dict[str, Any]] = None
+    description_i18n: Optional[Dict[str, Any]] = None
 
 
 class FactorResponse(FactorBase):
@@ -527,6 +533,7 @@ class ItemBase(BaseModel):
     text_en: Optional[str] = None
     text_es: Optional[str] = None
     text_sv: Optional[str] = None
+    text_i18n: Optional[Dict[str, Any]] = None
     active: bool = True
 
 
@@ -543,6 +550,7 @@ class ItemUpdate(BaseModel):
     text_en: Optional[str] = None
     text_es: Optional[str] = None
     text_sv: Optional[str] = None
+    text_i18n: Optional[Dict[str, Any]] = None
     active: Optional[bool] = None
 
 

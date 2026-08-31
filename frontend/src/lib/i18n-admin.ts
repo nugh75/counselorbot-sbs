@@ -628,6 +628,11 @@ const it: Dict = {
     'admin.header.subtitle': 'Strumenti amministrativi',
     'admin.sidebar.expand': 'Espandi sidebar',
     'admin.sidebar.collapse': 'Collassa sidebar',
+    // Stato di certificazione per lingua (registro content_language_versions).
+    'admin.q.versionStatus': 'Stato della lingua',
+    'admin.q.versionSource': 'provenienza',
+    'admin.q.versionApprovedBy': 'approvata da',
+    'admin.q.versionPromoteFailed': 'Transizione di stato rifiutata.',
 };
 
 const en: Dict = {
@@ -1246,6 +1251,11 @@ const en: Dict = {
     'admin.header.subtitle': 'Administrative tools',
     'admin.sidebar.expand': 'Expand sidebar',
     'admin.sidebar.collapse': 'Collapse sidebar',
+    // Stato di certificazione per lingua (registro content_language_versions).
+    'admin.q.versionStatus': 'Language status',
+    'admin.q.versionSource': 'source',
+    'admin.q.versionApprovedBy': 'approved by',
+    'admin.q.versionPromoteFailed': 'Status transition refused.',
 };
 
 const es: Dict = {
@@ -1745,6 +1755,11 @@ const es: Dict = {
     'admin.header.subtitle': 'Herramientas administrativas',
     'admin.sidebar.expand': 'Expandir barra lateral',
     'admin.sidebar.collapse': 'Contraer barra lateral',
+    // Stato di certificazione per lingua (registro content_language_versions).
+    'admin.q.versionStatus': 'Estado de la lengua',
+    'admin.q.versionSource': 'procedencia',
+    'admin.q.versionApprovedBy': 'aprobada por',
+    'admin.q.versionPromoteFailed': 'Transicion de estado rechazada.',
 };
 
 const fr: Dict = {
@@ -2244,6 +2259,11 @@ const fr: Dict = {
     'admin.header.subtitle': 'Outils administratifs',
     'admin.sidebar.expand': 'Déployer la barre latérale',
     'admin.sidebar.collapse': 'Replier la barre latérale',
+    // Stato di certificazione per lingua (registro content_language_versions).
+    'admin.q.versionStatus': 'Statut de la langue',
+    'admin.q.versionSource': 'provenance',
+    'admin.q.versionApprovedBy': 'approuvée par',
+    'admin.q.versionPromoteFailed': 'Transition de statut refusée.',
 };
 
 const de: Dict = {
@@ -2743,6 +2763,11 @@ const de: Dict = {
     'admin.header.subtitle': 'Verwaltungswerkzeuge',
     'admin.sidebar.expand': 'Seitenleiste ausklappen',
     'admin.sidebar.collapse': 'Seitenleiste einklappen',
+    // Stato di certificazione per lingua (registro content_language_versions).
+    'admin.q.versionStatus': 'Sprachstatus',
+    'admin.q.versionSource': 'Herkunft',
+    'admin.q.versionApprovedBy': 'freigegeben von',
+    'admin.q.versionPromoteFailed': 'Statusübergang abgelehnt.',
 };
 
 const sv: Dict = {
@@ -3242,6 +3267,11 @@ const sv: Dict = {
     'admin.header.subtitle': 'Administrativa verktyg',
     'admin.sidebar.expand': 'Expandera sidofältet',
     'admin.sidebar.collapse': 'Fäll ihop sidofältet',
+    // Stato di certificazione per lingua (registro content_language_versions).
+    'admin.q.versionStatus': 'Språkstatus',
+    'admin.q.versionSource': 'ursprung',
+    'admin.q.versionApprovedBy': 'godkänd av',
+    'admin.q.versionPromoteFailed': 'Statusövergången avvisades.',
 };
 
 const trainingIt: Dict = {

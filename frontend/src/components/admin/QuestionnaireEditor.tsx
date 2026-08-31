@@ -5,9 +5,41 @@ import { RefreshCw, Plus, Trash2, Save, ListChecks, Sliders, FileText, Eye } fro
 import { useI18n } from '@/lib/i18n-context';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
-const LOCALES = ['it', 'en', 'es', 'sv'] as const;
+// Le sei lingue dell'app. Non piu' le quattro che avevano una colonna dedicata:
+// i testi vivono in campi JSON, quindi aggiungerne una non tocca lo schema.
+const LOCALES = ['it', 'en', 'es', 'fr', 'de', 'sv'] as const;
 type Locale = typeof LOCALES[number];
+type I18nMap = Record<string, string> | null;
+
+interface ContentVersion {
+    id: number;
+    content_type: string;
+    content_key: string;
+    locale: string;
+    status: string;
+    source: string | null;
+    approved_by: string | null;
+}
 const ORIENTATIONS = ['resource', 'difficulty', 'neutral'] as const;
+
+// Durante la convivenza JSON / colonne vecchie il campo si legge da entrambi,
+// col JSON che vince. Rispecchia backend/i18n_fields.py.
+function localizedValue(row: object, field: string, locale: Locale): string {
+    const bag = row as Record<string, unknown>;
+    const json = bag[`${field}_i18n`] as I18nMap;
+    const fromJson = json?.[locale];
+    if (fromJson) return fromJson;
+    return (bag[`${field}_${locale}`] as string | null | undefined) ?? '';
+}
+
+// Una lingua svuotata esce dalla mappa: "non tradotto" e "tradotto in vuoto"
+// devono restare distinguibili.
+function mergedI18n(current: I18nMap, locale: Locale, value: string): Record<string, string> {
+    const next = { ...(current ?? {}) };
+    if (value.trim()) next[locale] = value;
+    else delete next[locale];
+    return next;
+}
 
 interface Instrument {
     code: string;
@@ -15,6 +47,7 @@ interface Instrument {
     name_en: string | null;
     name_es: string | null;
     name_sv: string | null;
+    name_i18n: I18nMap;
     response_scale_min: number;
     response_scale_max: number;
     report_scale_type: string;
@@ -33,6 +66,7 @@ interface Factor {
     label_en: string | null;
     label_es: string | null;
     label_sv: string | null;
+    label_i18n: I18nMap;
 }
 
 interface Item {
@@ -46,6 +80,7 @@ interface Item {
     text_en: string | null;
     text_es: string | null;
     text_sv: string | null;
+    text_i18n: I18nMap;
     active: boolean;
 }
 
@@ -83,8 +118,28 @@ export function QuestionnaireEditor() {
     const [factors, setFactors] = useState<Factor[]>([]);
     const [items, setItems] = useState<Item[]>([]);
     const [rules, setRules] = useState<Rules | null>(null);
+    const [versions, setVersions] = useState<ContentVersion[]>([]);
+    const [ladders, setLadders] = useState<Record<string, string[]>>({});
+    const [versionError, setVersionError] = useState('');
 
     const flash = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 2500); };
+
+    const loadVersions = useCallback(() => {
+        if (!selected) return;
+        fetch(`/api/admin/content-versions?content_type=instrument&content_key=${selected}`)
+            .then((r) => r.json())
+            .then(setVersions)
+            .catch(() => setVersions([]));
+    }, [selected]);
+
+    useEffect(() => { loadVersions(); }, [loadVersions]);
+
+    useEffect(() => {
+        fetch('/api/admin/content-versions/ladders')
+            .then((r) => r.json())
+            .then(setLadders)
+            .catch(() => setLadders({}));
+    }, []);
 
     useEffect(() => {
         fetch('/api/admin/instruments')
@@ -259,8 +314,11 @@ export function QuestionnaireEditor() {
                         <label key={l} className="block">
                             <span className="text-xs font-semibold text-slate-500 uppercase">{t('admin.q.name')} ({l})</span>
                             <input
-                                value={(meta[`name_${l}` as keyof Instrument] as string) ?? ''}
-                                onChange={(e) => setMeta({ ...meta, [`name_${l}`]: e.target.value })}
+                                value={localizedValue(meta, 'name', l)}
+                                onChange={(e) => setMeta({
+                                    ...meta,
+                                    name_i18n: mergedI18n(meta.name_i18n, l, e.target.value),
+                                })}
                                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                             />
                         </label>
@@ -334,8 +392,10 @@ export function QuestionnaireEditor() {
                                         <td className="py-2 pr-2 space-y-1">
                                             {LOCALES.map((l) => (
                                                 <input key={l} placeholder={l}
-                                                    value={(f[`label_${l}` as keyof Factor] as string) ?? ''}
-                                                    onChange={(e) => patchFactor(f.id, { [`label_${l}`]: e.target.value } as Partial<Factor>)}
+                                                    value={localizedValue(f, 'label', l)}
+                                                    onChange={(e) => patchFactor(f.id, {
+                                                        label_i18n: mergedI18n(f.label_i18n, l, e.target.value),
+                                                    })}
                                                     className="w-full rounded border border-slate-300 px-2 py-1" />
                                             ))}
                                         </td>
@@ -366,6 +426,15 @@ export function QuestionnaireEditor() {
                             </button>
                         ))}
                     </div>
+                    <LanguageStatusBar
+                        contentKey={selected}
+                        locale={locale}
+                        onChanged={loadVersions}
+                        versions={versions}
+                        ladder={ladders.instrument ?? []}
+                        error={versionError}
+                        setError={setVersionError}
+                    />
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
@@ -403,8 +472,10 @@ export function QuestionnaireEditor() {
                                         </td>
                                         <td className="py-2 pr-2">
                                             <textarea
-                                                value={(it[`text_${locale}` as keyof Item] as string) ?? ''}
-                                                onChange={(e) => patchItem(it.id, { [`text_${locale}`]: e.target.value } as Partial<Item>)}
+                                                value={localizedValue(it, 'text', locale)}
+                                                onChange={(e) => patchItem(it.id, {
+                                                    text_i18n: mergedI18n(it.text_i18n, locale, e.target.value),
+                                                })}
                                                 rows={2}
                                                 className="w-full min-w-[20rem] rounded border border-slate-300 px-2 py-1" />
                                         </td>
@@ -428,7 +499,7 @@ export function QuestionnaireEditor() {
                 <div className="space-y-4">
                     <div className="flex items-center gap-2 text-sm">
                         <span className="text-slate-500">{t('admin.q.viewLocale')}:</span>
-                        {LOCALES.filter((l) => l !== 'it').map((l) => (
+                        {LOCALES.map((l) => (
                             <button key={l} onClick={() => setLocale(l)}
                                 className={`rounded px-2 py-0.5 ${locale === l ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
                                 {l}
@@ -460,6 +531,69 @@ export function QuestionnaireEditor() {
                     </div>
                 </div>
             )}
+        </div>
+    );
+}
+
+// Stato di certificazione della lingua in lavorazione, con la promozione. La
+// scala degli stati arriva dal backend: il pannello non ne tiene una copia,
+// altrimenti divergerebbe dal vocabolario che il server fa rispettare.
+function LanguageStatusBar({
+    contentKey, locale, versions, ladder, onChanged, error, setError,
+}: {
+    contentKey: string;
+    locale: string;
+    versions: ContentVersion[];
+    ladder: string[];
+    onChanged: () => void;
+    error: string;
+    setError: (value: string) => void;
+}) {
+    const { t } = useI18n();
+    const version = versions.find((v) => v.locale === locale);
+    if (!contentKey) return null;
+
+    const promote = async (target: string) => {
+        if (!version) return;
+        setError('');
+        const res = await fetch(`/api/admin/content-versions/${version.id}/promote`, {
+            method: 'POST',
+            headers: JSON_HEADERS,
+            body: JSON.stringify({ target_status: target }),
+        });
+        if (!res.ok) {
+            const body = await res.json().catch(() => null);
+            setError(typeof body?.detail === 'string' ? body.detail : t('admin.q.versionPromoteFailed'));
+            return;
+        }
+        onChanged();
+    };
+
+    return (
+        <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+                <span className="text-slate-500">{t('admin.q.versionStatus')} ({locale}):</span>
+                <span className="rounded bg-white px-2 py-0.5 font-semibold text-slate-800 border border-slate-200">
+                    {version?.status ?? '—'}
+                </span>
+                {version?.source && (
+                    <span className="text-xs text-slate-500">{t('admin.q.versionSource')}: {version.source}</span>
+                )}
+                {version?.approved_by && (
+                    <span className="text-xs text-slate-500">{t('admin.q.versionApprovedBy')}: {version.approved_by}</span>
+                )}
+            </div>
+            {version && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                    {ladder.filter((s) => s !== version.status).map((s) => (
+                        <button key={s} onClick={() => promote(s)}
+                            className="rounded border border-slate-300 bg-white px-2 py-0.5 text-xs text-slate-700 hover:bg-slate-100">
+                            → {s}
+                        </button>
+                    ))}
+                </div>
+            )}
+            {error && <p className="text-xs text-red-600">{error}</p>}
         </div>
     );
 }
