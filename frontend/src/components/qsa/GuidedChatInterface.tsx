@@ -20,7 +20,7 @@ import { toast } from '@/components/ui/Toast';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
 import { IdeaMapPanel } from '@/components/qsa/IdeaMapPanel';
-import type { IdeaVariant } from '@/lib/idea-map';
+import { fetchIdeaNextStep, type IdeaNextStep, type IdeaVariant } from '@/lib/idea-map';
 import { freezeSession, type FrozenSessionDetail } from '@/lib/frozen-session';
 import { diagramContentForSpeech, splitDiagramContent } from '@/lib/diagram-content';
 
@@ -420,6 +420,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const isIdea = questionnaireType === 'IDEA';
     const [ideaVariant, setIdeaVariant] = useState<IdeaVariant>('student-path');
     const [ideaMapVersion, setIdeaMapVersion] = useState(0);
+    const [ideaMove, setIdeaMove] = useState<IdeaNextStep | null>(null);
     const [currentPhase, setCurrentPhase] = useState<string>('');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [responseLength, setResponseLength] = useState<ResponseLength>('medium');
@@ -688,6 +689,21 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         return { cleanText, shouldAdvance };
     };
 
+    // Idea: dopo ogni turno il server dice quale passo ripara cio' che manca,
+    // e quel passo diventa il contesto del turno seguente. Nessun avanzamento,
+    // nessun ordine: si torna indietro quando serve.
+    useEffect(() => {
+        if (!isIdea || !sessionId) return;
+        let cancelled = false;
+        void fetchIdeaNextStep(sessionId, activeLocale, ideaVariant).then((move) => {
+            if (cancelled || !move) return;
+            setIdeaMove(move);
+            processedPhases.current.add(move.step_id);
+            setCurrentPhase(move.step_id);
+        });
+        return () => { cancelled = true; };
+    }, [isIdea, sessionId, activeLocale, ideaVariant, ideaMapVersion]);
+
     // Phase change handler
     useEffect(() => {
         if (!currentPhase || initialLoading) return;
@@ -719,6 +735,10 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 role: 'assistant',
                 content: conclusionText,
             }]);
+        } else if (isIdea) {
+            // Il passo di Idea e' solo il contesto del prossimo turno della
+            // persona, non un turno da generare: la conversazione la guida lei.
+            setLastAnalysisFailed(false);
         } else {
             setLastAnalysisFailed(false);
             const step = getStepDef(currentPhase);
@@ -1279,8 +1299,9 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         <div className="grid gap-4 lg:h-chat lg:grid-cols-4 lg:gap-6">
             {/* Left Sidebar */}
             <div className="order-3 space-y-4 custom-scrollbar lg:order-1 lg:col-span-1 lg:overflow-y-auto lg:pr-2">
-                {/* Phase Progress */}
-                <div className="glass-panel overflow-hidden">
+                {/* Phase Progress — per Idea non esiste una sequenza da mostrare:
+                    il passo successivo dipende da cosa manca alla mappa. */}
+                <div className={cn("glass-panel overflow-hidden", isIdea && "hidden")}>
                     <button
                         type="button"
                         onClick={() => setIsPathPanelOpen(open => !open)}
@@ -1391,7 +1412,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 space-y-6">
                     {isIdea && (
                         <div className="space-y-3">
-                            <IdeaMapPanel sessionId={sessionId} version={ideaMapVersion} locale={activeLocale} variant={ideaVariant} />
+                            <IdeaMapPanel sessionId={sessionId} version={ideaMapVersion} locale={activeLocale} variant={ideaVariant} move={ideaMove} />
                             {messages.length <= 1 && (
                                 <fieldset className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                                     <legend className="px-1 text-xs font-medium text-slate-600">
