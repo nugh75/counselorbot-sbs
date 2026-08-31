@@ -1,44 +1,42 @@
 'use client';
 
-// Schermata iniziale di chi è già passato di qui: al posto della presentazione
-// mostra il percorso — sessioni riprendibili, strumenti con il loro stato,
-// taccuino, counselor e le scelte ricordate. Le fasi restano quelle di prima:
-// da qui si entra nella stessa catena, con le decisioni già prese al loro posto.
+// Schermata iniziale di chi è già passato di qui: mostra subito le scelte attive,
+// le sessioni riprendibili e l'intero catalogo degli strumenti con descrizioni.
+// Le aree personali restano nella pagina personale, non in questa home.
 
 import { useEffect, useState, useSyncExternalStore } from 'react';
-import { RotateCcw } from 'lucide-react';
+import Link from 'next/link';
+import { BookOpen, RotateCcw } from 'lucide-react';
 import { QUESTIONNAIRE_LIST, QuestionnaireConfig, QuestionnaireType } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { cn } from '@/lib/utils';
 import { fetchCounselors, getSelectedCounselorId, subscribeToCounselor } from '@/lib/counselor';
 import { clearFlowPrefs, getExperiencePref, getInputMethodPref, subscribeToFlowPrefs } from '@/lib/session-prefs';
 import { LOCAL_RESUME_HREF, resumeHref, useResumeEntries } from '@/lib/use-resume-entries';
-import { RETURNING_HOME_TOOLS } from '@/lib/returning-home-tools';
 import { CompassMark } from '@/components/ui/CompassMark';
+import { fetchInstruments, type InstrumentSummary } from '@/lib/instruments-api';
+import { instrumentAvailableInLocale } from '@/lib/instrument-availability';
 
 const STARTABLE: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', 'IDEA'];
 
 interface Props {
     // Ultima compilazione per strumento, in ISO; assente = mai compilato.
     lastCompiledAt: Partial<Record<QuestionnaireType, string>>;
-    notebookUpdatedAt: string | null;
     onStartInstrument: (questionnaire: QuestionnaireConfig) => void;
-    onBrowseInstruments: () => void;
     onChangeCounselor: () => void;
     onOpenIntro: () => void;
 }
 
 export function ReturningHome({
     lastCompiledAt,
-    notebookUpdatedAt,
     onStartInstrument,
-    onBrowseInstruments,
     onChangeCounselor,
     onOpenIntro,
 }: Props) {
     const { t, lang } = useI18n();
     const { frozen, localResume, count: resumeCount } = useResumeEntries();
     const [counselorInfo, setCounselorInfo] = useState<{ id: number; name: string } | null>(null);
+    const [instrumentCatalog, setInstrumentCatalog] = useState<InstrumentSummary[] | null>(null);
     const counselorId = useSyncExternalStore(
         subscribeToCounselor,
         () => getSelectedCounselorId(),
@@ -50,6 +48,14 @@ export function ReturningHome({
         () => '|',
     );
     const [method, experience] = prefsVersion.split('|');
+
+    useEffect(() => {
+        let alive = true;
+        fetchInstruments()
+            .then((rows) => { if (alive) setInstrumentCatalog(rows); })
+            .catch(() => { if (alive) setInstrumentCatalog([]); });
+        return () => { alive = false; };
+    }, []);
 
     useEffect(() => {
         if (counselorId == null) return;
@@ -65,7 +71,6 @@ export function ReturningHome({
     }, [counselorId, lang]);
 
     const counselorName = counselorInfo?.id === counselorId ? counselorInfo.name : null;
-
     const formatDate = (iso: string) => new Date(iso).toLocaleDateString(lang);
     const instruments = QUESTIONNAIRE_LIST.filter((q) => STARTABLE.includes(q.id));
     const prefsSummary = [
@@ -89,6 +94,40 @@ export function ReturningHome({
                     {t('base.about')}
                 </button>
             </header>
+
+            <section className="grid gap-4 border-y border-slate-100 py-6 sm:grid-cols-2">
+                <div>
+                    <span className="block h-0.5 w-10 rounded-full bg-teal-500" />
+                    <h2 className="mt-3 text-base font-bold text-slate-900">{t('base.counselor.title')}</h2>
+                    <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                        {counselorName ?? t('base.counselor.none')}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={onChangeCounselor}
+                        className="mt-1.5 text-sm font-medium text-indigo-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
+                    >
+                        {t('base.counselor.change')}
+                    </button>
+                </div>
+
+                <div>
+                    <span className="block h-0.5 w-10 rounded-full bg-teal-500" />
+                    <h2 className="mt-3 text-base font-bold text-slate-900">{t('base.prefs.title')}</h2>
+                    <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                        {prefsSummary || t('base.prefs.none')}
+                    </p>
+                    {prefsSummary && (
+                        <button
+                            type="button"
+                            onClick={clearFlowPrefs}
+                            className="mt-1.5 text-sm font-medium text-indigo-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
+                        >
+                            {t('base.prefs.reset')}
+                        </button>
+                    )}
+                </div>
+            </section>
 
             {resumeCount > 0 && (
                 <section>
@@ -120,106 +159,82 @@ export function ReturningHome({
             )}
 
             <section>
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
-                        {t('base.instruments.title')}
-                    </h2>
-                    <button
-                        type="button"
-                        onClick={onBrowseInstruments}
-                        className="text-sm font-medium text-indigo-700 hover:underline"
-                    >
-                        {t('base.browseAll')}
-                    </button>
-                </div>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
+                    {t('base.instruments.title')}
+                </h2>
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
                     {instruments.map((q) => {
                         const done = lastCompiledAt[q.id];
+                        const canCompleteQuestionnaire = (
+                            lang !== 'it'
+                            && !q.agentOnly
+                            && instrumentCatalog !== null
+                            && instrumentAvailableInLocale(instrumentCatalog, q.id, lang)
+                        );
                         return (
-                            <button
+                            <article
                                 key={q.id}
-                                type="button"
-                                onClick={() => onStartInstrument(q)}
-                                className="glass-panel flex flex-col items-start gap-1 p-4 text-left transition-colors hover:border-indigo-300"
+                                className="glass-panel flex flex-col gap-3 p-5 text-left transition-colors hover:border-indigo-300"
                             >
-                                <span className="flex items-center gap-2">
-                                    <span
-                                        className={cn(
-                                            'h-1.5 w-1.5 rounded-full',
-                                            done ? 'bg-teal-500' : 'bg-slate-300',
+                                <div>
+                                    <span className="flex flex-wrap items-center gap-2">
+                                        <span
+                                            className={cn(
+                                                'h-1.5 w-1.5 rounded-full',
+                                                done ? 'bg-teal-500' : 'bg-slate-300',
+                                            )}
+                                        />
+                                        <span className="font-bold text-slate-900">{q.name}</span>
+                                        {done && (
+                                            <span className="rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-bold text-teal-700">
+                                                {t('selector.badge.done')}
+                                            </span>
                                         )}
-                                    />
-                                    <span className="font-bold text-slate-900">{q.name}</span>
-                                </span>
-                                <span className="text-sm leading-snug text-slate-600">{t(`q.${q.id}.fullName`)}</span>
-                                <span className="mt-1 font-mono text-xs text-slate-500">
+                                    </span>
+                                    <h3 className="mt-1 text-sm font-medium leading-snug text-slate-600">
+                                        {t(`q.${q.id}.fullName`)}
+                                    </h3>
+                                </div>
+                                <p className="grow text-sm leading-relaxed text-slate-500">
+                                    {t(`q.${q.id}.description`)}
+                                </p>
+                                <span className="font-mono text-xs text-slate-500">
                                     {done ? t('base.instrument.doneOn', { date: formatDate(done) }) : t('base.instrument.todo')}
                                 </span>
-                            </button>
+                                <div className="flex flex-wrap items-center gap-2 pt-1">
+                                    {canCompleteQuestionnaire && (
+                                        <Link
+                                            href={`/somministrazione/${q.id}/${lang}`}
+                                            className="inline-flex items-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
+                                        >
+                                            {t('selector.completeQuestionnaire')}
+                                        </Link>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => onStartInstrument(q)}
+                                        className={cn(
+                                            'inline-flex items-center rounded-md px-3.5 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2',
+                                            canCompleteQuestionnaire
+                                                ? 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                                                : 'bg-indigo-600 text-white hover:bg-indigo-700',
+                                        )}
+                                    >
+                                        {t('selector.useTool')}
+                                    </button>
+                                    <Link
+                                        href={`/strumenti/${q.id}`}
+                                        className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
+                                    >
+                                        <BookOpen className="h-4 w-4" />
+                                        {t('selector.learn')}
+                                    </Link>
+                                </div>
+                            </article>
                         );
                     })}
                 </div>
             </section>
-
-            <section>
-                <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
-                    {t('base.tools.title')}
-                </h2>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {RETURNING_HOME_TOOLS.map((tool) => (
-                        <a
-                            key={tool.id}
-                            href={tool.href}
-                            className="glass-panel flex flex-col items-start gap-1 p-4 text-left transition-colors hover:border-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
-                        >
-                            <span className="font-bold text-slate-900">{t(tool.titleKey)}</span>
-                            <span className="text-sm leading-snug text-slate-600">{t(tool.bodyKey)}</span>
-                            {tool.id === 'notebook' && (
-                                <span className="mt-1 font-mono text-xs text-slate-500">
-                                    {notebookUpdatedAt
-                                        ? t('base.notebook.updatedOn', { date: formatDate(notebookUpdatedAt) })
-                                        : t('base.notebook.empty')}
-                                </span>
-                            )}
-                        </a>
-                    ))}
-                </div>
-            </section>
-
-            <section className="grid gap-4 sm:grid-cols-2">
-                <div>
-                    <span className="block h-0.5 w-10 rounded-full bg-teal-500" />
-                    <h3 className="mt-3 text-base font-bold text-slate-900">{t('base.counselor.title')}</h3>
-                    <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                        {counselorName ?? t('base.counselor.none')}
-                    </p>
-                    <button
-                        type="button"
-                        onClick={onChangeCounselor}
-                        className="mt-1.5 text-sm font-medium text-indigo-700 hover:underline"
-                    >
-                        {t('base.counselor.change')}
-                    </button>
-                </div>
-
-                <div>
-                    <span className="block h-0.5 w-10 rounded-full bg-teal-500" />
-                    <h3 className="mt-3 text-base font-bold text-slate-900">{t('base.prefs.title')}</h3>
-                    <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                        {prefsSummary || t('base.prefs.none')}
-                    </p>
-                    {prefsSummary && (
-                        <button
-                            type="button"
-                            onClick={clearFlowPrefs}
-                            className="mt-1.5 text-sm font-medium text-indigo-700 hover:underline"
-                        >
-                            {t('base.prefs.reset')}
-                        </button>
-                    )}
-                </div>
-            </section>
-
         </div>
     );
 }

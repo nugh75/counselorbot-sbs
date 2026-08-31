@@ -727,9 +727,7 @@ export default function Home() {
                     {step === 'base' && (
                         <ReturningHome
                             lastCompiledAt={lastCompiledAt}
-                            notebookUpdatedAt={notebookUpdatedAt ?? null}
                             onStartInstrument={handleQuestionnaireSelect}
-                            onBrowseInstruments={() => setStep('questionnaire-select')}
                             onChangeCounselor={() => setStep('counselor-select')}
                             onOpenIntro={() => setStep('intro')}
                         />
