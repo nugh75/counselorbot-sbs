@@ -1,17 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { QUESTIONNAIRE_LIST, QuestionnaireType, QuestionnaireConfig } from '@/lib/questionnaires';
 import { AlertTriangle, BookOpen, Check, ChevronDown, ExternalLink } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { fetchInstruments } from '@/lib/instruments-api';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 
 const ACTIVE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', 'IDEA'];
-const ADMINISTRATION_LANGS = ['en', 'es', 'sv'] as const;
 const STRATEGIC_COMPETENCES_URLS: Partial<Record<QuestionnaireType, string>> = {
     QSA: 'https://www.competenzestrategiche.it/QSA/',
     QSAr: 'https://www.competenzestrategiche.it/QSAr/',
@@ -38,6 +38,23 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
     // La chiave è l'id strumento per i questionari, oppure 'profile-changes' / 'pqbl'
     // per le card che portano ad altre pagine.
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
+    // Lingue in cui i questionari sono somministrabili in-app: lette dal registro
+    // (union delle available_locales), non da una lista scritta a mano.
+    const [availableLangs, setAvailableLangs] = useState<string[] | null>(null);
+    useEffect(() => {
+        let cancelled = false;
+        fetchInstruments()
+            .then((rows) => {
+                if (cancelled) return;
+                const langs = new Set<string>();
+                for (const row of rows) for (const l of row.available_locales) langs.add(l);
+                setAvailableLangs([...langs]);
+            })
+            .catch(() => {
+                if (!cancelled) setAvailableLangs(null);
+            });
+        return () => { cancelled = true; };
+    }, []);
     const active = QUESTIONNAIRE_LIST.filter((q) => ACTIVE_QUESTIONNAIRES.includes(q.id));
     const upcoming = QUESTIONNAIRE_LIST.filter((q) => !ACTIVE_QUESTIONNAIRES.includes(q.id));
     // Competenze Strategiche = strumenti con assessment sul sito / in-app; Interviste = agentOnly (Savickas).
@@ -47,8 +64,10 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
     const focusTools = active.filter((q) => q.id === 'IDEA');
     const interviews = active.filter((q) => q.agentOnly && q.id !== 'IDEA');
     const isItalian = lang === 'it';
-    const isAdministrationLang = ADMINISTRATION_LANGS.includes(lang as 'en' | 'es' | 'sv');
-    const isUnavailableQuestionnaireLang = lang === 'fr' || lang === 'de';
+    // Finché il catalogo non è arrivato assumiamo disponibile per le lingue non
+    // italiane, così fr/de non lampeggiano "non disponibile" al primo render.
+    const isAdministrationLang = availableLangs === null || availableLangs.includes(lang);
+    const isUnavailableQuestionnaireLang = !isItalian && !isAdministrationLang;
 
     const handleContinue = () => {
         if (!selectedKey) return;
