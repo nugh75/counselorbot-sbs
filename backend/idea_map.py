@@ -716,6 +716,15 @@ def map_context(spec: DiagramSpec | None, message: str = "", lang: str = "it",
             "agrees, send `closed: true` with a one-sentence `conclusion`. "
             "Never close on your own."
         )
+    elif move.get("reason") == "all-closed":
+        lines.append(
+            "The whole map is closed: this is the end of the session. Read the "
+            "map back in a few sentences - the idea, what it assumes, what it "
+            "settled, what stays open - and then ASK where they want to keep "
+            "it: in their notebook, as a work in their portfolio, as a PDF, or "
+            "nowhere. Do not save anything yourself and do not pick for them: "
+            "the interface does the keeping, you only ask."
+        )
     elif move.get("reason") == "task-unknown":
         lines.append(
             "Ask what kind of work this is, in plain words, and set `task_type` "
