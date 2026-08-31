@@ -627,15 +627,18 @@ def history(db: Session, username: str, session_id: str) -> list[models.IdeaMapR
 
 
 def map_context(spec: DiagramSpec | None, message: str = "", lang: str = "it",
-                chosen_focus: str | None = None) -> str:
+                chosen_focus: str | None = None, turns_used: int = 0,
+                budget: int | None = None) -> str:
     """La mappa corrente come la vede il modello, piu' la mossa da fare.
 
     Senza questo blocco la skill parla di una mappa che nel prompt non esiste:
     il modello non sa cosa c'e' gia', non puo' riferirsi agli id, e finisce per
     non mandare niente. Inglese come il resto del contratto verso il modello.
     """
+    pace = pace_directive(turns_used, budget)
     if spec is None:
         return (
+            f"PACE: {pace}\n"
             "The map is empty. Create it in THIS turn, from what the person has "
             "already said, EVEN IF the idea is still vague: a vague idea is a "
             "node with \"status\":\"mentioned\", never a reason to wait. Ask "
@@ -653,7 +656,7 @@ def map_context(spec: DiagramSpec | None, message: str = "", lang: str = "it",
     owner = owning_task(spec)
     focus_node = by_id.get(focus or "")
 
-    lines = [f"Title: {spec.title}"]
+    lines = [f"PACE: {pace}", f"Title: {spec.title}"]
     if focus_node is not None:
         task_type = focus_node.task_type or "not declared yet"
         lines.append(
@@ -800,7 +803,8 @@ def map_context(spec: DiagramSpec | None, message: str = "", lang: str = "it",
 
 
 def map_context_for(db: Session, username: str, session_id: str, *,
-                    message: str = "", lang: str = "it") -> str:
+                    message: str = "", lang: str = "it",
+                    turns_used: int = 0, budget: int | None = None) -> str:
     """Blocco [IDEA MAP] per l'envelope della chat.
 
     Senza utente o sessione (anteprima admin, prompt test) il blocco non
@@ -809,7 +813,57 @@ def map_context_for(db: Session, username: str, session_id: str, *,
     """
     spec = current_map(db, username, session_id) if (username and session_id) else None
     picked = chosen_focus(db, username, session_id) if (username and session_id) else None
-    return map_context(spec, message=message, lang=lang, chosen_focus=picked)
+    return map_context(spec, message=message, lang=lang, chosen_focus=picked,
+                       turns_used=turns_used, budget=budget)
+
+
+# Quanto dura una sessione. L'app non puo' misurare i minuti: puo' contare gli
+# scambi, e quello che cambia col numero e' il passo, non un troncamento. Zero
+# vuol dire "finche' serve".
+PACE_STOPS = (8, 16, 30, 0)
+DEFAULT_PACE = 16
+# Sotto l'ultimo quarto si smette di aprire strade nuove e si punta a chiudere:
+# lasciare un ramo aperto a fine tempo e' peggio che non averlo aperto.
+PACE_CLOSING_SHARE = 0.75
+
+
+def pace_directive(turns_used: int, budget: int | None) -> str:
+    """Come cambia il passo del turno rispetto alla durata scelta.
+
+    Non impone la chiusura: la chiusura resta un gesto della persona. Decide
+    quanto il modello puo' allargare - domande di seguito, rami nuovi - o
+    quanto deve stringere.
+    """
+    if not budget:
+        return (
+            "No length was set for this session: take the time the thinking "
+            "needs, and do not rush to close."
+        )
+    left = budget - turns_used
+    if left <= 0:
+        return (
+            f"The {budget} exchanges this session was given are used up. Do not "
+            "ask anything new: read the map back and propose closing what is "
+            "open. If the person wants to go on, they will say so."
+        )
+    if turns_used >= budget * PACE_CLOSING_SHARE:
+        return (
+            f"About {left} exchanges left of the {budget} chosen. Head for the "
+            "end: open no new branches, ask only what the roles still missing "
+            "need, and prefer closing an open branch over deepening it."
+        )
+    if budget <= 8:
+        return (
+            f"A short session ({budget} exchanges, {left} left): one question "
+            "per turn and no follow-ups, take what the person gives you and put "
+            "it on the map. Open a branch only if the idea cannot be settled "
+            "without it."
+        )
+    return (
+        f"About {left} exchanges left of the {budget} chosen: there is room to "
+        "follow something up when it matters, and to open a branch when work "
+        "has to come first."
+    )
 
 
 # --- il percorso derivato ----------------------------------------------------
