@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch, getIdentity, type Identity } from '@/lib/auth';
 import { canUsePersonalPage } from '@/lib/roles';
@@ -18,8 +19,8 @@ import { TelegramLinkCard } from '@/components/profile/TelegramLinkCard';
 import { TeacherNotesCard } from '@/components/profile/TeacherNotesCard';
 import { MyGroupsCard } from '@/components/profile/MyGroupsCard';
 import {
-    ArrowLeft, Trash2, Download, MessageSquare, ShieldAlert, Search,
-    BookOpen, Wrench, Folder
+    ArrowLeft, ArrowRight, Trash2, Download, MessageSquare, ShieldAlert, Search,
+    NotebookPen, BookText, UsersRound, Send, FolderOpen, ClipboardList,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -36,22 +37,95 @@ interface QuestionnaireResult {
     submitted_at: string;
 }
 
-const BOOKLET_TYPES: BookletType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', ...EVENT_BOOKLET_TYPES];
+type PersonalSection = 'notebook' | 'booklet' | 'groups' | 'telegram' | 'portfolio' | 'sessions';
+
+const PERSONAL_AREAS = [
+    {
+        id: 'notebook',
+        slug: 'taccuino',
+        icon: NotebookPen,
+        titleKey: 'profile.about.title',
+        descriptionKey: 'profile.about.subtitle',
+        iconClass: 'bg-teal-50 text-teal-700',
+        edgeClass: 'bg-teal-500',
+    },
+    {
+        id: 'booklet',
+        slug: 'libretto',
+        icon: BookText,
+        titleKey: 'profile.bookletSection.title',
+        descriptionKey: 'profile.bookletSection.subtitle',
+        iconClass: 'bg-indigo-50 text-indigo-700',
+        edgeClass: 'bg-indigo-500',
+    },
+    {
+        id: 'groups',
+        slug: 'classi',
+        icon: UsersRound,
+        titleKey: 'profile.area.classes.title',
+        descriptionKey: 'profile.area.classes.description',
+        iconClass: 'bg-sky-50 text-sky-700',
+        edgeClass: 'bg-sky-500',
+    },
+    {
+        id: 'telegram',
+        slug: 'telegram',
+        icon: Send,
+        titleKey: 'profile.area.telegram.title',
+        descriptionKey: 'profile.area.telegram.description',
+        iconClass: 'bg-blue-50 text-blue-700',
+        edgeClass: 'bg-blue-500',
+    },
+    {
+        id: 'portfolio',
+        slug: 'portfolio',
+        icon: FolderOpen,
+        titleKey: 'profile.portfolioSection.title',
+        descriptionKey: 'profile.portfolioSection.subtitle',
+        iconClass: 'bg-amber-50 text-amber-700',
+        edgeClass: 'bg-amber-500',
+    },
+    {
+        id: 'sessions',
+        slug: 'compilazioni',
+        icon: ClipboardList,
+        titleKey: 'profile.myCompilations',
+        descriptionKey: 'profile.sessions.subtitle',
+        iconClass: 'bg-violet-50 text-violet-700',
+        edgeClass: 'bg-violet-500',
+    },
+] as const;
+
+function personalSectionFromPath(pathname: string): PersonalSection | null {
+    const slug = pathname.split('/').filter(Boolean)[1];
+    return PERSONAL_AREAS.find((area) => area.slug === slug)?.id ?? null;
+}
 
 export default function ProfilePage() {
     const { t, tf, lang } = useI18n();
+    const pathname = usePathname();
     const isDark = useDarkMode();
     const [identity, setIdentity] = useState<Identity | null>(null);
     const [sessions, setSessions] = useState<QuestionnaireResult[]>([]);
     const [selectedSession, setSelectedSession] = useState<QuestionnaireResult | null>(null);
     const [conversation, setConversation] = useState<Array<{ role: string; text: string }> | null>(null);
     const [convLoading, setConvLoading] = useState(false);
+    const [sessionSummary, setSessionSummary] = useState<string | null>(null);
+    const [summaryLoading, setSummaryLoading] = useState(false);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
     const [sessionSearch, setSessionSearch] = useState('');
     const [selectedBookletType, setSelectedBookletType] = useState<BookletType>('QSA');
-    const [activeTab, setActiveTab] = useState<'taccuino' | 'strumenti' | 'portfolio'>('taccuino');
+    const activeSection = personalSectionFromPath(pathname);
+    const personalAreas = PERSONAL_AREAS.map((area) => ({
+        ...area,
+        href: `/profilo/${area.slug}`,
+        title: t(area.titleKey),
+        description: t(area.descriptionKey),
+    }));
+    const activeArea = personalAreas.find((area) => area.id === activeSection) ?? null;
+    const ActiveAreaIcon = activeArea?.icon;
 
     const bookletTypesOptions = useMemo((): BookletType[] => {
         const completed = sessions
@@ -116,24 +190,44 @@ export default function ProfilePage() {
     useEffect(() => {
         if (!selectedSession) {
             setConversation(null);
+            setSessionSummary(null);
             return;
         }
         setConvLoading(true);
+        setSummaryLoading(true);
         setConversation(null);
+        setSessionSummary(null);
+
+        let active = true;
         apiFetch(`/api/user/questionnaire-result/${selectedSession.session_id}/conversation`)
-            .then((res) => {
-                if (res.ok) return res.json();
-                throw new Error('Failed to fetch conversation');
-            })
-            .then((data) => {
-                setConversation(data as Array<{ role: string; text: string }>);
+            .then(async (res) => {
+                if (!res.ok) throw new Error('Failed to fetch conversation');
+                const data = await res.json();
+                if (active) setConversation(data as Array<{ role: string; text: string }>);
             })
             .catch((err) => {
+                if (!active) return;
                 console.error("Error loading conversation:", err);
             })
             .finally(() => {
-                setConvLoading(false);
+                if (active) setConvLoading(false);
             });
+
+        apiFetch(`/api/user/questionnaire-result/${selectedSession.session_id}/summary`)
+            .then(async (res) => {
+                if (!res.ok) throw new Error('Failed to fetch summary');
+                const data = await res.json();
+                if (active) setSessionSummary((data as { summary?: string | null }).summary ?? null);
+            })
+            .catch((err) => {
+                if (!active) return;
+                console.error("Error loading summary:", err);
+            })
+            .finally(() => {
+                if (active) setSummaryLoading(false);
+            });
+
+        return () => { active = false; };
     }, [selectedSession]);
 
     const handleDelete = async (sessionId: string) => {
@@ -313,120 +407,83 @@ export default function ProfilePage() {
             {/* Header */}
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
+                    {activeArea && ActiveAreaIcon && (
+                        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${activeArea.iconClass}`}>
+                            <ActiveAreaIcon className="h-5 w-5" aria-hidden />
+                        </span>
+                    )}
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900">{t('profile.title')}</h1>
-                        <p className="text-sm text-slate-500 mt-1">{t('profile.subtitle')}</p>
+                        <h1 className="text-2xl font-bold text-slate-900">
+                            {activeArea?.title ?? t('profile.title')}
+                        </h1>
+                        <p className="mt-1 max-w-2xl text-sm text-slate-500">
+                            {activeArea?.description ?? t('profile.subtitle')}
+                        </p>
                     </div>
                 </div>
                 <Link
-                    href="/"
+                    href={activeArea ? '/profilo' : '/'}
                     className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4" />
-                    {t('nav.home')}
+                    {activeArea ? t('profile.nav') : t('nav.home')}
                 </Link>
             </div>
 
-            {/* Account Info Details Card */}
-            <section className="glass-panel p-6 flex flex-wrap items-center justify-between gap-6">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-lg">
-                        {identity.username?.slice(0, 2).toUpperCase() || 'U'}
-                    </div>
-                    <div>
-                        <h2 className="font-bold text-lg text-slate-800">{identity.name || identity.username}</h2>
-                        <p className="text-xs text-slate-400">{identity.email || t('profile.noEmail')}</p>
-                    </div>
-                </div>
-                <div className="flex gap-4 text-sm border-l border-slate-100 pl-6">
-                    <div>
-                        <span className="block text-xs text-slate-400 uppercase font-semibold">{t('profile.username')}</span>
-                        <span className="font-medium text-slate-700">{identity.username}</span>
-                    </div>
-                    <div>
-                        <span className="block text-xs text-slate-400 uppercase font-semibold">{t('profile.groups')}</span>
-                        <span className="font-medium text-slate-700 capitalize">
-                            {identity.groups?.join(', ') || 'user'}
-                        </span>
-                    </div>
-                </div>
-            </section>
-
-            {/* Tab navigation */}
-            <div className="border-b border-slate-200">
-                <nav className="-mb-px flex gap-2 overflow-x-auto pb-px scrollbar-none">
-                    {/* Tab: Taccuino */}
-                    <div className="group relative">
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('taccuino')}
-                            className={`flex items-center justify-center p-3 border-b-2 -mb-px transition-colors ${
-                                activeTab === 'taccuino'
-                                    ? 'border-indigo-600 text-indigo-700'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700'
-                            }`}
-                        >
-                            <BookOpen className="w-5 h-5 shrink-0" />
-                        </button>
-                        {/* Tooltip */}
-                        <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 scale-90 rounded bg-slate-900 px-2.5 py-1 text-xs text-white opacity-0 transition-all group-hover:opacity-100 group-hover:scale-100 whitespace-nowrap shadow-md">
-                            {t('profile.tab.notebook')}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
+            {!activeArea && (
+                <>
+                    {/* Account Info Details Card */}
+                    <section className="glass-panel flex flex-wrap items-center justify-between gap-6 p-6">
+                        <div className="flex items-center gap-4">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-lg font-bold text-slate-600">
+                                {identity.username?.slice(0, 2).toUpperCase() || 'U'}
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-bold text-slate-800">{identity.name || identity.username}</h2>
+                                <p className="text-xs text-slate-400">{identity.email || t('profile.noEmail')}</p>
+                            </div>
                         </div>
-                    </div>
-
-                    {/* Tab: Portfolio */}
-                    <div className="group relative">
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('portfolio')}
-                            className={`flex items-center justify-center p-3 border-b-2 -mb-px transition-colors ${
-                                activeTab === 'portfolio'
-                                    ? 'border-indigo-600 text-indigo-700'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700'
-                            }`}
-                        >
-                            <Folder className="w-5 h-5 shrink-0" />
-                        </button>
-                        {/* Tooltip */}
-                        <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 scale-90 rounded bg-slate-900 px-2.5 py-1 text-xs text-white opacity-0 transition-all group-hover:opacity-100 group-hover:scale-100 whitespace-nowrap shadow-md">
-                            {t('profile.tab.portfolio')}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
+                        <div className="flex gap-4 border-l border-slate-100 pl-6 text-sm">
+                            <div>
+                                <span className="block text-xs font-semibold uppercase text-slate-400">{t('profile.username')}</span>
+                                <span className="font-medium text-slate-700">{identity.username}</span>
+                            </div>
+                            <div>
+                                <span className="block text-xs font-semibold uppercase text-slate-400">{t('profile.groups')}</span>
+                                <span className="font-medium capitalize text-slate-700">
+                                    {identity.groups?.join(', ') || 'user'}
+                                </span>
+                            </div>
                         </div>
-                    </div>
+                    </section>
 
-                    {/* Tab: Strumenti */}
-                    <div className="group relative">
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('strumenti')}
-                            className={`flex items-center justify-center p-3 border-b-2 -mb-px transition-colors ${
-                                activeTab === 'strumenti'
-                                    ? 'border-indigo-600 text-indigo-700'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700'
-                            }`}
-                        >
-                            <Wrench className="w-5 h-5 shrink-0" />
-                        </button>
-                        {/* Tooltip */}
-                        <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 scale-90 rounded bg-slate-900 px-2.5 py-1 text-xs text-white opacity-0 transition-all group-hover:opacity-100 group-hover:scale-100 whitespace-nowrap shadow-md">
-                            {t('profile.tab.tools')}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
-                        </div>
-                    </div>
-                </nav>
-            </div>
+                    <nav className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label={t('profile.title')}>
+                        {personalAreas.map((area) => {
+                            const Icon = area.icon;
+                            return (
+                                <Link
+                                    key={area.id}
+                                    href={area.href}
+                                    className="glass-panel group relative flex min-h-36 overflow-hidden p-5 transition-colors hover:border-indigo-300 hover:bg-white"
+                                >
+                                    <span className={`absolute inset-y-0 left-0 w-1 ${area.edgeClass}`} aria-hidden />
+                                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${area.iconClass}`}>
+                                        <Icon className="h-5 w-5" aria-hidden />
+                                    </span>
+                                    <span className="ml-4 min-w-0 flex-1">
+                                        <span className="block font-bold text-slate-900">{area.title}</span>
+                                        <span className="mt-1 block text-sm leading-relaxed text-slate-500">{area.description}</span>
+                                    </span>
+                                    <ArrowRight className="ml-3 h-4 w-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-600" aria-hidden />
+                                </Link>
+                            );
+                        })}
+                    </nav>
+                </>
+            )}
 
-            {activeTab === 'taccuino' && (
-            <section className="space-y-4" aria-labelledby="personal-profile-section">
-                <div>
-                    <h2 id="personal-profile-section" className="text-lg font-bold text-slate-800">
-                        {t('profile.about.title')}
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-500">
-                        {t('profile.about.subtitle')}
-                    </p>
-                </div>
+            {activeSection === 'notebook' && (
+            <section className="space-y-4" aria-label={t('profile.about.title')}>
                 <LearnerProfileCard variant="edit" />
                 <Link
                     href="/profilo/cambiamenti"
@@ -440,7 +497,7 @@ export default function ProfilePage() {
             </section>
             )}
 
-            {activeTab === 'strumenti' && (
+            {activeSection === 'sessions' && (
             <>
             <section className="glass-panel p-5 space-y-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -467,7 +524,19 @@ export default function ProfilePage() {
                         </Link>
                     </div>
                 ) : (
-                    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.45fr)]">
+                    <div className="grid gap-3 lg:grid-cols-[minmax(260px,0.45fr)_minmax(0,1fr)]">
+                        <label className="block">
+                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profile.sessions.search')}</span>
+                            <div className="mt-1 flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2">
+                                <Search className="h-4 w-4 text-slate-400" />
+                                <input
+                                    value={sessionSearch}
+                                    onChange={(event) => setSessionSearch(event.target.value)}
+                                    placeholder={t('profile.sessions.searchPlaceholder')}
+                                    className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+                                />
+                            </div>
+                        </label>
                         <label className="block">
                             <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profile.sessions.active')}</span>
                             <select
@@ -486,18 +555,6 @@ export default function ProfilePage() {
                                     </option>
                                 ))}
                             </select>
-                        </label>
-                        <label className="block">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profile.sessions.search')}</span>
-                            <div className="mt-1 flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2">
-                                <Search className="h-4 w-4 text-slate-400" />
-                                <input
-                                    value={sessionSearch}
-                                    onChange={(event) => setSessionSearch(event.target.value)}
-                                    placeholder={t('profile.sessions.searchPlaceholder')}
-                                    className="min-w-0 flex-1 bg-transparent text-sm outline-none"
-                                />
-                            </div>
                         </label>
                     </div>
                 )}
@@ -571,8 +628,26 @@ export default function ProfilePage() {
                                 </div>
                             </div>
 
+                            {/* The final guided response is the synthesis for every instrument. */}
+                            <div className="space-y-3 bg-white p-4 border border-slate-100 rounded-xl">
+                                <h3 className="text-sm font-bold text-slate-700">{t('profile.sessionSummary.title')}</h3>
+                                {summaryLoading ? (
+                                    <div className="py-4 text-center text-xs text-slate-400">
+                                        {t('profile.sessionSummary.loading')}
+                                    </div>
+                                ) : sessionSummary ? (
+                                    <div className="prose prose-sm max-w-none text-slate-700 prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-li:my-0">
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{sessionSummary}</ReactMarkdown>
+                                    </div>
+                                ) : (
+                                    <p className="py-2 text-sm text-slate-500">
+                                        {t('profile.sessionSummary.pending')}
+                                    </p>
+                                )}
+                            </div>
+
                             {/* Render Scores Visual Chart if quantitative */}
-                            {selectedSession.questionnaire_type !== 'SAVICKAS' && selectedSession.scores && (
+                            {chartData.length > 0 && (
                                 <div className="space-y-3 bg-white p-4 border border-slate-100 rounded-xl">
                                     <h3 className="text-sm font-bold text-slate-700">{t('profile.factorBreakdown')}</h3>
                                     
@@ -605,16 +680,7 @@ export default function ProfilePage() {
                             )}
 
                             {/* Detailed Grid of Factors */}
-                            {selectedSession.questionnaire_type === 'SAVICKAS' ? (
-                                <div className="space-y-4 text-center py-8">
-                                    <div className="max-w-md mx-auto space-y-2">
-                                        <h3 className="font-bold text-slate-800">{t('profile.savickasTitle')}</h3>
-                                        <p className="text-sm text-slate-500 leading-relaxed">
-                                            {t('profile.savickasDesc')}
-                                        </p>
-                                    </div>
-                                </div>
-                            ) : selectedSession.scores ? (
+                            {chartData.length > 0 && selectedSession.scores ? (
                                 <div className="space-y-3">
                                     <h3 className="text-sm font-bold text-slate-700">{t('profile.factorEvaluation')}</h3>
                                     
@@ -718,16 +784,8 @@ export default function ProfilePage() {
             </>
             )}
 
-            {activeTab === 'taccuino' && (
-            <section className="space-y-4" aria-labelledby="student-booklet-section">
-                <div>
-                    <h2 id="student-booklet-section" className="text-lg font-bold text-slate-800">
-                        {t('profile.bookletSection.title')}
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-500">
-                        {t('profile.bookletSection.subtitle')}
-                    </p>
-                </div>
+            {activeSection === 'booklet' && (
+            <section className="space-y-4" aria-label={t('profile.bookletSection.title')}>
                 <div className="glass-panel p-5">
                     <label className="block">
                         <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profile.bookletSection.tool')}</span>
@@ -746,21 +804,15 @@ export default function ProfilePage() {
                 </div>
                 <StudentBookletCard questionnaireType={selectedBookletType} lang={lang} />
                 <TeacherNotesCard lang={lang} />
-                <MyGroupsCard lang={lang} />
-                <TelegramLinkCard lang={lang} />
             </section>
             )}
 
-            {activeTab === 'portfolio' && (
-            <section className="space-y-4" aria-labelledby="portfolio-section">
-                <div>
-                    <h2 id="portfolio-section" className="text-lg font-bold text-slate-800">
-                        {t('profile.portfolioSection.title')}
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-500">
-                        {t('profile.portfolioSection.subtitle')}
-                    </p>
-                </div>
+            {activeSection === 'groups' && <MyGroupsCard lang={lang} showHeading={false} />}
+
+            {activeSection === 'telegram' && <TelegramLinkCard lang={lang} showHeading={false} />}
+
+            {activeSection === 'portfolio' && (
+            <section className="space-y-4" aria-label={t('profile.portfolioSection.title')}>
                 <PortfolioCard />
             </section>
             )}
