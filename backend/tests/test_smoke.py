@@ -5747,6 +5747,36 @@ def test_every_gate_that_would_silently_exclude_idea_lets_it_through():
         db.close()
 
 
+def test_idea_never_carries_a_scores_line_into_the_prompt():
+    """Una riga di servizio sui punteggi diventa un nodo della mappa.
+
+    Il modello l'ha gia' disegnata come se fosse l'idea della persona
+    ("Percorso riflessivo guidato dall'AI"), quindi per Idea non parte, da
+    qualunque client arrivi il turno.
+    """
+    _ensure_guided_steps("IDEA")
+    session_id = "idea-no-scores"
+    session_memory.clear(session_id)
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    try:
+        r = client.post("/chat", json={
+            "message": "Vorrei mettere a fuoco un'idea",
+            "mode": "idea-focus",
+            "phase": "idea-statement",
+            "use_phase_prompt": False,
+            "session_id": session_id,
+            "questionnaire_type": "IDEA",
+            "language": "it",
+            "scores_context": "CONTESTO: percorso riflessivo guidato dall'AI, qualitativo, senza punteggi numerici.",
+        })
+        assert r.status_code == 200, r.text
+        envelope = _latest_log_details(session_id).get("envelope")
+        assert "percorso riflessivo guidato" not in envelope["full_message"].lower()
+        assert "percorso riflessivo guidato" not in envelope["system_prompt_final"].lower()
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+
+
 def test_idea_map_is_closed_until_the_feature_is_on():
     _set_idea_feature("false")
     main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity

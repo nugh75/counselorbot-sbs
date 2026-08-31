@@ -2280,6 +2280,14 @@ def build_context_envelope(
     if not _scores_enabled(component_flags, questionnaire_type):
         message_scores_context = ""
         include_scores_reference = False
+    if questionnaire_type == IDEA_INSTRUMENT:
+        # Idea non ha punteggi. Una riga di contesto che li annuncia diventa un
+        # nodo della mappa: il modello l'ha gia' presa per l'idea della persona.
+        # Il filtro sta anche qui e non solo nel client perche' la mappa non deve
+        # dipendere da chi manda il turno.
+        message_scores_context = ""
+        model_scores_context = ""
+        include_scores_reference = False
     if not _component_enabled(component_flags, "knowledge"):
         knowledge_context = ""
     if not _component_enabled(component_flags, "profile"):
