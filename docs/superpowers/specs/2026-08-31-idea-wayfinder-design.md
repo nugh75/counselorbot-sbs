@@ -156,6 +156,87 @@ Lo **step 0 lo chiede** con una domanda in linguaggio naturale, non con dodici
 pastiglie da scegliere prima di aver detto una parola. Chi non sa rispondere
 resta su `unknown`, e il modello lo fissa più avanti quando è chiaro.
 
+## Il percorso non e' una sequenza: e' un albero derivato
+
+Un albero di step scritto a mano sarebbe finto: resterebbe una sequenza con
+bivi decisi in anticipo. Se le ramificazioni nascono dal ragionamento,
+l'albero si deriva, e la mappa ha gia' quello che serve per derivarlo: cosa le
+manca per quel task, e quali difetti porta.
+
+> Il prossimo step non e' il successivo. E' quello che ripara cio' che alla
+> mappa manca.
+
+Ruolo obbligatorio assente -> lo step che lo produce. Difetto presente -> lo
+step che lo affronta. Gli otto step restano, ma come **repertorio**: nessun
+ordine, nessun `sort_order` come cammino, nessun `[[AVANZA_STEP]]` per IDEA.
+La navigazione passa dal client al server: `GET /idea/next-step` risponde
+*quale step e perche'*.
+
+### I task che escono dal ragionamento
+
+Ruolo nuovo **`task`**: un pezzo di lavoro che emerge parlando e che va messo
+a fuoco per conto suo. Porta il proprio `task_type`, quindi i propri ruoli
+obbligatori e la propria domanda pivot. Ogni nodo `task` e' una radice locale
+e apre un ramo.
+
+"Tesi sulla dispersione" fa nascere parlando "vedere cosa esiste gia'"
+(`systematic-review`) e "decidere come misuro" (`empirical-study`): due nodi
+figli, due rami, due chiusure distinte. La mappa non e' piu' solo il prodotto:
+e' la navigazione, e si clicca un nodo per farlo diventare il fuoco.
+
+### Freni
+
+1. **Profondita' massima 2**: idea -> task -> sotto-task. Piu' giu' non e'
+   messa a fuoco, e' procrastinazione strutturata.
+2. **Un ramo aperto alla volta**: gli altri restano visibili ma dormienti,
+   altrimenti la conversazione si sfilaccia.
+3. **Un task si chiude, non si abbandona** (vedi sotto).
+
+## La chiusura di un task
+
+Un task finisce quando il suo **obiettivo** e' raggiunto, non quando la
+casella dei ruoli e' piena: i ruoli sono la traccia, non la meta.
+
+### Chi dichiara finito
+
+In tre tempi, perche' nessuno dei tre regge da solo: il server, che vede solo
+la forma, chiuderebbe anche a vuoto; il modello, lasciato giudicare,
+chiuderebbe per compiacenza; la persona, senza che nessuno glielo faccia
+notare, non se ne accorge.
+
+1. il **server rileva** che le condizioni osservabili ci sono;
+2. il **modello espone il caso**, rileggendo cosa si e' stabilito;
+3. la **persona conferma**.
+
+Un task chiuso si puo' **riaprire** se emerge qualcosa che lo contraddice: la
+ricerca non resta finita perche' e' stata dichiarata tale.
+
+### Obiettivo per task
+
+| task | obiettivo raggiunto quando | osservabile |
+|---|---|---|
+| `thesis-chapter` | sai cosa il capitolo deve stabilire | affermazione reggente in una frase, un'evidenza, un'alternativa considerata |
+| `article` | il contributo e' dicibile in una frase che nomina cosa cambia nel campo | affermazione, evidenza, obiezione prevista |
+| `position` | regge davanti alla contro-argomentazione piu' forte | affermazione, evidenza, il contro-argomento piu' forte nominato |
+| `research-question` | la domanda e' falsificabile | domanda, cosa vedresti se fosse falsa, vincolo di fattibilita' |
+| `systematic-review` | il confine del corpus e' deciso | domanda, criteri di inclusione ed esclusione, un caso limite deciso |
+| `empirical-study` | sai cosa confronti con cosa e cosa conterebbe come smentita | confronto, misura, implicazione, vincolo |
+| `teaching-unit` | sai da cosa capisci che hanno imparato | esito, destinatario, osservabile di apprendimento, vincolo di tempo |
+| `intervention` | sai chi cambia, di quanto, in che tempo | destinatario, cambiamento atteso, vincolo, primo passo |
+| `study-path` | la scelta e' fattibile e sai cosa rinunci | opzioni, criterio, decisione, cosa perdi |
+| `personal-project` | c'e' un primo passo osservabile e sai chi se ne accorge | destinatario, cambiamento, passo |
+
+### Cosa porta un nodo task
+
+Due campi che i nodi concettuali non hanno: **`closed`** e **`conclusion`**
+(una frase: cosa ha stabilito). Chiudere senza conclusione non lascia niente.
+Sulla mappa un task chiuso si vede - anello pieno, conclusione sotto - e il
+fuoco torna al padre.
+
+L'**idea radice e' essa stessa un task**: si chiude quando il suo obiettivo e'
+raggiunto e tutti i suoi rami aperti sono chiusi. La ricorsione termina da
+se', senza una regola in piu'.
+
 ## Componenti
 
 | # | Task | File |
@@ -167,7 +248,10 @@ resta su `unknown`, e il modello lo fissa più avanti quando è chiaro.
 | W5 | prompt: 8 step + 3 varianti, codice **e** DB (append, mai overwrite) | `backend/prompt_config.py` |
 | W6 | pannello: status, difetti, task corrente, decisioni | `frontend/src/components/qsa/IdeaMapPanel.tsx` |
 | W7 | PDF: sezione decisioni, difetti nella descrizione | `backend/pdf_generator.py` |
-| W8 | test: difetti calcolati, ruoli per task, due registri | `backend/tests/` |
+| W8 | ruolo `task`, `closed`, `conclusion`, profondita', ramo aperto | `backend/idea_map.py` |
+| W9 | `GET /idea/next-step`: quale step e perche' | `backend/routes/idea_map.py` |
+| W10 | UI ad albero: mappa cliccabile al posto dello stepper, niente `[[AVANZA_STEP]]` | `frontend/src/components/qsa/` |
+| W11 | test: difetti calcolati, ruoli per task, due registri, chiusura e riapertura | `backend/tests/` |
 
 ## Verifiche
 
