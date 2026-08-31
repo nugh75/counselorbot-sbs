@@ -16,6 +16,7 @@ from backend.idea_map import (
     extract_patch,
     map_context,
     missing_roles,
+    names_prior_work,
     next_move,
     parse_patch,
     required_roles,
@@ -299,6 +300,86 @@ def test_the_context_tells_the_model_what_the_turn_is_for():
     text = map_context(_tree())
     assert "WHAT THIS TURN IS FOR" in text
     assert "systematic-review" in text
+
+
+# --- l'innesco del ramo, riconosciuto dal server ---
+
+@pytest.mark.parametrize("message,lang", [
+    ("Prima di tutto pero' dovrei capire se esistono gia' dei dati", "it"),
+    ("Non posso decidere il disegno finche' non ho parlato con la vicepreside", "it"),
+    ("Mi servirebbe pero' progettare prima l'unita' didattica", "it"),
+    ("Devo prima vedere cosa e' gia' stato pubblicato", "it"),
+    ("First I have to see what already exists", "en"),
+    ("I can't decide until I have the data", "en"),
+    ("Primero tengo que ver que existe", "es"),
+])
+def test_work_that_comes_first_is_recognised(message, lang):
+    assert names_prior_work(message, lang)
+
+
+@pytest.mark.parametrize("message,lang", [
+    ("Ho solo tre mesi e lavoro il pomeriggio", "it"),
+    ("Vorrei fare la tesi sulla dispersione scolastica", "it"),
+    ("Mi interessa capire se il tutoraggio funziona", "it"),
+    ("I only have three months", "en"),
+])
+def test_a_plain_constraint_is_not_a_branch(message, lang):
+    assert not names_prior_work(message, lang)
+
+
+def test_the_context_asks_for_a_branch_only_when_the_person_named_one():
+    spec = _base()
+    plain = map_context(spec, message="Ho solo tre mesi", lang="it")
+    assert "NAMED WORK THAT COMES FIRST" not in plain
+
+    trigger = map_context(spec, message="Prima devo vedere cosa esiste", lang="it")
+    assert "NAMED WORK THAT COMES FIRST" in trigger
+    # La radice non deve essere sostituita dal lavoro nuovo: e' l'errore che il
+    # modello ha fatto davvero, mettendo il sotto-lavoro al centro.
+    assert "STAYS the centre" in trigger
+
+
+def test_prior_work_becomes_a_branch_even_when_the_model_files_it_as_a_limit():
+    patch = parse_patch({
+        "add_nodes": [{"id": "dip", "label": "Devo prima capire se esistono dati",
+                       "role": "constraint"}],
+        "add_edges": [{"from": "dip", "to": "idea", "kind": "weakens"}],
+    })
+    spec = apply_patch(_base(), patch, promote_prior_work=True)
+    promoted = next(n for n in spec.nodes if n.id == "dip")
+    assert promoted.role == "task" and promoted.icon == "book"
+
+
+def test_nothing_is_promoted_when_the_turn_had_no_trigger():
+    patch = parse_patch({
+        "add_nodes": [{"id": "lim", "label": "Ho solo tre mesi", "role": "constraint"}],
+        "add_edges": [{"from": "lim", "to": "idea"}],
+    })
+    spec = apply_patch(_base(), patch, promote_prior_work=False)
+    assert next(n for n in spec.nodes if n.id == "lim").role == "constraint"
+
+
+def test_nothing_is_promoted_when_the_turn_added_several_nodes():
+    # Con piu' nodi non si sa quale sarebbe il lavoro: meglio non indovinare.
+    patch = parse_patch({
+        "add_nodes": [
+            {"id": "a", "label": "Uno", "role": "constraint"},
+            {"id": "b", "label": "Due", "role": "evidence"},
+        ],
+        "add_edges": [{"from": "a", "to": "idea"}, {"from": "b", "to": "idea"}],
+    })
+    spec = apply_patch(_base(), patch, promote_prior_work=True)
+    assert [n.role for n in spec.nodes if n.id in ("a", "b")] == ["constraint", "evidence"]
+
+
+def test_a_branch_the_model_opened_itself_is_left_alone():
+    patch = parse_patch({
+        "add_nodes": [{"id": "t9", "label": "Rivedere la letteratura", "role": "task",
+                       "task_type": "systematic-review"}],
+        "add_edges": [{"from": "t9", "to": "idea"}],
+    })
+    spec = apply_patch(_base(), patch, promote_prior_work=True)
+    assert next(n for n in spec.nodes if n.id == "t9").task_type == "systematic-review"
 
 
 if __name__ == "__main__":

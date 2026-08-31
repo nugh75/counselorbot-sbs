@@ -2407,7 +2407,10 @@ def build_context_envelope(
     # Sta in fondo, vicino alle istruzioni della skill: e' la cosa su cui il
     # modello deve agire in questo turno, non uno sfondo.
     if questionnaire_type == IDEA_INSTRUMENT:
-        idea_map_block = map_context_for(db, username_for_context, session_id)
+        idea_map_block = map_context_for(
+            db, username_for_context, session_id,
+            message=request.message or "", lang=language,
+        )
         if components is not None:
             components["idea_map"] = idea_map_block
         if idea_map_block:
