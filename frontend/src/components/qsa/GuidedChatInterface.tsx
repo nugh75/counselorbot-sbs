@@ -19,7 +19,7 @@ import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/Res
 import { toast } from '@/components/ui/Toast';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
-import { IdeaMapPanel } from '@/components/qsa/IdeaMapPanel';
+import { IdeaWorkspace } from '@/components/qsa/IdeaWorkspace';
 import { fetchIdeaNextStep, type IdeaNextStep, type IdeaVariant } from '@/lib/idea-map';
 import { freezeSession, type FrozenSessionDetail } from '@/lib/frozen-session';
 import { diagramContentForSpeech, splitDiagramContent } from '@/lib/diagram-content';
@@ -1303,6 +1303,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     );
 
     return (
+        <div className="space-y-4">
         <div className="grid gap-4 lg:h-chat lg:grid-cols-4 lg:gap-6">
             {/* Left Sidebar */}
             <div className="order-3 space-y-4 custom-scrollbar lg:order-1 lg:col-span-1 lg:overflow-y-auto lg:pr-2">
@@ -1419,7 +1420,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 space-y-6">
                     {isIdea && (
                         <div className="space-y-3">
-                            <IdeaMapPanel sessionId={sessionId} version={ideaMapVersion} locale={activeLocale} variant={ideaVariant} move={ideaMove} />
                             {messages.length <= 1 && (
                                 <fieldset className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                                     <legend className="px-1 text-xs font-medium text-slate-600">
@@ -1687,6 +1687,19 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     {renderStepNavigation(true)}
                 </div>
             )}
+        </div>
+
+        {/* Idea: mappa e rami sotto la conversazione, sempre raggiungibili. */}
+        {isIdea && (
+            <IdeaWorkspace
+                sessionId={sessionId}
+                version={ideaMapVersion}
+                locale={activeLocale}
+                variant={ideaVariant}
+                move={ideaMove}
+                onFocusMoved={() => setIdeaMapVersion((value) => value + 1)}
+            />
+        )}
         </div>
     );
 }

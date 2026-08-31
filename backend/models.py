@@ -908,6 +908,10 @@ class IdeaMapRevision(Base):
     username = Column(String, nullable=False, index=True)
     session_id = Column(String, nullable=False, index=True)
     spec = Column(JSON, nullable=False)
-    source = Column(String, nullable=False, default="turn")  # turn|manual|synthesis
+    source = Column(String, nullable=False, default="turn")  # turn|manual|synthesis|focus
     step_id = Column(String, nullable=True)
+    # Ramo scelto dalla persona. Vuoto = vale quello derivato (il task aperto
+    # piu' profondo). Viaggia con la revisione perche' anche spostarsi fra i
+    # rami e' un momento del ragionamento, e lo storico deve poterlo mostrare.
+    focus_id = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
