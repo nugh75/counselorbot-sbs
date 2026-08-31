@@ -46,8 +46,6 @@ const PERSONAL_AREAS = [
         icon: NotebookPen,
         titleKey: 'profile.about.title',
         descriptionKey: 'profile.about.subtitle',
-        iconClass: 'bg-teal-50 text-teal-700',
-        edgeClass: 'bg-teal-500',
     },
     {
         id: 'booklet',
@@ -55,8 +53,6 @@ const PERSONAL_AREAS = [
         icon: BookText,
         titleKey: 'profile.bookletSection.title',
         descriptionKey: 'profile.bookletSection.subtitle',
-        iconClass: 'bg-indigo-50 text-indigo-700',
-        edgeClass: 'bg-indigo-500',
     },
     {
         id: 'groups',
@@ -64,8 +60,6 @@ const PERSONAL_AREAS = [
         icon: UsersRound,
         titleKey: 'profile.area.classes.title',
         descriptionKey: 'profile.area.classes.description',
-        iconClass: 'bg-sky-50 text-sky-700',
-        edgeClass: 'bg-sky-500',
     },
     {
         id: 'telegram',
@@ -73,8 +67,6 @@ const PERSONAL_AREAS = [
         icon: Send,
         titleKey: 'profile.area.telegram.title',
         descriptionKey: 'profile.area.telegram.description',
-        iconClass: 'bg-blue-50 text-blue-700',
-        edgeClass: 'bg-blue-500',
     },
     {
         id: 'portfolio',
@@ -82,8 +74,6 @@ const PERSONAL_AREAS = [
         icon: FolderOpen,
         titleKey: 'profile.portfolioSection.title',
         descriptionKey: 'profile.portfolioSection.subtitle',
-        iconClass: 'bg-amber-50 text-amber-700',
-        edgeClass: 'bg-amber-500',
     },
     {
         id: 'sessions',
@@ -91,10 +81,10 @@ const PERSONAL_AREAS = [
         icon: ClipboardList,
         titleKey: 'profile.myCompilations',
         descriptionKey: 'profile.sessions.subtitle',
-        iconClass: 'bg-violet-50 text-violet-700',
-        edgeClass: 'bg-violet-500',
     },
 ] as const;
+
+const ICON_BADGE_CLASS = 'bg-indigo-50 text-indigo-600';
 
 function personalSectionFromPath(pathname: string): PersonalSection | null {
     const slug = pathname.split('/').filter(Boolean)[1];
@@ -408,7 +398,7 @@ export default function ProfilePage() {
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                     {activeArea && ActiveAreaIcon && (
-                        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${activeArea.iconClass}`}>
+                        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${ICON_BADGE_CLASS}`}>
                             <ActiveAreaIcon className="h-5 w-5" aria-hidden />
                         </span>
                     )}
@@ -466,8 +456,7 @@ export default function ProfilePage() {
                                     href={area.href}
                                     className="glass-panel group relative flex min-h-36 overflow-hidden p-5 transition-colors hover:border-indigo-300 hover:bg-white"
                                 >
-                                    <span className={`absolute inset-y-0 left-0 w-1 ${area.edgeClass}`} aria-hidden />
-                                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${area.iconClass}`}>
+                                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${ICON_BADGE_CLASS}`}>
                                         <Icon className="h-5 w-5" aria-hidden />
                                     </span>
                                     <span className="ml-4 min-w-0 flex-1">
