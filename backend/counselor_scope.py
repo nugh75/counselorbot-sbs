@@ -48,7 +48,10 @@ def suits(counselor, questionnaire_type: str | None, restricted: set[str]) -> bo
         return True
     code = questionnaire_type.upper()
     declared = {str(item).upper() for item in (getattr(counselor, "questionnaire_types", None) or [])}
-    if code in declared:
+    # `*` vale tutto, inviti compresi: stessa convenzione della colonna
+    # `language`, e un counselor buono per tutto non va riscritto a ogni
+    # strumento nuovo.
+    if "*" in declared or code in declared:
         return True
     if code in restricted:
         # A invito: chi non lo nomina non entra.
