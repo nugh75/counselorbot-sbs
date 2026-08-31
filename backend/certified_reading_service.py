@@ -23,6 +23,7 @@ from typing import Iterable
 from sqlalchemy.orm import Session
 
 from . import models
+from .content_version_service import served_locale
 from .memory_embeddings import memory_embedder
 from .reading_audience import audience_allows
 from .reading_frame import frame
@@ -98,15 +99,16 @@ class CertifiedReadingMemory:
         if not eligible:
             return []
 
-        ranked = self._rank([row for row, _ in eligible], query, language, ai_service, limit)
+        ranked = self._rank(db, [row for row, _ in eligible], query, language, ai_service, limit)
         matched_by_id = {row.id: matched for row, matched in eligible}
-        return [self._render_entry(row, matched_by_id.get(row.id, set()), language) for row in ranked]
+        return [self._render_entry(db, row, matched_by_id.get(row.id, set()), language) for row in ranked]
 
     # --- helpers ---
-    def _rank(self, rows, query, language, ai_service, limit):
+    def _rank(self, db: Session, rows, query, language, ai_service, limit):
         documents = [
             f"{row.title} {' '.join(row.themes or [])} "
-            f"{self._i18n(row.summary_i18n, language)} {self._i18n(row.why_i18n, language)}"
+            f"{self._i18n(db, row, row.summary_i18n, language)} "
+            f"{self._i18n(db, row, row.why_i18n, language)}"
             for row in rows
         ]
         selected = None
@@ -125,7 +127,10 @@ class CertifiedReadingMemory:
         selected.sort(key=lambda row: 0 if language in (row.available_languages or []) else 1)
         return selected[:max(0, limit)]
 
-    def _render_entry(self, row: models.CertifiedReading, matched_themes: set[str], language: str) -> dict:
+    def _render_entry(
+        self, db: Session, row: models.CertifiedReading,
+        matched_themes: set[str], language: str,
+    ) -> dict:
         kind = (row.kind or "essay").lower()
         creators = ", ".join(row.creators or [])
         return {
@@ -137,9 +142,11 @@ class CertifiedReadingMemory:
             "year": row.year,
             "publisher": row.publisher or "",
             "themes": sorted(matched_themes) or list(row.themes or []),
-            "summary": self._i18n(row.summary_i18n, language),
-            "why": self._i18n(row.why_i18n, language),
-            "synopsis": self._clip(self._i18n(row.synopsis_i18n, language), MAX_SYNOPSIS_CHARS),
+            "summary": self._i18n(db, row, row.summary_i18n, language),
+            "why": self._i18n(db, row, row.why_i18n, language),
+            "synopsis": self._clip(
+                self._i18n(db, row, row.synopsis_i18n, language), MAX_SYNOPSIS_CHARS
+            ),
             "languages": list(row.available_languages or []),
             "where": row.where_to_find or "",
             "audience": list(row.audience or []),
@@ -186,10 +193,13 @@ class CertifiedReadingMemory:
         cut = text[:limit].rsplit(" ", 1)[0].rstrip(" ,;:")
         return f"{cut}..."
 
-    def _i18n(self, data, language: str) -> str:
+    def _i18n(self, db: Session, row: models.CertifiedReading, data, language: str) -> str:
         if not isinstance(data, dict):
             return ""
-        return (data.get(language) or data.get("en") or data.get("it") or "").strip()
+        locale = served_locale(
+            db, "certified_reading", row.slug, language or "it", fallbacks=("en", "it")
+        )
+        return (data.get(locale) or "").strip() if locale else ""
 
     def _terms(self, text: str) -> set[str]:
         return set(re.findall(r"[A-Za-zÀ-ÿ0-9]{3,}", (text or "").casefold()))

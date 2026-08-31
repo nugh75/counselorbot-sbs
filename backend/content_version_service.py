@@ -103,3 +103,18 @@ def served_locales(db: Session, content_type: str, content_key: str) -> list[str
     """Le lingue in cui questo contenuto puo' essere mostrato, in ordine d'app."""
     statuses = status_map(db, content_type, content_key)
     return [loc for loc in APP_LOCALES if is_served(content_type, statuses.get(loc, ""))]
+
+
+def served_locale(
+    db: Session,
+    content_type: str,
+    content_key: str,
+    requested: str,
+    fallbacks: tuple[str, ...] = (),
+) -> Optional[str]:
+    """Prima lingua certificata fra quella richiesta e i ripieghi espliciti."""
+    statuses = status_map(db, content_type, content_key)
+    for locale in dict.fromkeys((requested, *fallbacks)):
+        if locale in APP_LOCALES and is_served(content_type, statuses.get(locale, "")):
+            return locale
+    return None
