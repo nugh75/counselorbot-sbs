@@ -1030,6 +1030,11 @@ def _seed_and_migrate():
         # Idempotente per strumento: salta quelli già seminati/editati.
         _seed_instruments_catalog(db)
 
+        # Etichette della scala di risposta: vivevano nel frontend, appartengono
+        # allo strumento. Idempotente, non sovrascrive correzioni admin.
+        from .response_scale_labels import seed_response_labels
+        seed_response_labels(db, models)
+
         # Seed catalogo strategie certificate. Non sovrascrive le righe già
         # presenti, perché il catalogo è curato e modificabile dagli admin.
         from .certified_strategy_seed import seed_certified_strategies

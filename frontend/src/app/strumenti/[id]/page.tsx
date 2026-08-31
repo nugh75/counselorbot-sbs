@@ -1,12 +1,13 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ExternalLink } from 'lucide-react';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
-import { getTestAdministration, AdministrationLocale } from '@/lib/test-administrations';
+import { fetchInstruments } from '@/lib/instruments-api';
 import { useI18n } from '@/lib/i18n-context';
 
 const AVAILABLE_INSTRUMENTS: QuestionnaireType[] = ['QSA', 'QSAr', 'QPCS', 'QPCC', 'ZTPI', 'QAP', 'SAVICKAS', 'IDEA'];
@@ -26,14 +27,23 @@ export default function InstrumentDetailsPage() {
     const id = params.id as QuestionnaireType;
     const questionnaire = AVAILABLE_INSTRUMENTS.includes(id) ? QUESTIONNAIRES[id] : null;
     const assessmentUrl = lang === 'it' ? STRATEGIC_COMPETENCES_URLS[id] : undefined;
-    // Surface the in-app questionnaire under validation. en/es/sv use their own
-    // locale; Italian also shows the English version (default) for completeness.
-    const inAppLocale: AdministrationLocale | null =
-        lang === 'en' || lang === 'es' || lang === 'sv' ? lang
-            : lang === 'it' ? 'en'
-                : null;
-    const inAppAdministration = inAppLocale && getTestAdministration(id, inAppLocale) ? inAppLocale : null;
-    const isEnglishFallback = lang === 'it' && inAppAdministration === 'en';
+    // La somministrazione in-app compare solo se lo strumento e' certificato
+    // nella lingua dell'interfaccia. Niente ripiego sull'inglese: il registro
+    // decide, e una lingua non pronta si dice, non si sostituisce.
+    const [availableLocales, setAvailableLocales] = useState<string[] | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        fetchInstruments()
+            .then((rows) => {
+                if (cancelled) return;
+                setAvailableLocales(rows.find((r) => r.code === id)?.available_locales ?? []);
+            })
+            .catch(() => { if (!cancelled) setAvailableLocales([]); });
+        return () => { cancelled = true; };
+    }, [id]);
+
+    const inAppAvailable = availableLocales?.includes(lang) ?? false;
 
     if (!questionnaire) {
         return (
@@ -75,21 +85,21 @@ export default function InstrumentDetailsPage() {
                 ))}
             </div>
 
-            {inAppAdministration && (
+            {inAppAvailable && (
                 <section className="rounded-xl border-2 border-amber-300 bg-amber-50 p-5 flex flex-col md:flex-row md:items-center gap-5">
                     <div className="flex-1">
                         <h2 className="font-semibold text-amber-950">
-                            {t(isEnglishFallback ? 'detail.assessment.inapp.englishTitle' : 'detail.assessment.inapp.title')}
+                            {t('detail.assessment.inapp.title')}
                         </h2>
                         <p className="text-sm text-amber-900 mt-1 leading-relaxed">
-                            {t(isEnglishFallback ? 'detail.assessment.inapp.englishBody' : 'detail.assessment.inapp.body')}
+                            {t('detail.assessment.inapp.body')}
                         </p>
                     </div>
                     <Link
-                        href={`/somministrazione/${id}/${inAppAdministration}`}
+                        href={`/somministrazione/${id}`}
                         className="inline-flex shrink-0 items-center justify-center rounded-md bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-800 transition-colors"
                     >
-                        {t(isEnglishFallback ? 'detail.assessment.inapp.englishLink' : 'detail.assessment.inapp.link')}
+                        {t('detail.assessment.inapp.link')}
                     </Link>
                 </section>
             )}
