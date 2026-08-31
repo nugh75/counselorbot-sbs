@@ -29,6 +29,7 @@ from ..idea_map import (
     closure_ready,
     current_focus,
     next_move,
+    PACE_STOPS,
     pivot_question,
     reopen,
     set_focus,
@@ -365,6 +366,7 @@ def read_next_step(
     session_id: str = Query(min_length=1),
     lang: str = "it",
     variant: str = "student-open",
+    budget: int | None = None,
     username: str | None = None,
     db: Session = Depends(get_db),
     identity: dict = Depends(auth.get_identity_view_as),
@@ -393,8 +395,13 @@ def read_next_step(
 
     focus = move.get("focus")
     task_type = _task_type_of(spec, focus)
+    from ..chat_logic import _idea_turns_used
+
     return {
         **move,
+        "turns_used": _idea_turns_used(db, session_id),
+        "budget": budget or 0,
+        "pace_stops": list(PACE_STOPS),
         "reason_text": reason_text,
         "task_label": task_label(task_type, lang) if task_type else None,
         "pivot": move.get("pivot") or (pivot_question(task_type) if task_type else ""),

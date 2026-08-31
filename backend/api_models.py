@@ -21,6 +21,7 @@ class ChatRequest(schemas.BaseModel):
     internal_message: bool = False  # Istruzione tecnica: non mostrarla come input studente nei log/PDF
     counselor_id: Optional[int] = None  # se valorizzato: persona + provider/model dal counselor
     idea_variant: Optional[str] = None  # strumento Idea: student-path|student-open|research
+    idea_budget: Optional[int] = None   # scambi previsti per la sessione; 0/None = senza limite
 
 
 class SiteChatRequest(schemas.BaseModel):
