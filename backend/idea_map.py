@@ -185,7 +185,8 @@ def extract_patch(text: str) -> tuple[str, IdeaPatch | None]:
 
 
 def apply_patch(current: DiagramSpec | None, patch: IdeaPatch, *,
-                default_title: str = "Idea", promote_prior_work: bool = False) -> DiagramSpec:
+                default_title: str = "Idea", promote_prior_work: bool = False,
+                prior_work_message: str = "") -> DiagramSpec:
     """Applica la patch e restituisce la mappa nuova, gia' validata.
 
     Non muta `current`: una revisione, una volta scritta, non si tocca piu'.
@@ -262,27 +263,46 @@ def apply_patch(current: DiagramSpec | None, patch: IdeaPatch, *,
         raise IdeaMapError(str(exc)) from exc
 
     if promote_prior_work:
-        merged = _promote_prior_work(merged, patch)
+        merged = _promote_prior_work(merged, patch, prior_work_message)
     merged = _limit_task_depth(merged)
     return with_computed_flaws(merged)
 
 
-def _promote_prior_work(spec: DiagramSpec, patch: IdeaPatch) -> DiagramSpec:
+_WORD_RE = re.compile(r"[^\W\d_]{4,}", re.UNICODE)
+
+
+def _content_words(text: str) -> set[str]:
+    return {word.lower() for word in _WORD_RE.findall(text or "")}
+
+
+def _promote_prior_work(spec: DiagramSpec, patch: IdeaPatch, message: str = "") -> DiagramSpec:
     """Il lavoro che viene prima diventa un ramo anche se il modello non l'ha aperto.
 
-    Provato su formulazioni diverse, il modello archivia quasi sempre la
-    dipendenza come `constraint`: sente il limite e non il lavoro. Quando il
-    turno portava un innesco riconosciuto e ha aggiunto UN solo nodo che non e'
-    l'idea, quel nodo e' il lavoro, e qui diventa un ramo. Un nodo solo e' il
-    confine della regola: oltre, non si sa quale sarebbe.
+    Provato su modelli diversi, la dipendenza viene archiviata come
+    `constraint` o come `open-question`: si sente il limite, non il lavoro.
+    Quando il turno portava un innesco riconosciuto e nessun ramo, il nodo da
+    promuovere e' l'unico aggiunto; se ne sono stati aggiunti piu' d'uno, e'
+    quello che ripete le parole della frase con cui la persona ha nominato il
+    lavoro. Sotto due parole in comune non si promuove niente: indovinare quale
+    nodo sia il lavoro e' peggio che lasciare la mappa piatta.
     """
     if any(node.role == "task" for node in patch.add_nodes):
         return spec
     candidates = [node for node in patch.add_nodes if node.role != "idea"]
-    if len(candidates) != 1:
+    if not candidates:
         return spec
 
-    target = candidates[0].id
+    if len(candidates) == 1:
+        target = candidates[0].id
+    else:
+        said = _content_words(message)
+        scored = sorted(
+            ((len(_content_words(node.label) & said), node.id) for node in candidates),
+            reverse=True,
+        )
+        if not scored or scored[0][0] < 2:
+            return spec
+        target = scored[0][1]
     nodes = []
     for node in spec.nodes:
         copy = node.model_copy(deep=True)
@@ -556,11 +576,13 @@ def save_revision(db: Session, username: str, session_id: str, spec: DiagramSpec
 def apply_and_store(db: Session, username: str, session_id: str, patch: IdeaPatch, *,
                     source: str = "turn", step_id: str | None = None,
                     default_title: str = "Idea",
-                    promote_prior_work: bool = False) -> models.IdeaMapRevision:
+                    promote_prior_work: bool = False,
+                    prior_work_message: str = "") -> models.IdeaMapRevision:
     """Passo completo di un turno: applica la patch e scrive la revisione."""
     updated = apply_patch(
         current_map(db, username, session_id), patch,
         default_title=default_title, promote_prior_work=promote_prior_work,
+        prior_work_message=prior_work_message,
     )
     return save_revision(db, username, session_id, updated, source=source, step_id=step_id)
 

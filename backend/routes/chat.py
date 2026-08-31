@@ -355,6 +355,7 @@ def _apply_idea_patch(response_content: str, *, questionnaire_type: str, usernam
         revision = apply_and_store(
             map_db, username, session_id, patch, source="turn", step_id=step_id,
             promote_prior_work=names_prior_work(user_message, lang),
+            prior_work_message=user_message,
         )
         return cleaned, revision.id
     except IdeaMapError as exc:
