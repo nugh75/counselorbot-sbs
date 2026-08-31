@@ -753,6 +753,7 @@ export default function Home() {
                     {step === 'counselor-select' && (
                         <CounselorSelector
                             questionnaireName={selectedQuestionnaire?.name}
+                            questionnaireType={selectedQuestionnaire?.id}
                             onBack={goBack}
                             onContinue={() => {
                                 void proceedAfterCounselor(selectedQuestionnaire, scores);

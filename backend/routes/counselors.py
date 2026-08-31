@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from .. import models, schemas, auth, database
 from ..counselor_i18n import localized_description, translate_counselor_async, translate_counselor_sync
+from ..counselor_scope import restricted_instruments, suits
 from sqlalchemy import cast as sa_cast, String
 
 router = APIRouter()
@@ -48,6 +49,9 @@ def _serialize(counselor: models.Counselor, presets: dict) -> schemas.CounselorR
 @router.get("/counselors", response_model=List[schemas.CounselorPublic])
 async def list_public_counselors(
     lang: Optional[str] = Query(None),
+    questionnaire_type: Optional[str] = Query(
+        None, description="Marca come adatti i counselor che possono servire questo strumento"
+    ),
     language: Optional[str] = Query(None, description="Filtra counselor che supportano questa lingua ('*' = tutte)"),
     db: Session = Depends(get_db),
 ):
@@ -67,6 +71,7 @@ async def list_public_counselors(
     rows = q.all()
     presets = _preset_map(db)
     active = _active_provider(db)
+    restricted = restricted_instruments(db)
     out = []
     for r in rows:
         pub = schemas.CounselorPublic.model_validate(r)
@@ -74,7 +79,10 @@ async def list_public_counselors(
         preset = presets.get(r.preset_id) if r.preset_id else None
         provider = preset.provider if preset else active
         pub.model_origin = _provider_origin(provider)
+        pub.suitable = suits(r, questionnaire_type, restricted)
         out.append(pub)
+    # Gli adatti in cima: chi sceglie legge prima cio' che puo' usare.
+    out.sort(key=lambda item: not item.suitable)
     return out
 
 
