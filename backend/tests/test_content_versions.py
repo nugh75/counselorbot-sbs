@@ -260,6 +260,114 @@ def test_backfill_moves_legacy_columns_into_json_and_is_idempotent():
         db.close()
 
 
+# --- derivazione degli stati iniziali ---------------------------------------
+
+from backend.content_versions_seed import (  # noqa: E402
+    derive_instrument_versions,
+    derive_strategy_versions,
+)
+
+
+def test_derivation_gives_every_language_a_row():
+    db = _TestSession()
+    try:
+        code = f"{PREFIX}-DER"
+        db.add(models.Instrument(code=code, response_scale_min=1, response_scale_max=4))
+        db.add(models.Factor(instrument_code=code, code="C1", label_en="Elaborative"))
+        db.add(models.QuestionnaireItem(
+            instrument_code=code, item_number=1, factor_code="C1",
+            text_en="english item", text_sv="svenskt item",
+        ))
+        db.commit()
+
+        derive_instrument_versions(db)
+        statuses = cvs.status_map(db, "instrument", code)
+        # tutte e sei hanno una riga: "in che stato e' il tedesco?" ha sempre risposta
+        assert set(statuses) == set(APP_LOCALES)
+        # en e sv hanno item ma nessuna norma validata -> pilot, come oggi
+        assert statuses["en"] == "pilot"
+        assert statuses["sv"] == "pilot"
+        # le altre non hanno item -> draft
+        assert statuses["es"] == "draft"
+        assert statuses["fr"] == "draft"
+        assert statuses["de"] == "draft"
+        assert statuses["it"] == "draft"
+    finally:
+        db.close()
+
+
+def test_validated_norms_promote_the_language_to_validated():
+    db = _TestSession()
+    try:
+        code = f"{PREFIX}-NORM"
+        db.add(models.Instrument(code=code, response_scale_min=1, response_scale_max=4))
+        db.add(models.QuestionnaireItem(
+            instrument_code=code, item_number=1, factor_code="C1", text_en="english item",
+        ))
+        db.add(models.NormThreshold(
+            instrument_code=code, locale="en", factor_code="C1",
+            raw_min=0, raw_max=10, stanine=5, status="validated",
+        ))
+        db.commit()
+
+        derive_instrument_versions(db)
+        assert cvs.status_map(db, "instrument", code)["en"] == "validated"
+    finally:
+        db.close()
+
+
+def test_derivation_never_overwrites_an_existing_row():
+    db = _TestSession()
+    try:
+        code = f"{PREFIX}-KEEP"
+        db.add(models.Instrument(code=code, response_scale_min=1, response_scale_max=4))
+        db.add(models.QuestionnaireItem(
+            instrument_code=code, item_number=1, factor_code="C1", text_en="english item",
+        ))
+        db.commit()
+        # un admin ha gia' portato l'inglese a reviewed: la derivazione non lo riporta a pilot
+        cvs.upsert_version(db, "instrument", code, "en", status="reviewed", approved_by="daniele")
+
+        derive_instrument_versions(db)
+        assert cvs.status_map(db, "instrument", code)["en"] == "reviewed"
+    finally:
+        db.close()
+
+
+def test_derivation_is_idempotent():
+    db = _TestSession()
+    try:
+        code = f"{PREFIX}-IDEM"
+        db.add(models.Instrument(code=code, response_scale_min=1, response_scale_max=4))
+        db.add(models.QuestionnaireItem(
+            instrument_code=code, item_number=1, factor_code="C1", text_en="english item",
+        ))
+        db.commit()
+        first = derive_instrument_versions(db)
+        assert first >= 1
+        assert derive_instrument_versions(db) == 0
+    finally:
+        db.close()
+
+
+def test_certified_strategies_get_an_italian_registry_row():
+    db = _TestSession()
+    try:
+        slug = f"{PREFIX}-strategia"
+        db.add(models.CertifiedStrategy(
+            slug=slug, name_it="Ripasso distribuito", description_it="Come si fa",
+            status="certified", is_active=True,
+        ))
+        db.commit()
+        derive_strategy_versions(db)
+        statuses = cvs.status_map(db, "certified_strategy", slug)
+        assert statuses["it"] == "certified"
+        # le altre lingue non hanno testo: restano bozza, non nascono certificate
+        assert statuses["de"] == "draft"
+    finally:
+        db.close()
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0
