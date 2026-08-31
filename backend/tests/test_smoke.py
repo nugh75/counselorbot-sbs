@@ -5898,6 +5898,87 @@ def test_moving_between_branches_is_remembered():
         _set_idea_feature("false")
 
 
+def test_concluding_keeps_the_result_where_the_person_chose():
+    """Chiudere senza chiedere dove va il risultato lo butterebbe via.
+
+    La mappa resterebbe in tabella e nessuno la ritroverebbe: la sessione
+    finisce con una domanda, e "da nessuna parte" e' una risposta valida.
+    """
+    _set_idea_feature("true")
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    session_id = "idea-conclude"
+    try:
+        client.post("/idea/map/patch", json={
+            "session_id": session_id,
+            "patch": {
+                "title": "Tesi sulla dispersione",
+                "add_nodes": [
+                    {"id": "idea", "label": "Tesi sulla dispersione", "role": "idea",
+                     "accent": True, "task_type": "thesis-chapter"},
+                    {"id": "s1", "label": "Scrivere l'indice", "role": "step"},
+                ],
+                "add_edges": [{"from": "idea", "to": "s1"}],
+            },
+        })
+
+        nothing = client.post("/idea/conclude", json={"session_id": session_id, "targets": []})
+        assert nothing.status_code == 200, nothing.text
+        assert nothing.json()["kept"] == {}, "non tenere niente e' una scelta, non un errore"
+        assert nothing.json()["pdf_url"].startswith("/api/idea/map/pdf")
+
+        both = client.post("/idea/conclude", json={
+            "session_id": session_id, "targets": ["notebook", "portfolio"],
+            "variant": "student-path",
+        })
+        assert both.status_code == 200, both.text
+        kept = both.json()["kept"]
+        assert kept["notebook"]["revision_id"], "il taccuino deve avere una revisione nuova"
+        assert kept["portfolio"]["item_id"], "il portfolio deve avere una voce nuova"
+
+        # La variante ricerca non scrive nel taccuino, ma non fa fallire il resto.
+        research = client.post("/idea/conclude", json={
+            "session_id": session_id, "targets": ["notebook", "portfolio"],
+            "variant": "research",
+        }).json()["kept"]
+        assert research["notebook"].get("skipped")
+        assert research["portfolio"]["item_id"]
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        _set_idea_feature("false")
+        # Taccuino e portfolio sono condivisi con altri test: quello che questo
+        # ha scritto lo toglie questo.
+        db = _TestSession()
+        try:
+            db.query(models.LearnerProfileRevision).filter(
+                models.LearnerProfileRevision.session_id == session_id
+            ).delete(synchronize_session=False)
+            db.query(models.PortfolioItem).filter(
+                models.PortfolioItem.category == "idea",
+                models.PortfolioItem.title == "Tesi sulla dispersione",
+            ).delete(synchronize_session=False)
+            db.commit()
+        finally:
+            db.close()
+
+
+def test_the_end_of_the_session_asks_instead_of_saving():
+    from backend.idea_map import apply_patch, map_context, next_move, parse_patch
+
+    spec = apply_patch(None, parse_patch({
+        "title": "Chiusa",
+        "add_nodes": [
+            {"id": "idea", "label": "Idea", "role": "idea", "accent": True,
+             "task_type": "thesis-chapter", "closed": True, "conclusion": "Fatto"},
+            {"id": "e1", "label": "Evidenza", "role": "evidence"},
+        ],
+        "add_edges": [{"from": "idea", "to": "e1"}],
+    }))
+    assert next_move(spec)["reason"] == "all-closed"
+    text = map_context(spec)
+    assert "ASK where they want to keep it" in text
+    assert "Do not save anything yourself" in text
+
+
 def test_idea_map_is_closed_until_the_feature_is_on():
     _set_idea_feature("false")
     main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity

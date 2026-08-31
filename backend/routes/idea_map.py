@@ -10,6 +10,8 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response, StreamingResponse
+from typing import Literal
+
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
@@ -257,11 +259,14 @@ def map_to_portfolio(
     _require_feature(db)
     owner = _owner(identity)
     spec = _map_or_404(db, owner, request.session_id)
+    return _keep_in_portfolio(db, owner, spec, request.lang)
 
+
+def _keep_in_portfolio(db: Session, owner: str, spec, lang: str) -> dict:
     item = models.PortfolioItem(
         username=owner,
         title=spec.title,
-        description=describe(spec, request.lang),
+        description=describe(spec, lang),
         category="idea",
         item_date=date.today().isoformat(),
         images=[],
@@ -271,7 +276,7 @@ def map_to_portfolio(
     db.refresh(item)
 
     try:
-        payload = render(spec, theme="light", fmt="png", embed_title=True, lang=request.lang)
+        payload = render(spec, theme="light", fmt="png", embed_title=True, lang=lang)
     except DiagramSpecError as exc:
         # La voce resta, senza disegno: il testo della mappa e' gia' dentro la
         # descrizione, e perdere il lavoro per un rendering fallito sarebbe peggio.
@@ -310,7 +315,10 @@ def map_to_notebook(
         raise HTTPException(status_code=409, detail="la variante ricerca non scrive nel taccuino")
     owner = _owner(identity)
     spec = _map_or_404(db, owner, request.session_id)
+    return _keep_in_notebook(db, owner, spec, request.session_id)
 
+
+def _keep_in_notebook(db: Session, owner: str, spec, session_id: str) -> dict:
     step = next((node.label for node in spec.nodes if node.role == "step"), "")
     line = f"Idea ({date.today().isoformat()}): {spec.title}."
     if step:
@@ -333,7 +341,7 @@ def map_to_notebook(
         username=owner,
         data=data,
         source="idea_focus",
-        session_id=request.session_id,
+        session_id=session_id,
     )
     db.add(revision)
     db.commit()
@@ -445,3 +453,51 @@ def move_focus(
     move = next_move(spec, request.node_id)
     return {"revision_id": revision.id, "focus": request.node_id, "step_id": move["step_id"],
             "reason": move["reason"], "detail": move["detail"]}
+
+
+class ConcludeRequest(BaseModel):
+    session_id: str = Field(min_length=1, max_length=120)
+    # Dove va tenuto il risultato. Vuoto e' una risposta legittima: si puo'
+    # concludere senza tenere niente.
+    targets: list[Literal["notebook", "portfolio"]] = Field(default_factory=list, max_length=2)
+    lang: str = Field(default="it", max_length=5)
+    variant: str = Field(default="student-open", max_length=20)
+
+
+@router.post("/idea/conclude")
+def conclude(
+    request: ConcludeRequest,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    """Chiude la sessione tenendo il risultato dove la persona ha scelto.
+
+    Una destinazione che fallisce non ferma le altre: si torna cosa e' andato
+    dove, e la persona vede l'esito di ognuna invece di un errore solo.
+    """
+    _require_feature(db)
+    owner = _owner(identity)
+    spec = _map_or_404(db, owner, request.session_id)
+
+    kept: dict[str, dict] = {}
+    for target in dict.fromkeys(request.targets):
+        try:
+            if target == "portfolio":
+                kept["portfolio"] = _keep_in_portfolio(db, owner, spec, request.lang)
+            elif target == "notebook":
+                if request.variant == "research":
+                    kept["notebook"] = {"skipped": "la variante ricerca non scrive nel taccuino"}
+                    continue
+                kept["notebook"] = _keep_in_notebook(db, owner, spec, request.session_id)
+        except Exception as exc:  # pragma: no cover - dipende dal disco/DB
+            logger.warning("Conclusione Idea, %s non riuscito: %s", target, exc)
+            db.rollback()
+            kept[target] = {"failed": str(exc)}
+
+    return {
+        "session_id": request.session_id,
+        "title": spec.title,
+        "description": describe(spec, request.lang),
+        "kept": kept,
+        "pdf_url": f"/api/idea/map/pdf?session_id={request.session_id}&lang={request.lang}",
+    }
