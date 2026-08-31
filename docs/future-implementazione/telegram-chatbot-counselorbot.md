@@ -132,6 +132,7 @@ Responsabilita':
 | File | Responsabilita |
 |---|---|
 | `routes/telegram.py` | endpoint FastAPI webhook, verifica secret token, parsing update |
+| `telegram_state.py` (blocco pQBL) | allenamento su un PDF: elenco documenti pronti, sessione learning, una MCQ per messaggio, ritentativo sulla stessa domanda, riepilogo |
 | `telegram_bot.py` | chiamate alla Bot API (`sendMessage`, tastiere, callback query) |
 | `telegram_state.py` | macchina a stati e persistenza conversazione Telegram |
 

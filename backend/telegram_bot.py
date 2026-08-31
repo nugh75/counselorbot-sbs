@@ -1,7 +1,8 @@
 """Client minimale per la Telegram Bot API (httpx, nessuna libreria esterna).
 
 Solo le chiamate usate dal bot CounselorBot: sendMessage (con inline keyboard
-opzionale), sendPhoto per i diagrammi e answerCallbackQuery. I messaggi lunghi vengono spezzati sotto il
+opzionale), sendPhoto per i diagrammi, getFile per i PDF di pQBL e
+answerCallbackQuery. I messaggi lunghi vengono spezzati sotto il
 limite Telegram di 4096 caratteri.
 """
 import logging
@@ -103,6 +104,33 @@ async def get_bot_username() -> str:
     except httpx.HTTPError as e:
         logger.error("Telegram getMe errore rete: %s", type(e).__name__)
     return _bot_username_cache or ""
+
+
+# Limite di Telegram per i file che un bot puo' scaricare (20 MB): oltre questa
+# soglia getFile risponde "file is too big" e l'unica strada resta il web.
+MAX_DOWNLOAD_BYTES = 20 * 1024 * 1024
+
+
+async def download_file(file_id: str) -> bytes | None:
+    """Scarica un file inviato in chat: getFile per il path, poi il contenuto."""
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            info = await client.get(_api_url("getFile"), params={"file_id": file_id})
+            if info.status_code != 200:
+                logger.error("Telegram getFile fallita: %s", info.status_code)
+                return None
+            file_path = ((info.json().get("result") or {}).get("file_path") or "").strip()
+            if not file_path:
+                return None
+            content = await client.get(f"https://api.telegram.org/file/bot{token}/{file_path}")
+            if content.status_code != 200:
+                logger.error("Telegram download fallito: %s", content.status_code)
+                return None
+            return content.content
+    except httpx.HTTPError as e:
+        logger.error("Telegram download errore rete: %s", type(e).__name__)
+        return None
 
 
 async def answer_callback_query(callback_query_id: str) -> None:
