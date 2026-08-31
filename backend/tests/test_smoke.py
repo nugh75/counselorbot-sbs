@@ -309,6 +309,7 @@ EXPECTED_ROUTES = {
     ("POST", "/tts"),
     ("POST", "/questionnaire-result"),
     ("GET", "/user/questionnaire-results"),
+    ("GET", "/user/questionnaire-result/{session_id}/summary"),
     ("GET", "/user/learner-profile"),
     ("POST", "/user/learner-profile"),
     ("GET", "/user/learner-profile/history"),
@@ -1894,6 +1895,43 @@ def test_startup_migration_rewrites_guided_completion_home_texts():
         db.close()
 
 
+def test_startup_migration_adds_the_final_idea_plan_without_overwriting_custom_prompts():
+    from backend.prompt_config import (
+        DEFAULT_SYSTEM_PROMPT_IDEA,
+        PREVIOUS_DEFAULT_SYSTEM_PROMPT_IDEA,
+    )
+
+    db = _TestSession()
+    row = db.query(models.Config).filter(models.Config.key == "prompt_idea_focus").first()
+    created = row is None
+    if row is None:
+        row = models.Config(key="prompt_idea_focus", value="", description="test")
+        db.add(row)
+        db.flush()
+    original = row.value
+    try:
+        row.value = PREVIOUS_DEFAULT_SYSTEM_PROMPT_IDEA
+        db.commit()
+        assert main._migrate_idea_plan_prompt(db) is True
+        db.commit()
+        db.refresh(row)
+        assert row.value == DEFAULT_SYSTEM_PROMPT_IDEA
+        assert "explicit plan for producing or developing the idea" in row.value
+
+        row.value = "Custom Idea prompt"
+        db.commit()
+        assert main._migrate_idea_plan_prompt(db) is False
+        db.refresh(row)
+        assert row.value == "Custom Idea prompt"
+    finally:
+        if created:
+            db.delete(row)
+        else:
+            row.value = original
+        db.commit()
+        db.close()
+
+
 def test_prompt_audit_scopes_certified_strategies_to_qsa_second_level_step():
     _ensure_guided_steps("QSA")
     db = _TestSession()
@@ -3336,6 +3374,59 @@ def test_questionnaire_result_user_history_and_delete():
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
+def test_questionnaire_result_summary_uses_final_guided_step_for_every_instrument():
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    session_ids = []
+    try:
+        for questionnaire_type in ("IDEA", "QSA"):
+            _ensure_guided_steps(questionnaire_type)
+            session_id = f"summary-{questionnaire_type.lower()}-{uuid.uuid4().hex[:8]}"
+            session_ids.append(session_id)
+            with _TestSession() as db:
+                final_step = (
+                    db.query(models.GuidedStep)
+                    .filter(models.GuidedStep.questionnaire_type == questionnaire_type)
+                    .order_by(models.GuidedStep.sort_order.desc(), models.GuidedStep.id.desc())
+                    .first()
+                )
+                assert final_step is not None
+                db.add(models.QuestionnaireResult(
+                    session_id=session_id,
+                    questionnaire_type=questionnaire_type,
+                    scores={} if questionnaire_type == "IDEA" else {"C1": 7},
+                    username="student",
+                ))
+                db.add_all([
+                    models.Log(
+                        session_id=session_id,
+                        action="chat_message",
+                        questionnaire_type=questionnaire_type,
+                        phase=final_step.id,
+                        details={"bot_response": f"Sintesi finale {questionnaire_type}"},
+                    ),
+                    models.Log(
+                        session_id=session_id,
+                        action="chat_message",
+                        questionnaire_type=questionnaire_type,
+                        phase="not-the-final-step",
+                        details={"bot_response": "Messaggio successivo non sintetico"},
+                    ),
+                ])
+                db.commit()
+
+            response = client.get(f"/user/questionnaire-result/{session_id}/summary")
+            assert response.status_code == 200, response.text
+            assert response.json() == {"summary": f"Sintesi finale {questionnaire_type}"}
+    finally:
+        with _TestSession() as db:
+            db.query(models.Log).filter(models.Log.session_id.in_(session_ids)).delete(synchronize_session=False)
+            db.query(models.QuestionnaireResult).filter(
+                models.QuestionnaireResult.session_id.in_(session_ids)
+            ).delete(synchronize_session=False)
+            db.commit()
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
 def test_learner_profile_revisions_and_history():
     """Profilo del discente: salvataggio append-only, dedup, storico, delete."""
     main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
@@ -3511,6 +3602,20 @@ def test_student_booklet_multiple_schede_and_arrays():
         assert client.delete(f"/user/student-booklets/id/{id2}").status_code == 200
         r = client.get("/user/student-booklets/instrument/QSA/list")
         assert id2 not in {b["id"] for b in r.json()}
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
+def test_student_booklet_can_create_idea_entry():
+    """Idea usa la stessa scheda narrativa degli altri strumenti."""
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        response = client.post("/user/student-booklets/instrument/IDEA", json={
+            "data": {"title": "Nuova idea"},
+        })
+
+        assert response.status_code == 200, response.text
+        assert response.json()["questionnaire_type"] == "IDEA"
     finally:
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
@@ -5775,6 +5880,61 @@ def test_idea_never_carries_a_scores_line_into_the_prompt():
         assert "percorso riflessivo guidato" not in envelope["system_prompt_final"].lower()
     finally:
         main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+
+
+def test_idea_reference_upload_is_private_session_context():
+    _set_idea_feature("true")
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    session_id = "idea-reference-context"
+    try:
+        uploaded = client.post(
+            "/idea/reference",
+            data={"session_id": session_id},
+            files={
+                "file": (
+                    "cornice.md",
+                    b"# Costrutto\n\nLa definizione distingue tratto e stato.",
+                    "text/markdown",
+                ),
+            },
+        )
+        assert uploaded.status_code == 200, uploaded.text
+        assert uploaded.json()["filename"] == "cornice.md"
+
+        metadata = client.get("/idea/reference", params={"session_id": session_id})
+        assert metadata.status_code == 200
+        assert metadata.json()["reference"]["filename"] == "cornice.md"
+
+        reply = client.post("/chat", json={
+            "message": "Voglio chiarire questo costrutto.",
+            "mode": "idea-focus",
+            "session_id": session_id,
+            "questionnaire_type": "IDEA",
+            "language": "it",
+            "idea_variant": "concept",
+        })
+        assert reply.status_code == 200, reply.text
+        envelope = _latest_log_details(session_id).get("envelope")
+        prompt = envelope["system_prompt_final"]
+        assert "[IDEA REFERENCE]" in prompt
+        assert "cornice.md" in prompt
+        assert "La definizione distingue tratto e stato" in prompt
+        assert "delimit what belongs inside and outside it" in prompt
+
+        removed = client.delete("/idea/reference", params={"session_id": session_id})
+        assert removed.status_code == 200
+        assert client.get("/idea/reference", params={"session_id": session_id}).json()["reference"] is None
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        _set_idea_feature("false")
+        db = _TestSession()
+        try:
+            db.query(models.IdeaReference).filter(
+                models.IdeaReference.session_id == session_id
+            ).delete(synchronize_session=False)
+            db.commit()
+        finally:
+            db.close()
 
 
 def test_an_invite_only_instrument_only_admits_the_counselors_that_name_it():

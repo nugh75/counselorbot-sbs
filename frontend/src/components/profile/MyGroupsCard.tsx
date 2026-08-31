@@ -49,7 +49,7 @@ const TEXTS = {
     },
 };
 
-export function MyGroupsCard({ lang }: { lang: string }) {
+export function MyGroupsCard({ lang, showHeading = true }: { lang: string; showHeading?: boolean }) {
     const texts = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
     const [groups, setGroups] = useState<MyGroup[]>([]);
     const [joinCode, setJoinCode] = useState('');
@@ -93,11 +93,17 @@ export function MyGroupsCard({ lang }: { lang: string }) {
     };
 
     return (
-        <section className="glass-panel space-y-3 p-5" aria-labelledby="my-groups-section">
-            <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-slate-500" aria-hidden />
-                <h2 id="my-groups-section" className="text-lg font-bold text-slate-800">{texts.title}</h2>
-            </div>
+        <section
+            className="glass-panel space-y-3 p-5"
+            aria-labelledby={showHeading ? 'my-groups-section' : undefined}
+            aria-label={showHeading ? undefined : texts.title}
+        >
+            {showHeading && (
+                <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-slate-500" aria-hidden />
+                    <h2 id="my-groups-section" className="text-lg font-bold text-slate-800">{texts.title}</h2>
+                </div>
+            )}
             <ul className="space-y-2">
                 {groups.map((group) => (
                     <li key={group.membership_id} className="flex items-center gap-2 rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-700">

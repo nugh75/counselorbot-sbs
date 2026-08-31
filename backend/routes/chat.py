@@ -319,6 +319,7 @@ IDEA_VARIANT_KEYS = {
     "student-path": "prompt_idea_variant_student_path",
     "student-open": "prompt_idea_variant_student_open",
     "research": "prompt_idea_variant_research",
+    "concept": "prompt_idea_variant_concept",
 }
 
 

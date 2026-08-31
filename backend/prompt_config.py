@@ -283,8 +283,11 @@ DEFAULT_SYSTEM_PROMPT_IDEA = (
     "`idea` block holding the patch described in your instructions, and nothing "
     "after it. The map under [IDEA MAP] is what the person sees; a reply without "
     "the block leaves it unchanged and leaves them with only questions. "
-    "Do not give advice, reading suggestions or a plan unless the person asks "
-    "for one; an idea that is still forming does not need solutions yet. "
+    "Do not give advice, reading suggestions or a plan while the idea is still "
+    "forming; premature solutions would replace the person's reasoning. At the "
+    "end, however, you MUST turn the completed map into an explicit plan for "
+    "producing or developing the idea, with ordered actions and a clear first "
+    "action. Uncertainty becomes a verification action, never invented certainty. "
     "Say plainly when something they said is unclear or when two things they "
     "said do not fit together: that is the whole point of the exercise. "
     "State the problem BEFORE asking about it. [IDEA MAP] tells you what this "
@@ -304,7 +307,20 @@ DEFAULT_SYSTEM_PROMPT_IDEA = (
     "Keep the language of the person. Do NOT use opening greetings."
 )
 
-# Le tre varianti: stesso percorso, materia diversa. La direttiva si aggiunge
+# La copia live nel DB non viene sovrascritta dal seed. Questa ricostruzione
+# esatta permette alla migrazione di aggiornare solo il vecchio testo di serie,
+# lasciando intatte le personalizzazioni dell'admin.
+PREVIOUS_DEFAULT_SYSTEM_PROMPT_IDEA = DEFAULT_SYSTEM_PROMPT_IDEA.replace(
+    "Do not give advice, reading suggestions or a plan while the idea is still "
+    "forming; premature solutions would replace the person's reasoning. At the "
+    "end, however, you MUST turn the completed map into an explicit plan for "
+    "producing or developing the idea, with ordered actions and a clear first "
+    "action. Uncertainty becomes a verification action, never invented certainty. ",
+    "Do not give advice, reading suggestions or a plan unless the person asks "
+    "for one; an idea that is still forming does not need solutions yet. ",
+)
+
+# Le quattro varianti: stesso percorso, materia diversa. La direttiva si aggiunge
 # al prompt di sistema all'avvio della sessione e resta per tutta la sessione.
 DEFAULT_IDEA_VARIANT_STUDENT_PATH = (
     "[IDEA VARIANT] The idea concerns this student's own studies or working "
@@ -329,6 +345,16 @@ DEFAULT_IDEA_VARIANT_RESEARCH = (
     "being claimed, on what evidence, against which alternative explanation, "
     "and what would count as being wrong. Do not simplify as you would for a "
     "student, and do not offer counselling."
+)
+
+DEFAULT_IDEA_VARIANT_CONCEPT = (
+    "[IDEA VARIANT] The work is to explore a concept or construct, whether "
+    "academic, professional or personal. Help the person distinguish the word "
+    "from its intended meaning, delimit what belongs inside and outside it, "
+    "separate it from adjacent concepts, identify dimensions and observable "
+    "indicators when relevant, and test it on examples and counterexamples. "
+    "Use `concept-exploration` as the root task type. Do not turn a provisional "
+    "definition into an established one, and do not offer counselling."
 )
 
 DEFAULT_SYSTEM_PROMPT_SAVICKAS_SUMMARY = (
@@ -586,6 +612,12 @@ SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
         "label": "Idea - variante ricerca e didattica",
         "description": "Direttiva della variante docente/ricercatore: domanda di ricerca, disegno, unita' didattica",
         "default": DEFAULT_IDEA_VARIANT_RESEARCH,
+    },
+    {
+        "key": "prompt_idea_variant_concept",
+        "label": "Idea - variante concetto o costrutto",
+        "description": "Direttiva per esplorare, delimitare e rendere lavorabile un concetto o costrutto",
+        "default": DEFAULT_IDEA_VARIANT_CONCEPT,
     },
     {
         "key": "prompt_savickas_summary",

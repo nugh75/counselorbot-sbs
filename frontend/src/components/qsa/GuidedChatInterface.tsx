@@ -1,6 +1,6 @@
 'use client';
 
-import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert } from 'lucide-react';
+import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
@@ -20,7 +20,16 @@ import { toast } from '@/components/ui/Toast';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
 import { IdeaWorkspace } from '@/components/qsa/IdeaWorkspace';
-import { fetchIdeaNextStep, IDEA_PACE_DEFAULT, type IdeaNextStep, type IdeaVariant } from '@/lib/idea-map';
+import {
+    deleteIdeaReference,
+    fetchIdeaNextStep,
+    fetchIdeaReference,
+    IDEA_PACE_DEFAULT,
+    uploadIdeaReference,
+    type IdeaNextStep,
+    type IdeaReference,
+    type IdeaVariant,
+} from '@/lib/idea-map';
 import { freezeSession, type FrozenSessionDetail } from '@/lib/frozen-session';
 import { diagramContentForSpeech, splitDiagramContent } from '@/lib/diagram-content';
 
@@ -428,6 +437,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const [ideaVariant, setIdeaVariant] = useState<IdeaVariant>('student-path');
     const [ideaMapVersion, setIdeaMapVersion] = useState(0);
     const [ideaMove, setIdeaMove] = useState<IdeaNextStep | null>(null);
+    const [ideaReference, setIdeaReference] = useState<IdeaReference | null>(null);
+    const [isIdeaReferenceUploading, setIsIdeaReferenceUploading] = useState(false);
     // Quanti scambi si vuole che duri. 0 = finche' serve.
     const [ideaBudget, setIdeaBudget] = useState<number>(IDEA_PACE_DEFAULT);
     const [currentPhase, setCurrentPhase] = useState<string>('');
@@ -463,6 +474,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const requestRef = useRef<AbortController | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const ideaReferenceInputRef = useRef<HTMLInputElement>(null);
     const processedPhases = useRef<Set<string>>(new Set());
     const loadedSessionScopeRef = useRef('');
 
@@ -494,6 +506,14 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     useEffect(() => {
         setConversationId(undefined);
     }, [questionnaireType, sessionId]);
+
+    useEffect(() => {
+        if (!isIdea || !sessionId) {
+            setIdeaReference(null);
+            return;
+        }
+        void fetchIdeaReference(sessionId).then(setIdeaReference);
+    }, [isIdea, sessionId]);
 
     useEffect(() => {
         scrollToBottom();
@@ -954,6 +974,32 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             return 'qsar-generic';
         }
         return 'generic';
+    };
+
+    const handleIdeaReferenceSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file || !isIdea || isIdeaReferenceUploading) return;
+        setIsIdeaReferenceUploading(true);
+        try {
+            const reference = await uploadIdeaReference(sessionId, file);
+            setIdeaReference(reference);
+            toast.success(t('idea.reference.uploaded'));
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : t('idea.reference.error'));
+        } finally {
+            setIsIdeaReferenceUploading(false);
+        }
+    };
+
+    const handleIdeaReferenceDelete = async () => {
+        if (!isIdea || !ideaReference || isIdeaReferenceUploading) return;
+        if (await deleteIdeaReference(sessionId)) {
+            setIdeaReference(null);
+            toast.success(t('idea.reference.removed'));
+        } else {
+            toast.error(t('idea.reference.error'));
+        }
     };
 
     const handleSend = async (e: { preventDefault: () => void }, overrideText?: string) => {
@@ -1432,7 +1478,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                         {t('idea.variant.question')}
                                     </legend>
                                     <div className="flex flex-wrap gap-2 pt-1">
-                                        {(['student-path', 'student-open', 'research'] as const).map((variant) => (
+                                        {(['student-path', 'student-open', 'research', 'concept'] as const).map((variant) => (
                                             <button
                                                 key={variant}
                                                 type="button"
@@ -1445,7 +1491,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                         : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300',
                                                 )}
                                             >
-                                                {t(`idea.variant.${variant === 'student-path' ? 'studyPath' : variant === 'student-open' ? 'open' : 'research'}`)}
+                                                {t(`idea.variant.${variant === 'student-path' ? 'studyPath' : variant === 'student-open' ? 'open' : variant}`)}
                                             </button>
                                         ))}
                                     </div>
@@ -1636,7 +1682,52 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                 ))}
                             </div>
                         )}
+                        {isIdea && ideaReference && (
+                            <div className="mb-2 flex min-w-0 items-center gap-2 rounded-md border border-teal-100 bg-teal-50 px-2.5 py-2 text-xs text-teal-900">
+                                <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
+                                <span className="min-w-0 flex-1 truncate" title={ideaReference.filename}>
+                                    {ideaReference.filename}
+                                    {ideaReference.truncated ? ` · ${t('idea.reference.truncated')}` : ''}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => void handleIdeaReferenceDelete()}
+                                    disabled={isIdeaReferenceUploading || isLoading}
+                                    aria-label={t('idea.reference.remove')}
+                                    className="rounded p-1 text-teal-700 transition hover:bg-teal-100 disabled:opacity-50"
+                                >
+                                    <X className="h-3.5 w-3.5" />
+                                </button>
+                            </div>
+                        )}
                         <div className="mb-2 flex items-center justify-end gap-1.5">
+                            {isIdea && (
+                                <>
+                                    <input
+                                        ref={ideaReferenceInputRef}
+                                        type="file"
+                                        accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown"
+                                        className="hidden"
+                                        onChange={(event) => void handleIdeaReferenceSelect(event)}
+                                    />
+                                    <Tooltip
+                                        content={t(ideaReference ? 'idea.reference.replace' : 'idea.reference.add')}
+                                        side="top"
+                                    >
+                                        <button
+                                            type="button"
+                                            onClick={() => ideaReferenceInputRef.current?.click()}
+                                            disabled={isLoading || isIdeaReferenceUploading || !sessionId}
+                                            aria-label={t(ideaReference ? 'idea.reference.replace' : 'idea.reference.add')}
+                                            className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {isIdeaReferenceUploading
+                                                ? <Loader2 className="h-4 w-4 animate-spin" />
+                                                : <Paperclip className="h-4 w-4" />}
+                                        </button>
+                                    </Tooltip>
+                                </>
+                            )}
                             <Tooltip content={t('frozen.freeze')} side="top">
                                 <button
                                     type="button"

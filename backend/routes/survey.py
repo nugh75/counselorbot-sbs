@@ -20,10 +20,10 @@ router = APIRouter()
 get_db = database.get_db
 logger = logging.getLogger(__name__)
 
-# Strumenti del libretto: i 7 questionari + due libretti narrativi senza dimensioni
+# Strumenti del libretto: i questionari e Idea + due libretti narrativi senza dimensioni
 # (eventi significativi), in cui forza/area sono testo libero come per Savickas.
 STUDENT_BOOKLET_TYPES = (
-    "QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP",
+    "QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP", "IDEA",
     "EVENTO_STUDIO", "EVENTO_PROFESSIONALE",
 )
 
@@ -715,6 +715,34 @@ def _session_conversation_messages(db: Session, session_id: str) -> list[dict]:
     return messages
 
 
+def _session_final_summary(
+    db: Session,
+    result: models.QuestionnaireResult,
+) -> str | None:
+    """Return the latest response from the instrument's final guided step."""
+    final_step = (
+        db.query(models.GuidedStep)
+        .filter(models.GuidedStep.questionnaire_type == result.questionnaire_type)
+        .order_by(models.GuidedStep.sort_order.desc(), models.GuidedStep.id.desc())
+        .first()
+    )
+    if final_step is None:
+        return None
+
+    row = (
+        db.query(models.Log)
+        .filter(
+            models.Log.action == "chat_message",
+            models.Log.session_id == result.session_id,
+            models.Log.phase == final_step.id,
+        )
+        .order_by(models.Log.timestamp.desc(), models.Log.id.desc())
+        .first()
+    )
+    summary = ((row.details or {}).get("bot_response") or "").strip() if row else ""
+    return summary or None
+
+
 def _pdf_strategy_context(db: Session, session_id: str, lang: str) -> str:
     log_rows = (
         db.query(models.Log)
@@ -848,6 +876,17 @@ async def get_user_session_conversation(
         raise HTTPException(status_code=403, detail="Non autorizzato a visualizzare questa sessione")
 
     return _session_conversation_messages(db, session_id)
+
+
+@router.get("/user/questionnaire-result/{session_id}/summary")
+async def get_user_session_summary(
+    session_id: str,
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Restituisce la sintesi prodotta nel passo finale dello strumento."""
+    result = _get_owned_questionnaire_result(session_id, current_user, db)
+    return {"summary": _session_final_summary(db, result)}
 
 
 @router.get("/questionnaire-result/{session_id}/pdf")

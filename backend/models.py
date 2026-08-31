@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text, DateTime, JSON
+from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text, DateTime, JSON, UniqueConstraint
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -914,4 +914,22 @@ class IdeaMapRevision(Base):
     # piu' profondo). Viaggia con la revisione perche' anche spostarsi fra i
     # rami e' un momento del ragionamento, e lo storico deve poterlo mostrare.
     focus_id = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class IdeaReference(Base):
+    """Un solo documento di riferimento attivo per sessione Idea e utente."""
+
+    __tablename__ = "idea_references"
+    __table_args__ = (
+        UniqueConstraint("username", "session_id", name="uq_idea_reference_owner_session"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, nullable=False, index=True)
+    session_id = Column(String, nullable=False, index=True)
+    filename = Column(String, nullable=False)
+    kind = Column(String, nullable=False)
+    text = Column(Text, nullable=False)
+    truncated = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

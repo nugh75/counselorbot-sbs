@@ -26,6 +26,7 @@ from .guided_step_label_i18n import STEP_LABEL_I18N, resolve_step_label
 from sqlalchemy import func
 
 from .idea_map import IDEA_INSTRUMENT, map_context_for
+from .idea_reference import reference_context_for
 from .rag_index import site_rag_index, counselorbot_rag_index, questionari_rag_index, build_context as rag_build_context
 from .api_models import ChatRequest
 from .prompt_config import (
@@ -2427,6 +2428,18 @@ def build_context_envelope(
         components["student_booklet"] = booklet_context
     if booklet_context:
         parts_system.append("[BOOKLET]\n" + booklet_context)
+
+    # --- [IDEA REFERENCE] documento privato scelto per questa sessione ---
+    # Precede la mappa: [IDEA MAP] resta l'ultimo blocco operativo prima delle
+    # direttive della skill e quindi continua a guidare la singola mossa.
+    if questionnaire_type == IDEA_INSTRUMENT:
+        idea_reference_block = reference_context_for(
+            db, username_for_context, session_id,
+        )
+        if components is not None:
+            components["idea_reference"] = idea_reference_block
+        if idea_reference_block:
+            parts_system.append("[IDEA REFERENCE]\n" + idea_reference_block)
 
     # --- [IDEA MAP] la mappa che la sessione sta costruendo ---
     # Sta in fondo, vicino alle istruzioni della skill: e' la cosa su cui il

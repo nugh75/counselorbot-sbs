@@ -16,6 +16,14 @@ import { LOCAL_RESUME_HREF, resumeHref, useResumeEntries } from '@/lib/use-resum
 
 const STARTABLE: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', 'IDEA'];
 
+// Il resto degli strumenti: pagine a sé, senza punteggi e senza stato
+// "compilato", quindi stanno in una griglia loro e si aprono per link.
+const TOOLS: { href: string; titleKey: string; bodyKey: string }[] = [
+    { href: '/pqbl', titleKey: 'pqbl.card.title', bodyKey: 'pqbl.card.desc' },
+    { href: '/profilo/cambiamenti', titleKey: 'profileChanges.title', bodyKey: 'profileChanges.cardBody' },
+    { href: '/assistente', titleKey: 'assistant.title', bodyKey: 'assistant.subtitle' },
+];
+
 interface Props {
     // Ultima compilazione per strumento, in ISO; assente = mai compilato.
     lastCompiledAt: Partial<Record<QuestionnaireType, string>>;
@@ -148,6 +156,24 @@ export function ReturningHome({
                             </button>
                         );
                     })}
+                </div>
+            </section>
+
+            <section>
+                <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
+                    {t('base.tools.title')}
+                </h2>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {TOOLS.map((tool) => (
+                        <a
+                            key={tool.href}
+                            href={tool.href}
+                            className="glass-panel flex flex-col items-start gap-1 p-4 text-left transition-colors hover:border-indigo-300"
+                        >
+                            <span className="font-bold text-slate-900">{t(tool.titleKey)}</span>
+                            <span className="text-sm leading-snug text-slate-600">{t(tool.bodyKey)}</span>
+                        </a>
+                    ))}
                 </div>
             </section>
 

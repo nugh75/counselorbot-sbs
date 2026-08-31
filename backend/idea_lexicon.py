@@ -18,7 +18,7 @@ LANGS = ("it", "en", "es", "fr", "de", "sv")
 
 def register_for_variant(variant: str | None) -> str:
     """La variante decide il registro, non il contenuto della diagnosi."""
-    return RESEARCH if (variant or "") == "research" else PLAIN
+    return RESEARCH if (variant or "") in {"research", "concept"} else PLAIN
 
 
 STATUS_WORDS = {
@@ -124,32 +124,38 @@ TASK_LABELS = {
            "position": "Posizione da sostenere", "research-question": "Domanda di ricerca",
            "systematic-review": "Revisione sistematica", "empirical-study": "Studio empirico",
            "teaching-unit": "Unita' didattica", "intervention": "Intervento",
-           "study-path": "Percorso di studio", "personal-project": "Progetto personale"},
+           "study-path": "Percorso di studio", "personal-project": "Progetto personale",
+           "concept-exploration": "Esplorazione di un concetto o costrutto"},
     "en": {"thesis-chapter": "Thesis or chapter", "article": "Article",
            "position": "Position to defend", "research-question": "Research question",
            "systematic-review": "Systematic review", "empirical-study": "Empirical study",
            "teaching-unit": "Teaching unit", "intervention": "Intervention",
-           "study-path": "Study path", "personal-project": "Personal project"},
+           "study-path": "Study path", "personal-project": "Personal project",
+           "concept-exploration": "Concept or construct exploration"},
     "es": {"thesis-chapter": "Tesis o capitulo", "article": "Articulo",
            "position": "Posicion que defender", "research-question": "Pregunta de investigacion",
            "systematic-review": "Revision sistematica", "empirical-study": "Estudio empirico",
            "teaching-unit": "Unidad didactica", "intervention": "Intervencion",
-           "study-path": "Itinerario de estudio", "personal-project": "Proyecto personal"},
+           "study-path": "Itinerario de estudio", "personal-project": "Proyecto personal",
+           "concept-exploration": "Exploracion de un concepto o constructo"},
     "fr": {"thesis-chapter": "These ou chapitre", "article": "Article",
            "position": "Position a defendre", "research-question": "Question de recherche",
            "systematic-review": "Revue systematique", "empirical-study": "Etude empirique",
            "teaching-unit": "Unite didactique", "intervention": "Intervention",
-           "study-path": "Parcours d'etudes", "personal-project": "Projet personnel"},
+           "study-path": "Parcours d'etudes", "personal-project": "Projet personnel",
+           "concept-exploration": "Exploration d'un concept ou construit"},
     "de": {"thesis-chapter": "Arbeit oder Kapitel", "article": "Artikel",
            "position": "Zu vertretende Position", "research-question": "Forschungsfrage",
            "systematic-review": "Systematische Ubersicht", "empirical-study": "Empirische Studie",
            "teaching-unit": "Unterrichtseinheit", "intervention": "Intervention",
-           "study-path": "Bildungsweg", "personal-project": "Personliches Projekt"},
+           "study-path": "Bildungsweg", "personal-project": "Personliches Projekt",
+           "concept-exploration": "Erkundung eines Konzepts oder Konstrukts"},
     "sv": {"thesis-chapter": "Uppsats eller kapitel", "article": "Artikel",
            "position": "Standpunkt att forsvara", "research-question": "Forskningsfraga",
            "systematic-review": "Systematisk oversikt", "empirical-study": "Empirisk studie",
            "teaching-unit": "Undervisningsmoment", "intervention": "Insats",
-           "study-path": "Studievag", "personal-project": "Personligt projekt"},
+           "study-path": "Studievag", "personal-project": "Personligt projekt",
+           "concept-exploration": "Utforskning av begrepp eller konstrukt"},
 }
 
 
