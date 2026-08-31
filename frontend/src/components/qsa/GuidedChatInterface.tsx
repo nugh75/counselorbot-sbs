@@ -20,7 +20,7 @@ import { toast } from '@/components/ui/Toast';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
 import { IdeaWorkspace } from '@/components/qsa/IdeaWorkspace';
-import { fetchIdeaNextStep, type IdeaNextStep, type IdeaVariant } from '@/lib/idea-map';
+import { fetchIdeaNextStep, IDEA_PACE_DEFAULT, type IdeaNextStep, type IdeaVariant } from '@/lib/idea-map';
 import { freezeSession, type FrozenSessionDetail } from '@/lib/frozen-session';
 import { diagramContentForSpeech, splitDiagramContent } from '@/lib/diagram-content';
 
@@ -428,6 +428,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const [ideaVariant, setIdeaVariant] = useState<IdeaVariant>('student-path');
     const [ideaMapVersion, setIdeaMapVersion] = useState(0);
     const [ideaMove, setIdeaMove] = useState<IdeaNextStep | null>(null);
+    // Quanti scambi si vuole che duri. 0 = finche' serve.
+    const [ideaBudget, setIdeaBudget] = useState<number>(IDEA_PACE_DEFAULT);
     const [currentPhase, setCurrentPhase] = useState<string>('');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [responseLength, setResponseLength] = useState<ResponseLength>('medium');
@@ -702,14 +704,14 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     useEffect(() => {
         if (!isIdea || !sessionId) return;
         let cancelled = false;
-        void fetchIdeaNextStep(sessionId, activeLocale, ideaVariant).then((move) => {
+        void fetchIdeaNextStep(sessionId, activeLocale, ideaVariant, ideaBudget).then((move) => {
             if (cancelled || !move) return;
             setIdeaMove(move);
             processedPhases.current.add(move.step_id);
             setCurrentPhase(move.step_id);
         });
         return () => { cancelled = true; };
-    }, [isIdea, sessionId, activeLocale, ideaVariant, ideaMapVersion]);
+    }, [isIdea, sessionId, activeLocale, ideaVariant, ideaBudget, ideaMapVersion]);
 
     // Phase change handler
     useEffect(() => {
@@ -794,6 +796,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 response_length: responseLength,
                 counselor_id: getSelectedCounselorId(),
                 idea_variant: isIdea ? ideaVariant : undefined,
+                idea_budget: isIdea ? ideaBudget : undefined,
             }, (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
             if (result.conversation_id) setConversationId(result.conversation_id);
             setLastFeedbackTargets(result.strategy_ids, result.response_id);
@@ -834,6 +837,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         response_length: responseLength,
                         counselor_id: getSelectedCounselorId(),
                         idea_variant: isIdea ? ideaVariant : undefined,
+                        idea_budget: isIdea ? ideaBudget : undefined,
                     };
                 }
                 return {
@@ -850,6 +854,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     response_length: responseLength,
                     counselor_id: getSelectedCounselorId(),
                     idea_variant: isIdea ? ideaVariant : undefined,
+                    idea_budget: isIdea ? ideaBudget : undefined,
                 };
             };
 
@@ -1015,6 +1020,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 response_length: responseLength,
                 counselor_id: getSelectedCounselorId(),
                 idea_variant: isIdea ? ideaVariant : undefined,
+                idea_budget: isIdea ? ideaBudget : undefined,
             };
             if (scoresContextOverride) {
                 chatPayload.scores_context = scoresContextOverride;
@@ -1697,6 +1703,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 locale={activeLocale}
                 variant={ideaVariant}
                 move={ideaMove}
+                budget={ideaBudget}
+                onBudgetChange={setIdeaBudget}
                 onFocusMoved={() => setIdeaMapVersion((value) => value + 1)}
             />
         )}

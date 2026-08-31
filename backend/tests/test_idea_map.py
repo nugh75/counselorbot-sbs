@@ -18,6 +18,7 @@ from backend.idea_map import (
     map_context,
     missing_roles,
     names_prior_work,
+    pace_directive,
     reopen as reopen_branch,
     resolve_focus,
     wants_plan,
@@ -551,6 +552,42 @@ def test_reopening_keeps_what_the_branch_had_settled():
     # La conclusione resta: cancellarla perderebbe cio' che era stato stabilito
     # prima del ripensamento.
     assert idea.closed is False and idea.conclusion == "Stabilito"
+
+
+# --- la durata scelta cambia il passo, non tronca ---
+
+def test_without_a_length_nothing_is_rushed():
+    assert "do not rush to close" in pace_directive(0, None)
+    assert "do not rush to close" in pace_directive(40, 0)
+
+
+def test_a_short_session_asks_one_thing_at_a_time():
+    text = pace_directive(2, 8)
+    assert "no follow-ups" in text
+    assert "Open a branch only if" in text
+
+
+def test_the_last_quarter_stops_opening_new_ground():
+    # Lasciare un ramo aperto a fine tempo e' peggio che non averlo aperto.
+    text = pace_directive(13, 16)
+    assert "open no new branches" in text
+    assert "3 exchanges left" in text
+
+
+def test_when_the_budget_is_spent_it_proposes_closing_not_closes():
+    text = pace_directive(16, 16)
+    assert "propose closing" in text
+    # La chiusura resta un gesto della persona anche a tempo scaduto.
+    assert "If the person wants to go on, they will say so." in text
+
+
+def test_going_over_the_budget_is_not_an_error():
+    assert pace_directive(30, 16) == pace_directive(16, 16)
+
+
+def test_the_pace_reaches_the_model_on_an_empty_map():
+    assert "PACE:" in map_context(None, budget=8)
+    assert "PACE:" in map_context(_base(), budget=8)
 
 
 if __name__ == "__main__":
