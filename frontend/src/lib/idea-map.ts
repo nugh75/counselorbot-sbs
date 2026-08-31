@@ -141,3 +141,30 @@ export async function moveIdeaFocus(sessionId: string, nodeId: string): Promise<
     });
     return response.ok;
 }
+
+export type IdeaKeepTarget = 'notebook' | 'portfolio';
+
+export interface IdeaConclusion {
+    session_id: string;
+    title: string;
+    description: string;
+    kept: Record<string, { item_id?: number; revision_id?: number; image?: boolean; skipped?: string; failed?: string }>;
+    pdf_url: string;
+}
+
+// Chiudere la sessione tenendo il risultato dove la persona ha scelto. Nessuna
+// destinazione e' una risposta legittima.
+export async function concludeIdea(
+    sessionId: string,
+    targets: IdeaKeepTarget[],
+    lang: string,
+    variant: IdeaVariant,
+): Promise<IdeaConclusion | null> {
+    const response = await apiFetch('/api/idea/conclude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, targets, lang, variant }),
+    });
+    if (!response.ok) return null;
+    return response.json() as Promise<IdeaConclusion>;
+}

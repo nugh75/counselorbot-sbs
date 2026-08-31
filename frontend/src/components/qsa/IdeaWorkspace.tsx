@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, GitBranch } from 'lucide-react';
+import { CheckCheck, ChevronDown, GitBranch } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
 import { IdeaBranchTree } from '@/components/qsa/IdeaBranchTree';
+import { IdeaConclusion } from '@/components/qsa/IdeaConclusion';
 import { IdeaMapPanel } from '@/components/qsa/IdeaMapPanel';
 import type { IdeaNextStep, IdeaVariant } from '@/lib/idea-map';
 
@@ -25,6 +26,10 @@ export function IdeaWorkspace({ sessionId, version, locale, variant, move, onFoc
     const { t } = useI18n();
     // Aperto di default: la mappa e' la cosa che deve stare sotto gli occhi.
     const [open, setOpen] = useState(true);
+    const [concluding, setConcluding] = useState(false);
+    // Quando ogni ramo e' chiuso la chiusura non e' piu' una via d'uscita:
+    // e' il passo che tocca, e si vede.
+    const finished = move?.reason === 'all-closed';
 
     return (
         <section className="glass-panel overflow-hidden">
@@ -42,6 +47,27 @@ export function IdeaWorkspace({ sessionId, version, locale, variant, move, onFoc
                 {move?.task_label && (
                     <span className="truncate text-xs text-slate-500">{move.task_label}</span>
                 )}
+                <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(event) => { event.stopPropagation(); setConcluding(true); }}
+                    onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            setConcluding(true);
+                        }
+                    }}
+                    className={cn(
+                        'inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                        finished
+                            ? 'bg-teal-700 text-white hover:bg-teal-800'
+                            : 'border border-slate-200 text-slate-600 hover:border-slate-300',
+                    )}
+                >
+                    <CheckCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                    {t('idea.conclude.action')}
+                </span>
                 <ChevronDown
                     className={cn('h-4 w-4 shrink-0 text-slate-400 transition-transform', !open && '-rotate-90')}
                     aria-hidden="true"
@@ -72,6 +98,15 @@ export function IdeaWorkspace({ sessionId, version, locale, variant, move, onFoc
                     </div>
                 </div>
             </div>
+
+            {concluding && (
+                <IdeaConclusion
+                    sessionId={sessionId}
+                    locale={locale}
+                    variant={variant}
+                    onClose={() => setConcluding(false)}
+                />
+            )}
         </section>
     );
 }
