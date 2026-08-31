@@ -264,6 +264,13 @@ function buildScoresFormatter(
         };
     }
 
+    // Idea non ha punteggi da contestualizzare, e una riga di servizio nel
+    // messaggio diventa un nodo della mappa: il modello ha gia' disegnato
+    // "Percorso riflessivo guidato dall'AI" come se fosse l'idea della persona.
+    if (questionnaireType === 'IDEA') {
+        return (): string => '';
+    }
+
     // Agent-led questionnaires (QPCS, QPCC, QAP): qualitative, no numeric factors.
     const cfg = QUESTIONNAIRES[questionnaireType as keyof typeof QUESTIONNAIRES];
     if (!cfg || cfg.factorPrefix.length === 0) {
