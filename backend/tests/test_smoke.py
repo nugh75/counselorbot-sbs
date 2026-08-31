@@ -4502,6 +4502,38 @@ def test_telegram_parse_scores():
     assert scores == {} and extra == [] and invalid == []
 
 
+def test_telegram_idea_instrument_offered():
+    """Idea e' fra gli strumenti del bot e segue il flag del web."""
+    db = _TestSession()
+    try:
+        _set_config("feature_idea_focus", "true")
+        labels = [b["text"] for row in telegram_state._instrument_keyboard(db) for b in row]
+        callbacks = [b["callback_data"] for row in telegram_state._instrument_keyboard(db) for b in row]
+        assert "Idea" in labels
+        assert "instr:IDEA" in callbacks
+
+        _set_config("feature_idea_focus", "false")
+        labels = [b["text"] for row in telegram_state._instrument_keyboard(db) for b in row]
+        assert "Idea" not in labels
+        # Gli altri strumenti restano comunque disponibili.
+        assert "QSA" in labels and "Savickas" in labels
+    finally:
+        _set_config("feature_idea_focus", "true")
+        db.close()
+
+
+def test_telegram_idea_has_no_score_context():
+    """Idea non ha punteggi: il contesto non deve inventarne."""
+    db = _TestSession()
+    try:
+        context = telegram_state.format_scores_context(db, "IDEA", None, "it")
+        assert "IDEA" in context
+        assert "senza punteggi" in context
+        assert "IDEA" in telegram_state.NARRATIVE_QUESTIONNAIRES
+    finally:
+        db.close()
+
+
 def test_telegram_link_code_flow():
     from datetime import datetime, timedelta, timezone
     db = _TestSession()

@@ -28,7 +28,11 @@ logger = logging.getLogger(__name__)
 
 LINK_CODE_TTL_MINUTES = 10
 SCORE_QUESTIONNAIRES = ("QSA", "QSAr", "ZTPI", "QPCS", "QPCC", "QAP")
-ALL_QUESTIONNAIRES = SCORE_QUESTIONNAIRES + ("SAVICKAS",)
+# Strumenti senza punteggi: si va dritti agli step guidati.
+NARRATIVE_QUESTIONNAIRES = ("SAVICKAS", "IDEA")
+ALL_QUESTIONNAIRES = SCORE_QUESTIONNAIRES + NARRATIVE_QUESTIONNAIRES
+# Variante Idea usata dal bot: la stessa che il web propone di default.
+IDEA_DEFAULT_VARIANT = "student-path"
 STEP_ADVANCE_MARKER = "[[AVANZA_STEP]]"
 # Fallback quando la tabella Factor non ha righe per lo strumento.
 FALLBACK_FACTORS = {**QUESTIONNAIRE_FACTORS, "ZTPI": ("T1", "T2", "T3", "T4", "T5")}
@@ -382,6 +386,8 @@ def format_scores_context(db: Session, questionnaire_type: str, scores: dict | N
     """Equivalente backend di buildScoresFormatter (GuidedChatInterface.tsx)."""
     if questionnaire_type == "SAVICKAS":
         return "CONTESTO INTERVISTA SAVICKAS: percorso narrativo qualitativo senza punteggi numerici."
+    if questionnaire_type == "IDEA":
+        return "CONTESTO STRUMENTO IDEA: messa a fuoco di un'idea attraverso una mappa, senza punteggi numerici."
     scores = scores or {}
     factors = {
         f.code: f
@@ -493,6 +499,7 @@ async def _call_chat(db: Session, state: models.TelegramConversationState, *, me
         language=state.language,
         max_tokens=700,
         counselor_id=state.counselor_id,
+        idea_variant=IDEA_DEFAULT_VARIANT if state.questionnaire_type == "IDEA" else None,
     )
     try:
         result = await chat_endpoint(request, BackgroundTasks(), db, _identity_for(state.username))
@@ -633,10 +640,24 @@ def _choose_instrument_text(db: Session, state: models.TelegramConversationState
     return f"{_t('choose_instrument', language)}\n{_t('counselor_line', language, name=counselor)}"
 
 
-def _instrument_keyboard() -> list[list[dict]]:
+def _instrument_label(qtype: str) -> str:
+    """Le sigle restano maiuscole; i nomi propri no (SAVICKAS -> Savickas)."""
+    return qtype.capitalize() if qtype in ("SAVICKAS", "IDEA") else qtype
+
+
+def _available_questionnaires(db: Session) -> tuple[str, ...]:
+    """Idea compare solo se il suo feature flag e' acceso, come nel web."""
+    from .routes.idea_map import feature_enabled as idea_enabled
+
+    if idea_enabled(db):
+        return ALL_QUESTIONNAIRES
+    return tuple(q for q in ALL_QUESTIONNAIRES if q != "IDEA")
+
+
+def _instrument_keyboard(db: Session) -> list[list[dict]]:
     rows, row = [], []
-    for qtype in ALL_QUESTIONNAIRES:
-        row.append({"text": qtype.capitalize() if qtype == "SAVICKAS" else qtype, "callback_data": f"instr:{qtype}"})
+    for qtype in _available_questionnaires(db):
+        row.append({"text": _instrument_label(qtype), "callback_data": f"instr:{qtype}"})
         if len(row) == 2:
             rows.append(row)
             row = []
@@ -850,7 +871,7 @@ async def _handle_message(db: Session, message: dict) -> None:
         _reset_state(state)
         state.state = "choose_instrument"
         db.commit()
-        await telegram_bot.send_message(chat_id, _choose_instrument_text(db, state, language), keyboard=_instrument_keyboard())
+        await telegram_bot.send_message(chat_id, _choose_instrument_text(db, state, language), keyboard=_instrument_keyboard(db))
         return
 
     if command == "/counselor":
@@ -916,7 +937,7 @@ async def _handle_callback(db: Session, callback: dict) -> None:
         _reset_state(state)
         state.state = "choose_instrument"
         db.commit()
-        await telegram_bot.send_message(chat_id, _choose_instrument_text(db, state, language), keyboard=_instrument_keyboard())
+        await telegram_bot.send_message(chat_id, _choose_instrument_text(db, state, language), keyboard=_instrument_keyboard(db))
         return
 
     if data.startswith("couns:"):
@@ -943,11 +964,11 @@ async def _handle_callback(db: Session, callback: dict) -> None:
 
     if data.startswith("instr:"):
         qtype = data.split(":", 1)[1]
-        if qtype not in ALL_QUESTIONNAIRES:
+        if qtype not in _available_questionnaires(db):
             return
         _reset_state(state)
         state.questionnaire_type = qtype
-        if qtype == "SAVICKAS":
+        if qtype in NARRATIVE_QUESTIONNAIRES:
             db.commit()
             await _start_flow(db, state)
         else:
