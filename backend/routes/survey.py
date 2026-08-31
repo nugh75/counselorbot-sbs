@@ -15,6 +15,7 @@ from ..pdf_generator import generate_questionnaire_pdf, generate_student_booklet
 from ..diagram_blocks import strip_for_speech
 from ..ai_service import AIService
 from .. import scoring_service
+from .. import content_version_service, i18n_fields
 
 router = APIRouter()
 get_db = database.get_db
@@ -235,11 +236,54 @@ async def get_anonymous_research_code(
     return {"anonymous_research_code": code}
 
 
+def _locale_unavailable_detail(e: "scoring_service.LocaleUnavailable") -> dict:
+    return {
+        "message": str(e),
+        "locale": e.locale,
+        "status": e.status,
+        "available_locales": e.available,
+    }
+
+
+@router.get("/instruments")
+async def list_instruments(db: Session = Depends(get_db)):
+    """Strumenti con, per ogni lingua, lo stato di certificazione.
+
+    Alimenta selettore e pagina di somministrazione: quali lingue siano offerte
+    non e' piu' una lista scritta a mano nel frontend.
+    """
+    out = []
+    for instrument in db.query(models.Instrument).order_by(models.Instrument.code).all():
+        item_count = (
+            db.query(models.QuestionnaireItem)
+            .filter(
+                models.QuestionnaireItem.instrument_code == instrument.code,
+                models.QuestionnaireItem.active == True,  # noqa: E712
+            )
+            .count()
+        )
+        out.append({
+            "code": instrument.code,
+            "name_i18n": i18n_fields.merged_i18n(instrument, "name"),
+            "status": instrument.status,
+            "report_scale_type": instrument.report_scale_type,
+            "item_count": item_count,
+            "locales": content_version_service.status_map(db, "instrument", instrument.code),
+            "available_locales": content_version_service.served_locales(
+                db, "instrument", instrument.code
+            ),
+        })
+    return out
+
+
 @router.get("/instruments/{code}/rules")
 async def get_instrument_rules(code: str, locale: str = Query("en"), db: Session = Depends(get_db)):
     """Regole di scala leggibili (item->fattore, reverse, scala, fattori) per la vista frontend."""
     try:
         return scoring_service.get_rules(db, code, locale)
+    except scoring_service.LocaleUnavailable as e:
+        # 409, non 404: lo strumento esiste, quella lingua non e' ancora pronta.
+        raise HTTPException(status_code=409, detail=_locale_unavailable_detail(e))
     except scoring_service.ScoringError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -258,6 +302,8 @@ async def score_instrument(
     """
     try:
         profile = scoring_service.compute_profile(db, code, payload.locale, payload.answers)
+    except scoring_service.LocaleUnavailable as e:
+        raise HTTPException(status_code=409, detail=_locale_unavailable_detail(e))
     except scoring_service.ScoringError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

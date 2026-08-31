@@ -12,6 +12,8 @@ from sqlalchemy.types import Text
 from sqlalchemy.orm import Session
 
 from .. import models, schemas, auth, database, pii
+from .. import content_version_service
+from ..content_versions import CONTENT_TYPES, ContentVersionError
 from ..ai_service import AIService
 from ..training_dataset import (
     APPROVED_EXPORT_STATUSES,
@@ -1543,6 +1545,64 @@ async def admin_delete_norm_threshold(threshold_id: int, current_user: models.Us
     db.delete(db_obj)
     db.commit()
     return {"status": "success"}
+
+
+# --- registro delle versioni linguistiche -----------------------------------
+
+@router.get("/admin/content-versions", response_model=List[schemas.ContentLanguageVersionResponse])
+async def admin_list_content_versions(
+    content_type: Optional[str] = Query(None),
+    content_key: Optional[str] = Query(None),
+    locale: Optional[str] = Query(None),
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Stato di certificazione per (contenuto, lingua), filtrabile."""
+    q = db.query(models.ContentLanguageVersion)
+    if content_type:
+        q = q.filter(models.ContentLanguageVersion.content_type == content_type)
+    if content_key:
+        q = q.filter(models.ContentLanguageVersion.content_key == content_key)
+    if locale:
+        q = q.filter(models.ContentLanguageVersion.locale == locale)
+    return q.order_by(
+        models.ContentLanguageVersion.content_type,
+        models.ContentLanguageVersion.content_key,
+        models.ContentLanguageVersion.locale,
+    ).all()
+
+
+@router.get("/admin/content-versions/ladders")
+async def admin_content_version_ladders(
+    current_user: models.User = Depends(auth.get_current_active_admin),
+):
+    """I vocabolari di stato, cosi' il pannello non ne tiene una copia propria."""
+    return {content_type: list(ladder) for content_type, ladder in CONTENT_TYPES.items()}
+
+
+@router.post(
+    "/admin/content-versions/{version_id}/promote",
+    response_model=schemas.ContentLanguageVersionResponse,
+)
+async def admin_promote_content_version(
+    version_id: int,
+    payload: schemas.ContentVersionPromoteRequest,
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Transizione di stato. Rifiuta i salti che nasconderebbero un passo del protocollo."""
+    row = db.query(models.ContentLanguageVersion).filter(
+        models.ContentLanguageVersion.id == version_id
+    ).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Versione linguistica non trovata")
+    try:
+        return content_version_service.promote(
+            db, row, payload.target_status,
+            approved_by=current_user.get("username") or "admin",
+        )
+    except ContentVersionError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 # --- Users & Groups summary (admin dashboard) --------------------------------

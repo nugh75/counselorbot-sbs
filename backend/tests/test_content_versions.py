@@ -465,6 +465,27 @@ def test_scoring_refuses_an_unavailable_locale_before_computing():
         db.close()
 
 
+# --- API --------------------------------------------------------------------
+
+def test_registered_routes_cover_the_new_endpoints():
+    import backend.main as main_module
+
+    # FastAPI >= 0.138 avvolge i router inclusi in `_IncludedRouter` (lazy), senza
+    # path propri: vanno espansi, come fa gia' `_registered_routes` nello smoke.
+    paths = set()
+    for r in main_module.app.routes:
+        if hasattr(r, "original_router"):
+            for sub in getattr(r.original_router, "routes", []):
+                if getattr(sub, "path", None):
+                    paths.add(sub.path)
+        elif getattr(r, "path", None):
+            paths.add(r.path)
+
+    assert "/instruments" in paths
+    assert "/admin/content-versions" in paths
+    assert "/admin/content-versions/{version_id}/promote" in paths
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0
