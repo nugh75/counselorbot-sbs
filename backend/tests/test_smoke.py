@@ -5839,6 +5839,65 @@ def test_an_invite_only_instrument_only_admits_the_counselors_that_name_it():
             db.close()
 
 
+def test_moving_between_branches_is_remembered():
+    """Il fuoco derivato sceglie il ramo aperto piu' profondo.
+
+    Se la persona puo' navigare, la sua scelta deve vincere e restare, anche
+    dopo un turno di chat: altrimenti tornare su un ramo dura un istante.
+    """
+    _set_idea_feature("true")
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    session_id = "idea-branch-nav"
+    try:
+        client.post("/idea/map/patch", json={
+            "session_id": session_id,
+            "patch": {
+                "title": "Tesi",
+                "add_nodes": [
+                    {"id": "idea", "label": "Tesi", "role": "idea", "accent": True,
+                     "task_type": "thesis-chapter"},
+                    {"id": "t1", "label": "Rivedere la letteratura", "role": "task",
+                     "task_type": "systematic-review"},
+                    {"id": "t2", "label": "Decidere il disegno", "role": "task",
+                     "task_type": "empirical-study"},
+                ],
+                "add_edges": [{"from": "idea", "to": "t1"}, {"from": "idea", "to": "t2"}],
+            },
+        })
+
+        rows = client.get("/idea/branches", params={"session_id": session_id}).json()
+        assert {r["id"] for r in rows} == {"idea", "t1", "t2"}, "solo il lavoro entra nell'albero"
+        assert next(r for r in rows if r["is_focus"])["id"] == "t2"
+        assert next(r for r in rows if r["id"] == "t1")["parent"] == "idea"
+        assert next(r for r in rows if r["id"] == "t1")["task_label"]
+
+        moved = client.post("/idea/focus", json={"session_id": session_id, "node_id": "t1"})
+        assert moved.status_code == 200, moved.text
+        assert moved.json()["focus"] == "t1"
+
+        rows = client.get("/idea/branches", params={"session_id": session_id}).json()
+        assert next(r for r in rows if r["is_focus"])["id"] == "t1", "la scelta deve restare"
+        assert client.get("/idea/next-step", params={"session_id": session_id}).json()["focus"] == "t1"
+
+        # Un turno di chat non riporta il fuoco sul derivato.
+        client.post("/idea/map/patch", json={
+            "session_id": session_id,
+            "patch": {"add_nodes": [{"id": "q1", "label": "Quali studi", "role": "open-question"}],
+                      "add_edges": [{"from": "t1", "to": "q1"}]},
+        })
+        assert client.get("/idea/next-step", params={"session_id": session_id}).json()["focus"] == "t1"
+
+        # Risalire al padre e' un movimento come gli altri.
+        client.post("/idea/focus", json={"session_id": session_id, "node_id": "idea"})
+        assert client.get("/idea/next-step", params={"session_id": session_id}).json()["focus"] == "idea"
+
+        bad = client.post("/idea/focus", json={"session_id": session_id, "node_id": "q1"})
+        assert bad.status_code == 422, "un nodo che non e' lavoro non e' un ramo"
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        _set_idea_feature("false")
+
+
 def test_idea_map_is_closed_until_the_feature_is_on():
     _set_idea_feature("false")
     main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
