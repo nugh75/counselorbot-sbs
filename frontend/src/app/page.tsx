@@ -34,6 +34,7 @@ import { deleteFrozenSession, getFrozenSession, type FrozenSessionDetail } from 
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { shouldReviewNotebookBeforeInstrument } from '@/lib/notebook-flow';
+import { isStartableQuestionnaireId } from '@/lib/tool-catalog';
 
 
 type Step = 'intro' | 'base' | 'notebook' | 'counselor-select' | 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'farewell';
@@ -46,8 +47,6 @@ interface SavedResult {
     scores: Record<string, number> | null;
     submitted_at: string;
 }
-
-const STARTABLE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', 'IDEA'];
 
 // Agent-only questionnaires skip the score-input flow and go straight to the AI-led
 // guided chat. Currently only Savickas is agent-only.
@@ -229,6 +228,7 @@ export default function Home() {
     // Il taccuino apre soltanto il primo percorso; dopo resta nell'area personale
     // e viene proposto alla conclusione di ogni chat guidata.
     const [notebookReviewed, setNotebookReviewed] = useState(false);
+    const [counselorOpenedFromHome, setCounselorOpenedFromHome] = useState(false);
     const entryClaimed = useRef(false);
     const hasCompletedQuestionnaires = (savedResults?.length ?? 0) > 0;
 
@@ -365,8 +365,8 @@ export default function Home() {
             return;
         }
 
-        const requestedId = params.get('start') as QuestionnaireType | null;
-        if (!requestedId || !STARTABLE_QUESTIONNAIRES.includes(requestedId)) return;
+        const requestedId = params.get('start');
+        if (!requestedId || !isStartableQuestionnaireId(requestedId)) return;
 
         const questionnaire = QUESTIONNAIRES[requestedId];
         setSelectedQuestionnaire(questionnaire);
@@ -433,6 +433,7 @@ export default function Home() {
     // taccuino precede soltanto il primo strumento: chi ha già una compilazione
     // salvata entra direttamente nel percorso e lo ritrova alla fine della chat.
     const handleQuestionnaireSelect = (questionnaire: QuestionnaireConfig) => {
+        setCounselorOpenedFromHome(false);
         setSelectedQuestionnaire(questionnaire);
         setSelectedInstrumentId(questionnaire.id);
         setScores(null);
@@ -594,6 +595,10 @@ export default function Home() {
     const goBack = () => {
         if (step === 'notebook') setStep(homeStep());
         else if (step === 'questionnaire-select') setStep(hasCompletedQuestionnaires ? homeStep() : 'notebook');
+        else if (step === 'counselor-select' && counselorOpenedFromHome) {
+            setCounselorOpenedFromHome(false);
+            setStep(homeStep());
+        }
         else if (step === 'counselor-select') setStep(selectedQuestionnaire ? 'questionnaire-select' : homeStep());
         else if (step === 'method-select') setStep('counselor-select');
         else if (step === 'manual-input' || step === 'upload-input') setStep('method-select');
@@ -741,7 +746,11 @@ export default function Home() {
                         <ReturningHome
                             lastCompiledAt={lastCompiledAt}
                             onStartInstrument={handleQuestionnaireSelect}
-                            onChangeCounselor={() => setStep('counselor-select')}
+                            onChangeCounselor={() => {
+                                setSelectedQuestionnaire(null);
+                                setCounselorOpenedFromHome(true);
+                                setStep('counselor-select');
+                            }}
                             onOpenIntro={() => setStep('intro')}
                         />
                     )}
@@ -766,6 +775,11 @@ export default function Home() {
                             questionnaireType={selectedQuestionnaire?.id}
                             onBack={goBack}
                             onContinue={() => {
+                                if (counselorOpenedFromHome) {
+                                    setCounselorOpenedFromHome(false);
+                                    setStep(homeStep());
+                                    return;
+                                }
                                 void proceedAfterCounselor(selectedQuestionnaire, scores);
                             }}
                         />
@@ -862,6 +876,7 @@ export default function Home() {
                                     pdfToken={pdfToken}
                                     sessionId={sessionId}
                                     locale={lang}
+                                    onComplete={handleInteractionComplete}
                                 />
                             )}
                         </div>
