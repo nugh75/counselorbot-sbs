@@ -261,6 +261,12 @@ def _seed_and_migrate():
 
     db = database.SessionLocal()
     try:
+        # Colonne JSON dei testi multilingue. Devono precedere qualunque query su
+        # instruments/factors/questionnaire_items/certified_strategies: i modelli
+        # le dichiarano gia', quindi una SELECT prima dell'ALTER fallirebbe.
+        from .content_versions_seed import ensure_i18n_columns
+        ensure_i18n_columns(database.engine)
+
         # Tabella persistente per i codici anonimi di ricerca, usati negli export
         # per incrociare piu' questionari senza mostrare l'identita' reale.
         try:
@@ -1051,6 +1057,11 @@ def _seed_and_migrate():
         # Idempotente: riempie solo le lingue mancanti, non sovrascrive.
         from .guided_step_label_i18n import seed_step_label_i18n
         seed_step_label_i18n(db, models)
+
+        # Travaso dei testi nelle colonne JSON. Dopo il seed del catalogo, cosi'
+        # anche uno strumento appena seminato entra nei campi i18n. Idempotente.
+        from .content_versions_seed import backfill_i18n_columns
+        backfill_i18n_columns(db)
     finally:
         db.close()
 

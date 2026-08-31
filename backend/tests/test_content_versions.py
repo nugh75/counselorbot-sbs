@@ -54,6 +54,11 @@ _ensure_test_database()
 _engine = create_engine(_test_url)
 _TestSession = sessionmaker(bind=_engine, autoflush=False, autocommit=False)
 database.Base.metadata.create_all(bind=_engine)
+# `create_all` non altera una tabella gia' esistente: la migrazione delle colonne
+# JSON va applicata anche qui, ed e' la stessa che gira all'avvio dell'app.
+from backend.content_versions_seed import ensure_i18n_columns  # noqa: E402
+
+ensure_i18n_columns(_engine)
 
 PREFIX = f"t{uuid.uuid4().hex[:6]}"
 
@@ -186,6 +191,71 @@ def test_upsert_refuses_a_locale_outside_the_app():
             db.rollback()
             return
         raise AssertionError("una lingua fuori dalle sei deve essere rifiutata")
+    finally:
+        db.close()
+
+
+# --- campi i18n -------------------------------------------------------------
+
+from backend import i18n_fields  # noqa: E402
+from backend.content_versions_seed import backfill_i18n_columns  # noqa: E402
+
+
+def test_json_wins_over_the_legacy_column():
+    item = models.QuestionnaireItem(
+        instrument_code="X", item_number=1,
+        text_en="legacy english", text_i18n={"en": "json english", "fr": "francais"},
+    )
+    assert i18n_fields.localized(item, "text", "en") == "json english"
+    assert i18n_fields.localized(item, "text", "fr") == "francais"
+
+
+def test_legacy_column_is_still_read_when_json_is_missing():
+    item = models.QuestionnaireItem(instrument_code="X", item_number=1, text_sv="svenska")
+    assert i18n_fields.localized(item, "text", "sv") == "svenska"
+
+
+def test_a_missing_language_is_none_not_another_language():
+    item = models.QuestionnaireItem(instrument_code="X", item_number=1, text_en="english")
+    assert i18n_fields.localized(item, "text", "de") is None
+
+
+def test_merged_view_lists_every_language_that_has_text():
+    factor = models.Factor(
+        instrument_code="X", code="C1",
+        label_en="Elaborative", label_sv="Elaborativa", label_i18n={"fr": "Elaboratives"},
+    )
+    assert i18n_fields.merged_i18n(factor, "label") == {
+        "en": "Elaborative", "sv": "Elaborativa", "fr": "Elaboratives",
+    }
+    assert i18n_fields.locales_with_text(factor, "label") == {"en", "sv", "fr"}
+
+
+def test_empty_string_does_not_count_as_translated():
+    factor = models.Factor(instrument_code="X", code="C1", label_en="", label_i18n={"sv": "   "})
+    assert i18n_fields.locales_with_text(factor, "label") == set()
+
+
+def test_backfill_moves_legacy_columns_into_json_and_is_idempotent():
+    db = _TestSession()
+    try:
+        code = f"{PREFIX}-BF"
+        db.add(models.QuestionnaireItem(
+            instrument_code=code, item_number=1, text_en="english", text_sv="svenska",
+        ))
+        db.commit()
+        moved = backfill_i18n_columns(db)
+        assert moved >= 1
+        row = (
+            db.query(models.QuestionnaireItem)
+            .filter(models.QuestionnaireItem.instrument_code == code)
+            .first()
+        )
+        assert row.text_i18n == {"en": "english", "sv": "svenska"}
+        # la colonna vecchia non viene svuotata: un rollback del codice deve poter leggere ancora
+        assert row.text_en == "english"
+        # seconda passata: nessuna riga toccata
+        assert backfill_i18n_columns(db) == 0
     finally:
         db.close()
 
