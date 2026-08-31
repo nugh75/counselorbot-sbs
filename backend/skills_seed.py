@@ -157,7 +157,7 @@ and overriding them only hides them.
 
 `task_type`, one of: `thesis-chapter`, `article`, `position`,
 `research-question`, `systematic-review`, `empirical-study`, `teaching-unit`,
-`intervention`, `study-path`, `personal-project`.
+`intervention`, `study-path`, `personal-project`, `concept-exploration`.
 
 **Branches.** A `task` node is work that came out of the reasoning and must be
 settled before the main idea can be: "first I have to see what already exists"
@@ -192,6 +192,7 @@ DIAGRAM_EDGE_KINDS_POLICY_MARKER = "skills_diagram_edge_kinds_v1"
 DIAGRAM_ICONS_POLICY_MARKER = "skills_diagram_icons_v1"
 IDEA_FOCUS_POLICY_MARKER = "skills_idea_focus_v2"
 IDEA_WAYFINDER_POLICY_MARKER = "skills_idea_wayfinder_v1"
+IDEA_CONCEPT_POLICY_MARKER = "skills_idea_concept_v1"
 SKILLS_BUDGET_POLICY_MARKER = "skills_total_budget_4500_v1"
 # Valore di serie prima dell'allargamento: le installazioni ferme li' sono
 # le uniche da aggiornare.
@@ -199,6 +200,8 @@ PREVIOUS_TOTAL_MAX_CHARS = "3000"
 # Contratto della mappa prima della diagnosi wayfinder: riconosce le
 # installazioni ancora sul testo di serie, le uniche da aggiornare.
 IDEA_FOCUS_INSTRUCTIONS_EN_V1_MD5 = "b324b198d0f5f90d660819c980b43848"
+# Contratto immediatamente precedente alla variante concetto/costrutto.
+IDEA_FOCUS_INSTRUCTIONS_EN_PRE_CONCEPT_MD5 = "61399a693ed8567e25338a04ee2631f6"
 # Contratto del diagramma prima dei tipi di arco: serve a riconoscere le
 # installazioni ancora sul testo di serie, che sono le uniche da aggiornare.
 CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V1_MD5 = "8a3890a53e860a50876501193da698bf"
@@ -690,6 +693,35 @@ def apply_idea_wayfinder_policy(db) -> bool:
         key=IDEA_WAYFINDER_POLICY_MARKER,
         value="applied",
         description="Migrazione una tantum: diagnosi wayfinder nel contratto della mappa Idea.",
+    ))
+    db.commit()
+    return updated
+
+
+def apply_idea_concept_policy(db) -> bool:
+    """Aggiunge il task concetto al contratto standard senza toccare i custom."""
+    marker = db.query(models.Config).filter(
+        models.Config.key == IDEA_CONCEPT_POLICY_MARKER
+    ).first()
+    if marker is not None:
+        return False
+
+    seed_skills(db)
+    skill = db.query(models.Skill).filter(models.Skill.slug == "idea-focus").first()
+    updated = False
+    if skill is not None:
+        current = (skill.instructions_i18n or {}).get("en", "")
+        digest = hashlib.md5(current.encode("utf-8")).hexdigest()
+        if digest == IDEA_FOCUS_INSTRUCTIONS_EN_PRE_CONCEPT_MD5:
+            skill.instructions_i18n = {"en": IDEA_FOCUS_INSTRUCTIONS_EN}
+            updated = True
+        elif current != IDEA_FOCUS_INSTRUCTIONS_EN:
+            logger.info("idea-focus personalizzata dall'admin: variante concetto non imposta")
+
+    db.add(models.Config(
+        key=IDEA_CONCEPT_POLICY_MARKER,
+        value="applied",
+        description="Migrazione una tantum: task concetto/costrutto nel contratto Idea.",
     ))
     db.commit()
     return updated

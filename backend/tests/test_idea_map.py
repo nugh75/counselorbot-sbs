@@ -517,21 +517,29 @@ def _closed_root(task_type: str):
 
 def test_work_to_do_closes_with_a_plan():
     text = map_context(_closed_root("teaching-unit"))
-    assert "Put an operational plan" in text
+    assert "Put an explicit production plan" in text
 
 
-def test_work_to_understand_closes_without_one():
-    # Una domanda di ricerca finisce quando e' falsificabile: un piano
-    # fingerebbe una certezza che non c'e'.
+def test_work_to_understand_also_closes_with_a_plan():
+    # Anche quando l'esito principale e' una comprensione, Idea deve tradurre
+    # la mappa in un piano esplicito per produrre/sviluppare quell'idea.
     text = map_context(_closed_root("research-question"))
-    assert "No operational plan here unless they ask" in text
-    assert "Put an operational plan" not in text
+    assert "Put an explicit production plan" in text
+    assert "No operational plan here unless they ask" not in text
 
 
-def test_which_tasks_end_in_something_to_do():
-    assert wants_plan("teaching-unit") and wants_plan("study-path")
-    assert not wants_plan("research-question") and not wants_plan("position")
-    assert not wants_plan(None)
+def test_every_idea_ends_with_an_explicit_plan():
+    for task_type in (
+        "teaching-unit", "study-path", "research-question", "position",
+        "concept-exploration", None,
+    ):
+        assert wants_plan(task_type)
+
+
+def test_concept_exploration_has_its_own_completion_profile():
+    assert required_roles("concept-exploration") == (
+        "idea", "evidence", "alternative", "open-question",
+    )
 
 
 def test_coming_back_to_a_closed_branch_offers_to_reopen_it():

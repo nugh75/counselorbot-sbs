@@ -20,7 +20,7 @@ class ChatRequest(schemas.BaseModel):
     memory_message: Optional[str] = None  # Solo testo reale dell'utente, senza istruzioni interne
     internal_message: bool = False  # Istruzione tecnica: non mostrarla come input studente nei log/PDF
     counselor_id: Optional[int] = None  # se valorizzato: persona + provider/model dal counselor
-    idea_variant: Optional[str] = None  # strumento Idea: student-path|student-open|research
+    idea_variant: Optional[str] = None  # Idea: student-path|student-open|research|concept
     idea_budget: Optional[int] = None   # scambi previsti per la sessione; 0/None = senza limite
 
 

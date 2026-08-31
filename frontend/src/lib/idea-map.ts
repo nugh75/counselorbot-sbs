@@ -3,7 +3,41 @@
 
 import { apiFetch } from '@/lib/auth';
 
-export type IdeaVariant = 'student-path' | 'student-open' | 'research';
+export type IdeaVariant = 'student-path' | 'student-open' | 'research' | 'concept';
+
+export interface IdeaReference {
+    filename: string;
+    kind: 'pdf' | 'text' | 'markdown';
+    characters: number;
+    truncated: boolean;
+    created_at: string | null;
+}
+
+export async function fetchIdeaReference(sessionId: string): Promise<IdeaReference | null> {
+    const response = await apiFetch(`/api/idea/reference?session_id=${encodeURIComponent(sessionId)}`);
+    if (!response.ok) return null;
+    const data = await response.json() as { reference?: IdeaReference | null };
+    return data.reference ?? null;
+}
+
+export async function uploadIdeaReference(sessionId: string, file: File): Promise<IdeaReference> {
+    const form = new FormData();
+    form.append('session_id', sessionId);
+    form.append('file', file);
+    const response = await apiFetch('/api/idea/reference', { method: 'POST', body: form });
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({})) as { detail?: string };
+        throw new Error(data.detail || 'Reference upload failed');
+    }
+    return response.json() as Promise<IdeaReference>;
+}
+
+export async function deleteIdeaReference(sessionId: string): Promise<boolean> {
+    const response = await apiFetch(`/api/idea/reference?session_id=${encodeURIComponent(sessionId)}`, {
+        method: 'DELETE',
+    });
+    return response.ok;
+}
 
 export const IDEA_ROLES = [
     'idea', 'assumption', 'evidence', 'alternative',

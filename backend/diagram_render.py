@@ -86,7 +86,7 @@ TASK_TYPES = (
     "thesis-chapter", "article", "position",
     "research-question", "systematic-review",
     "empirical-study", "teaching-unit", "intervention",
-    "study-path", "personal-project",
+    "study-path", "personal-project", "concept-exploration",
 )
 
 # Il ruolo letto a voce: la descrizione testuale deve dire perche' un nodo sta
