@@ -1596,10 +1596,15 @@ async def admin_promote_content_version(
     ).first()
     if not row:
         raise HTTPException(status_code=404, detail="Versione linguistica non trovata")
+    approved_by = (
+        current_user.get("username")
+        if isinstance(current_user, dict)
+        else getattr(current_user, "username", None)
+    ) or "admin"
     try:
         return content_version_service.promote(
             db, row, payload.target_status,
-            approved_by=current_user.get("username") or "admin",
+            approved_by=approved_by,
         )
     except ContentVersionError as e:
         raise HTTPException(status_code=400, detail=str(e))

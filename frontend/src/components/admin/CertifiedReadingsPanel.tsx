@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X, BadgeCheck, AlertTriangle, Search } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { ContentLanguageStatus } from './ContentLanguageStatus';
 
 type Lang = 'it' | 'en' | 'es' | 'fr' | 'de' | 'sv';
 const LANGS: Lang[] = ['it', 'en', 'es', 'fr', 'de', 'sv'];
@@ -381,6 +382,13 @@ export function CertifiedReadingsPanel() {
                     <button key={l} type="button" onClick={() => setLang(l)} className={chip(lang === l)}>{l.toUpperCase()}</button>
                 ))}
             </div>
+            {editingId !== 'new' && (
+                <ContentLanguageStatus
+                    contentType="certified_reading"
+                    contentKey={form.slug}
+                    locale={lang}
+                />
+            )}
             <div className="mt-2 space-y-3">
                 <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.readings.summary')}
                     <textarea className={areaCls} value={form.summary_i18n[lang] ?? ''}

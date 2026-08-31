@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X, Languages } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { ContentLanguageStatus } from './ContentLanguageStatus';
 
 // Le sei lingue dell'app: i testi vivono in campi JSON, non in colonne fisse.
 type Lang = 'it' | 'en' | 'es' | 'fr' | 'de' | 'sv';
@@ -257,6 +258,13 @@ export function CertifiedStrategiesPanel() {
                     <Languages className="h-4 w-4" />{t('admin.certified.translate')}
                 </button>
             </div>
+            {editingId !== 'new' && (
+                <ContentLanguageStatus
+                    contentType="certified_strategy"
+                    contentKey={form.slug}
+                    locale={lang}
+                />
+            )}
             <div className="mt-2 space-y-3">
                 <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.certified.name')}
                     <input className={inputCls} value={fieldValue('name_i18n')} onChange={(e) => setField('name_i18n', e.target.value)} />
