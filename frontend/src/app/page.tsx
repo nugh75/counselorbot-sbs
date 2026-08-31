@@ -33,6 +33,7 @@ import { getResume, setResume } from '@/lib/resume';
 import { deleteFrozenSession, getFrozenSession, type FrozenSessionDetail } from '@/lib/frozen-session';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
+import { shouldReviewNotebookBeforeInstrument } from '@/lib/notebook-flow';
 
 
 type Step = 'intro' | 'base' | 'notebook' | 'counselor-select' | 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'farewell';
@@ -225,9 +226,11 @@ export default function Home() {
     // rivendica subito, altrimenti si sceglie fra intro e percorso quando i
     // dati dello studente sono arrivati.
     const [ready, setReady] = useState(false);
-    // Revisione del taccuino: una volta per giro, da qualunque schermata si parta.
+    // Il taccuino apre soltanto il primo percorso; dopo resta nell'area personale
+    // e viene proposto alla conclusione di ogni chat guidata.
     const [notebookReviewed, setNotebookReviewed] = useState(false);
     const entryClaimed = useRef(false);
+    const hasCompletedQuestionnaires = (savedResults?.length ?? 0) > 0;
 
     useEffect(() => {
         getIdentity().then(setIdentity);
@@ -274,7 +277,7 @@ export default function Home() {
     // Dove si torna a percorso finito: al percorso se c'è una storia, alla
     // presentazione se è la prima volta.
     const homeStep = (): Step => (
-        (savedResults && savedResults.length > 0) || notebookUpdatedAt ? 'base' : 'intro'
+        hasCompletedQuestionnaires || notebookUpdatedAt ? 'base' : 'intro'
     );
 
     useEffect(() => {
@@ -396,7 +399,7 @@ export default function Home() {
         if (!existingSessionId) {
             addCompletedProfile(questionnaire.id, newSessionId, {});
             try {
-                await apiFetch('/api/questionnaire-result', {
+                const response = await apiFetch('/api/questionnaire-result', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -405,6 +408,10 @@ export default function Home() {
                         scores: {},
                     }),
                 });
+                if (response.ok) {
+                    const saved = await response.json() as SavedResult;
+                    setSavedResults((current) => [...(current ?? []), saved]);
+                }
             } catch (e) {
                 console.error("Failed to save questionnaire result", e);
             }
@@ -423,8 +430,8 @@ export default function Home() {
     };
 
     // Avvio di uno strumento, dal selettore o dalla schermata del percorso. Il
-    // taccuino resta la prima tappa di ogni giro (è lì che si registra la
-    // revisione di inizio sessione), ma una volta sola.
+    // taccuino precede soltanto il primo strumento: chi ha già una compilazione
+    // salvata entra direttamente nel percorso e lo ritrova alla fine della chat.
     const handleQuestionnaireSelect = (questionnaire: QuestionnaireConfig) => {
         setSelectedQuestionnaire(questionnaire);
         setSelectedInstrumentId(questionnaire.id);
@@ -432,7 +439,7 @@ export default function Home() {
         setPdfToken(undefined);
         setSessionId('');
         setExperience(null);
-        if (!notebookReviewed) {
+        if (shouldReviewNotebookBeforeInstrument(hasCompletedQuestionnaires, notebookReviewed)) {
             setStep('notebook');
             return;
         }
@@ -537,7 +544,7 @@ export default function Home() {
 
         // Salva risultati questionario su DB
         try {
-            await apiFetch('/api/questionnaire-result', {
+            const response = await apiFetch('/api/questionnaire-result', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -546,6 +553,10 @@ export default function Home() {
                     scores: scores,
                 }),
             });
+            if (response.ok) {
+                const saved = await response.json() as SavedResult;
+                setSavedResults((current) => [...(current ?? []), saved]);
+            }
         } catch (e) {
             console.error("Failed to save questionnaire result", e);
         }
@@ -582,7 +593,7 @@ export default function Home() {
 
     const goBack = () => {
         if (step === 'notebook') setStep(homeStep());
-        else if (step === 'questionnaire-select') setStep('notebook');
+        else if (step === 'questionnaire-select') setStep(hasCompletedQuestionnaires ? homeStep() : 'notebook');
         else if (step === 'counselor-select') setStep(selectedQuestionnaire ? 'questionnaire-select' : homeStep());
         else if (step === 'method-select') setStep('counselor-select');
         else if (step === 'manual-input' || step === 'upload-input') setStep('method-select');
@@ -681,18 +692,20 @@ export default function Home() {
     }, {});
     const completedTypes = Object.keys(lastCompiledAt) as QuestionnaireType[];
 
-    // Orientamento percorso: mappa lo step interno alle fasi visibili. Il taccuino
-    // è la prima tappa (generale, indipendente dallo strumento), subito dopo l'intro.
-    const flowStages = ['CounselorBot', t('flow.taccuino'), t('flow.select'), t('flow.counselor'), t('flow.input'), t('flow.profile'), t('flow.chat'), t('flow.done')];
+    // Il taccuino compare nell'orientamento soltanto finché serve come intake.
+    const flowStages = hasCompletedQuestionnaires
+        ? ['CounselorBot', t('flow.select'), t('flow.counselor'), t('flow.input'), t('flow.profile'), t('flow.chat'), t('flow.done')]
+        : ['CounselorBot', t('flow.taccuino'), t('flow.select'), t('flow.counselor'), t('flow.input'), t('flow.profile'), t('flow.chat'), t('flow.done')];
+    const stageOffset = hasCompletedQuestionnaires ? 0 : 1;
     const stageIndex =
         step === 'intro' ? 0
             : step === 'notebook' ? 1
-                : step === 'questionnaire-select' ? 2
-                    : step === 'counselor-select' ? 3
-                        : step === 'method-select' || step === 'manual-input' || step === 'upload-input' ? 4
-                            : step === 'dashboard' ? 5
-                                : step === 'interaction' ? 6
-                                    : 7;
+                : step === 'questionnaire-select' ? 1 + stageOffset
+                    : step === 'counselor-select' ? 2 + stageOffset
+                        : step === 'method-select' || step === 'manual-input' || step === 'upload-input' ? 3 + stageOffset
+                            : step === 'dashboard' ? 4 + stageOffset
+                                : step === 'interaction' ? 5 + stageOffset
+                                    : 6 + stageOffset;
 
     return (
         <div className="page-wide space-y-8">
@@ -720,7 +733,7 @@ export default function Home() {
                 >
                     {/* Step: Intro */}
                     {step === 'intro' && (
-                        <IntroScreen onStart={() => setStep('notebook')} />
+                        <IntroScreen onStart={() => setStep(hasCompletedQuestionnaires ? 'questionnaire-select' : 'notebook')} />
                     )}
 
                     {/* Step: percorso — schermata iniziale di chi è già passato di qui */}
@@ -733,7 +746,7 @@ export default function Home() {
                         />
                     )}
 
-                    {/* Step: Taccuino (sempre per primo, generale, indipendente dallo strumento) */}
+                    {/* Step: Taccuino — intake prima del primo strumento. */}
                     {step === 'notebook' && (
                         <div className="space-y-4">
                             <LearnerProfileCard
