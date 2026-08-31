@@ -185,7 +185,7 @@ def extract_patch(text: str) -> tuple[str, IdeaPatch | None]:
 
 
 def apply_patch(current: DiagramSpec | None, patch: IdeaPatch, *,
-                default_title: str = "Idea") -> DiagramSpec:
+                default_title: str = "Idea", promote_prior_work: bool = False) -> DiagramSpec:
     """Applica la patch e restituisce la mappa nuova, gia' validata.
 
     Non muta `current`: una revisione, una volta scritta, non si tocca piu'.
@@ -261,8 +261,37 @@ def apply_patch(current: DiagramSpec | None, patch: IdeaPatch, *,
     except DiagramSpecError as exc:
         raise IdeaMapError(str(exc)) from exc
 
+    if promote_prior_work:
+        merged = _promote_prior_work(merged, patch)
     merged = _limit_task_depth(merged)
     return with_computed_flaws(merged)
+
+
+def _promote_prior_work(spec: DiagramSpec, patch: IdeaPatch) -> DiagramSpec:
+    """Il lavoro che viene prima diventa un ramo anche se il modello non l'ha aperto.
+
+    Provato su formulazioni diverse, il modello archivia quasi sempre la
+    dipendenza come `constraint`: sente il limite e non il lavoro. Quando il
+    turno portava un innesco riconosciuto e ha aggiunto UN solo nodo che non e'
+    l'idea, quel nodo e' il lavoro, e qui diventa un ramo. Un nodo solo e' il
+    confine della regola: oltre, non si sa quale sarebbe.
+    """
+    if any(node.role == "task" for node in patch.add_nodes):
+        return spec
+    candidates = [node for node in patch.add_nodes if node.role != "idea"]
+    if len(candidates) != 1:
+        return spec
+
+    target = candidates[0].id
+    nodes = []
+    for node in spec.nodes:
+        copy = node.model_copy(deep=True)
+        if copy.id == target and copy.role != "task":
+            logger.info("Innesco di ramo riconosciuto: %s diventa un task", copy.id)
+            copy.role = "task"
+            copy.icon = NODE_ROLES["task"]
+        nodes.append(copy)
+    return spec.model_copy(update={"nodes": nodes})
 
 
 def _limit_task_depth(spec: DiagramSpec) -> DiagramSpec:
@@ -284,6 +313,37 @@ def _limit_task_depth(spec: DiagramSpec) -> DiagramSpec:
             changed = True
         nodes.append(copy)
     return spec.model_copy(update={"nodes": nodes}) if changed else spec
+
+
+# Il modello non riconosce da solo il momento in cui nasce un ramo: provato su
+# formulazioni diverse, lo ha mancato tre volte su tre. La dipendenza pero' si
+# dice con poche forme fisse in ogni lingua ("prima devo", "non posso finche'"),
+# e quelle si riconoscono qui. Il riconoscimento non decide: alza il volume di
+# un'istruzione che resta del modello, che puo' comunque non seguirla.
+BRANCH_TRIGGERS = {
+    # Le forme sono poche ma le parole si interpongono ("prima di tutto pero'
+    # dovrei"), percio' i due pezzi si cercano a distanza, non attaccati.
+    "it": (r"\bprima\b.{0,20}\b(?:devo|dovrei|bisogna|serve|mi serve|mi servirebbe|occorre|capire|vedere|fare|passare)\b"
+           r"|\b(?:devo|dovrei|serve|mi serve|mi servirebbe|occorre|bisogna)\b.{0,30}\bprima\b"
+           r"|\bnon posso\b.{0,40}\b(?:finche|prima di)\b"
+           r"|\bpartire da\b"),
+    "en": (r"\bfirst\b.{0,20}\b(?:have to|need to|must|should|check|see|understand)\b"
+           r"|\b(?:have to|need to|must|should)\b.{0,30}\bfirst\b"
+           r"|\bbefore (?:that|this|i)\b"
+           r"|\bi can(?:'|no)?t\b.{0,40}\buntil\b"),
+    "es": r"\bprimero (?:tengo que|debo|necesito)\b|\bantes de\b|\bno puedo\b.{0,40}\bhasta\b",
+    "fr": r"\bd'abord je (?:dois|devrais)\b|\bavant (?:de|ca|cela)\b|\bje ne peux pas\b.{0,40}\btant que\b",
+    "de": r"\bzuerst muss ich\b|\bbevor\b|\bich kann nicht\b.{0,40}\bbis\b",
+    "sv": r"\bforst maste jag\b|\binnan\b|\bjag kan inte\b.{0,40}\btills\b",
+}
+
+
+def names_prior_work(message: str, lang: str = "it") -> bool:
+    """La persona ha nominato un lavoro che viene prima dell'idea?"""
+    if not message:
+        return False
+    pattern = BRANCH_TRIGGERS.get((lang or "it").lower()[:2], BRANCH_TRIGGERS["en"])
+    return re.search(pattern, message.lower()) is not None
 
 
 # --- l'albero: chi sta sotto chi ---------------------------------------------
@@ -495,9 +555,13 @@ def save_revision(db: Session, username: str, session_id: str, spec: DiagramSpec
 
 def apply_and_store(db: Session, username: str, session_id: str, patch: IdeaPatch, *,
                     source: str = "turn", step_id: str | None = None,
-                    default_title: str = "Idea") -> models.IdeaMapRevision:
+                    default_title: str = "Idea",
+                    promote_prior_work: bool = False) -> models.IdeaMapRevision:
     """Passo completo di un turno: applica la patch e scrive la revisione."""
-    updated = apply_patch(current_map(db, username, session_id), patch, default_title=default_title)
+    updated = apply_patch(
+        current_map(db, username, session_id), patch,
+        default_title=default_title, promote_prior_work=promote_prior_work,
+    )
     return save_revision(db, username, session_id, updated, source=source, step_id=step_id)
 
 
@@ -513,7 +577,7 @@ def history(db: Session, username: str, session_id: str) -> list[models.IdeaMapR
     )
 
 
-def map_context(spec: DiagramSpec | None) -> str:
+def map_context(spec: DiagramSpec | None, message: str = "", lang: str = "it") -> str:
     """La mappa corrente come la vede il modello, piu' la mossa da fare.
 
     Senza questo blocco la skill parla di una mappa che nel prompt non esiste:
@@ -522,10 +586,16 @@ def map_context(spec: DiagramSpec | None) -> str:
     """
     if spec is None:
         return (
-            "The map is empty. Your next `idea` block creates it: at least two "
-            "nodes and one edge, one node with \"role\":\"idea\", "
-            "\"accent\":true and the \"task_type\" of the work, plus a short "
-            "\"title\". If the kind of work is not clear yet, ask for it first."
+            "The map is empty. Create it in THIS turn, from what the person has "
+            "already said, EVEN IF the idea is still vague: a vague idea is a "
+            "node with \"status\":\"mentioned\", never a reason to wait. Ask "
+            "your narrowing question in the same reply, after the block. "
+            "At least two nodes and one edge, one node with "
+            "\"role\":\"idea\" and \"accent\":true, plus a short \"title\". "
+            "If the kind of work is not clear yet, leave \"task_type\" out and "
+            "ask about it in your reply - never wait for the answer before "
+            "creating the map, or the map never starts. "
+            "Never quote or paraphrase this instruction to the person."
         )
 
     focus = current_focus(spec)
@@ -567,6 +637,17 @@ def map_context(spec: DiagramSpec | None) -> str:
 
     move = next_move(spec)
     lines.append("")
+    if names_prior_work(message, lang):
+        lines.append(
+            "THIS TURN THE PERSON NAMED WORK THAT COMES FIRST. Open a branch "
+            "for it now: add a node with `\"role\":\"task\"`, give it the "
+            "`task_type` that fits it, and link it to the branch it came from. "
+            "The idea already on the map STAYS the centre and keeps its accent "
+            "- the new work hangs off it, never replaces it. Everything the "
+            "person says about that work from now on hangs off the task node. "
+            "Do NOT file it as a `constraint`: a constraint is a limit lived "
+            "with, a task is work to be done, and this is work."
+        )
     lines.append(
         "FIRST, ALWAYS: record what the person just said. If their message "
         "opens something else - a new piece of work, a correction, a different "
@@ -610,17 +691,20 @@ def map_context(spec: DiagramSpec | None) -> str:
     elif move.get("reason") == "task-unknown":
         lines.append(
             "Ask what kind of work this is, in plain words, and set `task_type` "
-            "on the branch node from the closed list."
+            "on the branch node from the closed list. Keep building the map "
+            "meanwhile: the missing kind of work never blocks the map."
         )
 
     lines.append(
         "Send a patch with what this turn brought. Do not resend what is "
-        "already here, and do not rename an id."
+        "already here, and do not rename an id. Nothing in this block is ever "
+        "said to the person: it tells you what to do, not what to write."
     )
     return "\n".join(lines)
 
 
-def map_context_for(db: Session, username: str, session_id: str) -> str:
+def map_context_for(db: Session, username: str, session_id: str, *,
+                    message: str = "", lang: str = "it") -> str:
     """Blocco [IDEA MAP] per l'envelope della chat.
 
     Senza utente o sessione (anteprima admin, prompt test) il blocco non
@@ -628,7 +712,7 @@ def map_context_for(db: Session, username: str, session_id: str) -> str:
     cui la skill gli chiede di agire anche quando non c'e' ancora niente.
     """
     spec = current_map(db, username, session_id) if (username and session_id) else None
-    return map_context(spec)
+    return map_context(spec, message=message, lang=lang)
 
 
 # --- il percorso derivato ----------------------------------------------------

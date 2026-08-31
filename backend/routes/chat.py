@@ -19,7 +19,7 @@ from ..ai_service import AIService, AIError
 from .. import pii
 from ..api_models import ChatRequest, QsaAuditRequest, TTSRequest
 from ..diagram_blocks import strip_for_speech
-from ..idea_map import IDEA_INSTRUMENT, IdeaMapError, apply_and_store, extract_patch
+from ..idea_map import IDEA_INSTRUMENT, IdeaMapError, apply_and_store, extract_patch, names_prior_work
 from ..memory_service import session_memory
 from ..strategy_memory import shared_response_memory
 from ..skills import engine as skills_engine
@@ -338,7 +338,8 @@ def _apply_idea_variant_directive(system_prompt: str, ai_service, request) -> st
 
 
 def _apply_idea_patch(response_content: str, *, questionnaire_type: str, username: str | None,
-                      session_id: str, step_id: str | None) -> tuple[str, int | None]:
+                      session_id: str, step_id: str | None,
+                      user_message: str = "", lang: str = "it") -> tuple[str, int | None]:
     """Toglie la patch della mappa dal testo e la fonde nella mappa di sessione.
 
     Il blocco non deve arrivare allo studente ne' finire nella memoria della
@@ -352,7 +353,8 @@ def _apply_idea_patch(response_content: str, *, questionnaire_type: str, usernam
     map_db = database.SessionLocal()
     try:
         revision = apply_and_store(
-            map_db, username, session_id, patch, source="turn", step_id=step_id
+            map_db, username, session_id, patch, source="turn", step_id=step_id,
+            promote_prior_work=names_prior_work(user_message, lang),
         )
         return cleaned, revision.id
     except IdeaMapError as exc:
@@ -553,6 +555,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         username=identity.get("username"),
         session_id=session_id,
         step_id=request.phase,
+        user_message=request.message or "",
+        lang=request.language or "it",
     )
 
     if _should_sanitize_ztpi_text(request.mode, request.phase):
@@ -925,6 +929,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 username=identity.get("username"),
                 session_id=session_id,
                 step_id=request.phase,
+                user_message=request.message or "",
+                lang=request.language or "it",
             )
             if not response_content.strip():
                 raise AIError(
