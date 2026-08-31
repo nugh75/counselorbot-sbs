@@ -13,16 +13,10 @@ import { cn } from '@/lib/utils';
 import { fetchCounselors, getSelectedCounselorId, subscribeToCounselor } from '@/lib/counselor';
 import { clearFlowPrefs, getExperiencePref, getInputMethodPref, subscribeToFlowPrefs } from '@/lib/session-prefs';
 import { LOCAL_RESUME_HREF, resumeHref, useResumeEntries } from '@/lib/use-resume-entries';
+import { RETURNING_HOME_TOOLS } from '@/lib/returning-home-tools';
+import { CompassMark } from '@/components/ui/CompassMark';
 
 const STARTABLE: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', 'IDEA'];
-
-// Il resto degli strumenti: pagine a sé, senza punteggi e senza stato
-// "compilato", quindi stanno in una griglia loro e si aprono per link.
-const TOOLS: { href: string; titleKey: string; bodyKey: string }[] = [
-    { href: '/pqbl', titleKey: 'pqbl.card.title', bodyKey: 'pqbl.card.desc' },
-    { href: '/profilo/cambiamenti', titleKey: 'profileChanges.title', bodyKey: 'profileChanges.cardBody' },
-    { href: '/assistente', titleKey: 'assistant.title', bodyKey: 'assistant.subtitle' },
-];
 
 interface Props {
     // Ultima compilazione per strumento, in ISO; assente = mai compilato.
@@ -30,7 +24,6 @@ interface Props {
     notebookUpdatedAt: string | null;
     onStartInstrument: (questionnaire: QuestionnaireConfig) => void;
     onBrowseInstruments: () => void;
-    onReviewNotebook: () => void;
     onChangeCounselor: () => void;
     onOpenIntro: () => void;
 }
@@ -40,7 +33,6 @@ export function ReturningHome({
     notebookUpdatedAt,
     onStartInstrument,
     onBrowseInstruments,
-    onReviewNotebook,
     onChangeCounselor,
     onOpenIntro,
 }: Props) {
@@ -83,9 +75,19 @@ export function ReturningHome({
 
     return (
         <div className="space-y-10 py-2">
-            <header>
-                <h1 className="font-display text-3xl font-bold text-slate-900">{t('base.title')}</h1>
-                <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-600">{t('base.subtitle')}</p>
+            <header className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <h1 className="font-display text-3xl font-bold text-slate-900">{t('base.title')}</h1>
+                    <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-600">{t('base.subtitle')}</p>
+                </div>
+                <button
+                    type="button"
+                    onClick={onOpenIntro}
+                    className="inline-flex shrink-0 items-center gap-2 self-start rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-indigo-300 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
+                >
+                    <CompassMark className="h-5 w-5" />
+                    {t('base.about')}
+                </button>
             </header>
 
             {resumeCount > 0 && (
@@ -164,37 +166,27 @@ export function ReturningHome({
                     {t('base.tools.title')}
                 </h2>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {TOOLS.map((tool) => (
+                    {RETURNING_HOME_TOOLS.map((tool) => (
                         <a
-                            key={tool.href}
+                            key={tool.id}
                             href={tool.href}
-                            className="glass-panel flex flex-col items-start gap-1 p-4 text-left transition-colors hover:border-indigo-300"
+                            className="glass-panel flex flex-col items-start gap-1 p-4 text-left transition-colors hover:border-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
                         >
                             <span className="font-bold text-slate-900">{t(tool.titleKey)}</span>
                             <span className="text-sm leading-snug text-slate-600">{t(tool.bodyKey)}</span>
+                            {tool.id === 'notebook' && (
+                                <span className="mt-1 font-mono text-xs text-slate-500">
+                                    {notebookUpdatedAt
+                                        ? t('base.notebook.updatedOn', { date: formatDate(notebookUpdatedAt) })
+                                        : t('base.notebook.empty')}
+                                </span>
+                            )}
                         </a>
                     ))}
                 </div>
             </section>
 
-            <section className="grid gap-4 sm:grid-cols-3">
-                <div>
-                    <span className="block h-0.5 w-10 rounded-full bg-teal-500" />
-                    <h3 className="mt-3 text-base font-bold text-slate-900">{t('base.notebook.title')}</h3>
-                    <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                        {notebookUpdatedAt
-                            ? t('base.notebook.updatedOn', { date: formatDate(notebookUpdatedAt) })
-                            : t('base.notebook.empty')}
-                    </p>
-                    <button
-                        type="button"
-                        onClick={onReviewNotebook}
-                        className="mt-1.5 text-sm font-medium text-indigo-700 hover:underline"
-                    >
-                        {t('base.notebook.action')}
-                    </button>
-                </div>
-
+            <section className="grid gap-4 sm:grid-cols-2">
                 <div>
                     <span className="block h-0.5 w-10 rounded-full bg-teal-500" />
                     <h3 className="mt-3 text-base font-bold text-slate-900">{t('base.counselor.title')}</h3>
@@ -228,15 +220,6 @@ export function ReturningHome({
                 </div>
             </section>
 
-            <footer className="border-t border-slate-100 pt-6">
-                <button
-                    type="button"
-                    onClick={onOpenIntro}
-                    className="text-sm font-medium text-slate-500 hover:text-indigo-700"
-                >
-                    {t('base.about')}
-                </button>
-            </footer>
         </div>
     );
 }

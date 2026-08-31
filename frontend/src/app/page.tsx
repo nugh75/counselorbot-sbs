@@ -730,7 +730,6 @@ export default function Home() {
                             notebookUpdatedAt={notebookUpdatedAt ?? null}
                             onStartInstrument={handleQuestionnaireSelect}
                             onBrowseInstruments={() => setStep('questionnaire-select')}
-                            onReviewNotebook={() => setStep('notebook')}
                             onChangeCounselor={() => setStep('counselor-select')}
                             onOpenIntro={() => setStep('intro')}
                         />
