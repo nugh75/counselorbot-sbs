@@ -1032,7 +1032,10 @@ def generate_idea_map_pdf(
 
     pdf.set_font("Helvetica", "B", 14)
     pdf.set_text_color(*APP_TEXT)
-    pdf.multi_cell(content_w, 7, _latin1(spec.title), new_x="LMARGIN", new_y="NEXT")
+    # Il titolo del PDF e' il nome del lavoro, non il segnaposto della mappa.
+    from .idea_map import effective_title
+
+    pdf.multi_cell(content_w, 7, _latin1(effective_title(spec)), new_x="LMARGIN", new_y="NEXT")
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(80, 80, 90)
     if username:

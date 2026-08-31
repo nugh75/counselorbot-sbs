@@ -12,6 +12,7 @@ from backend.idea_map import (
     apply_patch,
     closure_ready,
     computed_flaws,
+    effective_title,
     current_focus,
     extract_patch,
     branches,
@@ -588,6 +589,56 @@ def test_going_over_the_budget_is_not_an_error():
 def test_the_pace_reaches_the_model_on_an_empty_map():
     assert "PACE:" in map_context(None, budget=8)
     assert "PACE:" in map_context(_base(), budget=8)
+
+
+# --- il nome del lavoro ---
+
+def _untitled(label: str):
+    return apply_patch(None, parse_patch({
+        "add_nodes": [
+            {"id": "idea", "label": label, "role": "idea", "accent": True},
+            {"id": "q", "label": "Una domanda", "role": "open-question"},
+        ],
+        "add_edges": [{"from": "idea", "to": "q"}],
+    }))
+
+
+def test_a_map_with_no_title_takes_its_name_from_the_idea():
+    # Senza questo la voce nel portfolio si chiama "Idea" mentre il nodo
+    # centrale dice di cosa si tratta davvero.
+    spec = _untitled("Skill per eliminare ripetizioni semantiche")
+    assert spec.title == "Skill per eliminare ripetizioni semantiche"
+    assert effective_title(spec) == "Skill per eliminare ripetizioni semantiche"
+
+
+def test_a_title_the_model_gave_is_never_overwritten():
+    spec = apply_patch(None, parse_patch({
+        "title": "Tesi sulla dispersione",
+        "add_nodes": [
+            {"id": "idea", "label": "Qualcosa d'altro", "role": "idea", "accent": True},
+            {"id": "q", "label": "Q", "role": "open-question"},
+        ],
+        "add_edges": [{"from": "idea", "to": "q"}],
+    }))
+    assert spec.title == "Tesi sulla dispersione"
+    later = apply_patch(spec, parse_patch({"update": [{"id": "idea", "label": "Cambiata"}]}))
+    assert later.title == "Tesi sulla dispersione"
+
+
+def test_a_long_idea_is_cut_to_what_a_title_can_hold():
+    # L'etichetta di un nodo e' gia' capped a 80, ma una mappa scritta da una
+    # versione precedente puo' portarne una piu' lunga: il titolo la taglia.
+    spec = _untitled("Corta")
+    nodes = [node.model_copy(update={"label": "Parola " * 40}) if node.id == "idea" else node
+             for node in spec.nodes]
+    stretched = spec.model_copy(update={"title": "Idea", "nodes": nodes})
+    assert len(effective_title(stretched)) <= 80
+
+
+def test_a_map_saved_before_this_rule_reads_back_with_a_real_name():
+    spec = _untitled("Il tutoraggio tra pari")
+    stale = spec.model_copy(update={"title": "Idea"})
+    assert effective_title(stale) == "Il tutoraggio tra pari"
 
 
 if __name__ == "__main__":

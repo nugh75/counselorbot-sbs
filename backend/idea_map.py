@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 
 from . import models
 from .diagram_render import (
+    MAX_TITLE,
     NODE_FLAWS,
     NODE_ROLES,
     NODE_STATUSES,
@@ -34,6 +35,9 @@ from .diagram_render import (
 logger = logging.getLogger(__name__)
 
 IDEA_INSTRUMENT = "IDEA"
+# Titolo di ripiego quando il modello non ne manda uno. Non deve arrivare a
+# nessuno: e' il nome che finirebbe nel portfolio, nel PDF e nel disegno.
+PLACEHOLDER_TITLE = "Idea"
 FEATURE_KEY = "feature_idea_focus"
 
 # Senza un tipo di lavoro dichiarato valgono le quattro gambe generiche: di
@@ -284,6 +288,10 @@ def apply_patch(current: DiagramSpec | None, patch: IdeaPatch, *,
     except DiagramSpecError as exc:
         raise IdeaMapError(str(exc)) from exc
 
+    if not patch.title:
+        # Nessun titolo esplicito: lo prende dall'idea, cosi' la mappa ha un
+        # nome dal primo turno e non solo quando il modello si ricorda.
+        merged = merged.model_copy(update={"title": effective_title(merged)})
     if promote_prior_work:
         merged = _promote_prior_work(merged, patch, prior_work_message)
     merged = _limit_task_depth(merged)
@@ -527,6 +535,24 @@ def with_computed_flaws(spec: DiagramSpec) -> DiagramSpec:
     return spec.model_copy(update={"nodes": nodes})
 
 
+def effective_title(spec: DiagramSpec) -> str:
+    """Il nome della mappa, che nel portfolio e nel PDF e' il nome del lavoro.
+
+    Il modello dovrebbe mandarlo col primo blocco e spesso non lo fa: resta il
+    segnaposto, e la voce nel portfolio si chiama "Idea" mentre il nodo
+    centrale dice di cosa si tratta davvero. Quando manca, il titolo e'
+    l'idea stessa.
+    """
+    current = (spec.title or "").strip()
+    if current and current != PLACEHOLDER_TITLE:
+        return current
+    root = next((node for node in spec.nodes if node.accent), None)
+    if root is None:
+        root = next((node for node in spec.nodes if node.role == "idea"), None)
+    label = (getattr(root, "label", "") or "").strip()
+    return label[:MAX_TITLE] if label else PLACEHOLDER_TITLE
+
+
 def missing_roles(spec: DiagramSpec | None, task_node_id: str | None = None) -> list[str]:
     """Cosa manca a quel ramo perche' si possa dire a fuoco.
 
@@ -572,7 +598,10 @@ def current_map(db: Session, username: str, session_id: str) -> DiagramSpec | No
     if revision is None:
         return None
     try:
-        return parse_spec(revision.spec)
+        spec = parse_spec(revision.spec)
+        # Le mappe scritte prima di questa regola portano ancora il segnaposto:
+        # si sistemano leggendole, senza toccare cio' che e' gia' in tabella.
+        return spec.model_copy(update={"title": effective_title(spec)})
     except DiagramSpecError as exc:
         # Una revisione scritta da una versione precedente del contratto non
         # deve bloccare la sessione: si riparte dalla mappa vuota.
