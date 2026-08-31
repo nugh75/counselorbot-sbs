@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FolderOpen, ImagePlus, Loader2, Pencil, Plus, Save, Search, Trash2, X } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { FolderOpen, ImagePlus, Loader2, Maximize2, Pencil, Plus, Save, Search, Trash2, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import { toast } from '@/components/ui/Toast';
@@ -14,6 +15,8 @@ function imageQuerySuffix(): string {
 }
 
 interface PortfolioImage { id: string; filename?: string | null }
+
+interface LightboxImage { src: string; alt: string }
 
 interface PortfolioItem {
     id: number;
@@ -61,7 +64,10 @@ export function PortfolioCard() {
     const [form, setForm] = useState<EditForm | null>(null);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [lightbox, setLightbox] = useState<LightboxImage | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const lightboxTriggerRef = useRef<HTMLButtonElement | null>(null);
+    const lightboxCloseRef = useRef<HTMLButtonElement | null>(null);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -83,6 +89,31 @@ export function PortfolioCard() {
     }, [q, categoryFilter]);
 
     useEffect(() => { void load(); }, [load]);
+
+    useEffect(() => {
+        if (!lightbox) return;
+        const trigger = lightboxTriggerRef.current;
+        const previousOverflow = document.body.style.overflow;
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') setLightbox(null);
+            if (event.key === 'Tab') {
+                event.preventDefault();
+                lightboxCloseRef.current?.focus();
+            }
+        };
+        document.body.style.overflow = 'hidden';
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            document.removeEventListener('keydown', handleKeyDown);
+            trigger?.focus();
+        };
+    }, [lightbox]);
+
+    const openImage = (trigger: HTMLButtonElement, image: LightboxImage) => {
+        lightboxTriggerRef.current = trigger;
+        setLightbox(image);
+    };
 
     const setField = (key: keyof EditForm, value: string) => {
         setForm((prev) => (prev ? { ...prev, [key]: value } : prev));
@@ -255,8 +286,21 @@ export function PortfolioCard() {
                             <div className="flex flex-wrap gap-3">
                                 {form.images.map((img) => (
                                     <div key={img.id} className="relative h-24 w-24 overflow-hidden rounded-lg border border-slate-200">
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src={`/api/user/portfolio/${form.id}/images/${img.id}${imageQuerySuffix()}`} alt={img.filename || t('portfolio.imageAlt')} className="h-full w-full object-cover" />
+                                        <button
+                                            type="button"
+                                            onClick={(event) => openImage(event.currentTarget, {
+                                                src: `/api/user/portfolio/${form.id}/images/${img.id}${imageQuerySuffix()}`,
+                                                alt: img.filename || t('portfolio.imageAlt'),
+                                            })}
+                                            className="group h-full w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
+                                            aria-label={t('portfolio.openImage')}
+                                        >
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img src={`/api/user/portfolio/${form.id}/images/${img.id}${imageQuerySuffix()}`} alt={img.filename || t('portfolio.imageAlt')} className="h-full w-full object-cover" />
+                                            <span className="absolute inset-0 flex items-center justify-center bg-slate-950/0 text-white opacity-0 transition group-hover:bg-slate-950/35 group-hover:opacity-100 group-focus-visible:bg-slate-950/35 group-focus-visible:opacity-100">
+                                                <Maximize2 className="h-5 w-5" aria-hidden="true" />
+                                            </span>
+                                        </button>
                                         <button
                                             type="button"
                                             onClick={() => void deleteImage(img.id)}
@@ -311,8 +355,21 @@ export function PortfolioCard() {
                     {items.map((item) => (
                         <article key={item.id} className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
                             {item.images[0] ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={`/api/user/portfolio/${item.id}/images/${item.images[0].id}${imageQuerySuffix()}`} alt={item.title} className="h-32 w-full object-cover" />
+                                <button
+                                    type="button"
+                                    onClick={(event) => openImage(event.currentTarget, {
+                                        src: `/api/user/portfolio/${item.id}/images/${item.images[0].id}${imageQuerySuffix()}`,
+                                        alt: item.title,
+                                    })}
+                                    className="group relative h-32 w-full overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
+                                    aria-label={t('portfolio.openImage')}
+                                >
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={`/api/user/portfolio/${item.id}/images/${item.images[0].id}${imageQuerySuffix()}`} alt={item.title} className="h-full w-full object-cover" />
+                                    <span className="absolute inset-0 flex items-center justify-center bg-slate-950/0 text-white opacity-0 transition group-hover:bg-slate-950/35 group-hover:opacity-100 group-focus-visible:bg-slate-950/35 group-focus-visible:opacity-100">
+                                        <Maximize2 className="h-6 w-6" aria-hidden="true" />
+                                    </span>
+                                </button>
                             ) : (
                                 <div className="flex h-32 w-full items-center justify-center bg-slate-50 text-slate-300">
                                     <FolderOpen className="h-8 w-8" />
@@ -344,6 +401,35 @@ export function PortfolioCard() {
                         </article>
                     ))}
                 </div>
+            )}
+            {lightbox && typeof document !== 'undefined' && createPortal(
+                <div
+                    className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:p-6"
+                    onMouseDown={(event) => {
+                        if (event.currentTarget === event.target) setLightbox(null);
+                    }}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={lightbox.alt}
+                >
+                    <button
+                        ref={lightboxCloseRef}
+                        type="button"
+                        onClick={() => setLightbox(null)}
+                        className="absolute right-3 top-3 z-10 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white/90 text-slate-700 shadow hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:right-6 sm:top-6"
+                        aria-label={t('common.close')}
+                        autoFocus
+                    >
+                        <X className="h-5 w-5" aria-hidden="true" />
+                    </button>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                        src={lightbox.src}
+                        alt={lightbox.alt}
+                        className="block max-h-full max-w-full object-contain"
+                    />
+                </div>,
+                document.body,
             )}
         </section>
     );
