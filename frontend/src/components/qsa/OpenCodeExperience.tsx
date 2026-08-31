@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import {
     AlertCircle,
     BarChart3,
+    CheckCircle2,
     Eye,
     FileText,
     Monitor,
@@ -20,6 +21,7 @@ import { createTerminalSession, TerminalSession } from '@/lib/opencode-terminal'
 import { streamChat } from '@/lib/chat-stream';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
+import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import '@xterm/xterm/css/xterm.css';
 
 interface OpenCodeExperienceProps {
@@ -28,6 +30,7 @@ interface OpenCodeExperienceProps {
     pdfToken?: string;
     sessionId: string;
     locale: string;
+    onComplete: () => void;
 }
 
 interface ChatMessage {
@@ -45,6 +48,7 @@ export function OpenCodeExperience({
     pdfToken,
     sessionId,
     locale,
+    onComplete,
 }: OpenCodeExperienceProps) {
     const { t, tf } = useI18n();
     const terminalRef = useRef<TerminalSession | null>(null);
@@ -66,6 +70,7 @@ export function OpenCodeExperience({
     const [streaming, setStreaming] = useState(false);
     const [error, setError] = useState('');
     const [showPdf, setShowPdf] = useState(!!pdfToken);
+    const [concluding, setConcluding] = useState(false);
 
     const invertedSet = useMemo(
         () => new Set(questionnaire.invertedFactors || []),
@@ -352,6 +357,36 @@ export function OpenCodeExperience({
         }
     };
 
+    const concludePath = () => {
+        stopGeneration();
+        syncMemory();
+        setConcluding(true);
+    };
+
+    if (concluding) {
+        return (
+            <div className="mx-auto w-full max-w-2xl space-y-5">
+                <div className="glass-panel p-6">
+                    <div className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-teal-600" />
+                        <div>
+                            <h2 className="font-bold text-slate-900">{t('opencode.conclusion.title')}</h2>
+                            <p className="mt-1 text-sm leading-relaxed text-slate-600">{t('opencode.conclusion.body')}</p>
+                        </div>
+                    </div>
+                </div>
+                <LearnerProfileCard variant="update" sessionId={sessionId} />
+                <button
+                    type="button"
+                    onClick={onComplete}
+                    className="inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
+                >
+                    {t('opencode.conclusion.continue')}
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="flex w-full flex-col gap-4 xl:h-chat xl:flex-row xl:gap-6">
             <div className="flex min-h-[18rem] max-h-[min(60svh,34rem)] flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm xl:h-full xl:max-h-none xl:min-h-0">
@@ -431,6 +466,19 @@ export function OpenCodeExperience({
                             )}
                     </div>
                     <div className="flex flex-wrap items-center gap-1">
+                        <button
+                            type="button"
+                            onClick={concludePath}
+                            disabled={busy || streaming}
+                            className={`flex items-center gap-1.5 rounded-lg p-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
+                                viewMode === 'chat'
+                                    ? 'text-teal-700 hover:bg-teal-50'
+                                    : 'text-teal-300 hover:bg-slate-800'
+                            }`}
+                        >
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            {t('opencode.conclude')}
+                        </button>
                         <button
                             onClick={switchView}
                             disabled={!workspaceKey || (viewMode === 'terminal' && !graphicalAvailable)}

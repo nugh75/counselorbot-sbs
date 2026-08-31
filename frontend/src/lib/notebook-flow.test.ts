@@ -28,3 +28,13 @@ test('pQBL proposes a notebook update with its final results', () => {
     );
     assert.match(source, /phase === 'finalResults'[\s\S]*LearnerProfileCard[\s\S]*variant="update"/);
 });
+
+test('OpenCode has an explicit conclusion that proposes a notebook update', () => {
+    const source = readFileSync(
+        new URL('../components/qsa/OpenCodeExperience.tsx', import.meta.url),
+        'utf8',
+    );
+    assert.match(source, /opencode\.conclude/);
+    assert.match(source, /LearnerProfileCard variant="update"/);
+    assert.match(source, /onClick=\{onComplete\}/);
+});
