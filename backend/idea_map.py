@@ -54,54 +54,64 @@ TASK_PROFILES: dict[str, dict] = {
         "family": "claim",
         "required": ("idea", "evidence", "alternative"),
         "pivot": "what do you have to convince the reader to believe?",
+        "plan": True,
     },
     "article": {
         "family": "claim",
         "required": ("idea", "evidence", "alternative"),
         "pivot": "what does the field currently hold that you are changing?",
+        "plan": True,
     },
     "position": {
         "family": "claim",
         "required": ("idea", "evidence", "alternative"),
         "pivot": "who is right if you are wrong?",
+        "plan": False,
     },
     # --- deve produrre una domanda a cui rispondere ---
     "research-question": {
         "family": "question",
         "required": ("idea", "open-question", "constraint"),
         "pivot": "what would you see, if it were false?",
+        "plan": False,
     },
     "systematic-review": {
         "family": "question",
         "required": ("idea", "open-question", "constraint"),
         "pivot": "what does NOT go in, and why? Take one borderline case and decide it.",
+        "plan": True,
     },
     # --- deve produrre un disegno da eseguire ---
     "empirical-study": {
         "family": "design",
         "required": ("idea", "implication", "constraint", "step"),
         "pivot": "compared to what?",
+        "plan": True,
     },
     "teaching-unit": {
         "family": "design",
         "required": ("idea", "implication", "constraint", "step"),
         "pivot": "how do you tell that they have learnt it?",
+        "plan": True,
     },
     "intervention": {
         "family": "design",
         "required": ("idea", "implication", "constraint", "step"),
         "pivot": "and if nothing changes?",
+        "plan": True,
     },
     # --- deve produrre una scelta ---
     "study-path": {
         "family": "choice",
         "required": ("idea", "alternative", "decision"),
         "pivot": "what do you lose by choosing well?",
+        "plan": True,
     },
     "personal-project": {
         "family": "choice",
         "required": ("idea", "alternative", "decision"),
         "pivot": "who notices, if you do it?",
+        "plan": True,
     },
 }
 
@@ -116,6 +126,18 @@ def pivot_question(task_type: str | None) -> str:
     """La domanda che in quel lavoro manca sempre."""
     profile = TASK_PROFILES.get(task_type or "")
     return profile["pivot"] if profile else ""
+
+
+def wants_plan(task_type: str | None) -> bool:
+    """Questo lavoro finisce con qualcosa da fare, o con qualcosa da capire?
+
+    Una domanda di ricerca finisce quando e' falsificabile e una posizione
+    quando regge alla contro-argomentazione: chiuderle con un piano operativo
+    fingerebbe una certezza che non c'e'. Chiedere un piano resta sempre
+    possibile; qui si decide solo cosa la sintesi produce da sola.
+    """
+    profile = TASK_PROFILES.get(task_type or "")
+    return bool(profile["plan"]) if profile else False
 
 # Il modello scrive la patch in un blocco recintato, come gia' fa per i
 # diagrammi. Solo i blocchi chiusi: durante lo streaming il fence aperto resta
@@ -638,6 +660,14 @@ def map_context(spec: DiagramSpec | None, message: str = "", lang: str = "it",
             f"Branch in hand: {focus_node.id} ({focus_node.label}) - kind of work: {task_type}."
         )
 
+    if focus_node is not None and focus_node.closed:
+        lines.append(
+            "This branch is CLOSED. The person came back to it, so something "
+            "about it is not settled after all: ask what has changed, and if "
+            "they want to work on it again send `\"closed\": false` for it. "
+            "Do not treat it as finished just because it was."
+        )
+
     lines.append("Nodes on the map (use these ids; never rename one):")
     for node in spec.nodes:
         marks = []
@@ -716,6 +746,21 @@ def map_context(spec: DiagramSpec | None, message: str = "", lang: str = "it",
             "agrees, send `closed: true` with a one-sentence `conclusion`. "
             "Never close on your own."
         )
+        if wants_plan(getattr(node, "task_type", None)):
+            lines.append(
+                "This kind of work ends in something to do: with the read-back, "
+                "give an operational plan - concrete steps, in the order they "
+                "have to happen, saying which one comes first and what each one "
+                "needs. Use only what is on the map; do not invent steps."
+            )
+        else:
+            lines.append(
+                "This kind of work ends in something to understand, not "
+                "something to do: do NOT produce an operational plan unless the "
+                "person asks for one. A plan here would fake a certainty that "
+                "has not been reached. Close with what is now clear and what "
+                "stays open."
+            )
     elif move.get("reason") == "all-closed":
         lines.append(
             "The whole map is closed: this is the end of the session. Read the "
@@ -725,6 +770,20 @@ def map_context(spec: DiagramSpec | None, message: str = "", lang: str = "it",
             "nowhere. Do not save anything yourself and do not pick for them: "
             "the interface does the keeping, you only ask."
         )
+        root = by_id.get(root_id(spec) or "")
+        if wants_plan(getattr(root, "task_type", None)):
+            lines.append(
+                "Put an operational plan in that read-back: the concrete steps "
+                "in the order they have to happen, drawn from the map, with the "
+                "first one named. If a branch was closed, its conclusion is "
+                "part of the plan."
+            )
+        else:
+            lines.append(
+                "No operational plan here unless they ask: this work ends in "
+                "something understood. Say what is now clear, what stays open, "
+                "and what would change the answer."
+            )
     elif move.get("reason") == "task-unknown":
         lines.append(
             "Ask what kind of work this is, in plain words, and set `task_type` "
@@ -927,3 +986,29 @@ def set_focus(db: Session, username: str, session_id: str, node_id: str) -> mode
     if not any(node.id == node_id and _is_task_node(node) for node in spec.nodes):
         raise IdeaMapError(f"non e' un ramo: {node_id}")
     return save_revision(db, username, session_id, spec, source="focus", focus_id=node_id)
+
+
+def reopen(db: Session, username: str, session_id: str, node_id: str) -> models.IdeaMapRevision:
+    """Riapre un ramo chiuso e ci sposta il lavoro.
+
+    Una conclusione non si cancella riaprendo: resta scritta, e se il lavoro
+    cambia sara' il lavoro a riscriverla. Cancellarla qui perderebbe cio' che
+    quel ramo aveva stabilito prima del ripensamento.
+    """
+    spec = current_map(db, username, session_id)
+    if spec is None:
+        raise IdeaMapError("non c'e' ancora una mappa")
+    target = next((node for node in spec.nodes if node.id == node_id), None)
+    if target is None or not _is_task_node(target):
+        raise IdeaMapError(f"non e' un ramo: {node_id}")
+    if not target.closed:
+        raise IdeaMapError(f"il ramo {node_id} e' gia' aperto")
+
+    nodes = []
+    for node in spec.nodes:
+        copy = node.model_copy(deep=True)
+        if copy.id == node_id:
+            copy.closed = False
+        nodes.append(copy)
+    reopened = spec.model_copy(update={"nodes": nodes})
+    return save_revision(db, username, session_id, reopened, source="manual", focus_id=node_id)
