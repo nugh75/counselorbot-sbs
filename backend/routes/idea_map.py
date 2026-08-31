@@ -30,6 +30,7 @@ from ..idea_map import (
     current_focus,
     next_move,
     PACE_STOPS,
+    effective_title,
     pivot_question,
     reopen,
     set_focus,
@@ -268,7 +269,7 @@ def map_to_portfolio(
 def _keep_in_portfolio(db: Session, owner: str, spec, lang: str) -> dict:
     item = models.PortfolioItem(
         username=owner,
-        title=spec.title,
+        title=effective_title(spec),
         description=describe(spec, lang),
         category="idea",
         item_date=date.today().isoformat(),
@@ -323,7 +324,7 @@ def map_to_notebook(
 
 def _keep_in_notebook(db: Session, owner: str, spec, session_id: str) -> dict:
     step = next((node.label for node in spec.nodes if node.role == "step"), "")
-    line = f"Idea ({date.today().isoformat()}): {spec.title}."
+    line = f"Idea ({date.today().isoformat()}): {effective_title(spec)}."
     if step:
         line += f" Prossimo passo: {step}."
 
@@ -528,7 +529,7 @@ def conclude(
 
     return {
         "session_id": request.session_id,
-        "title": spec.title,
+        "title": effective_title(spec),
         "description": describe(spec, request.lang),
         "kept": kept,
         "pdf_url": f"/api/idea/map/pdf?session_id={request.session_id}&lang={request.lang}",

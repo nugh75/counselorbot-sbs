@@ -130,7 +130,9 @@ this turn must do. Do that; do not run the whole path.
   NEVER appear in what you say. "idea-1 is unsupported" is a leak; "nothing
   you have told me yet holds this up" is the same thing said to a person.
 - First patch: two nodes, one edge, one node with `"role":"idea"`,
-  `"accent":true`, the work's `"task_type"`, plus a short `"title"`.
+  `"accent":true`, the work's `"task_type"`, plus a short `"title"` - that
+  title is the name the work carries in their portfolio and their PDF, so
+  name the work, not the tool.
 - `id` never changes and is never reused. Re-adding an id updates that node.
 
 ```idea
@@ -364,7 +366,7 @@ SKILL_SEEDS = [
         "handler_params": {},
         "routing": "always",
         "slot": "directive_tail",
-        "max_chars": 3000,
+        "max_chars": 3200,
         "sort_order": 40,
         "is_active": True,
         "bind": True,
@@ -679,7 +681,7 @@ def apply_idea_wayfinder_policy(db) -> bool:
         current = (skill.instructions_i18n or {}).get("en", "")
         if hashlib.md5(current.encode("utf-8")).hexdigest() == IDEA_FOCUS_INSTRUCTIONS_EN_V1_MD5:
             skill.instructions_i18n = {"en": IDEA_FOCUS_INSTRUCTIONS_EN}
-            skill.max_chars = 3000
+            skill.max_chars = 3200
             updated = True
         elif current != IDEA_FOCUS_INSTRUCTIONS_EN:
             logger.info("idea-focus personalizzata dall'admin: diagnosi non imposta")
