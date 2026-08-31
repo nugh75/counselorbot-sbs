@@ -11,16 +11,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import models, schemas, auth, database
-from ..counselor_i18n import generate_translations, _ollama_base, _model
+from ..certified_translation import translate_strategies
+from ..content_versions_seed import derive_strategy_versions
 
 router = APIRouter()
 get_db = database.get_db
-
-# Lingue di destinazione gestite dal catalogo (la sorgente e' l'italiano).
-_TRANSLATE_LANGS = ("en", "es", "sv")
-# Campi tradotti: prefisso colonna -> nessun suffisso (es. name_it -> name_en...)
-_TRANSLATABLE_FIELDS = ("name", "recommended_when", "description")
-
 
 @router.get("/admin/certified-strategies", response_model=List[schemas.CertifiedStrategyResponse])
 async def list_certified_strategies(
@@ -51,6 +46,7 @@ async def create_certified_strategy(
     db.add(strategy)
     db.commit()
     db.refresh(strategy)
+    derive_strategy_versions(db)
     return strategy
 
 
@@ -107,28 +103,18 @@ async def translate_certified_strategy(
     current_user: models.User = Depends(auth.get_current_active_admin),
     db: Session = Depends(get_db),
 ):
-    """Riempie en/es/sv da IT per nome/quando/come via Ollama. L'admin poi rivede."""
+    """Riempie le cinque lingue da IT nel JSON; l'admin poi certifica per lingua."""
     strategy = db.query(models.CertifiedStrategy).filter(models.CertifiedStrategy.id == strategy_id).first()
     if not strategy:
         raise HTTPException(status_code=404, detail="Strategia non trovata")
-    base_url = _ollama_base(db)
-    model = _model(db)
-    translated_any = False
     try:
-        for prefix in _TRANSLATABLE_FIELDS:
-            source = (getattr(strategy, f"{prefix}_it", None) or "").strip()
-            if not source:
-                continue
-            translations = generate_translations(base_url, model, source)
-            for lang in _TRANSLATE_LANGS:
-                value = translations.get(lang)
-                if value:
-                    setattr(strategy, f"{prefix}_{lang}", value)
-                    translated_any = True
+        translated = translate_strategies(db, content_key=strategy.slug)
     except Exception as e:  # noqa: BLE001 - best-effort, Ollama puo' non essere raggiungibile
         raise HTTPException(status_code=502, detail=f"Traduzione non disponibile: {e}")
-    if not translated_any:
+    if not translated and not any(
+        (getattr(strategy, f"{field}_it", None) or "").strip()
+        for field in ("name", "recommended_when", "description")
+    ):
         raise HTTPException(status_code=400, detail="Nessun testo italiano da tradurre")
-    db.commit()
     db.refresh(strategy)
     return strategy

@@ -49,8 +49,15 @@ def _missing_langs(current: Dict[str, str], force: bool) -> list[str]:
     return [lang for lang in TOOL_TARGET_LANGS if not (current.get(lang) or "").strip()]
 
 
-def _register(db: Session, content_type: str, key: str, langs: list[str], model_label: str) -> None:
-    """Segna le lingue come `translated`, senza mai retrocedere una gia' certificata.
+def _register(
+    db: Session,
+    content_type: str,
+    key: str,
+    langs: list[str],
+    complete_langs: set[str],
+    model_label: str,
+) -> None:
+    """Registra provenienza e completezza senza autocertificare.
 
     Una lingua rivista e certificata da una persona non torna indietro perche' lo
     script e' passato di nuovo.
@@ -61,9 +68,35 @@ def _register(db: Session, content_type: str, key: str, langs: list[str], model_
             continue
         upsert_version(
             db, content_type, key, lang,
-            status="translated", source=f"llm:{model_label}",
+            status="translated" if lang in complete_langs else "draft",
+            source=f"llm:{model_label}",
             notes="traduzione automatica, da rivedere",
         )
+
+
+def _complete_strategy_langs(row: models.CertifiedStrategy) -> set[str]:
+    required = [
+        field for field in _STRATEGY_FIELDS
+        if (getattr(row, f"{field}_it", None) or "").strip()
+    ]
+    return {
+        lang for lang in TOOL_TARGET_LANGS
+        if required and all((merged_i18n(row, field).get(lang) or "").strip() for field in required)
+    }
+
+
+def _complete_reading_langs(row: models.CertifiedReading) -> set[str]:
+    required = [
+        field for field in _READING_FIELDS
+        if ((getattr(row, f"{field}_i18n", None) or {}).get("it") or "").strip()
+    ]
+    return {
+        lang for lang in TOOL_TARGET_LANGS
+        if required and all(
+            ((getattr(row, f"{field}_i18n", None) or {}).get(lang) or "").strip()
+            for field in required
+        )
+    }
 
 
 def translate_strategies(
@@ -73,13 +106,17 @@ def translate_strategies(
     model_label: str = "ollama",
     force: bool = False,
     limit: Optional[int] = None,
+    content_key: Optional[str] = None,
 ) -> int:
     """Traduce le strategie certificate dall'italiano. Ritorna le righe toccate."""
     if translate is None:
         translate, model_label = ollama_translator(db)
 
     touched = 0
-    rows = db.query(models.CertifiedStrategy).order_by(models.CertifiedStrategy.id).all()
+    query = db.query(models.CertifiedStrategy)
+    if content_key is not None:
+        query = query.filter(models.CertifiedStrategy.slug == content_key)
+    rows = query.order_by(models.CertifiedStrategy.id).all()
     for row in rows:
         if limit is not None and touched >= limit:
             break
@@ -102,7 +139,10 @@ def translate_strategies(
                         changed_langs.add(lang)
             setattr(row, f"{field}_i18n", current)
         if changed_langs:
-            _register(db, "certified_strategy", row.slug, sorted(changed_langs), model_label)
+            _register(
+                db, "certified_strategy", row.slug, sorted(changed_langs),
+                _complete_strategy_langs(row), model_label,
+            )
             touched += 1
     db.commit()
     if touched:
@@ -147,7 +187,10 @@ def translate_readings(
                         changed_langs.add(lang)
                 setattr(row, f"{field}_i18n", current)
         if changed_langs:
-            _register(db, "certified_reading", row.slug, sorted(changed_langs), model_label)
+            _register(
+                db, "certified_reading", row.slug, sorted(changed_langs),
+                _complete_reading_langs(row), model_label,
+            )
             touched += 1
     db.commit()
     if touched:

@@ -15,6 +15,7 @@ from typing import Dict, List
 from sqlalchemy.orm import Session
 
 from . import models
+from .content_version_service import served_locale
 from .i18n_fields import localized
 from .memory_embeddings import memory_embedder
 
@@ -103,7 +104,7 @@ class CertifiedStrategyMemory:
                 continue
             if not self._factors_satisfied(row, salient):
                 continue
-            alignment = self._profile_alignment(row, questionnaire, score_bands, language)
+            alignment = self._profile_alignment(db, row, questionnaire, score_bands, language)
             if alignment["role"] == "exclude":
                 continue
             profile_alignment[row.id] = alignment
@@ -114,8 +115,8 @@ class CertifiedStrategyMemory:
         if query_terms or scores_context:
             documents = [
                 f"{row.keywords or ''} "
-                f"{self._localized(row, 'name', language)} "
-                f"{self._localized(row, 'recommended_when', language)}".strip()
+                f"{self._localized(db, row, 'name', language)} "
+                f"{self._localized(db, row, 'recommended_when', language)}".strip()
                 for row in eligible
             ]
             ranked = memory_embedder.rank(
@@ -142,9 +143,9 @@ class CertifiedStrategyMemory:
 
         result = []
         for row in selected:
-            name = self._localized(row, "name", language)
-            recommended = self._localized(row, "recommended_when", language)
-            how = self._localized(row, "description", language)
+            name = self._localized(db, row, "name", language)
+            recommended = self._localized(db, row, "recommended_when", language)
+            how = self._localized(db, row, "description", language)
             if not (name or how or recommended):
                 continue
             result.append(
@@ -226,12 +227,13 @@ class CertifiedStrategyMemory:
             return "adequate"
         return "strength"
 
-    def _target_bands(self, row: models.CertifiedStrategy, language: str) -> set[str]:
-        text = self._localized(row, "recommended_when", language) or self._localized(row, "recommended_when", "it")
+    def _target_bands(self, db: Session, row: models.CertifiedStrategy, language: str) -> set[str]:
+        text = self._localized(db, row, "recommended_when", language)
         return {band for band, pattern in _TARGET_BAND_PATTERNS.items() if pattern.search(text or "")}
 
     def _profile_alignment(
         self,
+        db: Session,
         row: models.CertifiedStrategy,
         questionnaire: str,
         score_bands: dict[str, dict[str, str]],
@@ -245,7 +247,7 @@ class CertifiedStrategyMemory:
         if not code_bands:
             return {"role": "primary", "note": ""}
 
-        target_bands = self._target_bands(row, language)
+        target_bands = self._target_bands(db, row, language)
         if target_bands and not any(info["band"] in target_bands for info in code_bands.values()):
             return {"role": "exclude", "note": ""}
 
@@ -268,17 +270,14 @@ class CertifiedStrategyMemory:
             return 10
         return 0
 
-    def _localized(self, row: models.CertifiedStrategy, prefix: str, language: str) -> str:
-        """Testo nella lingua del turno, con ripiego sull'italiano.
-
-        Il ripiego resta di proposito: toglierlo significherebbe non consegnare
-        nessun consiglio certificato nelle lingue non ancora tradotte, e l'app
-        peggiorerebbe invece di migliorare. Lo stato per lingua e' nel registro
-        `content_language_versions`: quando le traduzioni saranno riviste e
-        certificate, il cancello potra' sostituire questo ripiego.
-        """
-        lang = language or "it"
-        return (localized(row, prefix, lang) or localized(row, prefix, "it") or "").strip()
+    def _localized(
+        self, db: Session, row: models.CertifiedStrategy, prefix: str, language: str
+    ) -> str:
+        """Testo nella lingua certificata richiesta, altrimenti italiano certificato."""
+        lang = served_locale(
+            db, "certified_strategy", row.slug, language or "it", fallbacks=("it",)
+        )
+        return (localized(row, prefix, lang) or "").strip() if lang else ""
 
     def _terms(self, text: str) -> set[str]:
         return set(re.findall(r"[A-Za-zÀ-ÿ0-9]{2,}", (text or "").casefold()))
