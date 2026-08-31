@@ -3552,6 +3552,20 @@ def test_student_booklet_multiple_schede_and_arrays():
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
+def test_student_booklet_can_create_idea_entry():
+    """Idea usa la stessa scheda narrativa degli altri strumenti."""
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        response = client.post("/user/student-booklets/instrument/IDEA", json={
+            "data": {"title": "Nuova idea"},
+        })
+
+        assert response.status_code == 200, response.text
+        assert response.json()["questionnaire_type"] == "IDEA"
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
 def test_certified_strategies_for_student_endpoint():
     """Lo studente vede solo le strategie certificate, attive e nello scope."""
     main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
