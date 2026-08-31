@@ -14,7 +14,11 @@ from .registry import SkillBinding
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_TOTAL_MAX_CHARS = 3000
+# Le istruzioni delle skill sono cresciute: a 3000 il contratto dei
+# diagrammi da solo ne occupava 1977 e il materiale certificato non ci
+# stava piu'. Il tetto vive per non far esplodere il prompt, non per
+# scegliere fra due blocchi che servono entrambi.
+DEFAULT_TOTAL_MAX_CHARS = 4500
 
 
 @dataclass
@@ -46,9 +50,19 @@ def _instructions(skill, language: str) -> str:
     return value.strip() if isinstance(value, str) else ""
 
 
+# Chi prende il budget per primo. Fuori dalle strutturali contava solo
+# `sort_order`, e un numero deciso quando due skill sono nate in momenti
+# diversi faceva passare un'illustrazione facoltativa davanti al materiale
+# della risposta: `concept-diagram` (optional, 35) si prendeva due terzi del
+# budget e `certified-advice` (primary, 50) restava senza, in silenzio.
+_ROUTING_RANK = {"always": 0, "support": 0, "primary": 1}
+_OPTIONAL_RANK = 2
+
+
 def _render_order(binding: SkillBinding) -> tuple:
-    # Le skill strutturali (`always`) hanno la precedenza sul budget complessivo.
-    return (0 if binding.skill.routing in {"always", "support"} else 1, binding.sort_order, binding.slug)
+    """Strutturali, poi il comportamento primario del turno, poi il resto."""
+    rank = _ROUTING_RANK.get(binding.skill.routing, _OPTIONAL_RANK)
+    return (rank, binding.sort_order, binding.slug)
 
 
 def render(bindings: list[SkillBinding], ctx: SkillContext, total_max_chars: int = DEFAULT_TOTAL_MAX_CHARS) -> SkillsResult:
