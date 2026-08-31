@@ -233,6 +233,26 @@ export function ReturningHome({
                             </article>
                         );
                     })}
+                    <article className="glass-panel flex flex-col gap-3 p-5 text-left transition-colors hover:border-indigo-300">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="h-1.5 w-1.5 rounded-full bg-ochre-500" />
+                            <h3 className="font-bold text-slate-900">{t('pqbl.card.title')}</h3>
+                            <span className="rounded-full bg-ochre-50 px-2 py-0.5 text-[10px] font-bold text-ochre-700">
+                                {t('pqbl.card.badge')}
+                            </span>
+                        </div>
+                        <p className="grow text-sm leading-relaxed text-slate-500">
+                            {t('pqbl.card.desc')}
+                        </p>
+                        <div className="pt-1">
+                            <Link
+                                href="/pqbl"
+                                className="inline-flex items-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
+                            >
+                                {t('pqbl.card.cta')}
+                            </Link>
+                        </div>
+                    </article>
                 </div>
             </section>
         </div>
