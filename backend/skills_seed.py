@@ -359,7 +359,7 @@ SKILL_SEEDS = [
         "handler_params": {},
         "routing": "always",
         "slot": "directive_tail",
-        "max_chars": 2900,
+        "max_chars": 3000,
         "sort_order": 40,
         "is_active": True,
         "bind": True,
@@ -674,7 +674,7 @@ def apply_idea_wayfinder_policy(db) -> bool:
         current = (skill.instructions_i18n or {}).get("en", "")
         if hashlib.md5(current.encode("utf-8")).hexdigest() == IDEA_FOCUS_INSTRUCTIONS_EN_V1_MD5:
             skill.instructions_i18n = {"en": IDEA_FOCUS_INSTRUCTIONS_EN}
-            skill.max_chars = 2900
+            skill.max_chars = 3000
             updated = True
         elif current != IDEA_FOCUS_INSTRUCTIONS_EN:
             logger.info("idea-focus personalizzata dall'admin: diagnosi non imposta")

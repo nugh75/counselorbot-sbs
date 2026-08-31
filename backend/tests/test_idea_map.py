@@ -471,6 +471,32 @@ def test_only_work_shows_up_in_the_tree():
     assert "c1" not in {b["id"] for b in branches(spec)}
 
 
+def test_the_map_contract_fits_the_budget_it_is_given():
+    """Un contratto piu' lungo del cap viene tagliato in silenzio.
+
+    E' gia' successo: a 2962 caratteri contro un cap di 2900 sparivano le due
+    regole finali, fra cui quella che impedisce al modello di togliere nodi
+    dalla mappa senza che la persona lo abbia chiesto. Nessun errore, nessun
+    log: solo un modello che si comporta peggio.
+    """
+    from backend.skills.engine import DEFAULT_TOTAL_MAX_CHARS, truncate
+    from backend.skills_seed import IDEA_FOCUS_INSTRUCTIONS_EN, SKILL_SEEDS
+
+    seed = next(s for s in SKILL_SEEDS if s["slug"] == "idea-focus")
+    length = len(IDEA_FOCUS_INSTRUCTIONS_EN)
+    assert length <= seed["max_chars"], (
+        f"il contratto ({length}) supera il proprio cap ({seed['max_chars']})"
+    )
+    assert length <= DEFAULT_TOTAL_MAX_CHARS, (
+        f"il contratto ({length}) supera il budget complessivo ({DEFAULT_TOTAL_MAX_CHARS})"
+    )
+    assert truncate(IDEA_FOCUS_INSTRUCTIONS_EN, seed["max_chars"]) == IDEA_FOCUS_INSTRUCTIONS_EN
+
+    # Le regole che sparivano per prime, essendo in fondo.
+    assert "`remove` only when they say it is wrong" in IDEA_FOCUS_INSTRUCTIONS_EN
+    assert "80 characters" in IDEA_FOCUS_INSTRUCTIONS_EN
+
+
 if __name__ == "__main__":
     import sys
 
