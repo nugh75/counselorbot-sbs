@@ -43,6 +43,16 @@ export function getExperiencePref(): ExperiencePref | null {
     return read(EXPERIENCE_KEY, ['standard', 'opencode'] as const);
 }
 
+// Idea offre due esperienze sostanzialmente diverse (mappa grafica e workspace
+// OpenCode): la scelta va mostrata a ogni nuova sessione, anche se altrove è
+// stata ricordata una modalità.
+export function experiencePrefForInstrument(
+    instrument: string,
+    preference: ExperiencePref | null,
+): ExperiencePref | null {
+    return instrument === 'IDEA' ? null : preference;
+}
+
 export function setExperiencePref(value: ExperiencePref | null): void {
     write(EXPERIENCE_KEY, value);
 }

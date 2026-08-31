@@ -27,7 +27,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { addCompletedProfile, getCompletedProfiles } from '@/lib/profile-tracker';
 import { apiFetch, ai4authLoginUrl, getIdentity, type Identity } from '@/lib/auth';
 import { getSelectedCounselorId, setSelectedCounselorId } from '@/lib/counselor';
-import { getExperiencePref, getInputMethodPref, setExperiencePref, setInputMethodPref } from '@/lib/session-prefs';
+import { experiencePrefForInstrument, getExperiencePref, getInputMethodPref, setExperiencePref, setInputMethodPref } from '@/lib/session-prefs';
 import { setSelectedInstrumentId } from '@/lib/instrument';
 import { getResume, setResume } from '@/lib/resume';
 import { deleteFrozenSession, getFrozenSession, type FrozenSessionDetail } from '@/lib/frozen-session';
@@ -413,10 +413,10 @@ export default function Home() {
         beginInteraction(newSessionId, questionnaire.id);
     };
 
-    // Apre la chat con la modalità già scelta in passato; senza preferenza la
-    // schermata di scelta compare come prima.
+    // Apre la chat con la modalità già scelta in passato; Idea fa eccezione,
+    // perché mappa grafica e OpenCode devono restare una scelta esplicita.
     const beginInteraction = (sid: string, instrument: string) => {
-        const pref = getExperiencePref();
+        const pref = experiencePrefForInstrument(instrument, getExperiencePref());
         setExperience(pref);
         if (pref) setResume({ instrument, sessionId: sid, experience: pref, counselorId: getSelectedCounselorId() });
         setStep('interaction');
