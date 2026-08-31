@@ -5814,11 +5814,25 @@ def test_an_invite_only_instrument_only_admits_the_counselors_that_name_it():
         # Senza strumento richiesto nessuno viene escluso.
         plain = {c["slug"]: c["suitable"] for c in client.get("/counselors").json()}
         assert plain["scope-open"] is True and plain["scope-invited"] is True
+
+        # `*` vale tutto, inviti compresi: un counselor buono per ogni strumento
+        # non va riscritto quando se ne aggiunge uno.
+        db2 = _TestSession()
+        try:
+            db2.add(models.Counselor(slug="scope-all", name="Ovunque", persona="x",
+                                     questionnaire_types=["*"], is_active=True))
+            db2.commit()
+        finally:
+            db2.close()
+        for code in ("IDEA", "QSA"):
+            rows = {c["slug"]: c["suitable"] for c in client.get(
+                "/counselors", params={"questionnaire_type": code}).json()}
+            assert rows["scope-all"] is True, f"`*` deve valere anche su {code}"
     finally:
         db = _TestSession()
         try:
             db.query(models.Counselor).filter(
-                models.Counselor.slug.in_(["scope-open", "scope-invited"])
+                models.Counselor.slug.in_(["scope-open", "scope-invited", "scope-all"])
             ).delete(synchronize_session=False)
             db.commit()
         finally:
