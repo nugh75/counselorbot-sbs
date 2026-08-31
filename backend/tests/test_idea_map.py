@@ -18,7 +18,9 @@ from backend.idea_map import (
     map_context,
     missing_roles,
     names_prior_work,
+    reopen as reopen_branch,
     resolve_focus,
+    wants_plan,
     next_move,
     parse_patch,
     required_roles,
@@ -495,6 +497,60 @@ def test_the_map_contract_fits_the_budget_it_is_given():
     # Le regole che sparivano per prime, essendo in fondo.
     assert "`remove` only when they say it is wrong" in IDEA_FOCUS_INSTRUCTIONS_EN
     assert "80 characters" in IDEA_FOCUS_INSTRUCTIONS_EN
+
+
+# --- riaprire, e cosa produce la chiusura ---
+
+def _closed_root(task_type: str):
+    return apply_patch(None, parse_patch({
+        "title": "Chiusa",
+        "add_nodes": [
+            {"id": "idea", "label": "Idea", "role": "idea", "accent": True,
+             "task_type": task_type, "closed": True, "conclusion": "Stabilito"},
+            {"id": "e1", "label": "Evidenza", "role": "evidence"},
+        ],
+        "add_edges": [{"from": "idea", "to": "e1"}],
+    }))
+
+
+def test_work_to_do_closes_with_a_plan():
+    text = map_context(_closed_root("teaching-unit"))
+    assert "Put an operational plan" in text
+
+
+def test_work_to_understand_closes_without_one():
+    # Una domanda di ricerca finisce quando e' falsificabile: un piano
+    # fingerebbe una certezza che non c'e'.
+    text = map_context(_closed_root("research-question"))
+    assert "No operational plan here unless they ask" in text
+    assert "Put an operational plan" not in text
+
+
+def test_which_tasks_end_in_something_to_do():
+    assert wants_plan("teaching-unit") and wants_plan("study-path")
+    assert not wants_plan("research-question") and not wants_plan("position")
+    assert not wants_plan(None)
+
+
+def test_coming_back_to_a_closed_branch_offers_to_reopen_it():
+    text = map_context(_closed_root("teaching-unit"), chosen_focus="idea")
+    assert "This branch is CLOSED" in text
+    assert '"closed": false' in text
+
+
+def test_reopening_keeps_what_the_branch_had_settled():
+    spec = _closed_root("teaching-unit")
+    nodes = []
+    for node in spec.nodes:
+        copy = node.model_copy(deep=True)
+        if copy.id == "idea":
+            copy.closed = False
+        nodes.append(copy)
+    reopened = spec.model_copy(update={"nodes": nodes})
+    idea = next(n for n in reopened.nodes if n.id == "idea")
+    # La conclusione resta: cancellarla perderebbe cio' che era stato stabilito
+    # prima del ripensamento.
+    assert idea.closed is False and idea.conclusion == "Stabilito"
 
 
 if __name__ == "__main__":
