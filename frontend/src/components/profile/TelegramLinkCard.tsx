@@ -58,7 +58,7 @@ const TEXTS = {
     },
 };
 
-export function TelegramLinkCard({ lang }: { lang: string }) {
+export function TelegramLinkCard({ lang, showHeading = true }: { lang: string; showHeading?: boolean }) {
     const texts = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
     const [status, setStatus] = useState<LinkStatus | null>(null);
     const [code, setCode] = useState<string | null>(null);
@@ -107,11 +107,17 @@ export function TelegramLinkCard({ lang }: { lang: string }) {
     };
 
     return (
-        <section className="glass-panel p-5 space-y-3" aria-labelledby="telegram-link-section">
-            <div className="flex items-center gap-2">
-                <Send className="h-4 w-4 text-slate-500" aria-hidden />
-                <h2 id="telegram-link-section" className="text-lg font-bold text-slate-800">{texts.title}</h2>
-            </div>
+        <section
+            className="glass-panel space-y-3 p-5"
+            aria-labelledby={showHeading ? 'telegram-link-section' : undefined}
+            aria-label={showHeading ? undefined : texts.title}
+        >
+            {showHeading && (
+                <div className="flex items-center gap-2">
+                    <Send className="h-4 w-4 text-slate-500" aria-hidden />
+                    <h2 id="telegram-link-section" className="text-lg font-bold text-slate-800">{texts.title}</h2>
+                </div>
+            )}
             <p className="text-sm text-slate-500">{texts.subtitle}</p>
             <p className="text-sm font-medium text-slate-700">
                 {status?.linked
