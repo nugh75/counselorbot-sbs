@@ -168,20 +168,19 @@ e il bug §1.2 muore per costruzione invece che per patch. L'italiano resta
 `draft` per sempre di proposito: la somministrazione italiana vive sul sito
 esterno (§9), e il registro lo dice invece di lasciarlo implicito.
 
-Per le strategie certificate: ogni riga con `status == "certified"` genera una
-riga di registro `(certified_strategy, slug, it, certified)`, perché il seed è
-italiano. Le altre lingue non nascono.
+Strategie, letture e le due famiglie di domande generano sempre tutte e sei le
+righe di registro: una lingua priva di testo nasce `draft`, una sorgente già
+approvata `certified`. In questo modo anche «non ancora tradotto» è uno stato
+esplicito e promuovibile dal pannello, non l'assenza di una riga.
 
-**Quando il cancello dei tool si accende.** Oggi
-`certified_strategy_service._localized` ripiega sull'italiano per qualunque
-lingua. In una chat tedesca arriva testo italiano: è il difetto da chiudere. Ma
-accendere il cancello nel sotto-progetto 1, prima che le traduzioni esistano,
-toglierebbe i consigli certificati a ogni lingua diversa dall'italiano senza
-darne di nuovi — l'app peggiorerebbe nell'intervallo. Quindi: il sotto-progetto
-1 scrive il registro e lascia il ripiego attivo; il cancello dei tool si accende
-nel sotto-progetto 2, nello stesso momento in cui le traduzioni entrano. Il
-cancello degli **strumenti** invece si accende subito, perché lì «non offerto» è
-già meglio dell'attuale «item inglesi sotto cornice spagnola».
+**Cancello dei tool.** Strategie e letture usano la lingua richiesta soltanto
+quando la relativa versione è `certified`. Una traduzione LLM in stato
+`translated` non raggiunge lo studente; nell'intervallo il servizio può
+ripiegare esclusivamente su una lingua sorgente certificata. Stato e
+provenienza della lingua selezionata sono visibili e promuovibili nel pannello.
+Il cancello degli **strumenti** resta più severo: una lingua sotto `pilot` non è
+somministrabile, perché «non offerto» è meglio di «item inglesi sotto cornice
+spagnola».
 
 ### 3.5 `SUPPORTED_LOCALES` derivato
 
