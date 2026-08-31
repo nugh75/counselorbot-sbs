@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Bot, ClipboardList, LayoutGrid, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, Users, type LucideIcon } from 'lucide-react';
+import { BookOpen, Bot, ClipboardList, LayoutGrid, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, Users, type LucideIcon } from 'lucide-react';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { HeaderCounselor } from './HeaderCounselor';
 import { HeaderInstrument } from './HeaderInstrument';
@@ -56,6 +56,8 @@ export function Header() {
 
     // Azioni di navigazione secondarie: in linea da `sm`, raccolte in un menu su mobile.
     const secondaryItems: SecondaryItem[] = [];
+    // Guida all'interfaccia: disponibile per tutti, anche senza login.
+    secondaryItems.push({ key: 'guide', href: '/guide', icon: BookOpen, label: t('nav.guide') });
     if (canOpenAssistant) {
         secondaryItems.push({ key: 'assistant', href: '/assistente', icon: Bot, label: t('assistant.title') });
     }
