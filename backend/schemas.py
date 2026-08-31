@@ -1053,6 +1053,9 @@ class CertifiedStrategyBase(BaseModel):
     description_en: Optional[str] = None
     description_es: Optional[str] = None
     description_sv: Optional[str] = None
+    name_i18n: Optional[Dict[str, str]] = None
+    recommended_when_i18n: Optional[Dict[str, str]] = None
+    description_i18n: Optional[Dict[str, str]] = None
     factor_codes: Optional[List[str]] = None
     match_mode: str = "any"  # any | all
     questionnaire_types: Optional[List[str]] = None
@@ -1151,6 +1154,9 @@ class CertifiedStrategyUpdate(BaseModel):
     description_en: Optional[str] = None
     description_es: Optional[str] = None
     description_sv: Optional[str] = None
+    name_i18n: Optional[Dict[str, str]] = None
+    recommended_when_i18n: Optional[Dict[str, str]] = None
+    description_i18n: Optional[Dict[str, str]] = None
     factor_codes: Optional[List[str]] = None
     match_mode: Optional[str] = None
     questionnaire_types: Optional[List[str]] = None
