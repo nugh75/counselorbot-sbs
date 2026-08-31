@@ -635,6 +635,7 @@ def _seed_and_migrate():
                 apply_diagram_icons_policy,
                 apply_english_skill_instructions_policy,
                 apply_idea_focus_policy,
+                apply_idea_wayfinder_policy,
                 apply_reading_and_translations_policy,
                 apply_specialized_skills_policy,
                 seed_skill_configs,
@@ -649,9 +650,10 @@ def _seed_and_migrate():
             diagram_changed = apply_diagram_edge_kinds_policy(db)
             diagram_icons_changed = apply_diagram_icons_policy(db)
             idea_changed = apply_idea_focus_policy(db)
+            wayfinder_changed = apply_idea_wayfinder_policy(db)
             if (configs_changed or skills_changed or policy_changed or specialized_changed
                     or i18n_changed or english_changed or diagram_changed
-                    or diagram_icons_changed or idea_changed):
+                    or diagram_icons_changed or idea_changed or wayfinder_changed):
                 logger.info("Seed skill completato")
         except Exception as e:
             logger.warning(f"Seed skill fallito: {e}")

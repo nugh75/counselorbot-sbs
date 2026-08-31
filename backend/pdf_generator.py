@@ -987,17 +987,23 @@ def generate_student_booklet_pdf(
 
 IDEA_PDF_TEXT = {
     "it": {"title": "Mappa dell'idea", "map": "La mappa", "words": "La mappa a parole",
-           "history": "Come e' cresciuta", "missing": "Manca ancora", "step": "Tappa"},
+           "history": "Come e' cresciuta", "missing": "Manca ancora", "step": "Tappa",
+           "decisions": "Le decisioni", "closed": "Rami conclusi"},
     "en": {"title": "Map of the idea", "map": "The map", "words": "The map in words",
-           "history": "How it grew", "missing": "Still missing", "step": "Stage"},
+           "history": "How it grew", "missing": "Still missing", "step": "Stage",
+           "decisions": "The decisions", "closed": "Closed branches"},
     "es": {"title": "Mapa de la idea", "map": "El mapa", "words": "El mapa en palabras",
-           "history": "Como ha crecido", "missing": "Todavia falta", "step": "Etapa"},
+           "history": "Como ha crecido", "missing": "Todavia falta", "step": "Etapa",
+           "decisions": "Las decisiones", "closed": "Ramas cerradas"},
     "fr": {"title": "Carte de l'idee", "map": "La carte", "words": "La carte en mots",
-           "history": "Comment elle a grandi", "missing": "Il manque encore", "step": "Etape"},
+           "history": "Comment elle a grandi", "missing": "Il manque encore", "step": "Etape",
+           "decisions": "Les decisions", "closed": "Branches closes"},
     "de": {"title": "Karte der Idee", "map": "Die Karte", "words": "Die Karte in Worten",
-           "history": "Wie sie gewachsen ist", "missing": "Es fehlt noch", "step": "Etappe"},
+           "history": "Wie sie gewachsen ist", "missing": "Es fehlt noch", "step": "Etappe",
+           "decisions": "Die Entscheidungen", "closed": "Abgeschlossene Zweige"},
     "sv": {"title": "Idens karta", "map": "Kartan", "words": "Kartan i ord",
-           "history": "Hur den vaxte", "missing": "Det saknas", "step": "Steg"},
+           "history": "Hur den vaxte", "missing": "Det saknas", "step": "Steg",
+           "decisions": "Besluten", "closed": "Avslutade grenar"},
 }
 
 
@@ -1049,6 +1055,28 @@ def generate_idea_map_pdf(
             fill=APP_PRIMARY_SOFT,
             border=APP_PRIMARY_BORDER,
         )
+
+    # Le decisioni sono il prodotto della famiglia "scelta" e l'uscita di
+    # wayfinder: stanno per conto loro, non in mezzo alla descrizione.
+    decisions = [node for node in spec.nodes if node.role == "decision"]
+    if decisions:
+        _section_heading(pdf, text["decisions"], content_w)
+        for node in decisions:
+            _text_card(pdf, node.label, content_w, fill=APP_PRIMARY_SOFT, border=APP_PRIMARY_BORDER)
+
+    # Un ramo chiuso senza la sua conclusione non lascia niente: qui si legge
+    # cosa ha stabilito, non solo che e' finito.
+    closed = [node for node in spec.nodes if node.closed and node.conclusion]
+    if closed:
+        _section_heading(pdf, text["closed"], content_w)
+        for node in closed:
+            _text_card(
+                pdf,
+                f"{node.label}: {node.conclusion}",
+                content_w,
+                fill=APP_SURFACE,
+                border=APP_BORDER,
+            )
 
     earlier = [step for step in (history or []) if step is not spec]
     if earlier:

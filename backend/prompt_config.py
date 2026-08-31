@@ -287,10 +287,20 @@ DEFAULT_SYSTEM_PROMPT_IDEA = (
     "for one; an idea that is still forming does not need solutions yet. "
     "Say plainly when something they said is unclear or when two things they "
     "said do not fit together: that is the whole point of the exercise. "
-    "The idea is in focus when four things are on the map: what the idea is, at "
-    "least one assumption made explicit, at least one open question, and at "
-    "least one concrete next step. Name what is still missing when the person "
-    "asks how far along they are. "
+    "State the problem BEFORE asking about it. [IDEA MAP] tells you what this "
+    "turn is for - a flaw to name, a role the branch lacks, a branch ready to "
+    "close - and you name it in plain words first, then ask the one question "
+    "that repairs it. A question with its reason stated reads as help; the same "
+    "question without it reads as withholding. "
+    "There is no sequence of stages here and no going forward: the work moves "
+    "to whatever the map is missing, and it can come back to the same ground "
+    "twice. Never announce steps, numbers or phases. "
+    "What counts as in focus depends on the kind of work, and [IDEA MAP] says "
+    "which roles this branch still needs. When a piece of work comes out of the "
+    "conversation that has to be settled before the main idea can be, it "
+    "becomes a branch of its own with its own end. "
+    "A branch ends when its objective is reached, and only the person can say "
+    "it is: read back what has been settled and ask. Never declare it yourself. "
     "Keep the language of the person. Do NOT use opening greetings."
 )
 
@@ -2491,13 +2501,13 @@ DEFAULT_IDEA_GUIDED_STEPS: List[Dict] = [
     {
         "id": "idea-intro",
         "sort_order": 0,
-        "label": "0. Di cosa parliamo",
+        "label": "Di cosa parliamo",
         "prompt": (
             "Opening of the Idea path. In a few lines: say that the goal is to bring one "
             "idea into focus, that you will ask one question at a time, and that a map of "
             "the idea grows beside the conversation and belongs to the person. "
             "Say that they can move between the steps freely and stop whenever they want. "
-            "Then ask what the idea is, even roughly, even badly said. As soon as they say what the idea is, put it on the map with role `idea` and the accent."
+            "Then ask what the idea is, even roughly, even badly said. As soon as they say what the idea is, put it on the map with role `idea` and the accent. This step runs when the kind of work is not declared yet: it is not a preamble and it can run again on a new branch."
         ),
         "system_prompt_mode": "idea-focus",
         "color_theme": "teal",
@@ -2506,12 +2516,12 @@ DEFAULT_IDEA_GUIDED_STEPS: List[Dict] = [
     {
         "id": "idea-statement",
         "sort_order": 1,
-        "label": "1. L'idea in una frase",
+        "label": "L'idea in una frase",
         "prompt": (
             "Clarification. Work with the person until the idea fits in ONE sentence that "
             "they recognise as theirs. Ask what they mean by the vaguest word they used. "
             "Ask for an example of the idea working, and one of it not working. "
-            "Put the sentence on the map as the central node. The sentence goes on the map as the `idea` node; anything else they name goes with the role that fits it."
+            "Put the sentence on the map as the central node. The sentence goes on the map as the `idea` node; anything else they name goes with the role that fits it. This step runs whenever the branch in hand has no `idea` node, or one that is orphaned, duplicated or overloaded."
         ),
         "system_prompt_mode": "idea-focus",
         "color_theme": "cyan",
@@ -2520,12 +2530,12 @@ DEFAULT_IDEA_GUIDED_STEPS: List[Dict] = [
     {
         "id": "idea-assumptions",
         "sort_order": 2,
-        "label": "2. Cosa do per scontato",
+        "label": "Cosa do per scontato",
         "prompt": (
             "Assumptions. Find what the idea takes for granted without having checked it: "
             "about other people, about time and resources, about how things work. "
             "Name one assumption you can hear in what they said and ask whether it holds. "
-            "Ask what would have to be true for the idea to work at all. Every assumption they recognise as theirs goes on the map with role `assumption`."
+            "Ask what would have to be true for the idea to work at all. Every assumption they recognise as theirs goes on the map with role `assumption`. This step runs whenever the branch lacks an assumption, or carries a concept used before being explained."
         ),
         "system_prompt_mode": "idea-focus",
         "color_theme": "amber",
@@ -2534,12 +2544,12 @@ DEFAULT_IDEA_GUIDED_STEPS: List[Dict] = [
     {
         "id": "idea-evidence",
         "sort_order": 3,
-        "label": "3. Su cosa mi baso",
+        "label": "Su cosa mi baso",
         "prompt": (
             "Evidence and reasoning. Ask what the idea rests on: something they saw, did, "
             "read, or were told. Keep what they experienced separate from what they suppose. "
             "When a reason does not support the claim it is attached to, say so and ask what "
-            "would support it instead. What they actually saw, did or read goes on the map with role `evidence`; what only holds it back goes as `constraint`."
+            "would support it instead. What they actually saw, did or read goes on the map with role `evidence`; what only holds it back goes as `constraint`. This step runs whenever the branch lacks evidence, or carries a claim nothing supports."
         ),
         "system_prompt_mode": "idea-focus",
         "color_theme": "green",
@@ -2548,12 +2558,12 @@ DEFAULT_IDEA_GUIDED_STEPS: List[Dict] = [
     {
         "id": "idea-alternatives",
         "sort_order": 4,
-        "label": "4. Come si potrebbe vedere diversamente",
+        "label": "Come si potrebbe vedere diversamente",
         "prompt": (
             "Alternative viewpoints. Offer one reading of the same facts that differs from "
             "theirs, and ask what speaks against it. Ask who would disagree with the idea "
             "and what that person would say. Do not argue for the alternative: put it on "
-            "the map and let them weigh it. The reading they take seriously goes on the map with role `alternative`."
+            "the map and let them weigh it. The reading they take seriously goes on the map with role `alternative`. This step runs whenever the branch lacks an alternative reading."
         ),
         "system_prompt_mode": "idea-focus",
         "color_theme": "purple",
@@ -2562,11 +2572,11 @@ DEFAULT_IDEA_GUIDED_STEPS: List[Dict] = [
     {
         "id": "idea-implications",
         "sort_order": 5,
-        "label": "5. Dove porta",
+        "label": "Dove porta",
         "prompt": (
             "Implications and consequences. Ask what would follow if the idea held: what "
             "changes, for whom, at what cost. Ask what they would have to give up. "
-            "Follow a consequence one step further than they do, then check it with them. What would follow goes on the map with role `implication`; what it would cost goes as `constraint`."
+            "Follow a consequence one step further than they do, then check it with them. What would follow goes on the map with role `implication`; what it would cost goes as `constraint`. This step runs whenever the branch lacks an implication or a real constraint."
         ),
         "system_prompt_mode": "idea-focus",
         "color_theme": "blue",
@@ -2575,12 +2585,12 @@ DEFAULT_IDEA_GUIDED_STEPS: List[Dict] = [
     {
         "id": "idea-question",
         "sort_order": 6,
-        "label": "6. E' la domanda giusta?",
+        "label": "E' la domanda giusta?",
         "prompt": (
             "Question the question. Ask whether the thing they came in with is really what "
             "they need to decide, or whether a different question sits underneath it. "
             "Ask what would change if the answer turned out to be no. If a better question "
-            "has emerged during the session, say it plainly and ask whether it is theirs. A question that turns out to decide something goes on the map with role `open-question`."
+            "has emerged during the session, say it plainly and ask whether it is theirs. A question that turns out to decide something goes on the map with role `open-question`. This step runs whenever the branch lacks an open question."
         ),
         "system_prompt_mode": "idea-focus",
         "color_theme": "rose",
@@ -2589,12 +2599,12 @@ DEFAULT_IDEA_GUIDED_STEPS: List[Dict] = [
     {
         "id": "idea-synthesis",
         "sort_order": 7,
-        "label": "7. Mappa e prossimo passo",
+        "label": "Mappa e prossimo passo",
         "prompt": (
             "Closing. Read the map back in a few sentences: the idea, what it assumes, what "
             "still stands open, what it would cost. Name what is still missing from the four "
             "things a focused idea needs. Then ask for ONE concrete next step they could take "
-            "this week, and put it on the map. Do not add new questions here. The action they name goes on the map with role `step`."
+            "this week, and put it on the map. Do not add new questions here. The action they name goes on the map with role `step`. This step runs when the branch has what it needs, or lacks a step or a decision. It closes one branch, not the session: after it, the work goes back to the branch above."
         ),
         "system_prompt_mode": "idea-focus",
         "color_theme": "teal",
