@@ -8,7 +8,7 @@ import os
 import uuid
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import Response, StreamingResponse
 from typing import Literal
 
@@ -21,6 +21,13 @@ from ..diagram_render import DiagramSpecError, describe, render, spec_fingerprin
 from ..pdf_generator import generate_idea_map_pdf
 from .portfolio import PORTFOLIO_STORAGE_DIR
 from ..idea_lexicon import flaw_word, register_for_variant, status_word, task_label
+from ..idea_reference import (
+    MAX_REFERENCE_BYTES,
+    IdeaReferenceError,
+    current_reference,
+    extract_reference_text,
+    safe_reference_filename,
+)
 from ..idea_map import (
     FEATURE_KEY,
     IDEA_INSTRUMENT,
@@ -83,6 +90,84 @@ def _readable_owner(identity: dict, requested: str | None) -> str:
             raise HTTPException(status_code=403, detail="Azione non consentita")
         return requested
     return _owner(identity)
+
+
+def _reference_metadata(reference) -> dict | None:
+    if reference is None:
+        return None
+    return {
+        "filename": reference.filename,
+        "kind": reference.kind,
+        "characters": len(reference.text or ""),
+        "truncated": bool(reference.truncated),
+        "created_at": reference.created_at.isoformat() if reference.created_at else None,
+    }
+
+
+@router.post("/idea/reference")
+async def upload_reference(
+    session_id: str = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    """Sostituisce il riferimento della sessione con un PDF/TXT/MD."""
+    _require_feature(db)
+    owner = _owner(identity)
+    if not session_id.strip() or len(session_id) > 120:
+        raise HTTPException(status_code=422, detail="Sessione non valida.")
+    filename = safe_reference_filename(file.filename or "")
+    contents = await file.read(MAX_REFERENCE_BYTES + 1)
+    await file.close()
+    try:
+        extracted = await run_in_threadpool(extract_reference_text, filename, contents)
+    except IdeaReferenceError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    db.query(models.IdeaReference).filter(
+        models.IdeaReference.username == owner,
+        models.IdeaReference.session_id == session_id,
+    ).delete(synchronize_session=False)
+    reference = models.IdeaReference(
+        username=owner,
+        session_id=session_id,
+        filename=filename,
+        kind=extracted.kind,
+        text=extracted.text,
+        truncated=extracted.truncated,
+    )
+    db.add(reference)
+    db.commit()
+    db.refresh(reference)
+    return _reference_metadata(reference)
+
+
+@router.get("/idea/reference")
+def read_reference(
+    session_id: str = Query(min_length=1, max_length=120),
+    username: str | None = None,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    _require_feature(db)
+    owner = _readable_owner(identity, username)
+    return {"reference": _reference_metadata(current_reference(db, owner, session_id))}
+
+
+@router.delete("/idea/reference")
+def delete_reference(
+    session_id: str = Query(min_length=1, max_length=120),
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    _require_feature(db)
+    owner = _owner(identity)
+    removed = db.query(models.IdeaReference).filter(
+        models.IdeaReference.username == owner,
+        models.IdeaReference.session_id == session_id,
+    ).delete(synchronize_session=False)
+    db.commit()
+    return {"removed": bool(removed)}
 
 
 @router.get("/idea/map")

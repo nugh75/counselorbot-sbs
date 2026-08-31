@@ -58,64 +58,60 @@ TASK_PROFILES: dict[str, dict] = {
         "family": "claim",
         "required": ("idea", "evidence", "alternative"),
         "pivot": "what do you have to convince the reader to believe?",
-        "plan": True,
     },
     "article": {
         "family": "claim",
         "required": ("idea", "evidence", "alternative"),
         "pivot": "what does the field currently hold that you are changing?",
-        "plan": True,
     },
     "position": {
         "family": "claim",
         "required": ("idea", "evidence", "alternative"),
         "pivot": "who is right if you are wrong?",
-        "plan": False,
     },
     # --- deve produrre una domanda a cui rispondere ---
     "research-question": {
         "family": "question",
         "required": ("idea", "open-question", "constraint"),
         "pivot": "what would you see, if it were false?",
-        "plan": False,
     },
     "systematic-review": {
         "family": "question",
         "required": ("idea", "open-question", "constraint"),
         "pivot": "what does NOT go in, and why? Take one borderline case and decide it.",
-        "plan": True,
     },
     # --- deve produrre un disegno da eseguire ---
     "empirical-study": {
         "family": "design",
         "required": ("idea", "implication", "constraint", "step"),
         "pivot": "compared to what?",
-        "plan": True,
     },
     "teaching-unit": {
         "family": "design",
         "required": ("idea", "implication", "constraint", "step"),
         "pivot": "how do you tell that they have learnt it?",
-        "plan": True,
     },
     "intervention": {
         "family": "design",
         "required": ("idea", "implication", "constraint", "step"),
         "pivot": "and if nothing changes?",
-        "plan": True,
     },
     # --- deve produrre una scelta ---
     "study-path": {
         "family": "choice",
         "required": ("idea", "alternative", "decision"),
         "pivot": "what do you lose by choosing well?",
-        "plan": True,
     },
     "personal-project": {
         "family": "choice",
         "required": ("idea", "alternative", "decision"),
         "pivot": "who notices, if you do it?",
-        "plan": True,
+    },
+    # --- deve chiarire e rendere lavorabile un concetto o costrutto ---
+    "concept-exploration": {
+        "family": "concept",
+        "required": ("idea", "evidence", "alternative", "open-question"),
+        "pivot": "where does this concept stop applying, and what nearby concept takes over?",
     },
 }
 
@@ -133,15 +129,8 @@ def pivot_question(task_type: str | None) -> str:
 
 
 def wants_plan(task_type: str | None) -> bool:
-    """Questo lavoro finisce con qualcosa da fare, o con qualcosa da capire?
-
-    Una domanda di ricerca finisce quando e' falsificabile e una posizione
-    quando regge alla contro-argomentazione: chiuderle con un piano operativo
-    fingerebbe una certezza che non c'e'. Chiedere un piano resta sempre
-    possibile; qui si decide solo cosa la sintesi produce da sola.
-    """
-    profile = TASK_PROFILES.get(task_type or "")
-    return bool(profile["plan"]) if profile else False
+    """Ogni Idea termina con un piano esplicito per produrla o svilupparla."""
+    return True
 
 # Il modello scrive la patch in un blocco recintato, come gia' fa per i
 # diagrammi. Solo i blocchi chiusi: durante lo streaming il fence aperto resta
@@ -778,21 +767,13 @@ def map_context(spec: DiagramSpec | None, message: str = "", lang: str = "it",
             "agrees, send `closed: true` with a one-sentence `conclusion`. "
             "Never close on your own."
         )
-        if wants_plan(getattr(node, "task_type", None)):
-            lines.append(
-                "This kind of work ends in something to do: with the read-back, "
-                "give an operational plan - concrete steps, in the order they "
-                "have to happen, saying which one comes first and what each one "
-                "needs. Use only what is on the map; do not invent steps."
-            )
-        else:
-            lines.append(
-                "This kind of work ends in something to understand, not "
-                "something to do: do NOT produce an operational plan unless the "
-                "person asks for one. A plan here would fake a certainty that "
-                "has not been reached. Close with what is now clear and what "
-                "stays open."
-            )
+        lines.append(
+            "Put an explicit production plan in the read-back: concrete steps "
+            "for producing or developing this idea, in the order they have to "
+            "happen, naming the first action and what each step needs. Mark "
+            "uncertainties as checks rather than turning them into facts. Use "
+            "only what is on the map; do not invent steps."
+        )
     elif move.get("reason") == "all-closed":
         lines.append(
             "The whole map is closed: this is the end of the session. Read the "
@@ -802,20 +783,14 @@ def map_context(spec: DiagramSpec | None, message: str = "", lang: str = "it",
             "nowhere. Do not save anything yourself and do not pick for them: "
             "the interface does the keeping, you only ask."
         )
-        root = by_id.get(root_id(spec) or "")
-        if wants_plan(getattr(root, "task_type", None)):
-            lines.append(
-                "Put an operational plan in that read-back: the concrete steps "
-                "in the order they have to happen, drawn from the map, with the "
-                "first one named. If a branch was closed, its conclusion is "
-                "part of the plan."
-            )
-        else:
-            lines.append(
-                "No operational plan here unless they ask: this work ends in "
-                "something understood. Say what is now clear, what stays open, "
-                "and what would change the answer."
-            )
+        lines.append(
+            "Put an explicit production plan in that final read-back: the "
+            "concrete steps for producing or developing the idea, in the order "
+            "they have to happen, drawn from the map, with the first action "
+            "named. Turn unresolved questions into explicit verification steps, "
+            "not invented certainty. If a branch was closed, its conclusion is "
+            "part of the plan."
+        )
     elif move.get("reason") == "task-unknown":
         lines.append(
             "Ask what kind of work this is, in plain words, and set `task_type` "

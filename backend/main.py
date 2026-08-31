@@ -41,6 +41,8 @@ from .prompt_config import (
     INTRO_ALLOWED_QUESTIONS,
     INTRO_ALLOWED_QUESTIONS_SENTINEL,
     MODE_TO_SYSTEM_PROMPT_KEY,
+    DEFAULT_SYSTEM_PROMPT_IDEA,
+    PREVIOUS_DEFAULT_SYSTEM_PROMPT_IDEA,
 )
 from .questionnaire_catalog import INSTRUMENT_CATALOG_DEFAULTS
 from .guided_text_i18n import seed_definitions as guided_text_seed_definitions
@@ -138,6 +140,15 @@ def _migrate_guided_completion_home_texts(db):
             changed = True
 
     return changed
+
+
+def _migrate_idea_plan_prompt(db):
+    """Aggiorna soltanto il vecchio prompt Idea di serie, non i prompt custom."""
+    row = db.query(models.Config).filter(models.Config.key == "prompt_idea_focus").first()
+    if row is None or row.value != PREVIOUS_DEFAULT_SYSTEM_PROMPT_IDEA:
+        return False
+    row.value = DEFAULT_SYSTEM_PROMPT_IDEA
+    return True
 
 # Create Database Tables.
 # I worker uvicorn partono insieme e chiamano tutti questa riga: quando una
@@ -639,6 +650,7 @@ def _seed_and_migrate():
                 apply_diagram_icons_policy,
                 apply_english_skill_instructions_policy,
                 apply_idea_focus_policy,
+                apply_idea_concept_policy,
                 apply_idea_wayfinder_policy,
                 apply_skills_budget_policy,
                 apply_reading_and_translations_policy,
@@ -655,11 +667,12 @@ def _seed_and_migrate():
             diagram_changed = apply_diagram_edge_kinds_policy(db)
             diagram_icons_changed = apply_diagram_icons_policy(db)
             idea_changed = apply_idea_focus_policy(db)
+            idea_concept_changed = apply_idea_concept_policy(db)
             wayfinder_changed = apply_idea_wayfinder_policy(db)
             budget_changed = apply_skills_budget_policy(db)
             if (configs_changed or skills_changed or policy_changed or specialized_changed
                     or i18n_changed or english_changed or diagram_changed
-                    or diagram_icons_changed or idea_changed or wayfinder_changed
+                    or diagram_icons_changed or idea_changed or idea_concept_changed or wayfinder_changed
                     or budget_changed):
                 logger.info("Seed skill completato")
         except Exception as e:
@@ -705,6 +718,8 @@ def _seed_and_migrate():
                 changed = True
 
         if _migrate_guided_completion_home_texts(db):
+            changed = True
+        if _migrate_idea_plan_prompt(db):
             changed = True
 
         if changed:
