@@ -3,7 +3,7 @@
 | Campo | Valore |
 |---|---|
 | Data | 2026-08-31 |
-| Stato | Sotto-progetto 1 completato |
+| Stato | Sotto-progetti 1-3 implementati; traduzioni in revisione |
 | Branch | `feature/content-language-versions` |
 | Sotto-progetti | 1. Fondamenta · 2. Tool in tutte le lingue · 3. Strumenti FR/DE/ES |
 
@@ -19,8 +19,8 @@ Stato misurato al 2026-08-31:
 | Item / fattori / nomi strumenti | `en`, `sv` | colonne fisse `it/en/es/sv` | `es`, `fr`, `de` |
 | `certified_strategies` (entrano in chat) | solo `it` | colonne fisse `it/en/es/sv` | tutte le altre |
 | `certified_readings` | `it`, `en` | JSON `_i18n` | `es`, `sv`, `fr`, `de` |
-| `guided_step_questions` | solo `it` | riga per lingua ✓ | 5 lingue |
-| `assistant_questions` | solo `it` | riga per lingua ✓ | 5 lingue |
+| `guided_step_questions` | 6 lingue nel DB, `it` nel seed | riga per lingua ✓ | niente nel DB in esecuzione; il seed di un'installazione nuova resta italiano |
+| `assistant_questions` | 6 lingue nel DB, `it` nel seed | riga per lingua ✓ | idem |
 | `reading_themes.label` | solo `it` | dict in codice | admin-facing |
 | Skill `instructions_i18n` | `en` | contratto unico | niente, per scelta |
 
