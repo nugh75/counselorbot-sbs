@@ -5893,6 +5893,25 @@ def test_moving_between_branches_is_remembered():
 
         bad = client.post("/idea/focus", json={"session_id": session_id, "node_id": "q1"})
         assert bad.status_code == 422, "un nodo che non e' lavoro non e' un ramo"
+
+        # Un'idea chiusa non e' un'idea finita: si torna e si riapre.
+        client.post("/idea/map/patch", json={
+            "session_id": session_id,
+            "patch": {"update": [{"id": "t1", "closed": True, "conclusion": "Criteri fissati"}]},
+        })
+        rows = client.get("/idea/branches", params={"session_id": session_id}).json()
+        assert next(r for r in rows if r["id"] == "t1")["closed"] is True
+
+        again = client.post("/idea/reopen", json={"session_id": session_id, "node_id": "t1"})
+        assert again.status_code == 200, again.text
+        assert again.json()["focus"] == "t1"
+        rows = client.get("/idea/branches", params={"session_id": session_id}).json()
+        reopened = next(r for r in rows if r["id"] == "t1")
+        assert reopened["closed"] is False and reopened["is_focus"] is True
+        assert reopened["conclusion"] == "Criteri fissati", "la conclusione resta"
+
+        twice = client.post("/idea/reopen", json={"session_id": session_id, "node_id": "t1"})
+        assert twice.status_code == 422, "un ramo gia' aperto non si riapre"
     finally:
         main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
         _set_idea_feature("false")

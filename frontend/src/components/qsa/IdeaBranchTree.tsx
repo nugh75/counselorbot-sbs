@@ -1,10 +1,16 @@
 'use client';
 
-import { CheckCircle2, CornerLeftUp, Loader2, Target } from 'lucide-react';
+import { CheckCircle2, CornerLeftUp, Loader2, RotateCcw, Target } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
-import { fetchIdeaBranches, moveIdeaFocus, type IdeaBranch, type IdeaRole } from '@/lib/idea-map';
+import {
+    fetchIdeaBranches,
+    moveIdeaFocus,
+    reopenIdeaBranch,
+    type IdeaBranch,
+    type IdeaRole,
+} from '@/lib/idea-map';
 
 interface IdeaBranchTreeProps {
     sessionId: string;
@@ -36,6 +42,18 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
     }, [sessionId, locale]);
 
     useEffect(() => { void reload(); }, [reload, version]);
+
+    const reopenBranch = async (nodeId: string) => {
+        setMoving(nodeId);
+        try {
+            if (await reopenIdeaBranch(sessionId, nodeId)) {
+                await reload();
+                onFocusMoved();
+            }
+        } finally {
+            setMoving(null);
+        }
+    };
 
     const goTo = async (nodeId: string) => {
         setMoving(nodeId);
@@ -93,6 +111,24 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
                             </span>
                             {row.closed && row.conclusion && (
                                 <span className="mt-0.5 block text-[11px] text-teal-700">{row.conclusion}</span>
+                            )}
+                            {row.closed && (
+                                <span
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={(event) => { event.stopPropagation(); void reopenBranch(row.id); }}
+                                    onKeyDown={(event) => {
+                                        if (event.key === 'Enter' || event.key === ' ') {
+                                            event.preventDefault();
+                                            event.stopPropagation();
+                                            void reopenBranch(row.id);
+                                        }
+                                    }}
+                                    className="mt-1 inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-0.5 text-[11px] text-slate-500 hover:border-slate-300"
+                                >
+                                    <RotateCcw className="h-3 w-3" aria-hidden="true" />
+                                    {t('idea.branches.reopen')}
+                                </span>
                             )}
                             {!row.closed && row.missing_roles.length > 0 && (
                                 <span className="mt-0.5 block text-[11px] text-slate-400">
