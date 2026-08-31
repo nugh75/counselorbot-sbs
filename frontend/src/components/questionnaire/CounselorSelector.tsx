@@ -13,6 +13,9 @@ interface CounselorSelectorProps {
     onContinue?: () => void;
     onBack?: () => void;
     questionnaireName?: string;
+    // Codice dello strumento: alcuni strumenti sono a invito e non tutti i
+    // counselor li servono.
+    questionnaireType?: string;
 }
 
 function counselorTone(description: string | null | undefined, fallback: string): string {
@@ -21,7 +24,7 @@ function counselorTone(description: string | null | undefined, fallback: string)
     return first || fallback;
 }
 
-export function CounselorSelector({ onContinue, onBack, questionnaireName }: CounselorSelectorProps) {
+export function CounselorSelector({ onContinue, onBack, questionnaireName, questionnaireType }: CounselorSelectorProps) {
     const { t, lang } = useI18n();
     const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
     const [selected, setSelected] = useState<number | null>(null);
@@ -30,7 +33,7 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName }: Cou
     const load = useCallback(async () => {
         setLoaded(false);
         try {
-            const list = await fetchCounselors(lang, lang);
+            const list = await fetchCounselors(lang, lang, questionnaireType);
             setCounselors(list);
             const stored = getSelectedCounselorId();
             // se il counselor salvato non esiste piu', azzera
@@ -40,7 +43,7 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName }: Cou
         } finally {
             setLoaded(true);
         }
-    }, [lang]);
+    }, [lang, questionnaireType]);
 
     useEffect(() => { void load(); }, [load]);
 
@@ -48,7 +51,7 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName }: Cou
     useEffect(() => subscribeToCounselor(() => setSelected(getSelectedCounselorId())), []);
 
     const choose = (counselor: PublicCounselor) => {
-        if (counselor.is_active === false) return;
+        if (counselor.is_active === false || counselor.suitable === false) return;
         setSelected(counselor.id);
         setSelectedCounselorId(counselor.id);
     };
@@ -71,7 +74,7 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName }: Cou
     }
 
     const renderCard = (c: PublicCounselor) => {
-        const disabled = c.is_active === false;
+        const disabled = c.is_active === false || c.suitable === false;
         const isSelected = selected === c.id;
         return (
             <button
@@ -92,9 +95,14 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName }: Cou
                         <div>
                             <div className="flex flex-wrap items-center gap-2">
                                 <h2 className="text-base font-bold text-slate-900">{c.name}</h2>
-                                {disabled && (
+                                {c.is_active === false && (
                                     <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold uppercase text-slate-500">
                                         {t('counselor.unavailable')}
+                                    </span>
+                                )}
+                                {c.is_active !== false && c.suitable === false && (
+                                    <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700">
+                                        {t('counselor.notForInstrument')}
                                     </span>
                                 )}
                                 {c.model_origin && (
@@ -139,8 +147,31 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName }: Cou
         { key: 'external' as const, label: t('counselor.group.external'), items: cloudItems },
     ].filter((g) => g.items.length > 0);
 
+    // La scelta gia' fatta puo' non valere per questo strumento: si dice cosa
+    // non va e chi si puo' usare, invece di azzerarla in silenzio.
+    const chosen = counselors.find((c) => c.id === selected);
+    const chosenIsUnfit = Boolean(chosen && chosen.suitable === false);
+    const fitNames = counselors
+        .filter((c) => c.suitable !== false && c.is_active !== false)
+        .map((c) => c.name);
+
     return (
         <section className="space-y-5">
+            {chosenIsUnfit && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
+                    <p>
+                        <span className="font-semibold">{chosen?.name}</span>{' '}
+                        {t('counselor.unfit.notice')}{' '}
+                        {questionnaireName && <span className="font-semibold">{questionnaireName}</span>}
+                    </p>
+                    {fitNames.length > 0 && (
+                        <p className="mt-1">
+                            {t('counselor.unfit.alternatives')} {fitNames.join(', ')}
+                        </p>
+                    )}
+                </div>
+            )}
+
             <div className="flex items-center gap-3">
                 {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
                 {onContinue && (
