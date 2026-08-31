@@ -308,6 +308,7 @@ class Instrument(Base):
     name_en = Column(String, nullable=True)
     name_es = Column(String, nullable=True)
     name_sv = Column(String, nullable=True)
+    name_i18n = Column(JSON, nullable=True)   # {lingua: nome}; le colonne name_* restano in ripiego
     # Scala di RISPOSTA agli item (es. 1-4 frequenza, 1-5 Likert)
     response_scale_min = Column(Integer, nullable=False, default=1)
     response_scale_max = Column(Integer, nullable=False, default=4)
@@ -340,6 +341,8 @@ class Factor(Base):
     description_en = Column(Text, nullable=True)
     description_es = Column(Text, nullable=True)
     description_sv = Column(Text, nullable=True)
+    label_i18n = Column(JSON, nullable=True)
+    description_i18n = Column(JSON, nullable=True)
 
 
 class QuestionnaireItem(Base):
@@ -357,6 +360,7 @@ class QuestionnaireItem(Base):
     text_en = Column(Text, nullable=True)
     text_es = Column(Text, nullable=True)
     text_sv = Column(Text, nullable=True)
+    text_i18n = Column(JSON, nullable=True)
     active = Column(Boolean, nullable=False, default=True)
 
 
@@ -637,6 +641,9 @@ class CertifiedStrategy(Base):
     description_en = Column(Text, nullable=True)
     description_es = Column(Text, nullable=True)
     description_sv = Column(Text, nullable=True)
+    name_i18n = Column(JSON, nullable=True)
+    recommended_when_i18n = Column(JSON, nullable=True)
+    description_i18n = Column(JSON, nullable=True)
     factor_codes = Column(JSON, nullable=True)        # ["C6","A2",...]
     # any = saliente almeno un fattore; all = combinazione (tutti salienti insieme)
     match_mode = Column(String, nullable=False, default="any")
