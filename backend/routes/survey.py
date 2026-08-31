@@ -597,21 +597,27 @@ async def download_student_booklet_pdf_by_id(
     )
 
 
-def _localized_strategy_field(row: models.CertifiedStrategy, prefix: str, lang: str) -> str:
-    value = getattr(row, f"{prefix}_{lang}", None) or getattr(row, f"{prefix}_it", None)
-    return (value or "").strip()
+def _localized_strategy_field(
+    db: Session, row: models.CertifiedStrategy, prefix: str, lang: str
+) -> str:
+    locale = content_version_service.served_locale(
+        db, "certified_strategy", row.slug, lang, fallbacks=("it",)
+    )
+    return (i18n_fields.localized(row, prefix, locale) or "").strip() if locale else ""
 
 
 @router.get("/user/certified-strategies")
 async def list_certified_strategies_for_student(
     questionnaire_type: str = Query(..., description="Strumento (QSA, QSAr, ...)"),
-    lang: str = Query("it", description="Lingua (it, en, es, sv)"),
+    lang: str = Query("it", description="Lingua (it, en, es, fr, de, sv)"),
     current_user: dict = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
     """Strategie certificate attive, filtrate per strumento, per il libretto."""
     code = _normalize_booklet_type(questionnaire_type)
-    language = lang if lang in ("it", "en", "es", "sv") else "it"
+    language = (lang or "it").strip().lower().replace("_", "-").split("-", 1)[0]
+    if language not in scoring_service.SUPPORTED_LOCALES:
+        language = "it"
     rows = (
         db.query(models.CertifiedStrategy)
         .filter(
@@ -626,14 +632,14 @@ async def list_certified_strategies_for_student(
         scope = {item.upper() for item in (row.questionnaire_types or [])}
         if scope and code.upper() not in scope:
             continue
-        name = _localized_strategy_field(row, "name", language)
-        description = _localized_strategy_field(row, "description", language)
+        name = _localized_strategy_field(db, row, "name", language)
+        description = _localized_strategy_field(db, row, "description", language)
         if not (name or description):
             continue
         result.append({
             "slug": row.slug,
             "name": name,
-            "recommended_when": _localized_strategy_field(row, "recommended_when", language),
+            "recommended_when": _localized_strategy_field(db, row, "recommended_when", language),
             "description": description,
             "factor_codes": row.factor_codes or [],
         })
@@ -815,8 +821,8 @@ def _pdf_strategy_context(db: Session, session_id: str, lang: str) -> str:
             row = by_slug.get(slug)
             if not row:
                 continue
-            name = _localized_strategy_field(row, "name", lang) or row.slug
-            desc = _localized_strategy_field(row, "description", lang)
+            name = _localized_strategy_field(db, row, "name", lang) or row.slug
+            desc = _localized_strategy_field(db, row, "description", lang)
             lines.append(f"- {name}: {desc}" if desc else f"- {name}")
     for strategy_id in dict.fromkeys(strategy_ids):
         lines.append(f"- {strategy_id}")
