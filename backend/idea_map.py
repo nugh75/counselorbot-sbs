@@ -559,13 +559,15 @@ def current_map(db: Session, username: str, session_id: str) -> DiagramSpec | No
 
 
 def save_revision(db: Session, username: str, session_id: str, spec: DiagramSpec, *,
-                  source: str = "turn", step_id: str | None = None) -> models.IdeaMapRevision:
+                  source: str = "turn", step_id: str | None = None,
+                  focus_id: str | None = None) -> models.IdeaMapRevision:
     revision = models.IdeaMapRevision(
         username=username,
         session_id=session_id,
         spec=json.loads(spec.model_dump_json()),
         source=source,
         step_id=step_id,
+        focus_id=focus_id,
     )
     db.add(revision)
     db.commit()
@@ -584,7 +586,10 @@ def apply_and_store(db: Session, username: str, session_id: str, patch: IdeaPatc
         default_title=default_title, promote_prior_work=promote_prior_work,
         prior_work_message=prior_work_message,
     )
-    return save_revision(db, username, session_id, updated, source=source, step_id=step_id)
+    return save_revision(
+        db, username, session_id, updated, source=source, step_id=step_id,
+        focus_id=chosen_focus(db, username, session_id),
+    )
 
 
 def history(db: Session, username: str, session_id: str) -> list[models.IdeaMapRevision]:
@@ -599,7 +604,8 @@ def history(db: Session, username: str, session_id: str) -> list[models.IdeaMapR
     )
 
 
-def map_context(spec: DiagramSpec | None, message: str = "", lang: str = "it") -> str:
+def map_context(spec: DiagramSpec | None, message: str = "", lang: str = "it",
+                chosen_focus: str | None = None) -> str:
     """La mappa corrente come la vede il modello, piu' la mossa da fare.
 
     Senza questo blocco la skill parla di una mappa che nel prompt non esiste:
@@ -620,7 +626,7 @@ def map_context(spec: DiagramSpec | None, message: str = "", lang: str = "it") -
             "Never quote or paraphrase this instruction to the person."
         )
 
-    focus = current_focus(spec)
+    focus = resolve_focus(spec, chosen_focus)
     by_id = {node.id: node for node in spec.nodes}
     owner = owning_task(spec)
     focus_node = by_id.get(focus or "")
@@ -657,7 +663,7 @@ def map_context(spec: DiagramSpec | None, message: str = "", lang: str = "it") -
         label = f' "{edge.label}"' if edge.label else ""
         lines.append(f"- {edge.source} -{edge.kind}->{label} {edge.target}")
 
-    move = next_move(spec)
+    move = next_move(spec, chosen_focus)
     lines.append("")
     if names_prior_work(message, lang):
         lines.append(
@@ -734,7 +740,8 @@ def map_context_for(db: Session, username: str, session_id: str, *,
     cui la skill gli chiede di agire anche quando non c'e' ancora niente.
     """
     spec = current_map(db, username, session_id) if (username and session_id) else None
-    return map_context(spec, message=message, lang=lang)
+    picked = chosen_focus(db, username, session_id) if (username and session_id) else None
+    return map_context(spec, message=message, lang=lang, chosen_focus=picked)
 
 
 # --- il percorso derivato ----------------------------------------------------
@@ -794,17 +801,76 @@ def current_focus(spec: DiagramSpec) -> str | None:
     return max(open_ids, key=lambda node_id: (task_depth(spec, node_id), node_id))
 
 
-def next_move(spec: DiagramSpec | None) -> dict:
+def resolve_focus(spec: DiagramSpec, chosen: str | None) -> str | None:
+    """Il ramo in lavorazione: quello scelto se esiste ancora, altrimenti il derivato.
+
+    Un ramo scelto e poi rimosso non deve bloccare la sessione su un nodo che
+    non c'e' piu'; un ramo chiuso invece resta scegliibile, perche' rileggerlo
+    o riaprirlo e' un gesto legittimo.
+    """
+    if chosen:
+        node = next((n for n in spec.nodes if n.id == chosen), None)
+        if node is not None and _is_task_node(node):
+            return chosen
+    return current_focus(spec)
+
+
+def branches(spec: DiagramSpec | None, chosen_focus: str | None = None) -> list[dict]:
+    """L'albero dei rami come lo naviga la persona.
+
+    Solo i nodi che sono lavoro - l'idea e i task -, con quanto manca a
+    ciascuno: e' l'unica cosa che dice se vale la pena tornarci.
+    """
+    if spec is None:
+        return []
+    focus = resolve_focus(spec, chosen_focus)
+    owner = owning_task(spec)
+    out = []
+    for node in spec.nodes:
+        if not _is_task_node(node):
+            continue
+        parent = None
+        if node.role == "task":
+            # Il proprietario di un task e' se stesso: il padre e' quello del
+            # primo vicino che lo precede nell'albero.
+            links = _adjacency(spec)
+            levels = _levels(spec)
+            here = levels.get(node.id)
+            candidates = [
+                neighbour for neighbour in links.get(node.id, ())
+                if here is not None and levels.get(neighbour, 99) < here
+            ]
+            parent = owner.get(candidates[0]) if candidates else root_id(spec)
+            if parent == node.id:
+                parent = root_id(spec)
+        out.append({
+            "id": node.id,
+            "label": node.label,
+            "task_type": node.task_type,
+            "depth": task_depth(spec, node.id),
+            "parent": parent,
+            "closed": bool(node.closed),
+            "conclusion": node.conclusion,
+            "missing_roles": missing_roles(spec, node.id),
+            "flaws": len(branch_flaws(spec, node.id)),
+            "is_focus": node.id == focus,
+        })
+    out.sort(key=lambda item: (item["depth"], item["id"]))
+    return out
+
+
+def next_move(spec: DiagramSpec | None, chosen_focus: str | None = None) -> dict:
     """Quale step fare adesso, e perche'.
 
     Il prossimo step non e' il successivo: e' quello che ripara cio' che al
-    ramo in lavorazione manca.
+    ramo in lavorazione manca. `chosen_focus` e' il ramo su cui la persona si
+    e' spostata: vince sul derivato finche' resta un ramo vero.
     """
     if spec is None:
         return {"step_id": "idea-intro", "focus": None, "reason": "no-map",
                 "detail": "there is no map yet"}
 
-    focus = current_focus(spec)
+    focus = resolve_focus(spec, chosen_focus)
     if focus is None:
         return {"step_id": "idea-synthesis", "focus": root_id(spec), "reason": "all-closed",
                 "detail": "every branch is closed"}
@@ -832,3 +898,23 @@ def next_move(spec: DiagramSpec | None) -> dict:
     return {"step_id": "idea-synthesis", "focus": focus, "reason": "ready-to-close",
             "pivot": pivot_question(getattr(node, "task_type", None)),
             "detail": "the branch has what it needs: propose closing it"}
+
+
+def chosen_focus(db: Session, username: str, session_id: str) -> str | None:
+    """Il ramo su cui la persona si e' spostata l'ultima volta."""
+    revision = current_revision(db, username, session_id)
+    return getattr(revision, "focus_id", None)
+
+
+def set_focus(db: Session, username: str, session_id: str, node_id: str) -> models.IdeaMapRevision:
+    """Sposta il lavoro su un altro ramo.
+
+    Scrive una revisione con la stessa mappa e il fuoco nuovo: append-only vale
+    anche per la navigazione, e lo storico mostra dove si e' andati e quando.
+    """
+    spec = current_map(db, username, session_id)
+    if spec is None:
+        raise IdeaMapError("non c'e' ancora una mappa")
+    if not any(node.id == node_id and _is_task_node(node) for node in spec.nodes):
+        raise IdeaMapError(f"non e' un ramo: {node_id}")
+    return save_revision(db, username, session_id, spec, source="focus", focus_id=node_id)

@@ -109,3 +109,35 @@ export async function keepIdeaMap(
     });
     return response.ok;
 }
+
+export interface IdeaBranch {
+    id: string;
+    label: string;
+    task_type: string | null;
+    task_label: string | null;
+    depth: number;
+    parent: string | null;
+    closed: boolean;
+    conclusion: string | null;
+    missing_roles: IdeaRole[];
+    flaws: number;
+    is_focus: boolean;
+}
+
+// L'albero dei rami: la chat e' una riga sola, i rami esistono solo nella
+// mappa. Senza questo non c'e' modo di vederli ne' di tornare su.
+export async function fetchIdeaBranches(sessionId: string, lang: string): Promise<IdeaBranch[]> {
+    const params = new URLSearchParams({ session_id: sessionId, lang });
+    const response = await apiFetch(`/api/idea/branches?${params.toString()}`);
+    if (!response.ok) return [];
+    return response.json() as Promise<IdeaBranch[]>;
+}
+
+export async function moveIdeaFocus(sessionId: string, nodeId: string): Promise<boolean> {
+    const response = await apiFetch('/api/idea/focus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, node_id: nodeId }),
+    });
+    return response.ok;
+}

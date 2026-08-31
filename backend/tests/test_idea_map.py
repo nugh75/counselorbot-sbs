@@ -14,9 +14,11 @@ from backend.idea_map import (
     computed_flaws,
     current_focus,
     extract_patch,
+    branches,
     map_context,
     missing_roles,
     names_prior_work,
+    resolve_focus,
     next_move,
     parse_patch,
     required_roles,
@@ -411,6 +413,62 @@ def test_nothing_is_promoted_when_no_node_echoes_the_person():
         prior_work_message="Prima devo parlare con la vicepreside",
     )
     assert not [n for n in spec.nodes if n.role == "task"]
+
+
+# --- navigare fra i rami ---
+
+def _two_branches():
+    return apply_patch(None, parse_patch({
+        "title": "Tesi",
+        "add_nodes": [
+            {"id": "idea", "label": "Tesi", "role": "idea", "accent": True,
+             "task_type": "thesis-chapter"},
+            {"id": "t1", "label": "Rivedere la letteratura", "role": "task",
+             "task_type": "systematic-review"},
+            {"id": "t2", "label": "Decidere il disegno", "role": "task",
+             "task_type": "empirical-study"},
+        ],
+        "add_edges": [{"from": "idea", "to": "t1"}, {"from": "idea", "to": "t2"}],
+    }))
+
+
+def test_the_branch_tree_says_what_each_branch_still_lacks():
+    rows = {b["id"]: b for b in branches(_two_branches())}
+    assert set(rows) == {"idea", "t1", "t2"}
+    assert rows["t1"]["parent"] == "idea" and rows["t1"]["depth"] == 1
+    assert rows["idea"]["depth"] == 0
+    assert "constraint" in rows["t1"]["missing_roles"]
+
+
+def test_choosing_a_branch_beats_the_derived_one():
+    spec = _two_branches()
+    assert resolve_focus(spec, None) == "t2"
+    assert resolve_focus(spec, "t1") == "t1"
+    assert next_move(spec, "t1")["focus"] == "t1"
+
+
+def test_a_branch_that_no_longer_exists_does_not_strand_the_session():
+    spec = _two_branches()
+    assert resolve_focus(spec, "gone") == "t2"
+
+
+def test_a_closed_branch_can_still_be_walked_back_into():
+    spec = apply_patch(_two_branches(), parse_patch({
+        "update": [{"id": "t1", "closed": True, "conclusion": "Criteri fissati"}],
+    }))
+    # Derivato non lo sceglierebbe piu', ma rileggerlo o riaprirlo e' legittimo.
+    assert resolve_focus(spec, None) == "t2"
+    assert resolve_focus(spec, "t1") == "t1"
+    row = next(b for b in branches(spec, "t1") if b["id"] == "t1")
+    assert row["closed"] and row["is_focus"] and row["conclusion"] == "Criteri fissati"
+
+
+def test_only_work_shows_up_in_the_tree():
+    spec = apply_patch(_two_branches(), parse_patch({
+        "add_nodes": [{"id": "c1", "label": "Tre mesi", "role": "constraint"}],
+        "add_edges": [{"from": "t1", "to": "c1"}],
+    }))
+    assert "c1" not in {b["id"] for b in branches(spec)}
 
 
 if __name__ == "__main__":
