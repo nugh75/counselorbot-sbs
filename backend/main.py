@@ -1068,11 +1068,20 @@ def _seed_and_migrate():
         # seminato entra nei campi i18n e nel registro. Entrambi idempotenti.
         from .content_versions_seed import (
             backfill_i18n_columns,
+            derive_assistant_question_versions,
+            derive_guided_step_question_versions,
             derive_instrument_versions,
+            derive_reading_versions,
             derive_strategy_versions,
         )
         backfill_i18n_columns(db)
-        derived = derive_instrument_versions(db) + derive_strategy_versions(db)
+        derived = (
+            derive_instrument_versions(db)
+            + derive_strategy_versions(db)
+            + derive_reading_versions(db)
+            + derive_guided_step_question_versions(db)
+            + derive_assistant_question_versions(db)
+        )
         if derived:
             logger.info("Derived %d content language versions", derived)
     finally:

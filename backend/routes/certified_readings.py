@@ -14,6 +14,7 @@ from .. import auth, database, models, schemas
 from ..reading_themes import READING_THEMES
 from ..reading_verification import verify_reading
 from .. import web_lookup
+from ..content_versions_seed import derive_reading_versions
 
 router = APIRouter()
 get_db = database.get_db
@@ -99,6 +100,7 @@ async def create_certified_reading(
     db.add(row)
     db.commit()
     db.refresh(row)
+    derive_reading_versions(db)
     return row
 
 

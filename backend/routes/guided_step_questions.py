@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models, schemas
+from ..content_versions_seed import derive_guided_step_question_versions
 
 router = APIRouter()
 get_db = database.get_db
@@ -59,6 +60,7 @@ async def create_guided_step_question(
     db.add(question)
     db.commit()
     db.refresh(question)
+    derive_guided_step_question_versions(db)
     return question
 
 

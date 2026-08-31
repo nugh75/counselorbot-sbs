@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models, schemas
+from ..content_versions_seed import derive_assistant_question_versions
 
 router = APIRouter()
 get_db = database.get_db
@@ -85,6 +86,7 @@ async def create_assistant_question(
     db.add(question)
     db.commit()
     db.refresh(question)
+    derive_assistant_question_versions(db)
     return question
 
 

@@ -140,9 +140,9 @@ def derive_instrument_versions(db: Session) -> int:
 def derive_strategy_versions(db: Session) -> int:
     """Stato iniziale di ogni (strategia, lingua).
 
-    Una strategia gia' `certified` lo e' nelle lingue in cui ha testo; nelle
-    altre e' bozza. Il seed e' italiano, quindi in pratica nasce certificata solo
-    in italiano.
+    Una strategia gia' `certified` conserva la certificazione italiana. Ogni
+    altro testo esistente nasce `translated` e richiede una certificazione
+    esplicita della singola lingua; le lingue senza testo restano bozza.
     """
     created = 0
     for strategy in db.query(models.CertifiedStrategy).all():
@@ -150,7 +150,7 @@ def derive_strategy_versions(db: Session) -> int:
         for locale in APP_LOCALES:
             if get_version(db, "certified_strategy", strategy.slug, locale) is not None:
                 continue
-            if locale in with_text and strategy.status == "certified":
+            if locale == "it" and locale in with_text and strategy.status == "certified":
                 status = "certified"
             elif locale in with_text:
                 status = "translated"
@@ -162,4 +162,126 @@ def derive_strategy_versions(db: Session) -> int:
                 notes="stato dedotto dai dati alla migrazione",
             )
             created += 1
+    return created
+
+
+def _complete_json_locales(row, fields: tuple[str, ...], source_locale: str = "it") -> set[str]:
+    """Lingue complete per tutti i campi che hanno un testo sorgente."""
+    required = [
+        field for field in fields
+        if ((getattr(row, f"{field}_i18n", None) or {}).get(source_locale) or "").strip()
+    ]
+    if not required:
+        return set()
+    return {
+        locale
+        for locale in APP_LOCALES
+        if all(
+            ((getattr(row, f"{field}_i18n", None) or {}).get(locale) or "").strip()
+            for field in required
+        )
+    }
+
+
+def derive_reading_versions(db: Session) -> int:
+    """Crea lo stato iniziale per ogni coppia (lettura, lingua)."""
+    existing = {
+        (row.content_key, row.locale)
+        for row in db.query(models.ContentLanguageVersion).filter(
+            models.ContentLanguageVersion.content_type == "certified_reading"
+        ).all()
+    }
+    created = 0
+    for reading in db.query(models.CertifiedReading).all():
+        complete = _complete_json_locales(reading, ("why", "summary", "synopsis"))
+        for locale in APP_LOCALES:
+            if (reading.slug, locale) in existing:
+                continue
+            if locale in complete and reading.status == "certified":
+                status = "certified"
+            elif locale in complete:
+                status = "translated"
+            else:
+                status = "draft"
+            db.add(models.ContentLanguageVersion(
+                content_type="certified_reading", content_key=reading.slug,
+                locale=locale, status=status, source="derived",
+                notes="stato dedotto dai dati alla migrazione",
+            ))
+            existing.add((reading.slug, locale))
+            created += 1
+    if created:
+        db.commit()
+    return created
+
+
+def guided_step_question_key(questionnaire_type: str, step_id: str, sort_order: int) -> str:
+    """Chiave condivisa dalle traduzioni della stessa domanda guidata."""
+    return f"{questionnaire_type}::{step_id}::{sort_order}"
+
+
+def derive_guided_step_question_versions(db: Session) -> int:
+    """Crea sei stati per ogni domanda guidata logica gia' presente nel DB."""
+    groups: dict[str, set[str]] = {}
+    for row in db.query(models.GuidedStepQuestion).all():
+        key = guided_step_question_key(row.questionnaire_type, row.step_id, row.sort_order)
+        if (row.text or "").strip():
+            groups.setdefault(key, set()).add(row.language)
+
+    existing = {
+        (row.content_key, row.locale)
+        for row in db.query(models.ContentLanguageVersion).filter(
+            models.ContentLanguageVersion.content_type == "guided_step_question"
+        ).all()
+    }
+    created = 0
+    for key, available in groups.items():
+        for locale in APP_LOCALES:
+            if (key, locale) in existing:
+                continue
+            db.add(models.ContentLanguageVersion(
+                content_type="guided_step_question", content_key=key, locale=locale,
+                status="certified" if locale in available else "draft",
+                source="derived", notes="stato dedotto dai dati alla migrazione",
+            ))
+            existing.add((key, locale))
+            created += 1
+    if created:
+        db.commit()
+    return created
+
+
+def assistant_question_key(topic: str, sort_order: int) -> str:
+    """Chiave condivisa dalle traduzioni della stessa domanda assistente."""
+    return f"{topic}::{sort_order}"
+
+
+def derive_assistant_question_versions(db: Session) -> int:
+    """Crea sei stati per ogni domanda assistente logica gia' presente nel DB."""
+    groups: dict[str, set[str]] = {}
+    for row in db.query(models.AssistantQuestion).all():
+        key = assistant_question_key(row.topic, row.sort_order)
+        if (row.text or "").strip():
+            groups.setdefault(key, set()).add(row.language)
+
+    existing = {
+        (row.content_key, row.locale)
+        for row in db.query(models.ContentLanguageVersion).filter(
+            models.ContentLanguageVersion.content_type == "assistant_question"
+        ).all()
+    }
+    created = 0
+    for key, available in groups.items():
+        for locale in APP_LOCALES:
+            if (key, locale) in existing:
+                continue
+            db.add(models.ContentLanguageVersion(
+                content_type="assistant_question", content_key=key, locale=locale,
+                status="certified" if locale in available else "draft",
+                source="derived", notes="stato dedotto dai dati alla migrazione",
+            ))
+            existing.add((key, locale))
+            created += 1
+    if created:
+        db.commit()
     return created
