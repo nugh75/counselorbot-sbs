@@ -1,16 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { BookMarked, Download, FileText, FolderPlus, Loader2, Maximize2, RefreshCw, X } from 'lucide-react';
+import { Download, Loader2, Maximize2, RefreshCw, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useI18n } from '@/lib/i18n-context';
 import { useDarkMode } from '@/lib/use-dark-mode';
-import { toast } from '@/components/ui/Toast';
 import {
     fetchIdeaMap,
     ideaMapImageUrl,
-    ideaMapPdfUrl,
-    keepIdeaMap,
     type IdeaMapState,
     type IdeaNextStep,
     type IdeaRole,
@@ -48,7 +45,6 @@ export function IdeaMapPanel({ sessionId, version, locale, variant, move }: Idea
     const [state, setState] = useState<IdeaMapState | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
-    const [isKeeping, setIsKeeping] = useState(false);
 
     const reload = useCallback(async () => {
         setIsLoading(true);
@@ -71,17 +67,6 @@ export function IdeaMapPanel({ sessionId, version, locale, variant, move }: Idea
         document.addEventListener('keydown', close);
         return () => document.removeEventListener('keydown', close);
     }, [isFullscreen]);
-
-    const keep = async (target: 'portfolio' | 'notebook') => {
-        setIsKeeping(true);
-        try {
-            const ok = await keepIdeaMap(target, sessionId, locale, variant);
-            if (ok) toast.success(t('idea.keep.saved'));
-            else toast.error(t('toast.error'));
-        } finally {
-            setIsKeeping(false);
-        }
-    };
 
     // I difetti non stanno dentro il disegno: il tratteggio si vede, il nome no.
     const flawed = (state?.spec?.nodes ?? []).filter((node) => node.flaw);
@@ -169,38 +154,6 @@ export function IdeaMapPanel({ sessionId, version, locale, variant, move }: Idea
                 <p className="border-t border-slate-200 px-3 py-2 text-xs text-teal-700">
                     {t('idea.map.readyToClose')}
                 </p>
-            )}
-
-            {imageUrl && (
-                <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 px-3 py-2">
-                    <a
-                        href={ideaMapPdfUrl(sessionId, locale)}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:border-slate-300"
-                    >
-                        <FileText className="h-3.5 w-3.5" aria-hidden="true" />
-                        {t('idea.keep.pdf')}
-                    </a>
-                    <button
-                        type="button"
-                        disabled={isKeeping}
-                        onClick={() => void keep('portfolio')}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:border-slate-300 disabled:opacity-50"
-                    >
-                        <FolderPlus className="h-3.5 w-3.5" aria-hidden="true" />
-                        {t('idea.keep.portfolio')}
-                    </button>
-                    {variant !== 'research' && (
-                        <button
-                            type="button"
-                            disabled={isKeeping}
-                            onClick={() => void keep('notebook')}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:border-slate-300 disabled:opacity-50"
-                        >
-                            <BookMarked className="h-3.5 w-3.5" aria-hidden="true" />
-                            {t('idea.keep.notebook')}
-                        </button>
-                    )}
-                </div>
             )}
 
             {isFullscreen && imageUrl && typeof document !== 'undefined' && createPortal(
