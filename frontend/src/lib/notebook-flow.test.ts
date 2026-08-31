@@ -20,3 +20,11 @@ test('the guided instrument proposes a notebook update at its conclusion', () =>
     );
     assert.match(source, /currentPhase === FIXED_CONCLUSION_ID[\s\S]*LearnerProfileCard variant="update"/);
 });
+
+test('pQBL proposes a notebook update with its final results', () => {
+    const source = readFileSync(
+        new URL('../app/pqbl/page.tsx', import.meta.url),
+        'utf8',
+    );
+    assert.match(source, /phase === 'finalResults'[\s\S]*LearnerProfileCard[\s\S]*variant="update"/);
+});
