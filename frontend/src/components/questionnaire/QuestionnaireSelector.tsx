@@ -1,17 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { QUESTIONNAIRE_LIST, QuestionnaireType, QuestionnaireConfig } from '@/lib/questionnaires';
 import { AlertTriangle, BookOpen, Check, ChevronDown, ExternalLink } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
-import { fetchInstruments } from '@/lib/instruments-api';
+import { instrumentAvailableInLocale } from '@/lib/instrument-availability';
+import { ACTIVE_QUESTIONNAIRE_IDS, TOOL_CATEGORIES } from '@/lib/tool-catalog';
+import { useInstrumentCatalog } from '@/lib/use-instrument-catalog';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 
-const ACTIVE_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', 'IDEA'];
 const STRATEGIC_COMPETENCES_URLS: Partial<Record<QuestionnaireType, string>> = {
     QSA: 'https://www.competenzestrategiche.it/QSA/',
     QSAr: 'https://www.competenzestrategiche.it/QSAr/',
@@ -35,43 +36,25 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
     const [expanded, setExpanded] = useState<string | null>(null);
     // Selezione come nel CounselorSelector: si clicca la card per evidenziarla,
     // poi si avanza con la freccia in alto (nessuna azione "vai" per card).
-    // La chiave è l'id strumento per i questionari, oppure 'profile-changes' / 'pqbl'
-    // per le card che portano ad altre pagine.
+    // La chiave è l'id strumento per i questionari, oppure 'pqbl' per la pagina
+    // di allenamento da PDF.
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
-    // Lingue in cui i questionari sono somministrabili in-app: lette dal registro
-    // (union delle available_locales), non da una lista scritta a mano.
-    const [availableLangs, setAvailableLangs] = useState<string[] | null>(null);
-    useEffect(() => {
-        let cancelled = false;
-        fetchInstruments()
-            .then((rows) => {
-                if (cancelled) return;
-                const langs = new Set<string>();
-                for (const row of rows) for (const l of row.available_locales) langs.add(l);
-                setAvailableLangs([...langs]);
-            })
-            .catch(() => {
-                if (!cancelled) setAvailableLangs(null);
-            });
-        return () => { cancelled = true; };
-    }, []);
-    const active = QUESTIONNAIRE_LIST.filter((q) => ACTIVE_QUESTIONNAIRES.includes(q.id));
-    const upcoming = QUESTIONNAIRE_LIST.filter((q) => !ACTIVE_QUESTIONNAIRES.includes(q.id));
+    const { rows: instrumentCatalog, loading: catalogLoading, error: catalogError, retry: retryCatalog } = useInstrumentCatalog();
+    const active = ACTIVE_QUESTIONNAIRE_IDS.map((id) => QUESTIONNAIRE_LIST.find((q) => q.id === id)).filter((q): q is QuestionnaireConfig => Boolean(q));
+    const upcoming = QUESTIONNAIRE_LIST.filter((q) => !ACTIVE_QUESTIONNAIRE_IDS.includes(q.id));
     // Competenze Strategiche = strumenti con assessment sul sito / in-app; Interviste = agentOnly (Savickas).
     const csQuestionnaires = active.filter((q) => !q.agentOnly);
     // Idea non e' un'intervista e non ha un questionario dietro: sta per conto
     // suo, e resta disponibile anche nelle lingue in cui i questionari non ci sono.
     const focusTools = active.filter((q) => q.id === 'IDEA');
     const interviews = active.filter((q) => q.agentOnly && q.id !== 'IDEA');
+    const hasPqbl = TOOL_CATEGORIES.some((group) => group.standaloneIds.includes('pqbl'));
     const isItalian = lang === 'it';
-    // Finché il catalogo non è arrivato assumiamo disponibile per le lingue non
-    // italiane, così fr/de non lampeggiano "non disponibile" al primo render.
-    const isAdministrationLang = availableLangs === null || availableLangs.includes(lang);
-    const isUnavailableQuestionnaireLang = !isItalian && !isAdministrationLang;
+    const isAdministrationLang = instrumentCatalog?.some((row) => row.available_locales.includes(lang)) ?? false;
+    const isUnavailableQuestionnaireLang = !isItalian && instrumentCatalog !== null && !isAdministrationLang;
 
     const handleContinue = () => {
         if (!selectedKey) return;
-        if (selectedKey === 'profile-changes') { router.push('/profilo/cambiamenti'); return; }
         if (selectedKey === 'pqbl') { router.push('/pqbl'); return; }
         const q = active.find((item) => item.id === selectedKey);
         if (q) onSelect(q);
@@ -80,16 +63,24 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
     // Card strumento, senza icona: testa (nome + badge + nome esteso), descrizione,
     // dettaglio espandibile, azioni ed eventuali credenziali sito.
     const renderCard = (q: QuestionnaireConfig) => {
-        const hasInAppAdministration = isAdministrationLang && !q.agentOnly;
+        const hasInAppAdministration = !q.agentOnly
+            && instrumentCatalog !== null
+            && instrumentAvailableInLocale(instrumentCatalog, q.id, lang);
         const externalAssessmentUrl = isItalian && !q.agentOnly ? STRATEGIC_COMPETENCES_URLS[q.id] : undefined;
         const hasExternalAssessment = Boolean(externalAssessmentUrl);
         const isExpanded = expanded === q.id;
         const isSelected = selectedKey === q.id;
+        const unavailableInCurrentLanguage = !isItalian
+            && !q.agentOnly
+            && instrumentCatalog !== null
+            && !hasInAppAdministration;
         const primaryBadge = hasInAppAdministration
             ? t('selector.badge.inApp')
             : hasExternalAssessment
                 ? t('selector.badge.external')
-                : q.agentOnly
+                : unavailableInCurrentLanguage
+                    ? t('selector.badge.unavailableLanguage')
+                    : q.agentOnly
                     ? t('selector.badge.agent')
                     : t('selector.badge.results');
         return (
@@ -220,6 +211,18 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
                 <ForwardButton onClick={handleContinue} disabled={!selectedKey} label={t('counselor.continue')} />
             </div>
 
+            {!isItalian && catalogLoading && (
+                <p className="text-sm text-slate-500" role="status">{t('base.catalog.loading')}</p>
+            )}
+            {!isItalian && catalogError && (
+                <div className="flex flex-wrap items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
+                    <span>{t('base.catalog.error')}</span>
+                    <button type="button" onClick={retryCatalog} className="font-semibold text-amber-950 underline underline-offset-2">
+                        {t('base.catalog.retry')}
+                    </button>
+                </div>
+            )}
+
             {isUnavailableQuestionnaireLang && (
                 <section className="rounded-xl border-2 border-amber-300 bg-amber-50 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
                     <AlertTriangle className="w-7 h-7 shrink-0 text-amber-700" />
@@ -263,46 +266,12 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
                     <h2 className="text-xl font-bold text-slate-900">{t('selector.section.interviews')}</h2>
                     <div className="grid md:grid-cols-2 gap-3">
                         {interviews.map(renderCard)}
-                        <article
-                            role="button"
-                            tabIndex={0}
-                            aria-pressed={selectedKey === 'profile-changes'}
-                            onClick={() => setSelectedKey('profile-changes')}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                    e.preventDefault();
-                                    setSelectedKey('profile-changes');
-                                }
-                            }}
-                            className={cn(
-                                'glass-panel p-4 flex flex-col gap-3 relative cursor-pointer transition-colors',
-                                selectedKey === 'profile-changes' ? 'ring-2 ring-indigo-400 border-indigo-300' : 'hover:border-indigo-200',
-                            )}
-                        >
-                            {selectedKey === 'profile-changes' && (
-                                <div className="absolute right-3 top-3 rounded-full bg-indigo-600 p-1 text-white">
-                                    <Check className="h-3.5 w-3.5" />
-                                </div>
-                            )}
-                            <div className="min-w-0">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <h3 className="font-bold text-slate-800">{t('profileChanges.title')}</h3>
-                                    <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-full">
-                                        {t('selector.badge.agent')}
-                                    </span>
-                                </div>
-                                <p className="text-sm font-medium text-slate-600 mt-1">{t('profileChanges.cardSubtitle')}</p>
-                            </div>
-                            <p className="text-sm text-slate-500 leading-relaxed grow">
-                                {t('profileChanges.cardBody')}
-                            </p>
-                        </article>
                     </div>
                 </section>
             )}
 
             {/* 3. Strumenti attivi (pQBL da PDF) */}
-            <section className="space-y-4">
+            {hasPqbl && <section className="space-y-4">
                 <h2 className="text-xl font-bold text-slate-900">{t('selector.section.active')}</h2>
                 <div
                     role="button"
@@ -335,7 +304,7 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
                         <p className="text-sm text-slate-500 mt-1 leading-relaxed">{t('pqbl.card.desc')}</p>
                     </div>
                 </div>
-            </section>
+            </section>}
 
             {/* 4. In arrivo */}
             {!isUnavailableQuestionnaireLang && (
