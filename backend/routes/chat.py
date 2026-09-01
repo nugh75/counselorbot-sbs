@@ -389,11 +389,15 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     c_provider, c_model, c_persona, c_name, c_disable_thinking, c_reasoning_budget = _resolve_counselor(db, request.counselor_id)
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
     # L'headroom per il reasoning e' applicato dinamicamente per-modello in AIService.
-    max_tokens = _response_length_max_tokens(request.response_length, request.max_tokens)
+    # IDEA richiede risposte piu' ricche: forziamo profilo lungo (350 parole / 1200 token).
+    effective_response_length = request.response_length
+    if (request.questionnaire_type or "") == IDEA_INSTRUMENT:
+        effective_response_length = "long"
+    max_tokens = _response_length_max_tokens(effective_response_length, request.max_tokens)
 
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
     system_prompt = _apply_global_directives(system_prompt, request.language, db)
-    system_prompt = _apply_response_length_directive(system_prompt, request.response_length)
+    system_prompt = _apply_response_length_directive(system_prompt, effective_response_length)
     system_prompt = _apply_idea_variant_directive(system_prompt, ai_service, request)
     effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)
 
@@ -576,7 +580,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         lang=request.language or "it",
     )
     response_content = _strip_generic_acknowledgement(response_content)
-    response_content, _ = _limit_visible_words(response_content, request.response_length)
+    response_content, _ = _limit_visible_words(response_content, effective_response_length)
 
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         step_label = _sanitize_ztpi_step_label(step_label, request.language)
@@ -686,10 +690,13 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     c_provider, c_model, c_persona, c_name, c_disable_thinking, c_reasoning_budget = _resolve_counselor(db, request.counselor_id)
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
     # L'headroom per il reasoning e' applicato dinamicamente per-modello in AIService.
-    max_tokens = _response_length_max_tokens(request.response_length, request.max_tokens)
+    effective_response_length = request.response_length
+    if (request.questionnaire_type or "") == IDEA_INSTRUMENT:
+        effective_response_length = "long"
+    max_tokens = _response_length_max_tokens(effective_response_length, request.max_tokens)
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
     system_prompt = _apply_global_directives(system_prompt, request.language, db)
-    system_prompt = _apply_response_length_directive(system_prompt, request.response_length)
+    system_prompt = _apply_response_length_directive(system_prompt, effective_response_length)
     system_prompt = _apply_idea_variant_directive(system_prompt, ai_service, request)
     effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)
 
@@ -931,9 +938,9 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 )
                 if questionnaire_type == IDEA_INSTRUMENT:
                     display_response = strip_patch_for_display(display_response)
-                display_response, truncated = _limit_visible_words(display_response, request.response_length)
+                display_response, truncated = _limit_visible_words(display_response, effective_response_length)
                 event = {"display": display_response}
-                if request.response_length is None:
+                if effective_response_length is None:
                     event["delta"] = text
                 yield f"data: {_json.dumps(event)}\n\n"
                 # IDEA manda la patch tecnica in fondo: continuiamo a consumare
@@ -973,7 +980,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     user_message=request.message or "",
                     lang=request.language or "it",
                 )
-            response_content, _ = _limit_visible_words(response_content, request.response_length)
+            response_content, _ = _limit_visible_words(response_content, effective_response_length)
             if not response_content.strip():
                 raise AIError(
                     "Il provider AI ha terminato lo stream senza contenuto visibile. "
