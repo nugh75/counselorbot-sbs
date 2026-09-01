@@ -119,6 +119,22 @@ _PHONE_DE_RE = re.compile(r"(?<!\d)01[567][ .\-]?\d{7,8}(?!\d)")
 _PHONE_SV_RE = re.compile(r"(?<!\d)07[02369][ \d.\-]{6,10}\d(?!\d)")
 _PHONE_UK_RE = re.compile(r"(?<!\d)07\d{3}[ ]?\d{6}(?!\d)")
 
+# URL: i link possono contenere parametri con dati personali (rizzo-pii li
+# tratta via regex allo stesso modo).
+_URL_RE = re.compile(r"https?://[^\s<>()\"']+")
+
+# Indirizzo IPv4 con validazione degli ottetti.
+_IP_RE = re.compile(r"(?<!\d)(?:\d{1,3}\.){3}\d{1,3}(?!\d)")
+
+# Handle social (@nome.utente): richiede almeno una lettera per non
+# confondersi con "@10" in testi generici.
+_SOCIAL_RE = re.compile(r"(?<!\w)@[A-Za-z0-9_.]{2,}(?!\w)")
+
+# Data completa (giorno/mese/anno): candidata tipica a data di nascita.
+# Over-redazione reversibile: l'anno da solo resta fuori (troppi falsi
+# positivi in testo accademico).
+_DATE_RE = re.compile(r"(?<!\d)\d{1,2}[/-]\d{1,2}[/-](?:19|20)\d{2}(?!\d)")
+
 
 # --- Checksum ---------------------------------------------------------------
 
@@ -214,6 +230,19 @@ def _sv_phone_valid(value: str) -> bool:
     return 9 <= sum(c.isdigit() for c in value) <= 10
 
 
+def _ip_valid(value: str) -> bool:
+    return all(0 <= int(o) <= 255 for o in value.split("."))
+
+
+def _social_valid(value: str) -> bool:
+    return any(c.isalpha() for c in value)
+
+
+def _date_valid(value: str) -> bool:
+    day, month, year = value.replace("-", "/").split("/")
+    return 1 <= int(day) <= 31 and 1 <= int(month) <= 12 and 1900 <= int(year) <= 2100
+
+
 # --- Motore di detection condiviso ------------------------------------------
 # Etichetta per la redazione distruttiva dei log (invariata per i tipi storici).
 _LABELS = {
@@ -228,6 +257,10 @@ _LABELS = {
     "nir": "[nir]",
     "nino": "[nino]",
     "personnummer": "[personnummer]",
+    "url": "[url]",
+    "ip": "[ip]",
+    "social": "[social]",
+    "data": "[data]",
 }
 
 # Priorita': i rilevatori a checksum vincono su telefono e carte (una sequenza
@@ -235,6 +268,10 @@ _LABELS = {
 _DETECTORS: list = [
     # (tipo, regex, validatore|None)
     ("email", _EMAIL_RE, None),
+    ("url", _URL_RE, None),
+    ("ip", _IP_RE, _ip_valid),
+    ("social", _SOCIAL_RE, _social_valid),
+    ("data", _DATE_RE, _date_valid),
     ("piva", _PIVA_RE, _piva_checksum_valid),
     ("nir", _NIR_RE, _nir_valid),
     ("nino", _NINO_RE, None),
