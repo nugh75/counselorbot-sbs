@@ -182,6 +182,7 @@ def test_orientation_forces_json_and_uses_the_selected_counselor():
 
     assert "Return ONLY JSON" in args[1]
     assert _requests_json_response(args[1], args[0]) is True
+    assert "three to five sentences" in args[1]
     assert "Speak with calm precision." in args[1]
     assert kwargs["provider"] == "ollama"
     assert kwargs["model"] == "test-model"
