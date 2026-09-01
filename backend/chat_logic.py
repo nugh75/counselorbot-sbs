@@ -255,6 +255,16 @@ def _apply_response_length_directive(system_prompt: str, response_length: Option
     )
 
 
+def _balance_bold_truncation(text: str) -> str:
+    """Se il taglio ha lasciato un ``**`` aperto, lo rimuove e il testo dopo."""
+    if not text or text.count('**') % 2 == 0:
+        return text
+    idx = text.rfind('**')
+    if idx >= 0:
+        text = text[:idx].rstrip()
+    return text
+
+
 def _limit_visible_words(text: str, response_length: Optional[str]) -> tuple[str, bool]:
     profile = RESPONSE_LENGTH_PROFILES.get(response_length or "")
     if not profile:
@@ -273,10 +283,10 @@ def _limit_visible_words(text: str, response_length: Optional[str]) -> tuple[str
         if match.end() >= natural_floor
     ]
     if sentence_ends:
-        return text[:sentence_ends[-1]].rstrip(), True
+        return _balance_bold_truncation(text[:sentence_ends[-1]].rstrip()), True
 
     bounded = text[:cutoff].rstrip(" ,;:-")
-    return f"{bounded}…", True
+    return _balance_bold_truncation(f"{bounded}…"), True
 
 
 # Lingue supportate per la risposta dell'AI (codice -> nome inglese, nome nativo)
