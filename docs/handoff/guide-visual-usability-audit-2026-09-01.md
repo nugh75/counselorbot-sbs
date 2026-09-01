@@ -3,7 +3,7 @@
 - **Data:** 2026-09-01
 - **Pagina:** `/guide`
 - **Baseline verificata:** `3f68c5f` (`fix(guide): use language-neutral length icon`)
-- **Stato:** audit concluso, correzioni non ancora implementate
+- **Stato:** correzioni implementate su `fix/guide-visual-usability` (`480bfd0`, `9c359df`, `590a30b`), verificate con Playwright
 - **Ambito:** desktop, mobile, tema chiaro/scuro, reflow multilingue e tastiera
 
 ## Obiettivo
@@ -125,18 +125,34 @@ La pagina desktop in tema chiaro è utilizzabile, ma la sezione sulla chat è sp
 6. Aggiungere i metadata GUA-09.
 7. Ripetere l'intera matrice desktop/mobile, chiaro/scuro, italiano/tedesco e tastiera.
 
+## Esito dell'implementazione
+
+| Problema | Esito |
+|---|---|
+| GUA-01 | Mappatura dark per `bg-slate-50/70` in `globals.css`; contrasto misurato `12,02:1`. |
+| GUA-02 | Lightbox fullscreen su entrambe le immagini (click/touch, Escape, focus intrappolato e restituito al trigger). **Aperto:** cattura mobile reale della chat non prodotta — richiede una sessione autenticata su ai4auth. |
+| GUA-03 | Indice iniziale con ancore alle nove sezioni e ai controlli della chat; sequenza 01–09 invariata. Sezioni comprimibili valutate e scartate: le ancore soddisfano il criterio con una singola azione. |
+| GUA-04 | Descrizioni dei controlli da `text-xs` a `text-sm`; paragrafi con `max-w-prose`. |
+| GUA-05 | Numerazione su `text-ochre-600` (chiaro `4,65:1`) + mappatura dark ocra chiara (`8,63:1`). |
+| GUA-06 | Trigger menu e pulsante indietro a 44 px (`console-topbar-icon--lg`, `h-12`), hit area del marchio ~49 px via padding. |
+| GUA-07 | `max-h-[calc(100dvh-4.5rem)]` + `overflow-y-auto` sul menu. Verificato anonimo, orizzontale 568×320 e con account non disponibile in locale: il limite vale per qualsiasi contenuto. |
+| GUA-08 | Semantica disclosure (`aria-expanded` + `aria-controls`, senza `role=menu/menuitem`); Escape chiude e restituisce il focus al trigger. |
+| GUA-09 | `guide/layout.tsx` con metadata specifici; scheda = «Guida all'interfaccia - CounselorBot». |
+
+Verifica Playwright (14/14): titolo, overflow orizzontale assente a 1440/390/320 (anche tedesco), contrasti chiaro/scuro, target 44 px, menu nei 320 px di altezza, lightbox da tastiera.
+
 ## Checklist di verifica finale
 
-- [ ] Tema chiaro e scuro leggibili a 1440, 390 e 320 px.
-- [ ] Screenshot consultabili e ingrandibili con mouse, touch e tastiera.
-- [ ] Nessun overflow orizzontale né testo tagliato nelle sei lingue.
-- [ ] Indice/ancore o sezioni comprimibili utilizzabili anche da tastiera.
-- [ ] Contrasto dei testi piccoli almeno `4,5:1`.
-- [ ] Target mobili principali comodi e adeguatamente distanziati.
-- [ ] Menu verificato con account, servizi e più sessioni da riprendere.
-- [ ] ESLint, controllo i18n e build Next.js superati.
-- [ ] Rebuild frontend e smoke HTTP `/guide` superati.
-- [ ] Nuove catture visive confrontate con la baseline.
+- [x] Tema chiaro e scuro leggibili a 1440, 390 e 320 px.
+- [x] Screenshot consultabili e ingrandibili con mouse, touch e tastiera.
+- [x] Nessun overflow orizzontale né testo tagliato nelle sei lingue. (Verificate it e de; overflow misurato a 1440/390/320.)
+- [x] Indice/ancore o sezioni comprimibili utilizzabili anche da tastiera.
+- [x] Contrasto dei testi piccoli almeno `4,5:1`.
+- [x] Target mobili principali comodi e adeguatamente distanziati.
+- [~] Menu verificato con account, servizi e più sessioni da riprendere. (Verificato anonimo e orizzontale; account ricco non riproducibile in locale.)
+- [x] ESLint, controllo i18n e build Next.js superati.
+- [x] Rebuild frontend e smoke HTTP `/guide` superati.
+- [x] Nuove catture visive confrontate con la baseline. (Catture in `/tmp/guide-fix`.)
 
 ## Evidenze temporanee della sessione
 
