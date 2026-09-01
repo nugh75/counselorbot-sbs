@@ -213,15 +213,15 @@ def _is_platform_help_request(message: str, language: str) -> bool:
 
 _TOOL_INFO = {
     "it": {
-        "QSA": "Il QSA è un questionario che esplora le tue strategie di studio: concentrazione, autoregolazione, motivazione e modo di affrontare i compiti. Rispondendo alle domande ottieni un profilo dei tuoi punti di forza e delle aree su cui lavorare. La versione più breve dello stesso percorso si chiama QSAr.",
-        "QSAr": "Il QSAr è la versione breve del QSA: esplora le tue strategie di studio e la concentrazione con un percorso più rapido. Se vuoi un primo quadro senza impegnare troppo tempo, è il punto di partenza giusto.",
-        "ZTPI": "Lo ZTPI è un questionario che riflette sul tuo rapporto con passato, presente e futuro. Aiuta a capire come la prospettiva temporale influenza le tue scelte e la tua motivazione.",
-        "QPCS": "Il QPCS esplora le competenze strategiche che percepisci di avere: come affronti compiti, studio e sfide. Offre un quadro delle risorse su cui puoi contare.",
-        "QPCC": "Il QPCC esplora le convinzioni che hai su di te e sulle tue competenze. Aiuta a distinguere ciò che sai fare da ciò che credi di sapere, e a lavorare sulle convinzioni che ti frenano.",
-        "QAP": "Il QAP approfondisce l’adattabilità e le risorse utili per le scelte professionali: come ti orienti, quanto sei pronto al cambiamento e come costruisci il tuo futuro lavorativo.",
-        "SAVICKAS": "SAVICKAS è un’intervista narrativa sulla tua storia e sul tuo progetto professionale. Racconti le tue esperienze e insieme costruiamo il filo che le collega alla direzione che vuoi prendere.",
-        "IDEA": "IDEA è una conversazione aperta che aiuta a mettere a fuoco un’idea, una decisione o un progetto. Parlando con il counselor costruisci una mappa di ciò che conta e del prossimo passo da fare.",
-        "pqbl": "pQBL trasforma un PDF di studio in un percorso di domande e feedback: carichi un testo, ricevi domande per verificare la comprensione e lavori attivamente sul materiale.",
+        "QSA": "Il QSA è un questionario che esplora le tue strategie di studio in modo approfondito.\nOsserva come ti concentri, come ti organizzi, quanto sai regolarti tra motivazione ed emozioni mentre studi, e come affronti compiti e materiali.\nDalle tue risposte ottieni un profilo articolato per fattori: vedi subito i punti di forza su cui contare e le aree in cui intervenire.\nÈ utile quando vuoi capire davvero come studi, prima di scegliere come migliorare. La versione più breve dello stesso percorso si chiama QSAr.",
+        "QSAr": "Il QSAr è la versione breve del QSA.\nEsplora gli stessi aspetti — concentrazione, organizzazione, autoregolazione, motivazione — con un percorso più rapido e un profilo più essenziale.\nÈ il punto di partenza giusto se vuoi un primo quadro di come studi senza impegnare troppo tempo; puoi passare al QSA in seguito per approfondire.",
+        "ZTPI": "Lo ZTPI è un questionario che riflette sul tuo rapporto con passato, presente e futuro.\nTi aiuta a capire come la prospettiva temporale influenza le tue scelte, la tua motivazione e il modo in cui affronti studio e progetti.\nDalle risposte emerge un profilo delle tue prospettive temporali, utile per dare direzione alle decisioni e alle abitudini.",
+        "QPCS": "Il QPCS esplora le competenze strategiche che percepisci di avere.\nOsserva come affronti compiti, studio, impegni e sfide quotidiane, e quali strategie senti di padroneggiare.\nIl profilo che ne esce ti mostra le risorse su cui puoi contare e dove vale la pena rafforzarti.",
+        "QPCC": "Il QPCC esplora le convinzioni che hai su di te e sulle tue competenze.\nAiuta a distinguere ciò che sai fare davvero da ciò che credi di sapere, mettendo in luce le convinzioni che ti sostengono e quelle che ti frenano.\nÈ utile quando senti che l’immagine che hai di te non corrisponde a come agisci.",
+        "QAP": "Il QAP approfondisce l’adattabilità e le risorse per le scelte professionali.\nEsplora come ti orienti nelle decisioni, quanto sei pronto al cambiamento e come costruisci il tuo futuro lavorativo.\nIl profilo che emerge ti aiuta a capire su quali risorse puntare quando devi scegliere strada, lavoro o percorso di studi.",
+        "SAVICKAS": "SAVICKAS è un’intervista narrativa sulla tua storia e sul tuo progetto professionale.\nInvece di un questionario, è una conversazione: racconti esperienze, passaggi e scelte della tua vita, e insieme costruiamo il filo che li collega.\nServe a dare senso alla tua storia e a trasformarla in una direzione concreta per il futuro.",
+        "IDEA": "IDEA è una conversazione aperta che aiuta a mettere a fuoco un’idea, una decisione o un progetto.\nParlando con il counselor esplori ciò che conta per te e costruisci una mappa: nodi, collegamenti e prossimo passo.\nNon è un questionario: è uno spazio libero dove ragionare ad alta voce e uscire con qualcosa di concreto.",
+        "pqbl": "pQBL trasforma un PDF di studio in un percorso di domande e feedback.\nCarichi un testo — una dispensa, un articolo, un capitolo — e ricevi domande pensate per verificare e approfondire la comprensione.\nÈ utile per studiare attivamente materiale reale invece di rileggerlo passivamente.",
     },
     "en": {
         "QSA": "QSA is a questionnaire that explores your study strategies: concentration, self-regulation, motivation and how you approach tasks. Your answers produce a profile of strengths and areas to work on. The shorter version of the same journey is called QSAr.",
@@ -418,7 +418,7 @@ Answer every direct question before suggesting a route. If the student asks how 
 
 Return ONLY JSON, with no prose outside this object, using this exact shape:
 {{
-  "reply": "a warm, concrete reflection in language {lang} of three to five sentences that answers the question directly and explains how the proposed tool would help the student and what they would get out of it",
+  "reply": "a warm, concrete reflection in language {lang} of four to six sentences that answers the question directly, briefly explains how the recommended tool works, and says what the student would get out of it",
   "recommendations": [{{"id": "one exact catalog id", "reason": "why it fits what the student said"}}],
   "notebook_draft": {{
     "context": "optional first-person statement",
@@ -446,7 +446,7 @@ Use one primary recommendation and at most two alternatives. Base every notebook
             (message or "").strip()[:4000],
             system_prompt,
             "orientation",
-            max_tokens=1200,
+            max_tokens=1500,
             provider=provider,
             model=model,
             history=safe_history,
