@@ -32,6 +32,7 @@ WELCOME = {
 class StartRequest(BaseModel):
     language: str = "it"
     new_session: bool = False
+    counselor_id: int | None = None
 
 
 class MessageRequest(BaseModel):
@@ -59,6 +60,7 @@ def _serialize(row: models.OrientationSession) -> dict:
     return {
         "session_id": row.session_id,
         "language": row.language,
+        "counselor_id": row.counselor_id,
         "status": row.status,
         "messages": list(row.messages or []),
         "recommendations": list(row.recommendations or []),
@@ -90,6 +92,34 @@ def _latest(db: Session, owner: str, status: str | None = None):
     if status:
         query = query.filter(models.OrientationSession.status == status)
     return query.order_by(models.OrientationSession.updated_at.desc(), models.OrientationSession.created_at.desc()).first()
+
+
+def _active_counselor(db: Session, counselor_id: int | None) -> models.Counselor | None:
+    if counselor_id is None:
+        return None
+    counselor = (
+        db.query(models.Counselor)
+        .filter(models.Counselor.id == counselor_id, models.Counselor.is_active.is_(True))
+        .first()
+    )
+    if counselor is None:
+        raise HTTPException(status_code=400, detail="Choose an active counselor")
+    return counselor
+
+
+def _welcome(language: str, counselor: models.Counselor | None) -> str:
+    base = WELCOME[language]
+    if counselor is None:
+        return base
+    introductions = {
+        "it": f"Hai scelto {counselor.name} come counselor. Sarà la sua voce ad accompagnarti nella Bussola. ",
+        "en": f"You chose {counselor.name} as your counselor. Their voice will accompany you in the Compass. ",
+        "es": f"Has elegido a {counselor.name} como counselor. Su voz te acompañará en la Brújula. ",
+        "fr": f"Vous avez choisi {counselor.name} comme counselor. Sa voix vous accompagnera dans la Boussole. ",
+        "de": f"Du hast {counselor.name} als Counselor gewählt. Diese Stimme begleitet dich im Kompass. ",
+        "sv": f"Du har valt {counselor.name} som counselor. Den rösten följer dig i Kompassen. ",
+    }
+    return introductions[language] + base
 
 
 def _is_eligible_student(identity: dict) -> bool:
@@ -135,17 +165,30 @@ def start_orientation(
     db: Session = Depends(get_db),
 ):
     owner = _owner(current_user)
+    counselor = _active_counselor(db, payload.counselor_id)
     if not payload.new_session:
         existing = _latest(db, owner, "in_progress")
         if existing is not None:
+            if existing.counselor_id is None and counselor is not None:
+                existing.counselor_id = counselor.id
+                intro = _welcome(existing.language, counselor)
+                messages = list(existing.messages or [])
+                if messages and messages[0].get("content") == WELCOME[normalize_language(existing.language)]:
+                    messages[0] = {"role": "assistant", "content": intro}
+                else:
+                    messages.append({"role": "assistant", "content": intro})
+                existing.messages = messages[-MAX_MESSAGES:]
+                db.commit()
+                db.refresh(existing)
             return _serialize(existing)
     lang = normalize_language(payload.language)
     row = models.OrientationSession(
         session_id=str(uuid.uuid4()),
         username=owner,
         language=lang,
+        counselor_id=counselor.id if counselor else None,
         status="in_progress",
-        messages=[{"role": "assistant", "content": WELCOME[lang]}],
+        messages=[{"role": "assistant", "content": _welcome(lang, counselor)}],
         recommendations=[],
         notebook_draft={},
     )
@@ -175,17 +218,18 @@ def orientation_message(
     if row.status != "in_progress":
         raise HTTPException(status_code=409, detail="Orientation session already completed")
     history = list(row.messages or [])
-    analysis = analyze_turn(db, payload.message, payload.language, history)
+    analysis = analyze_turn(db, payload.message, payload.language, history, row.counselor_id)
     messages = (history + [
         {"role": "user", "content": payload.message},
         {"role": "assistant", "content": analysis.reply},
     ])[-MAX_MESSAGES:]
     row.language = normalize_language(payload.language)
     row.messages = messages
-    row.recommendations = analysis.recommendations
-    row.notebook_draft = analysis.notebook_draft
-    row.notebook_reviewed = False
-    row.notebook_revision_id = None
+    if not analysis.informational:
+        row.recommendations = analysis.recommendations
+        row.notebook_draft = analysis.notebook_draft
+        row.notebook_reviewed = False
+        row.notebook_revision_id = None
     db.commit()
     db.refresh(row)
     return _serialize(row)

@@ -34,3 +34,10 @@ test('Bussola exposes editable notebook and instrument booklet after completion'
     assert.match(source, /EVENT_BOOKLET_TYPES/);
     assert.match(source, /disabled=\{!session\.notebook_reviewed \|\| completing\}/);
 });
+
+test('Bussola asks for a counselor before creating the conversation', () => {
+    const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
+    assert.match(source, /CounselorSelector/);
+    assert.match(source, /orientation\.counselor\.title/);
+    assert.match(source, /createSession\(newSession, counselorId\)/);
+});

@@ -14,6 +14,7 @@ export interface OrientationRecommendation {
 export interface OrientationSession {
     session_id: string;
     language: Lang;
+    counselor_id?: number | null;
     status: 'in_progress' | 'completed';
     messages: OrientationMessage[];
     recommendations: OrientationRecommendation[];
@@ -43,11 +44,11 @@ export async function fetchOrientationStatus(): Promise<OrientationStatus> {
     return readJson(await apiFetch('/api/orientation/status'));
 }
 
-export async function startOrientation(language: Lang, newSession = false): Promise<OrientationSession> {
+export async function startOrientation(language: Lang, newSession = false, counselorId?: number | null): Promise<OrientationSession> {
     return readJson(await apiFetch('/api/orientation/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ language, new_session: newSession }),
+        body: JSON.stringify({ language, new_session: newSession, counselor_id: counselorId }),
     }));
 }
 

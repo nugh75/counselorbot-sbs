@@ -630,6 +630,26 @@ def _seed_and_migrate():
         except Exception as e:
             logger.debug(f"counselors assistant_audience migration skipped/failed: {e}")
 
+        # Migration: il counselor scelto prima della Bussola resta legato alla
+        # sessione, così riapertura e turni successivi usano la stessa voce.
+        try:
+            with database.engine.connect() as conn:
+                conn.execute(sa_text(
+                    "ALTER TABLE orientation_sessions ADD COLUMN counselor_id INTEGER"
+                ))
+                conn.commit()
+        except Exception as e:
+            logger.debug(f"orientation counselor migration skipped/failed: {e}")
+        try:
+            with database.engine.connect() as conn:
+                conn.execute(sa_text(
+                    "CREATE INDEX IF NOT EXISTS ix_orientation_sessions_counselor_id "
+                    "ON orientation_sessions (counselor_id)"
+                ))
+                conn.commit()
+        except Exception as e:
+            logger.debug(f"orientation counselor index skipped/failed: {e}")
+
         # Create initial admin user if not exists
         user = db.query(models.User).filter(models.User.username == "admin").first()
         if not user:
