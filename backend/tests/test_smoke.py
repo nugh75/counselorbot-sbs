@@ -3122,7 +3122,7 @@ def _done_sse_event(response):
 def test_response_length_helpers_and_validation():
     directive = chat_logic._apply_response_length_directive("BASE", "short")
     assert "no more than 80 words" in directive
-    assert chat_logic._response_length_max_tokens("medium", 900) == 600
+    assert chat_logic._response_length_max_tokens("medium", 900) == 800
     assert chat_logic._response_length_max_tokens(None, 900) == 900
 
     source = " ".join(f"parola{i}" for i in range(1, 101))
@@ -3189,7 +3189,7 @@ def test_response_length_is_enforced_on_both_web_streams():
 
 def test_idea_stream_finishes_and_applies_the_hidden_patch_after_visible_limit():
     original_stream = _FakeAIService.stream_response
-    visible = " ".join(f"parola{i}" for i in range(1, 101))
+    visible = " ".join(f"parola{i}" for i in range(1, 701))
     patch = (
         '\n```idea\n'
         '{"title":"Idea aggiornata","add_nodes":['
@@ -3218,10 +3218,11 @@ def test_idea_stream_finishes_and_applies_the_hidden_patch_after_visible_limit()
         })
         assert response.status_code == 200, response.text
         done = _done_sse_event(response)
-        assert len(chat_logic._VISIBLE_WORD_RE.findall(done["response"])) == 80
+        assert len(chat_logic._VISIBLE_WORD_RE.findall(done["response"])) == 600
+        assert done["response"].endswith("…")
         assert "```idea" not in done["response"]
         assert done["idea_revision_id"] is not None
-        assert _FakeAIService.last_stream_args["max_tokens"] == 900
+        assert _FakeAIService.last_stream_args["max_tokens"] == 2000
 
         current = client.get("/idea/map", params={"session_id": session_id})
         assert current.status_code == 200, current.text
