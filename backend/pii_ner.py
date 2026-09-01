@@ -26,7 +26,7 @@ _ner_enabled: bool = True
 _ner_model: str = _DEFAULT_MODEL
 
 # Categorie che il prompt NER puo' restituire (normalizzate a minuscolo).
-_NER_TYPES = {"nome", "indirizzo", "citta"}
+_NER_TYPES = {"nome", "indirizzo", "citta", "scuola", "matricola", "data_nascita"}
 
 
 def set_ner_enabled(enabled: bool) -> None:
@@ -82,9 +82,13 @@ def _ner_entities(text: str, base_url: str, model: str) -> list:
     prompt = (
         "Extract personal information from the following text. "
         "Recognize only these categories: person name (nome), postal address (indirizzo), "
-        "city (citta). Do not extract email, phone numbers or numeric identifiers. "
+        "city (citta), school or university name (scuola), student ID number (matricola), "
+        "date of birth (data_nascita). "
+        "A student ID number (matricola) is allowed even though it is numeric. "
+        "Do not extract email, phone numbers, or other numeric identifiers. "
         "Return ONLY a JSON object with an \"entities\" array of "
-        "{\"type\": \"nome\"|\"indirizzo\"|\"citta\", \"value\": \"exact text\"}. "
+        "{\"type\": \"nome\"|\"indirizzo\"|\"citta\"|\"scuola\"|\"matricola\"|\"data_nascita\", "
+        "\"value\": \"exact text\"}. "
         "If nothing is found return {\"entities\": []}.\n\nText:\n" + text
     )
     resp = httpx.post(

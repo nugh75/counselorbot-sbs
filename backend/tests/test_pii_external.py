@@ -294,6 +294,40 @@ def test_find_pii_ignores_short_number_sequences():
     assert pii.find_pii("ho 3 esami e 12 crediti") == []
 
 
+# --- URL, IP, handle social, data di nascita --------------------------------
+
+def test_find_pii_detects_url():
+    found = pii.find_pii("guarda https://drive.google.com/file/d/abc123/view")
+    assert ("url", "https://drive.google.com/file/d/abc123/view") in found
+
+
+def test_find_pii_detects_ipv4():
+    assert ("ip", "192.168.1.10") in pii.find_pii("il mio ip e' 192.168.1.10")
+
+
+def test_find_pii_rejects_invalid_ipv4():
+    assert pii.find_pii("ip 999.168.1.10") == []
+
+
+def test_find_pii_detects_social_handle():
+    found = pii.find_pii("seguimi su @mario_rossi e @luisa.bianchi")
+    assert ("social", "@mario_rossi") in found
+    assert ("social", "@luisa.bianchi") in found
+
+
+def test_find_pii_detects_birth_date():
+    found = pii.find_pii("sono nato il 14/05/2005 a Roma")
+    assert ("data", "14/05/2005") in found
+
+
+def test_find_pii_rejects_invalid_date():
+    assert pii.find_pii("esame il 32/13/2005") == []
+
+
+def test_find_pii_rejects_generic_year():
+    assert pii.find_pii("mi laureo nel 2005") == []
+
+
 # --- anonymize / restore (roundtrip) ----------------------------------------
 
 def test_anonymize_roundtrip_restores_original():
@@ -377,6 +411,11 @@ def test_anonymize_texts_ner_disabled_leaves_names():
 def test_parse_entities_valid_and_invalid_json():
     good = '{"entities": [{"type": "nome", "value": "Marco Rossi"}]}'
     assert pii_ner._parse_entities(good) == [("nome", "Marco Rossi")]
+    # nuovi tipi contestuali ammessi
+    good2 = ('{"entities": [{"type": "scuola", "value": "Universita di Padova"},'
+             ' {"type": "matricola", "value": "1234567"}]}')
+    assert pii_ner._parse_entities(good2) == [
+        ("scuola", "Universita di Padova"), ("matricola", "1234567")]
     assert pii_ner._parse_entities("non-json") == []
     assert pii_ner._parse_entities('{"entities": 42}') == []
 
