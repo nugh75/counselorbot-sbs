@@ -83,6 +83,13 @@ _TARGA_RE = re.compile(
     r"(?![A-Za-z0-9])"
 )
 
+# Telefono internazionale: prefisso + obbligatorio. La classe include spazi,
+# punti, trattini e parentesi; il validatore conta le cifre (7-15) per
+# escludere falsi positivi come "+3 ore".
+_INTL_PHONE_RE = re.compile(
+    r"(?<!\w)\+[\d .\-()]{7,18}(?!\w)"
+)
+
 
 # --- Checksum ---------------------------------------------------------------
 
@@ -138,6 +145,10 @@ def _luhn_valid(number: str) -> bool:
     return total % 10 == 0
 
 
+def _intl_phone_valid(value: str) -> bool:
+    return 7 <= sum(c.isdigit() for c in value) <= 15
+
+
 # --- Motore di detection condiviso ------------------------------------------
 # Etichetta per la redazione distruttiva dei log (invariata per i tipi storici).
 _LABELS = {
@@ -160,6 +171,7 @@ _DETECTORS: list = [
     ("iban", _IBAN_RE, _iban_mod97_valid),
     ("cf", _CF_RE, _cf_checksum_valid),
     ("targa", _TARGA_RE, None),
+    ("telefono", _INTL_PHONE_RE, _intl_phone_valid),
     ("telefono", _PHONE_RE, None),
 ]
 

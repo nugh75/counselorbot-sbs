@@ -150,6 +150,52 @@ def test_find_pii_keeps_email_and_phone():
     assert any(t == "telefono" for t, _ in found)
 
 
+def test_find_pii_detects_foreign_ibans():
+    """Gli IBAN esteri (DE/ES/FR/GB/SE) passano con mod-97: il formato
+    e' internazionale, non serve una regex per nazione."""
+    for iban in [
+        "DE89370400440532013000",
+        "ES9121000418450200051332",
+        "FR1420041010050500013M02606",
+        "GB29NWBK60161331926819",
+        "SE4550000000058398257466",
+    ]:
+        assert _iban_to_number(iban) % 97 == 1  # sanity: fixture valide
+        assert ("iban", iban) in pii.find_pii(f"iban {iban}")
+
+
+def test_find_pii_detects_international_phones():
+    """Telefoni internazionali con prefisso + (formato usato dagli studenti
+    non italiani) vanno rilevati; senza prefisso no (falsi positivi)."""
+    for phone in [
+        "+46 70 123 45 67",        # Svezia
+        "+1 (555) 123-4567",       # USA
+        "+49 170 1234567",         # Germania
+        "+34 612 345 678",         # Spagna
+    ]:
+        found = pii.find_pii(f"chiamami al {phone}")
+        assert any(t == "telefono" for t, _ in found), phone
+
+
+def test_find_pii_ignores_plus_without_enough_digits():
+    assert pii.find_pii("faccio +3 ore di sport") == []
+    assert pii.find_pii("numero 1234567 senza prefisso") == []
+
+
+def test_anonymize_roundtrip_multilingual_text():
+    """Testo non italiano con IBAN estero, telefono internazionale ed email:
+    roundtrip esatto (il layer deterministico e' language-neutral)."""
+    text = (
+        "My name is John, my IBAN is DE89370400440532013000, "
+        "call me at +46 70 123 45 67 or john.doe@example.com"
+    )
+    anonymized, mapping = pii.anonymize(text)
+    assert "DE89370400440532013000" not in anonymized
+    assert "+46 70 123 45 67" not in anonymized
+    assert "john.doe@example.com" not in anonymized
+    assert pii.restore(anonymized, mapping) == text
+
+
 # --- anonymize / restore (roundtrip) ----------------------------------------
 
 def test_anonymize_roundtrip_restores_original():
