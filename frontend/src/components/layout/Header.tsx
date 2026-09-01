@@ -85,7 +85,7 @@ export function Header() {
                         <CompassMark className="h-8 w-8 shrink-0" />
                         {/* CounselorBot e' il brand principale: titolo grande -> home. */}
                         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-                        <a href="/" className="font-display block text-lg sm:text-2xl font-bold text-slate-900 whitespace-nowrap hover:opacity-80 transition-opacity leading-none" aria-label={t('nav.homeAria')}>
+                        <a href="/" className="font-display block -m-2 p-2 text-lg sm:text-2xl font-bold text-slate-900 whitespace-nowrap hover:opacity-80 transition-opacity leading-none" aria-label={t('nav.homeAria')}>
                             CounselorBot
                         </a>
                     </div>
@@ -230,6 +230,7 @@ function MobileHeaderMenu({
     const dark = useDarkMode();
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
     const { frozen, localResume, count: resumeCount } = resumeEntries;
     const currentLanguage = LANGUAGES.find((l) => l.code === lang) || LANGUAGES[0];
 
@@ -239,7 +240,10 @@ function MobileHeaderMenu({
             if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
         };
         const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') setOpen(false);
+            if (e.key === 'Escape') {
+                setOpen(false);
+                triggerRef.current?.focus();
+            }
         };
         document.addEventListener('mousedown', onPointerDown);
         document.addEventListener('keydown', onKeyDown);
@@ -270,16 +274,17 @@ function MobileHeaderMenu({
         <div ref={ref} className="relative sm:hidden">
             <button
                 type="button"
-                className="console-topbar-icon"
-                aria-haspopup="menu"
+                ref={triggerRef}
+                className="console-topbar-icon console-topbar-icon--lg"
                 aria-expanded={open}
+                aria-controls="mobile-menu"
                 aria-label={label}
                 onClick={() => setOpen((v) => !v)}
             >
                 <MoreVertical className="w-4 h-4" />
             </button>
             {open && (
-                <div role="menu" className="absolute right-0 top-full z-[60] mt-2 w-[min(88vw,18rem)] overflow-hidden rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+                <div id="mobile-menu" className="absolute right-0 top-full z-[60] mt-2 max-h-[calc(100dvh-4.5rem)] w-[min(88vw,18rem)] overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
                     {accountLabel && (
                         <div className="border-b border-slate-100 px-3 py-2 dark:border-slate-700">
                             <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{t('header.account')}</div>
@@ -297,11 +302,11 @@ function MobileHeaderMenu({
                             </>
                         );
                         return item.external ? (
-                            <a key={item.key} role="menuitem" href={item.href} className={itemClass} onClick={close}>
+                            <a key={item.key}href={item.href} className={itemClass} onClick={close}>
                                 {inner}
                             </a>
                         ) : (
-                            <Link key={item.key} role="menuitem" href={item.href} className={itemClass} onClick={close}>
+                            <Link key={item.key}href={item.href} className={itemClass} onClick={close}>
                                 {inner}
                             </Link>
                         );
@@ -316,7 +321,6 @@ function MobileHeaderMenu({
                             {frozen.map((row) => (
                                 <Link
                                     key={row.session_id}
-                                    role="menuitem"
                                     href={resumeHref(row)}
                                     className={itemClass}
                                     onClick={(event) => {
@@ -331,7 +335,6 @@ function MobileHeaderMenu({
                             ))}
                             {localResume && (
                                 <Link
-                                    role="menuitem"
                                     href={LOCAL_RESUME_HREF}
                                     className={itemClass}
                                     onClick={(event) => {
@@ -346,21 +349,21 @@ function MobileHeaderMenu({
                             )}
                         </div>
                     )}
-                    <Link role="menuitem" href="/questionario" className={itemClass} onClick={close}>
+                    <Link href="/questionario" className={itemClass} onClick={close}>
                         <ClipboardList className="h-4 w-4 shrink-0" />
                         <span className="truncate">{t('nav.feedback')}</span>
                     </Link>
                     {servicesHref && (
-                        <a role="menuitem" href={servicesHref} className={itemClass} onClick={close}>
+                        <a href={servicesHref} className={itemClass} onClick={close}>
                             <LayoutGrid className="h-4 w-4 shrink-0" />
                             <span className="truncate">{servicesLabel}</span>
                         </a>
                     )}
-                    <a role="menuitem" href={authHref} className={itemClass} onClick={close}>
+                    <a href={authHref} className={itemClass} onClick={close}>
                         <AuthIcon className="h-4 w-4 shrink-0" />
                         <span className="truncate">{authLabel}</span>
                     </a>
-                    <button type="button" role="menuitem" className={itemClass} onClick={toggleTheme}>
+                    <button type="button" className={itemClass} onClick={toggleTheme}>
                         {dark ? <Sun className="h-4 w-4 shrink-0" /> : <Moon className="h-4 w-4 shrink-0" />}
                         <span className="truncate">{dark ? t('theme.toLight') : t('theme.toDark')}</span>
                     </button>
@@ -373,7 +376,6 @@ function MobileHeaderMenu({
                                 <button
                                     key={language.code}
                                     type="button"
-                                    role="menuitem"
                                     onClick={() => {
                                         setLang(language.code);
                                         close();
