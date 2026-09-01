@@ -230,8 +230,8 @@ def _clamp_max_tokens(value: Optional[int], default: Optional[int] = None) -> Op
 
 RESPONSE_LENGTH_PROFILES = {
     "short": {"max_words": 80, "max_tokens": 256},
-    "medium": {"max_words": 180, "max_tokens": 600},
-    "long": {"max_words": 350, "max_tokens": 1200},
+    "medium": {"max_words": 260, "max_tokens": 800},
+    "long": {"max_words": 600, "max_tokens": 2000},
 }
 _VISIBLE_WORD_RE = re.compile(r"[^\W_]+(?:['’][^\W_]+)*", re.UNICODE)
 
