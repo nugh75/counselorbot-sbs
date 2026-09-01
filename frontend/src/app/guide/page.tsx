@@ -17,7 +17,16 @@ export default function GuidePage() {
     const chatControls = [
         { key: 'suggested', icon: <MessageSquareText className="h-4 w-4" aria-hidden="true" /> },
         { key: 'freeze', icon: <Snowflake className="h-4 w-4" aria-hidden="true" /> },
-        { key: 'length', icon: <span className="font-mono text-xs font-bold" aria-hidden="true">S M L</span> },
+        {
+            key: 'length',
+            icon: (
+                <span className="flex flex-col items-center gap-0.5" aria-hidden="true">
+                    <span className="h-px w-2 rounded-full bg-current" />
+                    <span className="h-px w-3 rounded-full bg-current" />
+                    <span className="h-px w-4 rounded-full bg-current" />
+                </span>
+            ),
+        },
         { key: 'message', icon: <Send className="h-4 w-4" aria-hidden="true" /> },
         { key: 'navigation', icon: <span className="flex" aria-hidden="true"><ChevronLeft className="h-4 w-4" /><ChevronRight className="h-4 w-4" /></span> },
         { key: 'feedback', icon: <span className="flex gap-1" aria-hidden="true"><Volume2 className="h-4 w-4" /><ThumbsUp className="h-4 w-4" /><ThumbsDown className="h-4 w-4" /></span> },
