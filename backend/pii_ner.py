@@ -136,7 +136,7 @@ def anonymize_texts(texts: list, ollama_base: str = None) -> tuple:
         nonlocal ner_ok
         if not text or not isinstance(text, str):
             return text
-        spans = []  # (start, end, token)
+        det_spans = []  # (start, end, token) — layer deterministico
         for ptype, value in pii.find_pii(text):
             token = token_for(ptype, value)
             idx = 0
@@ -144,8 +144,9 @@ def anonymize_texts(texts: list, ollama_base: str = None) -> tuple:
                 idx = text.find(value, idx)
                 if idx < 0:
                     break
-                spans.append((idx, idx + len(value), token))
+                det_spans.append((idx, idx + len(value), token))
                 idx += len(value)
+        ner_spans = []  # (start, end, token) — layer NER
         if _ner_enabled:
             try:
                 for ntype, value in _ner_entities(text, ollama_base, _ner_model):
@@ -155,11 +156,24 @@ def anonymize_texts(texts: list, ollama_base: str = None) -> tuple:
                         idx = text.find(value, idx)
                         if idx < 0:
                             break
-                        spans.append((idx, idx + len(value), token))
+                        ner_spans.append((idx, idx + len(value), token))
                         idx += len(value)
             except Exception as e:  # pragma: no cover - difensivo
                 logger.warning("NER exception: %s", e)
                 ner_ok = False
+        # Filtra gli span NER: (1) mai sopra uno span deterministico;
+        # (2) tra span NER sovrapposti vince il piu' esterno/lungo (un
+        # indirizzo che contiene la citta' va anonimizzato per intero,
+        # altrimenti la strada resta visibile = leak).
+        ner_spans.sort(key=lambda s: (s[0], -(s[1] - s[0])))
+        kept_ner = []
+        for s, e, t in ner_spans:
+            if any(s < d_e and e > d_s for d_s, d_e, _ in det_spans):
+                continue
+            if any(s < k_e and e > k_s for k_s, k_e, _ in kept_ner):
+                continue
+            kept_ner.append((s, e, t))
+        spans = det_spans + kept_ner
         if not spans:
             return text
         spans.sort(key=lambda s: s[0], reverse=True)
@@ -197,16 +211,18 @@ class StreamRestorer:
         if not self._mapping:
             out, self._buf = self._buf, ""
             return out
-        p = self._buf.rfind("[[PII:")
-        if p == -1:
-            out, self._buf = self._buf, ""
-            return pii.restore(out, self._mapping)
-        tail = self._buf[p:]
-        if any(tok.startswith(tail) for tok in self._mapping):
-            out, self._buf = self._buf[:p], tail
-        else:
-            out, self._buf = self._buf, ""
-        return pii.restore(out, self._mapping)
+        # 1) Sostituisci i token completi ovunque siano nel buffer.
+        out = pii.restore(self._buf, self._mapping)
+        # 2) Tieni in buffer la coda che e' una SUBSTRING di qualche token:
+        # i provider possono spezzare un placeholder in pezzi minuscoli
+        # (' [[' + 'P' + 'II' ...) che non sono ancora un prefisso valido.
+        for k in range(len(out), 0, -1):
+            tail = out[-k:]
+            if any(tail in tok for tok in self._mapping):
+                self._buf = tail
+                return out[:-k]
+        self._buf = ""
+        return out
 
     def flush(self) -> str:
         out = pii.restore(self._buf, self._mapping)

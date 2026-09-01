@@ -271,6 +271,50 @@ def test_anonymize_texts_ner_failure_returns_deterministic_and_ner_not_ok(monkey
         pii_ner.set_ner_enabled(prev)
 
 
+def test_anonymize_texts_ner_overlap_keeps_outer_span(monkeypatch):
+    """Il modello puo' restituire span sovrapposti (indirizzo che contiene la
+    citta'): va tenuto lo span esterno, altrimenti la strada resta visibile
+    verso il provider esterno (leak)."""
+    def fake_entities(text, base_url, model):
+        return [
+            ("indirizzo", "via Garibaldi 12 a Torino"),
+            ("citta", "Torino"),
+        ]
+    monkeypatch.setattr(pii_ner, "_ner_entities", fake_entities)
+    prev = pii_ner.is_ner_enabled()
+    pii_ner.set_ner_enabled(True)
+    try:
+        anon, mapping, ner_ok = pii_ner.anonymize_texts(
+            ["abito in via Garibaldi 12 a Torino"])
+        assert ner_ok
+        # nessun pezzo dell'indirizzo deve restare visibile
+        assert "via Garibaldi" not in anon[0]
+        assert "Torino" not in anon[0]
+        assert pii_ner.restore_text(anon[0], mapping) == \
+            "abito in via Garibaldi 12 a Torino"
+    finally:
+        pii_ner.set_ner_enabled(prev)
+
+
+def test_anonymize_texts_ner_never_overrides_deterministic(monkeypatch):
+    """Se il NER copre un identificatore deterministico (es. CF dentro un
+    indirizzo inventato), il deterministico vince e il NER salta."""
+    cf = _make_valid_cf()
+
+    def fake_entities(text, base_url, model):
+        return [("indirizzo", f"via Roma 1 {cf} Torino")]
+    monkeypatch.setattr(pii_ner, "_ner_entities", fake_entities)
+    prev = pii_ner.is_ner_enabled()
+    pii_ner.set_ner_enabled(True)
+    try:
+        anon, mapping, ner_ok = pii_ner.anonymize_texts([f"via Roma 1 {cf} Torino"])
+        assert ner_ok
+        assert cf not in anon[0]  # token deterministico presente
+        assert pii_ner.restore_text(anon[0], mapping) == f"via Roma 1 {cf} Torino"
+    finally:
+        pii_ner.set_ner_enabled(prev)
+
+
 def test_stream_restorer_reassembles_split_token():
     mapping = {"[[PII:CF:1]]": "ABCDEF12A34B567C"}
     restorer = pii_ner.StreamRestorer(mapping)
@@ -281,11 +325,48 @@ def test_stream_restorer_reassembles_split_token():
     assert out == "il cf e' ABCDEF12A34B567C ok"
 
 
+def test_stream_restorer_reassembles_token_split_before_colon():
+    """Il chunk puo' spezzare il placeholder anche PRIMA dei due punti
+    ('[[PII' + ':NOME:1]]'): ogni prefisso di token va tenuto in buffer."""
+    mapping = {"[[PII:NOME:1]]": "Marco Rossi"}
+    restorer = pii_ner.StreamRestorer(mapping)
+    out = ""
+    for chunk in ["nome ", "[[PII", ":NOME", ":1]]", " ok"]:
+        out += restorer.feed(chunk)
+    out += restorer.flush()
+    assert out == "nome Marco Rossi ok"
+
+
 def test_stream_restorer_passthrough_without_mapping():
     restorer = pii_ner.StreamRestorer({})
     out = restorer.feed("nessun token")
     out += restorer.flush()
     assert out == "nessun token"
+
+
+def test_stream_restorer_tiny_chunks_like_real_deepseek():
+    """Chunk minuscoli e spezzati dentro il prefisso, come li produce
+    deepseek reale: la coda bufferizzata deve essere una SUBSTRING del token,
+    non solo un suo prefisso."""
+    mapping = {
+        "[[PII:NOME:1]]": "Marco Rossi",
+        "[[PII:CF:1]]": "RSSMRA80A01H501U",
+        "[[PII:CITTA:1]]": "Torino",
+    }
+    restorer = pii_ner.StreamRestorer(mapping)
+    out = ""
+    for chunk in [
+        "- nome", " [", "[", "P", "II", ":", "NOME", ":", "1", "]]\n",
+        "- cf", " [", "[", "P", "II", ":", "CF", ":", "1", "]]\n",
+        "- citt", "a", " [", "[", "P", "II", ":", "CIT", "TA", ":", "1", "]]",
+    ]:
+        out += restorer.feed(chunk)
+    out += restorer.flush()
+    assert out == (
+        "- nome Marco Rossi\n"
+        "- cf RSSMRA80A01H501U\n"
+        "- citta Torino"
+    )
 
 
 # --- ai_service: wrapper anonimizzazione provider esterni --------------------
