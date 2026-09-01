@@ -504,7 +504,7 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                             <option value="lesson_classroom">{t('admin.run.meta.contextLesson')}</option>
                             <option value="library_study_room">{t('admin.run.meta.contextLibrary')}</option>
                             <option value="home">{t('admin.run.meta.contextHome')}</option>
-                            <option value="school_university_lab">{t('admin.run.meta.contextLab')}</option>
+                            <option value="lab">{t('admin.run.meta.contextLab')}</option>
                             <option value="university_campus">{t('admin.run.meta.contextUniversity')}</option>
                             <option value="online_remote">{t('admin.run.meta.contextRemote')}</option>
                             <option value="workshop_event">{t('admin.run.meta.contextEvent')}</option>
