@@ -13,6 +13,8 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from . import models
+from . import pii
+from . import pii_ner
 from .reasoning_profiles import DISABLED_PLAN, ReasoningPlan, resolve_plan
 
 logger = logging.getLogger(__name__)
@@ -86,6 +88,9 @@ OPENAI_COMPAT_PROVIDERS = {
     'deepinfra': 'https://api.deepinfra.com/v1/openai',
 }
 
+# Provider locali: nessuna anonimizzazione verso l'esterno necessaria.
+LOCAL_PROVIDERS = {'ollama', 'llamacpp'}
+
 class AIService:
     def __init__(self, db: Session):
         self.db = db
@@ -117,6 +122,10 @@ class AIService:
         self.ollama_preload_enabled = str(self.config.get('ollama_preload', 'false')).lower() == 'true'
         # Modello di embedding locale (via Ollama) per il RAG del chatbot del sito.
         self.embedding_model = (self.config.get('embedding_model') or 'qwen3-embedding:4b').strip()
+        # Anonimizzazione PII verso provider esterni (vedi `_anonymize_external`).
+        # `block` = errore se il detector NER non risponde; `send_raw` = invio comunque.
+        self.external_pii_redact = str(self.config.get('external_pii_redact', 'true')).lower() not in ('0', 'false', 'no', 'off')
+        self.external_pii_fallback = (self.config.get('external_pii_fallback') or 'block').strip().lower()
 
         # Registro provider: un'unica fonte di verità per dispatch sync/stream.
         # call_max  = default max_tokens per la chiamata bloccante (get_response)
@@ -271,6 +280,33 @@ class AIService:
             return f"{system_prompt}\n\n/no_think"
         return system_prompt
 
+    def _ollama_base(self) -> str:
+        return (self.config.get('ollama_ip') or 'http://localhost:11434').rstrip('/')
+
+    def _anonymize_external(self, provider: str, user_message: str,
+                            system_prompt: str, history: list):
+        """Anonimizza l'envelope per i provider esterni (GDPR minimizzazione).
+
+        Ritorna `(user_message, system_prompt, history, mapping)`; per provider
+        locali o flag spento i testi restano invariati e il mapping e' vuoto.
+        Con `external_pii_fallback=block`, un detector NER non raggiungibile
+        blocca la chiamata invece di esporre i dati."""
+        if provider in LOCAL_PROVIDERS or not self.external_pii_redact:
+            return user_message, system_prompt, history, {}
+        history = history or []
+        texts = [user_message, system_prompt] + [m.get('content', '') for m in history]
+        anon_texts, mapping, ner_ok = pii_ner.anonymize_texts(
+            texts, ollama_base=self._ollama_base())
+        if not ner_ok and self.external_pii_fallback == 'block':
+            raise AIError(
+                "Anonimizzazione PII non disponibile (modello locale non raggiungibile). "
+                "Riprova, oppure disattiva la redazione esterna dal pannello admin.")
+        anon_history = [
+            dict(m, content=anon_texts[2 + i]) if m.get('content') else m
+            for i, m in enumerate(history)
+        ]
+        return anon_texts[0], anon_texts[1], anon_history, mapping
+
     def _load_config(self):
         configs = self.db.query(models.Config).all()
         config_dict = {c.key: c.value for c in configs}
@@ -410,8 +446,11 @@ class AIService:
                                        fallback_max_tokens=entry['call_max'])
         mt = plan.max_tokens
         self.last_usage = None
+        user_message, system_prompt, _history, pii_mapping = self._anonymize_external(
+            provider, user_message, system_prompt, None)
         try:
-            return entry['call'](user_message, system_prompt, model, max_tokens=mt)
+            result = entry['call'](user_message, system_prompt, model, max_tokens=mt)
+            return pii.restore(result, pii_mapping) if pii_mapping else result
         except AIError:
             raise
         except Exception as e:
@@ -457,6 +496,10 @@ class AIService:
         # Il riassunto e' un task breve: niente reasoning (consumerebbe il budget).
         self._reasoning_plan = DISABLED_PLAN
         provider, summary_model = self._apply_budget_lock(provider, summary_model)
+        # Anonimizza il testo verso provider esterni (il riassunto resta con i
+        # placeholder: e' testo interno, mai mostrato allo studente).
+        user_msg, _sp, _h, _m = self._anonymize_external(
+            provider, user_msg, SUMMARY_SYSTEM_PROMPT, None)
         try:
             return self._provider(provider)['call'](user_msg, SUMMARY_SYSTEM_PROMPT, summary_model, max_tokens=mt)
         except Exception as e:
@@ -766,6 +809,12 @@ class AIService:
                 f"---\n\n{user_message}"
             )
 
+        # Anonimizzazione PII verso provider esterni (mapping in RAM,
+        # ripristinato nei chunk in uscita prima della visualizzazione).
+        user_message, system_prompt, history, pii_mapping = self._anonymize_external(
+            provider, user_message, system_prompt, history)
+        restorer = pii_ner.StreamRestorer(pii_mapping) if pii_mapping else None
+
         def _dispatch():
             entry = self._provider(provider)
             self.last_usage = None
@@ -784,9 +833,18 @@ class AIService:
             # {"type": "content"|"reasoning", "text": ...}. Esponi sempre dict.
             for item in _dispatch():
                 if isinstance(item, dict):
+                    if restorer and item.get("type") == "content" and item.get("text"):
+                        item = {**item, "text": restorer.feed(item["text"])}
+                    elif restorer and item.get("type") == "reasoning" and item.get("text"):
+                        item = {**item, "text": pii.restore(item["text"], pii_mapping)}
                     yield item
                 elif item:
-                    yield {"type": "content", "text": item}
+                    yield {"type": "content",
+                           "text": restorer.feed(item) if restorer else item}
+            if restorer:
+                tail = restorer.flush()
+                if tail:
+                    yield {"type": "content", "text": tail}
         except AIError:
             raise
         except Exception as e:

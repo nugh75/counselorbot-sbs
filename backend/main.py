@@ -172,15 +172,22 @@ async def lifespan(app: FastAPI):
     _seed_and_migrate()
     asyncio.create_task(_memory_cleanup_loop())
     asyncio.create_task(_log_retention_loop())
-    # Carica il flag di redazione PII dalla config (default attivo).
+    # Carica i flag PII dalla config (default attivi).
     try:
         from . import pii as _pii
+        from . import pii_ner as _pii_ner
         from .database import SessionLocal as _cfg_session
         _db = _cfg_session()
         try:
             _row = _db.query(models.Config).filter(models.Config.key == "log_pii_redact").first()
             if _row and (_row.value or "").strip().lower() in ("0", "false", "no", "off"):
                 _pii.set_pii_redact_enabled(False)
+            _row = _db.query(models.Config).filter(models.Config.key == "pii_ner_enabled").first()
+            if _row and (_row.value or "").strip().lower() in ("0", "false", "no", "off"):
+                _pii_ner.set_ner_enabled(False)
+            _row = _db.query(models.Config).filter(models.Config.key == "pii_ner_model").first()
+            if _row and (_row.value or "").strip():
+                _pii_ner.set_ner_model(_row.value.strip())
         finally:
             _db.close()
     except Exception as _e:
@@ -633,7 +640,7 @@ def _seed_and_migrate():
         # Config operative per il logging: redazione PII e retention giorni.
         # Valore testuale coerente con il resto della tabella configs.
         for key, default, descr in [
-            ("log_pii_redact", "true", "Redazione PII (email/telefono/cf) nei log conversazionali (true/false)."),
+            ("log_pii_redact", "true", "Redazione PII (email/telefono/cf/iban/piva/carta/targa) nei log conversazionali (true/false)."),
             ("log_full_prompt", "true", "Salva nei log il prompt finale completo e l'envelope dei messaggi (true/false)."),
             ("log_retention_days", "90", "Giorni di conservazione dei log; 0 disattiva la retention automatica."),
             ("usd_eur_rate", "0.92", "Tasso di cambio USD->EUR per la conversione dei costi nel pannello admin."),
@@ -642,6 +649,10 @@ def _seed_and_migrate():
             ("readings_allow_sensitive", "false", "Se true, le letture marcate sensibili possono essere proposte allo studente quando e' lui a nominare quel tema. Spenta: restano solo nel catalogo admin."),
             ("counselor_restricted_instruments", '["IDEA"]', "Strumenti a invito: un counselor li serve solo se li elenca nei suoi questionari. Per gli altri strumenti, lista vuota continua a valere 'tutti'."),
             ("feature_idea_focus", "false", "Strumento Idea (chat libera che mette a fuoco un'idea costruendo una mappa). Spento: non compare fra gli strumenti e gli endpoint della mappa rispondono 404."),
+            ("external_pii_redact", "true", "Anonimizzazione PII reversibile verso provider LLM esterni (placeholder + restore). Provider locali mai toccati (true/false)."),
+            ("external_pii_fallback", "block", "Se il detector NER locale non risponde: 'block' blocca la chiamata esterna, 'send_raw' invia comunque."),
+            ("pii_ner_enabled", "true", "Layer NER locale (Ollama) per nomi/indirizzi nell'anonimizzazione esterna. Spento: solo layer deterministico checksum (true/false)."),
+            ("pii_ner_model", "qwen3:0.6b", "Modello Ollama usato dal layer NER PII."),
         ]:
             if not db.query(models.Config).filter(models.Config.key == key).first():
                 db.add(models.Config(key=key, value=default, description=descr))

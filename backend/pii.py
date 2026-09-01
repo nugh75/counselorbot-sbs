@@ -55,7 +55,6 @@ _PHONE_RE = re.compile(
 )
 
 # Codice fiscale italiano (16 caratteri alfanumerici, formato standard).
-# Conservativo: richiede le 3 consonanti iniziali tipiche del cognome.
 _CF_RE = re.compile(
     r"(?<![A-Za-z0-9])"
     r"[A-Z]{6}"                    # cognome + nome (6 consonanti)
@@ -64,17 +63,198 @@ _CF_RE = re.compile(
     r"(?![A-Za-z0-9])"
 )
 
+# IBAN: nazione + check + BBAN alfanumerico, validato con mod-97.
+_IBAN_RE = re.compile(
+    r"(?<![A-Za-z0-9])"
+    r"[A-Z]{2}\d{2}[A-Z0-9]{5,30}"
+    r"(?![A-Za-z0-9])"
+)
 
-def _redact_email(text: str) -> str:
-    return _EMAIL_RE.sub("[email]", text)
+# Partita IVA italiana: 11 cifre, validata con cifra di controllo.
+_PIVA_RE = re.compile(r"(?<!\d)\d{11}(?!\d)")
+
+# Carte di pagamento: 13-19 cifre, validata con Luhn.
+_CARD_RE = re.compile(r"(?<!\d)\d{13,19}(?!\d)")
+
+# Targa italiana (formato 1994+): 2 lettere, 3 cifre, 2 lettere.
+_TARGA_RE = re.compile(
+    r"(?<![A-Za-z0-9])"
+    r"[A-Z]{2}\d{3}[A-Z]{2}"
+    r"(?![A-Za-z0-9])"
+)
 
 
-def _redact_phone(text: str) -> str:
-    return _PHONE_RE.sub("[telefono]", text)
+# --- Checksum ---------------------------------------------------------------
+
+def _cf_checksum_valid(cf: str) -> bool:
+    """Verifica il carattere di controllo del codice fiscale."""
+    odd = {
+        "0": 1, "1": 0, "2": 5, "3": 7, "4": 9, "5": 13, "6": 15, "7": 17,
+        "8": 19, "9": 21, "A": 1, "B": 0, "C": 5, "D": 7, "E": 9, "F": 13,
+        "G": 15, "H": 17, "I": 19, "J": 21, "K": 2, "L": 4, "M": 18, "N": 20,
+        "O": 11, "P": 3, "Q": 6, "R": 8, "S": 12, "T": 14, "U": 16, "V": 10,
+        "W": 22, "X": 25, "Y": 24, "Z": 23,
+    }
+    total = 0
+    for i, ch in enumerate(cf[:15], start=1):
+        if i % 2 == 1:
+            total += odd[ch]
+        elif ch.isdigit():
+            total += int(ch)
+        else:
+            total += ord(ch) - 65
+    return chr(65 + total % 26) == cf[15]
 
 
-def _redact_cf(text: str) -> str:
-    return _CF_RE.sub("[cf]", text)
+def _iban_mod97_valid(iban: str) -> bool:
+    rearranged = iban[4:] + iban[:4]
+    digits = ""
+    for ch in rearranged:
+        digits += ch if ch.isdigit() else str(ord(ch) - 55)
+    return int(digits) % 97 == 1
+
+
+def _piva_checksum_valid(piva: str) -> bool:
+    total = 0
+    for i, ch in enumerate(piva[:10], start=1):
+        d = int(ch)
+        if i % 2 == 1:
+            d *= 2
+            if d > 9:
+                d -= 9
+        total += d
+    return (10 - total % 10) % 10 == int(piva[10])
+
+
+def _luhn_valid(number: str) -> bool:
+    total = 0
+    for i, ch in enumerate(reversed(number)):
+        d = int(ch)
+        if i % 2 == 1:
+            d *= 2
+            if d > 9:
+                d -= 9
+        total += d
+    return total % 10 == 0
+
+
+# --- Motore di detection condiviso ------------------------------------------
+# Etichetta per la redazione distruttiva dei log (invariata per i tipi storici).
+_LABELS = {
+    "email": "[email]",
+    "telefono": "[telefono]",
+    "cf": "[cf]",
+    "iban": "[iban]",
+    "piva": "[piva]",
+    "card": "[carta]",
+    "targa": "[targa]",
+}
+
+# Priorita': i rilevatori a checksum vincono su telefono (una sequenza di 11
+# cifre matcha anche il pattern telefonico).
+_DETECTORS: list = [
+    # (tipo, regex, validatore|None)
+    ("email", _EMAIL_RE, None),
+    ("piva", _PIVA_RE, _piva_checksum_valid),
+    ("card", _CARD_RE, _luhn_valid),
+    ("iban", _IBAN_RE, _iban_mod97_valid),
+    ("cf", _CF_RE, _cf_checksum_valid),
+    ("targa", _TARGA_RE, None),
+    ("telefono", _PHONE_RE, None),
+]
+
+
+def find_pii(text: Optional[str]) -> list:
+    """Ritorna le occorrenze PII come tuple `(tipo, valore)` in ordine di
+    posizione, con validazione checksum dove disponibile."""
+    if not text or not isinstance(text, str):
+        return []
+    claimed: list = []  # (start, end) gia' assegnati
+    found: list = []    # (start, tipo, valore)
+    for ptype, regex, validator in _DETECTORS:
+        for m in regex.finditer(text):
+            value = m.group(0)
+            if validator is not None and not validator(value):
+                continue
+            start, end = m.span()
+            if any(start < c_end and end > c_start for c_start, c_end in claimed):
+                continue
+            claimed.append((start, end))
+            found.append((start, ptype, value))
+    found.sort(key=lambda x: x[0])
+    return [(ptype, value) for _, ptype, value in found]
+
+
+def anonymize(text: Optional[str]) -> tuple:
+    """Anonimizzazione reversibile: sostituisce ogni PII con un placeholder
+    `[[PII:TIPO:N]]` e ritorna `(testo_anonimizzato, mapping)`.
+
+    Il mapping (token -> valore reale) vive solo in memoria: nessuna traccia
+    su disco. `restore` inverte la trasformazione.
+    """
+    if not text or not isinstance(text, str):
+        return text, {}
+    spans = []  # (start, end, token)
+    counters: dict = {}
+    for ptype, value in find_pii(text):
+        n = counters.get(ptype, 0) + 1
+        counters[ptype] = n
+        token = f"[[PII:{ptype.upper()}:{n}]]"
+        # trova tutte le occorrenze della stessa stringa, per valore
+        idx = 0
+        while True:
+            idx = text.find(value, idx)
+            if idx < 0:
+                break
+            spans.append((idx, idx + len(value), token))
+            idx += len(value)
+    # Ordine discendente: la sostituzione in-place non sfalsa gli indici
+    # precedenti. Skip di span sovrapposti (casi limite tra tipi diversi).
+    spans.sort(key=lambda s: s[0], reverse=True)
+    out = list(text)
+    mapping: dict = {}
+    placed: list = []  # (start, end) gia' sostituiti
+    for start, end, token in spans:
+        if any(start < p_end and end > p_start for p_start, p_end in placed):
+            continue
+        out[start:end] = [token]
+        mapping[token] = text[start:end]
+        placed.append((start, end))
+    return "".join(out), mapping
+
+
+def restore(text: Optional[str], mapping: dict) -> Optional[str]:
+    """Inverte `anonymize`: sostituisce i token noti con i valori reali.
+    Token sconosciuti restano invariati."""
+    if not text or not isinstance(text, str):
+        return text
+    out = text
+    for token, value in mapping.items():
+        out = out.replace(token, value)
+    return out
+
+
+def _redact_spans(text: str) -> str:
+    """Redazione distruttiva basata sullo stesso motore di `find_pii`."""
+    spans = []  # (start, end, label)
+    for ptype, value in find_pii(text):
+        idx = 0
+        while True:
+            idx = text.find(value, idx)
+            if idx < 0:
+                break
+            spans.append((idx, idx + len(value), _LABELS[ptype]))
+            idx += len(value)
+    # Ordine discendente come in `anonymize`.
+    spans.sort(key=lambda s: s[0], reverse=True)
+    out = list(text)
+    placed: list = []  # (start, end) gia' sostituiti
+    for start, end, label in spans:
+        if any(start < p_end and end > p_start for p_start, p_end in placed):
+            continue
+        out[start:end] = [label]
+        placed.append((start, end))
+    return "".join(out)
 
 
 def redact(text: Optional[str]) -> Optional[str]:
@@ -89,10 +269,7 @@ def redact(text: Optional[str]) -> Optional[str]:
     if not _pii_redact_enabled or not text:
         return text
     try:
-        out = _redact_email(text)
-        out = _redact_phone(out)
-        out = _redact_cf(out)
-        return out
+        return _redact_spans(text)
     except Exception as e:  # pragma: no cover - difensivo
         logger.warning("PII redaction failed (returning original): %s", e)
         return text
@@ -107,7 +284,7 @@ def redact_always(text: Optional[str]) -> Optional[str]:
     if not isinstance(text, str) or not text:
         return text
     try:
-        return _redact_cf(_redact_phone(_redact_email(text)))
+        return _redact_spans(text)
     except Exception as e:  # pragma: no cover - difensivo
         logger.warning("PII redaction failed (returning original): %s", e)
         return text
@@ -156,13 +333,4 @@ def redact_envelope(envelope: dict) -> dict:
 
 def detect_pii_types(text: Optional[str]) -> set[str]:
     """Ritorna i tipi PII rilevati nel testo, senza esporre i valori trovati."""
-    if not text or not isinstance(text, str):
-        return set()
-    found: set[str] = set()
-    if _EMAIL_RE.search(text):
-        found.add("email")
-    if _PHONE_RE.search(text):
-        found.add("telefono")
-    if _CF_RE.search(text):
-        found.add("cf")
-    return found
+    return {ptype for ptype, _ in find_pii(text)}
