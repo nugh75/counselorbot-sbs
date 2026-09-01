@@ -152,7 +152,7 @@ def test_tool_question_gets_a_direct_explanation():
     assert intent.informational is False
 
 
-def test_orientation_forces_json_and_uses_the_selected_counselor():
+def test_orientation_uses_the_selected_counselor_without_forced_json():
     db = _Session()
     try:
         preset = models.ModelPreset(
@@ -183,12 +183,34 @@ def test_orientation_forces_json_and_uses_the_selected_counselor():
         db.close()
 
     assert "Return ONLY JSON" in args[1]
-    assert _requests_json_response(args[1], args[0]) is True
     assert "four to six sentences" in args[1]
     assert "formulaic empathy" in args[1]
     assert "Speak with calm precision." in args[1]
     assert kwargs["provider"] == "ollama"
     assert kwargs["model"] == "test-model"
+    assert kwargs["json_mode"] is False
+
+
+def test_plain_text_reply_is_kept_and_uses_local_ranking():
+    class _PlainService(_FakeAIService):
+        def get_response(self, *args, **kwargs):
+            type(self).last_call = (args, kwargs)
+            return "Il QSA osserva come studi e ti restituisce un profilo utile per capire da dove partire."
+
+    orientation.AIService = _PlainService
+    db = _Session()
+    try:
+        analysis = analyze_turn(db, "Voglio organizzare meglio lo studio", "it")
+        args, kwargs = _PlainService.last_call
+    finally:
+        orientation.AIService = _FakeAIService
+        db.close()
+
+    assert analysis.reply.startswith("Il QSA osserva come studi")
+    assert [row["id"] for row in analysis.recommendations] == ["QSA"]
+    assert analysis.notebook_draft == {"goal": "Voglio organizzare meglio lo studio"}
+    assert kwargs["model"] == "qwen3.8:latest"
+    assert kwargs["json_mode"] is False
 
 
 def test_model_output_is_filtered_through_closed_contract():
