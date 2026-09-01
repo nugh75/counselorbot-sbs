@@ -11,7 +11,7 @@ from sqlalchemy import cast, func, or_, text as sa_text
 from sqlalchemy.types import Text
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, auth, database, pii
+from .. import models, schemas, auth, database, pii, pii_ner
 from .. import content_version_service
 from ..content_versions import CONTENT_TYPES, ContentVersionError
 from ..ai_service import AIService
@@ -1133,6 +1133,10 @@ async def create_or_update_config(config: schemas.ConfigCreate, current_user: mo
     db.refresh(db_config)
     if config.key == "log_pii_redact":
         pii.set_pii_redact_enabled((config.value or "").strip().lower() not in ("0", "false", "no", "off"))
+    if config.key == "pii_ner_enabled":
+        pii_ner.set_ner_enabled((config.value or "").strip().lower() not in ("0", "false", "no", "off"))
+    if config.key == "pii_ner_model":
+        pii_ner.set_ner_model((config.value or "").strip())
     return db_config
 
 
