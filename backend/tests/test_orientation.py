@@ -125,6 +125,31 @@ def test_platform_question_gets_a_complete_answer_instead_of_generic_routing():
         assert analysis.notebook_draft == {}
 
 
+def test_tool_question_gets_a_direct_explanation():
+    db = _Session()
+    try:
+        qsa = analyze_turn(db, "Che cosa è il QSA?", "it")
+        qsar = analyze_turn(db, "cos'è il QSAr?", "it")
+        idea = analyze_turn(db, "Come funziona IDEA?", "it")
+        en = analyze_turn(db, "What is ZTPI?", "en")
+        intent = analyze_turn(db, "Voglio provare il QSA", "it")
+    finally:
+        db.close()
+
+    assert qsa.informational is True
+    assert "strategie di studio" in qsa.reply
+    assert qsa.recommendations == []
+    assert qsa.notebook_draft == {}
+    assert qsar.informational is True
+    assert "breve" in qsar.reply
+    assert idea.informational is True
+    assert "mappa" in idea.reply
+    assert en.informational is True
+    assert "questionnaire" in en.reply
+    # Nessun punto interrogativo: resta una richiesta di orientamento, non una risposta.
+    assert intent.informational is False
+
+
 def test_orientation_forces_json_and_uses_the_selected_counselor():
     db = _Session()
     try:
