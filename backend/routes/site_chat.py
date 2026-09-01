@@ -428,6 +428,7 @@ async def site_chat_stream(
             session_memory.record_interaction(
                 session_id,
                 user_message=question,
+                transcript_user=question,
                 bot_response=answer,
                 questionnaire_type=_SITE_QTYPE,
                 phase=request.audience,

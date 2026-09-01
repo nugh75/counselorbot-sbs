@@ -29,6 +29,7 @@ MAX_EPISODES = 16
 MAX_EXTERNAL_NOTES_CHARS = 1200
 MAX_TRANSCRIPT_TURNS = 12
 MAX_TRANSCRIPT_CHARS = 6000
+DEFAULT_NOTEBOOK_MIN_USER_TURNS = 4
 
 
 def _default_memory_dir() -> Path:
@@ -85,6 +86,65 @@ class SessionMemory:
                 return []
             self._touch(session_id)
         return self._parse_transcript(text)
+
+    def get_notebook_suggestion(
+        self,
+        session_id: str,
+        min_user_turns: int = DEFAULT_NOTEBOOK_MIN_USER_TURNS,
+    ) -> Dict[str, object]:
+        """Restituisce una proposta estrattiva stabile solo dopo turni sufficienti."""
+        with self._lock:
+            text = self._read(session_id)
+            data = self._parse(text)
+            user_turns = sum(
+                1
+                for turn in data["transcript"]
+                if turn.get("role") == "user"
+                and len(str(turn.get("content") or "").strip()) >= 12
+                and not str(turn.get("content") or "").lstrip().startswith("[")
+            )
+            if user_turns < min_user_turns:
+                return {
+                    "status": "pending",
+                    "user_turns": user_turns,
+                    "min_user_turns": min_user_turns,
+                    "data": {},
+                }
+
+            existing = data.get("notebook_suggestion") or {}
+            if existing:
+                return {
+                    "status": "ready",
+                    "user_turns": user_turns,
+                    "min_user_turns": min_user_turns,
+                    "data": existing,
+                }
+
+            suggestion = {
+                key: value
+                for key, value in {
+                    "goal": (data["goals"][-1] if data["goals"] else ""),
+                    "main_difficulty": (data["facts"][-1] if data["facts"] else ""),
+                    "notes": (data["preferences"][-1] if data["preferences"] else ""),
+                }.items()
+                if value
+            }
+            if not suggestion:
+                return {
+                    "status": "insufficient_evidence",
+                    "user_turns": user_turns,
+                    "min_user_turns": min_user_turns,
+                    "data": {},
+                }
+
+            data["notebook_suggestion"] = suggestion
+            self._write(session_id, self._render(data))
+            return {
+                "status": "ready",
+                "user_turns": user_turns,
+                "min_user_turns": min_user_turns,
+                "data": suggestion,
+            }
 
     def get_relevant_context(
         self,
@@ -296,6 +356,7 @@ class SessionMemory:
             "episodes": [],
             "last_topic": "",
             "last_suggestion": "",
+            "notebook_suggestion": {},
             "transcript": [],
         }
 
@@ -320,6 +381,18 @@ class SessionMemory:
         data["episodes"] = self._list_section(text, "Episodi utente")
         data["last_topic"] = self._section(text, "Ultimo tema discusso").strip()
         data["last_suggestion"] = self._section(text, "Ultimo suggerimento dato").strip()
+        notebook_raw = self._section(text, "Proposta taccuino").replace("```json", "").replace("```", "").strip()
+        if notebook_raw and notebook_raw != "-":
+            try:
+                parsed_notebook = json.loads(notebook_raw)
+                if isinstance(parsed_notebook, dict):
+                    data["notebook_suggestion"] = {
+                        str(key): str(value)
+                        for key, value in parsed_notebook.items()
+                        if str(value).strip()
+                    }
+            except (TypeError, ValueError):
+                pass
         data["transcript"] = self._parse_transcript(text)
         return data
 
@@ -391,6 +464,11 @@ class SessionMemory:
             "",
             "## Ultimo suggerimento dato",
             str(data["last_suggestion"] or "-").strip(),
+            "",
+            "## Proposta taccuino",
+            "```json",
+            json.dumps(data.get("notebook_suggestion") or {}, ensure_ascii=False),
+            "```",
             "",
         ]
         return "\n".join(parts)

@@ -3650,6 +3650,74 @@ def test_learner_profile_revisions_and_history():
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
+def test_learner_profile_suggestion_waits_four_turns_and_remains_stable():
+    """La proposta nasce da materiale esplicito e non cambia a ogni turno."""
+    sid = "learner-profile-suggestion-test"
+    session_memory.clear(sid)
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        with _TestSession() as db:
+            db.add(models.Log(
+                session_id=sid,
+                action="chat_message",
+                username="student",
+                details={},
+            ))
+            db.commit()
+        turns = [
+            "Voglio superare l'esame di analisi.",
+            "Ho difficolta a mantenere la concentrazione quando studio.",
+            "Preferisco esempi concreti e brevi.",
+        ]
+        for index, message in enumerate(turns):
+            session_memory.record_interaction(
+                sid,
+                user_message=message,
+                transcript_user=message,
+                bot_response=f"Risposta {index}",
+                language="it",
+            )
+
+        pending = client.get(f"/user/learner-profile/suggestion?session_id={sid}")
+        assert pending.status_code == 200, pending.text
+        assert pending.json()["status"] == "pending"
+        assert pending.json()["user_turns"] == 3
+
+        fourth = "Faccio fatica soprattutto a iniziare gli esercizi difficili."
+        session_memory.record_interaction(
+            sid,
+            user_message=fourth,
+            transcript_user=fourth,
+            bot_response="Risposta 4",
+            language="it",
+        )
+        ready = client.get(f"/user/learner-profile/suggestion?session_id={sid}")
+        assert ready.status_code == 200, ready.text
+        ready_data = ready.json()
+        assert ready_data["status"] == "ready"
+        assert ready_data["data"]["goal"] == "Voglio superare l'esame di analisi"
+        assert "Faccio fatica" in ready_data["data"]["main_difficulty"]
+        assert "esempi concreti" in ready_data["data"]["notes"]
+
+        fifth = "Ora voglio cambiare completamente obiettivo e studiare storia."
+        session_memory.record_interaction(
+            sid,
+            user_message=fifth,
+            transcript_user=fifth,
+            bot_response="Risposta 5",
+            language="it",
+        )
+        stable = client.get(f"/user/learner-profile/suggestion?session_id={sid}")
+        assert stable.status_code == 200, stable.text
+        assert stable.json()["data"] == ready_data["data"]
+    finally:
+        with _TestSession() as db:
+            db.query(models.Log).filter(models.Log.session_id == sid).delete(synchronize_session=False)
+            db.commit()
+        session_memory.clear(sid)
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
 def test_student_booklet_crud_pdf_and_ownership():
     main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
     try:

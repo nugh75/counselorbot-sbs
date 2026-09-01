@@ -12,6 +12,8 @@ import { PencilButton } from '@/components/ui/PencilButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { BackButton } from '@/components/ui/BackButton';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 
 export interface LearnerProfileData {
     context?: string;
@@ -32,6 +34,13 @@ interface Revision {
     source: string;
     session_id?: string | null;
     created_at: string;
+}
+
+interface NotebookSuggestion {
+    status: 'pending' | 'insufficient_evidence' | 'ready';
+    user_turns: number;
+    min_user_turns: number;
+    data: LearnerProfileData;
 }
 
 type Variant = 'edit' | 'review' | 'update';
@@ -61,9 +70,12 @@ interface Props {
     // (BackButton freccia sinistra + matita + freccia destra). Se omesso, la
     // riga superiore non mostra il back.
     onBack?: () => void;
+    // Nella chat libera mostra l'intera card soltanto quando il backend ha una
+    // proposta basata su evidenze sufficienti; nessun invito generico anticipato.
+    suggestionOnly?: boolean;
 }
 
-export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial = false, onUnavailable, onBack }: Props) {
+export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial = false, onUnavailable, onBack, suggestionOnly = false }: Props) {
     const { t } = useI18n();
     const [hidden, setHidden] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -77,6 +89,8 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     const [showHistory, setShowHistory] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [validationError, setValidationError] = useState('');
+    const [suggestion, setSuggestion] = useState<NotebookSuggestion | null>(null);
+    const [suggestionHandled, setSuggestionHandled] = useState(false);
 
     const load = useCallback(async () => {
         try {
@@ -94,6 +108,17 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     }, []);
 
     useEffect(() => { void load(); }, [load]);
+
+    useEffect(() => {
+        if (variant !== 'update' || !sessionId) return;
+        let cancelled = false;
+        void apiFetch(`/api/user/learner-profile/suggestion?session_id=${encodeURIComponent(sessionId)}`)
+            .then(async (res) => {
+                if (!cancelled && res.ok) setSuggestion(await res.json());
+            })
+            .catch(() => undefined);
+        return () => { cancelled = true; };
+    }, [sessionId, variant]);
 
     // Avvisa il parent quando non c'è nulla da rivedere (così salta la schermata).
     useEffect(() => {
@@ -148,7 +173,15 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
         setConfirmDelete(false);
     };
 
+    const useSuggestion = () => {
+        if (suggestion?.status !== 'ready') return;
+        setForm((current) => ({ ...current, ...suggestion.data }));
+        setEditing(true);
+        setSuggestionHandled(true);
+    };
+
     if (hidden || dismissed || loading) return null;
+    if (suggestionOnly && (suggestion?.status !== 'ready' || (suggestionHandled && !editing))) return null;
     // Revisione a inizio sessione: se non c'è ancora un profilo si propone
     // l'intake, se c'è si chiede conferma rapida (un click se nulla è cambiato).
     const isIntake = !profile;
@@ -193,22 +226,21 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                 ))}
             </div>
             <div className="flex items-center gap-3 pt-1">
-                <button
+                <Button
                     onClick={() => void save(saveSource)}
                     disabled={saving}
-                    className="px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
                 >
                     {t('lp.save')}
-                </button>
+                </Button>
                 {variant !== 'edit' && !(requireInitial && isIntake) && (
-                    <button onClick={() => setDismissed(true)} className="px-3 py-2 text-sm text-slate-500 hover:text-slate-700">
+                    <Button variant="ghost" onClick={() => setDismissed(true)}>
                         {t('lp.skip')}
-                    </button>
+                    </Button>
                 )}
                 {variant === 'edit' && editing && (
-                    <button onClick={() => { setEditing(false); setForm(profile?.data ?? {}); }} className="px-3 py-2 text-sm text-slate-500 hover:text-slate-700">
+                    <Button variant="ghost" onClick={() => { setEditing(false); setForm(profile?.data ?? {}); }} aria-label={t('lp.skip')}>
                         <X className="w-4 h-4" />
-                    </button>
+                    </Button>
                 )}
                 {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
             </div>
@@ -250,17 +282,49 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                     {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
                 </div>
             )}
-            <div className="glass-panel p-5 space-y-4">
-            {variant !== 'edit' && (
+            <Card className="p-5 space-y-4">
+            {variant !== 'edit' && !suggestionOnly && (
                 <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-slate-800">{title}</h3>
                 </div>
             )}
-            <p className="text-sm leading-relaxed text-slate-500">
-                {isIntake ? t('lp.intro') : t('lp.reviewIntro')}
-            </p>
+            {!suggestionOnly && (
+                <p className="text-sm leading-relaxed text-slate-500">
+                    {isIntake ? t('lp.intro') : t('lp.reviewIntro')}
+                </p>
+            )}
 
-            {variant === 'review' && !isIntake && !editing ? (
+            {suggestion?.status === 'ready' && !suggestionHandled && (
+                <section className="rounded-xl border border-ochre-200 bg-ochre-50 p-4" aria-label={t('lp.suggestion.title')}>
+                    <div className="flex items-start gap-3">
+                        <div className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-ochre-500" />
+                        <div className="min-w-0 flex-1">
+                            <h4 className="font-display text-base font-semibold text-slate-900">{t('lp.suggestion.title')}</h4>
+                            <p className="mt-1 text-sm leading-relaxed text-slate-600">{t('lp.suggestion.intro')}</p>
+                            <dl className="mt-3 space-y-2">
+                                {(['goal', 'main_difficulty', 'notes'] as const).map((key) => {
+                                    const value = suggestion.data[key]?.trim();
+                                    const labelKey = key === 'goal' ? 'lp.field.goal'
+                                        : key === 'main_difficulty' ? 'lp.field.difficulty'
+                                        : 'lp.field.notes';
+                                    return value ? (
+                                        <div key={key}>
+                                            <dt className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">{t(labelKey)}</dt>
+                                            <dd className="mt-0.5 text-sm text-slate-800">{value}</dd>
+                                        </div>
+                                    ) : null;
+                                })}
+                            </dl>
+                            <div className="mt-4 flex flex-wrap gap-2">
+                                <Button size="sm" onClick={useSuggestion}>{t('lp.suggestion.use')}</Button>
+                                <Button size="sm" variant="ghost" onClick={() => setSuggestionHandled(true)}>{t('lp.skip')}</Button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            {suggestionOnly && !editing ? null : variant === 'review' && !isIntake && !editing ? (
                 <div className="space-y-3">
                     {summaryUi}
                 </div>
@@ -268,31 +332,32 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                 <div className="space-y-3">
                     {summaryUi}
                     <div className="flex flex-wrap items-center gap-3">
-                        <button
+                        <Button
+                            variant="secondary"
                             onClick={() => setEditing(true)}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-slate-300 text-sm text-slate-700 hover:bg-slate-50"
                         >
                             <Pencil className="w-4 h-4" /> {t('lp.edit')}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant="secondary"
                             onClick={() => void loadHistory()}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-slate-300 text-sm text-slate-700 hover:bg-slate-50"
                         >
                             <History className="w-4 h-4" /> {t('lp.history')}
-                        </button>
+                        </Button>
                         {confirmDelete ? (
                             <span className="inline-flex items-center gap-2 text-sm">
                                 <span className="text-red-600">{t('lp.deleteConfirm')}</span>
-                                <button onClick={() => void deleteAll()} className="px-2 py-1 rounded bg-red-600 text-white text-xs">{t('lp.delete')}</button>
-                                <button onClick={() => setConfirmDelete(false)} className="px-2 py-1 rounded border text-xs">{t('lp.skip')}</button>
+                                <Button size="sm" variant="danger" onClick={() => void deleteAll()}>{t('lp.delete')}</Button>
+                                <Button size="sm" variant="secondary" onClick={() => setConfirmDelete(false)}>{t('lp.skip')}</Button>
                             </span>
                         ) : (
-                            <button
+                            <Button
+                                variant="ghost"
                                 onClick={() => setConfirmDelete(true)}
-                                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-red-500 hover:text-red-700"
+                                className="text-red-600 hover:bg-red-50 hover:text-red-700"
                             >
                                 <Trash2 className="w-4 h-4" /> {t('lp.delete')}
-                            </button>
+                            </Button>
                         )}
                         {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
                     </div>
@@ -318,7 +383,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
             ) : (
                 formUi
             )}
-            </div>
+            </Card>
         </div>
     );
 }
