@@ -8,11 +8,12 @@ import { useI18n } from '@/lib/i18n-context';
 import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StickyActions } from '@/components/ui/StickyActions';
+import { AGE_BANDS } from '@/lib/age-bands';
 
 const API_BASE = '/api';
 
 // Options for demographics
-const ETA_OPTIONS = ['< 14', '14-16', '17-18', '19-24', '25-34', '35-44', '45-54', '55+'];
+const ETA_OPTIONS = AGE_BANDS;
 const SESSO_OPTIONS = ['Maschio', 'Femmina', 'Altro', 'Preferisco non rispondere'];
 
 const PAESE_OPTIONS = ['Italia', 'Svezia', 'Regno Unito (Inghilterra)', 'Spagna', 'Francia', 'Germania', 'Altro'];
@@ -524,7 +525,7 @@ function SelectField({
 }: {
     label: string;
     value: string;
-    options: string[];
+    options: readonly string[];
     onChange: (value: string) => void;
     placeholder?: string;
     optionLabel?: (value: string) => string;
