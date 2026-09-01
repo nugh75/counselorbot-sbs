@@ -13,6 +13,7 @@ import {
 } from '@/lib/instruments-api';
 import { addCompletedProfile } from '@/lib/profile-tracker';
 import { apiFetch, ai4authLoginUrl } from '@/lib/auth';
+import { AGE_BANDS } from '@/lib/age-bands';
 
 const QUESTIONNAIRE_SELECTION_HREF = '/?view=questionnaires';
 
@@ -538,10 +539,11 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                         >
                             <option value="">{t('admin.run.meta.preferNot')}</option>
-                            <option value="under_18">{t('admin.run.meta.under18')}</option>
-                            <option value="18_20">18-20</option>
-                            <option value="21_24">21-24</option>
-                            <option value="25_plus">25+</option>
+                            {AGE_BANDS.map((band) => (
+                                <option key={band} value={band}>
+                                    {band}
+                                </option>
+                            ))}
                         </select>
                     </label>
                     <label className="block">
