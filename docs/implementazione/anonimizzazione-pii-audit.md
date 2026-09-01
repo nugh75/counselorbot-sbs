@@ -164,9 +164,12 @@ Branch `feature/pii-external-anonymization`. TDD: `backend/tests/test_pii_extern
 
 - **`backend/pii.py`** — refactor: motore unico `find_pii(text) -> [(tipo, valore)]`
   con validazione checksum (IBAN mod-97, PIVA, Luhn, CF carattere di controllo)
-  e targa. Due consumatori: `redact()` distruttivo (audit, invariato) e
-  `anonymize()` reversibile con token `[[PII:TIPO:N]]` + mapping. `restore()`
-  inverte. Priorità dei rilevatori a checksum sul pattern telefonico.
+  e targa; identificatori esteri: DNI/NIE spagnolo (tabella mod-23), NIR
+  francese (mod-97), NINO britannico, personnummer svedese (Luhn); telefoni
+  internazionali (`+...`, conteggio cifre) e nazionali ES/FR/DE/SV/UK. Due
+  consumatori: `redact()` distruttivo (audit, invariato) e `anonymize()`
+  reversibile con token `[[PII:TIPO:N]]` + mapping. `restore()` inverte.
+  Priorità dei rilevatori a checksum sul pattern telefonico.
 - **`backend/pii_ner.py`** (nuovo) — layer ML prompt-driven: `anonymize_texts`
   applica il deterministico su tutti i testi + NER Ollama (`qwen3:0.6b`,
   format json) per nome/indirizzo/città, exact-match sul valore (il modello

@@ -196,6 +196,104 @@ def test_anonymize_roundtrip_multilingual_text():
     assert pii.restore(anonymized, mapping) == text
 
 
+# --- Identificatori nazionali esteri ----------------------------------------
+
+_DNI_LETTERS = "TRWAGMYFPDXBNJZSQVHLCKE"
+
+
+def _dni_letter(number: int) -> str:
+    return _DNI_LETTERS[number % 23]
+
+
+def _make_valid_dni() -> str:
+    return "12345678" + _dni_letter(12345678)
+
+
+def _make_valid_nie() -> str:
+    number = 1234567  # X -> 0
+    return "X" + str(number) + _dni_letter(number)
+
+
+def _luhn_check_digit(digits9: str) -> str:
+    total = 0
+    for i, ch in enumerate(digits9):
+        d = int(ch)
+        if i % 2 == 0:
+            d *= 2
+            if d > 9:
+                d -= 9
+        total += d
+    return str((10 - total % 10) % 10)
+
+
+def _make_valid_personnummer() -> str:
+    base = "640823323"
+    return "640823-" + base[6:] + _luhn_check_digit(base)
+
+
+def _make_valid_nir() -> str:
+    base13 = "2850569151003"
+    key = 97 - (int(base13) % 97)
+    return base13 + f"{key:02d}"
+
+
+def test_find_pii_detects_spanish_dni():
+    dni = _make_valid_dni()
+    assert ("dni", dni) in pii.find_pii(f"mi dni es {dni}")
+
+
+def test_find_pii_rejects_dni_with_bad_letter():
+    dni = _make_valid_dni()
+    broken = dni[:-1] + "A" if _dni_letter(12345678) != "A" else "B"
+    assert pii.find_pii(f"dni {broken}") == []
+
+
+def test_find_pii_detects_spanish_nie():
+    nie = _make_valid_nie()
+    assert ("dni", nie) in pii.find_pii(f"mi nie es {nie}")
+
+
+def test_find_pii_detects_swedish_personnummer():
+    pn = _make_valid_personnummer()
+    assert ("personnummer", pn) in pii.find_pii(f"personnummer {pn}")
+
+
+def test_find_pii_rejects_personnummer_with_bad_checksum():
+    pn = _make_valid_personnummer()
+    broken = pn[:-1] + ("0" if pn[-1] != "0" else "1")
+    assert pii.find_pii(f"personnummer {broken}") == []
+
+
+def test_find_pii_detects_french_nir():
+    nir = _make_valid_nir()
+    assert ("nir", nir) in pii.find_pii(f"numero securite sociale {nir}")
+
+
+def test_find_pii_detects_uk_nino():
+    # AB e' ammessa; la Q e' vietata dal formato reale (riservata agli esempi HMRC).
+    assert ("nino", "AB123456C") in pii.find_pii("my NINO is AB123456C")
+
+
+def test_find_pii_rejects_invalid_nino_letters():
+    assert pii.find_pii("NINO DF123456C") == []  # D non ammessa
+
+
+def test_find_pii_detects_national_phones():
+    for phone in [
+        "612 345 678",       # Spagna
+        "06 12 34 56 78",    # Francia
+        "0170 1234567",      # Germania (mobile)
+        "070-123 45 67",     # Svezia
+        "07700 900123",      # Regno Unito
+    ]:
+        found = pii.find_pii(f"chiamami al {phone}")
+        assert any(t == "telefono" for t, _ in found), phone
+
+
+def test_find_pii_ignores_short_number_sequences():
+    assert pii.find_pii("ho 3 esami e 12 crediti") == []
+
+
 # --- anonymize / restore (roundtrip) ----------------------------------------
 
 def test_anonymize_roundtrip_restores_original():
