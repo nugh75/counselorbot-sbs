@@ -165,6 +165,32 @@ def _strip_fonte_tokens(text: str) -> str:
     return t
 
 
+_INSTRUMENT_QUERY_PATTERNS = {
+    code: re.compile(rf"(?<!\w){token}(?!\w)", re.IGNORECASE)
+    for code, token in {
+        "QSAR": "qsar",
+        "QSA": "qsa",
+        "ZTPI": "ztpi",
+        "QPCS": "qpcs",
+        "QPCC": "qpcc",
+        "QAP": "qap",
+        "SAVICKAS": "savickas",
+    }.items()
+}
+
+
+def _filter_single_instrument_results(question: str, results: list[dict]) -> list[dict]:
+    """Per richieste esplicite su un solo strumento esclude chunk estranei."""
+    mentioned = [code for code, pattern in _INSTRUMENT_QUERY_PATTERNS.items() if pattern.search(question)]
+    if len(mentioned) != 1:
+        return results
+    pattern = _INSTRUMENT_QUERY_PATTERNS[mentioned[0]]
+    return [
+        result for result in results
+        if pattern.search(" ".join(str(result.get(key) or "") for key in ("source", "title", "text")))
+    ]
+
+
 def _resolve_site_prompt(ai_service: AIService, audience: str, collection: str = COLLECTION_COMPETENZE) -> str:
     audience = audience if audience in SITE_CHAT_MODE_TO_PROMPT_KEY else "studente"
     if collection == COLLECTION_COUNSELORBOT:
@@ -350,6 +376,7 @@ async def site_chat_stream(
         retrieval_error = str(e)
     else:
         retrieval_error = None
+        results = _filter_single_instrument_results(question, results)
 
     def _log_and_persist(answer: str, sources: list[str], usage: dict | None = None) -> str | None:
         """Logga l'interazione, aggiorna la memoria conversazionale e crea il

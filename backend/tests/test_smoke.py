@@ -3010,7 +3010,7 @@ def test_rag_docs_dynamic_collection_upload_preview_and_delete():
 
 def test_site_chat_stream_grounded_mocked():
     # Patcha la retrieval per non toccare embeddings/rete: contesto fittizio.
-    canned = [{"score": 0.9, "source": "fonti/x.md", "title": "Doc X", "text": "Contenuto di prova."}]
+    canned = [{"score": 0.9, "source": "fonti/qsa.md", "title": "Doc QSA", "text": "Contenuto di prova sul QSA."}]
     original_search = site_chat_routes.site_rag_index.search
     site_chat_routes.site_rag_index.search = lambda svc, q, k, *a, **kw: canned
     main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
@@ -3022,7 +3022,7 @@ def test_site_chat_stream_grounded_mocked():
         assert r.status_code == 200, r.text
         assert "RISPOSTA_TEST" in r.text
         assert '"done": true' in r.text
-        assert "fonti/x.md" in r.text  # le fonti citate tornano nell'evento done
+        assert "fonti/qsa.md" in r.text  # le fonti citate tornano nell'evento done
         with _TestSession() as db:
             entry = (
                 db.query(models.Log)
@@ -3043,6 +3043,29 @@ def test_site_chat_stream_grounded_mocked():
         })
         assert fb.status_code == 200, fb.text
         assert fb.json()["recorded"] >= 1
+    finally:
+        site_chat_routes.site_rag_index.search = original_search
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
+def test_site_chat_single_instrument_filters_other_instrument_sources():
+    """Una domanda esplicita sul QSA non deve usare fonti di altri strumenti."""
+    canned = [
+        {"score": 0.92, "source": "fonti/qsa.md", "title": "Questionario QSA", "text": "Il QSA rileva strategie di apprendimento."},
+        {"score": 0.91, "source": "fonti/qpcs.md", "title": "Questionario QPCS", "text": "Il QPCS riguarda la progettualita professionale."},
+    ]
+    original_search = site_chat_routes.site_rag_index.search
+    site_chat_routes.site_rag_index.search = lambda *a, **kw: canned
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        response = client.post("/site-chat/stream", json={
+            "message": "Che cosa misura il QSA?",
+            "audience": "studente",
+            "session_id": "site-chat-qsa-source-filter",
+        })
+        assert response.status_code == 200, response.text
+        done = _done_sse_event(response)
+        assert done["sources"] == ["fonti/qsa.md"]
     finally:
         site_chat_routes.site_rag_index.search = original_search
         main.app.dependency_overrides.pop(auth.get_identity, None)
@@ -3129,7 +3152,7 @@ def test_response_length_is_enforced_on_both_web_streams():
 
     _FakeAIService.stream_response = long_stream
     site_chat_routes.site_rag_index.search = lambda *a, **kw: [
-        {"score": 0.9, "source": "fonti/x.md", "title": "Doc X", "text": "Contenuto di prova."}
+        {"score": 0.9, "source": "fonti/qsa.md", "title": "Doc QSA", "text": "Contenuto di prova sul QSA."}
     ]
     main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
     try:
