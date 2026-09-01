@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 're
 import Link from 'next/link';
 import { ArrowRight, BookOpen, Check, Compass, Loader2, MessageCircle, NotebookPen, Route, Send, Sparkles } from 'lucide-react';
 import { CompassMark } from '@/components/ui/CompassMark';
+import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
 import { LearnerProfileCard, type LearnerProfileData } from '@/components/profile/LearnerProfileCard';
 import { StudentBookletCard, EVENT_BOOKLET_TYPES, bookletTypeOptionLabel, type BookletType } from '@/components/profile/StudentBookletCard';
 import { toast } from '@/components/ui/Toast';
@@ -20,6 +21,7 @@ import {
 } from '@/lib/orientation-api';
 import { QUESTIONNAIRE_LIST, QUESTIONNAIRES, type QuestionnaireType } from '@/lib/questionnaires';
 import { orientationToolHref, safeOrientationNext } from '@/lib/tool-catalog';
+import { getSelectedCounselorId } from '@/lib/counselor';
 
 const NOTEBOOK_FIELDS: { key: keyof LearnerProfileData; labelKey: string }[] = [
     { key: 'context', labelKey: 'lp.field.context' },
@@ -54,6 +56,9 @@ export default function BussolaPage() {
     const { t, tf, lang } = useI18n();
     const [session, setSession] = useState<OrientationSession | null>(null);
     const [latestSessionId, setLatestSessionId] = useState<string | null>(null);
+    const [orientationRequired, setOrientationRequired] = useState(false);
+    const [choosingCounselor, setChoosingCounselor] = useState(false);
+    const [pendingNewSession, setPendingNewSession] = useState(false);
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const [completing, setCompleting] = useState(false);
@@ -71,6 +76,10 @@ export default function BussolaPage() {
             const row = await fetchOrientationSession(sessionId);
             setSession(row);
             setBookletType(recommendedBooklet(row));
+            if (row.status === 'in_progress' && !row.counselor_id) {
+                setPendingNewSession(false);
+                setChoosingCounselor(true);
+            }
         } catch {
             setError(t('orientation.error'));
         } finally {
@@ -78,20 +87,37 @@ export default function BussolaPage() {
         }
     }, [t]);
 
-    const createSession = useCallback(async (newSession: boolean) => {
+    const createSession = useCallback(async (newSession: boolean, counselorId: number) => {
         setLoading(true);
         setError('');
         setOpenRecord(null);
         try {
-            const row = await startOrientation(lang, newSession);
+            const row = await startOrientation(lang, newSession, counselorId);
             setSession(row);
             setBookletType(recommendedBooklet(row));
+            setChoosingCounselor(false);
         } catch {
             setError(t('orientation.error'));
         } finally {
             setLoading(false);
         }
     }, [lang, t]);
+
+    const beginCounselorChoice = (newSession: boolean) => {
+        setPendingNewSession(newSession);
+        setChoosingCounselor(true);
+        setError('');
+    };
+
+    const continueWithCounselor = async () => {
+        const counselorId = getSelectedCounselorId();
+        if (!counselorId) {
+            setError(t('counselor.selectFirst'));
+            return;
+        }
+        const newSession = pendingNewSession;
+        await createSession(newSession, counselorId);
+    };
 
     useEffect(() => {
         let active = true;
@@ -101,9 +127,14 @@ export default function BussolaPage() {
                 const status = await fetchOrientationStatus();
                 if (!active) return;
                 setLatestSessionId(status.latest_session_id ?? null);
+                setOrientationRequired(status.required);
                 if (status.required) {
                     if (status.in_progress_session_id) await openSession(status.in_progress_session_id);
-                    else await createSession(false);
+                    else {
+                        setPendingNewSession(false);
+                        setChoosingCounselor(true);
+                        setLoading(false);
+                    }
                 } else {
                     setLoading(false);
                 }
@@ -115,7 +146,7 @@ export default function BussolaPage() {
             }
         })();
         return () => { active = false; };
-    }, [createSession, openSession, t]);
+    }, [openSession, t]);
 
     useEffect(() => {
         endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -148,6 +179,7 @@ export default function BussolaPage() {
             const row = await completeOrientation(session.session_id);
             setSession(row);
             setLatestSessionId(row.session_id);
+            setOrientationRequired(false);
         } catch {
             setError(t('orientation.error'));
         } finally {
@@ -189,12 +221,24 @@ export default function BussolaPage() {
 
             {loading ? (
                 <div className="flex justify-center py-12"><Loader2 className="h-7 w-7 animate-spin text-indigo-600" /></div>
+            ) : choosingCounselor ? (
+                <section className="rounded-xl border border-indigo-200 bg-white p-5 shadow-sm sm:p-7">
+                    <div className="mb-6 max-w-2xl border-l-2 border-ochre-400 pl-4">
+                        <p className="text-xs font-semibold uppercase tracking-[0.1em] text-ochre-600">{t('orientation.counselor.step')}</p>
+                        <h2 className="font-display mt-1 text-2xl font-bold text-slate-900">{t('orientation.counselor.title')}</h2>
+                        <p className="mt-2 text-sm leading-relaxed text-slate-600">{t('orientation.counselor.body')}</p>
+                    </div>
+                    <CounselorSelector
+                        onContinue={() => void continueWithCounselor()}
+                        onBack={orientationRequired ? undefined : () => setChoosingCounselor(false)}
+                    />
+                </section>
             ) : !session ? (
                 <section className="glass-panel flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3"><Compass className="h-6 w-6 text-indigo-600" /><p className="text-sm leading-relaxed text-slate-600">{t('orientation.subtitle')}</p></div>
                     <div className="flex flex-wrap gap-2">
                         {latestSessionId && <button type="button" onClick={() => void openSession(latestSessionId)} className="rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-700">{t('orientation.landing.latest')}</button>}
-                        <button type="button" onClick={() => void createSession(true)} className="rounded-md bg-ochre-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-ochre-600">{t('orientation.landing.new')}</button>
+                        <button type="button" onClick={() => beginCounselorChoice(true)} className="rounded-md bg-ochre-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-ochre-600">{t('orientation.landing.new')}</button>
                     </div>
                 </section>
             ) : (
@@ -203,7 +247,7 @@ export default function BussolaPage() {
                         <div className="max-h-[34rem] space-y-4 overflow-y-auto px-4 py-5 sm:px-6" aria-live="polite">
                             {session.messages.map((message, index) => (
                                 <div key={`${message.role}-${index}`} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                    <div className={`max-w-[88%] rounded-xl px-4 py-3 text-sm leading-relaxed sm:max-w-2xl ${message.role === 'user' ? 'bg-indigo-600 text-white' : 'border border-slate-100 bg-slate-50 text-slate-700'}`}>
+                                    <div className={`max-w-[88%] whitespace-pre-line rounded-xl px-4 py-3 text-sm leading-relaxed sm:max-w-2xl ${message.role === 'user' ? 'bg-indigo-600 text-white' : 'border border-slate-100 bg-slate-50 text-slate-700'}`}>
                                         {message.content}
                                     </div>
                                 </div>
@@ -242,7 +286,7 @@ export default function BussolaPage() {
                             <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
                                 <button type="button" onClick={() => setOpenRecord(openRecord === 'notebook' ? null : 'notebook')} className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-700"><NotebookPen className="h-4 w-4" />{openRecord === 'notebook' ? t('orientation.records.close') : t('orientation.records.notebook')}</button>
                                 <button type="button" onClick={() => setOpenRecord(openRecord === 'booklet' ? null : 'booklet')} className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-700"><BookOpen className="h-4 w-4" />{openRecord === 'booklet' ? t('orientation.records.close') : t('orientation.records.booklet')}</button>
-                                <button type="button" onClick={() => void createSession(true)} className="ml-auto rounded-md px-4 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">{t('orientation.landing.new')}</button>
+                                <button type="button" onClick={() => beginCounselorChoice(true)} className="ml-auto rounded-md px-4 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">{t('orientation.landing.new')}</button>
                             </div>
                         </section>
                     )}

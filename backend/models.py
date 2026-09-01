@@ -490,6 +490,7 @@ class OrientationSession(Base):
     session_id = Column(String, primary_key=True)
     username = Column(String, nullable=False, index=True)
     language = Column(String, nullable=False, default="it")
+    counselor_id = Column(Integer, nullable=True, index=True)
     status = Column(String, nullable=False, default="in_progress", index=True)
     messages = Column(JSON, nullable=False, default=list)
     recommendations = Column(JSON, nullable=False, default=list)
