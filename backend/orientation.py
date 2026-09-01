@@ -405,6 +405,9 @@ def analyze_turn(
     if fallback.informational:
         return fallback
     counselor, provider, model, disable_thinking, reasoning_budget = _counselor_runtime(db, counselor_id)
+    if provider is None and model is None:
+        # Modello predefinito della Bussola: senza preset del counselor usa qwen3.8.
+        model = "qwen3.8:latest"
     catalog = "\n".join(f"- {tool_id}: {TOOL_DESCRIPTIONS[tool_id]}" for tool_id in TOOL_IDS)
     counselor_context = ""
     if counselor is not None:
@@ -450,8 +453,15 @@ Use one primary recommendation and at most two alternatives. Base every notebook
             provider=provider,
             model=model,
             history=safe_history,
+            json_mode=False,
         )
-        return _clean_analysis(_extract_json_object(raw), fallback)
+        try:
+            return _clean_analysis(_extract_json_object(raw), fallback)
+        except (ValueError, json.JSONDecodeError):
+            # Testo libero (JSON non forzato): la risposta vale per intero,
+            # strumenti e taccuino dal classificatore locale.
+            reply = str(raw or "").strip()[:1800]
+            return OrientationAnalysis(reply or fallback.reply, fallback.recommendations, fallback.notebook_draft)
     except (AIError, ValueError, TypeError, json.JSONDecodeError) as exc:
         logger.warning("Bussola AI non disponibile, uso fallback deterministico: %s", exc)
         return fallback

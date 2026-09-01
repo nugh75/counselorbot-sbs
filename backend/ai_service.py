@@ -378,6 +378,7 @@ class AIService:
         provider: str = None,
         model: str = None,
         history: list = None,
+        json_mode: bool | None = None,
     ):
         """
         Genera una risposta LLM.  Se conversation_summary è fornito, viene
@@ -430,6 +431,8 @@ class AIService:
         mt = plan.max_tokens
         self.last_usage = None
         try:
+            if effective_provider == 'ollama':
+                return entry['call'](user_message, system_prompt, model_name, max_tokens=mt, history=history, json_mode=json_mode)
             return entry['call'](user_message, system_prompt, model_name, max_tokens=mt, history=history)
         except AIError:
             raise
@@ -710,7 +713,7 @@ class AIService:
         response = client.chat.complete(**kwargs)
         return response.choices[0].message.content
 
-    def _call_ollama(self, user_message, system_prompt, model, max_tokens: int = 8000, history=None):
+    def _call_ollama(self, user_message, system_prompt, model, max_tokens: int = 8000, history=None, json_mode: bool | None = None):
         base_url = (self._get_api_key('ollama_ip') or "http://localhost:11434").rstrip('/')
         system_prompt = self._apply_no_think(system_prompt)
         messages = [{"role": "system", "content": system_prompt}]
@@ -728,7 +731,7 @@ class AIService:
         }
         # Estrazione JSON (parser QSA): mai reasoning, altrimenti il `think` puo'
         # rompere/rallentare l'output strutturato. Forza think off a prescindere.
-        is_json = _requests_json_response(system_prompt, user_message)
+        is_json = json_mode if json_mode is not None else _requests_json_response(system_prompt, user_message)
         if self.disable_thinking or is_json:
             payload["think"] = False
         else:
