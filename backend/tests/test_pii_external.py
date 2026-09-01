@@ -328,6 +328,20 @@ def test_find_pii_rejects_generic_year():
     assert pii.find_pii("mi laureo nel 2005") == []
 
 
+def test_find_pii_detects_health_keywords():
+    for word in [
+        "dislessico", "dislessia", "DSA", "BES", "ADHD", "TDAH",
+        "dyslexia", "dyslexie", "dislexia", "ADHS", "dyslexi",
+    ]:
+        found = pii.find_pii(f"ho {word} dalla scuola primaria")
+        assert any(t == "salute" for t, _ in found), word
+
+
+def test_find_pii_ignores_generic_symptoms():
+    # sintomo generico, non una diagnosi: fuori dalla lista
+    assert pii.find_pii("ho mal di testa oggi") == []
+
+
 # --- anonymize / restore (roundtrip) ----------------------------------------
 
 def test_anonymize_roundtrip_restores_original():
@@ -413,9 +427,11 @@ def test_parse_entities_valid_and_invalid_json():
     assert pii_ner._parse_entities(good) == [("nome", "Marco Rossi")]
     # nuovi tipi contestuali ammessi
     good2 = ('{"entities": [{"type": "scuola", "value": "Universita di Padova"},'
-             ' {"type": "matricola", "value": "1234567"}]}')
+             ' {"type": "matricola", "value": "1234567"},'
+             ' {"type": "salute", "value": "dislessia"}]}')
     assert pii_ner._parse_entities(good2) == [
-        ("scuola", "Universita di Padova"), ("matricola", "1234567")]
+        ("scuola", "Universita di Padova"), ("matricola", "1234567"),
+        ("salute", "dislessia")]
     assert pii_ner._parse_entities("non-json") == []
     assert pii_ner._parse_entities('{"entities": 42}') == []
 
