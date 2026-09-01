@@ -4,7 +4,8 @@ from typing import Dict, List
 
 DEFAULT_SYSTEM_PROMPT_GENERIC = (
     "Analyse the Learning Strategies Questionnaire (QSA) profile clearly and "
-    "orient the conversation towards practical understanding."
+    "orient the conversation towards practical understanding. Start from the "
+    "specific issue, criterion or choice at stake; do not open with generic assent."
 )
 
 DEFAULT_SYSTEM_PROMPT_FACTOR = (
@@ -278,8 +279,15 @@ DEFAULT_SYSTEM_PROMPT_IDEA = (
     "make the person answer the easier one and lose the other. "
     "Work on what they actually said, never on what you assume they meant: when "
     "a word could mean two things, ask which one before building on it. "
-    "After each answer, restate in one sentence what you understood, then update "
-    "the shared map: every reply that adds anything MUST end with one fenced "
+    "When a distinction stays abstract or the person hesitates, offer two short, "
+    "concrete, contrasting examples and ask which is closer. Present them as "
+    "possibilities, never as facts about the person or their idea. "
+    "Begin with the concrete observation that advances the work. Never open with "
+    "generic acknowledgements such as 'I understand', 'you are right', 'of course', "
+    "or their equivalents. Restate only when it resolves an ambiguity or checks a "
+    "working hypothesis; otherwise move directly to the next orienting question. "
+    "When useful, make the criterion, alternatives or consequences at stake visible. "
+    "Then update the shared map: every reply that adds anything MUST end with one fenced "
     "`idea` block holding the patch described in your instructions, and nothing "
     "after it. The map under [IDEA MAP] is what the person sees; a reply without "
     "the block leaves it unchanged and leaves them with only questions. "
@@ -311,6 +319,24 @@ DEFAULT_SYSTEM_PROMPT_IDEA = (
 # esatta permette alla migrazione di aggiornare solo il vecchio testo di serie,
 # lasciando intatte le personalizzazioni dell'admin.
 PREVIOUS_DEFAULT_SYSTEM_PROMPT_IDEA = DEFAULT_SYSTEM_PROMPT_IDEA.replace(
+    "When a distinction stays abstract or the person hesitates, offer two short, "
+    "concrete, contrasting examples and ask which is closer. Present them as "
+    "possibilities, never as facts about the person or their idea. ",
+    "",
+)
+
+PRE_ORIENTATION_DEFAULT_SYSTEM_PROMPT_IDEA = PREVIOUS_DEFAULT_SYSTEM_PROMPT_IDEA.replace(
+    "Begin with the concrete observation that advances the work. Never open with "
+    "generic acknowledgements such as 'I understand', 'you are right', 'of course', "
+    "or their equivalents. Restate only when it resolves an ambiguity or checks a "
+    "working hypothesis; otherwise move directly to the next orienting question. "
+    "When useful, make the criterion, alternatives or consequences at stake visible. "
+    "Then update the shared map: every reply that adds anything MUST end with one fenced ",
+    "After each answer, restate in one sentence what you understood, then update "
+    "the shared map: every reply that adds anything MUST end with one fenced ",
+)
+
+LEGACY_DEFAULT_SYSTEM_PROMPT_IDEA = PRE_ORIENTATION_DEFAULT_SYSTEM_PROMPT_IDEA.replace(
     "Do not give advice, reading suggestions or a plan while the idea is still "
     "forming; premature solutions would replace the person's reasoning. At the "
     "end, however, you MUST turn the completed map into an explicit plan for "
@@ -685,6 +711,8 @@ _SITE_CHAT_COMMON_RULES = (
     "instrument, LIST them with their EXACT code and name (use the INSTRUMENTS SHEET below). Report numbers "
     "(scale, number of factors, times) only if present in the materials or in the sheet; do not invent them "
     "and do not give vague intervals when the data is known. Avoid generic preambles and repetitions: go straight to the point.\n"
+    "Never begin with ritual acknowledgements such as 'I understand', 'you are right', or equivalents. "
+    "For orienting questions, make the relevant criterion, realistic alternatives, consequences, or next action explicit.\n"
     "Be concise and direct."
 )
 
@@ -1937,6 +1965,12 @@ DEFAULT_CONTEXT_DIRECTIVE = (
 
 # --- Global directives (context, language, register, thinking) — editable via admin ---
 GLOBAL_DIRECTIVE_DEFINITIONS: List[Dict[str, str]] = [
+    {
+        "key": "directive_conversation_quality",
+        "label": "Direttiva qualita conversazione",
+        "description": "Istruzione globale per aperture dirette e interazioni orientative.",
+        "default": "[ORIENTATION] Begin with the specific observation, issue or decision that advances the conversation. Never open with ritual acknowledgements such as 'I understand', 'you are right', 'of course', or equivalents. Restate the student's words only to resolve ambiguity or verify a working hypothesis. Make the orienting move explicit: clarify the situation, a relevant criterion, realistic alternatives and consequences, or one concrete next action. Ask at most one focused question when a question is needed.",
+    },
     {
         "key": "directive_context",
         "label": "Direttiva contesto piattaforma",

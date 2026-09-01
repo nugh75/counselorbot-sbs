@@ -25,6 +25,7 @@ from ..chat_logic import (
     _apply_response_length_directive,
     _limit_visible_words,
     _response_length_max_tokens,
+    _strip_generic_acknowledgement,
 )
 from .. import pii
 from ..api_models import SiteChatRequest
@@ -463,7 +464,7 @@ async def site_chat_stream(
                 if truncated:
                     break
 
-            answer = _strip_fonte_tokens("".join(chunks))
+            answer = _strip_generic_acknowledgement(_strip_fonte_tokens("".join(chunks)))
             answer, _ = _limit_visible_words(answer, request.response_length)
             response_id = _log_and_persist(answer, sources, usage_info)
             yield f"data: {_json.dumps({'done': True, 'response': answer, 'session_id': session_id, 'conversation_id': conversation_id, 'sources': sources, 'response_id': response_id})}\n\n"

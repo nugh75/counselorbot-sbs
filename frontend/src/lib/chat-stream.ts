@@ -9,6 +9,7 @@ export interface ChatStreamResult {
     conversation_id?: string;
     strategy_ids?: string[];
     response_id?: string;
+    idea_revision_id?: number;
     sources?: string[];
 }
 
@@ -39,6 +40,7 @@ export async function streamChat(
     let conversationId: string | undefined;
     let strategyIds: string[] | undefined;
     let responseId: string | undefined;
+    let ideaRevisionId: number | undefined;
     let sources: string[] | undefined;
 
     for (;;) {
@@ -55,7 +57,7 @@ export async function streamChat(
             const json = line.slice(5).trim();
             if (!json) continue;
 
-            let evt: { delta?: string; display?: string; reasoning?: string; done?: boolean; response?: string; session_id?: string; conversation_id?: string; strategy_ids?: string[]; response_id?: string; sources?: string[]; error?: string };
+            let evt: { delta?: string; display?: string; reasoning?: string; done?: boolean; response?: string; session_id?: string; conversation_id?: string; strategy_ids?: string[]; response_id?: string; idea_revision_id?: number; sources?: string[]; error?: string };
             try {
                 evt = JSON.parse(json);
             } catch {
@@ -82,10 +84,11 @@ export async function streamChat(
                 conversationId = evt.conversation_id;
                 strategyIds = evt.strategy_ids;
                 responseId = evt.response_id;
+                ideaRevisionId = evt.idea_revision_id;
                 sources = evt.sources;
             }
         }
     }
 
-    return { response: full, session_id: sessionId, conversation_id: conversationId, strategy_ids: strategyIds, response_id: responseId, sources };
+    return { response: full, session_id: sessionId, conversation_id: conversationId, strategy_ids: strategyIds, response_id: responseId, idea_revision_id: ideaRevisionId, sources };
 }

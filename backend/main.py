@@ -42,6 +42,8 @@ from .prompt_config import (
     INTRO_ALLOWED_QUESTIONS_SENTINEL,
     MODE_TO_SYSTEM_PROMPT_KEY,
     DEFAULT_SYSTEM_PROMPT_IDEA,
+    LEGACY_DEFAULT_SYSTEM_PROMPT_IDEA,
+    PRE_ORIENTATION_DEFAULT_SYSTEM_PROMPT_IDEA,
     PREVIOUS_DEFAULT_SYSTEM_PROMPT_IDEA,
 )
 from .questionnaire_catalog import INSTRUMENT_CATALOG_DEFAULTS
@@ -145,7 +147,11 @@ def _migrate_guided_completion_home_texts(db):
 def _migrate_idea_plan_prompt(db):
     """Aggiorna soltanto il vecchio prompt Idea di serie, non i prompt custom."""
     row = db.query(models.Config).filter(models.Config.key == "prompt_idea_focus").first()
-    if row is None or row.value != PREVIOUS_DEFAULT_SYSTEM_PROMPT_IDEA:
+    if row is None or row.value not in {
+        PREVIOUS_DEFAULT_SYSTEM_PROMPT_IDEA,
+        PRE_ORIENTATION_DEFAULT_SYSTEM_PROMPT_IDEA,
+        LEGACY_DEFAULT_SYSTEM_PROMPT_IDEA,
+    }:
         return False
     row.value = DEFAULT_SYSTEM_PROMPT_IDEA
     return True

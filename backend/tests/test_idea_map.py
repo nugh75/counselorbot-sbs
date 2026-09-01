@@ -22,6 +22,7 @@ from backend.idea_map import (
     pace_directive,
     reopen as reopen_branch,
     resolve_focus,
+    strip_patch_for_display,
     wants_plan,
     next_move,
     parse_patch,
@@ -159,6 +160,16 @@ def test_a_message_without_a_block_is_untouched():
 def test_an_empty_patch_counts_as_no_patch():
     clean, patch = extract_patch("Testo.\n```idea\n{}\n```")
     assert patch is None and clean == "Testo."
+
+
+def test_an_open_streaming_patch_never_becomes_visible():
+    visible = strip_patch_for_display('Testo per la persona.\n```idea\n{"add_nodes":[')
+    assert visible == "Testo per la persona."
+
+    complete = strip_patch_for_display(
+        'Testo per la persona.\n```idea\n{"add_nodes":[{"id":"x","label":"X"}]}\n```'
+    )
+    assert complete == "Testo per la persona."
 
 
 # --- diagnosi wayfinder: difetti calcolati, albero, chiusura ---

@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import uuid
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -197,6 +198,15 @@ def extract_patch(text: str) -> tuple[str, IdeaPatch | None]:
         logger.info("Patch della mappa Idea scartata: %s", exc)
         return cleaned, None
     return cleaned, (None if patch.is_empty() else patch)
+
+
+def strip_patch_for_display(text: str) -> str:
+    """Nasconde la patch completa o ancora in streaming dalla risposta visibile."""
+    cleaned, _ = extract_patch(text)
+    open_block = re.search(r"```idea(?:[ \t]*\r?\n|[ \t]*$)", cleaned)
+    if open_block:
+        cleaned = cleaned[:open_block.start()].rstrip()
+    return cleaned
 
 
 def apply_patch(current: DiagramSpec | None, patch: IdeaPatch, *,
@@ -619,7 +629,8 @@ def apply_and_store(db: Session, username: str, session_id: str, patch: IdeaPatc
                     source: str = "turn", step_id: str | None = None,
                     default_title: str = "Idea",
                     promote_prior_work: bool = False,
-                    prior_work_message: str = "") -> models.IdeaMapRevision:
+                    prior_work_message: str = "",
+                    focus_id: str | None = None) -> models.IdeaMapRevision:
     """Passo completo di un turno: applica la patch e scrive la revisione."""
     updated = apply_patch(
         current_map(db, username, session_id), patch,
@@ -628,7 +639,36 @@ def apply_and_store(db: Session, username: str, session_id: str, patch: IdeaPatc
     )
     return save_revision(
         db, username, session_id, updated, source=source, step_id=step_id,
-        focus_id=chosen_focus(db, username, session_id),
+        focus_id=focus_id if focus_id is not None else chosen_focus(db, username, session_id),
+    )
+
+
+def create_manual_branch(db: Session, username: str, session_id: str, label: str) -> models.IdeaMapRevision:
+    """Aggiunge un ramo nominato dalla persona e sposta subito il fuoco su di esso."""
+    spec = current_map(db, username, session_id)
+    if spec is None:
+        raise IdeaMapError("non c'e' ancora una mappa")
+    parent_id = resolve_focus(spec, chosen_focus(db, username, session_id)) or root_id(spec)
+    if parent_id is None:
+        raise IdeaMapError("la mappa non ha un punto da cui creare il ramo")
+
+    branch_id = f"task-{uuid.uuid4().hex[:12]}"
+    patch = parse_patch({
+        "add_nodes": [{
+            "id": branch_id,
+            "label": label.strip(),
+            "role": "task",
+            "status": "mentioned",
+        }],
+        "add_edges": [{"from": parent_id, "to": branch_id, "kind": "link"}],
+    })
+    return apply_and_store(
+        db,
+        username,
+        session_id,
+        patch,
+        source="manual",
+        focus_id=branch_id,
     )
 
 

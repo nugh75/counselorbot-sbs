@@ -1956,6 +1956,7 @@ def test_startup_migration_adds_the_final_idea_plan_without_overwriting_custom_p
         db.refresh(row)
         assert row.value == DEFAULT_SYSTEM_PROMPT_IDEA
         assert "explicit plan for producing or developing the idea" in row.value
+        assert "two short, concrete, contrasting examples" in row.value
 
         row.value = "Custom Idea prompt"
         db.commit()
@@ -3159,6 +3160,98 @@ def test_response_length_is_enforced_on_both_web_streams():
         assert "no more than 80 words" in _FakeAIService.last_stream_args["system_prompt"]
     finally:
         _FakeAIService.stream_response = original_stream
+        site_chat_routes.site_rag_index.search = original_search
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
+def test_idea_stream_finishes_and_applies_the_hidden_patch_after_visible_limit():
+    original_stream = _FakeAIService.stream_response
+    visible = " ".join(f"parola{i}" for i in range(1, 101))
+    patch = (
+        '\n```idea\n'
+        '{"title":"Idea aggiornata","add_nodes":['
+        '{"id":"idea","label":"Idea aggiornata","role":"idea","accent":true},'
+        '{"id":"q1","label":"Che cosa manca?","role":"open-question"}],'
+        '"add_edges":[{"from":"idea","to":"q1","kind":"link"}]}\n```'
+    )
+
+    def idea_stream(self, *args, **kwargs):
+        _FakeAIService.last_stream_args = {"max_tokens": kwargs.get("max_tokens")}
+        yield {"type": "content", "text": visible}
+        yield {"type": "content", "text": patch}
+
+    _FakeAIService.stream_response = idea_stream
+    _set_idea_feature("true")
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    session_id = "idea-stream-after-visible-limit"
+    try:
+        response = client.post("/chat/stream", json={
+            "message": "Vorrei mettere a fuoco questa idea",
+            "mode": "idea-focus",
+            "session_id": session_id,
+            "questionnaire_type": "IDEA",
+            "language": "it",
+            "response_length": "short",
+        })
+        assert response.status_code == 200, response.text
+        done = _done_sse_event(response)
+        assert len(chat_logic._VISIBLE_WORD_RE.findall(done["response"])) == 80
+        assert "```idea" not in done["response"]
+        assert done["idea_revision_id"] is not None
+        assert _FakeAIService.last_stream_args["max_tokens"] == 900
+
+        current = client.get("/idea/map", params={"session_id": session_id})
+        assert current.status_code == 200, current.text
+        assert [node["id"] for node in current.json()["spec"]["nodes"]] == ["idea", "q1"]
+    finally:
+        _FakeAIService.stream_response = original_stream
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        _set_idea_feature("false")
+
+
+def test_generic_acknowledgement_is_removed_from_visible_chat_openings():
+    original_stream = _FakeAIService.stream_response
+    original_response = _FakeAIService.get_response
+    original_search = site_chat_routes.site_rag_index.search
+    original_retrieval = chat_routes._retrieved_context
+
+    def assent_stream(self, *args, **kwargs):
+        yield {"type": "content", "text": "Capisco. La difficolta centrale e distinguere le priorita."}
+
+    def assent_response(self, *args, **kwargs):
+        return "Capisco. La difficolta centrale e distinguere le priorita."
+
+    _FakeAIService.stream_response = assent_stream
+    _FakeAIService.get_response = assent_response
+    chat_routes._retrieved_context = lambda *a, **kw: ("", [], [], [])
+    site_chat_routes.site_rag_index.search = lambda *a, **kw: [
+        {"score": 0.9, "source": "fonti/qsa.md", "title": "QSA", "text": "Materiale QSA."}
+    ]
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        guided = client.post("/chat", json={
+            "message": "Mi distraggo quando studio",
+            "mode": "generic",
+            "session_id": "opening-contract-chat",
+        })
+        assert guided.status_code == 200, guided.text
+        assert guided.json()["response"] == (
+            "La difficolta centrale e distinguere le priorita."
+        )
+
+        assistant = client.post("/site-chat/stream", json={
+            "message": "Come posso orientarmi nello studio?",
+            "audience": "studente",
+            "session_id": "opening-contract-site",
+        })
+        assert assistant.status_code == 200, assistant.text
+        assert _done_sse_event(assistant)["response"] == (
+            "La difficolta centrale e distinguere le priorita."
+        )
+    finally:
+        _FakeAIService.stream_response = original_stream
+        _FakeAIService.get_response = original_response
+        chat_routes._retrieved_context = original_retrieval
         site_chat_routes.site_rag_index.search = original_search
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
@@ -6317,6 +6410,44 @@ def test_idea_map_is_private_to_whoever_drew_it():
         )
         denied = client.get("/idea/map", params={"session_id": "idea-private", "username": "idea-owner"})
         assert denied.status_code == 403, denied.text
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        _set_idea_feature("false")
+
+
+def test_idea_branch_can_be_created_manually_and_becomes_the_focus():
+    _set_idea_feature("true")
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    session_id = "idea-manual-branch"
+    try:
+        first = client.post("/idea/map/patch", json={
+            "session_id": session_id,
+            "patch": {
+                "title": "Laboratorio di scrittura",
+                "add_nodes": [
+                    {"id": "idea", "label": "Laboratorio di scrittura", "role": "idea", "accent": True},
+                    {"id": "q1", "label": "Per chi?", "role": "open-question"},
+                ],
+                "add_edges": [{"from": "idea", "to": "q1"}],
+            },
+        })
+        assert first.status_code == 200, first.text
+
+        created = client.post("/idea/branch", json={
+            "session_id": session_id,
+            "label": "Verificare gli spazi disponibili",
+        })
+        assert created.status_code == 200, created.text
+        branch_id = created.json()["focus"]
+        assert branch_id.startswith("task-")
+        assert created.json()["reason"] == "task-unknown"
+
+        rows = client.get("/idea/branches", params={"session_id": session_id, "lang": "it"})
+        assert rows.status_code == 200, rows.text
+        branch = next(row for row in rows.json() if row["id"] == branch_id)
+        assert branch["label"] == "Verificare gli spazi disponibili"
+        assert branch["parent"] == "idea"
+        assert branch["is_focus"] is True
     finally:
         main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
         _set_idea_feature("false")
