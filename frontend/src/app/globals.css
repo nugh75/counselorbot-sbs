@@ -274,6 +274,13 @@ h1.text-3xl {
   color: var(--console-topbar-text-hover);
 }
 
+/* Variante 44px: target tattile comodo per il trigger del menu mobile (WCAG
+   2.2 target size enhanced), senza ingrandire l'icona visiva. */
+.console-topbar-icon--lg {
+  width: 44px;
+  height: 44px;
+}
+
 /* Prose styles for markdown content */
 .prose {
   line-height: 1.6;

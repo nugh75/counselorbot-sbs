@@ -15,7 +15,7 @@ interface BackButtonProps {
 }
 
 const BASE =
-    'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-indigo-700';
+    'inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-indigo-700';
 
 export function BackButton({ href, onClick, label = 'Indietro', className }: BackButtonProps) {
     const cls = cn(BASE, className);
