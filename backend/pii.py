@@ -90,6 +90,35 @@ _INTL_PHONE_RE = re.compile(
     r"(?<!\w)\+[\d .\-()]{7,18}(?!\w)"
 )
 
+# --- Identificatori nazionali esteri ----------------------------------------
+
+# DNI/NIE spagnolo: 8 cifre + lettera di controllo, oppure X/Y/Z + 7 cifre
+# + lettera (NIE). Lettera = numero mod 23 sulla tabella ufficiale.
+_DNI_RE = re.compile(r"(?<![A-Za-z0-9])[XYZ]?\d{7,8}[A-Z](?![A-Za-z0-9])")
+_DNI_LETTERS = "TRWAGMYFPDXBNJZSQVHLCKE"
+
+# NIR francese (numero securite sociale): 15 cifre, chiave mod-97.
+_NIR_RE = re.compile(r"(?<!\d)[12]\d{14}(?!\d)")
+
+# NINO britannico: 2 lettere (no D/F/I/Q/U/V), 6 cifre, lettera A-D.
+# Nessun checksum: il formato stesso e' distintivo.
+_NINO_RE = re.compile(
+    r"(?<![A-Za-z0-9])[A-CEGHJ-PR-TW-Z]{2}\d{6}[A-D](?![A-Za-z0-9])"
+)
+
+# Personnummer svedese: YYMMDD-XXXX (o + per ultracentenari), checksum Luhn
+# sull'ultima cifra delle 10.
+_PERSONNUMMER_RE = re.compile(r"(?<!\d)\d{6}[-+]\d{4}(?!\d)")
+
+# Telefoni nazionali (senza prefisso internazionale), prefissi conservativi.
+_PHONE_ES_RE = re.compile(r"(?<!\d)[689]\d{2}[ .\-]?\d{3}[ .\-]?\d{3}(?!\d)")
+_PHONE_FR_RE = re.compile(r"(?<!\d)0[1-9](?:[ .\-]?\d{2}){4}(?!\d)")
+_PHONE_DE_RE = re.compile(r"(?<!\d)01[567][ .\-]?\d{7,8}(?!\d)")
+# Svedese: prefisso 07x, gruppi con separatori variabili ("070-123 45 67"
+# spezza anche l'ultimo gruppo); validatore sul conteggio cifre (9-10).
+_PHONE_SV_RE = re.compile(r"(?<!\d)07[02369][ \d.\-]{6,10}\d(?!\d)")
+_PHONE_UK_RE = re.compile(r"(?<!\d)07\d{3}[ ]?\d{6}(?!\d)")
+
 
 # --- Checksum ---------------------------------------------------------------
 
@@ -149,6 +178,42 @@ def _intl_phone_valid(value: str) -> bool:
     return 7 <= sum(c.isdigit() for c in value) <= 15
 
 
+def _dni_valid(value: str) -> bool:
+    if len(value) != 9:
+        return False
+    if value[0].isdigit():
+        number, letter = int(value[:8]), value[8]
+    elif value[0] in "XYZ":
+        number = int("XYZ".index(value[0])) * 10**7 + int(value[1:8])
+        letter = value[8]
+    else:
+        return False
+    return _DNI_LETTERS[number % 23] == letter
+
+
+def _nir_valid(value: str) -> bool:
+    return (int(value[:13]) + int(value[13:])) % 97 == 0
+
+
+def _personnummer_valid(value: str) -> bool:
+    digits = value.replace("-", "").replace("+", "")
+    if len(digits) != 10:
+        return False
+    total = 0
+    for i, ch in enumerate(digits[:9]):
+        d = int(ch)
+        if i % 2 == 0:
+            d *= 2
+            if d > 9:
+                d -= 9
+        total += d
+    return (10 - total % 10) % 10 == int(digits[9])
+
+
+def _sv_phone_valid(value: str) -> bool:
+    return 9 <= sum(c.isdigit() for c in value) <= 10
+
+
 # --- Motore di detection condiviso ------------------------------------------
 # Etichetta per la redazione distruttiva dei log (invariata per i tipi storici).
 _LABELS = {
@@ -159,20 +224,33 @@ _LABELS = {
     "piva": "[piva]",
     "card": "[carta]",
     "targa": "[targa]",
+    "dni": "[dni]",
+    "nir": "[nir]",
+    "nino": "[nino]",
+    "personnummer": "[personnummer]",
 }
 
-# Priorita': i rilevatori a checksum vincono su telefono (una sequenza di 11
-# cifre matcha anche il pattern telefonico).
+# Priorita': i rilevatori a checksum vincono su telefono e carte (una sequenza
+# di cifre lunga matcha anche quei pattern).
 _DETECTORS: list = [
     # (tipo, regex, validatore|None)
     ("email", _EMAIL_RE, None),
     ("piva", _PIVA_RE, _piva_checksum_valid),
+    ("nir", _NIR_RE, _nir_valid),
+    ("nino", _NINO_RE, None),
+    ("dni", _DNI_RE, _dni_valid),
+    ("personnummer", _PERSONNUMMER_RE, _personnummer_valid),
     ("card", _CARD_RE, _luhn_valid),
     ("iban", _IBAN_RE, _iban_mod97_valid),
     ("cf", _CF_RE, _cf_checksum_valid),
     ("targa", _TARGA_RE, None),
     ("telefono", _INTL_PHONE_RE, _intl_phone_valid),
     ("telefono", _PHONE_RE, None),
+    ("telefono", _PHONE_ES_RE, None),
+    ("telefono", _PHONE_FR_RE, None),
+    ("telefono", _PHONE_DE_RE, None),
+    ("telefono", _PHONE_SV_RE, _sv_phone_valid),
+    ("telefono", _PHONE_UK_RE, None),
 ]
 
 
