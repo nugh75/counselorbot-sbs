@@ -6,7 +6,7 @@ import ts from 'typescript';
 const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const sourceRoot = path.join(frontendRoot, 'src');
 const languages = ['it', 'en', 'es', 'fr', 'de', 'sv'];
-const i18nModules = ['i18n.ts', 'i18n-admin.ts', 'i18n-factors.ts', 'i18n-survey.ts', 'i18n-readings.ts'];
+const i18nModules = ['i18n.ts', 'i18n-admin.ts', 'i18n-factors.ts', 'i18n-survey.ts', 'i18n-readings.ts', 'i18n-orientation.ts'];
 const modules = new Map();
 
 function sourceFile(file, kind = ts.ScriptKind.TS) {
@@ -88,6 +88,7 @@ const dictionaries = Object.fromEntries(languages.map((language) => [
         ...containerValues('i18n-admin.ts', 'ADMIN_DICTS', language),
         ...objectValues('i18n-factors.ts', language),
         ...objectValues('i18n-survey.ts', language),
+        ...containerValues('i18n-orientation.ts', 'ORIENTATION_DICTS', language),
     ]),
 ]));
 const allKeys = new Set(languages.flatMap((language) => [...dictionaries[language].keys()]));

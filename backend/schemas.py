@@ -633,7 +633,7 @@ class LearnerProfileSave(BaseModel):
     age: Optional[str] = None
     school_class: Optional[str] = None
     school_year: Optional[str] = None
-    source: str = "manual"  # intake|session_start|session_end|manual
+    source: str = "manual"  # intake|session_start|session_end|orientation|manual
     session_id: Optional[str] = None
 
     @validator("context", "goal", "main_difficulty", "strengths", "weaknesses", "notes", "gender", "age", "school_class", "school_year", pre=True)
@@ -644,7 +644,7 @@ class LearnerProfileSave(BaseModel):
 
     @validator("source")
     def _valid_source(cls, v):
-        allowed = {"intake", "session_start", "session_end", "manual"}
+        allowed = {"intake", "session_start", "session_end", "orientation", "manual"}
         return v if v in allowed else "manual"
 
 
