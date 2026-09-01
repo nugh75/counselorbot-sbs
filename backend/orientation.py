@@ -388,7 +388,7 @@ Answer every direct question before suggesting a route. If the student asks how 
 
 Return ONLY JSON, with no prose outside this object, using this exact shape:
 {{
-  "reply": "a concise, warm reflection in language {lang}",
+  "reply": "a warm, concrete reflection in language {lang} of three to five sentences that answers the question directly and explains how the proposed tool would help the student and what they would get out of it",
   "recommendations": [{{"id": "one exact catalog id", "reason": "why it fits what the student said"}}],
   "notebook_draft": {{
     "context": "optional first-person statement",
