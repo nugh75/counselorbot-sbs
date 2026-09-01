@@ -9,11 +9,12 @@ Lo studente vede, modifica e cancella il proprio modello (trasparenza).
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from .. import auth, models, schemas
 from ..database import get_db
+from ..memory_service import session_memory
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +54,26 @@ async def get_learner_profile(
 ):
     """Profilo corrente (ultima revisione) dell'utente autenticato, o null."""
     return _latest_revision(db, current_user["username"])
+
+
+@router.get("/user/learner-profile/suggestion")
+async def get_learner_profile_suggestion(
+    session_id: str = Query(min_length=1, max_length=200),
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Proposta stabile basata soltanto sui contenuti espliciti della sessione."""
+    owns_session = (
+        db.query(models.Log.id)
+        .filter(
+            models.Log.session_id == session_id,
+            models.Log.username == current_user["username"],
+        )
+        .first()
+    )
+    if not owns_session:
+        raise HTTPException(status_code=404, detail="Sessione non trovata")
+    return session_memory.get_notebook_suggestion(session_id)
 
 
 @router.post("/user/learner-profile", response_model=schemas.LearnerProfileResponse)

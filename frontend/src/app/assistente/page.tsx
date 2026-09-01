@@ -13,6 +13,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { fetchAssistantQuestions, type AssistantQuestionsByTopic } from '@/lib/assistant-questions';
 import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId, subscribeToCounselor, type PublicCounselor } from '@/lib/counselor';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
+import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 
 // Tabelle con bordi + scroll orizzontale per una lettura pulita dei documenti.
 const mdComponents: Components = {
@@ -601,6 +602,13 @@ export default function AssistentePage() {
                             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                         </button>
                     </div>
+                    {sessionId && messages.filter((message) => message.role === 'user').length >= 4 && (
+                        <LearnerProfileCard
+                            variant="update"
+                            sessionId={sessionId}
+                            suggestionOnly
+                        />
+                    )}
                 </div>
 
                 {/* Pannello anteprima documento */}
