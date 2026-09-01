@@ -29,7 +29,7 @@ from ..qsa_extractor import (
     extract_questionnaire_data,
 )
 from ..guided_text_i18n import SECONDARY_LANGS, resolve_text, QUESTIONS_LABEL, PHASE_WORD
-from ..guided_step_label_i18n import resolve_step_label
+from ..guided_step_label_i18n import resolve_step_label, strip_step_ordinal
 from ..guided_step_questions_seed import FIXED_QUESTIONS_STEP_ID
 from ..prompt_config import (
     DEFAULT_SYSTEM_PROMPT_GENERIC,
@@ -236,6 +236,8 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
     # resolved to the requested language (suffixed key -> base/Italian fallback).
     for ui_def in GUIDED_PUBLIC_UI_CONFIG_DEFINITIONS:
         result[ui_def["key"]] = resolve_text(cfg_get, ui_def["key"], lang, ui_def["default"])
+    result["label_guided_questions"] = strip_step_ordinal(result["label_guided_questions"])
+    result["label_guided_conclusion"] = strip_step_ordinal(result["label_guided_conclusion"])
 
     # Dynamic steps filtered by questionnaire_type
     steps = (
@@ -262,7 +264,7 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
         {
             "id": s.id,
             "sort_order": s.sort_order,
-            "label": (
+            "label": strip_step_ordinal(
                 _sanitize_ztpi_step_label(resolve_step_label(s, lang), lang)
                 if questionnaire_type == "ZTPI"
                 else resolve_step_label(s, lang)
@@ -281,7 +283,7 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
 
     # Override questions/conclusion texts per questionnaire
     if questionnaire_type == "QSAr":
-        result["label_guided_questions"] = f"8. {qlabel}"
+        result["label_guided_questions"] = qlabel
         result["text_guided_questions_phase_banner"] = f"--- {phase_word} 8: {qlabel} ---"
         result["text_guided_questions_intro"] = resolve_text(
             cfg_get, "text_qsar_questions_intro", lang, DEFAULT_GUIDED_TEXT_QSAR_QUESTIONS_INTRO
@@ -299,7 +301,7 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
             lang,
         )
     elif questionnaire_type == "SAVICKAS":
-        result["label_guided_questions"] = f"7. {qlabel}"
+        result["label_guided_questions"] = qlabel
         result["text_guided_questions_phase_banner"] = f"--- {phase_word} 7: {qlabel} ---"
         result["text_guided_questions_intro"] = resolve_text(
             cfg_get, "text_savickas_questions_intro", lang, DEFAULT_GUIDED_TEXT_SAVICKAS_QUESTIONS_INTRO

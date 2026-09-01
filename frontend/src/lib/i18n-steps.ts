@@ -188,7 +188,15 @@ const de: StepLabelMap = {
 // IT non incluso: per l'italiano si usa l'etichetta dal DB (admin-editable).
 const STEP_LABELS: Partial<Record<Lang, StepLabelMap>> = { en, es, fr, de, sv };
 
+const STEP_ORDINAL_PREFIX = /^\s*(?:\d{1,3}(?:\.\d{1,3})+|\d{1,3}[.)]|\d{1,3}\s*[-–—:])\s*/;
+
+/** Remove the legacy number from a title; the path renders the canonical number. */
+export function stripStepOrdinal(label: string): string {
+    const cleaned = label.replace(STEP_ORDINAL_PREFIX, '').trim();
+    return cleaned || label.trim();
+}
+
 /** Etichetta step localizzata; fallback al testo dal DB (italiano) se manca. */
 export function stepLabel(lang: Lang, stepId: string, fallback: string): string {
-    return STEP_LABELS[lang]?.[stepId] ?? fallback;
+    return stripStepOrdinal(STEP_LABELS[lang]?.[stepId] ?? fallback);
 }
