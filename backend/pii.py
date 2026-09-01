@@ -135,6 +135,34 @@ _SOCIAL_RE = re.compile(r"(?<!\w)@[A-Za-z0-9_.]{2,}(?!\w)")
 # positivi in testo accademico).
 _DATE_RE = re.compile(r"(?<!\d)\d{1,2}[/-]\d{1,2}[/-](?:19|20)\d{2}(?!\d)")
 
+# Termini diagnostici comuni nel contesto counseling (art. 9 GDPR): supporto
+# deterministico al NER per la categoria salute. Solo termini tecnici
+# specifici, mai sintomi generici ("mal di testa"): falsi positivi ~zero.
+_HEALTH_TERMS = [
+    # italiano
+    "dislessia", "dislessico", "dislessica", "dislessici", "dislessiche",
+    "discalculia", "disgrafia", "disortografia", "DSA", "BES", "ADHD",
+    "TDAH", "autismo", "autistico", "autistica", "asperger",
+    # inglese
+    "dyslexia", "dyslexic", "dyscalculia", "dysgraphia", "dysorthographia",
+    "autism", "autistic",
+    # spagnolo
+    "dislexia", "disléxico", "disléxica", "discalculia", "disgrafía",
+    "disortografía", "autismo", "autista",
+    # francese
+    "dyslexie", "dyslexique", "dyscalculie", "dysgraphie",
+    "dysorthographie", "autisme", "autiste",
+    # tedesco
+    "Legasthenie", "Legastheniker", "Legasthenikerin", "Dyskalkulie",
+    "Dysgraphie", "ADHS", "Autismus", "Autist", "Autistin",
+    # svedese
+    "dyslexi", "dyskalkyli", "dysgrafi", "autism", "autistisk",
+]
+_HEALTH_RE = re.compile(
+    r"(?<![A-Za-zÀ-ÿ])(" + "|".join(re.escape(t) for t in _HEALTH_TERMS) + r")(?![A-Za-zÀ-ÿ])",
+    re.IGNORECASE,
+)
+
 
 # --- Checksum ---------------------------------------------------------------
 
@@ -261,6 +289,7 @@ _LABELS = {
     "ip": "[ip]",
     "social": "[social]",
     "data": "[data]",
+    "salute": "[salute]",
 }
 
 # Priorita': i rilevatori a checksum vincono su telefono e carte (una sequenza
@@ -272,6 +301,7 @@ _DETECTORS: list = [
     ("ip", _IP_RE, _ip_valid),
     ("social", _SOCIAL_RE, _social_valid),
     ("data", _DATE_RE, _date_valid),
+    ("salute", _HEALTH_RE, None),
     ("piva", _PIVA_RE, _piva_checksum_valid),
     ("nir", _NIR_RE, _nir_valid),
     ("nino", _NINO_RE, None),
