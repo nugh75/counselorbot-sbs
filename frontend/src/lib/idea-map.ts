@@ -197,6 +197,17 @@ export async function moveIdeaFocus(sessionId: string, nodeId: string): Promise<
     return response.ok;
 }
 
+export async function createIdeaBranch(sessionId: string, label: string): Promise<number | null> {
+    const response = await apiFetch('/api/idea/branch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, label }),
+    });
+    if (!response.ok) return null;
+    const data = await response.json() as { revision_id?: number };
+    return data.revision_id ?? null;
+}
+
 export type IdeaKeepTarget = 'notebook' | 'portfolio';
 
 export interface IdeaConclusion {

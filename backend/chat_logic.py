@@ -459,6 +459,7 @@ def _apply_global_directives(system_prompt: str, language: Optional[str], db=Non
             return row.value.strip()
         return fallback
 
+    conversation_quality_directive = _read("directive_conversation_quality", "")
     context_directive = _read("directive_context", "")
     lang_directive = _read("directive_language", "")
     register_directive = _read("directive_register", "")
@@ -511,7 +512,19 @@ def _apply_global_directives(system_prompt: str, language: Optional[str], db=Non
     if not context_directive:
         context_directive = prompt_config.DEFAULT_CONTEXT_DIRECTIVE
 
+    if not conversation_quality_directive:
+        conversation_quality_directive = (
+            "[ORIENTATION] Begin with the specific observation, issue or decision that advances the "
+            "conversation. Never open with ritual acknowledgements such as 'I understand', 'you are "
+            "right', 'of course', or equivalents. Restate the student's words only to resolve "
+            "ambiguity or verify a working hypothesis. Make the orienting move explicit: clarify the "
+            "situation, a relevant criterion, realistic alternatives and consequences, or one concrete "
+            "next action. Ask at most one focused question when a question is needed."
+        )
+
     parts = [system_prompt]
+    if conversation_quality_directive:
+        parts.append("\n\n" + conversation_quality_directive)
     if context_directive:
         parts.append("\n\n" + context_directive)
     if lang_directive:
@@ -1367,11 +1380,36 @@ def _student_visible_response(
     language: Optional[str],
     sanitize_ztpi: bool,
 ) -> str:
+    text = _strip_generic_acknowledgement(text)
     if sanitize_ztpi:
         return _sanitize_ztpi_user_text(text, language)
     if _is_strategy_questionnaire(questionnaire_type):
         return _annotate_qsa_factor_codes(text, language, progressive=True, questionnaire_type=questionnaire_type)
     return text
+
+
+_GENERIC_ACKNOWLEDGEMENT_RE = re.compile(
+    r"^\s*(?:"
+    r"capisco|comprendo|hai(?:\s+perfettamente)?\s+ragione|ha(?:\s+perfettamente)?\s+ragione|"
+    r"certo|certamente|"
+    r"i\s+understand|you(?:'re|\s+are)\s+(?:absolutely\s+)?right|of\s+course|"
+    r"entiendo|comprendo|tienes\s+raz[oó]n|por\s+supuesto|"
+    r"je\s+comprends|vous\s+avez\s+raison|tu\s+as\s+raison|bien\s+s[uû]r|"
+    r"ich\s+verstehe|sie\s+haben\s+recht|du\s+hast\s+recht|nat[uü]rlich|"
+    r"jag\s+f[oö]rst[aå]r|du\s+har\s+r[aä]tt|sj[aä]lvklart"
+    r")\s*(?:[.!:;]+|,\s*)\s*",
+    flags=re.IGNORECASE | re.UNICODE,
+)
+
+
+def _strip_generic_acknowledgement(text: str) -> str:
+    """Rimuove solo formule rituali isolate in apertura, non assensi sostanziali."""
+    if not text:
+        return text
+    cleaned = _GENERIC_ACKNOWLEDGEMENT_RE.sub("", text, count=1).lstrip()
+    if cleaned == text.lstrip() or not cleaned:
+        return text
+    return cleaned[0].upper() + cleaned[1:]
 
 
 _GUIDED_NO_GREETING_SUFFIX = " Do NOT start with greetings. Go straight to the analysis."

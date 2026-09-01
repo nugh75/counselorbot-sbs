@@ -35,6 +35,7 @@ from ..idea_map import (
     branches,
     chosen_focus,
     closure_ready,
+    create_manual_branch,
     current_focus,
     next_move,
     PACE_STOPS,
@@ -509,6 +510,35 @@ def read_next_step(
 class FocusRequest(BaseModel):
     session_id: str = Field(min_length=1, max_length=120)
     node_id: str = Field(min_length=1, max_length=40)
+
+
+class CreateBranchRequest(BaseModel):
+    session_id: str = Field(min_length=1, max_length=120)
+    label: str = Field(min_length=1, max_length=80)
+
+
+@router.post("/idea/branch")
+def create_branch(
+    request: CreateBranchRequest,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    """Crea una ramificazione esplicita dalla diramazione attualmente in uso."""
+    _require_feature(db)
+    owner = _owner(identity)
+    try:
+        revision = create_manual_branch(db, owner, request.session_id, request.label)
+    except IdeaMapError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    spec = current_map(db, owner, request.session_id)
+    focus = getattr(revision, "focus_id", None)
+    move = next_move(spec, focus)
+    return {
+        "revision_id": revision.id,
+        "focus": focus,
+        "step_id": move["step_id"],
+        "reason": move["reason"],
+    }
 
 
 @router.post("/idea/reopen")

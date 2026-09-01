@@ -441,6 +441,11 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const [isIdeaReferenceUploading, setIsIdeaReferenceUploading] = useState(false);
     // Quanti scambi si vuole che duri. 0 = finche' serve.
     const [ideaBudget, setIdeaBudget] = useState<number>(IDEA_PACE_DEFAULT);
+
+    const refreshIdeaWorkspace = (revisionId?: number) => {
+        if (!isIdea) return;
+        setIdeaMapVersion((value) => Math.max(value + 1, revisionId ?? 0));
+    };
     const [currentPhase, setCurrentPhase] = useState<string>('');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [responseLength, setResponseLength] = useState<ResponseLength>('medium');
@@ -826,7 +831,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             }, (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
             if (result.conversation_id) setConversationId(result.conversation_id);
             setLastFeedbackTargets(result.strategy_ids, result.response_id);
-            if (isIdea) setIdeaMapVersion((value) => value + 1);
+            refreshIdeaWorkspace(result.idea_revision_id);
             if (!result.response?.trim()) dropLast();
         } catch {
             if (!controller.signal.aborted) dropLast();
@@ -908,7 +913,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 responseText = result.response || '';
                 if (result.conversation_id) setConversationId(result.conversation_id);
                 setLastFeedbackTargets(result.strategy_ids, result.response_id);
-                if (isIdea) setIdeaMapVersion((value) => value + 1);
+                refreshIdeaWorkspace(result.idea_revision_id);
                 streamOk = true;
             } catch {
                 if (controller.signal.aborted) return;
@@ -1086,7 +1091,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             const { response } = result;
             if (result.conversation_id) setConversationId(result.conversation_id);
             setLastFeedbackTargets(result.strategy_ids, result.response_id);
-            if (isIdea) setIdeaMapVersion((value) => value + 1);
+            refreshIdeaWorkspace(result.idea_revision_id);
 
             // Sul testo completo applica il segnale di avanzamento
             const { cleanText, shouldAdvance } = extractAdvanceSignal(response || '');

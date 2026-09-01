@@ -19,7 +19,14 @@ from ..ai_service import AIService, AIError
 from .. import pii
 from ..api_models import ChatRequest, QsaAuditRequest, TTSRequest
 from ..diagram_blocks import strip_for_speech
-from ..idea_map import IDEA_INSTRUMENT, IdeaMapError, apply_and_store, extract_patch, names_prior_work
+from ..idea_map import (
+    IDEA_INSTRUMENT,
+    IdeaMapError,
+    apply_and_store,
+    extract_patch,
+    names_prior_work,
+    strip_patch_for_display,
+)
 from ..memory_service import session_memory
 from ..strategy_memory import shared_response_memory
 from ..skills import engine as skills_engine
@@ -84,6 +91,7 @@ from ..chat_logic import (
     _should_sanitize_ztpi_text,
     _should_include_step_analysis_context,
     _step_allows_practical_advice,
+    _strip_generic_acknowledgement,
     _student_visible_response,
     _update_markdown_memory_background,
     build_context_envelope,
@@ -415,6 +423,12 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             step_label = step.label
             questionnaire_type = step.questionnaire_type
 
+    # Il limite scelto riguarda la prosa visibile. IDEA deve avere spazio anche
+    # per la patch JSON privata che segue la risposta, altrimenti il provider la
+    # tronca prima che il diagramma possa aggiornarsi.
+    if questionnaire_type == IDEA_INSTRUMENT:
+        max_tokens = max(max_tokens or 0, 900)
+
     component_flags = get_prompt_component_flags(db, questionnaire_type, request.phase)
     # Nei follow-up in-step il mode della richiesta prevale sul mode dello step:
     # puo' approfondire un consiglio gia' emerso senza recuperarne uno nuovo.
@@ -552,7 +566,6 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             response_content = _ensure_required_qsa_factor_codes(
                 response_content, questionnaire_type, request.language, _phase_factor_codes(db, request.phase)
             )
-    response_content, _ = _limit_visible_words(response_content, request.response_length)
     response_content, idea_revision_id = _apply_idea_patch(
         response_content,
         questionnaire_type=questionnaire_type,
@@ -562,6 +575,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         user_message=request.message or "",
         lang=request.language or "it",
     )
+    response_content = _strip_generic_acknowledgement(response_content)
+    response_content, _ = _limit_visible_words(response_content, request.response_length)
 
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         step_label = _sanitize_ztpi_step_label(step_label, request.language)
@@ -702,6 +717,9 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         if step:
             step_label = step.label
             questionnaire_type = step.questionnaire_type
+
+    if questionnaire_type == IDEA_INSTRUMENT:
+        max_tokens = max(max_tokens or 0, 900)
 
     component_flags = get_prompt_component_flags(db, questionnaire_type, request.phase)
     # Nei follow-up in-step il mode della richiesta prevale sul mode dello step:
@@ -911,31 +929,51 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 display_response = _student_visible_response(
                     raw_response, questionnaire_type, request.language, sanitize
                 )
+                if questionnaire_type == IDEA_INSTRUMENT:
+                    display_response = strip_patch_for_display(display_response)
                 display_response, truncated = _limit_visible_words(display_response, request.response_length)
                 event = {"display": display_response}
                 if request.response_length is None:
                     event["delta"] = text
                 yield f"data: {_json.dumps(event)}\n\n"
-                if truncated:
+                # IDEA manda la patch tecnica in fondo: continuiamo a consumare
+                # lo stream anche quando il testo visibile ha gia' raggiunto il
+                # limite, altrimenti il diagramma non riceve mai l'aggiornamento.
+                if truncated and questionnaire_type != IDEA_INSTRUMENT:
                     break
 
-            response_content = _student_visible_response(
-                "".join(chunks), questionnaire_type, request.language, sanitize
-            )
-            if _requires_complete_factor_output(request.mode):
-                response_content = _ensure_required_qsa_factor_codes(
-                    response_content, questionnaire_type, request.language, _phase_factor_codes(db, request.phase)
+            raw_response = "".join(chunks)
+            if questionnaire_type == IDEA_INSTRUMENT:
+                response_content, idea_revision_id = _apply_idea_patch(
+                    raw_response,
+                    questionnaire_type=questionnaire_type,
+                    username=identity.get("username"),
+                    session_id=session_id,
+                    step_id=request.phase,
+                    user_message=request.message or "",
+                    lang=request.language or "it",
+                )
+                response_content = _student_visible_response(
+                    response_content, questionnaire_type, request.language, sanitize
+                )
+            else:
+                response_content = _student_visible_response(
+                    raw_response, questionnaire_type, request.language, sanitize
+                )
+                if _requires_complete_factor_output(request.mode):
+                    response_content = _ensure_required_qsa_factor_codes(
+                        response_content, questionnaire_type, request.language, _phase_factor_codes(db, request.phase)
+                    )
+                response_content, idea_revision_id = _apply_idea_patch(
+                    response_content,
+                    questionnaire_type=questionnaire_type,
+                    username=identity.get("username"),
+                    session_id=session_id,
+                    step_id=request.phase,
+                    user_message=request.message or "",
+                    lang=request.language or "it",
                 )
             response_content, _ = _limit_visible_words(response_content, request.response_length)
-            response_content, idea_revision_id = _apply_idea_patch(
-                response_content,
-                questionnaire_type=questionnaire_type,
-                username=identity.get("username"),
-                session_id=session_id,
-                step_id=request.phase,
-                user_message=request.message or "",
-                lang=request.language or "it",
-            )
             if not response_content.strip():
                 raise AIError(
                     "Il provider AI ha terminato lo stream senza contenuto visibile. "
