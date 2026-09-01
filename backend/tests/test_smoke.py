@@ -1411,6 +1411,39 @@ def test_guided_ui_texts_public():
     assert r.status_code == 200, r.text
 
 
+def test_guided_ui_step_labels_have_no_duplicate_ordinals_in_any_language():
+    import re
+    from backend.guided_step_label_i18n import strip_step_ordinal
+
+    ordinal_prefix = re.compile(
+        r"^\s*(?:\d{1,3}(?:\.\d{1,3})+|\d{1,3}[.)]|\d{1,3}\s*[-–—:])\s*"
+    )
+    instruments = ("QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP", "IDEA")
+    languages = ("it", "en", "es", "fr", "de", "sv")
+
+    assert strip_step_ordinal("3.1 Elaborazione") == "Elaborazione"
+    assert strip_step_ordinal("4 - Domande") == "Domande"
+    assert strip_step_ordinal("2026: prospettive") == "2026: prospettive"
+
+    for questionnaire_type in instruments:
+        for language in languages:
+            r = client.get(
+                f"/qsa/guided-ui-texts?questionnaire_type={questionnaire_type}&lang={language}"
+            )
+            assert r.status_code == 200, r.text
+            payload = r.json()
+            labels = [step["label"] for step in payload["guided_steps"]]
+            labels.extend([
+                payload["label_guided_questions"],
+                payload["label_guided_conclusion"],
+            ])
+            assert all(not ordinal_prefix.match(label) for label in labels), (
+                questionnaire_type,
+                language,
+                labels,
+            )
+
+
 def test_training_dataset_review_flow():
     r = client.post("/admin/training-dataset/generate", json={
         "instrument_code": "QSA",

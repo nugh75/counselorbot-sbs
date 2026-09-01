@@ -11,7 +11,7 @@ import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useI18n } from '@/lib/i18n-context';
-import { stepLabel } from '@/lib/i18n-steps';
+import { stepLabel, stripStepOrdinal } from '@/lib/i18n-steps';
 import type { Lang } from '@/lib/i18n';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
@@ -208,19 +208,19 @@ const SAVICKAS_FALLBACK_STEPS: StepDef[] = [
     },
 ];
 
-function normalizeLoadedSteps(questionnaireType: string, loadedSteps: StepDef[]): StepDef[] {
+function normalizeLoadedSteps(questionnaireType: string, loadedSteps: StepDef[]): { steps: StepDef[]; usedFallback: boolean } {
     const ordered = [...loadedSteps].sort((a, b) => a.sort_order - b.sort_order);
     if (questionnaireType === 'ZTPI') {
         const ids = ordered.map((s) => s.id);
         const hasAllRequired = ZTPI_REQUIRED_STEP_IDS.every((id) => ids.includes(id));
-        return hasAllRequired ? ordered : ZTPI_FALLBACK_STEPS;
+        return { steps: hasAllRequired ? ordered : ZTPI_FALLBACK_STEPS, usedFallback: !hasAllRequired };
     }
     if (questionnaireType === 'SAVICKAS') {
         const ids = ordered.map((s) => s.id);
         const hasAllRequired = SAVICKAS_REQUIRED_STEP_IDS.every((id) => ids.includes(id));
-        return hasAllRequired ? ordered : SAVICKAS_FALLBACK_STEPS;
+        return { steps: hasAllRequired ? ordered : SAVICKAS_FALLBACK_STEPS, usedFallback: !hasAllRequired };
     }
-    return ordered;
+    return { steps: ordered, usedFallback: false };
 }
 
 // --- Color theme mapping (string literals for Tailwind scanner) ---
@@ -583,10 +583,16 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 const data = await res.json();
                 if (!isMounted) return;
 
-                // Dynamic steps — localizza le etichette in EN/SV (fallback al testo DB)
+                // The API label is already localized. Static translations are used only
+                // for the offline fallback paths.
                 const loadedSteps: StepDef[] = data.guided_steps || [];
-                const normalizedSteps = normalizeLoadedSteps(questionnaireType, loadedSteps)
-                    .map((s) => ({ ...s, label: stepLabel(activeLocale, s.id, s.label) }));
+                const normalized = normalizeLoadedSteps(questionnaireType, loadedSteps);
+                const normalizedSteps = normalized.steps.map((s) => ({
+                    ...s,
+                    label: normalized.usedFallback
+                        ? stepLabel(activeLocale, s.id, s.label)
+                        : stripStepOrdinal(s.label),
+                }));
                 setSteps(normalizedSteps);
 
                 const phaseOrder = [
@@ -644,8 +650,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
                 // Testi/etichette ora localizzati lato backend per la lingua richiesta
                 // (chiave per-lingua con fallback all'italiano): si applicano per ogni lingua.
-                setQuestionsLabel(data.label_guided_questions || t('guided.questionsLabel'));
-                setConclusionLabel(data.label_guided_conclusion || t('guided.conclusionLabel'));
+                setQuestionsLabel(stripStepOrdinal(data.label_guided_questions || t('guided.questionsLabel')));
+                setConclusionLabel(stripStepOrdinal(data.label_guided_conclusion || t('guided.conclusionLabel')));
                 setQuestionsBanner(data.text_guided_questions_phase_banner || t('guided.questionsBanner'));
                 setQuestionsIntro(data.text_guided_questions_intro || t('guided.questionsIntro'));
                 setConclusionText(data.text_guided_conclusion || t('guided.conclusionText'));
@@ -1235,7 +1241,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const currentColors = getPhaseColors(currentPhase);
     const currentStepIndex = phases.indexOf(currentPhase) + 1;
     const totalSteps = phases.length;
-    const sidebarPhases = phases.filter(p => p !== FIXED_CONCLUSION_ID);
+    const sidebarPhases = phases;
     const hasScoreEntries = scoreGroups.some(group => group.entries.length > 0);
     const isSavickasAgreement = questionnaireType === 'SAVICKAS' && currentPhase === 'savickas-patto';
     const suggestedQuestions = currentPhase === FIXED_QUESTIONS_ID
@@ -1383,9 +1389,10 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         </div>
 
                     <div className="space-y-2">
-                        {sidebarPhases.map((phaseId, idx) => {
+                        {sidebarPhases.map((phaseId) => {
                             const isActive = currentPhase === phaseId;
-                            const isDone = phases.indexOf(currentPhase) > phases.indexOf(phaseId);
+                            const phaseIndex = phases.indexOf(phaseId);
+                            const isDone = phases.indexOf(currentPhase) > phaseIndex;
                             const phaseColors = getPhaseColors(phaseId);
 
                             return (
@@ -1398,7 +1405,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                         isActive ? `${phaseColors.border} ${phaseColors.iconBg} ${phaseColors.ring} text-white ring-4` :
                                             isDone ? `${phaseColors.border} ${phaseColors.iconBg} text-white` : `${phaseColors.border} bg-white`
                                     )}>
-                                        {isDone ? <CheckCircle2 className="w-2.5 h-2.5" /> : idx + 1}
+                                        {isDone ? <CheckCircle2 className="w-2.5 h-2.5" /> : phaseIndex + 1}
                                     </div>
                                     <span className="truncate">{getPhaseLabel(phaseId)}</span>
                                 </div>

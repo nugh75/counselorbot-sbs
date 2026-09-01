@@ -10,9 +10,22 @@ Seeding is idempotent and only fills languages that are still missing, so
 admin-customised translations are never overwritten.
 """
 
+import re
 from typing import Dict
 
 SECONDARY_LANGS = ["en", "es", "fr", "de", "sv"]
+
+_STEP_ORDINAL_PREFIX = re.compile(
+    r"^\s*(?:\d{1,3}(?:\.\d{1,3})+|\d{1,3}[.)]|\d{1,3}\s*[-–—:])\s*"
+)
+
+
+def strip_step_ordinal(label: str) -> str:
+    """Remove a legacy ordinal prefix from a student-facing step label."""
+    if not label:
+        return label
+    cleaned = _STEP_ORDINAL_PREFIX.sub("", label, count=1).strip()
+    return cleaned or label.strip()
 
 STEP_LABEL_I18N: Dict[str, Dict[str, str]] = {
     # --- QSA ---
