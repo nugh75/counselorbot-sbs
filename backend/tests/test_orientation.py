@@ -102,6 +102,19 @@ def test_fallback_is_localized_and_ranks_learning_intent():
     assert "detailed exploration" not in analysis.recommendations[0]["reason"]
 
 
+def test_disoriented_student_is_asked_about_the_area_instead_of_being_routed_to_idea():
+    """Orientare chi non sa ancora che cosa cerca è compito della Bussola, non di IDEA."""
+    analysis = fallback_analysis("Non so come muovermi, mi hanno detto di usare questa piattaforma", "it")
+    assert analysis.recommendations == []
+    assert "IDEA" not in analysis.reply
+    assert analysis.informational is False
+    assert "il modo in cui studi" in analysis.reply
+
+    english = fallback_analysis("I have no clue how to move around here", "en")
+    assert english.recommendations == []
+    assert "the way you study" in english.reply
+
+
 def test_platform_question_gets_a_complete_answer_instead_of_generic_routing():
     db = _Session()
     try:
