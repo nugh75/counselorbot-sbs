@@ -306,3 +306,95 @@ parlava più solo del QSA.
 - **`PencilButton`** è rimasto a 36px, fuori dai 44px delle altre primitive
   circolari.
 - **ai4auth** non condivide i token: allineamento da fare nell'altro repo.
+
+---
+
+## 9. Audit — 2026-09-02 (secondo giro, sui percorsi)
+
+Il primo audit aveva chiuso token, contrasto e gerarchia. Questo guarda i
+**percorsi**: dove si perde lavoro, dove un comando promette una cosa e ne fa
+un'altra, dove l'app aspetta senza dirlo. Ventuno rilievi misurati sul codice
+(non test con utenti), tutti chiusi tranne quanto elencato in 9.2.
+
+**Lavoro perso.** La somministrazione teneva cento item in un solo `useState`,
+senza bozza, senza guardia all'uscita: era l'unica superficie lunga senza rete,
+mentre la chat guidata si congela da sola e pQBL tiene l'avanzamento. Il modulo
+dei punteggi perdeva i suoi venticinque campi anche solo tornando indietro di un
+passo, perché si smonta. Entrambe le bozze vivono ora in `lib/compilation-draft.ts`,
+per strumento (e per lingua nella somministrazione: i numeri degli item non
+significano nulla fra strumenti diversi), annunciate al ripristino invece che
+applicate di nascosto. **Il consenso non entra mai in una bozza**: è un gesto,
+non un dato, e ritrovarlo spuntato farebbe passare per acconsentito quel che
+nessuno ha acconsentito in questa sessione.
+
+**Cronologia.** I dodici passi del percorso guidato vivevano in `useState` senza
+toccare `history`: Indietro del browser, e la gesture di ritorno che su Android è
+la navigazione principale, uscivano dall'app. `lib/flow-history.ts` tiene il
+cammino percorso con una profondità che le entrate di cronologia trasportano,
+così indietro **e avanti** si muovono dentro il percorso. Ci passa anche il
+BackButton sullo schermo, il che chiude di riflesso il ritorno che portava sempre
+all'inserimento manuale anche a chi era arrivato da un PDF.
+
+**Comandi che non mantengono.** "Scarica il resoconto PDF" costruiva un blob e lo
+mostrava in un `iframe`: nessun file sul dispositivo, e su iOS un riquadro bianco.
+Ora salva come già facevano area personale e libretto. Due invii — l'apertura
+della chat e quello della somministrazione — non si bloccavano durante la
+chiamata: un secondo click creava una seconda sessione e una seconda riga di
+risultato, rumore nei dati di ricerca prima che nell'interfaccia.
+
+**Attesa.** `OrientationGate` rimetteva `checking` a ogni cambio rotta e
+interrogava `/orientation/status` senza cache, sostituendo la pagina con una
+barretta: lo pagavano tutti a ogni click, anche chi non poteva esserne rimandato
+indietro. Il cancello si risolve una volta per caricamento; un errore di rete
+resta fail-open e si riprova al cambio rotta. `/auth/me` non era memoizzata e la
+home ne aveva tre chiamanti insieme: ora una richiesta condivisa.
+
+**Chat.** Tutte e tre aprivano un `AbortController` per ogni richiesta ma non lo
+esponevano mai: nessun modo di fermare una risposta andata per il verso
+sbagliato. Il primario diventa "ferma" mentre la richiesta è aperta, e il testo
+già arrivato resta. La chat guidata disabilitava anche la casella per tutto lo
+streaming, cioè proprio quando si formula la domanda dopo. La Bussola aveva
+ancora `aria-live` sul contenitore — lo schema che l'audit precedente aveva
+sostituito nelle altre due — l'errore in fondo alla pagina e un
+`max-h-[34rem]` scritto a mano invece dei token di altezza (aggiunta
+`max-h-chat` accanto a `h-chat` e `min-h-chat`).
+
+**Tocco e nomi.** I pollici del riscontro erano bersagli da ~22px, sotto il
+minimo di 24px, in tutte e tre le chat; allegato e congela stavano a 32px. La
+classe `.tap-icon` applica la regola che la topbar già segue: disegno invariato,
+44px al dito. Nell'assistente pollici e "?" avevano solo `title`.
+
+**Testo e titoli.** `text-[10px]` in cinquantotto punti — valore assoluto, non
+segue né il 15px di radice né il carattere scelto nel browser — diventa il
+gradino `text-2xs` in rem. Solo il layout radice e `/guide` dichiaravano
+`metadata`: venti rotte prendono il proprio titolo. La lingua del documento era
+fissa a `it` fino all'idratazione e ora si applica nello script no-flash.
+
+**Dialoghi nativi.** Libretto e portfolio chiedevano conferma con `window.confirm`
+e il caricamento PDF segnalava l'errore con `alert()`: finestre che non seguono
+il tema scuro, non traducono i propri pulsanti e bloccano. Nuova primitiva
+`ConfirmInline`; l'errore del caricamento resta nella pagina.
+
+**Colore.** L'avanzamento di Savickas era `bg-green-600` dove ogni altro
+strumento usa petrol, e "ripeti il passo" era `bg-amber-600`, che il sistema
+riserva agli avvisi.
+
+### 9.1 Falso positivo, per memoria
+
+Il primo elenco segnalava una chiave spagnola mancante
+(`assistant.welcome.studente`). Non manca: è a `i18n.ts:2211`, senza
+indentazione, e la regex dell'analisi l'aveva saltata. `npm run i18n:check`
+esiste già e passa su tutte e sei le lingue — è il controllo di parità da
+credere, non un'ispezione a mano.
+
+### 9.2 Resta aperto
+
+- Tutto quanto elencato in 8.3, che questo giro non ha toccato.
+- **`text-[11px]`** in trentanove punti: stesso problema di `text-[10px]`, non
+  convertito per non cambiare la misura visibile insieme al meccanismo.
+- **Sottopagine dell'area personale**: hanno il titolo di scheda, non ancora una
+  conferma di eliminazione uniforme — `profilo/page.tsx` tiene la propria,
+  scritta a mano, accanto alla nuova `ConfirmInline`.
+- **Doppio ingresso in cronologia**: il percorso guidato ora spinge le proprie
+  entrate, ma rientrando in `/` da un'altra rotta il cammino riparte da zero e un
+  Indietro più profondo non trova nulla da muovere. Degrada senza rompere.
