@@ -1015,7 +1015,7 @@ function StepPromptsPanel({
 
                             {flags.approved_strategies && eligibleApproved.length > 0 && (
                                 <div className="mt-3 space-y-1.5 border-t border-indigo-100 pt-3">
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-700/70 ml-1">{componentText.select_approved_strategies}</p>
+                                    <p className="text-2xs font-bold uppercase tracking-wider text-indigo-700/70 ml-1">{componentText.select_approved_strategies}</p>
                                     <div className="grid gap-1.5 max-h-[160px] overflow-y-auto pr-1">
                                         {eligibleApproved.map((strategy) => (
                                             <label key={strategy.id} className="flex items-start gap-2 rounded-md border border-slate-200 bg-white p-2 text-[11px] text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
@@ -1037,7 +1037,7 @@ function StepPromptsPanel({
 
                             {flags.certified_strategies && eligibleCertified.length > 0 && (
                                 <div className="mt-3 space-y-1.5 border-t border-indigo-100 pt-3">
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-700/70 ml-1">{componentText.select_certified_strategies}</p>
+                                    <p className="text-2xs font-bold uppercase tracking-wider text-indigo-700/70 ml-1">{componentText.select_certified_strategies}</p>
                                     <div className="grid gap-1.5 max-h-[160px] overflow-y-auto pr-1">
                                         {eligibleCertified.map((strategy) => (
                                             <label key={strategy.slug} className="flex items-start gap-2 rounded-md border border-slate-200 bg-white p-2 text-[11px] text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors">
@@ -2109,7 +2109,7 @@ export function ConfigForm() {
                                         <h4 className={`text-xs font-bold ${c.subTitle} uppercase tracking-wider`}>
                                             {t('admin.config.textsMessages')}
                                         </h4>
-                                        <span className={`text-[10px] font-bold ${c.subTitle} bg-white/60 px-2 py-0.5 rounded uppercase`}>
+                                        <span className={`text-2xs font-bold ${c.subTitle} bg-white/60 px-2 py-0.5 rounded uppercase`}>
                                             {t('admin.config.editingLang')}: {lang.toUpperCase()}
                                         </span>
                                     </div>
@@ -2263,7 +2263,7 @@ export function ConfigForm() {
                                                         <h3 className="text-sm font-semibold text-slate-900">
                                                             {step.label || step.id}
                                                         </h3>
-                                                        <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                                                        <span className="text-2xs font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
                                                             {step.id}
                                                         </span>
                                                     </div>

@@ -255,7 +255,7 @@ export function ReturningHome({
                                         <div className="flex flex-wrap items-center gap-2">
                                             <span className="h-1.5 w-1.5 rounded-full bg-ochre-500" />
                                             <h4 className="font-bold text-slate-900">{t('pqbl.card.title')}</h4>
-                                            <span className="rounded-full bg-ochre-50 px-2 py-0.5 text-[10px] font-bold text-ochre-700">{t('pqbl.card.badge')}</span>
+                                            <span className="rounded-full bg-ochre-50 px-2 py-0.5 text-2xs font-bold text-ochre-700">{t('pqbl.card.badge')}</span>
                                         </div>
                                         <p className="grow text-sm leading-relaxed text-slate-500">{t('pqbl.card.desc')}</p>
                                         <div className="pt-1">

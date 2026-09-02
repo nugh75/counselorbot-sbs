@@ -96,19 +96,19 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName, quest
                             <div className="flex flex-wrap items-center gap-2">
                                 <h2 className="text-base font-bold text-slate-900">{c.name}</h2>
                                 {c.is_active === false && (
-                                    <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold uppercase text-slate-500">
+                                    <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-2xs font-bold uppercase text-slate-500">
                                         {t('counselor.unavailable')}
                                     </span>
                                 )}
                                 {c.is_active !== false && c.suitable === false && (
-                                    <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700">
+                                    <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-2xs font-bold uppercase text-amber-700">
                                         {t('counselor.notForInstrument')}
                                     </span>
                                 )}
                                 {c.model_origin && (
                                     <span
                                         title={t(c.model_origin === 'local' ? 'counselor.origin.local.hint' : 'counselor.origin.external.hint')}
-                                        className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-500"
+                                        className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-1.5 py-0.5 text-2xs font-medium text-slate-500"
                                     >
                                         {c.model_origin === 'local'
                                             ? <Cpu className="h-3 w-3" />
@@ -122,7 +122,7 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName, quest
 
                         <div className="flex flex-wrap gap-1.5">
                             {(c.questionnaire_types || []).slice(0, 6).map((q) => (
-                                <span key={q} className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+                                <span key={q} className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-2xs font-semibold text-slate-500">
                                     {q}
                                 </span>
                             ))}

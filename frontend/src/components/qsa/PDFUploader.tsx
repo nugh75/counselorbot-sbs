@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 import { BackButton } from '@/components/ui/BackButton';
+import { Callout } from '@/components/ui/Callout';
 
 interface PDFUploaderProps {
     onUploadComplete: (scores: Record<string, number>, pdfToken?: string) => void;
@@ -23,6 +24,7 @@ export function PDFUploader({ onUploadComplete, questionnaire, onBack }: PDFUplo
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [fileInputRef, setFileInputRef] = useState<HTMLInputElement | null>(null);
+    const [uploadError, setUploadError] = useState('');
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault();
@@ -58,6 +60,7 @@ export function PDFUploader({ onUploadComplete, questionnaire, onBack }: PDFUplo
 
     const startUpload = async (file: File) => {
         setIsUploading(true);
+        setUploadError('');
         
         try {
             const formData = new FormData();
@@ -91,8 +94,11 @@ export function PDFUploader({ onUploadComplete, questionnaire, onBack }: PDFUplo
             
         } catch (error) {
             console.error("Upload error:", error);
+            // La finestra nativa non segue il tema, non traduce il suo pulsante
+            // e interrompe il caricamento con un blocco modale: l'errore resta
+            // nella pagina, dove sta il comando che l'ha prodotto.
             const errMsg = error instanceof Error ? error.message : String(error);
-            alert(`${t('pdf.error')}\n(${errMsg})`);
+            setUploadError(`${t('pdf.error')} (${errMsg})`);
         } finally {
             setIsUploading(false);
         }
@@ -103,7 +109,8 @@ export function PDFUploader({ onUploadComplete, questionnaire, onBack }: PDFUplo
             <div className="flex items-center gap-3">
                 {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
             </div>
-            <div className="w-full max-w-xl mx-auto">
+            <div className="w-full max-w-xl mx-auto space-y-4">
+            {uploadError && <Callout variant="danger">{uploadError}</Callout>}
             <div
                 onDragEnter={handleDrag}
                 onDragOver={handleDrag}

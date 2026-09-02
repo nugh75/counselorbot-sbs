@@ -338,7 +338,7 @@ export function UsersSummaryPanel() {
                                             <tr key={user.username} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
                                                 <td className="px-3 py-2.5">
                                                     <span className="font-medium text-slate-800">{user.display_name}</span>
-                                                    <span className="block text-[10px] text-slate-500">{user.username}</span>
+                                                    <span className="block text-2xs text-slate-500">{user.username}</span>
                                                 </td>
                                                 <td className="px-3 py-2.5 text-slate-600">{user.groups_count || '—'}</td>
                                                 <td className="px-3 py-2.5 text-slate-600">{user.plans_count || '—'}</td>
@@ -370,7 +370,7 @@ export function UsersSummaryPanel() {
                                             <tr key={user.username} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
                                                 <td className="px-3 py-2.5">
                                                     <span className="font-medium text-slate-800">{user.display_name}</span>
-                                                    <span className="block text-[10px] text-slate-500">{user.username}</span>
+                                                    <span className="block text-2xs text-slate-500">{user.username}</span>
                                                 </td>
                                                 <td className="px-3 py-2.5 text-slate-600">{user.results_count || '—'}</td>
                                                 <td className="px-3 py-2.5 text-slate-600">{user.memberships_count || '—'}</td>
@@ -398,7 +398,7 @@ export function UsersSummaryPanel() {
                                             <tr key={user.username} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
                                                 <td className="px-3 py-2.5">
                                                     <span className="font-medium text-slate-800">{user.display_name}</span>
-                                                    <span className="block text-[10px] text-slate-500">{user.username}</span>
+                                                    <span className="block text-2xs text-slate-500">{user.username}</span>
                                                 </td>
                                                 <td className="px-3 py-2.5 text-slate-600">{user.in_logs ? '✓' : '—'}</td>
                                             </tr>
@@ -499,7 +499,7 @@ export function UsersSummaryPanel() {
                                                     <tr key={group.id} className="border-b border-slate-100 align-top last:border-0 hover:bg-slate-50">
                                                         <td className="px-3 py-2.5">
                                                             <span className="font-medium text-slate-800">{group.name}</span>
-                                                            <span className="block font-mono text-[10px] text-slate-500">{group.code}</span>
+                                                            <span className="block font-mono text-2xs text-slate-500">{group.code}</span>
                                                         </td>
                                                         <td className="px-3 py-2.5 text-slate-600">{group.owner_username}</td>
                                                         <td className="px-3 py-2.5 text-slate-600">

@@ -153,7 +153,7 @@ function ConfigTab() {
                                 <p className="font-medium text-slate-800 text-sm">
                                     {item.key}
                                     {item.key.includes('__') && (
-                                        <span className="ml-2 rounded bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600 uppercase">
+                                        <span className="ml-2 rounded bg-indigo-50 px-1.5 py-0.5 text-2xs font-semibold text-indigo-600 uppercase">
                                             {t('admin.config.editingLang')}: {lang.toUpperCase()}
                                         </span>
                                     )}

@@ -290,7 +290,7 @@ function MobileHeaderMenu({
                 <div id="mobile-menu" className="absolute right-0 top-full z-[60] mt-2 max-h-[calc(100dvh-4.5rem)] w-[min(88vw,18rem)] overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
                     {accountLabel && (
                         <div className="border-b border-slate-100 px-3 py-2 dark:border-slate-700">
-                            <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{t('header.account')}</div>
+                            <div className="text-2xs font-semibold uppercase tracking-wide text-slate-500">{t('header.account')}</div>
                             <div className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100" title={accountLabel}>
                                 {accountLabel}
                             </div>
@@ -318,7 +318,7 @@ function MobileHeaderMenu({
                         l'unica porta, l'icona "Riprendi" della topbar non c'è. */}
                     {resumeCount > 0 && (
                         <div className="border-y border-slate-100 py-1 dark:border-slate-700">
-                            <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                            <div className="px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-slate-500">
                                 {t('frozen.resumeTitle')}
                             </div>
                             {frozen.map((row) => (
@@ -377,7 +377,7 @@ function MobileHeaderMenu({
                         <span className="truncate">{dark ? t('theme.toLight') : t('theme.toDark')}</span>
                     </button>
                     <div className="border-t border-slate-100 p-2 dark:border-slate-700">
-                        <div className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                        <div className="px-1 pb-1 text-2xs font-semibold uppercase tracking-wide text-slate-500">
                             {t('nav.language')}: {currentLanguage.label}
                         </div>
                         <div className="grid grid-cols-3 gap-1">

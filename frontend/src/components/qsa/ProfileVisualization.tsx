@@ -136,7 +136,7 @@ function ZoneBand({ outcome, label, width, divider }: { outcome: Outcome; label:
     const tone = OUTCOME_TONE[outcome];
     return (
         <div
-            className={cn('flex items-center justify-center gap-1 text-[10px] font-semibold', divider && 'border-l border-slate-200')}
+            className={cn('flex items-center justify-center gap-1 text-2xs font-semibold', divider && 'border-l border-slate-200')}
             style={{ width, backgroundColor: tone.band, color: tone.bandText }}
         >
             <span aria-hidden="true">{tone.glyph}</span>
@@ -156,7 +156,7 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
             <div className="col-start-1 row-start-1 min-w-0 sm:w-44 sm:flex-shrink-0">
                 <div className="flex items-center gap-2">
                     <span className="font-mono font-bold text-slate-700">{code}</span>
-                    {isInverted && <span className="text-[10px] text-slate-500">↔</span>}
+                    {isInverted && <span className="text-2xs text-slate-500">↔</span>}
                 </div>
                 <div className="text-xs text-slate-500 leading-tight break-words" title={factorName}>
                     {factorName}
@@ -206,7 +206,7 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
                     <span aria-hidden="true">{interpretation.tone.glyph}</span>
                     {score}
                 </span>
-                <div className="text-[10px] text-slate-500 mt-0.5">
+                <div className="text-2xs text-slate-500 mt-0.5">
                     {interpretation.label}
                 </div>
             </div>
@@ -352,7 +352,7 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                 {([['strength', positiveLegend], ['adequate', midLegend], ['growth', t('profile.growth')]] as const).map(([outcome, label]) => (
                     <div key={outcome} className="flex items-center gap-2">
                         <span
-                            className="flex h-5 w-5 items-center justify-center rounded-sm border border-slate-200 text-[10px] font-semibold"
+                            className="flex h-5 w-5 items-center justify-center rounded-sm border border-slate-200 text-2xs font-semibold"
                             style={{ backgroundColor: OUTCOME_TONE[outcome].band, color: OUTCOME_TONE[outcome].bandText }}
                             aria-hidden="true"
                         >

@@ -509,7 +509,7 @@ export function OpenCodeExperience({
                         />
                     ) : scoreGroups.length > 0 ? scoreGroups.map(group => (
                         <div key={group.prefix} className="bg-white rounded-lg border border-slate-200 shadow-sm p-3">
-                            <div className={`text-[10px] font-bold uppercase tracking-wider mb-2 ${prefixColors[group.prefix] || 'text-slate-600'}`}>
+                            <div className={`text-2xs font-bold uppercase tracking-wider mb-2 ${prefixColors[group.prefix] || 'text-slate-600'}`}>
                                 {t(`profile.section.${group.prefix}`)}
                             </div>
                             <div className="space-y-2">
@@ -549,7 +549,7 @@ export function OpenCodeExperience({
                             {t('opencode.chatTitle')}
                         </span>
                         {status && (
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase ${
+                            <span className={`text-2xs px-2 py-0.5 rounded-full font-semibold uppercase ${
                                 status === 'connected'
                                     ? 'bg-emerald-100 text-emerald-700'
                                     : 'bg-amber-100 text-amber-700'

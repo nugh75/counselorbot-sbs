@@ -376,7 +376,7 @@ export function RagDocsPanel() {
                             }`}
                         >
                             {c.label}
-                            <span className="ml-2 text-[10px] uppercase tracking-wide text-slate-500">
+                            <span className="ml-2 text-2xs uppercase tracking-wide text-slate-500">
                                 {c.builtin ? c.mode : t('admin.rag.dynamic')}
                             </span>
                         </button>
@@ -500,7 +500,7 @@ export function RagDocsPanel() {
                                                             {doc.scope_included ? t('admin.rag.scope.in') : t('admin.rag.scope.out')}
                                                         </button>
                                                         {doc.scope_forced && (
-                                                            <span className="text-[10px] font-medium uppercase tracking-wide text-amber-600">
+                                                            <span className="text-2xs font-medium uppercase tracking-wide text-amber-600">
                                                                 {t('admin.rag.scope.manual')}
                                                             </span>
                                                         )}

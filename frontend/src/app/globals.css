@@ -317,6 +317,14 @@ h1.text-3xl {
   }
 }
 
+/* Il gradino piu' piccolo della scala. Era scritto `text-[10px]` in
+   cinquantotto punti: un valore assoluto, che non segue il 15px di radice ne'
+   la dimensione di carattere scelta nel browser. In rem lo segue. */
+@utility text-2xs {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+}
+
 /* Comando a icona dentro una riga densa: i pollici del riscontro e i pulsanti
    della barra di composizione stavano fra i 22 e i 32px. Stessa regola della
    topbar: il disegno non cambia, l'area toccabile arriva a 44px al dito. */
