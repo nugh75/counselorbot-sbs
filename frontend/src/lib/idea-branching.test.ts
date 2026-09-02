@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const chat = () => readFileSync(new URL('../components/qsa/GuidedChatInterface.tsx', import.meta.url), 'utf8');
+const intro = () => readFileSync(new URL('../components/qsa/IdeaBranchIntro.tsx', import.meta.url), 'utf8');
 const panel = () => readFileSync(new URL('../components/qsa/IdeaMapPanel.tsx', import.meta.url), 'utf8');
 const workspace = () => readFileSync(new URL('../components/qsa/IdeaWorkspace.tsx', import.meta.url), 'utf8');
 
@@ -42,4 +43,22 @@ test('clicking any node lands on the branch that owns it', () => {
     // finirebbe in 422.
     assert.match(panel(), /state\?\.owners\?\.\[nodeId\] \?\? nodeId/);
     assert.match(workspace(), /moveIdeaFocus\(sessionId, nodeId\)/);
+});
+
+test('a branch other than the first one opens on an empty chat', () => {
+    const source = chat();
+    // L'apertura - quel che si e' detto prima che esistesse un ramo - resta al
+    // primo ramo: senza questo il ramo nuovo eredita una conversazione che non
+    // e' la sua e non si capisce piu' dove si e' finiti.
+    assert.match(source, /if \(index < opening\.start\) return opening\.branchId === ideaFocus;/);
+});
+
+test('the empty branch says how it was born, what it hangs from and what is done in it', () => {
+    const source = intro();
+    assert.match(source, /branch\.origin === 'manual'/);
+    assert.match(source, /rows\.find\(\(row\) => row\.id === branch\.parent\)/);
+    assert.match(source, /idea\.branches\.intro\.doing/);
+    assert.match(source, /empty && \(/);
+    // La scheda resta in testa al ramo anche quando il ramo ha gia' messaggi.
+    assert.match(chat(), /<IdeaBranchIntro[\s\S]{0,240}empty=\{visibleMessages\.length === 0\}/);
 });

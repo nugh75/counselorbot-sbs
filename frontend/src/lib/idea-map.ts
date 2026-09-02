@@ -183,6 +183,8 @@ export interface IdeaBranch {
     is_focus: boolean;
     // Questo lavoro finisce con qualcosa da fare o con qualcosa da capire.
     wants_plan: boolean;
+    // Chi ha aperto il ramo: la persona, o la conversazione stessa.
+    origin: 'manual' | 'conversation';
 }
 
 // L'albero dei rami: la chat e' una riga sola, i rami esistono solo nella

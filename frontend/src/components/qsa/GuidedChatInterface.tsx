@@ -20,6 +20,7 @@ import { toast } from '@/components/ui/Toast';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
 import { IdeaBranchBar } from '@/components/qsa/IdeaBranchBar';
+import { IdeaBranchIntro } from '@/components/qsa/IdeaBranchIntro';
 import { IdeaWorkspace } from '@/components/qsa/IdeaWorkspace';
 import {
     deleteIdeaReference,
@@ -477,17 +478,20 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         setIdeaSegments([]);
     }, [sessionId]);
 
-    // Cosa si vede: l'apertura comune (prima che esistesse un ramo) e i tratti
-    // del ramo attivo. Niente viene cancellato, solo tenuto fuori dagli occhi.
+    // Cosa si vede: solo i tratti del ramo attivo. L'apertura - quel che si e'
+    // detto prima che esistesse un ramo - resta al primo ramo, che e' dove e'
+    // stata detta: entrando in un ramo nuovo la chat parte vuota, e a spiegare
+    // dove si e' finiti ci pensa la scheda del ramo. Niente viene cancellato,
+    // solo tenuto fuori dagli occhi.
     const visibleMessages = (() => {
         if (!isIdea || !ideaFocus || ideaSegments.length === 0) {
             return messages.map((message, index) => ({ message, index }));
         }
-        const opening = ideaSegments[0].start;
+        const opening = ideaSegments[0];
         return messages
             .map((message, index) => ({ message, index }))
             .filter(({ index }) => {
-                if (index < opening) return true;
+                if (index < opening.start) return opening.branchId === ideaFocus;
                 const segment = ideaSegments.filter((row) => row.start <= index).pop();
                 return segment?.branchId === ideaFocus;
             });
@@ -1556,6 +1560,15 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                 </fieldset>
                             )}
                         </div>
+                    )}
+                    {isIdea && ideaFocus && (
+                        <IdeaBranchIntro
+                            sessionId={sessionId}
+                            version={ideaMapVersion}
+                            locale={activeLocale}
+                            focus={ideaFocus}
+                            empty={visibleMessages.length === 0}
+                        />
                     )}
                     {hiddenMessages > 0 && (
                         <p className="mx-auto rounded-full bg-slate-50 px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-slate-400">
