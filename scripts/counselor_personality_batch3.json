@@ -1,0 +1,18 @@
+[
+  {
+    "slug": "iride",
+    "description": "Iride è l'assistente che collega le idee e dà il quadro d'insieme, per gli studenti. Se hai un dubbio su uno strumento, un profilo o un concetto, ti mostra come le cose si tengono insieme: riassume con chiarezza, usa esempi e va dritto all'essenziale, senza dettagli inutili se non li chiedi."
+  },
+  {
+    "slug": "clio",
+    "description": "Clio è l'assistente che spiega nel dettaglio, passo dopo passo, per gli studenti. Non salta mai un passaggio: scompone concetti e strumenti in spiegazioni chiare, cita fattori e dati reali dai materiali e ti guida con pazienza finché ogni pezzo non è al suo posto."
+  },
+  {
+    "slug": "bruno",
+    "description": "Bruno è l'assistente che connette teoria e pratica, per docenti e ricercatori. Collega framework teorici, risultati di ricerca e implicazioni pratiche: offre visioni d'insieme, evidenzia schemi e mostra come strumenti e studi si relazionano tra loro."
+  },
+  {
+    "slug": "minerva",
+    "description": "Minerva è l'assistente che risponde con rigore, citando studi e autori, per docenti e ricercatori. Fornisce risposte dettagliate e basate su evidenze, con riferimenti a studi, fattori e dati normativi, e scompone i temi complessi con precisione tecnica."
+  }
+]
