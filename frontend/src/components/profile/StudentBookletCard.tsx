@@ -6,6 +6,7 @@ import { QUESTIONNAIRES, type QuestionnaireType } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 import { toast } from '@/components/ui/Toast';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
 
 // Libretti narrativi senza dimensioni (fattori): eventi significativi.
 export const EVENT_BOOKLET_TYPES = ['EVENTO_STUDIO', 'EVENTO_PROFESSIONALE'] as const;
@@ -126,6 +127,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [downloading, setDownloading] = useState(false);
+    const [confirmingDelete, setConfirmingDelete] = useState(false);
 
     const factorOptions = useMemo(() => {
         if (!isQuestionnaireType(questionnaireType) || questionnaireType === 'SAVICKAS') return [];
@@ -271,7 +273,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
 
     const deleteBooklet = async () => {
         if (currentId == null) return;
-        if (!window.confirm(t('booklet.confirmDelete'))) return;
+        setConfirmingDelete(false);
         try {
             const res = await apiFetch(`/api/user/student-booklets/id/${currentId}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Delete failed');
@@ -444,15 +446,22 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
                 >
                     <Plus className="h-3.5 w-3.5" /> {t('booklet.new')}
                 </button>
-                {currentId != null && (
+                {currentId != null && (confirmingDelete ? (
+                    <ConfirmInline
+                        className="ml-auto"
+                        question={t('booklet.confirmDelete')}
+                        onConfirm={() => void deleteBooklet()}
+                        onCancel={() => setConfirmingDelete(false)}
+                    />
+                ) : (
                     <button
                         type="button"
-                        onClick={() => void deleteBooklet()}
+                        onClick={() => setConfirmingDelete(true)}
                         className="ml-auto inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-rose-50 hover:text-rose-600"
                     >
                         <Trash2 className="h-3.5 w-3.5" /> {t('booklet.delete')}
                     </button>
-                )}
+                ))}
             </div>
 
             {loading ? (

@@ -101,19 +101,19 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
                 <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                         <h3 className="font-bold text-slate-800">{q.name}</h3>
-                        <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded-full">
+                        <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-2xs font-bold rounded-full">
                             {t('selector.active')}
                         </span>
-                        <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-full">
+                        <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-2xs font-bold rounded-full">
                             {primaryBadge}
                         </span>
                         {hasInAppAdministration && (
-                            <span className="px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold rounded-full">
+                            <span className="px-2 py-0.5 bg-amber-50 text-amber-700 text-2xs font-bold rounded-full">
                                 {t('selector.experimentalBadge')}
                             </span>
                         )}
                         {completed.includes(q.id) && (
-                            <span className="px-2 py-0.5 bg-teal-50 text-teal-700 text-[10px] font-bold rounded-full">
+                            <span className="px-2 py-0.5 bg-teal-50 text-teal-700 text-2xs font-bold rounded-full">
                                 {t('selector.badge.done')}
                             </span>
                         )}
@@ -289,7 +289,7 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                             <h3 className="font-bold text-slate-800">{t('pqbl.card.title')}</h3>
-                            <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded-full">
+                            <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-2xs font-bold rounded-full">
                                 {t('pqbl.card.badge')}
                             </span>
                         </div>
@@ -309,7 +309,7 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
                         {upcoming.map((q) => (
                             <div key={q.id} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-white px-3 py-2.5">
                                 <span className="text-sm font-semibold text-slate-600">{q.name}</span>
-                                <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full">
+                                <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-2xs font-bold rounded-full">
                                     {t('selector.soon')}
                                 </span>
                             </div>

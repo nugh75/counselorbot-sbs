@@ -26,7 +26,7 @@ export function FlowStepper({ steps, current }: FlowStepperProps) {
                         >
                             <span
                                 className={cn(
-                                    'flex items-center justify-center text-[10px] font-bold transition-all',
+                                    'flex items-center justify-center text-2xs font-bold transition-all',
                                     active
                                         ? 'h-5 w-5 rounded-full bg-ochre-600 text-white ring-4 ring-ochre-600/15'
                                         : done

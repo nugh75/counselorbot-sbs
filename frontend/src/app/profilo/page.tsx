@@ -554,8 +554,16 @@ export default function ProfilePage() {
                         {t('profile.sessions.resultTitle')}
                     </h2>
                     {selectedSession && (
-                        <span className={`px-3 py-0.5 border text-xs font-bold rounded-full uppercase ${getTypeColor(selectedSession.questionnaire_type)}`}>
-                            {selectedSession.questionnaire_type} · {selectedSession.session_id.slice(0, 8)}
+                        // Prima il badge portava lo strumento e otto cifre
+                        // dell'UUID di sessione: un identificativo tecnico che
+                        // non aiuta a riconoscere quale compilazione si sta
+                        // guardando. La data sì. L'id resta nel `title`, dove
+                        // serve al supporto e non allo studente.
+                        <span
+                            title={selectedSession.session_id}
+                            className={`px-3 py-0.5 border text-xs font-bold rounded-full uppercase ${getTypeColor(selectedSession.questionnaire_type)}`}
+                        >
+                            {selectedSession.questionnaire_type} · {new Date(selectedSession.submitted_at).toLocaleDateString(lang)}
                         </span>
                     )}
                 </div>
@@ -589,17 +597,17 @@ export default function ProfilePage() {
                                     
                                     {showDeleteConfirm === selectedSession.session_id ? (
                                         <div className="flex items-center gap-1 bg-red-50 border border-red-100 rounded-lg p-1 animate-fade-in">
-                                            <span className="text-[10px] font-semibold text-red-700 px-2">{t('profile.deleteShortConfirm')}</span>
+                                            <span className="text-2xs font-semibold text-red-700 px-2">{t('profile.deleteShortConfirm')}</span>
                                             <button
                                                 onClick={() => handleDelete(selectedSession.session_id)}
                                                 disabled={actionLoading === selectedSession.session_id}
-                                                className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-[10px] font-bold"
+                                                className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-2xs font-bold"
                                             >
                                                 {t('profile.yes')}
                                             </button>
                                             <button
                                                 onClick={() => setShowDeleteConfirm(null)}
-                                                className="px-2 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 rounded text-[10px] font-medium"
+                                                className="px-2 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 rounded text-2xs font-medium"
                                             >
                                                 {t('profile.no')}
                                             </button>
@@ -696,7 +704,7 @@ export default function ProfilePage() {
                                                     <div>
                                                         <div className="flex justify-between items-start gap-2">
                                                             <span className="font-bold text-xs text-slate-800">{code} - {tf(`factor.${code}.name`, factorDef?.name || code)}</span>
-                                                            <span className={`px-2 py-0.5 border text-[10px] font-semibold rounded-full shrink-0 ${badgeColor}`}>
+                                                            <span className={`px-2 py-0.5 border text-2xs font-semibold rounded-full shrink-0 ${badgeColor}`}>
                                                                 {evaluation}
                                                             </span>
                                                         </div>
@@ -706,7 +714,7 @@ export default function ProfilePage() {
                                                     </div>
                                                     <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-slate-50">
                                                         <span className="text-sm font-bold text-indigo-700">{val}</span>
-                                                        <span className="text-[10px] text-slate-500">{t('profile.stanineLabel')}</span>
+                                                        <span className="text-2xs text-slate-500">{t('profile.stanineLabel')}</span>
                                                         {inverted && <span className="text-[9px] text-slate-500 italic">{t('profile.invertedShort')}</span>}
                                                     </div>
                                                 </div>
@@ -742,7 +750,7 @@ export default function ProfilePage() {
                                                 key={index}
                                                 className={`flex flex-col ${msg.role === 'student' ? 'items-end' : 'items-start'}`}
                                             >
-                                                <span className="text-[10px] font-semibold text-slate-500 mb-0.5 uppercase tracking-wider">
+                                                <span className="text-2xs font-semibold text-slate-500 mb-0.5 uppercase tracking-wider">
                                                     {msg.role === 'student' ? t('profile.conversation.student') : 'CounselorBot'}
                                                 </span>
                                                 <div

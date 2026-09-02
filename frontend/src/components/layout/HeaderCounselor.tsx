@@ -95,7 +95,7 @@ export function HeaderCounselor() {
                         >
                             <span className="truncate flex-1">{c.name}</span>
                             {c.is_active === false && (
-                                <span className="shrink-0 text-[10px] text-slate-500 italic">{t('counselor.unavailable')}</span>
+                                <span className="shrink-0 text-2xs text-slate-500 italic">{t('counselor.unavailable')}</span>
                             )}
                         </button>
                     ))}

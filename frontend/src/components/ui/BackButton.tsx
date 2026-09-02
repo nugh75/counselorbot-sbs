@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 interface BackButtonProps {
     href?: string;
     onClick?: () => void;
-    label?: string;
+    label: string;
     className?: string;
     variant?: 'icon' | 'labelled';
 }
@@ -23,7 +23,7 @@ const ICON =
 const LABELLED =
     'inline-flex h-11 shrink-0 items-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-indigo-700';
 
-export function BackButton({ href, onClick, label = 'Indietro', className, variant = 'icon' }: BackButtonProps) {
+export function BackButton({ href, onClick, label, className, variant = 'icon' }: BackButtonProps) {
     const cls = cn(variant === 'labelled' ? LABELLED : ICON, className);
     const inner = (
         <>

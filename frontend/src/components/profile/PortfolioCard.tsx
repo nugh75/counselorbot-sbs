@@ -6,6 +6,7 @@ import { FolderOpen, ImagePlus, Loader2, Maximize2, Pencil, Plus, Save, Search, 
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import { toast } from '@/components/ui/Toast';
+import { ConfirmInline } from '@/components/ui/ConfirmInline';
 
 // In anteprima le <img> (non passano da fetch) devono puntare all'account di
 // prova: il backend accetta l'impersonazione anche via query param view_as.
@@ -64,6 +65,8 @@ export function PortfolioCard() {
     const [form, setForm] = useState<EditForm | null>(null);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
+    // Conferma di eliminazione in linea, al posto della finestra nativa.
+    const [confirmingDelete, setConfirmingDelete] = useState<number | null>(null);
     const [lightbox, setLightbox] = useState<LightboxImage | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const lightboxTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -152,7 +155,7 @@ export function PortfolioCard() {
     };
 
     const deleteItem = async (id: number) => {
-        if (!window.confirm(t('portfolio.confirmDelete'))) return;
+        setConfirmingDelete(null);
         try {
             const res = await apiFetch(`/api/user/portfolio/${id}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Delete failed');
@@ -318,7 +321,7 @@ export function PortfolioCard() {
                                     className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-slate-300 text-slate-500 hover:bg-slate-50 disabled:opacity-50"
                                 >
                                     {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
-                                    <span className="text-[10px] font-semibold">{t('portfolio.addImage')}</span>
+                                    <span className="text-2xs font-semibold">{t('portfolio.addImage')}</span>
                                 </button>
                                 <input
                                     ref={fileInputRef}
@@ -379,14 +382,21 @@ export function PortfolioCard() {
                                 <div className="flex items-start justify-between gap-2">
                                     <h3 className="text-sm font-bold text-slate-800">{item.title}</h3>
                                     <div className="flex shrink-0 gap-1">
-                                        <button type="button" onClick={() => setForm(toForm(item))} className="rounded p-1 text-slate-500 hover:bg-slate-50 hover:text-indigo-600" aria-label={t('portfolio.edit')}>
+                                        <button type="button" onClick={() => setForm(toForm(item))} className="tap-icon rounded text-slate-500 hover:bg-slate-50 hover:text-indigo-600" aria-label={t('portfolio.edit')}>
                                             <Pencil className="h-3.5 w-3.5" />
                                         </button>
-                                        <button type="button" onClick={() => void deleteItem(item.id)} className="rounded p-1 text-slate-500 hover:bg-rose-50 hover:text-rose-600" aria-label={t('portfolio.delete')}>
+                                        <button type="button" onClick={() => setConfirmingDelete(item.id)} className="tap-icon rounded text-slate-500 hover:bg-rose-50 hover:text-rose-600" aria-label={t('portfolio.delete')}>
                                             <Trash2 className="h-3.5 w-3.5" />
                                         </button>
                                     </div>
                                 </div>
+                                {confirmingDelete === item.id && (
+                                    <ConfirmInline
+                                        question={t('portfolio.confirmDelete')}
+                                        onConfirm={() => void deleteItem(item.id)}
+                                        onCancel={() => setConfirmingDelete(null)}
+                                    />
+                                )}
                                 <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
                                     {item.category && <span className="rounded-full bg-indigo-50 px-2 py-0.5 font-semibold text-indigo-600">{item.category}</span>}
                                     {item.item_date && <span>{new Date(item.item_date).toLocaleDateString(lang)}</span>}

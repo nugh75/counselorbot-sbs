@@ -178,7 +178,7 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
                             <span className="flex flex-wrap items-baseline gap-x-2">
                                 <span className={cn('font-medium', isRoot && 'text-slate-900')}>{row.label}</span>
                                 {row.task_label && (
-                                    <span className="text-[10px] uppercase tracking-wide text-slate-500">
+                                    <span className="text-2xs uppercase tracking-wide text-slate-500">
                                         {row.task_label}
                                     </span>
                                 )}

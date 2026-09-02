@@ -256,7 +256,7 @@ export function PresetsPanel() {
                                     <td className="px-3 py-2">
                                         <span className="text-slate-600">{p.provider}</span>
                                         {!p.provider_configured && (
-                                            <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">{t('admin.presets.notConfigured')}</span>
+                                            <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-2xs font-medium text-amber-700">{t('admin.presets.notConfigured')}</span>
                                         )}
                                     </td>
                                     <td className="px-3 py-2 font-mono text-xs text-slate-700">{p.model}</td>

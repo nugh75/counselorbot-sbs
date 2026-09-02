@@ -358,14 +358,14 @@ function CompactScoreBar({
 
     return (
         <div className="space-y-1">
-            <div className="text-[10px] leading-tight text-slate-600 break-words" title={`${code} (${factorName})`}>
+            <div className="text-2xs leading-tight text-slate-600 break-words" title={`${code} (${factorName})`}>
                 <span className="font-mono font-semibold">{code}</span> <span>({factorName})</span>
             </div>
             <div className="flex items-center gap-2">
                 <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div className={cn("h-full rounded-full transition-all", color)} style={{ width: `${width}%` }} />
                 </div>
-                <span className="w-4 text-[10px] font-bold text-slate-600">{score}</span>
+                <span className="w-4 text-2xs font-bold text-slate-600">{score}</span>
             </div>
         </div>
     );
@@ -1605,7 +1605,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
                             {scoreGroups.map((group, idx) => (
                                 <div key={group.prefix} className={cn("space-y-1.5", idx > 0 && "pt-2 border-t border-slate-100")}>
-                                    <div className={cn("text-[10px] font-medium uppercase", group.colorClass)}>{group.label}</div>
+                                    <div className={cn("text-2xs font-medium uppercase", group.colorClass)}>{group.label}</div>
                                     {group.entries.map(([code, score]) => (
                                         <CompactScoreBar
                                             key={code}
@@ -1685,7 +1685,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         />
                     )}
                     {hiddenMessages > 0 && (
-                        <p className="mx-auto rounded-full bg-slate-50 px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-slate-500">
+                        <p className="mx-auto rounded-full bg-slate-50 px-3 py-1 text-2xs font-medium uppercase tracking-widest text-slate-500">
                             {t('idea.branches.onlyThis')}
                         </p>
                     )}
@@ -1695,7 +1695,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             msg.role === 'user' ? 'justify-end' : msg.role === 'system' ? 'justify-center' : 'justify-start'
                         )}>
                             {msg.role === 'system' ? (
-                                <span className="max-w-full break-words rounded-full bg-slate-50 px-3 py-2 text-[10px] font-medium uppercase tracking-widest text-slate-500">{msg.content}</span>
+                                <span className="max-w-full break-words rounded-full bg-slate-50 px-3 py-2 text-2xs font-medium uppercase tracking-widest text-slate-500">{msg.content}</span>
                             ) : (
                                 <div className={cn("flex min-w-0 max-w-[94%] flex-col gap-1 sm:max-w-[90%]", msg.role === 'user' ? "items-end" : "items-start")}>
                                     <ChatBubble role={msg.role === 'user' ? 'user' : 'assistant'}>
@@ -1706,7 +1706,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                         <button
                                                             type="button"
                                                             onClick={() => toggleReasoning(idx)}
-                                                            className="flex w-full min-w-0 items-center gap-1.5 text-[10px] uppercase tracking-wide text-slate-500 transition-colors hover:text-slate-600"
+                                                            className="flex w-full min-w-0 items-center gap-1.5 text-2xs uppercase tracking-wide text-slate-500 transition-colors hover:text-slate-600"
                                                         >
                                                             {!msg.content.trim() && <Loader2 className="w-3 h-3 animate-spin" />}
                                                             <ChevronRight className={cn("w-3 h-3 transition-transform", !hiddenReasoning.has(idx) && "rotate-90")} />
@@ -1747,7 +1747,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                 onClick={() => handlePlayTTS(diagramContentForSpeech(msg.content), idx)}
                                                 disabled={isAudioLoading}
                                                 className={cn(
-                                                    "flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium transition-colors border",
+                                                    "flex items-center gap-1.5 px-2 py-1 rounded-md text-2xs font-medium transition-colors border",
                                                     playingMessageIdx === idx
                                                         ? "bg-indigo-50 text-indigo-600 border-indigo-200"
                                                         : "bg-transparent text-slate-500 border-transparent hover:bg-slate-50 hover:text-slate-600"
@@ -1967,7 +1967,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             )}
                         </div>
                         <div className="mt-2 text-center">
-                            <p className="text-[10px] text-slate-500">
+                            <p className="text-2xs text-slate-500">
                                 {inputHint}
                             </p>
                         </div>

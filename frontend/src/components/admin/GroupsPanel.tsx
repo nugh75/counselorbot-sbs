@@ -532,10 +532,10 @@ export function GroupsPanel() {
                                                     />
                                                     <span className="flex-1 text-slate-700">
                                                         {user.display_name}
-                                                        <span className="ml-1 text-[10px] text-slate-500">{user.username}</span>
+                                                        <span className="ml-1 text-2xs text-slate-500">{user.username}</span>
                                                     </span>
                                                     {alreadyShared && (
-                                                        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-500">
+                                                        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-2xs font-medium text-slate-500">
                                                             {texts.shareAlreadyShared}
                                                         </span>
                                                     )}
@@ -565,7 +565,7 @@ export function GroupsPanel() {
                                                 <div key={share.id} className="flex items-center justify-between rounded-md bg-white px-2 py-1.5 text-xs">
                                                     <span className="text-slate-700">
                                                         {allUsers.find((u) => u.username === share.shared_with_username)?.display_name || share.shared_with_username}
-                                                        <span className="ml-1 text-[10px] text-slate-500">{share.shared_with_username}</span>
+                                                        <span className="ml-1 text-2xs text-slate-500">{share.shared_with_username}</span>
                                                     </span>
                                                     <button
                                                         type="button"

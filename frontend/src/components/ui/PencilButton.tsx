@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 interface PencilButtonProps {
     href?: string;
     onClick?: () => void;
-    label?: string;
+    label: string;
     className?: string;
     disabled?: boolean;
 }
@@ -19,7 +19,7 @@ interface PencilButtonProps {
 const BASE =
     'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-indigo-700 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:hover:bg-slate-50 disabled:hover:text-slate-300';
 
-export function PencilButton({ href, onClick, label = 'Modifica', className, disabled }: PencilButtonProps) {
+export function PencilButton({ href, onClick, label, className, disabled }: PencilButtonProps) {
     const cls = cn(BASE, className);
     const icon = <Pencil className="h-4 w-4" />;
 

@@ -97,7 +97,7 @@ export function RolePreviewPanel() {
                         <div key={account.username} className="glass-panel flex flex-col gap-2 p-4">
                             <div className="flex items-center gap-2">
                                 <h3 className="font-bold text-slate-800">{account.name}</h3>
-                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-2xs font-bold text-slate-600">
                                     {t(ROLE_KEY[account.role])}
                                 </span>
                             </div>

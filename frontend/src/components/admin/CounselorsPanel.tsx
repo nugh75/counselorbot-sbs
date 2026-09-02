@@ -262,7 +262,7 @@ export function CounselorsPanel() {
             <div className="mt-3">
                 <div className="mb-1 flex items-center gap-2">
                     <span className="text-xs font-medium text-slate-500">{t('admin.counselors.description')}</span>
-                    <button type="button" disabled={saving} onClick={() => void translate()} title={t('admin.counselors.translateHint') || 'Traduci via Ollama'} className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-500 hover:bg-slate-50 disabled:opacity-50">
+                    <button type="button" disabled={saving} onClick={() => void translate()} title={t('admin.counselors.translateHint') || 'Traduci via Ollama'} className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-2xs font-medium text-slate-500 hover:bg-slate-50 disabled:opacity-50">
                         <Languages className="h-3 w-3" /> {t('admin.counselors.translate') || 'Traduci'}
                     </button>
                 </div>
@@ -272,7 +272,7 @@ export function CounselorsPanel() {
                             key={l.code}
                             type="button"
                             onClick={() => setTLang(l.code)}
-                            className={`rounded-md border px-2 py-0.5 text-[10px] font-medium ${
+                            className={`rounded-md border px-2 py-0.5 text-2xs font-medium ${
                                 tLang === l.code
                                     ? 'border-indigo-300 bg-indigo-100 text-indigo-700'
                                     : 'border-slate-200 bg-white text-slate-500'

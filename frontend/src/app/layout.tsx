@@ -34,10 +34,13 @@ export default function RootLayout({
     return (
         <html lang="it" suppressHydrationWarning>
             <head>
-                {/* No-flash: applica il tema salvato prima del primo paint. */}
+                {/* No-flash: tema e lingua salvati applicati prima del primo paint.
+                    La lingua arrivava solo dopo l'idratazione, quindi il primo
+                    rendering — e con esso la voce di uno screen reader — partiva
+                    in italiano anche per chi legge in un'altra delle sei lingue. */}
                 <script
                     dangerouslySetInnerHTML={{
-                        __html: `(function(){try{if(localStorage.getItem('cb_theme')==='dark'){document.documentElement.classList.add('dark')}}catch(e){}})()`,
+                        __html: `(function(){try{if(localStorage.getItem('cb_theme')==='dark'){document.documentElement.classList.add('dark')}var l=localStorage.getItem('cb_lang');if(l&&['it','en','es','fr','de','sv'].indexOf(l)>-1){document.documentElement.lang=l}}catch(e){}})()`,
                     }}
                 />
             </head>
