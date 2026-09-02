@@ -57,6 +57,7 @@ from .routes import chat as chat_routes
 from .routes import memory as memory_routes
 from .routes import site_chat as site_chat_routes
 from .routes import learner_profile as learner_profile_routes
+from .routes import orientation as orientation_routes
 from .routes import cross_synthesis as cross_synthesis_routes
 from .routes import portfolio as portfolio_routes
 from .routes import pqbl as pqbl_routes
@@ -634,6 +635,26 @@ def _seed_and_migrate():
                 conn.commit()
         except Exception as e:
             logger.debug(f"counselors assistant_audience migration skipped/failed: {e}")
+
+        # Migration: il counselor scelto prima della Bussola resta legato alla
+        # sessione, così riapertura e turni successivi usano la stessa voce.
+        try:
+            with database.engine.connect() as conn:
+                conn.execute(sa_text(
+                    "ALTER TABLE orientation_sessions ADD COLUMN counselor_id INTEGER"
+                ))
+                conn.commit()
+        except Exception as e:
+            logger.debug(f"orientation counselor migration skipped/failed: {e}")
+        try:
+            with database.engine.connect() as conn:
+                conn.execute(sa_text(
+                    "CREATE INDEX IF NOT EXISTS ix_orientation_sessions_counselor_id "
+                    "ON orientation_sessions (counselor_id)"
+                ))
+                conn.commit()
+        except Exception as e:
+            logger.debug(f"orientation counselor index skipped/failed: {e}")
 
         # Create initial admin user if not exists
         user = db.query(models.User).filter(models.User.username == "admin").first()
@@ -1653,6 +1674,7 @@ app.include_router(chat_routes.router)
 app.include_router(memory_routes.router)
 app.include_router(site_chat_routes.router)
 app.include_router(learner_profile_routes.router)
+app.include_router(orientation_routes.router)
 app.include_router(cross_synthesis_routes.router)
 app.include_router(portfolio_routes.router)
 app.include_router(pqbl_routes.router)

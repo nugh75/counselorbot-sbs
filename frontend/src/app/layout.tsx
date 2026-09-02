@@ -7,6 +7,7 @@ import { ViewAsFetchPatch } from '@/components/layout/ViewAsFetchPatch';
 import { I18nProvider } from '@/lib/i18n-context';
 import { Toaster } from '@/components/ui/Toast';
 import { TooltipProvider } from '@/components/ui/Tooltip';
+import { OrientationGate } from '@/components/layout/OrientationGate';
 
 // Tre ruoli tipografici. Body = Inter (invariato). Display = Bricolage Grotesque,
 // grottesco contemporaneo, usato con parsimonia su titoli/wordmark. Mono = IBM Plex
@@ -41,7 +42,7 @@ export default function RootLayout({
                         <ViewAsFetchPatch />
                         <Header />
                         <main className="pt-20 px-4 pb-12">
-                            {children}
+                            <OrientationGate>{children}</OrientationGate>
                         </main>
                         <RolePreviewBanner />
                         <Toaster />

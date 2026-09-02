@@ -86,6 +86,22 @@ export function ReturningHome({
                 </button>
             </header>
 
+            <section className="glass-panel relative overflow-hidden border-indigo-100 p-5 sm:p-6">
+                <div className="absolute -right-10 -top-12 h-32 w-32 rounded-full border border-indigo-100" aria-hidden="true" />
+                <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-start gap-4">
+                        <CompassMark className="mt-0.5 h-9 w-9 shrink-0" />
+                        <div>
+                            <h2 className="font-display text-xl font-bold text-slate-900">{t('orientation.title')}</h2>
+                            <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-600">{t('orientation.subtitle')}</p>
+                        </div>
+                    </div>
+                    <Link href="/bussola" className="inline-flex shrink-0 items-center justify-center rounded-md bg-ochre-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-ochre-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ochre-400 focus-visible:ring-offset-2">
+                        {t('orientation.landing.open')}
+                    </Link>
+                </div>
+            </section>
+
             <section className="grid gap-4 border-y border-slate-100 py-6 sm:grid-cols-2">
                 <div>
                     <span className="block h-0.5 w-10 rounded-full bg-teal-500" />
