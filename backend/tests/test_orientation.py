@@ -9,8 +9,9 @@ from sqlalchemy.pool import StaticPool
 
 from backend import auth, database, models, orientation
 from backend.ai_service import _requests_json_response
-from backend.orientation import _clean_analysis, analyze_turn, fallback_analysis
+from backend.orientation import _clean_analysis, _tools_named_in, analyze_turn, fallback_analysis
 from backend.routes import orientation as orientation_routes
+from backend.routes.orientation import _merged_recommendations
 
 
 _engine = create_engine(
@@ -53,6 +54,9 @@ def _get_identity():
 
 class _FakeAIService:
     last_call = None
+    # Risposta grezza da restituire al posto del JSON di default: serve a coprire
+    # il ramo "testo libero", quello che scatta quando il JSON non e' forzato.
+    override = None
 
     def __init__(self, db=None):
         self.config = {}
@@ -61,6 +65,8 @@ class _FakeAIService:
 
     def get_response(self, *args, **kwargs):
         type(self).last_call = (args, kwargs)
+        if type(self).override is not None:
+            return type(self).override
         return """{
           "reply": "Hai descritto un obiettivo di studio concreto.",
           "recommendations": [
@@ -187,6 +193,77 @@ def test_tool_question_hands_the_canonical_description_to_the_model():
     # Il fallback locale conserva la spiegazione completa per quando il modello cade.
     assert fallback_analysis("Che cosa è il QSA?", "it").informational is True
     assert fallback_analysis("Voglio provare il QSA", "it").informational is False
+
+
+def test_asking_about_a_tool_also_proposes_it():
+    """La risposta chiude con "se vuoi iniziare, dimmelo": la scheda deve esserci.
+
+    Il turno resta informativo — non e' una diagnosi — ma senza raccomandazione
+    chiedere del QSA non lo faceva comparire fra gli strumenti proposti.
+    """
+    analysis = fallback_analysis("Che cosa e' il QSA?", "it")
+    assert analysis.informational is True
+    assert [row["id"] for row in analysis.recommendations] == ["QSA"]
+
+    # La panoramica di piattaforma non e' una richiesta su uno strumento: nessuna scheda.
+    assert fallback_analysis("Cosa posso fare?", "it").recommendations == []
+
+
+def test_tools_are_read_out_of_the_reply_as_whole_words():
+    assert _tools_named_in("Partirei dal QSA, poi eventualmente SAVICKAS.") == ["QSA", "SAVICKAS"]
+    # QSAr non e' QSA: il confine di parola li tiene distinti.
+    assert _tools_named_in("Se hai poco tempo c'e' il QSAr.") == ["QSAr"]
+    # "idea" minuscolo e' una parola italiana comune, e IDEA e' invite-only.
+    assert _tools_named_in("Hai gia' un'idea concreta in testa?") == []
+    assert _tools_named_in("Carica un PDF e usiamo pQBL.") == ["pqbl"]
+
+
+def test_a_prose_reply_drives_the_panel_from_what_it_named():
+    """Ramo testo libero: senza questo, un refuso dello studente svuotava il turno.
+
+    Il classificatore locale guarda le parole dello studente, e su "Qss" non
+    trova nulla; il modello invece aveva appena scritto "QSA" nella risposta.
+    """
+    db = _Session()
+    try:
+        _FakeAIService.override = "Presumo QSA. Lo compili sul sito e poi ne parliamo qui."
+        analysis = analyze_turn(db, "Qss", "it")
+    finally:
+        _FakeAIService.override = None
+        db.close()
+
+    assert [row["id"] for row in analysis.recommendations] == ["QSA"]
+
+
+def test_the_panel_summarises_the_session_not_the_last_turn():
+    previous = [{"id": "SAVICKAS", "reason": "prima"}, {"id": "pqbl", "reason": "prima"}]
+
+    # Le nuove entrano in testa, le vecchie scalano.
+    merged = _merged_recommendations(previous, [{"id": "QSA", "reason": "adesso"}])
+    assert [row["id"] for row in merged] == ["QSA", "SAVICKAS", "pqbl"]
+
+    # Nessuna proposta: il turno non tocca il pannello.
+    assert _merged_recommendations(previous, []) == previous
+
+    # Uno strumento gia' presente risale invece di duplicarsi, e il tetto resta tre.
+    merged = _merged_recommendations(merged, [{"id": "pqbl", "reason": "adesso"}])
+    assert [row["id"] for row in merged] == ["pqbl", "QSA", "SAVICKAS"]
+    assert merged[0]["reason"] == "adesso"
+
+
+def test_prompt_says_what_an_already_completed_questionnaire_unlocks():
+    db = _Session()
+    try:
+        analyze_turn(db, "Ho gia' compilato il QSA", "it")
+        prompt = _FakeAIService.last_call[0][1]
+    finally:
+        db.close()
+
+    # Avere i risultati apre la chat guidata: non e' un motivo per cambiare strumento.
+    assert "already filled in one of the six questionnaires is not finished with it" in prompt
+    assert "Never ask the student to type or paste scores into this conversation" in prompt
+    # E le raccomandazioni sono schede, non prosa.
+    assert "clickable cards under this conversation" in prompt
 
 
 def test_prompt_carries_the_questionnaire_address_only_where_it_applies():

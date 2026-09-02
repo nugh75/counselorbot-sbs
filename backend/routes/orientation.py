@@ -148,6 +148,34 @@ def orientation_status(
     }
 
 
+# Il pannello e' un riepilogo della sessione, non dell'ultimo turno. Prima
+# `row.recommendations` veniva sostituito in blocco: la conversazione si
+# accumulava e le schede no, cosi' lo strumento su cui lo studente aveva appena
+# deciso di partire spariva appena il turno seguente ne nominava altri. Le nuove
+# proposte entrano in testa, le vecchie scalano, e il totale resta tre — lo
+# stesso tetto che _clean_analysis applica a un singolo turno.
+MAX_RECOMMENDATIONS = 3
+
+
+def _merged_recommendations(
+    previous: list[dict] | None,
+    incoming: list[dict[str, str]],
+) -> list[dict]:
+    if not incoming:
+        return list(previous or [])
+    merged: list[dict] = []
+    seen: set[str] = set()
+    for row in list(incoming) + list(previous or []):
+        tool_id = str((row or {}).get("id") or "")
+        if not tool_id or tool_id in seen:
+            continue
+        merged.append(row)
+        seen.add(tool_id)
+        if len(merged) == MAX_RECOMMENDATIONS:
+            break
+    return merged
+
+
 @router.post("/orientation/sessions")
 def start_orientation(
     payload: StartRequest,
@@ -214,8 +242,7 @@ def orientation_message(
     ])[-MAX_MESSAGES:]
     row.language = normalize_language(payload.language)
     row.messages = messages
-    if not analysis.informational and analysis.recommendations:
-        row.recommendations = analysis.recommendations
+    row.recommendations = _merged_recommendations(row.recommendations, analysis.recommendations)
     db.commit()
     db.refresh(row)
     return _serialize(row)
