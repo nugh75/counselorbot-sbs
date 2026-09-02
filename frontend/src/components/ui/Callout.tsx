@@ -24,8 +24,11 @@ interface CalloutProps {
 export function Callout({ variant = 'info', title, children, icon, className }: CalloutProps) {
     const s = STYLES[variant];
     const Icon = icon === null ? null : (icon ?? s.defaultIcon);
+    // Un callout d'errore che compare dopo un'azione va annunciato: senza ruolo
+    // resta muto per chi usa uno screen reader. Le altre varianti restano
+    // contenuto normale, per non interrompere la lettura.
     return (
-        <div className={cn('rounded-xl p-5 flex gap-3', s.box, className)}>
+        <div role={variant === 'danger' ? 'alert' : undefined} className={cn('rounded-xl p-5 flex gap-3', s.box, className)}>
             {Icon && <Icon className={cn('w-6 h-6 shrink-0', s.icon)} />}
             <div className="min-w-0 space-y-1 text-sm leading-relaxed">
                 {title && <p className="font-semibold">{title}</p>}

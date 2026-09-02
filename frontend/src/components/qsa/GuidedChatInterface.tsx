@@ -1401,6 +1401,18 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         }
         return [];
     })();
+    // Annuncio per screen reader. Il trascritto è un role="log": va bene per
+    // navigarlo, ma da solo non dice nulla mentre la risposta arriva. Un
+    // aria-live sul contenitore riannuncerebbe a ogni token dello streaming,
+    // quindi la regione qui sotto porta due soli stati: "sto elaborando" mentre
+    // la richiesta è aperta, e il testo della risposta una volta chiusa.
+    const lastMessage = messages[messages.length - 1];
+    const liveAnnouncement = isLoading
+        ? t('guided.processing')
+        : lastMessage?.role === 'assistant' && lastMessage.content.trim()
+            ? lastMessage.content
+            : '';
+
     const inputPlaceholder = isLoading
         ? t('guided.input.waiting')
         : isSavickasAgreement
@@ -1606,13 +1618,15 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 {/* Header */}
                 <div className={cn("flex min-w-0 items-center gap-3 border-b border-slate-100 p-4", currentColors.headerBg)}>
                     <div className="min-w-0">
-                        <h3 className="font-bold text-slate-800">CounselorBot AI</h3>
+                        <h3 id="guided-chat-title" className="font-bold text-slate-800">CounselorBot AI</h3>
                         <p className="truncate text-xs font-medium text-slate-500">{getPhaseLabel(currentPhase)}</p>
                     </div>
                 </div>
 
+                <p className="sr-only" aria-live="polite">{liveAnnouncement}</p>
+
                 {/* Messages */}
-                <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 space-y-6">
+                <div role="log" aria-labelledby="guided-chat-title" className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 space-y-6">
                     {isIdea && (
                         <div className="space-y-3">
                             {messages.length <= 1 && (
@@ -1930,6 +1944,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             <button
                                 type="submit"
                                 disabled={isLoading || !input.trim()}
+                                aria-label={t('chat.send')}
                                 className="shrink-0 rounded-md bg-indigo-600 p-3 text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
                             >
                                 <Send className="w-5 h-5" />

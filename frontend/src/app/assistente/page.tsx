@@ -399,6 +399,15 @@ export default function AssistentePage() {
     // rendere immediatamente visibile a quale assistente si sta interagando.
     const viewAs = getViewAsAccount();
 
+    // Vedi GuidedChatInterface: aria-live sul trascritto riannuncerebbe a ogni
+    // token, quindi la regione porta lo stato di attesa e poi la risposta finita.
+    const lastMessage = messages[messages.length - 1];
+    const liveAnnouncement = loading
+        ? t('guided.thinking')
+        : lastMessage?.role === 'assistant' && lastMessage.content.trim()
+            ? lastMessage.content
+            : '';
+
     return (
         <div className="flex flex-col lg:h-chat">
             {/* Layout a due colonne: quadrati a sinistra, chat a destra */}
@@ -494,7 +503,9 @@ export default function AssistentePage() {
 
                 {/* Colonna destra: chat - prende tutto lo spazio rimanente */}
                 <div className="flex min-h-chat flex-1 min-w-0 flex-col gap-3 overflow-hidden lg:min-h-0 lg:gap-4">
-                    <div ref={scrollRef} className="glass-panel min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
+                    <p className="sr-only" aria-live="polite">{liveAnnouncement}</p>
+
+                    <div ref={scrollRef} role="log" aria-label={t('assistant.title')} className="glass-panel min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
                         {messages.length === 0 && (
                             <div className="flex items-start gap-3 text-slate-600">
                                 <p className="text-sm leading-relaxed pt-1">{welcomeText}</p>
@@ -597,6 +608,7 @@ export default function AssistentePage() {
                         <button
                             onClick={send}
                             disabled={loading || !input.trim()}
+                            aria-label={t('chat.send')}
                             className="flex h-12 w-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-0 text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:px-5"
                         >
                             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
