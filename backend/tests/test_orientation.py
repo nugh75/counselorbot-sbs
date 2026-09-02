@@ -1,4 +1,4 @@
-"""Bussola: catalogo chiuso, sessioni private e salvataggio esplicito."""
+"""Bussola: catalogo chiuso, sessioni private e nessuna scrittura su Taccuino o Libretto."""
 from __future__ import annotations
 
 from fastapi import FastAPI
@@ -100,7 +100,6 @@ def test_fallback_is_localized_and_ranks_learning_intent():
     analysis = fallback_analysis("Voglio studiare con più concentrazione", "it")
     assert analysis.recommendations[0]["id"] == "QSA"
     assert "detailed exploration" not in analysis.recommendations[0]["reason"]
-    assert analysis.notebook_draft == {"goal": "Voglio studiare con più concentrazione"}
 
 
 def test_platform_question_gets_a_complete_answer_instead_of_generic_routing():
@@ -124,7 +123,6 @@ def test_platform_question_gets_a_complete_answer_instead_of_generic_routing():
         assert "pQBL" in analysis.reply
         assert "Taccuino" in analysis.reply
         assert analysis.recommendations == []
-        assert analysis.notebook_draft == {}
 
 
 def test_tool_question_gets_a_direct_explanation():
@@ -141,7 +139,6 @@ def test_tool_question_gets_a_direct_explanation():
     assert qsa.informational is True
     assert "strategie di studio" in qsa.reply
     assert qsa.recommendations == []
-    assert qsa.notebook_draft == {}
     assert qsar.informational is True
     assert "breve" in qsar.reply
     assert idea.informational is True
@@ -208,7 +205,6 @@ def test_plain_text_reply_is_kept_and_uses_local_ranking():
 
     assert analysis.reply.startswith("Il QSA osserva come studi")
     assert [row["id"] for row in analysis.recommendations] == ["QSA"]
-    assert analysis.notebook_draft == {"goal": "Voglio organizzare meglio lo studio"}
     assert kwargs["model"] == "qwen3.8:latest"
     assert kwargs["json_mode"] is False
 
@@ -229,7 +225,8 @@ def test_model_output_is_filtered_through_closed_contract():
         fallback,
     )
     assert [row["id"] for row in cleaned.recommendations] == ["QAP", "IDEA"]
-    assert cleaned.notebook_draft == {"goal": "Scegliere"}
+    # La Bussola consiglia soltanto: nessun campo del Taccuino esce dall'analisi.
+    assert not hasattr(cleaned, "notebook_draft")
 
 
 def test_new_student_stays_gated_until_one_orientation_is_completed():
@@ -251,14 +248,10 @@ def test_new_student_stays_gated_until_one_orientation_is_completed():
         f"/orientation/sessions/{started['session_id']}/message",
         json={"message": "Voglio organizzare meglio lo studio", "language": "it"},
     )
-    client.post(
-        f"/orientation/sessions/{started['session_id']}/notebook-review",
-        json={"data": {"goal": "Organizzare meglio lo studio."}},
-    )
     assert client.get("/orientation/status").json()["required"] is True
 
 
-def test_first_orientation_requires_review_and_remains_reopenable():
+def test_first_orientation_completes_without_touching_the_notebook():
     username = "orientation.student"
     _identity["username"] = username
     _reset(username)
@@ -293,7 +286,7 @@ def test_first_orientation_requires_review_and_remains_reopenable():
     )
     assert turn.status_code == 200
     assert [row["id"] for row in turn.json()["recommendations"]] == ["QSA", "IDEA"]
-    assert turn.json()["notebook_draft"] == {"goal": "Voglio organizzare meglio il mio studio."}
+    assert "notebook_draft" not in turn.json()
 
     help_turn = client.post(
         f"/orientation/sessions/{session_id}/message",
@@ -302,36 +295,12 @@ def test_first_orientation_requires_review_and_remains_reopenable():
     assert help_turn.status_code == 200
     assert "QSA e QSAr" in help_turn.json()["messages"][-1]["content"]
     assert [row["id"] for row in help_turn.json()["recommendations"]] == ["QSA", "IDEA"]
-    assert help_turn.json()["notebook_draft"] == {"goal": "Voglio organizzare meglio il mio studio."}
 
-    blocked = client.post(f"/orientation/sessions/{session_id}/complete")
-    assert blocked.status_code == 409
-
-    reviewed = client.post(
+    # L'endpoint di revisione del Taccuino non esiste più: la Bussola consiglia e basta.
+    assert client.post(
         f"/orientation/sessions/{session_id}/notebook-review",
-        json={"data": {"goal": "Organizzare lo studio con un metodo sostenibile."}},
-    )
-    assert reviewed.status_code == 200
-    assert reviewed.json()["notebook_reviewed"] is True
-    assert reviewed.json()["notebook_revision_id"] is not None
-    assert client.get("/orientation/status").json()["required"] is False
-
-    db = _Session()
-    try:
-        latest = (
-            db.query(models.LearnerProfileRevision)
-            .filter(models.LearnerProfileRevision.username == username)
-            .order_by(models.LearnerProfileRevision.id.desc())
-            .first()
-        )
-        assert latest.source == "orientation"
-        assert latest.session_id == session_id
-        assert latest.data == {
-            "context": "Frequento il quarto anno.",
-            "goal": "Organizzare lo studio con un metodo sostenibile.",
-        }
-    finally:
-        db.close()
+        json={"data": {"goal": "Organizzare lo studio."}},
+    ).status_code == 404
 
     completed = client.post(f"/orientation/sessions/{session_id}/complete")
     assert completed.status_code == 200
@@ -340,6 +309,18 @@ def test_first_orientation_requires_review_and_remains_reopenable():
     status = client.get("/orientation/status").json()
     assert status["completed"] is True
     assert status["required"] is False
+
+    # Nessuna revisione scritta dalla Bussola: resta solo quella dello studente.
+    db = _Session()
+    try:
+        revisions = (
+            db.query(models.LearnerProfileRevision)
+            .filter(models.LearnerProfileRevision.username == username)
+            .all()
+        )
+        assert [row.source for row in revisions] == ["manual"]
+    finally:
+        db.close()
 
     reopened = client.get(f"/orientation/sessions/{session_id}")
     assert reopened.status_code == 200

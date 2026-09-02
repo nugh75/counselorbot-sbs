@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 SUPPORTED_LANGUAGES = {"it", "en", "es", "fr", "de", "sv"}
 TOOL_IDS = ("QSA", "QSAr", "ZTPI", "QPCS", "QPCC", "QAP", "SAVICKAS", "IDEA", "pqbl")
-NOTEBOOK_FIELDS = ("context", "goal", "main_difficulty", "strengths", "weaknesses", "notes")
 
 TOOL_DESCRIPTIONS = {
     "QSA": "detailed exploration of cognitive and affective learning strategies",
@@ -174,7 +173,6 @@ _REASON_PREFIX = {
 class OrientationAnalysis:
     reply: str
     recommendations: list[dict[str, str]]
-    notebook_draft: dict[str, str]
     informational: bool = False
 
 
@@ -315,15 +313,15 @@ def fallback_analysis(message: str, language: str = "it") -> OrientationAnalysis
     lang = normalize_language(language)
     tool = _tool_question(message, lang)
     if tool:
-        return OrientationAnalysis(_TOOL_INFO[lang][tool] + _TOOL_INFO_TAIL[lang], [], {}, informational=True)
+        return OrientationAnalysis(_TOOL_INFO[lang][tool] + _TOOL_INFO_TAIL[lang], [], informational=True)
     if _is_platform_help_request(message, lang):
-        return OrientationAnalysis(_PLATFORM_HELP[lang], [], {}, informational=True)
+        return OrientationAnalysis(_PLATFORM_HELP[lang], [], informational=True)
     ranked = _rank_tools(message)
     recommendations = [
         {"id": tool_id, "reason": f"{_REASON_PREFIX[lang]} ({tool_id})."}
         for tool_id in ranked
     ]
-    return OrientationAnalysis(_GENERIC_REPLY[lang].format(tool=ranked[0]), recommendations, {})
+    return OrientationAnalysis(_GENERIC_REPLY[lang].format(tool=ranked[0]), recommendations)
 
 
 def _counselor_runtime(db: Session, counselor_id: int | None):
@@ -378,7 +376,7 @@ def _clean_analysis(payload: dict, fallback: OrientationAnalysis) -> Orientation
     if not recommendations:
         recommendations = fallback.recommendations
 
-    return OrientationAnalysis(reply, recommendations, {})
+    return OrientationAnalysis(reply, recommendations)
 
 
 def analyze_turn(
@@ -413,7 +411,8 @@ Return ONLY JSON, with no prose outside this object, using this exact shape:
   "reply": "a warm, concrete reflection in language {lang} of four to six sentences that answers the question directly, briefly explains how the recommended tool works, and says what the student would get out of it",
   "recommendations": [{{"id": "one exact catalog id", "reason": "why it fits what the student said"}}]
 }}
-Use one primary recommendation and at most two alternatives. Never invent scores, diagnoses, personal facts, links or tools."""
+Use one primary recommendation and at most two alternatives. Never invent scores, diagnoses, personal facts, links or tools.
+You only advise: never write, edit or fill in the student's Notebook, Booklet or Portfolio, and never promise to do so. The student updates those spaces alone."""
     safe_history = [
         {"role": str(row.get("role") or "user"), "content": str(row.get("content") or "")[:1800]}
         for row in (history or [])[-8:]
@@ -440,9 +439,9 @@ Use one primary recommendation and at most two alternatives. Never invent scores
             return _clean_analysis(_extract_json_object(raw), fallback)
         except (ValueError, json.JSONDecodeError):
             # Testo libero (JSON non forzato): la risposta vale per intero,
-            # strumenti e taccuino dal classificatore locale.
+            # gli strumenti dal classificatore locale.
             reply = str(raw or "").strip()[:1800]
-            return OrientationAnalysis(reply or fallback.reply, fallback.recommendations, fallback.notebook_draft)
+            return OrientationAnalysis(reply or fallback.reply, fallback.recommendations)
     except (AIError, ValueError, TypeError, json.JSONDecodeError) as exc:
         logger.warning("Bussola AI non disponibile, uso fallback deterministico: %s", exc)
         return fallback

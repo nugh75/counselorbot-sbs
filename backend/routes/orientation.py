@@ -3,16 +3,14 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, validator
 from sqlalchemy.orm import Session
 
-from .. import auth, models, schemas
+from .. import auth, models
 from ..database import get_db
-from ..orientation import NOTEBOOK_FIELDS, analyze_turn, normalize_language
-from .learner_profile import _latest_revision
+from ..orientation import analyze_turn, normalize_language
 
 router = APIRouter()
 
@@ -47,11 +45,6 @@ class MessageRequest(BaseModel):
         return text[:MAX_MESSAGE_CHARS]
 
 
-class NotebookReviewRequest(BaseModel):
-    data: dict[str, Any] = Field(default_factory=dict)
-    skip: bool = False
-
-
 def _owner(current_user: dict) -> str:
     return str(current_user.get("username") or "").strip()
 
@@ -64,9 +57,6 @@ def _serialize(row: models.OrientationSession) -> dict:
         "status": row.status,
         "messages": list(row.messages or []),
         "recommendations": list(row.recommendations or []),
-        "notebook_draft": dict(row.notebook_draft or {}),
-        "notebook_reviewed": bool(row.notebook_reviewed),
-        "notebook_revision_id": row.notebook_revision_id,
         "created_at": row.created_at,
         "updated_at": row.updated_at,
         "completed_at": row.completed_at,
@@ -190,7 +180,6 @@ def start_orientation(
         status="in_progress",
         messages=[{"role": "assistant", "content": _welcome(lang, counselor)}],
         recommendations=[],
-        notebook_draft={},
     )
     db.add(row)
     db.commit()
@@ -227,52 +216,6 @@ def orientation_message(
     row.messages = messages
     if not analysis.informational:
         row.recommendations = analysis.recommendations
-    db.commit()
-    db.refresh(row)
-    return _serialize(row)
-
-
-@router.post("/orientation/sessions/{session_id}/notebook-review")
-def review_orientation_notebook(
-    session_id: str,
-    payload: NotebookReviewRequest,
-    current_user: dict = Depends(auth.get_current_user),
-    db: Session = Depends(get_db),
-):
-    owner = _owner(current_user)
-    row = _owned_session(db, owner, session_id)
-    if row.status != "in_progress":
-        raise HTTPException(status_code=409, detail="Orientation session already completed")
-
-    revision_id = None
-    if not payload.skip:
-        approved = {}
-        for key in NOTEBOOK_FIELDS:
-            if key not in payload.data:
-                continue
-            value = str(payload.data.get(key) or "").strip()[:schemas.LEARNER_PROFILE_MAX_FIELD_CHARS]
-            if value:
-                approved[key] = value
-        if not approved:
-            raise HTTPException(status_code=400, detail="Select at least one notebook field or skip")
-        latest = _latest_revision(db, owner)
-        merged = dict((latest.data if latest else {}) or {})
-        merged.update(approved)
-        if latest is not None and latest.data == merged:
-            revision_id = latest.id
-        else:
-            revision = models.LearnerProfileRevision(
-                username=owner,
-                data=merged,
-                source="orientation",
-                session_id=session_id,
-            )
-            db.add(revision)
-            db.flush()
-            revision_id = revision.id
-
-    row.notebook_reviewed = True
-    row.notebook_revision_id = revision_id
     db.commit()
     db.refresh(row)
     return _serialize(row)
