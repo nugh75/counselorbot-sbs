@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field, validator
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 import json
+import re
 
 # Token
 class Token(BaseModel):
@@ -806,6 +807,10 @@ class PortfolioItemResponse(BaseModel):
 FROZEN_SESSION_TYPES = {"QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP", "IDEA"}
 FROZEN_SESSION_MAX_MESSAGES = 400
 FROZEN_SESSION_MAX_CONTENT_CHARS = 20000
+# Il PDF del profilo caricato per la sandbox OpenCode: il workspace rigenera
+# `documento.md` a ogni apertura, quindi senza questo token una sessione ripresa
+# perderebbe il testo del PDF. Stesso formato accettato da routes/opencode.py.
+FROZEN_SESSION_PDF_TOKEN_RE = re.compile(r"^[a-f0-9]{32}$")
 
 
 class FrozenSessionMessage(BaseModel):
@@ -839,6 +844,16 @@ class FrozenSessionCreate(BaseModel):
     locale: Optional[str] = Field(default=None, max_length=16)
     response_length: Optional[str] = None
     label: Optional[str] = Field(default=None, max_length=200)
+    pdf_token: Optional[str] = None
+
+    @validator("pdf_token", pre=True)
+    def _known_pdf_token(cls, v):
+        if v is None or v == "":
+            return None
+        text = str(v).strip()
+        if not FROZEN_SESSION_PDF_TOKEN_RE.match(text):
+            raise ValueError("unsupported pdf_token")
+        return text
 
     @validator("session_id", pre=True)
     def _require_session_id(cls, v):
@@ -876,6 +891,7 @@ class FrozenSessionDetail(FrozenSessionSummary):
     counselor_id: Optional[int] = None
     locale: Optional[str] = None
     response_length: Optional[str] = None
+    pdf_token: Optional[str] = None
 
 
 # --- Model presets (provider + modello + parametri riusabili) ---

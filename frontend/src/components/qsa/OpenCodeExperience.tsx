@@ -18,6 +18,9 @@ import {
     ThumbsUp,
 } from 'lucide-react';
 import { createTerminalSession, TerminalSession } from '@/lib/opencode-terminal';
+import { AUTO_FREEZE_DELAY_MS, autoFreezeSignature, shouldAutoFreeze } from '@/lib/auto-freeze';
+import { getSelectedCounselorId } from '@/lib/counselor';
+import { freezeSession, type FrozenSessionSnapshot } from '@/lib/frozen-session';
 import { streamChat } from '@/lib/chat-stream';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
@@ -31,6 +34,9 @@ interface OpenCodeExperienceProps {
     sessionId: string;
     locale: string;
     onComplete: () => void;
+    // Trascrizione dello snapshot congelato, usata solo se il workspace non ha
+    // più la propria (vedi `startOpenCode`).
+    restoredMessages?: { role: string; content: string }[];
 }
 
 interface ChatMessage {
@@ -49,6 +55,7 @@ export function OpenCodeExperience({
     sessionId,
     locale,
     onComplete,
+    restoredMessages,
 }: OpenCodeExperienceProps) {
     const { t, tf } = useI18n();
     const terminalRef = useRef<TerminalSession | null>(null);
@@ -58,6 +65,16 @@ export function OpenCodeExperience({
     const streamingRef = useRef(false);
     const requestRef = useRef<AbortController | null>(null);
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
+    const pendingSnapshotRef = useRef<{ snapshot: FrozenSessionSnapshot; signature: string } | null>(null);
+    const savedSignatureRef = useRef('');
+    const completedRef = useRef(false);
+    // Letta una volta sola: la ripresa parte dallo snapshot con cui il
+    // componente è stato montato.
+    const restoredMessagesRef = useRef<ChatMessage[]>(
+        (restoredMessages || [])
+            .filter((message) => message.role === 'user' || message.role === 'assistant')
+            .map((message) => ({ role: message.role as 'user' | 'assistant', content: message.content })),
+    );
 
     const [viewMode, setViewMode] = useState<ViewMode>('chat');
     const [workspaceKey, setWorkspaceKey] = useState('');
@@ -221,7 +238,12 @@ export function OpenCodeExperience({
             setGraphicalAvailable(true);
             terminalRef.current?.destroy();
             terminalRef.current = null;
-            const history = Array.isArray(data.history) ? data.history : [];
+            // La GC di ai4educ cancella i workspace fermi da 14 giorni: il
+            // server non ha più la trascrizione, ma lo snapshot congelato sì.
+            // Meglio rimetterla davanti allo studente che aprire una chat vuota
+            // su una sessione che l'elenco "Riprendi" prometteva piena.
+            const serverHistory = Array.isArray(data.history) ? data.history : [];
+            const history = serverHistory.length ? serverHistory : restoredMessagesRef.current;
             setViewMode('chat');
             setStatus('connected');
             sessionIdRef.current = data.session_id;
@@ -312,6 +334,68 @@ export function OpenCodeExperience({
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
+    // Autosalvataggio come nella chat guidata: la sessione finisce nell'elenco
+    // "Riprendi" senza gesto manuale. Il workspace OpenCode conserva già la
+    // trascrizione lato server, quindi qui lo snapshot serve a ritrovare la
+    // strada — strumento, sessione, modalità — non a ricostruire la chat.
+    const flushAutoFreeze = useCallback(async (options: { keepalive?: boolean } = {}) => {
+        const pending = pendingSnapshotRef.current;
+        if (!pending || completedRef.current) return;
+        pendingSnapshotRef.current = null;
+        savedSignatureRef.current = pending.signature;
+        try {
+            await freezeSession(pending.snapshot, options);
+        } catch {
+            savedSignatureRef.current = '';
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!shouldAutoFreeze({
+            sessionId,
+            messageCount: messages.length,
+            isLoading: streaming || busy,
+            completed: completedRef.current,
+        })) return;
+        const signature = autoFreezeSignature({ messages, currentPhase: '', responseLength: 'medium' });
+        if (signature === savedSignatureRef.current) return;
+        pendingSnapshotRef.current = {
+            snapshot: {
+                session_id: sessionId,
+                questionnaire_type: questionnaire.id,
+                messages,
+                current_phase: '',
+                scores,
+                counselor_id: getSelectedCounselorId(),
+                experience: 'opencode',
+                locale,
+                response_length: 'medium',
+                label: `${questionnaire.id} — ${t('guided.mode.sandbox')}`,
+                pdf_token: pdfToken || null,
+            },
+            signature,
+        };
+        const timer = window.setTimeout(() => { void flushAutoFreeze(); }, AUTO_FREEZE_DELAY_MS);
+        return () => window.clearTimeout(timer);
+    }, [messages, streaming, busy, sessionId, questionnaire.id, scores, locale, pdfToken, t, flushAutoFreeze]);
+
+    useEffect(() => {
+        const onPageHide = () => { void flushAutoFreeze({ keepalive: true }); };
+        window.addEventListener('pagehide', onPageHide);
+        return () => {
+            window.removeEventListener('pagehide', onPageHide);
+            void flushAutoFreeze();
+        };
+    }, [flushAutoFreeze]);
+
+    // Percorso concluso: chi chiude la chat cancella lo snapshot, quindi
+    // l'autosalvataggio deve fermarsi prima di uscire.
+    const handleComplete = () => {
+        completedRef.current = true;
+        pendingSnapshotRef.current = null;
+        onComplete();
+    };
+
     const submitFeedback = async (index: number, helpful: boolean) => {
         const msg = messages[index];
         if (!msg?.responseId || msg.feedback !== undefined) return;
@@ -378,7 +462,7 @@ export function OpenCodeExperience({
                 <LearnerProfileCard variant="update" sessionId={sessionId} />
                 <button
                     type="button"
-                    onClick={onComplete}
+                    onClick={handleComplete}
                     className="inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
                 >
                     {t('opencode.conclusion.continue')}

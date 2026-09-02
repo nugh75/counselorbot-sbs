@@ -8,10 +8,14 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { getResume, subscribeToResume, type ResumePoint } from '@/lib/resume';
 import { listFrozenSessions, subscribeToFrozenSessions, type FrozenSessionSummary } from '@/lib/frozen-session';
+import { hasPqblProgress, subscribeToPqblProgress } from '@/lib/pqbl-progress';
 
 export interface ResumeEntries {
     frozen: FrozenSessionSummary[];
     localResume: ResumePoint | null;
+    // pQBL tiene il proprio progresso in locale e lo ripristina da solo: qui
+    // serve solo a farlo comparire fra le sessioni riprendibili.
+    pqbl: boolean;
     count: number;
 }
 
@@ -21,6 +25,13 @@ export function useResumeEntries(): ResumeEntries {
         () => (getResume() ? '1' : null),
         () => null,
     );
+    // Il progresso pQBL cambia dentro /pqbl, da cui si esce con una navigazione
+    // che rimonta l'header: qui basta leggerlo, come per il resume locale.
+    const pqbl = useSyncExternalStore(
+        subscribeToPqblProgress,
+        () => (hasPqblProgress() ? '1' : null),
+        () => null,
+    ) !== null;
     const [frozen, setFrozen] = useState<FrozenSessionSummary[]>([]);
     const localResume = hasLocalResume ? getResume() : null;
 
@@ -48,7 +59,7 @@ export function useResumeEntries(): ResumeEntries {
         return () => { alive = false; unsubscribe(); };
     }, []);
 
-    return { frozen, localResume, count: frozen.length + (localResume ? 1 : 0) };
+    return { frozen, localResume, pqbl, count: frozen.length + (localResume ? 1 : 0) + (pqbl ? 1 : 0) };
 }
 
 // Riprendere ricarica la pagina: la home legge lo snapshot dai query param al
@@ -58,3 +69,5 @@ export function resumeHref(entry: { session_id: string }): string {
 }
 
 export const LOCAL_RESUME_HREF = '/?resume=1';
+
+export const PQBL_RESUME_HREF = '/pqbl';

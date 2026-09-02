@@ -29,6 +29,7 @@ export interface FrozenSessionDetail extends FrozenSessionSummary {
     counselor_id?: number | null;
     locale?: string | null;
     response_length?: 'short' | 'medium' | 'long' | null;
+    pdf_token?: string | null;
 }
 
 export interface FrozenSessionSnapshot {
@@ -42,6 +43,9 @@ export interface FrozenSessionSnapshot {
     locale: string;
     response_length: 'short' | 'medium' | 'long';
     label: string;
+    // Solo la sandbox OpenCode: il workspace rigenera `documento.md` a ogni
+    // apertura, quindi senza il token la ripresa perderebbe il PDF del profilo.
+    pdf_token?: string | null;
 }
 
 // Notifica l'header (che monta una sola volta e non rivede il fetch iniziale)
@@ -60,11 +64,19 @@ export function subscribeToFrozenSessions(onChange: () => void): () => void {
     return () => window.removeEventListener(FROZEN_SESSIONS_EVENT, onChange);
 }
 
-export async function freezeSession(snapshot: FrozenSessionSnapshot): Promise<void> {
+export interface FreezeOptions {
+    // Uscita dalla pagina (pagehide): la richiesta deve sopravvivere alla
+    // navigazione. Il browser limita a 64KB il corpo delle richieste keepalive,
+    // ma l'autosalvataggio ha già scritto tutto tranne l'ultimo turno.
+    keepalive?: boolean;
+}
+
+export async function freezeSession(snapshot: FrozenSessionSnapshot, options: FreezeOptions = {}): Promise<void> {
     const res = await apiFetch('/api/session/freeze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(snapshot),
+        keepalive: options.keepalive,
     });
     if (!res.ok) throw new Error(`Freeze fallito (${res.status})`);
     notifyFrozenSessionsChanged();

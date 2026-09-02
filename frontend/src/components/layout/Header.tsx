@@ -17,7 +17,7 @@ import { ai4authLoginUrl, AI4AUTH_LOGOUT_URL, AI4EDUC_PORTAL_URL, AI4EDUC_MANAGE
 import { useI18n } from '@/lib/i18n-context';
 import { canUseAssistant, canUsePersonalPage, canUseResearchConsole, canUseTeacherAssistant, isResearcher, isTeacher } from '@/lib/roles';
 import { useDarkMode } from '@/lib/use-dark-mode';
-import { LOCAL_RESUME_HREF, resumeHref, useResumeEntries, type ResumeEntries } from '@/lib/use-resume-entries';
+import { LOCAL_RESUME_HREF, PQBL_RESUME_HREF, resumeHref, useResumeEntries, type ResumeEntries } from '@/lib/use-resume-entries';
 
 interface SecondaryItem {
     key: string;
@@ -234,7 +234,7 @@ function MobileHeaderMenu({
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLButtonElement>(null);
-    const { frozen, localResume, count: resumeCount } = resumeEntries;
+    const { frozen, localResume, pqbl: pqblResume, count: resumeCount } = resumeEntries;
     const currentLanguage = LANGUAGES.find((l) => l.code === lang) || LANGUAGES[0];
 
     useEffect(() => {
@@ -348,6 +348,12 @@ function MobileHeaderMenu({
                                 >
                                     <RotateCcw className="h-4 w-4 shrink-0" />
                                     <span className="truncate">{t('header.resume')} · {localResume.instrument}</span>
+                                </Link>
+                            )}
+                            {pqblResume && (
+                                <Link href={PQBL_RESUME_HREF} className={itemClass} onClick={close}>
+                                    <RotateCcw className="h-4 w-4 shrink-0" />
+                                    <span className="truncate">{t('header.resume')} · {t('pqbl.card.badge')}</span>
                                 </Link>
                             )}
                         </div>
