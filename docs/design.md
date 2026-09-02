@@ -68,8 +68,13 @@ call-site, ogni `bg-indigo-600` esistente diventa petrol.
 | Token | Hex | Uso |
 | --- | --- | --- |
 | `ochre-300` | `#dca055` | accento nei diagrammi e nel PDF |
-| `ochre-500` | `#c9711f` | pallino dello step attivo, ago della bussola |
-| `ochre-700` | `#8f4c14` | etichetta dello step attivo |
+| `ochre-500` | `#c9711f` | pallini e segni **senza testo sopra** (ago della bussola) |
+| **`ochre-600`** | **`#b15f17`** | **riempimento delle CTA d'ingresso** (`Button variant="accent"`) |
+| `ochre-700` | `#8f4c14` | hover delle CTA, etichetta dello step attivo |
+
+> **Regola.** Bianco su `ochre-500` misura 3.58:1 e non passa AA per il testo
+> normale: l'ocra che porta testo è `ochre-600` (4.65:1). `ochre-500` resta la
+> tinta dei segni senza testo.
 
 > **Regola.** Ocra ≠ ambra. L'ambra è un **avviso** (`Callout variant="warning"`),
 > l'ocra è **movimento**. Non si usa l'ocra per segnalare un problema, né l'ambra
@@ -95,6 +100,11 @@ Fissati in `components/ui/Callout.tsx` e validi ovunque:
 Le zone del profilo (`ProfileVisualization`) hanno una scala propria, perché non
 sono stati dell'interfaccia ma **esiti di misura**: forza `#22c55e`, adeguato
 `#eab308`, crescita `#ef4444` — e il verso si inverte sui fattori invertiti.
+Quelli sono i colori del **segno** (la tacca sulla barra). Il testo delle fasce e
+del badge del punteggio passa dai token `--zone-*` in `globals.css`, con
+override scuro: come hex inline restavano fuori dal remap e leggevano 2.5-3.7:1.
+Ogni esito porta anche un **glifo** (▲ forza, ● adeguato, ▽ crescita) nella
+barra, nel badge e nella legenda: il colore non è mai l'unico canale.
 
 Fuori da queste liste (`teal`, `rose`, `purple`, `violet`, `blue`, `cyan`,
 `orange`, `lime`, `fuchsia`, `pink`, `green`) ci sono tinte usate per
@@ -144,9 +154,13 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
 - **Focus**: anello `2px` petrol con `outline-offset: 2px` su tutti gli
   interattivi, via `:focus-visible`. Non si rimuove.
 - **Target tattili**: `console-topbar-icon--lg` = 44px per il menu mobile.
-- **Movimento**: solo `fade-in-up` all'ingresso e la barra indeterminata di
+- **Movimento**: le variabili `--animate-*` vanno in `@theme`, non in `:root`
+  — Tailwind v4 genera le utility `animate-*` solo da lì, e tenute in `:root`
+  esistono le variabili ma non le classi. Solo `fade-in-up` all'ingresso e la barra indeterminata di
   attesa. `prefers-reduced-motion` azzera tutto — vale anche per l'ago della
-  bussola, che controlla `useReducedMotion`.
+  bussola, che controlla `useReducedMotion`. Per framer-motion la media query
+  CSS non basta: `layout.tsx` avvolge l'albero in `MotionConfig
+  reducedMotion="user"`.
 
 ---
 
@@ -159,10 +173,14 @@ aggiunge alla primitiva.
 
 | Primitiva | Cosa fissa |
 | --- | --- |
-| `Button` | 5 varianti (primary/secondary/ghost/danger/success) × 3 taglie |
+| `Button` | 6 varianti (primary/**accent**/secondary/ghost/danger/success) × 3 taglie; `md` e `lg` partono da 44px |
 | `Card` | `glass-panel p-6` |
+| `ChatBubble`, `ChatPending` | la forma condivisa delle tre chat (guidata, Bussola, assistente) |
+| `SkipLink` | primo elemento focalizzabile della pagina, verso `#contenuto` |
 | `Callout` | i 4 ruoli semantici, con icona di default |
-| `PageHeader` | titolo + sottotitolo + un solo pattern di back-nav |
+| `PageHeader` | titolo + sottotitolo + back-nav |
+| `BackButton` | due varianti dichiarate: `icon` (cerchio, percorso guidato) e `labelled` (pillola con testo, pagine autonome) |
+| `ForwardButton` | il primario del percorso: petrol pieno, etichetta visibile, 44px |
 | `FlowStepper` | il passo attivo è ocra, i fatti sono petrol, i futuri slate |
 | `Toast`, `Tooltip`, `Skeleton`, `StickyActions` | stati transitori |
 | `CompassMark` | il mark, statico nell'header e animato nell'intro |
@@ -212,7 +230,9 @@ vede *prima* quelle pagine.
 
 ## 8. Audit — 2026-09-02
 
-### Corretto in questo passaggio
+Due passaggi nello stesso giorno: il primo sui token, il secondo sull'uso.
+
+### 8.1 Primo passaggio — igiene dei token
 
 - `--primary` valeva ancora l'indigo di default (`243.4 75.4% 58.6%`) mentre
   `--color-primary` era già petrol: due primari nello stesso `:root`. Ora è il
@@ -227,22 +247,62 @@ vede *prima* quelle pagine.
   override in `.dark`: `bg-muted` restava quasi bianco in tema scuro.
 - `text-gray-*` in cinque punti (admin, SurveyViewer): fuori scala e senza remap
   scuro. Passati a `slate`.
-- Fogli QR stampati e grafici delle survey usavano l'indigo vecchio
-  (`#4338ca`, `#3730a3`, `#eef2ff`, `#c7d2fe`, `#4f46e5`, `#6366f1`): materiale
-  a stampa fuori marchio. Passati ai valori petrol.
+- Fogli QR stampati e grafici delle survey usavano l'indigo vecchio. Passati ai
+  valori petrol.
 
-### Resta aperto
+### 8.2 Secondo passaggio — usabilità
 
-- **Adozione delle primitive**: `Button` è importato in 1 file, mentre
-  `bg-indigo-600` compare 110 volte in classi scritte a mano, con altezze e pesi
-  divergenti (`h-9` vs `py-2.5` vs `py-3`, `font-medium` vs `font-semibold`).
-  È il disallineamento più visibile che rimane. Va chiuso a lotti, per area.
+Venti rilievi misurati sul codice e sul CSS compilato. Tutti chiusi tranne
+quanto elencato in 8.3.
+
+**Movimento morto.** Tolta la riga doppia, le tre `--animate-*` erano rimaste in
+`:root`: le variabili esistevano, le utility no. `.animate-fade-in-up` e
+`.animate-indeterminate` erano assenti dal bundle e i dieci call-site inerti — la
+barra "preparazione PDF" era un blocco fermo a un terzo, che si legge come
+progresso bloccato. Spostate in `@theme`. Rimosse `custom-scrollbar` (mai
+definita), `text-gradient` (mai usata) e le classi `animate-in …` della chat, che
+chiedevano un plugin non installato.
+
+**Contrasto.** Ocra delle CTA 3.58 → 4.65. Badge del punteggio nel profilo
+1.77-3.20 → 6.6-7.6. `text-slate-400` 2.56 → 4.76 su 312 usi (in tema scuro lo
+stesso token stava già a 5.71: falliva solo il tema chiaro). `text-slate-300`
+1.48 → 4.76 dove portava significato. Etichette di fascia 2.5-3.7 → 6.1-7.0 in
+entrambi i temi.
+
+**Accessibilità.** `aria-live` esisteva una volta sola in tutta l'app: chat
+guidata e assistente ora hanno un `role="log"` con nome e una regione live che
+porta due stati (attesa, risposta finita) invece di riannunciare a ogni token.
+Etichetta sui pulsanti di invio. `role="alert"` dentro `Callout variant="danger"`.
+`MotionConfig reducedMotion="user"` per framer-motion. Skip-link verso
+`#contenuto`. Icone della topbar a 44px su puntatore grossolano.
+
+**Modulo dei punteggi.** Etichette (erano venticinque campi anonimi), messaggi
+d'errore con `aria-invalid`/`aria-describedby`, riepilogo `role="alert"`, fuoco
+sul primo campo mancante. Il filtro da tastiera cedeva anche `Ctrl+V`: chi
+copiava i punteggi dal PDF non poteva incollarli. `InputRow` estratto dal
+componente, che lo ricreava a ogni render smontando tutti i campi.
+
+**Gerarchia e coerenza.** `ForwardButton` era 36px e grigio accanto a un
+`BackButton` di 48px: l'azione principale del percorso era più piccola e più
+quieta di quella che torna indietro, e senza testo. Ora è il primario con
+etichetta, entrambi a 44px. Back-nav ridotta a due varianti dichiarate. Tre
+comandi finali stipati in `grid-cols-3` anche a 360px, con due primari
+indistinguibili: ora impilano e uno solo è pieno. `FlowStepper` mostra il nome
+della tappa corrente anche su mobile e porta `aria-current`. `metadata` non
+parlava più solo del QSA.
+
+### 8.3 Resta aperto
+
+- **Adozione delle primitive**: fatto il percorso studente (home, flusso,
+  Bussola) e le due primitive di navigazione. Restano ~107 `bg-indigo-600`
+  scritti a mano in pannelli admin, pQBL e area personale. Da chiudere a lotti,
+  per area, come questo.
 - **Doppio dialetto di token**: `SkillsPanel` parla shadcn (`bg-primary`,
   `bg-muted`, `text-destructive`), il resto dell'app parla utility Tailwind
   diretto. Va scelto uno dei due; il secondo è quello di fatto.
-- **`green` vs `emerald`**: due famiglie per lo stesso ruolo, ~85 e ~75 usi.
-- **`text-gradient`**: utility definita e mai usata (gradiente indigo).
-- **`ProfileVisualization` e `ScoreInputForm`** non usano ancora `font-mono` per
-  punteggi e codici fattore, che è il punto in cui la scelta tipografica si
-  vedrebbe di più.
+- **`green` vs `emerald`**: due famiglie per lo stesso ruolo.
+- **`ScoreInputForm`** usa `font-mono` per i codici fattore ma non per i
+  punteggi; `ProfileVisualization` idem.
+- **`PencilButton`** è rimasto a 36px, fuori dai 44px delle altre primitive
+  circolari.
 - **ai4auth** non condivide i token: allineamento da fare nell'altro repo.
