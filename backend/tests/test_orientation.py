@@ -9,6 +9,7 @@ from sqlalchemy.pool import StaticPool
 
 from backend import auth, database, models, orientation
 from backend.student_context import student_context
+from backend.tool_brief_seed import TOOL_BRIEFS, seed_tool_briefs
 from backend.ai_service import _requests_json_response
 from backend.orientation import _clean_analysis, _tools_named_in, analyze_turn, fallback_analysis
 from backend.routes import orientation as orientation_routes
@@ -32,6 +33,8 @@ for table in (
     # lo studente ha gia' fatto (student_context).
     models.FrozenSession.__table__,
     models.PortfolioItem.__table__,
+    models.Factor.__table__,
+    models.OrientationToolBrief.__table__,
 ):
     table.create(bind=_engine, checkfirst=True)
 
@@ -326,6 +329,69 @@ def test_the_context_reaches_the_prompt():
         assert "THE STUDENT SO FAR" not in _FakeAIService.last_call[0][1]
     finally:
         db.close()
+
+
+def test_every_catalog_tool_has_a_brief():
+    """Uno strumento senza spiegazione lunga tornerebbe alla riga di sessanta caratteri."""
+    from backend.orientation import TOOL_IDS
+
+    assert set(TOOL_BRIEFS) == set(TOOL_IDS)
+    for tool_id, brief in TOOL_BRIEFS.items():
+        for heading in ("WHAT IT LOOKS AT", "WHAT YOU GET", "WHEN IT IS THE RIGHT MOMENT", "WHAT IT DOES NOT DO"):
+            assert heading in brief, f"{tool_id} manca {heading}"
+        # Abbastanza lunga da essere una spiegazione, non una parafrasi del catalogo.
+        assert len(brief) > 700, tool_id
+
+
+def test_the_seed_never_overwrites_an_edited_brief():
+    db = _Session()
+    try:
+        db.query(models.OrientationToolBrief).delete()
+        db.commit()
+        assert seed_tool_briefs(db, models) == len(TOOL_BRIEFS)
+
+        row = db.query(models.OrientationToolBrief).filter_by(tool_id="QSA").one()
+        row.brief = "Testo riscritto da un admin."
+        db.commit()
+
+        # Un secondo giro non crea nulla e lascia stare la riga modificata.
+        assert seed_tool_briefs(db, models) == 0
+        assert db.query(models.OrientationToolBrief).filter_by(tool_id="QSA").one().brief == "Testo riscritto da un admin."
+    finally:
+        # Il testo riscritto non deve restare in giro per gli altri test.
+        db.query(models.OrientationToolBrief).delete()
+        db.commit()
+        db.close()
+
+
+def test_the_brief_and_its_factors_reach_the_prompt():
+    db = _Session()
+    try:
+        seed_tool_briefs(db, models)
+        db.query(models.Factor).filter_by(instrument_code="QSA").delete()
+        db.add(models.Factor(instrument_code="QSA", code="C1", sort_order=1, label_en="Elaborative strategies"))
+        db.add(models.Factor(instrument_code="QSA", code="C3", sort_order=2, label_en="Disorientation in studying",
+                             is_interpretation_inverted=True))
+        db.commit()
+
+        analyze_turn(db, "Che cosa e' il QSA?", "it")
+        prompt = _FakeAIService.last_call[0][1]
+
+        analyze_turn(db, "Non so bene cosa voglio", "it")
+        unrelated = _FakeAIService.last_call[0][1]
+    finally:
+        db.query(models.Factor).filter_by(instrument_code="QSA").delete()
+        db.commit()
+        db.close()
+
+    assert "HOW THESE TOOLS WORK" in prompt
+    assert "WHAT IT DOES NOT DO" in prompt
+    # I fattori sono la parte concreta, e i rovesciati vanno dichiarati.
+    assert "C1 Elaborative strategies" in prompt
+    assert "C3 Disorientation in studying (reverse-scored)" in prompt
+
+    # Senza uno strumento in gioco il blocco non c'e': il prompt non raddoppia.
+    assert "HOW THESE TOOLS WORK" not in unrelated
 
 
 def test_prompt_says_what_an_already_completed_questionnaire_unlocks():

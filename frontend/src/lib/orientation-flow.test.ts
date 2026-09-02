@@ -63,3 +63,25 @@ test('Bussola asks for a counselor before creating the conversation', () => {
     assert.match(source, /setPendingCounselorId\(counselorId\)/);
     assert.match(source, /createSession\(pendingNewSession, pendingCounselorId\)/);
 });
+
+test('the gate settles once per page load instead of re-checking on every route', () => {
+    const source = readFileSync(
+        new URL('../components/layout/OrientationGate.tsx', import.meta.url),
+        'utf8',
+    );
+    // Una volta accertato che la Bussola non serve, il cancello non interroga
+    // più il server né svuota il contenuto a ogni cambio rotta.
+    assert.match(source, /let gateSettled = false/);
+    assert.match(source, /if \(gateSettled\) \{[\s\S]*?setChecking\(false\)/);
+    assert.match(source, /if \(!status\.required\) \{\s*\n\s*gateSettled = true/);
+    // Un errore di rete non deve spegnere il cancello per tutta la sessione.
+    assert.doesNotMatch(source, /catch \{[\s\S]{0,200}gateSettled = true/);
+});
+
+test('the real identity is fetched once and shared by its callers', () => {
+    const source = readFileSync(new URL('./auth.ts', import.meta.url), 'utf8');
+    assert.match(source, /let identityRequest: Promise<Identity \| null> \| null = null/);
+    assert.match(source, /if \(identityRequest\) return identityRequest/);
+    // Un errore di rete non resta in cache.
+    assert.match(source, /identityRequest = null/);
+});

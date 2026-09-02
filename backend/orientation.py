@@ -524,6 +524,91 @@ def _questionnaire_sources(language: str) -> str:
     )
 
 
+# LIVELLO 1+2+3 · la spiegazione profonda di uno strumento.
+# Il catalogo dava al modello una subordinata di sessanta caratteri, e il testo
+# canonico piu' ricco (`_TOOL_INFO`) si sbloccava solo su una domanda esplicita:
+# quando la Bussola *raccomandava* scriveva quasi a memoria, e usciva sbrigativa.
+# Qui entra la spiegazione lunga dal DB (modificabile dagli admin) piu' i fattori
+# che lo strumento riporta, presi dal catalogo. Solo per gli strumenti in gioco:
+# a testo pieno per tutti e nove il prompt raddoppierebbe.
+MAX_BRIEF_TOOLS = 2
+
+
+def _brief_candidates(message: str, history: list[dict[str, str]] | None, lang: str) -> list[str]:
+    """Gli strumenti di cui si sta parlando adesso, al massimo due."""
+    ordered: list[str] = []
+    asked = _tool_question(message, lang)
+    if asked:
+        ordered.append(asked)
+    ordered.extend(_rank_tools(message))
+    # Quello che il turno precedente aveva proposto resta in gioco: lo studente
+    # sta quasi sempre rispondendo a quello.
+    last_assistant = next(
+        (str(row.get("content") or "") for row in reversed(history or []) if row.get("role") == "assistant"),
+        "",
+    )
+    ordered.extend(_tools_named_in(last_assistant))
+
+    unique: list[str] = []
+    for tool_id in ordered:
+        if tool_id in TOOL_IDS and tool_id not in unique:
+            unique.append(tool_id)
+    return unique[:MAX_BRIEF_TOOLS]
+
+
+def _factor_line(db: Session, tool_id: str) -> str:
+    """I fattori che lo strumento riporta: e' la parte concreta del "a che serve"."""
+    rows = (
+        db.query(models.Factor)
+        .filter(models.Factor.instrument_code == tool_id)
+        .order_by(models.Factor.sort_order, models.Factor.id)
+        .all()
+    )
+    if not rows:
+        return ""
+    parts = []
+    for row in rows:
+        label = (row.label_i18n or {}).get("en") if isinstance(row.label_i18n, dict) else None
+        label = label or row.label_en or row.code
+        # I fattori invertiti si leggono al contrario: dirlo evita che il modello
+        # spieghi un punteggio alto come una risorsa quando e' un'area di crescita.
+        parts.append(f"{row.code} {label}{' (reverse-scored)' if row.is_interpretation_inverted else ''}")
+    return "Factors it reports: " + "; ".join(parts) + "."
+
+
+def _tool_briefs(db: Session, message: str, history: list[dict[str, str]] | None, lang: str) -> str:
+    candidates = _brief_candidates(message, history, lang)
+    if not candidates:
+        return ""
+    blocks: list[str] = []
+    for tool_id in candidates:
+        row = (
+            db.query(models.OrientationToolBrief)
+            .filter(
+                models.OrientationToolBrief.tool_id == tool_id,
+                models.OrientationToolBrief.is_active.is_(True),
+            )
+            .first()
+        )
+        if row is None or not (row.brief or "").strip():
+            continue
+        section = [f"### {tool_id}", row.brief.strip()]
+        factors = _factor_line(db, tool_id)
+        if factors:
+            section.append(factors)
+        blocks.append("\n".join(section))
+    if not blocks:
+        return ""
+    header = (
+        "\n## HOW THESE TOOLS WORK\n"
+        "Source of truth for the tools in play right now. Explain them from this, in the student's "
+        "language, at the depth the question deserves: what it looks at, what they would get, why "
+        "this moment is the right one, and what it will not give them. Never flatten a tool into one "
+        "line, and never contradict what is written here."
+    )
+    return header + "\n" + "\n\n".join(blocks) + "\n"
+
+
 def analyze_turn(
     db: Session,
     message: str,
@@ -540,6 +625,7 @@ def analyze_turn(
     # Che cosa lo studente ha gia' fatto: senza, la Bussola raccomanda al buio
     # e sa di un questionario compilato solo se lo studente glielo scrive.
     student = student_context(db, username)
+    briefs = _tool_briefs(db, message, history, lang)
     counselor, provider, model, disable_thinking, reasoning_budget = _counselor_runtime(db, counselor_id)
     if provider is None and model is None:
         # Modello predefinito della Bussola: senza preset del counselor usa qwen3.8.
@@ -561,7 +647,7 @@ A student who says they have already filled in one of the six questionnaires is 
 Your recommendations become clickable cards under this conversation, one per tool, each carrying the reason you gave. Point the student at them in your own words when you suggest something, instead of describing a tool as if there were no way to open it.
 Answer every direct question before suggesting a route. If the student asks how CounselorBot works or which tools exist, explain the complete catalog and the personal spaces instead of asking another clarifying question. Never reply with only a generic acknowledgment.
 Bringing a disoriented student into focus is YOUR task, not a tool's: if the student does not know where to start, ask about their area of interest and explain the options yourself. Recommend IDEA only when the student already names a concrete idea, decision or project of their own.
-Never repeat a list or an explanation you already gave earlier in this conversation: if the student is still lost after the overview, do not print the catalog again, ask one concrete question about their situation and name at most two tools that fit. When you do give the overview, name all nine catalog tools grouped into the three families — six questionnaires, two guided conversations, pQBL — and the three personal spaces. Do not open the reply with formulaic empathy statements such as "I understand..." or "Let me step into your shoes...": start with the substance of the answer.{counselor_context}{student}
+Never repeat a list or an explanation you already gave earlier in this conversation: if the student is still lost after the overview, do not print the catalog again, ask one concrete question about their situation and name at most two tools that fit. When you do give the overview, name all nine catalog tools grouped into the three families — six questionnaires, two guided conversations, pQBL — and the three personal spaces. Do not open the reply with formulaic empathy statements such as "I understand..." or "Let me step into your shoes...": start with the substance of the answer.{counselor_context}{student}{briefs}
 
 Return ONLY JSON, with no prose outside this object, using this exact shape:
 {{

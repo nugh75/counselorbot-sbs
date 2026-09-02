@@ -96,15 +96,25 @@ function applyViewAs(real: Identity, account: ViewAsAccount): Identity {
     };
 }
 
+// Una sola richiesta a /auth/me per caricamento di pagina. La home ne aveva tre
+// contemporanee — header, cancello della Bussola e pagina — e la barra in alto
+// mostrava i suoi segnaposto a ogni cambio rotta. L'anteprima ruoli si applica
+// sopra questo risultato e cambia pagina ricaricandola, quindi non la riguarda.
+let identityRequest: Promise<Identity | null> | null = null;
+
 // Identita' reale dal backend, senza applicare l'anteprima.
 export async function getRealIdentity(): Promise<Identity | null> {
-    try {
+    if (identityRequest) return identityRequest;
+    identityRequest = (async () => {
         const res = await fetch('/api/auth/me');
         if (!res.ok) return null;
-        return await res.json();
-    } catch {
+        return await res.json() as Identity;
+    })().catch(() => {
+        // Un errore di rete non si tiene in cache: il tentativo dopo riprova.
+        identityRequest = null;
         return null;
-    }
+    });
+    return identityRequest;
 }
 
 // Identita' effettiva usata dalla UI: applica il profilo di prova se l'utente
