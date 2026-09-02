@@ -78,6 +78,14 @@
   --color-ochre-700: #8f4c14;
   --color-ochre-800: #6f3c13;
   --color-ochre-900: #5a3211;
+
+  /* MOVIMENTO. Le utility `animate-*` sono generate solo da `@theme`: tenute in
+     `:root` le variabili esistevano ma le classi no, e i 10 call-site (compresa
+     la barra indeterminata di preparazione del PDF) restavano fermi. I
+     `@keyframes` corrispondenti sono più sotto, come CSS letterale. */
+  --animate-fade-in-up: fadeInUp 0.5s ease-out forwards;
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-indeterminate: indeterminate 1.2s ease-in-out infinite;
 }
 
 :root {
@@ -128,10 +136,6 @@
 
   --color-accent: #e2e8f0;
   --color-accent-foreground: #0f172a;
-
-  --animate-fade-in-up: fadeInUp 0.5s ease-out forwards;
-  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  --animate-indeterminate: indeterminate 1.2s ease-in-out infinite;
 }
 
 /* Barra di progresso indeterminata (preparazione PDF nella schermata finale). */
@@ -192,10 +196,6 @@
 
 @utility glass-panel-hover {
   @apply hover:border-indigo-200 hover:shadow-sm;
-}
-
-@utility text-gradient {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-indigo-600;
 }
 
 /* Scala tipografica -1: base 15px. Tutto il testo text-* (rem) si rimpicciolisce
