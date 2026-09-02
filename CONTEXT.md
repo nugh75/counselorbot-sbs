@@ -7,6 +7,7 @@
 - **Entry point**: `docker compose up -d --build` or `uvicorn backend.main:app --reload --port 8000` + `cd frontend && npm run dev`
 - **Test**: `docker exec counselorbot_backend python -m backend.tests.test_smoke`
 - **Repo**: (github)
+- **Visual identity**: `docs/design.md` — read it before changing layout, colour, typography, or any UI component
 
 ## Domain
 CounselorBot is an AI-powered web app that helps students analyze learning/career profiles through guided chat over seven instruments. UI and content are primarily Italian.
@@ -514,6 +515,8 @@ frontend/
     register/               Registration (redirects to home)
     strumenti/[id]/         Instrument detail pages
     api/chat/stream/        SSE bypass filesystem route
+  src/app/globals.css       Design tokens, utilities, dark-mode remap (see docs/design.md)
+  src/components/ui/        Shared primitives (Button, Card, Callout, PageHeader, CompassMark)
   src/components/admin/     Admin UI components (ConfigForm, etc.)
   src/lib/
     auth.ts                 Identity from /auth/me
@@ -539,6 +542,7 @@ Makefile                    Prompt testing shortcuts
 - **i18n**: admin strings in `i18n-admin.ts` (IT + EN blocks). Add new keys to both.
 - **Tests**: dedicated `counselorbot_test` Postgres DB (never SQLite). Override `get_db`/auth, mock `AIService`. Plain-runnable and pytest-compatible.
 - **Startup seeding**: idempotent. Raw-SQL column migrations must be idempotent.
+- **Visual identity**: `docs/design.md` is the source of truth; the tokens live in `frontend/src/app/globals.css`. The brand colour is a petrol teal exposed through the **remapped `indigo-*` scale** — use `indigo-*` utilities, never a petrol hex at the call site. `ochre-*` means movement (active step, start), `amber` means warning; they are not interchangeable. `slate` is the only neutral scale. Dark mode is a **central remap** at the bottom of `globals.css`, not `dark:` at call sites: a colour utility with no entry there stays light on dark. Prefer the primitives in `src/components/ui/`. The same identity is restated outside the web app in `backend/pdf_generator.py` (`APP_*`), `backend/diagram_render.py` (`PALETTE`) and the printed QR sheets built inline in the admin panels — those change together.
 - **Backend Dockerfile**: copies explicit paths (`COPY backend/routes/`, `COPY backend/tests/`), not the whole tree. Missing COPY → `ModuleNotFoundError` after rebuild.
 
 ## Notes
