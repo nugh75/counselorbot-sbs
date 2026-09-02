@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { autoFreezeSignature, shouldAutoFreeze } from './auto-freeze.ts';
+import { autoFreezeSignature, phasesAlreadyOpened, shouldAutoFreeze } from './auto-freeze.ts';
 
 const base = { sessionId: 'session-1', messageCount: 4, isLoading: false, completed: false };
 
@@ -80,4 +80,28 @@ test('a resumed OpenCode sandbox keeps its PDF and its transcript', () => {
     assert.match(source, /pdf_token: pdfToken \|\| null,\n\s*\},\n\s*signature,/);
     // Workspace ripulito dalla GC: si mostra la trascrizione dello snapshot.
     assert.match(source, /serverHistory\.length \? serverHistory : restoredMessagesRef\.current/);
+});
+
+test('a resumed session does not reopen the phases already in its transcript', () => {
+    const messages = [
+        { content: '--- Presentazione ---' },
+        { content: 'Ciao! Sono Clio…' },
+        { content: 'non ho capito cosa puoi fare?' },
+    ];
+    const markers = {
+        'step-presentazione': '--- Presentazione ---',
+        'step-cognitivo': '--- Fattori cognitivi ---',
+        'guided-questions': 'Banner delle domande',
+    };
+
+    assert.deepEqual(phasesAlreadyOpened(markers, messages), ['step-presentazione']);
+    assert.deepEqual(phasesAlreadyOpened(markers, []), []);
+});
+
+test('the restored transcript decides which phases stay closed', () => {
+    const source = readFileSync(
+        new URL('../components/qsa/GuidedChatInterface.tsx', import.meta.url),
+        'utf8',
+    );
+    assert.match(source, /phasesAlreadyOpened\(markers, restoredMessages\)[\s\S]*?processedPhases\.current\.add\(phase\)/);
 });

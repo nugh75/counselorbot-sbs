@@ -33,7 +33,7 @@ import {
     type IdeaVariant,
 } from '@/lib/idea-map';
 import { freezeSession, type FrozenSessionDetail, type FrozenSessionSnapshot } from '@/lib/frozen-session';
-import { AUTO_FREEZE_DELAY_MS, autoFreezeSignature, shouldAutoFreeze } from '@/lib/auto-freeze';
+import { AUTO_FREEZE_DELAY_MS, autoFreezeSignature, phasesAlreadyOpened, shouldAutoFreeze } from '@/lib/auto-freeze';
 import { diagramContentForSpeech, splitDiagramContent } from '@/lib/diagram-content';
 
 // --- Types ---
@@ -667,10 +667,24 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
                 if (frozenSnapshot && frozenSnapshot.session_id === sessionId && shouldRestoreSession && phaseOrder.includes(frozenSnapshot.current_phase)) {
                     // Ripristino da snapshot congelato: ha precedenza sulla memoria di sessione.
+                    const restoredMessages = frozenSnapshot.messages as ChatMessage[];
                     setCurrentPhase(frozenSnapshot.current_phase);
-                    setMessages(frozenSnapshot.messages as ChatMessage[]);
+                    setMessages(restoredMessages);
                     if (frozenSnapshot.response_length) {
                         setResponseLength(frozenSnapshot.response_length);
+                    }
+                    // Le fasi già aperte restano tali: altrimenti l'effetto di cambio
+                    // fase rigenera l'intro della fase ripresa e lo studente si
+                    // rilegge la presentazione sotto alla conversazione di prima.
+                    const markers: Record<string, string> = {
+                        [FIXED_QUESTIONS_ID]: data.text_guided_questions_phase_banner || t('guided.questionsBanner'),
+                        [FIXED_CONCLUSION_ID]: data.text_guided_conclusion || t('guided.conclusionText'),
+                    };
+                    for (const step of normalizedSteps) {
+                        markers[step.id] = `--- ${step.label} ---`;
+                    }
+                    for (const phase of phasesAlreadyOpened(markers, restoredMessages)) {
+                        processedPhases.current.add(phase);
                     }
                 } else {
                     // Check if we can resume the session state from backend memory

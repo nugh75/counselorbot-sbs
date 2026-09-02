@@ -39,3 +39,19 @@ export function autoFreezeSignature(input: {
         last ? last.content.length : 0,
     ].join('|');
 }
+
+// Riprendendo una sessione congelata la trascrizione torna intera, ma il
+// componente non sa più quali fasi ha già aperto: senza questo, l'effetto di
+// cambio fase rigenera l'intro della fase corrente e lo studente si rilegge la
+// presentazione. Una fase è già aperta se nella trascrizione c'è il messaggio
+// che la apre — il marcatore dello step, il banner delle domande, il testo di
+// conclusione.
+export function phasesAlreadyOpened(
+    markers: Record<string, string>,
+    messages: { content: string }[],
+): string[] {
+    const seen = new Set(messages.map((message) => message.content));
+    return Object.entries(markers)
+        .filter(([, marker]) => marker && seen.has(marker))
+        .map(([phase]) => phase);
+}
