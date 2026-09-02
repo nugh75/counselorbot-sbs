@@ -326,12 +326,12 @@ export function ResearchContactsPanel() {
 <style>
   *{box-sizing:border-box} body{font-family:Arial,Helvetica,sans-serif;color:#1e293b;margin:0;padding:32px}
   .sheet{max-width:640px;margin:0 auto}
-  .badge{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#4338ca;background:#eef2ff;border:1px solid #c7d2fe;border-radius:999px;padding:3px 10px}
+  .badge{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#124e52;background:#e9f2f2;border:1px solid #a0cccd;border-radius:999px;padding:3px 10px}
   h1{font-size:24px;margin:14px 0 4px} .intro{color:#475569;margin:0 0 20px}
   .row{display:flex;gap:24px;align-items:flex-start;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:18px}
   .qr{width:180px;height:180px} .meta{flex:1;min-width:0}
   .label{font-size:11px;font-weight:700;text-transform:uppercase;color:#64748b;margin-top:10px}
-  .code{font-size:30px;font-weight:800;letter-spacing:.08em;color:#3730a3;margin:2px 0}
+  .code{font-size:30px;font-weight:800;letter-spacing:.08em;color:#155e63;margin:2px 0}
   .hint{font-size:13px;color:#475569;margin:2px 0 0}
   .link{font-family:monospace;font-size:12px;word-break:break-all;color:#334155}
   ol{margin:8px 0 0;padding-left:20px;line-height:1.6} li{margin-bottom:4px}
