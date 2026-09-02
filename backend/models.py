@@ -561,6 +561,28 @@ class FrozenSession(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class OrientationToolBrief(Base):
+    """Testo lungo con cui la Bussola spiega uno strumento.
+
+    Il catalogo dava al modello una subordinata di sessanta caratteri per
+    strumento, e il testo canonico piu' ricco si sbloccava solo su una domanda
+    esplicita: le raccomandazioni uscivano sbrigative. Qui sta la spiegazione
+    profonda, una per id del catalogo (i sei questionari, SAVICKAS, IDEA, pQBL).
+
+    E' materiale di istruzione per il modello, quindi in **inglese**: gli LLM
+    reggono il cambio di lingua e una sola stesura evita sei traduzioni da tenere
+    allineate. Il seed crea solo le righe mancanti e non sovrascrive mai un testo
+    modificato dall'admin.
+    """
+
+    __tablename__ = "orientation_tool_briefs"
+
+    tool_id = Column(String, primary_key=True, index=True)
+    brief = Column(Text, nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class ModelPreset(Base):
     """Preset riusabile = bundle provider + modello + parametri.
 

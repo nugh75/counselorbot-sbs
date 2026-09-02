@@ -1,11 +1,13 @@
 'use client';
 
+import { type FormEvent } from 'react';
 import { useForm, type UseFormRegister, type FieldErrors } from 'react-hook-form';
 import { QuestionnaireConfig, FactorDefinition } from '@/lib/questionnaires';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
+import { clearScoreDraft, loadScoreDraft, saveScoreDraft } from '@/lib/compilation-draft';
 
 type FormData = { scores: Record<string, string | number> };
 
@@ -109,9 +111,27 @@ interface ScoreInputFormProps {
 
 export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack }: ScoreInputFormProps) {
     const { t, tf } = useI18n();
+    // Venticinque numeri copiati da un PDF vivevano solo dentro react-hook-form:
+    // si perdevano al ricaricamento e anche solo tornando indietro di un passo,
+    // perché il componente si smonta. La bozza li tiene finché non sono inviati.
+    const draft = loadScoreDraft(questionnaire.id);
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
-        defaultValues: { scores: initialScores || {} },
+        defaultValues: { scores: initialScores || draft?.scores || {} },
     });
+
+    // I campi sono registrati come `scores.<codice>`: gli eventi di modifica
+    // risalgono al form, quindi la bozza si legge da lì invece che dallo stato
+    // interno della libreria.
+    const rememberDraft = (event: FormEvent<HTMLFormElement>) => {
+        const scores: Record<string, number> = {};
+        for (const [name, value] of new FormData(event.currentTarget).entries()) {
+            if (!name.startsWith('scores.') || typeof value !== 'string' || value === '') continue;
+            const parsed = Number(value);
+            if (!Number.isNaN(parsed)) scores[name.slice('scores.'.length)] = parsed;
+        }
+        if (Object.keys(scores).length === 0) return;
+        saveScoreDraft({ instrument: questionnaire.id, scores, savedAt: new Date().toISOString() });
+    };
 
     // Group factors by prefix
     const groupedFactors = questionnaire.factorPrefix.map(prefix => ({
@@ -123,6 +143,7 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack 
         const scores = Object.fromEntries(
             Object.entries(data.scores).map(([code, value]) => [code, Number(value)]),
         );
+        clearScoreDraft();
         onSubmit(scores);
     };
 
@@ -147,7 +168,7 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack 
                     {t('score.error.summary', { count: missingCount })}
                 </p>
             )}
-            <form id="score-form" onSubmit={handleSubmit(onFormSubmit)} className="max-w-4xl mx-auto space-y-4">
+            <form id="score-form" onChange={rememberDraft} onSubmit={handleSubmit(onFormSubmit)} className="max-w-4xl mx-auto space-y-4">
                 <div className={cn("grid gap-x-8 gap-y-3", gridCols)}>
                     {groupedFactors.map(({ prefix, factors }) => {
                         const colorClass = PREFIX_COLOR[prefix] || 'text-slate-700';

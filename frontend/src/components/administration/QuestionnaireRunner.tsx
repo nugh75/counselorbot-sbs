@@ -14,6 +14,11 @@ import {
 import { addCompletedProfile } from '@/lib/profile-tracker';
 import { apiFetch, ai4authLoginUrl } from '@/lib/auth';
 import { AGE_BANDS } from '@/lib/age-bands';
+import {
+    clearAdministrationDraft,
+    loadAdministrationDraft,
+    saveAdministrationDraft,
+} from '@/lib/compilation-draft';
 
 const QUESTIONNAIRE_SELECTION_HREF = '/?view=questionnaires';
 
@@ -125,6 +130,10 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
     const [anonymousResearchCode, setAnonymousResearchCode] = useState('');
     const [codeRequiresLogin, setCodeRequiresLogin] = useState(false);
     const [loginHref, setLoginHref] = useState('/login');
+    // Invio in corso: il comando resta fermo finché lo scoring non risponde.
+    const [submitting, setSubmitting] = useState(false);
+    // Bozza ritrovata all'ingresso: lo si dice, non lo si fa di nascosto.
+    const [restoredDraft, setRestoredDraft] = useState(false);
     const [metadata, setMetadata] = useState({
         age_range: '',
         gender: '',
@@ -172,6 +181,38 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
             .catch(() => { if (!cancelled) setLoadFailed(true); });
         return () => { cancelled = true; };
     }, [instrument, lang]);
+
+    // Bozza: si ripristina all'ingresso e si riscrive a ogni risposta. Il
+    // consenso non entra mai nella bozza né ne esce: è un gesto della sessione
+    // in corso.
+    useEffect(() => {
+        const draft = loadAdministrationDraft(instrument, lang);
+        if (!draft) return;
+        setAnswers(draft.answers);
+        setMetadata((current) => ({ ...current, ...draft.metadata, consent: current.consent }));
+        setRestoredDraft(true);
+    }, [instrument, lang]);
+
+    useEffect(() => {
+        if (results) return;
+        if (Object.keys(answers).length === 0) return;
+        saveAdministrationDraft({
+            instrument,
+            locale: lang,
+            answers,
+            // Campo per campo, così il consenso non finisce nella bozza per
+            // distrazione se un domani se ne aggiunge un altro.
+            metadata: {
+                age_range: metadata.age_range,
+                gender: metadata.gender,
+                education_context: metadata.education_context,
+                participation_context: metadata.participation_context,
+                recruitment_source: metadata.recruitment_source,
+                study: metadata.study,
+            },
+            savedAt: new Date().toISOString(),
+        });
+    }, [answers, metadata, instrument, lang, results]);
 
     const displayItems = useMemo(() => {
         if (!rules) return [] as { number: number; text: string }[];
@@ -256,6 +297,7 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
             return;
         }
         setError('');
+        setSubmitting(true);
 
         const newSessionId = generateUUID();
         const researchCode = anonymousResearchCode || getOrCreateAnonymousResearchCode();
@@ -301,6 +343,7 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                 }
                 throw new Error(`score failed: ${res.status}`);
             }
+            clearAdministrationDraft();
             const profile: ScoreResponse = await res.json();
             setResults(profile.results);
 
@@ -312,6 +355,8 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
         } catch (e) {
             console.error('Failed to score/save questionnaire result', e);
             setError(t('admin.run.loadError'));
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -590,6 +635,24 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                 </label>
             </section>
 
+            {restoredDraft && (
+                <div className="flex flex-wrap items-center gap-3 rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-950" role="status">
+                    <span>{t('admin.run.draftRestored')}</span>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            clearAdministrationDraft();
+                            setAnswers({});
+                            setRestoredDraft(false);
+                            setStartedAt(Date.now());
+                        }}
+                        className="font-semibold underline underline-offset-2"
+                    >
+                        {t('admin.run.draftDiscard')}
+                    </button>
+                </div>
+            )}
+
             <div className="sticky top-16 z-10 rounded-lg border border-slate-200 bg-white/95 p-4 shadow-sm backdrop-blur">
                 <div className="flex justify-between text-sm font-semibold text-slate-700">
                     <span>{answered}/{displayItems.length} {t('admin.run.progress')}</span>
@@ -648,9 +711,10 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                 <div className="flex justify-end pt-2">
                     <button
                         type="submit"
-                        className="rounded-md bg-indigo-600 px-7 py-3 font-semibold text-white hover:bg-indigo-700 transition-colors"
+                        disabled={submitting}
+                        className="rounded-md bg-indigo-600 px-7 py-3 font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        {t('admin.run.submit')}
+                        {submitting ? t('admin.run.submitting') : t('admin.run.submit')}
                     </button>
                 </div>
             </form>
