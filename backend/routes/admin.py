@@ -1437,6 +1437,52 @@ async def admin_create_instrument(instrument: schemas.InstrumentCreate, current_
     return db_obj
 
 
+# Spiegazioni lunghe degli strumenti usate dalla Bussola. Testi in inglese
+# (istruzioni per il modello) e curati: il seed crea le voci mancanti, qui si
+# rivedono senza un deploy.
+class ToolBriefUpdate(BaseModel):
+    brief: str
+    is_active: bool = True
+
+
+def _tool_brief_payload(row) -> dict:
+    return {
+        "tool_id": row.tool_id,
+        "brief": row.brief,
+        "is_active": bool(row.is_active),
+        "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+    }
+
+
+@router.get("/admin/orientation/tool-briefs")
+def list_tool_briefs(
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    rows = db.query(models.OrientationToolBrief).order_by(models.OrientationToolBrief.tool_id).all()
+    return [_tool_brief_payload(row) for row in rows]
+
+
+@router.put("/admin/orientation/tool-briefs/{tool_id}")
+def update_tool_brief(
+    tool_id: str,
+    payload: ToolBriefUpdate,
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    row = db.query(models.OrientationToolBrief).filter(models.OrientationToolBrief.tool_id == tool_id).first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Tool brief not found")
+    brief = (payload.brief or "").strip()
+    if not brief:
+        raise HTTPException(status_code=422, detail="The brief cannot be empty")
+    row.brief = brief
+    row.is_active = payload.is_active
+    db.commit()
+    db.refresh(row)
+    return _tool_brief_payload(row)
+
+
 @router.put("/admin/instruments/{code}", response_model=schemas.InstrumentResponse)
 async def admin_update_instrument(code: str, update: schemas.InstrumentUpdate, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
     db_obj = db.query(models.Instrument).filter(models.Instrument.code == code).first()

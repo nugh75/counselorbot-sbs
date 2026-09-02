@@ -1081,6 +1081,14 @@ def _seed_and_migrate():
         if seed_certified_strategies(db, models):
             logger.info("Seeded certified strategies catalog")
 
+        # Seed delle spiegazioni lunghe degli strumenti usate dalla Bussola.
+        # Testi in inglese (istruzioni per il modello) e modificabili dagli admin:
+        # il seed crea solo le voci mancanti.
+        from .tool_brief_seed import seed_tool_briefs
+        created_briefs = seed_tool_briefs(db, models)
+        if created_briefs:
+            logger.info("Seeded orientation tool briefs: %s voci", created_briefs)
+
         # Seed del catalogo letture. Le voci nascono in bozza: entrano in chat
         # solo quando un admin le certifica dopo la verifica bibliografica.
         from .certified_reading_seed import seed_certified_readings
