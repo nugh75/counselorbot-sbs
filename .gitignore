@@ -33,3 +33,6 @@ session_memory/
 
 # Dynamic RAG collections uploaded at runtime — never commit
 rag-collections/
+
+# Indice RAG rigenerato in locale (lock + cache di embedding): non versionarlo.
+.rag_index/
