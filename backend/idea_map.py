@@ -1091,6 +1091,19 @@ def chosen_focus(db: Session, username: str, session_id: str) -> str | None:
     return getattr(revision, "focus_id", None)
 
 
+def focused_branch(db: Session, username: str, session_id: str) -> str | None:
+    """Il ramo su cui si sta lavorando davvero, scelto o derivato.
+
+    `chosen_focus` da' solo cio' che la persona ha scelto; senza una scelta il
+    ramo e' quello derivato dalla mappa, ed e' quello che conta per sapere a
+    quale ramo appartiene il materiale del turno.
+    """
+    spec = current_map(db, username, session_id)
+    if spec is None:
+        return None
+    return resolve_focus(spec, chosen_focus(db, username, session_id))
+
+
 def set_focus(db: Session, username: str, session_id: str, node_id: str) -> models.IdeaMapRevision:
     """Sposta il lavoro su un altro ramo.
 
