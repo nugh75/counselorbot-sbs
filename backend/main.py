@@ -347,6 +347,8 @@ def _seed_and_migrate():
             # eta' quando lo studente non ha compilato il taccuino.
             ("student_groups", "ADD COLUMN school_level VARCHAR"),
             ("administration_plans", "ADD COLUMN school_level VARCHAR"),
+            # Sessione pQBL in corso sul bot Telegram.
+            ("telegram_conversation_states", "ADD COLUMN pqbl_state JSON"),
         ]:
             try:
                 with database.engine.connect() as conn:

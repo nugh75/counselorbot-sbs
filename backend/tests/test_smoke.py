@@ -4795,6 +4795,38 @@ def test_telegram_parse_scores():
     assert scores == {} and extra == [] and invalid == []
 
 
+def test_telegram_idea_instrument_offered():
+    """Idea e' fra gli strumenti del bot e segue il flag del web."""
+    db = _TestSession()
+    try:
+        _set_config("feature_idea_focus", "true")
+        labels = [b["text"] for row in telegram_state._instrument_keyboard(db) for b in row]
+        callbacks = [b["callback_data"] for row in telegram_state._instrument_keyboard(db) for b in row]
+        assert "Idea" in labels
+        assert "instr:IDEA" in callbacks
+
+        _set_config("feature_idea_focus", "false")
+        labels = [b["text"] for row in telegram_state._instrument_keyboard(db) for b in row]
+        assert "Idea" not in labels
+        # Gli altri strumenti restano comunque disponibili.
+        assert "QSA" in labels and "Savickas" in labels
+    finally:
+        _set_config("feature_idea_focus", "true")
+        db.close()
+
+
+def test_telegram_idea_has_no_score_context():
+    """Idea non ha punteggi: il contesto non deve inventarne."""
+    db = _TestSession()
+    try:
+        context = telegram_state.format_scores_context(db, "IDEA", None, "it")
+        assert "IDEA" in context
+        assert "senza punteggi" in context
+        assert "IDEA" in telegram_state.NARRATIVE_QUESTIONNAIRES
+    finally:
+        db.close()
+
+
 def test_telegram_link_code_flow():
     from datetime import datetime, timedelta, timezone
     db = _TestSession()
@@ -5045,6 +5077,175 @@ def test_group_membership_web_flow():
         assert client.get("/user/groups").json() == []
     finally:
         main.app.dependency_overrides.pop(auth.get_current_user, None)
+
+
+def test_telegram_pqbl_learning_flow():
+    """/pqbl elenca i documenti pronti, si risponde a bottoni e si chiude col riepilogo."""
+    import asyncio
+
+    sent: list[dict] = []
+
+    async def _fake_send(chat_id, text, keyboard=None):
+        sent.append({"chat_id": chat_id, "text": text, "keyboard": keyboard})
+
+    async def _fake_answer(callback_query_id):
+        pass
+
+    real_send = telegram_state.telegram_bot.send_message
+    real_answer = telegram_state.telegram_bot.answer_callback_query
+    telegram_state.telegram_bot.send_message = _fake_send
+    telegram_state.telegram_bot.answer_callback_query = _fake_answer
+
+    TG_USER = 717171
+
+    def _options(correct_key: str) -> list:
+        return [
+            {"key": key, "text": f"opzione {key}", "correct": key == correct_key,
+             "feedback": f"feedback {key}"}
+            for key in ("a", "b", "c", "d")
+        ]
+
+    async def _run():
+        db = _TestSession()
+        try:
+            doc = models.PqblDocument(
+                id="pqbl-tg-doc", username="tg.pqbl", filename="dispensa.pdf",
+                text_hash="hash-tg", language="it", size=10, status="ready",
+                chunks_total=1, chunks_done=1,
+            )
+            db.add(doc)
+            db.add(models.PqblQuestion(
+                document_id=doc.id, skill="skill-1", position=0,
+                question_text="Prima domanda?", options=_options("a"),
+            ))
+            db.add(models.PqblQuestion(
+                document_id=doc.id, skill="skill-2", position=1,
+                question_text="Seconda domanda?", options=_options("b"),
+            ))
+            db.commit()
+            question_ids = [
+                q.id for q in db.query(models.PqblQuestion)
+                .filter(models.PqblQuestion.document_id == doc.id)
+                .order_by(models.PqblQuestion.position).all()
+            ]
+
+            code = telegram_state.create_link_code(db, "tg.pqbl")
+            await telegram_state.process_update({"message": {
+                "chat": {"id": TG_USER, "type": "private"},
+                "from": {"id": TG_USER, "language_code": "it"},
+                "text": f"/link {code}",
+            }})
+
+            await telegram_state.process_update({"message": {
+                "chat": {"id": TG_USER, "type": "private"},
+                "from": {"id": TG_USER, "language_code": "it"},
+                "text": "/pqbl",
+            }})
+            flat = [b for row in (sent[-1]["keyboard"] or []) for b in row]
+            assert any(b["callback_data"] == f"pqbl:doc:{doc.id}" for b in flat)
+            assert "dispensa.pdf" in sent[-1]["keyboard"][0][0]["text"]
+
+            await telegram_state.process_update({"callback_query": {
+                "id": "cb-doc", "data": f"pqbl:doc:{doc.id}",
+                "from": {"id": TG_USER, "language_code": "it"},
+                "message": {"chat": {"id": TG_USER, "type": "private"}},
+            }})
+            assert "Prima domanda?" in sent[-1]["text"]
+            assert "1/2" in sent[-1]["text"]
+            first_buttons = [b for row in sent[-1]["keyboard"] for b in row]
+            assert len(first_buttons) == 4
+
+            # Risposta sbagliata: feedback e stessa domanda da rifare.
+            await telegram_state.process_update({"callback_query": {
+                "id": "cb-wrong", "data": f"pqbl:ans:{question_ids[0]}:b",
+                "from": {"id": TG_USER, "language_code": "it"},
+                "message": {"chat": {"id": TG_USER, "type": "private"}},
+            }})
+            assert "Non ancora" in sent[-1]["text"]
+            assert "Prima domanda?" in sent[-1]["text"]
+
+            # Risposta giusta: si passa alla seconda.
+            await telegram_state.process_update({"callback_query": {
+                "id": "cb-right", "data": f"pqbl:ans:{question_ids[0]}:a",
+                "from": {"id": TG_USER, "language_code": "it"},
+                "message": {"chat": {"id": TG_USER, "type": "private"}},
+            }})
+            assert "Seconda domanda?" in sent[-1]["text"]
+            assert "2/2" in sent[-1]["text"]
+
+            # Ultima risposta: riepilogo e stato ripulito.
+            await telegram_state.process_update({"callback_query": {
+                "id": "cb-last", "data": f"pqbl:ans:{question_ids[1]}:b",
+                "from": {"id": TG_USER, "language_code": "it"},
+                "message": {"chat": {"id": TG_USER, "type": "private"}},
+            }})
+            assert "Sessione conclusa" in sent[-1]["text"]
+            # Una sola domanda su due corretta al primo tentativo.
+            assert "1/2" in sent[-1]["text"]
+
+            state = db.query(models.TelegramConversationState).filter(
+                models.TelegramConversationState.telegram_user_id == TG_USER
+            ).first()
+            db.refresh(state)
+            assert state.state == "idle"
+            assert state.pqbl_state is None
+        finally:
+            db.close()
+
+    try:
+        asyncio.run(_run())
+    finally:
+        telegram_state.telegram_bot.send_message = real_send
+        telegram_state.telegram_bot.answer_callback_query = real_answer
+
+
+def test_telegram_pqbl_rejects_non_pdf():
+    """Un file che non e' PDF non entra nella pipeline pQBL."""
+    import asyncio
+
+    sent: list[dict] = []
+
+    async def _fake_send(chat_id, text, keyboard=None):
+        sent.append({"chat_id": chat_id, "text": text, "keyboard": keyboard})
+
+    real_send = telegram_state.telegram_bot.send_message
+    telegram_state.telegram_bot.send_message = _fake_send
+
+    TG_USER = 727272
+
+    async def _run():
+        db = _TestSession()
+        try:
+            code = telegram_state.create_link_code(db, "tg.pqbl.file")
+            await telegram_state.process_update({"message": {
+                "chat": {"id": TG_USER, "type": "private"},
+                "from": {"id": TG_USER, "language_code": "it"},
+                "text": f"/link {code}",
+            }})
+            await telegram_state.process_update({"message": {
+                "chat": {"id": TG_USER, "type": "private"},
+                "from": {"id": TG_USER, "language_code": "it"},
+                "document": {"file_id": "x", "file_name": "note.docx",
+                             "mime_type": "application/msword", "file_size": 1000},
+            }})
+            assert "PDF" in sent[-1]["text"]
+
+            # Oltre il limite di download di Telegram si rimanda al web.
+            await telegram_state.process_update({"message": {
+                "chat": {"id": TG_USER, "type": "private"},
+                "from": {"id": TG_USER, "language_code": "it"},
+                "document": {"file_id": "y", "file_name": "grosso.pdf",
+                             "mime_type": "application/pdf",
+                             "file_size": telegram_state.telegram_bot.MAX_DOWNLOAD_BYTES + 1},
+            }})
+            assert "20 MB" in sent[-1]["text"]
+        finally:
+            db.close()
+
+    try:
+        asyncio.run(_run())
+    finally:
+        telegram_state.telegram_bot.send_message = real_send
 
 
 def test_telegram_counselor_selection():
