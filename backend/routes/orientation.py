@@ -214,7 +214,7 @@ def orientation_message(
     ])[-MAX_MESSAGES:]
     row.language = normalize_language(payload.language)
     row.messages = messages
-    if not analysis.informational:
+    if not analysis.informational and analysis.recommendations:
         row.recommendations = analysis.recommendations
     db.commit()
     db.refresh(row)
