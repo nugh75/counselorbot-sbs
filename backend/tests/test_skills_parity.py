@@ -29,6 +29,8 @@ from backend import database, models
 from backend.api_models import ChatRequest
 from backend.chat_logic import _retrieved_context
 from backend.skills_seed import seed_skills
+from backend.strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY
+from backend.content_versions_seed import derive_strategy_versions
 
 # --- DB Postgres dedicato ai test (stessa istanza, db separato) ---
 TEST_DB_NAME = "counselorbot_test"
@@ -77,6 +79,24 @@ def _set_config(db, key: str, value: str) -> None:
     db.commit()
 
 
+# Il percorso storico legge le strategie approvate dalla config, non dai
+# certificati. Il test le semina da se': dipendere da `test_smoke`, che le
+# scrive dentro un proprio test, faceva passare questo file solo quando la
+# suite girava intera e in quell'ordine.
+APPROVED_MARKDOWN = """# Strategie condivise
+
+## parity-approved-c6
+- status: approved
+- questionnaires: QSA
+- keywords: organizzazione studio tempo
+- text.it: Dividi lo studio in blocchi e fissane l'ordine la sera prima.
+"""
+
+
+def _ensure_approved(db) -> None:
+    _set_config(db, APPROVED_STRATEGIES_CONFIG_KEY, APPROVED_MARKDOWN)
+
+
 def _ensure_certified(db) -> None:
     if db.query(models.CertifiedStrategy).filter(models.CertifiedStrategy.slug == "parity-c6").first():
         return
@@ -89,6 +109,10 @@ def _ensure_certified(db) -> None:
         keywords="organizzazione studio tempo", status="certified", sort_order=1, is_active=True,
     ))
     db.commit()
+    # Le strategie sono fail-closed per lingua: senza le righe di
+    # `content_language_versions` l'italiano non viene servito e il recupero
+    # torna vuoto.
+    derive_strategy_versions(db)
 
 
 def _request() -> ChatRequest:
@@ -118,6 +142,7 @@ def test_engine_on_uses_certified_advice_only():
     db = _TestSession()
     try:
         _ensure_certified(db)
+        _ensure_approved(db)
         seed_skills(db)
 
         _set_config(db, "skills_engine_enabled", "false")

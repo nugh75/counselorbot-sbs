@@ -1,6 +1,20 @@
-"""Regressioni per diagrammi e identita' visiva nel PDF di riepilogo."""
+"""Regressioni per diagrammi e identita' visiva nel PDF di riepilogo.
+
+Il diagramma viene rasterizzato da Graphviz, che sta nell'immagine del backend
+ma non necessariamente sulla macchina di chi sviluppa. Senza il motore il PDF
+esce senza immagini e il test falliva come se il codice fosse rotto: meglio
+dichiararlo saltato, cosi' il rosso resta un rosso vero.
+"""
+import shutil
+
+import pytest
 
 from backend.pdf_generator import generate_questionnaire_pdf
+
+requires_graphviz = pytest.mark.skipif(
+    shutil.which("neato") is None,
+    reason="Graphviz (neato) non installato: i diagrammi non si rasterizzano",
+)
 
 
 DIAGRAM_MESSAGE = (
@@ -15,6 +29,7 @@ DIAGRAM_MESSAGE = (
 )
 
 
+@requires_graphviz
 def test_summary_pdf_embeds_diagrams_from_the_conversation():
     pdf = generate_questionnaire_pdf(
         questionnaire_type="QSA",
