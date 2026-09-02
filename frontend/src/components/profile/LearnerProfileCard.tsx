@@ -185,6 +185,11 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     // Revisione a inizio sessione: se non c'è ancora un profilo si propone
     // l'intake, se c'è si chiede conferma rapida (un click se nulla è cambiato).
     const isIntake = !profile;
+    // Il taccuino compare sia come passo del percorso (la Bussola lo apre quando
+    // scegli uno strumento, la home come intake prima del primo) sia come card
+    // della pagina personale. Solo nel primo caso e' una fase di una sequenza, e
+    // deve avere la stessa "prima riga" di comandi di tutte le altre.
+    const inFlow = variant === 'review' || variant === 'update';
     const saveSource = variant === 'update' ? 'session_end'
         : variant === 'review' ? (isIntake ? 'intake' : 'session_start')
         : (isIntake ? 'intake' : 'manual');
@@ -225,25 +230,25 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                     </label>
                 ))}
             </div>
-            <div className="flex items-center gap-3 pt-1">
-                <Button
-                    onClick={() => void save(saveSource)}
-                    disabled={saving}
-                >
-                    {t('lp.save')}
-                </Button>
-                {variant !== 'edit' && !(requireInitial && isIntake) && (
-                    <Button variant="ghost" onClick={() => setDismissed(true)}>
-                        {t('lp.skip')}
+            {/* Nel percorso i comandi stanno in cima, fuori dalla Card: qui in fondo
+                resta solo il caso della pagina personale, dove il taccuino non e'
+                un passo di una sequenza. */}
+            {!inFlow && (
+                <div className="flex items-center gap-3 pt-1">
+                    <Button
+                        onClick={() => void save(saveSource)}
+                        disabled={saving}
+                    >
+                        {t('lp.save')}
                     </Button>
-                )}
-                {variant === 'edit' && editing && (
-                    <Button variant="ghost" onClick={() => { setEditing(false); setForm(profile?.data ?? {}); }} aria-label={t('lp.skip')}>
-                        <X className="w-4 h-4" />
-                    </Button>
-                )}
-                {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
-            </div>
+                    {variant === 'edit' && editing && (
+                        <Button variant="ghost" onClick={() => { setEditing(false); setForm(profile?.data ?? {}); }} aria-label={t('lp.skip')}>
+                            <X className="w-4 h-4" />
+                        </Button>
+                    )}
+                    {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
+                </div>
+            )}
             {validationError && <p className="text-sm text-red-600">{validationError}</p>}
         </div>
     );
@@ -259,6 +264,10 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
         </div>
     );
 
+    // Il riepilogo di un taccuino gia' scritto ha comandi propri (conferma +
+    // matita); in tutti gli altri stati del percorso si sta compilando il modulo.
+    const showSummaryRow = variant === 'review' && !isIntake && !editing;
+
     const title = variant === 'update' ? t('lp.updateTitle')
         : variant === 'review' && !isIntake ? t('lp.reviewTitle')
         : t('lp.title');
@@ -267,7 +276,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
         <div className="space-y-4">
             {/* "Prima riga" uniforme a tutte le altre fasi: pulsanti fuori dal */}
             {/* frame del taccuino (BackButton + PencilButton + ForwardButton). */}
-            {variant === 'review' && !isIntake && !editing && (
+            {showSummaryRow && (
                 <div className="flex items-center gap-3">
                     {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
                     <ForwardButton
@@ -279,6 +288,22 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                         onClick={() => setEditing(true)}
                         label={t('lp.edit')}
                     />
+                    {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
+                </div>
+            )}
+            {inFlow && !showSummaryRow && (
+                <div className="flex flex-wrap items-center gap-3">
+                    {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
+                    <ForwardButton
+                        onClick={() => void save(saveSource)}
+                        disabled={saving}
+                        label={t('lp.save')}
+                    />
+                    {!(requireInitial && isIntake) && (
+                        <Button variant="ghost" onClick={() => setDismissed(true)}>
+                            {t('lp.skip')}
+                        </Button>
+                    )}
                     {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
                 </div>
             )}
