@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Check, Compass, Loader2, Send, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import { CompassMark } from '@/components/ui/CompassMark';
 import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
@@ -248,8 +249,8 @@ export default function BussolaPage() {
                 <section className="glass-panel flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3"><Compass className="h-6 w-6 text-indigo-600" /><p className="text-sm leading-relaxed text-slate-600">{t('orientation.subtitle')}</p></div>
                     <div className="flex flex-wrap gap-2">
-                        {latestSessionId && <button type="button" onClick={() => void openSession(latestSessionId)} className="rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-700">{t('orientation.landing.latest')}</button>}
-                        <button type="button" onClick={() => beginCounselorChoice(true)} className="rounded-md bg-ochre-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-ochre-700">{t('orientation.landing.new')}</button>
+                        {latestSessionId && <Button type="button" variant="secondary" onClick={() => void openSession(latestSessionId)}>{t('orientation.landing.latest')}</Button>}
+                        <Button type="button" variant="accent" onClick={() => beginCounselorChoice(true)}>{t('orientation.landing.new')}</Button>
                     </div>
                 </section>
             ) : (
@@ -280,18 +281,18 @@ export default function BussolaPage() {
 
                     {session.status === 'in_progress' && session.recommendations.length > 0 && (
                         <div className="flex justify-end">
-                            <button type="button" onClick={() => void finish()} disabled={completing} className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40">
+                            <Button type="button" size="lg" onClick={() => void finish()} disabled={completing}>
                                 {completing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}{t('orientation.complete')}
-                            </button>
+                            </Button>
                         </div>
                     )}
 
                     {session.status === 'completed' && (
                         <section className="glass-panel space-y-5 border-teal-200 p-5 sm:p-6">
                             <div className="flex gap-3"><Sparkles className="mt-0.5 h-6 w-6 shrink-0 text-teal-600" /><div><h2 className="font-display text-xl font-bold text-slate-900">{t('orientation.completed.title')}</h2><p className="mt-1 text-sm leading-relaxed text-slate-600">{t('orientation.completed.body')}</p></div></div>
-                            {nextHref && <Link href={nextHref} className="inline-flex items-center gap-2 rounded-md bg-ochre-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-ochre-700">{t('orientation.continue')}<ArrowRight className="h-4 w-4" /></Link>}
+                            {nextHref && <Link href={nextHref} className="inline-flex min-h-11 items-center gap-2 rounded-md bg-ochre-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-ochre-700">{t('orientation.continue')}<ArrowRight className="h-4 w-4" /></Link>}
                             <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-                                <button type="button" onClick={() => beginCounselorChoice(true)} className="ml-auto rounded-md px-4 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">{t('orientation.landing.new')}</button>
+                                <Button type="button" variant="ghost" onClick={() => beginCounselorChoice(true)} className="ml-auto text-indigo-700 hover:bg-indigo-50">{t('orientation.landing.new')}</Button>
                             </div>
                         </section>
                     )}
@@ -319,7 +320,7 @@ function RecommendationSection({ session, onPick }: { session: OrientationSessio
                         <h3 className="mt-3 text-lg font-bold text-slate-900">{toolName(item.id, t)}</h3>
                         <p className="mt-1 text-sm leading-relaxed text-slate-500">{toolDescription(item.id, t)}</p>
                         <p className="mt-4 grow border-l-2 border-teal-400 pl-3 text-sm leading-relaxed text-slate-700">{item.reason}</p>
-                        <button type="button" onClick={() => onPick(item.id)} className="mt-5 inline-flex items-center justify-between rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">{t('orientation.recommendation.start')}<ArrowRight className="h-4 w-4" /></button>
+                        <Button type="button" onClick={() => onPick(item.id)} className="mt-5 justify-between">{t('orientation.recommendation.start')}<ArrowRight className="h-4 w-4" /></Button>
                     </article>
                 ))}
             </div>

@@ -19,6 +19,7 @@ const OpenCodeExperience = dynamic(
     { ssr: false }
 );
 import { MessageSquare, Terminal, LogIn } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { FlowStepper } from '@/components/ui/FlowStepper';
 import { CompassMark } from '@/components/ui/CompassMark';
@@ -90,13 +91,9 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
                 <p className="mt-4 max-w-xl text-lg leading-relaxed text-slate-600">
                     {t('app.intro.subtitle')}
                 </p>
-                <button
-                    type="button"
-                    onClick={onStart}
-                    className="mt-8 inline-flex items-center rounded-md bg-ochre-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-ochre-700"
-                >
+                <Button type="button" variant="accent" size="lg" onClick={onStart} className="mt-8">
                     {t('app.home.cta')}
-                </button>
+                </Button>
             </div>
 
             <section className="mx-auto max-w-2xl text-center">
@@ -837,20 +834,14 @@ export default function Home() {
                                             <p className="text-sm text-slate-500 mt-1">{t('experience.choose.sub')}</p>
                                         </div>
                                         <div className="grid sm:grid-cols-2 gap-2.5">
-                                            <button
-                                                onClick={() => chooseExperience('standard')}
-                                                className="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
-                                            >
+                                            <Button onClick={() => chooseExperience('standard')} className="w-full">
                                                 <MessageSquare className="w-4 h-4" />
                                                 {t('guided.mode.guided')}
-                                            </button>
-                                            <button
-                                                onClick={() => chooseExperience('opencode')}
-                                                className="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
-                                            >
+                                            </Button>
+                                            <Button variant="secondary" onClick={() => chooseExperience('opencode')} className="w-full">
                                                 <Terminal className="w-4 h-4" />
                                                 {t('guided.mode.sandbox')}
-                                            </button>
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
@@ -904,13 +895,11 @@ export default function Home() {
                                     via. Senza prefisso responsive le tre colonne restavano
                                     affiancate anche a 360px, in tracce da ~95px. */}
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4">
-                                    <button
-                                        onClick={analyzeAnother}
-                                        className="min-h-11 py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-md transition-colors flex items-center justify-center"
-                                    >
+                                    <Button variant="secondary" size="lg" onClick={analyzeAnother}>
                                         {t('completed.another')}
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button
+                                        size="lg"
                                         onClick={async () => {
                                             // Anteprima inline: prepara il blob e mostralo nell'iframe sotto.
                                             setPdfLoading(true);
@@ -928,16 +917,12 @@ export default function Home() {
                                             }
                                         }}
                                         disabled={pdfLoading}
-                                        className="min-h-11 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center disabled:opacity-60"
                                     >
                                         {t('completed.downloadPdf')}
-                                    </button>
-                                    <button
-                                        onClick={() => setStep('farewell')}
-                                        className="min-h-11 py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-md transition-colors flex items-center justify-center"
-                                    >
+                                    </Button>
+                                    <Button variant="secondary" size="lg" onClick={() => setStep('farewell')}>
                                         {t('completed.end')}
-                                    </button>
+                                    </Button>
                                 </div>
 
                                 {/* Barra di avanzamento (indeterminata) durante la preparazione del PDF. */}
@@ -982,16 +967,13 @@ export default function Home() {
                                         href="/questionario"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="block w-full py-3.5 bg-ochre-600 hover:bg-ochre-700 text-white font-bold rounded-md transition-colors shadow-md"
+                                        className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-ochre-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-ochre-700"
                                     >
                                         {t('farewell.feedback')}
                                     </a>
-                                    <button
-                                        onClick={() => setStep(homeStep())}
-                                        className="w-full py-3.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded-md transition-colors"
-                                    >
+                                    <Button variant="secondary" size="lg" onClick={() => setStep(homeStep())} className="w-full">
                                         {t('farewell.home')}
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                         </div>
