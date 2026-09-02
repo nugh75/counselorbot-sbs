@@ -18,9 +18,6 @@ export interface OrientationSession {
     status: 'in_progress' | 'completed';
     messages: OrientationMessage[];
     recommendations: OrientationRecommendation[];
-    notebook_draft: Record<string, string>;
-    notebook_reviewed: boolean;
-    notebook_revision_id?: number | null;
     created_at: string;
     updated_at?: string | null;
     completed_at?: string | null;
@@ -61,18 +58,6 @@ export async function sendOrientationMessage(sessionId: string, message: string,
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message, language }),
-    }));
-}
-
-export async function reviewOrientationNotebook(
-    sessionId: string,
-    data: Record<string, string>,
-    skip = false,
-): Promise<OrientationSession> {
-    return readJson(await apiFetch(`/api/orientation/sessions/${encodeURIComponent(sessionId)}/notebook-review`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data, skip }),
     }));
 }
 

@@ -27,17 +27,22 @@ test('required orientation does not interrupt recovery links', () => {
     assert.equal(orientationGateBypass('/bussola'), true);
 });
 
-test('Bussola exposes editable notebook and instrument booklet after completion', () => {
+test('Bussola opens the notebook before and after the conversation, and never the booklet', () => {
     const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
-    assert.match(source, /LearnerProfileCard variant="edit"/);
-    assert.match(source, /StudentBookletCard/);
-    assert.match(source, /EVENT_BOOKLET_TYPES/);
-    assert.match(source, /disabled=\{!session\.notebook_reviewed \|\| completing\}/);
+    assert.match(source, /variant="review"[\s\S]*onDone=\{startAfterNotebook\}/);
+    assert.match(source, /session\.status === 'completed' && <LearnerProfileCard variant="update"/);
+    assert.doesNotMatch(source, /StudentBookletCard/);
+});
+
+test('Bussola only advises: it writes neither notebook nor booklet', () => {
+    const api = readFileSync(new URL('./orientation-api.ts', import.meta.url), 'utf8');
+    assert.doesNotMatch(api, /notebook-review|notebook_draft|notebook_reviewed/);
 });
 
 test('Bussola asks for a counselor before creating the conversation', () => {
     const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
     assert.match(source, /CounselorSelector/);
     assert.match(source, /orientation\.counselor\.title/);
-    assert.match(source, /createSession\(newSession, counselorId\)/);
+    assert.match(source, /setPendingCounselorId\(counselorId\)/);
+    assert.match(source, /createSession\(pendingNewSession, pendingCounselorId\)/);
 });
