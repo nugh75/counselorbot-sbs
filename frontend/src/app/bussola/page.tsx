@@ -259,6 +259,7 @@ export default function BussolaPage() {
                     sessionId={session.session_id}
                     onDone={() => void leaveForTool()}
                     onUnavailable={() => void leaveForTool()}
+                    onBack={() => setPendingTool(null)}
                 />
             ) : !session ? (
                 <section className="glass-panel flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
@@ -333,7 +334,11 @@ export default function BussolaPage() {
                     {session.status === 'completed' && (
                         <section className="glass-panel space-y-5 border-teal-200 p-5 sm:p-6">
                             <div className="flex gap-3"><Sparkles className="mt-0.5 h-6 w-6 shrink-0 text-teal-600" /><div><h2 className="font-display text-xl font-bold text-slate-900">{t('orientation.completed.title')}</h2><p className="mt-1 text-sm leading-relaxed text-slate-600">{t('orientation.completed.body')}</p></div></div>
-                            {nextHref && <Link href={nextHref} className="inline-flex min-h-11 items-center gap-2 rounded-md bg-ochre-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-ochre-700">{t('orientation.continue')}<ArrowRight className="h-4 w-4" /></Link>}
+                            {/* Concludere la Bussola non e' un vicolo cieco. Il collegamento
+                                dipendeva da `?next=`, che mette solo il cancello quando rimanda
+                                qui: chi apriva la Bussola dalla topbar arrivava in fondo senza
+                                nessuna uscita che non fosse aprire uno degli strumenti. */}
+                            <Link href={nextHref ?? '/'} className="inline-flex min-h-11 items-center gap-2 rounded-md bg-ochre-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-ochre-700">{nextHref ? t('orientation.continue') : t('nav.home')}<ArrowRight className="h-4 w-4" /></Link>
                             <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
                                 <Button type="button" variant="ghost" onClick={() => beginCounselorChoice(true)} className="ml-auto text-indigo-700 hover:bg-indigo-50">{t('orientation.landing.new')}</Button>
                             </div>
