@@ -9,6 +9,7 @@ import { I18nProvider } from '@/lib/i18n-context';
 import { Toaster } from '@/components/ui/Toast';
 import { TooltipProvider } from '@/components/ui/Tooltip';
 import { OrientationGate } from '@/components/layout/OrientationGate';
+import { SkipLink } from '@/components/layout/SkipLink';
 
 // Tre ruoli tipografici. Body = Inter (invariato). Display = Bricolage Grotesque,
 // grottesco contemporaneo, usato con parsimonia su titoli/wordmark. Mono = IBM Plex
@@ -17,9 +18,12 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'sw
 const display = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
 const mono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-mono', display: 'swap' });
 
+// Titolo e descrizione della scheda del browser, dei preferiti e delle anteprime
+// di condivisione. Restavano fermi al solo QSA mentre l'app copre l'intero
+// strumentario: niente conteggi qui, che invecchiano a ogni strumento aggiunto.
 export const metadata: Metadata = {
-    title: 'CounselorBot - Analisi Strategie di Apprendimento',
-    description: 'Assistente AI per il questionario QSA',
+    title: 'CounselorBot — Orientamento e profilo di apprendimento',
+    description: 'Percorsi guidati di orientamento, analisi del profilo di apprendimento e conversazione con counselor AI.',
 };
 
 export default function RootLayout({
@@ -46,9 +50,10 @@ export default function RootLayout({
                         dell'albero, presente e futuro. */}
                     <MotionConfig reducedMotion="user">
                     <TooltipProvider delayDuration={300}>
+                        <SkipLink />
                         <ViewAsFetchPatch />
                         <Header />
-                        <main className="pt-20 px-4 pb-12">
+                        <main id="contenuto" className="pt-20 px-4 pb-12">
                             <OrientationGate>{children}</OrientationGate>
                         </main>
                         <RolePreviewBanner />

@@ -17,7 +17,7 @@ export function FlowStepper({ steps, current }: FlowStepperProps) {
                 const done = i < current;
                 const active = i === current;
                 return (
-                    <li key={label} className="flex shrink-0 items-center gap-1 sm:gap-2">
+                    <li key={label} aria-current={active ? 'step' : undefined} className="flex shrink-0 items-center gap-1 sm:gap-2">
                         <span
                             className={cn(
                                 'flex items-center gap-2 whitespace-nowrap transition-colors',
@@ -36,7 +36,11 @@ export function FlowStepper({ steps, current }: FlowStepperProps) {
                             >
                                 {done ? <Check className="h-3 w-3" /> : active ? i + 1 : null}
                             </span>
-                            <span className="hidden sm:inline text-[11px] uppercase tracking-[0.08em]">{label}</span>
+                            {/* Sotto sm restava solo il passo attivo come numero dentro il
+                                pallino: una riga per dire "4", senza dire di che cosa. Il
+                                nome della tappa corrente resta sempre visibile, le altre
+                                compaiono da sm in su. */}
+                            <span className={cn('text-[11px] uppercase tracking-[0.08em]', active ? 'inline' : 'hidden sm:inline')}>{label}</span>
                         </span>
                         {i < steps.length - 1 && (
                             <span className={cn('h-px w-4 sm:w-8 transition-colors', done ? 'bg-indigo-400' : 'bg-slate-200')} />
