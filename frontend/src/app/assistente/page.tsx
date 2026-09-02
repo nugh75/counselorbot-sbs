@@ -13,6 +13,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { fetchAssistantQuestions, type AssistantQuestionsByTopic } from '@/lib/assistant-questions';
 import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId, subscribeToCounselor, type PublicCounselor } from '@/lib/counselor';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
+import { ChatBubble } from '@/components/ui/ChatBubble';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 
 // Tabelle con bordi + scroll orizzontale per una lettura pulita dei documenti.
@@ -514,9 +515,7 @@ export default function AssistentePage() {
 
                         {messages.map((msg, i) => (
                             <div key={i} className={`flex min-w-0 items-start gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                                <div className={`min-w-0 max-w-[92%] break-words rounded-lg px-4 py-2.5 sm:max-w-[80%] ${
-                                    msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-800'
-                                }`}>
+                                <ChatBubble role={msg.role === 'user' ? 'user' : 'assistant'} className="max-w-[92%] sm:max-w-[80%]">
                                     {msg.role === 'assistant' && !msg.content
                                         ? <Loader2 className="w-4 h-4 animate-spin text-slate-500" />
                                         : (
@@ -569,7 +568,7 @@ export default function AssistentePage() {
                                             )}
                                         </div>
                                     )}
-                                </div>
+                                </ChatBubble>
                             </div>
                         ))}
                     </div>
