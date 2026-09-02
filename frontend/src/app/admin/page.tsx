@@ -129,7 +129,7 @@ export default function AdminPage() {
                     <div className="mx-auto w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
                         <ShieldAlert className="w-6 h-6 text-red-600" />
                     </div>
-                    <h2 className="text-xl font-bold text-gray-900">{t('admin.forbidden.title')}</h2>
+                    <h2 className="text-xl font-bold text-slate-900">{t('admin.forbidden.title')}</h2>
                     <p className="text-slate-500 text-sm">
                         {t('admin.forbidden.body')}
                     </p>

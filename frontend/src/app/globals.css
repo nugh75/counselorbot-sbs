@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Identita' grafica: docs/design.md e' la fonte di verita' dichiarata (scale,
+   ruoli semantici, regole del dark mode, superfici fuori dall'app web).
+   Una tinta nuova si aggiunge qui, mai al call-site. */
+
 /* Dark mode class-based: .dark sull'<html> attiva sia le varianti dark: sia gli
    override CSS sotto (vedi fondo file). */
 @custom-variant dark (&:where(.dark, .dark *));
@@ -37,8 +41,6 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
-
-  --animate-fade-in-up: fade-in-up 0.6s ease-out forwards;
 
   /* Ruoli tipografici (vedi layout.tsx). font-sans default, font-display titoli,
      font-mono per codici fattore e punteggi. */
@@ -110,7 +112,11 @@
   --popover: 0 0% 100%;
   --popover-foreground: 222.2 84% 4.9%;
 
-  --primary: 243.4 75.4% 58.6%;
+  /* Petrol in HSL (= #155e63): allineato a --console-primary, che sotto
+     ridefinisce --color-primary. Prima qui restava l'indigo di default. */
+  --primary: 184 65% 24%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
   --color-background: var(--console-bg);
   --color-foreground: var(--console-text-1);
 
@@ -381,6 +387,12 @@ h1.text-3xl {
   --background: 222 47% 11%;
   --foreground: 210 40% 98%;
   --card: 215 28% 17%;
+  --destructive: 0 72% 58%;
+
+  --color-muted: #334155;
+  --color-muted-foreground: #94a3b8;
+  --color-accent: #334155;
+  --color-accent-foreground: #f1f5f9;
 }
 
 /* Superfici */

@@ -80,7 +80,7 @@ export function SurveyViewer() {
     };
 
     const renderRating = (value?: number) => {
-        if (value === undefined || value === null) return <span className="text-gray-300">-</span>;
+        if (value === undefined || value === null) return <span className="text-slate-300">-</span>;
         return (
             <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${value >= 4 ? 'bg-green-100 text-green-700' :
                 value === 3 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
@@ -92,7 +92,7 @@ export function SurveyViewer() {
 
     const renderTools = (value?: string[] | string) => {
         const tools = Array.isArray(value) ? value : value ? [value] : [];
-        if (tools.length === 0) return <span className="text-gray-300">-</span>;
+        if (tools.length === 0) return <span className="text-slate-300">-</span>;
         return (
             <div className="flex flex-wrap gap-2">
                 {tools.map((tool) => (
@@ -118,8 +118,8 @@ export function SurveyViewer() {
         ];
 
         const fieldMetadata: Record<string, { label: string; color: string; bg: string }> = {
-            'q_utile': { label: t('admin.surveys.m.utile'), color: '#4f46e5', bg: 'bg-indigo-50' },
-            'q_pertinente': { label: t('admin.surveys.m.pertinente'), color: '#6366f1', bg: 'bg-indigo-50' },
+            'q_utile': { label: t('admin.surveys.m.utile'), color: '#155e63', bg: 'bg-indigo-50' },
+            'q_pertinente': { label: t('admin.surveys.m.pertinente'), color: '#1f7376', bg: 'bg-indigo-50' },
             'q_chiaro': { label: t('admin.surveys.m.chiaro'), color: '#0ea5e9', bg: 'bg-sky-50' },
             'q_dettaglio': { label: t('admin.surveys.m.dettaglio'), color: '#06b6d4', bg: 'bg-cyan-50' },
             'q_facile': { label: t('admin.surveys.m.facile'), color: '#14b8a6', bg: 'bg-teal-50' },
@@ -389,7 +389,7 @@ export function SurveyViewer() {
                                                                             {survey.counselor_utilizzato}
                                                                         </span>
                                                                     ) : (
-                                                                        <span className="text-gray-300">-</span>
+                                                                        <span className="text-slate-300">-</span>
                                                                     )}
                                                                 </div>
                                                                 <div>

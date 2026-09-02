@@ -7,6 +7,7 @@ This directory is the canonical entry point for stable project documentation, re
 - [Implemented documentation organization](progetto/organizzazione/proposta-organizzazione-docs-implementata-2026-05-30.md): inventory, mapping, and migration decisions.
 - [Documentation graph](progetto/organizzazione/grafo-docs-2026-05-30.md): Mermaid view of the `docs/` structure.
 - [Graphify documentation graph](progetto/organizzazione/graphify-docs-2026-05-30/README.md): generated output from `safishamsi/graphify`.
+- [Visual identity](design.md): design tokens, colour and type scales, dark-mode rules, and the current alignment audit.
 - [Project log](progetto/diario.md): project chronology.
 - [Communications](progetto/comunicazioni/): contact drafts and messages.
 - [Validation](validazione/): scientific plan, operating manual, psychometric details, diagnosis, and stanine notes.
