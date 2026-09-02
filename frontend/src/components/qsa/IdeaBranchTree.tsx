@@ -178,7 +178,7 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
                             <span className="flex flex-wrap items-baseline gap-x-2">
                                 <span className={cn('font-medium', isRoot && 'text-slate-900')}>{row.label}</span>
                                 {row.task_label && (
-                                    <span className="text-[10px] uppercase tracking-wide text-slate-400">
+                                    <span className="text-[10px] uppercase tracking-wide text-slate-500">
                                         {row.task_label}
                                     </span>
                                 )}
@@ -205,7 +205,7 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
                                 </span>
                             )}
                             {!row.closed && row.missing_roles.length > 0 && (
-                                <span className="mt-0.5 block text-[11px] text-slate-400">
+                                <span className="mt-0.5 block text-[11px] text-slate-500">
                                     {t('idea.map.missing')} {row.missing_roles.map((r) => t(ROLE_KEY[r])).join(' · ')}
                                 </span>
                             )}

@@ -91,7 +91,7 @@ export function PromptExportPanel() {
                 <div>
                     <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">{texts.perTool}</h3>
                     {instruments.length === 0 ? (
-                        <p className="mt-2 text-sm text-slate-400">{texts.empty}</p>
+                        <p className="mt-2 text-sm text-slate-500">{texts.empty}</p>
                     ) : (
                         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                             {instruments.map((instrument) => (
@@ -106,7 +106,7 @@ export function PromptExportPanel() {
                                         <FileText className="h-4 w-4 text-indigo-600" />
                                         {instrument}
                                     </span>
-                                    <Download className="h-4 w-4 text-slate-400" />
+                                    <Download className="h-4 w-4 text-slate-500" />
                                     {loading === instrument && <span className="sr-only">…</span>}
                                 </button>
                             ))}

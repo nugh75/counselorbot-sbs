@@ -412,7 +412,7 @@ export function GroupsPanel() {
             )}
 
             {message && <p className="text-sm text-red-600">{message}</p>}
-            {groups !== null && groups.length === 0 && <p className="text-sm text-slate-400">{texts.empty}</p>}
+            {groups !== null && groups.length === 0 && <p className="text-sm text-slate-500">{texts.empty}</p>}
 
             <div className="space-y-3">
                 {(groups || []).map((group) => (
@@ -421,9 +421,9 @@ export function GroupsPanel() {
                             <div>
                                 <h3 className="font-bold text-slate-800">
                                     {group.name}
-                                    {!group.is_active && <span className="ml-2 text-xs font-normal text-slate-400">({texts.inactive})</span>}
+                                    {!group.is_active && <span className="ml-2 text-xs font-normal text-slate-500">({texts.inactive})</span>}
                                 </h3>
-                                <p className="text-xs text-slate-400">
+                                <p className="text-xs text-slate-500">
                                     {texts.code}: <span className="font-mono font-semibold text-slate-600">{group.code}</span>
                                     {' - '}{group.members_count} {texts.members}
                                     {' - '}{group.owner_username}
@@ -497,7 +497,7 @@ export function GroupsPanel() {
                                 </button>
                             </div>
                         )}
-                        <p className="mt-2 text-xs text-slate-400">{texts.privacy}</p>
+                        <p className="mt-2 text-xs text-slate-500">{texts.privacy}</p>
 
                         <div className="mt-2 flex flex-wrap items-center gap-2">
                             <button
@@ -532,7 +532,7 @@ export function GroupsPanel() {
                                                     />
                                                     <span className="flex-1 text-slate-700">
                                                         {user.display_name}
-                                                        <span className="ml-1 text-[10px] text-slate-400">{user.username}</span>
+                                                        <span className="ml-1 text-[10px] text-slate-500">{user.username}</span>
                                                     </span>
                                                     {alreadyShared && (
                                                         <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-500">
@@ -543,7 +543,7 @@ export function GroupsPanel() {
                                             );
                                         })}
                                     {allUsers.filter((u) => u.in_research_contacts || u.in_plans || u.in_groups || u.in_notes).length === 0 && (
-                                        <p className="text-xs text-slate-400">{texts.shareNoUsers}</p>
+                                        <p className="text-xs text-slate-500">{texts.shareNoUsers}</p>
                                     )}
                                 </div>
                                 <div className="mt-3 flex flex-wrap gap-2">
@@ -565,7 +565,7 @@ export function GroupsPanel() {
                                                 <div key={share.id} className="flex items-center justify-between rounded-md bg-white px-2 py-1.5 text-xs">
                                                     <span className="text-slate-700">
                                                         {allUsers.find((u) => u.username === share.shared_with_username)?.display_name || share.shared_with_username}
-                                                        <span className="ml-1 text-[10px] text-slate-400">{share.shared_with_username}</span>
+                                                        <span className="ml-1 text-[10px] text-slate-500">{share.shared_with_username}</span>
                                                     </span>
                                                     <button
                                                         type="button"
@@ -582,7 +582,7 @@ export function GroupsPanel() {
                                     </div>
                                 )}
                                 {(!shares[group.id] || shares[group.id].length === 0) && (
-                                    <p className="mt-2 text-xs text-slate-400">{texts.noShares}</p>
+                                    <p className="mt-2 text-xs text-slate-500">{texts.noShares}</p>
                                 )}
                             </div>
                         )}

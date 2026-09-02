@@ -346,7 +346,7 @@ export function QuestionnaireEditor() {
                             </select>
                         </label>
                     </div>
-                    <p className="text-xs text-slate-400">{t('admin.q.scaleHint')}</p>
+                    <p className="text-xs text-slate-500">{t('admin.q.scaleHint')}</p>
                     <button onClick={saveMeta} className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
                         <Save className="w-4 h-4" /> {t('admin.q.save')}
                     </button>
@@ -516,7 +516,7 @@ export function QuestionnaireEditor() {
                             <div key={f.code} className="rounded-lg border border-slate-200 p-4">
                                 <div className="flex items-center justify-between">
                                     <span className="font-semibold text-indigo-700">{f.code} — {f.label}</span>
-                                    <span className="text-xs text-slate-400">{f.orientation}{f.is_interpretation_inverted ? ' · inv' : ''}</span>
+                                    <span className="text-xs text-slate-500">{f.orientation}{f.is_interpretation_inverted ? ' · inv' : ''}</span>
                                 </div>
                                 <p className="mt-2 text-xs text-slate-500">
                                     {t('admin.q.rules.items')}: {f.item_numbers.join(', ') || '—'}

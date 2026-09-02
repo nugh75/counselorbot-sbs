@@ -363,16 +363,16 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                     </div>
                     {showHistory && (
                         <div className="border-t border-slate-200 pt-3 space-y-3">
-                            {!history?.length && <p className="text-sm text-slate-400">{t('lp.historyEmpty')}</p>}
+                            {!history?.length && <p className="text-sm text-slate-500">{t('lp.historyEmpty')}</p>}
                             {history?.map((rev) => (
                                 <div key={rev.id} className="text-sm">
-                                    <div className="text-xs text-slate-400">
+                                    <div className="text-xs text-slate-500">
                                         {new Date(rev.created_at).toLocaleDateString()} · {rev.source}
                                     </div>
                                     <ul className="ml-3 mt-0.5 space-y-0.5 text-slate-600">
                                         {FIELDS.map((f) => {
                                             const value = (rev.data?.[f.key] || '').trim();
-                                            return value ? <li key={f.key}><span className="text-slate-400">{t(f.labelKey)}:</span> {value}</li> : null;
+                                            return value ? <li key={f.key}><span className="text-slate-500">{t(f.labelKey)}:</span> {value}</li> : null;
                                         })}
                                     </ul>
                                 </div>

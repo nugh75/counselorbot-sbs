@@ -65,7 +65,7 @@ export function HeaderCounselor() {
             >
                 <User className="h-3.5 w-3.5" />
                 <span className="max-w-24 truncate sm:max-w-32">{selected ? selected.name : t('counselor.pick')}</span>
-                <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                <ChevronDown className="h-3.5 w-3.5 text-slate-500" />
             </button>
 
             {open && (
@@ -74,7 +74,7 @@ export function HeaderCounselor() {
                         <button
                             type="button"
                             onClick={() => choose(null)}
-                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-400 hover:bg-slate-50 border-b border-slate-100"
+                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-500 hover:bg-slate-50 border-b border-slate-100"
                         >
                             {t('counselor.deselect') || 'Nessuno'}
                         </button>
@@ -95,7 +95,7 @@ export function HeaderCounselor() {
                         >
                             <span className="truncate flex-1">{c.name}</span>
                             {c.is_active === false && (
-                                <span className="shrink-0 text-[10px] text-slate-400 italic">{t('counselor.unavailable')}</span>
+                                <span className="shrink-0 text-[10px] text-slate-500 italic">{t('counselor.unavailable')}</span>
                             )}
                         </button>
                     ))}

@@ -264,7 +264,7 @@ export function QuestionnaireResultsViewer() {
 
             {/* Filter */}
             <div className="flex items-center gap-3">
-                <Filter className="w-4 h-4 text-slate-400" />
+                <Filter className="w-4 h-4 text-slate-500" />
                 <div className="flex flex-wrap gap-2">
                     <button
                         onClick={() => handleFilterChange('')}
@@ -440,7 +440,7 @@ export function QuestionnaireResultsViewer() {
                                             </td>
                                             <td className="px-4 py-3">
                                                 {result.questionnaire_type === 'SAVICKAS' ? (
-                                                    <span className="text-xs text-slate-400 italic">{t('admin.results.qualitative')}</span>
+                                                    <span className="text-xs text-slate-500 italic">{t('admin.results.qualitative')}</span>
                                                 ) : scoreKeys.length > 0 ? (
                                                     <div className="flex flex-wrap gap-1">
                                                         {scoreKeys.slice(0, 6).map(key => (
@@ -453,11 +453,11 @@ export function QuestionnaireResultsViewer() {
                                                             />
                                                         ))}
                                                         {scoreKeys.length > 6 && (
-                                                            <span className="text-xs text-slate-400">+{scoreKeys.length - 6}</span>
+                                                            <span className="text-xs text-slate-500">+{scoreKeys.length - 6}</span>
                                                         )}
                                                     </div>
                                                 ) : (
-                                                    <span className="text-xs text-slate-400">-</span>
+                                                    <span className="text-xs text-slate-500">-</span>
                                                 )}
                                             </td>
                                         </tr>
@@ -486,18 +486,18 @@ export function QuestionnaireResultsViewer() {
                                                                     return (
                                                                         <div key={code} className={`p-2 rounded border ${badgeClass}`}>
                                                                             <div className="font-semibold text-slate-700">{name}</div>
-                                                                            {desc && <div className="text-slate-400 mt-0.5">{desc}</div>}
+                                                                            {desc && <div className="text-slate-500 mt-0.5">{desc}</div>}
                                                                             <div className="flex items-center gap-1.5 mt-1">
                                                                                 <span className="text-lg font-bold">{value}</span>
-                                                                                <span className="text-xs text-slate-400">/9</span>
-                                                                                {inverted && <span className="text-xs text-slate-400">({t('admin.results.invertedAbbr')})</span>}
+                                                                                <span className="text-xs text-slate-500">/9</span>
+                                                                                {inverted && <span className="text-xs text-slate-500">({t('admin.results.invertedAbbr')})</span>}
                                                                             </div>
                                                                         </div>
                                                                     );
                                                                 })}
                                                             </div>
                                                         ) : (
-                                                            <p className="text-slate-400">{t('admin.results.noScores')}</p>
+                                                            <p className="text-slate-500">{t('admin.results.noScores')}</p>
                                                         )}
                                                     </div>
                                                 </td>
@@ -508,14 +508,14 @@ export function QuestionnaireResultsViewer() {
                             })}
                             {results.length === 0 && !loading && (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-8 text-center text-slate-400">
+                                    <td colSpan={4} className="px-6 py-8 text-center text-slate-500">
                                         {t('admin.results.empty')}
                                     </td>
                                 </tr>
                             )}
                             {loading && (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-8 text-center text-slate-400">
+                                    <td colSpan={4} className="px-6 py-8 text-center text-slate-500">
                                         <RefreshCw className="w-5 h-5 animate-spin mx-auto" />
                                     </td>
                                 </tr>

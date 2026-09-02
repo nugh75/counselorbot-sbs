@@ -32,7 +32,7 @@ export function LanguageSwitcher() {
                     aria-label={t('nav.language')}
                 >
                     <FlagIcon code={current.code} className="h-4 w-6" />
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
                 </button>
             </Tooltip>
 

@@ -21,14 +21,14 @@ export function FlowStepper({ steps, current }: FlowStepperProps) {
                         <span
                             className={cn(
                                 'flex items-center gap-2 whitespace-nowrap transition-colors',
-                                active ? 'text-ochre-700 font-semibold' : done ? 'text-indigo-700 font-medium' : 'text-slate-400',
+                                active ? 'text-ochre-700 font-semibold' : done ? 'text-indigo-700 font-medium' : 'text-slate-500',
                             )}
                         >
                             <span
                                 className={cn(
                                     'flex items-center justify-center text-[10px] font-bold transition-all',
                                     active
-                                        ? 'h-5 w-5 rounded-full bg-ochre-500 text-white ring-4 ring-ochre-500/15'
+                                        ? 'h-5 w-5 rounded-full bg-ochre-600 text-white ring-4 ring-ochre-600/15'
                                         : done
                                             ? 'h-5 w-5 rounded-full bg-indigo-600 text-white'
                                             : 'h-2.5 w-2.5 rounded-full border-2 border-slate-300',

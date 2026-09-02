@@ -130,7 +130,7 @@ export function IdeaBranchBar({ sessionId, version, locale, onFocusMoved }: Idea
                     </option>
                 ))}
             </select>
-            {busy && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" aria-hidden="true" />}
+            {busy && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-500" aria-hidden="true" />}
             <button
                 type="button"
                 onClick={() => setAdding(true)}

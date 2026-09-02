@@ -233,7 +233,7 @@ export function PresetsPanel() {
 
             <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
                 <table className="w-full text-left text-sm">
-                    <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-400">
+                    <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
                         <tr>
                             <th className="px-3 py-2 font-semibold">{t('admin.presets.name')}</th>
                             <th className="px-3 py-2 font-semibold">{t('admin.presets.provider')}</th>
@@ -243,9 +243,9 @@ export function PresetsPanel() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {loading && <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-400">…</td></tr>}
+                        {loading && <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">…</td></tr>}
                         {!loading && presets.length === 0 && editingId !== 'new' && (
-                            <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-400">{t('admin.presets.empty')}</td></tr>
+                            <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">{t('admin.presets.empty')}</td></tr>
                         )}
                         {presets.map((p) => (
                             editingId === p.id ? (
@@ -260,7 +260,7 @@ export function PresetsPanel() {
                                         )}
                                     </td>
                                     <td className="px-3 py-2 font-mono text-xs text-slate-700">{p.model}</td>
-                                    <td className="px-3 py-2">{p.is_active ? <Check className="h-4 w-4 text-emerald-600" /> : <X className="h-4 w-4 text-slate-300" />}</td>
+                                    <td className="px-3 py-2">{p.is_active ? <Check className="h-4 w-4 text-emerald-600" /> : <X className="h-4 w-4 text-slate-500" />}</td>
                                     <td className="px-3 py-2">
                                         <div className="flex justify-end gap-1">
                                             <button type="button" onClick={() => startEdit(p)} className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Pencil className="h-4 w-4" /></button>

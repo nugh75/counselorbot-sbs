@@ -109,7 +109,7 @@ function TelegramLinkInner() {
                         <p>{texts.manual}</p>
                         <p className="mt-1 font-mono text-lg font-bold tracking-widest">/link {code}</p>
                     </div>
-                    <p className="text-xs text-slate-400">{texts.expires}</p>
+                    <p className="text-xs text-slate-500">{texts.expires}</p>
                 </>
             )}
         </main>

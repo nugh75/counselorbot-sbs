@@ -184,7 +184,7 @@ export function AssistantAdminPanel({ onOpenTab }: Props) {
                 <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     {statCards.map((card) => (
                         <div key={card.label} className="rounded-lg border border-slate-200 bg-white p-4">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{card.label}</p>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{card.label}</p>
                             <p className="mt-2 text-2xl font-bold text-slate-900">{card.value}</p>
                         </div>
                     ))}
@@ -204,19 +204,19 @@ export function AssistantAdminPanel({ onOpenTab }: Props) {
                     </div>
                     <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                         <div>
-                            <dt className="text-xs font-semibold uppercase text-slate-400">{t('admin.assistant.model.provider')}</dt>
+                            <dt className="text-xs font-semibold uppercase text-slate-500">{t('admin.assistant.model.provider')}</dt>
                             <dd className="mt-1 font-medium text-slate-800">{config.active_provider || '-'}</dd>
                         </div>
                         <div>
-                            <dt className="text-xs font-semibold uppercase text-slate-400">{t('admin.assistant.model.model')}</dt>
+                            <dt className="text-xs font-semibold uppercase text-slate-500">{t('admin.assistant.model.model')}</dt>
                             <dd className="mt-1 font-medium text-slate-800">{config.model_name || '-'}</dd>
                         </div>
                         <div>
-                            <dt className="text-xs font-semibold uppercase text-slate-400">{t('admin.assistant.model.topK')}</dt>
+                            <dt className="text-xs font-semibold uppercase text-slate-500">{t('admin.assistant.model.topK')}</dt>
                             <dd className="mt-1 font-medium text-slate-800">{config.site_chat_top_k || '-'}</dd>
                         </div>
                         <div>
-                            <dt className="text-xs font-semibold uppercase text-slate-400">{t('admin.assistant.model.minScore')}</dt>
+                            <dt className="text-xs font-semibold uppercase text-slate-500">{t('admin.assistant.model.minScore')}</dt>
                             <dd className="mt-1 font-medium text-slate-800">{config.site_chat_min_score || '-'}</dd>
                         </div>
                     </dl>
@@ -232,7 +232,7 @@ export function AssistantAdminPanel({ onOpenTab }: Props) {
                             {t('admin.assistant.manage')}
                         </button>
                     </div>
-                    <label className="mt-4 block text-xs font-semibold uppercase text-slate-400">
+                    <label className="mt-4 block text-xs font-semibold uppercase text-slate-500">
                         {t('admin.assistant.rag.collection')}
                         <select
                             value={selectedCollection}
@@ -246,15 +246,15 @@ export function AssistantAdminPanel({ onOpenTab }: Props) {
                     </label>
                     <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
                         <div className="rounded-md bg-slate-50 p-3">
-                            <p className="text-xs font-semibold uppercase text-slate-400">{t('admin.assistant.stat.sources')}</p>
+                            <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.assistant.stat.sources')}</p>
                             <p className="mt-1 text-lg font-bold text-slate-900">{fmtNumber(selectedStats.n_sources)}</p>
                         </div>
                         <div className="rounded-md bg-slate-50 p-3">
-                            <p className="text-xs font-semibold uppercase text-slate-400">{t('admin.assistant.stat.chunks')}</p>
+                            <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.assistant.stat.chunks')}</p>
                             <p className="mt-1 text-lg font-bold text-slate-900">{fmtNumber(selectedStats.n_chunks)}</p>
                         </div>
                         <div className="rounded-md bg-slate-50 p-3">
-                            <p className="text-xs font-semibold uppercase text-slate-400">{t('admin.assistant.rag.graphNodes')}</p>
+                            <p className="text-xs font-semibold uppercase text-slate-500">{t('admin.assistant.rag.graphNodes')}</p>
                             <p className="mt-1 text-lg font-bold text-slate-900">{fmtNumber(selectedStats.n_graph_nodes)}</p>
                         </div>
                     </div>

@@ -237,7 +237,7 @@ export function ApprovedStrategiesPanel() {
 
             <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
                 <table className="w-full text-left text-sm">
-                    <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-400">
+                    <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
                         <tr>
                             <th className="px-3 py-2 font-semibold">{t('admin.approvedStrategies.table.strategy')}</th>
                             <th className="px-3 py-2 font-semibold">{t('admin.approvedStrategies.table.questionnaires')}</th>
@@ -247,9 +247,9 @@ export function ApprovedStrategiesPanel() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {loading && <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-400">{t('common.loading')}</td></tr>}
+                        {loading && <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">{t('common.loading')}</td></tr>}
                         {!loading && strategies.length === 0 && editingId !== 'new' && (
-                            <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-400">{t('admin.approvedStrategies.empty')}</td></tr>
+                            <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">{t('admin.approvedStrategies.empty')}</td></tr>
                         )}
                         {strategies.map((strategy) => (
                             editingId === strategy.id ? (

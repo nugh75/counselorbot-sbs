@@ -223,10 +223,10 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
     };
 
     if (students === null) {
-        return <p className="mt-3 text-sm text-slate-400">{texts.loading}</p>;
+        return <p className="mt-3 text-sm text-slate-500">{texts.loading}</p>;
     }
     if (students.length === 0) {
-        return <p className="mt-3 text-sm text-slate-400">{texts.empty}</p>;
+        return <p className="mt-3 text-sm text-slate-500">{texts.empty}</p>;
     }
 
     return (
@@ -243,7 +243,7 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                         >
                             {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                             <span className="font-mono">{student.username}</span>
-                            <span className="text-xs font-normal text-slate-400">
+                            <span className="text-xs font-normal text-slate-500">
                                 {student.results.length} {texts.tests}
                                 {student.telegram_linked ? ` - ${texts.telegram}` : ''}
                             </span>
@@ -262,14 +262,14 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                                                 {result.questionnaire_type}
                                             </button>
                                             {result.submitted_at && (
-                                                <span className="ml-2 text-xs text-slate-400">
+                                                <span className="ml-2 text-xs text-slate-500">
                                                     {new Date(result.submitted_at).toLocaleDateString()}
                                                 </span>
                                             )}
                                             <div><ScoresLine scores={result.scores} /></div>
                                             {openSession === result.session_id && (
                                                 <div className="mt-2 max-h-64 space-y-1 overflow-y-auto rounded-md border border-slate-200 bg-slate-50 p-2">
-                                                    <p className="text-xs font-semibold uppercase text-slate-400">{texts.transcript}</p>
+                                                    <p className="text-xs font-semibold uppercase text-slate-500">{texts.transcript}</p>
                                                     {(conversations[result.session_id] || []).map((message, index) => (
                                                         <p key={index} className="text-xs text-slate-600">
                                                             <span className="font-semibold">{message.role === 'student' ? texts.studentRole : 'AI'}:</span>{' '}
@@ -284,7 +284,7 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
 
                                 {student.learner_profile && (
                                     <div className="rounded-md border border-slate-200 bg-slate-50 p-2">
-                                        <p className="text-xs font-semibold uppercase text-slate-400">{texts.profile}</p>
+                                        <p className="text-xs font-semibold uppercase text-slate-500">{texts.profile}</p>
                                         <pre className="mt-1 max-h-40 overflow-y-auto whitespace-pre-wrap text-xs text-slate-600">
                                             {JSON.stringify(student.learner_profile, null, 1)}
                                         </pre>
@@ -293,7 +293,7 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
 
                                 {withNotes && (
                                 <div>
-                                    <p className="flex items-center gap-1 text-xs font-semibold uppercase text-slate-400">
+                                    <p className="flex items-center gap-1 text-xs font-semibold uppercase text-slate-500">
                                         <StickyNote className="h-3.5 w-3.5" /> {texts.notes}
                                     </p>
                                     <ul className="mt-1 space-y-1">
@@ -301,7 +301,7 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                                             <li key={note.id} className="flex items-start gap-2 text-sm text-slate-700">
                                                 <span className="flex-1">
                                                     {note.kind === 'message' ? '[messaggio] ' : ''}{note.text}
-                                                    <span className="ml-2 text-xs text-slate-400">
+                                                    <span className="ml-2 text-xs text-slate-500">
                                                         {note.author_username}
                                                         {note.visible_to_student ? ` - ${texts.visible.toLowerCase()}` : ''}
                                                         {note.created_at ? ` - ${new Date(note.created_at).toLocaleDateString()}` : ''}
@@ -311,7 +311,7 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                                                     type="button"
                                                     title={texts.deleteNote}
                                                     onClick={() => void deleteNote(note.id)}
-                                                    className="text-slate-400 hover:text-red-600"
+                                                    className="text-slate-500 hover:text-red-600"
                                                 >
                                                     <Trash2 className="h-3.5 w-3.5" />
                                                 </button>
@@ -350,7 +350,7 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
 
                                 {withNotes && (
                                 <div>
-                                    <p className="flex items-center gap-1 text-xs font-semibold uppercase text-slate-400">
+                                    <p className="flex items-center gap-1 text-xs font-semibold uppercase text-slate-500">
                                         <Send className="h-3.5 w-3.5" /> {texts.message}
                                     </p>
                                     <textarea
@@ -381,7 +381,7 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
             <button
                 type="button"
                 onClick={() => void load()}
-                className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600"
+                className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-600"
             >
                 <RefreshCw className="h-3 w-3" /> {texts.students}
             </button>

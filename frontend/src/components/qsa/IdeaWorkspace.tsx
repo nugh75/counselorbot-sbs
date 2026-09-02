@@ -78,7 +78,7 @@ export function IdeaWorkspace({ sessionId, version, locale, variant, move, budge
                     {t('idea.conclude.action')}
                 </span>
                 <ChevronDown
-                    className={cn('h-4 w-4 shrink-0 text-slate-400 transition-transform', !open && '-rotate-90')}
+                    className={cn('h-4 w-4 shrink-0 text-slate-500 transition-transform', !open && '-rotate-90')}
                     aria-hidden="true"
                 />
             </button>

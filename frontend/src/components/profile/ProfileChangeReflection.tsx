@@ -387,7 +387,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                 <div className="space-y-2 border-t border-slate-100 pt-3">
                     {reflections.slice(0, 3).map((reflection) => (
                         <div key={reflection.id} className="rounded-md bg-slate-50 p-3 text-sm text-slate-600">
-                            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                                 {new Date(reflection.created_at).toLocaleDateString(lang)}
                             </div>
                             {reflection.note}
@@ -436,7 +436,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
             </div>
 
             {loading ? (
-                <div className="text-sm text-slate-400">{t('profileChanges.loading')}</div>
+                <div className="text-sm text-slate-500">{t('profileChanges.loading')}</div>
             ) : mode === 'profilo' ? (
                 !current ? (
                     <div className="rounded-lg border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">
@@ -471,7 +471,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                                     <div key={change.key} className="rounded-lg border border-slate-200 bg-white p-3 text-sm">
                                         <div className="font-semibold text-slate-800">{change.label}</div>
                                         <div className="mt-1 space-y-1 text-xs text-slate-500">
-                                            <div><span className="font-semibold text-slate-400">{t('profileChanges.before')}:</span> {change.before || '-'}</div>
+                                            <div><span className="font-semibold text-slate-500">{t('profileChanges.before')}:</span> {change.before || '-'}</div>
                                             <div><span className="font-semibold text-indigo-500">{t('profileChanges.now')}:</span> {change.after || '-'}</div>
                                         </div>
                                     </div>
@@ -529,7 +529,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                                 {currentBookletReflections.slice().reverse().slice(0, 3).map((reflection, index) => (
                                     <div key={index} className="rounded-md bg-slate-50 p-3 text-sm text-slate-600">
                                         {reflection.created_at && (
-                                            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                                            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                                                 {new Date(reflection.created_at).toLocaleDateString(lang)}
                                             </div>
                                         )}
@@ -554,7 +554,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                             <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${message.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-800'}`}>
                                     {!message.content && message.role === 'assistant' ? (
-                                        <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                                        <Loader2 className="h-4 w-4 animate-spin text-slate-500" />
                                     ) : (
                                         <div className="prose prose-sm max-w-none prose-p:my-1">
                                             <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>

@@ -96,7 +96,7 @@ export function ReturningHome({
                             <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-600">{t('orientation.subtitle')}</p>
                         </div>
                     </div>
-                    <Link href="/bussola" className="inline-flex shrink-0 items-center justify-center rounded-md bg-ochre-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-ochre-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ochre-400 focus-visible:ring-offset-2">
+                    <Link href="/bussola" className="inline-flex shrink-0 items-center justify-center rounded-md bg-ochre-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-ochre-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ochre-400 focus-visible:ring-offset-2">
                         {t('orientation.landing.open')}
                     </Link>
                 </div>

@@ -77,7 +77,7 @@ export function IdeaConclusion({ sessionId, locale, variant, onClose }: IdeaConc
                     <h2 className="min-w-0 flex-1 text-lg font-bold text-slate-900">
                         {done ? t('idea.conclude.doneTitle') : t('idea.conclude.title')}
                     </h2>
-                    <button type="button" onClick={onClose} aria-label={t('idea.map.close')} className="rounded-md p-1 text-slate-400 hover:bg-slate-100">
+                    <button type="button" onClick={onClose} aria-label={t('idea.map.close')} className="rounded-md p-1 text-slate-500 hover:bg-slate-100">
                         <X className="h-4 w-4" />
                     </button>
                 </div>

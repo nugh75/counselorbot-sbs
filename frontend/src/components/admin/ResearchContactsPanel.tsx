@@ -499,7 +499,7 @@ export function ResearchContactsPanel() {
 
             {!loading && contacts.length > 0 && (
                 <div className="relative">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                     <input
                         type="search"
                         value={query}
@@ -512,17 +512,17 @@ export function ResearchContactsPanel() {
 
             <div className="grid gap-4 xl:grid-cols-2">
                 {loading && (
-                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-400 xl:col-span-2">
+                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 xl:col-span-2">
                         {t('admin.rc.loading')}
                     </section>
                 )}
                 {!loading && contacts.length === 0 && editingId !== 'new' && (
-                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-400 xl:col-span-2">
+                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 xl:col-span-2">
                         {t('admin.rc.empty')}
                     </section>
                 )}
                 {!loading && contacts.length > 0 && filtered.length === 0 && (
-                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-400 xl:col-span-2">
+                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 xl:col-span-2">
                         {t('admin.rc.noResults')}
                     </section>
                 )}
@@ -539,7 +539,7 @@ export function ResearchContactsPanel() {
                                             {contact.is_active ? t('admin.rc.status.active') : t('admin.rc.status.inactive')}
                                         </span>
                                     </div>
-                                    <p className="mt-1 text-xs text-slate-400">{t('admin.rc.createdOn')} {formatDate(contact.created_at)}</p>
+                                    <p className="mt-1 text-xs text-slate-500">{t('admin.rc.createdOn')} {formatDate(contact.created_at)}</p>
                                 </div>
                                 <div className="flex gap-1">
                                     <button type="button" onClick={() => startEdit(contact)} className="rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900" title={t('admin.rc.action.edit')}>
@@ -574,25 +574,25 @@ export function ResearchContactsPanel() {
                             <div className="mt-4 grid gap-2 text-sm text-slate-600">
                                 {contact.role && (
                                     <div className="flex items-center gap-2">
-                                        <User className="h-4 w-4 text-slate-400" />
+                                        <User className="h-4 w-4 text-slate-500" />
                                         {contact.role}
                                     </div>
                                 )}
                                 {contact.institution && (
                                     <div className="flex items-center gap-2">
-                                        <Building2 className="h-4 w-4 text-slate-400" />
+                                        <Building2 className="h-4 w-4 text-slate-500" />
                                         {contact.institution}
                                     </div>
                                 )}
                                 {contact.email && (
                                     <div className="flex items-center gap-2">
-                                        <Mail className="h-4 w-4 text-slate-400" />
+                                        <Mail className="h-4 w-4 text-slate-500" />
                                         <a className="text-indigo-700 hover:text-indigo-900" href={`mailto:${contact.email}`}>{contact.email}</a>
                                     </div>
                                 )}
                                 {contact.phone && (
                                     <div className="flex items-center gap-2">
-                                        <Phone className="h-4 w-4 text-slate-400" />
+                                        <Phone className="h-4 w-4 text-slate-500" />
                                         {contact.phone}
                                     </div>
                                 )}

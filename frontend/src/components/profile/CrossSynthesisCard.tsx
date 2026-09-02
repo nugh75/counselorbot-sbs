@@ -81,7 +81,7 @@ export function CrossSynthesisCard() {
             </div>
 
             {!availability.available ? (
-                <p className="text-sm text-slate-400 border border-dashed border-slate-200 rounded-xl bg-white px-4 py-6 text-center">
+                <p className="text-sm text-slate-500 border border-dashed border-slate-200 rounded-xl bg-white px-4 py-6 text-center">
                     {t('combined.needTwo')}
                 </p>
             ) : (

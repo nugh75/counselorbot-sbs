@@ -284,7 +284,7 @@ export function AssistantQuestionsPanel() {
                         <div key={topic} className="rounded-md border border-slate-200 bg-slate-50 p-3">
                             <p className="text-xs font-semibold uppercase text-slate-500">{topicLabel(topic)}</p>
                             <p className="mt-1 text-2xl font-bold text-slate-900">{countsByTopic[topic] ?? 0}</p>
-                            <p className="text-xs text-slate-400">{t('admin.aq.activeIt')}</p>
+                            <p className="text-xs text-slate-500">{t('admin.aq.activeIt')}</p>
                         </div>
                     ))}
                 </div>
@@ -314,12 +314,12 @@ export function AssistantQuestionsPanel() {
 
             <div className="space-y-2">
                 {loading && (
-                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-400">
+                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500">
                         {t('admin.aq.loading')}
                     </section>
                 )}
                 {!loading && filtered.length === 0 && editingId !== 'new' && (
-                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-400">
+                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500">
                         {t('admin.aq.empty')}
                     </section>
                 )}
@@ -332,12 +332,12 @@ export function AssistantQuestionsPanel() {
                                 <div className="flex flex-wrap items-center gap-2">
                                     <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700">{topicLabel(q.topic)}</span>
                                     <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">{q.language.toUpperCase()}</span>
-                                    <span className="text-xs text-slate-400">#{q.sort_order}</span>
+                                    <span className="text-xs text-slate-500">#{q.sort_order}</span>
                                     {!q.is_active && (
                                         <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">{t('admin.aq.inactive')}</span>
                                     )}
                                 </div>
-                                <p className={`mt-1 text-sm leading-relaxed ${q.is_active ? 'text-slate-800' : 'text-slate-400 line-through'}`}>{q.text}</p>
+                                <p className={`mt-1 text-sm leading-relaxed ${q.is_active ? 'text-slate-800' : 'text-slate-500 line-through'}`}>{q.text}</p>
                             </div>
                             <div className="flex shrink-0 gap-1">
                                 <button type="button" onClick={() => void toggleActive(q)} className="rounded-md px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-100" title={t('admin.aq.toggle')}>

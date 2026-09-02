@@ -249,7 +249,7 @@ export default function BussolaPage() {
                     <div className="flex items-center gap-3"><Compass className="h-6 w-6 text-indigo-600" /><p className="text-sm leading-relaxed text-slate-600">{t('orientation.subtitle')}</p></div>
                     <div className="flex flex-wrap gap-2">
                         {latestSessionId && <button type="button" onClick={() => void openSession(latestSessionId)} className="rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-700">{t('orientation.landing.latest')}</button>}
-                        <button type="button" onClick={() => beginCounselorChoice(true)} className="rounded-md bg-ochre-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-ochre-600">{t('orientation.landing.new')}</button>
+                        <button type="button" onClick={() => beginCounselorChoice(true)} className="rounded-md bg-ochre-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-ochre-700">{t('orientation.landing.new')}</button>
                     </div>
                 </section>
             ) : (
@@ -289,7 +289,7 @@ export default function BussolaPage() {
                     {session.status === 'completed' && (
                         <section className="glass-panel space-y-5 border-teal-200 p-5 sm:p-6">
                             <div className="flex gap-3"><Sparkles className="mt-0.5 h-6 w-6 shrink-0 text-teal-600" /><div><h2 className="font-display text-xl font-bold text-slate-900">{t('orientation.completed.title')}</h2><p className="mt-1 text-sm leading-relaxed text-slate-600">{t('orientation.completed.body')}</p></div></div>
-                            {nextHref && <Link href={nextHref} className="inline-flex items-center gap-2 rounded-md bg-ochre-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-ochre-600">{t('orientation.continue')}<ArrowRight className="h-4 w-4" /></Link>}
+                            {nextHref && <Link href={nextHref} className="inline-flex items-center gap-2 rounded-md bg-ochre-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-ochre-700">{t('orientation.continue')}<ArrowRight className="h-4 w-4" /></Link>}
                             <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
                                 <button type="button" onClick={() => beginCounselorChoice(true)} className="ml-auto rounded-md px-4 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">{t('orientation.landing.new')}</button>
                             </div>

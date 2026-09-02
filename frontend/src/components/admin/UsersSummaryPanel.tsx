@@ -307,7 +307,7 @@ export function UsersSummaryPanel() {
             {tab === 'users' && (
                 <>
                     <div className="relative">
-                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                         <input
                             type="search"
                             value={query}
@@ -317,7 +317,7 @@ export function UsersSummaryPanel() {
                         />
                     </div>
 
-                    {loading && <p className="text-sm text-slate-400">{texts.loading}</p>}
+                    {loading && <p className="text-sm text-slate-500">{texts.loading}</p>}
                     {!loading && data && staffUsers.length > 0 && (
                         <section className="rounded-lg border border-slate-200 bg-white p-4">
                             <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-indigo-600">{texts.docentiRicercatori} ({staffUsers.length})</h3>
@@ -338,7 +338,7 @@ export function UsersSummaryPanel() {
                                             <tr key={user.username} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
                                                 <td className="px-3 py-2.5">
                                                     <span className="font-medium text-slate-800">{user.display_name}</span>
-                                                    <span className="block text-[10px] text-slate-400">{user.username}</span>
+                                                    <span className="block text-[10px] text-slate-500">{user.username}</span>
                                                 </td>
                                                 <td className="px-3 py-2.5 text-slate-600">{user.groups_count || '—'}</td>
                                                 <td className="px-3 py-2.5 text-slate-600">{user.plans_count || '—'}</td>
@@ -370,7 +370,7 @@ export function UsersSummaryPanel() {
                                             <tr key={user.username} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
                                                 <td className="px-3 py-2.5">
                                                     <span className="font-medium text-slate-800">{user.display_name}</span>
-                                                    <span className="block text-[10px] text-slate-400">{user.username}</span>
+                                                    <span className="block text-[10px] text-slate-500">{user.username}</span>
                                                 </td>
                                                 <td className="px-3 py-2.5 text-slate-600">{user.results_count || '—'}</td>
                                                 <td className="px-3 py-2.5 text-slate-600">{user.memberships_count || '—'}</td>
@@ -398,7 +398,7 @@ export function UsersSummaryPanel() {
                                             <tr key={user.username} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
                                                 <td className="px-3 py-2.5">
                                                     <span className="font-medium text-slate-800">{user.display_name}</span>
-                                                    <span className="block text-[10px] text-slate-400">{user.username}</span>
+                                                    <span className="block text-[10px] text-slate-500">{user.username}</span>
                                                 </td>
                                                 <td className="px-3 py-2.5 text-slate-600">{user.in_logs ? '✓' : '—'}</td>
                                             </tr>
@@ -410,7 +410,7 @@ export function UsersSummaryPanel() {
                     )}
 
                     {!loading && data && filteredUsers.length === 0 && (
-                        <p className="text-sm text-slate-400">{texts.noUsers}</p>
+                        <p className="text-sm text-slate-500">{texts.noUsers}</p>
                     )}
                 </>
             )}
@@ -418,7 +418,7 @@ export function UsersSummaryPanel() {
             {tab === 'groups' && (
                 <>
                     <div className="relative">
-                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                         <input
                             type="search"
                             value={query}
@@ -428,7 +428,7 @@ export function UsersSummaryPanel() {
                         />
                     </div>
 
-                    {loading && <p className="text-sm text-slate-400">{texts.loading}</p>}
+                    {loading && <p className="text-sm text-slate-500">{texts.loading}</p>}
                     {data && !loading && (
                         <div className="space-y-3">
                             {filteredGroups.map((group) => (
@@ -436,7 +436,7 @@ export function UsersSummaryPanel() {
                                     <div className="flex flex-wrap items-start justify-between gap-2">
                                         <div>
                                             <h3 className="font-bold text-slate-800">{group.name}</h3>
-                                            <p className="mt-0.5 text-xs text-slate-400">
+                                            <p className="mt-0.5 text-xs text-slate-500">
                                                 {texts.code}: <span className="font-mono font-semibold text-slate-600">{group.code}</span>
                                                 {' · '}{texts.owner}: {group.owner_username}
                                                 {' · '}{group.members_count} {texts.members}
@@ -448,12 +448,12 @@ export function UsersSummaryPanel() {
                                         </span>
                                     </div>
                                     {group.created_at && (
-                                        <p className="mt-2 text-xs text-slate-400">{texts.created}: {new Date(group.created_at).toLocaleDateString(lang, { year: 'numeric', month: '2-digit', day: '2-digit' })}</p>
+                                        <p className="mt-2 text-xs text-slate-500">{texts.created}: {new Date(group.created_at).toLocaleDateString(lang, { year: 'numeric', month: '2-digit', day: '2-digit' })}</p>
                                     )}
                                 </section>
                             ))}
                             {filteredGroups.length === 0 && (
-                                <p className="text-sm text-slate-400">{texts.noGroups}</p>
+                                <p className="text-sm text-slate-500">{texts.noGroups}</p>
                             )}
                         </div>
                     )}
@@ -463,7 +463,7 @@ export function UsersSummaryPanel() {
             {tab === 'schools' && (
                 <>
                     <div className="relative">
-                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                         <input
                             type="search"
                             value={query}
@@ -473,7 +473,7 @@ export function UsersSummaryPanel() {
                         />
                     </div>
 
-                    {loading && <p className="text-sm text-slate-400">{texts.loading}</p>}
+                    {loading && <p className="text-sm text-slate-500">{texts.loading}</p>}
                     {data && !loading && (
                         <div className="space-y-3">
                             {schoolBuckets.map(([school, schoolGroups]) => (
@@ -481,7 +481,7 @@ export function UsersSummaryPanel() {
                                     <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-800">
                                         <Building2 className="h-4 w-4 text-slate-500" />
                                         {school || texts.noSchool}
-                                        <span className="text-xs font-normal text-slate-400">
+                                        <span className="text-xs font-normal text-slate-500">
                                             ({schoolGroups.length} {texts.groups.toLowerCase()} · {schoolGroups.reduce((n, g) => n + g.members_count, 0)} {texts.members.toLowerCase()})
                                         </span>
                                     </h3>
@@ -499,11 +499,11 @@ export function UsersSummaryPanel() {
                                                     <tr key={group.id} className="border-b border-slate-100 align-top last:border-0 hover:bg-slate-50">
                                                         <td className="px-3 py-2.5">
                                                             <span className="font-medium text-slate-800">{group.name}</span>
-                                                            <span className="block font-mono text-[10px] text-slate-400">{group.code}</span>
+                                                            <span className="block font-mono text-[10px] text-slate-500">{group.code}</span>
                                                         </td>
                                                         <td className="px-3 py-2.5 text-slate-600">{group.owner_username}</td>
                                                         <td className="px-3 py-2.5 text-slate-600">
-                                                            {group.members.length === 0 && <span className="text-slate-400">{texts.noStudents}</span>}
+                                                            {group.members.length === 0 && <span className="text-slate-500">{texts.noStudents}</span>}
                                                             {group.members.length > 0 && (
                                                                 <div className="flex flex-wrap gap-1">
                                                                     {group.members.map((member) => (
@@ -522,7 +522,7 @@ export function UsersSummaryPanel() {
                                 </section>
                             ))}
                             {schoolBuckets.length === 0 && (
-                                <p className="text-sm text-slate-400">{texts.noGroups}</p>
+                                <p className="text-sm text-slate-500">{texts.noGroups}</p>
                             )}
                         </div>
                     )}
