@@ -37,7 +37,8 @@ test('Bussola opens the notebook before and after the conversation, and never th
 test('a recommended tool can be opened at any point, through the notebook question', () => {
     const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
     // Il bottone dello strumento non dipende più dallo stato della sessione.
-    assert.match(source, /<button type="button" onClick=\{\(\) => onPick\(item\.id\)\}/);
+    // (È una <Button>, la primitiva, da quando il percorso studente la adotta.)
+    assert.match(source, /<Button type="button" onClick=\{\(\) => onPick\(item\.id\)\}/);
     assert.match(source, /session && pendingTool \? \(\s*<LearnerProfileCard\s+variant="update"/);
     assert.match(source, /onDone=\{\(\) => void leaveForTool\(\)\}/);
     // Il gate rimanda alla Bussola chi non l'ha conclusa: uscire deve completarla.
