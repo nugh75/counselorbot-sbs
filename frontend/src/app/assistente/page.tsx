@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { LucideIcon } from 'lucide-react';
-import { Send, GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search, Award, Eye, Users } from 'lucide-react';
+import { Send, Square, GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search, Award, Eye, Users } from 'lucide-react';
 import { streamChat } from '@/lib/chat-stream';
 import { ai4authLoginUrl, getIdentity, getViewAsAccount, type Identity } from '@/lib/auth';
 import { canUseAssistant, canUseTeacherAssistant } from '@/lib/roles';
@@ -137,6 +137,7 @@ export default function AssistentePage() {
     // Indice della prossima domanda per topic: "Prepara domanda" scorre la lista
     // cosi' propone ogni volta una domanda diversa invece di ripetere la stessa.
     const questionVariantIdx = useRef<Record<string, number>>({});
+    const requestRef = useRef<AbortController | null>(null);
     // Counselor AI: opzionale, scelta in una dropdown. Il sito-chat invia
     // counselor_id al backend che applichera' la persona al system prompt.
     const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
@@ -274,11 +275,15 @@ export default function AssistentePage() {
             scrollToBottom();
         };
 
+        requestRef.current?.abort();
+        const controller = new AbortController();
+        requestRef.current = controller;
+
         try {
             const result = await streamChat(
                 { message: question, audience, session_id: sessionId, conversation_id: conversationId, language: lang, collection, counselor_id: counselorId ?? undefined, response_length: responseLength },
                 (full) => updateLast(full),
-                undefined,
+                controller.signal,
                 undefined,
                 '/api/site-chat/stream',
             );
@@ -296,10 +301,19 @@ export default function AssistentePage() {
             if (result.session_id) setSessionId(result.session_id);
             if (result.conversation_id) setConversationId(result.conversation_id);
         } catch (e) {
-            updateLast(t('assistant.error', { message: e instanceof Error ? e.message : t('assistant.errorGeneric') }));
+            // Interruzione chiesta dal lettore: il testo già arrivato resta, non
+            // viene sostituito dal messaggio d'errore.
+            if (!controller.signal.aborted) {
+                updateLast(t('assistant.error', { message: e instanceof Error ? e.message : t('assistant.errorGeneric') }));
+            }
         } finally {
+            if (requestRef.current === controller) requestRef.current = null;
             setLoading(false);
         }
+    };
+
+    const stopGeneration = () => {
+        requestRef.current?.abort();
     };
 
     const submitFeedback = async (index: number, helpful: boolean) => {
@@ -607,14 +621,25 @@ export default function AssistentePage() {
                             placeholder={t('assistant.inputPlaceholder')}
                             className="min-w-0 flex-1 resize-none rounded-lg border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
-                        <button
-                            onClick={send}
-                            disabled={loading || !input.trim()}
-                            aria-label={t('chat.send')}
-                            className="flex h-12 w-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-0 text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:px-5"
-                        >
-                            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                        </button>
+                        {loading ? (
+                            <button
+                                onClick={stopGeneration}
+                                aria-label={t('chat.stop')}
+                                title={t('chat.stop')}
+                                className="flex h-12 w-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-slate-700 px-0 text-white transition-colors hover:bg-slate-800 sm:w-auto sm:px-5"
+                            >
+                                <Square className="h-5 w-5 fill-current" />
+                            </button>
+                        ) : (
+                            <button
+                                onClick={send}
+                                disabled={!input.trim()}
+                                aria-label={t('chat.send')}
+                                className="flex h-12 w-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-0 text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:px-5"
+                            >
+                                <Send className="w-5 h-5" />
+                            </button>
+                        )}
                     </div>
                     {sessionId && messages.filter((message) => message.role === 'user').length >= 4 && (
                         <LearnerProfileCard

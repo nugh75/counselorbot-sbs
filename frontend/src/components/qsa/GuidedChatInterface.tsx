@@ -602,6 +602,13 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         return controller;
     };
 
+    // Ferma la risposta in corso. Il testo già arrivato resta nel messaggio:
+    // interrompere non è annullare, e quel che si è letto vale. Il `finally`
+    // della richiesta rimette isLoading a false.
+    const stopGeneration = () => {
+        requestRef.current?.abort();
+    };
+
     const setLastFeedbackTargets = (strategyIds?: string[], responseId?: string) => {
         if (!strategyIds?.length && !responseId) return;
         setMessages(prev => {
@@ -1419,11 +1426,11 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             ? lastMessage.content
             : '';
 
-    const inputPlaceholder = isLoading
-        ? t('guided.input.waiting')
-        : isSavickasAgreement
-            ? t('guided.input.pattoPlaceholder')
-            : t('guided.input.placeholder');
+    // Nessun segnaposto d'attesa: la casella resta scrivibile mentre la risposta
+    // arriva, così il pensiero successivo si scrive quando nasce.
+    const inputPlaceholder = isSavickasAgreement
+        ? t('guided.input.pattoPlaceholder')
+        : t('guided.input.placeholder');
     const inputHint = isSavickasAgreement
         ? t('guided.hint.savickasPatto')
         : isAnalysisStep(currentPhase)
@@ -1485,7 +1492,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     onClick={() => void advancePhase()}
                     disabled={isLoading}
                     className={cn(
-                        "flex items-center justify-center gap-1 bg-green-600 font-bold text-white shadow-sm transition-colors hover:bg-green-700 disabled:opacity-50",
+                        "flex items-center justify-center gap-1 bg-indigo-600 font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-50",
                         mobile
                             ? cn("h-11 min-w-0 rounded-lg px-4 text-sm", !showPreviousStep && "col-span-2")
                             : "w-full rounded-lg px-3 py-2.5 text-xs",
@@ -1502,7 +1509,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     onClick={repeatCurrentStep}
                     disabled={isLoading}
                     className={cn(
-                        "bg-amber-600 font-bold text-white shadow-sm transition-colors hover:bg-amber-700 disabled:opacity-50",
+                        "border border-slate-200 bg-white font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50",
                         mobile
                             ? "col-span-2 min-h-11 rounded-lg px-4 py-2.5 text-sm"
                             : "w-full rounded-lg px-3 py-2.5 text-xs",
@@ -1932,19 +1939,32 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                     }
                                 }}
                                 placeholder={inputPlaceholder}
-                                disabled={isLoading}
                                 minRows={1}
                                 maxRows={6}
                                 className="min-w-0 flex-1 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50"
                             />
-                            <button
-                                type="submit"
-                                disabled={isLoading || !input.trim()}
-                                aria-label={t('chat.send')}
-                                className="shrink-0 rounded-md bg-indigo-600 p-3 text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
-                            >
-                                <Send className="w-5 h-5" />
-                            </button>
+                            {/* Mentre la risposta arriva il primario ferma, non invia: la
+                                richiesta ha già il suo AbortController, mancava il comando. */}
+                            {isLoading ? (
+                                <button
+                                    type="button"
+                                    onClick={stopGeneration}
+                                    aria-label={t('chat.stop')}
+                                    title={t('chat.stop')}
+                                    className="shrink-0 rounded-md bg-slate-700 p-3 text-white transition-colors hover:bg-slate-800"
+                                >
+                                    <Square className="h-5 w-5 fill-current" />
+                                </button>
+                            ) : (
+                                <button
+                                    type="submit"
+                                    disabled={!input.trim()}
+                                    aria-label={t('chat.send')}
+                                    className="shrink-0 rounded-md bg-indigo-600 p-3 text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+                                >
+                                    <Send className="w-5 h-5" />
+                                </button>
+                            )}
                         </div>
                         <div className="mt-2 text-center">
                             <p className="text-[10px] text-slate-500">
