@@ -20,7 +20,6 @@ const OpenCodeExperience = dynamic(
 );
 import { MessageSquare, Terminal, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { PageHeader } from '@/components/ui/PageHeader';
 import { FlowStepper } from '@/components/ui/FlowStepper';
 import { CompassMark } from '@/components/ui/CompassMark';
 import { toast } from '@/components/ui/Toast';
@@ -36,6 +35,7 @@ import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { shouldReviewNotebookBeforeInstrument } from '@/lib/notebook-flow';
 import { isStartableQuestionnaireId } from '@/lib/tool-catalog';
+import { enterStep, startTrail, stepAtDepth, type Trail } from '@/lib/flow-history';
 
 
 type Step = 'intro' | 'base' | 'notebook' | 'counselor-select' | 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'farewell';
@@ -214,6 +214,9 @@ export default function Home() {
     // PDF finale inline: barra di avanzamento durante la preparazione, poi
     // anteprima in un iframe sotto la card (niente pagina/download separati).
     const [pdfLoading, setPdfLoading] = useState(false);
+    // Apertura della chat in corso: tiene fermo il comando finché le due
+    // scritture non sono andate.
+    const [starting, setStarting] = useState(false);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [frozenSnapshot, setFrozenSnapshot] = useState<FrozenSessionDetail | null>(null);
     const [savedResults, setSavedResults] = useState<SavedResult[] | null>(null);
@@ -227,6 +230,12 @@ export default function Home() {
     const [notebookReviewed, setNotebookReviewed] = useState(false);
     const [counselorOpenedFromHome, setCounselorOpenedFromHome] = useState(false);
     const entryClaimed = useRef(false);
+    // Cronologia del percorso: un'entrata per passo, così Indietro e Avanti del
+    // browser (e la gesture di ritorno) si muovono dentro il percorso invece di
+    // uscirne. `movingRef` distingue il passo deciso dal codice da quello
+    // deciso dal browser, che non deve accodare una nuova entrata.
+    const trailRef = useRef<Trail<Step> | null>(null);
+    const movingRef = useRef(false);
     const hasCompletedQuestionnaires = (savedResults?.length ?? 0) > 0;
 
     useEffect(() => {
@@ -246,6 +255,40 @@ export default function Home() {
             .catch(() => { if (alive) setNotebookUpdatedAt(null); });
         return () => { alive = false; };
     }, [identity]);
+
+    // Un'entrata di cronologia per ogni passo, dal secondo in poi: la prima è
+    // quella con cui la pagina è stata aperta e va lasciata al browser.
+    useEffect(() => {
+        if (!ready) return;
+        if (movingRef.current) {
+            movingRef.current = false;
+            return;
+        }
+        const previous = trailRef.current;
+        if (!previous) {
+            trailRef.current = startTrail(step);
+            return;
+        }
+        const next = enterStep(previous, step);
+        if (next === previous) return;
+        trailRef.current = next;
+        window.history.pushState({ cbDepth: next.depth }, '');
+    }, [ready, step]);
+
+    useEffect(() => {
+        const onPopState = (event: PopStateEvent) => {
+            const trail = trailRef.current;
+            if (!trail) return;
+            const depth = (event.state as { cbDepth?: number } | null)?.cbDepth ?? 1;
+            const moved = stepAtDepth(trail, depth);
+            if (!moved.step) return;
+            trailRef.current = moved.trail;
+            movingRef.current = true;
+            setStep(moved.step);
+        };
+        window.addEventListener('popstate', onPopState);
+        return () => window.removeEventListener('popstate', onPopState);
+    }, []);
 
     // Uscendo dalla schermata finale, libera l'object URL del PDF inline.
     useEffect(() => {
@@ -519,12 +562,17 @@ export default function Home() {
         setStep('dashboard');
     };
 
+    // Due POST prima di aprire la chat, e nessun blocco sul comando: un secondo
+    // click su rete lenta creava una seconda sessione e una seconda riga di
+    // risultato.
     const startInteraction = async () => {
+        if (starting) return;
         if (!getSelectedCounselorId()) {
             toast.info(t('counselor.selectFirst'));
             setStep('counselor-select');
             return;
         }
+        setStarting(true);
         const newSessionId = generateUUID();
         setSessionId(newSessionId);
         const qType = selectedQuestionnaire?.id || 'QSA';
@@ -564,6 +612,7 @@ export default function Home() {
             console.error("Failed to save questionnaire result", e);
         }
 
+        setStarting(false);
         beginInteraction(newSessionId, qType);
     };
 
@@ -594,7 +643,16 @@ export default function Home() {
         setStep(homeStep());
     };
 
+    // Indietro sullo schermo e Indietro del browser sono lo stesso gesto: con un
+    // passo alle spalle si torna per la cronologia, così le due strade non
+    // divergono. Restano da mappare solo gli ingressi diretti (?start=,
+    // ?frozen=, ?session_id=), che alle spalle non hanno nulla.
     const goBack = () => {
+        const trail = trailRef.current;
+        if (trail && trail.depth > 1) {
+            window.history.back();
+            return;
+        }
         if (step === 'notebook') setStep(homeStep());
         else if (step === 'questionnaire-select') setStep(hasCompletedQuestionnaires ? homeStep() : 'notebook');
         else if (step === 'counselor-select' && counselorOpenedFromHome) {
@@ -604,44 +662,10 @@ export default function Home() {
         else if (step === 'counselor-select') setStep(selectedQuestionnaire ? 'questionnaire-select' : homeStep());
         else if (step === 'method-select') setStep('counselor-select');
         else if (step === 'manual-input' || step === 'upload-input') setStep('method-select');
-        else if (step === 'dashboard') setStep('manual-input');
+        else if (step === 'dashboard') setStep('method-select');
         else if (step === 'interaction') setStep(isAgentOnly(selectedQuestionnaire) ? 'counselor-select' : 'dashboard');
         else if (step === 'completed') setStep('dashboard');
         else if (step === 'farewell') setStep('completed');
-    };
-
-    const getStepTitle = () => {
-        switch (step) {
-            case 'intro': return 'CounselorBot';
-            case 'counselor-select': return 'Scegli il counselor';
-            case 'questionnaire-select': return 'CounselorBot';
-            case 'method-select': return `${selectedQuestionnaire?.name} — ${t('step.methodSelect.titleSuffix')}`;
-            case 'manual-input': return t('step.manualInput.title');
-            case 'upload-input': return t('step.uploadInput.title');
-            case 'dashboard': return t('step.dashboard.title');
-            case 'interaction': return selectedQuestionnaire?.id === 'SAVICKAS' ? t('step.interaction.title.savickas') : t('step.interaction.title.guided');
-            case 'completed': return t('step.completed.title');
-            case 'farewell': return t('step.farewell.title');
-            default: return 'CounselorBot';
-        }
-    };
-
-    const getStepDescription = () => {
-        switch (step) {
-            case 'counselor-select': return 'Dopo lo strumento, scegli l’approccio con cui vuoi affrontare il percorso.';
-            case 'questionnaire-select': return t('step.questionnaireSelect.desc');
-            case 'method-select': return t('step.methodSelect.desc');
-            case 'manual-input': return t('step.manualInput.desc');
-            case 'upload-input': return t('step.uploadInput.desc');
-            case 'dashboard': return `${t('step.dashboard.descPrefix')} ${selectedQuestionnaire?.name}`;
-            case 'interaction':
-                return selectedQuestionnaire?.id === 'SAVICKAS'
-                    ? t('step.interaction.desc.savickas')
-                    : `${t('step.interaction.desc.guidedPrefix')} ${selectedQuestionnaire?.name}`;
-            case 'completed': return t('step.completed.desc');
-            case 'farewell': return t('step.farewell.desc');
-            default: return '';
-        }
     };
 
     if (identity === undefined) {
@@ -718,18 +742,9 @@ export default function Home() {
         <div className="page-wide space-y-8">
             {step !== 'intro' && step !== 'base' && !(step === 'counselor-select' && counselorOpenedFromHome) && <FlowStepper steps={flowStages} current={stageIndex} />}
 
-            {/* The selection screen owns its introduction to avoid repeating the page purpose. */}
-            {/* method-select e manual-input gestiscono la loro "prima riga" */}
-            {/* internamente (BackButton + ForwardButton), come strumenti/counselor. */}
-            {/* 'completed' non mostra il PageHeader: il titolo è già nella card. */}
-            {step !== 'intro' && step !== 'base' && step !== 'notebook' && step !== 'questionnaire-select' && step !== 'counselor-select' && step !== 'dashboard' && step !== 'interaction' && step !== 'method-select' && step !== 'manual-input' && step !== 'upload-input' && step !== 'completed' && (
-                <PageHeader
-                    title={getStepTitle()}
-                    subtitle={getStepDescription()}
-                    onBack={goBack}
-                />
-            )}
-
+            {/* Ogni passo porta la propria testata: il titolo sta nella schermata
+                (o nella card), e la "prima riga" di comandi — BackButton più
+                ForwardButton — è dentro il componente della fase. */}
             <AnimatePresence mode="wait">
                 <motion.div
                     key={step}
@@ -815,7 +830,7 @@ export default function Home() {
                         <div className="space-y-4 animate-fade-in-up">
                             <div className="flex items-center gap-3">
                                 <BackButton onClick={goBack} label={t('nav.back')} />
-                                <ForwardButton onClick={startInteraction} label={t('dashboard.ready.btn')} />
+                                <ForwardButton onClick={startInteraction} label={t('dashboard.ready.btn')} disabled={starting} />
                             </div>
                             <ProfileVisualization scores={scores} questionnaire={selectedQuestionnaire} />
                         </div>
@@ -901,14 +916,26 @@ export default function Home() {
                                     <Button
                                         size="lg"
                                         onClick={async () => {
-                                            // Anteprima inline: prepara il blob e mostralo nell'iframe sotto.
+                                            // Il comando dice "scarica" e finora apriva soltanto
+                                            // un'anteprima: nessun file arrivava sul dispositivo, e
+                                            // su iOS il PDF in un iframe resta un riquadro bianco.
+                                            // Ora salva davvero, come l'area personale e il libretto,
+                                            // e l'anteprima resta in più dove il browser la rende.
                                             setPdfLoading(true);
                                             try {
                                                 const res = await apiFetch(`/api/questionnaire-result/${sessionId}/pdf?lang=${lang}`);
                                                 if (!res.ok) throw new Error('PDF download failed');
                                                 const blob = await res.blob();
                                                 if (pdfUrl) window.URL.revokeObjectURL(pdfUrl);
-                                                setPdfUrl(window.URL.createObjectURL(blob));
+                                                const url = window.URL.createObjectURL(blob);
+                                                const type = selectedQuestionnaire?.id || 'QSA';
+                                                const link = document.createElement('a');
+                                                link.href = url;
+                                                link.download = `counselorbot_${type}_${sessionId.slice(0, 8)}.pdf`;
+                                                document.body.appendChild(link);
+                                                link.click();
+                                                link.remove();
+                                                setPdfUrl(url);
                                             } catch (e) {
                                                 console.error('Failed to load PDF', e);
                                                 toast.error(t('toast.error'));
@@ -944,7 +971,7 @@ export default function Home() {
                             {pdfUrl && (
                                 <iframe
                                     src={pdfUrl}
-                                    title={t('completed.downloadPdf')}
+                                    title={t('completed.pdfPreview')}
                                     className="mt-6 w-full h-[75vh] rounded-xl border border-slate-200 bg-white shadow-sm"
                                 />
                             )}
