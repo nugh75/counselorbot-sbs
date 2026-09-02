@@ -18,12 +18,6 @@ interface CounselorSelectorProps {
     questionnaireType?: string;
 }
 
-function counselorTone(description: string | null | undefined, fallback: string): string {
-    if (!description) return fallback;
-    const first = description.split(/[.!?]/)[0]?.trim();
-    return first || fallback;
-}
-
 export function CounselorSelector({ onContinue, onBack, questionnaireName, questionnaireType }: CounselorSelectorProps) {
     const { t, lang } = useI18n();
     const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
@@ -117,7 +111,7 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName, quest
                                     </span>
                                 )}
                             </div>
-                            <p className="mt-0.5 text-sm text-slate-600">{counselorTone(c.description, t('counselor.toneDefault'))}</p>
+                            <p className="mt-0.5 text-sm leading-relaxed text-slate-600">{c.description || t('counselor.toneDefault')}</p>
                         </div>
 
                         <div className="flex flex-wrap gap-1.5">
