@@ -34,6 +34,22 @@ test('Bussola opens the notebook before and after the conversation, and never th
     assert.doesNotMatch(source, /StudentBookletCard/);
 });
 
+test('a recommended tool can be opened at any point, through the notebook question', () => {
+    const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
+    // Il bottone dello strumento non dipende più dallo stato della sessione.
+    assert.match(source, /<button type="button" onClick=\{\(\) => onPick\(item\.id\)\}/);
+    assert.match(source, /session && pendingTool \? \(\s*<LearnerProfileCard\s+variant="update"/);
+    assert.match(source, /onDone=\{\(\) => void leaveForTool\(\)\}/);
+    // Il gate rimanda alla Bussola chi non l'ha conclusa: uscire deve completarla.
+    assert.match(source, /completeOrientation\(session\.session_id\)/);
+    assert.match(source, /router\.push\(orientationToolHref\(pendingTool\)\)/);
+});
+
+test('the Compass header carries no feature blurbs', () => {
+    const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
+    assert.doesNotMatch(source, /orientation\.feature\.|orientation\.platform/);
+});
+
 test('Bussola only advises: it writes neither notebook nor booklet', () => {
     const api = readFileSync(new URL('./orientation-api.ts', import.meta.url), 'utf8');
     assert.doesNotMatch(api, /notebook-review|notebook_draft|notebook_reviewed/);
