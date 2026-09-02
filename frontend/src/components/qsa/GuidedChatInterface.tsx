@@ -1763,7 +1763,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                         title={t('guided.feedback.helpful')}
                                                         aria-label={t('guided.feedback.helpful')}
                                                         onClick={() => submitStrategyFeedback(idx, true)}
-                                                        className={cn("p-1 rounded text-slate-500 hover:text-green-600", msg.feedback === true && "text-green-600")}
+                                                        className={cn("tap-icon rounded text-slate-500 hover:text-green-600", msg.feedback === true && "text-green-600")}
                                                     >
                                                         <ThumbsUp className="w-3.5 h-3.5" />
                                                     </button>
@@ -1772,7 +1772,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                         title={t('guided.feedback.notHelpful')}
                                                         aria-label={t('guided.feedback.notHelpful')}
                                                         onClick={() => submitStrategyFeedback(idx, false)}
-                                                        className={cn("p-1 rounded text-slate-500 hover:text-red-600", msg.feedback === false && "text-red-600")}
+                                                        className={cn("tap-icon rounded text-slate-500 hover:text-red-600", msg.feedback === false && "text-red-600")}
                                                     >
                                                         <ThumbsDown className="w-3.5 h-3.5" />
                                                     </button>
@@ -1895,7 +1895,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                             onClick={() => ideaReferenceInputRef.current?.click()}
                                             disabled={isLoading || isIdeaReferenceUploading || !sessionId}
                                             aria-label={t(ideaReference ? 'idea.reference.replace' : 'idea.reference.add')}
-                                            className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                            className="tap-icon rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             {isIdeaReferenceUploading
                                                 ? <Loader2 className="h-4 w-4 animate-spin" />
@@ -1910,7 +1910,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                     onClick={() => void handleFreeze()}
                                     disabled={isLoading || !sessionId}
                                     aria-label={t('frozen.freeze')}
-                                    className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="tap-icon rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     <Snowflake className="h-4 w-4" />
                                 </button>

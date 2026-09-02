@@ -547,7 +547,8 @@ export default function AssistentePage() {
                                                 onClick={() => submitFeedback(i, true)}
                                                 disabled={msg.feedback !== undefined}
                                                 title={t('assistant.feedbackUp')}
-                                                className={`p-1 rounded transition-colors disabled:cursor-default ${
+                                                aria-label={t('assistant.feedbackUp')}
+                                                className={`tap-icon rounded transition-colors disabled:cursor-default ${
                                                     msg.feedback === true ? 'text-green-600' : 'text-slate-500 hover:text-green-600'
                                                 }`}
                                             >
@@ -557,7 +558,8 @@ export default function AssistentePage() {
                                                 onClick={() => submitFeedback(i, false)}
                                                 disabled={msg.feedback !== undefined}
                                                 title={t('assistant.feedbackDown')}
-                                                className={`p-1 rounded transition-colors disabled:cursor-default ${
+                                                aria-label={t('assistant.feedbackDown')}
+                                                className={`tap-icon rounded transition-colors disabled:cursor-default ${
                                                     msg.feedback === false ? 'text-red-600' : 'text-slate-500 hover:text-red-600'
                                                 }`}
                                             >
@@ -587,9 +589,10 @@ export default function AssistentePage() {
                             onClick={prepareQuestion}
                             disabled={!selectedTopic}
                             title={t('assistant.prepareQuestion')}
+                            aria-label={t('assistant.prepareQuestion')}
                             className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-bold text-slate-500 transition-colors hover:border-indigo-300 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                            ?
+                            <span aria-hidden="true">?</span>
                         </button>
                         <textarea
                             value={input}
