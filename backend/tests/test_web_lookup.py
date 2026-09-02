@@ -526,6 +526,128 @@ def test_an_article_starts_from_openalex():
         _restore()
 
 
+# --- ricerca tematica --------------------------------------------------------
+
+OPENALEX_SEARCH = {"results": [
+    {
+        "title": "Early school leaving in upper secondary education",
+        "publication_year": 2021,
+        "type": "article",
+        "cited_by_count": 42,
+        "doi": "https://doi.org/10.1000/leaving",
+        "authorships": [{"author": {"display_name": "A. Rossi"}},
+                        {"author": {"display_name": "B. Bianchi"}}],
+        "primary_location": {"source": {"display_name": "Journal of Education"}},
+        "open_access": {"is_oa": True, "oa_status": "gold", "oa_url": "https://cdn.example.org/a.pdf"},
+        "best_oa_location": {"pdf_url": "https://repo.example.org/leaving.pdf"},
+        "abstract_inverted_index": {"Students": [0], "leave": [1], "early": [2]},
+    },
+    {
+        "title": "Dropout prevention programmes",
+        "publication_year": 2019,
+        "cited_by_count": 7,
+        "doi": "https://doi.org/10.1000/prevention",
+        "authorships": [{"author": {"display_name": "C. Verdi"}}],
+        "primary_location": {"source": {"display_name": "Review of Research"}},
+        "open_access": {"is_oa": False, "oa_status": "closed"},
+        "abstract_inverted_index": {"Programmes": [0], "work": [1]},
+    },
+]}
+
+
+def test_a_topical_search_keeps_works_whose_title_does_not_echo_the_query():
+    """Il filtro sul titolo vale per l'entita', non per il tema.
+
+    Cercando "dispersione scolastica" nessun titolo ricalca la domanda: con il
+    controllo di `lookup` la ricerca tornerebbe sempre vuota.
+    """
+    _install(_Responses(json_map={"api.openalex.org": OPENALEX_SEARCH}))
+    try:
+        works = web_lookup.search_works("early school leaving secondary", sources=["openalex"])
+        assert [w.title for w in works] == [
+            "Early school leaving in upper secondary education",
+            "Dropout prevention programmes",
+        ]
+        first = works[0]
+        assert first.authors == "A. Rossi; B. Bianchi"
+        assert first.year == "2021" and first.journal == "Journal of Education"
+        assert first.doi == "10.1000/leaving"
+        assert first.url == "https://doi.org/10.1000/leaving"
+        assert first.abstract == "Students leave early"
+        assert first.oa_status == "gold" and first.citations == 42
+        assert first.pdf_url == "https://repo.example.org/leaving.pdf"
+        assert first.license == web_lookup.LICENSES["openalex"] and first.retrieved_at
+    finally:
+        _restore()
+
+
+def test_the_search_asks_openalex_for_the_filters_it_was_given():
+    responses = _install(_Responses(json_map={"api.openalex.org": OPENALEX_SEARCH}))
+    try:
+        web_lookup.search_works(
+            "early school leaving", sources=["openalex"],
+            limit=5, year_from=2015, oa_only=True, lang="en",
+        )
+        called = responses.calls[0]
+        assert "per_page=5" in called
+        assert "open_access.is_oa%3Atrue" in called
+        assert "publication_year%3A%3E2014" in called
+        assert "language%3Aen" in called
+        assert "sort=relevance_score%3Adesc" in called
+    finally:
+        _restore()
+
+
+def test_the_search_does_not_filter_by_open_access_unless_asked():
+    responses = _install(_Responses(json_map={"api.openalex.org": OPENALEX_SEARCH}))
+    try:
+        web_lookup.search_works("early school leaving", sources=["openalex"], oa_only=False)
+        assert "open_access.is_oa" not in responses.calls[0]
+    finally:
+        _restore()
+
+
+def test_the_same_work_found_twice_is_kept_once():
+    """Europe PMC e OpenAlex indicizzano gli stessi lavori: il DOI decide."""
+    _install(_Responses(json_map={
+        "api.openalex.org": OPENALEX_SEARCH,
+        "europepmc": {"resultList": {"result": [{
+            "title": "Early school leaving in upper secondary education",
+            "doi": "10.1000/leaving",
+            "abstractText": "Students leave early, and the reasons are known.",
+            "pubYear": "2021",
+            "authorString": "Rossi A, Bianchi B.",
+            "journalTitle": "Journal of Education",
+            "isOpenAccess": "Y",
+        }]}},
+    }))
+    try:
+        works = web_lookup.search_works("early school leaving", sources=["openalex", "europepmc"])
+        assert [w.doi for w in works] == ["10.1000/leaving", "10.1000/prevention"]
+    finally:
+        _restore()
+
+
+def test_a_work_without_an_allowed_url_does_not_leave_the_search():
+    _install(_Responses(json_map={"api.openalex.org": {"results": [{
+        "title": "Somewhere else", "doi": "", "id": "https://example.com/W1",
+        "abstract_inverted_index": {"Text": [0]},
+    }]}}))
+    try:
+        assert web_lookup.search_works("anything", sources=["openalex"]) == []
+    finally:
+        _restore()
+
+
+def test_the_query_of_a_search_leaves_without_personal_data():
+    responses = _install(_Responses(json_map={"api.openalex.org": {"results": []}}))
+    try:
+        web_lookup.search_works("dispersione, scrive daniele.dragoni@gmail.com", sources=["openalex"])
+        assert "dragoni" not in responses.calls[0].lower()
+    finally:
+        _restore()
+
+
 # --- blocco per il prompt ----------------------------------------------------
 
 def test_the_block_carries_source_link_and_date():
