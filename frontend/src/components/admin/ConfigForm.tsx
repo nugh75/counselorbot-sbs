@@ -1481,7 +1481,7 @@ export function ConfigForm() {
 
     // --- Render ---
 
-    if (loading) return <div className="text-center py-8 text-gray-400">{t('admin.config.loading')}</div>;
+    if (loading) return <div className="text-center py-8 text-slate-400">{t('admin.config.loading')}</div>;
 
     const apiKeys = [
         { key: 'api_key_openai', label: 'API Key OpenAI' },
