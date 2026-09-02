@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { MotionConfig } from 'framer-motion';
 import { Inter, Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { Header } from '@/components/layout/Header';
@@ -38,6 +39,12 @@ export default function RootLayout({
             </head>
             <body className={`${inter.variable} ${display.variable} ${mono.variable} min-h-screen bg-slate-50 text-slate-900 selection:bg-indigo-100 selection:text-indigo-900`}>
                 <I18nProvider>
+                    {/* La media query prefers-reduced-motion in globals.css azzera le
+                        durate CSS, ma framer-motion anima in JavaScript e non la vede:
+                        le transizioni di passo continuavano a muoversi per chi ha
+                        chiesto di non farlo. reducedMotion="user" copre ogni motion.*
+                        dell'albero, presente e futuro. */}
+                    <MotionConfig reducedMotion="user">
                     <TooltipProvider delayDuration={300}>
                         <ViewAsFetchPatch />
                         <Header />
@@ -47,6 +54,7 @@ export default function RootLayout({
                         <RolePreviewBanner />
                         <Toaster />
                     </TooltipProvider>
+                    </MotionConfig>
                 </I18nProvider>
             </body>
         </html>
