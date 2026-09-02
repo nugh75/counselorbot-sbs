@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Check, Compass, Loader2, Send, Sparkles } from 'lucide-react';
+import { ArrowDown, ArrowRight, Check, Compass, Loader2, Send, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
 import { QuestionnaireLink } from '@/components/ui/QuestionnaireLink';
@@ -269,6 +269,20 @@ export default function BussolaPage() {
                             {sending && <ChatPending label={t('orientation.processing')} />}
                             <div ref={endRef} />
                         </div>
+                        {session.recommendations.length > 0 && (
+                            <div className="border-t border-slate-100 px-4 py-2 sm:px-6">
+                                <button
+                                    type="button"
+                                    // Qui scrollare la pagina e' l'intento: il pannello sta sotto
+                                    // la piega e senza questo non c'era nulla che lo indicasse.
+                                    onClick={() => document.getElementById('orientation-recommendations')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-700 hover:underline"
+                                >
+                                    {t('orientation.recommendations.jump', { count: session.recommendations.length })}
+                                    <ArrowDown className="h-4 w-4" />
+                                </button>
+                            </div>
+                        )}
                         {session.status === 'in_progress' && (
                             <form onSubmit={submitMessage} className="border-t border-slate-100 bg-slate-50/70 p-3 sm:p-4">
                                 <div className="flex items-end gap-2">
@@ -279,7 +293,11 @@ export default function BussolaPage() {
                         )}
                     </section>
 
-                    {session.recommendations.length > 0 && <RecommendationSection session={session} onPick={setPendingTool} />}
+                    {session.recommendations.length > 0 && (
+                        <div id="orientation-recommendations">
+                            <RecommendationSection session={session} onPick={setPendingTool} />
+                        </div>
+                    )}
 
                     {session.status === 'in_progress' && session.recommendations.length > 0 && (
                         <div className="flex justify-end">
