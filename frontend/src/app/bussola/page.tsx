@@ -2,13 +2,10 @@
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, BookOpen, Check, Compass, Loader2, MessageCircle, NotebookPen, Route, Send, Sparkles } from 'lucide-react';
+import { ArrowRight, Check, Compass, Loader2, MessageCircle, NotebookPen, Route, Send, Sparkles } from 'lucide-react';
 import { CompassMark } from '@/components/ui/CompassMark';
 import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
-import { StudentBookletCard, EVENT_BOOKLET_TYPES, bookletTypeOptionLabel, type BookletType } from '@/components/profile/StudentBookletCard';
-import { toast } from '@/components/ui/Toast';
-import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import {
     completeOrientation,
@@ -18,7 +15,7 @@ import {
     startOrientation,
     type OrientationSession,
 } from '@/lib/orientation-api';
-import { QUESTIONNAIRE_LIST, QUESTIONNAIRES, type QuestionnaireType } from '@/lib/questionnaires';
+import { QUESTIONNAIRES, type QuestionnaireType } from '@/lib/questionnaires';
 import { orientationToolHref, safeOrientationNext } from '@/lib/tool-catalog';
 import { getSelectedCounselorId } from '@/lib/counselor';
 
@@ -37,27 +34,23 @@ function toolDescription(id: string, t: (key: string) => string): string {
     return t(`q.${id}.description`);
 }
 
-function recommendedBooklet(session: OrientationSession | null): QuestionnaireType {
-    const id = session?.recommendations.find((item) => item.id in QUESTIONNAIRES)?.id;
-    return (id as QuestionnaireType | undefined) ?? 'IDEA';
-}
-
 export default function BussolaPage() {
-    const { t, tf, lang } = useI18n();
+    const { t, lang } = useI18n();
     const [session, setSession] = useState<OrientationSession | null>(null);
     const [latestSessionId, setLatestSessionId] = useState<string | null>(null);
     const [orientationRequired, setOrientationRequired] = useState(false);
     const [choosingCounselor, setChoosingCounselor] = useState(false);
     const [pendingNewSession, setPendingNewSession] = useState(false);
+    // Taccuino di apertura: lo studente lo rivede prima che la conversazione inizi.
+    const [pendingCounselorId, setPendingCounselorId] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const [completing, setCompleting] = useState(false);
     const [input, setInput] = useState('');
     const [error, setError] = useState('');
     const [nextHref, setNextHref] = useState<string | null>(null);
-    const [openRecord, setOpenRecord] = useState<'notebook' | 'booklet' | null>(null);
-    const [bookletType, setBookletType] = useState<BookletType>('IDEA');
     const endRef = useRef<HTMLDivElement>(null);
+    const startingRef = useRef(false);
 
     const openSession = useCallback(async (sessionId: string) => {
         setLoading(true);
@@ -65,7 +58,6 @@ export default function BussolaPage() {
         try {
             const row = await fetchOrientationSession(sessionId);
             setSession(row);
-            setBookletType(recommendedBooklet(row));
             if (row.status === 'in_progress' && !row.counselor_id) {
                 setPendingNewSession(false);
                 setChoosingCounselor(true);
@@ -80,13 +72,12 @@ export default function BussolaPage() {
     const createSession = useCallback(async (newSession: boolean, counselorId: number) => {
         setLoading(true);
         setError('');
-        setOpenRecord(null);
         try {
             const row = await startOrientation(lang, newSession, counselorId);
             setSession(row);
-            setBookletType(recommendedBooklet(row));
-            setChoosingCounselor(false);
+            setPendingCounselorId(null);
         } catch {
+            startingRef.current = false;
             setError(t('orientation.error'));
         } finally {
             setLoading(false);
@@ -94,20 +85,31 @@ export default function BussolaPage() {
     }, [lang, t]);
 
     const beginCounselorChoice = (newSession: boolean) => {
+        startingRef.current = false;
         setPendingNewSession(newSession);
+        setPendingCounselorId(null);
         setChoosingCounselor(true);
         setError('');
     };
 
-    const continueWithCounselor = async () => {
+    const continueWithCounselor = () => {
+        startingRef.current = false;
         const counselorId = getSelectedCounselorId();
         if (!counselorId) {
             setError(t('counselor.selectFirst'));
             return;
         }
-        const newSession = pendingNewSession;
-        await createSession(newSession, counselorId);
+        setPendingCounselorId(counselorId);
+        setChoosingCounselor(false);
     };
+
+    // Il taccuino apre la Bussola: rivisto (o saltato) lo studente entra in chat.
+    // La card chiama onDone e poi onUnavailable dopo il salvataggio: la sessione va creata una volta sola.
+    const startAfterNotebook = useCallback(() => {
+        if (startingRef.current || pendingCounselorId === null) return;
+        startingRef.current = true;
+        void createSession(pendingNewSession, pendingCounselorId);
+    }, [createSession, pendingCounselorId, pendingNewSession]);
 
     useEffect(() => {
         let active = true;
@@ -152,7 +154,6 @@ export default function BussolaPage() {
         try {
             const row = await sendOrientationMessage(session.session_id, message, lang);
             setSession(row);
-            setBookletType(recommendedBooklet(row));
         } catch {
             setInput(message);
             setError(t('orientation.error'));
@@ -219,10 +220,17 @@ export default function BussolaPage() {
                         <p className="mt-2 text-sm leading-relaxed text-slate-600">{t('orientation.counselor.body')}</p>
                     </div>
                     <CounselorSelector
-                        onContinue={() => void continueWithCounselor()}
+                        onContinue={continueWithCounselor}
                         onBack={orientationRequired ? undefined : () => setChoosingCounselor(false)}
                     />
                 </section>
+            ) : pendingCounselorId !== null ? (
+                <LearnerProfileCard
+                    variant="review"
+                    onDone={startAfterNotebook}
+                    onUnavailable={startAfterNotebook}
+                    onBack={() => setChoosingCounselor(true)}
+                />
             ) : !session ? (
                 <section className="glass-panel flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3"><Compass className="h-6 w-6 text-indigo-600" /><p className="text-sm leading-relaxed text-slate-600">{t('orientation.subtitle')}</p></div>
@@ -270,20 +278,13 @@ export default function BussolaPage() {
                             <div className="flex gap-3"><Sparkles className="mt-0.5 h-6 w-6 shrink-0 text-teal-600" /><div><h2 className="font-display text-xl font-bold text-slate-900">{t('orientation.completed.title')}</h2><p className="mt-1 text-sm leading-relaxed text-slate-600">{t('orientation.completed.body')}</p></div></div>
                             {nextHref && <Link href={nextHref} className="inline-flex items-center gap-2 rounded-md bg-ochre-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-ochre-600">{t('orientation.continue')}<ArrowRight className="h-4 w-4" /></Link>}
                             <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-                                <button type="button" onClick={() => setOpenRecord(openRecord === 'notebook' ? null : 'notebook')} className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-700"><NotebookPen className="h-4 w-4" />{openRecord === 'notebook' ? t('orientation.records.close') : t('orientation.records.notebook')}</button>
-                                <button type="button" onClick={() => setOpenRecord(openRecord === 'booklet' ? null : 'booklet')} className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-700"><BookOpen className="h-4 w-4" />{openRecord === 'booklet' ? t('orientation.records.close') : t('orientation.records.booklet')}</button>
                                 <button type="button" onClick={() => beginCounselorChoice(true)} className="ml-auto rounded-md px-4 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">{t('orientation.landing.new')}</button>
                             </div>
                         </section>
                     )}
 
-                    {session.status === 'completed' && openRecord === 'notebook' && <LearnerProfileCard variant="edit" sessionId={session.session_id} />}
-                    {session.status === 'completed' && openRecord === 'booklet' && (
-                        <div className="space-y-4">
-                            <label className="block max-w-xl"><span className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">{t('orientation.booklet.select')}</span><select value={bookletType} onChange={(event) => setBookletType(event.target.value as BookletType)} className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">{[...QUESTIONNAIRE_LIST.map((item) => item.id), ...EVENT_BOOKLET_TYPES].map((type) => <option key={type} value={type}>{bookletTypeOptionLabel(type, t, tf)}</option>)}</select></label>
-                            <StudentBookletCard key={bookletType} questionnaireType={bookletType} lang={lang} />
-                        </div>
-                    )}
+                    {/* Il taccuino chiude la Bussola: lo studente rivede quanto ha scritto. */}
+                    {session.status === 'completed' && <LearnerProfileCard variant="update" sessionId={session.session_id} />}
                 </>
             )}
 
