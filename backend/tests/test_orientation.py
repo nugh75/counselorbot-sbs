@@ -8,6 +8,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from backend import auth, database, models, orientation
+from backend.student_context import student_context
 from backend.ai_service import _requests_json_response
 from backend.orientation import _clean_analysis, _tools_named_in, analyze_turn, fallback_analysis
 from backend.routes import orientation as orientation_routes
@@ -27,6 +28,10 @@ for table in (
     models.LearnerProfileRevision.__table__,
     models.OrientationSession.__table__,
     models.StudentBooklet.__table__,
+    # La Bussola legge anche sessioni congelate e portfolio per sapere che cosa
+    # lo studente ha gia' fatto (student_context).
+    models.FrozenSession.__table__,
+    models.PortfolioItem.__table__,
 ):
     table.create(bind=_engine, checkfirst=True)
 
@@ -249,6 +254,78 @@ def test_the_panel_summarises_the_session_not_the_last_turn():
     merged = _merged_recommendations(merged, [{"id": "pqbl", "reason": "adesso"}])
     assert [row["id"] for row in merged] == ["pqbl", "QSA", "SAVICKAS"]
     assert merged[0]["reason"] == "adesso"
+
+
+def test_the_compass_knows_what_the_student_has_already_done():
+    """Senza questo blocco la Bussola raccomanda al buio.
+
+    Sapere che il QSA e' gia' compilato e' cio' che le permette di proporlo
+    aprendo la chat guidata invece di rimandare lo studente a compilarlo.
+    """
+    db = _Session()
+    username = "context.student"
+    try:
+        db.add(models.QuestionnaireResult(
+            session_id="s-1", questionnaire_type="QSA", username=username,
+            scores={"C1": 7, "A1": 3},
+        ))
+        db.add(models.FrozenSession(username=username, session_id="s-2", questionnaire_type="ZTPI", data={}))
+        db.add(models.LearnerProfileRevision(
+            username=username, source="manual",
+            data={"goal": "Organizzare lo studio", "main_difficulty": "Mi distraggo"},
+        ))
+        db.add(models.PortfolioItem(username=username, title="Tesina di storia", category="elaborato"))
+        db.commit()
+        block = student_context(db, username)
+    finally:
+        db.query(models.QuestionnaireResult).filter_by(username=username).delete()
+        db.query(models.FrozenSession).filter_by(username=username).delete()
+        db.query(models.LearnerProfileRevision).filter_by(username=username).delete()
+        db.query(models.PortfolioItem).filter_by(username=username).delete()
+        db.commit()
+        db.close()
+
+    assert "Instruments already completed" in block and "- QSA" in block
+    assert "Interrupted sessions that can be resumed" in block and "- ZTPI" in block
+    assert "Organizzare lo studio" in block and "Mi distraggo" in block
+    assert "Tesina di storia" in block
+
+    # I punteggi non entrano mai: la Bussola non li produce e non li interpreta.
+    assert "C1" not in block
+    assert "7" not in block
+
+
+def test_a_new_student_adds_no_context_block():
+    db = _Session()
+    try:
+        assert student_context(db, "nobody.at.all") == ""
+        assert student_context(db, "") == ""
+    finally:
+        db.close()
+
+
+def test_the_context_reaches_the_prompt():
+    db = _Session()
+    username = "orientation.student"
+    try:
+        db.add(models.QuestionnaireResult(session_id="s-9", questionnaire_type="QAP", username=username, scores=None))
+        db.commit()
+        analyze_turn(db, "Non so da dove partire", "it", None, None, username)
+        prompt = _FakeAIService.last_call[0][1]
+    finally:
+        db.query(models.QuestionnaireResult).filter_by(username=username).delete()
+        db.commit()
+        db.close()
+
+    assert "THE STUDENT SO FAR" in prompt
+    assert "- QAP" in prompt
+    # Senza username il blocco non compare: nessuna fuga di contesto fra studenti.
+    db = _Session()
+    try:
+        analyze_turn(db, "Non so da dove partire", "it")
+        assert "THE STUDENT SO FAR" not in _FakeAIService.last_call[0][1]
+    finally:
+        db.close()
 
 
 def test_prompt_says_what_an_already_completed_questionnaire_unlocks():

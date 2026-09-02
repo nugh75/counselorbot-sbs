@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from . import models
 from .ai_service import AIError, AIService
+from .student_context import student_context
 
 logger = logging.getLogger(__name__)
 
@@ -529,12 +530,16 @@ def analyze_turn(
     language: str,
     history: list[dict[str, str]] | None = None,
     counselor_id: int | None = None,
+    username: str = "",
 ) -> OrientationAnalysis:
     """Interpreta un turno; il catalogo chiuso resta l'autorità finale."""
     lang = normalize_language(language)
     fallback = _fallback_without_repetition(fallback_analysis(message, lang), history, lang)
     reference = _canonical_reference(message, lang)
     sources = _questionnaire_sources(lang)
+    # Che cosa lo studente ha gia' fatto: senza, la Bussola raccomanda al buio
+    # e sa di un questionario compilato solo se lo studente glielo scrive.
+    student = student_context(db, username)
     counselor, provider, model, disable_thinking, reasoning_budget = _counselor_runtime(db, counselor_id)
     if provider is None and model is None:
         # Modello predefinito della Bussola: senza preset del counselor usa qwen3.8.
@@ -556,7 +561,7 @@ A student who says they have already filled in one of the six questionnaires is 
 Your recommendations become clickable cards under this conversation, one per tool, each carrying the reason you gave. Point the student at them in your own words when you suggest something, instead of describing a tool as if there were no way to open it.
 Answer every direct question before suggesting a route. If the student asks how CounselorBot works or which tools exist, explain the complete catalog and the personal spaces instead of asking another clarifying question. Never reply with only a generic acknowledgment.
 Bringing a disoriented student into focus is YOUR task, not a tool's: if the student does not know where to start, ask about their area of interest and explain the options yourself. Recommend IDEA only when the student already names a concrete idea, decision or project of their own.
-Never repeat a list or an explanation you already gave earlier in this conversation: if the student is still lost after the overview, do not print the catalog again, ask one concrete question about their situation and name at most two tools that fit. When you do give the overview, name all nine catalog tools grouped into the three families — six questionnaires, two guided conversations, pQBL — and the three personal spaces. Do not open the reply with formulaic empathy statements such as "I understand..." or "Let me step into your shoes...": start with the substance of the answer.{counselor_context}
+Never repeat a list or an explanation you already gave earlier in this conversation: if the student is still lost after the overview, do not print the catalog again, ask one concrete question about their situation and name at most two tools that fit. When you do give the overview, name all nine catalog tools grouped into the three families — six questionnaires, two guided conversations, pQBL — and the three personal spaces. Do not open the reply with formulaic empathy statements such as "I understand..." or "Let me step into your shoes...": start with the substance of the answer.{counselor_context}{student}
 
 Return ONLY JSON, with no prose outside this object, using this exact shape:
 {{

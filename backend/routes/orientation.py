@@ -235,7 +235,7 @@ def orientation_message(
     if row.status != "in_progress":
         raise HTTPException(status_code=409, detail="Orientation session already completed")
     history = list(row.messages or [])
-    analysis = analyze_turn(db, payload.message, payload.language, history, row.counselor_id)
+    analysis = analyze_turn(db, payload.message, payload.language, history, row.counselor_id, row.username)
     messages = (history + [
         {"role": "user", "content": payload.message},
         {"role": "assistant", "content": analysis.reply},
