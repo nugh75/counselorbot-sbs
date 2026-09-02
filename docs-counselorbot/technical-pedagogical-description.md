@@ -6,7 +6,8 @@ administrators/teachers/researchers who configure, monitor, and integrate it int
 teaching or research.
 
 > **Test mode notice**: Item-level questionnaire administration on CounselorBot is
-> currently in **test mode** and available only in **Swedish, English, and Spanish**. The
+> currently in **test mode** and available in **English, Spanish, French, German, and
+> Swedish**; none of those versions is validated yet. It is not available in Italian. The
 > guided chat and the platform interface work in Italian, English, Spanish, French,
 > German, and Swedish once a profile is entered manually or uploaded. For Italian-language
 > questionnaires, the official validated instruments are administered through

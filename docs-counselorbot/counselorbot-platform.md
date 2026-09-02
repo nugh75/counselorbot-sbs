@@ -171,6 +171,7 @@ Collapsible sections grouped for configuration, research, monitoring, and traini
 ## Languages
 
 The platform interface and the guided chat support Italian, English, Spanish, French,
-German, and Swedish. Item-level questionnaire administration (test mode) is limited to
-English, Spanish, and Swedish. Italian-language questionnaires are administered via
+German, and Swedish. Item-level questionnaire administration (test mode) is available in
+English, Spanish, French, German, and Swedish; those versions are not validated yet.
+It is not available in Italian. Italian-language questionnaires are administered via
 [competenzestrategiche.it](https://competenzestrategiche.it).
