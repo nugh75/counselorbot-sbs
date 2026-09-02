@@ -17,6 +17,7 @@ import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { toast } from '@/components/ui/Toast';
+import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
 import { IdeaBranchBar } from '@/components/qsa/IdeaBranchBar';
@@ -1679,12 +1680,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                 <span className="max-w-full break-words rounded-full bg-slate-50 px-3 py-2 text-[10px] font-medium uppercase tracking-widest text-slate-500">{msg.content}</span>
                             ) : (
                                 <div className={cn("flex min-w-0 max-w-[94%] flex-col gap-1 sm:max-w-[90%]", msg.role === 'user' ? "items-end" : "items-start")}>
-                                    <div className={cn(
-                                        "min-w-0 break-words rounded-lg px-4 py-3 text-sm leading-relaxed shadow-sm sm:px-5 sm:py-3.5",
-                                        msg.role === 'user'
-                                            ? 'bg-indigo-600 text-white rounded-tr-sm'
-                                            : 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm'
-                                    )}>
+                                    <ChatBubble role={msg.role === 'user' ? 'user' : 'assistant'}>
                                         {msg.role === 'assistant' ? (
                                             <div className="space-y-2">
                                                 {msg.reasoning && (
@@ -1724,7 +1720,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                 ) : null}
                                             </div>
                                         ) : msg.content}
-                                    </div>
+                                    </ChatBubble>
 
                                     {msg.role === 'assistant' && msg.content.trim() && (
                                         <div className="flex items-center gap-1">
@@ -1780,17 +1776,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
 
 
-                    {isLoading && (
-                        <div className="flex justify-start">
-                            <div className="px-5 py-4 rounded-lg bg-white border border-slate-100 shadow-sm flex items-center gap-3">
-                                <span className="relative flex h-3 w-3">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
-                                </span>
-                                <span className="text-xs font-medium text-slate-500">{t('guided.processing')}</span>
-                            </div>
-                        </div>
-                    )}
+                    {isLoading && <ChatPending label={t('guided.processing')} />}
                     {/* Fine sessione: invito a rivedere il profilo dopo la conversazione */}
                     {currentPhase === FIXED_CONCLUSION_ID && (
                         <div className="max-w-full sm:max-w-2xl">

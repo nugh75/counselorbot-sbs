@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Check, Compass, Loader2, Send, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
 import { CompassMark } from '@/components/ui/CompassMark';
 import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
@@ -259,12 +260,12 @@ export default function BussolaPage() {
                         <div className="max-h-[34rem] space-y-4 overflow-y-auto px-4 py-5 sm:px-6" aria-live="polite">
                             {session.messages.map((message, index) => (
                                 <div key={`${message.role}-${index}`} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                    <div className={`max-w-[88%] whitespace-pre-line rounded-xl px-4 py-3 text-sm leading-relaxed sm:max-w-2xl ${message.role === 'user' ? 'bg-indigo-600 text-white' : 'border border-slate-100 bg-slate-50 text-slate-700'}`}>
+                                    <ChatBubble role={message.role === 'user' ? 'user' : 'assistant'} className="max-w-[88%] whitespace-pre-line sm:max-w-2xl">
                                         {message.content}
-                                    </div>
+                                    </ChatBubble>
                                 </div>
                             ))}
-                            {sending && <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin text-indigo-600" />{t('orientation.processing')}</div>}
+                            {sending && <ChatPending label={t('orientation.processing')} />}
                             <div ref={endRef} />
                         </div>
                         {session.status === 'in_progress' && (
