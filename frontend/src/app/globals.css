@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Identita' grafica: docs/design.md e' la fonte di verita' dichiarata (scale,
+   ruoli semantici, regole del dark mode, superfici fuori dall'app web).
+   Una tinta nuova si aggiunge qui, mai al call-site. */
+
 /* Dark mode class-based: .dark sull'<html> attiva sia le varianti dark: sia gli
    override CSS sotto (vedi fondo file). */
 @custom-variant dark (&:where(.dark, .dark *));
