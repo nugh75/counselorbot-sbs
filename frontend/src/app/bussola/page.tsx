@@ -1,11 +1,11 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, BookOpen, Check, Compass, Loader2, MessageCircle, NotebookPen, Route, Send, Sparkles } from 'lucide-react';
 import { CompassMark } from '@/components/ui/CompassMark';
 import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
-import { LearnerProfileCard, type LearnerProfileData } from '@/components/profile/LearnerProfileCard';
+import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { StudentBookletCard, EVENT_BOOKLET_TYPES, bookletTypeOptionLabel, type BookletType } from '@/components/profile/StudentBookletCard';
 import { toast } from '@/components/ui/Toast';
 import { apiFetch } from '@/lib/auth';
@@ -14,7 +14,6 @@ import {
     completeOrientation,
     fetchOrientationSession,
     fetchOrientationStatus,
-    reviewOrientationNotebook,
     sendOrientationMessage,
     startOrientation,
     type OrientationSession,
@@ -22,15 +21,6 @@ import {
 import { QUESTIONNAIRE_LIST, QUESTIONNAIRES, type QuestionnaireType } from '@/lib/questionnaires';
 import { orientationToolHref, safeOrientationNext } from '@/lib/tool-catalog';
 import { getSelectedCounselorId } from '@/lib/counselor';
-
-const NOTEBOOK_FIELDS: { key: keyof LearnerProfileData; labelKey: string }[] = [
-    { key: 'context', labelKey: 'lp.field.context' },
-    { key: 'goal', labelKey: 'lp.field.goal' },
-    { key: 'main_difficulty', labelKey: 'lp.field.difficulty' },
-    { key: 'strengths', labelKey: 'lp.field.strengths' },
-    { key: 'weaknesses', labelKey: 'lp.field.weaknesses' },
-    { key: 'notes', labelKey: 'lp.field.notes' },
-];
 
 function safeNextHref(): string | null {
     if (typeof window === 'undefined') return null;
@@ -267,13 +257,9 @@ export default function BussolaPage() {
 
                     {session.recommendations.length > 0 && <RecommendationSection session={session} />}
 
-                    {session.recommendations.length > 0 && session.status === 'in_progress' && (
-                        <NotebookDraftReview session={session} onSession={setSession} />
-                    )}
-
                     {session.status === 'in_progress' && session.recommendations.length > 0 && (
                         <div className="flex justify-end">
-                            <button type="button" onClick={() => void finish()} disabled={!session.notebook_reviewed || completing} className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40">
+                            <button type="button" onClick={() => void finish()} disabled={completing} className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40">
                                 {completing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}{t('orientation.complete')}
                             </button>
                         </div>
@@ -327,66 +313,4 @@ function RecommendationSection({ session }: { session: OrientationSession }) {
     );
 }
 
-function NotebookDraftReview({ session, onSession }: { session: OrientationSession; onSession: (row: OrientationSession) => void }) {
-    const { t } = useI18n();
-    const [current, setCurrent] = useState<LearnerProfileData>({});
-    const [values, setValues] = useState<Record<string, string>>({});
-    const [selected, setSelected] = useState<Record<string, boolean>>({});
-    const [saving, setSaving] = useState(false);
 
-    const entries = useMemo(() => NOTEBOOK_FIELDS.filter((field) => session.notebook_draft[field.key]), [session.notebook_draft]);
-    const hasSelectedValue = Object.entries(values).some(([key, value]) => selected[key] && value.trim());
-
-    useEffect(() => {
-        let active = true;
-        const draft = Object.fromEntries(entries.map((field) => [field.key, session.notebook_draft[field.key]]));
-        setValues(draft);
-        setSelected(Object.fromEntries(entries.map((field) => [field.key, true])));
-        apiFetch('/api/user/learner-profile')
-            .then((response) => response.ok ? response.json() : null)
-            .then((revision) => { if (active) setCurrent(revision?.data ?? {}); })
-            .catch(() => { if (active) setCurrent({}); });
-        return () => { active = false; };
-    }, [entries, session.notebook_draft]);
-
-    const save = async (skip: boolean) => {
-        setSaving(true);
-        try {
-            const data = skip ? {} : Object.fromEntries(Object.entries(values).filter(([key, value]) => selected[key] && value.trim()));
-            const row = await reviewOrientationNotebook(session.session_id, data, skip);
-            onSession(row);
-            toast.success(t(skip ? 'orientation.notebook.skipped' : 'orientation.notebook.saved'));
-        } catch {
-            toast.error(t('orientation.error'));
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    if (session.notebook_reviewed) {
-        return <div className="rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900">{t(session.notebook_revision_id ? 'orientation.notebook.saved' : 'orientation.notebook.skipped')}</div>;
-    }
-
-    return (
-        <section className="glass-panel space-y-5 p-5 sm:p-6">
-            <div className="flex gap-3"><NotebookPen className="mt-0.5 h-6 w-6 shrink-0 text-teal-600" /><div><h2 className="font-display text-xl font-bold text-slate-900">{t('orientation.notebook.title')}</h2><p className="mt-1 text-sm leading-relaxed text-slate-500">{t('orientation.notebook.subtitle')}</p></div></div>
-            {entries.length === 0 ? <p className="text-sm text-slate-600">{t('orientation.notebook.empty')}</p> : (
-                <div className="space-y-4">
-                    {entries.map((field) => (
-                        <div key={field.key} className="rounded-lg border border-slate-200 bg-white p-4">
-                            <label className="flex items-start gap-3">
-                                <input type="checkbox" checked={selected[field.key] ?? false} onChange={(event) => setSelected((old) => ({ ...old, [field.key]: event.target.checked }))} className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-400" />
-                                <span className="grow"><span className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">{t(field.labelKey)}</span>{current[field.key] && <span className="mt-1 block text-xs leading-relaxed text-slate-400">{t('orientation.notebook.current')}: {current[field.key]}</span>}</span>
-                            </label>
-                            <textarea value={values[field.key] ?? ''} onChange={(event) => setValues((old) => ({ ...old, [field.key]: event.target.value }))} disabled={!selected[field.key]} rows={3} maxLength={600} className="mt-3 w-full resize-y rounded-md border border-slate-300 px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:bg-slate-50 disabled:text-slate-400" />
-                        </div>
-                    ))}
-                </div>
-            )}
-            <div className="flex flex-wrap gap-2">
-                {entries.length > 0 && <button type="button" onClick={() => void save(false)} disabled={saving || !hasSelectedValue} className="inline-flex items-center gap-2 rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-40">{saving && <Loader2 className="h-4 w-4 animate-spin" />}{t('orientation.notebook.save')}</button>}
-                <button type="button" onClick={() => void save(true)} disabled={saving} className="rounded-md px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100">{t('orientation.notebook.skip')}</button>
-            </div>
-        </section>
-    );
-}
