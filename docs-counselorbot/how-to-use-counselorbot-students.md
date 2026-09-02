@@ -73,7 +73,8 @@ your profile.
   different aspects of how you learn and plan your future.
 - **What language can I use it in?** The interface and the guided chat work in Italian,
   English, Spanish, French, German, and Swedish once your profile is entered. Item-level
-  test administrations are available in Swedish, English, and Spanish.
+  test administrations are available in English, Spanish, French, German, and Swedish;
+  those versions are not validated yet.
 - **I speak Italian — can I use the questionnaires?** Item-level questionnaires on
   CounselorBot are not available in Italian yet. Please use
   [competenzestrategiche.it](https://competenzestrategiche.it) for Italian-language
