@@ -1,6 +1,5 @@
 'use client';
 
-import { useRef } from 'react';
 import { useForm, type UseFormRegister, type FieldErrors } from 'react-hook-form';
 import { QuestionnaireConfig, FactorDefinition } from '@/lib/questionnaires';
 import { cn } from '@/lib/utils';
@@ -110,7 +109,6 @@ interface ScoreInputFormProps {
 
 export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack }: ScoreInputFormProps) {
     const { t, tf } = useI18n();
-    const formRef = useRef<HTMLFormElement>(null);
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
         defaultValues: { scores: initialScores || {} },
     });
@@ -128,19 +126,16 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack 
         onSubmit(scores);
     };
 
-    // Il submit sta in cima, i campi scorrono per venticinque righe: senza questo
-    // salto un punteggio mancante si segnalava solo come bordo rosso fuori schermo.
-    const onInvalid = () => {
-        formRef.current?.querySelector<HTMLInputElement>('input[aria-invalid="true"]')?.focus();
-    };
-
     const missingCount = Object.keys(errors.scores || {}).length;
     const gridCols = groupedFactors.length === 1 ? 'grid-cols-1 max-w-xl mx-auto' : 'md:grid-cols-2';
 
     // Stessa "prima riga" di selezione usata da QuestionnaireSelector /
-    // CounselorSelector / InputMethodSelector: BackButton (cerchio+freccia) +
-    // ForwardButton (cerchio+freccia a destra, qui submit del form). Nessun
-    // testo introduttivo: il FlowStepper in alto descrive già la fase.
+    // CounselorSelector / InputMethodSelector: BackButton (cerchio quieto) +
+    // ForwardButton (primario con etichetta, qui submit del form). Nessun testo
+    // introduttivo: il FlowStepper in alto descrive già la fase.
+    // Il fuoco sul primo campo mancante lo porta shouldFocusError di
+    // react-hook-form, attivo di default: il submit sta in cima e i campi
+    // scorrono per venticinque righe.
     return (
         <div className="w-full space-y-5 animate-fade-in-up">
             <div className="flex items-center gap-3">
@@ -152,7 +147,7 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack 
                     {t('score.error.summary', { count: missingCount })}
                 </p>
             )}
-            <form ref={formRef} id="score-form" onSubmit={handleSubmit(onFormSubmit, onInvalid)} className="max-w-4xl mx-auto space-y-4">
+            <form id="score-form" onSubmit={handleSubmit(onFormSubmit)} className="max-w-4xl mx-auto space-y-4">
                 <div className={cn("grid gap-x-8 gap-y-3", gridCols)}>
                     {groupedFactors.map(({ prefix, factors }) => {
                         const colorClass = PREFIX_COLOR[prefix] || 'text-slate-700';
