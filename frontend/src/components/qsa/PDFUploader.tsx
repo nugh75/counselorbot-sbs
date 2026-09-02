@@ -138,7 +138,7 @@ export function PDFUploader({ onUploadComplete, questionnaire, onBack }: PDFUplo
                         />
                         <button
                             onClick={triggerFileSelect}
-                            className="px-6 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white transition-colors font-medium text-sm"
+                            className="inline-flex min-h-11 items-center justify-center rounded-md bg-indigo-600 px-6 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
                         >
                             {t('pdf.select')}
                         </button>
