@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { BookOpen, Bot, ClipboardList, LayoutGrid, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, Users, type LucideIcon } from 'lucide-react';
+import { BookOpen, Bot, ClipboardList, Compass, LayoutGrid, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, Users, type LucideIcon } from 'lucide-react';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { HeaderCounselor } from './HeaderCounselor';
 import { HeaderInstrument } from './HeaderInstrument';
@@ -15,7 +15,7 @@ import { LANGUAGES } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { ai4authLoginUrl, AI4AUTH_LOGOUT_URL, AI4EDUC_PORTAL_URL, AI4EDUC_MANAGER_URL, getIdentity, type Identity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
-import { canUseAssistant, canUsePersonalPage, canUseResearchConsole, canUseTeacherAssistant } from '@/lib/roles';
+import { canUseAssistant, canUsePersonalPage, canUseResearchConsole, canUseTeacherAssistant, isResearcher, isTeacher } from '@/lib/roles';
 import { useDarkMode } from '@/lib/use-dark-mode';
 import { LOCAL_RESUME_HREF, resumeHref, useResumeEntries, type ResumeEntries } from '@/lib/use-resume-entries';
 
@@ -58,6 +58,9 @@ export function Header() {
     const secondaryItems: SecondaryItem[] = [];
     // Guida all'interfaccia: disponibile per tutti, anche senza login.
     secondaryItems.push({ key: 'guide', href: '/guide', icon: BookOpen, label: t('nav.guide') });
+    if (isAuthenticated && !identity?.is_admin && !isResearcher(identity) && !isTeacher(identity)) {
+        secondaryItems.push({ key: 'orientation', href: '/bussola', icon: Compass, label: t('nav.orientation') });
+    }
     if (canOpenAssistant) {
         secondaryItems.push({ key: 'assistant', href: '/assistente', icon: Bot, label: t('assistant.title') });
     }

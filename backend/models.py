@@ -458,7 +458,7 @@ class LearnerProfileRevision(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, nullable=False, index=True)
     data = Column(JSON, nullable=False)
-    source = Column(String, nullable=False, default="manual")  # intake|session_start|session_end|manual
+    source = Column(String, nullable=False, default="manual")  # intake|session_start|session_end|orientation|manual
     session_id = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -476,6 +476,30 @@ class LearnerProfileReflection(Base):
     session_id = Column(String, nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class OrientationSession(Base):
+    """Conversazione della Bussola, separata da profili e questionari.
+
+    La prima sessione conclusa sblocca gli altri strumenti per i nuovi studenti;
+    le sessioni successive restano riapribili senza alterare le compilazioni.
+    """
+
+    __tablename__ = "orientation_sessions"
+
+    session_id = Column(String, primary_key=True)
+    username = Column(String, nullable=False, index=True)
+    language = Column(String, nullable=False, default="it")
+    counselor_id = Column(Integer, nullable=True, index=True)
+    status = Column(String, nullable=False, default="in_progress", index=True)
+    messages = Column(JSON, nullable=False, default=list)
+    recommendations = Column(JSON, nullable=False, default=list)
+    notebook_draft = Column(JSON, nullable=False, default=dict)
+    notebook_reviewed = Column(Boolean, nullable=False, default=False)
+    notebook_revision_id = Column(Integer, nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    completed_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class StudentBooklet(Base):
