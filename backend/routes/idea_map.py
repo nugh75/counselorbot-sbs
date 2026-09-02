@@ -49,6 +49,7 @@ from ..idea_map import (
     current_map,
     current_revision,
     history,
+    manual_branch_ids,
     missing_roles,
     owning_task,
     parse_patch,
@@ -585,9 +586,13 @@ def read_branches(
     owner = _readable_owner(identity, username)
     spec = current_map(db, owner, session_id)
     rows = branches(spec, chosen_focus(db, owner, session_id))
+    # Chi ha aperto il ramo: la scheda che accoglie in un ramo nuovo parte da
+    # qui, e "l'hai aperto tu" non si racconta come "e' venuto fuori parlando".
+    manual = manual_branch_ids(db, owner, session_id)
     for row in rows:
         row["task_label"] = task_label(row["task_type"], lang) if row["task_type"] else None
         row["wants_plan"] = wants_plan(row["task_type"])
+        row["origin"] = "manual" if row["id"] in manual else "conversation"
     return rows
 
 

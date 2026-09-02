@@ -3233,6 +3233,46 @@ def test_idea_stream_finishes_and_applies_the_hidden_patch_after_visible_limit()
         _set_idea_feature("false")
 
 
+def test_a_branch_says_whether_the_person_opened_it_or_the_talk_did():
+    """La chat di un ramo nuovo si apre vuota: quel che spiega dove si e'
+    finiti e' la scheda del ramo, e la scheda parte da come il ramo e' nato."""
+    _set_idea_feature("true")
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    session_id = "idea-branch-origin"
+    try:
+        seed = client.post("/idea/map/patch", json={
+            "session_id": session_id,
+            "source": "turn",
+            "patch": {
+                "title": "Tesi sulla dispersione",
+                "add_nodes": [
+                    {"id": "idea", "label": "Tesi sulla dispersione", "role": "idea", "accent": True},
+                    {"id": "t1", "label": "Trovare i dati", "role": "task"},
+                ],
+                "add_edges": [{"from": "idea", "to": "t1", "kind": "link"}],
+            },
+        })
+        assert seed.status_code == 200, seed.text
+
+        made = client.post("/idea/branch", json={
+            "session_id": session_id,
+            "label": "Leggere la normativa",
+        })
+        assert made.status_code == 200, made.text
+
+        listed = client.get("/idea/branches", params={"session_id": session_id, "lang": "it"})
+        assert listed.status_code == 200, listed.text
+        rows = {row["label"]: row for row in listed.json()}
+        assert rows["Leggere la normativa"]["origin"] == "manual"
+        assert rows["Trovare i dati"]["origin"] == "conversation"
+        # Il ramo nuovo pende da dove si stava lavorando, non dalla radice:
+        # senza questo la scheda non puo' dire a cosa e' collegato.
+        assert rows["Leggere la normativa"]["parent"] == "t1"
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        _set_idea_feature("false")
+
+
 def test_generic_acknowledgement_is_removed_from_visible_chat_openings():
     original_stream = _FakeAIService.stream_response
     original_response = _FakeAIService.get_response

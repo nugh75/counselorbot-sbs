@@ -1066,6 +1066,25 @@ def next_move(spec: DiagramSpec | None, chosen_focus: str | None = None) -> dict
             "detail": "the branch has what it needs: propose closing it"}
 
 
+def manual_branch_ids(db: Session, username: str, session_id: str) -> set[str]:
+    """I rami che la persona ha aperto a mano.
+
+    Un ramo aperto su richiesta si spiega diversamente da uno emerso parlando,
+    e la chat del ramo nuovo parte vuota: la differenza sta solo nella
+    revisione che l'ha creato.
+    """
+    rows = (
+        db.query(models.IdeaMapRevision.focus_id)
+        .filter(
+            models.IdeaMapRevision.username == username,
+            models.IdeaMapRevision.session_id == session_id,
+            models.IdeaMapRevision.source == "manual",
+        )
+        .all()
+    )
+    return {row[0] for row in rows if row[0]}
+
+
 def chosen_focus(db: Session, username: str, session_id: str) -> str | None:
     """Il ramo su cui la persona si e' spostata l'ultima volta."""
     revision = current_revision(db, username, session_id)
