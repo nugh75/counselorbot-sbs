@@ -29,6 +29,7 @@ export interface FrozenSessionDetail extends FrozenSessionSummary {
     counselor_id?: number | null;
     locale?: string | null;
     response_length?: 'short' | 'medium' | 'long' | null;
+    pdf_token?: string | null;
 }
 
 export interface FrozenSessionSnapshot {
@@ -42,6 +43,9 @@ export interface FrozenSessionSnapshot {
     locale: string;
     response_length: 'short' | 'medium' | 'long';
     label: string;
+    // Solo la sandbox OpenCode: il workspace rigenera `documento.md` a ogni
+    // apertura, quindi senza il token la ripresa perderebbe il PDF del profilo.
+    pdf_token?: string | null;
 }
 
 // Notifica l'header (che monta una sola volta e non rivede il fetch iniziale)

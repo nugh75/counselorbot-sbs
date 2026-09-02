@@ -6809,6 +6809,7 @@ def test_frozen_session_round_trip_and_isolation():
             "locale": "it",
             "response_length": "short",
             "label": "QSA — Step 1",
+            "pdf_token": "a" * 32,
         }
         r = client.post("/session/freeze", json=payload)
         assert r.status_code == 200, r.text
@@ -6830,6 +6831,14 @@ def test_frozen_session_round_trip_and_isolation():
         assert body["scores"] == {"C1": 7.0}
         assert body["counselor_id"] == 3
         assert body["response_length"] == "short"
+        # Senza il token la sandbox OpenCode ripresa perderebbe il PDF del
+        # profilo: `documento.md` viene rigenerato a ogni apertura.
+        assert body["pdf_token"] == "a" * 32
+
+        # Un token malformato non entra nello snapshot.
+        assert client.post(
+            "/session/freeze", json={**payload, "pdf_token": "non-un-token"}
+        ).status_code == 422
 
         # Ricongelare aggiorna la riga esistente invece di duplicarla.
         payload["messages"].append({"role": "user", "content": "Riprendo da qui."})
