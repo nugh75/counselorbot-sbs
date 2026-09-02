@@ -20,6 +20,8 @@ const TEXTS = {
         generate: 'Genera codice',
         codeHint: 'Invia questo codice al bot entro 10 minuti con:',
         unlink: 'Scollega Telegram',
+        openBot: 'Apri il bot su Telegram',
+        botHint: 'Bot ufficiale:',
         error: 'Operazione non riuscita, riprova.',
     },
     en: {
@@ -30,30 +32,36 @@ const TEXTS = {
         generate: 'Generate code',
         codeHint: 'Send this code to the bot within 10 minutes with:',
         unlink: 'Unlink Telegram',
+        openBot: 'Open the bot on Telegram',
+        botHint: 'Official bot:',
         error: 'Operation failed, please retry.',
     },
     es: {
         title: 'Telegram', subtitle: 'Vincula Telegram para usar CounselorBot también desde el bot.',
         linked: 'Telegram vinculado', notLinked: 'Telegram no vinculado', generate: 'Generar código',
         codeHint: 'Envía este código al bot antes de 10 minutos con:', unlink: 'Desvincular Telegram',
+        openBot: 'Abrir el bot en Telegram', botHint: 'Bot oficial:',
         error: 'La operación ha fallado. Inténtalo de nuevo.',
     },
     fr: {
         title: 'Telegram', subtitle: 'Associez Telegram pour utiliser CounselorBot également depuis le bot.',
         linked: 'Telegram associé', notLinked: 'Telegram non associé', generate: 'Générer un code',
         codeHint: 'Envoyez ce code au bot dans les 10 minutes avec :', unlink: 'Dissocier Telegram',
+        openBot: 'Ouvrir le bot sur Telegram', botHint: 'Bot officiel :',
         error: 'L’opération a échoué. Réessayez.',
     },
     de: {
         title: 'Telegram', subtitle: 'Verknüpfen Sie Telegram, um CounselorBot auch über den Bot zu nutzen.',
         linked: 'Telegram verknüpft', notLinked: 'Telegram nicht verknüpft', generate: 'Code erstellen',
         codeHint: 'Senden Sie diesen Code innerhalb von 10 Minuten mit folgendem Befehl an den Bot:', unlink: 'Telegram trennen',
+        openBot: 'Bot in Telegram öffnen', botHint: 'Offizieller Bot:',
         error: 'Der Vorgang ist fehlgeschlagen. Versuchen Sie es erneut.',
     },
     sv: {
         title: 'Telegram', subtitle: 'Länka Telegram för att använda CounselorBot även via boten.',
         linked: 'Telegram länkat', notLinked: 'Telegram inte länkat', generate: 'Skapa kod',
         codeHint: 'Skicka den här koden till boten inom 10 minuter med:', unlink: 'Koppla från Telegram',
+        openBot: 'Öppna boten i Telegram', botHint: 'Officiell bot:',
         error: 'Åtgärden misslyckades. Försök igen.',
     },
 };
@@ -61,6 +69,7 @@ const TEXTS = {
 export function TelegramLinkCard({ lang, showHeading = true }: { lang: string; showHeading?: boolean }) {
     const texts = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
     const [status, setStatus] = useState<LinkStatus | null>(null);
+    const [botUsername, setBotUsername] = useState('');
     const [code, setCode] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(false);
@@ -75,6 +84,25 @@ export function TelegramLinkCard({ lang, showHeading = true }: { lang: string; s
     }, []);
 
     useEffect(() => { void loadStatus(); }, [loadStatus]);
+
+    useEffect(() => {
+        let cancelled = false;
+        void (async () => {
+            try {
+                const res = await apiFetch('/api/telegram/bot-info');
+                if (!res.ok) return;
+                const info = await res.json() as { bot_username: string };
+                if (!cancelled) setBotUsername(info.bot_username || '');
+            } catch {
+                // silenzioso: senza username restano solo le istruzioni testuali
+            }
+        })();
+        return () => { cancelled = true; };
+    }, []);
+
+    const deepLink = botUsername
+        ? `https://t.me/${botUsername}${code ? `?start=l_${code}` : ''}`
+        : '';
 
     const generateCode = async () => {
         setBusy(true);
@@ -124,10 +152,34 @@ export function TelegramLinkCard({ lang, showHeading = true }: { lang: string; s
                     ? `${texts.linked}${status.telegram_username ? ` (@${status.telegram_username})` : ''}`
                     : texts.notLinked}
             </p>
+            {botUsername && (
+                <p className="text-sm text-slate-600">
+                    {texts.botHint}{' '}
+                    <a
+                        href={`https://t.me/${botUsername}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-semibold text-indigo-600 hover:underline"
+                    >
+                        @{botUsername}
+                    </a>
+                </p>
+            )}
             {code && (
-                <div className="rounded-md border border-slate-300 bg-white p-3 text-sm text-slate-800">
+                <div className="space-y-2 rounded-md border border-slate-300 bg-white p-3 text-sm text-slate-800">
+                    {deepLink && (
+                        <a
+                            href={deepLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-block rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                        >
+                            {texts.openBot}
+                        </a>
+                    )}
                     <p>{texts.codeHint}</p>
-                    <p className="mt-1 font-mono text-lg font-bold tracking-widest">/link {code}</p>
+                    <p className="font-mono text-lg font-bold tracking-widest">/link {code}</p>
+                    {botUsername && <p className="text-xs text-slate-500">@{botUsername}</p>}
                 </div>
             )}
             {error && <p className="text-sm text-red-600">{texts.error}</p>}

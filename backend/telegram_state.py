@@ -28,7 +28,11 @@ logger = logging.getLogger(__name__)
 
 LINK_CODE_TTL_MINUTES = 10
 SCORE_QUESTIONNAIRES = ("QSA", "QSAr", "ZTPI", "QPCS", "QPCC", "QAP")
-ALL_QUESTIONNAIRES = SCORE_QUESTIONNAIRES + ("SAVICKAS",)
+# Strumenti senza punteggi: si va dritti agli step guidati.
+NARRATIVE_QUESTIONNAIRES = ("SAVICKAS", "IDEA")
+ALL_QUESTIONNAIRES = SCORE_QUESTIONNAIRES + NARRATIVE_QUESTIONNAIRES
+# Variante Idea usata dal bot: la stessa che il web propone di default.
+IDEA_DEFAULT_VARIANT = "student-path"
 STEP_ADVANCE_MARKER = "[[AVANZA_STEP]]"
 # Fallback quando la tabella Factor non ha righe per lo strumento.
 FALLBACK_FACTORS = {**QUESTIONNAIRE_FACTORS, "ZTPI": ("T1", "T2", "T3", "T4", "T5")}
@@ -45,8 +49,8 @@ BOT_TEXTS = {
         "en": "Hi {name}! Do you want to start a new analysis?",
     },
     "help": {
-        "it": "Comandi:\n/start - avvia il bot\n/link CODICE - collega il tuo account\n/unlink - scollega Telegram\n/strumenti - scegli uno strumento\n/counselor - scegli il counselor\n/nuovo - nuova analisi\n/stato - percorso corrente\n/annulla - annulla il flusso corrente",
-        "en": "Commands:\n/start - start the bot\n/link CODE - link your account\n/unlink - unlink Telegram\n/strumenti - choose an instrument\n/counselor - choose the counselor\n/nuovo - new analysis\n/stato - current progress\n/annulla - cancel the current flow",
+        "it": "Comandi:\n/start - avvia il bot\n/link CODICE - collega il tuo account\n/unlink - scollega Telegram\n/strumenti - scegli uno strumento\n/pqbl - allenati su un PDF con domande\n/counselor - scegli il counselor\n/nuovo - nuova analisi\n/stato - percorso corrente\n/annulla - annulla il flusso corrente",
+        "en": "Commands:\n/start - start the bot\n/link CODE - link your account\n/unlink - unlink Telegram\n/strumenti - choose an instrument\n/pqbl - practise on a PDF with questions\n/counselor - choose the counselor\n/nuovo - new analysis\n/stato - current progress\n/annulla - cancel the current flow",
     },
     "need_link": {
         "it": "Prima devi collegare il tuo account CounselorBot: genera il codice nella pagina Profilo della web app e invia /link CODICE.",
@@ -149,6 +153,52 @@ BOT_TEXTS = {
     "teacher_message": {
         "it": "\U0001F4E9 Messaggio dal tuo docente:",
         "en": "\U0001F4E9 Message from your teacher:",
+    },
+    "pqbl_intro": {
+        "it": "pQBL: ti alleni su un PDF con domande a scelta multipla e feedback immediato.",
+        "en": "pQBL: practise on a PDF with multiple-choice questions and instant feedback.",
+    },
+    "pqbl_pick": {
+        "it": "Scegli il documento, oppure mandami un PDF (max 20 MB) e preparo le domande.",
+        "en": "Pick a document, or send me a PDF (max 20 MB) and I will prepare the questions.",
+    },
+    "pqbl_no_docs": {
+        "it": "Non hai ancora un documento pronto. Mandami un PDF (max 20 MB) e preparo le domande.",
+        "en": "You have no document ready yet. Send me a PDF (max 20 MB) and I will prepare the questions.",
+    },
+    "pqbl_not_pdf": {
+        "it": "Per pQBL serve un PDF. Mandamene uno e preparo le domande.",
+        "en": "pQBL needs a PDF. Send me one and I will prepare the questions.",
+    },
+    "pqbl_too_big": {
+        "it": "Telegram non mi lascia scaricare file oltre 20 MB: carica questo PDF dalla web app.",
+        "en": "Telegram does not let me download files over 20 MB: upload this PDF from the web app.",
+    },
+    "pqbl_generating": {
+        "it": "Ho ricevuto {filename}. Sto preparando le domande, ci vogliono un paio di minuti: ti avviso appena sono pronte.",
+        "en": "Got {filename}. I am preparing the questions, it takes a couple of minutes: I will let you know when they are ready.",
+    },
+    "pqbl_ready": {
+        "it": "Domande pronte per {filename}.",
+        "en": "Questions ready for {filename}.",
+    },
+    "pqbl_failed": {
+        "it": "Non sono riuscito a preparare le domande da questo PDF. Prova dalla web app.",
+        "en": "I could not prepare the questions from this PDF. Try from the web app.",
+    },
+    "pqbl_question": {
+        "it": "Domanda {n}/{total} - {skill}\n\n{text}",
+        "en": "Question {n}/{total} - {skill}\n\n{text}",
+    },
+    "pqbl_correct": {"it": "Giusto. {feedback}", "en": "Correct. {feedback}"},
+    "pqbl_wrong": {"it": "Non ancora. {feedback}\n\nRiprova:", "en": "Not yet. {feedback}\n\nTry again:"},
+    "pqbl_summary": {
+        "it": "Sessione conclusa.\nCorrette al primo tentativo: {ok}/{total} ({pct}%)\nTentativi totali: {attempts}",
+        "en": "Session finished.\nCorrect on first try: {ok}/{total} ({pct}%)\nTotal attempts: {attempts}",
+    },
+    "pqbl_no_session": {
+        "it": "Nessuna sessione pQBL attiva. Usa /pqbl per iniziare.",
+        "en": "No active pQBL session. Use /pqbl to start.",
     },
     "btn_open_login": {"it": "Accedi e collega", "en": "Log in and link"},
     "btn_new": {"it": "Nuova analisi", "en": "New analysis"},
@@ -382,6 +432,8 @@ def format_scores_context(db: Session, questionnaire_type: str, scores: dict | N
     """Equivalente backend di buildScoresFormatter (GuidedChatInterface.tsx)."""
     if questionnaire_type == "SAVICKAS":
         return "CONTESTO INTERVISTA SAVICKAS: percorso narrativo qualitativo senza punteggi numerici."
+    if questionnaire_type == "IDEA":
+        return "CONTESTO STRUMENTO IDEA: messa a fuoco di un'idea attraverso una mappa, senza punteggi numerici."
     scores = scores or {}
     factors = {
         f.code: f
@@ -436,6 +488,7 @@ def _reset_state(state: models.TelegramConversationState) -> None:
     state.conversation_id = None
     state.scores = None
     state.step_id = None
+    state.pqbl_state = None
 
 
 # --- Flusso guidato (riuso pipeline chat) -----------------------------------
@@ -493,6 +546,7 @@ async def _call_chat(db: Session, state: models.TelegramConversationState, *, me
         language=state.language,
         max_tokens=700,
         counselor_id=state.counselor_id,
+        idea_variant=IDEA_DEFAULT_VARIANT if state.questionnaire_type == "IDEA" else None,
     )
     try:
         result = await chat_endpoint(request, BackgroundTasks(), db, _identity_for(state.username))
@@ -633,10 +687,24 @@ def _choose_instrument_text(db: Session, state: models.TelegramConversationState
     return f"{_t('choose_instrument', language)}\n{_t('counselor_line', language, name=counselor)}"
 
 
-def _instrument_keyboard() -> list[list[dict]]:
+def _instrument_label(qtype: str) -> str:
+    """Le sigle restano maiuscole; i nomi propri no (SAVICKAS -> Savickas)."""
+    return qtype.capitalize() if qtype in ("SAVICKAS", "IDEA") else qtype
+
+
+def _available_questionnaires(db: Session) -> tuple[str, ...]:
+    """Idea compare solo se il suo feature flag e' acceso, come nel web."""
+    from .routes.idea_map import feature_enabled as idea_enabled
+
+    if idea_enabled(db):
+        return ALL_QUESTIONNAIRES
+    return tuple(q for q in ALL_QUESTIONNAIRES if q != "IDEA")
+
+
+def _instrument_keyboard(db: Session) -> list[list[dict]]:
     rows, row = [], []
-    for qtype in ALL_QUESTIONNAIRES:
-        row.append({"text": qtype.capitalize() if qtype == "SAVICKAS" else qtype, "callback_data": f"instr:{qtype}"})
+    for qtype in _available_questionnaires(db):
+        row.append({"text": _instrument_label(qtype), "callback_data": f"instr:{qtype}"})
         if len(row) == 2:
             rows.append(row)
             row = []
@@ -774,6 +842,260 @@ async def _do_link(db: Session, sender: dict, chat_id: int, language: str,
     await telegram_bot.send_message(chat_id, message, keyboard=keyboard)
 
 
+# --- pQBL: allenamento a domande su un PDF ----------------------------------
+#
+# Il bot non reimplementa nulla: chiama gli stessi endpoint della web app
+# (routes/pqbl.py), che restano l'unico posto dove si decide cosa e' corretto.
+# Qui vive solo la resa in chat: una domanda per messaggio, quattro bottoni,
+# feedback subito e ritentativo sulla stessa domanda finche' non ci si arriva.
+
+PQBL_OPTION_LETTERS = ("A", "B", "C", "D")
+PQBL_DOC_LIST_LIMIT = 6
+
+
+def _pqbl_ready_documents(db: Session, username: str) -> list[models.PqblDocument]:
+    return (
+        db.query(models.PqblDocument)
+        .filter(
+            models.PqblDocument.username == username,
+            models.PqblDocument.status == "ready",
+        )
+        .order_by(models.PqblDocument.created_at.desc())
+        .limit(PQBL_DOC_LIST_LIMIT)
+        .all()
+    )
+
+
+def _pqbl_document_keyboard(documents: list[models.PqblDocument]) -> list[list[dict]]:
+    return [
+        [{"text": (doc.filename or doc.id)[:60], "callback_data": f"pqbl:doc:{doc.id}"}]
+        for doc in documents
+    ]
+
+
+async def _pqbl_offer_documents(db: Session, state: models.TelegramConversationState) -> None:
+    documents = _pqbl_ready_documents(db, state.username)
+    language = state.language
+    if not documents:
+        await telegram_bot.send_message(state.telegram_chat_id, _t("pqbl_no_docs", language))
+        return
+    text = f"{_t('pqbl_intro', language)}\n{_t('pqbl_pick', language)}"
+    await telegram_bot.send_message(
+        state.telegram_chat_id, text, keyboard=_pqbl_document_keyboard(documents),
+    )
+
+
+def _pqbl_question_keyboard(question: dict) -> list[list[dict]]:
+    """Una riga per opzione: i testi delle MCQ sono lunghi, due per riga non ci stanno."""
+    rows = []
+    for letter, option in zip(PQBL_OPTION_LETTERS, question.get("options") or []):
+        label = f"{letter}) {option.get('text') or ''}"
+        rows.append([{
+            "text": label[:64],
+            "callback_data": f"pqbl:ans:{question['id']}:{option.get('key')}",
+        }])
+    return rows
+
+
+async def _pqbl_send_current_question(db: Session, state: models.TelegramConversationState,
+                                      prefix: str = "") -> None:
+    payload = state.pqbl_state or {}
+    queue = payload.get("queue") or []
+    index = payload.get("index") or 0
+    if index >= len(queue):
+        await _pqbl_finish(db, state)
+        return
+    question = (payload.get("questions") or {}).get(str(queue[index]))
+    if not question:
+        await _pqbl_finish(db, state)
+        return
+    body = _t(
+        "pqbl_question", state.language,
+        n=index + 1, total=len(queue),
+        skill=question.get("skill") or "",
+        text=question.get("question") or "",
+    )
+    text = f"{prefix}\n\n{body}" if prefix else body
+    await telegram_bot.send_message(
+        state.telegram_chat_id, text, keyboard=_pqbl_question_keyboard(question),
+    )
+
+
+async def _pqbl_start_session(db: Session, state: models.TelegramConversationState,
+                              document_id: str) -> None:
+    from .api_models import PqblSessionCreate
+    from .routes.pqbl import create_pqbl_session, get_pqbl_session_questions
+
+    try:
+        created = await create_pqbl_session(
+            PqblSessionCreate(document_id=document_id, mode="learning"),
+            db, _identity_for(state.username),
+        )
+        fetched = await get_pqbl_session_questions(created["session_id"], db)
+    except Exception:
+        logger.exception("Telegram pQBL: avvio sessione fallito (documento %s)", document_id)
+        await telegram_bot.send_message(state.telegram_chat_id, _t("error", state.language))
+        return
+
+    questions = fetched.get("questions") or []
+    if not questions:
+        await telegram_bot.send_message(state.telegram_chat_id, _t("pqbl_no_docs", state.language))
+        return
+
+    _reset_state(state)
+    state.state = "pqbl"
+    state.pqbl_state = {
+        "session_id": created["session_id"],
+        "document_id": document_id,
+        "queue": [q["id"] for q in questions],
+        "index": 0,
+        "questions": {str(q["id"]): q for q in questions},
+    }
+    db.commit()
+    await _pqbl_send_current_question(db, state)
+
+
+async def _pqbl_handle_answer(db: Session, state: models.TelegramConversationState,
+                              question_id: int, option_key: str) -> None:
+    from .api_models import PqblAnswerRequest
+    from .routes.pqbl import answer_pqbl_question
+
+    payload = state.pqbl_state or {}
+    session_id = payload.get("session_id")
+    if not session_id:
+        await telegram_bot.send_message(state.telegram_chat_id, _t("pqbl_no_session", state.language))
+        return
+    try:
+        result = await answer_pqbl_question(
+            session_id, PqblAnswerRequest(question_id=question_id, option_key=option_key), db,
+        )
+    except Exception:
+        logger.exception("Telegram pQBL: risposta rifiutata (sessione %s)", session_id)
+        await telegram_bot.send_message(state.telegram_chat_id, _t("error", state.language))
+        return
+
+    feedback = (result.get("feedback") or "").strip()
+    if result.get("correct"):
+        await telegram_bot.send_message(
+            state.telegram_chat_id, _t("pqbl_correct", state.language, feedback=feedback).strip(),
+        )
+        payload["index"] = (payload.get("index") or 0) + 1
+        state.pqbl_state = dict(payload)
+        db.commit()
+        await _pqbl_send_current_question(db, state)
+        return
+
+    # Sbagliata: in learning si ritenta la stessa domanda (R5), il primo
+    # tentativo resta registrato per la metrica.
+    await _pqbl_send_current_question(
+        db, state, prefix=_t("pqbl_wrong", state.language, feedback=feedback).strip(),
+    )
+
+
+async def _pqbl_finish(db: Session, state: models.TelegramConversationState) -> None:
+    from .routes.pqbl import get_pqbl_session_summary
+
+    payload = state.pqbl_state or {}
+    session_id = payload.get("session_id")
+    summary = None
+    if session_id:
+        try:
+            summary = await get_pqbl_session_summary(session_id, db)
+        except Exception:
+            logger.exception("Telegram pQBL: riepilogo non disponibile (sessione %s)", session_id)
+    _reset_state(state)
+    db.commit()
+    if summary:
+        await telegram_bot.send_message(state.telegram_chat_id, _t(
+            "pqbl_summary", state.language,
+            ok=summary.get("first_try_correct", 0),
+            total=summary.get("total_questions", 0),
+            pct=summary.get("first_try_pct", 0),
+            attempts=summary.get("total_attempts", 0),
+        ))
+
+
+async def _pqbl_handle_pdf(db: Session, state: models.TelegramConversationState,
+                           document: dict) -> None:
+    """PDF mandato in chat: stessa strada dell'upload web, generazione inclusa."""
+    import asyncio
+    import io
+
+    from fastapi import UploadFile
+
+    from .routes.pqbl import upload_pqbl_document
+
+    language = state.language
+    chat_id = state.telegram_chat_id
+    filename = document.get("file_name") or "documento.pdf"
+    if not filename.lower().endswith(".pdf") and document.get("mime_type") != "application/pdf":
+        await telegram_bot.send_message(chat_id, _t("pqbl_not_pdf", language))
+        return
+    if (document.get("file_size") or 0) > telegram_bot.MAX_DOWNLOAD_BYTES:
+        await telegram_bot.send_message(chat_id, _t("pqbl_too_big", language))
+        return
+
+    content = await telegram_bot.download_file(document.get("file_id") or "")
+    if not content:
+        await telegram_bot.send_message(chat_id, _t("pqbl_failed", language))
+        return
+
+    background = BackgroundTasks()
+    try:
+        uploaded = await upload_pqbl_document(
+            background,
+            UploadFile(file=io.BytesIO(content), filename=filename),
+            10, state.counselor_id or 0, "",
+            db, _identity_for(state.username),
+        )
+    except Exception:
+        logger.exception("Telegram pQBL: upload fallito per %s", filename)
+        await telegram_bot.send_message(chat_id, _t("pqbl_failed", language))
+        return
+
+    document_id = uploaded.get("document_id")
+    if uploaded.get("status") == "ready":
+        await telegram_bot.send_message(chat_id, _t("pqbl_ready", language, filename=filename))
+        await _pqbl_start_session(db, state, document_id)
+        return
+
+    # La generazione e' il background task dell'endpoint: qui non c'e' una
+    # risposta HTTP che lo faccia partire, quindi lo si lancia a mano e si
+    # avvisa lo studente a cose fatte.
+    await telegram_bot.send_message(chat_id, _t("pqbl_generating", language, filename=filename))
+    asyncio.create_task(_pqbl_generate_then_notify(
+        document_id, state.telegram_user_id, chat_id, filename, language,
+    ))
+
+
+async def _pqbl_generate_then_notify(document_id: str, telegram_user_id: int, chat_id: int,
+                                     filename: str, language: str) -> None:
+    """Genera il question bank fuori dal webhook e avvisa quando e' pronto."""
+    from .routes.pqbl import _generate_all_chunks
+
+    try:
+        await run_in_threadpool(_generate_all_chunks, document_id)
+    except Exception:
+        logger.exception("Telegram pQBL: generazione fallita (documento %s)", document_id)
+
+    db = database.SessionLocal()
+    try:
+        doc = db.query(models.PqblDocument).filter(models.PqblDocument.id == document_id).first()
+        if not doc or doc.status != "ready":
+            await telegram_bot.send_message(chat_id, _t("pqbl_failed", language))
+            return
+        await telegram_bot.send_message(chat_id, _t("pqbl_ready", language, filename=filename))
+        state = (
+            db.query(models.TelegramConversationState)
+            .filter(models.TelegramConversationState.telegram_user_id == telegram_user_id)
+            .first()
+        )
+        if state:
+            await _pqbl_start_session(db, state, document_id)
+    finally:
+        db.close()
+
+
 async def _handle_message(db: Session, message: dict) -> None:
     chat = message.get("chat") or {}
     sender = message.get("from") or {}
@@ -786,6 +1108,16 @@ async def _handle_message(db: Session, message: dict) -> None:
     text = (message.get("text") or "").strip()
     language = normalize_language(sender.get("language_code"))
     link = get_active_link(db, user_id)
+
+    document = message.get("document")
+    if document:
+        if not link:
+            await telegram_bot.send_message(chat_id, _t("need_link", language))
+            return
+        state = _get_state(db, user_id, chat_id, link.username, language)
+        db.commit()
+        await _pqbl_handle_pdf(db, state, document)
+        return
 
     command = text.split()[0].lower() if text.startswith("/") and text.split() else ""
     command = command.split("@", 1)[0]  # /cmd@botname -> /cmd
@@ -850,7 +1182,12 @@ async def _handle_message(db: Session, message: dict) -> None:
         _reset_state(state)
         state.state = "choose_instrument"
         db.commit()
-        await telegram_bot.send_message(chat_id, _choose_instrument_text(db, state, language), keyboard=_instrument_keyboard())
+        await telegram_bot.send_message(chat_id, _choose_instrument_text(db, state, language), keyboard=_instrument_keyboard(db))
+        return
+
+    if command == "/pqbl":
+        db.commit()
+        await _pqbl_offer_documents(db, state)
         return
 
     if command == "/counselor":
@@ -861,7 +1198,11 @@ async def _handle_message(db: Session, message: dict) -> None:
     if command == "/stato":
         db.commit()
         counselor_line = _t("counselor_line", language, name=_counselor_name(db, state.counselor_id, language))
-        if state.state == "in_step" and state.step_id:
+        if state.state == "pqbl":
+            payload = state.pqbl_state or {}
+            done, total = (payload.get("index") or 0), len(payload.get("queue") or [])
+            await telegram_bot.send_message(chat_id, f"pQBL {done}/{total}\n{counselor_line}")
+        elif state.state == "in_step" and state.step_id:
             steps = {s.id: s for s in _steps(db, state.questionnaire_type)}
             step = steps.get(state.step_id)
             label = resolve_step_label(step, language) if step else state.step_id
@@ -884,6 +1225,9 @@ async def _handle_message(db: Session, message: dict) -> None:
     # Testo libero: dipende dallo stato corrente.
     if state.state == "enter_scores":
         await _handle_scores_text(db, state, text)
+    elif state.state == "pqbl":
+        # In pQBL si risponde con i bottoni: il testo libero non ha un posto.
+        await _pqbl_send_current_question(db, state)
     elif state.state == "in_step":
         await telegram_bot.send_message(chat_id, _t("thinking", language))
         await _handle_free_text(db, state, text)
@@ -916,7 +1260,7 @@ async def _handle_callback(db: Session, callback: dict) -> None:
         _reset_state(state)
         state.state = "choose_instrument"
         db.commit()
-        await telegram_bot.send_message(chat_id, _choose_instrument_text(db, state, language), keyboard=_instrument_keyboard())
+        await telegram_bot.send_message(chat_id, _choose_instrument_text(db, state, language), keyboard=_instrument_keyboard(db))
         return
 
     if data.startswith("couns:"):
@@ -941,13 +1285,25 @@ async def _handle_callback(db: Session, callback: dict) -> None:
             await telegram_bot.send_message(chat_id, _t("no_flow", language))
         return
 
+    if data.startswith("pqbl:doc:"):
+        await _pqbl_start_session(db, state, data.split(":", 2)[2])
+        return
+
+    if data.startswith("pqbl:ans:"):
+        _, _, question_id, option_key = data.split(":", 3)
+        if state.state != "pqbl":
+            await telegram_bot.send_message(chat_id, _t("pqbl_no_session", language))
+            return
+        await _pqbl_handle_answer(db, state, int(question_id), option_key)
+        return
+
     if data.startswith("instr:"):
         qtype = data.split(":", 1)[1]
-        if qtype not in ALL_QUESTIONNAIRES:
+        if qtype not in _available_questionnaires(db):
             return
         _reset_state(state)
         state.questionnaire_type = qtype
-        if qtype == "SAVICKAS":
+        if qtype in NARRATIVE_QUESTIONNAIRES:
             db.commit()
             await _start_flow(db, state)
         else:

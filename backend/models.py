@@ -810,7 +810,7 @@ class TelegramConversationState(Base):
     telegram_user_id = Column(BigInteger, nullable=False, unique=True, index=True)
     telegram_chat_id = Column(BigInteger, nullable=False)
     username = Column(String, nullable=False, index=True)
-    state = Column(String, nullable=False, default="idle")  # idle|choose_instrument|enter_scores|confirm_scores|in_step
+    state = Column(String, nullable=False, default="idle")  # idle|choose_instrument|enter_scores|confirm_scores|in_step|pqbl
     questionnaire_type = Column(String, nullable=True)
     session_id = Column(String, nullable=True)
     conversation_id = Column(String, nullable=True)
@@ -818,6 +818,8 @@ class TelegramConversationState(Base):
     step_id = Column(String, nullable=True)
     language = Column(String, nullable=False, default="it")
     counselor_id = Column(Integer, nullable=True)
+    # Sessione pQBL in corso: {session_id, document_id, queue[], index, questions{}}.
+    pqbl_state = Column(JSON, nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
