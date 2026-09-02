@@ -12,6 +12,7 @@ Eseguibile senza pytest:
 Con pytest (se installato):
     pytest backend/tests/test_smoke.py
 """
+import atexit
 import json
 import os
 import re
@@ -189,6 +190,14 @@ main.app.dependency_overrides[prompt_audit_routes.require_prompt_audit_access] =
 # Sintesi finale di Idea: il modello riscrive la descrizione della mappa.
 import backend.idea_synthesis as idea_synthesis_module
 idea_synthesis_module.AIService = _FakeAIService
+
+# Le immagini del portfolio finiscono su disco. Il default punta al percorso del
+# container (/app/uploads/portfolio), che fuori dal container non e' scrivibile:
+# la suite scrive in una cartella temporanea, cancellata alla fine del processo.
+import backend.routes.portfolio as portfolio_routes
+_PORTFOLIO_TMP = tempfile.mkdtemp(prefix="counselorbot-portfolio-test-")
+portfolio_routes.PORTFOLIO_STORAGE_DIR = _PORTFOLIO_TMP
+atexit.register(shutil.rmtree, _PORTFOLIO_TMP, True)
 
 client = TestClient(main.app)
 
@@ -818,11 +827,18 @@ def test_certified_strategies_crud_and_retrieve():
     assert r.status_code == 200 and r.json()["sort_order"] == 5
     assert any(s["id"] == sid for s in client.get("/admin/certified-strategies").json())
 
-    # retrieve: la strategia (match_mode=all su C6) riemerge solo se C6 e' saliente
+    # retrieve: la strategia (match_mode=all su C6) riemerge solo se C6 e' saliente.
+    # Il limite va alzato apposta: `retrieve` ne rende due, ordinate per
+    # sort_order, e questa e' appena stata spostata a 5. Con il default il test
+    # smetteva di misurare il match e cominciava a misurare la classifica,
+    # fallendo appena un altro modulo della suite seminava una strategia su C6
+    # con ordine piu' basso. Cio' che qui si verifica e' se la strategia rientra
+    # o no, non in che posizione.
     db = _TestSession()
     try:
         hit = certified_strategy_memory.retrieve(
             db, questionnaire_type="QSA", scores_context="Fattore C6 (Attenzione): 8/9", query="non riesco a concentrarmi",
+            limit=20,
         )
         assert any(s["id"] == "focus-c6" for s in hit)
         excluded = certified_strategy_memory.retrieve(
@@ -831,10 +847,12 @@ def test_certified_strategies_crud_and_retrieve():
             scores_context="Fattore C6 (Attenzione): 8/9",
             query="non riesco a concentrarmi",
             excluded_ids={"focus-c6"},
+            limit=20,
         )
         assert not any(s["id"] == "focus-c6" for s in excluded)
         miss = certified_strategy_memory.retrieve(
             db, questionnaire_type="QSA", scores_context="Fattore A2: 3/9", query="organizzazione",
+            limit=20,
         )
         assert not any(s["id"] == "focus-c6" for s in miss)
         # scope questionario diverso -> esclusa
