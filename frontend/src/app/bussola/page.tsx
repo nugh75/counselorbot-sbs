@@ -202,6 +202,19 @@ export default function BussolaPage() {
         router.push(orientationToolHref(pendingTool));
     }, [pendingTool, router, session, t]);
 
+    // L'avviso di errore stava in fondo alla pagina, sotto le raccomandazioni e
+    // il taccuino: chi vedeva fallire un invio doveva scorrere per sapere perché.
+    // Con la conversazione aperta va sotto il trascritto, accanto alla casella.
+    const errorNote = error
+        ? <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</p>
+        : null;
+
+    // Due soli stati per lo screen reader: l'attesa e la risposta arrivata.
+    const lastMessage = session?.messages[session.messages.length - 1];
+    const liveAnnouncement = sending
+        ? t('orientation.processing')
+        : lastMessage?.role === 'assistant' ? lastMessage.content : '';
+
     return (
         <div className="page-wide space-y-8">
             <header className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 py-7 shadow-sm sm:px-8 sm:py-9">
@@ -258,7 +271,16 @@ export default function BussolaPage() {
             ) : (
                 <>
                     <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                        <div className="max-h-[34rem] space-y-4 overflow-y-auto px-4 py-5 sm:px-6" aria-live="polite">
+                        {/* Come nella chat guidata e nell'assistente: il trascritto è un
+                            role="log" da navigare, e l'annuncio vive in una regione a
+                            parte con due soli stati. Un aria-live sul contenitore
+                            rileggeva l'intera conversazione a ogni turno. */}
+                        <p className="sr-only" aria-live="polite">{liveAnnouncement}</p>
+                        <div
+                            role="log"
+                            aria-label={t('orientation.title')}
+                            className="max-h-chat space-y-4 overflow-y-auto px-4 py-5 sm:px-6"
+                        >
                             {session.messages.map((message, index) => (
                                 <div key={`${message.role}-${index}`} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                     <ChatBubble role={message.role === 'user' ? 'user' : 'assistant'} className="max-w-[88%] whitespace-pre-line sm:max-w-2xl">
@@ -283,6 +305,7 @@ export default function BussolaPage() {
                                 </button>
                             </div>
                         )}
+                        {errorNote && <div className="border-t border-slate-100 px-4 py-3 sm:px-6">{errorNote}</div>}
                         {session.status === 'in_progress' && (
                             <form onSubmit={submitMessage} className="border-t border-slate-100 bg-slate-50/70 p-3 sm:p-4">
                                 <div className="flex items-end gap-2">
@@ -322,7 +345,7 @@ export default function BussolaPage() {
                 </>
             )}
 
-            {error && <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</p>}
+            {!session && errorNote}
         </div>
     );
 }
