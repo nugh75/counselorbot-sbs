@@ -8,19 +8,11 @@ import { QUESTIONNAIRE_LIST, QuestionnaireType, QuestionnaireConfig } from '@/li
 import { AlertTriangle, BookOpen, Check, ChevronDown, ExternalLink } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { instrumentAvailableInLocale } from '@/lib/instrument-availability';
+import { STRATEGIC_COMPETENCES_URLS } from '@/lib/questionnaire-sources';
 import { ACTIVE_QUESTIONNAIRE_IDS, TOOL_CATEGORIES } from '@/lib/tool-catalog';
 import { useInstrumentCatalog } from '@/lib/use-instrument-catalog';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
-
-const STRATEGIC_COMPETENCES_URLS: Partial<Record<QuestionnaireType, string>> = {
-    QSA: 'https://www.competenzestrategiche.it/QSA/',
-    QSAr: 'https://www.competenzestrategiche.it/QSAr/',
-    QPCS: 'https://www.competenzestrategiche.it/QPCS/',
-    QPCC: 'https://www.competenzestrategiche.it/QPCC/',
-    ZTPI: 'https://www.competenzestrategiche.it/ZTPI/',
-    QAP: 'https://www.competenzestrategiche.it/QAP/',
-};
 
 interface QuestionnaireSelectorProps {
     onSelect: (questionnaire: QuestionnaireConfig) => void;

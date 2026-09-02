@@ -9,16 +9,9 @@ import { ForwardButton } from '@/components/ui/ForwardButton';
 import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
 import { fetchInstruments } from '@/lib/instruments-api';
 import { useI18n } from '@/lib/i18n-context';
+import { STRATEGIC_COMPETENCES_URLS, STRATEGIC_COMPETENCES_CODE, STRATEGIC_COMPETENCES_PASSWORD } from '@/lib/questionnaire-sources';
 
 const AVAILABLE_INSTRUMENTS: QuestionnaireType[] = ['QSA', 'QSAr', 'QPCS', 'QPCC', 'ZTPI', 'QAP', 'SAVICKAS', 'IDEA'];
-const STRATEGIC_COMPETENCES_URLS: Partial<Record<QuestionnaireType, string>> = {
-    QSA: 'https://www.competenzestrategiche.it/QSA/',
-    QSAr: 'https://www.competenzestrategiche.it/QSAr/',
-    QPCS: 'https://www.competenzestrategiche.it/QPCS/',
-    QPCC: 'https://www.competenzestrategiche.it/QPCC/',
-    ZTPI: 'https://www.competenzestrategiche.it/ZTPI/',
-    QAP: 'https://www.competenzestrategiche.it/QAP/',
-};
 const QUESTIONNAIRE_SELECTION_HREF = '/?view=questionnaires';
 
 export default function InstrumentDetailsPage() {
@@ -112,10 +105,10 @@ export default function InstrumentDetailsPage() {
                     </div>
                     <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0">
                         <div className="rounded-md border border-sky-200 bg-white px-4 py-2 text-sm text-slate-700">
-                            {t('detail.assessment.codeLabel')}: <strong className="text-lg text-slate-900">1087</strong>
+                            {t('detail.assessment.codeLabel')}: <strong className="text-lg text-slate-900">{STRATEGIC_COMPETENCES_CODE}</strong>
                         </div>
                         <div className="rounded-md border border-sky-200 bg-white px-4 py-2 text-sm text-slate-700">
-                            {t('detail.assessment.passwordLabel')}: <strong className="text-lg text-slate-900">counselor</strong>
+                            {t('detail.assessment.passwordLabel')}: <strong className="text-lg text-slate-900">{STRATEGIC_COMPETENCES_PASSWORD}</strong>
                         </div>
                         <a
                             href={assessmentUrl}

@@ -189,6 +189,34 @@ def test_tool_question_hands_the_canonical_description_to_the_model():
     assert fallback_analysis("Voglio provare il QSA", "it").informational is False
 
 
+def test_prompt_carries_the_questionnaire_address_only_where_it_applies():
+    """La Bussola raccomanda uno strumento: deve anche dire dove si compila.
+
+    In italiano i sei questionari si fanno su competenzestrategiche.it, quindi il
+    prompt porta gli indirizzi esatti e le credenziali del sito; nelle altre cinque
+    lingue si compilano in app, quindi non deve comparire nessun indirizzo. La
+    regola finale vieta di inventare link, per cui senza questo blocco il modello
+    non poteva darne nessuno.
+    """
+    db = _Session()
+    try:
+        analyze_turn(db, "Voglio capire come studio", "it")
+        italian = _FakeAIService.last_call[0][1]
+        analyze_turn(db, "I want to understand how I study", "en")
+        english = _FakeAIService.last_call[0][1]
+    finally:
+        db.close()
+
+    assert "https://www.competenzestrategiche.it/QSA/" in italian
+    assert "https://www.competenzestrategiche.it/QAP/" in italian
+    assert "1087" in italian and "counselor" in italian
+    assert "copied verbatim" in italian
+
+    assert "competenzestrategiche.it/QSA/" not in english
+    assert "1087" not in english
+    assert "inside CounselorBot" in english
+
+
 def test_orientation_uses_the_selected_counselor_without_forced_json():
     db = _Session()
     try:
