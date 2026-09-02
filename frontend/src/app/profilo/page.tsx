@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useI18n } from '@/lib/i18n-context';
+import { BackButton } from '@/components/ui/BackButton';
 import { apiFetch, getIdentity, type Identity } from '@/lib/auth';
 import { canUsePersonalPage } from '@/lib/roles';
 import { useDarkMode } from '@/lib/use-dark-mode';
@@ -19,7 +20,7 @@ import { TelegramLinkCard } from '@/components/profile/TelegramLinkCard';
 import { TeacherNotesCard } from '@/components/profile/TeacherNotesCard';
 import { MyGroupsCard } from '@/components/profile/MyGroupsCard';
 import {
-    ArrowLeft, ArrowRight, Trash2, Download, MessageSquare, ShieldAlert, Search,
+    ArrowRight, Trash2, Download, MessageSquare, ShieldAlert, Search,
     NotebookPen, BookText, UsersRound, Send, FolderOpen, ClipboardList,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -411,13 +412,11 @@ export default function ProfilePage() {
                         </p>
                     </div>
                 </div>
-                <Link
+                <BackButton
+                    variant="labelled"
                     href={activeArea ? '/profilo' : '/'}
-                    className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    {activeArea ? t('profile.nav') : t('nav.home')}
-                </Link>
+                    label={activeArea ? t('profile.nav') : t('nav.home')}
+                />
             </div>
 
             {!activeArea && (

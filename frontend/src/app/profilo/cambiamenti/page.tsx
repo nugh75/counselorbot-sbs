@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, User, ShieldAlert } from 'lucide-react';
+import { User, ShieldAlert } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { BackButton } from '@/components/ui/BackButton';
 import { getIdentity, type Identity } from '@/lib/auth';
 import { canUsePersonalPage } from '@/lib/roles';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -79,13 +79,7 @@ export default function ProfileChangesPage() {
         <div className="page-wide px-4 py-8 space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <h1 className="text-2xl font-bold text-slate-900">{t('profileChanges.title')}</h1>
-                <Link
-                    href="/profilo"
-                    className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    {t('profileChanges.backToNotebook')}
-                </Link>
+                <BackButton variant="labelled" href="/profilo" label={t('profileChanges.backToNotebook')} />
             </div>
             <ProfileChangeReflection lang={lang} />
         </div>
