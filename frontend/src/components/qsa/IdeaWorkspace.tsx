@@ -7,7 +7,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { IdeaBranchTree } from '@/components/qsa/IdeaBranchTree';
 import { IdeaConclusion } from '@/components/qsa/IdeaConclusion';
 import { IdeaMapPanel } from '@/components/qsa/IdeaMapPanel';
-import { IDEA_PACE_STOPS, type IdeaNextStep, type IdeaVariant } from '@/lib/idea-map';
+import { IDEA_PACE_STOPS, moveIdeaFocus, type IdeaNextStep, type IdeaVariant } from '@/lib/idea-map';
 
 interface IdeaWorkspaceProps {
     sessionId: string;
@@ -33,6 +33,12 @@ export function IdeaWorkspace({ sessionId, version, locale, variant, move, budge
     // Quando ogni ramo e' chiuso la chiusura non e' piu' una via d'uscita:
     // e' il passo che tocca, e si vede.
     const finished = move?.reason === 'all-closed';
+
+    // Cliccare un pezzo della mappa porta al ramo che lo contiene: la mappa
+    // diventa il modo di muoversi, non solo il posto dove si guarda.
+    const pickNode = async (nodeId: string) => {
+        if (await moveIdeaFocus(sessionId, nodeId)) onFocusMoved();
+    };
 
     return (
         <section className="glass-panel overflow-hidden">
@@ -126,6 +132,7 @@ export function IdeaWorkspace({ sessionId, version, locale, variant, move, budge
                             locale={locale}
                             variant={variant}
                             move={move}
+                            onPickNode={(nodeId) => void pickNode(nodeId)}
                         />
                     </div>
                 </div>
