@@ -300,6 +300,16 @@ h1.text-3xl {
   height: 44px;
 }
 
+/* Su puntatore grossolano ogni icona della topbar prende la stessa misura: da
+   sm in su la barra ne mostra fino a dodici, e a 32px erano bersagli stretti
+   per il dito su tablet. Il mouse tiene la densita' di prima. */
+@media (pointer: coarse) {
+  .console-topbar-icon {
+    width: 44px;
+    height: 44px;
+  }
+}
+
 /* Prose styles for markdown content */
 .prose {
   line-height: 1.6;

@@ -900,10 +900,13 @@ export default function Home() {
                                     </p>
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-4 pt-4">
+                                {/* Tre comandi, un solo primario: il PDF è l'esito che si porta
+                                    via. Senza prefisso responsive le tre colonne restavano
+                                    affiancate anche a 360px, in tracce da ~95px. */}
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4">
                                     <button
                                         onClick={analyzeAnother}
-                                        className="py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center"
+                                        className="min-h-11 py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-md transition-colors flex items-center justify-center"
                                     >
                                         {t('completed.another')}
                                     </button>
@@ -925,13 +928,13 @@ export default function Home() {
                                             }
                                         }}
                                         disabled={pdfLoading}
-                                        className="py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center disabled:opacity-60"
+                                        className="min-h-11 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors flex items-center justify-center disabled:opacity-60"
                                     >
                                         {t('completed.downloadPdf')}
                                     </button>
                                     <button
                                         onClick={() => setStep('farewell')}
-                                        className="py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-md transition-colors flex items-center justify-center"
+                                        className="min-h-11 py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-md transition-colors flex items-center justify-center"
                                     >
                                         {t('completed.end')}
                                     </button>
