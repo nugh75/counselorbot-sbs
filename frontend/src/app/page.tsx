@@ -304,7 +304,12 @@ export default function Home() {
                 if (snapshot.counselor_id != null) setSelectedCounselorId(snapshot.counselor_id);
                 setSessionId(snapshot.session_id);
                 setScores(snapshot.scores || {});
-                setExperience('standard');
+                // La sandbox OpenCode si congela come la chat guidata: riaprirla
+                // in modalità guidata mostrerebbe un percorso che non è il suo.
+                setExperience(snapshot.experience === 'opencode' ? 'opencode' : 'standard');
+                // La sandbox rigenera `documento.md` a ogni apertura: senza il
+                // token il PDF del profilo sparirebbe dal workspace.
+                setPdfToken(snapshot.pdf_token || undefined);
                 setFrozenSnapshot(snapshot);
                 setStep('interaction');
                 setReady(true);
@@ -872,6 +877,11 @@ export default function Home() {
                                     sessionId={sessionId}
                                     locale={lang}
                                     onComplete={handleInteractionComplete}
+                                    restoredMessages={
+                                        frozenSnapshot?.session_id === sessionId
+                                            ? frozenSnapshot.messages
+                                            : undefined
+                                    }
                                 />
                             )}
                         </div>

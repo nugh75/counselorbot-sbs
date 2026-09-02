@@ -36,7 +36,9 @@ test('OpenCode has an explicit conclusion that proposes a notebook update', () =
     );
     assert.match(source, /opencode\.conclude/);
     assert.match(source, /LearnerProfileCard variant="update"/);
-    assert.match(source, /onClick=\{onComplete\}/);
+    // Il pulsante passa dal wrapper che ferma l'autosalvataggio prima di uscire.
+    assert.match(source, /onClick=\{handleComplete\}/);
+    assert.match(source, /const handleComplete = \(\) => \{[\s\S]*?onComplete\(\);/);
 });
 
 test('the notebook suggestion is loaded by session, shown only when ready, and requires an explicit action', () => {
