@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, BookOpen, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, Award, MessageCircleQuestion, Wand2, PanelLeftClose, PanelLeftOpen, CalendarDays, Eye, FolderOpen, Bot, Download } from 'lucide-react';
+import { BookOpen, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, Award, MessageCircleQuestion, Wand2, PanelLeftClose, PanelLeftOpen, CalendarDays, Eye, FolderOpen, Bot, Download } from 'lucide-react';
 import { ConfigForm } from '@/components/admin/ConfigForm';
 import { LogViewer } from '@/components/admin/LogViewer';
 import { CostStats } from '@/components/admin/CostStats';
@@ -32,6 +31,7 @@ import { PromptExportPanel } from '@/components/admin/PromptExportPanel';
 import { UsersSummaryPanel } from '@/components/admin/UsersSummaryPanel';
 import { getRealIdentity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
+import { BackButton } from '@/components/ui/BackButton';
 import { canUseResearchConsole } from '@/lib/roles';
 
 import { cn } from '@/lib/utils';
@@ -157,13 +157,7 @@ export default function AdminPage() {
                             <p className="text-sm text-slate-500 mt-1">CounselorBot · {activeItem?.label}</p>
                         </div>
                     </div>
-                    <Link
-                        href="/"
-                        className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        {t('nav.home')}
-                    </Link>
+                    <BackButton variant="labelled" href="/" label={t('nav.home')} />
                 </div>
                 <div className={cn('grid gap-6', sidebarCollapsed ? 'lg:grid-cols-[4.5rem_1fr]' : 'lg:grid-cols-[17rem_1fr]')}>
                     <aside className="glass-panel p-3 lg:sticky lg:top-24 lg:self-start">
