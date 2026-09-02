@@ -60,11 +60,19 @@ export function subscribeToFrozenSessions(onChange: () => void): () => void {
     return () => window.removeEventListener(FROZEN_SESSIONS_EVENT, onChange);
 }
 
-export async function freezeSession(snapshot: FrozenSessionSnapshot): Promise<void> {
+export interface FreezeOptions {
+    // Uscita dalla pagina (pagehide): la richiesta deve sopravvivere alla
+    // navigazione. Il browser limita a 64KB il corpo delle richieste keepalive,
+    // ma l'autosalvataggio ha già scritto tutto tranne l'ultimo turno.
+    keepalive?: boolean;
+}
+
+export async function freezeSession(snapshot: FrozenSessionSnapshot, options: FreezeOptions = {}): Promise<void> {
     const res = await apiFetch('/api/session/freeze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(snapshot),
+        keepalive: options.keepalive,
     });
     if (!res.ok) throw new Error(`Freeze fallito (${res.status})`);
     notifyFrozenSessionsChanged();

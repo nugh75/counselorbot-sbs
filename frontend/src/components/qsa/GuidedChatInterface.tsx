@@ -1,7 +1,7 @@
 'use client';
 
 import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X } from 'lucide-react';
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
 import { QUESTIONNAIRES } from '@/lib/questionnaires';
@@ -32,7 +32,8 @@ import {
     type IdeaReference,
     type IdeaVariant,
 } from '@/lib/idea-map';
-import { freezeSession, type FrozenSessionDetail } from '@/lib/frozen-session';
+import { freezeSession, type FrozenSessionDetail, type FrozenSessionSnapshot } from '@/lib/frozen-session';
+import { AUTO_FREEZE_DELAY_MS, autoFreezeSignature, shouldAutoFreeze } from '@/lib/auto-freeze';
 import { diagramContentForSpeech, splitDiagramContent } from '@/lib/diagram-content';
 
 // --- Types ---
@@ -532,6 +533,11 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const ideaReferenceInputRef = useRef<HTMLInputElement>(null);
     const processedPhases = useRef<Set<string>>(new Set());
     const loadedSessionScopeRef = useRef('');
+    // Autosalvataggio: snapshot in attesa di essere scritto, firma dell'ultimo
+    // scritto, e il percorso concluso (che non va più congelato).
+    const pendingSnapshotRef = useRef<{ snapshot: FrozenSessionSnapshot; signature: string } | null>(null);
+    const savedSignatureRef = useRef('');
+    const completedRef = useRef(false);
 
     // Derived from questionnaire config
     const questionnaire = useMemo(() => QUESTIONNAIRES[questionnaireType as keyof typeof QUESTIONNAIRES], [questionnaireType]);
@@ -1257,29 +1263,90 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         }
     };
 
+    // Stato congelabile della chat: lo usano il fiocco di neve e
+    // l'autosalvataggio.
+    const buildSnapshot = (): FrozenSessionSnapshot => ({
+        session_id: sessionId,
+        questionnaire_type: questionnaireType,
+        messages,
+        current_phase: currentPhase,
+        scores,
+        counselor_id: getSelectedCounselorId(),
+        experience: 'standard',
+        locale: activeLocale,
+        response_length: responseLength,
+        label: `${questionnaireType} — ${getPhaseLabel(currentPhase)}`,
+    });
+
+    // Scrive lo snapshot in attesa. Chiamata dal timer di fine turno e, per
+    // sicurezza, quando si lascia lo strumento.
+    const flushAutoFreeze = useCallback(async (options: { keepalive?: boolean } = {}) => {
+        const pending = pendingSnapshotRef.current;
+        if (!pending || completedRef.current) return;
+        pendingSnapshotRef.current = null;
+        savedSignatureRef.current = pending.signature;
+        try {
+            await freezeSession(pending.snapshot, options);
+        } catch {
+            // Silenzioso: la sessione continua e il turno successivo riprova.
+            savedSignatureRef.current = '';
+        }
+    }, []);
+
     // Congela la sessione: salva lo stato visibile lato server e lascia che il
     // chiamante chiuda la chat. Lo studente la riprende da qualsiasi dispositivo.
     const handleFreeze = async () => {
         if (isLoading) return;
         try {
-            await freezeSession({
-                session_id: sessionId,
-                questionnaire_type: questionnaireType,
-                messages,
-                current_phase: currentPhase,
-                scores,
-                counselor_id: getSelectedCounselorId(),
-                experience: 'standard',
-                locale: activeLocale,
-                response_length: responseLength,
-                label: `${questionnaireType} — ${getPhaseLabel(currentPhase)}`,
-            });
+            const snapshot = buildSnapshot();
+            await freezeSession(snapshot);
+            pendingSnapshotRef.current = null;
+            savedSignatureRef.current = autoFreezeSignature({ messages, currentPhase, responseLength });
             toast.success(t('frozen.frozen'));
             onFrozen?.();
         } catch {
             toast.error(t('toast.error'));
         }
     };
+
+    // Fine percorso: lo snapshot viene cancellato da chi chiude la chat, quindi
+    // l'autosalvataggio deve smettere prima di uscire, o lo ricrea.
+    const handleComplete = () => {
+        completedRef.current = true;
+        pendingSnapshotRef.current = null;
+        onComplete();
+    };
+
+    // A fine turno lo stato va sul server da solo: uscire dallo strumento non
+    // chiede più il gesto manuale.
+    useEffect(() => {
+        if (!shouldAutoFreeze({
+            sessionId,
+            messageCount: messages.length,
+            isLoading,
+            completed: completedRef.current,
+        })) return;
+        const signature = autoFreezeSignature({ messages, currentPhase, responseLength });
+        if (signature === savedSignatureRef.current) return;
+        pendingSnapshotRef.current = { snapshot: buildSnapshot(), signature };
+        const timer = window.setTimeout(() => { void flushAutoFreeze(); }, AUTO_FREEZE_DELAY_MS);
+        return () => window.clearTimeout(timer);
+        // buildSnapshot legge lo stato corrente a ogni render: le dipendenze qui
+        // sono quello che rende lo snapshot diverso dal precedente.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [messages, currentPhase, responseLength, isLoading, sessionId]);
+
+    // Uscita dallo strumento con un turno ancora in attesa: `pagehide` copre tab
+    // chiusa, ricarica e link che lasciano la pagina (il logo dell'header è un
+    // link vero); lo smontaggio copre il tasto indietro e il cambio di schermata.
+    useEffect(() => {
+        const onPageHide = () => { void flushAutoFreeze({ keepalive: true }); };
+        window.addEventListener('pagehide', onPageHide);
+        return () => {
+            window.removeEventListener('pagehide', onPageHide);
+            void flushAutoFreeze();
+        };
+    }, [flushAutoFreeze]);
 
     // Loading state
     if (initialLoading) {
@@ -1709,7 +1776,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 {currentPhase === FIXED_CONCLUSION_ID ? (
                     <div className="flex justify-center border-t border-slate-100 bg-slate-50 p-3 sm:p-4">
                         <button
-                            onClick={onComplete}
+                            onClick={handleComplete}
                             className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors"
                         >
                             {t('guided.backHome')}

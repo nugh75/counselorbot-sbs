@@ -304,7 +304,9 @@ export default function Home() {
                 if (snapshot.counselor_id != null) setSelectedCounselorId(snapshot.counselor_id);
                 setSessionId(snapshot.session_id);
                 setScores(snapshot.scores || {});
-                setExperience('standard');
+                // La sandbox OpenCode si congela come la chat guidata: riaprirla
+                // in modalità guidata mostrerebbe un percorso che non è il suo.
+                setExperience(snapshot.experience === 'opencode' ? 'opencode' : 'standard');
                 setFrozenSnapshot(snapshot);
                 setStep('interaction');
                 setReady(true);
