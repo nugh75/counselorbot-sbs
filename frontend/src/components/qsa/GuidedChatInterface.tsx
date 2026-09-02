@@ -1500,7 +1500,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         <div className="space-y-4">
         <div className="grid gap-4 lg:h-chat lg:grid-cols-4 lg:gap-6">
             {/* Left Sidebar */}
-            <div className="order-3 space-y-4 custom-scrollbar lg:order-1 lg:col-span-1 lg:overflow-y-auto lg:pr-2">
+            <div className="order-3 space-y-4 lg:order-1 lg:col-span-1 lg:overflow-y-auto lg:pr-2">
                 {/* Phase Progress — per Idea non esiste una sequenza da mostrare:
                     il passo successivo dipende da cosa manca alla mappa. */}
                 <div className={cn("glass-panel overflow-hidden", isIdea && "hidden")}>
@@ -1658,7 +1658,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     )}
                     {visibleMessages.map(({ message: msg, index: idx }) => (
                         <div key={idx} className={cn(
-                            "flex min-w-0 animate-in fade-in slide-in-from-bottom-2 duration-300",
+                            "flex min-w-0 animate-fade-in-up",
                             msg.role === 'user' ? 'justify-end' : msg.role === 'system' ? 'justify-center' : 'justify-start'
                         )}>
                             {msg.role === 'system' ? (
