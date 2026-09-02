@@ -7,6 +7,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
+from pydantic import BaseModel
 from sqlalchemy import cast, func, or_, text as sa_text
 from sqlalchemy.types import Text
 from sqlalchemy.orm import Session
