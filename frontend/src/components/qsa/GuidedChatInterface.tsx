@@ -11,6 +11,7 @@ import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useI18n } from '@/lib/i18n-context';
+import { isNearBottom } from '@/lib/chat-scroll';
 import { stepLabel, stripStepOrdinal } from '@/lib/i18n-steps';
 import type { Lang } from '@/lib/i18n';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
@@ -530,7 +531,10 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const requestRef = useRef<AbortController | null>(null);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messagesRef = useRef<HTMLDivElement>(null);
+    // Finche' il lettore e' in fondo lo streaming ce lo tiene; appena risale a
+    // rileggere, smette di riportarlo giu'.
+    const stickToBottom = useRef(true);
     const ideaReferenceInputRef = useRef<HTMLInputElement>(null);
     const processedPhases = useRef<Set<string>>(new Set());
     const loadedSessionScopeRef = useRef('');
@@ -561,9 +565,14 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         }));
     }, [scores, questionnaire, t]);
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
+    useEffect(() => {
+        const el = messagesRef.current;
+        if (!el || !stickToBottom.current) return;
+        // scrollTop sul contenitore: scrollIntoView scrolla ogni antenato fino al
+        // viewport, e con un aggiornamento di stato per token trascinava l'intera
+        // pagina, rendendo impossibile muoversi mentre la risposta arrivava.
+        el.scrollTop = el.scrollHeight;
+    }, [messages]);
 
     useEffect(() => {
         setConversationId(undefined);
@@ -576,10 +585,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         }
         void fetchIdeaReference(sessionId).then(setIdeaReference);
     }, [isIdea, sessionId]);
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
 
     useEffect(() => {
         return () => {
@@ -1627,7 +1632,13 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 <p className="sr-only" aria-live="polite">{liveAnnouncement}</p>
 
                 {/* Messages */}
-                <div role="log" aria-labelledby="guided-chat-title" className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 space-y-6">
+                <div
+                    ref={messagesRef}
+                    onScroll={(event) => { stickToBottom.current = isNearBottom(event.currentTarget); }}
+                    role="log"
+                    aria-labelledby="guided-chat-title"
+                    className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 space-y-6"
+                >
                     {isIdea && (
                         <div className="space-y-3">
                             {messages.length <= 1 && (
@@ -1783,7 +1794,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             <LearnerProfileCard variant="update" sessionId={sessionId} />
                         </div>
                     )}
-                    <div ref={messagesEndRef} />
                 </div>
 
                 {/* Input Area */}

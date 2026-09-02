@@ -24,6 +24,7 @@ import { freezeSession, type FrozenSessionSnapshot } from '@/lib/frozen-session'
 import { streamChat } from '@/lib/chat-stream';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
+import { isNearBottom } from '@/lib/chat-scroll';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import '@xterm/xterm/css/xterm.css';
 
@@ -64,7 +65,10 @@ export function OpenCodeExperience({
     const sessionIdRef = useRef('');
     const streamingRef = useRef(false);
     const requestRef = useRef<AbortController | null>(null);
-    const messagesEndRef = useRef<HTMLDivElement | null>(null);
+    const messagesRef = useRef<HTMLDivElement | null>(null);
+    // Finche' il lettore e' in fondo lo streaming ce lo tiene; appena risale a
+    // rileggere, smette di riportarlo giu'.
+    const stickToBottom = useRef(true);
     const pendingSnapshotRef = useRef<{ snapshot: FrozenSessionSnapshot; signature: string } | null>(null);
     const savedSignatureRef = useRef('');
     const completedRef = useRef(false);
@@ -331,7 +335,12 @@ export function OpenCodeExperience({
     }, [viewMode]);
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        const el = messagesRef.current;
+        if (!el || !stickToBottom.current) return;
+        // scrollTop sul contenitore: scrollIntoView scrolla ogni antenato fino al
+        // viewport, e con un aggiornamento di stato per token trascinava l'intera
+        // pagina, rendendo impossibile muoversi mentre la risposta arrivava.
+        el.scrollTop = el.scrollHeight;
     }, [messages]);
 
     // Autosalvataggio come nella chat guidata: la sessione finisce nell'elenco
@@ -598,7 +607,11 @@ export function OpenCodeExperience({
                     </div>
                 ) : (
                     <>
-                        <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-5">
+                        <div
+                            ref={messagesRef}
+                            onScroll={(event) => { stickToBottom.current = isNearBottom(event.currentTarget); }}
+                            className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-5"
+                        >
                             {busy && messages.length === 0 && (
                                 <div className="h-full flex items-center justify-center text-sm text-slate-500">
                                     <RefreshCw className="w-4 h-4 mr-2 animate-spin text-indigo-600" />
@@ -668,7 +681,6 @@ export function OpenCodeExperience({
                                     </div>
                                 </div>
                             ))}
-                            <div ref={messagesEndRef} />
                         </div>
                         <form onSubmit={submit} className="border-t border-slate-200 bg-white p-3 sm:p-4">
                             {error && messages.length > 0 && (
