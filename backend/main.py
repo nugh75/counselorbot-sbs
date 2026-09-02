@@ -678,6 +678,7 @@ def _seed_and_migrate():
             ("readings_allow_sensitive", "false", "Se true, le letture marcate sensibili possono essere proposte allo studente quando e' lui a nominare quel tema. Spenta: restano solo nel catalogo admin."),
             ("counselor_restricted_instruments", '["IDEA"]', "Strumenti a invito: un counselor li serve solo se li elenca nei suoi questionari. Per gli altri strumenti, lista vuota continua a valere 'tutti'."),
             ("feature_idea_focus", "false", "Strumento Idea (chat libera che mette a fuoco un'idea costruendo una mappa). Spento: non compare fra gli strumenti e gli endpoint della mappa rispondono 404."),
+            ("idea_sources_enabled", "true", "Ricerca di fonti esterne dai rami dello strumento Idea (enciclopedie: Wikipedia/Treccani; lavori: OpenAlex/Europe PMC). Il gesto e' esplicito: nessuna ricerca parte da sola. Spenta: gli endpoint /idea/sources rispondono 404."),
             ("external_pii_redact", "true", "Anonimizzazione PII reversibile verso provider LLM esterni (placeholder + restore). Provider locali mai toccati (true/false)."),
             ("external_pii_fallback", "block", "Se il detector NER locale non risponde: 'block' blocca la chiamata esterna, 'send_raw' invia comunque."),
             ("pii_ner_enabled", "true", "Layer NER locale (Ollama) per nomi/indirizzi nell'anonimizzazione esterna. Spento: solo layer deterministico checksum (true/false)."),
