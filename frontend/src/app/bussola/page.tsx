@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowRight, Check, Compass, Loader2, Send, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
+import { QuestionnaireLink } from '@/components/ui/QuestionnaireLink';
 import { CompassMark } from '@/components/ui/CompassMark';
 import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
@@ -321,6 +322,9 @@ function RecommendationSection({ session, onPick }: { session: OrientationSessio
                         <h3 className="mt-3 text-lg font-bold text-slate-900">{toolName(item.id, t)}</h3>
                         <p className="mt-1 text-sm leading-relaxed text-slate-500">{toolDescription(item.id, t)}</p>
                         <p className="mt-4 grow border-l-2 border-teal-400 pl-3 text-sm leading-relaxed text-slate-700">{item.reason}</p>
+                        {/* La Bussola manda a `/?start=<id>`, che salta la card di scelta:
+                            senza questo, il link al questionario non lo vede mai nessuno. */}
+                        <QuestionnaireLink instrument={item.id} className="mt-4" />
                         <Button type="button" onClick={() => onPick(item.id)} className="mt-5 justify-between">{t('orientation.recommendation.start')}<ArrowRight className="h-4 w-4" /></Button>
                     </article>
                 ))}

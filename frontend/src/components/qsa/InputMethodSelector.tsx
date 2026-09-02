@@ -6,6 +6,7 @@ import { QuestionnaireConfig, supportsProfileUpload } from '@/lib/questionnaires
 import { useI18n } from '@/lib/i18n-context';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
+import { QuestionnaireLink } from '@/components/ui/QuestionnaireLink';
 import { cn } from '@/lib/utils';
 import { apiFetch } from '@/lib/auth';
 
@@ -185,6 +186,9 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
                     label={t('counselor.continue')}
                 />
             </div>
+            {/* E' la schermata che chiede i punteggi: qui la domanda "e dove li
+                prendo?" arriva davvero, e finora non aveva risposta. */}
+            {questionnaire && <QuestionnaireLink instrument={questionnaire.id} className="max-w-5xl" />}
             <div className="flex flex-col sm:flex-row gap-4 w-full max-w-5xl">
                 {options.map((opt) => (
                     <div key={opt.key} className="flex-1 min-w-0">
