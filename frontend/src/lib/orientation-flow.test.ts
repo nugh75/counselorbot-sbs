@@ -85,3 +85,15 @@ test('the real identity is fetched once and shared by its callers', () => {
     // Un errore di rete non resta in cache.
     assert.match(source, /identityRequest = null/);
 });
+
+test('a concluded Compass has a way out even when no tool is opened', () => {
+    const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
+    // Senza `?next=` — cioè per chi apre la Bussola dalla topbar invece di
+    // esserci rimandato dal cancello — il pannello finale non aveva alcun
+    // collegamento: restavano le schede degli strumenti e nient'altro.
+    assert.match(source, /href=\{nextHref \?\? '\/'\}/);
+    assert.match(source, /nextHref \? t\('orientation\.continue'\) : t\('nav\.home'\)/);
+    // Il taccuino chiesto prima di aprire uno strumento sostituisce la pagina:
+    // senza ritorno, ogni suo comando portava comunque a quello strumento.
+    assert.match(source, /onBack=\{\(\) => setPendingTool\(null\)\}/);
+});
