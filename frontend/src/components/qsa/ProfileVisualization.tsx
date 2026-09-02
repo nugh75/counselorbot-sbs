@@ -33,10 +33,26 @@ type Translator = (key: string, vars?: Record<string, string | number>) => strin
 // fondo (fondo al 12,5%): 1.77-3.20:1, sotto la soglia AA, proprio sul numero
 // che lo studente viene a leggere. La coppia -800 su -50 sta a 6.6-7.6:1, ed e'
 // la stessa ricetta gia' usata dalle chip di sintesi in questo file.
+// `glyph` e' il secondo canale: prima la fascia buona e quella da far crescere
+// si distinguevano solo per tinta, e con una discromatopsia rosso-verde — circa
+// l'8% degli uomini — la schermata dei risultati perdeva la sua distinzione
+// principale. Il triangolo, il punto e il triangolo rovesciato dicono lo stesso
+// esito senza colore, e compaiono uguali nella barra e nella legenda.
+// `band` e `bandText` sono variabili CSS, non hex: cosi' il tema scuro le
+// ridefinisce dal remap centrale invece di restare fuori (vedi globals.css).
 const OUTCOME_TONE = {
-    strength: { mark: '#22c55e', text: '#166534', chip: '#f0fdf4' },
-    adequate: { mark: '#eab308', text: '#854d0e', chip: '#fefce8' },
-    growth: { mark: '#ef4444', text: '#991b1b', chip: '#fef2f2' },
+    strength: {
+        mark: '#22c55e', text: '#166534', chip: '#f0fdf4', glyph: '\u25b2',
+        band: 'var(--zone-strength-band)', bandText: 'var(--zone-strength-text)',
+    },
+    adequate: {
+        mark: '#eab308', text: '#854d0e', chip: '#fefce8', glyph: '\u25cf',
+        band: 'var(--zone-adequate-band)', bandText: 'var(--zone-adequate-text)',
+    },
+    growth: {
+        mark: '#ef4444', text: '#991b1b', chip: '#fef2f2', glyph: '\u25bd',
+        band: 'var(--zone-growth-band)', bandText: 'var(--zone-growth-text)',
+    },
 } as const;
 
 type Outcome = keyof typeof OUTCOME_TONE;
@@ -93,8 +109,7 @@ interface ScoreBarProps {
 interface ScoreSegment {
     start: number;
     end: number;
-    backgroundColor: string;
-    textColor: string;
+    outcome: Outcome;
 }
 
 function makeZTPISegments(code: ZTPIFactorCode): ScoreSegment[] {
@@ -102,18 +117,32 @@ function makeZTPISegments(code: ZTPIFactorCode): ScoreSegment[] {
     const ideal = ZTPI_BTP_IDEAL[code];
     const segments: ScoreSegment[] = [];
 
-    const pushSegment = (start: number, end: number, backgroundColor: string, textColor: string) => {
+    const pushSegment = (start: number, end: number, outcome: Outcome) => {
         if (start > end) return;
-        segments.push({ start, end, backgroundColor, textColor });
+        segments.push({ start, end, outcome });
     };
 
-    pushSegment(1, near.min - 1, 'rgba(239, 68, 68, 0.2)', '#dc2626');
-    pushSegment(near.min, ideal.min - 1, 'rgba(234, 179, 8, 0.2)', '#ca8a04');
-    pushSegment(ideal.min, ideal.max, 'rgba(34, 197, 94, 0.2)', '#16a34a');
-    pushSegment(ideal.max + 1, near.max, 'rgba(234, 179, 8, 0.2)', '#ca8a04');
-    pushSegment(near.max + 1, 9, 'rgba(239, 68, 68, 0.2)', '#dc2626');
+    pushSegment(1, near.min - 1, 'growth');
+    pushSegment(near.min, ideal.min - 1, 'adequate');
+    pushSegment(ideal.min, ideal.max, 'strength');
+    pushSegment(ideal.max + 1, near.max, 'adequate');
+    pushSegment(near.max + 1, 9, 'growth');
 
     return segments;
+}
+
+// Una fascia della barra: banda, glifo dell'esito e intervallo di punteggio.
+function ZoneBand({ outcome, label, width, divider }: { outcome: Outcome; label: string; width: string; divider: boolean }) {
+    const tone = OUTCOME_TONE[outcome];
+    return (
+        <div
+            className={cn('flex items-center justify-center gap-1 text-[10px] font-semibold', divider && 'border-l border-slate-200')}
+            style={{ width, backgroundColor: tone.band, color: tone.bandText }}
+        >
+            <span aria-hidden="true">{tone.glyph}</span>
+            {label}
+        </div>
+    );
 }
 
 function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interpretation }: ScoreBarProps) {
@@ -137,57 +166,22 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
             <div className="relative col-span-2 row-start-2 min-w-0 sm:flex-1">
                 {isZTPI ? (
                     <div className="flex h-6 rounded-md overflow-hidden border border-slate-200">
-                        {ztpiSegments.map((segment, idx) => {
-                            const slots = segment.end - segment.start + 1;
-                            const width = `${(slots / 9) * 100}%`;
-                            const label = segment.start === segment.end ? `${segment.start}` : `${segment.start}-${segment.end}`;
-                            return (
-                                <div
-                                    key={`${segment.start}-${segment.end}`}
-                                    className={cn(
-                                        "flex items-center justify-center text-[10px] font-medium",
-                                        idx > 0 && "border-l border-slate-200"
-                                    )}
-                                    style={{
-                                        width,
-                                        backgroundColor: segment.backgroundColor,
-                                        color: segment.textColor,
-                                    }}
-                                >
-                                    {label}
-                                </div>
-                            );
-                        })}
+                        {ztpiSegments.map((segment, idx) => (
+                            <ZoneBand
+                                key={`${segment.start}-${segment.end}`}
+                                outcome={segment.outcome}
+                                label={segment.start === segment.end ? `${segment.start}` : `${segment.start}-${segment.end}`}
+                                width={`${((segment.end - segment.start + 1) / 9) * 100}%`}
+                                divider={idx > 0}
+                            />
+                        ))}
                     </div>
                 ) : (
                     <div className="flex h-6 rounded-md overflow-hidden border border-slate-200">
-                        {/* Zone 1-3 */}
-                        <div
-                            className="w-1/3 flex items-center justify-center text-[10px] font-medium"
-                            style={{
-                                backgroundColor: isInverted ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                                color: isInverted ? '#16a34a' : '#dc2626'
-                            }}
-                        >
-                            1-3
-                        </div>
-                        {/* Zone 4-6 */}
-                        <div
-                            className="w-1/3 flex items-center justify-center text-[10px] font-medium border-x border-slate-200"
-                            style={{ backgroundColor: 'rgba(234, 179, 8, 0.2)', color: '#ca8a04' }}
-                        >
-                            4-6
-                        </div>
-                        {/* Zone 7-9 */}
-                        <div
-                            className="w-1/3 flex items-center justify-center text-[10px] font-medium"
-                            style={{
-                                backgroundColor: isInverted ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)',
-                                color: isInverted ? '#dc2626' : '#16a34a'
-                            }}
-                        >
-                            7-9
-                        </div>
+                        {/* L'esito si ribalta sui fattori invertiti: 1-3 e' una forza. */}
+                        <ZoneBand outcome={isInverted ? 'strength' : 'growth'} label="1-3" width="33.333%" divider={false} />
+                        <ZoneBand outcome="adequate" label="4-6" width="33.333%" divider />
+                        <ZoneBand outcome={isInverted ? 'growth' : 'strength'} label="7-9" width="33.334%" divider />
                     </div>
                 )}
 
@@ -209,6 +203,7 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
                         color: interpretation.tone.text,
                     }}
                 >
+                    <span aria-hidden="true">{interpretation.tone.glyph}</span>
                     {score}
                 </span>
                 <div className="text-[10px] text-slate-500 mt-0.5">
@@ -352,18 +347,20 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
 
             {/* Legenda, in basso */}
             <div className="flex justify-center gap-4 text-xs flex-wrap pt-2 border-t border-slate-100">
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                    <span className="text-slate-600">{positiveLegend}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                    <span className="text-slate-600">{midLegend}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                    <span className="text-slate-600">{t('profile.growth')}</span>
-                </div>
+                {/* Il campione della legenda e' la fascia vera, glifo compreso: chi non
+                    distingue rosso e verde legge comunque quale banda e' quale. */}
+                {([['strength', positiveLegend], ['adequate', midLegend], ['growth', t('profile.growth')]] as const).map(([outcome, label]) => (
+                    <div key={outcome} className="flex items-center gap-2">
+                        <span
+                            className="flex h-5 w-5 items-center justify-center rounded-sm border border-slate-200 text-[10px] font-semibold"
+                            style={{ backgroundColor: OUTCOME_TONE[outcome].band, color: OUTCOME_TONE[outcome].bandText }}
+                            aria-hidden="true"
+                        >
+                            {OUTCOME_TONE[outcome].glyph}
+                        </span>
+                        <span className="text-slate-600">{label}</span>
+                    </div>
+                ))}
                 {questionnaire.invertedFactors.length > 0 && (
                     <div className="flex items-center gap-1 text-slate-500">
                         <span>↔</span>
