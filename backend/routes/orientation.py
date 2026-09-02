@@ -227,9 +227,6 @@ def orientation_message(
     row.messages = messages
     if not analysis.informational:
         row.recommendations = analysis.recommendations
-        row.notebook_draft = analysis.notebook_draft
-        row.notebook_reviewed = False
-        row.notebook_revision_id = None
     db.commit()
     db.refresh(row)
     return _serialize(row)
@@ -290,8 +287,6 @@ def complete_orientation(
     row = _owned_session(db, _owner(current_user), session_id)
     if not row.recommendations:
         raise HTTPException(status_code=409, detail="Write at least one message before completing orientation")
-    if not row.notebook_reviewed:
-        raise HTTPException(status_code=409, detail="Review the notebook draft before completing orientation")
     row.status = "completed"
     row.completed_at = datetime.now(timezone.utc)
     db.commit()

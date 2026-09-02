@@ -323,9 +323,7 @@ def fallback_analysis(message: str, language: str = "it") -> OrientationAnalysis
         {"id": tool_id, "reason": f"{_REASON_PREFIX[lang]} ({tool_id})."}
         for tool_id in ranked
     ]
-    compact = " ".join((message or "").strip().split())[:600]
-    draft = {"goal": compact} if compact else {}
-    return OrientationAnalysis(_GENERIC_REPLY[lang].format(tool=ranked[0]), recommendations, draft)
+    return OrientationAnalysis(_GENERIC_REPLY[lang].format(tool=ranked[0]), recommendations, {})
 
 
 def _counselor_runtime(db: Session, counselor_id: int | None):
@@ -380,16 +378,7 @@ def _clean_analysis(payload: dict, fallback: OrientationAnalysis) -> Orientation
     if not recommendations:
         recommendations = fallback.recommendations
 
-    raw_draft = payload.get("notebook_draft")
-    notebook_draft = {}
-    if isinstance(raw_draft, dict):
-        for key in NOTEBOOK_FIELDS:
-            value = str(raw_draft.get(key) or "").strip()[:600]
-            if value:
-                notebook_draft[key] = value
-    if not notebook_draft:
-        notebook_draft = fallback.notebook_draft
-    return OrientationAnalysis(reply, recommendations, notebook_draft)
+    return OrientationAnalysis(reply, recommendations, {})
 
 
 def analyze_turn(
@@ -422,17 +411,9 @@ Answer every direct question before suggesting a route. If the student asks how 
 Return ONLY JSON, with no prose outside this object, using this exact shape:
 {{
   "reply": "a warm, concrete reflection in language {lang} of four to six sentences that answers the question directly, briefly explains how the recommended tool works, and says what the student would get out of it",
-  "recommendations": [{{"id": "one exact catalog id", "reason": "why it fits what the student said"}}],
-  "notebook_draft": {{
-    "context": "optional first-person statement",
-    "goal": "optional first-person statement",
-    "main_difficulty": "optional first-person statement",
-    "strengths": "optional first-person statement",
-    "weaknesses": "optional first-person statement",
-    "notes": "optional first-person reasoning or agreed next step"
-  }}
+  "recommendations": [{{"id": "one exact catalog id", "reason": "why it fits what the student said"}}]
 }}
-Use one primary recommendation and at most two alternatives. Base every notebook sentence only on the student's statements; omit unknown fields. Explain that the student can edit or reject the notebook draft. Never invent scores, diagnoses, personal facts, links or tools."""
+Use one primary recommendation and at most two alternatives. Never invent scores, diagnoses, personal facts, links or tools."""
     safe_history = [
         {"role": str(row.get("role") or "user"), "content": str(row.get("content") or "")[:1800]}
         for row in (history or [])[-8:]
