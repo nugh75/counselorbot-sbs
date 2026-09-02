@@ -655,7 +655,8 @@ export function OpenCodeExperience({
                                                             onClick={() => submitFeedback(index, true)}
                                                             disabled={message.feedback !== undefined}
                                                             title={t('guided.feedback.helpful')}
-                                                            className={`p-1 rounded transition-colors disabled:cursor-default ${
+                                                            aria-label={t('guided.feedback.helpful')}
+                                                            className={`tap-icon rounded transition-colors disabled:cursor-default ${
                                                                 message.feedback === true ? 'text-green-600' : 'text-slate-500 hover:text-green-600'
                                                             }`}
                                                         >
@@ -665,7 +666,8 @@ export function OpenCodeExperience({
                                                             onClick={() => submitFeedback(index, false)}
                                                             disabled={message.feedback !== undefined}
                                                             title={t('guided.feedback.notHelpful')}
-                                                            className={`p-1 rounded transition-colors disabled:cursor-default ${
+                                                            aria-label={t('guided.feedback.notHelpful')}
+                                                            className={`tap-icon rounded transition-colors disabled:cursor-default ${
                                                                 message.feedback === false ? 'text-red-600' : 'text-slate-500 hover:text-red-600'
                                                             }`}
                                                         >

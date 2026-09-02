@@ -317,6 +317,24 @@ h1.text-3xl {
   }
 }
 
+/* Comando a icona dentro una riga densa: i pollici del riscontro e i pulsanti
+   della barra di composizione stavano fra i 22 e i 32px. Stessa regola della
+   topbar: il disegno non cambia, l'area toccabile arriva a 44px al dito. */
+.tap-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+}
+
+@media (pointer: coarse) {
+  .tap-icon {
+    width: 44px;
+    height: 44px;
+  }
+}
+
 /* Prose styles for markdown content */
 .prose {
   line-height: 1.6;
