@@ -34,6 +34,9 @@ interface OpenCodeExperienceProps {
     sessionId: string;
     locale: string;
     onComplete: () => void;
+    // Trascrizione dello snapshot congelato, usata solo se il workspace non ha
+    // più la propria (vedi `startOpenCode`).
+    restoredMessages?: { role: string; content: string }[];
 }
 
 interface ChatMessage {
@@ -52,6 +55,7 @@ export function OpenCodeExperience({
     sessionId,
     locale,
     onComplete,
+    restoredMessages,
 }: OpenCodeExperienceProps) {
     const { t, tf } = useI18n();
     const terminalRef = useRef<TerminalSession | null>(null);
@@ -64,6 +68,13 @@ export function OpenCodeExperience({
     const pendingSnapshotRef = useRef<{ snapshot: FrozenSessionSnapshot; signature: string } | null>(null);
     const savedSignatureRef = useRef('');
     const completedRef = useRef(false);
+    // Letta una volta sola: la ripresa parte dallo snapshot con cui il
+    // componente è stato montato.
+    const restoredMessagesRef = useRef<ChatMessage[]>(
+        (restoredMessages || [])
+            .filter((message) => message.role === 'user' || message.role === 'assistant')
+            .map((message) => ({ role: message.role as 'user' | 'assistant', content: message.content })),
+    );
 
     const [viewMode, setViewMode] = useState<ViewMode>('chat');
     const [workspaceKey, setWorkspaceKey] = useState('');
@@ -227,7 +238,12 @@ export function OpenCodeExperience({
             setGraphicalAvailable(true);
             terminalRef.current?.destroy();
             terminalRef.current = null;
-            const history = Array.isArray(data.history) ? data.history : [];
+            // La GC di ai4educ cancella i workspace fermi da 14 giorni: il
+            // server non ha più la trascrizione, ma lo snapshot congelato sì.
+            // Meglio rimetterla davanti allo studente che aprire una chat vuota
+            // su una sessione che l'elenco "Riprendi" prometteva piena.
+            const serverHistory = Array.isArray(data.history) ? data.history : [];
+            const history = serverHistory.length ? serverHistory : restoredMessagesRef.current;
             setViewMode('chat');
             setStatus('connected');
             sessionIdRef.current = data.session_id;
@@ -355,12 +371,13 @@ export function OpenCodeExperience({
                 locale,
                 response_length: 'medium',
                 label: `${questionnaire.id} — ${t('guided.mode.sandbox')}`,
+                pdf_token: pdfToken || null,
             },
             signature,
         };
         const timer = window.setTimeout(() => { void flushAutoFreeze(); }, AUTO_FREEZE_DELAY_MS);
         return () => window.clearTimeout(timer);
-    }, [messages, streaming, busy, sessionId, questionnaire.id, scores, locale, t, flushAutoFreeze]);
+    }, [messages, streaming, busy, sessionId, questionnaire.id, scores, locale, pdfToken, t, flushAutoFreeze]);
 
     useEffect(() => {
         const onPageHide = () => { void flushAutoFreeze({ keepalive: true }); };
