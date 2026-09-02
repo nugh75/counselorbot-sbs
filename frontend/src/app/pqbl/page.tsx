@@ -565,11 +565,11 @@ export default function PqblPage() {
                                 />
                             </div>
                             {documentInfo.n_questions > 0 && (
-                                <p className="text-sm text-slate-400">
+                                <p className="text-sm text-slate-500">
                                     {t('pqbl.generating.questionsReady', { n: documentInfo.n_questions })}
                                 </p>
                             )}
-                            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                            <p className="text-xs text-slate-500 max-w-sm mx-auto">
                                 {t('pqbl.generating.sub')}
                             </p>
                         </>
@@ -600,7 +600,7 @@ export default function PqblPage() {
                         <ul className="space-y-2">
                             {documentInfo.skills.map((skill) => (
                                 <li key={skill} className="flex items-start gap-2 text-sm text-slate-600">
-                                    <BookOpen className="w-4 h-4 mt-0.5 shrink-0 text-slate-400" />
+                                    <BookOpen className="w-4 h-4 mt-0.5 shrink-0 text-slate-500" />
                                     {skill}
                                 </li>
                             ))}
@@ -681,7 +681,7 @@ export default function PqblPage() {
                             })}
                         </div>
                         {currentAnsweredCorrect && (
-                            <p className="text-xs text-slate-400">{t('pqbl.quiz.tryOthers')}</p>
+                            <p className="text-xs text-slate-500">{t('pqbl.quiz.tryOthers')}</p>
                         )}
                     </div>
 

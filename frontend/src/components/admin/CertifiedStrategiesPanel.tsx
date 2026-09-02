@@ -280,7 +280,7 @@ export function CertifiedStrategiesPanel() {
             {/* Fattori collegati, raggruppati per strumento */}
             <div className="mt-4">
                 <div className="mb-1 text-xs font-medium text-slate-500">{t('admin.certified.factors')}
-                    {derivedQTypes.length > 0 && <span className="ml-2 font-normal text-slate-400">→ {derivedQTypes.join(', ')}</span>}
+                    {derivedQTypes.length > 0 && <span className="ml-2 font-normal text-slate-500">→ {derivedQTypes.join(', ')}</span>}
                 </div>
                 <div className="space-y-2">
                     {Object.entries(factorsByInstrument).map(([code, factors]) => (
@@ -293,7 +293,7 @@ export function CertifiedStrategiesPanel() {
                             </div>
                         </div>
                     ))}
-                    {Object.keys(factorsByInstrument).length === 0 && <p className="text-xs text-slate-400">{t('admin.certified.noFactors')}</p>}
+                    {Object.keys(factorsByInstrument).length === 0 && <p className="text-xs text-slate-500">{t('admin.certified.noFactors')}</p>}
                 </div>
             </div>
 
@@ -342,7 +342,7 @@ export function CertifiedStrategiesPanel() {
 
             <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
                 <table className="w-full text-left text-sm">
-                    <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-400">
+                    <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
                         <tr>
                             <th className="px-3 py-2 font-semibold">{t('admin.certified.name')}</th>
                             <th className="px-3 py-2 font-semibold">{t('admin.certified.factors')}</th>
@@ -352,9 +352,9 @@ export function CertifiedStrategiesPanel() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {loading && <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-400">…</td></tr>}
+                        {loading && <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">…</td></tr>}
                         {!loading && strategies.length === 0 && editingId !== 'new' && (
-                            <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-400">{t('admin.certified.empty')}</td></tr>
+                            <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">{t('admin.certified.empty')}</td></tr>
                         )}
                         {strategies.map((s) => (
                             editingId === s.id ? (
@@ -363,7 +363,7 @@ export function CertifiedStrategiesPanel() {
                                 <tr key={s.id}>
                                     <td className="px-3 py-2 font-medium text-slate-800">
                                         {s.name_it || s.slug}
-                                        <span className="ml-2 font-mono text-xs text-slate-400">{s.slug}</span>
+                                        <span className="ml-2 font-mono text-xs text-slate-500">{s.slug}</span>
                                     </td>
                                     <td className="px-3 py-2 text-xs text-slate-500">
                                         {(s.factor_codes || []).join(s.match_mode === 'all' ? ' + ' : ', ') || '-'}
@@ -373,7 +373,7 @@ export function CertifiedStrategiesPanel() {
                                             {s.status === 'certified' ? t('admin.certified.certified') : t('admin.certified.draft')}
                                         </span>
                                     </td>
-                                    <td className="px-3 py-2">{s.is_active ? <Check className="h-4 w-4 text-emerald-600" /> : <X className="h-4 w-4 text-slate-300" />}</td>
+                                    <td className="px-3 py-2">{s.is_active ? <Check className="h-4 w-4 text-emerald-600" /> : <X className="h-4 w-4 text-slate-500" />}</td>
                                     <td className="px-3 py-2">
                                         <div className="flex justify-end gap-1">
                                             <button type="button" onClick={() => startEdit(s)} className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Pencil className="h-4 w-4" /></button>

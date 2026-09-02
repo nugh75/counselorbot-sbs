@@ -374,7 +374,7 @@ export function CounselorsPanel() {
 
             <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
                 <table className="w-full text-left text-sm">
-                    <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-400">
+                    <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
                         <tr>
                             <th className="px-3 py-2 font-semibold">{t('admin.counselors.name')}</th>
                             <th className="px-3 py-2 font-semibold">{t('admin.counselors.preset')}</th>
@@ -384,9 +384,9 @@ export function CounselorsPanel() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {loading && <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-400">…</td></tr>}
+                        {loading && <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">…</td></tr>}
                         {!loading && counselors.length === 0 && editingId !== 'new' && (
-                            <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-400">{t('admin.counselors.empty')}</td></tr>
+                            <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500">{t('admin.counselors.empty')}</td></tr>
                         )}
                         {counselors.map((c) => (
                             editingId === c.id ? (
@@ -395,11 +395,11 @@ export function CounselorsPanel() {
                                 <tr key={c.id}>
                                     <td className="px-3 py-2 font-medium text-slate-800">
                                         {c.name}
-                                        <span className="ml-2 font-mono text-xs text-slate-400">{c.slug}</span>
+                                        <span className="ml-2 font-mono text-xs text-slate-500">{c.slug}</span>
                                     </td>
                                     <td className="px-3 py-2 text-xs text-slate-500">{c.provider ? `${c.provider}/${c.model}` : '-'}</td>
                                     <td className="px-3 py-2 text-xs text-slate-500">{(c.questionnaire_types || []).join(', ') || '-'}</td>
-                                    <td className="px-3 py-2">{c.is_active ? <Check className="h-4 w-4 text-emerald-600" /> : <X className="h-4 w-4 text-slate-300" />}</td>
+                                    <td className="px-3 py-2">{c.is_active ? <Check className="h-4 w-4 text-emerald-600" /> : <X className="h-4 w-4 text-slate-500" />}</td>
                                     <td className="px-3 py-2">
                                         <div className="flex justify-end gap-1">
                                             <button type="button" onClick={() => startEdit(c)} className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Pencil className="h-4 w-4" /></button>

@@ -430,16 +430,16 @@ export default function ProfilePage() {
                             </div>
                             <div>
                                 <h2 className="text-lg font-bold text-slate-800">{identity.name || identity.username}</h2>
-                                <p className="text-xs text-slate-400">{identity.email || t('profile.noEmail')}</p>
+                                <p className="text-xs text-slate-500">{identity.email || t('profile.noEmail')}</p>
                             </div>
                         </div>
                         <div className="flex gap-4 border-l border-slate-100 pl-6 text-sm">
                             <div>
-                                <span className="block text-xs font-semibold uppercase text-slate-400">{t('profile.username')}</span>
+                                <span className="block text-xs font-semibold uppercase text-slate-500">{t('profile.username')}</span>
                                 <span className="font-medium text-slate-700">{identity.username}</span>
                             </div>
                             <div>
-                                <span className="block text-xs font-semibold uppercase text-slate-400">{t('profile.groups')}</span>
+                                <span className="block text-xs font-semibold uppercase text-slate-500">{t('profile.groups')}</span>
                                 <span className="font-medium capitalize text-slate-700">
                                     {identity.groups?.join(', ') || 'user'}
                                 </span>
@@ -463,7 +463,7 @@ export default function ProfilePage() {
                                         <span className="block font-bold text-slate-900">{area.title}</span>
                                         <span className="mt-1 block text-sm leading-relaxed text-slate-500">{area.description}</span>
                                     </span>
-                                    <ArrowRight className="ml-3 h-4 w-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-600" aria-hidden />
+                                    <ArrowRight className="ml-3 h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-600" aria-hidden />
                                 </Link>
                             );
                         })}
@@ -498,7 +498,7 @@ export default function ProfilePage() {
                             {t('profile.sessions.subtitle')}
                         </p>
                     </div>
-                    <span className="text-xs font-semibold text-slate-400">
+                    <span className="text-xs font-semibold text-slate-500">
                         {filteredSessions.length} / {sessions.length}
                     </span>
                 </div>
@@ -517,7 +517,7 @@ export default function ProfilePage() {
                         <label className="block">
                             <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profile.sessions.search')}</span>
                             <div className="mt-1 flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2">
-                                <Search className="h-4 w-4 text-slate-400" />
+                                <Search className="h-4 w-4 text-slate-500" />
                                 <input
                                     value={sessionSearch}
                                     onChange={(event) => setSessionSearch(event.target.value)}
@@ -574,7 +574,7 @@ export default function ProfilePage() {
                                             {t('profile.submittedOn', { date: new Date(selectedSession.submitted_at).toLocaleString(lang) })}
                                         </span>
                                     </div>
-                                    <p className="text-xs font-mono text-slate-400">
+                                    <p className="text-xs font-mono text-slate-500">
                                         {t('history.session')} ID: {selectedSession.session_id}
                                     </p>
                                 </div>
@@ -621,7 +621,7 @@ export default function ProfilePage() {
                             <div className="space-y-3 bg-white p-4 border border-slate-100 rounded-xl">
                                 <h3 className="text-sm font-bold text-slate-700">{t('profile.sessionSummary.title')}</h3>
                                 {summaryLoading ? (
-                                    <div className="py-4 text-center text-xs text-slate-400">
+                                    <div className="py-4 text-center text-xs text-slate-500">
                                         {t('profile.sessionSummary.loading')}
                                     </div>
                                 ) : sessionSummary ? (
@@ -702,13 +702,13 @@ export default function ProfilePage() {
                                                             </span>
                                                         </div>
                                                         {factorDef?.description && (
-                                                            <p className="text-[11px] text-slate-400 leading-normal mt-1">{tf(`factor.${code}.desc`, factorDef.description)}</p>
+                                                            <p className="text-[11px] text-slate-500 leading-normal mt-1">{tf(`factor.${code}.desc`, factorDef.description)}</p>
                                                         )}
                                                     </div>
                                                     <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-slate-50">
                                                         <span className="text-sm font-bold text-indigo-700">{val}</span>
-                                                        <span className="text-[10px] text-slate-400">{t('profile.stanineLabel')}</span>
-                                                        {inverted && <span className="text-[9px] text-slate-400 italic">{t('profile.invertedShort')}</span>}
+                                                        <span className="text-[10px] text-slate-500">{t('profile.stanineLabel')}</span>
+                                                        {inverted && <span className="text-[9px] text-slate-500 italic">{t('profile.invertedShort')}</span>}
                                                     </div>
                                                 </div>
                                             );
@@ -725,13 +725,13 @@ export default function ProfilePage() {
                                 </h3>
                                 
                                 {convLoading && (
-                                    <div className="py-6 text-center text-xs text-slate-400">
+                                    <div className="py-6 text-center text-xs text-slate-500">
                                         {t('profile.conversation.loading')}
                                     </div>
                                 )}
                                 
                                 {!convLoading && conversation && conversation.length === 0 && (
-                                    <p className="text-xs text-slate-400 text-center py-4">
+                                    <p className="text-xs text-slate-500 text-center py-4">
                                         {t('profile.conversation.empty')}
                                     </p>
                                 )}
@@ -743,7 +743,7 @@ export default function ProfilePage() {
                                                 key={index}
                                                 className={`flex flex-col ${msg.role === 'student' ? 'items-end' : 'items-start'}`}
                                             >
-                                                <span className="text-[10px] font-semibold text-slate-400 mb-0.5 uppercase tracking-wider">
+                                                <span className="text-[10px] font-semibold text-slate-500 mb-0.5 uppercase tracking-wider">
                                                     {msg.role === 'student' ? t('profile.conversation.student') : 'CounselorBot'}
                                                 </span>
                                                 <div
@@ -763,7 +763,7 @@ export default function ProfilePage() {
                         </div>
                     </>
                 ) : (
-                    <div className="glass-panel p-12 text-center space-y-4 text-slate-400">
+                    <div className="glass-panel p-12 text-center space-y-4 text-slate-500">
                         <p className="font-medium">{t('profile.selectSession')}</p>
                     </div>
                 )}

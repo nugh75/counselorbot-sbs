@@ -364,7 +364,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
             <button
                 type="button"
                 onClick={() => removeArrayItem(key, index)}
-                className="shrink-0 rounded-md border border-slate-200 p-2 text-slate-400 hover:bg-slate-50 hover:text-rose-500"
+                className="shrink-0 rounded-md border border-slate-200 p-2 text-slate-500 hover:bg-slate-50 hover:text-rose-500"
                 aria-label={t('booklet.remove')}
             >
                 <X className="h-4 w-4" />
@@ -456,7 +456,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
             </div>
 
             {loading ? (
-                <div className="text-sm text-slate-400">{t('booklet.loading')}</div>
+                <div className="text-sm text-slate-500">{t('booklet.loading')}</div>
             ) : booklets.length === 0 && currentId == null ? (
                 <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
                     {t('booklet.empty')}

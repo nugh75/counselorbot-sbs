@@ -141,9 +141,9 @@ export function BenchmarkPanel() {
                 <p className="text-sm text-slate-500">{t('admin.bench.subtitle')}</p>
 
                 <div className="mt-3">
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{t('admin.bench.selectPresets')}</div>
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{t('admin.bench.selectPresets')}</div>
                     {loading ? (
-                        <div className="flex items-center gap-2 text-sm text-slate-400"><Loader2 className="h-4 w-4 animate-spin" /></div>
+                        <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /></div>
                     ) : presets.length === 0 ? (
                         <div className="rounded-md border border-dashed border-slate-300 p-4 text-sm text-slate-500">{t('admin.bench.noPresets')}</div>
                     ) : (
@@ -152,7 +152,7 @@ export function BenchmarkPanel() {
                                 <label key={p.id} className={`flex items-center gap-2 rounded-md border p-2 text-sm ${selected.includes(p.id) ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200'} ${!p.provider_configured ? 'opacity-60' : ''}`}>
                                     <input type="checkbox" checked={selected.includes(p.id)} onChange={() => toggle(p.id)} disabled={!p.provider_configured} />
                                     <span className="font-medium text-slate-800">{p.name}</span>
-                                    <span className="ml-auto font-mono text-xs text-slate-400">{p.provider}/{p.model}</span>
+                                    <span className="ml-auto font-mono text-xs text-slate-500">{p.provider}/{p.model}</span>
                                 </label>
                             ))}
                         </div>
@@ -179,7 +179,7 @@ export function BenchmarkPanel() {
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
-                            <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-400">
+                            <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
                                 <tr>
                                     <th className="px-3 py-2 font-semibold">{t('admin.bench.colModel')}</th>
                                     <th className="px-3 py-2 font-semibold">{t('admin.bench.colProvider')}</th>
@@ -202,7 +202,7 @@ export function BenchmarkPanel() {
                                         <td className="px-3 py-2 text-right font-bold text-slate-900">{fmtNum(r.score, 3)}</td>
                                     </tr>
                                 ))}
-                                {sortedSummary.length === 0 && <tr><td colSpan={7} className="px-3 py-6 text-center text-slate-400"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></td></tr>}
+                                {sortedSummary.length === 0 && <tr><td colSpan={7} className="px-3 py-6 text-center text-slate-500"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></td></tr>}
                             </tbody>
                         </table>
                     </div>
@@ -217,13 +217,13 @@ export function BenchmarkPanel() {
             <div className="rounded-lg border border-slate-200 bg-white p-4">
                 <h3 className="mb-2 text-sm font-semibold text-slate-700">{t('admin.bench.history')}</h3>
                 {runs.length === 0 ? (
-                    <div className="text-sm text-slate-400">{t('admin.bench.noRuns')}</div>
+                    <div className="text-sm text-slate-500">{t('admin.bench.noRuns')}</div>
                 ) : (
                     <div className="divide-y divide-slate-100">
                         {runs.map((r) => (
                             <button key={r.id} type="button" onClick={() => void loadRun(r.run_id)} className="flex w-full items-center justify-between py-2 text-left text-sm hover:bg-slate-50">
                                 <span className="font-mono text-xs text-slate-600">{r.run_id}</span>
-                                <span className="text-xs text-slate-400">{(r.summary || []).length} {t('admin.bench.models')}</span>
+                                <span className="text-xs text-slate-500">{(r.summary || []).length} {t('admin.bench.models')}</span>
                                 <span className={`rounded px-2 py-0.5 text-xs font-medium ${r.status === 'done' ? 'bg-emerald-100 text-emerald-700' : r.status === 'error' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>{r.status}</span>
                             </button>
                         ))}
@@ -236,7 +236,7 @@ export function BenchmarkPanel() {
                     <div className="max-h-[80vh] w-full max-w-3xl overflow-auto rounded-lg bg-white p-5" onClick={(e) => e.stopPropagation()}>
                         <div className="mb-3 flex items-center justify-between">
                             <h3 className="font-semibold text-slate-800">{t('admin.bench.detail')}</h3>
-                            <button type="button" onClick={() => setDetail(null)} className="rounded p-1 text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button>
+                            <button type="button" onClick={() => setDetail(null)} className="rounded p-1 text-slate-500 hover:bg-slate-100"><X className="h-5 w-5" /></button>
                         </div>
                         <div className="space-y-3">
                             {detail.steps.map((s, i) => (

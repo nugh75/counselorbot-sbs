@@ -1513,7 +1513,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     >
                         <h3 className="min-w-0 flex-1 text-sm font-semibold uppercase tracking-wider text-slate-700">{t('guided.path')}</h3>
                         <span className="text-xs text-slate-500">{currentStepIndex}/{totalSteps}</span>
-                        <ChevronRight className={cn("h-4 w-4 text-slate-400 transition-transform", isPathPanelOpen && "rotate-90")} />
+                        <ChevronRight className={cn("h-4 w-4 text-slate-500 transition-transform", isPathPanelOpen && "rotate-90")} />
                     </button>
                     <div
                         id="guided-path-panel"
@@ -1534,7 +1534,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             return (
                                 <div key={phaseId} className={cn(
                                     "flex items-center gap-2 p-2 rounded-lg text-xs transition-colors",
-                                    isActive ? `${phaseColors.headerBg} ${phaseColors.text} font-medium` : isDone ? phaseColors.text : "text-slate-400"
+                                    isActive ? `${phaseColors.headerBg} ${phaseColors.text} font-medium` : isDone ? phaseColors.text : "text-slate-500"
                                 )}>
                                     <div className={cn(
                                         "w-4 h-4 rounded-full flex items-center justify-center text-[8px] border",
@@ -1567,7 +1567,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         >
                             <BarChart3 className="h-4 w-4 text-slate-600" />
                             <span className="min-w-0 flex-1 text-sm font-semibold text-slate-700">{t('guided.scores')}</span>
-                            <ChevronRight className={cn("h-4 w-4 text-slate-400 transition-transform", isScoresPanelOpen && "rotate-90")} />
+                            <ChevronRight className={cn("h-4 w-4 text-slate-500 transition-transform", isScoresPanelOpen && "rotate-90")} />
                         </button>
                         <div
                             id="guided-scores-panel"
@@ -1652,7 +1652,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         />
                     )}
                     {hiddenMessages > 0 && (
-                        <p className="mx-auto rounded-full bg-slate-50 px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-slate-400">
+                        <p className="mx-auto rounded-full bg-slate-50 px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-slate-500">
                             {t('idea.branches.onlyThis')}
                         </p>
                     )}
@@ -1662,7 +1662,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             msg.role === 'user' ? 'justify-end' : msg.role === 'system' ? 'justify-center' : 'justify-start'
                         )}>
                             {msg.role === 'system' ? (
-                                <span className="max-w-full break-words rounded-full bg-slate-50 px-3 py-2 text-[10px] font-medium uppercase tracking-widest text-slate-400">{msg.content}</span>
+                                <span className="max-w-full break-words rounded-full bg-slate-50 px-3 py-2 text-[10px] font-medium uppercase tracking-widest text-slate-500">{msg.content}</span>
                             ) : (
                                 <div className={cn("flex min-w-0 max-w-[94%] flex-col gap-1 sm:max-w-[90%]", msg.role === 'user' ? "items-end" : "items-start")}>
                                     <div className={cn(
@@ -1678,12 +1678,12 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                         <button
                                                             type="button"
                                                             onClick={() => toggleReasoning(idx)}
-                                                            className="flex w-full min-w-0 items-center gap-1.5 text-[10px] uppercase tracking-wide text-slate-400 transition-colors hover:text-slate-600"
+                                                            className="flex w-full min-w-0 items-center gap-1.5 text-[10px] uppercase tracking-wide text-slate-500 transition-colors hover:text-slate-600"
                                                         >
                                                             {!msg.content.trim() && <Loader2 className="w-3 h-3 animate-spin" />}
                                                             <ChevronRight className={cn("w-3 h-3 transition-transform", !hiddenReasoning.has(idx) && "rotate-90")} />
                                                             {t('guided.reasoning')}
-                                                            <span className="ml-auto truncate normal-case tracking-normal text-slate-400/80">
+                                                            <span className="ml-auto truncate normal-case tracking-normal text-slate-500/80">
                                                                 {hiddenReasoning.has(idx) ? t('guided.reasoningShow') : t('guided.reasoningHide')}
                                                             </span>
                                                         </button>
@@ -1703,7 +1703,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                         />
                                                     </div>
                                                 ) : !msg.reasoning ? (
-                                                    <span className="flex items-center gap-2 text-slate-400 italic">
+                                                    <span className="flex items-center gap-2 text-slate-500 italic">
                                                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                                         {t('guided.thinking')}
                                                     </span>
@@ -1722,7 +1722,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                     "flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium transition-colors border",
                                                     playingMessageIdx === idx
                                                         ? "bg-indigo-50 text-indigo-600 border-indigo-200"
-                                                        : "bg-transparent text-slate-400 border-transparent hover:bg-slate-50 hover:text-slate-600"
+                                                        : "bg-transparent text-slate-500 border-transparent hover:bg-slate-50 hover:text-slate-600"
                                                 )}
                                             >
                                                 {isAudioLoading && playingMessageIdx === idx ? (
@@ -1742,7 +1742,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                         title={t('guided.feedback.helpful')}
                                                         aria-label={t('guided.feedback.helpful')}
                                                         onClick={() => submitStrategyFeedback(idx, true)}
-                                                        className={cn("p-1 rounded text-slate-400 hover:text-green-600", msg.feedback === true && "text-green-600")}
+                                                        className={cn("p-1 rounded text-slate-500 hover:text-green-600", msg.feedback === true && "text-green-600")}
                                                     >
                                                         <ThumbsUp className="w-3.5 h-3.5" />
                                                     </button>
@@ -1751,7 +1751,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                         title={t('guided.feedback.notHelpful')}
                                                         aria-label={t('guided.feedback.notHelpful')}
                                                         onClick={() => submitStrategyFeedback(idx, false)}
-                                                        className={cn("p-1 rounded text-slate-400 hover:text-red-600", msg.feedback === false && "text-red-600")}
+                                                        className={cn("p-1 rounded text-slate-500 hover:text-red-600", msg.feedback === false && "text-red-600")}
                                                     >
                                                         <ThumbsDown className="w-3.5 h-3.5" />
                                                     </button>
@@ -1925,7 +1925,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                 disabled={isLoading}
                                 minRows={1}
                                 maxRows={6}
-                                className="min-w-0 flex-1 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50"
+                                className="min-w-0 flex-1 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50"
                             />
                             <button
                                 type="submit"
@@ -1936,7 +1936,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             </button>
                         </div>
                         <div className="mt-2 text-center">
-                            <p className="text-[10px] text-slate-400">
+                            <p className="text-[10px] text-slate-500">
                                 {inputHint}
                             </p>
                         </div>

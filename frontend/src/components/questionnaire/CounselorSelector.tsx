@@ -108,7 +108,7 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName, quest
                                 {c.model_origin && (
                                     <span
                                         title={t(c.model_origin === 'local' ? 'counselor.origin.local.hint' : 'counselor.origin.external.hint')}
-                                        className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-400"
+                                        className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-500"
                                     >
                                         {c.model_origin === 'local'
                                             ? <Cpu className="h-3 w-3" />

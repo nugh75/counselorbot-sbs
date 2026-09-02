@@ -109,7 +109,7 @@ export function MyGroupsCard({ lang, showHeading = true }: { lang: string; showH
                     <li key={group.membership_id} className="flex items-center gap-2 rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-700">
                         <span className="flex-1">
                             <span className="font-semibold">{group.name}</span>
-                            <span className="ml-2 text-xs text-slate-400">
+                            <span className="ml-2 text-xs text-slate-500">
                                 {texts.via} {group.joined_via === 'telegram' ? 'Telegram' : 'web'}
                                 {group.joined_at ? ` - ${new Date(group.joined_at).toLocaleDateString()}` : ''}
                             </span>
@@ -118,7 +118,7 @@ export function MyGroupsCard({ lang, showHeading = true }: { lang: string; showH
                             type="button"
                             title={texts.leave}
                             onClick={() => void leave(group.membership_id)}
-                            className="text-slate-400 hover:text-red-600"
+                            className="text-slate-500 hover:text-red-600"
                         >
                             <LogOut className="h-4 w-4" />
                         </button>

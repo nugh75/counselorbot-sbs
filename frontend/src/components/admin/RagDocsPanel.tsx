@@ -329,7 +329,7 @@ export function RagDocsPanel() {
                                     placeholder="es. normativa-scuola"
                                     className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                                 />
-                                <p className="text-[11px] text-slate-400 mt-1">{t('admin.rag.field.idHint')}</p>
+                                <p className="text-[11px] text-slate-500 mt-1">{t('admin.rag.field.idHint')}</p>
                             </div>
                             <div>
                                 <label className="block text-xs font-semibold text-slate-600 mb-1">{t('admin.rag.field.label')}</label>
@@ -376,7 +376,7 @@ export function RagDocsPanel() {
                             }`}
                         >
                             {c.label}
-                            <span className="ml-2 text-[10px] uppercase tracking-wide text-slate-400">
+                            <span className="ml-2 text-[10px] uppercase tracking-wide text-slate-500">
                                 {c.builtin ? c.mode : t('admin.rag.dynamic')}
                             </span>
                         </button>
@@ -467,7 +467,7 @@ export function RagDocsPanel() {
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead>
-                                    <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
+                                    <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
                                         <th className="py-2 pr-3 font-semibold">{t('admin.rag.table.doc')}</th>
                                         <th className="py-2 pr-3 font-semibold">{t('admin.rag.table.size')}</th>
                                         <th className="py-2 pr-3 font-semibold">{t('admin.rag.table.mtime')}</th>
@@ -530,7 +530,7 @@ export function RagDocsPanel() {
                                                                     onClick={() => void handlePreview(doc)}
                                                                     title={t('admin.rag.previewDoc')}
                                                                     aria-label={t('admin.rag.previewDoc')}
-                                                                    className="rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
+                                                                    className="rounded-md p-1.5 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600"
                                                                 >
                                                                     <Eye className="h-4 w-4" />
                                                                 </button>
@@ -538,7 +538,7 @@ export function RagDocsPanel() {
                                                                     href={docFileUrl(selected, doc.source, true)}
                                                                     title={t('admin.rag.downloadDoc')}
                                                                     aria-label={t('admin.rag.downloadDoc')}
-                                                                    className="rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
+                                                                    className="rounded-md p-1.5 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600"
                                                                 >
                                                                     <Download className="h-4 w-4" />
                                                                 </a>
@@ -550,7 +550,7 @@ export function RagDocsPanel() {
                                                                 onClick={() => void handleDeleteDoc(doc)}
                                                                 title={t('admin.rag.deleteDoc')}
                                                                 aria-label={t('admin.rag.deleteDoc')}
-                                                                className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                                                                className="rounded-md p-1.5 text-slate-500 hover:bg-red-50 hover:text-red-600"
                                                             >
                                                                 <Trash2 className="h-4 w-4" />
                                                             </button>
@@ -566,13 +566,13 @@ export function RagDocsPanel() {
                                                                 <Eye className="h-4 w-4 shrink-0 text-indigo-600" />
                                                                 <div className="min-w-0 flex-1">
                                                                     <p className="truncate text-sm font-semibold text-slate-800" title={preview.source}>{preview.title}</p>
-                                                                    <p className="truncate text-xs text-slate-400">{preview.source}</p>
+                                                                    <p className="truncate text-xs text-slate-500">{preview.source}</p>
                                                                 </div>
                                                                 <a
                                                                     href={docFileUrl(selected, preview.source, true)}
                                                                     title={t('admin.rag.downloadDoc')}
                                                                     aria-label={t('admin.rag.downloadDoc')}
-                                                                    className="rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
+                                                                    className="rounded-md p-1.5 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600"
                                                                 >
                                                                     <Download className="h-4 w-4" />
                                                                 </a>
@@ -581,7 +581,7 @@ export function RagDocsPanel() {
                                                                     onClick={() => setPreview(null)}
                                                                     title={t('admin.rag.closePreview')}
                                                                     aria-label={t('admin.rag.closePreview')}
-                                                                    className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                                                                    className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                                                                 >
                                                                     <X className="h-4 w-4" />
                                                                 </button>

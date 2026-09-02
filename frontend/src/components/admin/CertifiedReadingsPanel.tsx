@@ -271,7 +271,7 @@ export function CertifiedReadingsPanel() {
     const verificationBadge = (row: Reading) => {
         const match = row.verification?.match as boolean | null | undefined;
         if (row.verification == null) {
-            return <span className="text-xs text-slate-400">{t('admin.readings.neverChecked')}</span>;
+            return <span className="text-xs text-slate-500">{t('admin.readings.neverChecked')}</span>;
         }
         if (match === true) {
             return <span className="inline-flex items-center gap-1 text-xs text-emerald-700"><BadgeCheck className="h-3.5 w-3.5" />{t('admin.readings.verified')}</span>;
@@ -411,7 +411,7 @@ export function CertifiedReadingsPanel() {
                         </button>
                     )}
                 </div>
-                <p className="mt-1 text-[11px] text-slate-400">{t('admin.readings.synopsisHint')}</p>
+                <p className="mt-1 text-[11px] text-slate-500">{t('admin.readings.synopsisHint')}</p>
                 <textarea className={`${areaCls} mt-2`} value={form.synopsis_i18n[lang] ?? ''}
                     onChange={(e) => setForm({ ...form, synopsis_i18n: { ...form.synopsis_i18n, [lang]: e.target.value } })} />
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -425,7 +425,7 @@ export function CertifiedReadingsPanel() {
                     </label>
                 </div>
                 {form.synopsis_source.retrieved_at && (
-                    <p className="mt-1 text-[11px] text-slate-400">
+                    <p className="mt-1 text-[11px] text-slate-500">
                         {t('admin.readings.synopsisRetrieved')}: {form.synopsis_source.retrieved_at}
                         {form.synopsis_source.license ? ` — ${form.synopsis_source.license}` : ''}
                     </p>
@@ -506,7 +506,7 @@ export function CertifiedReadingsPanel() {
                                         <div className="flex flex-wrap items-center gap-2">
                                             <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium uppercase text-slate-500">{row.kind}</span>
                                             <span className="font-medium text-slate-800">{row.title}</span>
-                                            {row.year && <span className="text-xs text-slate-400">{row.year}</span>}
+                                            {row.year && <span className="text-xs text-slate-500">{row.year}</span>}
                                             <span className={`rounded px-1.5 py-0.5 text-[11px] font-medium ${row.status === 'certified' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
                                                 {row.status === 'certified' ? t('admin.readings.certified') : t('admin.readings.draft')}
                                             </span>

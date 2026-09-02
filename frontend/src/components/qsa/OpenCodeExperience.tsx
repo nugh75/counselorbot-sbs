@@ -522,7 +522,7 @@ export function OpenCodeExperience({
                             </div>
                         </div>
                     )) : (
-                        <div className="bg-white rounded-lg border border-slate-200 p-6 text-center text-sm text-slate-400">
+                        <div className="bg-white rounded-lg border border-slate-200 p-6 text-center text-sm text-slate-500">
                             {t('opencode.noScores')}
                         </div>
                     )}
@@ -643,7 +643,7 @@ export function OpenCodeExperience({
                                                             disabled={message.feedback !== undefined}
                                                             title={t('guided.feedback.helpful')}
                                                             className={`p-1 rounded transition-colors disabled:cursor-default ${
-                                                                message.feedback === true ? 'text-green-600' : 'text-slate-400 hover:text-green-600'
+                                                                message.feedback === true ? 'text-green-600' : 'text-slate-500 hover:text-green-600'
                                                             }`}
                                                         >
                                                             <ThumbsUp className="w-3.5 h-3.5" />
@@ -653,13 +653,13 @@ export function OpenCodeExperience({
                                                             disabled={message.feedback !== undefined}
                                                             title={t('guided.feedback.notHelpful')}
                                                             className={`p-1 rounded transition-colors disabled:cursor-default ${
-                                                                message.feedback === false ? 'text-red-600' : 'text-slate-400 hover:text-red-600'
+                                                                message.feedback === false ? 'text-red-600' : 'text-slate-500 hover:text-red-600'
                                                             }`}
                                                         >
                                                             <ThumbsDown className="w-3.5 h-3.5" />
                                                         </button>
                                                         {message.feedback !== undefined && (
-                                                            <span className="text-xs text-slate-400 ml-1">{t('guided.feedback.thanks')}</span>
+                                                            <span className="text-xs text-slate-500 ml-1">{t('guided.feedback.thanks')}</span>
                                                         )}
                                                     </div>
                                                 )}
@@ -682,7 +682,7 @@ export function OpenCodeExperience({
                                     disabled={busy || streaming || !openCodeSessionId}
                                     rows={1}
                                     placeholder={t('opencode.placeholder')}
-                                    className="max-h-32 min-w-0 flex-1 resize-none bg-transparent px-2 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 disabled:opacity-60"
+                                    className="max-h-32 min-w-0 flex-1 resize-none bg-transparent px-2 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-500 disabled:opacity-60"
                                 />
                                 {streaming ? (
                                     <button
@@ -704,7 +704,7 @@ export function OpenCodeExperience({
                                     </button>
                                 )}
                             </div>
-                            <p className="mt-2 text-[11px] text-slate-400 text-center">
+                            <p className="mt-2 text-[11px] text-slate-500 text-center">
                                 {t('opencode.inputHint')}
                             </p>
                         </form>

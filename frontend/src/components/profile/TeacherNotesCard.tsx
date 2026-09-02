@@ -45,7 +45,7 @@ export function TeacherNotesCard({ lang }: { lang: string }) {
                 {notes.map((note) => (
                     <li key={note.id} className="rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-700">
                         {note.kind === 'message' ? `[${texts.message}] ` : ''}{note.text}
-                        <div className="mt-1 text-xs text-slate-400">
+                        <div className="mt-1 text-xs text-slate-500">
                             {note.author_username}
                             {note.created_at ? ` - ${new Date(note.created_at).toLocaleDateString()}` : ''}
                         </div>

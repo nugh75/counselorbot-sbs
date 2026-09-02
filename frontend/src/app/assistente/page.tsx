@@ -424,7 +424,7 @@ export default function AssistentePage() {
 
                     {/* Selettore base di conoscenza: collezioni RAG builtin + dinamiche. */}
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1.5">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
                             {t('assistant.collection.label')}
                         </p>
                         <div className="grid grid-cols-2 gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
@@ -448,7 +448,7 @@ export default function AssistentePage() {
                     {/* Selettore counselor AI: opzionale. Definisce lo stile
                         dell'assistente (persona). "Nessuno" = assistente neutro. */}
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1.5 flex items-center gap-1.5">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5 flex items-center gap-1.5">
                             <Users className="h-3.5 w-3.5" />
                             {t('assistant.counselor.label')}
                         </p>
@@ -466,7 +466,7 @@ export default function AssistentePage() {
                             ))}
                         </select>
                         {counselors.length === 0 && (
-                            <p className="mt-1 text-xs text-slate-400">{t('assistant.counselor.empty')}</p>
+                            <p className="mt-1 text-xs text-slate-500">{t('assistant.counselor.empty')}</p>
                         )}
                     </div>
 
@@ -507,7 +507,7 @@ export default function AssistentePage() {
                                     msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-800'
                                 }`}>
                                     {msg.role === 'assistant' && !msg.content
-                                        ? <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+                                        ? <Loader2 className="w-4 h-4 animate-spin text-slate-500" />
                                         : (
                                             <div className="prose prose-sm max-w-none break-words prose-p:my-1.5 prose-headings:my-2">
                                                 <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{msg.content}</ReactMarkdown>
@@ -538,7 +538,7 @@ export default function AssistentePage() {
                                                 disabled={msg.feedback !== undefined}
                                                 title={t('assistant.feedbackUp')}
                                                 className={`p-1 rounded transition-colors disabled:cursor-default ${
-                                                    msg.feedback === true ? 'text-green-600' : 'text-slate-400 hover:text-green-600'
+                                                    msg.feedback === true ? 'text-green-600' : 'text-slate-500 hover:text-green-600'
                                                 }`}
                                             >
                                                 <ThumbsUp className="w-4 h-4" />
@@ -548,13 +548,13 @@ export default function AssistentePage() {
                                                 disabled={msg.feedback !== undefined}
                                                 title={t('assistant.feedbackDown')}
                                                 className={`p-1 rounded transition-colors disabled:cursor-default ${
-                                                    msg.feedback === false ? 'text-red-600' : 'text-slate-400 hover:text-red-600'
+                                                    msg.feedback === false ? 'text-red-600' : 'text-slate-500 hover:text-red-600'
                                                 }`}
                                             >
                                                 <ThumbsDown className="w-4 h-4" />
                                             </button>
                                             {msg.feedback !== undefined && (
-                                                <span className="text-xs text-slate-400 ml-1">{t('assistant.feedbackThanks')}</span>
+                                                <span className="text-xs text-slate-500 ml-1">{t('assistant.feedbackThanks')}</span>
                                             )}
                                         </div>
                                     )}
@@ -624,14 +624,14 @@ export default function AssistentePage() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 title={t('assistant.previewNewTab')}
-                                className="p-1 text-slate-400 hover:text-indigo-600 transition-colors"
+                                className="p-1 text-slate-500 hover:text-indigo-600 transition-colors"
                             >
                                 <ExternalLink className="w-4 h-4" />
                             </a>
                             <button
                                 onClick={() => setPreview(null)}
                                 title={t('assistant.previewClose')}
-                                className="p-1 text-slate-400 hover:text-slate-700 transition-colors"
+                                className="p-1 text-slate-500 hover:text-slate-700 transition-colors"
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -639,7 +639,7 @@ export default function AssistentePage() {
 
                         <div className="flex-1 min-h-0 overflow-hidden">
                             {preview.loading && (
-                                <div className="h-full flex items-center justify-center text-slate-400">
+                                <div className="h-full flex items-center justify-center text-slate-500">
                                     <Loader2 className="w-6 h-6 animate-spin" />
                                 </div>
                             )}

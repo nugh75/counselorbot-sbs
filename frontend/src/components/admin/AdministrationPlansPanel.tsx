@@ -488,13 +488,13 @@ export function AdministrationPlansPanel() {
                                         />
                                         <span>
                                             <span className="font-medium">{contact.name}</span>
-                                            <span className="block text-xs text-slate-400">
+                                            <span className="block text-xs text-slate-500">
                                                 {[contact.institution, contact.email, contact.code].filter(Boolean).join(' · ')}
                                             </span>
                                         </span>
                                     </label>
                                 ))}
-                                {activeContacts.length === 0 && <p className="text-sm text-slate-400">{t('admin.ap.noContacts')}</p>}
+                                {activeContacts.length === 0 && <p className="text-sm text-slate-500">{t('admin.ap.noContacts')}</p>}
                             </div>
                         </section>
                         <label className="block text-xs font-semibold uppercase text-slate-500">
@@ -594,7 +594,7 @@ export function AdministrationPlansPanel() {
 
             {!loading && plans.length > 0 && (
                 <div className="relative">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                     <input
                         type="search"
                         value={query}
@@ -607,17 +607,17 @@ export function AdministrationPlansPanel() {
 
             <div className="grid gap-4 xl:grid-cols-2">
                 {loading && (
-                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-400 xl:col-span-2">
+                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 xl:col-span-2">
                         {t('admin.ap.loading')}
                     </section>
                 )}
                 {!loading && plans.length === 0 && editingId !== 'new' && (
-                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-400 xl:col-span-2">
+                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 xl:col-span-2">
                         {t('admin.ap.empty')}
                     </section>
                 )}
                 {!loading && plans.length > 0 && filteredPlans.length === 0 && (
-                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-400 xl:col-span-2">
+                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 xl:col-span-2">
                         {t('admin.ap.noResults')}
                     </section>
                 )}
@@ -637,7 +637,7 @@ export function AdministrationPlansPanel() {
                                             {t(`admin.ap.status.${plan.status}`)}
                                         </span>
                                     </div>
-                                    <p className="mt-1 text-xs text-slate-400">{t('admin.ap.createdOn')} {formatDateTime(plan.created_at)}</p>
+                                    <p className="mt-1 text-xs text-slate-500">{t('admin.ap.createdOn')} {formatDateTime(plan.created_at)}</p>
                                 </div>
                                 <div className="flex gap-1">
                                     <button type="button" onClick={() => startEdit(plan)} className="rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900" title={t('admin.ap.action.edit')}>
@@ -670,24 +670,24 @@ export function AdministrationPlansPanel() {
                             <div className="mt-4 grid gap-2 text-sm text-slate-600">
                                 {plan.scheduled_at && (
                                     <div className="flex items-center gap-2">
-                                        <CalendarDays className="h-4 w-4 text-slate-400" />
+                                        <CalendarDays className="h-4 w-4 text-slate-500" />
                                         {formatDateTime(plan.scheduled_at)}
                                     </div>
                                 )}
                                 {plan.location && (
                                     <div className="flex items-center gap-2">
-                                        <MapPin className="h-4 w-4 text-slate-400" />
+                                        <MapPin className="h-4 w-4 text-slate-500" />
                                         {plan.location}
                                     </div>
                                 )}
                                 {plan.researchers.length > 0 && (
                                     <div className="flex items-start gap-2">
-                                        <Users className="mt-0.5 h-4 w-4 text-slate-400" />
+                                        <Users className="mt-0.5 h-4 w-4 text-slate-500" />
                                         <span>{plan.researchers.map((researcher) => researcher.name).join(', ')}</span>
                                     </div>
                                 )}
                                 <div className="flex items-center gap-2">
-                                    <FileText className="h-4 w-4 text-slate-400" />
+                                    <FileText className="h-4 w-4 text-slate-500" />
                                     {t('admin.ap.responses')}: {plan.responses_count}
                                 </div>
                             </div>

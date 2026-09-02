@@ -38,7 +38,7 @@ export function ResponseLengthSelector({ value, onChange, disabled = false }: Re
                             className={`flex h-7 w-7 flex-col items-center justify-center gap-0.5 rounded transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                                 active
                                     ? 'bg-slate-700 text-white'
-                                    : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
+                                    : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
                             }`}
                         >
                             {[0, 1, 2].map((line) => (

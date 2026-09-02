@@ -93,7 +93,7 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
                 <button
                     type="button"
                     onClick={onStart}
-                    className="mt-8 inline-flex items-center rounded-md bg-ochre-500 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-ochre-600"
+                    className="mt-8 inline-flex items-center rounded-md bg-ochre-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-ochre-700"
                 >
                     {t('app.home.cta')}
                 </button>
@@ -940,14 +940,14 @@ export default function Home() {
                                 {/* Barra di avanzamento (indeterminata) durante la preparazione del PDF. */}
                                 {pdfLoading && (
                                     <div className="space-y-1.5">
-                                        <p className="text-xs text-slate-400">{t('completed.pdfPreparing')}</p>
+                                        <p className="text-xs text-slate-500">{t('completed.pdfPreparing')}</p>
                                         <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                                             <div className="h-full w-1/3 animate-indeterminate rounded-full bg-indigo-500" />
                                         </div>
                                     </div>
                                 )}
 
-                                <p className="pt-4 border-t border-slate-100 text-sm text-slate-400">
+                                <p className="pt-4 border-t border-slate-100 text-sm text-slate-500">
                                     {t('completed.thanks')}
                                 </p>
                             </div>
@@ -979,7 +979,7 @@ export default function Home() {
                                         href="/questionario"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="block w-full py-3.5 bg-ochre-500 hover:bg-ochre-600 text-white font-bold rounded-md transition-colors shadow-md"
+                                        className="block w-full py-3.5 bg-ochre-600 hover:bg-ochre-700 text-white font-bold rounded-md transition-colors shadow-md"
                                     >
                                         {t('farewell.feedback')}
                                     </a>

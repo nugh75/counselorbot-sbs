@@ -147,8 +147,8 @@ function MultiSelectFilter({
                 onClick={() => setOpen((value) => !value)}
                 className="flex h-10 w-full items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-400"
             >
-                <span className={`truncate ${selected.length === 0 ? 'text-slate-400' : ''}`}>{summary}</span>
-                <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+                <span className={`truncate ${selected.length === 0 ? 'text-slate-500' : ''}`}>{summary}</span>
+                <ChevronDown className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${open ? 'rotate-180' : ''}`} />
             </button>
             {open && (
                 <div className="absolute z-20 mt-1 w-full min-w-[200px] rounded-md border border-slate-200 bg-white p-2 shadow-lg">
@@ -161,7 +161,7 @@ function MultiSelectFilter({
                     />
                     <div className="max-h-56 overflow-auto">
                         {filtered.length === 0 && (
-                            <div className="px-2 py-3 text-center text-xs text-slate-400">{emptyLabel}</div>
+                            <div className="px-2 py-3 text-center text-xs text-slate-500">{emptyLabel}</div>
                         )}
                         {filtered.map((value) => (
                             <label key={value} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-50">
@@ -571,7 +571,7 @@ export function LogViewer() {
     const renderFeedback = (value: boolean | null | undefined) => {
         if (value === true) return <ThumbsUp className="h-4 w-4 text-emerald-600" aria-label={t('admin.logs.feedbackPositive')} />;
         if (value === false) return <ThumbsDown className="h-4 w-4 text-red-600" aria-label={t('admin.logs.feedbackNegative')} />;
-        return <span className="text-xs text-slate-400">-</span>;
+        return <span className="text-xs text-slate-500">-</span>;
     };
 
     const filterSummary = useMemo(() => {
@@ -613,7 +613,7 @@ export function LogViewer() {
 
     const detailBlock = (label: string, text: string, key?: string) => (
         <div key={key} className="rounded-md border border-slate-200 bg-slate-50 p-3">
-            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</div>
+            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
             <div className="prose prose-sm max-w-none break-words text-slate-700 prose-p:my-1 prose-pre:my-1 prose-pre:whitespace-pre-wrap prose-headings:my-1.5 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-table:my-1">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
             </div>
@@ -643,7 +643,7 @@ export function LogViewer() {
                 .filter(Boolean);
             return items.length ? (
                 <div key={keyId} className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</div>
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
                     <div className="space-y-2 border-l-2 border-slate-200 pl-3">{items}</div>
                 </div>
             ) : null;
@@ -653,7 +653,7 @@ export function LogViewer() {
             .filter(Boolean);
         return entries.length ? (
             <div key={keyId} className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</div>
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
                 <div className="space-y-2 border-l-2 border-slate-200 pl-3">{entries}</div>
             </div>
         ) : null;
@@ -706,7 +706,7 @@ export function LogViewer() {
                 <div className="flex flex-wrap gap-2">
                     {chips.map((c) => (
                         <span key={c.k} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
-                            <span className="font-semibold text-slate-400">{c.k}:</span> {c.v}
+                            <span className="font-semibold text-slate-500">{c.k}:</span> {c.v}
                         </span>
                     ))}
                 </div>
@@ -717,7 +717,7 @@ export function LogViewer() {
                 {error && detailBlock(t('admin.logs.d.error'), error)}
                 {sources.length > 0 && detailBlock(t('admin.logs.d.sources'), sources.join('\n'))}
                 {otherNodes}
-                {!hasContent && <div className="text-sm text-slate-400">{t('admin.logs.d.empty')}</div>}
+                {!hasContent && <div className="text-sm text-slate-500">{t('admin.logs.d.empty')}</div>}
             </div>
         );
     };
@@ -741,7 +741,7 @@ export function LogViewer() {
                             <span className="text-right font-mono text-slate-500">{count}</span>
                         </div>
                     ))}
-                    {rows.length === 0 && <p className="text-sm text-slate-400">{t('admin.logs.empty')}</p>}
+                    {rows.length === 0 && <p className="text-sm text-slate-500">{t('admin.logs.empty')}</p>}
                 </div>
             </div>
         );
@@ -793,7 +793,7 @@ export function LogViewer() {
             <div className="rounded-lg border border-slate-200 bg-white p-4">
                 <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                     <label className="relative block">
-                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                         <input
                             value={filters.q}
                             onChange={(event) => setFilter('q', event.target.value)}
@@ -986,7 +986,7 @@ export function LogViewer() {
                     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 text-sm text-slate-500">
                         <span>{t('admin.logs.totalCount').replace('{n}', String(total))}</span>
                         <div className="flex items-center gap-2">
-                            <span className="text-xs text-slate-400">{t('admin.logs.sortOrder')}:</span>
+                            <span className="text-xs text-slate-500">{t('admin.logs.sortOrder')}:</span>
                             <select
                                 value={sort}
                                 onChange={(event) => { setSort(event.target.value as 'desc' | 'asc'); setPage(0); }}
@@ -1031,7 +1031,7 @@ export function LogViewer() {
                                             className="flex items-center gap-1 hover:text-slate-900 focus:outline-none"
                                         >
                                             {t('admin.logs.date')}
-                                            <span className="text-slate-400">
+                                            <span className="text-slate-500">
                                                 {sort === 'desc' ? '↓' : '↑'}
                                             </span>
                                         </button>
@@ -1063,10 +1063,10 @@ export function LogViewer() {
                                                 <button type="button" onClick={() => void openConversation(conversationId)} title={conversationId} className="block w-full truncate text-left font-mono text-xs font-medium text-sky-700 hover:text-sky-900">
                                                     {short(conversationId, 18)}
                                                 </button>
-                                                <button type="button" onClick={() => void openSession(log.session_id)} title={log.session_id} className="block w-full truncate text-left font-mono text-[11px] text-slate-400 hover:text-slate-600">
+                                                <button type="button" onClick={() => void openSession(log.session_id)} title={log.session_id} className="block w-full truncate text-left font-mono text-[11px] text-slate-500 hover:text-slate-600">
                                                     {t('admin.logs.session')}: {short(log.session_id, 14)}
                                                 </button>
-                                                {log.username && <div className="truncate text-xs text-slate-400" title={log.username}>{log.username}</div>}
+                                                {log.username && <div className="truncate text-xs text-slate-500" title={log.username}>{log.username}</div>}
                                             </td>
                                             <td className="px-2 py-2 align-top font-mono text-xs text-slate-600"><div className="truncate" title={anon}>{anon}</div></td>
                                             <td className="px-2 py-2 align-top">
@@ -1079,7 +1079,7 @@ export function LogViewer() {
                                             <td className="px-2 py-2 align-top text-xs text-slate-600"><div className="truncate" title={modelName}>{modelName}</div></td>
                                             <td className="px-2 py-2 align-top text-xs text-slate-600">
                                                 <div className="truncate font-medium" title={log.questionnaire_type || '-'}>{log.questionnaire_type || '-'}</div>
-                                                <div className="truncate text-slate-400" title={log.phase || log.mode || '-'}>{log.phase || log.mode || '-'}</div>
+                                                <div className="truncate text-slate-500" title={log.phase || log.mode || '-'}>{log.phase || log.mode || '-'}</div>
                                             </td>
                                             <td className="px-2 py-2 align-top">{renderFeedback(log.helpful)}</td>
                                             <td className="px-2 py-2 align-top font-mono text-xs text-slate-600"><div className="truncate" title={costText}>{costText}</div></td>
@@ -1111,12 +1111,12 @@ export function LogViewer() {
                                 })}
                                 {logs.length === 0 && !loading && (
                                     <tr>
-                                        <td colSpan={10} className="px-6 py-10 text-center text-slate-400">{t('admin.logs.empty')}</td>
+                                        <td colSpan={10} className="px-6 py-10 text-center text-slate-500">{t('admin.logs.empty')}</td>
                                     </tr>
                                 )}
                                 {loading && (
                                     <tr>
-                                        <td colSpan={10} className="px-6 py-10 text-center text-slate-400">
+                                        <td colSpan={10} className="px-6 py-10 text-center text-slate-500">
                                             <RefreshCw className="mx-auto h-5 w-5 animate-spin" />
                                         </td>
                                     </tr>
@@ -1129,24 +1129,24 @@ export function LogViewer() {
 
             {view === 'stats' && (
                 <div className="space-y-4">
-                    {statsLoading && <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-400"><RefreshCw className="mx-auto h-5 w-5 animate-spin" /></div>}
+                    {statsLoading && <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500"><RefreshCw className="mx-auto h-5 w-5 animate-spin" /></div>}
                     {stats && !statsLoading && (
                         <>
                             <div className="grid gap-3 md:grid-cols-4">
                                 <div className="rounded-lg border border-slate-200 bg-white p-4">
-                                    <div className="text-xs uppercase text-slate-400">{t('admin.logs.statsTurns')}</div>
+                                    <div className="text-xs uppercase text-slate-500">{t('admin.logs.statsTurns')}</div>
                                     <div className="mt-2 text-2xl font-semibold text-slate-900">{stats.total}</div>
                                 </div>
                                 <div className="rounded-lg border border-slate-200 bg-white p-4">
-                                    <div className="text-xs uppercase text-slate-400">{t('admin.logs.statsSessions')}</div>
+                                    <div className="text-xs uppercase text-slate-500">{t('admin.logs.statsSessions')}</div>
                                     <div className="mt-2 text-2xl font-semibold text-slate-900">{stats.distinct_sessions}</div>
                                 </div>
                                 <div className="rounded-lg border border-slate-200 bg-white p-4">
-                                    <div className="text-xs uppercase text-slate-400">{t('admin.logs.statsRated')}</div>
+                                    <div className="text-xs uppercase text-slate-500">{t('admin.logs.statsRated')}</div>
                                     <div className="mt-2 text-2xl font-semibold text-slate-900">{stats.feedback.rated}</div>
                                 </div>
                                 <div className="rounded-lg border border-slate-200 bg-white p-4">
-                                    <div className="text-xs uppercase text-slate-400">{t('admin.logs.statsPositive')}</div>
+                                    <div className="text-xs uppercase text-slate-500">{t('admin.logs.statsPositive')}</div>
                                     <div className="mt-2 text-2xl font-semibold text-slate-900">{stats.positive_feedback_pct}%</div>
                                 </div>
                             </div>
@@ -1160,7 +1160,7 @@ export function LogViewer() {
                                 <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                                     {stats.turns_by_day.slice(-12).map((item) => (
                                         <div key={item.date} className="rounded-md border border-slate-100 p-3">
-                                            <div className="text-xs text-slate-400">{item.date.slice(0, 10)}</div>
+                                            <div className="text-xs text-slate-500">{item.date.slice(0, 10)}</div>
                                             <div className="mt-1 text-lg font-semibold text-slate-800">{item.turns}</div>
                                         </div>
                                     ))}
@@ -1181,13 +1181,13 @@ export function LogViewer() {
                                 {t('admin.logs.runRetention')}
                             </button>
                         </div>
-                        {hygieneLoading && <RefreshCw className="mt-6 h-5 w-5 animate-spin text-slate-400" />}
+                        {hygieneLoading && <RefreshCw className="mt-6 h-5 w-5 animate-spin text-slate-500" />}
                         {retention && (
                             <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                                <div><dt className="text-slate-400">{t('admin.logs.retentionDays')}</dt><dd className="mt-1 font-semibold text-slate-800">{retention.retention_enabled ? retention.retention_days : t('admin.logs.disabled')}</dd></div>
-                                <div><dt className="text-slate-400">{t('admin.logs.purgeable')}</dt><dd className="mt-1 font-semibold text-slate-800">{retention.purgeable_logs}</dd></div>
-                                <div><dt className="text-slate-400">{t('admin.logs.totalLogs')}</dt><dd className="mt-1 font-semibold text-slate-800">{retention.total_logs}</dd></div>
-                                <div><dt className="text-slate-400">{t('admin.logs.oldest')}</dt><dd className="mt-1 font-semibold text-slate-800">{formatDate(retention.oldest_log_timestamp)}</dd></div>
+                                <div><dt className="text-slate-500">{t('admin.logs.retentionDays')}</dt><dd className="mt-1 font-semibold text-slate-800">{retention.retention_enabled ? retention.retention_days : t('admin.logs.disabled')}</dd></div>
+                                <div><dt className="text-slate-500">{t('admin.logs.purgeable')}</dt><dd className="mt-1 font-semibold text-slate-800">{retention.purgeable_logs}</dd></div>
+                                <div><dt className="text-slate-500">{t('admin.logs.totalLogs')}</dt><dd className="mt-1 font-semibold text-slate-800">{retention.total_logs}</dd></div>
+                                <div><dt className="text-slate-500">{t('admin.logs.oldest')}</dt><dd className="mt-1 font-semibold text-slate-800">{formatDate(retention.oldest_log_timestamp)}</dd></div>
                             </dl>
                         )}
                         {retention?.age_buckets && (
@@ -1207,10 +1207,10 @@ export function LogViewer() {
                         <h4 className="text-sm font-semibold text-slate-800">{t('admin.logs.piiReport')}</h4>
                         {piiReport && (
                             <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                                <div><dt className="text-slate-400">{t('admin.logs.redaction')}</dt><dd className="mt-1 font-semibold text-slate-800">{piiReport.redaction_enabled ? t('admin.logs.enabled') : t('admin.logs.disabled')}</dd></div>
-                                <div><dt className="text-slate-400">{t('admin.logs.scanned')}</dt><dd className="mt-1 font-semibold text-slate-800">{piiReport.scanned_logs}</dd></div>
-                                <div><dt className="text-slate-400">{t('admin.logs.suspect')}</dt><dd className="mt-1 font-semibold text-slate-800">{piiReport.suspect_logs}</dd></div>
-                                <div><dt className="text-slate-400">Email / Tel / CF</dt><dd className="mt-1 font-semibold text-slate-800">{piiReport.by_type.email || 0} / {piiReport.by_type.telefono || 0} / {piiReport.by_type.cf || 0}</dd></div>
+                                <div><dt className="text-slate-500">{t('admin.logs.redaction')}</dt><dd className="mt-1 font-semibold text-slate-800">{piiReport.redaction_enabled ? t('admin.logs.enabled') : t('admin.logs.disabled')}</dd></div>
+                                <div><dt className="text-slate-500">{t('admin.logs.scanned')}</dt><dd className="mt-1 font-semibold text-slate-800">{piiReport.scanned_logs}</dd></div>
+                                <div><dt className="text-slate-500">{t('admin.logs.suspect')}</dt><dd className="mt-1 font-semibold text-slate-800">{piiReport.suspect_logs}</dd></div>
+                                <div><dt className="text-slate-500">Email / Tel / CF</dt><dd className="mt-1 font-semibold text-slate-800">{piiReport.by_type.email || 0} / {piiReport.by_type.telefono || 0} / {piiReport.by_type.cf || 0}</dd></div>
                             </dl>
                         )}
                     </div>
@@ -1238,14 +1238,14 @@ export function LogViewer() {
                             </div>
                         </div>
                         <div className="flex-1 space-y-5 overflow-y-auto bg-slate-50 p-4">
-                            {sessionLoading && <RefreshCw className="mx-auto h-5 w-5 animate-spin text-slate-400" />}
+                            {sessionLoading && <RefreshCw className="mx-auto h-5 w-5 animate-spin text-slate-500" />}
                             {!sessionLoading && sessionLogs.map((log) => {
                                 const details = asObject(log.details);
                                 const userText = firstText(details, ['user_input', 'effective_user_input', 'question']);
                                 const botText = firstText(details, ['bot_response', 'answer']);
                                 return (
                                     <div key={log.id} className="space-y-2">
-                                        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+                                        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                                             <span>{formatDate(log.timestamp)} · {log.action} · {log.provider || '-'}/{log.model_name || '-'}</span>
                                             <span className="inline-flex items-center gap-1">{renderFeedback(log.helpful)} {csvLabel(log.helpful)}</span>
                                         </div>

@@ -112,7 +112,7 @@ export default function GuidePage() {
                             {n === 7 && (
                                 <a
                                     href="#guide-chat-controls"
-                                    className="ml-8 flex items-center gap-2 rounded-md px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
+                                    className="ml-8 flex items-center gap-2 rounded-md px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 dark:text-slate-500 dark:hover:bg-slate-700"
                                 >
                                     {t('guide.chat.controlsTitle')}
                                 </a>

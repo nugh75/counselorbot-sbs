@@ -52,7 +52,7 @@ export function HeaderResume({ entries }: { entries: ResumeEntries }) {
                     role="menu"
                     className="absolute right-0 mt-1 w-56 max-h-64 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg z-[60]"
                 >
-                    <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-400 border-b border-slate-100">
+                    <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-100">
                         {t('frozen.resumeTitle')}
                     </div>
                     {frozen.map((row) => (

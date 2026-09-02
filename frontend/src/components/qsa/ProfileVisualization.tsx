@@ -6,8 +6,7 @@ import {
     ZTPIFactorCode,
     ZTPI_BTP_IDEAL,
     ZTPI_BTP_NEAR,
-    analyzeZTPIScore,
-    getZTPIAlignmentColorHex
+    analyzeZTPIScore
 } from '@/lib/ztpi-model';
 import { useI18n } from '@/lib/i18n-context';
 
@@ -28,19 +27,36 @@ const PREFIX_SECTION_COLOR: Record<string, string> = {
 
 type Translator = (key: string, vars?: Record<string, string | number>) => string;
 
+// Tinte degli esiti di misura. `mark` e' la tacca satura sulla barra, dove il
+// colore e' un segno e non un testo; `text` e `chip` sono la coppia leggibile
+// del badge del punteggio. Prima il badge usava la stessa tinta per testo e
+// fondo (fondo al 12,5%): 1.77-3.20:1, sotto la soglia AA, proprio sul numero
+// che lo studente viene a leggere. La coppia -800 su -50 sta a 6.6-7.6:1, ed e'
+// la stessa ricetta gia' usata dalle chip di sintesi in questo file.
+const OUTCOME_TONE = {
+    strength: { mark: '#22c55e', text: '#166534', chip: '#f0fdf4' },
+    adequate: { mark: '#eab308', text: '#854d0e', chip: '#fefce8' },
+    growth: { mark: '#ef4444', text: '#991b1b', chip: '#fef2f2' },
+} as const;
+
+type Outcome = keyof typeof OUTCOME_TONE;
+type Interpretation = { label: string; color: string; zone: 'low' | 'mid' | 'high'; tone: (typeof OUTCOME_TONE)[Outcome] };
+
+const read = (label: string, outcome: Outcome, zone: 'low' | 'mid' | 'high'): Interpretation =>
+    ({ label, color: OUTCOME_TONE[outcome].mark, zone, tone: OUTCOME_TONE[outcome] });
+
 function getInterpretation(
     code: string,
     score: number,
     invertedSet: Set<string>,
     questionnaireId: string,
     t: Translator
-): { label: string; color: string; zone: 'low' | 'mid' | 'high' } {
+): Interpretation {
     if (questionnaireId === 'ZTPI' && code.startsWith('T')) {
         const analysis = analyzeZTPIScore(code as ZTPIFactorCode, score);
-        const color = getZTPIAlignmentColorHex(code as ZTPIFactorCode, score);
-        if (analysis.zone === 'ideal') return { label: t('profile.legend.ztpiPositive'), color, zone: 'high' };
-        if (analysis.zone === 'near') return { label: t('profile.legend.ztpiMid'), color, zone: 'mid' };
-        return { label: t('profile.growth'), color, zone: 'low' };
+        if (analysis.zone === 'ideal') return read(t('profile.legend.ztpiPositive'), 'strength', 'high');
+        if (analysis.zone === 'near') return read(t('profile.legend.ztpiMid'), 'adequate', 'mid');
+        return read(t('profile.growth'), 'growth', 'low');
     }
 
     const isInverted = invertedSet.has(code);
@@ -52,15 +68,15 @@ function getInterpretation(
 
     if (isInverted) {
         switch (zone) {
-            case 'low': return { label: t('profile.strength'), color: '#22c55e', zone };
-            case 'mid': return { label: t('profile.normal'), color: '#eab308', zone };
-            case 'high': return { label: t('profile.growth'), color: '#ef4444', zone };
+            case 'low': return read(t('profile.strength'), 'strength', zone);
+            case 'mid': return read(t('profile.normal'), 'adequate', zone);
+            case 'high': return read(t('profile.growth'), 'growth', zone);
         }
     } else {
         switch (zone) {
-            case 'low': return { label: t('profile.growth'), color: '#ef4444', zone };
-            case 'mid': return { label: t('profile.adequate'), color: '#eab308', zone };
-            case 'high': return { label: t('profile.strength'), color: '#22c55e', zone };
+            case 'low': return read(t('profile.growth'), 'growth', zone);
+            case 'mid': return read(t('profile.adequate'), 'adequate', zone);
+            case 'high': return read(t('profile.strength'), 'strength', zone);
         }
     }
 }
@@ -71,7 +87,7 @@ interface ScoreBarProps {
     score: number;
     factorName: string;
     isInverted: boolean;
-    interpretation: { label: string; color: string; zone: 'low' | 'mid' | 'high' };
+    interpretation: Interpretation;
 }
 
 interface ScoreSegment {
@@ -111,7 +127,7 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
             <div className="col-start-1 row-start-1 min-w-0 sm:w-44 sm:flex-shrink-0">
                 <div className="flex items-center gap-2">
                     <span className="font-mono font-bold text-slate-700">{code}</span>
-                    {isInverted && <span className="text-[10px] text-slate-400">↔</span>}
+                    {isInverted && <span className="text-[10px] text-slate-500">↔</span>}
                 </div>
                 <div className="text-xs text-slate-500 leading-tight break-words" title={factorName}>
                     {factorName}
@@ -189,8 +205,8 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
                 <span
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold"
                     style={{
-                        backgroundColor: `${interpretation.color}20`,
-                        color: interpretation.color
+                        backgroundColor: interpretation.tone.chip,
+                        color: interpretation.tone.text,
                     }}
                 >
                     {score}
@@ -289,7 +305,7 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                             </div>
                             {topStrengths.length > 0
                                 ? renderChips(topStrengths, 'strength')
-                                : <p className="text-xs text-slate-400">{t('profile.summary.balanced')}</p>}
+                                : <p className="text-xs text-slate-500">{t('profile.summary.balanced')}</p>}
                         </div>
                         <div className="space-y-1.5">
                             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-700">
@@ -297,10 +313,10 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                             </div>
                             {topGrowth.length > 0
                                 ? renderChips(topGrowth, 'growth')
-                                : <p className="text-xs text-slate-400">{t('profile.summary.balanced')}</p>}
+                                : <p className="text-xs text-slate-500">{t('profile.summary.balanced')}</p>}
                         </div>
                     </div>
-                    <p className="text-[11px] text-slate-400 text-center pt-0.5">{t('profile.summary.note')}</p>
+                    <p className="text-[11px] text-slate-500 text-center pt-0.5">{t('profile.summary.note')}</p>
                 </div>
             )}
 
@@ -349,7 +365,7 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                     <span className="text-slate-600">{t('profile.growth')}</span>
                 </div>
                 {questionnaire.invertedFactors.length > 0 && (
-                    <div className="flex items-center gap-1 text-slate-400">
+                    <div className="flex items-center gap-1 text-slate-500">
                         <span>↔</span>
                         <span>= {t('profile.invertedScale')}</span>
                     </div>

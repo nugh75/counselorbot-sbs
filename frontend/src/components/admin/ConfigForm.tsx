@@ -945,9 +945,9 @@ function StepPromptsPanel({
                     </select>
                 </label>
                 <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 sm:grid-cols-3 lg:col-span-4">
-                    <div><p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.instrument')}</p><p className="mt-1 font-mono text-slate-800">{questionnaireType}</p></div>
-                    <div><p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.mode')}</p><p className="mt-1 text-slate-800">{modeLabel}</p></div>
-                    <div><p className="font-semibold uppercase tracking-wider text-slate-400">{t('admin.promptAudit.promptKey')}</p><p className="mt-1 break-words font-mono text-slate-800">{systemPromptKey || '-'}</p></div>
+                    <div><p className="font-semibold uppercase tracking-wider text-slate-500">{t('admin.promptAudit.instrument')}</p><p className="mt-1 font-mono text-slate-800">{questionnaireType}</p></div>
+                    <div><p className="font-semibold uppercase tracking-wider text-slate-500">{t('admin.promptAudit.mode')}</p><p className="mt-1 text-slate-800">{modeLabel}</p></div>
+                    <div><p className="font-semibold uppercase tracking-wider text-slate-500">{t('admin.promptAudit.promptKey')}</p><p className="mt-1 break-words font-mono text-slate-800">{systemPromptKey || '-'}</p></div>
                 </div>
             </div>
 
@@ -1000,7 +1000,7 @@ function StepPromptsPanel({
                                 <label className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
                                     <span>{componentText.certified_strategies_limit}</span>
                                     <select
-                                        className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 disabled:bg-slate-100 disabled:text-slate-400 focus:ring-1 focus:ring-indigo-500 outline-none"
+                                        className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 disabled:bg-slate-100 disabled:text-slate-500 focus:ring-1 focus:ring-indigo-500 outline-none"
                                         value={certifiedStrategyLimit}
                                         onChange={(event) => updateCertifiedStrategyLimit(Number(event.target.value))}
                                         disabled={!flags.knowledge || !flags.certified_strategies}
@@ -1026,7 +1026,7 @@ function StepPromptsPanel({
                                                     onChange={() => toggleStrategyAllowed(strategy.id)}
                                                 />
                                                 <div className="leading-tight">
-                                                    <span className="font-mono text-[9px] font-bold text-slate-400 mr-1">[{strategy.id}]</span>
+                                                    <span className="font-mono text-[9px] font-bold text-slate-500 mr-1">[{strategy.id}]</span>
                                                     {strategy.texts?.[selectedLanguage] || strategy.texts?.it || strategy.id}
                                                 </div>
                                             </label>
@@ -1048,7 +1048,7 @@ function StepPromptsPanel({
                                                     onChange={() => toggleStrategyAllowed(strategy.slug)}
                                                 />
                                                 <div className="leading-tight">
-                                                    <span className="font-mono text-[9px] font-bold text-slate-400 mr-1">[{strategy.slug}]</span>
+                                                    <span className="font-mono text-[9px] font-bold text-slate-500 mr-1">[{strategy.slug}]</span>
                                                     {strategy[`name_${selectedLanguage}`] || strategy.name_it || strategy.slug}
                                                 </div>
                                             </label>
@@ -1481,7 +1481,7 @@ export function ConfigForm() {
 
     // --- Render ---
 
-    if (loading) return <div className="text-center py-8 text-slate-400">{t('admin.config.loading')}</div>;
+    if (loading) return <div className="text-center py-8 text-slate-500">{t('admin.config.loading')}</div>;
 
     const apiKeys = [
         { key: 'api_key_openai', label: 'API Key OpenAI' },
@@ -1798,7 +1798,7 @@ export function ConfigForm() {
                         />
                         <label htmlFor="disable_thinking" className="text-sm font-medium text-slate-700 cursor-pointer">
                             {t('admin.config.noThinking')} <strong>{t('admin.config.noThinkingName')}</strong>
-                            <span className="block text-xs text-slate-400 font-normal">{t('admin.config.noThinkingDesc')}</span>
+                            <span className="block text-xs text-slate-500 font-normal">{t('admin.config.noThinkingDesc')}</span>
                         </label>
                     </div>
                 </div>
@@ -2065,7 +2065,7 @@ export function ConfigForm() {
                                     t={t}
                                 />
                             ) : (
-                                <div className="rounded-lg border border-slate-200 bg-white p-6 text-center text-sm text-slate-400">
+                                <div className="rounded-lg border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
                                     {t('admin.config.noSteps')}
                                 </div>
                             )
@@ -2145,7 +2145,7 @@ export function ConfigForm() {
                                     })}
                                 </div>
                             ) : (
-                                <div className="rounded-lg border border-slate-200 bg-white p-6 text-center text-sm text-slate-400">
+                                <div className="rounded-lg border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
                                     {t('admin.config.noTexts')}
                                 </div>
                             )
@@ -2263,7 +2263,7 @@ export function ConfigForm() {
                                                         <h3 className="text-sm font-semibold text-slate-900">
                                                             {step.label || step.id}
                                                         </h3>
-                                                        <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
+                                                        <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
                                                             {step.id}
                                                         </span>
                                                     </div>
@@ -2271,7 +2271,7 @@ export function ConfigForm() {
                                                         <button
                                                             onClick={() => handleMoveStep(step.id, 'up')}
                                                             disabled={idx === 0}
-                                                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-30"
+                                                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-600 transition-colors disabled:opacity-30"
                                                             title={t('admin.config.moveUp')}
                                                         >
                                                             <ChevronUp className="w-4 h-4" />
@@ -2279,7 +2279,7 @@ export function ConfigForm() {
                                                         <button
                                                             onClick={() => handleMoveStep(step.id, 'down')}
                                                             disabled={idx === sectionSteps.length - 1}
-                                                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-30"
+                                                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-600 transition-colors disabled:opacity-30"
                                                             title={t('admin.config.moveDown')}
                                                         >
                                                             <ChevronDown className="w-4 h-4" />
@@ -2352,7 +2352,7 @@ export function ConfigForm() {
                                     })}
 
                                     {sectionSteps.length === 0 && !showNewStepForm && (
-                                        <div className="text-center py-8 text-slate-400 text-sm">
+                                        <div className="text-center py-8 text-slate-500 text-sm">
                                             {t('admin.config.noSteps')}
                                         </div>
                                     )}

@@ -98,7 +98,7 @@ function GroupJoinInner() {
                     <p className="text-lg font-semibold text-slate-700">
                         {texts.joined}: {group.name}
                     </p>
-                    <p className="max-w-sm text-xs text-slate-400">{texts.privacy}</p>
+                    <p className="max-w-sm text-xs text-slate-500">{texts.privacy}</p>
                     <div className="flex flex-col gap-2 sm:flex-row">
                         <Link
                             href="/strumenti"

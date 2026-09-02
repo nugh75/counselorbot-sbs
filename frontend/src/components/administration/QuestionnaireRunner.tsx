@@ -351,7 +351,7 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                                             style={{ width: `${(((result.stanine ?? 1) - 1) / 8) * 100}%` }}
                                         />
                                     </div>
-                                    <div className="mt-1.5 flex justify-between text-[10px] text-slate-400">
+                                    <div className="mt-1.5 flex justify-between text-[10px] text-slate-500">
                                         <span>{t('admin.run.rawAverage')}: {result.raw_average.toFixed(2)} / {scaleMax}</span>
                                     </div>
                                 </div>

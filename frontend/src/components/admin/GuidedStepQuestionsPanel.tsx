@@ -339,7 +339,7 @@ export function GuidedStepQuestionsPanel() {
                         <div key={code} className="rounded-md border border-slate-200 bg-slate-50 p-3">
                             <p className="text-xs font-semibold uppercase text-slate-500">{code}</p>
                             <p className="mt-1 text-2xl font-bold text-slate-900">{countsByQuestionnaire[code] ?? 0}</p>
-                            <p className="text-xs text-slate-400">{t('admin.gsq.activeIt')}</p>
+                            <p className="text-xs text-slate-500">{t('admin.gsq.activeIt')}</p>
                         </div>
                     ))}
                 </div>
@@ -395,12 +395,12 @@ export function GuidedStepQuestionsPanel() {
 
             <div className="space-y-2">
                 {loading && (
-                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-400">
+                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500">
                         {t('admin.gsq.loading')}
                     </section>
                 )}
                 {!loading && filtered.length === 0 && editingId !== 'new' && (
-                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-400">
+                    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500">
                         {t('admin.gsq.empty')}
                     </section>
                 )}
@@ -423,14 +423,14 @@ export function GuidedStepQuestionsPanel() {
                                     <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
                                         {q.language.toUpperCase()}
                                     </span>
-                                    <span className="text-xs text-slate-400">#{q.sort_order}</span>
+                                    <span className="text-xs text-slate-500">#{q.sort_order}</span>
                                     {!q.is_active && (
                                         <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
                                             {t('admin.gsq.inactive')}
                                         </span>
                                     )}
                                 </div>
-                                <p className={`mt-1 text-sm leading-relaxed ${q.is_active ? 'text-slate-800' : 'text-slate-400 line-through'}`}>
+                                <p className={`mt-1 text-sm leading-relaxed ${q.is_active ? 'text-slate-800' : 'text-slate-500 line-through'}`}>
                                     {q.text}
                                 </p>
                             </div>

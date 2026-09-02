@@ -235,7 +235,7 @@ export function CostStats() {
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {kpis.map((kpi) => (
                             <div key={kpi.label} className="rounded-lg border border-slate-200 bg-white p-4">
-                                <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-400">
+                                <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-500">
                                     <kpi.icon className="h-4 w-4" />
                                     {kpi.label}
                                 </div>
@@ -252,16 +252,16 @@ export function CostStats() {
                             { key: 'year', label: t('admin.costs.thisYear'), rr: data.periods.year },
                         ] as const).map(({ key, label, rr }) => (
                             <div key={key} className="rounded-lg border border-slate-200 bg-white p-4">
-                                <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-400">
+                                <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-500">
                                     <CalendarDays className="h-4 w-4" />
-                                    {label} <span className="font-mono text-slate-300">{rr.period}</span>
+                                    {label} <span className="font-mono text-slate-500">{rr.period}</span>
                                 </div>
                                 <div className="mt-2 text-xl font-bold text-slate-900">{fmtUsdEur(rr.cost_to_date, rate)}</div>
                                 <div className="mt-2 flex items-baseline justify-between">
                                     <span className="text-xs text-slate-500">{t('admin.costs.projected')}</span>
                                     <span className="text-lg font-bold text-emerald-600">{fmtUsdEur(rr.projected_cost, rate)}</span>
                                 </div>
-                                <div className="text-[11px] text-slate-400">{rr.days_elapsed} / {rr.days_total} {t('admin.costs.days')}</div>
+                                <div className="text-[11px] text-slate-500">{rr.days_elapsed} / {rr.days_total} {t('admin.costs.days')}</div>
                             </div>
                         ))}
                     </div>
@@ -285,7 +285,7 @@ export function CostStats() {
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
-                                <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-400">
+                                <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
                                     <tr>
                                         <th className="px-3 py-2 font-semibold">{t('admin.costs.period')}</th>
                                         <th className="px-3 py-2 text-right font-semibold">{t('admin.costs.turns')}</th>
@@ -310,7 +310,7 @@ export function CostStats() {
                                         </tr>
                                     ))}
                                     {periodRows.length === 0 && (
-                                        <tr><td colSpan={4} className="px-3 py-6 text-center text-slate-400">{t('admin.costs.noData')}</td></tr>
+                                        <tr><td colSpan={4} className="px-3 py-6 text-center text-slate-500">{t('admin.costs.noData')}</td></tr>
                                     )}
                                 </tbody>
                             </table>
@@ -365,7 +365,7 @@ export function CostStats() {
                             </div>
                         )}
                         {data.monthly_budget_usd <= 0 && (
-                            <p className="mt-2 text-xs text-slate-400">{t('admin.costs.budget.hint')}</p>
+                            <p className="mt-2 text-xs text-slate-500">{t('admin.costs.budget.hint')}</p>
                         )}
                     </div>
 
@@ -378,7 +378,7 @@ export function CostStats() {
                                     <div key={key} className="rounded-md bg-slate-50 p-3">
                                         <div className="text-xs font-medium text-slate-500">{t(`admin.costs.${key}`)}</div>
                                         <div className="mt-1 text-lg font-bold text-slate-900">{fmtCost(data.split[key].cost)}</div>
-                                        <div className="text-xs text-slate-400">{fmtInt(data.split[key].turns)} {t('admin.costs.turns').toLowerCase()}</div>
+                                        <div className="text-xs text-slate-500">{fmtInt(data.split[key].turns)} {t('admin.costs.turns').toLowerCase()}</div>
                                     </div>
                                 ))}
                             </div>
@@ -405,7 +405,7 @@ export function CostStats() {
                                     <div className="text-xl font-bold text-emerald-600">{fmtUsdEur(scenario.yearly, rate)}</div>
                                 </div>
                             </div>
-                            <p className="mt-2 text-xs text-slate-400">
+                            <p className="mt-2 text-xs text-slate-500">
                                 {fmtInt(scenario.totalInteractions)} {t('admin.costs.turns').toLowerCase()} · {fmtCost(scenario.costPerInteraction)}/{t('admin.costs.perInteraction')}
                             </p>
                         </div>
@@ -417,7 +417,7 @@ export function CostStats() {
                         <h3 className="mb-3 text-sm font-semibold text-slate-700">{t('admin.costs.byModel')}</h3>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
-                                <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-400">
+                                <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
                                     <tr>
                                         <th className="px-3 py-2 font-semibold">{t('admin.costs.model')}</th>
                                         <th className="px-3 py-2 font-semibold">{t('admin.costs.provider')}</th>
@@ -450,7 +450,7 @@ export function CostStats() {
                         <h3 className="mb-3 text-sm font-semibold text-slate-700">{t('admin.costs.byUser')}</h3>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
-                                <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-400">
+                                <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
                                     <tr>
                                         <th className="px-3 py-2 font-semibold">{t('admin.costs.code')}</th>
                                         <th className="px-3 py-2 text-right font-semibold">{t('admin.costs.sessions')}</th>
@@ -485,7 +485,7 @@ export function CostStats() {
                                         <div className="h-full rounded bg-sky-400" style={{ width: maxDayCost > 0 ? `${Math.max(2, (row.cost / maxDayCost) * 100)}%` : '0%' }} />
                                     </div>
                                     <span className="w-24 shrink-0 text-right font-medium text-slate-700">{fmtCost(row.cost)}</span>
-                                    <span className="w-16 shrink-0 text-right text-slate-400">{fmtInt(row.turns)}</span>
+                                    <span className="w-16 shrink-0 text-right text-slate-500">{fmtInt(row.turns)}</span>
                                 </div>
                             ))}
                         </div>

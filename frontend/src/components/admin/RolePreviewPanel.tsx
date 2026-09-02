@@ -101,7 +101,7 @@ export function RolePreviewPanel() {
                                     {t(ROLE_KEY[account.role])}
                                 </span>
                             </div>
-                            <p className="text-[11px] font-semibold text-slate-400">{account.username}</p>
+                            <p className="text-[11px] font-semibold text-slate-500">{account.username}</p>
                             <p className="grow text-xs text-slate-500">{t(ROLE_DESC_KEY[account.role])}</p>
                             <button
                                 type="button"
@@ -143,7 +143,7 @@ export function RolePreviewPanel() {
                                             {ok ? (
                                                 <Check className="mx-auto h-4 w-4 text-emerald-600" />
                                             ) : (
-                                                <Minus className="mx-auto h-4 w-4 text-slate-300" />
+                                                <Minus className="mx-auto h-4 w-4 text-slate-500" />
                                             )}
                                         </td>
                                     );

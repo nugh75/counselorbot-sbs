@@ -188,7 +188,7 @@ export default function AdminPage() {
                             {navGroups.map((group) => (
                                 <div key={group.title}>
                                     {!sidebarCollapsed && (
-                                    <h3 className="px-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                                    <h3 className="px-2 text-[11px] font-bold uppercase tracking-wide text-slate-500">
                                         {group.title}
                                     </h3>
                                     )}

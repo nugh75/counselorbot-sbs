@@ -227,7 +227,7 @@ export function PortfolioCard() {
                 <label className="block">
                     <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('portfolio.search')}</span>
                     <div className="mt-1 flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2">
-                        <Search className="h-4 w-4 text-slate-400" />
+                        <Search className="h-4 w-4 text-slate-500" />
                         <input
                             value={q}
                             onChange={(event) => setQ(event.target.value)}
@@ -250,7 +250,7 @@ export function PortfolioCard() {
                 <div className="rounded-xl border border-indigo-100 bg-white p-4 space-y-3">
                     <div className="flex items-center justify-between">
                         <h3 className="text-sm font-bold text-slate-800">{form.id ? t('portfolio.editTitle') : t('portfolio.newTitle')}</h3>
-                        <button type="button" onClick={() => setForm(null)} className="text-slate-400 hover:text-slate-600" aria-label={t('common.close')}>
+                        <button type="button" onClick={() => setForm(null)} className="text-slate-500 hover:text-slate-600" aria-label={t('common.close')}>
                             <X className="h-4 w-4" />
                         </button>
                     </div>
@@ -281,7 +281,7 @@ export function PortfolioCard() {
                     <div className="space-y-2">
                         <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('portfolio.images')}</span>
                         {!form.id ? (
-                            <p className="text-xs text-slate-400">{t('portfolio.saveFirst')}</p>
+                            <p className="text-xs text-slate-500">{t('portfolio.saveFirst')}</p>
                         ) : (
                             <div className="flex flex-wrap gap-3">
                                 {form.images.map((img) => (
@@ -315,7 +315,7 @@ export function PortfolioCard() {
                                     type="button"
                                     onClick={() => fileInputRef.current?.click()}
                                     disabled={uploading}
-                                    className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-slate-300 text-slate-400 hover:bg-slate-50 disabled:opacity-50"
+                                    className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-slate-300 text-slate-500 hover:bg-slate-50 disabled:opacity-50"
                                 >
                                     {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
                                     <span className="text-[10px] font-semibold">{t('portfolio.addImage')}</span>
@@ -345,7 +345,7 @@ export function PortfolioCard() {
 
             {/* Elenco lavori */}
             {loading ? (
-                <div className="text-sm text-slate-400">{t('portfolio.loading')}</div>
+                <div className="text-sm text-slate-500">{t('portfolio.loading')}</div>
             ) : items.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
                     {q || categoryFilter ? t('portfolio.emptyFound') : t('portfolio.emptyYet')}
@@ -371,7 +371,7 @@ export function PortfolioCard() {
                                     </span>
                                 </button>
                             ) : (
-                                <div className="flex h-32 w-full items-center justify-center bg-slate-50 text-slate-300">
+                                <div className="flex h-32 w-full items-center justify-center bg-slate-50 text-slate-400">
                                     <FolderOpen className="h-8 w-8" />
                                 </div>
                             )}
@@ -379,15 +379,15 @@ export function PortfolioCard() {
                                 <div className="flex items-start justify-between gap-2">
                                     <h3 className="text-sm font-bold text-slate-800">{item.title}</h3>
                                     <div className="flex shrink-0 gap-1">
-                                        <button type="button" onClick={() => setForm(toForm(item))} className="rounded p-1 text-slate-400 hover:bg-slate-50 hover:text-indigo-600" aria-label={t('portfolio.edit')}>
+                                        <button type="button" onClick={() => setForm(toForm(item))} className="rounded p-1 text-slate-500 hover:bg-slate-50 hover:text-indigo-600" aria-label={t('portfolio.edit')}>
                                             <Pencil className="h-3.5 w-3.5" />
                                         </button>
-                                        <button type="button" onClick={() => void deleteItem(item.id)} className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600" aria-label={t('portfolio.delete')}>
+                                        <button type="button" onClick={() => void deleteItem(item.id)} className="rounded p-1 text-slate-500 hover:bg-rose-50 hover:text-rose-600" aria-label={t('portfolio.delete')}>
                                             <Trash2 className="h-3.5 w-3.5" />
                                         </button>
                                     </div>
                                 </div>
-                                <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-400">
+                                <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
                                     {item.category && <span className="rounded-full bg-indigo-50 px-2 py-0.5 font-semibold text-indigo-600">{item.category}</span>}
                                     {item.item_date && <span>{new Date(item.item_date).toLocaleDateString(lang)}</span>}
                                 </div>

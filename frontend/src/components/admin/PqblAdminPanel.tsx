@@ -239,7 +239,7 @@ function DocumentsTab() {
             {docs.map(doc => (
                 <div key={doc.document_id} className="rounded-lg border border-slate-200 bg-white">
                     <div className="flex items-center gap-3 p-3">
-                        <button onClick={() => setExpanded(e => (e === doc.document_id ? null : doc.document_id))} className="text-slate-400 hover:text-slate-600">
+                        <button onClick={() => setExpanded(e => (e === doc.document_id ? null : doc.document_id))} className="text-slate-500 hover:text-slate-600">
                             {expanded === doc.document_id ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                         </button>
                         <div className="flex-1 min-w-0">
@@ -250,7 +250,7 @@ function DocumentsTab() {
                             </p>
                         </div>
                         <StatusBadge status={doc.status} />
-                        <button onClick={() => deleteDoc(doc.document_id)} className="text-slate-400 hover:text-red-600 p-1" title={t('admin.pqbl.docs.deleteTitle')}>
+                        <button onClick={() => deleteDoc(doc.document_id)} className="text-slate-500 hover:text-red-600 p-1" title={t('admin.pqbl.docs.deleteTitle')}>
                             <Trash2 className="w-4 h-4" />
                         </button>
                     </div>
@@ -337,7 +337,7 @@ function QuestionEditor({ question }: { question: PqblQuestion }) {
     return (
         <div className="p-4 space-y-3">
             <div className="flex items-center gap-2">
-                <span className="text-xs font-mono text-slate-400">#{question.position + 1}</span>
+                <span className="text-xs font-mono text-slate-500">#{question.position + 1}</span>
                 <input
                     value={draft.skill}
                     onChange={e => setDraft(d => ({ ...d, skill: e.target.value }))}
