@@ -202,6 +202,13 @@
   min-height: var(--chat-mobile-h);
 }
 
+/* Trascritto che cresce dentro un pannello di altezza libera (Bussola): il
+   tetto va legato alla stessa variabile, non a un valore in rem scritto a mano,
+   altrimenti su uno schermo basso o con la tastiera aperta esce dalla vista. */
+@utility max-h-chat {
+  max-height: var(--chat-mobile-h);
+}
+
 /* Card: radius unico (rounded-xl) cotto nell'utility -> nessun rounded-* ai call-site. */
 @utility glass-panel {
   @apply bg-white border border-slate-200 rounded-xl shadow-sm transition-colors duration-150;
