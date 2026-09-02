@@ -12,7 +12,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { cn } from '@/lib/utils';
 import { fetchCounselors, getSelectedCounselorId, subscribeToCounselor } from '@/lib/counselor';
 import { clearFlowPrefs, getExperiencePref, getInputMethodPref, subscribeToFlowPrefs } from '@/lib/session-prefs';
-import { LOCAL_RESUME_HREF, resumeHref, useResumeEntries } from '@/lib/use-resume-entries';
+import { LOCAL_RESUME_HREF, PQBL_RESUME_HREF, resumeHref, useResumeEntries } from '@/lib/use-resume-entries';
 import { CompassMark } from '@/components/ui/CompassMark';
 import { instrumentAvailableInLocale } from '@/lib/instrument-availability';
 import { TOOL_CATEGORIES } from '@/lib/tool-catalog';
@@ -33,7 +33,7 @@ export function ReturningHome({
     onOpenIntro,
 }: Props) {
     const { t, lang } = useI18n();
-    const { frozen, localResume, count: resumeCount } = useResumeEntries();
+    const { frozen, localResume, pqbl: pqblResume, count: resumeCount } = useResumeEntries();
     const [counselorInfo, setCounselorInfo] = useState<{ id: number; name: string } | null>(null);
     const { rows: instrumentCatalog, loading: catalogLoading, error: catalogError, retry: retryCatalog } = useInstrumentCatalog();
     const counselorId = useSyncExternalStore(
@@ -159,6 +159,15 @@ export function ReturningHome({
                             >
                                 <RotateCcw className="h-4 w-4 shrink-0 text-indigo-600" />
                                 <span className="truncate">{t('header.resume')} · {localResume.instrument}</span>
+                            </a>
+                        )}
+                        {pqblResume && (
+                            <a
+                                href={PQBL_RESUME_HREF}
+                                className="glass-panel flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-indigo-300"
+                            >
+                                <RotateCcw className="h-4 w-4 shrink-0 text-indigo-600" />
+                                <span className="truncate">{t('header.resume')} · {t('pqbl.card.badge')}</span>
                             </a>
                         )}
                     </div>
