@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { clearPqblProgress, loadPqblProgress, savePqblProgress } from './pqbl-progress.ts';
+import { clearPqblProgress, hasPqblProgress, loadPqblProgress, savePqblProgress } from './pqbl-progress.ts';
 
 class MemoryStorage {
     private values = new Map<string, string>();
@@ -20,4 +20,18 @@ test('pQBL progress can be saved, restored and cleared', () => {
     assert.deepEqual(loadPqblProgress(storage), { phase: 'quiz', sessionId: 'session-1' });
     clearPqblProgress(storage);
     assert.equal(loadPqblProgress(storage), null);
+});
+
+test('only an activity in the middle counts as resumable', () => {
+    const storage = new MemoryStorage() as Storage;
+    assert.equal(hasPqblProgress(storage), false);
+
+    savePqblProgress({ phase: 'setup' }, storage);
+    assert.equal(hasPqblProgress(storage), false);
+
+    savePqblProgress({ phase: 'quiz' }, storage);
+    assert.equal(hasPqblProgress(storage), true);
+
+    savePqblProgress({ phase: 'finalResults' }, storage);
+    assert.equal(hasPqblProgress(storage), false);
 });
