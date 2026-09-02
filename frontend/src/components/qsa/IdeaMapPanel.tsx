@@ -1,12 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Download, Loader2, Maximize2, RefreshCw, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useI18n } from '@/lib/i18n-context';
 import { useDarkMode } from '@/lib/use-dark-mode';
 import {
     fetchIdeaMap,
+    fetchIdeaMapSvg,
     ideaMapImageUrl,
     type IdeaMapState,
     type IdeaNextStep,
@@ -23,6 +24,8 @@ interface IdeaMapPanelProps {
     // Cosa il server dice che questo turno deve riparare. Null finche' non e'
     // arrivata la prima risposta.
     move: IdeaNextStep | null;
+    // Click su un pezzo della mappa: porta al ramo che lo contiene.
+    onPickNode?: (nodeId: string) => void;
 }
 
 // Le quattro gambe del ragionamento, nell'ordine in cui il percorso le chiede.
@@ -39,21 +42,28 @@ const MISSING_KEY: Record<IdeaRole, string> = {
     task: 'idea.role.task',
 };
 
-export function IdeaMapPanel({ sessionId, version, locale, variant, move }: IdeaMapPanelProps) {
+export function IdeaMapPanel({ sessionId, version, locale, variant, move, onPickNode }: IdeaMapPanelProps) {
     const { t } = useI18n();
     const isDark = useDarkMode();
     const [state, setState] = useState<IdeaMapState | null>(null);
+    const [svg, setSvg] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const theme = isDark ? 'dark' : 'light';
 
     const reload = useCallback(async () => {
         setIsLoading(true);
         try {
-            setState(await fetchIdeaMap(sessionId));
+            const next = await fetchIdeaMap(sessionId);
+            setState(next);
+            // Inline e non <img>: dentro un'immagine i nodi non si possono cliccare.
+            setSvg(next?.revision_id == null
+                ? null
+                : await fetchIdeaMapSvg(sessionId, next.revision_id, theme, locale));
         } finally {
             setIsLoading(false);
         }
-    }, [sessionId]);
+    }, [sessionId, theme, locale]);
 
     useEffect(() => {
         void reload();
@@ -72,10 +82,6 @@ export function IdeaMapPanel({ sessionId, version, locale, variant, move }: Idea
     const flawed = (state?.spec?.nodes ?? []).filter((node) => node.flaw);
 
     const revisionId = state?.revision_id ?? null;
-    const theme = isDark ? 'dark' : 'light';
-    const imageUrl = revisionId === null
-        ? null
-        : ideaMapImageUrl(sessionId, revisionId, theme, 'svg', locale);
 
     return (
         <section className="mb-3 w-full min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -97,7 +103,7 @@ export function IdeaMapPanel({ sessionId, version, locale, variant, move }: Idea
                             ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                             : <RefreshCw className="h-4 w-4" aria-hidden="true" />}
                     </button>
-                    {imageUrl && (
+                    {svg && (
                         <>
                             <button
                                 type="button"
@@ -120,13 +126,13 @@ export function IdeaMapPanel({ sessionId, version, locale, variant, move }: Idea
                 </div>
             </header>
 
-            {imageUrl ? (
+            {svg ? (
                 <div className="w-full overflow-x-auto p-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                        src={imageUrl}
-                        alt={state?.description || t('idea.map.title')}
-                        className="mx-auto max-w-full"
+                    <IdeaMapCanvas
+                        svg={svg}
+                        state={state}
+                        onPickNode={onPickNode}
+                        label={state?.description || t('idea.map.title')}
                     />
                 </div>
             ) : (
@@ -156,7 +162,7 @@ export function IdeaMapPanel({ sessionId, version, locale, variant, move }: Idea
                 </p>
             )}
 
-            {isFullscreen && imageUrl && typeof document !== 'undefined' && createPortal(
+            {isFullscreen && svg && typeof document !== 'undefined' && createPortal(
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-4"
                     role="dialog"
@@ -171,16 +177,66 @@ export function IdeaMapPanel({ sessionId, version, locale, variant, move }: Idea
                     >
                         <X className="h-5 w-5" aria-hidden="true" />
                     </button>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                        src={imageUrl}
-                        alt={state?.description || t('idea.map.title')}
-                        className="max-h-full max-w-full"
+                    <div
+                        className="max-h-full max-w-full overflow-auto rounded-lg bg-white p-4"
                         onClick={(event) => event.stopPropagation()}
-                    />
+                    >
+                        <IdeaMapCanvas
+                            svg={svg}
+                            state={state}
+                            onPickNode={onPickNode}
+                            label={state?.description || t('idea.map.title')}
+                        />
+                    </div>
                 </div>,
                 document.body,
             )}
         </section>
+    );
+}
+
+// L'SVG di graphviz porta l'id del nodo dentro <title>, che pero' il browser
+// mostra come tooltip: l'id tecnico non dice niente a chi guarda. Qui l'id
+// passa su un data attribute e il tooltip diventa l'etichetta vera.
+function IdeaMapCanvas({ svg, state, onPickNode, label }: {
+    svg: string;
+    state: IdeaMapState | null;
+    onPickNode?: (nodeId: string) => void;
+    label: string;
+}) {
+    const hostRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const host = hostRef.current;
+        if (!host) return;
+        const labels = new Map((state?.spec?.nodes ?? []).map((node) => [node.id, node.label]));
+        host.querySelectorAll('g.node').forEach((group) => {
+            const title = group.querySelector('title');
+            const id = title?.textContent?.trim();
+            if (!id) return;
+            (group as SVGGElement).dataset.nodeId = id;
+            const readable = labels.get(id);
+            if (title && readable) title.textContent = readable;
+        });
+    }, [svg, state]);
+
+    const pick = (event: React.MouseEvent<HTMLDivElement>) => {
+        if (!onPickNode) return;
+        const group = (event.target as Element).closest('g.node') as SVGGElement | null;
+        const nodeId = group?.dataset.nodeId;
+        if (!nodeId) return;
+        // Il fuoco sta solo sui rami: un nodo qualsiasi porta al ramo che lo contiene.
+        onPickNode(state?.owners?.[nodeId] ?? nodeId);
+    };
+
+    return (
+        <div
+            ref={hostRef}
+            role="img"
+            aria-label={label}
+            onClick={pick}
+            className={onPickNode ? '[&_g.node]:cursor-pointer [&_svg]:h-auto [&_svg]:max-w-full' : '[&_svg]:h-auto [&_svg]:max-w-full'}
+            dangerouslySetInnerHTML={{ __html: svg }}
+        />
     );
 }

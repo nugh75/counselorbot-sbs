@@ -19,6 +19,7 @@ import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/Res
 import { toast } from '@/components/ui/Toast';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
+import { IdeaBranchBar } from '@/components/qsa/IdeaBranchBar';
 import { IdeaWorkspace } from '@/components/qsa/IdeaWorkspace';
 import {
     deleteIdeaReference,
@@ -441,6 +442,11 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const [isIdeaReferenceUploading, setIsIdeaReferenceUploading] = useState(false);
     // Quanti scambi si vuole che duri. 0 = finche' serve.
     const [ideaBudget, setIdeaBudget] = useState<number>(IDEA_PACE_DEFAULT);
+    // Dove comincia ciascun ramo dentro la trascrizione. La chat resta una
+    // lista sola: qui si segna da quale messaggio in poi si stava lavorando su
+    // un certo ramo, cosi' tornarci mostra la sua sequenza e non tutto il resto.
+    const [ideaSegments, setIdeaSegments] = useState<{ branchId: string; start: number }[]>([]);
+    const messageCountRef = useRef(0);
 
     const refreshIdeaWorkspace = (revisionId?: number) => {
         if (!isIdea) return;
@@ -448,6 +454,46 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     };
     const [currentPhase, setCurrentPhase] = useState<string>('');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+    const ideaFocus = isIdea ? ideaMove?.focus ?? null : null;
+
+    // Il conteggio serve all'effetto sotto senza mettere i messaggi in
+    // dipendenza: cambiano a ogni token dello streaming. Dichiarato prima, cosi'
+    // e' aggiornato quando il fuoco viene letto.
+    useEffect(() => {
+        messageCountRef.current = messages.length;
+    }, [messages.length]);
+
+    useEffect(() => {
+        if (!isIdea || !ideaFocus) return;
+        setIdeaSegments((rows) => (
+            rows.length > 0 && rows[rows.length - 1].branchId === ideaFocus
+                ? rows
+                : [...rows, { branchId: ideaFocus, start: messageCountRef.current }]
+        ));
+    }, [isIdea, ideaFocus]);
+
+    useEffect(() => {
+        setIdeaSegments([]);
+    }, [sessionId]);
+
+    // Cosa si vede: l'apertura comune (prima che esistesse un ramo) e i tratti
+    // del ramo attivo. Niente viene cancellato, solo tenuto fuori dagli occhi.
+    const visibleMessages = (() => {
+        if (!isIdea || !ideaFocus || ideaSegments.length === 0) {
+            return messages.map((message, index) => ({ message, index }));
+        }
+        const opening = ideaSegments[0].start;
+        return messages
+            .map((message, index) => ({ message, index }))
+            .filter(({ index }) => {
+                if (index < opening) return true;
+                const segment = ideaSegments.filter((row) => row.start <= index).pop();
+                return segment?.branchId === ideaFocus;
+            });
+    })();
+
+    const hiddenMessages = messages.length - visibleMessages.length;
     const [responseLength, setResponseLength] = useState<ResponseLength>('medium');
     const [input, setInput] = useState('');
     const [conversationId, setConversationId] = useState<string | undefined>(undefined);
@@ -1511,7 +1557,12 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             )}
                         </div>
                     )}
-                    {messages.map((msg, idx) => (
+                    {hiddenMessages > 0 && (
+                        <p className="mx-auto rounded-full bg-slate-50 px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-slate-400">
+                            {t('idea.branches.onlyThis')}
+                        </p>
+                    )}
+                    {visibleMessages.map(({ message: msg, index: idx }) => (
                         <div key={idx} className={cn(
                             "flex min-w-0 animate-in fade-in slide-in-from-bottom-2 duration-300",
                             msg.role === 'user' ? 'justify-end' : msg.role === 'system' ? 'justify-center' : 'justify-start'
@@ -1652,7 +1703,16 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         </button>
                     </div>
                 ) : (
-                    <form onSubmit={handleSend} className="border-t border-slate-100 bg-white p-3 sm:p-4">
+                    <form onSubmit={handleSend} className="border-t border-slate-100 bg-white">
+                        {isIdea && sessionId && (
+                            <IdeaBranchBar
+                                sessionId={sessionId}
+                                version={ideaMapVersion}
+                                locale={activeLocale}
+                                onFocusMoved={() => setIdeaMapVersion((value) => value + 1)}
+                            />
+                        )}
+                        <div className="p-3 sm:p-4">
                         {/* Domande suggerite per lo step corrente: compilano l'input per permettere modifica prima dell'invio. */}
                         {!isLoading && suggestedQuestions.length > 0 && (
                             <div className="mb-2 flex flex-wrap gap-1.5">
@@ -1785,6 +1845,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             <p className="text-[10px] text-slate-400">
                                 {inputHint}
                             </p>
+                        </div>
                         </div>
                     </form>
                 )}

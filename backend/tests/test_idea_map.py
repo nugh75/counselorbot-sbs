@@ -17,6 +17,7 @@ from backend.idea_map import (
     extract_patch,
     branches,
     map_context,
+    owning_task,
     missing_roles,
     names_prior_work,
     pace_directive,
@@ -453,6 +454,23 @@ def test_the_branch_tree_says_what_each_branch_still_lacks():
     assert rows["t1"]["parent"] == "idea" and rows["t1"]["depth"] == 1
     assert rows["idea"]["depth"] == 0
     assert "constraint" in rows["t1"]["missing_roles"]
+
+
+def test_every_node_says_which_branch_would_receive_a_click_on_it():
+    """La mappa e' cliccabile, ma il fuoco si sposta solo sui rami.
+
+    Senza questa tabella un click su un'ipotesi non avrebbe dove atterrare:
+    `set_focus` la rifiuterebbe. Il nodo concettuale porta al ramo che lo
+    contiene, il ramo a se stesso.
+    """
+    spec = apply_patch(_two_branches(), parse_patch({
+        "add_nodes": [{"id": "a1", "label": "I dati siano accessibili", "role": "assumption"}],
+        "add_edges": [{"from": "t1", "to": "a1"}],
+    }))
+    owners = owning_task(spec)
+    assert owners["a1"] == "t1"
+    assert owners["t1"] == "t1"
+    assert owners["idea"] == "idea"
 
 
 def test_choosing_a_branch_beats_the_derived_one():

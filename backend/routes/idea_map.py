@@ -50,6 +50,7 @@ from ..idea_map import (
     current_revision,
     history,
     missing_roles,
+    owning_task,
     parse_patch,
 )
 from ..diagram_render import ROLE_WORDS, parse_spec
@@ -195,6 +196,10 @@ def read_map(
         "complete": spec is not None and bool(focus) and closure_ready(spec, focus),
         "focus": focus,
         "task_type": _task_type_of(spec, focus),
+        # Chi possiede cosa: cliccando un nodo qualsiasi della mappa si arriva
+        # al ramo che lo contiene. `set_focus` accetta solo nodi-ramo, senza
+        # questa tabella un click su un'ipotesi non avrebbe dove atterrare.
+        "owners": {} if spec is None else owning_task(spec),
     }
 
 

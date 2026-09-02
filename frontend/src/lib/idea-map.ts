@@ -68,6 +68,9 @@ export interface IdeaMapState {
     complete: boolean;
     focus: string | null;
     task_type: string | null;
+    // A quale ramo appartiene ogni nodo. Cliccando la mappa si sposta il fuoco,
+    // ma il fuoco sta solo sui rami: questo dice dove atterra il click.
+    owners: Record<string, string>;
 }
 
 export interface IdeaNextStep {
@@ -130,6 +133,19 @@ export function ideaMapImageUrl(
         v: String(revisionId ?? 0),
     });
     return `/api/idea/map/image?${params.toString()}`;
+}
+
+// La mappa serve inline, non come <img>: dentro un'immagine l'SVG non e'
+// cliccabile, e senza click i nodi non portano da nessuna parte.
+export async function fetchIdeaMapSvg(
+    sessionId: string,
+    revisionId: number | null,
+    theme: 'light' | 'dark',
+    lang: string,
+): Promise<string | null> {
+    const response = await apiFetch(ideaMapImageUrl(sessionId, revisionId, theme, 'svg', lang));
+    if (!response.ok) return null;
+    return response.text();
 }
 
 export function ideaMapPdfUrl(sessionId: string, lang: string): string {
