@@ -2,7 +2,8 @@
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Check, Compass, Loader2, MessageCircle, NotebookPen, Route, Send, Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowRight, Check, Compass, Loader2, Send, Sparkles } from 'lucide-react';
 import { CompassMark } from '@/components/ui/CompassMark';
 import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
@@ -36,6 +37,7 @@ function toolDescription(id: string, t: (key: string) => string): string {
 
 export default function BussolaPage() {
     const { t, lang } = useI18n();
+    const router = useRouter();
     const [session, setSession] = useState<OrientationSession | null>(null);
     const [latestSessionId, setLatestSessionId] = useState<string | null>(null);
     const [orientationRequired, setOrientationRequired] = useState(false);
@@ -49,8 +51,11 @@ export default function BussolaPage() {
     const [input, setInput] = useState('');
     const [error, setError] = useState('');
     const [nextHref, setNextHref] = useState<string | null>(null);
+    // Strumento scelto dalle raccomandazioni: prima di uscire si chiede il taccuino.
+    const [pendingTool, setPendingTool] = useState<string | null>(null);
     const endRef = useRef<HTMLDivElement>(null);
     const startingRef = useRef(false);
+    const leavingRef = useRef(false);
 
     const openSession = useCallback(async (sessionId: string) => {
         setLoading(true);
@@ -178,11 +183,21 @@ export default function BussolaPage() {
         }
     };
 
-    const features = [
-        { icon: MessageCircle, title: t('orientation.feature.listen.title'), body: t('orientation.feature.listen.body') },
-        { icon: Route, title: t('orientation.feature.route.title'), body: t('orientation.feature.route.body') },
-        { icon: NotebookPen, title: t('orientation.feature.reflect.title'), body: t('orientation.feature.reflect.body') },
-    ];
+    // Aprire uno strumento chiude la Bussola: il gate rimanda qui chi non l'ha
+    // conclusa, quindi la sessione va completata prima di uscire.
+    const leaveForTool = useCallback(async () => {
+        if (leavingRef.current || !pendingTool || !session) return;
+        leavingRef.current = true;
+        try {
+            if (session.status === 'in_progress') await completeOrientation(session.session_id);
+        } catch {
+            setError(t('orientation.error'));
+            leavingRef.current = false;
+            setPendingTool(null);
+            return;
+        }
+        router.push(orientationToolHref(pendingTool));
+    }, [pendingTool, router, session, t]);
 
     return (
         <div className="page-wide space-y-8">
@@ -198,15 +213,6 @@ export default function BussolaPage() {
                         </div>
                     </div>
                     <p className="mt-5 text-base leading-relaxed text-slate-600 sm:text-lg">{t('orientation.subtitle')}</p>
-                    <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-500">{t('orientation.platform')}</p>
-                </div>
-                <div className="relative mt-7 grid gap-4 border-t border-slate-100 pt-6 md:grid-cols-3">
-                    {features.map(({ icon: Icon, title, body }) => (
-                        <div key={title} className="flex gap-3">
-                            <Icon className="mt-0.5 h-5 w-5 shrink-0 text-teal-600" />
-                            <div><h2 className="text-sm font-bold text-slate-800">{title}</h2><p className="mt-1 text-sm leading-relaxed text-slate-500">{body}</p></div>
-                        </div>
-                    ))}
                 </div>
             </header>
 
@@ -230,6 +236,13 @@ export default function BussolaPage() {
                     onDone={startAfterNotebook}
                     onUnavailable={startAfterNotebook}
                     onBack={() => setChoosingCounselor(true)}
+                />
+            ) : session && pendingTool ? (
+                <LearnerProfileCard
+                    variant="update"
+                    sessionId={session.session_id}
+                    onDone={() => void leaveForTool()}
+                    onUnavailable={() => void leaveForTool()}
                 />
             ) : !session ? (
                 <section className="glass-panel flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
@@ -263,7 +276,7 @@ export default function BussolaPage() {
                         )}
                     </section>
 
-                    {session.recommendations.length > 0 && <RecommendationSection session={session} />}
+                    {session.recommendations.length > 0 && <RecommendationSection session={session} onPick={setPendingTool} />}
 
                     {session.status === 'in_progress' && session.recommendations.length > 0 && (
                         <div className="flex justify-end">
@@ -293,7 +306,7 @@ export default function BussolaPage() {
     );
 }
 
-function RecommendationSection({ session }: { session: OrientationSession }) {
+function RecommendationSection({ session, onPick }: { session: OrientationSession; onPick: (id: string) => void }) {
     const { t } = useI18n();
     return (
         <section>
@@ -306,7 +319,7 @@ function RecommendationSection({ session }: { session: OrientationSession }) {
                         <h3 className="mt-3 text-lg font-bold text-slate-900">{toolName(item.id, t)}</h3>
                         <p className="mt-1 text-sm leading-relaxed text-slate-500">{toolDescription(item.id, t)}</p>
                         <p className="mt-4 grow border-l-2 border-teal-400 pl-3 text-sm leading-relaxed text-slate-700">{item.reason}</p>
-                        {session.status === 'completed' && <Link href={orientationToolHref(item.id)} className="mt-5 inline-flex items-center justify-between rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">{t('orientation.recommendation.start')}<ArrowRight className="h-4 w-4" /></Link>}
+                        <button type="button" onClick={() => onPick(item.id)} className="mt-5 inline-flex items-center justify-between rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">{t('orientation.recommendation.start')}<ArrowRight className="h-4 w-4" /></button>
                     </article>
                 ))}
             </div>
