@@ -13,6 +13,7 @@ from typing import List, Optional
 from fastapi import HTTPException
 
 from . import models
+from .student_context import LEARNER_PROFILE_LABELS
 from . import database
 from . import prompt_config
 from .anonymous_codes import code_for_identity
@@ -1659,18 +1660,7 @@ def _update_markdown_memory_background(
 
 MAX_LEARNER_PROFILE_CHARS = 900
 
-_LEARNER_PROFILE_LABELS = {
-    "age": "Età",
-    "gender": "Genere",
-    "school_class": "Classe / contesto",
-    "school_year": "Anno / percorso",
-    "context": "Contesto di studio",
-    "goal": "Obiettivo attuale",
-    "main_difficulty": "Difficoltà principale percepita",
-    "strengths": "Punti di forza",
-    "weaknesses": "Punti di debolezza",
-    "notes": "Note",
-}
+
 
 
 def _learner_profile_context(db, username: str) -> str:
@@ -1693,7 +1683,7 @@ def _learner_profile_context(db, username: str) -> str:
         "Auto-descrizione dello studente: usala per contestualizzare e, quando utile, "
         "confronta la sua percezione con i punteggi. Non sovrascrive i dati dei questionari.",
     ]
-    for key, label in _LEARNER_PROFILE_LABELS.items():
+    for key, label in LEARNER_PROFILE_LABELS.items():
         value = str(revision.data.get(key) or "").strip()
         if value:
             lines.append(f"- {label}: {value}")
