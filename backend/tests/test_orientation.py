@@ -115,7 +115,8 @@ def test_disoriented_student_is_asked_about_the_area_instead_of_being_routed_to_
     assert "the way you study" in english.reply
 
 
-def test_platform_question_gets_a_complete_answer_instead_of_generic_routing():
+def test_platform_question_hands_the_catalog_to_the_model_instead_of_printing_it():
+    """Il catalogo è materiale per il modello: la risposta resta di chi conosce il turno."""
     db = _Session()
     try:
         messages = (
@@ -125,41 +126,67 @@ def test_platform_question_gets_a_complete_answer_instead_of_generic_routing():
             "cosa possso fare?",
             "non capisco cosa dovrei fare, ho aperto adesso il software",
         )
-        analyses = [analyze_turn(db, message, "it") for message in messages]
+        prompts = []
+        for message in messages:
+            analysis = analyze_turn(db, message, "it")
+            prompts.append(_FakeAIService.last_call[0][1])
+            assert analysis.reply != orientation._PLATFORM_HELP["it"]
     finally:
         db.close()
 
-    for analysis in analyses:
-        assert "QSA e QSAr" in analysis.reply
-        assert "SAVICKAS" in analysis.reply
-        assert "IDEA" in analysis.reply
-        assert "pQBL" in analysis.reply
-        assert "Taccuino" in analysis.reply
-        assert analysis.recommendations == []
+    for prompt in prompts:
+        assert "QSA e QSAr" in prompt
+        assert "SAVICKAS" in prompt
+        assert "pQBL" in prompt
+        assert "Taccuino" in prompt
+        assert "Never repeat a list or an explanation you already gave" in prompt
 
 
-def test_tool_question_gets_a_direct_explanation():
+def test_the_catalog_is_not_reprinted_when_the_student_is_still_lost():
+    """Seconda richiesta di aiuto: senza modello si chiede l'area, non si ripete la lista."""
+    history = [
+        {"role": "user", "content": "che cosa posso fare?"},
+        {"role": "assistant", "content": orientation._PLATFORM_HELP["it"]},
+    ]
+    repeated = orientation._fallback_without_repetition(
+        fallback_analysis("sono confuso non so da dove iniziare", "it"), history, "it"
+    )
+    assert repeated.reply != orientation._PLATFORM_HELP["it"]
+    assert "il modo in cui studi" in repeated.reply
+
+    first_time = orientation._fallback_without_repetition(
+        fallback_analysis("sono confuso non so da dove iniziare", "it"), [], "it"
+    )
+    assert first_time.reply == orientation._PLATFORM_HELP["it"]
+
+
+def test_tool_question_hands_the_canonical_description_to_the_model():
     db = _Session()
     try:
-        qsa = analyze_turn(db, "Che cosa è il QSA?", "it")
-        qsar = analyze_turn(db, "cos'è il QSAr?", "it")
-        idea = analyze_turn(db, "Come funziona IDEA?", "it")
-        en = analyze_turn(db, "What is ZTPI?", "en")
-        intent = analyze_turn(db, "Voglio provare il QSA", "it")
+        prompts = {}
+        for label, message, language in (
+            ("QSA", "Che cosa è il QSA?", "it"),
+            ("QSAr", "cos'è il QSAr?", "it"),
+            ("IDEA", "Come funziona IDEA?", "it"),
+            ("ZTPI", "What is ZTPI?", "en"),
+        ):
+            analyze_turn(db, message, language)
+            prompts[label] = _FakeAIService.last_call[0][1]
+        analyze_turn(db, "Voglio provare il QSA", "it")
+        intent_prompt = _FakeAIService.last_call[0][1]
     finally:
         db.close()
 
-    assert qsa.informational is True
-    assert "strategie di studio" in qsa.reply
-    assert qsa.recommendations == []
-    assert qsar.informational is True
-    assert "breve" in qsar.reply
-    assert idea.informational is True
-    assert "mappa" in idea.reply
-    assert en.informational is True
-    assert "questionnaire" in en.reply
-    # Nessun punto interrogativo: resta una richiesta di orientamento, non una risposta.
-    assert intent.informational is False
+    assert "strategie di studio" in prompts["QSA"]
+    assert "versione breve" in prompts["QSAr"]
+    assert "mappa" in prompts["IDEA"]
+    assert "questionnaire about your relationship with past" in prompts["ZTPI"]
+    # Nessun punto interrogativo: resta una richiesta di orientamento, non una domanda.
+    assert "Canonical description" not in intent_prompt
+
+    # Il fallback locale conserva la spiegazione completa per quando il modello cade.
+    assert fallback_analysis("Che cosa è il QSA?", "it").informational is True
+    assert fallback_analysis("Voglio provare il QSA", "it").informational is False
 
 
 def test_orientation_uses_the_selected_counselor_without_forced_json():
@@ -306,7 +333,7 @@ def test_first_orientation_completes_without_touching_the_notebook():
         json={"message": "Mi spieghi quali strumenti ci sono in CounselorBot?", "language": "it"},
     )
     assert help_turn.status_code == 200
-    assert "QSA e QSAr" in help_turn.json()["messages"][-1]["content"]
+    assert help_turn.json()["messages"][-1]["content"] != orientation._PLATFORM_HELP["it"]
     assert [row["id"] for row in help_turn.json()["recommendations"]] == ["QSA", "IDEA"]
 
     # L'endpoint di revisione del Taccuino non esiste più: la Bussola consiglia e basta.
