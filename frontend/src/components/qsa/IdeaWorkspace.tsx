@@ -7,6 +7,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { IdeaBranchTree } from '@/components/qsa/IdeaBranchTree';
 import { IdeaConclusion } from '@/components/qsa/IdeaConclusion';
 import { IdeaMapPanel } from '@/components/qsa/IdeaMapPanel';
+import { IdeaSourcesPanel } from '@/components/qsa/IdeaSourcesPanel';
 import { IDEA_PACE_STOPS, moveIdeaFocus, type IdeaNextStep, type IdeaVariant } from '@/lib/idea-map';
 
 interface IdeaWorkspaceProps {
@@ -136,6 +137,16 @@ export function IdeaWorkspace({ sessionId, version, locale, variant, move, budge
                         />
                     </div>
                 </div>
+
+                {/* Le fonti stanno sotto mappa e rami e larghe quanto il
+                    pannello: una ricerca produce righe di testo lungo, in una
+                    colonna sarebbero illeggibili. */}
+                <IdeaSourcesPanel
+                    sessionId={sessionId}
+                    version={version}
+                    locale={locale}
+                    focus={move?.focus ?? null}
+                />
             </div>
 
             {concluding && (
