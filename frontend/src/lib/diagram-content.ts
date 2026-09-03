@@ -55,6 +55,18 @@ function isDiagramSpec(value: unknown): value is DiagramSpec {
     return true;
 }
 
+// Il backend tiene source/target e il contratto dice from/to: un arco nel
+// dialetto sbagliato passava la validazione e poi non combaciava con nulla,
+// senza un errore. Qui i due dialetti diventano uno.
+function normalizeEdge(edge: unknown): DiagramEdge | null {
+    if (!edge || typeof edge !== 'object') return null;
+    const candidate = edge as Partial<DiagramEdge> & { source?: unknown; target?: unknown };
+    const from = typeof candidate.from === 'string' ? candidate.from : candidate.source;
+    const to = typeof candidate.to === 'string' ? candidate.to : candidate.target;
+    if (typeof from !== 'string' || !from.trim() || typeof to !== 'string' || !to.trim()) return null;
+    return { ...candidate, from, to } as DiagramEdge;
+}
+
 // Uno spec puo' arrivare dal testo di un messaggio o dalla risposta di
 // `/diagram/from-message`: la validazione e' la stessa, cambia solo l'involucro.
 export function parseDiagramSpec(value: unknown): DiagramSpec | null {
@@ -69,6 +81,7 @@ export function parseDiagramSpec(value: unknown): DiagramSpec | null {
                 ? node.icon as DiagramIcon
                 : undefined,
         })),
+        edges: (value.edges ?? []).map(normalizeEdge).filter((edge): edge is DiagramEdge => edge !== null),
     };
 }
 
