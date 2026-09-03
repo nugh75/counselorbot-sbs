@@ -72,7 +72,7 @@ _PATTERNS = {
         # chiuso, cosi' l'offerta appena fatta non puo' essere mantenuta.
         r"un.?altra\s+(?:azione|idea|opzione|strategia)|"
         r"seconda\s+(?:azione|opzione|idea)|"
-        r"another\s+(?:one|action|option|idea|suggestion)|"
+        r"another\s+(?:\w+\s+)?(?:one|action|option|idea|suggestion)|"
         r"second\s+(?:action|option|suggestion)|"
         r"otra\s+(?:accion|opcion|idea|sugerencia)|"
         r"une\s+autre\s+(?:action|option|idee|suggestion)|"
