@@ -1339,3 +1339,46 @@ class SkillPreviewResponse(BaseModel):
     blocks: dict
     ids: dict
     trace: List[dict]
+
+
+# --- Istituti, referenti ed eventi di orientamento ---
+
+class InstitutionBase(BaseModel):
+    slug: str
+    name: str
+    kind: str = "school"          # school | university
+    website_url: Optional[str] = None
+    orientation_page_url: Optional[str] = None
+    is_active: bool = True
+
+
+class InstitutionCreate(InstitutionBase):
+    pass
+
+
+class InstitutionUpdate(BaseModel):
+    name: Optional[str] = None
+    kind: Optional[str] = None
+    website_url: Optional[str] = None
+    orientation_page_url: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class InstitutionResponse(InstitutionBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class InstitutionPublic(BaseModel):
+    """Quel che uno studente puo' vedere per scegliere il proprio istituto."""
+    id: int
+    slug: str
+    name: str
+    kind: str
+    website_url: Optional[str] = None
+    orientation_page_url: Optional[str] = None
+
+    class Config:
+        from_attributes = True

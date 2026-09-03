@@ -379,6 +379,12 @@ def test_the_seeded_skill_is_intent_gated_and_bound_everywhere():
     assert tuple(seed["bind_instruments"]) == ENGINE_INSTRUMENTS
 
 
+def test_the_public_institution_list_exposes_no_internal_fields():
+    from backend import schemas
+    fields = set(schemas.InstitutionPublic.model_fields)
+    assert fields == {"id", "slug", "name", "kind", "orientation_page_url", "website_url"}
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0
