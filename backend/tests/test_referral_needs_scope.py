@@ -15,7 +15,7 @@ import psycopg2
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from backend import database, models
+from backend import database, models, schemas
 from backend.referral_needs import REFERRAL_NEEDS, known_needs, needs_from_text
 from backend.referral_scope import NOT_LISTED, institution_for, institution_ids_for
 
@@ -162,6 +162,34 @@ def test_a_deactivated_institution_counts_as_not_declared():
         closed = _institution(db, "chiuso", is_active=False)
         _notebook(db, user, closed.slug)
         assert institution_ids_for(db, user) == []
+    finally:
+        _scope_clear(db, user); db.close()
+
+
+# --- il taccuino salva l'istituto ma non lo racconta al modello ---------------
+
+def test_the_institution_is_saved_but_never_reaches_the_prompt():
+    """Il nome dell'istituto di un minorenne e' quasi-identificante: e' una
+    chiave di retrieval, non un fatto da raccontare al counselor."""
+    from backend.student_context import LEARNER_PROFILE_LABELS
+
+    assert "institution_slug" in schemas.LEARNER_PROFILE_FIELDS
+    assert "institution_slug" in schemas.LearnerProfileSave.model_fields
+    assert "institution_slug" not in LEARNER_PROFILE_LABELS
+
+
+def test_the_notebook_round_trips_the_chosen_slug():
+    db = _TestSession(); user = f"{PREFIX}-f"
+    try:
+        school = _institution(db, "roundtrip")
+        payload = schemas.LearnerProfileSave(
+            context="prova", institution_slug=school.slug, source="manual")
+        data = {
+            key: value
+            for key in schemas.LEARNER_PROFILE_FIELDS
+            if (value := getattr(payload, key)) is not None
+        }
+        assert data["institution_slug"] == school.slug
     finally:
         _scope_clear(db, user); db.close()
 

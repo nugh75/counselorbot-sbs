@@ -14,6 +14,7 @@ import { BackButton } from '@/components/ui/BackButton';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { INSTITUTION_NOT_LISTED, fetchInstitutions, type Institution } from '@/lib/referrals-api';
 
 export interface LearnerProfileData {
     context?: string;
@@ -26,6 +27,7 @@ export interface LearnerProfileData {
     age?: string;
     school_class?: string;
     school_year?: string;
+    institution_slug?: string;
 }
 
 interface Revision {
@@ -45,11 +47,17 @@ interface NotebookSuggestion {
 
 type Variant = 'edit' | 'review' | 'update';
 
-const FIELDS: { key: keyof LearnerProfileData; labelKey: string; multiline?: boolean; type?: 'number' }[] = [
+const FIELDS: {
+    key: keyof LearnerProfileData;
+    labelKey: string;
+    multiline?: boolean;
+    type?: 'number' | 'select';
+}[] = [
     { key: 'age', labelKey: 'lp.field.age', type: 'number' },
     { key: 'gender', labelKey: 'lp.field.gender' },
     { key: 'school_class', labelKey: 'lp.field.schoolClass' },
     { key: 'school_year', labelKey: 'lp.field.schoolYear' },
+    { key: 'institution_slug', labelKey: 'lp.field.institution', type: 'select' },
     { key: 'context', labelKey: 'lp.field.context' },
     { key: 'goal', labelKey: 'lp.field.goal' },
     { key: 'main_difficulty', labelKey: 'lp.field.difficulty' },
@@ -87,6 +95,17 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     const [dismissed, setDismissed] = useState(false);
     const [history, setHistory] = useState<Revision[] | null>(null);
     const [showHistory, setShowHistory] = useState(false);
+    const [institutions, setInstitutions] = useState<Institution[]>([]);
+
+    // L'elenco serve solo al select: un errore di rete non deve impedire di
+    // salvare il resto del taccuino, quindi si degrada a lista vuota.
+    useEffect(() => {
+        let alive = true;
+        fetchInstitutions()
+            .then((rows) => { if (alive) setInstitutions(rows); })
+            .catch(() => { if (alive) setInstitutions([]); });
+        return () => { alive = false; };
+    }, []);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [validationError, setValidationError] = useState('');
     const [suggestion, setSuggestion] = useState<NotebookSuggestion | null>(null);
@@ -195,7 +214,14 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
         : (isIntake ? 'intake' : 'manual');
 
     const filledEntries = FIELDS
-        .map((f) => ({ ...f, value: (profile?.data?.[f.key] || '').trim() }))
+        .map((f) => {
+            const raw = (profile?.data?.[f.key] || '').trim();
+            if (f.key !== 'institution_slug') return { ...f, value: raw };
+            // Lo slug e' una chiave, non una cosa da mostrare a una persona.
+            if (raw === INSTITUTION_NOT_LISTED) return { ...f, value: t('lp.institution.notListed') };
+            const match = institutions.find((i) => i.slug === raw);
+            return { ...f, value: match ? match.name : '' };
+        })
         .filter((f) => f.value);
 
     const formUi = (
@@ -204,7 +230,27 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                 {FIELDS.map((f) => (
                     <label key={f.key} className="block">
                         <span className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">{t(f.labelKey)}</span>
-                        {f.type === 'number' ? (
+                        {f.type === 'select' ? (
+                            <select
+                                value={form[f.key] || ''}
+                                onChange={(e) => {
+                                    setValidationError('');
+                                    setForm((prev) => ({ ...prev, [f.key]: e.target.value }));
+                                }}
+                                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            >
+                                <option value="">{t('lp.institution.choose')}</option>
+                                {institutions.map((institution) => (
+                                    <option key={institution.slug} value={institution.slug}>
+                                        {institution.name}
+                                    </option>
+                                ))}
+                                {/* Un campo libero riporterebbe dentro il match fragile
+                                    che l'anagrafica esiste per evitare: chi non si trova
+                                    in elenco lo dichiara, e vede le sole righe nazionali. */}
+                                <option value={INSTITUTION_NOT_LISTED}>{t('lp.institution.notListed')}</option>
+                            </select>
+                        ) : f.type === 'number' ? (
                             <input
                                 type="number"
                                 value={form[f.key] || ''}
