@@ -78,6 +78,19 @@ const ZOOM_LABELS: Record<Lang, Record<ZoomAction, string>> = {
     sv: { in: 'Förstora', out: 'Förminska', reset: 'Återställ ursprunglig storlek' },
 };
 
+const REPLAY_LABELS: Record<Lang, string> = {
+    it: 'Rivedi la comparsa del diagramma',
+    en: 'Play the diagram again',
+    es: 'Ver de nuevo la aparición del diagrama',
+    fr: 'Revoir l’apparition du diagramme',
+    de: 'Aufbau des Diagramms erneut zeigen',
+    sv: 'Spela upp diagrammet igen',
+};
+
+export function diagramReplayLabel(lang: string): string {
+    return REPLAY_LABELS[(lang || 'it').slice(0, 2) as Lang] ?? REPLAY_LABELS.en;
+}
+
 export function diagramZoomLabel(action: ZoomAction, lang: string): string {
     const dict = ZOOM_LABELS[(lang || 'it').slice(0, 2) as Lang] ?? ZOOM_LABELS.en;
     return dict[action];
