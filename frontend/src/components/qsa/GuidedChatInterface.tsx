@@ -1749,6 +1749,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                     locale={activeLocale}
                                                     label={t('guided.diagram')}
                                                     failedLabel={t('guided.diagramFailed')}
+                                                    placeholder={t('guided.diagramPrompt')}
+                                                    submitLabel={t('guided.diagramSend')}
                                                 />
                                             )}
                                             {diagramContentForSpeech(msg.content) && (

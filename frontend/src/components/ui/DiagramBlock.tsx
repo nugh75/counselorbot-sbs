@@ -1,5 +1,6 @@
 'use client';
 
+import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { GitBranch, Loader2, Maximize2, X, ZoomIn, ZoomOut } from 'lucide-react';
@@ -53,6 +54,41 @@ function KindSample({ kind }: { kind: DiagramEdgeKind }) {
             )}
         </svg>
     );
+}
+
+// Trascinamento: ingrandito, il disegno si sposta prendendolo, come una mappa.
+// Le barre di scorrimento restano, e su touch lo scorrimento nativo basta gia'.
+function usePanning(ref: React.RefObject<HTMLDivElement | null>, enabled: boolean) {
+    const [dragging, setDragging] = useState(false);
+
+    const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+        const node = ref.current;
+        if (!enabled || !node || event.pointerType === 'touch' || event.button !== 0) return;
+        const startX = event.clientX;
+        const startY = event.clientY;
+        const startLeft = node.scrollLeft;
+        const startTop = node.scrollTop;
+        setDragging(true);
+        node.setPointerCapture(event.pointerId);
+
+        const onMove = (moveEvent: PointerEvent) => {
+            node.scrollLeft = startLeft - (moveEvent.clientX - startX);
+            node.scrollTop = startTop - (moveEvent.clientY - startY);
+        };
+        const onUp = () => {
+            setDragging(false);
+            node.releasePointerCapture(event.pointerId);
+            node.removeEventListener('pointermove', onMove);
+            node.removeEventListener('pointerup', onUp);
+            node.removeEventListener('pointercancel', onUp);
+        };
+        node.addEventListener('pointermove', onMove);
+        node.addEventListener('pointerup', onUp);
+        node.addEventListener('pointercancel', onUp);
+    };
+
+    const cursor = enabled ? (dragging ? 'cursor-grabbing' : 'cursor-grab') : '';
+    return { onPointerDown, cursor };
 }
 
 // Passi di zoom: fitti intorno alla dimensione naturale, dove serve regolare, e
@@ -137,6 +173,10 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
     const [renderState, setRenderState] = useState<RenderState>({ key: '', imageUrl: null, failed: false });
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [zoom, setZoom] = useState(1);
+    const cardScrollRef = useRef<HTMLDivElement>(null);
+    const fullScrollRef = useRef<HTMLDivElement>(null);
+    const cardPan = usePanning(cardScrollRef, zoom > 1);
+    const fullPan = usePanning(fullScrollRef, zoom > 1);
     const expandButtonRef = useRef<HTMLButtonElement>(null);
     const closeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -231,10 +271,15 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                 ) : null}
             </figcaption>
             {imageUrl ? (
-                <div className="flex w-full min-w-0 max-w-full justify-center overflow-auto p-3">
+                <div
+                    ref={cardScrollRef}
+                    onPointerDown={cardPan.onPointerDown}
+                    className={`flex w-full min-w-0 max-w-full justify-center overflow-auto p-3 ${cardPan.cursor}`}
+                >
                     {/* A misura naturale il diagramma sta dentro la card; ingrandito la card scorre. */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
+                        draggable={false}
                         src={imageUrl}
                         alt={description}
                         style={zoom === 1 ? undefined : { width: `${zoom * 100}%`, maxWidth: 'none' }}
@@ -292,9 +337,14 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                             </button>
                             </span>
                         </header>
-                        <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-3 sm:p-6">
+                        <div
+                            ref={fullScrollRef}
+                            onPointerDown={fullPan.onPointerDown}
+                            className={`flex min-h-0 flex-1 items-center justify-center overflow-auto p-3 sm:p-6 ${fullPan.cursor}`}
+                        >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
+                                draggable={false}
                                 src={imageUrl}
                                 alt={description}
                                 style={zoom === 1 ? undefined : { width: `${zoom * 100}%`, maxWidth: 'none' }}
