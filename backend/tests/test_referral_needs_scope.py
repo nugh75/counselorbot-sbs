@@ -77,7 +77,10 @@ def _scope_clear(db, username):
     db.query(models.GroupMembership).filter(models.GroupMembership.username == username).delete()
     db.query(models.LearnerProfileRevision).filter(
         models.LearnerProfileRevision.username == username).delete()
-    db.query(models.StudentGroup).filter(models.StudentGroup.owner_username == "docente").delete()
+    db.query(models.StudentGroup).filter(
+        models.StudentGroup.owner_username == "docente",
+        models.StudentGroup.code.like(f"{PREFIX[:6].upper()}%"),
+    ).delete()
     db.query(models.Institution).filter(models.Institution.slug.like(f"{PREFIX}-%")).delete()
     db.commit()
 
