@@ -2498,18 +2498,19 @@ def build_context_envelope(
     if knowledge_context:
         parts_system.append("[KNOWLEDGE]\n" + knowledge_context)
 
-    # Una richiesta esplicita di letture puo' usare il catalogo editoriale
-    # certificato anche negli step che tengono spento il RAG generale. Il filtro
-    # sul marcatore impedisce a qualunque altro blocco knowledge di attraversare
+    # Una richiesta esplicita di letture o un dato puntuale puo' usare il
+    # catalogo editoriale certificato e le fonti pubbliche recuperate ora
+    # anche negli step che tengono spento il RAG generale. Il filtro sul
+    # marcatore impedisce a qualunque altro blocco knowledge di attraversare
     # il confine configurato dall'admin.
     if not _component_enabled(component_flags, "knowledge"):
-        certified_readings = [
+        source_blocks = [
             block
             for block in (skills_blocks or {}).get("knowledge", [])
-            if block.lstrip().startswith("[CERTIFIED_READINGS]")
+            if block.lstrip().startswith(("[CERTIFIED_READINGS]", "[WEB_SOURCES]"))
         ]
-        if certified_readings:
-            parts_system.append("[KNOWLEDGE]\n" + "\n\n".join(certified_readings))
+        if source_blocks:
+            parts_system.append("[KNOWLEDGE]\n" + "\n\n".join(source_blocks))
 
     # Slot di coda delle skill: direttive che devono chiudere il system prompt.
     for block in (skills_blocks or {}).get("directive_tail", []):
