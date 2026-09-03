@@ -633,6 +633,12 @@ const it: Dict = {
     'admin.q.versionSource': 'provenienza',
     'admin.q.versionApprovedBy': 'approvata da',
     'admin.q.versionPromoteFailed': 'Transizione di stato rifiutata.',
+    'admin.tab.orientationReferrals': 'Referenti ed eventi',
+    'admin.referrals.people': 'Figure',
+    'admin.referrals.events': 'Eventi',
+    'admin.referrals.allInstitutions': 'Tutti gli istituti',
+    'admin.referrals.national': 'Nazionale',
+    'admin.referrals.loadError': 'Non riesco a caricare il catalogo.',
 };
 
 const en: Dict = {
@@ -1256,6 +1262,12 @@ const en: Dict = {
     'admin.q.versionSource': 'source',
     'admin.q.versionApprovedBy': 'approved by',
     'admin.q.versionPromoteFailed': 'Status transition refused.',
+    'admin.tab.orientationReferrals': 'Referrals and events',
+    'admin.referrals.people': 'People',
+    'admin.referrals.events': 'Events',
+    'admin.referrals.allInstitutions': 'All institutions',
+    'admin.referrals.national': 'National',
+    'admin.referrals.loadError': 'I cannot load the catalogue.',
 };
 
 const es: Dict = {
@@ -1760,6 +1772,12 @@ const es: Dict = {
     'admin.q.versionSource': 'procedencia',
     'admin.q.versionApprovedBy': 'aprobada por',
     'admin.q.versionPromoteFailed': 'Transicion de estado rechazada.',
+    'admin.tab.orientationReferrals': 'Referentes y eventos',
+    'admin.referrals.people': 'Personas',
+    'admin.referrals.events': 'Eventos',
+    'admin.referrals.allInstitutions': 'Todas las instituciones',
+    'admin.referrals.national': 'Nacional',
+    'admin.referrals.loadError': 'No puedo cargar el catálogo.',
 };
 
 const fr: Dict = {
@@ -2264,6 +2282,12 @@ const fr: Dict = {
     'admin.q.versionSource': 'provenance',
     'admin.q.versionApprovedBy': 'approuvée par',
     'admin.q.versionPromoteFailed': 'Transition de statut refusée.',
+    'admin.tab.orientationReferrals': 'Référents et événements',
+    'admin.referrals.people': 'Personnes',
+    'admin.referrals.events': 'Événements',
+    'admin.referrals.allInstitutions': 'Tous les établissements',
+    'admin.referrals.national': 'National',
+    'admin.referrals.loadError': 'Impossible de charger le catalogue.',
 };
 
 const de: Dict = {
@@ -2768,6 +2792,12 @@ const de: Dict = {
     'admin.q.versionSource': 'Herkunft',
     'admin.q.versionApprovedBy': 'freigegeben von',
     'admin.q.versionPromoteFailed': 'Statusübergang abgelehnt.',
+    'admin.tab.orientationReferrals': 'Ansprechpersonen und Veranstaltungen',
+    'admin.referrals.people': 'Personen',
+    'admin.referrals.events': 'Veranstaltungen',
+    'admin.referrals.allInstitutions': 'Alle Einrichtungen',
+    'admin.referrals.national': 'National',
+    'admin.referrals.loadError': 'Der Katalog kann nicht geladen werden.',
 };
 
 const sv: Dict = {
@@ -3272,6 +3302,12 @@ const sv: Dict = {
     'admin.q.versionSource': 'ursprung',
     'admin.q.versionApprovedBy': 'godkänd av',
     'admin.q.versionPromoteFailed': 'Statusövergången avvisades.',
+    'admin.tab.orientationReferrals': 'Kontaktpersoner och evenemang',
+    'admin.referrals.people': 'Personer',
+    'admin.referrals.events': 'Evenemang',
+    'admin.referrals.allInstitutions': 'Alla institutioner',
+    'admin.referrals.national': 'Nationell',
+    'admin.referrals.loadError': 'Kan inte läsa in katalogen.',
 };
 
 const trainingIt: Dict = {
