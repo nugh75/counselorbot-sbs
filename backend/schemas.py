@@ -618,7 +618,7 @@ class ScoreRequest(BaseModel):
 
 # --- Learner profile (modello del discente auto-dichiarato) ---
 
-LEARNER_PROFILE_FIELDS = ("context", "goal", "main_difficulty", "strengths", "weaknesses", "notes", "gender", "age", "school_class", "school_year")
+LEARNER_PROFILE_FIELDS = ("context", "goal", "main_difficulty", "strengths", "weaknesses", "notes", "gender", "age", "school_class", "school_year", "institution_slug")
 LEARNER_PROFILE_MAX_FIELD_CHARS = 600
 
 
@@ -634,10 +634,14 @@ class LearnerProfileSave(BaseModel):
     age: Optional[str] = None
     school_class: Optional[str] = None
     school_year: Optional[str] = None
+    # Scelto da un elenco chiuso, non digitato: e' la chiave con cui la
+    # directory trova i referenti. Resta fuori da LEARNER_PROFILE_LABELS,
+    # quindi non entra mai nel prompt.
+    institution_slug: Optional[str] = None
     source: str = "manual"  # intake|session_start|session_end|orientation|manual
     session_id: Optional[str] = None
 
-    @validator("context", "goal", "main_difficulty", "strengths", "weaknesses", "notes", "gender", "age", "school_class", "school_year", pre=True)
+    @validator("context", "goal", "main_difficulty", "strengths", "weaknesses", "notes", "gender", "age", "school_class", "school_year", "institution_slug", pre=True)
     def _trim_and_cap(cls, v):
         if v is None:
             return None
@@ -1242,6 +1246,7 @@ class StudentGroupCreate(BaseModel):
     code: Optional[str] = None
     school: Optional[str] = None
     school_level: Optional[str] = None
+    institution_id: Optional[int] = None
 
 
 class StudentGroupUpdate(BaseModel):
@@ -1249,6 +1254,7 @@ class StudentGroupUpdate(BaseModel):
     is_active: Optional[bool] = None
     school: Optional[str] = None
     school_level: Optional[str] = None
+    institution_id: Optional[int] = None
 
 
 class GroupShareCreate(BaseModel):
@@ -1339,3 +1345,147 @@ class SkillPreviewResponse(BaseModel):
     blocks: dict
     ids: dict
     trace: List[dict]
+
+
+# --- Istituti, referenti ed eventi di orientamento ---
+
+class InstitutionBase(BaseModel):
+    slug: str
+    name: str
+    kind: str = "school"          # school | university
+    website_url: Optional[str] = None
+    orientation_page_url: Optional[str] = None
+    is_active: bool = True
+
+
+class InstitutionCreate(InstitutionBase):
+    pass
+
+
+class InstitutionUpdate(BaseModel):
+    name: Optional[str] = None
+    kind: Optional[str] = None
+    website_url: Optional[str] = None
+    orientation_page_url: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class InstitutionResponse(InstitutionBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class InstitutionPublic(BaseModel):
+    """Quel che uno studente puo' vedere per scegliere il proprio istituto."""
+    id: int
+    slug: str
+    name: str
+    kind: str
+    website_url: Optional[str] = None
+    orientation_page_url: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class OrientationReferralBase(BaseModel):
+    slug: str
+    institution_id: Optional[int] = None
+    role_label_i18n: Dict[str, str]
+    person_name: Optional[str] = None
+    needs: Optional[List[str]] = None
+    audience: Optional[List[str]] = None
+    questionnaire_types: Optional[List[str]] = None
+    contact_channel: Optional[Dict[str, Any]] = None
+    what_for_i18n: Optional[Dict[str, str]] = None
+    how_to_reach_i18n: Optional[Dict[str, str]] = None
+    source_reference: Optional[str] = None
+    certified_by: Optional[str] = None
+    status: str = "draft"
+    is_active: bool = True
+    sort_order: int = 0
+
+
+class OrientationReferralCreate(OrientationReferralBase):
+    pass
+
+
+class OrientationReferralUpdate(BaseModel):
+    institution_id: Optional[int] = None
+    role_label_i18n: Optional[Dict[str, str]] = None
+    person_name: Optional[str] = None
+    needs: Optional[List[str]] = None
+    audience: Optional[List[str]] = None
+    questionnaire_types: Optional[List[str]] = None
+    contact_channel: Optional[Dict[str, Any]] = None
+    what_for_i18n: Optional[Dict[str, str]] = None
+    how_to_reach_i18n: Optional[Dict[str, str]] = None
+    source_reference: Optional[str] = None
+    certified_by: Optional[str] = None
+    status: Optional[str] = None
+    is_active: Optional[bool] = None
+    sort_order: Optional[int] = None
+
+
+class OrientationReferralResponse(OrientationReferralBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class OrientationEventBase(BaseModel):
+    slug: str
+    institution_id: Optional[int] = None
+    kind: str = "open-day"
+    title_i18n: Dict[str, str]
+    summary_i18n: Optional[Dict[str, str]] = None
+    starts_at: datetime
+    ends_at: datetime
+    registration_deadline: Optional[datetime] = None
+    page_url: Optional[str] = None
+    location: Optional[str] = None
+    is_online: bool = False
+    needs: Optional[List[str]] = None
+    audience: Optional[List[str]] = None
+    status: str = "draft"
+    is_active: bool = True
+    sort_order: int = 0
+
+
+class OrientationEventCreate(OrientationEventBase):
+    pass
+
+
+class OrientationEventUpdate(BaseModel):
+    institution_id: Optional[int] = None
+    kind: Optional[str] = None
+    title_i18n: Optional[Dict[str, str]] = None
+    summary_i18n: Optional[Dict[str, str]] = None
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    registration_deadline: Optional[datetime] = None
+    page_url: Optional[str] = None
+    location: Optional[str] = None
+    is_online: Optional[bool] = None
+    needs: Optional[List[str]] = None
+    audience: Optional[List[str]] = None
+    status: Optional[str] = None
+    is_active: Optional[bool] = None
+    sort_order: Optional[int] = None
+
+
+class OrientationEventResponse(OrientationEventBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class OrientationDirectoryResponse(BaseModel):
+    """Quel che la pagina dell'area personale mostra allo studente."""
+    institution: Optional[InstitutionPublic] = None
+    referrals: List[Dict[str, Any]] = Field(default_factory=list)
+    events: List[Dict[str, Any]] = Field(default_factory=list)

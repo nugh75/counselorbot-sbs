@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Check, Link2, Plus, Share2, Trash2, UserMinus, UserPlus, Users, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
+import { fetchInstitutions, type Institution } from '@/lib/referrals-api';
 import { PlanStudentsPanel } from './PlanStudentsPanel';
 
 interface StudentGroup {
@@ -12,6 +13,7 @@ interface StudentGroup {
     name: string;
     school: string | null;
     school_level: string | null;
+    institution_id: number | null;
     owner_username: string;
     is_active: boolean;
     members_count: number;
@@ -33,6 +35,9 @@ const TEXTS = {
         levelUniversita: 'Universita',
         levelAdulti: 'Adulti',
         levelHint: 'Filtra le letture consigliate: senza fascia il bot chiede allo studente a che punto degli studi si trova.',
+        institutionLabel: 'Istituto',
+        institutionNone: 'Nessun istituto',
+        institutionHint: "Alimenta il fallback per gli studenti che non scelgono l'istituto nel taccuino.",
         create: 'Crea',
         cancel: 'Annulla',
         members: 'iscritti',
@@ -70,6 +75,9 @@ const TEXTS = {
         levelUniversita: 'University',
         levelAdulti: 'Adults',
         levelHint: 'Filters the readings the bot may suggest: with no level it asks the student where they are in their studies.',
+        institutionLabel: 'Institution',
+        institutionNone: 'No institution',
+        institutionHint: 'Feeds the fallback for students who never choose an institution in their notebook.',
         create: 'Create',
         cancel: 'Cancel',
         members: 'members',
@@ -101,6 +109,8 @@ const TEXTS = {
         schoolPlaceholder: 'Escuela o centro (opcional)', school: 'Escuela', levelLabel: 'Nivel', levelNone: 'Nivel no indicado',
         levelSecondaria: 'Secundaria', levelUniversita: 'Universidad', levelAdulti: 'Adultos',
         levelHint: 'Filtra las lecturas recomendadas: sin un nivel, el bot pregunta al estudiante en qué etapa de sus estudios se encuentra.',
+        institutionLabel: 'Institución', institutionNone: 'Sin institución',
+        institutionHint: 'Alimenta el resguardo para los estudiantes que nunca eligen una institución en su cuaderno.',
         create: 'Crear', cancel: 'Cancelar', members: 'miembros', inactive: 'inactiva', webLink: 'Enlace de invitación',
         telegramLink: 'Enlace de Telegram', code: 'Código de clase', students: 'Estudiantes', deactivate: 'Desactivar',
         activate: 'Reactivar', deleteGroup: 'Eliminar', empty: 'Aún no hay clases. Crea una y comparte el enlace con tus estudiantes.',
@@ -116,6 +126,8 @@ const TEXTS = {
         schoolPlaceholder: 'École ou établissement (facultatif)', school: 'École', levelLabel: 'Niveau', levelNone: 'Niveau non indiqué',
         levelSecondaria: 'Secondaire', levelUniversita: 'Université', levelAdulti: 'Adultes',
         levelHint: 'Filtre les lectures recommandées : sans niveau, le bot demande à l’étudiant où il en est dans ses études.',
+        institutionLabel: 'Établissement', institutionNone: 'Aucun établissement',
+        institutionHint: "Alimente le repli pour les étudiants qui ne choisissent jamais d'établissement dans leur carnet.",
         create: 'Créer', cancel: 'Annuler', members: 'membres', inactive: 'inactive', webLink: 'Lien d’invitation',
         telegramLink: 'Lien Telegram', code: 'Code de classe', students: 'Étudiants', deactivate: 'Désactiver',
         activate: 'Réactiver', deleteGroup: 'Supprimer', empty: 'Aucune classe. Créez-en une et partagez le lien avec vos étudiants.',
@@ -131,6 +143,8 @@ const TEXTS = {
         schoolPlaceholder: 'Schule oder Einrichtung (optional)', school: 'Schule', levelLabel: 'Stufe', levelNone: 'Keine Stufe angegeben',
         levelSecondaria: 'Sekundarstufe', levelUniversita: 'Universität', levelAdulti: 'Erwachsene',
         levelHint: 'Filtert empfohlene Lektüren: Ohne Stufe fragt der Bot die Lernenden nach ihrem Ausbildungsstand.',
+        institutionLabel: 'Einrichtung', institutionNone: 'Keine Einrichtung',
+        institutionHint: 'Speist den Fallback für Lernende, die im Lernheft nie eine Einrichtung wählen.',
         create: 'Erstellen', cancel: 'Abbrechen', members: 'Mitglieder', inactive: 'inaktiv', webLink: 'Einladungslink',
         telegramLink: 'Telegram-Link', code: 'Klassencode', students: 'Lernende', deactivate: 'Deaktivieren',
         activate: 'Reaktivieren', deleteGroup: 'Löschen', empty: 'Noch keine Klassen. Erstellen Sie eine und teilen Sie den Link mit den Lernenden.',
@@ -146,6 +160,8 @@ const TEXTS = {
         schoolPlaceholder: 'Skola eller lärosäte (valfritt)', school: 'Skola', levelLabel: 'Nivå', levelNone: 'Ingen nivå angiven',
         levelSecondaria: 'Gymnasienivå', levelUniversita: 'Universitet', levelAdulti: 'Vuxna',
         levelHint: 'Filtrerar rekommenderad läsning: utan nivå frågar boten studenten var i utbildningen hen befinner sig.',
+        institutionLabel: 'Institution', institutionNone: 'Ingen institution',
+        institutionHint: 'Förser reservvärdet för studenter som aldrig väljer en institution i sin anteckningsbok.',
         create: 'Skapa', cancel: 'Avbryt', members: 'medlemmar', inactive: 'inaktiv', webLink: 'Inbjudningslänk',
         telegramLink: 'Telegram-länk', code: 'Klasskod', students: 'Studenter', deactivate: 'Inaktivera',
         activate: 'Återaktivera', deleteGroup: 'Ta bort', empty: 'Inga klasser ännu. Skapa en och dela länken med dina studenter.',
@@ -164,6 +180,8 @@ export function GroupsPanel() {
     const [newName, setNewName] = useState('');
     const [newSchool, setNewSchool] = useState('');
     const [newLevel, setNewLevel] = useState('');
+    const [newInstitutionId, setNewInstitutionId] = useState('');
+    const [institutions, setInstitutions] = useState<Institution[]>([]);
     const [busy, setBusy] = useState(false);
     const [message, setMessage] = useState('');
     const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -176,6 +194,9 @@ export function GroupsPanel() {
     const [shareOpen, setShareOpen] = useState<number | null>(null);
 
     useEffect(() => { setOrigin(window.location.origin); }, []);
+    useEffect(() => {
+        fetchInstitutions().then(setInstitutions).catch(() => setInstitutions([]));
+    }, []);
     useEffect(() => {
         apiFetch('/api/telegram/bot-info')
             .then((res) => (res.ok ? res.json() : null))
@@ -291,6 +312,20 @@ export function GroupsPanel() {
         }
     };
 
+    const updateInstitution = async (groupId: number, institutionId: string) => {
+        try {
+            const res = await apiFetch(`/api/admin/groups/${groupId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ institution_id: institutionId ? Number(institutionId) : null }),
+            });
+            if (!res.ok) throw new Error('update failed');
+            load();
+        } catch {
+            setMessage(texts.error);
+        }
+    };
+
     const create = async () => {
         if (!newName.trim()) return;
         setBusy(true);
@@ -299,12 +334,18 @@ export function GroupsPanel() {
             const res = await apiFetch('/api/admin/groups', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: newName.trim(), school: newSchool.trim() || null, school_level: newLevel || null }),
+                body: JSON.stringify({
+                    name: newName.trim(),
+                    school: newSchool.trim() || null,
+                    school_level: newLevel || null,
+                    institution_id: newInstitutionId ? Number(newInstitutionId) : null,
+                }),
             });
             if (!res.ok) throw new Error('create failed');
             setNewName('');
             setNewSchool('');
             setNewLevel('');
+            setNewInstitutionId('');
             setCreating(false);
             load();
         } catch {
@@ -391,6 +432,18 @@ export function GroupsPanel() {
                         <option value="universita">{texts.levelUniversita}</option>
                         <option value="adulti">{texts.levelAdulti}</option>
                     </select>
+                    <select
+                        value={newInstitutionId}
+                        onChange={(event) => setNewInstitutionId(event.target.value)}
+                        title={texts.institutionHint}
+                        aria-label={texts.institutionLabel}
+                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm sm:w-48"
+                    >
+                        <option value="">{texts.institutionNone}</option>
+                        {institutions.map((institution) => (
+                            <option key={institution.id} value={String(institution.id)}>{institution.name}</option>
+                        ))}
+                    </select>
                     <div className="flex gap-2">
                         <button
                             type="button"
@@ -440,6 +493,19 @@ export function GroupsPanel() {
                                         <option value="secondaria">{texts.levelSecondaria}</option>
                                         <option value="universita">{texts.levelUniversita}</option>
                                         <option value="adulti">{texts.levelAdulti}</option>
+                                    </select>
+                                    {' - '}
+                                    <select
+                                        value={group.institution_id === null ? '' : String(group.institution_id)}
+                                        aria-label={texts.institutionLabel}
+                                        title={texts.institutionHint}
+                                        onChange={(event) => void updateInstitution(group.id, event.target.value)}
+                                        className="rounded border border-slate-200 bg-white px-1 py-0.5 text-xs text-slate-600"
+                                    >
+                                        <option value="">{texts.institutionNone}</option>
+                                        {institutions.map((institution) => (
+                                            <option key={institution.id} value={String(institution.id)}>{institution.name}</option>
+                                        ))}
                                     </select>
                                 </p>
                             </div>

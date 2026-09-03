@@ -75,6 +75,22 @@ WEB_LOOKUP_INSTRUCTIONS_EN = """## Factual answer from public sources
 """
 
 
+REFERRAL_GUIDE_INSTRUCTIONS_EN = """## Referral and event guidance
+
+- Name only the people, offices and events listed in [REFERRALS]. Never invent
+  a name, an address, an email, an opening time or a date.
+- Suggest at most two figures and two events.
+- For each figure, say in one sentence what the student can bring to them, then
+  how to reach them, in the student's own words.
+- A referral is an option, never an instruction: the student decides.
+- If the list holds nothing for what they asked, say so plainly and point to the
+  institution's orientation page. Do not fill the gap from memory.
+- A referral never replaces urgent help. If the student describes something that
+  cannot wait, say that first and do not turn it into a list of offices.
+- Never show internal identifiers, slugs or need codes.
+"""
+
+
 CONCEPT_DIAGRAM_INSTRUCTIONS_EN = """## Concept diagram
 
 - Draw only when the answer holds parts in relation: a process, a loop that
@@ -182,6 +198,7 @@ SKILL_INSTRUCTIONS_I18N = {
     "web-lookup": {"en": WEB_LOOKUP_INSTRUCTIONS_EN},
     "concept-diagram": {"en": CONCEPT_DIAGRAM_INSTRUCTIONS_EN},
     "idea-focus": {"en": IDEA_FOCUS_INSTRUCTIONS_EN},
+    "referral-guide": {"en": REFERRAL_GUIDE_INSTRUCTIONS_EN},
 }
 
 CERTIFIED_ADVICE_POLICY_MARKER = "skills_certified_advice_policy_v1"
@@ -193,10 +210,10 @@ DIAGRAM_ICONS_POLICY_MARKER = "skills_diagram_icons_v1"
 IDEA_FOCUS_POLICY_MARKER = "skills_idea_focus_v2"
 IDEA_WAYFINDER_POLICY_MARKER = "skills_idea_wayfinder_v1"
 IDEA_CONCEPT_POLICY_MARKER = "skills_idea_concept_v1"
-SKILLS_BUDGET_POLICY_MARKER = "skills_total_budget_4500_v1"
-# Valore di serie prima dell'allargamento: le installazioni ferme li' sono
-# le uniche da aggiornare.
-PREVIOUS_TOTAL_MAX_CHARS = "3000"
+SKILLS_BUDGET_POLICY_MARKER = "skills_total_budget_6500_v1"
+# Valori di serie precedenti: le installazioni ferme su uno di questi non
+# hanno mai regolato il tetto a mano, e sono le uniche da aggiornare.
+PREVIOUS_TOTAL_MAX_CHARS = ("3000", "4500")
 # Contratto della mappa prima della diagnosi wayfinder: riconosce le
 # installazioni ancora sul testo di serie, le uniche da aggiornare.
 IDEA_FOCUS_INSTRUCTIONS_EN_V1_MD5 = "b324b198d0f5f90d660819c980b43848"
@@ -303,6 +320,9 @@ SKILL_SEEDS = [
         "sort_order": 20,
         "is_active": True,
         "bind": True,
+        # Idea si appoggia alle stesse fonti degli altri strumenti: la mappa
+        # non toglie il catalogo, aggiunge il ragionamento.
+        "bind_instruments": ENGINE_INSTRUMENTS,
     },
     {
         "slug": "profile-comparison",
@@ -337,6 +357,9 @@ SKILL_SEEDS = [
         "sort_order": 60,
         "is_active": True,
         "bind": True,
+        # Idea si appoggia alle stesse fonti degli altri strumenti: la mappa
+        # non toglie le fonti pubbliche, aggiunge il ragionamento.
+        "bind_instruments": ENGINE_INSTRUMENTS,
     },
     {
         "slug": "concept-diagram",
@@ -374,6 +397,26 @@ SKILL_SEEDS = [
         "is_active": True,
         "bind": True,
         "bind_instruments": ("IDEA",),
+    },
+    {
+        "slug": "referral-guide",
+        "name": "Referenti ed eventi di orientamento",
+        "description": (
+            "Figure, uffici ed eventi certificati del proprio istituto, da usare quando "
+            "lo studente chiede a chi rivolgersi o quando c'e' un appuntamento. "
+            "Porta contatti verificati, non consigli."
+        ),
+        "instructions_i18n": SKILL_INSTRUCTIONS_I18N["referral-guide"],
+        "conditions": {"intents": ["referral"]},
+        "handler": "orientation_referrals",
+        "handler_params": {"limit_referrals": 2, "limit_events": 2},
+        "routing": "primary",
+        "slot": "directive_tail",
+        "max_chars": 2000,
+        "sort_order": 60,
+        "is_active": True,
+        "bind": True,
+        "bind_instruments": ENGINE_INSTRUMENTS,
     },
 ]
 
@@ -744,7 +787,7 @@ def apply_skills_budget_policy(db) -> bool:
         models.Config.key == "skills_total_max_chars"
     ).first()
     updated = False
-    if row is not None and str(row.value).strip() == PREVIOUS_TOTAL_MAX_CHARS:
+    if row is not None and str(row.value).strip() in PREVIOUS_TOTAL_MAX_CHARS:
         row.value = str(DEFAULT_TOTAL_MAX_CHARS)
         updated = True
     elif row is not None:
@@ -753,7 +796,7 @@ def apply_skills_budget_policy(db) -> bool:
     db.add(models.Config(
         key=SKILLS_BUDGET_POLICY_MARKER,
         value="applied",
-        description="Migrazione una tantum: budget complessivo delle skill portato a 4500.",
+        description="Migrazione una tantum: budget complessivo delle skill portato a 6500.",
     ))
     db.commit()
     return updated

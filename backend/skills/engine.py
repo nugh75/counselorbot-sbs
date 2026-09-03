@@ -16,9 +16,11 @@ logger = logging.getLogger(__name__)
 
 # Le istruzioni delle skill sono cresciute: a 3000 il contratto dei
 # diagrammi da solo ne occupava 1977 e il materiale certificato non ci
-# stava piu'. Il tetto vive per non far esplodere il prompt, non per
-# scegliere fra due blocchi che servono entrambi.
-DEFAULT_TOTAL_MAX_CHARS = 4500
+# stava piu'. Su Idea nemmeno 4500 bastavano: il contratto della mappa
+# (`always`, 3096) prende il budget per primo e lasciava fuori le fonti
+# pubbliche e il catalogo, che sono la risposta. Il tetto vive per non far
+# esplodere il prompt, non per scegliere fra due blocchi che servono entrambi.
+DEFAULT_TOTAL_MAX_CHARS = 6500
 
 
 @dataclass
@@ -229,6 +231,7 @@ def build_context(
         language=language or "it",
         intent=resolved_intent,
         session_id=session_id or "",
+        session_username=username or "",
         query=query or "",
         step_query=step_query or "",
         message=message or "",
