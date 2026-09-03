@@ -4706,6 +4706,44 @@ def test_build_context_envelope_component_flags_disable_parts():
     session_memory.clear(sid)
 
 
+def test_build_context_envelope_source_markers_pass_the_knowledge_gate():
+    """Con knowledge spento, solo i blocchi marcati [CERTIFIED_READINGS] e
+    [WEB_SOURCES] attraversano: il recupero vivo delle fonti (Idea incluso)
+    non deve sparire quando l'admin tiene spento il RAG generale."""
+    from backend.api_models import ChatRequest
+    from backend.chat_logic import build_context_envelope
+
+    sid = "envelope-sources-test"
+    session_memory.clear(sid)
+    db = next(_override_get_db())
+    ai = _FakeAIService(db)
+    request = ChatRequest(message="domanda", questionnaire_type="IDEA", language="it")
+    components = {}
+
+    system_final, _, _ = build_context_envelope(
+        db, ai, request, sid, {"username": "student"},
+        c_persona="", system_prompt="SYS",
+        step_label=None, questionnaire_type="IDEA",
+        effective_message="domanda", model_scores_context="",
+        message_scores_context="", knowledge_context="",
+        component_flags={"knowledge": False, "history": False},
+        skills_blocks={
+            "knowledge": [
+                "[RAG]\nblocco generico che deve restare fuori",
+                "[WEB_SOURCES]\n- Immanuel Kant — wikipedia (https://it.wikipedia.org/wiki/Immanuel_Kant)",
+                "[CERTIFIED_READINGS]\nCatalogo approvato",
+            ],
+        },
+        components=components,
+    )
+
+    assert "[KNOWLEDGE]" in system_final
+    assert "[WEB_SOURCES]" in system_final
+    assert "[CERTIFIED_READINGS]" in system_final
+    assert "[RAG]" not in system_final
+    session_memory.clear(sid)
+
+
 def test_build_context_envelope_counselor_name_placeholder():
     """Il placeholder {{counselor_name}} (persona + intro di sezione) viene
     risolto dal nome del counselor; senza counselor usa il fallback neutro."""
