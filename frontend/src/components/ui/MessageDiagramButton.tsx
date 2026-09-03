@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { GitBranch, Loader2 } from 'lucide-react';
-import { useDarkMode } from '@/lib/use-dark-mode';
+import { DiagramBlock } from '@/components/ui/DiagramBlock';
+import { parseDiagramSpec, type DiagramSpec } from '@/lib/diagram-content';
 import { cn } from '@/lib/utils';
 
 interface MessageDiagramButtonProps {
@@ -18,18 +19,13 @@ type State = 'idle' | 'loading' | 'done' | 'failed';
  * Chiede su richiesta il diagramma di un messaggio gia' scritto.
  *
  * Il diagramma dentro la risposta lo decide il modello; qui lo decide lo
- * studente, e il disegno arriva con titolo e legenda incorporati perche' vive
- * fuori dalla card che altrove glieli fornisce.
+ * studente. Il server torna lo spec, non l'immagine, cosi' il disegno finisce
+ * nella stessa card degli altri e ne eredita titolo, legenda, zoom e schermo
+ * intero invece di essere una figura a parte.
  */
 export function MessageDiagramButton({ text, locale, label, failedLabel }: MessageDiagramButtonProps) {
-    const isDark = useDarkMode();
     const [state, setState] = useState<State>('idle');
-    const [imageUrl, setImageUrl] = useState<string | null>(null);
-    const objectUrlRef = useRef<string | null>(null);
-
-    useEffect(() => () => {
-        if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
-    }, []);
+    const [spec, setSpec] = useState<DiagramSpec | null>(null);
 
     const request = async () => {
         if (state === 'loading') return;
@@ -38,18 +34,12 @@ export function MessageDiagramButton({ text, locale, label, failedLabel }: Messa
             const response = await fetch('/api/diagram/from-message', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    text: text.slice(0, 8000),
-                    theme: isDark ? 'dark' : 'light',
-                    lang: locale,
-                    embed_title: true,
-                }),
+                body: JSON.stringify({ text: text.slice(0, 8000), lang: locale, spec_only: true }),
             });
             if (!response.ok) throw new Error(`diagram failed: ${response.status}`);
-            const blob = await response.blob();
-            if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
-            objectUrlRef.current = URL.createObjectURL(blob);
-            setImageUrl(objectUrlRef.current);
+            const parsed = parseDiagramSpec(await response.json());
+            if (!parsed) throw new Error('diagram spec rejected');
+            setSpec(parsed);
             setState('done');
         } catch {
             setState('failed');
@@ -71,16 +61,11 @@ export function MessageDiagramButton({ text, locale, label, failedLabel }: Messa
                 {state === 'loading' ? <Loader2 className="h-3 w-3 animate-spin" /> : <GitBranch className="h-3 w-3" />}
                 {label}
             </button>
-            {state === 'failed' && (
-                <span className="text-2xs text-slate-500">{failedLabel}</span>
-            )}
-            {state === 'done' && imageUrl && (
-                <figure className="my-2 w-full min-w-0 max-w-full basis-full overflow-hidden rounded-xl border border-slate-200 bg-white">
-                    <div className="flex w-full min-w-0 max-w-full justify-center overflow-hidden p-3">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={imageUrl} alt={label} className="block h-auto max-h-[26rem] w-auto max-w-full object-contain" />
-                    </div>
-                </figure>
+            {state === 'failed' && <span className="text-2xs text-slate-500">{failedLabel}</span>}
+            {state === 'done' && spec && (
+                <div className="w-full basis-full">
+                    <DiagramBlock spec={spec} locale={locale} />
+                </div>
             )}
         </>
     );

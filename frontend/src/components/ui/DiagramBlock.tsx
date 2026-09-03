@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { GitBranch, Loader2, Maximize2, X } from 'lucide-react';
+import { GitBranch, Loader2, Maximize2, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { completeDiagramEdges, diagramEdgeKinds, type DiagramEdgeKind, type DiagramSpec } from '@/lib/diagram-content';
-import { diagramFullscreenLabel, edgeKindLabel } from '@/lib/i18n-diagram';
+import { diagramFullscreenLabel, diagramZoomLabel, edgeKindLabel } from '@/lib/i18n-diagram';
 import { useDarkMode } from '@/lib/use-dark-mode';
 import { Tooltip } from '@/components/ui/Tooltip';
 
@@ -55,6 +55,65 @@ function KindSample({ kind }: { kind: DiagramEdgeKind }) {
     );
 }
 
+// Passi di zoom: sotto 1 il disegno rientra in schermi stretti, sopra 1 il
+// contenitore scorre invece di rimpicciolire il testo.
+const ZOOM_STEPS = [0.5, 0.75, 1, 1.5, 2, 3];
+
+function ZoomControls({
+    zoom,
+    setZoom,
+    locale,
+    size,
+}: {
+    zoom: number;
+    setZoom: (value: number) => void;
+    locale: string;
+    size: 'sm' | 'lg';
+}) {
+    const index = ZOOM_STEPS.indexOf(zoom);
+    const box = size === 'lg' ? 'h-10 w-10' : 'h-8 w-8';
+    const icon = size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
+    const button = `inline-flex ${box} shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white hover:text-[#17747a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17747a] focus-visible:ring-offset-2 disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-500`;
+    return (
+        <>
+            <Tooltip content={diagramZoomLabel('out', locale)}>
+                <button
+                    type="button"
+                    onClick={() => setZoom(ZOOM_STEPS[Math.max(0, index - 1)])}
+                    disabled={index <= 0}
+                    className={button}
+                    aria-label={diagramZoomLabel('out', locale)}
+                >
+                    <ZoomOut className={icon} aria-hidden="true" />
+                </button>
+            </Tooltip>
+            <Tooltip content={diagramZoomLabel('reset', locale)}>
+                <button
+                    type="button"
+                    onClick={() => setZoom(1)}
+                    disabled={zoom === 1}
+                    className={`${button} text-2xs font-semibold tabular-nums`}
+                    aria-label={diagramZoomLabel('reset', locale)}
+                >
+                    {Math.round(zoom * 100)}%
+                </button>
+            </Tooltip>
+            <Tooltip content={diagramZoomLabel('in', locale)}>
+                <button
+                    type="button"
+                    onClick={() => setZoom(ZOOM_STEPS[Math.min(ZOOM_STEPS.length - 1, index + 1)])}
+                    disabled={index >= ZOOM_STEPS.length - 1}
+                    className={button}
+                    aria-label={diagramZoomLabel('in', locale)}
+                >
+                    <ZoomIn className={icon} aria-hidden="true" />
+                </button>
+            </Tooltip>
+        </>
+    );
+}
+
+
 function DiagramLegend({ kinds, locale }: { kinds: DiagramEdgeKind[]; locale: string }) {
     if (kinds.length === 0) return null;
     return (
@@ -75,6 +134,7 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
     const renderKey = `${isDark ? 'dark' : 'light'}:${locale}:${normalizedSpecJson}`;
     const [renderState, setRenderState] = useState<RenderState>({ key: '', imageUrl: null, failed: false });
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [zoom, setZoom] = useState(1);
     const expandButtonRef = useRef<HTMLButtonElement>(null);
     const closeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -152,24 +212,32 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                     <span className="truncate">{spec.title}</span>
                 </span>
                 {imageUrl ? (
-                    <Tooltip content={openFullscreenLabel}>
-                        <button
-                            ref={expandButtonRef}
-                            type="button"
-                            onClick={() => setIsFullscreen(true)}
-                            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white hover:text-[#17747a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17747a] focus-visible:ring-offset-2"
-                            aria-label={openFullscreenLabel}
-                        >
-                            <Maximize2 className="h-4 w-4" aria-hidden="true" />
-                        </button>
-                    </Tooltip>
+                    <span className="flex shrink-0 items-center gap-0.5">
+                        <ZoomControls zoom={zoom} setZoom={setZoom} locale={locale} size="sm" />
+                        <Tooltip content={openFullscreenLabel}>
+                            <button
+                                ref={expandButtonRef}
+                                type="button"
+                                onClick={() => setIsFullscreen(true)}
+                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white hover:text-[#17747a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17747a] focus-visible:ring-offset-2"
+                                aria-label={openFullscreenLabel}
+                            >
+                                <Maximize2 className="h-4 w-4" aria-hidden="true" />
+                            </button>
+                        </Tooltip>
+                    </span>
                 ) : null}
             </figcaption>
             {imageUrl ? (
-                <div className="flex w-full min-w-0 max-w-full justify-center overflow-hidden p-3">
-                    {/* Il diagramma si riduce entro la card; la misura naturale resta disponibile in fullscreen. */}
+                <div className="flex w-full min-w-0 max-w-full justify-center overflow-auto p-3">
+                    {/* A misura naturale il diagramma sta dentro la card; ingrandito la card scorre. */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={imageUrl} alt={description} className="block h-auto max-h-[26rem] w-auto max-w-full object-contain" />
+                    <img
+                        src={imageUrl}
+                        alt={description}
+                        style={zoom === 1 ? undefined : { width: `${zoom * 100}%`, maxWidth: 'none' }}
+                        className={zoom === 1 ? 'block h-auto max-h-[26rem] w-auto max-w-full object-contain' : 'block h-auto shrink-0 object-contain'}
+                    />
                 </div>
             ) : failed ? (
                 <ol className="grid gap-2 p-3 sm:grid-cols-2" aria-label={spec.title}>
@@ -208,6 +276,8 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                                 <GitBranch className="h-5 w-5 shrink-0 text-[#17747a]" aria-hidden="true" />
                                 <span className="truncate">{spec.title}</span>
                             </span>
+                            <span className="flex shrink-0 items-center gap-0.5">
+                            <ZoomControls zoom={zoom} setZoom={setZoom} locale={locale} size="lg" />
                             <button
                                 ref={closeButtonRef}
                                 type="button"
@@ -218,10 +288,16 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                             >
                                 <X className="h-5 w-5" aria-hidden="true" />
                             </button>
+                            </span>
                         </header>
                         <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-3 sm:p-6">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={imageUrl} alt={description} className="block h-full max-h-full w-full max-w-full object-contain" />
+                            <img
+                                src={imageUrl}
+                                alt={description}
+                                style={zoom === 1 ? undefined : { width: `${zoom * 100}%`, maxWidth: 'none' }}
+                                className={zoom === 1 ? 'block h-full max-h-full w-full max-w-full object-contain' : 'block h-auto shrink-0 object-contain'}
+                            />
                         </div>
                         <DiagramLegend kinds={legendKinds} locale={locale} />
                     </section>

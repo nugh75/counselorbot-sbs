@@ -6,7 +6,7 @@ spenta o non pubblicata, questi endpoint non esistono.
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import Response
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
@@ -60,9 +60,9 @@ class FromMessageRequest(BaseModel):
     text: str = Field(min_length=1, max_length=8000)
     theme: str = "light"
     lang: str = "it"
-    # Il disegno chiesto col bottone vive fuori dal messaggio: titolo e legenda
-    # stanno dentro l'immagine, perche' non c'e' una card attorno a fornirli.
-    embed_title: bool = False
+    # Il bottone chiede lo spec, non il disegno: lo passa alla stessa card degli
+    # altri diagrammi, che ci mette titolo, legenda, zoom e schermo intero.
+    spec_only: bool = False
 
 
 def feature_enabled(db: Session) -> bool:
@@ -143,12 +143,14 @@ async def diagram_from_message(
         logger.info("Diagramma da messaggio scartato: %s", exc)
         raise HTTPException(status_code=422, detail="the text does not yield a diagram")
 
+    if request.spec_only:
+        return JSONResponse(spec.model_dump(exclude_none=True))
     return await run_in_threadpool(
         _image_response,
         spec,
         theme=request.theme,
         fmt="svg",
-        embed_title=request.embed_title,
+        embed_title=False,
         lang=request.lang,
     )
 
