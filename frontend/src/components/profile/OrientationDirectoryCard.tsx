@@ -32,6 +32,9 @@ export default function OrientationDirectoryCard() {
 
     useEffect(() => {
         let alive = true;
+        // Falso positivo della regola: al cambio di lingua la directory si
+        // ricarica, e tornare a `loading` e' lo stato voluto, non una cascata.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setState('loading');
         fetchOrientationDirectory(lang)
             .then((data) => {
