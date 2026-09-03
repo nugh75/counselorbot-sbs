@@ -81,6 +81,7 @@ from .routes import idea_map as idea_map_routes
 from .routes import skills as skills_routes
 from .routes import diagram as diagram_routes
 from .routes import institutions as institutions_routes
+from .routes import orientation_referrals as orientation_referrals_routes
 
 
 # Re-export per retro-compatibilità (es. smoke test che importa da backend.main)
@@ -1710,3 +1711,4 @@ app.include_router(groups_routes.router)
 app.include_router(frozen_sessions_routes.router)
 app.include_router(idea_map_routes.router)
 app.include_router(institutions_routes.router)
+app.include_router(orientation_referrals_routes.router)
