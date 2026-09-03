@@ -87,15 +87,15 @@ const REPLAY_LABELS: Record<Lang, string> = {
     sv: 'Spela upp diagrammet igen',
 };
 
-type StepAction = 'back' | 'forward';
+type StepAction = 'back' | 'forward' | 'first';
 
 const STEP_LABELS: Record<Lang, Record<StepAction, string>> = {
-    it: { back: 'Un passo indietro', forward: 'Un passo avanti' },
-    en: { back: 'One step back', forward: 'One step forward' },
-    es: { back: 'Un paso atrás', forward: 'Un paso adelante' },
-    fr: { back: 'Un pas en arrière', forward: 'Un pas en avant' },
-    de: { back: 'Einen Schritt zurück', forward: 'Einen Schritt vor' },
-    sv: { back: 'Ett steg tillbaka', forward: 'Ett steg framåt' },
+    it: { back: 'Un passo indietro', forward: 'Un passo avanti', first: 'Riparti dal primo passo' },
+    en: { back: 'One step back', forward: 'One step forward', first: 'Start again from the first step' },
+    es: { back: 'Un paso atrás', forward: 'Un paso adelante', first: 'Volver al primer paso' },
+    fr: { back: 'Un pas en arrière', forward: 'Un pas en avant', first: 'Repartir de la première étape' },
+    de: { back: 'Einen Schritt zurück', forward: 'Einen Schritt vor', first: 'Wieder beim ersten Schritt beginnen' },
+    sv: { back: 'Ett steg tillbaka', forward: 'Ett steg framåt', first: 'Börja om från första steget' },
 };
 
 export function diagramStepLabel(action: StepAction, lang: string): string {
