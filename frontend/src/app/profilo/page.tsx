@@ -19,9 +19,10 @@ import { CrossSynthesisCard } from '@/components/profile/CrossSynthesisCard';
 import { TelegramLinkCard } from '@/components/profile/TelegramLinkCard';
 import { TeacherNotesCard } from '@/components/profile/TeacherNotesCard';
 import { MyGroupsCard } from '@/components/profile/MyGroupsCard';
+import OrientationDirectoryCard from '@/components/profile/OrientationDirectoryCard';
 import {
     ArrowRight, Trash2, Download, MessageSquare, ShieldAlert, Search,
-    NotebookPen, BookText, UsersRound, Send, FolderOpen, ClipboardList,
+    NotebookPen, BookText, UsersRound, Send, FolderOpen, ClipboardList, Compass,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -38,7 +39,7 @@ interface QuestionnaireResult {
     submitted_at: string;
 }
 
-type PersonalSection = 'notebook' | 'booklet' | 'groups' | 'telegram' | 'portfolio' | 'sessions';
+type PersonalSection = 'notebook' | 'booklet' | 'groups' | 'telegram' | 'portfolio' | 'sessions' | 'orientation';
 
 const PERSONAL_AREAS = [
     {
@@ -54,6 +55,13 @@ const PERSONAL_AREAS = [
         icon: BookText,
         titleKey: 'profile.bookletSection.title',
         descriptionKey: 'profile.bookletSection.subtitle',
+    },
+    {
+        id: 'orientation',
+        slug: 'orientamento',
+        icon: Compass,
+        titleKey: 'referrals.area.title',
+        descriptionKey: 'referrals.area.description',
     },
     {
         id: 'groups',
@@ -806,6 +814,12 @@ export default function ProfilePage() {
             {activeSection === 'groups' && <MyGroupsCard lang={lang} showHeading={false} />}
 
             {activeSection === 'telegram' && <TelegramLinkCard lang={lang} showHeading={false} />}
+
+            {activeSection === 'orientation' && (
+            <section className="space-y-4" aria-label={t('referrals.area.title')}>
+                <OrientationDirectoryCard />
+            </section>
+            )}
 
             {activeSection === 'portfolio' && (
             <section className="space-y-4" aria-label={t('profile.portfolioSection.title')}>
