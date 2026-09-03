@@ -3,7 +3,7 @@
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronLeft, ChevronRight, GitBranch, Loader2, Maximize2, RotateCcw, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, GitBranch, Loader2, Maximize2, RotateCcw, SkipBack, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { completeDiagramEdges, diagramEdgeKinds, type DiagramEdgeKind, type DiagramSpec } from '@/lib/diagram-content';
 import { diagramFullscreenLabel, diagramReplayLabel, diagramStepLabel, diagramZoomLabel, edgeKindLabel } from '@/lib/i18n-diagram';
 import { focusDiagramNode, revealUpTo, sanitizeSvgMarkup, tagDiagramSvg } from '@/lib/diagram-svg';
@@ -119,6 +119,17 @@ function StepControls({
     const current = step ?? turns - 1;
     return (
         <>
+            <Tooltip content={diagramStepLabel('first', locale)}>
+                <button
+                    type="button"
+                    onClick={() => setStep(0)}
+                    disabled={step === 0}
+                    aria-label={diagramStepLabel('first', locale)}
+                    className={button}
+                >
+                    <SkipBack className={icon} aria-hidden="true" />
+                </button>
+            </Tooltip>
             <Tooltip content={diagramStepLabel('back', locale)}>
                 <button
                     type="button"
@@ -256,6 +267,9 @@ function DiagramSurface({
 }) {
     const hostRef = useRef<HTMLDivElement>(null);
 
+    // Classificare il disegno e ascoltarne il passaggio del mouse dipende dal
+    // disegno, non dal punto in cui lo si sta guardando: rifarlo a ogni passo
+    // rimetteva tutto in chiaro per un istante.
     useEffect(() => {
         const svg = hostRef.current?.querySelector('svg');
         if (!svg) return;
@@ -263,26 +277,34 @@ function DiagramSurface({
         svg.setAttribute('aria-label', description);
         onTurns(tagDiagramSvg(svg, spec));
 
-        const host = svg;
-        // Rimettere la classe non basta: senza una lettura forzata il browser
-        // raggruppa le due modifiche e l'animazione non riparte.
-        host.classList.remove('dg-play');
-        void (host as unknown as HTMLElement).getBoundingClientRect();
-        if (step === null) host.classList.add('dg-play');
-        revealUpTo(host, step);
-
         const over = (event: Event) => {
             const node = (event.target as Element | null)?.closest?.('.dg-node');
-            focusDiagramNode(host, node?.getAttribute('data-node') ?? null);
+            focusDiagramNode(svg, node?.getAttribute('data-node') ?? null);
         };
-        const out = () => focusDiagramNode(host, null);
-        host.addEventListener('pointerover', over);
-        host.addEventListener('pointerleave', out);
+        const out = () => focusDiagramNode(svg, null);
+        svg.addEventListener('pointerover', over);
+        svg.addEventListener('pointerleave', out);
         return () => {
-            host.removeEventListener('pointerover', over);
-            host.removeEventListener('pointerleave', out);
+            svg.removeEventListener('pointerover', over);
+            svg.removeEventListener('pointerleave', out);
         };
-    }, [markup, spec, description, play, step, onTurns]);
+    }, [markup, spec, description, onTurns]);
+
+    useEffect(() => {
+        const svg = hostRef.current?.querySelector('svg');
+        if (!svg) return;
+        // Nascondere prima di togliere l'animazione: al contrario resta un
+        // fotogramma in cui niente e' animato e niente e' ancora nascosto,
+        // cioe' il disegno intero.
+        revealUpTo(svg, step);
+        svg.classList.remove('dg-play');
+        if (step === null) {
+            // La lettura forzata serve solo qui: senza, il browser raggruppa
+            // le due modifiche e la comparsa non riparte.
+            void (svg as unknown as HTMLElement).getBoundingClientRect();
+            svg.classList.add('dg-play');
+        }
+    }, [markup, play, step]);
 
     return (
         <div
