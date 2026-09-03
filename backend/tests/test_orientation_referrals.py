@@ -22,6 +22,7 @@ from backend import database, models
 from backend import orientation_referral_service
 from backend.orientation_referral_service import MAX_REFERRAL_CONTEXT_CHARS, orientation_referral_memory
 from backend.referral_frame import REFERRAL_FRAME, frame
+from backend.routes.orientation_referrals import DIRECTORY_LIMIT
 
 TEST_DB_NAME = "counselorbot_test"
 _prod = urlsplit(os.environ["DATABASE_URL"])
@@ -461,6 +462,45 @@ def test_an_event_cannot_end_before_it_starts():
         title_i18n={"it": "Open day"}, page_url="https://x.test",
         starts_at=NOW + timedelta(days=2), ends_at=NOW + timedelta(days=1))
     assert "prima" in _guard_raises(_guard_event, row)
+
+
+def test_the_directory_shows_rows_whose_need_the_student_never_named():
+    """La chat filtra per bisogno; la directory no: e' un elenco, non un turno."""
+    db = _TestSession()
+    try:
+        institution = _institution(db)
+        _referral(db, "psico", institution_id=institution.id, needs=["disagio-emotivo"])
+        _referral(db, "borse", institution_id=institution.id, needs=["borse-e-tasse"])
+        out = orientation_referral_memory.retrieve_referrals(
+            db, needs=set(), institution_ids=[institution.id],
+            language="it", limit=DIRECTORY_LIMIT)
+        assert {e["id"] for e in out} == {f"{PREFIX}-psico", f"{PREFIX}-borse"}
+    finally:
+        _clear(db); db.close()
+
+
+def test_the_directory_still_hides_expired_events():
+    db = _TestSession()
+    try:
+        institution = _institution(db)
+        _event(db, "scaduto", institution_id=institution.id,
+               starts_at=NOW - timedelta(days=5), ends_at=NOW - timedelta(days=4))
+        _event(db, "futuro", institution_id=institution.id)
+        out = orientation_referral_memory.retrieve_events(
+            db, needs=set(), institution_ids=[institution.id],
+            language="it", limit=DIRECTORY_LIMIT)
+        assert [e["id"] for e in out] == [f"{PREFIX}-futuro"]
+    finally:
+        _clear(db); db.close()
+
+
+def test_the_directory_route_is_mounted_for_students():
+    # app.routes non e' affidabile qui: su FastAPI 0.141.1 restituisce wrapper
+    # _IncludedRouter pigri e non elenca i path dei router inclusi. openapi()
+    # riflette invece cio' che e' davvero servito.
+    from backend.main import app
+
+    assert "/orientation-directory" in app.openapi()["paths"]
 
 
 if __name__ == "__main__":
