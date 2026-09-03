@@ -66,7 +66,18 @@ _PATTERNS = {
     "advice": re.compile(
         r"\b(consigl|cosa\s+posso\s+fare|come\s+faccio|come\s+(?:mi|posso)\s+organizz|come\s+posso\s+miglior|azione\s+concreta|"
         r"piano\s+d.azione|recommend|advice|what\s+can\s+i\s+do|how\s+can\s+i\s+improve|"
-        r"consej|recomend|conseil|empfehl|rat\b|rad\b)"
+        r"consej|recomend|conseil|empfehl|rat\b|rad\b|"
+        # Risposta all'offerta di fine step ("ne vuoi un'altra?"): senza questi
+        # la richiesta non e' classificata come consiglio e il catalogo resta
+        # chiuso, cosi' l'offerta appena fatta non puo' essere mantenuta.
+        r"un.?altra\s+(?:azione|idea|opzione|strategia)|"
+        r"seconda\s+(?:azione|opzione|idea)|"
+        r"another\s+(?:one|action|option|idea|suggestion)|"
+        r"second\s+(?:action|option|suggestion)|"
+        r"otra\s+(?:accion|opcion|idea|sugerencia)|"
+        r"une\s+autre\s+(?:action|option|idee|suggestion)|"
+        r"noch\s+eine[nrs]?\s+(?:aktion|option|idee|vorschlag)|"
+        r"en\s+till\b|ett\s+till\b|annat\s+forslag)"
     ),
     # Oltre alle domande esplicite di significato, il chiarimento copre anche il
     # disorientamento: "mi sento perso", "non so da dove partire", "non mi torna".
