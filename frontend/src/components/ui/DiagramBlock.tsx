@@ -3,9 +3,9 @@
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { GitBranch, Loader2, Maximize2, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { GitBranch, Loader2, Maximize2, RotateCcw, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { completeDiagramEdges, diagramEdgeKinds, type DiagramEdgeKind, type DiagramSpec } from '@/lib/diagram-content';
-import { diagramFullscreenLabel, diagramZoomLabel, edgeKindLabel } from '@/lib/i18n-diagram';
+import { diagramFullscreenLabel, diagramReplayLabel, diagramZoomLabel, edgeKindLabel } from '@/lib/i18n-diagram';
 import { focusDiagramNode, sanitizeSvgMarkup, tagDiagramSvg } from '@/lib/diagram-svg';
 import { useDarkMode } from '@/lib/use-dark-mode';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -98,6 +98,24 @@ function usePanning(ref: React.RefObject<HTMLDivElement | null>, enabled: boolea
 // rimpicciolire il testo.
 const ZOOM_STEPS = [0.25, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
 
+function ReplayButton({ onClick, locale, size }: { onClick: () => void; locale: string; size: 'sm' | 'lg' }) {
+    const label = diagramReplayLabel(locale);
+    const box = size === 'lg' ? 'h-10 w-10' : 'h-8 w-8';
+    const icon = size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
+    return (
+        <Tooltip content={label}>
+            <button
+                type="button"
+                onClick={onClick}
+                aria-label={label}
+                className={`inline-flex ${box} shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white hover:text-[#17747a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17747a] focus-visible:ring-offset-2`}
+            >
+                <RotateCcw className={icon} aria-hidden="true" />
+            </button>
+        </Tooltip>
+    );
+}
+
 function ZoomControls({
     zoom,
     setZoom,
@@ -173,12 +191,14 @@ function DiagramSurface({
     zoom,
     description,
     maxHeight,
+    play,
 }: {
     markup: string;
     spec: DiagramSpec;
     zoom: number;
     description: string;
     maxHeight: string;
+    play: number;
 }) {
     const hostRef = useRef<HTMLDivElement>(null);
 
@@ -190,6 +210,12 @@ function DiagramSurface({
         tagDiagramSvg(svg, spec);
 
         const host = svg;
+        // Rimettere la classe non basta: senza una lettura forzata il browser
+        // raggruppa le due modifiche e l'animazione non riparte.
+        host.classList.remove('dg-play');
+        void (host as unknown as HTMLElement).getBoundingClientRect();
+        host.classList.add('dg-play');
+
         const over = (event: Event) => {
             const node = (event.target as Element | null)?.closest?.('.dg-node');
             focusDiagramNode(host, node?.getAttribute('data-node') ?? null);
@@ -201,7 +227,7 @@ function DiagramSurface({
             host.removeEventListener('pointerover', over);
             host.removeEventListener('pointerleave', out);
         };
-    }, [markup, spec, description]);
+    }, [markup, spec, description, play]);
 
     return (
         <div
@@ -221,6 +247,7 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
     const [renderState, setRenderState] = useState<RenderState>({ key: '', markup: null, failed: false });
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [zoom, setZoom] = useState(1);
+    const [play, setPlay] = useState(0);
     const cardScrollRef = useRef<HTMLDivElement>(null);
     const fullScrollRef = useRef<HTMLDivElement>(null);
     const cardPan = usePanning(cardScrollRef, zoom > 1);
@@ -303,6 +330,7 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                 </span>
                 {markup ? (
                     <span className="flex shrink-0 items-center gap-0.5">
+                        <ReplayButton onClick={() => setPlay((value) => value + 1)} locale={locale} size="sm" />
                         <ZoomControls zoom={zoom} setZoom={setZoom} locale={locale} size="sm" />
                         <Tooltip content={openFullscreenLabel}>
                             <button
@@ -325,7 +353,7 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                     className={`flex w-full min-w-0 max-w-full justify-center overflow-auto p-3 ${cardPan.cursor}`}
                 >
                     {/* A misura naturale il diagramma sta dentro la card; ingrandito la card scorre. */}
-                    <DiagramSurface markup={markup} spec={spec} zoom={zoom} description={description} maxHeight="26rem" />
+                    <DiagramSurface markup={markup} spec={spec} zoom={zoom} description={description} maxHeight="26rem" play={play} />
                 </div>
             ) : failed ? (
                 <ol className="grid gap-2 p-3 sm:grid-cols-2" aria-label={spec.title}>
@@ -365,6 +393,7 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                                 <span className="truncate">{spec.title}</span>
                             </span>
                             <span className="flex shrink-0 items-center gap-0.5">
+                            <ReplayButton onClick={() => setPlay((value) => value + 1)} locale={locale} size="lg" />
                             <ZoomControls zoom={zoom} setZoom={setZoom} locale={locale} size="lg" />
                             <button
                                 ref={closeButtonRef}
@@ -383,7 +412,7 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                             onPointerDown={fullPan.onPointerDown}
                             className={`flex min-h-0 flex-1 items-center justify-center overflow-auto p-3 sm:p-6 ${fullPan.cursor}`}
                         >
-                            <DiagramSurface markup={markup} spec={spec} zoom={zoom} description={description} maxHeight="100%" />
+                            <DiagramSurface markup={markup} spec={spec} zoom={zoom} description={description} maxHeight="100%" play={play} />
                         </div>
                         <DiagramLegend kinds={legendKinds} locale={locale} />
                     </section>

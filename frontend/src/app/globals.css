@@ -593,39 +593,53 @@ h1.text-3xl {
 
 /* ---- Diagrammi inline: comparsa, messa a fuoco, anelli di retroazione ----
    Il disegno arriva come SVG nel DOM (non piu' dentro un <img>), quindi ogni
-   nodo e ogni arco sono raggiungibili. `--dg-step` lo assegna
-   `tagDiagramSvg`: e' il turno in cui quel pezzo entra. */
+   nodo e ogni arco sono raggiungibili. `--dg-step` lo assegna `tagDiagramSvg`:
+   e' il turno in cui quel pezzo entra.
+
+   Le animazioni stanno sotto `.dg-play`, che il componente toglie e rimette:
+   una comparsa che si vede una volta sola e' una comparsa che, quando l'utente
+   guarda il disegno, e' gia' finita. Il tasto "rivedi" la rimette in moto. */
+
+.dg-svg.dg-play .dg-node,
+.dg-svg.dg-play .dg-edge,
+.dg-svg.dg-play .dg-chip {
+    animation: dg-enter 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--dg-step, 0) * 190ms);
+}
+
+/* Non solo opacita': un pezzo che entra si vede entrare. */
+@keyframes dg-enter {
+    from { opacity: 0; transform: translateY(6px) scale(0.985); }
+    to { opacity: 1; transform: none; }
+}
 
 .dg-svg .dg-node,
 .dg-svg .dg-edge,
 .dg-svg .dg-chip {
-    animation: dg-enter 320ms ease-out both;
-    animation-delay: calc(var(--dg-step, 0) * 140ms);
+    transform-box: fill-box;
+    transform-origin: center;
 }
 
-@keyframes dg-enter {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-/* Il nodo su cui si puo' agire e' uno solo: si fa trovare, una volta sola. */
-.dg-svg .dg-accent > path,
-.dg-svg .dg-accent > polygon,
-.dg-svg .dg-accent > ellipse {
-    animation: dg-accent 1.4s ease-out 1;
-    animation-delay: calc(var(--dg-step, 0) * 140ms + 320ms);
+/* Il nodo su cui si puo' agire e' uno solo: si fa trovare. Tre battiti, non
+   uno: uno solo passa inosservato. */
+.dg-svg.dg-play .dg-accent > path,
+.dg-svg.dg-play .dg-accent > polygon,
+.dg-svg.dg-play .dg-accent > ellipse {
+    animation: dg-accent 900ms ease-in-out 3;
+    animation-delay: calc(var(--dg-step, 0) * 190ms + 460ms);
     transform-box: fill-box;
     transform-origin: center;
 }
 
 @keyframes dg-accent {
     0%, 100% { transform: scale(1); }
-    35% { transform: scale(1.035); }
+    45% { transform: scale(1.05); }
 }
 
 /* La retroazione e' l'arco che nessuno legge a colpo d'occhio: B torna su A.
-   Il tratteggio che scorre lo dice senza parole. Gli altri tipi restano fermi:
-   animare tutto sarebbe decorazione. */
+   Il tratteggio che scorre lo dice senza parole, e continua: e' l'unico che
+   deve restare leggibile anche arrivando a disegno gia' fatto. Gli altri tipi
+   restano fermi, animare tutto sarebbe decorazione. */
 .dg-svg .dg-kind-feedback path {
     animation: dg-flow 1.6s linear infinite;
 }
@@ -635,18 +649,25 @@ h1.text-3xl {
 }
 
 /* Messa a fuoco: sfiorando un nodo restano lui e i suoi collegamenti. */
+.dg-svg .dg-node { cursor: pointer; }
+
 .dg-svg.dg-focusing .dg-node,
 .dg-svg.dg-focusing .dg-edge,
 .dg-svg.dg-focusing .dg-chip {
-    opacity: 0.22;
-    transition: opacity 140ms ease-out;
+    opacity: 0.15;
+    transition: opacity 160ms ease-out;
 }
 
 .dg-svg.dg-focusing .dg-related {
     opacity: 1;
 }
 
-.dg-svg .dg-node { cursor: default; }
+/* Il disegno riempie la larghezza che lo zoom gli assegna. */
+.dg-svg > svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
 
 /* Chi disattiva le animazioni deve vedere il diagramma intero, non uno vuoto:
    la comparsa e' un aiuto alla lettura, mai l'unico modo di leggerlo. */
@@ -660,12 +681,6 @@ h1.text-3xl {
     .dg-svg .dg-kind-feedback path {
         animation: none;
         opacity: 1;
+        transform: none;
     }
-}
-
-/* Il disegno riempie la larghezza che lo zoom gli assegna. */
-.dg-svg > svg {
-    display: block;
-    width: 100%;
-    height: auto;
 }
