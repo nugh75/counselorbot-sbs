@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 import { GitBranch, Loader2, Maximize2, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { completeDiagramEdges, diagramEdgeKinds, type DiagramEdgeKind, type DiagramSpec } from '@/lib/diagram-content';
 import { diagramFullscreenLabel, diagramZoomLabel, edgeKindLabel } from '@/lib/i18n-diagram';
+import { focusDiagramNode, sanitizeSvgMarkup, tagDiagramSvg } from '@/lib/diagram-svg';
 import { useDarkMode } from '@/lib/use-dark-mode';
 import { Tooltip } from '@/components/ui/Tooltip';
 
@@ -16,7 +17,7 @@ interface DiagramBlockProps {
 
 interface RenderState {
     key: string;
-    imageUrl: string | null;
+    markup: string | null;
     failed: boolean;
 }
 
@@ -166,11 +167,58 @@ function DiagramLegend({ kinds, locale }: { kinds: DiagramEdgeKind[]; locale: st
     );
 }
 
+function DiagramSurface({
+    markup,
+    spec,
+    zoom,
+    description,
+    maxHeight,
+}: {
+    markup: string;
+    spec: DiagramSpec;
+    zoom: number;
+    description: string;
+    maxHeight: string;
+}) {
+    const hostRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const svg = hostRef.current?.querySelector('svg');
+        if (!svg) return;
+        svg.setAttribute('role', 'img');
+        svg.setAttribute('aria-label', description);
+        tagDiagramSvg(svg, spec);
+
+        const host = svg;
+        const over = (event: Event) => {
+            const node = (event.target as Element | null)?.closest?.('.dg-node');
+            focusDiagramNode(host, node?.getAttribute('data-node') ?? null);
+        };
+        const out = () => focusDiagramNode(host, null);
+        host.addEventListener('pointerover', over);
+        host.addEventListener('pointerleave', out);
+        return () => {
+            host.removeEventListener('pointerover', over);
+            host.removeEventListener('pointerleave', out);
+        };
+    }, [markup, spec, description]);
+
+    return (
+        <div
+            ref={hostRef}
+            className="dg-svg block shrink-0"
+            style={{ width: `${zoom * 100}%`, maxHeight: zoom === 1 ? maxHeight : undefined }}
+            dangerouslySetInnerHTML={{ __html: markup }}
+        />
+    );
+}
+
+
 export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
     const isDark = useDarkMode();
     const normalizedSpecJson = JSON.stringify(completeDiagramEdges(spec));
     const renderKey = `${isDark ? 'dark' : 'light'}:${locale}:${normalizedSpecJson}`;
-    const [renderState, setRenderState] = useState<RenderState>({ key: '', imageUrl: null, failed: false });
+    const [renderState, setRenderState] = useState<RenderState>({ key: '', markup: null, failed: false });
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [zoom, setZoom] = useState(1);
     const cardScrollRef = useRef<HTMLDivElement>(null);
@@ -182,8 +230,10 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
 
     useEffect(() => {
         const controller = new AbortController();
-        let objectUrl: string | null = null;
 
+        // Il disegno entra nel DOM invece che in un <img>: solo cosi' nodi e
+        // archi si possono animare e mettere a fuoco. Passa da un ripulitore,
+        // perche' le etichette le scrive un modello.
         void fetch('/api/diagram/render', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -198,22 +248,20 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
         })
             .then((response) => {
                 if (!response.ok) throw new Error(`diagram render failed: ${response.status}`);
-                return response.blob();
+                return response.text();
             })
-            .then((blob) => {
+            .then((source) => {
                 if (controller.signal.aborted) return;
-                objectUrl = URL.createObjectURL(blob);
-                setRenderState({ key: renderKey, imageUrl: objectUrl, failed: false });
+                const markup = sanitizeSvgMarkup(source);
+                if (!markup) throw new Error('diagram markup rejected');
+                setRenderState({ key: renderKey, markup, failed: false });
             })
             .catch((error: unknown) => {
                 if (error instanceof DOMException && error.name === 'AbortError') return;
-                setRenderState({ key: renderKey, imageUrl: null, failed: true });
+                setRenderState({ key: renderKey, markup: null, failed: true });
             });
 
-        return () => {
-            controller.abort();
-            if (objectUrl) URL.revokeObjectURL(objectUrl);
-        };
+        return () => controller.abort();
     }, [isDark, locale, normalizedSpecJson, renderKey]);
 
     useEffect(() => {
@@ -240,7 +288,7 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
     // La legenda compare solo se i tratti sono piu' d'uno: un tratto solo non ha nulla da spiegare.
     const legendKinds = diagramEdgeKinds(completeDiagramEdges(spec));
     const isCurrentRender = renderState.key === renderKey;
-    const imageUrl = isCurrentRender ? renderState.imageUrl : null;
+    const markup = isCurrentRender ? renderState.markup : null;
     const failed = isCurrentRender && renderState.failed;
     const openFullscreenLabel = diagramFullscreenLabel('open', locale);
     const closeFullscreenLabel = diagramFullscreenLabel('close', locale);
@@ -253,7 +301,7 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                     <GitBranch className="h-4 w-4 shrink-0 text-[#17747a]" aria-hidden="true" />
                     <span className="truncate">{spec.title}</span>
                 </span>
-                {imageUrl ? (
+                {markup ? (
                     <span className="flex shrink-0 items-center gap-0.5">
                         <ZoomControls zoom={zoom} setZoom={setZoom} locale={locale} size="sm" />
                         <Tooltip content={openFullscreenLabel}>
@@ -270,21 +318,14 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                     </span>
                 ) : null}
             </figcaption>
-            {imageUrl ? (
+            {markup ? (
                 <div
                     ref={cardScrollRef}
                     onPointerDown={cardPan.onPointerDown}
                     className={`flex w-full min-w-0 max-w-full justify-center overflow-auto p-3 ${cardPan.cursor}`}
                 >
                     {/* A misura naturale il diagramma sta dentro la card; ingrandito la card scorre. */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                        draggable={false}
-                        src={imageUrl}
-                        alt={description}
-                        style={zoom === 1 ? undefined : { width: `${zoom * 100}%`, maxWidth: 'none' }}
-                        className={zoom === 1 ? 'block h-auto max-h-[26rem] w-auto max-w-full object-contain' : 'block h-auto shrink-0 object-contain'}
-                    />
+                    <DiagramSurface markup={markup} spec={spec} zoom={zoom} description={description} maxHeight="26rem" />
                 </div>
             ) : failed ? (
                 <ol className="grid gap-2 p-3 sm:grid-cols-2" aria-label={spec.title}>
@@ -304,8 +345,8 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                     <span className="sr-only">{spec.title}</span>
                 </div>
             )}
-            {imageUrl ? <DiagramLegend kinds={legendKinds} locale={locale} /> : null}
-            {isFullscreen && imageUrl ? createPortal(
+            {markup ? <DiagramLegend kinds={legendKinds} locale={locale} /> : null}
+            {isFullscreen && markup ? createPortal(
                 <div
                     className="fixed inset-0 z-[80] flex bg-slate-950/75 p-2 backdrop-blur-sm sm:p-4"
                     onMouseDown={(event) => {
@@ -342,14 +383,7 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                             onPointerDown={fullPan.onPointerDown}
                             className={`flex min-h-0 flex-1 items-center justify-center overflow-auto p-3 sm:p-6 ${fullPan.cursor}`}
                         >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                                draggable={false}
-                                src={imageUrl}
-                                alt={description}
-                                style={zoom === 1 ? undefined : { width: `${zoom * 100}%`, maxWidth: 'none' }}
-                                className={zoom === 1 ? 'block h-full max-h-full w-full max-w-full object-contain' : 'block h-auto shrink-0 object-contain'}
-                            />
+                            <DiagramSurface markup={markup} spec={spec} zoom={zoom} description={description} maxHeight="100%" />
                         </div>
                         <DiagramLegend kinds={legendKinds} locale={locale} />
                     </section>
