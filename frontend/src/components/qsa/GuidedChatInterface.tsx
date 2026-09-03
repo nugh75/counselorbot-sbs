@@ -1743,16 +1743,14 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
                                     {msg.role === 'assistant' && msg.content.trim() && (
                                         <div className="flex flex-wrap items-center gap-1">
-                                            {!msg.content.includes('```diagram') && (
-                                                <MessageDiagramButton
-                                                    text={diagramContentForSpeech(msg.content) || msg.content}
-                                                    locale={activeLocale}
-                                                    label={t('guided.diagram')}
-                                                    failedLabel={t('guided.diagramFailed')}
-                                                    placeholder={t('guided.diagramPrompt')}
-                                                    submitLabel={t('guided.diagramSend')}
-                                                />
-                                            )}
+                                            <MessageDiagramButton
+                                                text={diagramContentForSpeech(msg.content) || msg.content}
+                                                locale={activeLocale}
+                                                label={t('guided.diagram')}
+                                                failedLabel={t('guided.diagramFailed')}
+                                                placeholder={t('guided.diagramPrompt')}
+                                                submitLabel={t('guided.diagramSend')}
+                                            />
                                             {diagramContentForSpeech(msg.content) && (
                                             <button
                                                 onClick={() => handlePlayTTS(diagramContentForSpeech(msg.content), idx)}
