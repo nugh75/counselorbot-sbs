@@ -639,6 +639,19 @@ const it: Dict = {
     'admin.referrals.allInstitutions': 'Tutti gli istituti',
     'admin.referrals.national': 'Nazionale',
     'admin.referrals.loadError': 'Non riesco a caricare il catalogo.',
+    'admin.referrals.field.institution': 'istituto',
+    'admin.referrals.field.needs': 'bisogni',
+    'admin.referrals.field.audience': 'pubblico',
+    'admin.referrals.field.active': 'attiva',
+    'admin.referrals.field.order': 'ordine',
+    'admin.referrals.newPerson': 'nuova figura',
+    'admin.referrals.edit': 'modifica',
+    'admin.referrals.field.personName': "persona (facoltativa, solo se già pubblica)",
+    'admin.referrals.save': 'salva',
+    'admin.referrals.cancel': 'annulla',
+    'admin.referrals.newEvent': 'nuovo evento',
+    'admin.referrals.field.kind': 'tipo',
+    'admin.referrals.field.location': 'luogo',
 };
 
 const en: Dict = {
@@ -1268,6 +1281,19 @@ const en: Dict = {
     'admin.referrals.allInstitutions': 'All institutions',
     'admin.referrals.national': 'National',
     'admin.referrals.loadError': 'I cannot load the catalogue.',
+    'admin.referrals.field.institution': 'institution',
+    'admin.referrals.field.needs': 'needs',
+    'admin.referrals.field.audience': 'audience',
+    'admin.referrals.field.active': 'active',
+    'admin.referrals.field.order': 'order',
+    'admin.referrals.newPerson': 'new contact',
+    'admin.referrals.edit': 'edit',
+    'admin.referrals.field.personName': 'person (optional, only if already public)',
+    'admin.referrals.save': 'save',
+    'admin.referrals.cancel': 'cancel',
+    'admin.referrals.newEvent': 'new event',
+    'admin.referrals.field.kind': 'kind',
+    'admin.referrals.field.location': 'location',
 };
 
 const es: Dict = {
@@ -1778,6 +1804,19 @@ const es: Dict = {
     'admin.referrals.allInstitutions': 'Todas las instituciones',
     'admin.referrals.national': 'Nacional',
     'admin.referrals.loadError': 'No puedo cargar el catálogo.',
+    'admin.referrals.field.institution': 'institución',
+    'admin.referrals.field.needs': 'necesidades',
+    'admin.referrals.field.audience': 'público',
+    'admin.referrals.field.active': 'activa',
+    'admin.referrals.field.order': 'orden',
+    'admin.referrals.newPerson': 'nueva persona',
+    'admin.referrals.edit': 'editar',
+    'admin.referrals.field.personName': 'persona (opcional, solo si ya es pública)',
+    'admin.referrals.save': 'guardar',
+    'admin.referrals.cancel': 'cancelar',
+    'admin.referrals.newEvent': 'nuevo evento',
+    'admin.referrals.field.kind': 'tipo',
+    'admin.referrals.field.location': 'lugar',
 };
 
 const fr: Dict = {
@@ -2288,6 +2327,19 @@ const fr: Dict = {
     'admin.referrals.allInstitutions': 'Tous les établissements',
     'admin.referrals.national': 'National',
     'admin.referrals.loadError': 'Impossible de charger le catalogue.',
+    'admin.referrals.field.institution': 'établissement',
+    'admin.referrals.field.needs': 'besoins',
+    'admin.referrals.field.audience': 'public',
+    'admin.referrals.field.active': 'active',
+    'admin.referrals.field.order': 'ordre',
+    'admin.referrals.newPerson': 'nouvelle personne',
+    'admin.referrals.edit': 'modifier',
+    'admin.referrals.field.personName': 'personne (facultatif, seulement si déjà publique)',
+    'admin.referrals.save': 'enregistrer',
+    'admin.referrals.cancel': 'annuler',
+    'admin.referrals.newEvent': 'nouvel événement',
+    'admin.referrals.field.kind': 'type',
+    'admin.referrals.field.location': 'lieu',
 };
 
 const de: Dict = {
@@ -2798,6 +2850,19 @@ const de: Dict = {
     'admin.referrals.allInstitutions': 'Alle Einrichtungen',
     'admin.referrals.national': 'National',
     'admin.referrals.loadError': 'Der Katalog kann nicht geladen werden.',
+    'admin.referrals.field.institution': 'Einrichtung',
+    'admin.referrals.field.needs': 'Bedürfnisse',
+    'admin.referrals.field.audience': 'Zielgruppe',
+    'admin.referrals.field.active': 'aktiv',
+    'admin.referrals.field.order': 'Reihenfolge',
+    'admin.referrals.newPerson': 'neue Ansprechperson',
+    'admin.referrals.edit': 'bearbeiten',
+    'admin.referrals.field.personName': 'Person (optional, nur wenn bereits öffentlich)',
+    'admin.referrals.save': 'speichern',
+    'admin.referrals.cancel': 'abbrechen',
+    'admin.referrals.newEvent': 'neue Veranstaltung',
+    'admin.referrals.field.kind': 'Art',
+    'admin.referrals.field.location': 'Ort',
 };
 
 const sv: Dict = {
@@ -3308,6 +3373,19 @@ const sv: Dict = {
     'admin.referrals.allInstitutions': 'Alla institutioner',
     'admin.referrals.national': 'Nationell',
     'admin.referrals.loadError': 'Kan inte läsa in katalogen.',
+    'admin.referrals.field.institution': 'institution',
+    'admin.referrals.field.needs': 'behov',
+    'admin.referrals.field.audience': 'målgrupp',
+    'admin.referrals.field.active': 'aktiv',
+    'admin.referrals.field.order': 'ordning',
+    'admin.referrals.newPerson': 'ny kontaktperson',
+    'admin.referrals.edit': 'redigera',
+    'admin.referrals.field.personName': 'person (valfritt, endast om redan offentlig)',
+    'admin.referrals.save': 'spara',
+    'admin.referrals.cancel': 'avbryt',
+    'admin.referrals.newEvent': 'nytt evenemang',
+    'admin.referrals.field.kind': 'typ',
+    'admin.referrals.field.location': 'plats',
 };
 
 const trainingIt: Dict = {
