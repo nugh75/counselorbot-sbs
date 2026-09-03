@@ -248,3 +248,32 @@ async def delete_event(
     db.delete(row)
     db.commit()
     return {"status": "deleted", "id": event_id}
+
+
+# --- directory dello studente ------------------------------------------------
+
+@router.get("/orientation-directory", response_model=schemas.OrientationDirectoryResponse)
+async def orientation_directory(
+    lang: str = Query("it"),
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Figure ed eventi del proprio istituto, senza filtro sui bisogni.
+
+    Il filtro per bisogno esiste perche' la chat non inietti materiale
+    estraneo al turno. Qui e' un elenco: deve mostrare tutto cio' che riguarda
+    il proprio istituto. Restano la fascia di pubblico, lo stato certificato e
+    la scadenza degli eventi.
+    """
+    username = current_user["username"]
+    institution_ids = institution_ids_for(db, username)
+    band = resolve_audience_band(db, username)
+    return schemas.OrientationDirectoryResponse(
+        institution=institution_for(db, username),
+        referrals=orientation_referral_memory.retrieve_referrals(
+            db, needs=set(), institution_ids=institution_ids,
+            audience_band=band, language=lang, limit=DIRECTORY_LIMIT),
+        events=orientation_referral_memory.retrieve_events(
+            db, needs=set(), institution_ids=institution_ids,
+            audience_band=band, language=lang, limit=DIRECTORY_LIMIT),
+    )
