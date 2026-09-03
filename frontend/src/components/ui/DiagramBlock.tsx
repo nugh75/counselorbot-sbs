@@ -55,9 +55,11 @@ function KindSample({ kind }: { kind: DiagramEdgeKind }) {
     );
 }
 
-// Passi di zoom: sotto 1 il disegno rientra in schermi stretti, sopra 1 il
-// contenitore scorre invece di rimpicciolire il testo.
-const ZOOM_STEPS = [0.5, 0.75, 1, 1.5, 2, 3];
+// Passi di zoom: fitti intorno alla dimensione naturale, dove serve regolare, e
+// piu' larghi agli estremi, dove serve arrivarci in pochi clic. Sotto 1 il
+// disegno rientra in schermi stretti, sopra 1 il contenitore scorre invece di
+// rimpicciolire il testo.
+const ZOOM_STEPS = [0.25, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
 
 function ZoomControls({
     zoom,
