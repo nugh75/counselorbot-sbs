@@ -160,7 +160,10 @@ async def diagram_from_message(
         raise HTTPException(status_code=422, detail="the text does not yield a diagram")
 
     if request.spec_only:
-        return JSONResponse(spec.model_dump(exclude_none=True))
+        # `by_alias`: il modello interno tiene source/target, il contratto
+        # dichiarato al modello e letto dal browser dice from/to. Senza, il
+        # disegno arriva ma nel browser nessun arco combacia.
+        return JSONResponse(spec.model_dump(exclude_none=True, by_alias=True))
     return await run_in_threadpool(
         _image_response,
         spec,
