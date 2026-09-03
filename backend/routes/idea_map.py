@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from .. import auth, database, models
+from .. import auth, database, idea_sources, models
 from ..diagram_render import DiagramSpecError, describe, render, spec_fingerprint
 from ..idea_synthesis import synthesis_for
 from ..pdf_generator import generate_idea_map_pdf
@@ -339,6 +339,9 @@ def map_pdf(
         session_id=session_id,
         language=lang,
         description=synthesis_for(db, spec, lang),
+        # Le fonti tenute di tutta la sessione, non del solo ramo a fuoco: il
+        # PDF e' il rendiconto del lavoro intero.
+        sources=[_source_row(row) for row in idea_sources.kept(db, owner, session_id)],
     )
     return StreamingResponse(
         stream,
@@ -661,3 +664,159 @@ def conclude(
         "kept": kept,
         "pdf_url": f"/api/idea/map/pdf?session_id={request.session_id}&lang={request.lang}",
     }
+
+
+# --- fonti esterne del ramo --------------------------------------------------
+
+class SourceSearchRequest(BaseModel):
+    session_id: str = Field(min_length=1, max_length=120)
+    query: str = Field(min_length=3, max_length=200)
+    group: Literal["encyclopedia", "works"] = "works"
+    limit: int = Field(default=8, ge=1, le=idea_sources.MAX_RESULTS)
+    year_from: int | None = Field(default=None, ge=1500, le=2100)
+    oa_only: bool = True
+    lang: str = Field(default="it", max_length=8)
+
+
+class SourceItem(BaseModel):
+    """Una voce vista nei risultati e scelta dalla persona."""
+
+    model_config = {"extra": "ignore"}
+
+    source: str = Field(default="", max_length=40)
+    title: str = Field(min_length=1, max_length=500)
+    url: str = Field(min_length=1, max_length=1000)
+    doi: str = Field(default="", max_length=200)
+    authors: str = Field(default="", max_length=500)
+    year: str = Field(default="", max_length=8)
+    journal: str = Field(default="", max_length=300)
+    abstract: str = Field(default="", max_length=4000)
+    oa_status: str = Field(default="", max_length=40)
+    pdf_url: str = Field(default="", max_length=1000)
+    license: str = Field(default="", max_length=200)
+    retrieved_at: str = Field(default="", max_length=40)
+
+
+class SourceKeepRequest(BaseModel):
+    session_id: str = Field(min_length=1, max_length=120)
+    branch_id: str = Field(min_length=1, max_length=40)
+    items: list[SourceItem] = Field(min_length=1, max_length=idea_sources.MAX_RESULTS)
+
+
+def _require_sources(db: Session) -> None:
+    _require_feature(db)
+    if not idea_sources.enabled(db):
+        raise HTTPException(status_code=404, detail="idea sources disabled")
+
+
+def _source_row(row) -> dict:
+    return {
+        "id": row.id,
+        "branch_id": row.branch_id,
+        "source": row.source,
+        "title": row.title,
+        "url": row.url,
+        "doi": row.doi or "",
+        "authors": row.authors or "",
+        "year": row.year or "",
+        "journal": row.journal or "",
+        "abstract": row.abstract or "",
+        "oa_status": row.oa_status or "",
+        "license": row.license or "",
+        "retrieved_at": row.retrieved_at or "",
+        "has_pdf": bool(row.pdf_path),
+    }
+
+
+@router.post("/idea/sources/search")
+def search_sources(
+    request: SourceSearchRequest,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    """Cerca fonti per il ramo. Non salva niente: propone."""
+    _require_sources(db)
+    _owner(identity)
+    try:
+        results = idea_sources.search(
+            db, request.session_id, request.query,
+            group=request.group, limit=request.limit,
+            year_from=request.year_from, oa_only=request.oa_only,
+            lang=request.lang,
+        )
+    except idea_sources.IdeaSourcesError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return {"group": request.group, "query": request.query, "results": results}
+
+
+@router.post("/idea/sources")
+def keep_sources(
+    request: SourceKeepRequest,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    """Attacca al ramo le fonti scelte, col PDF ad accesso aperto se c'e'."""
+    _require_sources(db)
+    owner = _owner(identity)
+    try:
+        saved = idea_sources.keep(
+            db, owner, request.session_id, request.branch_id,
+            [item.model_dump() for item in request.items],
+        )
+    except idea_sources.IdeaSourcesError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return {"kept": [_source_row(row) for row in saved]}
+
+
+@router.get("/idea/sources")
+def read_sources(
+    session_id: str = Query(min_length=1),
+    branch_id: str | None = None,
+    username: str | None = None,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    """Le fonti tenute, di un ramo o di tutta la sessione."""
+    _require_sources(db)
+    owner = _readable_owner(identity, username)
+    rows = idea_sources.kept(db, owner, session_id, branch_id)
+    return [_source_row(row) for row in rows]
+
+
+@router.delete("/idea/sources/{source_id}")
+def delete_source(
+    source_id: int,
+    session_id: str = Query(min_length=1),
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    _require_sources(db)
+    owner = _owner(identity)
+    if not idea_sources.remove(db, owner, session_id, source_id):
+        raise HTTPException(status_code=404, detail="fonte non trovata")
+    return {"deleted": source_id}
+
+
+@router.get("/idea/sources/{source_id}/pdf")
+def read_source_pdf(
+    source_id: int,
+    session_id: str = Query(min_length=1),
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    """Serve il PDF ad accesso aperto salvato con la fonte."""
+    _require_sources(db)
+    owner = _readable_owner(identity, None)
+    row = next(
+        (item for item in idea_sources.kept(db, owner, session_id) if item.id == source_id),
+        None,
+    )
+    if row is None or not row.pdf_path or not os.path.exists(row.pdf_path):
+        raise HTTPException(status_code=404, detail="nessun PDF per questa fonte")
+    with open(row.pdf_path, "rb") as handle:
+        payload = handle.read()
+    return Response(
+        content=payload,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="fonte-{source_id}.pdf"'},
+    )

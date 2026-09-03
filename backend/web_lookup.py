@@ -821,6 +821,208 @@ def cached_lookup(
     return results
 
 
+# --- ricerca tematica --------------------------------------------------------
+
+# Cercare un tema non e' cercare un'entita'. `lookup` pretende che il titolo
+# trovato ricalchi la domanda, ed e' giusto quando si chiede "di cosa parla
+# Mindset": una redirezione dell'enciclopedia diventerebbe una risposta sicura e
+# sbagliata. Ma su "dispersione scolastica nella secondaria" nessun titolo
+# ricalca la domanda, e quel controllo restituirebbe sempre il vuoto. Qui il
+# titolo non e' un criterio: lo sono i filtri (anno, lingua, accesso aperto) e
+# l'ordine di pertinenza che la fonte stessa dichiara.
+WORK_SOURCES = ("openalex", "europepmc")
+MAX_WORKS = 20
+# Un abstract e' piu' lungo di un estratto di enciclopedia: serve a decidere se
+# il lavoro c'entra, e mezza frase non basta a deciderlo.
+MAX_ABSTRACT_CHARS = 900
+MAILTO = USER_AGENT.split("mailto:")[-1].rstrip(") ") if "mailto:" in USER_AGENT else ""
+
+
+@dataclass
+class WorkResult:
+    """Un lavoro scientifico con quel che serve a citarlo e a giudicarlo."""
+
+    source: str
+    title: str
+    url: str
+    doi: str = ""
+    authors: str = ""
+    year: str = ""
+    journal: str = ""
+    abstract: str = ""
+    oa_status: str = ""
+    # Dove sta il PDF ad accesso aperto, quando esiste. Non e' un dominio della
+    # whitelist: e' l'editore o il repository, e cambia a ogni lavoro. Chi
+    # scarica deve verificarlo da se'.
+    pdf_url: str = ""
+    citations: int = 0
+    license: str = ""
+    retrieved_at: str = ""
+    query: str = ""
+
+    def as_dict(self) -> dict:
+        return {
+            "source": self.source, "title": self.title, "url": self.url, "doi": self.doi,
+            "authors": self.authors, "year": self.year, "journal": self.journal,
+            "abstract": self.abstract, "oa_status": self.oa_status, "pdf_url": self.pdf_url,
+            "citations": self.citations, "license": self.license,
+            "retrieved_at": self.retrieved_at, "query": self.query,
+        }
+
+
+def _doi_key(value: str) -> str:
+    """Il DOI nudo, minuscolo: la stessa opera arriva da due fonti scritta in
+    due modi ("https://doi.org/10.1/x" e "10.1/X")."""
+    text = (value or "").strip().lower()
+    for prefix in ("https://doi.org/", "http://doi.org/", "doi:"):
+        if text.startswith(prefix):
+            text = text[len(prefix):]
+    return text.strip("/")
+
+
+def _search_openalex(query: str, limit: int, year_from, oa_only: bool, lang: str) -> list[WorkResult]:
+    filters = []
+    if oa_only:
+        filters.append("open_access.is_oa:true")
+    if year_from:
+        filters.append(f"publication_year:>{int(year_from) - 1}")
+    if lang:
+        filters.append(f"language:{lang[:2]}")
+    params = {
+        "search": query,
+        "per_page": min(max(1, limit), MAX_WORKS),
+        "sort": "relevance_score:desc",
+    }
+    if MAILTO:
+        params["mailto"] = MAILTO
+    if filters:
+        params["filter"] = ",".join(filters)
+    data = _get_json(f"https://api.openalex.org/works?{urllib.parse.urlencode(params)}")
+
+    out = []
+    for hit in (data or {}).get("results") or []:
+        location = hit.get("primary_location") or {}
+        source_meta = location.get("source") or {}
+        access = hit.get("open_access") or {}
+        best = hit.get("best_oa_location") or {}
+        url = str(hit.get("doi") or location.get("landing_page_url") or hit.get("id") or "")
+        if not _allowed("openalex", url):
+            continue
+        out.append(WorkResult(
+            source="openalex",
+            title=str(hit.get("title") or "").strip(),
+            url=url,
+            doi=_doi_key(str(hit.get("doi") or "")),
+            authors="; ".join(
+                str(((entry or {}).get("author") or {}).get("display_name") or "").strip()
+                for entry in (hit.get("authorships") or [])
+                if ((entry or {}).get("author") or {}).get("display_name")
+            ),
+            year=str(hit.get("publication_year") or ""),
+            journal=str(source_meta.get("display_name") or ""),
+            abstract=shorten(
+                _abstract_from_inverted_index(hit.get("abstract_inverted_index") or {}),
+                MAX_ABSTRACT_CHARS,
+            ),
+            oa_status=str(access.get("oa_status") or ""),
+            pdf_url=str(best.get("pdf_url") or access.get("oa_url") or ""),
+            citations=int(hit.get("cited_by_count") or 0),
+            license=LICENSES["openalex"],
+            retrieved_at=_now(),
+            query=query,
+        ))
+    return out
+
+
+def _search_europepmc(query: str, limit: int, year_from, oa_only: bool, lang: str) -> list[WorkResult]:
+    del lang  # Europe PMC indicizza in inglese: la lingua non cambia la ricerca.
+    terms = [query]
+    if oa_only:
+        terms.append("OPEN_ACCESS:y")
+    if year_from:
+        terms.append(f"PUB_YEAR:[{int(year_from)} TO 3000]")
+    params = {
+        "format": "json",
+        "resultType": "core",
+        "pageSize": min(max(1, limit), MAX_WORKS),
+        "query": " AND ".join(terms),
+    }
+    data = _get_json(
+        "https://www.ebi.ac.uk/europepmc/webservices/rest/search?"
+        + urllib.parse.urlencode(params)
+    )
+
+    out = []
+    for record in ((data or {}).get("resultList") or {}).get("result") or []:
+        doi = _doi_key(str(record.get("doi") or ""))
+        url = f"https://doi.org/{doi}" if doi else f"https://europepmc.org/article/MED/{record.get('pmid') or ''}"
+        if not _allowed("europepmc", url):
+            continue
+        pdf_url = ""
+        for entry in ((record.get("fullTextUrlList") or {}).get("fullTextUrl") or []):
+            if str((entry or {}).get("documentStyle") or "").lower() == "pdf":
+                pdf_url = str(entry.get("url") or "")
+                break
+        out.append(WorkResult(
+            source="europepmc",
+            title=str(record.get("title") or "").strip(),
+            url=url,
+            doi=doi,
+            authors=str(record.get("authorString") or "").strip(),
+            year=str(record.get("pubYear") or ""),
+            journal=str(record.get("journalTitle") or ""),
+            abstract=shorten(str(record.get("abstractText") or "").strip(), MAX_ABSTRACT_CHARS),
+            oa_status="open" if str(record.get("isOpenAccess") or "").upper() == "Y" else "",
+            pdf_url=pdf_url,
+            citations=int(record.get("citedByCount") or 0),
+            license=LICENSES["europepmc"],
+            retrieved_at=_now(),
+            query=query,
+        ))
+    return out
+
+
+_WORK_SEARCHERS = {
+    "openalex": _search_openalex,
+    "europepmc": _search_europepmc,
+}
+
+
+def search_works(
+    query: str,
+    *,
+    sources: tuple[str, ...] | list[str] | None = None,
+    limit: int = 8,
+    year_from: int | None = None,
+    oa_only: bool = True,
+    lang: str = "",
+) -> list[WorkResult]:
+    """Lavori scientifici pertinenti a un tema, gia' deduplicati per DOI.
+
+    La query esce ripulita dalle PII come ogni altra chiamata verso l'esterno.
+    Una fonte che non risponde non ferma le altre.
+    """
+    query = redact_always((query or "").strip())[:MAX_QUERY_CHARS].strip()
+    if len(query) < 3:
+        return []
+    wanted = [s for s in (sources or WORK_SOURCES) if s in _WORK_SEARCHERS]
+    found: list[WorkResult] = []
+    seen: set[str] = set()
+    for source in wanted:
+        try:
+            results = _WORK_SEARCHERS[source](query, limit, year_from, oa_only, lang)
+        except Exception as exc:  # una fonte rotta non deve fermare le altre
+            logger.info("web_lookup: ricerca su %s non utilizzabile: %s", source, exc)
+            continue
+        for work in results:
+            key = work.doi or work.url.casefold()
+            if not work.title or key in seen:
+                continue
+            seen.add(key)
+            found.append(work)
+    return found[:min(max(1, limit), MAX_WORKS)]
+
+
 def render_block(results: list[LookupResult]) -> str:
     """Blocco per il prompt: estratti con la fonte attaccata, mai senza."""
     if not results:
