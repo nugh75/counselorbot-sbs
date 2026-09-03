@@ -46,7 +46,7 @@ _PATTERNS = {
         r"vad\s+handlar|vem\s+(?:skrev|regisserade)|nar\s+kom|"
         # voce enciclopedica: definizione di un termine, identita' di una persona
         r"(?:che\s+)?cos\W?\s*e\b|che\s+cosa\s+e\b|"
-        r"chi\s+(?:e|era|sono|erano)\s+\w|"
+        r"chi\s+(?:e'?|era|sono|erano)\s+\w|"
         r"quando\s+(?:e\s+)?(?:nato|nata|morto|morta|vissut)|dove\s+si\s+trova|"
         r"what\s+(?:is|are|was|were)\s+(?:a|an|the)?\s*\w|who\s+(?:is|was|were)\s+\w|"
         r"que\s+es\b|quien\s+(?:es|fue|era)\s+\w|"
@@ -84,6 +84,23 @@ _PATTERNS = {
         r"verloren|unklar|wo\s+(?:soll\s+)?ich\s+anfangen|"
         r"vilse|oklar|var\s+ska\s+jag\s+borja)"
     ),
+    # Chi puo' aiutare dal vivo: una persona, un ufficio, un appuntamento.
+    # Pattern stretto di proposito: senza un sostantivo di servizio o la
+    # costruzione esplicita "a chi rivolgersi", "chi e' X" resta una domanda
+    # enciclopedica e deve restare a `factual`.
+    "referral": re.compile(
+        r"\b(?:sportello|referente|tutor\b|orientatore|orientatrice|"
+        r"psicolog|counsell?or\s+scolastic|segreteria|ufficio\s+\w+|"
+        r"open\s?day|porte\s+aperte|help\s?desk|career\s+service|"
+        r"student\s+(?:services|support)|welcome\s+desk|"
+        r"a\s+chi\s+(?:mi\s+)?(?:posso\s+)?(?:rivolg|chied|parl)|"
+        r"con\s+chi\s+(?:posso\s+)?parl|chi\s+(?:mi\s+)?puo\s+aiutar|"
+        r"who\s+can\s+i\s+(?:talk|speak|turn)|who\s+should\s+i\s+(?:ask|contact)|"
+        r"quien\s+me\s+puede\s+ayudar|a\s+quien\s+me\s+dirijo|"
+        r"a\s+qui\s+(?:je\s+)?m\W?adress|qui\s+peut\s+m\W?aider|"
+        r"an\s+wen\s+kann\s+ich\s+mich\s+wenden|wer\s+kann\s+mir\s+helfen|"
+        r"vem\s+kan\s+jag\s+(?:prata|vanda))"
+    ),
 }
 
 _NEGATED_PATTERNS = {
@@ -119,15 +136,18 @@ _NEGATED_PATTERNS = {
 
 
 def classify(message: str, *, guided: bool = False) -> str:
-    """Ritorna compare|factual|reading|advice|clarify|guided oppure stringa vuota.
+    """Ritorna compare|referral|factual|reading|advice|clarify|guided oppure "".
 
     L'ordine e' intenzionale: un confronto o una lettura possono contenere la
     parola "strategia/consiglio", ma restano comportamenti piu' specifici. La
-    domanda fattuale precede la lettura perche' "di cosa parla quel libro" chiede
-    un dato su un'opera, non una nuova raccomandazione.
+    domanda fattuale precede la lettura perche' "di cosa parla quel libro"
+    chiede un dato su un'opera, non una nuova raccomandazione. `referral`
+    precede `factual` perche' "chi e' il referente DSA" e' una richiesta di
+    contatto, non una voce di enciclopedia: il suo pattern e' stretto apposta,
+    cosi' "chi e' Vygotskij" resta a `factual`.
     """
     text = _plain(message)
-    for intent in ("compare", "factual", "reading", "advice", "clarify"):
+    for intent in ("compare", "referral", "factual", "reading", "advice", "clarify"):
         negated = _NEGATED_PATTERNS.get(intent)
         if _PATTERNS[intent].search(text) and not (negated and negated.search(text)):
             return intent

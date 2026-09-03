@@ -81,6 +81,18 @@ def test_negated_behaviour_does_not_activate_the_wrong_skill():
     assert classify("Don't recommend a book; help me understand the result") == "clarify"
 
 
+def test_referral_is_recognised_and_does_not_steal_factual_questions():
+    from backend.skills.intents import classify
+    assert classify("a chi posso rivolgermi per l'ansia?") == "referral"
+    assert classify("c'e' uno sportello di ascolto?") == "referral"
+    assert classify("quando e' l'open day?") == "referral"
+    assert classify("chi e' il referente DSA?") == "referral"
+    assert classify("who can I talk to about this?") == "referral"
+    # Non deve rubare le domande enciclopediche ne' quelle sulle letture.
+    assert classify("chi e' Vygotskij?") == "factual"
+    assert classify("mi consigli una lettura?") == "reading"
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0
