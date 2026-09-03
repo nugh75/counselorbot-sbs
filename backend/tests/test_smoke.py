@@ -35,6 +35,7 @@ from starlette.testclient import TestClient
 from backend import database, models, auth
 import backend.main as main
 import backend.routes.chat as chat_routes
+import backend.routes.idea_map as idea_map_routes
 import backend.routes.survey as survey_routes
 import backend.chat_logic as chat_logic
 from backend.memory_service import session_memory
@@ -3289,6 +3290,186 @@ def test_a_branch_says_whether_the_person_opened_it_or_the_talk_did():
     finally:
         main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
         _set_idea_feature("false")
+
+
+OPENALEX_BRANCH_SEARCH = {"results": [{
+    "title": "Early school leaving in upper secondary education",
+    "publication_year": 2021,
+    "cited_by_count": 12,
+    "doi": "https://doi.org/10.1000/leaving",
+    "authorships": [{"author": {"display_name": "A. Rossi"}}],
+    "primary_location": {"source": {"display_name": "Journal of Education"}},
+    "open_access": {"is_oa": True, "oa_status": "gold"},
+    "abstract_inverted_index": {"Students": [0], "leave": [1], "early": [2]},
+}]}
+
+
+def _seed_idea_branch(session_id: str) -> None:
+    seeded = client.post("/idea/map/patch", json={
+        "session_id": session_id,
+        "source": "turn",
+        "patch": {
+            "title": "Dispersione",
+            "add_nodes": [
+                {"id": "idea", "label": "Tesi sulla dispersione", "role": "idea", "accent": True},
+                {"id": "t1", "label": "Trovare gli studi", "role": "task"},
+            ],
+            "add_edges": [{"from": "idea", "to": "t1", "kind": "link"}],
+        },
+    })
+    assert seeded.status_code == 200, seeded.text
+
+
+def test_idea_sources_are_searched_on_request_and_only_the_chosen_ones_are_kept():
+    """La ricerca propone, non salva: al ramo resta solo cio' che si sceglie."""
+    from backend import idea_sources
+    import backend.web_lookup as web_lookup
+
+    original_get_json = web_lookup._get_json
+    web_lookup._get_json = lambda url: OPENALEX_BRANCH_SEARCH if "openalex" in url else None
+    idea_sources._searches.clear()
+    _set_idea_feature("true")
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    session_id = "idea-sources-flow"
+    try:
+        _seed_idea_branch(session_id)
+
+        found = client.post("/idea/sources/search", json={
+            "session_id": session_id, "query": "early school leaving", "group": "works",
+        })
+        assert found.status_code == 200, found.text
+        results = found.json()["results"]
+        assert [item["title"] for item in results] == [
+            "Early school leaving in upper secondary education"
+        ]
+        # Cercare non scrive niente.
+        assert client.get("/idea/sources", params={"session_id": session_id}).json() == []
+
+        chosen = dict(results[0])
+        chosen["pdf_url"] = ""  # il download del PDF ha un test suo
+        kept = client.post("/idea/sources", json={
+            "session_id": session_id, "branch_id": "t1", "items": [chosen],
+        })
+        assert kept.status_code == 200, kept.text
+        saved = kept.json()["kept"]
+        assert len(saved) == 1 and saved[0]["has_pdf"] is False
+
+        listed = client.get("/idea/sources", params={"session_id": session_id, "branch_id": "t1"})
+        assert [row["url"] for row in listed.json()] == ["https://doi.org/10.1000/leaving"]
+        # Un altro ramo non eredita le fonti di questo.
+        assert client.get("/idea/sources", params={"session_id": session_id, "branch_id": "idea"}).json() == []
+
+        # La stessa voce tenuta due volte non si duplica.
+        again = client.post("/idea/sources", json={
+            "session_id": session_id, "branch_id": "t1", "items": [chosen],
+        })
+        assert again.status_code == 200 and again.json()["kept"] == []
+
+        db = _TestSession()
+        try:
+            block = idea_sources.context_for(db, "student", session_id, "t1")
+        finally:
+            db.close()
+        assert "Early school leaving" in block and "10.1000/leaving" in block
+
+        removed = client.delete(
+            f"/idea/sources/{saved[0]['id']}", params={"session_id": session_id}
+        )
+        assert removed.status_code == 200, removed.text
+        assert client.get("/idea/sources", params={"session_id": session_id}).json() == []
+    finally:
+        web_lookup._get_json = original_get_json
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        _set_idea_feature("false")
+
+
+def test_the_final_pdf_carries_the_sources_that_were_kept():
+    """Il PDF e' il rendiconto del lavoro: senza le fonti non dice su cosa si
+    appoggia, e il link e' l'unica cosa che lo rende verificabile."""
+    from backend import idea_sources
+    import backend.pdf_generator as pdf_generator
+
+    idea_sources._searches.clear()
+    _set_idea_feature("true")
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    session_id = "idea-sources-pdf"
+    seen = {}
+    original_pdf = pdf_generator.generate_idea_map_pdf
+
+    def spy(*args, **kwargs):
+        seen["sources"] = kwargs.get("sources")
+        return original_pdf(*args, **kwargs)
+
+    idea_map_routes.generate_idea_map_pdf = spy
+    try:
+        _seed_idea_branch(session_id)
+        kept = client.post("/idea/sources", json={
+            "session_id": session_id,
+            "branch_id": "t1",
+            "items": [{
+                "source": "openalex",
+                "title": "Early school leaving in upper secondary education",
+                "url": "https://doi.org/10.1000/leaving",
+                "authors": "A. Rossi",
+                "year": "2021",
+                "journal": "Journal of Education",
+            }],
+        })
+        assert kept.status_code == 200, kept.text
+
+        pdf = client.get("/idea/map/pdf", params={"session_id": session_id, "lang": "it"})
+        assert pdf.status_code == 200, pdf.text
+        assert pdf.content.startswith(b"%PDF")
+        assert [row["title"] for row in seen["sources"]] == [
+            "Early school leaving in upper secondary education"
+        ]
+    finally:
+        idea_map_routes.generate_idea_map_pdf = original_pdf
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        _set_idea_feature("false")
+
+
+def test_the_sources_of_a_branch_stay_off_until_the_admin_allows_them():
+    _set_idea_feature("true")
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    db = _TestSession()
+    try:
+        row = db.query(models.Config).filter(models.Config.key == "idea_sources_enabled").first()
+        if row is None:
+            row = models.Config(key="idea_sources_enabled", value="false", description="test")
+            db.add(row)
+        else:
+            row.value = "false"
+        db.commit()
+
+        blocked = client.post("/idea/sources/search", json={
+            "session_id": "idea-sources-off", "query": "qualunque cosa",
+        })
+        assert blocked.status_code == 404, blocked.text
+
+        row.value = "true"
+        db.commit()
+    finally:
+        db.close()
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        _set_idea_feature("false")
+
+
+def test_an_open_access_pdf_is_not_fetched_from_an_address_of_the_internal_network():
+    """Il PDF e' l'unica cosa che esce dalla whitelist: l'URL arriva dal client
+    e non deve poter diventare una richiesta verso la rete interna."""
+    from backend import idea_sources
+
+    assert idea_sources._is_public_host("localhost") is False
+    assert idea_sources._is_public_host("") is False
+
+    db = _TestSession()
+    try:
+        # http, non https: rifiutato prima ancora di risolvere il nome.
+        assert idea_sources._download_pdf(db, "student", "s", 1, "http://example.org/a.pdf") == ""
+        assert idea_sources._download_pdf(db, "student", "s", 1, "https://127.0.0.1/a.pdf") == ""
+    finally:
+        db.close()
 
 
 def test_generic_acknowledgement_is_removed_from_visible_chat_openings():

@@ -993,6 +993,42 @@ class IdeaReference(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class IdeaSource(Base):
+    """Una fonte che lo studente ha deciso di tenere per un ramo dell'idea.
+
+    La ricerca non salva niente: passano solo le voci scelte. Il ramo e' la
+    chiave del lavoro, non la sessione: le fonti di un ramo non devono
+    riempire il contesto di un altro.
+    """
+
+    __tablename__ = "idea_sources"
+    __table_args__ = (
+        UniqueConstraint("username", "session_id", "branch_id", "url",
+                         name="uq_idea_source_owner_branch_url"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, nullable=False, index=True)
+    session_id = Column(String, nullable=False, index=True)
+    branch_id = Column(String, nullable=False, index=True)
+    # wikipedia | treccani | openalex | europepmc
+    source = Column(String, nullable=False)
+    title = Column(String, nullable=False)
+    url = Column(String, nullable=False)
+    doi = Column(String, nullable=True)
+    authors = Column(String, nullable=True)
+    year = Column(String, nullable=True)
+    journal = Column(String, nullable=True)
+    # Abstract per un lavoro, estratto per una voce di enciclopedia.
+    abstract = Column(Text, nullable=True)
+    oa_status = Column(String, nullable=True)
+    # Percorso del PDF ad accesso aperto scaricato, quando c'e'.
+    pdf_path = Column(String, nullable=True)
+    license = Column(String, nullable=True)
+    retrieved_at = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 class ContentLanguageVersion(Base):
     """Stato di certificazione di un contenuto in una lingua.
 

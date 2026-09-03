@@ -988,22 +988,22 @@ def generate_student_booklet_pdf(
 IDEA_PDF_TEXT = {
     "it": {"title": "Mappa dell'idea", "map": "La mappa", "words": "La mappa a parole",
            "history": "Come e' cresciuta", "missing": "Manca ancora", "step": "Tappa",
-           "decisions": "Le decisioni", "closed": "Rami conclusi"},
+           "decisions": "Le decisioni", "closed": "Rami conclusi", "sources": "Le fonti tenute"},
     "en": {"title": "Map of the idea", "map": "The map", "words": "The map in words",
            "history": "How it grew", "missing": "Still missing", "step": "Stage",
-           "decisions": "The decisions", "closed": "Closed branches"},
+           "decisions": "The decisions", "closed": "Closed branches", "sources": "The sources kept"},
     "es": {"title": "Mapa de la idea", "map": "El mapa", "words": "El mapa en palabras",
            "history": "Como ha crecido", "missing": "Todavia falta", "step": "Etapa",
-           "decisions": "Las decisiones", "closed": "Ramas cerradas"},
+           "decisions": "Las decisiones", "closed": "Ramas cerradas", "sources": "Las fuentes guardadas"},
     "fr": {"title": "Carte de l'idee", "map": "La carte", "words": "La carte en mots",
            "history": "Comment elle a grandi", "missing": "Il manque encore", "step": "Etape",
-           "decisions": "Les decisions", "closed": "Branches closes"},
+           "decisions": "Les decisions", "closed": "Branches closes", "sources": "Les sources gardees"},
     "de": {"title": "Karte der Idee", "map": "Die Karte", "words": "Die Karte in Worten",
            "history": "Wie sie gewachsen ist", "missing": "Es fehlt noch", "step": "Etappe",
-           "decisions": "Die Entscheidungen", "closed": "Abgeschlossene Zweige"},
+           "decisions": "Die Entscheidungen", "closed": "Abgeschlossene Zweige", "sources": "Die behaltenen Quellen"},
     "sv": {"title": "Idens karta", "map": "Kartan", "words": "Kartan i ord",
            "history": "Hur den vaxte", "missing": "Det saknas", "step": "Steg",
-           "decisions": "Besluten", "closed": "Avslutade grenar"},
+           "decisions": "Besluten", "closed": "Avslutade grenar", "sources": "Kallorna som sparats"},
 }
 
 
@@ -1015,6 +1015,7 @@ def generate_idea_map_pdf(
     session_id: str | None = None,
     language: str | None = None,
     description: str | None = None,
+    sources: list[dict] | None = None,
 ) -> BytesIO:
     """Mappa finale, la sua descrizione a parole e le tappe che l'hanno fatta.
 
@@ -1078,6 +1079,26 @@ def generate_idea_map_pdf(
             _text_card(
                 pdf,
                 f"{node.label}: {node.conclusion}",
+                content_w,
+                fill=APP_SURFACE,
+                border=APP_BORDER,
+            )
+
+    # Le fonti che la persona ha tenuto: senza di loro il PDF non dice su che
+    # cosa il lavoro si appoggia, e il link e' l'unica cosa che lo rende
+    # verificabile da chi legge.
+    if sources:
+        _section_heading(pdf, text["sources"], content_w)
+        for item in sources:
+            head = " - ".join(part for part in (
+                str(item.get("title") or ""),
+                str(item.get("authors") or ""),
+                str(item.get("year") or ""),
+                str(item.get("journal") or ""),
+            ) if part)
+            _text_card(
+                pdf,
+                f"{head}\n{item.get('url') or ''}",
                 content_w,
                 fill=APP_SURFACE,
                 border=APP_BORDER,
