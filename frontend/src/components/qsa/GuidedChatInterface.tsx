@@ -21,6 +21,7 @@ import { toast } from '@/components/ui/Toast';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
+import { MessageDiagramButton } from '@/components/ui/MessageDiagramButton';
 import { IdeaBranchBar } from '@/components/qsa/IdeaBranchBar';
 import { IdeaBranchIntro } from '@/components/qsa/IdeaBranchIntro';
 import { IdeaWorkspace } from '@/components/qsa/IdeaWorkspace';
@@ -1741,7 +1742,15 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                     </ChatBubble>
 
                                     {msg.role === 'assistant' && msg.content.trim() && (
-                                        <div className="flex items-center gap-1">
+                                        <div className="flex flex-wrap items-center gap-1">
+                                            {!msg.content.includes('```diagram') && (
+                                                <MessageDiagramButton
+                                                    text={diagramContentForSpeech(msg.content) || msg.content}
+                                                    locale={activeLocale}
+                                                    label={t('guided.diagram')}
+                                                    failedLabel={t('guided.diagramFailed')}
+                                                />
+                                            )}
                                             {diagramContentForSpeech(msg.content) && (
                                             <button
                                                 onClick={() => handlePlayTTS(diagramContentForSpeech(msg.content), idx)}

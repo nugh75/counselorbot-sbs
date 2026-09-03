@@ -60,6 +60,9 @@ class FromMessageRequest(BaseModel):
     text: str = Field(min_length=1, max_length=8000)
     theme: str = "light"
     lang: str = "it"
+    # Il disegno chiesto col bottone vive fuori dal messaggio: titolo e legenda
+    # stanno dentro l'immagine, perche' non c'e' una card attorno a fornirli.
+    embed_title: bool = False
 
 
 def feature_enabled(db: Session) -> bool:
@@ -145,7 +148,7 @@ async def diagram_from_message(
         spec,
         theme=request.theme,
         fmt="svg",
-        embed_title=False,
+        embed_title=request.embed_title,
         lang=request.lang,
     )
 
