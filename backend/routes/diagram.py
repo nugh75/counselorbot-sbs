@@ -44,7 +44,18 @@ SPEC_ONLY_SYSTEM_PROMPT = (
     "(A supports B), weakens (A hinders B), feedback (B returns on A and closes the "
     "loop), link (they belong together, no direction). Choose the one the text "
     "actually states. Write every label in the language of the text "
-    "you are given. Keep only what the text actually says. When the text names a factor by code, "
+    "you are given. Keep only what the text actually says. "
+    # L'ordine dei nodi non e' cosmetico: e' l'ordine in cui il disegno compare
+    # sullo schermo, quindi e' l'ordine in cui verra' letto.
+    "Order the nodes as a reading path: put first the one the reader should start from, and let "
+    "each following node follow from what came before, because the drawing appears one node at a "
+    "time in exactly this order. "
+    # `kind` dice gia' la relazione, e il tratto la disegna: ripeterla nell'etichetta
+    # spreca l'unico posto in cui si puo' spiegare qualcosa.
+    "An edge label says WHY the relation holds, never what it is: kind already carries that and the "
+    "stroke already shows it. \"the plan is never written down\" teaches something; \"weakens\" "
+    "repeats the line. Leave the label out when the text gives no reason. "
+    "When the text names a factor by code, "
     "put the code in the label with the words, like \"Perceived competence (A6)\": the drawing "
     "stands on its own here, with no prose beside it to say which node is which."
 )
