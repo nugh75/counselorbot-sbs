@@ -192,40 +192,43 @@ function SharedFields({ form, setForm, institutions, needs }: {
     setForm: (next: Record<string, unknown>) => void;
     institutions: Institution[]; needs: Need[];
 }) {
+    const { t } = useI18n();
     const selectedNeeds = (form.needs as string[]) || [];
     const selectedAudience = (form.audience as string[]) || [];
     return (
         <>
             <label className="block">
+                {/* "slug" è un token tecnico dello schema, uguale in ogni lingua: vedi allowedVisibleText in check-i18n.mjs */}
                 <span className="text-xs uppercase text-slate-500">slug</span>
                 <input value={(form.slug as string) || ''}
                        onChange={(e) => setForm({ ...form, slug: e.target.value })}
                        className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" />
             </label>
             <label className="block">
-                <span className="text-xs uppercase text-slate-500">istituto</span>
+                <span className="text-xs uppercase text-slate-500">{t('admin.referrals.field.institution')}</span>
                 <select value={form.institution_id === null ? '' : String(form.institution_id)}
                         onChange={(e) => setForm({
                             ...form,
                             institution_id: e.target.value ? Number(e.target.value) : null,
                         })}
                         className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm">
-                    <option value="">nazionale</option>
+                    <option value="">{t('admin.referrals.national')}</option>
                     {institutions.map((i) => <option key={i.id} value={String(i.id)}>{i.name}</option>)}
                 </select>
             </label>
             <div>
-                <p className="text-xs uppercase text-slate-500">bisogni</p>
+                <p className="text-xs uppercase text-slate-500">{t('admin.referrals.field.needs')}</p>
                 <Chips values={needs.map((n) => n.code)} selected={selectedNeeds}
                        labelOf={(c) => needs.find((n) => n.code === c)?.label ?? c}
                        onToggle={(c) => setForm({ ...form, needs: toggle(selectedNeeds, c) })} />
             </div>
             <div>
-                <p className="text-xs uppercase text-slate-500">pubblico</p>
+                <p className="text-xs uppercase text-slate-500">{t('admin.referrals.field.audience')}</p>
                 <Chips values={[...AUDIENCES]} selected={selectedAudience} labelOf={(a) => a}
                        onToggle={(a) => setForm({ ...form, audience: toggle(selectedAudience, a) })} />
             </div>
             <div className="flex flex-wrap items-center gap-3">
+                {/* "draft"/"certified" sono i valori letterali dello stato salvati dal backend, uguali in ogni lingua */}
                 <select value={(form.status as string) || 'draft'}
                         onChange={(e) => setForm({ ...form, status: e.target.value })}
                         className="rounded-md border border-slate-300 px-2 py-1 text-sm">
@@ -235,10 +238,10 @@ function SharedFields({ form, setForm, institutions, needs }: {
                 <label className="flex items-center gap-1 text-sm">
                     <input type="checkbox" checked={Boolean(form.is_active)}
                            onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
-                    attiva
+                    {t('admin.referrals.field.active')}
                 </label>
                 <label className="flex items-center gap-1 text-sm">
-                    ordine
+                    {t('admin.referrals.field.order')}
                     <input type="number" value={Number(form.sort_order) || 0}
                            onChange={(e) => setForm({ ...form, sort_order: Number(e.target.value) })}
                            className="w-16 rounded-md border border-slate-300 px-2 py-1 text-sm" />
@@ -261,6 +264,7 @@ function ReferralList({ rows, institutions, needs, institutionName, onSave, onDe
     onSave: (id: number | null, body: unknown) => Promise<boolean>;
     onDelete: (id: number) => void;
 }) {
+    const { t } = useI18n();
     const [editing, setEditing] = useState<number | 'new' | null>(null);
     const [form, setForm] = useState<Record<string, unknown>>(EMPTY_REFERRAL);
 
@@ -277,7 +281,7 @@ function ReferralList({ rows, institutions, needs, institutionName, onSave, onDe
         <div className="space-y-3">
             <button type="button" onClick={() => open()}
                     className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-3 py-1 text-sm text-white">
-                <Plus className="h-4 w-4" /> nuova figura
+                <Plus className="h-4 w-4" /> {t('admin.referrals.newPerson')}
             </button>
 
             {rows.map((row) => (
@@ -288,7 +292,7 @@ function ReferralList({ rows, institutions, needs, institutionName, onSave, onDe
                             {row.role_label_i18n.it || row.role_label_i18n.en || row.slug}
                         </span>
                         <span className="text-xs text-slate-500">{institutionName(row.institution_id)}</span>
-                        <button type="button" onClick={() => open(row)} className="text-xs text-indigo-600">modifica</button>
+                        <button type="button" onClick={() => open(row)} className="text-xs text-indigo-600">{t('admin.referrals.edit')}</button>
                         <button type="button" onClick={() => onDelete(row.id)} className="text-xs text-rose-600">
                             <Trash2 className="h-3 w-3" />
                         </button>
@@ -320,7 +324,7 @@ function ReferralList({ rows, institutions, needs, institutionName, onSave, onDe
                                 value={(form.how_to_reach_i18n as Record<string, string>) || {}}
                                 onChange={(v) => setForm({ ...form, how_to_reach_i18n: v })} />
                     <label className="block">
-                        <span className="text-xs uppercase text-slate-500">persona (facoltativa, solo se già pubblica)</span>
+                        <span className="text-xs uppercase text-slate-500">{t('admin.referrals.field.personName')}</span>
                         <input value={(form.person_name as string) || ''}
                                onChange={(e) => setForm({ ...form, person_name: e.target.value })}
                                className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" />
@@ -335,8 +339,8 @@ function ReferralList({ rows, institutions, needs, institutionName, onSave, onDe
                         ))}
                     </div>
                     <div className="flex gap-2">
-                        <button type="submit" className="rounded-md bg-indigo-600 px-3 py-1 text-sm text-white">salva</button>
-                        <button type="button" onClick={() => setEditing(null)} className="text-sm text-slate-600">annulla</button>
+                        <button type="submit" className="rounded-md bg-indigo-600 px-3 py-1 text-sm text-white">{t('admin.referrals.save')}</button>
+                        <button type="button" onClick={() => setEditing(null)} className="text-sm text-slate-600">{t('admin.referrals.cancel')}</button>
                     </div>
                 </form>
             )}
@@ -356,6 +360,7 @@ function EventList({ rows, institutions, needs, institutionName, onSave, onDelet
     onSave: (id: number | null, body: unknown) => Promise<boolean>;
     onDelete: (id: number) => void;
 }) {
+    const { t } = useI18n();
     const [editing, setEditing] = useState<number | 'new' | null>(null);
     const [form, setForm] = useState<Record<string, unknown>>(EMPTY_EVENT);
 
@@ -374,7 +379,7 @@ function EventList({ rows, institutions, needs, institutionName, onSave, onDelet
         <div className="space-y-3">
             <button type="button" onClick={() => open()}
                     className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-3 py-1 text-sm text-white">
-                <Plus className="h-4 w-4" /> nuovo evento
+                <Plus className="h-4 w-4" /> {t('admin.referrals.newEvent')}
             </button>
 
             {rows.map((row) => (
@@ -387,7 +392,7 @@ function EventList({ rows, institutions, needs, institutionName, onSave, onDelet
                         <span className="text-xs text-slate-500">
                             {row.starts_at.slice(0, 10)} · {institutionName(row.institution_id)}
                         </span>
-                        <button type="button" onClick={() => open(row)} className="text-xs text-indigo-600">modifica</button>
+                        <button type="button" onClick={() => open(row)} className="text-xs text-indigo-600">{t('admin.referrals.edit')}</button>
                         <button type="button" onClick={() => onDelete(row.id)} className="text-xs text-rose-600">
                             <Trash2 className="h-3 w-3" />
                         </button>
@@ -408,7 +413,7 @@ function EventList({ rows, institutions, needs, institutionName, onSave, onDelet
                       }}>
                     <SharedFields form={form} setForm={setForm} institutions={institutions} needs={needs} />
                     <label className="block">
-                        <span className="text-xs uppercase text-slate-500">tipo</span>
+                        <span className="text-xs uppercase text-slate-500">{t('admin.referrals.field.kind')}</span>
                         <select value={(form.kind as string) || 'open-day'}
                                 onChange={(e) => setForm({ ...form, kind: e.target.value })}
                                 className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm">
@@ -430,6 +435,7 @@ function EventList({ rows, institutions, needs, institutionName, onSave, onDelet
                         ))}
                     </div>
                     <div className="grid gap-2 sm:grid-cols-2">
+                        {/* "page_url" è il nome del campo dello schema, uguale in ogni lingua: vedi allowedVisibleText in check-i18n.mjs */}
                         <label className="block">
                             <span className="text-xs uppercase text-slate-500">page_url</span>
                             <input value={(form.page_url as string) || ''}
@@ -437,20 +443,21 @@ function EventList({ rows, institutions, needs, institutionName, onSave, onDelet
                                    className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" />
                         </label>
                         <label className="block">
-                            <span className="text-xs uppercase text-slate-500">luogo</span>
+                            <span className="text-xs uppercase text-slate-500">{t('admin.referrals.field.location')}</span>
                             <input value={(form.location as string) || ''}
                                    onChange={(e) => setForm({ ...form, location: e.target.value })}
                                    className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" />
                         </label>
                     </div>
+                    {/* "online" è il valore booleano dello schema, uguale in ogni lingua: vedi allowedVisibleText in check-i18n.mjs */}
                     <label className="flex items-center gap-1 text-sm">
                         <input type="checkbox" checked={Boolean(form.is_online)}
                                onChange={(e) => setForm({ ...form, is_online: e.target.checked })} />
                         online
                     </label>
                     <div className="flex gap-2">
-                        <button type="submit" className="rounded-md bg-indigo-600 px-3 py-1 text-sm text-white">salva</button>
-                        <button type="button" onClick={() => setEditing(null)} className="text-sm text-slate-600">annulla</button>
+                        <button type="submit" className="rounded-md bg-indigo-600 px-3 py-1 text-sm text-white">{t('admin.referrals.save')}</button>
+                        <button type="button" onClick={() => setEditing(null)} className="text-sm text-slate-600">{t('admin.referrals.cancel')}</button>
                     </div>
                 </form>
             )}
