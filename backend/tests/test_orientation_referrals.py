@@ -385,6 +385,84 @@ def test_the_public_institution_list_exposes_no_internal_fields():
     assert fields == {"id", "slug", "name", "kind", "orientation_page_url", "website_url"}
 
 
+from fastapi import HTTPException
+
+from backend.routes.orientation_referrals import _guard_event, _guard_referral
+
+
+def _guard_raises(fn, row) -> str:
+    try:
+        fn(row)
+    except HTTPException as exc:
+        return str(exc.detail)
+    return ""
+
+
+def test_a_draft_row_is_never_guarded():
+    row = models.OrientationReferral(slug="x", role_label_i18n={}, status="draft")
+    assert _guard_raises(_guard_referral, row) == ""
+
+
+def test_certifying_a_referral_needs_a_need_from_the_vocabulary():
+    row = models.OrientationReferral(
+        slug="x", role_label_i18n={"it": "Sportello"}, needs=[], status="certified",
+        what_for_i18n={"it": "cosa"}, contact_channel={"email": "a@b.test"})
+    assert "bisogno" in _guard_raises(_guard_referral, row)
+
+    row.needs = ["inventato"]
+    assert "vocabolario" in _guard_raises(_guard_referral, row)
+
+
+def test_certifying_a_referral_needs_a_role_a_reason_and_a_channel():
+    base = dict(slug="x", needs=["dsa-bes"], status="certified")
+    no_role = models.OrientationReferral(role_label_i18n={}, **base)
+    assert "ruolo" in _guard_raises(_guard_referral, no_role)
+
+    no_reason = models.OrientationReferral(
+        role_label_i18n={"it": "Referente"}, what_for_i18n={}, **base)
+    assert "puo' chiedere" in _guard_raises(_guard_referral, no_reason)
+
+    no_channel = models.OrientationReferral(
+        role_label_i18n={"it": "Referente"}, what_for_i18n={"it": "cosa"},
+        contact_channel={}, **base)
+    assert "contatto" in _guard_raises(_guard_referral, no_channel)
+
+
+def test_certifying_an_event_needs_a_page_and_an_end():
+    base = dict(slug="e", needs=["scelta-percorso"], status="certified",
+                title_i18n={"it": "Open day"}, starts_at=NOW)
+    no_page = models.OrientationEvent(page_url="", ends_at=NOW + timedelta(hours=2), **base)
+    assert "page_url" in _guard_raises(_guard_event, no_page)
+
+    no_end = models.OrientationEvent(page_url="https://x.test", ends_at=None, **base)
+    assert "fine" in _guard_raises(_guard_event, no_end)
+
+
+def test_an_off_domain_email_is_a_warning_and_not_a_block():
+    from backend.routes.orientation_referrals import warn_off_domain_email
+
+    institution = models.Institution(slug="x", name="Liceo", kind="school",
+                                     website_url="https://liceogalilei.test")
+    row = models.OrientationReferral(
+        slug="x", role_label_i18n={"it": "Sportello"}, needs=["dsa-bes"],
+        what_for_i18n={"it": "cosa"}, status="certified",
+        contact_channel={"email": "sportello@gmail.test"})
+    assert "non e' sul dominio" in warn_off_domain_email(row, institution)
+    # Nessun blocco: la voce si certifica lo stesso.
+    assert _guard_raises(_guard_referral, row) == ""
+
+    row.contact_channel = {"email": "sportello@liceogalilei.test"}
+    assert warn_off_domain_email(row, institution) == ""
+
+
+def test_an_event_cannot_end_before_it_starts():
+    row = models.OrientationEvent(
+        slug="e", needs=["scelta-percorso"], status="certified",
+        title_i18n={"it": "Open day"}, page_url="https://x.test",
+        starts_at=NOW + timedelta(days=2), ends_at=NOW + timedelta(days=1))
+    assert "prima" in _guard_raises(_guard_event, row)
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0
