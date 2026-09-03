@@ -346,6 +346,7 @@ def _seed_and_migrate():
             # Fascia della classe e del piano: filtra le letture certificate per
             # eta' quando lo studente non ha compilato il taccuino.
             ("student_groups", "ADD COLUMN school_level VARCHAR"),
+            ("student_groups", "ADD COLUMN institution_id INTEGER"),
             ("administration_plans", "ADD COLUMN school_level VARCHAR"),
             # Sessione pQBL in corso sul bot Telegram.
             ("telegram_conversation_states", "ADD COLUMN pqbl_state JSON"),

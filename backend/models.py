@@ -884,6 +884,9 @@ class StudentGroup(Base):
     # Fascia della classe: secondaria | universita | adulti. Serve a filtrare le
     # letture certificate quando lo studente non ha compilato il taccuino.
     school_level = Column(String, nullable=True)
+    # Istituto della classe: fallback quando lo studente non lo ha scelto nel
+    # taccuino. Nessuna FK dichiarata, come per le altre relazioni del modulo.
+    institution_id = Column(Integer, index=True, nullable=True)
     owner_username = Column(String, index=True, nullable=False)  # docente/ricercatore
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -1013,5 +1016,103 @@ class ContentLanguageVersion(Base):
     approved_by = Column(String, nullable=True)
     approved_at = Column(DateTime(timezone=True), nullable=True)
     notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class Institution(Base):
+    """Scuola o universita' a cui si agganciano referenti ed eventi.
+
+    Esiste perche' l'URL della pagina di orientamento va scritto una volta
+    sola, e perche' un istituto con dieci classi non va ridichiarato dieci
+    volte. Il testo libero `student_groups.school` non regge il confronto fra
+    «Liceo Galilei» e «L.S. Galilei».
+    """
+
+    __tablename__ = "institutions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    slug = Column(String, unique=True, index=True, nullable=False)
+    name = Column(String, nullable=False)
+    kind = Column(String, nullable=False, default="school")   # school | university
+    website_url = Column(String, nullable=True)
+    orientation_page_url = Column(String, nullable=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class OrientationReferral(Base):
+    """Figura o ufficio a cui uno studente puo' rivolgersi.
+
+    L'identita' primaria e' il RUOLO, non la persona: uno sportello sopravvive
+    a chi lo tiene, e una riga che nomina qualcuno invecchia in un anno.
+    `person_name` resta facoltativo, e solo per figure gia' pubbliche sul sito.
+
+    `contact_channel` accetta il canale istituzionale — email d'ufficio,
+    pagina, orari, stanza. Mai un recapito personale: queste righe raggiungono
+    minorenni e finiscono nel contesto di un modello.
+    """
+
+    __tablename__ = "orientation_referrals"
+
+    id = Column(Integer, primary_key=True, index=True)
+    slug = Column(String, unique=True, index=True, nullable=False)
+    # NULL = riga nazionale, valida per ogni istituto.
+    institution_id = Column(Integer, index=True, nullable=True)
+
+    role_label_i18n = Column(JSON, nullable=False)     # {lang: "Sportello d'ascolto"}
+    person_name = Column(String, nullable=True)
+
+    needs = Column(JSON, nullable=True)                # chiave d'aggancio, obbligatoria
+    audience = Column(JSON, nullable=True)             # ["secondaria", ...]
+    questionnaire_types = Column(JSON, nullable=True)  # opzionale
+
+    contact_channel = Column(JSON, nullable=True)      # {email, page_url, hours, location}
+    what_for_i18n = Column(JSON, nullable=True)        # cosa puoi chiedere, una frase
+    how_to_reach_i18n = Column(JSON, nullable=True)
+
+    source_reference = Column(Text, nullable=True)
+    certified_by = Column(String, nullable=True)
+    status = Column(String, nullable=False, default="draft")   # draft | certified
+    is_active = Column(Boolean, nullable=False, default=True)
+    sort_order = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class OrientationEvent(Base):
+    """Appuntamento o scadenza di orientamento.
+
+    Differenza sostanziale rispetto a letture e strategie: **scade**. Il
+    retrieval filtra su `ends_at`, quindi un open day passato sparisce senza
+    che nessuno lo cancelli, e il catalogo non chiede manutenzione periodica.
+    """
+
+    __tablename__ = "orientation_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    slug = Column(String, unique=True, index=True, nullable=False)
+    institution_id = Column(Integer, index=True, nullable=True)
+
+    # open-day | workshop | sportello | fiera | scadenza | webinar
+    kind = Column(String, nullable=False, default="open-day")
+    title_i18n = Column(JSON, nullable=False)
+    summary_i18n = Column(JSON, nullable=True)
+
+    starts_at = Column(DateTime(timezone=True), nullable=False)
+    ends_at = Column(DateTime(timezone=True), nullable=False)
+    registration_deadline = Column(DateTime(timezone=True), nullable=True)
+
+    page_url = Column(String, nullable=True)
+    location = Column(String, nullable=True)
+    is_online = Column(Boolean, nullable=False, default=False)
+
+    needs = Column(JSON, nullable=True)
+    audience = Column(JSON, nullable=True)
+
+    status = Column(String, nullable=False, default="draft")
+    is_active = Column(Boolean, nullable=False, default=True)
+    sort_order = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
