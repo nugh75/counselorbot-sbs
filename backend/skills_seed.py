@@ -320,6 +320,9 @@ SKILL_SEEDS = [
         "sort_order": 20,
         "is_active": True,
         "bind": True,
+        # Idea si appoggia alle stesse fonti degli altri strumenti: la mappa
+        # non toglie il catalogo, aggiunge il ragionamento.
+        "bind_instruments": ENGINE_INSTRUMENTS,
     },
     {
         "slug": "profile-comparison",
@@ -354,6 +357,9 @@ SKILL_SEEDS = [
         "sort_order": 60,
         "is_active": True,
         "bind": True,
+        # Idea si appoggia alle stesse fonti degli altri strumenti: la mappa
+        # non toglie le fonti pubbliche, aggiunge il ragionamento.
+        "bind_instruments": ENGINE_INSTRUMENTS,
     },
     {
         "slug": "concept-diagram",
