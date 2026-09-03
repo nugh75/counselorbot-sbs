@@ -1246,6 +1246,7 @@ class StudentGroupCreate(BaseModel):
     code: Optional[str] = None
     school: Optional[str] = None
     school_level: Optional[str] = None
+    institution_id: Optional[int] = None
 
 
 class StudentGroupUpdate(BaseModel):
@@ -1253,6 +1254,7 @@ class StudentGroupUpdate(BaseModel):
     is_active: Optional[bool] = None
     school: Optional[str] = None
     school_level: Optional[str] = None
+    institution_id: Optional[int] = None
 
 
 class GroupShareCreate(BaseModel):
