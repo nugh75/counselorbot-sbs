@@ -87,6 +87,22 @@ const REPLAY_LABELS: Record<Lang, string> = {
     sv: 'Spela upp diagrammet igen',
 };
 
+type StepAction = 'back' | 'forward';
+
+const STEP_LABELS: Record<Lang, Record<StepAction, string>> = {
+    it: { back: 'Un passo indietro', forward: 'Un passo avanti' },
+    en: { back: 'One step back', forward: 'One step forward' },
+    es: { back: 'Un paso atrás', forward: 'Un paso adelante' },
+    fr: { back: 'Un pas en arrière', forward: 'Un pas en avant' },
+    de: { back: 'Einen Schritt zurück', forward: 'Einen Schritt vor' },
+    sv: { back: 'Ett steg tillbaka', forward: 'Ett steg framåt' },
+};
+
+export function diagramStepLabel(action: StepAction, lang: string): string {
+    const dict = STEP_LABELS[(lang || 'it').slice(0, 2) as Lang] ?? STEP_LABELS.en;
+    return dict[action];
+}
+
 export function diagramReplayLabel(lang: string): string {
     return REPLAY_LABELS[(lang || 'it').slice(0, 2) as Lang] ?? REPLAY_LABELS.en;
 }

@@ -51,7 +51,8 @@ function edgeStep(edge: DiagramEdge | undefined, nodeOrder: Map<string, number>)
     return Math.max(nodeOrder.get(edge.from) ?? 0, nodeOrder.get(edge.to) ?? 0) + 0.5;
 }
 
-export function tagDiagramSvg(root: Element, spec: DiagramSpec) {
+/** Classifica il disegno e ritorna quanti turni servono a mostrarlo tutto. */
+export function tagDiagramSvg(root: Element, spec: DiagramSpec): number {
     const nodeOrder = new Map(spec.nodes.map((node, index) => [node.id, index]));
     const accents = new Set(spec.nodes.filter((node) => node.accent).map((node) => node.id));
     const edges = spec.edges ?? [];
@@ -95,7 +96,36 @@ export function tagDiagramSvg(root: Element, spec: DiagramSpec) {
     // quanti nodi ci sono.
     const ordered = [...new Set(steps.map((entry) => entry.step))].sort((a, b) => a - b);
     for (const { element, step } of steps) {
-        element.setAttribute('style', `--dg-step:${ordered.indexOf(step)}`);
+        const turn = ordered.indexOf(step);
+        element.setAttribute('data-dg-step', String(turn));
+        // La lunghezza del tratto serve al disegno che si traccia: senza, l'arco
+        // puo' solo comparire, non essere percorso da un capo all'altro.
+        const length = edgeLength(element);
+        element.setAttribute('style', `--dg-step:${turn}${length ? `;--dg-len:${length}` : ''}`);
+    }
+    return ordered.length;
+}
+
+function edgeLength(element: Element): number | null {
+    if (!element.classList.contains('dg-edge')) return null;
+    const path = element.querySelector('path');
+    if (!path || typeof (path as SVGPathElement).getTotalLength !== 'function') return null;
+    try {
+        const length = Math.ceil((path as SVGPathElement).getTotalLength());
+        return Number.isFinite(length) && length > 0 ? length : null;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Mostra il disegno fino a un certo turno: e' il passo-passo, quando lo
+ * studente lo percorre a mano invece di guardarlo scorrere.
+ */
+export function revealUpTo(root: Element, step: number | null) {
+    for (const element of Array.from(root.querySelectorAll('[data-dg-step]'))) {
+        const turn = Number(element.getAttribute('data-dg-step') ?? 0);
+        element.classList.toggle('dg-hidden', step !== null && turn > step);
     }
 }
 

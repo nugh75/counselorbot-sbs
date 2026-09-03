@@ -591,25 +591,25 @@ h1.text-3xl {
 .dark .text-fuchsia-900, .dark .text-fuchsia-800, .dark .text-fuchsia-700 { color: #f0abfc; }
 .dark .text-yellow-900, .dark .text-yellow-800, .dark .text-yellow-700 { color: #fcd34d; }
 
-/* ---- Diagrammi inline: comparsa, messa a fuoco, anelli di retroazione ----
-   Il disegno arriva come SVG nel DOM (non piu' dentro un <img>), quindi ogni
-   nodo e ogni arco sono raggiungibili. `--dg-step` lo assegna `tagDiagramSvg`:
-   e' il turno in cui quel pezzo entra.
-
-   Le animazioni stanno sotto `.dg-play`, che il componente toglie e rimette:
-   una comparsa che si vede una volta sola e' una comparsa che, quando l'utente
-   guarda il disegno, e' gia' finita. Il tasto "rivedi" la rimette in moto. */
+/* ---- Diagrammi inline: comparsa, passo-passo, messa a fuoco ----
+   Il disegno arriva come SVG nel DOM (non dentro un <img>), quindi ogni nodo e
+   ogni arco sono raggiungibili. `dg-svg` sta sul div contenitore, `dg-play` e
+   `dg-focusing` sull'<svg>: non chiederle mai sullo stesso elemento.
+   `--dg-step` e `data-dg-step` li assegna `tagDiagramSvg`: sono il turno in cui
+   quel pezzo entra. */
 
 .dg-play .dg-node,
 .dg-play .dg-edge,
 .dg-play .dg-chip {
-    animation: dg-enter 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
-    animation-delay: calc(var(--dg-step, 0) * 190ms);
+    /* `backwards` e non `both`: un'animazione che riempie in avanti blocca
+       l'opacita' sul valore finale e batte la cascata, quindi la messa a fuoco
+       non riusciva piu' a sbiadire nulla. */
+    animation: dg-enter 620ms cubic-bezier(0.34, 1.4, 0.5, 1) backwards;
+    animation-delay: calc(var(--dg-step, 0) * 420ms);
 }
 
-/* Non solo opacita': un pezzo che entra si vede entrare. */
 @keyframes dg-enter {
-    from { opacity: 0; transform: translateY(6px) scale(0.985); }
+    from { opacity: 0; transform: translateY(10px) scale(0.9); }
     to { opacity: 1; transform: none; }
 }
 
@@ -620,33 +620,62 @@ h1.text-3xl {
     transform-origin: center;
 }
 
-/* Il nodo su cui si puo' agire e' uno solo: si fa trovare. Tre battiti, non
-   uno: uno solo passa inosservato. */
+/* L'arco si traccia da un capo all'altro: il collegamento si vede nascere,
+   invece di essere gia' li'. `--dg-len` e' la lunghezza vera del tratto,
+   misurata nel browser. */
+.dg-play .dg-edge:not(.dg-kind-feedback) path {
+    stroke-dasharray: var(--dg-len, 0);
+    animation: dg-draw 700ms ease-out backwards;
+    animation-delay: calc(var(--dg-step, 0) * 420ms);
+}
+
+@keyframes dg-draw {
+    from { stroke-dashoffset: var(--dg-len, 0); }
+    to { stroke-dashoffset: 0; }
+}
+
+/* La punta arriva quando il tratto e' arrivato. */
+.dg-play .dg-edge polygon {
+    animation: dg-tip 260ms ease-out backwards;
+    animation-delay: calc(var(--dg-step, 0) * 420ms + 520ms);
+}
+
+@keyframes dg-tip {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Il nodo su cui si puo' agire e' uno solo: si fa trovare, tre battiti. */
 .dg-play .dg-accent > path,
 .dg-play .dg-accent > polygon,
 .dg-play .dg-accent > ellipse {
-    animation: dg-accent 900ms ease-in-out 3;
-    animation-delay: calc(var(--dg-step, 0) * 190ms + 460ms);
+    animation: dg-accent 900ms ease-in-out 3 backwards;
+    animation-delay: calc(var(--dg-step, 0) * 420ms + 620ms);
     transform-box: fill-box;
     transform-origin: center;
 }
 
 @keyframes dg-accent {
     0%, 100% { transform: scale(1); }
-    45% { transform: scale(1.05); }
+    45% { transform: scale(1.06); }
 }
 
 /* La retroazione e' l'arco che nessuno legge a colpo d'occhio: B torna su A.
-   Il tratteggio che scorre lo dice senza parole, e continua: e' l'unico che
-   deve restare leggibile anche arrivando a disegno gia' fatto. Gli altri tipi
-   restano fermi, animare tutto sarebbe decorazione. */
+   Il tratteggio che scorre lo dice senza parole, poi si ferma: un pezzo che
+   lampeggia per sempre su un disegno fermo e' rumore. */
 .dg-play .dg-kind-feedback path {
     animation: dg-flow 1.6s linear 4;
-    animation-delay: calc(var(--dg-step, 0) * 190ms);
+    animation-delay: calc(var(--dg-step, 0) * 420ms);
 }
 
 @keyframes dg-flow {
     to { stroke-dashoffset: -16; }
+}
+
+/* Passo-passo: cio' che non e' ancora il suo turno non c'e'. */
+.dg-svg .dg-hidden {
+    opacity: 0;
+    transition: opacity 260ms ease-out;
 }
 
 /* Messa a fuoco: sfiorando un nodo restano lui e i suoi collegamenti. */
@@ -655,7 +684,7 @@ h1.text-3xl {
 .dg-focusing .dg-node,
 .dg-focusing .dg-edge,
 .dg-focusing .dg-chip {
-    opacity: 0.15;
+    opacity: 0.12;
     transition: opacity 160ms ease-out;
 }
 
@@ -676,12 +705,14 @@ h1.text-3xl {
     .dg-svg .dg-node,
     .dg-svg .dg-edge,
     .dg-svg .dg-chip,
+    .dg-svg .dg-edge path,
+    .dg-svg .dg-edge polygon,
     .dg-svg .dg-accent > path,
     .dg-svg .dg-accent > polygon,
-    .dg-svg .dg-accent > ellipse,
-    .dg-svg .dg-kind-feedback path {
+    .dg-svg .dg-accent > ellipse {
         animation: none;
         opacity: 1;
         transform: none;
+        stroke-dasharray: none;
     }
 }

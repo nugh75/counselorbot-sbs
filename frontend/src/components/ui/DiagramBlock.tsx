@@ -1,12 +1,12 @@
 'use client';
 
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { GitBranch, Loader2, Maximize2, RotateCcw, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, GitBranch, Loader2, Maximize2, RotateCcw, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { completeDiagramEdges, diagramEdgeKinds, type DiagramEdgeKind, type DiagramSpec } from '@/lib/diagram-content';
-import { diagramFullscreenLabel, diagramReplayLabel, diagramZoomLabel, edgeKindLabel } from '@/lib/i18n-diagram';
-import { focusDiagramNode, sanitizeSvgMarkup, tagDiagramSvg } from '@/lib/diagram-svg';
+import { diagramFullscreenLabel, diagramReplayLabel, diagramStepLabel, diagramZoomLabel, edgeKindLabel } from '@/lib/i18n-diagram';
+import { focusDiagramNode, revealUpTo, sanitizeSvgMarkup, tagDiagramSvg } from '@/lib/diagram-svg';
 import { useDarkMode } from '@/lib/use-dark-mode';
 import { Tooltip } from '@/components/ui/Tooltip';
 
@@ -97,6 +97,56 @@ function usePanning(ref: React.RefObject<HTMLDivElement | null>, enabled: boolea
 // disegno rientra in schermi stretti, sopra 1 il contenitore scorre invece di
 // rimpicciolire il testo.
 const ZOOM_STEPS = [0.25, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
+
+function StepControls({
+    step,
+    turns,
+    setStep,
+    locale,
+    size,
+}: {
+    step: number | null;
+    turns: number;
+    setStep: (value: number | null) => void;
+    locale: string;
+    size: 'sm' | 'lg';
+}) {
+    if (turns < 2) return null;
+    const box = size === 'lg' ? 'h-10 w-10' : 'h-8 w-8';
+    const icon = size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
+    const button = `inline-flex ${box} shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white hover:text-[#17747a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17747a] focus-visible:ring-offset-2 disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-500`;
+    // Fuori dal passo-passo il disegno e' intero: indietro parte dalla fine.
+    const current = step ?? turns - 1;
+    return (
+        <>
+            <Tooltip content={diagramStepLabel('back', locale)}>
+                <button
+                    type="button"
+                    onClick={() => setStep(Math.max(0, current - 1))}
+                    disabled={step !== null && step <= 0}
+                    aria-label={diagramStepLabel('back', locale)}
+                    className={button}
+                >
+                    <ChevronLeft className={icon} aria-hidden="true" />
+                </button>
+            </Tooltip>
+            <span className="px-0.5 text-2xs font-semibold tabular-nums text-slate-500" aria-live="polite">
+                {current + 1}/{turns}
+            </span>
+            <Tooltip content={diagramStepLabel('forward', locale)}>
+                <button
+                    type="button"
+                    onClick={() => setStep(current + 1 >= turns - 1 ? null : current + 1)}
+                    disabled={step === null}
+                    aria-label={diagramStepLabel('forward', locale)}
+                    className={button}
+                >
+                    <ChevronRight className={icon} aria-hidden="true" />
+                </button>
+            </Tooltip>
+        </>
+    );
+}
 
 function ReplayButton({ onClick, locale, size }: { onClick: () => void; locale: string; size: 'sm' | 'lg' }) {
     const label = diagramReplayLabel(locale);
@@ -192,6 +242,8 @@ function DiagramSurface({
     description,
     maxHeight,
     play,
+    step,
+    onTurns,
 }: {
     markup: string;
     spec: DiagramSpec;
@@ -199,6 +251,8 @@ function DiagramSurface({
     description: string;
     maxHeight: string;
     play: number;
+    step: number | null;
+    onTurns: (turns: number) => void;
 }) {
     const hostRef = useRef<HTMLDivElement>(null);
 
@@ -207,14 +261,15 @@ function DiagramSurface({
         if (!svg) return;
         svg.setAttribute('role', 'img');
         svg.setAttribute('aria-label', description);
-        tagDiagramSvg(svg, spec);
+        onTurns(tagDiagramSvg(svg, spec));
 
         const host = svg;
         // Rimettere la classe non basta: senza una lettura forzata il browser
         // raggruppa le due modifiche e l'animazione non riparte.
         host.classList.remove('dg-play');
         void (host as unknown as HTMLElement).getBoundingClientRect();
-        host.classList.add('dg-play');
+        if (step === null) host.classList.add('dg-play');
+        revealUpTo(host, step);
 
         const over = (event: Event) => {
             const node = (event.target as Element | null)?.closest?.('.dg-node');
@@ -227,7 +282,7 @@ function DiagramSurface({
             host.removeEventListener('pointerover', over);
             host.removeEventListener('pointerleave', out);
         };
-    }, [markup, spec, description, play]);
+    }, [markup, spec, description, play, step, onTurns]);
 
     return (
         <div
@@ -248,6 +303,11 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [zoom, setZoom] = useState(1);
     const [play, setPlay] = useState(0);
+    // `null` = disegno intero; un numero = fermo a quel turno del passo-passo.
+    const [step, setStep] = useState<number | null>(null);
+    const [turns, setTurns] = useState(0);
+    const replay = useCallback(() => { setStep(null); setPlay((value) => value + 1); }, []);
+    const onTurns = useCallback((value: number) => setTurns(value), []);
     const cardScrollRef = useRef<HTMLDivElement>(null);
     const fullScrollRef = useRef<HTMLDivElement>(null);
     const cardPan = usePanning(cardScrollRef, zoom > 1);
@@ -330,7 +390,8 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                 </span>
                 {markup ? (
                     <span className="flex shrink-0 items-center gap-0.5">
-                        <ReplayButton onClick={() => setPlay((value) => value + 1)} locale={locale} size="sm" />
+                        <StepControls step={step} turns={turns} setStep={setStep} locale={locale} size="sm" />
+                        <ReplayButton onClick={replay} locale={locale} size="sm" />
                         <ZoomControls zoom={zoom} setZoom={setZoom} locale={locale} size="sm" />
                         <Tooltip content={openFullscreenLabel}>
                             <button
@@ -353,7 +414,7 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                     className={`flex w-full min-w-0 max-w-full justify-center overflow-auto p-3 ${cardPan.cursor}`}
                 >
                     {/* A misura naturale il diagramma sta dentro la card; ingrandito la card scorre. */}
-                    <DiagramSurface markup={markup} spec={spec} zoom={zoom} description={description} maxHeight="26rem" play={play} />
+                    <DiagramSurface markup={markup} spec={spec} zoom={zoom} description={description} maxHeight="26rem" play={play} step={step} onTurns={onTurns} />
                 </div>
             ) : failed ? (
                 <ol className="grid gap-2 p-3 sm:grid-cols-2" aria-label={spec.title}>
@@ -393,7 +454,8 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                                 <span className="truncate">{spec.title}</span>
                             </span>
                             <span className="flex shrink-0 items-center gap-0.5">
-                            <ReplayButton onClick={() => setPlay((value) => value + 1)} locale={locale} size="lg" />
+                            <StepControls step={step} turns={turns} setStep={setStep} locale={locale} size="lg" />
+                            <ReplayButton onClick={replay} locale={locale} size="lg" />
                             <ZoomControls zoom={zoom} setZoom={setZoom} locale={locale} size="lg" />
                             <button
                                 ref={closeButtonRef}
@@ -412,7 +474,7 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                             onPointerDown={fullPan.onPointerDown}
                             className={`flex min-h-0 flex-1 items-center justify-center overflow-auto p-3 sm:p-6 ${fullPan.cursor}`}
                         >
-                            <DiagramSurface markup={markup} spec={spec} zoom={zoom} description={description} maxHeight="100%" play={play} />
+                            <DiagramSurface markup={markup} spec={spec} zoom={zoom} description={description} maxHeight="100%" play={play} step={step} onTurns={onTurns} />
                         </div>
                         <DiagramLegend kinds={legendKinds} locale={locale} />
                     </section>
