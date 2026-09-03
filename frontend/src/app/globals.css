@@ -600,9 +600,9 @@ h1.text-3xl {
    una comparsa che si vede una volta sola e' una comparsa che, quando l'utente
    guarda il disegno, e' gia' finita. Il tasto "rivedi" la rimette in moto. */
 
-.dg-svg.dg-play .dg-node,
-.dg-svg.dg-play .dg-edge,
-.dg-svg.dg-play .dg-chip {
+.dg-play .dg-node,
+.dg-play .dg-edge,
+.dg-play .dg-chip {
     animation: dg-enter 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
     animation-delay: calc(var(--dg-step, 0) * 190ms);
 }
@@ -622,9 +622,9 @@ h1.text-3xl {
 
 /* Il nodo su cui si puo' agire e' uno solo: si fa trovare. Tre battiti, non
    uno: uno solo passa inosservato. */
-.dg-svg.dg-play .dg-accent > path,
-.dg-svg.dg-play .dg-accent > polygon,
-.dg-svg.dg-play .dg-accent > ellipse {
+.dg-play .dg-accent > path,
+.dg-play .dg-accent > polygon,
+.dg-play .dg-accent > ellipse {
     animation: dg-accent 900ms ease-in-out 3;
     animation-delay: calc(var(--dg-step, 0) * 190ms + 460ms);
     transform-box: fill-box;
@@ -640,8 +640,9 @@ h1.text-3xl {
    Il tratteggio che scorre lo dice senza parole, e continua: e' l'unico che
    deve restare leggibile anche arrivando a disegno gia' fatto. Gli altri tipi
    restano fermi, animare tutto sarebbe decorazione. */
-.dg-svg .dg-kind-feedback path {
-    animation: dg-flow 1.6s linear infinite;
+.dg-play .dg-kind-feedback path {
+    animation: dg-flow 1.6s linear 4;
+    animation-delay: calc(var(--dg-step, 0) * 190ms);
 }
 
 @keyframes dg-flow {
@@ -651,14 +652,14 @@ h1.text-3xl {
 /* Messa a fuoco: sfiorando un nodo restano lui e i suoi collegamenti. */
 .dg-svg .dg-node { cursor: pointer; }
 
-.dg-svg.dg-focusing .dg-node,
-.dg-svg.dg-focusing .dg-edge,
-.dg-svg.dg-focusing .dg-chip {
+.dg-focusing .dg-node,
+.dg-focusing .dg-edge,
+.dg-focusing .dg-chip {
     opacity: 0.15;
     transition: opacity 160ms ease-out;
 }
 
-.dg-svg.dg-focusing .dg-related {
+.dg-focusing .dg-related {
     opacity: 1;
 }
 
