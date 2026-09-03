@@ -72,6 +72,28 @@ def test_the_budget_holds_the_contracts_actually_shipped():
     )
 
 
+def test_the_budget_holds_the_map_contract_next_to_the_sources():
+    from backend.skills_seed import (
+        IDEA_FOCUS_INSTRUCTIONS_EN,
+        READING_GUIDE_INSTRUCTIONS_EN,
+        WEB_LOOKUP_INSTRUCTIONS_EN,
+    )
+
+    # Su Idea la mappa e' `always`: prende il budget per prima, e a 4500 le
+    # fonti pubbliche e il catalogo restavano fuori in silenzio. Il tetto deve
+    # reggere le tre direttive piu' il materiale che portano con se'.
+    contracts = (
+        len(IDEA_FOCUS_INSTRUCTIONS_EN)
+        + len(READING_GUIDE_INSTRUCTIONS_EN)
+        + len(WEB_LOOKUP_INSTRUCTIONS_EN)
+    )
+    material = 700 + 900  # estratto di web-lookup, poi le letture del catalogo
+    assert contracts + material < DEFAULT_TOTAL_MAX_CHARS, (
+        f"contratti e materiale fanno {contracts + material} "
+        f"contro un budget di {DEFAULT_TOTAL_MAX_CHARS}"
+    )
+
+
 if __name__ == "__main__":
     import sys
 
