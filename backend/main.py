@@ -698,6 +698,7 @@ def _seed_and_migrate():
                 apply_certified_advice_policy,
                 apply_diagram_edge_kinds_policy,
                 apply_diagram_icons_policy,
+                apply_diagram_node_mapping_policy,
                 apply_english_skill_instructions_policy,
                 apply_idea_focus_policy,
                 apply_idea_concept_policy,
@@ -716,13 +717,14 @@ def _seed_and_migrate():
             english_changed = apply_english_skill_instructions_policy(db)
             diagram_changed = apply_diagram_edge_kinds_policy(db)
             diagram_icons_changed = apply_diagram_icons_policy(db)
+            diagram_mapping_changed = apply_diagram_node_mapping_policy(db)
             idea_changed = apply_idea_focus_policy(db)
             idea_concept_changed = apply_idea_concept_policy(db)
             wayfinder_changed = apply_idea_wayfinder_policy(db)
             budget_changed = apply_skills_budget_policy(db)
             if (configs_changed or skills_changed or policy_changed or specialized_changed
                     or i18n_changed or english_changed or diagram_changed
-                    or diagram_icons_changed or idea_changed or idea_concept_changed or wayfinder_changed
+                    or diagram_icons_changed or diagram_mapping_changed or idea_changed or idea_concept_changed or wayfinder_changed
                     or budget_changed):
                 logger.info("Seed skill completato")
         except Exception as e:

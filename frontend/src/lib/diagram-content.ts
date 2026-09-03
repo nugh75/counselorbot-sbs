@@ -55,21 +55,26 @@ function isDiagramSpec(value: unknown): value is DiagramSpec {
     return true;
 }
 
+// Uno spec puo' arrivare dal testo di un messaggio o dalla risposta di
+// `/diagram/from-message`: la validazione e' la stessa, cambia solo l'involucro.
+export function parseDiagramSpec(value: unknown): DiagramSpec | null {
+    if (!isDiagramSpec(value)) return null;
+    return {
+        ...value,
+        // Un nome icona inventato non deve rompere il diagramma: il backend
+        // applica la stessa allowlist e il nodo resta leggibile senza icona.
+        nodes: value.nodes.map((node) => ({
+            ...node,
+            icon: typeof node.icon === 'string' && DIAGRAM_ICON_SET.has(node.icon)
+                ? node.icon as DiagramIcon
+                : undefined,
+        })),
+    };
+}
+
 function parseDiagramJson(raw: string): DiagramSpec | null {
     try {
-        const value: unknown = JSON.parse(raw);
-        if (!isDiagramSpec(value)) return null;
-        return {
-            ...value,
-            // Un nome icona inventato non deve rompere il diagramma: il backend
-            // applica la stessa allowlist e il nodo resta leggibile senza icona.
-            nodes: value.nodes.map((node) => ({
-                ...node,
-                icon: typeof node.icon === 'string' && DIAGRAM_ICON_SET.has(node.icon)
-                    ? node.icon as DiagramIcon
-                    : undefined,
-            })),
-        };
+        return parseDiagramSpec(JSON.parse(raw));
     } catch {
         return null;
     }
