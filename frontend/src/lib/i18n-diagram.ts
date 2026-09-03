@@ -67,6 +67,22 @@ const FULLSCREEN_LABELS: Record<Lang, Record<FullscreenAction, string>> = {
     sv: { open: 'Öppna diagrammet i helskärmsläge', close: 'Stäng helskärmsläget' },
 };
 
+type ZoomAction = 'in' | 'out' | 'reset';
+
+const ZOOM_LABELS: Record<Lang, Record<ZoomAction, string>> = {
+    it: { in: 'Ingrandisci', out: 'Rimpicciolisci', reset: 'Torna alla dimensione originale' },
+    en: { in: 'Zoom in', out: 'Zoom out', reset: 'Reset to original size' },
+    es: { in: 'Ampliar', out: 'Reducir', reset: 'Volver al tamaño original' },
+    fr: { in: 'Agrandir', out: 'Réduire', reset: 'Revenir à la taille initiale' },
+    de: { in: 'Vergrößern', out: 'Verkleinern', reset: 'Originalgröße wiederherstellen' },
+    sv: { in: 'Förstora', out: 'Förminska', reset: 'Återställ ursprunglig storlek' },
+};
+
+export function diagramZoomLabel(action: ZoomAction, lang: string): string {
+    const dict = ZOOM_LABELS[(lang || 'it').slice(0, 2) as Lang] ?? ZOOM_LABELS.en;
+    return dict[action];
+}
+
 export function edgeKindLabel(kind: DiagramEdgeKind, lang: string): string {
     const dict = EDGE_KIND_DICTS[(lang || 'it').slice(0, 2) as Lang] ?? en;
     return dict[kind];
