@@ -90,7 +90,8 @@ _PATTERNS = {
     # enciclopedica e deve restare a `factual`.
     "referral": re.compile(
         r"\b(?:sportello|referente|tutor\b|orientatore|orientatrice|"
-        r"psicolog|counsell?or\s+scolastic|segreteria|ufficio\s+\w+|"
+        r"psicolog[oa]\b|counsell?or\s+scolastic|segreteria|"
+        r"ufficio\s+(?:orientamento|placement|stage|tirocini|studenti|relazioni|didattica)|"
         r"open\s?day|porte\s+aperte|help\s?desk|career\s+service|"
         r"student\s+(?:services|support)|welcome\s+desk|"
         r"a\s+chi\s+(?:mi\s+)?(?:posso\s+)?(?:rivolg|chied|parl)|"
