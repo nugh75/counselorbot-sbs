@@ -196,7 +196,21 @@ class OrientationReferralMemory:
                 if entry["page_url"]:
                     lines.append(f"    {label['page']}: {entry['page_url']}")
 
-        return "\n".join(lines)[:MAX_REFERRAL_CONTEXT_CHARS]
+        # Un recapito troncato e' un recapito sbagliato: si taglia per riga
+        # intera, mai a meta' carattere, cosi' un URL o una email non arriva
+        # spezzata a meta'.
+        text = "\n".join(lines)
+        if len(text) <= MAX_REFERRAL_CONTEXT_CHARS:
+            return text
+        kept: list[str] = []
+        total = 0
+        for line in lines:
+            added = len(line) + (1 if kept else 0)  # newline di giunzione
+            if total + added > MAX_REFERRAL_CONTEXT_CHARS:
+                break
+            kept.append(line)
+            total += added
+        return "\n".join(kept)
 
 
 orientation_referral_memory = OrientationReferralMemory()
