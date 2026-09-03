@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, GitBranch, Loader2, Maximize2, RotateCcw, SkipBack, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { completeDiagramEdges, diagramEdgeKinds, type DiagramEdgeKind, type DiagramSpec } from '@/lib/diagram-content';
 import { diagramFullscreenLabel, diagramReplayLabel, diagramStepLabel, diagramZoomLabel, edgeKindLabel } from '@/lib/i18n-diagram';
-import { focusDiagramNode, revealUpTo, sanitizeSvgMarkup, tagDiagramSvg } from '@/lib/diagram-svg';
+import { focusDiagramNode, revealUpTo, sanitizeSvgMarkup, tagDiagramSvg, walkStep } from '@/lib/diagram-svg';
 import { useDarkMode } from '@/lib/use-dark-mode';
 import { Tooltip } from '@/components/ui/Tooltip';
 
@@ -115,7 +115,6 @@ function StepControls({
     const box = size === 'lg' ? 'h-10 w-10' : 'h-8 w-8';
     const icon = size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
     const button = `inline-flex ${box} shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white hover:text-[#17747a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17747a] focus-visible:ring-offset-2 disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-500`;
-    // Fuori dal passo-passo il disegno e' intero: indietro parte dalla fine.
     const current = step ?? turns - 1;
     return (
         <>
@@ -133,8 +132,8 @@ function StepControls({
             <Tooltip content={diagramStepLabel('back', locale)}>
                 <button
                     type="button"
-                    onClick={() => setStep(Math.max(0, current - 1))}
-                    disabled={step !== null && step <= 0}
+                    onClick={() => setStep(walkStep(step, turns, 'back'))}
+                    disabled={step === 0}
                     aria-label={diagramStepLabel('back', locale)}
                     className={button}
                 >
@@ -147,8 +146,7 @@ function StepControls({
             <Tooltip content={diagramStepLabel('forward', locale)}>
                 <button
                     type="button"
-                    onClick={() => setStep(current + 1 >= turns - 1 ? null : current + 1)}
-                    disabled={step === null}
+                    onClick={() => setStep(walkStep(step, turns, 'forward'))}
                     aria-label={diagramStepLabel('forward', locale)}
                     className={button}
                 >

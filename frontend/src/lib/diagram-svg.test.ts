@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { walkStep } from './diagram-svg.ts';
+
 // Le classi del diagramma vivono su due elementi diversi: `dg-svg` sul div che
 // contiene il disegno, `dg-play` e `dg-focusing` sull'<svg> dentro di esso.
 // Un selettore che le chiede insieme non trova mai niente, e il guasto e' muto:
@@ -51,4 +54,22 @@ test('the reveal fills backwards, or a finished animation would pin the opacity'
 
 test('the step-by-step hides what has not had its turn', () => {
     assert.ok(css.includes('.dg-hidden'));
+});
+
+test('the walk is entered from the first turn, whichever arrow is pressed', () => {
+    // Entrando dalla fine spariva un pezzo solo e i tasti sembravano inerti.
+    assert.equal(walkStep(null, 7, 'forward'), 0);
+    assert.equal(walkStep(null, 7, 'back'), 0);
+});
+
+test('the walk advances, stops at the start and leaves at the end', () => {
+    assert.equal(walkStep(0, 7, 'forward'), 1);
+    assert.equal(walkStep(0, 7, 'back'), 0);
+    assert.equal(walkStep(5, 7, 'forward'), 6);
+    assert.equal(walkStep(6, 7, 'forward'), null);
+    assert.equal(walkStep(6, 7, 'back'), 5);
+});
+
+test('a drawing with nothing to walk stays whole', () => {
+    assert.equal(walkStep(null, 0, 'forward'), null);
 });
