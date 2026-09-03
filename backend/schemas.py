@@ -618,7 +618,7 @@ class ScoreRequest(BaseModel):
 
 # --- Learner profile (modello del discente auto-dichiarato) ---
 
-LEARNER_PROFILE_FIELDS = ("context", "goal", "main_difficulty", "strengths", "weaknesses", "notes", "gender", "age", "school_class", "school_year")
+LEARNER_PROFILE_FIELDS = ("context", "goal", "main_difficulty", "strengths", "weaknesses", "notes", "gender", "age", "school_class", "school_year", "institution_slug")
 LEARNER_PROFILE_MAX_FIELD_CHARS = 600
 
 
@@ -634,10 +634,14 @@ class LearnerProfileSave(BaseModel):
     age: Optional[str] = None
     school_class: Optional[str] = None
     school_year: Optional[str] = None
+    # Scelto da un elenco chiuso, non digitato: e' la chiave con cui la
+    # directory trova i referenti. Resta fuori da LEARNER_PROFILE_LABELS,
+    # quindi non entra mai nel prompt.
+    institution_slug: Optional[str] = None
     source: str = "manual"  # intake|session_start|session_end|orientation|manual
     session_id: Optional[str] = None
 
-    @validator("context", "goal", "main_difficulty", "strengths", "weaknesses", "notes", "gender", "age", "school_class", "school_year", pre=True)
+    @validator("context", "goal", "main_difficulty", "strengths", "weaknesses", "notes", "gender", "age", "school_class", "school_year", "institution_slug", pre=True)
     def _trim_and_cap(cls, v):
         if v is None:
             return None
