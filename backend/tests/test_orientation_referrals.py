@@ -19,6 +19,8 @@ from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 
 from backend import database, models
+from backend.orientation_referral_service import orientation_referral_memory
+from backend.referral_frame import REFERRAL_FRAME, frame
 
 TEST_DB_NAME = "counselorbot_test"
 _prod = urlsplit(os.environ["DATABASE_URL"])
@@ -130,6 +132,148 @@ def test_a_referral_and_an_event_can_be_stored_against_an_institution():
         assert referral.institution_id == institution.id
         assert event.ends_at > NOW
         assert referral.needs == ["disagio-emotivo"]
+    finally:
+        _clear(db); db.close()
+
+
+def test_the_frame_covers_the_six_interface_languages():
+    assert set(REFERRAL_FRAME) == {"it", "en", "es", "fr", "de", "sv"}
+    for lang in REFERRAL_FRAME:
+        assert frame(lang)["intro"].strip(), lang
+    # Una lingua sconosciuta ricade sull'inglese, mai su una a caso.
+    assert frame("pt") == frame("en")
+
+
+def test_a_need_match_lets_a_referral_through():
+    db = _TestSession()
+    try:
+        institution = _institution(db)
+        _referral(db, institution_id=institution.id)
+        out = orientation_referral_memory.retrieve_referrals(
+            db, needs={"disagio-emotivo"}, institution_ids=[institution.id],
+            audience_band="secondaria", language="it")
+        assert [e["id"] for e in out] == [f"{PREFIX}-sportello"]
+        block = orientation_referral_memory.render_context(out, [], "it")
+        assert "[REFERRALS]" in block
+        assert "Sportello d'ascolto" in block
+    finally:
+        _clear(db); db.close()
+
+
+def test_a_row_without_needs_never_enters():
+    db = _TestSession()
+    try:
+        institution = _institution(db)
+        _referral(db, institution_id=institution.id, needs=[])
+        out = orientation_referral_memory.retrieve_referrals(
+            db, needs={"disagio-emotivo"}, institution_ids=[institution.id], language="it")
+        assert out == []
+        # Nemmeno senza filtro sui bisogni: una riga che entrerebbe ovunque
+        # non e' una raccomandazione.
+        assert orientation_referral_memory.retrieve_referrals(
+            db, needs=set(), institution_ids=[institution.id], language="it") == []
+    finally:
+        _clear(db); db.close()
+
+
+def test_an_empty_need_set_does_not_filter_by_need():
+    db = _TestSession()
+    try:
+        institution = _institution(db)
+        _referral(db, "uno", institution_id=institution.id, needs=["dsa-bes"])
+        out = orientation_referral_memory.retrieve_referrals(
+            db, needs=set(), institution_ids=[institution.id], language="it")
+        assert [e["id"] for e in out] == [f"{PREFIX}-uno"]
+    finally:
+        _clear(db); db.close()
+
+
+def test_a_draft_row_never_reaches_a_student():
+    db = _TestSession()
+    try:
+        institution = _institution(db)
+        _referral(db, institution_id=institution.id, status="draft")
+        assert orientation_referral_memory.retrieve_referrals(
+            db, needs={"disagio-emotivo"}, institution_ids=[institution.id], language="it") == []
+    finally:
+        _clear(db); db.close()
+
+
+def test_another_institution_row_is_not_visible():
+    db = _TestSession()
+    try:
+        mine = _institution(db, "mio")
+        theirs = _institution(db, "loro")
+        _referral(db, "loro-sportello", institution_id=theirs.id)
+        assert orientation_referral_memory.retrieve_referrals(
+            db, needs={"disagio-emotivo"}, institution_ids=[mine.id], language="it") == []
+    finally:
+        _clear(db); db.close()
+
+
+def test_a_national_row_reaches_everyone():
+    db = _TestSession()
+    try:
+        mine = _institution(db, "mio")
+        _referral(db, "nazionale", institution_id=None)
+        out = orientation_referral_memory.retrieve_referrals(
+            db, needs={"disagio-emotivo"}, institution_ids=[mine.id], language="it")
+        assert [e["id"] for e in out] == [f"{PREFIX}-nazionale"]
+    finally:
+        _clear(db); db.close()
+
+
+def test_audience_excludes_the_wrong_band():
+    db = _TestSession()
+    try:
+        institution = _institution(db)
+        _referral(db, institution_id=institution.id, audience=["universita"])
+        assert orientation_referral_memory.retrieve_referrals(
+            db, needs={"disagio-emotivo"}, institution_ids=[institution.id],
+            audience_band="secondaria", language="it") == []
+    finally:
+        _clear(db); db.close()
+
+
+def test_a_past_event_is_never_returned():
+    db = _TestSession()
+    try:
+        institution = _institution(db)
+        _event(db, "passato", institution_id=institution.id,
+               starts_at=NOW - timedelta(days=30), ends_at=NOW - timedelta(days=29))
+        assert orientation_referral_memory.retrieve_events(
+            db, needs={"scelta-percorso"}, institution_ids=[institution.id], language="it") == []
+    finally:
+        _clear(db); db.close()
+
+
+def test_events_come_out_with_the_nearest_first():
+    db = _TestSession()
+    try:
+        institution = _institution(db)
+        _event(db, "lontano", institution_id=institution.id,
+               starts_at=NOW + timedelta(days=40), ends_at=NOW + timedelta(days=41))
+        _event(db, "vicino", institution_id=institution.id,
+               starts_at=NOW + timedelta(days=2), ends_at=NOW + timedelta(days=3))
+        out = orientation_referral_memory.retrieve_events(
+            db, needs={"scelta-percorso"}, institution_ids=[institution.id],
+            language="it", limit=5)
+        assert [e["id"] for e in out] == [f"{PREFIX}-vicino", f"{PREFIX}-lontano"]
+    finally:
+        _clear(db); db.close()
+
+
+def test_the_block_falls_back_to_english_then_italian():
+    db = _TestSession()
+    try:
+        institution = _institution(db)
+        _referral(db, institution_id=institution.id,
+                  role_label_i18n={"en": "Listening desk"},
+                  what_for_i18n={"it": "Puoi parlare di come stai."})
+        out = orientation_referral_memory.retrieve_referrals(
+            db, needs={"disagio-emotivo"}, institution_ids=[institution.id], language="sv")
+        assert out[0]["role"] == "Listening desk"
+        assert out[0]["what_for"] == "Puoi parlare di come stai."
     finally:
         _clear(db); db.close()
 
