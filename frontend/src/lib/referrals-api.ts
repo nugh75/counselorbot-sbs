@@ -47,13 +47,13 @@ export interface OrientationDirectory {
 }
 
 export async function fetchInstitutions(): Promise<Institution[]> {
-    const res = await apiFetch('/institutions');
+    const res = await apiFetch('/api/institutions');
     if (!res.ok) throw new Error(`institutions: ${res.status}`);
     return res.json();
 }
 
 export async function fetchOrientationDirectory(lang: Lang): Promise<OrientationDirectory> {
-    const res = await apiFetch(`/orientation-directory?lang=${lang}`);
+    const res = await apiFetch(`/api/orientation-directory?lang=${lang}`);
     if (!res.ok) throw new Error(`orientation-directory: ${res.status}`);
     return res.json();
 }
