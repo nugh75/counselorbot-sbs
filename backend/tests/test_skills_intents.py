@@ -93,6 +93,18 @@ def test_referral_is_recognised_and_does_not_steal_factual_questions():
     assert classify("mi consigli una lettura?") == "reading"
 
 
+def test_referral_root_words_do_not_swallow_ordinary_sentences():
+    # "psicolog" senza confine destro catturava anche la disciplina
+    # (psicologia/psicologico), non solo la persona; "ufficio\s+\w+" catturava
+    # qualunque ufficio, non solo quelli di orientamento realmente censiti.
+    assert classify("mi consigli un libro di psicologia dello sviluppo?") == "reading"
+    assert classify("chi ha scritto un saggio di psicologia cognitiva?") == "factual"
+    assert classify("come faccio a organizzare l'ufficio studio a casa?") == "advice"
+    # I casi legittimi di referral restano riconosciuti.
+    assert classify("vorrei parlare con lo psicologo della scuola") == "referral"
+    assert classify("dov'e' l'ufficio orientamento?") == "referral"
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0
