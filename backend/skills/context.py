@@ -18,6 +18,9 @@ class SkillContext:
     # Comportamento primario richiesto: advice|reading|compare|clarify|guided.
     intent: str = ""
     session_id: str = ""
+    # Chi sta parlando: serve a risolvere il suo istituto. Mai iniettato nel
+    # prompt, e' solo una chiave di lettura.
+    session_username: str = ""
     # Query di retrieval generica, come la riceve `_retrieved_context`.
     query: str = ""
     # Query arricchita con label e prompt dello step piu' i punteggi della fase:

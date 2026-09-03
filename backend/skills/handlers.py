@@ -21,8 +21,12 @@ from ..certified_strategy_service import (
     score_bands,
 )
 from ..certified_reading_service import certified_reading_memory
+from ..orientation_referral_service import orientation_referral_memory
 from ..reading_frame import frame as reading_frame
 from ..reading_themes import themes_from_factors, themes_from_text
+from ..referral_frame import frame as referral_frame
+from ..referral_needs import needs_from_text
+from ..referral_scope import institution_ids_for
 from .. import web_lookup
 from ..strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, strategy_memory
 from .context import SkillContext, SkillOutput
@@ -396,5 +400,50 @@ def web_lookup_sources(ctx: SkillContext, params: dict) -> SkillOutput:
     return SkillOutput(
         text=web_lookup.render_block(results),
         ids=[item.url for item in results],
+        slot="knowledge",
+    )
+
+
+@handler("orientation_referrals")
+def orientation_referrals(ctx: SkillContext, params: dict) -> SkillOutput:
+    """Figure ed eventi di orientamento del proprio istituto.
+
+    Il modello riceve righe certificate, mai la scuola dello studente: il nome
+    dell'istituto e' quasi-identificante e resta fuori dal prompt. Quando lo
+    studente non nomina un bisogno specifico il filtro si spegne — l'intent ha
+    gia' fatto da gate — ma una riga senza bisogni non entra comunque.
+    """
+    if ctx.db is None:
+        return SkillOutput(applicable=False, reason="nessun database")
+
+    needs = needs_from_text(ctx.message or ctx.query)
+    institution_ids = institution_ids_for(ctx.db, ctx.session_username or "")
+    language = ctx.language or "it"
+
+    referrals = orientation_referral_memory.retrieve_referrals(
+        ctx.db,
+        needs=needs,
+        institution_ids=institution_ids,
+        audience_band=ctx.audience_band,
+        questionnaire_type=ctx.questionnaire_type,
+        language=language,
+        limit=int(params.get("limit_referrals", 2) or 0),
+    )
+    events = orientation_referral_memory.retrieve_events(
+        ctx.db,
+        needs=needs,
+        institution_ids=institution_ids,
+        audience_band=ctx.audience_band,
+        language=language,
+        limit=int(params.get("limit_events", 2) or 0),
+    )
+    if not referrals and not events:
+        # L'assenza e' una direttiva, non un dato: resta nello slot della skill
+        # cosi' raggiunge il modello anche senza blocco [KNOWLEDGE].
+        return SkillOutput(text=referral_frame(language)["empty"])
+
+    return SkillOutput(
+        text=orientation_referral_memory.render_context(referrals, events, language),
+        ids=[entry["id"] for entry in (*referrals, *events)],
         slot="knowledge",
     )

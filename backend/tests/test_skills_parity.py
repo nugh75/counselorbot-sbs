@@ -218,6 +218,33 @@ def test_disabled_binding_removes_only_its_block():
         db.close()
 
 
+def test_idea_is_bound_to_sources_like_the_other_instruments():
+    """Idea non deve perdere le fonti: web-lookup e reading-guide valgono
+    anche li', come per gli altri strumenti (regressione: il seed le legava
+    solo ai sette strumenti storici, lasciando Idea senza ricerche)."""
+    db = _TestSession()
+    try:
+        seed_skills(db)
+        skill_ids = {
+            slug: db.query(models.Skill).filter(models.Skill.slug == slug).first().id
+            for slug in ("web-lookup", "reading-guide")
+        }
+        for slug, skill_id in skill_ids.items():
+            for questionnaire_type in ("IDEA", "QSA"):
+                binding = (
+                    db.query(models.GuidedStepSkill)
+                    .filter(models.GuidedStepSkill.skill_id == skill_id,
+                            models.GuidedStepSkill.questionnaire_type == questionnaire_type,
+                            models.GuidedStepSkill.step_id == "*")
+                    .first()
+                )
+                assert binding is not None and binding.enabled, (
+                    f"{slug} non agganciata a {questionnaire_type}"
+                )
+    finally:
+        db.close()
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0

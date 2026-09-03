@@ -26,8 +26,9 @@ from .skills import intents as skills_intents
 from .guided_step_label_i18n import STEP_LABEL_I18N, resolve_step_label
 from sqlalchemy import func
 
-from .idea_map import IDEA_INSTRUMENT, map_context_for
+from .idea_map import IDEA_INSTRUMENT, focused_branch, map_context_for
 from .idea_reference import reference_context_for
+from .idea_sources import context_for as idea_sources_context_for
 from .rag_index import site_rag_index, counselorbot_rag_index, questionari_rag_index, build_context as rag_build_context
 from .api_models import ChatRequest
 from .prompt_config import (
@@ -2479,6 +2480,20 @@ def build_context_envelope(
         if idea_reference_block:
             parts_system.append("[IDEA REFERENCE]\n" + idea_reference_block)
 
+    # --- [IDEA SOURCES] le fonti che la persona ha tenuto per questo ramo ---
+    # Dopo il riferimento e prima della mappa: sono materiale, non la mossa da
+    # fare. Solo quelle del ramo a fuoco, altrimenti il lavoro di un ramo si
+    # porta dietro le letture di un altro.
+    if questionnaire_type == IDEA_INSTRUMENT:
+        idea_sources_block = idea_sources_context_for(
+            db, username_for_context, session_id,
+            focused_branch(db, username_for_context, session_id),
+        )
+        if components is not None:
+            components["idea_sources"] = idea_sources_block
+        if idea_sources_block:
+            parts_system.append("[IDEA SOURCES]\n" + idea_sources_block)
+
     # --- [IDEA MAP] la mappa che la sessione sta costruendo ---
     # Sta in fondo, vicino alle istruzioni della skill: e' la cosa su cui il
     # modello deve agire in questo turno, non uno sfondo.
@@ -2498,18 +2513,19 @@ def build_context_envelope(
     if knowledge_context:
         parts_system.append("[KNOWLEDGE]\n" + knowledge_context)
 
-    # Una richiesta esplicita di letture puo' usare il catalogo editoriale
-    # certificato anche negli step che tengono spento il RAG generale. Il filtro
-    # sul marcatore impedisce a qualunque altro blocco knowledge di attraversare
+    # Una richiesta esplicita di letture o un dato puntuale puo' usare il
+    # catalogo editoriale certificato e le fonti pubbliche recuperate ora
+    # anche negli step che tengono spento il RAG generale. Il filtro sul
+    # marcatore impedisce a qualunque altro blocco knowledge di attraversare
     # il confine configurato dall'admin.
     if not _component_enabled(component_flags, "knowledge"):
-        certified_readings = [
+        source_blocks = [
             block
             for block in (skills_blocks or {}).get("knowledge", [])
-            if block.lstrip().startswith("[CERTIFIED_READINGS]")
+            if block.lstrip().startswith(("[CERTIFIED_READINGS]", "[WEB_SOURCES]"))
         ]
-        if certified_readings:
-            parts_system.append("[KNOWLEDGE]\n" + "\n\n".join(certified_readings))
+        if source_blocks:
+            parts_system.append("[KNOWLEDGE]\n" + "\n\n".join(source_blocks))
 
     # Slot di coda delle skill: direttive che devono chiudere il system prompt.
     for block in (skills_blocks or {}).get("directive_tail", []):

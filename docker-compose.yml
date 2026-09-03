@@ -31,6 +31,7 @@ services:
       - AGENT_PTY_SOCKET=${AGENT_PTY_SOCKET:-/run/cloudflared-agent/pty.sock}
       - OPENCODE_CHAT_MODEL=${OPENCODE_CHAT_MODEL:-gemma4:12b}
       - QSA_PDF_STORAGE_DIR=/app/uploads/qsa
+      - IDEA_SOURCES_STORAGE_DIR=/app/uploads/idea-sources
       - RAG_DYNAMIC_COLLECTIONS_DIR=/app/rag-collections
     volumes:
       - ./session_memory:/app/session_memory

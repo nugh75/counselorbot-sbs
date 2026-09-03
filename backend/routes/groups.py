@@ -90,6 +90,7 @@ def _serialize_group(db: Session, group: models.StudentGroup) -> dict:
         "name": group.name,
         "school": group.school,
         "school_level": group.school_level,
+        "institution_id": group.institution_id,
         "owner_username": group.owner_username,
         "is_active": group.is_active,
         "members_count": _members_count(db, group.id),
@@ -170,6 +171,7 @@ async def create_group(
     school = (payload.school or "").strip() or None
     level = _valid_level(payload.school_level)
     group = models.StudentGroup(code=code, name=name, school=school, school_level=level,
+                                institution_id=payload.institution_id,
                                 owner_username=_username(current_user) or "")
     db.add(group)
     db.commit()
@@ -197,6 +199,9 @@ async def update_group(
         group.school = (updates["school"] or "").strip() or None
     if "school_level" in updates:
         group.school_level = _valid_level(updates["school_level"])
+    if "institution_id" in updates:
+        value = updates["institution_id"]
+        group.institution_id = int(value) if value else None
     db.commit()
     db.refresh(group)
     return _serialize_group(db, group)

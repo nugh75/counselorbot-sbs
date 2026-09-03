@@ -73,10 +73,11 @@ export function IdeaBranchBar({ sessionId, version, locale, onFocusMoved }: Idea
 
     if (adding) {
         return (
-            <form
-                className="flex flex-wrap items-center gap-2 border-b border-slate-200 bg-teal-50/60 px-3 py-2"
-                onSubmit={(event) => { event.preventDefault(); void addBranch(); }}
-            >
+            // Niente <form> qui: la barra sta dentro il form del composer, e il
+            // browser ignorerebbe il form interno mandando il submit a quello
+            // esterno (reload della pagina, sessione persa). Invio e tasto
+            // chiamano addBranch direttamente.
+            <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 bg-teal-50/60 px-3 py-2">
                 <label htmlFor="idea-bar-branch" className="text-xs font-medium text-teal-900">
                     {t('idea.branches.name')}
                 </label>
@@ -84,12 +85,20 @@ export function IdeaBranchBar({ sessionId, version, locale, onFocusMoved }: Idea
                     id="idea-bar-branch"
                     value={label}
                     onChange={(event) => setLabel(event.target.value)}
+                    // Invio qui manderebbe il messaggio della chat, non il ramo:
+                    // va fermato sul posto e usato per creare.
+                    onKeyDown={(event) => {
+                        if (event.key !== 'Enter') return;
+                        event.preventDefault();
+                        void addBranch();
+                    }}
                     maxLength={80}
                     autoFocus
                     className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-800 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
                 />
                 <button
-                    type="submit"
+                    type="button"
+                    onClick={() => void addBranch()}
                     disabled={!label.trim() || busy}
                     className="rounded-md bg-teal-700 p-1.5 text-white hover:bg-teal-800 disabled:opacity-50"
                     aria-label={t('idea.branches.create')}
@@ -107,7 +116,7 @@ export function IdeaBranchBar({ sessionId, version, locale, onFocusMoved }: Idea
                     <X className="h-4 w-4" aria-hidden="true" />
                 </button>
                 {failed && <p className="w-full text-[11px] text-rose-700">{t('idea.branches.error')}</p>}
-            </form>
+            </div>
         );
     }
 
