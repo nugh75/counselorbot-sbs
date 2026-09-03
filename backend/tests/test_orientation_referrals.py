@@ -503,6 +503,73 @@ def test_the_directory_route_is_mounted_for_students():
     assert "/orientation-directory" in app.openapi()["paths"]
 
 
+from fastapi.testclient import TestClient
+
+from backend import auth
+
+
+def test_the_directory_route_returns_everything_for_the_students_institution():
+    """Verifica end-to-end sulla rotta vera, non sul servizio chiamato a mano.
+
+    `needs=set()` nel corpo dell'endpoint e' la sola riga che decide se la
+    directory e' un elenco (tutto cio' che riguarda il proprio istituto) o un
+    filtro come la chat: se qualcuno la cambia, questo test deve accorgersene.
+    """
+    from backend.main import app
+
+    db = _TestSession()
+    username = f"{PREFIX}-studente"
+    revision = None
+    try:
+        institution = _institution(db, "rotta")
+        _referral(db, "rotta-uno", institution_id=institution.id, needs=["disagio-emotivo"])
+        _referral(db, "rotta-due", institution_id=institution.id, needs=["borse-e-tasse"])
+        _event(db, "rotta-scaduto", institution_id=institution.id,
+               starts_at=NOW - timedelta(days=5), ends_at=NOW - timedelta(days=4))
+        revision = models.LearnerProfileRevision(
+            username=username, data={"institution_slug": institution.slug}, source="manual")
+        db.add(revision)
+        db.commit()
+
+        def _get_db_override():
+            session = _TestSession()
+            try:
+                yield session
+            finally:
+                session.close()
+
+        def _get_current_user_override():
+            return {
+                "username": username, "email": "", "groups": [],
+                "is_admin": False, "is_researcher": False, "authenticated": True,
+            }
+
+        app.dependency_overrides[database.get_db] = _get_db_override
+        app.dependency_overrides[auth.get_current_user] = _get_current_user_override
+        try:
+            resp = TestClient(app).get("/orientation-directory?lang=it")
+            assert resp.status_code == 200, resp.text
+            body = resp.json()
+            assert body["institution"]["slug"] == institution.slug
+            # Nessun bisogno dichiarato dal chiamante: entrambe le figure,
+            # con bisogni diversi fra loro, devono comunque comparire.
+            assert {r["id"] for r in body["referrals"]} == {
+                f"{PREFIX}-rotta-uno", f"{PREFIX}-rotta-due",
+            }
+            assert all(e["id"] != f"{PREFIX}-rotta-scaduto" for e in body["events"])
+        finally:
+            app.dependency_overrides.pop(database.get_db, None)
+            app.dependency_overrides.pop(auth.get_current_user, None)
+    finally:
+        if revision is not None:
+            db.query(models.LearnerProfileRevision).filter(
+                models.LearnerProfileRevision.username == username
+            ).delete(synchronize_session=False)
+            db.commit()
+        _clear(db)
+        db.close()
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0
