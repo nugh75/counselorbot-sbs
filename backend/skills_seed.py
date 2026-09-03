@@ -210,10 +210,10 @@ DIAGRAM_ICONS_POLICY_MARKER = "skills_diagram_icons_v1"
 IDEA_FOCUS_POLICY_MARKER = "skills_idea_focus_v2"
 IDEA_WAYFINDER_POLICY_MARKER = "skills_idea_wayfinder_v1"
 IDEA_CONCEPT_POLICY_MARKER = "skills_idea_concept_v1"
-SKILLS_BUDGET_POLICY_MARKER = "skills_total_budget_4500_v1"
-# Valore di serie prima dell'allargamento: le installazioni ferme li' sono
-# le uniche da aggiornare.
-PREVIOUS_TOTAL_MAX_CHARS = "3000"
+SKILLS_BUDGET_POLICY_MARKER = "skills_total_budget_6500_v1"
+# Valori di serie precedenti: le installazioni ferme su uno di questi non
+# hanno mai regolato il tetto a mano, e sono le uniche da aggiornare.
+PREVIOUS_TOTAL_MAX_CHARS = ("3000", "4500")
 # Contratto della mappa prima della diagnosi wayfinder: riconosce le
 # installazioni ancora sul testo di serie, le uniche da aggiornare.
 IDEA_FOCUS_INSTRUCTIONS_EN_V1_MD5 = "b324b198d0f5f90d660819c980b43848"
@@ -787,7 +787,7 @@ def apply_skills_budget_policy(db) -> bool:
         models.Config.key == "skills_total_max_chars"
     ).first()
     updated = False
-    if row is not None and str(row.value).strip() == PREVIOUS_TOTAL_MAX_CHARS:
+    if row is not None and str(row.value).strip() in PREVIOUS_TOTAL_MAX_CHARS:
         row.value = str(DEFAULT_TOTAL_MAX_CHARS)
         updated = True
     elif row is not None:
@@ -796,7 +796,7 @@ def apply_skills_budget_policy(db) -> bool:
     db.add(models.Config(
         key=SKILLS_BUDGET_POLICY_MARKER,
         value="applied",
-        description="Migrazione una tantum: budget complessivo delle skill portato a 4500.",
+        description="Migrazione una tantum: budget complessivo delle skill portato a 6500.",
     ))
     db.commit()
     return updated
