@@ -19,7 +19,8 @@ from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 
 from backend import database, models
-from backend.orientation_referral_service import orientation_referral_memory
+from backend import orientation_referral_service
+from backend.orientation_referral_service import MAX_REFERRAL_CONTEXT_CHARS, orientation_referral_memory
 from backend.referral_frame import REFERRAL_FRAME, frame
 
 TEST_DB_NAME = "counselorbot_test"
@@ -274,6 +275,56 @@ def test_the_block_falls_back_to_english_then_italian():
             db, needs={"disagio-emotivo"}, institution_ids=[institution.id], language="sv")
         assert out[0]["role"] == "Listening desk"
         assert out[0]["what_for"] == "Puoi parlare di come stai."
+    finally:
+        _clear(db); db.close()
+
+
+def test_the_context_block_truncates_whole_lines_not_partial_ones():
+    db = _TestSession()
+    try:
+        institution = _institution(db)
+        for i in range(6):
+            _referral(
+                db, f"lungo-{i}", institution_id=institution.id,
+                role_label_i18n={"it": f"Sportello numero {i} con un nome piuttosto lungo"},
+                what_for_i18n={"it": ("Puoi parlare di come stai e di tutto cio' che ti serve. " * 3)},
+                how_to_reach_i18n={"it": ("Passa in aula 12 negli orari indicati oppure scrivi prima. " * 3)},
+                contact_channel={
+                    "email": f"sportello{i}@esempio.test", "hours": "mar 10-12", "location": "aula 12",
+                    "page_url": f"https://esempio.test/sportello-{i}-con-un-percorso-molto-lungo-di-prova",
+                },
+            )
+        for i in range(6):
+            _event(
+                db, f"lungo-{i}", institution_id=institution.id,
+                title_i18n={"it": f"Evento numero {i} con un titolo piuttosto lungo"},
+                summary_i18n={"it": ("Vieni a visitare la scuola e scopri tutti i percorsi disponibili. " * 3)},
+                starts_at=NOW + timedelta(days=i + 1), ends_at=NOW + timedelta(days=i + 1, hours=4),
+                page_url=f"https://esempio.test/evento-{i}-con-un-percorso-molto-lungo-di-prova",
+            )
+        referrals = orientation_referral_memory.retrieve_referrals(
+            db, needs={"disagio-emotivo"}, institution_ids=[institution.id], language="it", limit=20)
+        events = orientation_referral_memory.retrieve_events(
+            db, needs={"scelta-percorso"}, institution_ids=[institution.id], language="it", limit=20)
+
+        original_cap = orientation_referral_service.MAX_REFERRAL_CONTEXT_CHARS
+        orientation_referral_service.MAX_REFERRAL_CONTEXT_CHARS = 10**6
+        try:
+            full = orientation_referral_memory.render_context(referrals, events, "it")
+        finally:
+            orientation_referral_service.MAX_REFERRAL_CONTEXT_CHARS = original_cap
+
+        assert len(full) > MAX_REFERRAL_CONTEXT_CHARS, "il payload di prova deve superare il limite"
+        capped = orientation_referral_memory.render_context(referrals, events, "it")
+        assert len(capped) <= MAX_REFERRAL_CONTEXT_CHARS
+
+        full_lines = full.split("\n")
+        capped_lines = capped.split("\n")
+        assert capped_lines, capped_lines
+        # Ogni riga del blocco troncato deve comparire per intero nel blocco
+        # senza limite, nello stesso ordine: nessuna riga a meta'.
+        assert capped_lines == full_lines[: len(capped_lines)]
+        assert len(capped_lines) < len(full_lines)
     finally:
         _clear(db); db.close()
 
