@@ -373,6 +373,36 @@ def _tool_question(message: str, language: str) -> str | None:
     return None
 
 
+# Come si usa, non solo che cosa c'e'. Testo unico in inglese come i brief degli
+# strumenti: e' materiale per il modello, mai stampato allo studente, quindi una
+# stesura sola invece di sei traduzioni da tenere allineate. I contenuti vengono
+# dalla Guida all'interfaccia (`/guide`), che resta la fonte illustrata.
+_INTERFACE_HELP = (
+    "\nHOW COUNSELORBOT IS USED. Source of truth for the interface, alongside the overview of what it "
+    "contains. Explain it in the student's language at the depth the question deserves, and name only "
+    "what is written here.\n"
+    "GETTING STARTED - From the home page the student chooses a counselor, each with its own approach, "
+    "and then a tool. Before the first tool they fill in the Notebook (age, context, goals, "
+    "difficulties): it is what lets the counselor read their results against their real situation, and "
+    "they update it at the end of each path.\n"
+    "INSIDE A GUIDED CHAT - The conversation walks the profile one factor at a time. The scores can be "
+    "opened at any moment, and a Path panel marks the active phase: 'Previous step' returns to a phase "
+    "already visited, 'Next step' moves on. The student can write at any point, not only when asked, "
+    "and their question is answered inside the step. Suggested questions are clicked to copy them into "
+    "the field and can be edited before sending. Three buttons set the reply length - short, medium "
+    "(the default) or long - from the next reply on.\n"
+    "ON EACH REPLY - 'Listen' reads it aloud. 'Diagram' draws what that reply explains, on request. "
+    "Thumbs up or down record whether a reply carrying a strategy or a reference was useful.\n"
+    "LEAVING AND COMING BACK - Nothing is lost: the session saves itself after every reply and is "
+    "reopened from 'Resume' in the header, on any device. The snowflake button does the same and closes "
+    "the chat straight away.\n"
+    "WHAT IS KEPT - The Notebook holds what cuts across tools, the Booklet the work done on each "
+    "instrument, the Portfolio the student's own pieces of work.\n"
+    "SEEING IT - The interface is documented with screenshots under 'Guide' in the header, open to "
+    "everyone even before logging in. Point the student there when they would rather look than read.\n"
+)
+
+
 def _canonical_reference(message: str, language: str) -> str:
     """Testo canonico da dare al modello come fonte, non da stampare al posto suo."""
     lang = normalize_language(language)
@@ -380,7 +410,12 @@ def _canonical_reference(message: str, language: str) -> str:
     if tool:
         return f"\nCanonical description of {tool}, use it as the source of truth for this answer:\n{_TOOL_INFO[lang][tool]}\n"
     if _is_platform_help_request(message, lang):
-        return f"\nCanonical platform overview, use it as the source of truth and keep every tool and space it names:\n{_PLATFORM_HELP[lang]}\n"
+        # "Cosa posso fare" e' anche una domanda sull'interfaccia: l'elenco degli
+        # strumenti da solo non dice come si usano.
+        return (
+            f"\nCanonical platform overview, use it as the source of truth and keep every tool and space it names:\n{_PLATFORM_HELP[lang]}\n"
+            + _INTERFACE_HELP
+        )
     return ""
 
 
