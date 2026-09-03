@@ -652,6 +652,15 @@ const it: Dict = {
     'admin.referrals.newEvent': 'nuovo evento',
     'admin.referrals.field.kind': 'tipo',
     'admin.referrals.field.location': 'luogo',
+    'admin.referrals.institutions': 'Istituti',
+    'admin.referrals.newInstitution': 'nuovo istituto',
+    'admin.referrals.field.name': 'nome',
+    'admin.referrals.field.website': 'sito web',
+    'admin.referrals.field.orientationPage': 'pagina orientamento',
+    'admin.referrals.kind.school': 'scuola',
+    'admin.referrals.kind.university': 'università',
+    'admin.referrals.deactivate': 'disattiva',
+    'admin.referrals.inactive': 'non attiva',
 };
 
 const en: Dict = {
@@ -1294,6 +1303,15 @@ const en: Dict = {
     'admin.referrals.newEvent': 'new event',
     'admin.referrals.field.kind': 'kind',
     'admin.referrals.field.location': 'location',
+    'admin.referrals.institutions': 'Institutions',
+    'admin.referrals.newInstitution': 'new institution',
+    'admin.referrals.field.name': 'name',
+    'admin.referrals.field.website': 'website',
+    'admin.referrals.field.orientationPage': 'orientation page',
+    'admin.referrals.kind.school': 'school',
+    'admin.referrals.kind.university': 'university',
+    'admin.referrals.deactivate': 'deactivate',
+    'admin.referrals.inactive': 'inactive',
 };
 
 const es: Dict = {
@@ -1817,6 +1835,15 @@ const es: Dict = {
     'admin.referrals.newEvent': 'nuevo evento',
     'admin.referrals.field.kind': 'tipo',
     'admin.referrals.field.location': 'lugar',
+    'admin.referrals.institutions': 'Instituciones',
+    'admin.referrals.newInstitution': 'nuevo centro',
+    'admin.referrals.field.name': 'nombre',
+    'admin.referrals.field.website': 'sitio web',
+    'admin.referrals.field.orientationPage': 'página de orientación',
+    'admin.referrals.kind.school': 'escuela',
+    'admin.referrals.kind.university': 'universidad',
+    'admin.referrals.deactivate': 'desactivar',
+    'admin.referrals.inactive': 'inactivo',
 };
 
 const fr: Dict = {
@@ -2340,6 +2367,15 @@ const fr: Dict = {
     'admin.referrals.newEvent': 'nouvel événement',
     'admin.referrals.field.kind': 'type',
     'admin.referrals.field.location': 'lieu',
+    'admin.referrals.institutions': 'Établissements',
+    'admin.referrals.newInstitution': 'nouvel établissement',
+    'admin.referrals.field.name': 'nom',
+    'admin.referrals.field.website': 'site web',
+    'admin.referrals.field.orientationPage': 'page d’orientation',
+    'admin.referrals.kind.school': 'école',
+    'admin.referrals.kind.university': 'université',
+    'admin.referrals.deactivate': 'désactiver',
+    'admin.referrals.inactive': 'inactive',
 };
 
 const de: Dict = {
@@ -2863,6 +2899,15 @@ const de: Dict = {
     'admin.referrals.newEvent': 'neue Veranstaltung',
     'admin.referrals.field.kind': 'Art',
     'admin.referrals.field.location': 'Ort',
+    'admin.referrals.institutions': 'Einrichtungen',
+    'admin.referrals.newInstitution': 'neue Einrichtung',
+    'admin.referrals.field.name': 'Name',
+    'admin.referrals.field.website': 'Website',
+    'admin.referrals.field.orientationPage': 'Orientierungsseite',
+    'admin.referrals.kind.school': 'Schule',
+    'admin.referrals.kind.university': 'Universität',
+    'admin.referrals.deactivate': 'deaktivieren',
+    'admin.referrals.inactive': 'inaktiv',
 };
 
 const sv: Dict = {
@@ -3386,6 +3431,15 @@ const sv: Dict = {
     'admin.referrals.newEvent': 'nytt evenemang',
     'admin.referrals.field.kind': 'typ',
     'admin.referrals.field.location': 'plats',
+    'admin.referrals.institutions': 'Institutioner',
+    'admin.referrals.newInstitution': 'ny institution',
+    'admin.referrals.field.name': 'namn',
+    'admin.referrals.field.website': 'webbplats',
+    'admin.referrals.field.orientationPage': 'sida om vägledning',
+    'admin.referrals.kind.school': 'skola',
+    'admin.referrals.kind.university': 'universitet',
+    'admin.referrals.deactivate': 'inaktivera',
+    'admin.referrals.inactive': 'inaktiv',
 };
 
 const trainingIt: Dict = {
