@@ -128,6 +128,9 @@ CONCEPT_DIAGRAM_INSTRUCTIONS_EN = """## Concept diagram
   kind tells the student something false.
 - Labels in the student's language, in the student's own words; never scores,
   factor codes or identifiers.
+- When the nodes stand for factors, close with one line naming the pairing:
+  "Nodes: tension = A1; persistence = A2". Without it the drawing and the prose
+  around it speak two languages and the student has to translate.
 - Data only: no colours, no thickness, no coordinates, no rendering syntax.
 """
 
@@ -207,6 +210,7 @@ READING_AND_TRANSLATIONS_POLICY_MARKER = "skills_reading_sources_and_i18n_v1"
 ENGLISH_SKILL_INSTRUCTIONS_POLICY_MARKER = "skills_english_instructions_v1"
 DIAGRAM_EDGE_KINDS_POLICY_MARKER = "skills_diagram_edge_kinds_v1"
 DIAGRAM_ICONS_POLICY_MARKER = "skills_diagram_icons_v1"
+DIAGRAM_NODE_MAPPING_POLICY_MARKER = "skills_diagram_node_mapping_v1"
 IDEA_FOCUS_POLICY_MARKER = "skills_idea_focus_v2"
 IDEA_WAYFINDER_POLICY_MARKER = "skills_idea_wayfinder_v1"
 IDEA_CONCEPT_POLICY_MARKER = "skills_idea_concept_v1"
@@ -225,6 +229,10 @@ CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V1_MD5 = "8a3890a53e860a50876501193da698bf"
 # Contratto standard immediatamente precedente alle icone e ai limiti piu'
 # tolleranti. Serve a non sovrascrivere le personalizzazioni dell'admin.
 CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V2_MD5 = "a3271155da66f68747a0114872c5fabf"
+
+# Contratto senza la didascalia di mappatura nodo->fattore: il disegno parlava a
+# parole e il testo attorno in sigle, e il collegamento lo faceva lo studente.
+CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V3_MD5 = "6291ff5cf7c7bc3d7712f0349418fc66"
 
 SKILL_CONFIG_DEFAULTS = (
     (
@@ -655,6 +663,39 @@ def apply_diagram_icons_policy(db) -> bool:
         key=DIAGRAM_ICONS_POLICY_MARKER,
         value="applied",
         description="Migrazione una tantum: icone SVG e limiti robusti nei diagrammi.",
+    ))
+    db.commit()
+    return updated
+
+
+def apply_diagram_node_mapping_policy(db) -> bool:
+    """Chiede la didascalia che lega i nodi ai fattori, una sola volta.
+
+    Il divieto di scrivere sigle nel disegno resta giusto: un diagramma di soli
+    codici e' illeggibile. Ma la prosa attorno e' scritta in sigle, e senza una
+    riga di raccordo il collegamento lo doveva fare lo studente.
+    """
+    marker = db.query(models.Config).filter(
+        models.Config.key == DIAGRAM_NODE_MAPPING_POLICY_MARKER
+    ).first()
+    if marker is not None:
+        return False
+
+    seed_skills(db)
+    skill = db.query(models.Skill).filter(models.Skill.slug == "concept-diagram").first()
+    updated = False
+    if skill is not None:
+        current = (skill.instructions_i18n or {}).get("en", "")
+        if hashlib.md5(current.encode("utf-8")).hexdigest() == CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V3_MD5:
+            skill.instructions_i18n = {"en": CONCEPT_DIAGRAM_INSTRUCTIONS_EN}
+            updated = True
+        elif current != CONCEPT_DIAGRAM_INSTRUCTIONS_EN:
+            logger.info("concept-diagram personalizzata dall'admin: mappatura non imposta")
+
+    db.add(models.Config(
+        key=DIAGRAM_NODE_MAPPING_POLICY_MARKER,
+        value="applied",
+        description="Migrazione una tantum: didascalia nodo->fattore nei diagrammi.",
     ))
     db.commit()
     return updated

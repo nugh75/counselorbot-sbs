@@ -889,7 +889,9 @@ _ADVICE_DISTRIBUTION_DIRECTIVE = (
     "\n\n[ADVICE DISTRIBUTION] In this step, provide at most ONE new practical "
     "recommendation. Offer it only when the current score profile contains a meaningful "
     "improvement target. Present it as one priority with one concrete action; do not split "
-    "it into multiple habits, alternatives, daily and weekly actions, or extra tips."
+    "it into multiple habits, alternatives, daily and weekly actions, or extra tips. "
+    "Then ask whether the student wants a second option or prefers to try this one first: "
+    "one action stays the default, another arrives only if they ask for it."
 )
 
 _FOLLOW_UP_ADVICE_DIRECTIVE = (
