@@ -127,7 +127,9 @@ export function IdeaMapPanel({ sessionId, version, locale, variant, move, onPick
             </header>
 
             {svg ? (
-                <div className="w-full overflow-x-auto p-3">
+                // La mappa cresce in verticale: oltre questa altezza scorre
+                // dentro il pannello invece di allungare tutta la pagina.
+                <div className="w-full max-h-[26rem] overflow-auto p-3">
                     <IdeaMapCanvas
                         svg={svg}
                         state={state}
@@ -177,8 +179,10 @@ export function IdeaMapPanel({ sessionId, version, locale, variant, move, onPick
                     >
                         <X className="h-5 w-5" aria-hidden="true" />
                     </button>
+                    {/* Misure definite: senza, il flex shrink-to-fit lascia la
+                        larghezza indefinita e l'SVG (solo viewBox) collassa a 0x0. */}
                     <div
-                        className="max-h-full max-w-full overflow-auto rounded-lg bg-white p-4"
+                        className="h-full w-full max-h-full max-w-full overflow-auto rounded-lg bg-white p-4"
                         onClick={(event) => event.stopPropagation()}
                     >
                         <IdeaMapCanvas
