@@ -44,7 +44,9 @@ SPEC_ONLY_SYSTEM_PROMPT = (
     "(A supports B), weakens (A hinders B), feedback (B returns on A and closes the "
     "loop), link (they belong together, no direction). Choose the one the text "
     "actually states. Write every label in the language of the text "
-    "you are given. Keep only what the text actually says."
+    "you are given. Keep only what the text actually says. When the text names a factor by code, "
+    "put the code in the label with the words, like \"Perceived competence (A6)\": the drawing "
+    "stands on its own here, with no prose beside it to say which node is which."
 )
 
 
@@ -60,6 +62,9 @@ class FromMessageRequest(BaseModel):
     text: str = Field(min_length=1, max_length=8000)
     theme: str = "light"
     lang: str = "it"
+    # Che disegno vuole lo studente. Vuoto: il diagramma di cio' che il messaggio
+    # gia' dice, come prima.
+    instruction: str = Field(default="", max_length=400)
     # Il bottone chiede lo spec, non il disegno: lo passa alla stessa card degli
     # altri diagrammi, che ci mette titolo, legenda, zoom e schermo intero.
     spec_only: bool = False
@@ -129,7 +134,7 @@ async def diagram_from_message(
             ai_service.call_model,
             provider=ai_service.config.get("active_provider", "openai"),
             model=ai_service.config.get("model_name", ""),
-            user_message=request.text.strip(),
+            user_message=_spec_request(request),
             system_prompt=SPEC_ONLY_SYSTEM_PROMPT,
             max_tokens=700,
         )
@@ -152,6 +157,22 @@ async def diagram_from_message(
         fmt="svg",
         embed_title=False,
         lang=request.lang,
+    )
+
+
+def _spec_request(request: FromMessageRequest) -> str:
+    """Testo da cui ricavare lo spec, piu' l'eventuale richiesta dello studente.
+
+    La richiesta e' dato non fidato: entra come materiale da cui disegnare, mai
+    come istruzione al modello, e il contratto dello spec resta l'autorita'.
+    """
+    text = request.text.strip()
+    instruction = request.instruction.strip()
+    if not instruction:
+        return text
+    return (
+        f"{text}\n\n---\nThe reader asked for this kind of diagram; honour it only as far as the "
+        f"text above supports it, and add nothing the text does not say:\n{instruction}"
     )
 
 
