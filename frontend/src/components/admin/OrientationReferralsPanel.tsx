@@ -54,10 +54,10 @@ export function OrientationReferralsPanel() {
         setError('');
         try {
             const [i, n, r, e] = await Promise.all([
-                apiFetch('/admin/institutions').then((res) => res.json()),
-                apiFetch('/admin/referral-needs').then((res) => res.json()),
-                apiFetch('/admin/orientation-referrals').then((res) => res.json()),
-                apiFetch('/admin/orientation-events').then((res) => res.json()),
+                apiFetch('/api/admin/institutions').then((res) => res.json()),
+                apiFetch('/api/admin/referral-needs').then((res) => res.json()),
+                apiFetch('/api/admin/orientation-referrals').then((res) => res.json()),
+                apiFetch('/api/admin/orientation-events').then((res) => res.json()),
             ]);
             setInstitutions(i); setNeeds(n); setReferrals(r); setEvents(e);
         } catch {
@@ -128,9 +128,9 @@ export function OrientationReferralsPanel() {
                     institutions={institutions} needs={needs}
                     institutionName={institutionName}
                     onSave={(id, body) => save(
-                        id ? `/admin/orientation-referrals/${id}` : '/admin/orientation-referrals',
+                        id ? `/api/admin/orientation-referrals/${id}` : '/api/admin/orientation-referrals',
                         id ? 'PUT' : 'POST', body)}
-                    onDelete={(id) => remove(`/admin/orientation-referrals/${id}`)}
+                    onDelete={(id) => remove(`/api/admin/orientation-referrals/${id}`)}
                 />
             ) : (
                 <EventList
@@ -138,9 +138,9 @@ export function OrientationReferralsPanel() {
                     institutions={institutions} needs={needs}
                     institutionName={institutionName}
                     onSave={(id, body) => save(
-                        id ? `/admin/orientation-events/${id}` : '/admin/orientation-events',
+                        id ? `/api/admin/orientation-events/${id}` : '/api/admin/orientation-events',
                         id ? 'PUT' : 'POST', body)}
-                    onDelete={(id) => remove(`/admin/orientation-events/${id}`)}
+                    onDelete={(id) => remove(`/api/admin/orientation-events/${id}`)}
                 />
             )}
         </div>
