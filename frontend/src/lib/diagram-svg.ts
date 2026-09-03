@@ -119,6 +119,20 @@ function edgeLength(element: Element): number | null {
 }
 
 /**
+ * Il passo successivo del percorso. `null` e' il disegno intero.
+ *
+ * Da intero si entra sempre dal primo turno, in tutte e due le direzioni:
+ * entrare dalla fine faceva sparire un pezzo solo, e i tasti sembravano rotti.
+ * Oltre l'ultimo turno si esce, e il disegno torna intero.
+ */
+export function walkStep(step: number | null, turns: number, direction: 'back' | 'forward'): number | null {
+    if (turns < 1) return null;
+    if (step === null) return 0;
+    if (direction === 'back') return Math.max(0, step - 1);
+    return step + 1 > turns - 1 ? null : step + 1;
+}
+
+/**
  * Mostra il disegno fino a un certo turno: e' il passo-passo, quando lo
  * studente lo percorre a mano invece di guardarlo scorrere.
  */
