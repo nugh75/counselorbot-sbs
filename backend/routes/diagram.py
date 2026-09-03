@@ -47,6 +47,13 @@ SPEC_ONLY_SYSTEM_PROMPT = (
     "you are given. Keep only what the text actually says. "
     # L'ordine dei nodi non e' cosmetico: e' l'ordine in cui il disegno compare
     # sullo schermo, quindi e' l'ordine in cui verra' letto.
+    # Un titolo che nomina l'argomento non aggiunge nulla al disegno, che
+    # l'argomento ce l'ha gia' sotto gli occhi. Un titolo che dice la cosa
+    # trovata da' al disegno una tesi da sostenere.
+    "The title states what the diagram shows, as a claim the drawing supports: "
+    "\"Understanding stays in the head and is lost later\", not \"Study factors\". "
+    "Never a category, never the name of the area; if the text gives no finding, describe the "
+    "mechanism the drawing traces. "
     "Order the nodes as a reading path: put first the one the reader should start from, and let "
     "each following node follow from what came before, because the drawing appears one node at a "
     "time in exactly this order. "

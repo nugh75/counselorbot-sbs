@@ -40,3 +40,15 @@ test('nothing in a diagram animates forever: one blinking part is noise, not exp
 test('reduced motion leaves the diagram whole', () => {
     assert.ok(css.includes('prefers-reduced-motion'));
 });
+
+test('the reveal fills backwards, or a finished animation would pin the opacity', () => {
+    // `both` blocca l'opacita' sul valore finale, e un'animazione conclusa batte
+    // le regole normali: la messa a fuoco non riusciva piu' a sbiadire nulla.
+    const enter = css.slice(css.indexOf('.dg-play .dg-node'), css.indexOf('@keyframes dg-enter'));
+    assert.ok(enter.includes('backwards'), 'la comparsa deve riempire solo all indietro');
+    assert.equal(enter.includes(' both'), false);
+});
+
+test('the step-by-step hides what has not had its turn', () => {
+    assert.ok(css.includes('.dg-hidden'));
+});
