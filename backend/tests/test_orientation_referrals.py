@@ -329,6 +329,56 @@ def test_the_context_block_truncates_whole_lines_not_partial_ones():
         _clear(db); db.close()
 
 
+from backend.skills import handlers
+from backend.skills.context import SkillContext
+
+
+def _ctx(**kwargs):
+    base = dict(questionnaire_type="QSA", step_id=None, step_mode=None, language="it")
+    base.update(kwargs)
+    return SkillContext(**base)
+
+
+def test_the_handler_signals_absence_without_inventing_a_contact():
+    # L'assenza e' una direttiva, non un dato: la skill resta applicabile (come
+    # reading_sources) cosi' il testo "nessun referente" raggiunge comunque il
+    # modello. Se qui si dichiarasse applicable=False, l'intera skill primaria
+    # verrebbe scartata da `engine.render()` e la direttiva "non inventare
+    # contatti" non arriverebbe mai al turno.
+    db = _TestSession()
+    try:
+        out = handlers.get_handler("orientation_referrals")(
+            _ctx(db=db, message="a chi posso rivolgermi?", session_id="s1"), {})
+        assert out.applicable is True
+        assert out.text == frame("it")["empty"]
+    finally:
+        _clear(db); db.close()
+
+
+def test_the_handler_puts_the_catalogue_in_the_knowledge_slot():
+    db = _TestSession()
+    try:
+        _referral(db, "nazionale", institution_id=None)
+        out = handlers.get_handler("orientation_referrals")(
+            _ctx(db=db, message="vorrei parlare con uno psicologo", session_id="s2"), {})
+        assert out.applicable is True
+        assert out.slot == "knowledge"
+        assert "[REFERRALS]" in out.text
+        assert out.ids == [f"{PREFIX}-nazionale"]
+    finally:
+        _clear(db); db.close()
+
+
+def test_the_seeded_skill_is_intent_gated_and_bound_everywhere():
+    from backend.skills_seed import ENGINE_INSTRUMENTS, SKILL_SEEDS
+    seed = next(s for s in SKILL_SEEDS if s["slug"] == "referral-guide")
+    assert seed["conditions"] == {"intents": ["referral"]}
+    assert seed["handler"] == "orientation_referrals"
+    assert seed["routing"] == "primary"
+    assert seed["instructions_i18n"].get("en", "").strip()
+    assert tuple(seed["bind_instruments"]) == ENGINE_INSTRUMENTS
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0

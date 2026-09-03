@@ -75,6 +75,22 @@ WEB_LOOKUP_INSTRUCTIONS_EN = """## Factual answer from public sources
 """
 
 
+REFERRAL_GUIDE_INSTRUCTIONS_EN = """## Referral and event guidance
+
+- Name only the people, offices and events listed in [REFERRALS]. Never invent
+  a name, an address, an email, an opening time or a date.
+- Suggest at most two figures and two events.
+- For each figure, say in one sentence what the student can bring to them, then
+  how to reach them, in the student's own words.
+- A referral is an option, never an instruction: the student decides.
+- If the list holds nothing for what they asked, say so plainly and point to the
+  institution's orientation page. Do not fill the gap from memory.
+- A referral never replaces urgent help. If the student describes something that
+  cannot wait, say that first and do not turn it into a list of offices.
+- Never show internal identifiers, slugs or need codes.
+"""
+
+
 CONCEPT_DIAGRAM_INSTRUCTIONS_EN = """## Concept diagram
 
 - Draw only when the answer holds parts in relation: a process, a loop that
@@ -182,6 +198,7 @@ SKILL_INSTRUCTIONS_I18N = {
     "web-lookup": {"en": WEB_LOOKUP_INSTRUCTIONS_EN},
     "concept-diagram": {"en": CONCEPT_DIAGRAM_INSTRUCTIONS_EN},
     "idea-focus": {"en": IDEA_FOCUS_INSTRUCTIONS_EN},
+    "referral-guide": {"en": REFERRAL_GUIDE_INSTRUCTIONS_EN},
 }
 
 CERTIFIED_ADVICE_POLICY_MARKER = "skills_certified_advice_policy_v1"
@@ -374,6 +391,26 @@ SKILL_SEEDS = [
         "is_active": True,
         "bind": True,
         "bind_instruments": ("IDEA",),
+    },
+    {
+        "slug": "referral-guide",
+        "name": "Referenti ed eventi di orientamento",
+        "description": (
+            "Figure, uffici ed eventi certificati del proprio istituto, da usare quando "
+            "lo studente chiede a chi rivolgersi o quando c'e' un appuntamento. "
+            "Porta contatti verificati, non consigli."
+        ),
+        "instructions_i18n": SKILL_INSTRUCTIONS_I18N["referral-guide"],
+        "conditions": {"intents": ["referral"]},
+        "handler": "orientation_referrals",
+        "handler_params": {"limit_referrals": 2, "limit_events": 2},
+        "routing": "primary",
+        "slot": "directive_tail",
+        "max_chars": 2000,
+        "sort_order": 60,
+        "is_active": True,
+        "bind": True,
+        "bind_instruments": ENGINE_INSTRUMENTS,
     },
 ]
 

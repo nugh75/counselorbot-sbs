@@ -229,6 +229,7 @@ def build_context(
         language=language or "it",
         intent=resolved_intent,
         session_id=session_id or "",
+        session_username=username or "",
         query=query or "",
         step_query=step_query or "",
         message=message or "",
