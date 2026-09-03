@@ -5771,6 +5771,7 @@ def test_skills_policy_seeds_the_primary_behaviours():
                 "certified-advice",
                 "profile-wayfinder",
                 "reading-guide",
+                "referral-guide",
                 "profile-comparison",
                 "web-lookup",
                 "concept-diagram",
