@@ -590,3 +590,82 @@ h1.text-3xl {
 .dark .text-lime-900, .dark .text-lime-800, .dark .text-lime-700 { color: #bef264; }
 .dark .text-fuchsia-900, .dark .text-fuchsia-800, .dark .text-fuchsia-700 { color: #f0abfc; }
 .dark .text-yellow-900, .dark .text-yellow-800, .dark .text-yellow-700 { color: #fcd34d; }
+
+/* ---- Diagrammi inline: comparsa, messa a fuoco, anelli di retroazione ----
+   Il disegno arriva come SVG nel DOM (non piu' dentro un <img>), quindi ogni
+   nodo e ogni arco sono raggiungibili. `--dg-step` lo assegna
+   `tagDiagramSvg`: e' il turno in cui quel pezzo entra. */
+
+.dg-svg .dg-node,
+.dg-svg .dg-edge,
+.dg-svg .dg-chip {
+    animation: dg-enter 320ms ease-out both;
+    animation-delay: calc(var(--dg-step, 0) * 140ms);
+}
+
+@keyframes dg-enter {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Il nodo su cui si puo' agire e' uno solo: si fa trovare, una volta sola. */
+.dg-svg .dg-accent > path,
+.dg-svg .dg-accent > polygon,
+.dg-svg .dg-accent > ellipse {
+    animation: dg-accent 1.4s ease-out 1;
+    animation-delay: calc(var(--dg-step, 0) * 140ms + 320ms);
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+@keyframes dg-accent {
+    0%, 100% { transform: scale(1); }
+    35% { transform: scale(1.035); }
+}
+
+/* La retroazione e' l'arco che nessuno legge a colpo d'occhio: B torna su A.
+   Il tratteggio che scorre lo dice senza parole. Gli altri tipi restano fermi:
+   animare tutto sarebbe decorazione. */
+.dg-svg .dg-kind-feedback path {
+    animation: dg-flow 1.6s linear infinite;
+}
+
+@keyframes dg-flow {
+    to { stroke-dashoffset: -16; }
+}
+
+/* Messa a fuoco: sfiorando un nodo restano lui e i suoi collegamenti. */
+.dg-svg.dg-focusing .dg-node,
+.dg-svg.dg-focusing .dg-edge,
+.dg-svg.dg-focusing .dg-chip {
+    opacity: 0.22;
+    transition: opacity 140ms ease-out;
+}
+
+.dg-svg.dg-focusing .dg-related {
+    opacity: 1;
+}
+
+.dg-svg .dg-node { cursor: default; }
+
+/* Chi disattiva le animazioni deve vedere il diagramma intero, non uno vuoto:
+   la comparsa e' un aiuto alla lettura, mai l'unico modo di leggerlo. */
+@media (prefers-reduced-motion: reduce) {
+    .dg-svg .dg-node,
+    .dg-svg .dg-edge,
+    .dg-svg .dg-chip,
+    .dg-svg .dg-accent > path,
+    .dg-svg .dg-accent > polygon,
+    .dg-svg .dg-accent > ellipse,
+    .dg-svg .dg-kind-feedback path {
+        animation: none;
+        opacity: 1;
+    }
+}
+
+/* Il disegno riempie la larghezza che lo zoom gli assegna. */
+.dg-svg > svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
