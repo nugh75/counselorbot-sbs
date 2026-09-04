@@ -117,11 +117,14 @@ CONCEPT_DIAGRAM_INSTRUCTIONS_EN = """## Concept diagram
 - `form` says what kind of thing a node is, and picks its shape: `concept`
   (default: a thing, an idea, a state), `action` (something done), `decision`
   (a fork the student stands at), `outcome` (where it ends up). Use `decision`
-  only where the drawing really splits in two.
-- Give each node a fitting `icon` when possible, chosen only from this closed
-  list: `book`, `brain`, `check`, `clock`, `compass`, `heart`, `idea`,
-  `question`, `shield`, `target`. Omit it if none is honest; never invent a
-  name. The icon clarifies the label but never replaces it.
+  only where the drawing really splits in two. A node drawn as a symbol has no
+  shape, so `form` and `icon` on the same node cancel each other out.
+- `icon` makes a node a symbol: its shape goes away and the icon is drawn above
+  its words. Choose only from this closed list: `book`, `brain`, `check`,
+  `clock`, `compass`, `heart`, `idea`, `question`, `shield`, `target`; never
+  invent a name. A node carries a shape or a symbol, never both, so either every
+  node in a drawing has an icon or none does: half pictures and half boxes reads
+  as an accident. No honest icon for one of them means none for any of them.
 - `kind` on an edge names the relation; leave it out for a plain step forward:
   - `drives` (default): A produces B, the next step or the consequence.
   - `strengthens`: A supports or reinforces B.
@@ -130,8 +133,10 @@ CONCEPT_DIAGRAM_INSTRUCTIONS_EN = """## Concept diagram
   - `link`: they belong together, no direction, no cause.
   Pick the one that is true: each kind is drawn with its own stroke, so a wrong
   kind tells the student something false.
-- Labels in the student's language, in the student's own words; never scores,
-  factor codes or identifiers.
+- Title, note and labels in the student's language, in the student's own words;
+  never scores, factor codes or identifiers. The whole drawing speaks one
+  language, and it is theirs: an English title over Italian nodes reads as a
+  machine talking to itself.
 - When the nodes stand for factors, close with one line naming the pairing:
   "Nodes: tension = A1; persistence = A2". Without it the drawing and the prose
   around it speak two languages and the student has to translate.
@@ -223,6 +228,7 @@ DIAGRAM_EDGE_KINDS_POLICY_MARKER = "skills_diagram_edge_kinds_v1"
 DIAGRAM_ICONS_POLICY_MARKER = "skills_diagram_icons_v1"
 DIAGRAM_NODE_MAPPING_POLICY_MARKER = "skills_diagram_node_mapping_v1"
 DIAGRAM_SHAPES_POLICY_MARKER = "skills_diagram_shapes_and_note_v1"
+DIAGRAM_SYMBOL_POLICY_MARKER = "skills_diagram_symbol_nodes_v1"
 IDEA_FOCUS_POLICY_MARKER = "skills_idea_focus_v2"
 IDEA_WAYFINDER_POLICY_MARKER = "skills_idea_wayfinder_v1"
 IDEA_CONCEPT_POLICY_MARKER = "skills_idea_concept_v1"
@@ -249,6 +255,10 @@ CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V3_MD5 = "6291ff5cf7c7bc3d7712f0349418fc66"
 # Contratto senza le forme dei nodi e senza la nota: il disegno aveva una sola
 # forma per ogni cosa e taceva appena usciva dalla conversazione.
 CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V4_MD5 = "961614ab11e71eb9b68e570906a90899"
+
+# Contratto con l'icona ancora decorativa, e con il titolo libero di uscire dalla
+# lingua dello studente: e' quello che la migrazione precedente ha lasciato.
+CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V5_MD5 = "550c876d4040cb2764fe42533f45d44b"
 
 SKILL_CONFIG_DEFAULTS = (
     (
@@ -398,7 +408,7 @@ SKILL_SEEDS = [
         "handler_params": {},
         "routing": "optional",
         "slot": "directive_tail",
-        "max_chars": 3200,
+        "max_chars": 3600,
         "sort_order": 35,
         "is_active": True,
         "bind": True,
@@ -746,6 +756,36 @@ def apply_diagram_shapes_policy(db) -> bool:
         key=DIAGRAM_SHAPES_POLICY_MARKER,
         value="applied",
         description="Migrazione una tantum: forme dei nodi e nota sotto il diagramma.",
+    ))
+    db.commit()
+    return updated
+
+
+def apply_diagram_symbol_policy(db) -> bool:
+    """Il simbolo prende il posto della figura, e il titolo torna nella lingua
+    dello studente. Una volta sola, e solo sul testo di serie."""
+    marker = db.query(models.Config).filter(
+        models.Config.key == DIAGRAM_SYMBOL_POLICY_MARKER
+    ).first()
+    if marker is not None:
+        return False
+
+    seed_skills(db)
+    skill = db.query(models.Skill).filter(models.Skill.slug == "concept-diagram").first()
+    updated = False
+    if skill is not None:
+        current = (skill.instructions_i18n or {}).get("en", "")
+        if hashlib.md5(current.encode("utf-8")).hexdigest() == CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V5_MD5:
+            skill.instructions_i18n = {"en": CONCEPT_DIAGRAM_INSTRUCTIONS_EN}
+            skill.max_chars = 3600
+            updated = True
+        elif current != CONCEPT_DIAGRAM_INSTRUCTIONS_EN:
+            logger.info("concept-diagram personalizzata dall'admin: simboli non imposti")
+
+    db.add(models.Config(
+        key=DIAGRAM_SYMBOL_POLICY_MARKER,
+        value="applied",
+        description="Migrazione una tantum: il simbolo e' il nodo, titolo nella lingua dello studente.",
     ))
     db.commit()
     return updated
