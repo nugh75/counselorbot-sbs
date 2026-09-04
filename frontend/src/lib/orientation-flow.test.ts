@@ -41,3 +41,8 @@ test('Bussola asks for a counselor before creating the conversation', () => {
     assert.match(source, /orientation\.counselor\.title/);
     assert.match(source, /createSession\(newSession, counselorId\)/);
 });
+
+test('Bussola cards do not use decorative left borders', () => {
+    const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
+    assert.doesNotMatch(source, /border-l-/);
+});
