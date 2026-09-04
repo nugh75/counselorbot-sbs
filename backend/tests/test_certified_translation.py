@@ -76,6 +76,9 @@ def _strategy(db, slug, **kwargs):
         name_it="Ripasso distribuito",
         recommended_when_it="Quando studi tutto la sera prima",
         description_it="Dividi il ripasso su piu' giorni",
+        # Senza fattori ne' strumento la voce sarebbe un jolly, e il recupero la
+        # scarta: qui si verifica il gate sulla lingua, non quello sul merito.
+        questionnaire_types=["QSA"],
         status="certified", is_active=True, sort_order=0,
     )
     data.update(kwargs)
