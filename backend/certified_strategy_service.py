@@ -19,7 +19,42 @@ from .content_version_service import served_locale
 from .i18n_fields import localized
 from .memory_embeddings import memory_embedder
 
-MAX_CERTIFIED_CONTEXT_CHARS = 1400
+# Il tetto copre intestazione + elenco. La direttiva sulla sidebar ha allungato
+# l'intestazione di ~200 caratteri: il tetto sale di altrettanto, cosi' le
+# strategie mantengono lo spazio che avevano prima.
+MAX_CERTIFIED_CONTEXT_CHARS = 1610
+
+_SIDEBAR_INSTRUCTION = {
+    "it": (
+        "Le strategie pertinenti sono gia' visibili nel pannello Raccomandazioni. "
+        "Non ripetere i nomi delle strategie nella risposta: applicane i principi in modo "
+        "naturale e concreto, senza parlare del pannello."
+    ),
+    "en": (
+        "Relevant strategies are already visible in the Recommendations panel. "
+        "Do not repeat strategy names in the response: apply their principles naturally "
+        "and concretely without mentioning the panel."
+    ),
+    "es": (
+        "Las estrategias pertinentes ya aparecen en el panel de Recomendaciones. "
+        "No repitas sus nombres en la respuesta: aplica sus principios de forma natural "
+        "y concreta sin mencionar el panel."
+    ),
+    "fr": (
+        "Les stratégies pertinentes figurent déjà dans le panneau Recommandations. "
+        "Ne répète pas leur nom dans la réponse : applique leurs principes de façon "
+        "naturelle et concrète sans mentionner le panneau."
+    ),
+    "de": (
+        "Passende Strategien sind bereits im Bereich Empfehlungen sichtbar. Wiederhole "
+        "ihre Namen nicht in der Antwort: Wende ihre Grundsätze natürlich und konkret an, "
+        "ohne den Bereich zu erwähnen."
+    ),
+    "sv": (
+        "Relevanta strategier syns redan i panelen Rekommendationer. Upprepa inte deras "
+        "namn i svaret: tillämpa principerna naturligt och konkret utan att nämna panelen."
+    ),
+}
 
 _QSA_INVERTED_CODES = {"C3", "C6", "A1", "A4", "A5", "A7"}
 # QSAr usa codici con suffisso "r" (costrutto/direzione diversi dal QSA): solo
@@ -166,6 +201,7 @@ class CertifiedStrategyMemory:
         lines = [
             "[CERTIFIED_STRATEGIES]",
             "## Strategie di apprendimento certificate",
+            _SIDEBAR_INSTRUCTION.get((language or "").lower(), _SIDEBAR_INSTRUCTION["en"]),
             "Fonte autorizzata per consigli pratici, esercizi, piani d'azione e "
             "strategie di studio. Proponi solo queste strategie quando sono "
             "pertinenti; adattale alla situazione e non citarne l'identificatore. "

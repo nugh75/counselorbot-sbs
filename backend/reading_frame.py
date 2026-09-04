@@ -17,9 +17,10 @@ READING_FRAME: dict[str, dict[str, str]] = {
     "it": {
         "intro": (
             "Catalogo approvato: sono le uniche opere che puoi consigliare come lettura, "
-            "film o materiale. Cita al massimo due voci, con titolo e autore esatti come "
-            "scritti qui, e di' in una frase che cosa aiutano a capire. Se una voce porta "
-            "un'avvertenza, riportala. Non aggiungere titoli che non compaiano in questo elenco."
+            "film o materiale. Le voci pertinenti sono gia' visibili nel pannello "
+            "Raccomandazioni. Non ripetere titoli o autori nella risposta: usa il catalogo "
+            "solo per discutere in modo naturale perche' il tema puo' essere utile e come "
+            "collegarlo alla situazione dello studente. Non aggiungere opere assenti."
         ),
         "synopsis": "Di cosa parla",
         "why": "Perche'",
@@ -46,9 +47,10 @@ READING_FRAME: dict[str, dict[str, str]] = {
     "en": {
         "intro": (
             "Approved catalogue: these are the only works you may recommend as a reading, "
-            "a film or material. Cite at most two entries, with the exact title and author "
-            "written here, and say in one sentence what each helps to understand. If an entry "
-            "carries a content warning, state it. Do not add titles absent from this list."
+            "a film or material. Relevant entries are already visible in the Recommendations "
+            "panel. Do not repeat titles or authors in the response: use the catalogue only "
+            "to discuss naturally why the theme may help and how it relates to the student's "
+            "situation. Do not add works absent from the catalogue."
         ),
         "synopsis": "What it is about",
         "why": "Why",
@@ -74,9 +76,10 @@ READING_FRAME: dict[str, dict[str, str]] = {
     "es": {
         "intro": (
             "Catálogo aprobado: son las únicas obras que puedes recomendar como lectura, "
-            "película o material. Cita como máximo dos entradas, con el título y el autor "
-            "exactos tal como figuran aquí, y di en una frase qué ayudan a entender. Si una "
-            "entrada lleva una advertencia, indícala. No añadas títulos que no aparezcan aquí."
+            "película o material. Las entradas pertinentes ya aparecen en el panel de "
+            "Recomendaciones. No repitas títulos ni autores en la respuesta: usa el catálogo "
+            "solo para explicar de forma natural por qué el tema puede ayudar y cómo se "
+            "relaciona con la situación del estudiante. No añadas obras ausentes."
         ),
         "synopsis": "De qué trata",
         "why": "Por qué",
@@ -102,10 +105,10 @@ READING_FRAME: dict[str, dict[str, str]] = {
     "fr": {
         "intro": (
             "Catalogue approuvé : ce sont les seules œuvres que tu peux recommander comme "
-            "lecture, film ou matériel. Cite au maximum deux entrées, avec le titre et "
-            "l'auteur exacts tels qu'ils figurent ici, et dis en une phrase ce qu'elles aident "
-            "à comprendre. Si une entrée porte un avertissement, rapporte-le. N'ajoute aucun "
-            "titre absent de cette liste."
+            "lecture, film ou matériel. Les entrées pertinentes figurent déjà dans le panneau "
+            "Recommandations. Ne répète ni titres ni auteurs dans la réponse : utilise le "
+            "catalogue uniquement pour expliquer naturellement l'utilité du thème et son lien "
+            "avec la situation de l'élève. N'ajoute aucune œuvre absente."
         ),
         "synopsis": "De quoi il s'agit",
         "why": "Pourquoi",
@@ -131,9 +134,10 @@ READING_FRAME: dict[str, dict[str, str]] = {
     "de": {
         "intro": (
             "Freigegebener Katalog: Nur diese Werke darfst du als Lektüre, Film oder Material "
-            "empfehlen. Nenne höchstens zwei Einträge mit dem hier angegebenen Titel und Autor "
-            "und sage in einem Satz, wobei sie helfen. Trägt ein Eintrag einen Hinweis, gib ihn "
-            "weiter. Füge keine Titel hinzu, die hier nicht stehen."
+            "empfehlen. Passende Einträge sind bereits im Bereich Empfehlungen sichtbar. "
+            "Wiederhole in der Antwort keine Titel oder Namen von Autorinnen und Autoren: Nutze "
+            "den Katalog nur, um den Nutzen des Themas und den Bezug zur Situation der Person "
+            "natürlich zu erläutern. Füge keine fehlenden Werke hinzu."
         ),
         "synopsis": "Worum es geht",
         "why": "Warum",
@@ -160,9 +164,10 @@ READING_FRAME: dict[str, dict[str, str]] = {
     "sv": {
         "intro": (
             "Godkänd katalog: det här är de enda verk du får rekommendera som läsning, film "
-            "eller material. Nämn högst två poster, med exakt titel och upphovsperson som de "
-            "står här, och säg i en mening vad de hjälper till att förstå. Om en post har en "
-            "varning, återge den. Lägg inte till titlar som saknas i listan."
+            "eller material. Relevanta poster syns redan i panelen Rekommendationer. Upprepa "
+            "inte titlar eller upphovspersoner i svaret: använd katalogen bara för att naturligt "
+            "förklara varför temat kan hjälpa och hur det hänger ihop med studentens situation. "
+            "Lägg inte till verk som saknas."
         ),
         "synopsis": "Vad det handlar om",
         "why": "Varför",

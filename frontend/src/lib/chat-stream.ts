@@ -2,6 +2,7 @@
 // Chiama onDelta(fullText) ad ogni aggiornamento e ritorna la risposta finale.
 
 import { withViewAsHeaders } from '@/lib/auth';
+import type { RecommendationCatalog } from '@/lib/recommendations';
 
 export interface ChatStreamResult {
     response: string;
@@ -11,6 +12,7 @@ export interface ChatStreamResult {
     response_id?: string;
     idea_revision_id?: number;
     sources?: string[];
+    recommendations?: RecommendationCatalog;
 }
 
 export async function streamChat(
@@ -42,6 +44,7 @@ export async function streamChat(
     let responseId: string | undefined;
     let ideaRevisionId: number | undefined;
     let sources: string[] | undefined;
+    let recommendations: RecommendationCatalog | undefined;
 
     for (;;) {
         const { done, value } = await reader.read();
@@ -57,7 +60,7 @@ export async function streamChat(
             const json = line.slice(5).trim();
             if (!json) continue;
 
-            let evt: { delta?: string; display?: string; reasoning?: string; done?: boolean; response?: string; session_id?: string; conversation_id?: string; strategy_ids?: string[]; response_id?: string; idea_revision_id?: number; sources?: string[]; error?: string };
+            let evt: { delta?: string; display?: string; reasoning?: string; done?: boolean; response?: string; session_id?: string; conversation_id?: string; strategy_ids?: string[]; response_id?: string; idea_revision_id?: number; sources?: string[]; recommendations?: RecommendationCatalog; error?: string };
             try {
                 evt = JSON.parse(json);
             } catch {
@@ -86,9 +89,10 @@ export async function streamChat(
                 responseId = evt.response_id;
                 ideaRevisionId = evt.idea_revision_id;
                 sources = evt.sources;
+                recommendations = evt.recommendations;
             }
         }
     }
 
-    return { response: full, session_id: sessionId, conversation_id: conversationId, strategy_ids: strategyIds, response_id: responseId, idea_revision_id: ideaRevisionId, sources };
+    return { response: full, session_id: sessionId, conversation_id: conversationId, strategy_ids: strategyIds, response_id: responseId, idea_revision_id: ideaRevisionId, sources, recommendations };
 }

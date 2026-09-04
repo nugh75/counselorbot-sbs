@@ -272,13 +272,16 @@ def _config_true(db, key: str) -> bool:
     return str(getattr(row, "value", "false")).strip().lower() in ("1", "true", "yes", "on")
 
 
-def _certified_readings_block(ctx: SkillContext, params: dict) -> str:
+def _certified_readings_block(ctx: SkillContext, params: dict) -> tuple[str, list[dict]]:
     """Voci del catalogo approvato pertinenti al turno.
+
+    Ritorna (blocco di testo, voci renderizzate): gli slug delle voci servono
+    alla sidebar persistente per registrare cosa e' stato mostrato.
 
     I temi nominati dallo studente contano doppio: aprono il gate e sono gli
     unici che sbloccano il materiale marcato sensibile."""
     if ctx.db is None:
-        return ""
+        return "", []
     explicit = themes_from_text(ctx.message)
     implicit = themes_from_text(ctx.step_query or ctx.query) | themes_from_factors(ctx.salient_factors)
     allow_sensitive = _config_true(ctx.db, "readings_allow_sensitive")
@@ -294,6 +297,7 @@ def _certified_readings_block(ctx: SkillContext, params: dict) -> str:
         ai_service=ctx.ai_service,
         allow_sensitive=allow_sensitive,
         audience_band=ctx.audience_band,
+        excluded_ids=params.get("excluded_reading_ids") or (),
     )
     language = ctx.language or "it"
     block = certified_reading_memory.render_context(entries, language)
@@ -301,7 +305,7 @@ def _certified_readings_block(ctx: SkillContext, params: dict) -> str:
         # Senza fascia nota il filtro non ha potuto lavorare: la decisione passa
         # al turno, chiedendo allo studente a che punto degli studi si trova.
         block += "\n" + reading_frame(language)["ask_audience"]
-    return block
+    return block, entries
 
 
 @handler("reading_sources")
@@ -326,13 +330,16 @@ def reading_sources(ctx: SkillContext, params: dict) -> SkillOutput:
         if len(entries) >= limit:
             break
 
-    catalog = _certified_readings_block(ctx, params)
+    catalog, catalog_entries = _certified_readings_block(ctx, params)
+    # Slug delle voci di catalogo: identificatori del materiale raccomandato,
+    # usati dalla sidebar persistente per la non-ripetizione.
+    catalog_ids = [str(entry.get("id")) for entry in catalog_entries if entry.get("id")]
 
     if not entries:
         if catalog:
             # Nessun documento recuperato, ma il catalogo approvato ha qualcosa:
             # e' materiale citabile a pieno titolo, va nello slot dei dati.
-            return SkillOutput(text=catalog, slot="knowledge")
+            return SkillOutput(text=catalog, ids=catalog_ids, slot="knowledge")
         # L'assenza e' una direttiva, non un dato: resta nello slot della skill
         # cosi' raggiunge il modello anche quando [KNOWLEDGE] non viene composto.
         return SkillOutput(text=reading_frame(ctx.language or "it")["no_sources"])
@@ -347,7 +354,9 @@ def reading_sources(ctx: SkillContext, params: dict) -> SkillOutput:
         text = f"{catalog}\n\n{text}"
     return SkillOutput(
         text=text,
-        ids=[source for _, source in entries],
+        # Gli ids sono gli slug del catalogo certificato: le URL delle fonti
+        # RAG restano nel testo e non servono come identificatori a valle.
+        ids=catalog_ids,
         slot="knowledge",
     )
 

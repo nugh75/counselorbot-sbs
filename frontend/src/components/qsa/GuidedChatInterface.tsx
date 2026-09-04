@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
 import { QUESTIONNAIRES } from '@/lib/questionnaires';
 import { streamChat } from '@/lib/chat-stream';
+import { apiFetch } from '@/lib/auth';
 import { getSelectedCounselorId } from '@/lib/counselor';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
@@ -25,6 +26,7 @@ import { MessageDiagramButton } from '@/components/ui/MessageDiagramButton';
 import { IdeaBranchBar } from '@/components/qsa/IdeaBranchBar';
 import { IdeaBranchIntro } from '@/components/qsa/IdeaBranchIntro';
 import { IdeaWorkspace } from '@/components/qsa/IdeaWorkspace';
+import { RecommendationsPanel } from '@/components/qsa/RecommendationsPanel';
 import {
     deleteIdeaReference,
     fetchIdeaNextStep,
@@ -38,6 +40,7 @@ import {
 import { freezeSession, type FrozenSessionDetail, type FrozenSessionSnapshot } from '@/lib/frozen-session';
 import { AUTO_FREEZE_DELAY_MS, autoFreezeSignature, phasesAlreadyOpened, shouldAutoFreeze } from '@/lib/auto-freeze';
 import { diagramContentForSpeech, splitDiagramContent } from '@/lib/diagram-content';
+import { EMPTY_RECOMMENDATIONS, normalizeRecommendationCatalog, type RecommendationCatalog } from '@/lib/recommendations';
 
 // --- Types ---
 
@@ -514,6 +517,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const [userMessagesInPhase, setUserMessagesInPhase] = useState(0);
     const [isPathPanelOpen, setIsPathPanelOpen] = useState(false);
     const [isScoresPanelOpen, setIsScoresPanelOpen] = useState(false);
+    const [recommendations, setRecommendations] = useState<RecommendationCatalog>(EMPTY_RECOMMENDATIONS);
     // Indici dei messaggi con il box "Ragionamento" collassato (toggle per nasconderlo).
     const [hiddenReasoning, setHiddenReasoning] = useState<Set<number>>(new Set());
     const toggleReasoning = (idx: number) => setHiddenReasoning(prev => {
@@ -578,6 +582,25 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     useEffect(() => {
         setConversationId(undefined);
     }, [questionnaireType, sessionId]);
+
+    useEffect(() => {
+        let active = true;
+        setRecommendations({ reading: [], strategy: [] });
+        if (!sessionId) return () => { active = false; };
+
+        void apiFetch(`/api/session/${encodeURIComponent(sessionId)}/recommendations`)
+            .then(async (response) => response.ok ? response.json() : null)
+            .then((payload) => {
+                if (active && payload) setRecommendations(normalizeRecommendationCatalog(payload));
+            })
+            .catch(() => undefined);
+
+        return () => { active = false; };
+    }, [sessionId]);
+
+    const adoptRecommendations = (catalog: RecommendationCatalog | undefined) => {
+        if (catalog) setRecommendations(normalizeRecommendationCatalog(catalog));
+    };
 
     useEffect(() => {
         if (!isIdea || !sessionId) {
@@ -914,6 +937,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 idea_budget: isIdea ? ideaBudget : undefined,
             }, (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
             if (result.conversation_id) setConversationId(result.conversation_id);
+            adoptRecommendations(result.recommendations);
             setLastFeedbackTargets(result.strategy_ids, result.response_id);
             refreshIdeaWorkspace(result.idea_revision_id);
             if (!result.response?.trim()) dropLast();
@@ -996,6 +1020,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 const result = await streamChat(buildPayload(false), (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
                 responseText = result.response || '';
                 if (result.conversation_id) setConversationId(result.conversation_id);
+                adoptRecommendations(result.recommendations);
                 setLastFeedbackTargets(result.strategy_ids, result.response_id);
                 refreshIdeaWorkspace(result.idea_revision_id);
                 streamOk = true;
@@ -1174,6 +1199,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             );
             const { response } = result;
             if (result.conversation_id) setConversationId(result.conversation_id);
+            adoptRecommendations(result.recommendations);
             setLastFeedbackTargets(result.strategy_ids, result.response_id);
             refreshIdeaWorkspace(result.idea_revision_id);
 
@@ -1580,6 +1606,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         </div>
                     </div>
                 </div>
+
+                <RecommendationsPanel catalog={recommendations} />
 
                 {/* Scores Display */}
                 {hasScoreEntries && (

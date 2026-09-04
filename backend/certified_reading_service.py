@@ -46,6 +46,32 @@ KIND_LABELS = {
 
 
 class CertifiedReadingMemory:
+    def payloads_for_slugs(
+        self,
+        db: Session,
+        slugs: Iterable[str],
+        language: str = "it",
+    ) -> list[dict]:
+        """Return sidebar-ready certified entries, preserving the requested order."""
+        ordered = [str(slug).strip() for slug in slugs if str(slug).strip()]
+        if not ordered:
+            return []
+        rows = (
+            db.query(models.CertifiedReading)
+            .filter(
+                models.CertifiedReading.slug.in_(ordered),
+                models.CertifiedReading.status == "certified",
+                models.CertifiedReading.is_active.is_(True),
+            )
+            .all()
+        )
+        by_slug = {row.slug: row for row in rows}
+        return [
+            self._render_entry(db, by_slug[slug], set(), language)
+            for slug in ordered
+            if slug in by_slug
+        ]
+
     def retrieve(
         self,
         db: Session,
@@ -60,7 +86,9 @@ class CertifiedReadingMemory:
         ai_service=None,
         allow_sensitive: bool = False,
         audience_band: str | None = None,
+        excluded_ids: Iterable[str] | None = None,
     ) -> list[dict]:
+        excluded = {str(item).strip() for item in (excluded_ids or ()) if str(item).strip()}
         wanted = {str(t) for t in themes}
         explicit = {str(t) for t in explicit_themes}
         wanted |= explicit
@@ -78,6 +106,8 @@ class CertifiedReadingMemory:
         questionnaire = (questionnaire_type or "").upper()
         eligible = []
         for row in rows:
+            if row.slug in excluded:
+                continue
             row_themes = {str(t) for t in (row.themes or [])}
             row_codes = {str(c).upper() for c in (row.factor_codes or [])}
             if not row_themes and not row_codes:

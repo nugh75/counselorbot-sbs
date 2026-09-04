@@ -234,6 +234,27 @@ def test_the_catalog_alone_is_enough_without_retrieved_documents():
         db.commit(); db.close()
 
 
+def test_the_handler_returns_catalog_slugs_and_honours_what_is_already_shown():
+    """Gli ids del turno sono gli slug del catalogo: la sidebar li registra e
+    al turno dopo li rimanda indietro come gia' mostrati."""
+    db = _TestSession()
+    try:
+        _reading(db, "gia-vista")
+        _reading(db, "ancora-no", sort_order=1)
+        ctx = _ctx(db=db, message="ho ansia prima della verifica", component_flags={"knowledge": True})
+
+        out = handlers.reading_sources(ctx, {})
+        assert set(out.ids) == {f"{PREFIX}-gia-vista", f"{PREFIX}-ancora-no"}
+
+        out = handlers.reading_sources(ctx, {"excluded_reading_ids": [f"{PREFIX}-gia-vista"]})
+        assert out.ids == [f"{PREFIX}-ancora-no"]
+        assert f"{PREFIX}-gia-vista" not in out.text
+        assert "Titolo gia-vista" not in out.text
+    finally:
+        db.query(models.CertifiedReading).delete()
+        db.commit(); db.close()
+
+
 def test_absence_is_still_declared_when_nothing_matches():
     db = _TestSession()
     try:
@@ -400,6 +421,8 @@ def test_the_frame_speaks_the_language_of_the_turn():
         assert "What it is about: A man looks back" in block
         assert "Why: because it fits" in block
         assert "Approved catalogue" in block
+        assert "Recommendations panel" in block
+        assert "Do not repeat titles or authors" in block
         # Il tag resta un marcatore per il motore, non una frase da tradurre.
         assert "[CERTIFIED_READINGS]" in block
         assert "Di cosa parla" not in block and "Perche'" not in block
@@ -407,6 +430,8 @@ def test_the_frame_speaks_the_language_of_the_turn():
         italian = certified_reading_memory.render_context(
             certified_reading_memory.retrieve(db, themes={"ansia-e-prestazione"}, language="it"), "it")
         assert "Perche': perche' si'" in italian
+        assert "pannello Raccomandazioni" in italian
+        assert "Non ripetere titoli o autori" in italian
     finally:
         db.query(models.CertifiedReading).delete()
         db.commit(); db.close()

@@ -2210,7 +2210,7 @@ def test_retrieved_context_respects_allowed_strategies_whitelist():
                 questionnaire_type="QSA",
                 language="it",
             )
-            context, strategy_ids, certified_ids, _skills_blocks = _retrieved_context(
+            context, strategy_ids, certified_ids, _skills_blocks, _reading_ids = _retrieved_context(
                 db,
                 session_id="test-allowed-strategies",
                 request=request,
@@ -2640,6 +2640,20 @@ def test_chat_smoke_mocked_ai():
 
 
 
+def test_chat_message_returns_the_sessions_recommendation_catalog():
+    r = client.post("/chat/message", params={
+        "message": "ciao",
+        "session_id": "chat-message-recommendations",
+        "mode": "generic",
+        "questionnaire_type": "QSA",
+        "language": "it",
+    })
+
+    assert r.status_code == 200, r.text
+    assert r.json()["recommendations"] == {"reading": [], "strategy": []}
+
+
+
 def test_chat_logs_conversation_id_and_admin_filter():
     session_id = "conversation-log-session"
     conversation_id = "conversation-log-id"
@@ -2826,6 +2840,91 @@ def test_chat_stream_log_persists_prompt_envelope():
     assert "Analizza il mio profilo di studio" in envelope["full_message"]
     assert isinstance(envelope["history"], list)
     session_memory.clear(session_id)
+
+
+def test_chat_stream_and_resume_expose_the_sessions_recommendations():
+    from backend import recommendation_service
+    from backend.anonymous_codes import code_for_identity
+    from backend.skills_seed import SEEDED_INSTRUMENTS, seed_skills
+
+    session_id = "stream-recommendations"
+    reading_slug = "stream-new-certified-reading"
+    config_keys = ("skills_engine_enabled", "skills_engine_instruments")
+    original_configs = {}
+    _ensure_guided_steps("QSA")
+    db = _TestSession()
+    try:
+        for key in config_keys:
+            row = db.query(models.Config).filter(models.Config.key == key).first()
+            original_configs[key] = row.value if row else None
+        seed_skills(db)
+        code_for_identity(db, _fake_user_identity())
+        db.query(models.CertifiedReading).filter_by(slug=reading_slug).delete()
+        db.add(models.CertifiedReading(
+            slug=reading_slug,
+            kind="essay",
+            title="Manuale Zefiro",
+            creators=["Autrice verificata"],
+            themes=["organizzazione-e-tempo"],
+            available_languages=["it"],
+            why_i18n={"it": "Aiuta a organizzare lo studio."},
+            status="certified",
+            is_active=True,
+        ))
+        db.commit()
+        recommendation_service.record(
+            db,
+            session_id=session_id,
+            username="student",
+            recommendation_type="reading",
+            payloads=[{"slug": "existing-reading", "title": "Existing reading"}],
+            turn_index=1,
+        )
+    finally:
+        db.close()
+    _set_config("skills_engine_enabled", "true")
+    _set_config("skills_engine_instruments", json.dumps(list(SEEDED_INSTRUMENTS)))
+
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    try:
+        response = client.post("/chat/stream", json={
+            "message": "Puoi consigliarmi la lettura Manuale Zefiro sull'organizzazione del tempo?",
+            "mode": "factor-qa",
+            "phase": "cognitive",
+            "session_id": session_id,
+            "questionnaire_type": "QSA",
+            "language": "it",
+            "scores_context": "C3: 8/9\nC6: 9/9",
+        })
+        assert response.status_code == 200, response.text
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in response.text.splitlines()
+            if line.startswith("data: ")
+        ]
+        done = next(event for event in events if event.get("done"))
+        titles = {item["title"] for item in done["recommendations"]["reading"]}
+        assert titles == {"Existing reading", "Manuale Zefiro"}
+
+        resumed = client.get(f"/session/{session_id}/recommendations")
+        assert resumed.status_code == 200, resumed.text
+        assert resumed.json() == done["recommendations"]
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        session_memory.clear(session_id)
+        db = _TestSession()
+        try:
+            db.query(models.RecommendationHistory).filter_by(session_id=session_id).delete()
+            db.query(models.CertifiedReading).filter_by(slug=reading_slug).delete()
+            for key, original_value in original_configs.items():
+                row = db.query(models.Config).filter(models.Config.key == key).first()
+                if row and original_value is None:
+                    db.delete(row)
+                elif row:
+                    row.value = original_value
+            db.commit()
+        finally:
+            db.close()
 
 
 def test_chat_log_envelope_redacts_pii():
@@ -3486,7 +3585,7 @@ def test_generic_acknowledgement_is_removed_from_visible_chat_openings():
 
     _FakeAIService.stream_response = assent_stream
     _FakeAIService.get_response = assent_response
-    chat_routes._retrieved_context = lambda *a, **kw: ("", [], [], [])
+    chat_routes._retrieved_context = lambda *a, **kw: ("", [], [], [], [])
     site_chat_routes.site_rag_index.search = lambda *a, **kw: [
         {"score": 0.9, "source": "fonti/qsa.md", "title": "QSA", "text": "Materiale QSA."}
     ]
@@ -4996,7 +5095,7 @@ def test_retrieved_context_routing_and_strategy_exclusion():
     # 2. Test _retrieved_context routing logic using these flags
     # We toggle knowledge to True to test RAG retrieval with these flags
     flags["knowledge"] = True
-    knowledge_context, strategy_ids, certified_strategy_ids, _skills_blocks = _retrieved_context(
+    knowledge_context, strategy_ids, certified_strategy_ids, _skills_blocks, _reading_ids = _retrieved_context(
         db,
         session_id="test-routing",
         request=request,

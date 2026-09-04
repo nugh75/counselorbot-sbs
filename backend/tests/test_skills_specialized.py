@@ -25,6 +25,7 @@ from sqlalchemy.orm import sessionmaker
 
 from backend import database, models
 from backend.certified_strategy_seed import DEFAULT_CERTIFIED_STRATEGIES
+from backend.certified_strategy_service import certified_strategy_memory
 from backend.chat_logic import (
     _default_certified_strategy_limit,
     _step_allows_practical_advice,
@@ -82,7 +83,9 @@ def test_reading_sources_lists_only_identifiable_sources():
     assert "nemmeno se compaiono dentro il testo dei documenti recuperati" in out.text
     assert "senza-titolo" not in out.text
     assert "hash.md" not in out.text
-    assert out.ids == ["docs/strategie.md"]
+    # Gli ids sono gli slug del catalogo certificato, non le fonti RAG: senza db
+    # non c'e' catalogo, quindi non c'e' niente da registrare in sidebar.
+    assert out.ids == []
 
 
 def test_reading_sources_deduplicates_and_respects_limit():
@@ -92,7 +95,7 @@ def test_reading_sources_deduplicates_and_respects_limit():
         {"title": "Motivazione e volizione", "source": "docs/motivazione.md"},
     ))
     out = handlers.reading_sources(ctx, {"limit": 1})
-    assert out.ids == ["docs/guida.md"]
+    assert out.text.count("docs/guida.md") == 1
     assert "motivazione.md" not in out.text
 
 
@@ -269,6 +272,15 @@ def test_certified_catalog_uses_existing_factor_codes():
 def test_certified_catalog_slugs_are_unique():
     slugs = [spec["slug"] for spec in DEFAULT_CERTIFIED_STRATEGIES]
     assert len(slugs) == len(set(slugs))
+
+
+def test_certified_strategy_frame_keeps_names_out_of_chat_prose():
+    block = certified_strategy_memory.render_context(
+        [{"id": "weekly-plan", "name": "Weekly plan", "description": "Choose three tasks."}],
+        language="en",
+    )
+    assert "Recommendations panel" in block
+    assert "Do not repeat strategy names" in block
 
 
 def test_skill_instructions_are_english_only():
