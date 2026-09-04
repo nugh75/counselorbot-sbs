@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { walkStep } from './diagram-svg.ts';
+import { svgAspectRatio, walkStep } from './diagram-svg.ts';
 
 // Le classi del diagramma vivono su due elementi diversi: `dg-svg` sul div che
 // contiene il disegno, `dg-play` e `dg-focusing` sull'<svg> dentro di esso.
@@ -42,6 +42,49 @@ test('nothing in a diagram animates forever: one blinking part is noise, not exp
 
 test('reduced motion leaves the diagram whole', () => {
     assert.ok(css.includes('prefers-reduced-motion'));
+    // Le regole di gioco sono piu' specifiche di quelle che le spengono: senza
+    // `!important` il tracciato dell'arco sopravviveva ed era l'unico effetto
+    // in piedi, che e' esattamente il guasto che si vedeva.
+    const quiet = css.slice(css.indexOf('@media (prefers-reduced-motion'));
+    assert.ok(quiet.includes('animation: none !important'));
+    assert.ok(quiet.includes('transform: none !important'));
+});
+
+test('the stroke length lives in the keyframes, not in the rule', () => {
+    // Come dichiarazione fissa `stroke-dasharray` batte l'attributo di
+    // Graphviz finche' `dg-play` resta posata: `weakens` e `link` si vedevano
+    // pieni e la legenda mentiva.
+    const rule = css.slice(css.indexOf('.dg-play .dg-edge:is('), css.indexOf('@keyframes dg-draw'));
+    assert.equal(rule.includes('stroke-dasharray'), false);
+    assert.ok(css.slice(css.indexOf('@keyframes dg-draw')).includes('stroke-dasharray'));
+});
+
+test('only solid edges are drawn stroke by stroke', () => {
+    assert.ok(css.includes('.dg-play .dg-edge:is(.dg-kind-drives, .dg-kind-strengthens) path'));
+});
+
+test('the reveal waits: armed at mount, held until the card is seen', () => {
+    assert.ok(css.includes('.dg-hold'));
+    assert.ok(css.slice(css.indexOf('.dg-hold')).includes('animation-play-state: paused'));
+});
+
+test('centring inside a scrolling box is safe, or the start edge is lost', () => {
+    const fit = css.slice(css.indexOf('.dg-fit'));
+    assert.ok(fit.includes('justify-content: safe center'));
+    assert.ok(fit.includes('align-items: safe center'));
+});
+
+test('the aspect ratio comes from the viewBox: the renderer strips width and height', () => {
+    assert.equal(svgAspectRatio('<svg viewBox="0 0 320 900" role="img">'), 320 / 900);
+    assert.equal(svgAspectRatio('<svg viewBox="0.00 0.00 640.50 320.25">'), 640.5 / 320.25);
+    assert.equal(svgAspectRatio('<svg viewBox="0,0,200,100">'), 2);
+});
+
+test('a drawing without a usable viewBox falls back instead of collapsing', () => {
+    assert.equal(svgAspectRatio('<svg role="img">'), null);
+    assert.equal(svgAspectRatio('<svg viewBox="0 0 320">'), null);
+    assert.equal(svgAspectRatio('<svg viewBox="0 0 nope 900">'), null);
+    assert.equal(svgAspectRatio('<svg viewBox="0 0 320 0">'), null);
 });
 
 test('the reveal fills backwards, or a finished animation would pin the opacity', () => {

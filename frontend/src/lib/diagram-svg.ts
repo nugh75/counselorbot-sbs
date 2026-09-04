@@ -158,3 +158,20 @@ export function focusDiagramNode(root: Element, nodeId: string | null) {
         group.classList.toggle('dg-related', related);
     }
 }
+
+/**
+ * Rapporto larghezza/altezza del disegno, letto dal `viewBox`.
+ *
+ * Il renderer toglie `width` e `height` dal tag `<svg>`, quindi il disegno
+ * prende tutta la larghezza che gli si da' e l'altezza gli viene dietro: un
+ * grafo alto e stretto diventava piu' alto dello schermo. Con il rapporto la
+ * larghezza si puo' ricavare da quanta altezza c'e' davvero.
+ */
+export function svgAspectRatio(markup: string): number | null {
+    const match = /viewBox="([^"]+)"/i.exec(markup);
+    if (!match) return null;
+    const box = match[1].trim().split(/[\s,]+/).map(Number);
+    if (box.length !== 4 || box.some((value) => !Number.isFinite(value))) return null;
+    const [, , width, height] = box;
+    return width > 0 && height > 0 ? width / height : null;
+}
