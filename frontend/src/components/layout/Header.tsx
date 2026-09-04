@@ -7,6 +7,7 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { HeaderCounselor } from './HeaderCounselor';
 import { HeaderInstrument } from './HeaderInstrument';
 import { HeaderResume } from './HeaderResume';
+import { MotionToggle } from './MotionToggle';
 import { ThemeToggle } from './ThemeToggle';
 import { FlagIcon } from './FlagIcon';
 import { Tooltip, TooltipProvider } from '@/components/ui/Tooltip';
@@ -199,6 +200,7 @@ export function Header() {
                                 </Link>
                             </Tooltip>
                             <ThemeToggle />
+                            <MotionToggle />
                             <LanguageSwitcher />
                         </div>
                     </div>

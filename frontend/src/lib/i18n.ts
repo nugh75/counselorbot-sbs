@@ -994,6 +994,10 @@ const it: Dict = {
     'theme.toDark': 'Tema scuro',
     'theme.switchToLight': 'Passa al tema chiaro',
     'theme.switchToDark': 'Passa al tema scuro',
+    'motion.reduce': 'Riduci il movimento',
+    'motion.restore': 'Rimetti il movimento',
+    'motion.reduceHint': 'Ferma le animazioni dei diagrammi',
+    'motion.restoreHint': 'Rimetti le animazioni dei diagrammi',
 
     // --- somministrazione degli strumenti (cornice; item e scala vengono dall'API) ---
     'admin.run.testBadge': 'VERSIONE DI PROVA',
@@ -2063,6 +2067,10 @@ const en: Dict = {
     'theme.toDark': 'Dark theme',
     'theme.switchToLight': 'Switch to light theme',
     'theme.switchToDark': 'Switch to dark theme',
+    'motion.reduce': 'Reduce motion',
+    'motion.restore': 'Restore motion',
+    'motion.reduceHint': 'Stop the diagram animations',
+    'motion.restoreHint': 'Restore the diagram animations',
 
     // --- somministrazione degli strumenti (cornice; item e scala vengono dall'API) ---
     'admin.run.testBadge': 'TEST VERSION',
@@ -3131,6 +3139,10 @@ const es: Dict = {
     'theme.toDark': 'Tema oscuro',
     'theme.switchToLight': 'Cambiar al tema claro',
     'theme.switchToDark': 'Cambiar al tema oscuro',
+    'motion.reduce': 'Reducir el movimiento',
+    'motion.restore': 'Restaurar el movimiento',
+    'motion.reduceHint': 'Detener las animaciones de los diagramas',
+    'motion.restoreHint': 'Restaurar las animaciones de los diagramas',
 
     // --- somministrazione degli strumenti (cornice; item e scala vengono dall'API) ---
     'admin.run.testBadge': 'VERSION DE PRUEBA',
@@ -4199,6 +4211,10 @@ const fr: Dict = {
     'theme.toDark': 'Thème sombre',
     'theme.switchToLight': 'Passer au thème clair',
     'theme.switchToDark': 'Passer au thème sombre',
+    'motion.reduce': 'Réduire le mouvement',
+    'motion.restore': 'Rétablir le mouvement',
+    'motion.reduceHint': 'Arrêter les animations des schémas',
+    'motion.restoreHint': 'Rétablir les animations des schémas',
 
     // --- somministrazione degli strumenti (cornice; item e scala vengono dall'API) ---
     'admin.run.testBadge': 'VERSION D’ESSAI',
@@ -5267,6 +5283,10 @@ const de: Dict = {
     'theme.toDark': 'Dunkles Design',
     'theme.switchToLight': 'Zum hellen Design wechseln',
     'theme.switchToDark': 'Zum dunklen Design wechseln',
+    'motion.reduce': 'Bewegung reduzieren',
+    'motion.restore': 'Bewegung wiederherstellen',
+    'motion.reduceHint': 'Die Animationen der Diagramme anhalten',
+    'motion.restoreHint': 'Die Animationen der Diagramme wiederherstellen',
 
     // --- somministrazione degli strumenti (cornice; item e scala vengono dall'API) ---
     'admin.run.testBadge': 'TESTVERSION',
@@ -6335,6 +6355,10 @@ const sv: Dict = {
     'theme.toDark': 'Mörkt tema',
     'theme.switchToLight': 'Byt till ljust tema',
     'theme.switchToDark': 'Byt till mörkt tema',
+    'motion.reduce': 'Minska rörelsen',
+    'motion.restore': 'Återställ rörelsen',
+    'motion.reduceHint': 'Stoppa diagrammens animationer',
+    'motion.restoreHint': 'Återställ diagrammens animationer',
 
     // --- somministrazione degli strumenti (cornice; item e scala vengono dall'API) ---
     'admin.run.testBadge': 'TESTVERSION',

@@ -697,6 +697,26 @@ h1.text-3xl {
     to { stroke-dashoffset: -16; }
 }
 
+/* Al passaggio del dito o del mouse gli archi si rifanno, e continuano finche'
+   si resta sul disegno: il tratto pieno si ridisegna da un capo all'altro, il
+   tratteggiato scorre. Il verso di un ciclo si vede, invece di doverlo dedurre
+   dalle punte.
+
+   Il movimento e' chiesto, non offerto: comincia quando ci si posa sopra e
+   finisce quando si va via. Percio' non c'e' niente da fermare -- nessun ciclo
+   perpetuo resta acceso nella periferia di chi sta leggendo il testo accanto,
+   che e' cio' che da' la nausea a chi ha un disturbo vestibolare e ruba il
+   turno alla lettura a tutti gli altri. Sono gli unici `infinite` del foglio e
+   vivono solo dentro un `:hover`; chi ha chiesto meno movimento non li vede
+   affatto, perche' la regola in fondo li spegne con tutto il resto. */
+.dg-svg svg:hover .dg-edge:is(.dg-kind-drives, .dg-kind-strengthens) path {
+    animation: dg-draw 3400ms linear infinite;
+}
+
+.dg-svg svg:hover .dg-edge:is(.dg-kind-weakens, .dg-kind-feedback, .dg-kind-link, .dg-kind-unclear) path {
+    animation: dg-flow 4500ms linear infinite;
+}
+
 /* Passo-passo: cio' che non e' ancora il suo turno non c'e'.
    `!important` perche' un'animazione batte una dichiarazione normale: finche'
    la comparsa e' in corso, o in attesa in pausa, `opacity: 0` perdeva e il
@@ -746,4 +766,14 @@ h1.text-3xl {
         animation: none !important;
         transform: none !important;
     }
+}
+
+/* La stessa richiesta, fatta dentro l'app invece che al sistema operativo.
+   L'impostazione di sistema esiste ma quasi nessuno studente sa di averla, e su
+   un computer di scuola non puo' cambiarla: chi sta male deve poterlo dire
+   dove si trova. */
+[data-motion="reduced"] .dg-svg [data-dg-step],
+[data-motion="reduced"] .dg-svg [data-dg-step] * {
+    animation: none !important;
+    transform: none !important;
 }
