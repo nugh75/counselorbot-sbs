@@ -14,6 +14,7 @@ export interface PublicCounselor {
     show_in_assistant?: boolean;
     assistant_audience?: string | null;
     model_origin?: 'local' | 'external' | null;
+    model?: string | null;
     // Adatto allo strumento chiesto. I non adatti arrivano lo stesso: servono
     // a dire perche' quello scelto non va e quali si possono usare.
     suitable?: boolean;

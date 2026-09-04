@@ -1009,7 +1009,7 @@ class CounselorResponse(CounselorBase):
 
 
 class CounselorPublic(BaseModel):
-    """Vista pubblica lato utente: nessun dettaglio interno (preset/persona)."""
+    """Vista pubblica lato utente: modello visibile, nessun preset/persona."""
     id: int
     slug: str
     name: str
@@ -1023,6 +1023,9 @@ class CounselorPublic(BaseModel):
     assistant_audience: Optional[str] = None
     # "local" (Ollama/llama.cpp) | "external" (API a pagamento). Derivato dal preset.
     model_origin: Optional[str] = None
+    # Nome del modello effettivamente usato: preset del counselor oppure
+    # configurazione globale quando il counselor non ha un preset.
+    model: Optional[str] = None
     # Adatto allo strumento chiesto in `?questionnaire_type=`. Senza quel
     # parametro sono adatti tutti. I non adatti non vengono nascosti: servono a
     # spiegare perche' quello scelto non va e quali si possono usare.

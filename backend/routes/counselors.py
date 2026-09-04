@@ -32,6 +32,11 @@ def _active_provider(db: Session) -> Optional[str]:
     return (row.value if row else None) or "openai"
 
 
+def _active_model(db: Session) -> Optional[str]:
+    row = db.query(models.Config).filter(models.Config.key == "model_name").first()
+    return (row.value if row else None) or "gpt-4o"
+
+
 def _preset_map(db: Session) -> dict:
     return {p.id: p for p in db.query(models.ModelPreset).all()}
 
@@ -71,6 +76,7 @@ async def list_public_counselors(
     rows = q.all()
     presets = _preset_map(db)
     active = _active_provider(db)
+    active_model = _active_model(db)
     restricted = restricted_instruments(db)
     out = []
     for r in rows:
@@ -79,6 +85,7 @@ async def list_public_counselors(
         preset = presets.get(r.preset_id) if r.preset_id else None
         provider = preset.provider if preset else active
         pub.model_origin = _provider_origin(provider)
+        pub.model = preset.model if preset else active_model
         pub.suitable = suits(r, questionnaire_type, restricted)
         out.append(pub)
     # Gli adatti in cima: chi sceglie legge prima cio' che puo' usare.

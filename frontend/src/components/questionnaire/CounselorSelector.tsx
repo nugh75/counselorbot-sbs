@@ -110,6 +110,12 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName, quest
                                         {t(c.model_origin === 'local' ? 'counselor.origin.local' : 'counselor.origin.external')}
                                     </span>
                                 )}
+                                {c.model && (
+                                    <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-2xs font-medium text-indigo-700">
+                                        <span>{t('counselor.modelLabel')}</span>
+                                        <span className="truncate font-mono" title={c.model}>{c.model}</span>
+                                    </span>
+                                )}
                             </div>
                             <p className="mt-0.5 text-sm leading-relaxed text-slate-600">{c.description || t('counselor.toneDefault')}</p>
                         </div>

@@ -14,7 +14,7 @@ from ..strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_me
 from ..pdf_generator import generate_questionnaire_pdf, generate_student_booklet_pdf
 from ..diagram_blocks import strip_for_speech
 from ..ai_service import AIService
-from .. import scoring_service
+from .. import scoring_service, recommendation_service
 from .. import content_version_service, i18n_fields
 
 router = APIRouter()
@@ -771,15 +771,33 @@ def _session_final_summary(
     db: Session,
     result: models.QuestionnaireResult,
 ) -> str | None:
-    """Return the latest response from the instrument's final guided step."""
-    final_step = (
+    """Return the latest response from the instrument's configured synthesis step."""
+    steps = (
         db.query(models.GuidedStep)
         .filter(models.GuidedStep.questionnaire_type == result.questionnaire_type)
         .order_by(models.GuidedStep.sort_order.desc(), models.GuidedStep.id.desc())
-        .first()
+        .all()
     )
-    if final_step is None:
+    if not steps:
         return None
+
+    summary_ids = {
+        "QSA": "sl-synthesis",
+        "QSAR": "qsar-synthesis",
+        "ZTPI": "ztpi-btp",
+        "SAVICKAS": "savickas-final",
+        "QPCS": "qpcs-sintesi",
+        "QPCC": "qpcc-factors",
+        "QAP": "qap-factors",
+        "IDEA": "idea-synthesis",
+    }
+    preferred_id = summary_ids.get((result.questionnaire_type or "").upper())
+    final_step = next((step for step in steps if step.id == preferred_id), None)
+    if final_step is None:
+        final_step = next(
+            (step for step in steps if (step.system_prompt_mode or "").endswith("-summary")),
+            steps[0],
+        )
 
     row = (
         db.query(models.Log)
@@ -962,6 +980,11 @@ async def download_questionnaire_pdf(
     # step: non è una vera interazione e non va nel PDF studente.
     messages = _session_conversation_messages(db, session_id)
     summary_text = _generate_pdf_summary(db, result=result, scores=scores, messages=messages, lang=lang)
+    recommendations = recommendation_service.list_for_session(
+        db,
+        session_id=session_id,
+        username=result.username or "",
+    )
 
     pdf_bytes = generate_questionnaire_pdf(
         questionnaire_type=result.questionnaire_type,
@@ -971,6 +994,7 @@ async def download_questionnaire_pdf(
         language=lang,
         messages=messages or None,
         summary_text=summary_text,
+        recommendations=recommendations,
     )
 
     filename = f"counselorbot_{result.questionnaire_type}_{result.id}.pdf"
