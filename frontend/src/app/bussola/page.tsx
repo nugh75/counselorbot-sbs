@@ -236,7 +236,7 @@ export default function BussolaPage() {
                 <div className="flex justify-center py-12"><Loader2 className="h-7 w-7 animate-spin text-indigo-600" /></div>
             ) : choosingCounselor ? (
                 <section className="rounded-xl border border-indigo-200 bg-white p-5 shadow-sm sm:p-7">
-                    <div className="mb-6 max-w-2xl border-l-2 border-ochre-400 pl-4">
+                    <div className="mb-6 max-w-2xl">
                         <p className="text-xs font-semibold uppercase tracking-[0.1em] text-ochre-600">{t('orientation.counselor.step')}</p>
                         <h2 className="font-display mt-1 text-2xl font-bold text-slate-900">{t('orientation.counselor.title')}</h2>
                         <p className="mt-2 text-sm leading-relaxed text-slate-600">{t('orientation.counselor.body')}</p>
@@ -367,7 +367,7 @@ function RecommendationSection({ session, onPick }: { session: OrientationSessio
                         <div className="flex items-center justify-between gap-3"><span className="font-mono text-xs font-semibold text-ochre-600">{String(index + 1).padStart(2, '0')}</span>{index === 0 && <Compass className="h-5 w-5 text-indigo-600" />}</div>
                         <h3 className="mt-3 text-lg font-bold text-slate-900">{toolName(item.id, t)}</h3>
                         <p className="mt-1 text-sm leading-relaxed text-slate-500">{toolDescription(item.id, t)}</p>
-                        <p className="mt-4 grow border-l-2 border-teal-400 pl-3 text-sm leading-relaxed text-slate-700">{item.reason}</p>
+                        <p className="mt-4 grow text-sm leading-relaxed text-slate-700">{item.reason}</p>
                         {/* La Bussola manda a `/?start=<id>`, che salta la card di scelta:
                             senza questo, il link al questionario non lo vede mai nessuno. */}
                         <QuestionnaireLink instrument={item.id} className="mt-4" />
