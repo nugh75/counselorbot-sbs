@@ -91,7 +91,17 @@ def _override_get_db():
 
 
 def _fake_admin():
-    return models.User(id=1, username="admin", is_admin=True)
+    # Stessa forma di auth.get_current_active_admin in produzione: un dict
+    # identita', non un models.User (le rotte admin leggono current_user["..."]).
+    return {
+        "email": "admin@example.test",
+        "username": "admin",
+        "name": "Admin",
+        "groups": ["admins"],
+        "is_admin": True,
+        "is_researcher": True,
+        "authenticated": True,
+    }
 
 
 def _fake_user_identity():

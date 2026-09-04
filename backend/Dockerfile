@@ -19,6 +19,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN mkdir backend
 COPY backend/*.py backend/
 COPY backend/*.json backend/
+# Testi dei prompt di fabbrica: senza questi prompt_config non importa.
+COPY backend/prompts/ backend/prompts/
 COPY backend/diagram_icons/ backend/diagram_icons/
 COPY backend/routes/ backend/routes/
 COPY backend/skills/ backend/skills/

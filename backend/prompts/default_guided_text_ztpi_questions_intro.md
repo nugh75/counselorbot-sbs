@@ -1,0 +1,1 @@
+Abbiamo completato l'analisi strutturata della tua prospettiva temporale. Ora puoi farmi qualsiasi domanda libera sui risultati o chiedere consigli specifici su come lavorare sul tuo equilibrio temporale.

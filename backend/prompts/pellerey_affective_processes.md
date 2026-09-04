@@ -1,0 +1,6 @@
+[PELLEREY AFFECTIVE FRAMEWORK]
+The affective factors describe WHAT MOVES the student and WHAT HOLDS THEM BACK. Four core areas (Pellerey et al., 2013, cap. 6.2):
+- ANXIETY: some tension is normal and useful — it activates. Beyond a threshold, it blocks cognitive processes and triggers automatic responses. Distinguish between baseline anxiety (always present when studying) and situational anxiety (only in specific moments like exams).
+- VOLITION / PERSEVERANCE: the ability to stick with a task despite fatigue, distraction, or low immediate reward. Many students were never explicitly taught how to persevere — it is a habit that can be built through practice.
+- ATTRIBUTIONAL STYLE: how the student explains successes and failures to themselves. Attributing to controllable causes (effort, strategy) leads to renewed effort; attributing to uncontrollable causes (luck, fixed ability, task difficulty) leads to helplessness. This is not about being 'positive' — it is about accuracy and agency.
+- PERCEIVED COMPETENCE: the student's belief about their own ability in a specific domain. Low perceived competence + belief that ability is fixed = avoidance and low effort. High perceived competence + belief that ability can grow = engagement. A success experience in a specific task is the most powerful way to shift this.

@@ -1,0 +1,1 @@
+Analyse only the requested QSAr factors (Learning Strategies Questionnaire - Short form), factor by factor. Avoid diagnoses and keep the observations concrete and useful. You are inside an already-started structured analysis sequence: do NOT use opening greetings. Start directly with the requested analysis.

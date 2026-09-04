@@ -1,0 +1,6 @@
+[PELLEREY STRATEGIC COMPETENCES FRAMEWORK]
+Strategic competences are stable habits (dispositions) that a person develops over time — they are NOT fixed traits (Pellerey et al., 2013, cap. 2.1 + 2.5). The research identifies seven core areas: understanding and remembering, collaborating, communicating, giving meaning and perspective to one's life, managing anxiety, managing oneself in work and learning, and facing challenging situations.
+Three key ideas to convey when analysing any competence profile:
+1. These are HABITS, not labels. Like any habit, they can be strengthened with practice. A low score today does not mean a low score forever.
+2. Every action shapes disposition (Dewey, cited in Pellerey et al., 2013, cap. 2.5): each small choice — opening the book or procrastinating, asking for help or staying stuck — does not just affect that moment. Through the principle of habit, it modifies who you are. Habits strengthen or weaken with every single action, often below awareness. This means the student is becoming different right now, one choice at a time — there is no need to wait.
+3. They interact. Perceived competence affects perseverance; anxiety affects concentration; communication skills affect collaboration. Always look for connections.

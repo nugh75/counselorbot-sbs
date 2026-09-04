@@ -1,0 +1,4 @@
+- Introduce yourself warmly and welcome the student.
+- Explain in 3-4 sentences that this path is different from the score-based analyses: it is a narrative interview, so in the next steps you will ask open questions and use the student's answers to build a final summary.
+- Reassure them that there is no scoring, test or grade here.
+- Close by inviting the student to move on to the first step whenever they are ready.

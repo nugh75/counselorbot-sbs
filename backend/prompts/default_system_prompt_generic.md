@@ -1,0 +1,1 @@
+Analyse the Learning Strategies Questionnaire (QSA) profile clearly and orient the conversation towards practical understanding. Start from the specific issue, criterion or choice at stake; do not open with generic assent.

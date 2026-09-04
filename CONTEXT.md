@@ -44,7 +44,7 @@ CounselorBot is an AI-powered web app that helps students analyze learning/caree
 - **Session**: a chat session tied to a `QuestionnaireResult`. Has rolling Markdown conversational memory on disk.
 - **Frozen session**: a guided-chat session freezes itself. `GuidedChatInterface` and `OpenCodeExperience` write a snapshot ~1.5s after each finished turn (`lib/auto-freeze.ts` holds the guards: a session with only the intro message, one still streaming, or one already completed is never written) and flush a pending one on unmount and on `pagehide`, so leaving the tool by any route — back button, header link, closed tab — keeps the session. The "Congela sessione" button in `GuidedChatInterface` does the same and closes the chat on top; the snapshot (step, scores, transcript) is stored in the `frozen_sessions` table keyed to the caller's `username` (`POST /session/freeze`). It's resumed from any device via the header's frozen-session icon (dropdown when several are frozen) or the `/?frozen=<session_id>` URL, which restores the snapshot into the guided chat or into the OpenCode sandbox, following the snapshot's `experience`. The snapshot is deleted (`DELETE /session/frozen/{session_id}`) once the guided path completes, so it can't be resumed into a finished session. Known limitation: the transcript comes back in full, but the model's own session memory has a 2-hour TTL and the snapshot doesn't carry `conversation_id`, so a session resumed much later returns "cold" — the student sees the history, the assistant may not remember it, and previously suggested strategies can repeat.
 - **pQBL resume**: the pQBL activity keeps its own progress in `localStorage` (`lib/pqbl-progress.ts`) and restores it on entry; `hasPqblProgress` also lists it among the header's "Riprendi" entries (link to `/pqbl`), so it isn't the one tool whose interrupted session is invisible. It is per-browser, not cross-device like a frozen session.
-- **Student-facing chat** vs **Admin panel**: two sides of the same app. Admin edits prompts, API keys, guided steps, counselors live via UI.
+- **Student-facing chat** vs **Admin panel**: two sides of the same app. Admin edits prompts, guided steps and counselors; API keys are read-only here and are managed centrally in ai4educ Console → Secrets.
 - **Cross-synthesis**: on-demand synthesis across a student's multiple instrument results (`cross_synthesis.py`, `/user/cross-synthesis`).
 - **Telegram bot**: students can link their account (`TelegramAccountLink`) and interact with guided chat over Telegram; group/plan deep links auto-enroll into a class. State machine in `telegram_state.py`, API in `telegram_bot.py`.
 
@@ -103,7 +103,7 @@ Exception: **`/api/chat/stream`** is a filesystem route `frontend/src/app/api/ch
 ai4auth forward-auth at the edge (Nginx). Proxy injects `Remote-*` headers → parsed in `backend/auth.py`. Roles are marker-based on `Remote-Groups`: admin = any group in `ADMIN_GROUPS` (env `ADMIN_GROUPS`, comma-separated, always includes `admins`); researcher/teacher detected via `RESEARCH_GROUP_MARKERS`/`TEACHER_GROUP_MARKERS`. `frontend/src/lib/auth.ts` reads identity from `/auth/me`. Dev fallback identities exist for role preview (test accounts).
 
 ### Data Model
-- **Config**: key-value DB store for prompts, UI texts, provider/model, API keys. Every key in `ENV_KEY_MAP` (`ai_service.py`) — API keys, `ollama_ip`, `ollama_num_ctx`, `ollama_keep_alive`, `qsa_ocr_model`, `qsa_parser_model` — is owned by the environment, not by the database: the env value wins at runtime and startup rewrites the Config row to match, so editing those in the admin panel or in SQL has no lasting effect. Change them in `.env` (or the compose default) and recreate the container. Defaults in `prompt_config.py`, seeded at startup without overwriting.
+- **Config**: key-value DB store for prompts, UI texts, provider/model and non-secret runtime settings. API keys follow a separate single-source contract in `api_secrets.py`: they are read only from environment variables distributed through ai4educ Console → Secrets. The CounselorBot admin panel never stores, changes or returns secret values; it only reports whether each provider is configured and runs an authenticated, read-only provider check to distinguish “configured” from “working”. The legacy `api_secrets` table is retained only for schema compatibility and is never read at runtime. Non-secret keys in `ENV_KEY_MAP` (`ollama_ip`, `ollama_num_ctx`, `ollama_keep_alive`, `qsa_ocr_model`, `qsa_parser_model`) retain environment precedence. Defaults in `prompt_config.py` are seeded at startup without overwriting.
 - **GuidedStep**: per `questionnaire_type`, ordered steps with `prompt` + `system_prompt_mode`
 - **GuidedStepQuestion**: suggested questions per step
 - **QuestionnaireResult**: per-session survey data
@@ -135,6 +135,7 @@ Prompts live in **two places** with different roles:
 
 - **Traduzione dei contenuti**: `backend/certified_translation.py` (strategie e letture, sorgente **italiano**) e `backend/instrument_translation.py` (item, fattori, nome ed etichette della scala degli strumenti, sorgente **inglese** — gli originali italiani stanno sul sito esterno). Entrambi prendono il traduttore come parametro, così i test girano senza rete; in produzione è Ollama via `counselor_i18n._ollama_base` / `_model` (config `ollama_ip`, `counselor_translate_model`; il container raggiunge il server come `host.docker.internal:11434`). CLI: `python -m scripts.translate_certified_content --what all` e `python -m scripts.translate_instruments --all --targets fr,de,es`. Entrambi idempotenti: non richiamano il modello per una lingua già presente e non sovrascrivono una traduzione umana senza `--force`. **Una traduzione automatica nasce `translated` e si ferma lì**: `certified` per i tool e `reviewed`/`pilot`/`validated` per gli strumenti restano gesti umani; una risposta parziale del modello resta `draft`. Per gli strumenti una lingua diventa `translated` solo se sono completi nome, etichette dei fattori, scala di risposta e tutti gli item attivi (`refresh_instrument_status`). Il ricalcolo non retrocede mai una lingua che una persona ha portato oltre `translated`.
 - **DB = live, editable copy used at runtime.** System prompts and UI texts are rows in the `configs` table (e.g. `prompt_qpcs_analysis`, `prompt_qpcs_summary`); each guided step's instruction is the `prompt` column of `guided_steps` (with `system_prompt_mode`, label, color). The admin panel edits these DB rows.
+- **`backend/prompts/*.md` = the factory text itself, one file per prompt.** `prompt_config._text("name")` loads `backend/prompts/name.md` **verbatim** (only the final newline is dropped). Leading/trailing spaces and newlines that glue one block to another stay in Python, next to the concatenation that uses them — the file holds the text and nothing else. Short labels and composed prompts (`A + B`) remain inline in `prompt_config.py`. **The Dockerfile must copy this directory** (`COPY backend/prompts/`), otherwise `prompt_config` fails to import at startup.
 - **`backend/prompt_config.py` = defaults + structure (in code, versioned in git).** It provides three things the DB does not:
   1. **Seed values** (`SYSTEM_PROMPT_DEFINITIONS`, `DEFAULT_*_GUIDED_STEPS`, guided texts): copied into the DB **at first startup only if missing** — an already-populated DB is **not** overwritten (`main.py` seeds guided steps `if count == 0`).
   2. **Fallback**: if a config key is missing from the DB at runtime, the code default is used (`SYSTEM_PROMPT_DEFAULTS.get(key, DEFAULT_SYSTEM_PROMPT_GENERIC)` in `chat_logic.py`).
@@ -147,6 +148,19 @@ Prompts live in **two places** with different roles:
 - **DB** (`configs` / `guided_steps`) → takes effect on the running instance (seed does not touch an existing DB).
 
 Editing only the DB → a fresh install would ship the old text; editing only the code → the running instance is unchanged until the DB is updated. Git versions the code, **not** the DB.
+
+**Prompt history and the protection rule (`backend/prompt_revisions.py`)**
+
+Every prompt write is appended to the `prompt_revisions` table — `scope` (`config` / `guided_step` / `counselor_persona`), `target_key`, `value`, `origin` (`seed` / `migration` / `admin`), author and timestamp. Only prompt keys are versioned; operational settings in `configs` (`active_provider`, PII flags, model names) are not.
+
+This buys two things:
+
+1. **Rollback and audit.** `GET /api/admin/prompt-revisions` lists the history of a prompt; `POST /api/admin/prompt-revisions/{id}/restore` puts an old text back. A restore is itself appended, so the table stays append-only.
+2. **Admin edits are never silently overwritten.** The startup migrations recognise the rows to rewrite by looking for phrases inside the text, so a customised prompt that still contains a legacy phrase used to get clobbered on restart. `_seed_and_migrate` now photographs every admin-owned prompt before running the migrations and puts it back after — one choke point, so **migrations added in the future are covered without needing their own guard**.
+
+On the **first startup** after this feature, `reconcile` writes a baseline: a prompt that already differs from its factory default is recorded as `admin` and is protected from then on. A prompt still matching the default is recorded as `seed` and stays open to future automatic updates.
+
+**Consequence for whoever writes a migration**: do not add ad-hoc guards for customised text, and do not assume a rewrite will stick — if the row belongs to an admin, it will be reverted at the end of startup, by design.
 
 ### AI Providers
 `AIService` (`backend/ai_service.py`) dispatches through a provider registry supporting **13 providers**: openai, anthropic, gemini, mistral, openrouter, ollama, llamacpp, **groq**, **cerebras**, **deepseek**, **together**, **fireworks**, **deepinfra**. Each provider: `call`, `stream`, `call_max`, `stream_max`. `disable_thinking` per-provider, driven by reasoning profiles (`backend/reasoning_profiles.py`). **Error contract**: config/provider failures raise `AIError` — never returned as chat content. Monthly budget fallback (`monthly_budget_usd`) switches to Ollama local model when exceeded.
@@ -349,6 +363,8 @@ make prompt-test Q=QSA STEP=intro COUNSELOR=7 STUDENT=barbaraambu RESP_LANG=en  
 | `POST` | `/api/admin/config` | Create/update config entry |
 | `GET` | `/api/admin/config/env-status` | Check which secrets are overridden by env vars |
 | `GET` | `/api/admin/models` | List available AI models per provider |
+| `GET` | `/api/admin/prompt-revisions` | Prompt history (`scope`, `target_key`, `limit`), newest first |
+| `POST` | `/api/admin/prompt-revisions/{id}/restore` | Restore a prompt to an earlier revision |
 
 ### Admin: Prompt Audit
 | Method | Endpoint | Description |
@@ -545,7 +561,7 @@ Makefile                    Prompt testing shortcuts
 ```
 
 ## Conventions
-- **Configuration is DB-driven**: prompts, UI texts, API keys are DB rows, seeded from `prompt_config.py` at startup (idempotent, no overwrite). Admin edits live via ConfigForm.
+- **Configuration is DB-driven except secrets**: prompts and UI texts are DB rows seeded from `prompt_config.py` at startup (idempotent, no overwrite). API keys come only from the environment managed by ai4educ Console; ConfigForm displays and verifies them but cannot edit them.
 - **Error contract**: AI failures raise `AIError`. SSE emits `{error}` event. Non-streaming maps `AIError` → HTTP 502. Frontend consumer throws on `{error}`.
 - **Student-facing sanitization**: QSA codes expanded to `Code (Name)`. ZTPI labels stripped. Inverted QSA factors must stay aligned with `questionnaires.ts`.
 - **i18n**: admin strings in `i18n-admin.ts` (IT + EN blocks). Add new keys to both.

@@ -14,8 +14,15 @@ from sqlalchemy.orm import Session
 
 from .. import models, schemas, auth, database, pii, pii_ner
 from .. import content_version_service
+from .. import prompt_revisions
 from ..content_versions import CONTENT_TYPES, ContentVersionError
 from ..ai_service import AIService
+from ..api_secrets import (
+    API_KEY_ENV_MAP,
+    provider_from_config_key,
+    resolve_api_secret,
+    resolve_api_secrets,
+)
 from ..training_dataset import (
     APPROVED_EXPORT_STATUSES,
     VALID_REVIEW_STATUSES,
@@ -1117,12 +1124,18 @@ async def export_logs(
 
 @router.get("/admin/config", response_model=List[schemas.ConfigResponse])
 async def read_config(current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
-    configs = db.query(models.Config).all()
+    # Secrets have a dedicated masked endpoint and must never reach the browser.
+    configs = db.query(models.Config).filter(~models.Config.key.like("api_key_%")).all()
     return configs
 
 
 @router.post("/admin/config", response_model=schemas.ConfigResponse)
 async def create_or_update_config(config: schemas.ConfigCreate, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    if provider_from_config_key(config.key):
+        raise HTTPException(
+            status_code=409,
+            detail="Le chiavi API si modificano in ai4educ Console, pagina Segreti",
+        )
     db_config = db.query(models.Config).filter(models.Config.key == config.key).first()
     if db_config:
         db_config.value = config.value
@@ -1130,6 +1143,15 @@ async def create_or_update_config(config: schemas.ConfigCreate, current_user: mo
     else:
         db_config = models.Config(key=config.key, value=config.value, description=config.description)
         db.add(db_config)
+    if prompt_revisions.is_versioned_config_key(config.key):
+        prompt_revisions.record(
+            db,
+            prompt_revisions.SCOPE_CONFIG,
+            config.key,
+            config.value,
+            prompt_revisions.ORIGIN_ADMIN,
+            author=current_user.get("username"),
+        )
     db.commit()
     db.refresh(db_config)
     if config.key == "log_pii_redact":
@@ -1139,6 +1161,44 @@ async def create_or_update_config(config: schemas.ConfigCreate, current_user: mo
     if config.key == "pii_ner_model":
         pii_ner.set_ner_model((config.value or "").strip())
     return db_config
+
+
+@router.get("/admin/prompt-revisions", response_model=List[schemas.PromptRevisionResponse])
+async def list_prompt_revisions(
+    scope: Optional[str] = Query(None, description="config | guided_step | counselor_persona"),
+    target_key: Optional[str] = Query(None, description="chiave config, id step o id counselor"),
+    limit: int = Query(50, ge=1, le=500),
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Storia delle modifiche a un prompt, dalla piu' recente."""
+    if scope and scope not in prompt_revisions.SCOPES:
+        raise HTTPException(status_code=400, detail=f"scope non valido: {scope}")
+    return prompt_revisions.history(db, scope=scope, target_key=target_key, limit=limit)
+
+
+@router.post("/admin/prompt-revisions/{revision_id}/restore", response_model=schemas.PromptRevisionResponse)
+async def restore_prompt_revision(
+    revision_id: int,
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Riporta un prompt a una versione precedente.
+
+    Il ripristino viene appeso alla storia come modifica admin: la tabella resta
+    append-only e il prompt risulta personalizzato, quindi le migrazioni
+    d'avvio non lo riscriveranno.
+    """
+    revision = db.query(models.PromptRevision).filter(models.PromptRevision.id == revision_id).first()
+    if revision is None:
+        raise HTTPException(status_code=404, detail="Revisione non trovata")
+    if not prompt_revisions.restore(db, revision, author=current_user.get("username")):
+        raise HTTPException(
+            status_code=409,
+            detail=f"La riga '{revision.target_key}' non esiste piu': impossibile ripristinare",
+        )
+    db.commit()
+    return prompt_revisions.latest(db, revision.scope, revision.target_key)
 
 
 @router.get("/admin/models")
@@ -1159,6 +1219,76 @@ async def get_env_override_status(current_user: models.User = Depends(auth.get_c
     }
 
 
+class APIKeyUpdate(BaseModel):
+    value: str
+
+
+def _api_key_status(provider: str, resolved) -> dict:
+    return {
+        "provider": provider,
+        "configured": bool(resolved.value),
+        "source": resolved.source,
+        "editable": False,
+        "environment_variable": resolved.environment_variable,
+        "preferred_environment_variable": API_KEY_ENV_MAP[provider][0],
+        "updated_at": None,
+    }
+
+
+@router.get("/admin/api-keys")
+async def list_api_keys(
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Return source and presence only. Secret values never leave the backend."""
+    resolved = resolve_api_secrets(db)
+    return [_api_key_status(provider, resolved[provider]) for provider in API_KEY_ENV_MAP]
+
+
+@router.put("/admin/api-keys/{provider}")
+async def update_api_key(
+    provider: str,
+    update: APIKeyUpdate,
+    current_user: dict = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    if provider not in API_KEY_ENV_MAP:
+        raise HTTPException(status_code=404, detail="Provider non supportato")
+    raise HTTPException(
+        status_code=409,
+        detail="Le chiavi API si modificano in ai4educ Console, pagina Segreti",
+    )
+
+
+@router.delete("/admin/api-keys/{provider}")
+async def remove_api_key(
+    provider: str,
+    current_user: dict = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    if provider not in API_KEY_ENV_MAP:
+        raise HTTPException(status_code=404, detail="Provider non supportato")
+    raise HTTPException(
+        status_code=409,
+        detail="Le chiavi API si rimuovono in ai4educ Console, pagina Segreti",
+    )
+
+
+@router.post("/admin/api-keys/{provider}/verify")
+async def verify_api_key(
+    provider: str,
+    current_user: dict = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    if provider not in API_KEY_ENV_MAP:
+        raise HTTPException(status_code=404, detail="Provider non supportato")
+    resolved = resolve_api_secret(db, provider)
+    if not resolved.value:
+        raise HTTPException(status_code=400, detail="Chiave API non configurata")
+    working = AIService(db).verify_api_key(provider)
+    return {"provider": provider, "working": working}
+
+
 # --- Admin Guided Steps CRUD ---
 
 @router.get("/admin/guided-steps", response_model=List[schemas.GuidedStepResponse])
@@ -1173,6 +1303,14 @@ async def admin_create_guided_step(step: schemas.GuidedStepCreate, current_user:
         raise HTTPException(status_code=400, detail=f"Step with id '{step.id}' already exists")
     db_step = models.GuidedStep(**step.model_dump())
     db.add(db_step)
+    prompt_revisions.record(
+        db,
+        prompt_revisions.SCOPE_GUIDED_STEP,
+        db_step.id,
+        db_step.prompt,
+        prompt_revisions.ORIGIN_ADMIN,
+        author=current_user.get("username"),
+    )
     db.commit()
     db.refresh(db_step)
     return db_step
@@ -1186,6 +1324,15 @@ async def admin_update_guided_step(step_id: str, update: schemas.GuidedStepUpdat
     update_data = update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(db_step, field, value)
+    if "prompt" in update_data:
+        prompt_revisions.record(
+            db,
+            prompt_revisions.SCOPE_GUIDED_STEP,
+            db_step.id,
+            db_step.prompt,
+            prompt_revisions.ORIGIN_ADMIN,
+            author=current_user.get("username"),
+        )
     db.commit()
     db.refresh(db_step)
     return db_step

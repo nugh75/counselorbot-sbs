@@ -48,6 +48,7 @@ from .prompt_config import (
 )
 from .questionnaire_catalog import INSTRUMENT_CATALOG_DEFAULTS
 from .guided_text_i18n import seed_definitions as guided_text_seed_definitions
+from . import prompt_revisions
 
 # Logica/helper estratti (vedi chat_logic.py); router in routes/.
 from .chat_logic import _memory_cleanup_loop, _log_retention_loop
@@ -262,18 +263,70 @@ app.add_middleware(
 
 
 def _seed_and_migrate():
-    """Seeding idempotente di config/guided-step + migrazioni raw-SQL.
-    Invocato da `lifespan` all'avvio (sostituisce i vecchi @app.on_event)."""
-    from sqlalchemy import text as sa_text
+    """Seeding e migrazioni, con i prompt personalizzati protetti.
 
+    Le migrazioni qui sotto riconoscono le righe da riscrivere cercando frasi
+    dentro al testo: un prompt personalizzato che contiene ancora una frase
+    legacy verrebbe sovrascritto, e l'admin perderebbe il suo lavoro al primo
+    riavvio. Invece di mettere una guardia su ognuna delle riscritture sparse
+    nell'avvio, i prompt di proprieta' dell'admin vengono fotografati prima e
+    rimessi dopo: vale anche per le migrazioni che verranno aggiunte in futuro.
+    """
     # Advisory lock dedicato: con piu' worker uvicorn solo uno semina alla volta;
     # i perdenti attendono, poi trovano tutto gia' seminato (nessuna INSERT) ed
-    # evitano UniqueViolation sulle commit idempotenti. Tenuto su una connessione
-    # separata aperta per tutta la funzione.
+    # evitano UniqueViolation sulle commit idempotenti. Copre anche la fotografia
+    # e il ripristino: se due worker si incrociassero a meta' migrazione, uno
+    # fotograferebbe un testo gia' sovrascritto e lo rimetterebbe al posto di
+    # quello dell'admin. Tenuto su una connessione separata.
     lock_conn = None
     if database.engine.dialect.name == "postgresql":
         lock_conn = database.engine.connect()
         lock_conn.exec_driver_sql("SELECT pg_advisory_lock(91234)")
+
+    try:
+        db = database.SessionLocal()
+        try:
+            # On the first deployment of the revision feature, classify the
+            # prompts already in the database before any legacy migration can
+            # rewrite them. A genuinely empty database records nothing here and
+            # is baselined normally after the factory seed below.
+            if db.query(models.PromptRevision.id).first() is None:
+                baseline_count = prompt_revisions.reconcile(db)
+                db.commit()
+                if baseline_count:
+                    logger.info("Baseline prompt pre-migrazione registrata: %d", baseline_count)
+            protected = prompt_revisions.snapshot_admin_owned(db)
+        finally:
+            db.close()
+
+        _run_seed_and_migrations()
+
+        db = database.SessionLocal()
+        try:
+            reverted = prompt_revisions.restore_admin_owned(db, protected)
+            recorded = prompt_revisions.reconcile(db)
+            db.commit()
+            if reverted:
+                logger.info("Prompt personalizzati ripristinati dopo le migrazioni: %s", reverted)
+            if recorded:
+                logger.info("Revisioni di prompt registrate: %d", recorded)
+        except Exception as exc:  # lo storico non deve poter impedire l'avvio
+            db.rollback()
+            logger.warning("Storico prompt non aggiornato: %s", exc)
+        finally:
+            db.close()
+    finally:
+        if lock_conn is not None:
+            try:
+                lock_conn.exec_driver_sql("SELECT pg_advisory_unlock(91234)")
+            finally:
+                lock_conn.close()
+
+
+def _run_seed_and_migrations():
+    """Seeding idempotente di config/guided-step + migrazioni raw-SQL.
+    Invocato da `_seed_and_migrate`, che ne protegge i prompt personalizzati."""
+    from sqlalchemy import text as sa_text
 
     db = database.SessionLocal()
     try:
@@ -799,26 +852,6 @@ def _seed_and_migrate():
             db.commit()
             logger.info("Config seeding committed")
 
-        # Sincronizza i segreti da .env nel DB: la variabile d'ambiente resta la
-        # fonte di verità a runtime (override in AIService), ma la riga Config
-        # viene allineata così l'admin panel non mostra mai valori stantii.
-        from .ai_service import ENV_KEY_MAP
-        env_synced = False
-        for db_key, env_vars in ENV_KEY_MAP.items():
-            env_value = next((os.environ.get(v) for v in env_vars if os.environ.get(v)), None)
-            if not env_value:
-                continue
-            row = db.query(models.Config).filter(models.Config.key == db_key).first()
-            if row is None:
-                db.add(models.Config(key=db_key, value=env_value, description=f"Sincronizzato da .env ({env_vars[0]})"))
-                env_synced = True
-            elif row.value != env_value:
-                row.value = env_value
-                env_synced = True
-        if env_synced:
-            db.commit()
-            logger.info("Config sincronizzata con le variabili d'ambiente (.env)")
-
         # Seed QSA guided steps if none exist for QSA
         qsa_count = db.query(models.GuidedStep).filter(
             models.GuidedStep.questionnaire_type == "QSA"
@@ -1177,12 +1210,6 @@ def _seed_and_migrate():
         sync_admins_async()
     except Exception as e:  # noqa: BLE001
         logger.debug(f"admin sync not started: {e}")
-    finally:
-        if lock_conn is not None:
-            try:
-                lock_conn.exec_driver_sql("SELECT pg_advisory_unlock(91234)")
-            finally:
-                lock_conn.close()
 
 
 # Persona dei counselor tradotte in inglese, con il nome reso parametrico via
