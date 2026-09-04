@@ -27,17 +27,19 @@ test('every class the diagram code applies is styled somewhere', () => {
     }
 });
 
-test('the accent survives where the symbol is the node', () => {
-    // Un nodo-simbolo non ha bordo da accendere: senza questa regola l'unico
-    // punto su cui lo studente puo' agire non si distingue dagli altri.
+test('the accent is carried by colour, never by movement', () => {
+    // Un nodo-simbolo non ha bordo da accendere: l'accento vive nel colore del
+    // tracciato. E resta colore: un nodo che pulsa chiede attenzione senza
+    // spiegare niente, e il movimento in un diagramma spetta agli archi.
     assert.ok(css.includes('.dg-svg .dg-accent > svg'));
-    assert.ok(css.includes('.dg-play .dg-accent > svg'));
+    assert.equal(css.includes('dg-accent 2'), false, 'l accento non deve animarsi');
+    assert.equal(css.includes('@keyframes dg-accent'), false);
 });
 
 test('the reveal is replayable: its animations hang off dg-play', () => {
     // Senza `dg-play` la comparsa parte una volta sola, al montaggio, e quando
     // l'utente guarda il disegno e' gia' finita.
-    for (const selector of ['.dg-play .dg-node', '.dg-play .dg-accent', '.dg-play .dg-kind-feedback']) {
+    for (const selector of ['.dg-play .dg-node', '.dg-play .dg-edge', '.dg-play .dg-kind-feedback']) {
         assert.ok(css.includes(selector), `manca ${selector}`);
     }
 });

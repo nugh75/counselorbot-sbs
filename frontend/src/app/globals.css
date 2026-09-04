@@ -673,23 +673,11 @@ h1.text-3xl {
     to { opacity: 1; transform: none; }
 }
 
-/* Il nodo su cui si puo' agire e' uno solo: si fa trovare, tre battiti. */
-.dg-play .dg-accent > path,
-.dg-play .dg-accent > polygon,
-.dg-play .dg-accent > ellipse,
-.dg-play .dg-accent > svg {
-    animation: dg-accent 2400ms ease-in-out 3 backwards;
-    animation-delay: calc(var(--dg-step, 0) * var(--dg-beat) + 2850ms);
-    transform-box: fill-box;
-    transform-origin: center;
-}
+/* Il movimento appartiene agli archi: sono loro che dicono la direzione, e un
+   nodo che pulsa chiede attenzione senza spiegare niente. Il nodo su cui si
+   puo' agire si fa trovare dal colore, che sta fermo e resta anche stampato.
 
-@keyframes dg-accent {
-    0%, 100% { transform: scale(1); }
-    45% { transform: scale(1.12); }
-}
-
-/* Dove il simbolo e' il nodo non c'e' bordo da accendere: l'accento vive nel
+   Dove il simbolo e' il nodo non c'e' bordo da accendere: l'accento vive nel
    tracciato dell'icona, che qui vira all'ocra. Una dichiarazione CSS batte
    l'attributo `stroke` che il renderer scrive nell'SVG; nel PNG, che non ha un
    foglio di stile, l'accento resta nelle parole sulla pastiglia. */
