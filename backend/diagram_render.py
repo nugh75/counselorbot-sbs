@@ -575,11 +575,15 @@ def to_dot(spec: DiagramSpec, *, theme: str = "light", embed_title: bool = False
             else:
                 attrs.append(f'{key}="{value}"')
 
-        if edge.label and spec.type == "relation":
-            # `neato` posiziona le normali edge label sopra il tracciato: la
-            # pastiglia nasconde la linea, ma il tipo di arco diventa ambiguo.
-            # Un piccolo nodo intermedio riserva invece spazio vero e divide il
-            # tratto in due segmenti che terminano ai bordi dell'etichetta.
+        if edge.label and spec.type in ("relation", "cycle"):
+            # Solo `dot` riserva spazio vero alle etichette degli archi; `neato`
+            # e `circo` le posano sul punto medio del tracciato, dove finiscono
+            # sopra la linea o addosso al riquadro di un nodo. Un piccolo nodo
+            # intermedio riserva lo spazio e divide il tratto in due segmenti
+            # che terminano ai bordi dell'etichetta.
+            # Nel cerchio l'etichetta entra nell'anello: fra un concetto e il
+            # successivo si legge il verbo che li lega, che e' l'ordine in cui
+            # il ciclo si racconta.
             label_id = f"__diagram_edge_label_{edge_index}"
             while label_id in used_ids:
                 label_id += "_"

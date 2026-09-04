@@ -243,6 +243,28 @@ def test_relation_edge_label_reserves_a_real_gap_in_the_arc():
     assert '"s" -> "c" [label=' not in dot
 
 
+def test_cycle_edge_label_reserves_a_real_gap_too():
+    # `circo` posa l'etichetta sul punto medio dell'arco: nel ciclo finiva
+    # addosso al riquadro del nodo. Solo `dot` riserva spazio da solo.
+    dot = to_dot(parse_spec({**CYCLE, "edges": [
+        {"from": "a", "to": "b", "label": "riaccende"},
+    ]}))
+    assert '"__diagram_edge_label_0" [shape=plain' in dot
+    assert '"a" -> "__diagram_edge_label_0"' in dot
+    assert '"__diagram_edge_label_0" -> "b"' in dot
+    assert '"a" -> "b" [label=' not in dot
+
+
+def test_flow_keeps_the_label_on_the_edge():
+    # `dot` lo spazio se lo riserva: spezzare l'arco aggiungerebbe un rango
+    # e allungherebbe il disegno per niente.
+    dot = to_dot(parse_spec({**CYCLE, "type": "flow", "edges": [
+        {"from": "a", "to": "b", "label": "riaccende"},
+    ]}))
+    assert "__diagram_edge_label_0" not in dot
+    assert '"a" -> "b" [label=' in dot
+
+
 def test_dot_uses_the_local_icon_asset():
     spec = parse_spec({**CYCLE, "nodes": [
         {"id": "a", "label": "Obiettivo", "icon": "target"},
