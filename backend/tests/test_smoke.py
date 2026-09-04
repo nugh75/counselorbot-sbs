@@ -35,6 +35,7 @@ from starlette.testclient import TestClient
 from backend import database, models, auth
 import backend.main as main
 import backend.routes.chat as chat_routes
+import backend.routes.diagram as diagram_routes
 import backend.routes.idea_map as idea_map_routes
 import backend.routes.survey as survey_routes
 import backend.chat_logic as chat_logic
@@ -2637,7 +2638,6 @@ def test_chat_smoke_mocked_ai():
     assert r.status_code == 200, r.text
     assert r.json()["response"] == "RISPOSTA_TEST"
     assert r.json()["conversation_id"] != r.json()["session_id"]
-
 
 
 def test_chat_message_returns_the_sessions_recommendation_catalog():
@@ -7350,6 +7350,283 @@ def test_diagram_endpoint_renders_svg_when_graphviz_present():
     body = r.text
     assert body.startswith("<svg")
     assert "#103f42" in body               # palette scura
+
+
+def test_diagram_from_message_uses_the_selected_counselor_preset():
+    """Il diagramma richiesto da una risposta usa la stessa voce AI della chat."""
+    _set_diagram_skill(True)
+    db = _TestSession()
+    try:
+        preset = models.ModelPreset(
+            name="Diagram counselor preset",
+            provider="ollama",
+            model="diagram-counselor-model",
+            disable_thinking=True,
+            reasoning_budget=321,
+        )
+        db.add(preset)
+        db.flush()
+        counselor = models.Counselor(
+            slug="diagram-route-counselor",
+            name="Diagram Route Counselor",
+            preset_id=preset.id,
+            language=["*"],
+            is_active=True,
+        )
+        db.add(counselor)
+        db.commit()
+        db.refresh(counselor)
+        counselor_id = counselor.id
+    finally:
+        db.close()
+
+    class _DiagramAIService:
+        def __init__(self, db):
+            self.config = {"active_provider": "gemini", "model_name": "global-model"}
+            self.disable_thinking = False
+            self.reasoning_budget_override = None
+
+        def call_model(self, *, provider, model, **kwargs):
+            title = f"{provider}|{model}|{self.disable_thinking}|{self.reasoning_budget_override}"
+            return json.dumps({
+                "type": "flow",
+                "title": title,
+                "nodes": [{"id": "a", "label": "Prima"}, {"id": "b", "label": "Dopo"}],
+                "edges": [{"from": "a", "to": "b"}],
+            })
+
+    original_service = diagram_routes.AIService
+    diagram_routes.AIService = _DiagramAIService
+    try:
+        response = client.post("/diagram/from-message", json={
+            "text": "Prima accade una cosa, poi un'altra.",
+            "spec_only": True,
+            "counselor_id": counselor_id,
+        })
+    finally:
+        diagram_routes.AIService = original_service
+
+    assert response.status_code == 200, response.text
+    assert response.json()["title"] == "ollama|diagram-counselor-model|True|321"
+
+
+def test_diagram_from_message_requires_a_selected_counselor():
+    """Senza counselor il diagramma non deve ripiegare sul modello globale."""
+    _set_diagram_skill(True)
+
+    class _GlobalAIService:
+        def __init__(self, db):
+            self.config = {"active_provider": "gemini", "model_name": "global-model"}
+            self.disable_thinking = False
+            self.reasoning_budget_override = None
+
+        def call_model(self, **kwargs):
+            return json.dumps({
+                "type": "flow",
+                "title": "Modello globale usato",
+                "nodes": [{"id": "a", "label": "Prima"}, {"id": "b", "label": "Dopo"}],
+                "edges": [{"from": "a", "to": "b"}],
+            })
+
+    original_service = diagram_routes.AIService
+    diagram_routes.AIService = _GlobalAIService
+    try:
+        response = client.post("/diagram/from-message", json={
+            "text": "Prima accade una cosa, poi un'altra.",
+            "spec_only": True,
+        })
+    finally:
+        diagram_routes.AIService = original_service
+
+    assert response.status_code == 422, response.text
+
+
+def test_diagram_from_message_rejects_counselor_without_model_preset():
+    """Un counselor senza LLM proprio non deve ereditare il modello globale."""
+    _set_diagram_skill(True)
+    db = _TestSession()
+    try:
+        counselor = models.Counselor(
+            slug="diagram-route-no-preset",
+            name="Diagram Route No Preset",
+            preset_id=None,
+            language=["*"],
+            is_active=True,
+        )
+        db.add(counselor)
+        db.commit()
+        db.refresh(counselor)
+        counselor_id = counselor.id
+    finally:
+        db.close()
+
+    class _GlobalAIService:
+        called = False
+
+        def __init__(self, db):
+            self.config = {"active_provider": "gemini", "model_name": "global-model"}
+            self.disable_thinking = False
+            self.reasoning_budget_override = None
+
+        def call_model(self, **kwargs):
+            type(self).called = True
+            return json.dumps({
+                "type": "flow",
+                "title": "Modello globale usato",
+                "nodes": [{"id": "a", "label": "Prima"}, {"id": "b", "label": "Dopo"}],
+                "edges": [{"from": "a", "to": "b"}],
+            })
+
+    original_service = diagram_routes.AIService
+    diagram_routes.AIService = _GlobalAIService
+    try:
+        response = client.post("/diagram/from-message", json={
+            "text": "Prima accade una cosa, poi un'altra.",
+            "spec_only": True,
+            "counselor_id": counselor_id,
+        })
+    finally:
+        diagram_routes.AIService = original_service
+
+    assert response.status_code == 422, response.text
+    assert _GlobalAIService.called is False
+
+
+def _diagram_fallback_preset(slug: str, *, counselor_preset: bool):
+    """Counselor + preset di riserva dichiarato in `diagram_preset_id`."""
+    db = _TestSession()
+    try:
+        fallback = models.ModelPreset(
+            name=f"Diagram fallback {slug}",
+            provider="ollama",
+            model="diagram-fallback-model",
+        )
+        db.add(fallback)
+        db.flush()
+        preset_id = None
+        if counselor_preset:
+            broken = models.ModelPreset(
+                name=f"Diagram broken {slug}",
+                provider="ollama",
+                model="diagram-broken-model",
+            )
+            db.add(broken)
+            db.flush()
+            preset_id = broken.id
+        counselor = models.Counselor(
+            slug=slug,
+            name=slug,
+            preset_id=preset_id,
+            language=["*"],
+            is_active=True,
+        )
+        db.add(counselor)
+        row = db.query(models.Config).filter(models.Config.key == "diagram_preset_id").first()
+        if row is None:
+            db.add(models.Config(key="diagram_preset_id", value=str(fallback.id)))
+        else:
+            row.value = str(fallback.id)
+        db.commit()
+        db.refresh(counselor)
+        return counselor.id
+    finally:
+        db.close()
+
+
+def _clear_diagram_fallback():
+    db = _TestSession()
+    try:
+        db.query(models.Config).filter(models.Config.key == "diagram_preset_id").delete()
+        db.commit()
+    finally:
+        db.close()
+
+
+_FALLBACK_SPEC = json.dumps({
+    "type": "flow",
+    "title": "Riserva usata",
+    "nodes": [{"id": "a", "label": "Prima"}, {"id": "b", "label": "Dopo"}],
+    "edges": [{"from": "a", "to": "b"}],
+})
+
+
+def _run_diagram_with_fallback(counselor_id, broken_reply):
+    """Chiama /diagram/from-message con un modello counselor che fallisce.
+
+    `broken_reply` e' cio' che fa il modello del counselor: solleva o restituisce
+    spazzatura. Il modello di riserva risponde con uno spec valido.
+    """
+    calls = []
+
+    class _FallbackAIService:
+        def __init__(self, db):
+            self.config = {"active_provider": "gemini", "model_name": "global-model"}
+            self.disable_thinking = False
+            self.reasoning_budget_override = None
+
+        def call_model(self, *, provider, model, **kwargs):
+            calls.append(model)
+            if model == "diagram-fallback-model":
+                return _FALLBACK_SPEC
+            return broken_reply()
+
+    original_service = diagram_routes.AIService
+    diagram_routes.AIService = _FallbackAIService
+    try:
+        response = client.post("/diagram/from-message", json={
+            "text": "Prima accade una cosa, poi un'altra.",
+            "spec_only": True,
+            "counselor_id": counselor_id,
+        })
+    finally:
+        diagram_routes.AIService = original_service
+    return response, calls
+
+
+def test_diagram_from_message_falls_back_when_counselor_has_no_preset():
+    """Senza preset il counselor non ha modello: si usa quello dei diagrammi."""
+    _set_diagram_skill(True)
+    counselor_id = _diagram_fallback_preset("diagram-fb-no-preset", counselor_preset=False)
+    try:
+        response, calls = _run_diagram_with_fallback(counselor_id, lambda: "")
+    finally:
+        _clear_diagram_fallback()
+
+    assert response.status_code == 200, response.text
+    assert response.json()["title"] == "Riserva usata"
+    assert calls == ["diagram-fallback-model"]
+
+
+def test_diagram_from_message_falls_back_when_counselor_model_is_down():
+    """Modello del counselor irraggiungibile: lo spec arriva dalla riserva."""
+    _set_diagram_skill(True)
+    counselor_id = _diagram_fallback_preset("diagram-fb-down", counselor_preset=True)
+
+    def _down():
+        raise diagram_routes.AIError("provider 503")
+
+    try:
+        response, calls = _run_diagram_with_fallback(counselor_id, _down)
+    finally:
+        _clear_diagram_fallback()
+
+    assert response.status_code == 200, response.text
+    assert calls == ["diagram-broken-model", "diagram-fallback-model"]
+
+
+def test_diagram_from_message_falls_back_when_counselor_model_writes_no_spec():
+    """Il modello del counselor non sa scrivere lo spec: ci pensa la riserva."""
+    _set_diagram_skill(True)
+    counselor_id = _diagram_fallback_preset("diagram-fb-nojson", counselor_preset=True)
+    try:
+        response, calls = _run_diagram_with_fallback(
+            counselor_id, lambda: "Certo! Ecco il diagramma che mi hai chiesto."
+        )
+    finally:
+        _clear_diagram_fallback()
+
+    assert response.status_code == 200, response.text
+    assert calls == ["diagram-broken-model", "diagram-fallback-model"]
 
 
 if __name__ == "__main__":
