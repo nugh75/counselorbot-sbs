@@ -21,6 +21,7 @@ from ..diagram_render import (
     render,
     spec_fingerprint,
 )
+from .chat import _apply_counselor_overrides, _resolve_counselor
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ router = APIRouter()
 get_db = database.get_db
 
 SKILL_SLUG = "concept-diagram"
+DIAGRAM_PRESET_KEY = "diagram_preset_id"
 
 SPEC_ONLY_SYSTEM_PROMPT = (
     "You turn an explanation into one concept diagram. Answer with a single JSON object "
@@ -95,6 +97,7 @@ class FromMessageRequest(BaseModel):
     # Che disegno vuole lo studente. Vuoto: il diagramma di cio' che il messaggio
     # gia' dice, come prima.
     instruction: str = Field(default="", max_length=400)
+    counselor_id: int
     # Il bottone chiede lo spec, non il disegno: lo passa alla stessa card degli
     # altri diagrammi, che ci mette titolo, legenda, zoom e schermo intero.
     spec_only: bool = False
@@ -108,6 +111,28 @@ def feature_enabled(db: Session) -> bool:
 def _require_feature(db: Session) -> None:
     if not feature_enabled(db):
         raise HTTPException(status_code=404, detail="diagrams disabled")
+
+
+# provider, model, disable_thinking, reasoning_budget
+ModelChoice = tuple[str, str, bool | None, int | None]
+
+
+def _diagram_fallback(db: Session) -> ModelChoice | None:
+    """Modello di riserva per lo spec, dichiarato dall'admin.
+
+    Lo spec e' JSON stretto, non conversazione: il modello del counselor puo'
+    non saperlo scrivere, non avere preset o essere giu'. `diagram_preset_id`
+    nei config dice su quale modello ripiegare. Nessuna riserva implicita dal
+    modello globale: il ripiego e' una scelta esplicita, non un'eredita'.
+    """
+    row = db.query(models.Config).filter(models.Config.key == DIAGRAM_PRESET_KEY).first()
+    value = (row.value or "").strip() if row else ""
+    if not value.isdigit():
+        return None
+    preset = db.query(models.ModelPreset).filter(models.ModelPreset.id == int(value)).first()
+    if not preset or not preset.provider or not preset.model:
+        return None
+    return preset.provider, preset.model, bool(preset.disable_thinking), preset.reasoning_budget
 
 
 def _image_response(spec: DiagramSpec, *, theme: str, fmt: str, embed_title: bool, lang: str) -> Response:
@@ -158,25 +183,51 @@ async def diagram_from_message(
 ):
     """Ricava uno spec dal testo di un messaggio gia' scritto e lo disegna."""
     _require_feature(db)
-    ai_service = AIService(db)
-    try:
-        reply = await run_in_threadpool(
-            ai_service.call_model,
-            provider=ai_service.config.get("active_provider", "openai"),
-            model=ai_service.config.get("model_name", ""),
-            user_message=_spec_request(request),
-            system_prompt=SPEC_ONLY_SYSTEM_PROMPT,
-            max_tokens=700,
-        )
-    except AIError as exc:
-        logger.warning("Diagramma da messaggio: modello non disponibile: %s", exc)
-        raise HTTPException(status_code=503, detail="diagram model unavailable")
+    c_provider, c_model, _persona, _name, disable_thinking, reasoning_budget = _resolve_counselor(
+        db, request.counselor_id
+    )
 
-    try:
-        spec = parse_spec(_json_object(reply))
-    except DiagramSpecError as exc:
-        logger.info("Diagramma da messaggio scartato: %s", exc)
-        raise HTTPException(status_code=422, detail="the text does not yield a diagram")
+    # La voce della chat prima, la riserva dopo: il disegno esce comunque anche
+    # quando il modello del counselor e' giu' o non sa scrivere lo spec.
+    candidates: list[ModelChoice] = []
+    if c_provider and c_model:
+        candidates.append((c_provider, c_model, disable_thinking, reasoning_budget))
+    fallback = _diagram_fallback(db)
+    if fallback and fallback[:2] not in [c[:2] for c in candidates]:
+        candidates.append(fallback)
+    if not candidates:
+        raise HTTPException(status_code=422, detail="selected counselor has no configured model")
+
+    spec = None
+    unavailable = False
+    for provider, model, dt, rb in candidates:
+        # Un AIService per tentativo: gli override di un modello non devono
+        # restare addosso al successivo.
+        ai_service = AIService(db)
+        _apply_counselor_overrides(ai_service, dt, rb)
+        try:
+            reply = await run_in_threadpool(
+                ai_service.call_model,
+                provider=provider,
+                model=model,
+                user_message=_spec_request(request),
+                system_prompt=SPEC_ONLY_SYSTEM_PROMPT,
+                max_tokens=700,
+            )
+            spec = parse_spec(_json_object(reply))
+            break
+        except AIError as exc:
+            logger.warning("Diagramma: %s/%s non disponibile: %s", provider, model, exc)
+            unavailable = True
+        except DiagramSpecError as exc:
+            logger.info("Diagramma scartato da %s/%s: %s", provider, model, exc)
+            unavailable = False
+
+    if spec is None:
+        raise HTTPException(
+            status_code=503 if unavailable else 422,
+            detail="diagram model unavailable" if unavailable else "the text does not yield a diagram",
+        )
 
     if request.spec_only:
         # `by_alias`: il modello interno tiene source/target, il contratto

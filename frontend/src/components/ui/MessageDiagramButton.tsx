@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { GitBranch, Loader2, Send } from 'lucide-react';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
+import { getSelectedCounselorId } from '@/lib/counselor';
 import { parseDiagramSpec, type DiagramSpec } from '@/lib/diagram-content';
+import { buildDiagramFromMessageRequest } from '@/lib/diagram-request';
 import { cn } from '@/lib/utils';
 
 interface MessageDiagramButtonProps {
@@ -44,15 +46,17 @@ export function MessageDiagramButton({
         if (state === 'loading') return;
         setState('loading');
         try {
+            const counselorId = getSelectedCounselorId();
+            if (counselorId === null) throw new Error('counselor not selected');
             const response = await fetch('/api/diagram/from-message', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    text: text.slice(0, 8000),
-                    lang: locale,
-                    spec_only: true,
-                    instruction: instruction.trim().slice(0, 400),
-                }),
+                body: JSON.stringify(buildDiagramFromMessageRequest(
+                    text,
+                    locale,
+                    instruction,
+                    counselorId,
+                )),
             });
             if (!response.ok) throw new Error(`diagram failed: ${response.status}`);
             const parsed = parseDiagramSpec(await response.json());

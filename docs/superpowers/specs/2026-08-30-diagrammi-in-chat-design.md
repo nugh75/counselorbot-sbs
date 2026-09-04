@@ -114,8 +114,14 @@ pacchetto font (`fonts-inter` se disponibile nella base, altrimenti
 - `POST /api/diagram/render` — body: spec + `theme` (`light|dark`) +
   `format` (`svg|png`); risposta immagine. Autenticazione uguale alle route di
   chat.
-- `POST /api/diagram/from-message` — body: testo di un messaggio + lingua;
-  chiede al modello **solo** lo spec JSON e lo rende. Serve al bottone
+- `POST /api/diagram/from-message` — body: testo di un messaggio + lingua +
+  `counselor_id` obbligatorio; chiede **solo** lo spec JSON al provider/modello
+  del preset del counselor selezionato e lo rende. Non usa il modello globale.
+  Lo spec è JSON stretto, non conversazione: quando il modello del counselor
+  manca, è irraggiungibile o non lo sa scrivere, si ripiega sul preset indicato
+  dalla chiave di configurazione `diagram_preset_id`. È l'unica riserva, ed è
+  una scelta esplicita dell'admin: senza quella chiave la richiesta viene
+  rifiutata come prima. Serve al bottone
   "Visualizza come schema"; non modifica la conversazione.
 
 Interruttore globale: chiave di configurazione `feature_diagrams`
