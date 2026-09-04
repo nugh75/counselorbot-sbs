@@ -3,9 +3,9 @@
 import type React from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronLeft, ChevronRight, GitBranch, Loader2, Maximize2, RotateCcw, SkipBack, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, GitBranch, Loader2, Maximize2, SkipBack, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { completeDiagramEdges, diagramEdgeKinds, type DiagramEdgeKind, type DiagramSpec } from '@/lib/diagram-content';
-import { diagramFullscreenLabel, diagramReplayLabel, diagramStepLabel, diagramZoomLabel, edgeKindLabel } from '@/lib/i18n-diagram';
+import { diagramFullscreenLabel, diagramStepLabel, diagramZoomLabel, edgeKindLabel } from '@/lib/i18n-diagram';
 import { focusDiagramNode, revealUpTo, sanitizeSvgMarkup, svgAspectRatio, tagDiagramSvg, walkStep } from '@/lib/diagram-svg';
 import { useDarkMode } from '@/lib/use-dark-mode';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -157,24 +157,6 @@ function StepControls({
     );
 }
 
-function ReplayButton({ onClick, locale, size }: { onClick: () => void; locale: string; size: 'sm' | 'lg' }) {
-    const label = diagramReplayLabel(locale);
-    const box = size === 'lg' ? 'h-10 w-10' : 'h-8 w-8';
-    const icon = size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
-    return (
-        <Tooltip content={label}>
-            <button
-                type="button"
-                onClick={onClick}
-                aria-label={label}
-                className={`inline-flex ${box} shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white hover:text-[#17747a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17747a] focus-visible:ring-offset-2`}
-            >
-                <RotateCcw className={icon} aria-hidden="true" />
-            </button>
-        </Tooltip>
-    );
-}
-
 function ZoomControls({
     zoom,
     setZoom,
@@ -275,7 +257,6 @@ function DiagramSurface({
     onTurns: (turns: number) => void;
 }) {
     const hostRef = useRef<HTMLDivElement>(null);
-    const startedRef = useRef(false);
     const ratio = useMemo(() => svgAspectRatio(markup), [markup]);
 
     // Un passaggio solo sul disegno: classificarlo e mostrarlo fino al turno
@@ -292,11 +273,6 @@ function DiagramSurface({
         svg.setAttribute('aria-label', description);
         onTurns(tagDiagramSvg(svg, spec));
         revealUpTo(svg, step);
-        // La comparsa e' solo del disegno intero, e resta ferma finche' la card
-        // non entra in vista. Uscendo dal percorso riparte, perche' la classe
-        // torna su un elemento che non ce l'aveva.
-        svg.classList.toggle('dg-play', step === null);
-        svg.classList.toggle('dg-hold', step === null && !startedRef.current);
 
         const over = (event: Event) => {
             const node = (event.target as Element | null)?.closest?.('.dg-node');
@@ -310,31 +286,6 @@ function DiagramSurface({
             svg.removeEventListener('pointerleave', out);
         };
     }, [markup, spec, description, onTurns, step]);
-
-    // In chat il disegno monta mentre si legge il testo sopra: senza questo la
-    // comparsa e' gia' finita quando lo studente ci arriva.
-    // Dipende da `markup` senza usarlo: un disegno nuovo si riarma, e va
-    // rimesso in attesa di essere guardato.
-    useEffect(() => {
-        const host = hostRef.current;
-        const svg = host?.querySelector('svg');
-        if (!host || !svg || startedRef.current) return;
-        const start = () => {
-            startedRef.current = true;
-            svg.classList.remove('dg-hold');
-        };
-        if (typeof IntersectionObserver === 'undefined') {
-            start();
-            return;
-        }
-        const observer = new IntersectionObserver((entries) => {
-            if (!entries.some((entry) => entry.isIntersecting)) return;
-            observer.disconnect();
-            start();
-        });
-        observer.observe(host);
-        return () => observer.disconnect();
-    }, [markup]);
 
     return (
         <div
@@ -365,11 +316,9 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
     const [renderState, setRenderState] = useState<RenderState>({ key: '', markup: null, failed: false });
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [zoom, setZoom] = useState(1);
-    const [play, setPlay] = useState(0);
     // `null` = disegno intero; un numero = fermo a quel turno del passo-passo.
     const [step, setStep] = useState<number | null>(null);
     const [turns, setTurns] = useState(0);
-    const replay = useCallback(() => { setStep(null); setPlay((value) => value + 1); }, []);
     const onTurns = useCallback((value: number) => setTurns(value), []);
     const cardScrollRef = useRef<HTMLDivElement>(null);
     const fullScrollRef = useRef<HTMLDivElement>(null);
@@ -470,7 +419,6 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                 {markup ? (
                     <span className="flex shrink-0 items-center gap-0.5">
                         <StepControls step={step} turns={turns} setStep={setStep} locale={locale} size="sm" />
-                        <ReplayButton onClick={replay} locale={locale} size="sm" />
                         <ZoomControls zoom={zoom} setZoom={setZoom} locale={locale} size="sm" />
                         <Tooltip content={openFullscreenLabel}>
                             <button
@@ -495,7 +443,7 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                     {/* A misura naturale il diagramma sta dentro la card; ingrandito la card scorre.
                         Il riavvio rimonta la superficie: e' l'unico modo che non dipende da quando
                         il browser decide di ricalcolare lo stile. */}
-                    <DiagramSurface key={play} markup={markup} spec={drawnSpec} zoom={zoom} description={description} fitHeight="min(32rem, 70dvh)" step={step} onTurns={onTurns} />
+                    <DiagramSurface markup={markup} spec={drawnSpec} zoom={zoom} description={description} fitHeight="min(32rem, 70dvh)" step={step} onTurns={onTurns} />
                 </div>
             ) : failed ? (
                 <ol className="grid gap-2 p-3 sm:grid-cols-2" aria-label={spec.title}>
@@ -538,7 +486,6 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                             </span>
                             <span className="flex shrink-0 items-center gap-0.5">
                             <StepControls step={step} turns={turns} setStep={setStep} locale={locale} size="lg" />
-                            <ReplayButton onClick={replay} locale={locale} size="lg" />
                             <ZoomControls zoom={zoom} setZoom={setZoom} locale={locale} size="lg" />
                             <button
                                 type="button"
@@ -559,7 +506,7 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                             {/* Altezza disponibile a schermo intero: viewport meno intestazione,
                                 legenda e margini. Sottostimarla rimpicciolisce, sopravvalutarla
                                 fa uscire il disegno: meglio sottostimare. */}
-                            <DiagramSurface key={play} markup={markup} spec={drawnSpec} zoom={zoom} description={description} fitHeight="calc(100dvh - 14rem)" step={step} onTurns={onTurns} />
+                            <DiagramSurface markup={markup} spec={drawnSpec} zoom={zoom} description={description} fitHeight="calc(100dvh - 14rem)" step={step} onTurns={onTurns} />
                         </div>
                         <DiagramNote note={spec.note} />
                         <DiagramLegend kinds={legendKinds} locale={locale} />
