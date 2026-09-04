@@ -6,7 +6,7 @@ from pathlib import Path
 
 from fpdf import FPDF
 from fpdf.enums import MethodReturnValue
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 from .diagram_blocks import segments as diagram_segments
 from .diagram_render import DiagramSpec, DiagramSpecError, describe, render as render_diagram
@@ -314,7 +314,12 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "savickas_2": "Il percorso narrativo della Career Construction Interview non produce punteggi numerici.",
         "page": "Pagina",
         "conversation": "Conversazione",
-        "summary": "Sintesi della discussione e strategie",
+        "score_chart": "Grafico dei punteggi",
+        "readings": "Letture consigliate",
+        "strategies": "Strategie consigliate",
+        "no_readings": "Nessuna lettura e' stata consigliata durante il percorso.",
+        "no_strategies": "Nessuna strategia certificata e' stata consigliata durante il percorso.",
+        "summary": "Sintesi e consigli",
         "student": "Studente",
         "counselor": "Counselor",
     },
@@ -329,7 +334,12 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "savickas_2": "The narrative path of the Career Construction Interview does not produce numerical scores.",
         "page": "Page",
         "conversation": "Conversation",
-        "summary": "Discussion Summary and Strategies",
+        "score_chart": "Score chart",
+        "readings": "Recommended readings",
+        "strategies": "Recommended strategies",
+        "no_readings": "No reading was recommended during the pathway.",
+        "no_strategies": "No certified strategy was recommended during the pathway.",
+        "summary": "Summary and advice",
         "student": "Student",
         "counselor": "Counselor",
     },
@@ -344,7 +354,12 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "savickas_2": "El recorrido narrativo de la Career Construction Interview no produce puntuaciones numéricas.",
         "page": "Página",
         "conversation": "Conversación",
-        "summary": "Resumen de la conversación y estrategias",
+        "score_chart": "Gráfico de puntuaciones",
+        "readings": "Lecturas recomendadas",
+        "strategies": "Estrategias recomendadas",
+        "no_readings": "No se recomendó ninguna lectura durante el recorrido.",
+        "no_strategies": "No se recomendó ninguna estrategia certificada durante el recorrido.",
+        "summary": "Resumen y consejos",
         "student": "Estudiante",
         "counselor": "Counselor",
     },
@@ -359,7 +374,12 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "savickas_2": "Le parcours narratif de la Career Construction Interview ne produit pas de scores numériques.",
         "page": "Page",
         "conversation": "Conversation",
-        "summary": "Synthèse de la discussion et stratégies",
+        "score_chart": "Graphique des scores",
+        "readings": "Lectures recommandées",
+        "strategies": "Stratégies recommandées",
+        "no_readings": "Aucune lecture n'a été recommandée pendant le parcours.",
+        "no_strategies": "Aucune stratégie certifiée n'a été recommandée pendant le parcours.",
+        "summary": "Synthèse et conseils",
         "student": "Étudiant",
         "counselor": "Counselor",
     },
@@ -374,7 +394,12 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "savickas_2": "Der narrative Verlauf des Career Construction Interview liefert keine numerischen Werte.",
         "page": "Seite",
         "conversation": "Unterhaltung",
-        "summary": "Zusammenfassung der Diskussion und Strategien",
+        "score_chart": "Punktediagramm",
+        "readings": "Empfohlene Lektüre",
+        "strategies": "Empfohlene Strategien",
+        "no_readings": "Im Verlauf wurde keine Lektüre empfohlen.",
+        "no_strategies": "Im Verlauf wurde keine zertifizierte Strategie empfohlen.",
+        "summary": "Zusammenfassung und Empfehlungen",
         "student": "Student",
         "counselor": "Counselor",
     },
@@ -389,7 +414,12 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "savickas_2": "Den narrativa vägen i Career Construction Interview ger inga numeriska poäng.",
         "page": "Sida",
         "conversation": "Konversation",
-        "summary": "Sammanfattning av samtalet och strategier",
+        "score_chart": "Poängdiagram",
+        "readings": "Rekommenderad läsning",
+        "strategies": "Rekommenderade strategier",
+        "no_readings": "Ingen läsning rekommenderades under vägledningen.",
+        "no_strategies": "Ingen certifierad strategi rekommenderades under vägledningen.",
+        "summary": "Sammanfattning och råd",
         "student": "Student",
         "counselor": "Counselor",
     },
@@ -478,6 +508,61 @@ def _score_label(value: int, inverted: bool, ui: dict[str, str]) -> tuple[str, t
     elif value <= 3:
         return (ui["growth"], (239, 68, 68))
     return (ui["normal"], (234, 179, 8))
+
+
+def _chart_font(size: int, *, bold: bool = False):
+    path = INTER_FONTS["B" if bold else ""]
+    try:
+        return ImageFont.truetype(str(path), size=size)
+    except OSError:  # pragma: no cover - fallback per host senza Inter
+        return ImageFont.load_default()
+
+
+def render_score_chart_png(
+    questionnaire_type: str,
+    scores: dict[str, int | float],
+    language: str | None = None,
+) -> bytes:
+    """Rasterizza il grafico dei punteggi mostrato all'inizio del PDF."""
+    lang = _normalize_lang(language)
+    ui = UI_TEXT[lang]
+    entries = [(code, int(round(float(value)))) for code, value in scores.items()]
+    if not entries:
+        return b""
+
+    width, height = 1400, 610
+    image = Image.new("RGB", (width, height), APP_SURFACE)
+    draw = ImageDraw.Draw(image)
+    label_font = _chart_font(24, bold=True)
+    tick_font = _chart_font(20)
+    value_font = _chart_font(22, bold=True)
+
+    draw.rounded_rectangle((12, 12, width - 12, height - 12), radius=30, fill=APP_SURFACE, outline=APP_BORDER, width=3)
+    left, top, right, bottom = 105, 55, width - 55, height - 105
+    plot_h = bottom - top
+    for tick in (1, 3, 5, 7, 9):
+        y = bottom - (tick / 9) * plot_h
+        draw.line((left, y, right, y), fill=APP_BORDER, width=2)
+        draw.text((55, y - 12), str(tick), fill=APP_TEXT_MUTED, font=tick_font)
+    draw.line((left, top, left, bottom), fill=APP_TEXT_MUTED, width=3)
+    draw.line((left, bottom, right, bottom), fill=APP_TEXT_MUTED, width=3)
+
+    slot = (right - left) / max(1, len(entries))
+    bar_w = min(110, slot * 0.52)
+    for index, (code, value) in enumerate(entries):
+        x_center = left + slot * (index + 0.5)
+        x0, x1 = x_center - bar_w / 2, x_center + bar_w / 2
+        y0 = bottom - (max(0, min(9, value)) / 9) * plot_h
+        _, color = _score_label(value, code in INVERTED_CODES, ui)
+        draw.rounded_rectangle((x0, y0, x1, bottom), radius=12, fill=color)
+        value_box = draw.textbbox((0, 0), str(value), font=value_font)
+        draw.text((x_center - (value_box[2] - value_box[0]) / 2, y0 - 34), str(value), fill=APP_TEXT, font=value_font)
+        code_box = draw.textbbox((0, 0), code, font=label_font)
+        draw.text((x_center - (code_box[2] - code_box[0]) / 2, bottom + 24), code, fill=APP_TEXT, font=label_font)
+
+    stream = BytesIO()
+    image.save(stream, format="PNG", optimize=True)
+    return stream.getvalue()
 
 
 def _strip_markdown(text: str) -> str:
@@ -604,6 +689,64 @@ def _render_summary(pdf, summary_text: str, ui: dict[str, str], content_w: float
     )
 
 
+def _render_score_chart(
+    pdf: FPDF,
+    questionnaire_type: str,
+    scores: dict[str, int | float],
+    lang: str,
+    ui: dict[str, str],
+    content_w: float,
+) -> None:
+    payload = render_score_chart_png(questionnaire_type, scores, lang)
+    if not payload:
+        return
+    _section_heading(pdf, ui["score_chart"], content_w)
+    with Image.open(BytesIO(payload)) as image:
+        pixel_w, pixel_h = image.size
+    image_w = content_w - 8
+    image_h = image_w * pixel_h / pixel_w
+    _ensure_space(pdf, image_h + 8)
+    x, y = pdf.l_margin + 4, pdf.get_y()
+    pdf.image(BytesIO(payload), x=x, y=y, w=image_w, h=image_h, alt_text=ui["score_chart"])
+    pdf.set_y(y + image_h + 5)
+
+
+def _render_recommendations(
+    pdf: FPDF,
+    recommendations: dict[str, list[dict]],
+    ui: dict[str, str],
+    content_w: float,
+) -> None:
+    readings = recommendations.get("reading") or []
+    _section_heading(pdf, ui["readings"], content_w)
+    if not readings:
+        _text_card(pdf, ui["no_readings"], content_w, fill=APP_PAGE, border=APP_BORDER)
+    for item in readings:
+        title = str(item.get("title") or item.get("slug") or "").strip()
+        creators = str(item.get("creators") or "").strip()
+        year = str(item.get("year") or "").strip()
+        heading = title
+        if creators:
+            heading += f" - {creators}"
+        if year:
+            heading += f" ({year})"
+        detail = item.get("why") or item.get("summary") or item.get("synopsis") or ""
+        where = str(item.get("where") or "").strip()
+        body = "\n".join(part for part in (heading, str(detail).strip(), where) if part)
+        _text_card(pdf, body, content_w, fill=APP_PRIMARY_SOFT, border=APP_PRIMARY_BORDER)
+
+    strategies = recommendations.get("strategy") or []
+    _section_heading(pdf, ui["strategies"], content_w)
+    if not strategies:
+        _text_card(pdf, ui["no_strategies"], content_w, fill=APP_PAGE, border=APP_BORDER)
+    for item in strategies:
+        name = str(item.get("name") or item.get("slug") or "").strip()
+        detail = str(item.get("description") or "").strip()
+        when = str(item.get("recommended_when") or "").strip()
+        body = "\n".join(part for part in (name, detail, when) if part)
+        _text_card(pdf, body, content_w, fill=APP_PRIMARY_SOFT, border=APP_PRIMARY_BORDER)
+
+
 def _render_conversation(
     pdf,
     messages: list[dict],
@@ -659,6 +802,7 @@ def generate_questionnaire_pdf(
     language: str | None = None,
     messages: list[dict] | None = None,
     summary_text: str | None = None,
+    recommendations: dict[str, list[dict]] | None = None,
 ) -> BytesIO:
     """Genera un PDF dei risultati nella lingua selezionata, restituisce BytesIO.
 
@@ -693,6 +837,14 @@ def generate_questionnaire_pdf(
         text_color=APP_TEXT_MUTED,
     )
     pdf.ln(2)
+
+    # Apertura operativa: prima il profilo visivo, poi i materiali consigliati
+    # e la sintesi; il dettaglio analitico e la trascrizione seguono dopo.
+    if scores:
+        _render_score_chart(pdf, questionnaire_type, scores, lang, ui, content_w)
+    _render_recommendations(pdf, recommendations or {}, ui, content_w)
+    if summary_text and summary_text.strip():
+        _render_summary(pdf, summary_text.strip(), ui, content_w)
 
     has_inverted = False
 
@@ -774,9 +926,6 @@ def generate_questionnaire_pdf(
         pdf.set_text_color(140, 140, 150)
         pdf.multi_cell(content_w, 4, _latin1(ui["inverted_note"]), new_x="LMARGIN", new_y="NEXT")
 
-    # Sintesi AI e conversazione: prima il riepilogo utile, poi la trascrizione completa.
-    if summary_text and summary_text.strip():
-        _render_summary(pdf, summary_text.strip(), ui, content_w)
     if messages:
         _render_conversation(pdf, messages, ui, content_w, lang)
 

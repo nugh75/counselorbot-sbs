@@ -751,6 +751,7 @@ def test_counselors_crud_and_public():
     assert pub["voice_mapping"] == {"it": "it-IT-DiegoNeural", "en": "en-US-GuyNeural"}
     # badge origine modello: deepseek e' un'API esterna
     assert pub["model_origin"] == "external"
+    assert pub["model"] == "deepseek-v4-flash"
     # descrizione localizzata via ?lang (fallback all'italiano se manca la lingua)
     pub_en = next(c for c in client.get("/counselors?lang=en").json() if c["id"] == cid)
     assert pub_en["description"] == "Calm tutor"
@@ -3923,6 +3924,60 @@ def test_questionnaire_result_summary_uses_final_guided_step_for_every_instrumen
             db.query(models.QuestionnaireResult).filter(
                 models.QuestionnaireResult.session_id.in_(session_ids)
             ).delete(synchronize_session=False)
+            db.commit()
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
+def test_qpcs_summary_ignores_a_later_legacy_step():
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    _ensure_guided_steps("QPCS")
+    session_id = f"summary-qpcs-{uuid.uuid4().hex[:8]}"
+    legacy_step_id = f"qpcs-legacy-{uuid.uuid4().hex[:8]}"
+    try:
+        with _TestSession() as db:
+            db.add(models.GuidedStep(
+                id=legacy_step_id,
+                sort_order=99,
+                label="Legacy QPCS",
+                prompt="Legacy",
+                system_prompt_mode="qpcs-analysis",
+                color_theme="blue",
+                questionnaire_type="QPCS",
+            ))
+            db.add(models.QuestionnaireResult(
+                session_id=session_id,
+                questionnaire_type="QPCS",
+                scores={"S1": 7},
+                username="student",
+            ))
+            db.add_all([
+                models.Log(
+                    session_id=session_id,
+                    action="chat_message",
+                    questionnaire_type="QPCS",
+                    phase="qpcs-sintesi",
+                    details={"bot_response": "Sintesi finale QPCS"},
+                ),
+                models.Log(
+                    session_id=session_id,
+                    action="chat_message",
+                    questionnaire_type="QPCS",
+                    phase=legacy_step_id,
+                    details={"bot_response": "Risposta legacy"},
+                ),
+            ])
+            db.commit()
+
+        response = client.get(f"/user/questionnaire-result/{session_id}/summary")
+        assert response.status_code == 200, response.text
+        assert response.json() == {"summary": "Sintesi finale QPCS"}
+    finally:
+        with _TestSession() as db:
+            db.query(models.Log).filter(models.Log.session_id == session_id).delete(synchronize_session=False)
+            db.query(models.QuestionnaireResult).filter(
+                models.QuestionnaireResult.session_id == session_id
+            ).delete(synchronize_session=False)
+            db.query(models.GuidedStep).filter(models.GuidedStep.id == legacy_step_id).delete(synchronize_session=False)
             db.commit()
         main.app.dependency_overrides.pop(auth.get_identity, None)
 

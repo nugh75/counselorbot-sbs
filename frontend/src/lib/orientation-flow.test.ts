@@ -82,6 +82,16 @@ test('Bussola asks for a counselor before creating the conversation', () => {
     assert.match(source, /createSession\(pendingNewSession, pendingCounselorId\)/);
 });
 
+test('counselor cards show the AI model used by each persona', () => {
+    const source = readFileSync(
+        new URL('../components/questionnaire/CounselorSelector.tsx', import.meta.url),
+        'utf8',
+    );
+    assert.match(source, /c\.model &&/);
+    assert.match(source, /counselor\.modelLabel/);
+    assert.match(source, /\{c\.model\}/);
+});
+
 test('the gate settles once per page load instead of re-checking on every route', () => {
     const source = readFileSync(
         new URL('../components/layout/OrientationGate.tsx', import.meta.url),
