@@ -602,7 +602,7 @@ h1.text-3xl {
    sola. */
 
 .dg-svg {
-    --dg-beat: 900ms;
+    --dg-beat: 1400ms;
 }
 
 .dg-play .dg-node,
@@ -611,7 +611,7 @@ h1.text-3xl {
     /* `backwards` e non `both`: un'animazione che riempie in avanti blocca
        l'opacita' sul valore finale e batte la cascata, quindi la messa a fuoco
        non riusciva piu' a sbiadire nulla. */
-    animation: dg-enter 1200ms cubic-bezier(0.34, 1.4, 0.5, 1) backwards;
+    animation: dg-enter 1600ms cubic-bezier(0.34, 1.4, 0.5, 1) backwards;
     animation-delay: calc(var(--dg-step, 0) * var(--dg-beat));
 }
 
@@ -647,7 +647,7 @@ h1.text-3xl {
    in cui `dg-play` resta posata, e `weakens` e `link` si vedevano pieni,
    smentendo la legenda. */
 .dg-play .dg-edge:is(.dg-kind-drives, .dg-kind-strengthens) path {
-    animation: dg-draw 1400ms ease-out backwards;
+    animation: dg-draw 1800ms ease-out backwards;
     animation-delay: calc(var(--dg-step, 0) * var(--dg-beat));
 }
 
@@ -659,8 +659,8 @@ h1.text-3xl {
 /* La punta arriva quando il tratto e' arrivato, e arriva crescendo: una punta
    di otto pixel che si limita a sfumare non la vede nessuno. */
 .dg-play .dg-edge polygon {
-    animation: dg-tip 500ms cubic-bezier(0.34, 1.4, 0.5, 1) backwards;
-    animation-delay: calc(var(--dg-step, 0) * var(--dg-beat) + 1100ms);
+    animation: dg-tip 600ms cubic-bezier(0.34, 1.4, 0.5, 1) backwards;
+    animation-delay: calc(var(--dg-step, 0) * var(--dg-beat) + 1500ms);
     transform-box: fill-box;
     transform-origin: center;
 }
@@ -674,8 +674,8 @@ h1.text-3xl {
 .dg-play .dg-accent > path,
 .dg-play .dg-accent > polygon,
 .dg-play .dg-accent > ellipse {
-    animation: dg-accent 1400ms ease-in-out 3 backwards;
-    animation-delay: calc(var(--dg-step, 0) * var(--dg-beat) + 1300ms);
+    animation: dg-accent 1600ms ease-in-out 3 backwards;
+    animation-delay: calc(var(--dg-step, 0) * var(--dg-beat) + 1900ms);
     transform-box: fill-box;
     transform-origin: center;
 }
@@ -689,7 +689,7 @@ h1.text-3xl {
    Il tratteggio che scorre lo dice senza parole, poi si ferma: un pezzo che
    lampeggia per sempre su un disegno fermo e' rumore. */
 .dg-play .dg-kind-feedback path {
-    animation: dg-flow 2.4s linear 4;
+    animation: dg-flow 3s linear 4;
     animation-delay: calc(var(--dg-step, 0) * var(--dg-beat));
 }
 

@@ -265,9 +265,11 @@ function DiagramSurface({
     const startedRef = useRef(false);
     const ratio = useMemo(() => svgAspectRatio(markup), [markup]);
 
-    // Classificare il disegno e ascoltarne il passaggio del mouse dipende dal
-    // disegno, non dal punto in cui lo si sta guardando: rifarlo a ogni passo
-    // rimetteva tutto in chiaro per un istante.
+    // Un passaggio solo sul disegno: classificarlo e mostrarlo fino al turno
+    // giusto sono la stessa cosa, e tenerli in due effetti con dipendenze
+    // diverse voleva dire che un passo poteva lavorare su un disegno che quel
+    // ramo non aveva mai classificato -- il contatore avanzava e il disegno
+    // restava intero.
     // Prima della pittura, non dopo: un effetto normale lascia un fotogramma
     // con il disegno intero e non ancora animato.
     useLayoutEffect(() => {
@@ -276,11 +278,12 @@ function DiagramSurface({
         svg.setAttribute('role', 'img');
         svg.setAttribute('aria-label', description);
         onTurns(tagDiagramSvg(svg, spec));
-        // La comparsa e' armata subito ma tenuta ferma: parte quando la card
-        // entra in vista. Il riavvio rimonta questa superficie, quindi qui si
-        // riparte sempre da capo e non serve rianimare una classe gia' posata.
-        startedRef.current = false;
-        svg.classList.add('dg-play', 'dg-hold');
+        revealUpTo(svg, step);
+        // La comparsa e' solo del disegno intero, e resta ferma finche' la card
+        // non entra in vista. Uscendo dal percorso riparte, perche' la classe
+        // torna su un elemento che non ce l'aveva.
+        svg.classList.toggle('dg-play', step === null);
+        svg.classList.toggle('dg-hold', step === null && !startedRef.current);
 
         const over = (event: Event) => {
             const node = (event.target as Element | null)?.closest?.('.dg-node');
@@ -293,17 +296,7 @@ function DiagramSurface({
             svg.removeEventListener('pointerover', over);
             svg.removeEventListener('pointerleave', out);
         };
-    }, [markup, spec, description, onTurns]);
-
-    useLayoutEffect(() => {
-        const svg = hostRef.current?.querySelector('svg');
-        if (!svg) return;
-        // Nascondere prima di togliere l'animazione: al contrario resta un
-        // fotogramma in cui niente e' animato e niente e' ancora nascosto,
-        // cioe' il disegno intero.
-        revealUpTo(svg, step);
-        if (step !== null) svg.classList.remove('dg-play', 'dg-hold');
-    }, [markup, step]);
+    }, [markup, spec, description, onTurns, step]);
 
     // In chat il disegno monta mentre si legge il testo sopra: senza questo la
     // comparsa e' gia' finita quando lo studente ci arriva.
