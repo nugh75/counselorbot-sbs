@@ -45,10 +45,15 @@ function labelChipIndex(id: string): number | null {
     return Number.isNaN(index) ? null : index;
 }
 
-/** Un arco compare quando esistono i due capi che collega. */
+/**
+ * Un arco compare quando esistono i due capi che collega, cioe' insieme al
+ * secondo dei due. Non mezzo turno dopo: separarli raddoppiava i turni e ogni
+ * pressione muoveva un pezzo solo, tanto piccolo che i tasti sembravano
+ * inerti. Un nodo arriva con la freccia che ce l'ha portato.
+ */
 function edgeStep(edge: DiagramEdge | undefined, nodeOrder: Map<string, number>): number {
     if (!edge) return 0;
-    return Math.max(nodeOrder.get(edge.from) ?? 0, nodeOrder.get(edge.to) ?? 0) + 0.5;
+    return Math.max(nodeOrder.get(edge.from) ?? 0, nodeOrder.get(edge.to) ?? 0);
 }
 
 /** Classifica il disegno e ritorna quanti turni servono a mostrarlo tutto. */
