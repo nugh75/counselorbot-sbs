@@ -128,6 +128,7 @@ class CertifiedStrategyMemory:
             str(item).strip() for item in allowed_ids if str(item).strip()
         }
         profile_alignment: dict[int, dict[str, str]] = {}
+        matched_on: dict[int, list[str]] = {}
         eligible = []
         for row in rows:
             if row.slug in excluded:
@@ -149,6 +150,11 @@ class CertifiedStrategyMemory:
             if alignment["role"] == "exclude":
                 continue
             profile_alignment[row.id] = alignment
+            # Perche' questa voce e' entrata: i codici fattore salienti che hanno
+            # aperto il gate, o lo strumento quando la voce non ne dichiara
+            # (SAVICKAS non ha fattori).
+            codes = {str(code).upper() for code in (row.factor_codes or []) if str(code).strip()}
+            matched_on[row.id] = sorted(codes & salient) or [f"scope:{questionnaire}"]
             eligible.append(row)
 
         selected = None
@@ -196,6 +202,7 @@ class CertifiedStrategyMemory:
                     "recommended_when": recommended,
                     "description": how,
                     "advice_role": profile_alignment.get(row.id, {}).get("role", "primary"),
+                    "matched_on": matched_on.get(row.id, []),
                     "profile_note": profile_alignment.get(row.id, {}).get("note", ""),
                 }
             )

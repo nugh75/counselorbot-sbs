@@ -2211,7 +2211,10 @@ def test_retrieved_context_respects_allowed_strategies_whitelist():
                 questionnaire_type="QSA",
                 language="it",
             )
-            context, strategy_ids, certified_ids, _skills_blocks, _reading_ids = _retrieved_context(
+            (
+                context, strategy_ids, certified_ids, _skills_blocks,
+                _reading_ids, _meta,
+            ) = _retrieved_context(
                 db,
                 session_id="test-allowed-strategies",
                 request=request,
@@ -3585,7 +3588,7 @@ def test_generic_acknowledgement_is_removed_from_visible_chat_openings():
 
     _FakeAIService.stream_response = assent_stream
     _FakeAIService.get_response = assent_response
-    chat_routes._retrieved_context = lambda *a, **kw: ("", [], [], [], [])
+    chat_routes._retrieved_context = lambda *a, **kw: ("", [], [], [], [], {})
     site_chat_routes.site_rag_index.search = lambda *a, **kw: [
         {"score": 0.9, "source": "fonti/qsa.md", "title": "QSA", "text": "Materiale QSA."}
     ]
@@ -5095,7 +5098,10 @@ def test_retrieved_context_routing_and_strategy_exclusion():
     # 2. Test _retrieved_context routing logic using these flags
     # We toggle knowledge to True to test RAG retrieval with these flags
     flags["knowledge"] = True
-    knowledge_context, strategy_ids, certified_strategy_ids, _skills_blocks, _reading_ids = _retrieved_context(
+    (
+        knowledge_context, strategy_ids, certified_strategy_ids, _skills_blocks,
+        _reading_ids, _meta,
+    ) = _retrieved_context(
         db,
         session_id="test-routing",
         request=request,

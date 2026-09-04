@@ -172,6 +172,9 @@ class CertifiedReadingMemory:
             "year": row.year,
             "publisher": row.publisher or "",
             "themes": sorted(matched_themes) or list(row.themes or []),
+            # Perche' questa voce e' entrata in questo turno. Vuoto quando la
+            # voce viene riresa da uno slug (la sidebar la rilegge cosi').
+            "matched_on": sorted(matched_themes),
             "summary": self._i18n(db, row, row.summary_i18n, language),
             "why": self._i18n(db, row, row.why_i18n, language),
             "synopsis": self._clip(

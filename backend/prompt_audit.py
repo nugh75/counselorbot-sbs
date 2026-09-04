@@ -371,7 +371,10 @@ def build_prompt_audit(
         retrieval_flags = dict(component_flags)
         if not include_knowledge:
             retrieval_flags["knowledge"] = False
-        knowledge_context, strategy_ids, certified_strategy_ids, skills_blocks, _reading_ids = _retrieved_context(
+        (
+            knowledge_context, strategy_ids, certified_strategy_ids, skills_blocks,
+            _reading_ids, _recommendation_meta,
+        ) = _retrieved_context(
             db, session_id, retrieval_request, questionnaire_type, retrieval_query, ai_service=ai_service,
             certified_strategy_limit=component_options["certified_strategy_limit"],
             component_flags=retrieval_flags,
