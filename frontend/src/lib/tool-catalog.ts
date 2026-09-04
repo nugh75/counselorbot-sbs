@@ -60,5 +60,14 @@ export function orientationGateBypass(pathname: string, search = ''): boolean {
     if (exemptPaths.some((path) => pathname.startsWith(path))) return true;
     if (pathname !== '/') return false;
     const params = new URLSearchParams(search);
-    return Boolean(params.get('frozen') || params.get('resume') || params.get('session_id'));
+    // Riprese di una sessione: il cancello le lasciava gia' passare.
+    if (params.get('frozen') || params.get('resume') || params.get('session_id')) return true;
+    // La radice nuda e' la presentazione, e chi arriva per la prima volta deve
+    // vederla: prima il cancello lo spediva alla Bussola senza che avesse letto
+    // che cos'e' questo posto -- anche chi entra come ospite, che e' uno
+    // studente come gli altri per il cancello. Dalla presentazione l'unica via
+    // avanti e' il tasto, e il tasto porta alla Bussola: passare di qui non e'
+    // saltarla.
+    // I collegamenti che entrano dritti nel percorso restano al di qua.
+    return !params.get('view') && !params.get('start');
 }

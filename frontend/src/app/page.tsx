@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { fetchOrientationStatus } from '@/lib/orientation-api';
 import { QUESTIONNAIRES, QuestionnaireConfig, QuestionnaireType, supportsProfileUpload } from '@/lib/questionnaires';
 import { QuestionnaireSelector } from '@/components/questionnaire/QuestionnaireSelector';
 import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
@@ -205,6 +207,7 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
 export default function Home() {
     const { t, lang } = useI18n();
     const [identity, setIdentity] = useState<Identity | null | undefined>(undefined);
+    const router = useRouter();
     const [step, setStep] = useState<Step>('intro');
     const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<QuestionnaireConfig | null>(null);
     const [scores, setScores] = useState<Record<string, number> | null>(null);
@@ -312,6 +315,27 @@ export default function Home() {
     const claimEntry = () => {
         entryClaimed.current = true;
         setReady(true);
+    };
+
+    // Il tasto della presentazione. Il primo passo del percorso è la Bussola,
+    // non uno strumento: chi la deve ancora fare ci va da qui, invece di
+    // scoprirla come un rimbalzo del cancello alla prima pagina che apre.
+    // Lo stato lo si chiede al momento del clic: chiederlo al montaggio
+    // costerebbe una domanda al server a ogni visita, e serve solo a chi preme.
+    const startFromIntro = () => {
+        void (async () => {
+            try {
+                const status = await fetchOrientationStatus();
+                if (status.required) {
+                    router.push('/bussola');
+                    return;
+                }
+            } catch {
+                // Il server non risponde: si prosegue nel percorso, e il
+                // cancello rimanderà alla Bussola se serve davvero.
+            }
+            setStep(hasCompletedQuestionnaires ? 'questionnaire-select' : 'notebook');
+        })();
     };
 
     // Dove si torna a percorso finito: al percorso se c'è una storia, alla
@@ -755,7 +779,7 @@ export default function Home() {
                 >
                     {/* Step: Intro */}
                     {step === 'intro' && (
-                        <IntroScreen onStart={() => setStep(hasCompletedQuestionnaires ? 'questionnaire-select' : 'notebook')} />
+                        <IntroScreen onStart={startFromIntro} />
                     )}
 
                     {/* Step: percorso — schermata iniziale di chi è già passato di qui */}
