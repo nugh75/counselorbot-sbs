@@ -607,7 +607,8 @@ h1.text-3xl {
 
 .dg-play .dg-node,
 .dg-play .dg-edge,
-.dg-play .dg-chip {
+.dg-play .dg-chip,
+.dg-play .dg-tie {
     /* `backwards` e non `both`: un'animazione che riempie in avanti blocca
        l'opacita' sul valore finale e batte la cascata, quindi la messa a fuoco
        non riusciva piu' a sbiadire nulla. */
@@ -630,7 +631,8 @@ h1.text-3xl {
 
 .dg-svg .dg-node,
 .dg-svg .dg-edge,
-.dg-svg .dg-chip {
+.dg-svg .dg-chip,
+.dg-svg .dg-tie {
     transform-box: fill-box;
     transform-origin: center;
     /* Sullo stato base, non sulla classe che nasconde: dichiarata li', la
@@ -706,12 +708,19 @@ h1.text-3xl {
     pointer-events: none;
 }
 
+/* Il segno di un nodo e il filo che lo lega: sono oggetti del disegno, non
+   relazioni. Il filo non si traccia da un capo all'altro come un arco -- non
+   ha `dg-kind-*`, percio' la regola del tracciato non lo prende -- e il segno
+   entra in scena col suo concetto. */
+.dg-svg .dg-mark { cursor: pointer; }
+
 /* Messa a fuoco: sfiorando un nodo restano lui e i suoi collegamenti. */
 .dg-svg .dg-node { cursor: pointer; }
 
 .dg-focusing .dg-node,
 .dg-focusing .dg-edge,
-.dg-focusing .dg-chip {
+.dg-focusing .dg-chip,
+.dg-focusing .dg-tie {
     opacity: 0.12;
     transition: opacity 160ms ease-out;
 }

@@ -21,7 +21,7 @@ test('the animation classes are never asked for on the same element as dg-svg', 
 });
 
 test('every class the diagram code applies is styled somewhere', () => {
-    const applied = ['dg-node', 'dg-edge', 'dg-chip', 'dg-accent', 'dg-related', 'dg-play', 'dg-focusing'];
+    const applied = ['dg-node', 'dg-edge', 'dg-chip', 'dg-mark', 'dg-tie', 'dg-accent', 'dg-related', 'dg-play', 'dg-focusing'];
     for (const name of applied) {
         assert.ok(css.includes(`.${name}`), `${name} viene applicata dal codice ma non ha stile`);
     }

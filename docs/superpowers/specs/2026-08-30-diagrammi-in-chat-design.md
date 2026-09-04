@@ -234,13 +234,28 @@ ogni nodo aveva la stessa forma qualunque cosa fosse, e il disegno usciva dalla
 conversazione (schermo intero, PNG di Telegram, PDF) senza portarsi dietro la
 frase che lo spiegava.
 
-**L'icona esce.** Da label del nodo a `xlabel`, l'etichetta esterna di
-Graphviz: il motore la posa accanto al nodo, fuori dalla forma, e la scrive
-dentro lo stesso `<g class="node">` dell'SVG, percio' comparsa, passo-passo e
-messa a fuoco continuano a prenderla insieme al nodo. `forcelabels="true"`
-perche' un'etichetta esterna che non trova posto verrebbe lasciata cadere, e un
-nodo resterebbe senza segno. Dentro la bolla resta solo il testo, che cosi' si
-stringe. Verificato su `dot`, `circo`, `neato` e `twopi`.
+**L'icona esce, e diventa un oggetto.** Prima tentativo con `xlabel`,
+l'etichetta esterna di Graphviz: l'icona usciva dalla forma ma restava
+incollata all'angolo del riquadro, cioe' un distintivo del nodo, non un
+elemento del disegno. Ora e' un nodo suo (`__diagram_icon_<id>`, `shape=none`,
+senza bordo ne' riempimento) legato al concetto da un filo `penwidth 0.7` nel
+colore delle icone: il motore le riserva lo spazio che riserva a un nodo,
+percio' ha aria attorno e non tocca nessuna bolla. Il filo e' piu' fine di
+qualunque arco con un significato (1.0 il piu' sottile) e non e' punteggiato,
+cosi' non si confonde con `link`.
+
+In `dot` il segno sta sulla fila del suo concetto (`rank=same`) con
+`weight="10"`: senza la fila il disegno cresceva in altezza a ogni icona, e con
+un peso basso i segni finivano tutti in fondo alla fila, con i fili che
+attraversavano il disegno per raggiungerli. Fuori dalle file (`circo`, `neato`,
+`twopi`) vale il contrario: peso 0.2 e `len` corto, perche' il disegno deve
+aprirsi attorno ai concetti, non attorno ai segni.
+
+Nel browser `tagDiagramSvg` riconosce segni e fili dal prefisso: il segno prende
+`dg-mark` (piu' `dg-node`, cosi' sfiorarlo mette a fuoco il suo concetto) e il
+filo `dg-tie` senza `dg-kind-*`, percio' non viene tracciato come un arco.
+Entrambi entrano in scena, si mettono a fuoco e si nascondono col concetto che
+illustrano. Verificato su `dot`, `circo`, `neato` e `twopi`.
 
 **Quattro forme.** Campo `form` sul nodo, vocabolario semantico chiuso: il
 modello dichiara che genere di cosa e' il nodo, la geometria resta qui.
