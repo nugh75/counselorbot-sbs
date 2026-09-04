@@ -30,6 +30,9 @@ from ..idea_map import (
 from ..memory_service import session_memory
 from ..strategy_memory import shared_response_memory
 from ..skills import engine as skills_engine
+from .. import recommendation_service as _recommendation_service
+from ..certified_reading_service import certified_reading_memory
+from ..i18n_fields import localized
 from ..qsa_extractor import (
     DEFAULT_OCR_MODEL,
     DEFAULT_PARSER_MODEL,
@@ -378,6 +381,71 @@ def _apply_idea_patch(response_content: str, *, questionnaire_type: str, usernam
         map_db.close()
 
 
+def _record_recommendations(
+    db: Session,
+    *,
+    session_id: str,
+    username: str,
+    language: str,
+    reading_ids: list[str],
+    strategy_ids: list[str],
+    turn_index: int,
+) -> dict[str, list[dict]]:
+    """Persist the recommendations exposed by a completed chat turn."""
+    if not username:
+        return {"reading": [], "strategy": []}
+
+    reading_payloads = [
+        {"slug": entry["id"], **{key: value for key, value in entry.items() if key != "id"}}
+        for entry in certified_reading_memory.payloads_for_slugs(db, reading_ids, language)
+    ]
+    if reading_payloads:
+        _recommendation_service.record(
+            db,
+            session_id=session_id,
+            username=username,
+            recommendation_type="reading",
+            payloads=reading_payloads,
+            turn_index=turn_index,
+        )
+
+    strategy_rows = (
+        db.query(models.CertifiedStrategy)
+        .filter(
+            models.CertifiedStrategy.slug.in_(strategy_ids),
+            models.CertifiedStrategy.status == "certified",
+            models.CertifiedStrategy.is_active.is_(True),
+        )
+        .all()
+        if strategy_ids else []
+    )
+    strategy_by_slug = {row.slug: row for row in strategy_rows}
+    strategy_payloads = []
+    for slug in strategy_ids:
+        entry = strategy_by_slug.get(slug)
+        if entry is None:
+            continue
+        strategy_payloads.append({
+            "slug": entry.slug,
+            "name": localized(entry, "name", language) or entry.slug,
+            "description": localized(entry, "description", language) or "",
+            "recommended_when": localized(entry, "recommended_when", language) or "",
+        })
+    if strategy_payloads:
+        _recommendation_service.record(
+            db,
+            session_id=session_id,
+            username=username,
+            recommendation_type="strategy",
+            payloads=strategy_payloads,
+            turn_index=turn_index,
+        )
+
+    return _recommendation_service.list_for_session(
+        db, session_id=session_id, username=username,
+    )
+
+
 @router.post("/chat")
 async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db), identity: dict = Depends(auth.get_identity_view_as)):
     session_id = request.session_id or str(uuid.uuid4())
@@ -503,6 +571,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     knowledge_context = ""
     strategy_ids: list[str] = []
     certified_strategy_ids: list[str] = []
+    reading_ids: list[str] = []
     skills_blocks: dict[str, list[str]] = {}
     if component_flags.get("knowledge", True) or skills_engine.enabled(db, questionnaire_type):
         retrieval_query = f"{step_label} {model_message if component_flags.get('step_prompt', True) else ''} {component_scores_context}".strip()
@@ -512,7 +581,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         if _is_conversational_mode(request.mode):
             retrieval_query = f"{retrieval_query} {_conversational_retrieval_tail(session_id)}".strip()
         retrieval_request = request.copy(update={"scores_context": component_scores_context})
-        knowledge_context, strategy_ids, certified_strategy_ids, skills_blocks = _retrieved_context(
+        knowledge_context, strategy_ids, certified_strategy_ids, skills_blocks, reading_ids = _retrieved_context(
             db, session_id, retrieval_request, questionnaire_type, retrieval_query,
             ai_service=ai_service,
             certified_strategy_limit=component_options["certified_strategy_limit"],
@@ -657,6 +726,15 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     if response_id:
         log_entry.response_id = response_id
     db.commit()
+    recommendations_for_response = _record_recommendations(
+        db,
+        session_id=session_id,
+        username=identity.get("username", "") if identity else "",
+        language=request.language or "it",
+        reading_ids=reading_ids,
+        strategy_ids=certified_strategy_ids,
+        turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
+    )
 
     return {
         "response": response_content,
@@ -666,6 +744,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         "certified_strategy_ids": certified_strategy_ids,
         "response_id": response_id,
         "idea_revision_id": idea_revision_id,
+        "recommendations": recommendations_for_response,
     }
 
 
@@ -807,6 +886,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     knowledge_context = ""
     strategy_ids: list[str] = []
     certified_strategy_ids: list[str] = []
+    reading_ids: list[str] = []
     skills_blocks: dict[str, list[str]] = {}
     if component_flags.get("knowledge", True) or skills_engine.enabled(db, questionnaire_type):
         retrieval_query = f"{step_label} {model_message if component_flags.get('step_prompt', True) else ''} {component_scores_context}".strip()
@@ -816,7 +896,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         if _is_conversational_mode(request.mode):
             retrieval_query = f"{retrieval_query} {_conversational_retrieval_tail(session_id)}".strip()
         retrieval_request = request.copy(update={"scores_context": component_scores_context})
-        knowledge_context, strategy_ids, certified_strategy_ids, skills_blocks = _retrieved_context(
+        knowledge_context, strategy_ids, certified_strategy_ids, skills_blocks, reading_ids = _retrieved_context(
             db, session_id, retrieval_request, questionnaire_type, retrieval_query,
             ai_service=ai_service,
             certified_strategy_limit=component_options["certified_strategy_limit"],
@@ -1016,8 +1096,24 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             )
 
             response_id = _log_stream(response_content, usage_info)
+            recommendations_for_response: dict[str, list[dict]] = {"reading": [], "strategy": []}
+            recommendation_db = database.SessionLocal()
+            try:
+                recommendations_for_response = _record_recommendations(
+                    recommendation_db,
+                    session_id=session_id,
+                    username=identity.get("username", "") if identity else "",
+                    language=request.language or "it",
+                    reading_ids=reading_ids,
+                    strategy_ids=certified_strategy_ids,
+                    turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
+                )
+            except Exception as exc:
+                logger.warning("Recommendation persistence failed for %s: %s", session_id, exc)
+            finally:
+                recommendation_db.close()
 
-            yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': certified_strategy_ids, 'response_id': response_id, 'idea_revision_id': idea_revision_id})}\n\n"
+            yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': certified_strategy_ids, 'response_id': response_id, 'idea_revision_id': idea_revision_id, 'recommendations': recommendations_for_response})}\n\n"
         except Exception as e:
             logger.error(f"Errore stream chat session {session_id}: {e}")
             try:
@@ -1138,8 +1234,18 @@ async def chat_message(
     if response_id:
         log_entry.response_id = response_id
     db.commit()
+    recommendations_for_response = _recommendation_service.list_for_session(
+        db,
+        session_id=session_id,
+        username=identity.get("username", "") if identity else "",
+    )
 
-    return {"response": response_content, "conversation_id": resolved_conversation_id, "response_id": response_id}
+    return {
+        "response": response_content,
+        "conversation_id": resolved_conversation_id,
+        "response_id": response_id,
+        "recommendations": recommendations_for_response,
+    }
 
 
 @router.post("/qsa/audit")
@@ -1221,6 +1327,19 @@ async def upload_qsa_document(
 
 
 TTS_CHUNK_MAX_CHARS = 3000
+
+
+@router.get("/session/{session_id}/recommendations")
+async def get_session_recommendations(
+    session_id: str,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    """Log persistente delle raccomandazioni per la sidebar."""
+    username = identity.get("username", "") if identity else ""
+    return _recommendation_service.list_for_session(
+        db, session_id=session_id, username=username,
+    )
 
 
 def _split_text_for_tts(text: str, max_len: int = TTS_CHUNK_MAX_CHARS) -> list[str]:

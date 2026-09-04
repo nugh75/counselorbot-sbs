@@ -561,6 +561,34 @@ class FrozenSession(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class RecommendationHistory(Base):
+    """Log persistente delle raccomandazioni mostrate in sidebar.
+
+    Una riga per (session_id, slug): lo studente accede a titoli/letture e
+    strategie indipendentemente dal flusso chat, cosi' lo skills engine puo'
+    escludere quelle gia' offerte e il modello smette di ripeterle.
+    `payload` conserva il contesto che serve al render (titolo, autori, anno,
+    ruolo per le strategie, ecc.).
+    """
+
+    __tablename__ = "recommendation_history"
+    __table_args__ = (
+        UniqueConstraint(
+            "username", "session_id", "recommendation_type", "slug",
+            name="uq_recommendation_history_owner_session_type_slug",
+        ),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, nullable=False, index=True)
+    session_id = Column(String, nullable=False, index=True)
+    recommendation_type = Column(String, nullable=False, index=True)  # "strategy" | "reading"
+    slug = Column(String, nullable=False, index=True)
+    turn_index = Column(Integer, nullable=True)
+    payload = Column(JSON, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 class OrientationToolBrief(Base):
     """Testo lungo con cui la Bussola spiega uno strumento.
 

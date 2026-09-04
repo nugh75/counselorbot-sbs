@@ -23,6 +23,7 @@ from .strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_mem
 from .certified_strategy_service import certified_strategy_memory
 from .skills import engine as skills_engine
 from .skills import intents as skills_intents
+from . import recommendation_service as _recommendation_service
 from .guided_step_label_i18n import STEP_LABEL_I18N, resolve_step_label
 from sqlalchemy import func
 
@@ -1795,7 +1796,7 @@ def _retrieved_context(
     component_flags: dict | None = None,
     excluded_certified_strategy_ids: set[str] | None = None,
     username: str = "",
-) -> tuple[str, List[str], List[str], dict[str, list[str]]]:
+) -> tuple[str, List[str], List[str], dict[str, list[str]], List[str]]:
     """Fonti KNOWLEDGE per l'envelope: RAG (competenzestrategiche, counselorbot, questionari)
     + strategie approvate + certificate per-fattore + risposte votate.
 
@@ -1814,6 +1815,27 @@ def _retrieved_context(
 
     engine_on = skills_engine.enabled(db, questionnaire_type)
     skills_blocks: dict[str, list[str]] = {}
+    # Sidebar persistente: le raccomandazioni gia' mostrate non si ripetono.
+    shown_reading_ids: set[str] = set()
+    shown_strategy_ids: set[str] = set()
+    if engine_on and session_id:
+        try:
+            shown_reading_ids = _recommendation_service.slugs_shown(
+                db, session_id=session_id, username=username,
+                recommendation_type="reading",
+            )
+            shown_strategy_ids = _recommendation_service.slugs_shown(
+                db, session_id=session_id, username=username,
+                recommendation_type="strategy",
+            )
+        except Exception:
+            shown_reading_ids = set()
+            shown_strategy_ids = set()
+    if shown_strategy_ids:
+        excluded_certified_strategy_ids = {
+            *(excluded_certified_strategy_ids or set()),
+            *shown_strategy_ids,
+        }
 
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
     phase_codes = _phase_factor_codes(db, request.phase)
@@ -1926,6 +1948,7 @@ def _retrieved_context(
                 "certified_strategy_limit": certified_limit,
                 "allowed_strategies": component_flags.get("allowed_strategies"),
                 "excluded_strategy_ids": sorted(excluded_certified_strategy_ids or set()),
+                "excluded_reading_ids": sorted(shown_reading_ids),
             },
             intent=skills_intents.classify(
                 request.message or "",
@@ -1940,6 +1963,10 @@ def _retrieved_context(
         knowledge_blocks = skills_result.blocks.get("knowledge", [])
         strategy_ids = skills_result.ids.get("approved-strategies", [])
         certified_ids = skills_result.ids.get("certified-advice", [])
+        # Slug delle letture/film mostrate nel turno: servono alla sidebar
+        # persistente, non al prompt. La chiave e' lo slug della skill, non
+        # il nome dell'handler (reading_sources).
+        reading_ids = skills_result.ids.get("reading-guide", [])
     else:
         strategies = []
         if bool(component_flags.get("approved_strategies", True)):
@@ -1955,6 +1982,7 @@ def _retrieved_context(
             )
             strategies = _filter_allowed_strategy_entries(strategies, component_flags.get("allowed_strategies"))
         strategy_context = strategy_memory.render_context(strategies)
+        reading_ids = []
         certified = []
         if bool(component_flags.get("certified_strategies", True)) and certified_limit > 0:
             certified = certified_strategy_memory.retrieve(
@@ -2000,7 +2028,7 @@ def _retrieved_context(
         )
         if section
     ]
-    return "\n\n".join(sections), strategy_ids, certified_ids, skills_blocks
+    return "\n\n".join(sections), strategy_ids, certified_ids, skills_blocks, reading_ids
 
 
 PROMPT_COMPONENT_DEFAULTS = {
