@@ -9,7 +9,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, auth, database
+from .. import models, schemas, auth, database, prompt_revisions
 from ..counselor_i18n import localized_description, translate_counselor_async, translate_counselor_sync
 from ..counselor_scope import restricted_instruments, suits
 from sqlalchemy import cast as sa_cast, String
@@ -137,6 +137,16 @@ async def create_counselor(
         assistant_audience=payload.assistant_audience,
     )
     db.add(counselor)
+    db.flush()  # serve l'id per legare la revisione della persona
+    if (counselor.persona or "").strip():
+        prompt_revisions.record(
+            db,
+            prompt_revisions.SCOPE_COUNSELOR_PERSONA,
+            str(counselor.id),
+            counselor.persona,
+            prompt_revisions.ORIGIN_ADMIN,
+            author=current_user.get("username"),
+        )
     db.commit()
     db.refresh(counselor)
     if (counselor.description or "").strip():
@@ -170,6 +180,15 @@ async def update_counselor(
     desc_changed = "description" in updates and (updates["description"] or "") != (counselor.description or "")
     for field, value in updates.items():
         setattr(counselor, field, value)
+    if "persona" in updates:
+        prompt_revisions.record(
+            db,
+            prompt_revisions.SCOPE_COUNSELOR_PERSONA,
+            str(counselor.id),
+            counselor.persona,
+            prompt_revisions.ORIGIN_ADMIN,
+            author=current_user.get("username"),
+        )
     # se la descrizione cambia e l'admin non ha fornito traduzioni esplicite, rigenerale
     if desc_changed and "description_i18n" not in updates:
         counselor.description_i18n = None

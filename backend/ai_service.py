@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from . import models
 from . import pii
 from . import pii_ner
+from .api_secrets import API_KEY_ENV_MAP, config_key, resolve_api_secrets
 from .reasoning_profiles import DISABLED_PLAN, ReasoningPlan, resolve_plan
 
 logger = logging.getLogger(__name__)
@@ -53,19 +54,9 @@ SUMMARY_SYSTEM_PROMPT = (
     "The result REPLACES the previous summary — do not append, rewrite."
 )
 
-# Mappa chiavi DB -> variabili d'ambiente per i segreti
+# Mappa chiavi runtime -> variabili d'ambiente (segreti e impostazioni locali).
 ENV_KEY_MAP = {
-    'api_key_openai': ('API_KEY_OPENAI',),
-    'api_key_anthropic': ('API_KEY_ANTHROPIC',),
-    'api_key_gemini': ('API_KEY_GEMINI', 'GEMINI_API_KEY', 'GOOGLE_API_KEY'),
-    'api_key_mistral': ('API_KEY_MISTRAL',),
-    'api_key_openrouter': ('API_KEY_OPENROUTER', 'OPENROUTER_API_KEY'),
-    'api_key_groq': ('API_KEY_GROQ', 'GROQ_API_KEY'),
-    'api_key_cerebras': ('API_KEY_CEREBRAS', 'CEREBRAS_API_KEY'),
-    'api_key_deepseek': ('API_KEY_DEEPSEEK', 'DEEPSEEK_API_KEY'),
-    'api_key_together': ('API_KEY_TOGETHER', 'TOGETHER_API_KEY'),
-    'api_key_fireworks': ('API_KEY_FIREWORKS', 'FIREWORKS_API_KEY'),
-    'api_key_deepinfra': ('API_KEY_DEEPINFRA', 'DEEPINFRA_API_KEY'),
+    **{config_key(provider): env_vars for provider, env_vars in API_KEY_ENV_MAP.items()},
     'ollama_ip': ('OLLAMA_BASE_URL',),
     'ollama_num_ctx': ('OLLAMA_NUM_CTX',),
     'ollama_keep_alive': ('OLLAMA_KEEP_ALIVE',),
@@ -311,8 +302,19 @@ class AIService:
         configs = self.db.query(models.Config).all()
         config_dict = {c.key: c.value for c in configs}
 
-        # Le variabili d'ambiente hanno priorità sui valori nel DB
+        # API keys have a dedicated single-source contract and are never read
+        # from the generic Config table.
+        for provider, resolved in resolve_api_secrets(self.db).items():
+            key = config_key(provider)
+            if resolved.value:
+                config_dict[key] = resolved.value
+            else:
+                config_dict.pop(key, None)
+
+        # Non-secret runtime settings keep their existing environment override.
         for db_key, env_vars in ENV_KEY_MAP.items():
+            if db_key.startswith('api_key_'):
+                continue
             for env_var in env_vars:
                 env_value = os.environ.get(env_var)
                 if env_value:
@@ -367,6 +369,35 @@ class AIService:
         except Exception as e:
             logger.warning(f"list_models fallito per {provider}: {e}")
             return []
+
+    def verify_api_key(self, provider: str) -> bool:
+        """Perform an authenticated, read-only provider request."""
+        api_key = self._get_api_key(f"api_key_{provider}")
+        if not api_key:
+            return False
+        timeout = httpx.Timeout(15.0, connect=5.0)
+        try:
+            if provider == "anthropic":
+                anthropic.Anthropic(api_key=api_key, timeout=15).models.list(limit=1)
+            elif provider == "gemini":
+                from google import genai
+                client = genai.Client(api_key=api_key)
+                next(iter(client.models.list()), None)
+            elif provider == "mistral":
+                Mistral(api_key=api_key).models.list()
+            else:
+                base_url = None
+                if provider == "openrouter":
+                    base_url = "https://openrouter.ai/api/v1"
+                elif provider in OPENAI_COMPAT_PROVIDERS:
+                    base_url = OPENAI_COMPAT_PROVIDERS[provider]
+                kwargs = {"base_url": base_url} if base_url else {}
+                client = OpenAI(api_key=api_key, timeout=timeout, **kwargs)
+                client.models.list()
+            return True
+        except Exception as exc:
+            logger.warning("Verifica chiave API fallita per %s: %s", provider, exc)
+            return False
 
     def get_response(
         self,

@@ -39,6 +39,20 @@ class ConfigResponse(ConfigBase):
     class Config:
         from_attributes = True
 
+# Prompt revisions
+class PromptRevisionResponse(BaseModel):
+    id: int
+    scope: str
+    target_key: str
+    value: str
+    origin: str
+    author: Optional[str] = None
+    note: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
 # Log
 class LogBase(BaseModel):
     session_id: str

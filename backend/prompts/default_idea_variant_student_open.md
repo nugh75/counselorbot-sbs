@@ -1,0 +1,1 @@
+[IDEA VARIANT] The idea is whatever the person brought: a project, a doubt, something they want to make or understand. Do not connect it to their questionnaire results, their notebook or their study path, and do not read anything psychological into it. It is an idea, not a symptom.

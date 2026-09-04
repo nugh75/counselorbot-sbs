@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Cpu, FileText, Layers, Palette, Plus, RefreshCw, Save, Server, Trash2, ChevronUp, ChevronDown, Pencil, Award } from 'lucide-react';
+import { CheckCircle2, Cpu, ExternalLink, FileText, KeyRound, Layers, Palette, Plus, RefreshCw, Save, Server, Trash2, ChevronUp, ChevronDown, Pencil, Award, XCircle } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
+import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
 
 // --- Types ---
 
@@ -13,6 +15,18 @@ interface ConfigItem {
     value: string;
     description: string;
 }
+
+interface APIKeyStatus {
+    provider: string;
+    configured: boolean;
+    source: 'environment' | 'unset';
+    editable: boolean;
+    environment_variable?: string | null;
+    preferred_environment_variable: string;
+    updated_at?: string | null;
+}
+
+type APIKeyVerification = 'idle' | 'checking' | 'working' | 'failed';
 
 interface GuidedStep {
     id: string;
@@ -1168,6 +1182,8 @@ export function ConfigForm() {
     const [activeProvider, setActiveProvider] = useState('openai');
     const [activeModel, setActiveModel] = useState('gpt-4o');
     const [envOverrides, setEnvOverrides] = useState<Record<string, boolean>>({});
+    const [apiKeyStatuses, setApiKeyStatuses] = useState<APIKeyStatus[]>([]);
+    const [apiKeyVerification, setApiKeyVerification] = useState<Record<string, APIKeyVerification>>({});
 
     // Modelli realmente serviti dal provider (live). Vuoto = usa il fallback statico.
     const [liveModels, setLiveModels] = useState<string[]>([]);
@@ -1199,9 +1215,10 @@ export function ConfigForm() {
 
     const fetchConfigs = async () => {
         try {
-            const [configRes, envRes, stepsRes, resultsRes] = await Promise.all([
+            const [configRes, envRes, apiKeysRes, stepsRes, resultsRes] = await Promise.all([
                 fetch('/api/admin/config', { headers: authHeaders() }),
                 fetch('/api/admin/config/env-status', { headers: authHeaders() }),
+                fetch('/api/admin/api-keys', { headers: authHeaders() }),
                 fetch('/api/admin/guided-steps', { headers: authHeaders() }),
                 fetch('/api/admin/questionnaire-results?limit=100', { headers: authHeaders() }),
             ]);
@@ -1218,6 +1235,7 @@ export function ConfigForm() {
             }
 
             if (envRes.ok) setEnvOverrides(await envRes.json());
+            if (apiKeysRes.ok) setApiKeyStatuses(await apiKeysRes.json());
             if (stepsRes.ok) setGuidedSteps(await stepsRes.json());
             if (resultsRes.ok) setQuestionnaireResults(await resultsRes.json());
         } catch (error) {
@@ -1260,8 +1278,7 @@ export function ConfigForm() {
     };
     const activeKeyField = PROVIDER_KEY_FIELD[activeProvider];
     const activeKeyMissing = !!activeKeyField
-        && !envOverrides[activeKeyField]
-        && !(configs.find(c => c.key === activeKeyField)?.value || '').trim();
+        && !apiKeyStatuses.find(item => item.provider === activeProvider)?.configured;
 
     useEffect(() => { fetchConfigs(); }, []);
     useEffect(() => {
@@ -1312,6 +1329,22 @@ export function ConfigForm() {
             console.error('Failed to save config', error);
             showToast('error', t('admin.config.saveError'));
             return false;
+        }
+    };
+
+    const handleVerifyAPIKey = async (provider: string) => {
+        setApiKeyVerification(prev => ({ ...prev, [provider]: 'checking' }));
+        try {
+            const res = await fetch(`/api/admin/api-keys/${provider}/verify`, {
+                method: 'POST',
+                headers: authHeaders(),
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const result = await res.json();
+            setApiKeyVerification(prev => ({ ...prev, [provider]: result.working ? 'working' : 'failed' }));
+        } catch (error) {
+            console.error('Failed to verify API key', error);
+            setApiKeyVerification(prev => ({ ...prev, [provider]: 'failed' }));
         }
     };
 
@@ -1483,18 +1516,7 @@ export function ConfigForm() {
 
     if (loading) return <div className="text-center py-8 text-slate-500">{t('admin.config.loading')}</div>;
 
-    const apiKeys = [
-        { key: 'api_key_openai', label: 'API Key OpenAI' },
-        { key: 'api_key_anthropic', label: 'API Key Anthropic' },
-        { key: 'api_key_gemini', label: 'API Key Gemini' },
-        { key: 'api_key_mistral', label: 'API Key Mistral' },
-        { key: 'api_key_openrouter', label: 'API Key OpenRouter' },
-        { key: 'api_key_groq', label: 'API Key Groq' },
-        { key: 'api_key_cerebras', label: 'API Key Cerebras' },
-        { key: 'api_key_deepseek', label: 'API Key DeepSeek' },
-        { key: 'api_key_together', label: 'API Key Together' },
-        { key: 'api_key_fireworks', label: 'API Key Fireworks' },
-        { key: 'api_key_deepinfra', label: 'API Key DeepInfra' },
+    const localConnections = [
         { key: 'ollama_ip', label: 'Ollama IP Address' },
         { key: 'llamacpp_url', label: 'llama.cpp / llama-swap URL' },
     ];
@@ -1805,51 +1827,135 @@ export function ConfigForm() {
             </div>
 
             {/* 2. API Keys */}
-            <div className="grid gap-4">
-                <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">{t('admin.config.apiKeys')}</h3>
-                {apiKeys.map((def) => {
-                    const currentVal = configs.find(c => c.key === def.key)?.value || '';
-                    const isEnvOverridden = envOverrides[def.key] || false;
-                    const isActive =
-                        (!!activeKeyField && def.key === activeKeyField) ||
-                        (activeProvider === 'ollama' && def.key === 'ollama_ip') ||
-                        (activeProvider === 'llamacpp' && def.key === 'llamacpp_url');
+            <div className="space-y-4">
+                <div>
+                    <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">{t('admin.config.apiKeys')}</h3>
+                    <p className="mt-1 ml-1 text-sm text-slate-600">{t('admin.config.apiKeysIntro')}</p>
+                </div>
+                <Callout variant="info" title={t('admin.config.apiKeysContractTitle')}>
+                    <div className="space-y-2">
+                        <p>{t('admin.config.apiKeysContract')}</p>
+                        <a
+                            href="https://manager.ai4educ.org/segreti?project=counselorbot-10-step"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1.5 font-semibold text-indigo-700 hover:text-indigo-800 hover:underline"
+                        >
+                            {t('admin.config.apiKeysManagedLink')}
+                            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                        </a>
+                    </div>
+                </Callout>
+                <div className="grid gap-3 lg:grid-cols-2">
+                    {apiKeyStatuses.map((status) => {
+                        const verification = apiKeyVerification[status.provider] || 'idle';
+                        const providerLabel = PROVIDERS[status.provider]?.label || status.provider;
+                        const active = status.provider === activeProvider;
 
-                    return (
-                        <div key={def.key} className={`glass-panel p-4 flex items-center gap-4 transition-colors ${isActive ? 'bg-indigo-50 border-indigo-300 ring-1 ring-indigo-300' : 'hover:border-slate-300'}`}>
-                            <div className="flex-1">
-                                <label className="text-xs font-semibold text-slate-500 mb-1 flex items-center gap-2">
-                                    {def.label}
-                                    {isEnvOverridden && (
-                                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">ENV</span>
+                        return (
+                            <section
+                                key={status.provider}
+                                className={`glass-panel p-4 space-y-3 ${active ? 'bg-indigo-50 ring-1 ring-indigo-300' : ''}`}
+                                aria-labelledby={`api-key-${status.provider}`}
+                            >
+                                <div className="flex flex-wrap items-start justify-between gap-2">
+                                    <div>
+                                        <h4 id={`api-key-${status.provider}`} className="flex items-center gap-2 font-semibold text-slate-900">
+                                            <KeyRound className="w-4 h-4 text-indigo-600" />
+                                            {providerLabel}
+                                        </h4>
+                                        <p className="mt-1 text-xs text-slate-500">
+                                            {status.source === 'environment'
+                                                ? t('admin.config.apiKeySourceEnvironment')
+                                                : t('admin.config.apiKeySourceUnset')}
+                                        </p>
+                                    </div>
+                                    <span role="status" aria-live="polite" className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${
+                                        verification === 'working'
+                                            ? 'bg-emerald-100 text-emerald-800'
+                                            : verification === 'failed'
+                                                ? 'bg-red-100 text-red-800'
+                                                : status.configured
+                                                    ? 'bg-amber-100 text-amber-800'
+                                                    : 'bg-slate-100 text-slate-700'
+                                    }`}>
+                                        {verification === 'working' && <CheckCircle2 className="w-3.5 h-3.5" />}
+                                        {verification === 'failed' && <XCircle className="w-3.5 h-3.5" />}
+                                        {verification === 'checking'
+                                            ? t('admin.config.apiKeyChecking')
+                                            : verification === 'working'
+                                                ? t('admin.config.apiKeyWorking')
+                                                : verification === 'failed'
+                                                    ? t('admin.config.apiKeyFailed')
+                                                    : status.configured
+                                                        ? t('admin.config.apiKeyConfiguredUnverified')
+                                                        : t('admin.config.apiKeyNotConfigured')}
+                                    </span>
+                                </div>
+
+                                <p className="rounded-md bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-700">
+                                    {t(
+                                        status.configured
+                                            ? 'admin.config.apiKeyEnvironmentInstructions'
+                                            : 'admin.config.apiKeyUnsetInstructions',
+                                        { variable: status.environment_variable || status.preferred_environment_variable },
                                     )}
-                                </label>
-                                <input
-                                    type="password"
-                                    className={`w-full bg-transparent border-none p-0 text-sm text-slate-900 focus:ring-0 placeholder-slate-400 font-mono ${isEnvOverridden ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    placeholder={isEnvOverridden ? t('admin.config.envSet') : 'sk-...'}
-                                    value={isEnvOverridden ? '' : currentVal}
-                                    disabled={isEnvOverridden}
-                                    onChange={(e) => {
-                                        const newVal = e.target.value;
-                                        setConfigs(prev => {
-                                            const others = prev.filter(p => p.key !== def.key);
-                                            return [...others, { key: def.key, value: newVal, description: def.label }];
-                                        });
-                                    }}
-                                />
+                                </p>
+
+                                {verification === 'failed' && (
+                                    <p className="text-xs leading-relaxed text-red-700">{t('admin.config.apiKeyFailedHint')}</p>
+                                )}
+
+                                {status.configured && (
+                                    <div className="flex flex-wrap gap-2">
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="secondary"
+                                            onClick={() => handleVerifyAPIKey(status.provider)}
+                                            disabled={verification === 'checking'}
+                                        >
+                                            <RefreshCw className={`w-4 h-4 ${verification === 'checking' ? 'animate-spin' : ''}`} />
+                                            {t('admin.config.apiKeyVerify')}
+                                        </Button>
+                                    </div>
+                                )}
+                            </section>
+                        );
+                    })}
+                </div>
+
+                <div className="space-y-3 pt-2">
+                    <h4 className="text-sm font-semibold text-slate-700">{t('admin.config.localConnections')}</h4>
+                    {localConnections.map((def) => {
+                        const currentVal = configs.find(c => c.key === def.key)?.value || '';
+                        const isEnvOverridden = envOverrides[def.key] || false;
+                        return (
+                            <div key={def.key} className="glass-panel p-4 flex items-center gap-4">
+                                <div className="flex-1">
+                                    <label className="text-xs font-semibold text-slate-500 mb-1 flex items-center gap-2">
+                                        {def.label}
+                                        {isEnvOverridden && <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">ENV</span>}
+                                    </label>
+                                    <input
+                                        type="url"
+                                        className="w-full border-none bg-transparent p-0 font-mono text-sm text-slate-900 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
+                                        placeholder={isEnvOverridden ? t('admin.config.envSet') : 'http://host.docker.internal:11434'}
+                                        value={isEnvOverridden ? '' : currentVal}
+                                        disabled={isEnvOverridden}
+                                        onChange={(event) => setConfigDraft(def.key, event.target.value, def.label)}
+                                    />
+                                </div>
+                                {!isEnvOverridden && (
+                                    <Button type="button" size="sm" variant="ghost" onClick={() => handleSaveConfig({ key: def.key, value: currentVal, description: def.label })}>
+                                        <Save className="w-4 h-4" />
+                                        <span className="sr-only">{t('admin.config.save')}</span>
+                                    </Button>
+                                )}
                             </div>
-                            {!isEnvOverridden && (
-                                <button
-                                    onClick={() => handleSaveConfig({ key: def.key, value: configs.find(c => c.key === def.key)?.value || '', description: def.label })}
-                                    className="p-2 hover:bg-slate-100 rounded-md text-indigo-600 transition-colors"
-                                >
-                                    <Save className="w-4 h-4" />
-                                </button>
-                            )}
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
             </div>
 
             {/* Placeholder Language Mappings */}

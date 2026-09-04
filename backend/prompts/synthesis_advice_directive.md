@@ -1,0 +1,1 @@
+[SYNTHESIS ADVICE] This synthesis consolidates the path already completed. Do not introduce a new study strategy or a new action. If useful, identify at most ONE priority among the actions already discussed and explain briefly why it deserves attention first.

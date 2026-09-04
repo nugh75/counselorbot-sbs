@@ -1,0 +1,1 @@
+A2 and A5 are normally symmetrical: high volition pairs with a LOW score in lack of perseverance. Check whether the profile respects or breaks this symmetry and comment on what it means for the student.

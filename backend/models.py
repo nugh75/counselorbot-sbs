@@ -17,6 +17,16 @@ class Config(Base):
     value = Column(Text) # JSON or String value
     description = Column(String, nullable=True)
 
+
+class APISecret(Base):
+    """Legacy local key storage, retained for schema compatibility and never read at runtime."""
+    __tablename__ = "api_secrets"
+
+    provider = Column(String, primary_key=True, index=True)
+    encrypted_value = Column(Text, nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_by = Column(String, nullable=True)
+
 class Log(Base):
     __tablename__ = "logs"
 
@@ -1180,3 +1190,25 @@ class OrientationEvent(Base):
     sort_order = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class PromptRevision(Base):
+    """Storia append-only dei testi di prompt: rollback e audit.
+
+    Un prompt vive in tre posti diversi (`configs.value`, `guided_steps.prompt`,
+    `counselors.persona`): `scope` dice quale, `target_key` la riga. `origin`
+    distingue chi ha scritto — il seed di fabbrica, una migrazione d'avvio o un
+    admin — ed e' il campo che permette alle migrazioni di non calpestare le
+    personalizzazioni senza doverle indovinare cercando frasi dentro al testo.
+    """
+
+    __tablename__ = "prompt_revisions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    scope = Column(String, nullable=False, index=True)
+    target_key = Column(String, nullable=False, index=True)
+    value = Column(Text, nullable=False)
+    origin = Column(String, nullable=False)
+    author = Column(String, nullable=True)
+    note = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
