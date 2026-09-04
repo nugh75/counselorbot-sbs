@@ -137,6 +137,12 @@ class CertifiedStrategyMemory:
             scope = {item.upper() for item in (row.questionnaire_types or [])}
             if scope and questionnaire and questionnaire not in scope:
                 continue
+            if not scope and not (row.factor_codes or []):
+                # Stessa regola del catalogo letture: una voce che entra ovunque
+                # non e' una raccomandazione. Le voci senza codici fattore restano
+                # legittime (SAVICKAS non ha fattori), ma devono dichiarare almeno
+                # lo strumento a cui appartengono.
+                continue
             if not self._factors_satisfied(row, salient):
                 continue
             alignment = self._profile_alignment(db, row, questionnaire, score_bands, language)
