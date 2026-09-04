@@ -596,7 +596,14 @@ h1.text-3xl {
    ogni arco sono raggiungibili. `dg-svg` sta sul div contenitore, `dg-play`,
    `dg-hold` e `dg-focusing` sull'<svg>: non chiederle mai sullo stesso
    elemento. `--dg-step` e `data-dg-step` li assegna `tagDiagramSvg`: sono il
-   turno in cui quel pezzo entra. */
+   turno in cui quel pezzo entra.
+   `--dg-beat` e' la distanza fra un turno e il successivo: e' il ritmo con cui
+   il disegno si lascia leggere, non un dettaglio, e si regola qui una volta
+   sola. */
+
+.dg-svg {
+    --dg-beat: 900ms;
+}
 
 .dg-play .dg-node,
 .dg-play .dg-edge,
@@ -604,8 +611,8 @@ h1.text-3xl {
     /* `backwards` e non `both`: un'animazione che riempie in avanti blocca
        l'opacita' sul valore finale e batte la cascata, quindi la messa a fuoco
        non riusciva piu' a sbiadire nulla. */
-    animation: dg-enter 620ms cubic-bezier(0.34, 1.4, 0.5, 1) backwards;
-    animation-delay: calc(var(--dg-step, 0) * 420ms);
+    animation: dg-enter 1200ms cubic-bezier(0.34, 1.4, 0.5, 1) backwards;
+    animation-delay: calc(var(--dg-step, 0) * var(--dg-beat));
 }
 
 @keyframes dg-enter {
@@ -626,6 +633,10 @@ h1.text-3xl {
 .dg-svg .dg-chip {
     transform-box: fill-box;
     transform-origin: center;
+    /* Sullo stato base, non sulla classe che nasconde: dichiarata li', la
+       transizione spariva insieme alla classe e il pezzo che tornava scattava
+       di colpo. Un passo avanti non si vedeva, uno indietro si'. */
+    transition: opacity 450ms ease-out;
 }
 
 /* L'arco si traccia da un capo all'altro: il collegamento si vede nascere,
@@ -636,8 +647,8 @@ h1.text-3xl {
    in cui `dg-play` resta posata, e `weakens` e `link` si vedevano pieni,
    smentendo la legenda. */
 .dg-play .dg-edge:is(.dg-kind-drives, .dg-kind-strengthens) path {
-    animation: dg-draw 700ms ease-out backwards;
-    animation-delay: calc(var(--dg-step, 0) * 420ms);
+    animation: dg-draw 1400ms ease-out backwards;
+    animation-delay: calc(var(--dg-step, 0) * var(--dg-beat));
 }
 
 @keyframes dg-draw {
@@ -648,8 +659,8 @@ h1.text-3xl {
 /* La punta arriva quando il tratto e' arrivato, e arriva crescendo: una punta
    di otto pixel che si limita a sfumare non la vede nessuno. */
 .dg-play .dg-edge polygon {
-    animation: dg-tip 300ms cubic-bezier(0.34, 1.4, 0.5, 1) backwards;
-    animation-delay: calc(var(--dg-step, 0) * 420ms + 520ms);
+    animation: dg-tip 500ms cubic-bezier(0.34, 1.4, 0.5, 1) backwards;
+    animation-delay: calc(var(--dg-step, 0) * var(--dg-beat) + 1100ms);
     transform-box: fill-box;
     transform-origin: center;
 }
@@ -663,8 +674,8 @@ h1.text-3xl {
 .dg-play .dg-accent > path,
 .dg-play .dg-accent > polygon,
 .dg-play .dg-accent > ellipse {
-    animation: dg-accent 900ms ease-in-out 3 backwards;
-    animation-delay: calc(var(--dg-step, 0) * 420ms + 620ms);
+    animation: dg-accent 1400ms ease-in-out 3 backwards;
+    animation-delay: calc(var(--dg-step, 0) * var(--dg-beat) + 1300ms);
     transform-box: fill-box;
     transform-origin: center;
 }
@@ -678,18 +689,20 @@ h1.text-3xl {
    Il tratteggio che scorre lo dice senza parole, poi si ferma: un pezzo che
    lampeggia per sempre su un disegno fermo e' rumore. */
 .dg-play .dg-kind-feedback path {
-    animation: dg-flow 1.6s linear 4;
-    animation-delay: calc(var(--dg-step, 0) * 420ms);
+    animation: dg-flow 2.4s linear 4;
+    animation-delay: calc(var(--dg-step, 0) * var(--dg-beat));
 }
 
 @keyframes dg-flow {
     to { stroke-dashoffset: -16; }
 }
 
-/* Passo-passo: cio' che non e' ancora il suo turno non c'e'. */
+/* Passo-passo: cio' che non e' ancora il suo turno non c'e'.
+   `!important` perche' un'animazione batte una dichiarazione normale: finche'
+   la comparsa e' in corso, o in attesa in pausa, `opacity: 0` perdeva e il
+   passo non si vedeva. Fra le due, solo l'importante vince. */
 .dg-svg .dg-hidden {
-    opacity: 0;
-    transition: opacity 260ms ease-out;
+    opacity: 0 !important;
     pointer-events: none;
 }
 

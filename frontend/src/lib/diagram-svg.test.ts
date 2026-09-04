@@ -99,6 +99,33 @@ test('the step-by-step hides what has not had its turn', () => {
     assert.ok(css.includes('.dg-hidden'));
 });
 
+test('the walk beats a reveal still running', () => {
+    // Un'animazione batte una dichiarazione normale ma non una importante:
+    // senza, mentre la comparsa e' in corso (o in pausa in attesa di essere
+    // guardata) premere un passo non cambiava niente.
+    const hidden = css.slice(css.indexOf('.dg-svg .dg-hidden'));
+    assert.ok(hidden.includes('opacity: 0 !important'));
+});
+
+test('the walk fades in both directions', () => {
+    // Dichiarata sulla classe che nasconde, la transizione se ne andava con
+    // lei: nascondere sfumava, mostrare scattava.
+    const hidden = css.slice(css.indexOf('.dg-svg .dg-hidden'), css.indexOf('.dg-svg .dg-node { cursor'));
+    assert.equal(hidden.includes('transition'), false);
+    const base = css.slice(css.indexOf('.dg-svg .dg-node,'), css.indexOf('@keyframes dg-draw'));
+    assert.ok(base.includes('transition: opacity'));
+});
+
+test('one number governs the rhythm, and it is defined', () => {
+    // `var()` senza definizione rende invalido il `calc()`: il ritardo torna a
+    // zero e tutto il disegno entra insieme, senza un errore.
+    assert.ok(/\.dg-svg\s*\{[^}]*--dg-beat:\s*\d+ms/.test(css));
+    assert.ok(css.includes('calc(var(--dg-step, 0) * var(--dg-beat))'));
+    assert.equal(/animation-delay:[^;]*\d+ms\)(?![^;]*--dg-beat)/.test(
+        css.replace(/calc\(var\(--dg-step, 0\) \* var\(--dg-beat\)[^;]*\)/g, 'BEAT'),
+    ), false);
+});
+
 test('the walk is entered from the first turn, whichever arrow is pressed', () => {
     // Entrando dalla fine spariva un pezzo solo e i tasti sembravano inerti.
     assert.equal(walkStep(null, 7, 'forward'), 0);
@@ -111,6 +138,14 @@ test('the walk advances, stops at the start and leaves at the end', () => {
     assert.equal(walkStep(5, 7, 'forward'), 6);
     assert.equal(walkStep(6, 7, 'forward'), null);
     assert.equal(walkStep(6, 7, 'back'), 5);
+});
+
+test('an edge arrives with the node it reaches, not half a turn later', () => {
+    // Mezzo turno di scarto raddoppiava i turni: ogni pressione muoveva un
+    // pezzo solo e i tasti sembravano inerti.
+    const source = readFileSync(new URL('./diagram-svg.ts', import.meta.url), 'utf-8');
+    const step = source.slice(source.indexOf('function edgeStep'), source.indexOf('export function tagDiagramSvg'));
+    assert.equal(step.includes('+ 0.5'), false);
 });
 
 test('a drawing with nothing to walk stays whole', () => {
