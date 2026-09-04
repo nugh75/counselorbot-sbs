@@ -599,10 +599,13 @@ h1.text-3xl {
    turno in cui quel pezzo entra.
    `--dg-beat` e' la distanza fra un turno e il successivo: e' il ritmo con cui
    il disegno si lascia leggere, non un dettaglio, e si regola qui una volta
-   sola. */
+   sola. Le durate qui sotto gli stanno dietro in proporzione: la comparsa poco
+   piu' lunga di un battito, il tracciato ancora un po', la punta e il battito
+   dell'accento a valle di entrambi. Cambiare il battito senza toccarle
+   accavallerebbe i turni. */
 
 .dg-svg {
-    --dg-beat: 1400ms;
+    --dg-beat: 2100ms;
 }
 
 .dg-play .dg-node,
@@ -611,7 +614,7 @@ h1.text-3xl {
     /* `backwards` e non `both`: un'animazione che riempie in avanti blocca
        l'opacita' sul valore finale e batte la cascata, quindi la messa a fuoco
        non riusciva piu' a sbiadire nulla. */
-    animation: dg-enter 1600ms cubic-bezier(0.34, 1.4, 0.5, 1) backwards;
+    animation: dg-enter 2400ms cubic-bezier(0.34, 1.4, 0.5, 1) backwards;
     animation-delay: calc(var(--dg-step, 0) * var(--dg-beat));
 }
 
@@ -636,7 +639,7 @@ h1.text-3xl {
     /* Sullo stato base, non sulla classe che nasconde: dichiarata li', la
        transizione spariva insieme alla classe e il pezzo che tornava scattava
        di colpo. Un passo avanti non si vedeva, uno indietro si'. */
-    transition: opacity 450ms ease-out;
+    transition: opacity 650ms ease-out;
 }
 
 /* L'arco si traccia da un capo all'altro: il collegamento si vede nascere,
@@ -647,7 +650,7 @@ h1.text-3xl {
    in cui `dg-play` resta posata, e `weakens` e `link` si vedevano pieni,
    smentendo la legenda. */
 .dg-play .dg-edge:is(.dg-kind-drives, .dg-kind-strengthens) path {
-    animation: dg-draw 1800ms ease-out backwards;
+    animation: dg-draw 2700ms ease-out backwards;
     animation-delay: calc(var(--dg-step, 0) * var(--dg-beat));
 }
 
@@ -659,8 +662,8 @@ h1.text-3xl {
 /* La punta arriva quando il tratto e' arrivato, e arriva crescendo: una punta
    di otto pixel che si limita a sfumare non la vede nessuno. */
 .dg-play .dg-edge polygon {
-    animation: dg-tip 600ms cubic-bezier(0.34, 1.4, 0.5, 1) backwards;
-    animation-delay: calc(var(--dg-step, 0) * var(--dg-beat) + 1500ms);
+    animation: dg-tip 900ms cubic-bezier(0.34, 1.4, 0.5, 1) backwards;
+    animation-delay: calc(var(--dg-step, 0) * var(--dg-beat) + 2250ms);
     transform-box: fill-box;
     transform-origin: center;
 }
@@ -675,8 +678,8 @@ h1.text-3xl {
 .dg-play .dg-accent > polygon,
 .dg-play .dg-accent > ellipse,
 .dg-play .dg-accent > svg {
-    animation: dg-accent 1600ms ease-in-out 3 backwards;
-    animation-delay: calc(var(--dg-step, 0) * var(--dg-beat) + 1900ms);
+    animation: dg-accent 2400ms ease-in-out 3 backwards;
+    animation-delay: calc(var(--dg-step, 0) * var(--dg-beat) + 2850ms);
     transform-box: fill-box;
     transform-origin: center;
 }
@@ -698,7 +701,7 @@ h1.text-3xl {
    Il tratteggio che scorre lo dice senza parole, poi si ferma: un pezzo che
    lampeggia per sempre su un disegno fermo e' rumore. */
 .dg-play .dg-kind-feedback path {
-    animation: dg-flow 3s linear 4;
+    animation: dg-flow 4.5s linear 4;
     animation-delay: calc(var(--dg-step, 0) * var(--dg-beat));
 }
 
