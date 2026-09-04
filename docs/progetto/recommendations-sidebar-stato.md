@@ -10,7 +10,7 @@
 
 Le raccomandazioni (letture/film + strategie certificate) escono dalla prosa della chat e vivono in una **sidebar persistente a tab**, con log per sessione e non-ripetizione. La chat resta lo spazio di riflessione.
 
-**Stato: funzionalità completa e verificata dai test.** Restano fuori due cose, per scelta: la sezione PDF (nell'ADR è ancora "da decidere") e il rebuild Docker.
+**Stato: funzionalità completa, verificata dai test, committata e live** (immagini ricostruite il 2026-09-04). Resta fuori per scelta la sezione PDF: nell'ADR è ancora "da decidere".
 
 ---
 
@@ -50,8 +50,6 @@ Le raccomandazioni (letture/film + strategie certificate) escono dalla prosa del
 
 - **Sezione PDF nel booklet**: nell'ADR è ancora "da decidere" e il generatore PDF andrebbe disegnato prima. Il log è persistente, quindi la sezione si potrà aggiungere senza altri cambi di schema. *(Una versione precedente di questo file la dava per decisa: prevale l'ADR.)*
 - **Testo canonico della Bussola**: non toccato. La Bussola instrada fra strumenti e non descrive i pannelli della chat guidata; nominarci la sidebar sarebbe fuori registro.
-- **Rebuild Docker**: non eseguito. Il backend gira ancora sull'immagine vecchia — la funzionalità non è live finché non si rifà l'immagine (`docker compose up -d --build backend frontend`).
-- **Commit e push**: non eseguiti.
 - **Branch**: le modifiche stanno su `feature/diagram-shapes-and-note` insieme al lavoro sui diagrammi. Se serve un PR separato vanno spostate su `feature/recommendations-sidebar`.
 
 ---
@@ -75,6 +73,16 @@ python3 -m pytest backend/tests -q -p no:randomly \
 - backend: 674 passati, 6 saltati (esclusi i benchmark su modelli vivi e la batteria live qui sotto).
 - frontend: `npm test` 92 passati, `npm run lint` pulito (4 warning preesistenti, non nei file toccati), `npx tsc --noEmit` pulito.
 - **Fallisce, ma non per questo lavoro**: `test_qsa_counselor_prompt_battery.py::test_qsa_prompt_battery_static`. Interroga via HTTP il backend in esecuzione su `localhost:8088` (immagine vecchia, DB di produzione) e segnala `counselor_instrument_mismatch: Counselor 'Giulio' is not configured for QSA` — è uno stato dei dati, non il codice.
+
+---
+
+## Deploy (2026-09-04)
+
+Tre commit su `feature/diagram-shapes-and-note`, tutti pushati: `feat` (implementazione e test), `docs`, `fix` (vincolo di unicità). Di `backend/tests/test_smoke.py` sono state messe nell'indice **solo le parti di questo lavoro**: i tre test sui diagrammi restano nel working tree del loro autore, perché senza le modifiche a `backend/routes/diagram.py` sarebbero un commit rotto.
+
+`docker compose up -d --build backend frontend`: container su, `GET /session/{id}/recommendations` già servito in produzione.
+
+Trovato in fase di verifica: la tabella esisteva in produzione **senza il vincolo di unicità**, perché `create_all` non altera una tabella già presente e la tabella era nata prima che il vincolo fosse scritto. La migrazione di startup in `backend/main.py` lo aggiunge; verificato applicato sul database di produzione.
 
 ---
 
