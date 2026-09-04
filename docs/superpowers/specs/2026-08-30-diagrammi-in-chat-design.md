@@ -226,3 +226,48 @@ sono URL esterni né nomi di file controllati dal modello.
 La card mostra un comando di espansione quando l'SVG è pronto. Apre lo stesso
 disegno in un dialog a tutta viewport, con legenda, chiusura esplicita, tasto
 Esc, blocco dello scroll sottostante e ritorno del focus al comando di origine.
+
+## Forme, icone fuori, nota (2026-09-04, quarta passata)
+
+Tre difetti insieme: l'icona stava dentro la bolla e rubava spazio al testo,
+ogni nodo aveva la stessa forma qualunque cosa fosse, e il disegno usciva dalla
+conversazione (schermo intero, PNG di Telegram, PDF) senza portarsi dietro la
+frase che lo spiegava.
+
+**L'icona esce.** Da label del nodo a `xlabel`, l'etichetta esterna di
+Graphviz: il motore la posa accanto al nodo, fuori dalla forma, e la scrive
+dentro lo stesso `<g class="node">` dell'SVG, percio' comparsa, passo-passo e
+messa a fuoco continuano a prenderla insieme al nodo. `forcelabels="true"`
+perche' un'etichetta esterna che non trova posto verrebbe lasciata cadere, e un
+nodo resterebbe senza segno. Dentro la bolla resta solo il testo, che cosi' si
+stringe. Verificato su `dot`, `circo`, `neato` e `twopi`.
+
+**Quattro forme.** Campo `form` sul nodo, vocabolario semantico chiuso: il
+modello dichiara che genere di cosa e' il nodo, la geometria resta qui.
+
+| form | forma | senso |
+|---|---|---|
+| `concept` (default) | scatola arrotondata | una cosa, un'idea, uno stato |
+| `action` | scatola squadrata | qualcosa che si fa |
+| `decision` | rombo | un bivio davanti a cui si sta |
+| `outcome` | ellisse | dove si va a finire |
+
+Quattro e non sette, dallo standard dei diagrammi di flusso: si distinguono a
+colpo d'occhio e il modello sbaglia meno. Cio' che resta fuori (un ostacolo, una
+domanda) lo dicono gia' l'icona e il tipo di arco. Rombo ed ellisse crescono in
+tutte e due le direzioni, percio' le loro etichette vanno a capo prima
+(`NARROW_WRAP_AT`). `FORM_FROM_ROLE` da' la forma anche ai nodi della mappa di
+Idea, che dichiarano il ruolo e non la forma.
+
+**La nota.** Campo `note` sullo spec, una frase, 200 caratteri: dice cosa mostra
+il disegno o come si legge, mai l'elenco dei nodi. La card la stampa sotto il
+disegno (e sotto quello a schermo intero), `describe()` la mette in coda per
+screen reader e PDF, e nel PNG entra nel blocco del titolo. Li' resta in cima,
+non in fondo: Graphviz ha una sola etichetta di grafo, e sopra il disegno vale
+come attacco.
+
+**Migrazione.** `apply_diagram_shapes_policy` (marker
+`skills_diagram_shapes_and_note_v1`), come le tre precedenti: riscrive il
+contratto della skill solo dove e' ancora quello di serie, riconosciuto per
+hash. Il tetto del blocco sale a 3200 caratteri. Aggiornato anche
+`SPEC_ONLY_SYSTEM_PROMPT`, che serve il bottone "visualizza come schema".
