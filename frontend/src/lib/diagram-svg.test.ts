@@ -44,9 +44,24 @@ test('the reveal is replayable: its animations hang off dg-play', () => {
     }
 });
 
-test('nothing in a diagram animates forever: one blinking part is noise, not explanation', () => {
+test('nothing animates forever on its own: perpetual motion is asked for, never offered', () => {
+    // Un pezzo che si muove per sempre accanto a chi legge da' la nausea a chi
+    // ha un disturbo vestibolare e ruba il turno alla lettura a tutti gli
+    // altri; WCAG 2.2.2 vuole un modo per fermarlo. Qui il modo e' togliere il
+    // dito: ogni `infinite` deve vivere dentro un `:hover`.
     assert.ok(css.length > 0, 'blocco dei diagrammi non trovato nel foglio di stile');
-    assert.equal(css.includes('infinite'), false);
+    for (const rule of css.split('}')) {
+        if (!rule.includes('infinite')) continue;
+        assert.ok(rule.includes(':hover'), `movimento perpetuo fuori da :hover -> ${rule.trim().slice(0, 80)}`);
+    }
+});
+
+test('asking for less motion works from inside the app, not only from the system', () => {
+    // L'impostazione di sistema esiste ma quasi nessuno studente sa di averla,
+    // e su un computer di scuola non puo' cambiarla.
+    const inApp = css.slice(css.indexOf('[data-motion="reduced"]'));
+    assert.ok(inApp.includes('animation: none !important'));
+    assert.ok(inApp.includes('transform: none !important'));
 });
 
 test('reduced motion leaves the diagram whole', () => {
