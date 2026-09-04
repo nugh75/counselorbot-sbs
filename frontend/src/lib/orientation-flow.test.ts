@@ -97,3 +97,8 @@ test('a concluded Compass has a way out even when no tool is opened', () => {
     // senza ritorno, ogni suo comando portava comunque a quello strumento.
     assert.match(source, /onBack=\{\(\) => setPendingTool\(null\)\}/);
 });
+
+test('Bussola cards do not use decorative left borders', () => {
+    const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
+    assert.doesNotMatch(source, /border-l-/);
+});
