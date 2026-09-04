@@ -288,19 +288,50 @@ def test_render_svg_inlines_the_vector_icon():
     assert svg.count("<svg") >= 3  # radice + le due icone inline
 
 
-def test_the_icon_sits_outside_the_node_now():
-    # L'icona era dentro la bolla, dove rubava spazio al testo: ora e'
-    # un'etichetta esterna, cioe' un segno accanto al nodo.
+def test_the_icon_is_an_object_of_its_own_tied_to_the_node():
+    # L'icona era dentro la bolla, dove rubava spazio al testo, poi appiccicata
+    # al bordo: ora e' un nodo suo, con lo spazio che il motore riserva a un
+    # nodo, legato al concetto da un filo.
     spec = parse_spec({**CYCLE, "nodes": [
         {"id": "a", "label": "Obiettivo", "icon": "target"},
         {"id": "b", "label": "Verifica"},
     ], "edges": [{"from": "a", "to": "b"}]})
     dot = to_dot(spec)
-    assert 'xlabel=<<TABLE' in dot
+    assert '"__diagram_icon_a" [shape=none' in dot
+    assert '"__diagram_icon_a" -> "a"' in dot
     assert 'label="Obiettivo"' in dot
-    # Senza questo Graphviz lascia cadere l'etichetta esterna dove sta stretta,
-    # e un nodo resterebbe senza il suo segno.
-    assert 'forcelabels="true"' in dot
+    # Il segno non ha contenitore: niente riempimento, niente bordo.
+    assert "xlabel" not in dot
+
+
+def test_the_tie_is_thinner_than_any_relation():
+    # 1.0 e' il tratto piu' fine fra quelli che hanno un significato: il filo
+    # deve stare sotto, o si legge come una relazione che nessuno ha dichiarato.
+    spec = parse_spec({**CYCLE, "nodes": [
+        {"id": "a", "label": "Obiettivo", "icon": "target"},
+        {"id": "b", "label": "Verifica"},
+    ], "edges": [{"from": "a", "to": "b"}]})
+    tie = [line for line in to_dot(spec).splitlines() if '"__diagram_icon_a" -> "a"' in line][0]
+    assert 'penwidth="0.7"' in tie
+    assert 'dir="none"' in tie
+
+
+def test_a_node_without_an_icon_has_no_mark():
+    dot = to_dot(parse_spec(CYCLE))
+    assert "__diagram_icon_" not in dot
+
+
+def test_in_a_flow_the_mark_shares_the_rank_of_its_node():
+    # Senza, il segno prende una fila sua e il disegno cresce in altezza a ogni
+    # icona; con un peso basso finiva in fondo alla fila, e il filo attraversava
+    # tutto il disegno per raggiungerlo.
+    spec = parse_spec({**CYCLE, "type": "flow", "nodes": [
+        {"id": "a", "label": "Obiettivo", "icon": "target"},
+        {"id": "b", "label": "Verifica"},
+    ], "edges": [{"from": "a", "to": "b"}]})
+    dot = to_dot(spec)
+    assert '{ rank=same; "a"; "__diagram_icon_a"; }' in dot
+    assert 'weight="10"' in dot
 
 
 def test_form_picks_the_shape():

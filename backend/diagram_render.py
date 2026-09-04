@@ -49,6 +49,11 @@ DIAGRAM_ICONS = (
     "heart", "idea", "question", "shield", "target",
 )
 ICON_DIR = Path(__file__).with_name("diagram_icons")
+# Il segno e' un elemento del disegno, non una decorazione del nodo: vive in un
+# nodo suo, senza bordo ne' riempimento, legato al concetto da un filo sottile.
+# Il prefisso lo distingue dai nodi veri, nel DOT come nell'SVG.
+ICON_NODE_PREFIX = "__diagram_icon_"
+ICON_MARK_PX = 34
 
 # Che genere di cosa e' il nodo. Il modello dichiara il senso, non la geometria:
 # la forma la sceglie il renderer, come per i colori. Quattro, dallo standard
@@ -471,14 +476,8 @@ def _node_label(node: DiagramNode, form: str) -> str:
     return f'"{_wrap(_display_label(node), wrap_at)}"'
 
 
-def _node_xlabel(node: DiagramNode, theme: str) -> str | None:
-    """L'icona come segno a se' stante, posata accanto alla bolla.
-
-    `xlabel` e' l'etichetta esterna di Graphviz: il motore la mette fuori dalla
-    forma ma vicino al nodo, e la scrive dentro lo stesso gruppo SVG, percio'
-    passo-passo, messa a fuoco e comparsa continuano a prenderla con il nodo.
-    Dentro la bolla resta solo il testo, che cosi' si stringe.
-    """
+def _icon_mark_label(node: DiagramNode, theme: str) -> str | None:
+    """Etichetta del nodo-segno: soltanto l'icona, grande, senza contenitore."""
     if not node.icon:
         return None
     icon_path = ICON_DIR / f"{node.icon}-{theme}.png"
@@ -487,7 +486,7 @@ def _node_xlabel(node: DiagramNode, theme: str) -> str | None:
         return None
     return (
         '<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0">'
-        '<TR><TD FIXEDSIZE="TRUE" WIDTH="26" HEIGHT="26">'
+        f'<TR><TD FIXEDSIZE="TRUE" WIDTH="{ICON_MARK_PX}" HEIGHT="{ICON_MARK_PX}">'
         f'<IMG SRC="{_xml_escape(str(icon_path))}" SCALE="TRUE"/>'
         '</TD></TR></TABLE>>'
     )
@@ -533,6 +532,48 @@ def _title_block(spec: DiagramSpec, colors: dict, lang: str) -> str:
             + "".join(rows) + "</TABLE>>")
 
 
+def _icon_marks(spec: DiagramSpec, colors: dict, theme: str) -> list[str]:
+    """Righe DOT dei segni: un nodo per icona e il filo che lo lega al concetto.
+
+    Il segno e' un oggetto del disegno, non un distintivo appiccicato al bordo:
+    il motore gli riserva spazio come a un nodo, percio' ha aria attorno e non
+    tocca nessuna bolla. Il filo e' piu' sottile di qualunque arco con un
+    significato (1.0 il piu' fine) e porta il colore delle icone, cosi' non si
+    confonde con il tratto punteggiato di `link`.
+    """
+    lines: list[str] = []
+    tied: list[tuple[str, str]] = []
+    for node in spec.nodes:
+        label = _icon_mark_label(node, theme)
+        if not label:
+            continue
+        mark_id = f"{ICON_NODE_PREFIX}{node.id}"
+        lines.append(
+            f'  "{_escape(mark_id)}" [shape=none, style="", margin="0", width="0", '
+            f"height=\"0\", label={label}];"
+        )
+        tie = ['dir="none"', 'penwidth="0.7"', f'color="{colors["icon"]}"']
+        if spec.type in {"flow", "hierarchy"}:
+            # Sulla stessa fila il peso non allunga niente: decide soltanto chi
+            # sta accanto a chi. Basso, i segni finivano tutti in fondo alla
+            # fila e i fili attraversavano il disegno per raggiungerli.
+            tie.append('weight="10"')
+        else:
+            # Fuori dalle file il peso tira davvero: il disegno deve aprirsi
+            # attorno ai concetti, non attorno ai segni.
+            tie += ['weight="0.2"', 'len="0.7"']
+        lines.append(f'  "{_escape(mark_id)}" -> "{_escape(node.id)}" [{", ".join(tie)}];')
+        tied.append((mark_id, node.id))
+
+    # In `dot` le file sono ordinate: senza questo il segno finirebbe su una
+    # riga sua, sopra o sotto il concetto, e il disegno crescerebbe in altezza
+    # a ogni icona. Sulla stessa fila il segno sta di fianco, dove lo si cerca.
+    if spec.type in {"flow", "hierarchy"}:
+        for mark_id, node_id in tied:
+            lines.append(f'  {{ rank=same; "{_escape(node_id)}"; "{_escape(mark_id)}"; }}')
+    return lines
+
+
 def to_dot(spec: DiagramSpec, *, theme: str = "light", embed_title: bool = False,
            raster: bool = False, lang: str = "it") -> str:
     """Traduce lo spec in sorgente DOT gia' tematizzato."""
@@ -544,9 +585,6 @@ def to_dot(spec: DiagramSpec, *, theme: str = "light", embed_title: bool = False
         f'bgcolor="{background}"',
         f'fontname="{FONT_FAMILY}"',
         'pad="0.4"',
-        # Le icone sono etichette esterne: senza questo Graphviz le lascia
-        # cadere quando non trova posto, e un nodo resterebbe senza segno.
-        'forcelabels="true"',
     ]
     if spec.type == "cycle":
         # circo: cerchio piu' largo e archi curvi, cosi' le etichette respirano.
@@ -599,9 +637,6 @@ def to_dot(spec: DiagramSpec, *, theme: str = "light", embed_title: bool = False
         form = node.form or DEFAULT_FORM
         geometry = NODE_FORMS[form]
         attrs = [f'label={_node_label(node, form)}', f'shape="{geometry["shape"]}"']
-        xlabel = _node_xlabel(node, resolved_theme)
-        if xlabel:
-            attrs.append(f"xlabel={xlabel}")
         fill = colors["accent_fill"] if node.accent else colors["node_fill"]
         stroke = colors["accent_stroke"] if node.accent else colors["node_stroke"]
         text_colour = colors["accent_text"] if node.accent else colors["node_text"]
@@ -635,6 +670,8 @@ def to_dot(spec: DiagramSpec, *, theme: str = "light", embed_title: bool = False
             f'penwidth="{penwidth}"',
         ]
         lines.append(f'  "{_escape(node.id)}" [{", ".join(attrs)}];')
+
+    lines += _icon_marks(spec, colors, resolved_theme)
 
     used_ids = {node.id for node in spec.nodes}
     for edge_index, edge in enumerate(spec.edges):

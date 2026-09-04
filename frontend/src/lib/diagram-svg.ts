@@ -33,9 +33,18 @@ export function sanitizeSvgMarkup(markup: string): string | null {
 // il browser ha gia', dice il resto: quale nodo e' l'accento, di che tipo e'
 // ogni arco. Da qui in poi il CSS ha appigli.
 const EDGE_LABEL_PREFIX = '__diagram_edge_label_';
+// Il segno di un nodo e' un nodo suo, legato al concetto da un filo: nel disegno
+// e' un oggetto a se' stante, ma entra in scena, si mette a fuoco e si nasconde
+// insieme al concetto che illustra.
+const ICON_NODE_PREFIX = '__diagram_icon_';
 
 function titleOf(group: Element): string {
     return group.querySelector(':scope > title')?.textContent?.trim() ?? '';
+}
+
+/** Il nodo che un segno illustra, o null se non e' un segno. */
+function markOwner(id: string): string | null {
+    return id.startsWith(ICON_NODE_PREFIX) ? id.slice(ICON_NODE_PREFIX.length) : null;
 }
 
 /** Indice dell'arco a cui appartiene una pastiglia di etichetta, o null. */
@@ -76,6 +85,15 @@ export function tagDiagramSvg(root: Element, spec: DiagramSpec): number {
             steps.push({ element: group, step: edgeStep(edge, nodeOrder) });
             continue;
         }
+        const owner = markOwner(id);
+        if (owner !== null) {
+            // Anche `dg-node`: sfiorare il segno mette a fuoco il suo concetto,
+            // che e' il gesto che si fa senza pensarci.
+            group.classList.add('dg-node', 'dg-mark');
+            group.setAttribute('data-node', owner);
+            steps.push({ element: group, step: nodeOrder.get(owner) ?? 0 });
+            continue;
+        }
         group.classList.add('dg-node');
         if (accents.has(id)) group.classList.add('dg-accent');
         group.setAttribute('data-node', id);
@@ -84,6 +102,17 @@ export function tagDiagramSvg(root: Element, spec: DiagramSpec): number {
 
     for (const group of Array.from(root.querySelectorAll('g.edge'))) {
         const [rawSource = '', rawTarget = ''] = titleOf(group).split('->');
+        const tied = markOwner(rawSource.trim()) ?? markOwner(rawTarget.trim());
+        if (tied !== null) {
+            // Il filo non e' una relazione: niente tipo, niente tratto da
+            // percorrere. Se prendesse `dg-kind-drives` per mancanza d'altro,
+            // si disegnerebbe come un arco e direbbe una cosa falsa.
+            group.classList.add('dg-tie');
+            group.setAttribute('data-from', tied);
+            group.setAttribute('data-to', tied);
+            steps.push({ element: group, step: nodeOrder.get(tied) ?? 0 });
+            continue;
+        }
         const chip = labelChipIndex(rawSource.trim()) ?? labelChipIndex(rawTarget.trim());
         const edge = chip !== null
             ? edges[chip]
@@ -154,7 +183,7 @@ export function revealUpTo(root: Element, step: number | null) {
  */
 export function focusDiagramNode(root: Element, nodeId: string | null) {
     root.classList.toggle('dg-focusing', Boolean(nodeId));
-    for (const group of Array.from(root.querySelectorAll('.dg-node, .dg-edge, .dg-chip'))) {
+    for (const group of Array.from(root.querySelectorAll('.dg-node, .dg-edge, .dg-chip, .dg-tie'))) {
         const related = nodeId !== null && (
             group.getAttribute('data-node') === nodeId
             || group.getAttribute('data-from') === nodeId
