@@ -7,6 +7,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
+import { PromptHistory } from '@/components/admin/PromptHistory';
 
 // --- Types ---
 
@@ -2202,6 +2203,7 @@ export function ConfigForm() {
                                                 value={currentVal}
                                                 onChange={(e) => setConfigDraft(def.key, e.target.value, def.label)}
                                             />
+                                            <PromptHistory scope="config" targetKey={def.key} currentValue={currentVal} onRestored={(value) => setConfigDraft(def.key, value, def.label)} />
                                         </div>
                                     );
                                 })}
@@ -2246,6 +2248,7 @@ export function ConfigForm() {
                                                         onChange={(e) => setConfigDraft(localizedKey, e.target.value, def.label)}
                                                     />
                                                 )}
+                                                <PromptHistory scope="config" targetKey={localizedKey} currentValue={currentVal} onRestored={(value) => setConfigDraft(localizedKey, value, def.label)} />
                                             </div>
                                         );
                                     })}
@@ -2452,6 +2455,7 @@ export function ConfigForm() {
                                                         value={step.prompt}
                                                         onChange={(e) => updateStepField(step.id, 'prompt', e.target.value)}
                                                     />
+                                                    <PromptHistory scope="guided_step" targetKey={step.id} currentValue={step.prompt} onRestored={(value) => updateStepField(step.id, 'prompt', value)} />
                                                 </div>
                                             </div>
                                         );
