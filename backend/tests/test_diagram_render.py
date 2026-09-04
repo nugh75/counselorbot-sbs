@@ -271,6 +271,7 @@ def test_dot_uses_the_local_icon_asset():
         {"id": "b", "label": "Verifica", "icon": "check"},
     ], "edges": [{"from": "a", "to": "b"}]})
     dot = to_dot(spec, theme="dark")
+    # Il file resta lo stesso, che l'icona faccia da simbolo o stia nel nodo.
     assert "target-dark.png" in dot
     assert "check-dark.png" in dot
     assert "<IMG SRC=" in dot
@@ -288,50 +289,56 @@ def test_render_svg_inlines_the_vector_icon():
     assert svg.count("<svg") >= 3  # radice + le due icone inline
 
 
-def test_the_icon_is_an_object_of_its_own_tied_to_the_node():
-    # L'icona era dentro la bolla, dove rubava spazio al testo, poi appiccicata
-    # al bordo: ora e' un nodo suo, con lo spazio che il motore riserva a un
-    # nodo, legato al concetto da un filo.
+def test_an_icon_makes_the_node_a_symbol():
+    # L'icona non decora il nodo: lo diventa. Niente figura da riempire o
+    # bordare, l'icona sopra e le parole sotto.
     spec = parse_spec({**CYCLE, "nodes": [
         {"id": "a", "label": "Obiettivo", "icon": "target"},
         {"id": "b", "label": "Verifica"},
     ], "edges": [{"from": "a", "to": "b"}]})
     dot = to_dot(spec)
-    assert '"__diagram_icon_a" [shape=none' in dot
-    assert '"__diagram_icon_a" -> "a"' in dot
-    assert 'label="Obiettivo"' in dot
-    # Il segno non ha contenitore: niente riempimento, niente bordo.
+    symbol = [line for line in dot.splitlines() if line.strip().startswith('"a" [')][0]
+    assert "shape=plaintext" in symbol
+    assert "<IMG SRC=" in symbol and "Obiettivo" in symbol
+    assert "fillcolor" not in symbol
+    # E niente elementi inventati per portarcela: ne' fili ne' nodi in piu'.
+    assert "__diagram_icon_" not in dot
     assert "xlabel" not in dot
 
 
-def test_the_tie_is_thinner_than_any_relation():
-    # 1.0 e' il tratto piu' fine fra quelli che hanno un significato: il filo
-    # deve stare sotto, o si legge come una relazione che nessuno ha dichiarato.
+def test_a_node_without_an_icon_keeps_its_shape():
     spec = parse_spec({**CYCLE, "nodes": [
         {"id": "a", "label": "Obiettivo", "icon": "target"},
         {"id": "b", "label": "Verifica"},
     ], "edges": [{"from": "a", "to": "b"}]})
-    tie = [line for line in to_dot(spec).splitlines() if '"__diagram_icon_a" -> "a"' in line][0]
-    assert 'penwidth="0.7"' in tie
-    assert 'dir="none"' in tie
+    boxed = [line for line in to_dot(spec).splitlines() if line.strip().startswith('"b" [')][0]
+    assert 'shape="box"' in boxed
+    assert "fillcolor" in boxed
 
 
-def test_a_node_without_an_icon_has_no_mark():
-    dot = to_dot(parse_spec(CYCLE))
-    assert "__diagram_icon_" not in dot
-
-
-def test_in_a_flow_the_mark_shares_the_rank_of_its_node():
-    # Senza, il segno prende una fila sua e il disegno cresce in altezza a ogni
-    # icona; con un peso basso finiva in fondo alla fila, e il filo attraversava
-    # tutto il disegno per raggiungerlo.
-    spec = parse_spec({**CYCLE, "type": "flow", "nodes": [
-        {"id": "a", "label": "Obiettivo", "icon": "target"},
-        {"id": "b", "label": "Verifica"},
+def test_the_accent_survives_without_a_border():
+    # Un simbolo non ha bordo da ingrossare: l'accento passa nella pastiglia
+    # ocra sotto le parole, o il punto su cui agire sparisce.
+    spec = parse_spec({**CYCLE, "nodes": [
+        {"id": "a", "label": "Obiettivo", "icon": "target", "accent": True},
+        {"id": "b", "label": "Verifica", "icon": "check"},
     ], "edges": [{"from": "a", "to": "b"}]})
-    dot = to_dot(spec)
-    assert '{ rank=same; "a"; "__diagram_icon_a"; }' in dot
-    assert 'weight="10"' in dot
+    declarations = {
+        line.strip().split(" ", 1)[0]: line
+        for line in to_dot(spec).splitlines() if " [" in line and " -> " not in line
+    }
+    assert 'BGCOLOR="#faf1e3"' in declarations['"a"']
+    assert "BGCOLOR" not in declarations['"b"']
+
+
+def test_the_map_keeps_its_icons_inside_the_node():
+    # Nella mappa di Idea la figura porta messa a fuoco, difetto e chiusura:
+    # toglierla per fare posto al simbolo cancellerebbe tre informazioni.
+    raw = _mindmap(3)
+    dot = to_dot(parse_spec(raw))
+    node = [line for line in dot.splitlines() if line.strip().startswith('"idea" [')][0]
+    assert "shape=plaintext" not in node
+    assert "<IMG SRC=" in node
 
 
 def test_form_picks_the_shape():

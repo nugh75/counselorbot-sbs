@@ -607,8 +607,7 @@ h1.text-3xl {
 
 .dg-play .dg-node,
 .dg-play .dg-edge,
-.dg-play .dg-chip,
-.dg-play .dg-tie {
+.dg-play .dg-chip {
     /* `backwards` e non `both`: un'animazione che riempie in avanti blocca
        l'opacita' sul valore finale e batte la cascata, quindi la messa a fuoco
        non riusciva piu' a sbiadire nulla. */
@@ -631,8 +630,7 @@ h1.text-3xl {
 
 .dg-svg .dg-node,
 .dg-svg .dg-edge,
-.dg-svg .dg-chip,
-.dg-svg .dg-tie {
+.dg-svg .dg-chip {
     transform-box: fill-box;
     transform-origin: center;
     /* Sullo stato base, non sulla classe che nasconde: dichiarata li', la
@@ -675,7 +673,8 @@ h1.text-3xl {
 /* Il nodo su cui si puo' agire e' uno solo: si fa trovare, tre battiti. */
 .dg-play .dg-accent > path,
 .dg-play .dg-accent > polygon,
-.dg-play .dg-accent > ellipse {
+.dg-play .dg-accent > ellipse,
+.dg-play .dg-accent > svg {
     animation: dg-accent 1600ms ease-in-out 3 backwards;
     animation-delay: calc(var(--dg-step, 0) * var(--dg-beat) + 1900ms);
     transform-box: fill-box;
@@ -685,6 +684,14 @@ h1.text-3xl {
 @keyframes dg-accent {
     0%, 100% { transform: scale(1); }
     45% { transform: scale(1.12); }
+}
+
+/* Dove il simbolo e' il nodo non c'e' bordo da accendere: l'accento vive nel
+   tracciato dell'icona, che qui vira all'ocra. Una dichiarazione CSS batte
+   l'attributo `stroke` che il renderer scrive nell'SVG; nel PNG, che non ha un
+   foglio di stile, l'accento resta nelle parole sulla pastiglia. */
+.dg-svg .dg-accent > svg {
+    stroke: #dca055;
 }
 
 /* La retroazione e' l'arco che nessuno legge a colpo d'occhio: B torna su A.
@@ -708,19 +715,12 @@ h1.text-3xl {
     pointer-events: none;
 }
 
-/* Il segno di un nodo e il filo che lo lega: sono oggetti del disegno, non
-   relazioni. Il filo non si traccia da un capo all'altro come un arco -- non
-   ha `dg-kind-*`, percio' la regola del tracciato non lo prende -- e il segno
-   entra in scena col suo concetto. */
-.dg-svg .dg-mark { cursor: pointer; }
-
 /* Messa a fuoco: sfiorando un nodo restano lui e i suoi collegamenti. */
 .dg-svg .dg-node { cursor: pointer; }
 
 .dg-focusing .dg-node,
 .dg-focusing .dg-edge,
-.dg-focusing .dg-chip,
-.dg-focusing .dg-tie {
+.dg-focusing .dg-chip {
     opacity: 0.12;
     transition: opacity 160ms ease-out;
 }

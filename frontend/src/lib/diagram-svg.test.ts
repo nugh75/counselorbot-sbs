@@ -21,10 +21,17 @@ test('the animation classes are never asked for on the same element as dg-svg', 
 });
 
 test('every class the diagram code applies is styled somewhere', () => {
-    const applied = ['dg-node', 'dg-edge', 'dg-chip', 'dg-mark', 'dg-tie', 'dg-accent', 'dg-related', 'dg-play', 'dg-focusing'];
+    const applied = ['dg-node', 'dg-edge', 'dg-chip', 'dg-accent', 'dg-related', 'dg-play', 'dg-focusing'];
     for (const name of applied) {
         assert.ok(css.includes(`.${name}`), `${name} viene applicata dal codice ma non ha stile`);
     }
+});
+
+test('the accent survives where the symbol is the node', () => {
+    // Un nodo-simbolo non ha bordo da accendere: senza questa regola l'unico
+    // punto su cui lo studente puo' agire non si distingue dagli altri.
+    assert.ok(css.includes('.dg-svg .dg-accent > svg'));
+    assert.ok(css.includes('.dg-play .dg-accent > svg'));
 });
 
 test('the reveal is replayable: its animations hang off dg-play', () => {

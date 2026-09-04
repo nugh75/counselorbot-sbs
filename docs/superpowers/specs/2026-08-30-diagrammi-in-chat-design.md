@@ -234,28 +234,31 @@ ogni nodo aveva la stessa forma qualunque cosa fosse, e il disegno usciva dalla
 conversazione (schermo intero, PNG di Telegram, PDF) senza portarsi dietro la
 frase che lo spiegava.
 
-**L'icona esce, e diventa un oggetto.** Prima tentativo con `xlabel`,
-l'etichetta esterna di Graphviz: l'icona usciva dalla forma ma restava
-incollata all'angolo del riquadro, cioe' un distintivo del nodo, non un
-elemento del disegno. Ora e' un nodo suo (`__diagram_icon_<id>`, `shape=none`,
-senza bordo ne' riempimento) legato al concetto da un filo `penwidth 0.7` nel
-colore delle icone: il motore le riserva lo spazio che riserva a un nodo,
-percio' ha aria attorno e non tocca nessuna bolla. Il filo e' piu' fine di
-qualunque arco con un significato (1.0 il piu' sottile) e non e' punteggiato,
-cosi' non si confonde con `link`.
+**Il simbolo e' il nodo.** Due tentativi sbagliati prima di quello giusto, e
+vale la pena tenerne memoria. Con `xlabel` l'icona usciva dalla forma ma restava
+incollata all'angolo del riquadro: un distintivo, non un elemento. Come nodo a
+se' stante legato da un filo era peggio: il filo inventava una relazione che
+nessuno aveva dichiarato, e il nodo-icona era un nodo che non significava
+niente.
 
-In `dot` il segno sta sulla fila del suo concetto (`rank=same`) con
-`weight="10"`: senza la fila il disegno cresceva in altezza a ogni icona, e con
-un peso basso i segni finivano tutti in fondo alla fila, con i fili che
-attraversavano il disegno per raggiungerli. Fuori dalle file (`circo`, `neato`,
-`twopi`) vale il contrario: peso 0.2 e `len` corto, perche' il disegno deve
-aprirsi attorno ai concetti, non attorno ai segni.
+Il difetto non era la posizione ma la funzione: un'icona che ripete l'etichetta
+non fa niente, dovunque la si metta. Ora l'icona **prende il posto della
+figura**: `shape=plaintext`, niente riempimento e niente bordo, icona a 44px
+sopra e parole sotto. Il simbolo dice di che cosa si parla a colpo d'occhio,
+cioe' ha un lavoro. Un nodo porta una figura o un simbolo, mai tutti e due, e il
+contratto chiede che in un disegno le abbiano tutti o nessuno: meta' figure e
+meta' simboli si legge come una svista.
 
-Nel browser `tagDiagramSvg` riconosce segni e fili dal prefisso: il segno prende
-`dg-mark` (piu' `dg-node`, cosi' sfiorarlo mette a fuoco il suo concetto) e il
-filo `dg-tie` senza `dg-kind-*`, percio' non viene tracciato come un arco.
-Entrambi entrano in scena, si mettono a fuoco e si nascondono col concetto che
-illustrano. Verificato su `dot`, `circo`, `neato` e `twopi`.
+L'accento non puo' piu' stare nel bordo, che non c'e': le parole del nodo
+accentato siedono su una pastiglia ocra, e sul web il CSS ridipinge d'ocra anche
+il tracciato dell'icona (una dichiarazione batte l'attributo `stroke` scritto
+nell'SVG). Nel PNG l'icona resta petrolio: le icone raster hanno un colore per
+tema, non per nodo.
+
+La mappa di Idea e' l'eccezione, e per forza: li' la figura porta la messa a
+fuoco (intensita' del riempimento), il difetto (bordo tratteggiato) e la
+chiusura (doppio bordo). Toglierla per fare posto al simbolo cancellerebbe tre
+informazioni, quindi nel `mindmap` l'icona resta dentro il nodo.
 
 **Quattro forme.** Campo `form` sul nodo, vocabolario semantico chiuso: il
 modello dichiara che genere di cosa e' il nodo, la geometria resta qui.
@@ -281,8 +284,14 @@ screen reader e PDF, e nel PNG entra nel blocco del titolo. Li' resta in cima,
 non in fondo: Graphviz ha una sola etichetta di grafo, e sopra il disegno vale
 come attacco.
 
-**Migrazione.** `apply_diagram_shapes_policy` (marker
-`skills_diagram_shapes_and_note_v1`), come le tre precedenti: riscrive il
-contratto della skill solo dove e' ancora quello di serie, riconosciuto per
-hash. Il tetto del blocco sale a 3200 caratteri. Aggiornato anche
-`SPEC_ONLY_SYSTEM_PROMPT`, che serve il bottone "visualizza come schema".
+**Una lingua sola.** Il contratto chiedeva le etichette nella lingua dello
+studente e taceva sul titolo: arrivavano disegni con nodi in italiano e titolo
+in inglese. Ora la regola nomina titolo, nota ed etichette insieme.
+
+**Migrazione.** `apply_diagram_shapes_policy`
+(`skills_diagram_shapes_and_note_v1`) per forme e nota,
+`apply_diagram_symbol_policy` (`skills_diagram_symbol_nodes_v1`) per il simbolo
+e la lingua del titolo: come le tre precedenti, riscrivono il contratto solo
+dove e' ancora quello di serie, riconosciuto per hash. Il tetto del blocco sale
+a 3600 caratteri. Aggiornato anche `SPEC_ONLY_SYSTEM_PROMPT`, che serve il
+bottone "visualizza come schema".

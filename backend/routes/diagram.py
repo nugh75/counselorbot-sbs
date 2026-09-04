@@ -36,9 +36,11 @@ SPEC_ONLY_SYSTEM_PROMPT = (
     '"nodes":[{"id":"a","label":"<= 80 chars","icon":"target","accent":false}],'
     '"edges":[{"from":"a","to":"b","label":"<= 40 chars","kind":"drives"}]}. '
     "Use 2 to 8 nodes and at most 12 edges. Mark at most one node with accent:true: "
-    "the one the reader should act on. Give each node a fitting icon when possible, "
-    "chosen only from book, brain, check, clock, compass, heart, idea, question, "
-    "shield, target; omit it rather than inventing another name. On each edge, kind "
+    "the one the reader should act on. An icon makes a node a symbol: its shape goes away "
+    "and the icon is drawn above its words. Choose only from book, brain, check, clock, "
+    "compass, heart, idea, question, shield, target; never invent another name. A node "
+    "carries a shape or a symbol, never both, so either every node in the drawing has an "
+    "icon or none does. On each edge, kind "
     "names the relation and is "
     "drawn with its own stroke: drives (A produces B, the default), strengthens "
     "(A supports B), weakens (A hinders B), feedback (B returns on A and closes the "
@@ -52,8 +54,9 @@ SPEC_ONLY_SYSTEM_PROMPT = (
     "note is one sentence drawn under the diagram: what the drawing shows or how to read it, "
     "never a list of the nodes. Write it whenever the drawing would say little to someone who "
     "has not read the text; leave it out when the title already carries the whole point. "
-    "Write every label in the language of the text "
-    "you are given. Keep only what the text actually says. "
+    "Write the title, the note and every label in the language of the text "
+    "you are given -- the whole drawing speaks one language, and it is the reader's. "
+    "Keep only what the text actually says. "
     # L'ordine dei nodi non e' cosmetico: e' l'ordine in cui il disegno compare
     # sullo schermo, quindi e' l'ordine in cui verra' letto.
     # Un titolo che nomina l'argomento non aggiunge nulla al disegno, che

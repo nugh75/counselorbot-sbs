@@ -49,11 +49,15 @@ DIAGRAM_ICONS = (
     "heart", "idea", "question", "shield", "target",
 )
 ICON_DIR = Path(__file__).with_name("diagram_icons")
-# Il segno e' un elemento del disegno, non una decorazione del nodo: vive in un
-# nodo suo, senza bordo ne' riempimento, legato al concetto da un filo sottile.
-# Il prefisso lo distingue dai nodi veri, nel DOT come nell'SVG.
-ICON_NODE_PREFIX = "__diagram_icon_"
-ICON_MARK_PX = 34
+# Il simbolo non decora il nodo: e' il nodo. Dove c'e', la figura sparisce e
+# restano l'icona grande e le sue parole sotto, come nei diagrammi concettuali.
+# Un'icona che ripete l'etichetta accanto a una figura non fa niente; una che
+# prende il posto della figura dice a colpo d'occhio di che cosa si parla.
+SYMBOL_PX = 44
+# Nella mappa di Idea la figura non e' disponibile: il riempimento porta la
+# messa a fuoco, il bordo tratteggiato il difetto, il doppio bordo la chiusura.
+# Li' l'icona resta dentro il nodo, dove era.
+SYMBOL_TYPES = ("flow", "relation", "cycle", "hierarchy")
 
 # Che genere di cosa e' il nodo. Il modello dichiara il senso, non la geometria:
 # la forma la sceglie il renderer, come per i colori. Quattro, dallo standard
@@ -476,18 +480,58 @@ def _node_label(node: DiagramNode, form: str) -> str:
     return f'"{_wrap(_display_label(node), wrap_at)}"'
 
 
-def _icon_mark_label(node: DiagramNode, theme: str) -> str | None:
-    """Etichetta del nodo-segno: soltanto l'icona, grande, senza contenitore."""
+def _icon_file(node: DiagramNode, theme: str) -> Path | None:
     if not node.icon:
         return None
     icon_path = ICON_DIR / f"{node.icon}-{theme}.png"
-    if not icon_path.is_file():
-        logger.warning("Icona diagramma non disponibile: %s", icon_path.name)
+    if icon_path.is_file():
+        return icon_path
+    logger.warning("Icona diagramma non disponibile: %s", icon_path.name)
+    return None
+
+
+def _symbol_label(node: DiagramNode, colors: dict, theme: str) -> str | None:
+    """Il nodo disegnato come simbolo: l'icona grande, le parole sotto.
+
+    Niente figura, niente riempimento, niente bordo: il simbolo e' l'elemento
+    del disegno, non un distintivo appeso a un riquadro. L'accento qui non puo'
+    stare nel bordo, che non c'e': lo portano le parole, in ocra. Sul web anche
+    il tracciato dell'icona, che il CSS ridipinge; nel PNG resta petrolio,
+    perche' le icone raster hanno un colore per tema e non per nodo.
+    """
+    icon_path = _icon_file(node, theme)
+    if icon_path is None:
         return None
+    text_color = colors["accent_text"] if node.accent else colors["node_text"]
+    words = "<BR/>".join(_xml_escape(line) for line in _lines_at(_display_label(node), WRAP_AT))
+    # Il punto su cui si puo' agire deve farsi trovare anche senza bordo: le sue
+    # parole stanno su una pastiglia ocra, che e' un fondo, non un contenitore.
+    cell = (f'<TD BGCOLOR="{colors["accent_fill"]}" STYLE="ROUNDED" CELLPADDING="4">'
+            if node.accent else "<TD>")
     return (
         '<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0">'
-        f'<TR><TD FIXEDSIZE="TRUE" WIDTH="{ICON_MARK_PX}" HEIGHT="{ICON_MARK_PX}">'
+        f'<TR><TD FIXEDSIZE="TRUE" WIDTH="{SYMBOL_PX}" HEIGHT="{SYMBOL_PX}">'
         f'<IMG SRC="{_xml_escape(str(icon_path))}" SCALE="TRUE"/>'
+        '</TD></TR>'
+        f'<TR>{cell}<FONT COLOR="{text_color}" POINT-SIZE="12">{words}</FONT></TD></TR>'
+        '</TABLE>>'
+    )
+
+
+def _icon_inside_label(node: DiagramNode, colors: dict, theme: str) -> str | None:
+    """Icona e testo dentro la figura: serve alla mappa di Idea, dove la figura
+    porta gia' messa a fuoco, difetto e chiusura e non si puo' togliere."""
+    icon_path = _icon_file(node, theme)
+    if icon_path is None:
+        return None
+    text_color = colors["accent_text"] if node.accent else colors["node_text"]
+    wrapped = "<BR/>".join(_xml_escape(line) for line in _lines_at(_display_label(node), WRAP_AT))
+    return (
+        '<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0">'
+        '<TR><TD FIXEDSIZE="TRUE" WIDTH="24" HEIGHT="24">'
+        f'<IMG SRC="{_xml_escape(str(icon_path))}" SCALE="TRUE"/>'
+        '</TD><TD WIDTH="8"></TD><TD ALIGN="LEFT">'
+        f'<FONT COLOR="{text_color}">{wrapped}</FONT>'
         '</TD></TR></TABLE>>'
     )
 
@@ -530,48 +574,6 @@ def _title_block(spec: DiagramSpec, colors: dict, lang: str) -> str:
         )
     return ('<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">'
             + "".join(rows) + "</TABLE>>")
-
-
-def _icon_marks(spec: DiagramSpec, colors: dict, theme: str) -> list[str]:
-    """Righe DOT dei segni: un nodo per icona e il filo che lo lega al concetto.
-
-    Il segno e' un oggetto del disegno, non un distintivo appiccicato al bordo:
-    il motore gli riserva spazio come a un nodo, percio' ha aria attorno e non
-    tocca nessuna bolla. Il filo e' piu' sottile di qualunque arco con un
-    significato (1.0 il piu' fine) e porta il colore delle icone, cosi' non si
-    confonde con il tratto punteggiato di `link`.
-    """
-    lines: list[str] = []
-    tied: list[tuple[str, str]] = []
-    for node in spec.nodes:
-        label = _icon_mark_label(node, theme)
-        if not label:
-            continue
-        mark_id = f"{ICON_NODE_PREFIX}{node.id}"
-        lines.append(
-            f'  "{_escape(mark_id)}" [shape=none, style="", margin="0", width="0", '
-            f"height=\"0\", label={label}];"
-        )
-        tie = ['dir="none"', 'penwidth="0.7"', f'color="{colors["icon"]}"']
-        if spec.type in {"flow", "hierarchy"}:
-            # Sulla stessa fila il peso non allunga niente: decide soltanto chi
-            # sta accanto a chi. Basso, i segni finivano tutti in fondo alla
-            # fila e i fili attraversavano il disegno per raggiungerli.
-            tie.append('weight="10"')
-        else:
-            # Fuori dalle file il peso tira davvero: il disegno deve aprirsi
-            # attorno ai concetti, non attorno ai segni.
-            tie += ['weight="0.2"', 'len="0.7"']
-        lines.append(f'  "{_escape(mark_id)}" -> "{_escape(node.id)}" [{", ".join(tie)}];')
-        tied.append((mark_id, node.id))
-
-    # In `dot` le file sono ordinate: senza questo il segno finirebbe su una
-    # riga sua, sopra o sotto il concetto, e il disegno crescerebbe in altezza
-    # a ogni icona. Sulla stessa fila il segno sta di fianco, dove lo si cerca.
-    if spec.type in {"flow", "hierarchy"}:
-        for mark_id, node_id in tied:
-            lines.append(f'  {{ rank=same; "{_escape(node_id)}"; "{_escape(mark_id)}"; }}')
-    return lines
 
 
 def to_dot(spec: DiagramSpec, *, theme: str = "light", embed_title: bool = False,
@@ -634,9 +636,22 @@ def to_dot(spec: DiagramSpec, *, theme: str = "light", embed_title: bool = False
     ]
 
     for node in spec.nodes:
+        symbol = (_symbol_label(node, colors, resolved_theme)
+                  if spec.type in SYMBOL_TYPES else None)
+        if symbol is not None:
+            # Il simbolo e' il nodo: nessuna figura da riempire o bordare, e
+            # nessun margine, o le parole si staccherebbero dall'icona.
+            lines.append(
+                f'  "{_escape(node.id)}" [shape=plaintext, style="", margin="0.05", '
+                f"label={symbol}];"
+            )
+            continue
+
         form = node.form or DEFAULT_FORM
         geometry = NODE_FORMS[form]
-        attrs = [f'label={_node_label(node, form)}', f'shape="{geometry["shape"]}"']
+        inside = _icon_inside_label(node, colors, resolved_theme)
+        label = inside if inside is not None else _node_label(node, form)
+        attrs = [f'label={label}', f'shape="{geometry["shape"]}"']
         fill = colors["accent_fill"] if node.accent else colors["node_fill"]
         stroke = colors["accent_stroke"] if node.accent else colors["node_stroke"]
         text_colour = colors["accent_text"] if node.accent else colors["node_text"]
@@ -670,8 +685,6 @@ def to_dot(spec: DiagramSpec, *, theme: str = "light", embed_title: bool = False
             f'penwidth="{penwidth}"',
         ]
         lines.append(f'  "{_escape(node.id)}" [{", ".join(attrs)}];')
-
-    lines += _icon_marks(spec, colors, resolved_theme)
 
     used_ids = {node.id for node in spec.nodes}
     for edge_index, edge in enumerate(spec.edges):
