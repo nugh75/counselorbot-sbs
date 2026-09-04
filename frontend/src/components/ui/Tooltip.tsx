@@ -24,7 +24,10 @@ export function Tooltip({ content, children, side = 'bottom', className }: Toolt
                     sideOffset={6}
                     collisionPadding={8}
                     className={cn(
-                        'z-[60] max-w-[16rem] select-none rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-slate-50 shadow-md',
+                        // Sopra i riquadri a schermo intero (z-80), sotto avvisi e
+                        // salto al contenuto (z-100): un fumetto dietro il velo
+                        // del riquadro non si vede, e i pulsanti restano muti.
+                        'z-[90] max-w-[16rem] select-none rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-slate-50 shadow-md',
                         'dark:bg-slate-700',
                         className,
                     )}

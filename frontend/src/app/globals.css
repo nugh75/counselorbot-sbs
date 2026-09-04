@@ -593,10 +593,10 @@ h1.text-3xl {
 
 /* ---- Diagrammi inline: comparsa, passo-passo, messa a fuoco ----
    Il disegno arriva come SVG nel DOM (non dentro un <img>), quindi ogni nodo e
-   ogni arco sono raggiungibili. `dg-svg` sta sul div contenitore, `dg-play` e
-   `dg-focusing` sull'<svg>: non chiederle mai sullo stesso elemento.
-   `--dg-step` e `data-dg-step` li assegna `tagDiagramSvg`: sono il turno in cui
-   quel pezzo entra. */
+   ogni arco sono raggiungibili. `dg-svg` sta sul div contenitore, `dg-play`,
+   `dg-hold` e `dg-focusing` sull'<svg>: non chiederle mai sullo stesso
+   elemento. `--dg-step` e `data-dg-step` li assegna `tagDiagramSvg`: sono il
+   turno in cui quel pezzo entra. */
 
 .dg-play .dg-node,
 .dg-play .dg-edge,
@@ -613,6 +613,14 @@ h1.text-3xl {
     to { opacity: 1; transform: none; }
 }
 
+/* La comparsa e' armata al montaggio ma tenuta ferma finche' la card non entra
+   in vista: in chat il disegno monta mentre si legge il testo sopra, e senza
+   questo l'animazione e' gia' finita quando lo studente ci arriva. */
+.dg-hold,
+.dg-hold * {
+    animation-play-state: paused;
+}
+
 .dg-svg .dg-node,
 .dg-svg .dg-edge,
 .dg-svg .dg-chip {
@@ -622,27 +630,33 @@ h1.text-3xl {
 
 /* L'arco si traccia da un capo all'altro: il collegamento si vede nascere,
    invece di essere gia' li'. `--dg-len` e' la lunghezza vera del tratto,
-   misurata nel browser. */
-.dg-play .dg-edge:not(.dg-kind-feedback) path {
-    stroke-dasharray: var(--dg-len, 0);
+   misurata nel browser.
+   Solo i tratti pieni, e la lunghezza vive dentro i fotogrammi: come regola
+   fissa `stroke-dasharray` batteva l'attributo di Graphviz per tutto il tempo
+   in cui `dg-play` resta posata, e `weakens` e `link` si vedevano pieni,
+   smentendo la legenda. */
+.dg-play .dg-edge:is(.dg-kind-drives, .dg-kind-strengthens) path {
     animation: dg-draw 700ms ease-out backwards;
     animation-delay: calc(var(--dg-step, 0) * 420ms);
 }
 
 @keyframes dg-draw {
-    from { stroke-dashoffset: var(--dg-len, 0); }
-    to { stroke-dashoffset: 0; }
+    from { stroke-dasharray: var(--dg-len, 0); stroke-dashoffset: var(--dg-len, 0); }
+    to { stroke-dasharray: var(--dg-len, 0); stroke-dashoffset: 0; }
 }
 
-/* La punta arriva quando il tratto e' arrivato. */
+/* La punta arriva quando il tratto e' arrivato, e arriva crescendo: una punta
+   di otto pixel che si limita a sfumare non la vede nessuno. */
 .dg-play .dg-edge polygon {
-    animation: dg-tip 260ms ease-out backwards;
+    animation: dg-tip 300ms cubic-bezier(0.34, 1.4, 0.5, 1) backwards;
     animation-delay: calc(var(--dg-step, 0) * 420ms + 520ms);
+    transform-box: fill-box;
+    transform-origin: center;
 }
 
 @keyframes dg-tip {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from { opacity: 0; transform: scale(0.3); }
+    to { opacity: 1; transform: none; }
 }
 
 /* Il nodo su cui si puo' agire e' uno solo: si fa trovare, tre battiti. */
@@ -657,7 +671,7 @@ h1.text-3xl {
 
 @keyframes dg-accent {
     0%, 100% { transform: scale(1); }
-    45% { transform: scale(1.06); }
+    45% { transform: scale(1.12); }
 }
 
 /* La retroazione e' l'arco che nessuno legge a colpo d'occhio: B torna su A.
@@ -676,6 +690,7 @@ h1.text-3xl {
 .dg-svg .dg-hidden {
     opacity: 0;
     transition: opacity 260ms ease-out;
+    pointer-events: none;
 }
 
 /* Messa a fuoco: sfiorando un nodo restano lui e i suoi collegamenti. */
@@ -692,27 +707,30 @@ h1.text-3xl {
     opacity: 1;
 }
 
-/* Il disegno riempie la larghezza che lo zoom gli assegna. */
+/* Il disegno riempie la larghezza che il contenitore gli assegna; e' il
+   contenitore che tiene conto anche dell'altezza disponibile. */
 .dg-svg > svg {
     display: block;
     width: 100%;
     height: auto;
 }
 
+/* Centrare dentro un riquadro che scorre taglia il bordo iniziale e lo rende
+   irraggiungibile: `safe` centra finche' il disegno ci sta e allinea allo
+   start appena esce. */
+.dg-fit {
+    justify-content: safe center;
+    align-items: safe center;
+}
+
 /* Chi disattiva le animazioni deve vedere il diagramma intero, non uno vuoto:
-   la comparsa e' un aiuto alla lettura, mai l'unico modo di leggerlo. */
+   la comparsa e' un aiuto alla lettura, mai l'unico modo di leggerlo.
+   `!important` perche' le regole di gioco qui sopra sono piu' specifiche: senza,
+   il tracciato dell'arco restava l'unico effetto in piedi. */
 @media (prefers-reduced-motion: reduce) {
-    .dg-svg .dg-node,
-    .dg-svg .dg-edge,
-    .dg-svg .dg-chip,
-    .dg-svg .dg-edge path,
-    .dg-svg .dg-edge polygon,
-    .dg-svg .dg-accent > path,
-    .dg-svg .dg-accent > polygon,
-    .dg-svg .dg-accent > ellipse {
-        animation: none;
-        opacity: 1;
-        transform: none;
-        stroke-dasharray: none;
+    .dg-svg [data-dg-step],
+    .dg-svg [data-dg-step] * {
+        animation: none !important;
+        transform: none !important;
     }
 }
