@@ -10,23 +10,15 @@ from pydantic import BaseModel, Field, validator
 from sqlalchemy.orm import Session
 
 from .. import auth, models, schemas
+from ..ai_service import AIError
 from ..database import get_db
-from ..orientation import NOTEBOOK_FIELDS, analyze_turn, normalize_language
+from ..orientation import NOTEBOOK_FIELDS, analyze_turn, generate_opening, normalize_language
 from .learner_profile import _latest_revision
 
 router = APIRouter()
 
 MAX_MESSAGES = 40
 MAX_MESSAGE_CHARS = 4000
-
-WELCOME = {
-    "it": "Sono la Bussola di CounselorBot. Ti spiego come funziona la piattaforma e, partendo da ciò che vuoi affrontare adesso, ti aiuto a scegliere da dove iniziare. Puoi tornare qui ogni volta. Cosa ti porta oggi in CounselorBot?",
-    "en": "I am the CounselorBot Compass. I explain how the platform works and help you choose where to begin from what matters to you now. You can return whenever you want. What brings you to CounselorBot today?",
-    "es": "Soy la Brújula de CounselorBot. Te explico cómo funciona la plataforma y te ayudo a elegir por dónde empezar según lo que necesitas ahora. Puedes volver cuando quieras. ¿Qué te trae hoy a CounselorBot?",
-    "fr": "Je suis la Boussole de CounselorBot. Je vous explique le fonctionnement de la plateforme et vous aide à choisir par où commencer selon votre besoin actuel. Vous pouvez revenir quand vous le souhaitez. Qu’est-ce qui vous amène aujourd’hui?",
-    "de": "Ich bin der CounselorBot-Kompass. Ich erkläre die Plattform und helfe dir, ausgehend von deinem aktuellen Anliegen einen Anfang zu wählen. Du kannst jederzeit zurückkommen. Was führt dich heute zu CounselorBot?",
-    "sv": "Jag är CounselorBots kompass. Jag förklarar hur plattformen fungerar och hjälper dig välja var du kan börja utifrån det som är viktigt just nu. Du kan återvända när du vill. Vad tar dig till CounselorBot idag?",
-}
 
 
 class StartRequest(BaseModel):
@@ -107,21 +99,6 @@ def _active_counselor(db: Session, counselor_id: int | None) -> models.Counselor
     return counselor
 
 
-def _welcome(language: str, counselor: models.Counselor | None) -> str:
-    base = WELCOME[language]
-    if counselor is None:
-        return base
-    introductions = {
-        "it": f"Hai scelto {counselor.name} come counselor. Sarà la sua voce ad accompagnarti nella Bussola. ",
-        "en": f"You chose {counselor.name} as your counselor. Their voice will accompany you in the Compass. ",
-        "es": f"Has elegido a {counselor.name} como counselor. Su voz te acompañará en la Brújula. ",
-        "fr": f"Vous avez choisi {counselor.name} comme counselor. Sa voix vous accompagnera dans la Boussole. ",
-        "de": f"Du hast {counselor.name} als Counselor gewählt. Diese Stimme begleitet dich im Kompass. ",
-        "sv": f"Du har valt {counselor.name} som counselor. Den rösten följer dig i Kompassen. ",
-    }
-    return introductions[language] + base
-
-
 def _is_eligible_student(identity: dict) -> bool:
     return not identity.get("is_admin") and not identity.get("is_researcher") and not auth.is_teacher(identity.get("groups"))
 
@@ -171,24 +148,21 @@ def start_orientation(
         if existing is not None:
             if existing.counselor_id is None and counselor is not None:
                 existing.counselor_id = counselor.id
-                intro = _welcome(existing.language, counselor)
-                messages = list(existing.messages or [])
-                if messages and messages[0].get("content") == WELCOME[normalize_language(existing.language)]:
-                    messages[0] = {"role": "assistant", "content": intro}
-                else:
-                    messages.append({"role": "assistant", "content": intro})
-                existing.messages = messages[-MAX_MESSAGES:]
                 db.commit()
                 db.refresh(existing)
             return _serialize(existing)
     lang = normalize_language(payload.language)
+    try:
+        opening = generate_opening(db, lang, counselor.id if counselor else None)
+    except AIError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     row = models.OrientationSession(
         session_id=str(uuid.uuid4()),
         username=owner,
         language=lang,
         counselor_id=counselor.id if counselor else None,
         status="in_progress",
-        messages=[{"role": "assistant", "content": _welcome(lang, counselor)}],
+        messages=[{"role": "assistant", "content": opening}],
         recommendations=[],
         notebook_draft={},
     )
@@ -218,14 +192,25 @@ def orientation_message(
     if row.status != "in_progress":
         raise HTTPException(status_code=409, detail="Orientation session already completed")
     history = list(row.messages or [])
-    analysis = analyze_turn(db, payload.message, payload.language, history, row.counselor_id)
+    try:
+        analysis = analyze_turn(
+            db,
+            payload.message,
+            payload.language,
+            history,
+            row.counselor_id,
+            list(row.recommendations or []),
+            dict(row.notebook_draft or {}),
+        )
+    except AIError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     messages = (history + [
         {"role": "user", "content": payload.message},
         {"role": "assistant", "content": analysis.reply},
     ])[-MAX_MESSAGES:]
     row.language = normalize_language(payload.language)
     row.messages = messages
-    if not analysis.informational:
+    if analysis.state_action in {"replace", "clear"}:
         row.recommendations = analysis.recommendations
         row.notebook_draft = analysis.notebook_draft
         row.notebook_reviewed = False
