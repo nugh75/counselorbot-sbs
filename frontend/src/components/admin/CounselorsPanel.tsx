@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X, Languages } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { PromptHistory } from '@/components/admin/PromptHistory';
 import { LANGUAGES } from '@/lib/i18n';
 
 const QTYPES = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', 'IDEA'];
@@ -317,6 +318,14 @@ export function CounselorsPanel() {
             <label className="mt-3 flex flex-col text-xs font-medium text-slate-500">{t('admin.counselors.persona')}
                 <textarea className="min-h-[90px] w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700 outline-none focus:border-sky-400" value={form.persona} onChange={(e) => setForm({ ...form, persona: e.target.value })} />
             </label>
+            {typeof editingId === 'number' && (
+                <PromptHistory
+                    scope="counselor_persona"
+                    targetKey={String(editingId)}
+                    currentValue={form.persona}
+                    onRestored={(value) => { setForm((f) => ({ ...f, persona: value })); void refresh(); }}
+                />
+            )}
             <div className="mt-3">
                 <div className="mb-1 text-xs font-medium text-slate-500">{t('admin.counselors.questionnaires')}</div>
                 <div className="flex flex-wrap gap-2">
