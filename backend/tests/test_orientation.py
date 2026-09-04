@@ -1,6 +1,7 @@
 """Bussola: catalogo chiuso, sessioni private e salvataggio esplicito."""
 from __future__ import annotations
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -8,8 +9,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from backend import auth, database, models, orientation
-from backend.ai_service import _requests_json_response
-from backend.orientation import _clean_analysis, analyze_turn, fallback_analysis
+from backend.ai_service import AIError
+from backend.orientation import _clean_state, analyze_turn, generate_opening
 from backend.routes import orientation as orientation_routes
 
 
@@ -52,7 +53,7 @@ def _get_identity():
 
 
 class _FakeAIService:
-    last_call = None
+    calls = []
 
     def __init__(self, db=None):
         self.config = {}
@@ -60,9 +61,16 @@ class _FakeAIService:
         self.reasoning_budget_override = None
 
     def get_response(self, *args, **kwargs):
-        type(self).last_call = (args, kwargs)
-        return """{
-          "reply": "Hai descritto un obiettivo di studio concreto.",
+        type(self).calls.append((args, kwargs))
+        mode = args[2]
+        message = args[0].lower()
+        if mode == "orientation-opening":
+            return "Sono la Bussola. Quale situazione concreta vuoi mettere a fuoco oggi?"
+        if mode == "orientation-state":
+            if "chi ha progettato" in message or "quali strumenti" in message:
+                return '{"state_action": "hold", "recommendations": [], "notebook_draft": {}}'
+            return """{
+          "state_action": "replace",
           "recommendations": [
             {"id": "QSA", "reason": "Per osservare come organizzi lo studio."},
             {"id": "UNKNOWN", "reason": "Non appartiene al catalogo."},
@@ -73,6 +81,11 @@ class _FakeAIService:
             "private_fact": "Questo campo non deve passare."
           }
         }"""
+        if "chi ha progettato" in message:
+            return "Il QSA è stato progettato da Michele Pellerey."
+        if "quali strumenti" in message:
+            return "QSA e QSAr esplorano lo studio; SAVICKAS, IDEA e pQBL offrono percorsi diversi. Il Taccuino raccoglie solo ciò che emerge su di te."
+        return "Hai descritto un obiettivo di studio concreto. Prima di indicare uno strumento, qual è l’ostacolo che incontri più spesso?"
 
 
 orientation.AIService = _FakeAIService
@@ -96,63 +109,56 @@ def _reset(username: str) -> None:
         db.close()
 
 
-def test_fallback_is_localized_and_ranks_learning_intent():
-    analysis = fallback_analysis("Voglio studiare con più concentrazione", "it")
-    assert analysis.recommendations[0]["id"] == "QSA"
-    assert "detailed exploration" not in analysis.recommendations[0]["reason"]
-    assert analysis.notebook_draft == {"goal": "Voglio studiare con più concentrazione"}
-
-
-def test_platform_question_gets_a_complete_answer_instead_of_generic_routing():
+def test_opening_question_is_generated_by_the_selected_model():
     db = _Session()
     try:
-        messages = (
-            "Mi spieghi quali strumenti ci sono in CounselorBot?",
-            "Mi spieghi quali cose si possono fare qui?",
-            "Che cosa devo fare?",
-            "cosa possso fare?",
-            "non capisco cosa dovrei fare, ho aperto adesso il software",
+        _FakeAIService.calls = []
+        opening = generate_opening(db, "it")
+    finally:
+        db.close()
+
+    assert opening == "Sono la Bussola. Quale situazione concreta vuoi mettere a fuoco oggi?"
+    args, kwargs = _FakeAIService.calls[-1]
+    assert args[2] == "orientation-opening"
+    assert "Write the opening" in args[1]
+    assert "no domain is known" in args[1]
+    assert kwargs["json_mode"] is False
+
+
+def test_factual_tool_question_is_answered_by_the_model_and_does_not_change_state():
+    db = _Session()
+    try:
+        analysis = analyze_turn(
+            db,
+            "Chi ha progettato il QSA?",
+            "it",
+            current_recommendations=[{"id": "QSA", "reason": "Coerente con il bisogno emerso."}],
+            current_notebook={"goal": "Organizzare meglio lo studio."},
         )
-        analyses = [analyze_turn(db, message, "it") for message in messages]
     finally:
         db.close()
 
-    for analysis in analyses:
-        assert "QSA e QSAr" in analysis.reply
-        assert "SAVICKAS" in analysis.reply
-        assert "IDEA" in analysis.reply
-        assert "pQBL" in analysis.reply
-        assert "Taccuino" in analysis.reply
-        assert analysis.recommendations == []
-        assert analysis.notebook_draft == {}
+    assert analysis.reply == "Il QSA è stato progettato da Michele Pellerey."
+    assert analysis.state_action == "hold"
+    assert analysis.recommendations == []
+    assert analysis.notebook_draft == {}
 
 
-def test_tool_question_gets_a_direct_explanation():
+def test_platform_question_is_generated_by_the_model_without_creating_notebook_content():
     db = _Session()
     try:
-        qsa = analyze_turn(db, "Che cosa è il QSA?", "it")
-        qsar = analyze_turn(db, "cos'è il QSAr?", "it")
-        idea = analyze_turn(db, "Come funziona IDEA?", "it")
-        en = analyze_turn(db, "What is ZTPI?", "en")
-        intent = analyze_turn(db, "Voglio provare il QSA", "it")
+        analysis = analyze_turn(db, "Mi spieghi quali strumenti ci sono in CounselorBot?", "it")
     finally:
         db.close()
 
-    assert qsa.informational is True
-    assert "strategie di studio" in qsa.reply
-    assert qsa.recommendations == []
-    assert qsa.notebook_draft == {}
-    assert qsar.informational is True
-    assert "breve" in qsar.reply
-    assert idea.informational is True
-    assert "mappa" in idea.reply
-    assert en.informational is True
-    assert "questionnaire" in en.reply
-    # Nessun punto interrogativo: resta una richiesta di orientamento, non una risposta.
-    assert intent.informational is False
+    assert "QSA e QSAr" in analysis.reply
+    assert "Taccuino" in analysis.reply
+    assert analysis.state_action == "hold"
+    assert analysis.recommendations == []
+    assert analysis.notebook_draft == {}
 
 
-def test_orientation_uses_the_selected_counselor_without_forced_json():
+def test_orientation_uses_the_selected_counselor_for_reply_and_llm_state_extraction():
     db = _Session()
     try:
         preset = models.ModelPreset(
@@ -176,48 +182,59 @@ def test_orientation_uses_the_selected_counselor_without_forced_json():
         db.commit()
         db.refresh(counselor)
 
-        _FakeAIService.last_call = None
+        _FakeAIService.calls = []
         analyze_turn(db, "Voglio organizzare meglio lo studio", "it", counselor_id=counselor.id)
-        args, kwargs = _FakeAIService.last_call
+        reply_args, reply_kwargs = _FakeAIService.calls[-2]
+        state_args, state_kwargs = _FakeAIService.calls[-1]
     finally:
         db.close()
 
-    assert "Return ONLY JSON" in args[1]
-    assert "four to six sentences" in args[1]
-    assert "formulaic empathy" in args[1]
-    assert "Speak with calm precision." in args[1]
-    assert kwargs["provider"] == "ollama"
-    assert kwargs["model"] == "test-model"
-    assert kwargs["json_mode"] is False
+    assert "natural conversational reply" in reply_args[1]
+    assert "formulaic empathy" in reply_args[1]
+    assert "display pQBL" in reply_args[1]
+    assert "Taccuino, Libretto, Portfolio" in reply_args[1]
+    assert "diagnostic language" in reply_args[1]
+    assert "informational turns" in reply_args[1]
+    assert '"what can I do here?"' in reply_args[1]
+    assert "Speak with calm precision." in reply_args[1]
+    assert reply_kwargs["provider"] == "ollama"
+    assert reply_kwargs["model"] == "test-model"
+    assert reply_kwargs["json_mode"] is False
+    assert "state_action" in state_args[1]
+    assert state_kwargs["json_mode"] is True
 
 
-def test_plain_text_reply_is_kept_and_uses_local_ranking():
+def test_invalid_state_output_keeps_the_llm_reply_without_local_ranking_or_copied_goal():
     class _PlainService(_FakeAIService):
         def get_response(self, *args, **kwargs):
-            type(self).last_call = (args, kwargs)
+            type(self).calls.append((args, kwargs))
+            if args[2] == "orientation-state":
+                return "not valid json"
             return "Il QSA osserva come studi e ti restituisce un profilo utile per capire da dove partire."
 
     orientation.AIService = _PlainService
     db = _Session()
     try:
+        _PlainService.calls = []
         analysis = analyze_turn(db, "Voglio organizzare meglio lo studio", "it")
-        args, kwargs = _PlainService.last_call
+        calls = list(_PlainService.calls)
     finally:
         orientation.AIService = _FakeAIService
         db.close()
 
     assert analysis.reply.startswith("Il QSA osserva come studi")
-    assert [row["id"] for row in analysis.recommendations] == ["QSA"]
-    assert analysis.notebook_draft == {"goal": "Voglio organizzare meglio lo studio"}
-    assert kwargs["model"] == "qwen3.8:latest"
-    assert kwargs["json_mode"] is False
+    assert analysis.state_action == "hold"
+    assert analysis.recommendations == []
+    assert analysis.notebook_draft == {}
+    assert calls[0][1]["model"] == "qwen3.8:latest"
+    assert calls[0][1]["json_mode"] is False
+    assert calls[1][1]["json_mode"] is True
 
 
 def test_model_output_is_filtered_through_closed_contract():
-    fallback = fallback_analysis("una scelta per il mio futuro", "it")
-    cleaned = _clean_analysis(
+    cleaned = _clean_state(
         {
-            "reply": "Riflessione",
+            "state_action": "replace",
             "recommendations": [
                 {"id": "QAP", "reason": "Scelte future"},
                 {"id": "QAP", "reason": "Duplicato"},
@@ -225,11 +242,33 @@ def test_model_output_is_filtered_through_closed_contract():
                 {"id": "IDEA", "reason": "Mettere a fuoco"},
             ],
             "notebook_draft": {"goal": "Scegliere", "diagnosis": "vietata"},
-        },
-        fallback,
+        }
     )
+    assert cleaned.state_action == "replace"
     assert [row["id"] for row in cleaned.recommendations] == ["QAP", "IDEA"]
     assert cleaned.notebook_draft == {"goal": "Scegliere"}
+
+
+def test_invalid_or_empty_model_recommendations_cannot_trigger_a_deterministic_default():
+    cleaned = _clean_state({"state_action": "replace", "recommendations": [{"id": "UNKNOWN"}]})
+    assert cleaned.state_action == "hold"
+    assert cleaned.recommendations == []
+    assert cleaned.notebook_draft == {}
+
+
+def test_unavailable_reply_model_raises_instead_of_using_predefined_content():
+    class _UnavailableService(_FakeAIService):
+        def get_response(self, *args, **kwargs):
+            raise AIError("model unavailable")
+
+    orientation.AIService = _UnavailableService
+    db = _Session()
+    try:
+        with pytest.raises(AIError, match="model unavailable"):
+            analyze_turn(db, "Chi ha progettato il QSA?", "it")
+    finally:
+        orientation.AIService = _FakeAIService
+        db.close()
 
 
 def test_new_student_stays_gated_until_one_orientation_is_completed():
@@ -379,7 +418,8 @@ def test_session_keeps_the_counselor_chosen_before_the_conversation():
     )
     assert started.status_code == 200
     assert started.json()["counselor_id"] == counselor_id
-    assert "Clio" in started.json()["messages"][0]["content"]
+    assert started.json()["messages"][0]["content"] == "Sono la Bussola. Quale situazione concreta vuoi mettere a fuoco oggi?"
+    assert "Clio" in _FakeAIService.calls[-1][0][1]
 
 
 def test_existing_session_adopts_the_counselor_without_losing_history():
@@ -420,17 +460,17 @@ def test_existing_session_adopts_the_counselor_without_losing_history():
     assert resumed.json()["session_id"] == session_id
     assert resumed.json()["counselor_id"] == counselor_id
     messages = resumed.json()["messages"]
-    assert "Giulio" in messages[0]["content"]
     assert any(row["content"] == "Voglio organizzare meglio lo studio" for row in messages)
 
-    _FakeAIService.last_call = None
+    _FakeAIService.calls = []
     turn = client.post(
         f"/orientation/sessions/{session_id}/message",
         json={"message": "Vorrei concentrarmi di più", "language": "it"},
     )
     assert turn.status_code == 200
     assert turn.json()["counselor_id"] == counselor_id
-    assert _FakeAIService.last_call is not None
+    assert len(_FakeAIService.calls) == 2
+    assert "Giulio" in _FakeAIService.calls[0][0][1]
 
 
 def test_orientation_sessions_are_private():
