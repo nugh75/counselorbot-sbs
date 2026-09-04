@@ -288,6 +288,86 @@ def test_render_svg_inlines_the_vector_icon():
     assert svg.count("<svg") >= 3  # radice + le due icone inline
 
 
+def test_the_icon_sits_outside_the_node_now():
+    # L'icona era dentro la bolla, dove rubava spazio al testo: ora e'
+    # un'etichetta esterna, cioe' un segno accanto al nodo.
+    spec = parse_spec({**CYCLE, "nodes": [
+        {"id": "a", "label": "Obiettivo", "icon": "target"},
+        {"id": "b", "label": "Verifica"},
+    ], "edges": [{"from": "a", "to": "b"}]})
+    dot = to_dot(spec)
+    assert 'xlabel=<<TABLE' in dot
+    assert 'label="Obiettivo"' in dot
+    # Senza questo Graphviz lascia cadere l'etichetta esterna dove sta stretta,
+    # e un nodo resterebbe senza il suo segno.
+    assert 'forcelabels="true"' in dot
+
+
+def test_form_picks_the_shape():
+    spec = parse_spec({**CYCLE, "nodes": [
+        {"id": "a", "label": "Scelgo", "form": "decision"},
+        {"id": "b", "label": "Studio a vuoto", "form": "outcome"},
+        {"id": "c", "label": "Scrivo il piano", "form": "action"},
+    ], "edges": [{"from": "a", "to": "b"}, {"from": "a", "to": "c"}]})
+    dot = to_dot(spec)
+    assert '"a" [label="Scelgo", shape="diamond"' in dot
+    assert 'shape="ellipse"' in dot
+    # L'azione e' l'unica forma squadrata: senza `rounded` si distingue dal
+    # concetto, che ha la stessa scatola.
+    assert '"c" [label="Scrivo il piano", shape="box"' in dot
+    assert '"c" [' in dot and 'style="filled"' in dot.split('"c" [')[1].split("\n")[0]
+
+
+def test_a_node_without_a_form_keeps_the_rounded_box():
+    dot = to_dot(parse_spec(CYCLE))
+    assert 'shape="box"' in dot
+    assert 'style="rounded,filled"' in dot
+
+
+def test_unknown_form_is_ignored_like_an_unknown_icon():
+    spec = parse_spec({**CYCLE, "nodes": [
+        {"id": "a", "label": "Compito", "form": "trapezio"},
+        {"id": "b", "label": "Ansia"},
+    ], "edges": [{"from": "a", "to": "b"}]})
+    assert spec.nodes[0].form is None
+    assert 'shape="box"' in to_dot(spec)
+
+
+def test_the_role_picks_the_form_when_none_is_given():
+    raw = _mindmap(3)
+    raw["nodes"][1]["role"] = "step"
+    assert parse_spec(raw).nodes[1].form == "action"
+
+
+def test_an_explicit_form_wins_over_the_role():
+    raw = _mindmap(3)
+    raw["nodes"][1]["role"] = "step"
+    raw["nodes"][1]["form"] = "outcome"
+    assert parse_spec(raw).nodes[1].form == "outcome"
+
+
+def test_the_note_closes_the_spoken_description():
+    spec = parse_spec({**CYCLE, "note": "Il rimando allunga il compito."})
+    assert describe(spec, "it").endswith("Il rimando allunga il compito.")
+
+
+def test_a_blank_note_is_no_note():
+    assert parse_spec({**CYCLE, "note": "   "}).note is None
+
+
+def test_a_note_longer_than_the_contract_is_refused():
+    with pytest.raises(DiagramSpecError):
+        parse_spec({**CYCLE, "note": "x" * 201})
+
+
+def test_the_embedded_title_carries_the_note():
+    # Telegram e PDF portano via il disegno da solo: la nota deve viaggiare
+    # dentro l'immagine, o resta nella chat che nessuno ha davanti.
+    spec = parse_spec({**CYCLE, "note": "Si legge dal compito, in cerchio."})
+    dot = to_dot(spec, embed_title=True)
+    assert "Si legge dal compito, in cerchio." in dot
+
+
 def test_legend_lists_only_the_kinds_in_use():
     assert legend_entries(parse_spec(MIXED), "it") == [
         ("strengthens", "rafforza"),

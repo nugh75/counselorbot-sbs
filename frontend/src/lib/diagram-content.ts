@@ -3,16 +3,20 @@ export type DiagramType = 'flow' | 'relation' | 'cycle' | 'hierarchy';
 // Tipo di relazione dell'arco: decide il tratto con cui il backend lo disegna.
 export type DiagramEdgeKind = 'drives' | 'strengthens' | 'weakens' | 'feedback' | 'link';
 export type DiagramIcon = 'book' | 'brain' | 'check' | 'clock' | 'compass' | 'heart' | 'idea' | 'question' | 'shield' | 'target';
+// Che genere di cosa e' il nodo: decide la forma con cui il backend lo disegna.
+export type DiagramNodeForm = 'concept' | 'action' | 'decision' | 'outcome';
 
 export const DIAGRAM_EDGE_KINDS: DiagramEdgeKind[] = ['drives', 'strengthens', 'weakens', 'feedback', 'link'];
 export const DIAGRAM_ICONS: DiagramIcon[] = ['book', 'brain', 'check', 'clock', 'compass', 'heart', 'idea', 'question', 'shield', 'target'];
 const DIAGRAM_ICON_SET = new Set<string>(DIAGRAM_ICONS);
+const DIAGRAM_FORM_SET = new Set<string>(['concept', 'action', 'decision', 'outcome']);
 
 export interface DiagramNode {
     id: string;
     label: string;
     accent?: boolean;
     icon?: DiagramIcon;
+    form?: DiagramNodeForm;
 }
 
 export interface DiagramEdge {
@@ -27,6 +31,9 @@ export interface DiagramSpec {
     title: string;
     nodes: DiagramNode[];
     edges?: DiagramEdge[];
+    // Una frase sotto il disegno: cosa mostra, come si legge. Il disegno finisce
+    // anche fuori dalla chat, dove la prosa che lo accompagnava non c'e' piu'.
+    note?: string;
 }
 
 export type DiagramContentSegment =
@@ -79,6 +86,11 @@ export function parseDiagramSpec(value: unknown): DiagramSpec | null {
             ...node,
             icon: typeof node.icon === 'string' && DIAGRAM_ICON_SET.has(node.icon)
                 ? node.icon as DiagramIcon
+                : undefined,
+            // Come per l'icona: una forma inventata non deve valere piu' del
+            // contenuto, e il backend applica la stessa allowlist.
+            form: typeof node.form === 'string' && DIAGRAM_FORM_SET.has(node.form)
+                ? node.form as DiagramNodeForm
                 : undefined,
         })),
         edges: (value.edges ?? []).map(normalizeEdge).filter((edge): edge is DiagramEdge => edge !== null),

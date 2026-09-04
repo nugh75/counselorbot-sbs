@@ -43,7 +43,16 @@ SPEC_ONLY_SYSTEM_PROMPT = (
     "drawn with its own stroke: drives (A produces B, the default), strengthens "
     "(A supports B), weakens (A hinders B), feedback (B returns on A and closes the "
     "loop), link (they belong together, no direction). Choose the one the text "
-    "actually states. Write every label in the language of the text "
+    "actually states. On each node, form says what kind of thing it is and picks its shape: "
+    "concept (the default: a thing, an idea, a state), action (something done), decision (a "
+    "fork the reader stands at), outcome (where it ends up). Use decision only where the "
+    "drawing really splits in two. "
+    # Il disegno esce dalla chat: schermo intero, PNG di Telegram, PDF. La nota
+    # e' l'unica cosa che va con lui.
+    "note is one sentence drawn under the diagram: what the drawing shows or how to read it, "
+    "never a list of the nodes. Write it whenever the drawing would say little to someone who "
+    "has not read the text; leave it out when the title already carries the whole point. "
+    "Write every label in the language of the text "
     "you are given. Keep only what the text actually says. "
     # L'ordine dei nodi non e' cosmetico: e' l'ordine in cui il disegno compare
     # sullo schermo, quindi e' l'ordine in cui verra' letto.
