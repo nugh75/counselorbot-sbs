@@ -99,6 +99,19 @@ test('the step-by-step hides what has not had its turn', () => {
     assert.ok(css.includes('.dg-hidden'));
 });
 
+test('the walk is tagged and revealed in one pass, on every step', () => {
+    // Classificazione e passo stavano in due effetti con dipendenze diverse:
+    // un passo poteva lavorare su un disegno che quel ramo non aveva mai
+    // classificato, e il contatore avanzava mentre il disegno restava intero.
+    const block = readFileSync(new URL('../components/ui/DiagramBlock.tsx', import.meta.url), 'utf-8');
+    const start = block.indexOf('useLayoutEffect(() => {');
+    const deps = block.indexOf('}, [', start);
+    const effect = block.slice(start, block.indexOf(');', deps));
+    assert.ok(effect.includes('tagDiagramSvg('), 'la classificazione deve stare qui');
+    assert.ok(effect.includes('revealUpTo('), 'il passo deve stare nello stesso effetto');
+    assert.ok(/\}, \[[^\]]*\bstep\b[^\]]*\]/.test(effect), 'e deve rifarsi a ogni passo');
+});
+
 test('the walk beats a reveal still running', () => {
     // Un'animazione batte una dichiarazione normale ma non una importante:
     // senza, mentre la comparsa e' in corso (o in pausa in attesa di essere
