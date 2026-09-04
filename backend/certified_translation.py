@@ -32,21 +32,39 @@ _STRATEGY_FIELDS = ("name", "recommended_when", "description")
 _READING_FIELDS = ("why", "summary", "synopsis")
 
 
-def ollama_translator(db: Session) -> tuple[Translator, str]:
+# Che cosa sta traducendo, detto al traduttore. Senza, l'italiano senza
+# soggetto del catalogo diventa un ordine al lettore in tutte e cinque le lingue.
+READING_CONTEXT = (
+    "the sentence describes a book or a film and says why it may help a student; "
+    "its Italian verbs are third-person indicative with the work as the implicit "
+    "subject (\"Mostra\" = it shows), never imperatives addressed to the reader"
+)
+STRATEGY_CONTEXT = (
+    "the sentence is a study strategy addressed to a student; its Italian "
+    "infinitives are instructions to follow"
+)
+
+
+def ollama_translator(db: Session, context: str = "") -> tuple[Translator, str]:
     """Traduttore vero, piu' l'etichetta del modello da registrare come provenienza."""
     base_url = _ollama_base(db)
     model = _model(db)
 
     def translate(text: str) -> Dict[str, str]:
-        return generate_translations(base_url, model, text)
+        return generate_translations(base_url, model, text, context)
 
     return translate, model
 
 
-def _missing_langs(current: Dict[str, str], force: bool) -> list[str]:
+def _missing_langs(
+    current: Dict[str, str], force: bool, langs: Optional[list[str]] = None
+) -> list[str]:
+    """Lingue da produrre. `langs` restringe il campo: serve a rifare una sola
+    lingua senza sovrascrivere le altre, gia' riviste a mano."""
+    wanted = [lang for lang in TOOL_TARGET_LANGS if langs is None or lang in langs]
     if force:
-        return list(TOOL_TARGET_LANGS)
-    return [lang for lang in TOOL_TARGET_LANGS if not (current.get(lang) or "").strip()]
+        return wanted
+    return [lang for lang in wanted if not (current.get(lang) or "").strip()]
 
 
 def _register(
@@ -107,10 +125,11 @@ def translate_strategies(
     force: bool = False,
     limit: Optional[int] = None,
     content_key: Optional[str] = None,
+    langs: Optional[list[str]] = None,
 ) -> int:
     """Traduce le strategie certificate dall'italiano. Ritorna le righe toccate."""
     if translate is None:
-        translate, model_label = ollama_translator(db)
+        translate, model_label = ollama_translator(db, STRATEGY_CONTEXT)
 
     touched = 0
     query = db.query(models.CertifiedStrategy)
@@ -129,7 +148,7 @@ def translate_strategies(
             # La sorgente italiana entra nel JSON: senza, il lettore dovrebbe
             # ripiegare sulla colonna vecchia proprio per la lingua sorgente.
             current.setdefault("it", source)
-            missing = _missing_langs(current, force)
+            missing = _missing_langs(current, force, langs)
             if missing:
                 produced = translate(source)
                 for lang in missing:
@@ -157,6 +176,7 @@ def translate_readings(
     model_label: str = "ollama",
     force: bool = False,
     limit: Optional[int] = None,
+    langs: Optional[list[str]] = None,
 ) -> int:
     """Completa le lingue mancanti delle letture certificate. Ritorna le righe toccate.
 
@@ -164,7 +184,7 @@ def translate_readings(
     scritta da una persona non viene sovrascritta se non con `force`.
     """
     if translate is None:
-        translate, model_label = ollama_translator(db)
+        translate, model_label = ollama_translator(db, READING_CONTEXT)
 
     touched = 0
     rows = db.query(models.CertifiedReading).order_by(models.CertifiedReading.id).all()
@@ -177,7 +197,7 @@ def translate_readings(
             source = (current.get("it") or "").strip()
             if not source:
                 continue
-            missing = _missing_langs(current, force)
+            missing = _missing_langs(current, force, langs)
             if missing:
                 produced = translate(source)
                 for lang in missing:

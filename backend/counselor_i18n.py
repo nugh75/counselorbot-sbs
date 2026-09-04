@@ -67,7 +67,9 @@ def localized_description(counselor: models.Counselor, lang: Optional[str]) -> O
     return base
 
 
-def generate_translations(base_url: str, model: str, text: str) -> Dict[str, str]:
+def generate_translations(
+    base_url: str, model: str, text: str, context: str = ""
+) -> Dict[str, str]:
     """Traduce `text` (italiano) in tutte le TARGET_LANGS con una sola chiamata Ollama.
 
     Ritorna {lang: testo}. Solleva eccezione se la chiamata fallisce: il chiamante
@@ -77,10 +79,23 @@ def generate_translations(base_url: str, model: str, text: str) -> Dict[str, str
     system = (
         "You are a professional translator for a counseling/education web app. "
         "Translate the given Italian sentence into the requested languages. "
+        # L'italiano di questo catalogo usa l'infinito come istruzione ("Collegare
+        # i concetti...") e la terza persona per descrivere un'opera ("Mostra il
+        # costo..."). Senza questa riga il modello rendeva entrambi all'imperativo,
+        # e in svedese una descrizione diventava un ordine.
+        "Preserve the grammatical mood of the source: an Italian infinitive used "
+        "as an instruction stays an instruction, and a third-person sentence "
+        "describing a work stays a description — never turn one into a command. "
         "Return ONLY a JSON object whose keys are the language codes and whose "
         "values are the translations. Keep it natural and concise; do not add "
         "quotes, notes or extra text."
     )
+    # Una frase italiana senza soggetto ("Mostra la fatica fisica") e' ambigua
+    # fra terza persona e imperativo, e ogni modello provato sceglieva
+    # l'imperativo. La regola generale sopra non basta: serve dire di che cosa
+    # parla il testo. Il chiamante lo sa, il traduttore no.
+    if context:
+        system = f"{system} CONTEXT: {context}"
     user = (
         f"Languages (code = name): {targets}.\n"
         f"Italian text to translate:\n{text}\n\n"
