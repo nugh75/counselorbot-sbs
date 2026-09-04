@@ -661,6 +661,21 @@ def _seed_and_migrate():
         except Exception as e:
             logger.debug(f"orientation counselor index skipped/failed: {e}")
 
+        # Migration: `create_all` non aggiunge vincoli a una tabella che esiste
+        # gia'. Un database che ha visto `recommendation_history` prima del
+        # vincolo lo riceve qui, altrimenti la stessa raccomandazione puo'
+        # entrare due volte in sidebar.
+        try:
+            with database.engine.connect() as conn:
+                conn.execute(sa_text(
+                    "ALTER TABLE recommendation_history ADD CONSTRAINT "
+                    "uq_recommendation_history_owner_session_type_slug "
+                    "UNIQUE (username, session_id, recommendation_type, slug)"
+                ))
+                conn.commit()
+        except Exception as e:
+            logger.debug(f"recommendation history unique constraint skipped/failed: {e}")
+
         # Create initial admin user if not exists
         user = db.query(models.User).filter(models.User.username == "admin").first()
         if not user:
