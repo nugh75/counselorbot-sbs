@@ -161,6 +161,19 @@ def _allowed(entries: list[dict], allowed_ids) -> list[dict]:
     return [entry for entry in entries if str(entry.get("id", "")).strip() in allowed]
 
 
+def _match_meta(entries: list[dict]) -> dict[str, dict]:
+    """Perche' ogni voce e' entrata, indicizzato per slug.
+
+    Viaggia nel `meta` della skill fino alla sidebar: senza, il log delle
+    raccomandazioni registra che cosa e' stato mostrato ma non su che base, e
+    l'audit di domani non puo' ricostruirlo."""
+    return {
+        str(entry["id"]): {"matched_on": entry.get("matched_on") or []}
+        for entry in entries
+        if entry.get("id")
+    }
+
+
 @handler("certified_strategies")
 def certified_strategies(ctx: SkillContext, params: dict) -> SkillOutput:
     """Strategie certificate dal catalogo DB, gate sui fattori e sul profilo."""
@@ -190,6 +203,7 @@ def certified_strategies(ctx: SkillContext, params: dict) -> SkillOutput:
     return SkillOutput(
         text=text,
         ids=[entry["id"] for entry in entries],
+        meta=_match_meta(entries),
         slot="knowledge",
     )
 
@@ -339,7 +353,12 @@ def reading_sources(ctx: SkillContext, params: dict) -> SkillOutput:
         if catalog:
             # Nessun documento recuperato, ma il catalogo approvato ha qualcosa:
             # e' materiale citabile a pieno titolo, va nello slot dei dati.
-            return SkillOutput(text=catalog, ids=catalog_ids, slot="knowledge")
+            return SkillOutput(
+                text=catalog,
+                ids=catalog_ids,
+                meta=_match_meta(catalog_entries),
+                slot="knowledge",
+            )
         # L'assenza e' una direttiva, non un dato: resta nello slot della skill
         # cosi' raggiunge il modello anche quando [KNOWLEDGE] non viene composto.
         return SkillOutput(text=reading_frame(ctx.language or "it")["no_sources"])
@@ -357,6 +376,7 @@ def reading_sources(ctx: SkillContext, params: dict) -> SkillOutput:
         # Gli ids sono gli slug del catalogo certificato: le URL delle fonti
         # RAG restano nel testo e non servono come identificatori a valle.
         ids=catalog_ids,
+        meta=_match_meta(catalog_entries),
         slot="knowledge",
     )
 

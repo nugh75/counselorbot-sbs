@@ -29,6 +29,8 @@ class SkillsResult:
     blocks: dict[str, list[str]] = field(default_factory=dict)
     # slug -> identificatori del materiale usato (per i log e il feedback)
     ids: dict[str, list[str]] = field(default_factory=dict)
+    # slug della skill -> {id del materiale: perche' e' entrato}
+    meta: dict[str, dict] = field(default_factory=dict)
     # diagnostica per la preview admin
     trace: list[dict] = field(default_factory=list)
 
@@ -77,6 +79,7 @@ def render(bindings: list[SkillBinding], ctx: SkillContext, total_max_chars: int
 
         parts = []
         output_ids = []
+        output_meta: dict = {}
         output = SkillOutput()
 
         if skill.handler:
@@ -105,6 +108,8 @@ def render(bindings: list[SkillBinding], ctx: SkillContext, total_max_chars: int
             parts.append(output.text.strip())
         if output.ids:
             output_ids = list(output.ids)
+        if output.meta:
+            output_meta = dict(output.meta)
 
         # Normalmente istruzioni e materiale condividono lo slot e restano un
         # unico blocco. Un handler puo' separare dati e direttiva.
@@ -154,6 +159,8 @@ def render(bindings: list[SkillBinding], ctx: SkillContext, total_max_chars: int
             result.blocks.setdefault(slot, []).append(text)
         if output_ids:
             result.ids[skill.slug] = output_ids
+        if output_meta:
+            result.meta[skill.slug] = output_meta
         result.trace.append(entry)
     return result
 
@@ -300,5 +307,6 @@ def run_skills(ctx: SkillContext, *, router_enabled: bool = True) -> SkillsResul
     rendered = render(selected, ctx, total_max_chars=_config_int(ctx.db, "skills_total_max_chars", DEFAULT_TOTAL_MAX_CHARS))
     result.blocks = rendered.blocks
     result.ids = rendered.ids
+    result.meta = rendered.meta
     result.trace.extend(rendered.trace)
     return result

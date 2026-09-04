@@ -390,13 +390,21 @@ def _record_recommendations(
     reading_ids: list[str],
     strategy_ids: list[str],
     turn_index: int,
+    matched_on: dict[str, dict] | None = None,
 ) -> dict[str, list[dict]]:
     """Persist the recommendations exposed by a completed chat turn."""
     if not username:
         return {"reading": [], "strategy": []}
 
+    # `payloads_for_slugs` rirende la voce dal solo slug e non sa piu' perche'
+    # era entrata: la provenienza arriva dal turno, non dal catalogo.
+    provenance = matched_on or {}
     reading_payloads = [
-        {"slug": entry["id"], **{key: value for key, value in entry.items() if key != "id"}}
+        {
+            "slug": entry["id"],
+            **{key: value for key, value in entry.items() if key != "id"},
+            **provenance.get(entry["id"], {}),
+        }
         for entry in certified_reading_memory.payloads_for_slugs(db, reading_ids, language)
     ]
     if reading_payloads:
@@ -430,6 +438,7 @@ def _record_recommendations(
             "name": localized(entry, "name", language) or entry.slug,
             "description": localized(entry, "description", language) or "",
             "recommended_when": localized(entry, "recommended_when", language) or "",
+            **provenance.get(slug, {}),
         })
     if strategy_payloads:
         _recommendation_service.record(
@@ -573,6 +582,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     certified_strategy_ids: list[str] = []
     reading_ids: list[str] = []
     skills_blocks: dict[str, list[str]] = {}
+    recommendation_meta: dict[str, dict] = {}
     if component_flags.get("knowledge", True) or skills_engine.enabled(db, questionnaire_type):
         retrieval_query = f"{step_label} {model_message if component_flags.get('step_prompt', True) else ''} {component_scores_context}".strip()
         # Follow-up in-step: la domanda dello studente spesso non ha contenuto
@@ -581,7 +591,10 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         if _is_conversational_mode(request.mode):
             retrieval_query = f"{retrieval_query} {_conversational_retrieval_tail(session_id)}".strip()
         retrieval_request = request.copy(update={"scores_context": component_scores_context})
-        knowledge_context, strategy_ids, certified_strategy_ids, skills_blocks, reading_ids = _retrieved_context(
+        (
+            knowledge_context, strategy_ids, certified_strategy_ids, skills_blocks,
+            reading_ids, recommendation_meta,
+        ) = _retrieved_context(
             db, session_id, retrieval_request, questionnaire_type, retrieval_query,
             ai_service=ai_service,
             certified_strategy_limit=component_options["certified_strategy_limit"],
@@ -733,6 +746,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         language=request.language or "it",
         reading_ids=reading_ids,
         strategy_ids=certified_strategy_ids,
+        matched_on=recommendation_meta,
         turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
     )
 
@@ -888,6 +902,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     certified_strategy_ids: list[str] = []
     reading_ids: list[str] = []
     skills_blocks: dict[str, list[str]] = {}
+    recommendation_meta: dict[str, dict] = {}
     if component_flags.get("knowledge", True) or skills_engine.enabled(db, questionnaire_type):
         retrieval_query = f"{step_label} {model_message if component_flags.get('step_prompt', True) else ''} {component_scores_context}".strip()
         # Follow-up in-step: la domanda dello studente spesso non ha contenuto
@@ -896,7 +911,10 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         if _is_conversational_mode(request.mode):
             retrieval_query = f"{retrieval_query} {_conversational_retrieval_tail(session_id)}".strip()
         retrieval_request = request.copy(update={"scores_context": component_scores_context})
-        knowledge_context, strategy_ids, certified_strategy_ids, skills_blocks, reading_ids = _retrieved_context(
+        (
+            knowledge_context, strategy_ids, certified_strategy_ids, skills_blocks,
+            reading_ids, recommendation_meta,
+        ) = _retrieved_context(
             db, session_id, retrieval_request, questionnaire_type, retrieval_query,
             ai_service=ai_service,
             certified_strategy_limit=component_options["certified_strategy_limit"],
@@ -1106,6 +1124,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     language=request.language or "it",
                     reading_ids=reading_ids,
                     strategy_ids=certified_strategy_ids,
+                    matched_on=recommendation_meta,
                     turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
                 )
             except Exception as exc:

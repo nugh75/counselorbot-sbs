@@ -1796,7 +1796,7 @@ def _retrieved_context(
     component_flags: dict | None = None,
     excluded_certified_strategy_ids: set[str] | None = None,
     username: str = "",
-) -> tuple[str, List[str], List[str], dict[str, list[str]], List[str]]:
+) -> tuple[str, List[str], List[str], dict[str, list[str]], List[str], dict[str, dict]]:
     """Fonti KNOWLEDGE per l'envelope: RAG (competenzestrategiche, counselorbot, questionari)
     + strategie approvate + certificate per-fattore + risposte votate.
 
@@ -1961,6 +1961,10 @@ def _retrieved_context(
         skills_result = skills_engine.run_skills(ctx)
         skills_blocks = skills_result.blocks
         knowledge_blocks = skills_result.blocks.get("knowledge", [])
+        recommendation_meta = {
+            **skills_result.meta.get("certified-advice", {}),
+            **skills_result.meta.get("reading-guide", {}),
+        }
         strategy_ids = skills_result.ids.get("approved-strategies", [])
         certified_ids = skills_result.ids.get("certified-advice", [])
         # Slug delle letture/film mostrate nel turno: servono alla sidebar
@@ -1983,6 +1987,7 @@ def _retrieved_context(
             strategies = _filter_allowed_strategy_entries(strategies, component_flags.get("allowed_strategies"))
         strategy_context = strategy_memory.render_context(strategies)
         reading_ids = []
+        recommendation_meta = {}
         certified = []
         if bool(component_flags.get("certified_strategies", True)) and certified_limit > 0:
             certified = certified_strategy_memory.retrieve(
@@ -2028,7 +2033,10 @@ def _retrieved_context(
         )
         if section
     ]
-    return "\n\n".join(sections), strategy_ids, certified_ids, skills_blocks, reading_ids
+    return (
+        "\n\n".join(sections), strategy_ids, certified_ids, skills_blocks,
+        reading_ids, recommendation_meta,
+    )
 
 
 PROMPT_COMPONENT_DEFAULTS = {

@@ -197,6 +197,29 @@ def test_a_scoped_strategy_stays_out_of_another_instrument():
         _reset(db)
 
 
+# --- provenienza --------------------------------------------------------------
+
+def test_a_retrieved_strategy_says_which_factor_opened_the_gate():
+    db = _TestSession()
+    try:
+        _strategy(db, "provenienza")
+        out = certified_strategy_memory.retrieve(
+            db, "ZTPI", scores_context="T2 8/9", query="ricordi belli")
+        assert out[0]["matched_on"] == ["T2"]
+    finally:
+        _reset(db)
+
+
+def test_a_scoped_strategy_without_codes_says_the_instrument():
+    db = _TestSession()
+    try:
+        _strategy(db, "narrativa2", factor_codes=[], questionnaire_types=["SAVICKAS"])
+        out = certified_strategy_memory.retrieve(db, "SAVICKAS", query="un ricordo")
+        assert out[0]["matched_on"] == ["scope:SAVICKAS"]
+    finally:
+        _reset(db)
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0
