@@ -27,6 +27,24 @@ test('required orientation does not interrupt recovery links', () => {
     assert.equal(orientationGateBypass('/bussola'), true);
 });
 
+test('the landing shows before the gate, and its only way forward is the compass', () => {
+    // Chi entra per la prima volta -- anche come ospite, che per il cancello è
+    // uno studente come gli altri -- veniva spedito alla Bussola senza aver
+    // letto che cos'è questo posto.
+    assert.equal(orientationGateBypass('/'), true);
+    assert.equal(orientationGateBypass('/', ''), true);
+    // I collegamenti che entrano dritti nel percorso restano al di qua.
+    assert.equal(orientationGateBypass('/', '?view=questionnaires'), false);
+    assert.equal(orientationGateBypass('/', '?start=IDEA'), false);
+    // E il tasto della presentazione porta alla Bussola, o passare di qui
+    // sarebbe saltarla.
+    const source = readFileSync(new URL('../app/page.tsx', import.meta.url), 'utf8');
+    const handler = source.slice(source.indexOf('const startFromIntro'), source.indexOf('const homeStep'));
+    assert.match(handler, /status\.required/);
+    assert.match(handler, /router\.push\('\/bussola'\)/);
+    assert.match(source, /<IntroScreen onStart=\{startFromIntro\}/);
+});
+
 test('Bussola opens the notebook before and after the conversation, and never the booklet', () => {
     const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
     assert.match(source, /variant="review"[\s\S]*onDone=\{startAfterNotebook\}/);
