@@ -53,6 +53,12 @@ QAP_SOURCE = (
     "docs/questionari/strumenti/schede-bibliografiche/QAP_it.md."
 )
 
+ZTPI_SOURCE = (
+    "Zimbardo & Boyd, Il paradosso del tempo (Mondadori, 2009); scheda "
+    "docs/questionari/strumenti/schede-bibliografiche/ZTPI_it.md."
+)
+
+
 DEFAULT_CERTIFIED_STRATEGIES: list[dict[str, Any]] = [
     {
         "slug": "qsa-elaborative-links",
@@ -770,6 +776,675 @@ DEFAULT_CERTIFIED_STRATEGIES: list[dict[str, Any]] = [
         "source_reference": QAP_SOURCE,
         "sort_order": 143,
     },
+    # --- Backfill: strumenti con un solo consiglio per fattore -------------
+    # QPCS, QPCC, QAP e ZTPI avevano una sola strategia per fattore (T2 nessuna):
+    # con `limit=2` e la non-ripetizione il pannello si esauriva al primo turno.
+    # Queste voci entrano come bozze: raggiungono lo studente solo dopo che un
+    # admin le certifica dal pannello.
+    {
+        "slug": "qpcs-emotion-name-and-scale",
+        "name_it": "Dare un nome e una misura alla tensione",
+        "recommended_when_it": "Quando S1 (gestione delle emozioni) e' un'area di crescita.",
+        "description_it": (
+            "Prima di iniziare a studiare o prima di una prova, scrivere che emozione si sta "
+            "provando e darle un valore da uno a dieci; rifare la misura dopo dieci minuti di "
+            "lavoro effettivo e confrontare i due numeri, perche' la tensione quasi sempre "
+            "scende quando il compito e' cominciato."
+        ),
+        "factor_codes": ["S1"],
+        "questionnaire_types": ["QPCS"],
+        "keywords": "S1 emozioni ansia tensione misura consapevolezza avvio",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QPCS_SOURCE,
+        "status": "draft",
+        "sort_order": 150,
+    },
+    {
+        "slug": "qpcs-emotion-worry-window",
+        "name_it": "La finestra delle preoccupazioni",
+        "recommended_when_it": "Quando S1 (gestione delle emozioni) e' un'area di crescita.",
+        "description_it": (
+            "Riservare dieci minuti, sempre gli stessi, per scrivere di getto le preoccupazioni "
+            "legate allo studio, e chiudere li' il foglio; quando un pensiero torna durante la "
+            "sessione, rimandarlo alla finestra del giorno dopo invece di seguirlo."
+        ),
+        "factor_codes": ["S1"],
+        "questionnaire_types": ["QPCS"],
+        "keywords": "S1 preoccupazioni scrittura ansia prova rimuginio concentrazione",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QPCS_SOURCE,
+        "status": "draft",
+        "sort_order": 151,
+    },
+    {
+        "slug": "qpcs-communication-listen-back",
+        "name_it": "Ridire prima di rispondere",
+        "recommended_when_it": "Quando S2 (competenza comunicativa) e' un'area di crescita.",
+        "description_it": (
+            "In una discussione o in un lavoro di gruppo, riformulare con parole proprie la "
+            "posizione dell'altro e chiedere conferma prima di esporre la propria: il "
+            "malinteso emerge subito, e chi ascolta e' piu' disposto a fare lo stesso."
+        ),
+        "factor_codes": ["S2"],
+        "questionnaire_types": ["QPCS"],
+        "keywords": "S2 comunicazione ascolto riformulare gruppo discussione conflitto",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QPCS_SOURCE,
+        "status": "draft",
+        "sort_order": 152,
+    },
+    {
+        "slug": "qpcs-communication-three-sentence-summary",
+        "name_it": "Tre frasi per farsi capire",
+        "recommended_when_it": "Quando S2 (competenza comunicativa) e' un'area di crescita.",
+        "description_it": (
+            "Preparare la sintesi di cio' che si e' studiato in tre frasi — di che cosa parla, "
+            "perche' conta, che cosa resta aperto — e usarla come apertura sia quando si "
+            "espone sia quando si chiede aiuto, cosi' l'interlocutore sa da dove partire."
+        ),
+        "factor_codes": ["S2"],
+        "questionnaire_types": ["QPCS"],
+        "keywords": "S2 comunicazione sintesi esporre chiedere aiuto chiarezza",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QPCS_SOURCE,
+        "status": "draft",
+        "sort_order": 153,
+    },
+    {
+        "slug": "qpcs-perseverance-if-then",
+        "name_it": "Piano se-allora per gli ostacoli",
+        "recommended_when_it": "Quando S3 (volonta' e perseveranza) e' un'area di crescita.",
+        "description_it": (
+            "Individuare in anticipo l'ostacolo che con piu' probabilita' fara' interrompere lo "
+            "studio e scrivere la risposta gia' decisa nella forma \"se succede X, allora "
+            "faccio Y\": nel momento critico non serve piu' decidere, basta eseguire."
+        ),
+        "factor_codes": ["S3"],
+        "questionnaire_types": ["QPCS"],
+        "keywords": "S3 perseveranza ostacoli intenzioni se allora interruzioni piano",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": f"{QPCS_SOURCE} Gollwitzer, implementation intentions.",
+        "status": "draft",
+        "sort_order": 154,
+    },
+    {
+        "slug": "qpcs-perseverance-visible-progress",
+        "name_it": "Rendere visibile l'avanzamento",
+        "recommended_when_it": "Quando S3 (volonta' e perseveranza) e' un'area di crescita.",
+        "description_it": (
+            "Tenere una traccia visibile delle sessioni portate a termine — non delle ore "
+            "passate al tavolo — cosi' la costanza si misura su cio' che si e' concluso; "
+            "dopo un'interruzione si riparte dalla traccia, non da zero."
+        ),
+        "factor_codes": ["S3"],
+        "questionnaire_types": ["QPCS"],
+        "keywords": "S3 costanza avanzamento tracciamento sessioni motivazione ripresa",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QPCS_SOURCE,
+        "status": "draft",
+        "sort_order": 155,
+    },
+    {
+        "slug": "qpcs-collaboration-role-split",
+        "name_it": "Ruoli espliciti nel lavoro di gruppo",
+        "recommended_when_it": "Quando S4 (strategie e collaborazione) e' un'area di crescita.",
+        "description_it": (
+            "Prima di cominciare un lavoro di gruppo, mettere per iscritto chi fa che cosa "
+            "entro quando e chi ricompone i pezzi: la parte piu' fragile di un lavoro condiviso "
+            "non e' l'esecuzione, e' il punto in cui i contributi si uniscono."
+        ),
+        "factor_codes": ["S4"],
+        "questionnaire_types": ["QPCS"],
+        "keywords": "S4 collaborazione gruppo ruoli scadenze coordinamento",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QPCS_SOURCE,
+        "status": "draft",
+        "sort_order": 156,
+    },
+    {
+        "slug": "qpcs-strategy-fit-to-material",
+        "name_it": "Scegliere la strategia in base al materiale",
+        "recommended_when_it": "Quando S4 (strategie e collaborazione) e' un'area di crescita.",
+        "description_it": (
+            "Distinguere cio' che va ricordato a memoria da cio' che va capito e applicato, e "
+            "assegnare a ciascuno la tecnica adatta: recupero attivo e ripasso distribuito per "
+            "il primo, spiegazione a se' stessi ed esempi propri per il secondo."
+        ),
+        "factor_codes": ["S4"],
+        "questionnaire_types": ["QPCS"],
+        "keywords": "S4 strategie materiale memoria comprensione recupero attivo ripasso",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": f"{QPCS_SOURCE} {EVIDENCE_SOURCE}",
+        "status": "draft",
+        "sort_order": 157,
+    },
+    {
+        "slug": "qpcs-confidence-evidence-log",
+        "name_it": "Registro delle prove di competenza",
+        "recommended_when_it": "Quando S5 (fiducia e progetto di vita) e' un'area di crescita.",
+        "description_it": (
+            "Per due settimane annotare ogni giorno un fatto in cui si e' riusciti in qualcosa "
+            "di non banale, con l'ostacolo che c'era: la fiducia cresce su un elenco di prove "
+            "verificabili, non su un incoraggiamento generico."
+        ),
+        "factor_codes": ["S5"],
+        "questionnaire_types": ["QPCS"],
+        "keywords": "S5 fiducia autoefficacia prove registro riuscite ostacoli",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QPCS_SOURCE,
+        "status": "draft",
+        "sort_order": 158,
+    },
+    {
+        "slug": "qpcs-life-project-two-paths",
+        "name_it": "Due strade, gli stessi criteri",
+        "recommended_when_it": "Quando S5 (fiducia e progetto di vita) e' un'area di crescita.",
+        "description_it": (
+            "Descrivere due percorsi formativi possibili e confrontarli sugli stessi tre "
+            "criteri, scelti dallo studente prima di guardare le opzioni: cosi' il confronto "
+            "non si sposta ogni volta sul criterio che favorisce l'opzione preferita."
+        ),
+        "factor_codes": ["S5"],
+        "questionnaire_types": ["QPCS"],
+        "keywords": "S5 progetto di vita scelta criteri confronto percorsi futuro",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QPCS_SOURCE,
+        "status": "draft",
+        "sort_order": 159,
+    },
+    {
+        "slug": "qpcc-speaking-question-first",
+        "name_it": "Aprire con la domanda",
+        "recommended_when_it": "Quando K1 (parlare in pubblico) e' un'area di crescita.",
+        "description_it": (
+            "Cominciare l'esposizione enunciando la domanda a cui si risponde, non il titolo "
+            "dell'argomento: chi ascolta capisce subito dove si va, e chi parla ha un filo a "
+            "cui tornare se si perde."
+        ),
+        "factor_codes": ["K1"],
+        "questionnaire_types": ["QPCC"],
+        "keywords": "K1 esposizione presentazione domanda apertura filo pubblico",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QPCC_SOURCE,
+        "status": "draft",
+        "sort_order": 160,
+    },
+    {
+        "slug": "qpcc-speaking-recover-from-blank",
+        "name_it": "Che cosa fare quando ci si blocca",
+        "recommended_when_it": "Quando K1 (parlare in pubblico) e' un'area di crescita.",
+        "description_it": (
+            "Preparare prima una frase-ponte da usare nel vuoto di memoria — \"riprendo dal "
+            "punto in cui...\" — e tenere in vista una scaletta di tre voci: il blocco smette "
+            "di essere una catastrofe quando esiste gia' la mossa successiva."
+        ),
+        "factor_codes": ["K1"],
+        "questionnaire_types": ["QPCC"],
+        "keywords": "K1 blocco vuoto di memoria esposizione scaletta ansia recupero",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QPCC_SOURCE,
+        "status": "draft",
+        "sort_order": 161,
+    },
+    {
+        "slug": "qpcc-decision-worst-case-plan",
+        "name_it": "Nominare il peggio e preparare il primo passo",
+        "recommended_when_it": "Quando K2 (gestione dell'ansia e responsabilita') e' un'area di crescita.",
+        "description_it": (
+            "Scrivere lo scenario peggiore che si teme, stimare quanto sia davvero probabile e "
+            "definire il primo passo che si farebbe se accadesse: cio' che resta indefinito "
+            "pesa piu' di cio' che e' stato guardato in faccia."
+        ),
+        "factor_codes": ["K2"],
+        "questionnaire_types": ["QPCC"],
+        "keywords": "K2 ansia decisioni scenario peggiore probabilita piano responsabilita",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QPCC_SOURCE,
+        "status": "draft",
+        "sort_order": 162,
+    },
+    {
+        "slug": "qpcc-responsibility-share-and-check",
+        "name_it": "Dividere il peso e fissare la verifica",
+        "recommended_when_it": "Quando K2 (gestione dell'ansia e responsabilita') e' un'area di crescita.",
+        "description_it": (
+            "Individuare quale parte della responsabilita' e' davvero condivisa e con chi va "
+            "concordata, dirlo esplicitamente alla persona coinvolta e fissare quando si "
+            "verifichera' insieme, invece di portare da soli anche cio' che non compete."
+        ),
+        "factor_codes": ["K2"],
+        "questionnaire_types": ["QPCC"],
+        "keywords": "K2 responsabilita condivisione pressione accordo verifica confini",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QPCC_SOURCE,
+        "status": "draft",
+        "sort_order": 163,
+    },
+    {
+        "slug": "qpcc-time-block-protection",
+        "name_it": "Proteggere un blocco di tempo",
+        "recommended_when_it": "Quando K3 (volonta' e autoregolazione) e' un'area di crescita.",
+        "description_it": (
+            "Fissare un blocco settimanale sempre nello stesso giorno e nella stessa ora, "
+            "dichiararlo a chi potrebbe interromperlo e non usarlo per altro: un tempo "
+            "ricorrente e annunciato si difende meglio di un tempo deciso volta per volta."
+        ),
+        "factor_codes": ["K3"],
+        "questionnaire_types": ["QPCC"],
+        "keywords": "K3 autoregolazione tempo blocco routine interruzioni pianificazione",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QPCC_SOURCE,
+        "status": "draft",
+        "sort_order": 164,
+    },
+    {
+        "slug": "qpcc-start-ritual",
+        "name_it": "Rito di avvio breve",
+        "recommended_when_it": "Quando K3 (volonta' e autoregolazione) e' un'area di crescita.",
+        "description_it": (
+            "Definire tre gesti sempre uguali che aprono la sessione — sgombrare il tavolo, "
+            "scrivere l'obiettivo del blocco, mettere via il telefono — cosi' l'inizio diventa "
+            "una sequenza da eseguire e non una decisione da prendere ogni volta."
+        ),
+        "factor_codes": ["K3"],
+        "questionnaire_types": ["QPCC"],
+        "keywords": "K3 avvio rito abitudine procrastinazione sessione obiettivo",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QPCC_SOURCE,
+        "status": "draft",
+        "sort_order": 165,
+    },
+    {
+        "slug": "qpcc-transfer-to-new-case",
+        "name_it": "Applicare a un caso nuovo",
+        "recommended_when_it": "Quando K4 (strategie di elaborazione) e' un'area di crescita.",
+        "description_it": (
+            "Subito dopo aver capito una regola o un procedimento, applicarlo a un esempio non "
+            "trattato a lezione e cercato da soli: e' il punto in cui si scopre se si e' capito "
+            "davvero o si e' solo riconosciuto il caso gia' visto."
+        ),
+        "factor_codes": ["K4"],
+        "questionnaire_types": ["QPCC"],
+        "keywords": "K4 elaborazione trasferimento esempio nuovo applicazione comprensione",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": f"{QPCC_SOURCE} {EVIDENCE_SOURCE}",
+        "status": "draft",
+        "sort_order": 166,
+    },
+    {
+        "slug": "qpcc-compare-and-contrast",
+        "name_it": "Confrontare due concetti vicini",
+        "recommended_when_it": "Quando K4 (strategie di elaborazione) e' un'area di crescita.",
+        "description_it": (
+            "Prendere due nozioni che si tendono a confondere e scrivere dove coincidono, dove "
+            "si separano e quale esempio le distingue: la distinzione tenuta a mente in modo "
+            "vago e' la prima cosa che salta in una verifica."
+        ),
+        "factor_codes": ["K4"],
+        "questionnaire_types": ["QPCC"],
+        "keywords": "K4 confronto concetti distinzione esempi elaborazione precisione",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": f"{QPCC_SOURCE} {EVIDENCE_SOURCE}",
+        "status": "draft",
+        "sort_order": 167,
+    },
+    {
+        "slug": "qpcc-self-talk-rewrite",
+        "name_it": "Riscrivere la frase che ci si ripete",
+        "recommended_when_it": "Quando K5 (convinzioni su di se') e' un'area di crescita.",
+        "description_it": (
+            "Trascrivere alla lettera il giudizio che si ripete su di se' dopo un insuccesso e "
+            "riformularlo in termini di comportamento modificabile: da \"non sono portato\" a "
+            "\"con questo metodo non ha funzionato, provo a cambiare X\"."
+        ),
+        "factor_codes": ["K5"],
+        "questionnaire_types": ["QPCC"],
+        "keywords": "K5 convinzioni giudizio su di se attribuzione insuccesso riformulare",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QPCC_SOURCE,
+        "status": "draft",
+        "sort_order": 168,
+    },
+    {
+        "slug": "qpcc-mastery-model-peer",
+        "name_it": "Guardare chi ci e' gia' passato",
+        "recommended_when_it": "Quando K5 (convinzioni su di se') e' un'area di crescita.",
+        "description_it": (
+            "Individuare una persona vicina per eta' e condizione che ha superato la stessa "
+            "difficolta' e chiederle che cosa ha cambiato in concreto: vedere riuscire "
+            "qualcuno di simile a se' incide sulla fiducia piu' di un incoraggiamento."
+        ),
+        "factor_codes": ["K5"],
+        "questionnaire_types": ["QPCC"],
+        "keywords": "K5 fiducia modello esperienza vicaria compagni autoefficacia",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": f"{QPCC_SOURCE} Bandura, esperienza vicaria e autoefficacia.",
+        "status": "draft",
+        "sort_order": 169,
+    },
+    {
+        "slug": "qap-future-letter-to-self",
+        "name_it": "Lettera da un anno avanti",
+        "recommended_when_it": "Quando AD1 (preoccupazione per il futuro) e' un'area di crescita.",
+        "description_it": (
+            "Scrivere una pagina dal punto di vista di se' stessi fra un anno, raccontando al "
+            "passato che cosa si e' fatto per arrivare fin li': il futuro diventa pensabile "
+            "quando viene raccontato come gia' accaduto."
+        ),
+        "factor_codes": ["AD1"],
+        "questionnaire_types": ["QAP"],
+        "keywords": "AD1 futuro narrazione lettera progetto immaginare percorso",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QAP_SOURCE,
+        "status": "draft",
+        "sort_order": 170,
+    },
+    {
+        "slug": "qap-future-fixed-dates",
+        "name_it": "Le date che decidono",
+        "recommended_when_it": "Quando AD1 (preoccupazione per il futuro) e' un'area di crescita.",
+        "description_it": (
+            "Elencare le scadenze reali dei prossimi dodici mesi — iscrizioni, prove, colloqui, "
+            "termini di domanda — e collocarle in calendario con due settimane di margine: la "
+            "preoccupazione diffusa si riduce quando diventa un elenco di date."
+        ),
+        "factor_codes": ["AD1"],
+        "questionnaire_types": ["QAP"],
+        "keywords": "AD1 scadenze calendario iscrizioni pianificazione futuro margine",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QAP_SOURCE,
+        "status": "draft",
+        "sort_order": 171,
+    },
+    {
+        "slug": "qap-control-decision-criteria",
+        "name_it": "Dichiarare i criteri prima delle opzioni",
+        "recommended_when_it": "Quando AD2 (controllo) e' un'area di crescita.",
+        "description_it": (
+            "Stabilire i tre criteri che contano davvero — e in quale ordine — prima di "
+            "guardare le alternative, cosi' la scelta non si riduce a giustificare a posteriori "
+            "l'opzione verso cui si propendeva gia'."
+        ),
+        "factor_codes": ["AD2"],
+        "questionnaire_types": ["QAP"],
+        "keywords": "AD2 controllo criteri decisione alternative autonomia priorita",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QAP_SOURCE,
+        "status": "draft",
+        "sort_order": 172,
+    },
+    {
+        "slug": "qap-control-reversible-first",
+        "name_it": "Cominciare dalle scelte reversibili",
+        "recommended_when_it": "Quando AD2 (controllo) e' un'area di crescita.",
+        "description_it": (
+            "Separare le decisioni che si possono correggere da quelle che vincolano a lungo, e "
+            "agire prima sulle reversibili: si accumula esperienza e si rimanda l'impegno "
+            "irreversibile a quando si sa di piu'."
+        ),
+        "factor_codes": ["AD2"],
+        "questionnaire_types": ["QAP"],
+        "keywords": "AD2 decisione reversibile vincolo autonomia rischio esperienza",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QAP_SOURCE,
+        "status": "draft",
+        "sort_order": 173,
+    },
+    {
+        "slug": "qap-curiosity-informational-interview",
+        "name_it": "Un'ora con chi fa quel lavoro",
+        "recommended_when_it": "Quando AD3 (curiosita') e' un'area di crescita.",
+        "description_it": (
+            "Preparare cinque domande — giornata tipo, parte piu' difficile, come ci si e' "
+            "arrivati, che cosa si sarebbe fatto diversamente, che cosa serve davvero sapere — "
+            "e intervistare una persona che svolge il lavoro considerato."
+        ),
+        "factor_codes": ["AD3"],
+        "questionnaire_types": ["QAP"],
+        "keywords": "AD3 curiosita esplorazione intervista lavoro professione informazioni",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QAP_SOURCE,
+        "status": "draft",
+        "sort_order": 174,
+    },
+    {
+        "slug": "qap-curiosity-try-small",
+        "name_it": "Prova piccola prima della scelta grande",
+        "recommended_when_it": "Quando AD3 (curiosita') e' un'area di crescita.",
+        "description_it": (
+            "Cercare un'esperienza breve e a basso costo nel campo che interessa — una giornata "
+            "di osservazione, un laboratorio, un corso introduttivo — e ricavarne una nota su "
+            "che cosa e' piaciuto e che cosa no, prima di impegnarsi su un percorso lungo."
+        ),
+        "factor_codes": ["AD3"],
+        "questionnaire_types": ["QAP"],
+        "keywords": "AD3 esplorazione prova esperienza laboratorio orientamento scelta",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QAP_SOURCE,
+        "status": "draft",
+        "sort_order": 175,
+    },
+    {
+        "slug": "qap-confidence-obstacle-inventory",
+        "name_it": "Inventario degli ostacoli superati",
+        "recommended_when_it": "Quando AD4 (fiducia) e' un'area di crescita.",
+        "description_it": (
+            "Elencare tre difficolta' gia' affrontate negli ultimi due anni e, per ciascuna, "
+            "che cosa in concreto le ha sbloccate: quasi sempre ricompaiono le stesse due o tre "
+            "mosse, ed e' da quelle che conviene ripartire."
+        ),
+        "factor_codes": ["AD4"],
+        "questionnaire_types": ["QAP"],
+        "keywords": "AD4 fiducia ostacoli problemi risorse riuscite inventario",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QAP_SOURCE,
+        "status": "draft",
+        "sort_order": 176,
+    },
+    {
+        "slug": "qap-problem-solving-steps",
+        "name_it": "Scomporre il problema in mosse",
+        "recommended_when_it": "Quando AD4 (fiducia) e' un'area di crescita.",
+        "description_it": (
+            "Trasformare il problema in una sequenza di mosse verificabili e individuare quale "
+            "sia la prima davvero eseguibile oggi: un problema resta paralizzante finche' "
+            "rimane un blocco unico senza un punto d'ingresso."
+        ),
+        "factor_codes": ["AD4"],
+        "questionnaire_types": ["QAP"],
+        "keywords": "AD4 problem solving scomporre passi primo passo blocco",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": QAP_SOURCE,
+        "status": "draft",
+        "sort_order": 177,
+    },
+    {
+        "slug": "ztpi-past-negative-continuity",
+        "name_it": "Che cosa e' cambiato da allora",
+        "recommended_when_it": "Quando il Passato Negativo (T1) e' elevato.",
+        "description_it": (
+            "Accanto al ricordo che pesa, elencare che cosa e' cambiato nel frattempo — "
+            "capacita' acquisite, persone diverse intorno, contesto nuovo — senza negare "
+            "l'esperienza: il ricordo resta, smette di descrivere il presente."
+        ),
+        "factor_codes": ["T1"],
+        "questionnaire_types": ["ZTPI"],
+        "keywords": "T1 passato negativo cambiamento risorse presente distanza",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": ZTPI_SOURCE,
+        "status": "draft",
+        "sort_order": 180,
+    },
+    {
+        "slug": "ztpi-past-negative-boundaries",
+        "name_it": "Il passato al suo posto nel tempo",
+        "recommended_when_it": "Quando il Passato Negativo (T1) e' elevato.",
+        "description_it": (
+            "Collocare esplicitamente l'episodio nel momento in cui e' accaduto — eta', luogo, "
+            "chi c'era — e distinguere quali sue conseguenze sono ancora attive oggi e quali "
+            "no: molte hanno smesso di valere senza che se ne prendesse atto."
+        ),
+        "factor_codes": ["T1"],
+        "questionnaire_types": ["ZTPI"],
+        "keywords": "T1 passato negativo episodio conseguenze confini rimpianti",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": ZTPI_SOURCE,
+        "status": "draft",
+        "sort_order": 181,
+    },
+    {
+        "slug": "ztpi-past-positive-resources",
+        "name_it": "Risorse dal passato che funzionano ancora",
+        "recommended_when_it": "Quando il Passato Positivo (T2) e' una risorsa da valorizzare.",
+        "description_it": (
+            "Ricostruire in dettaglio un momento passato in cui si e' riusciti in qualcosa di "
+            "difficile e individuare la risorsa che allora ha funzionato — una persona, un "
+            "metodo, un'abitudine — per riportarla nella situazione attuale."
+        ),
+        "factor_codes": ["T2"],
+        "questionnaire_types": ["ZTPI"],
+        "keywords": "T2 passato positivo risorse riuscite memoria continuita",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": ZTPI_SOURCE,
+        "status": "draft",
+        "sort_order": 182,
+    },
+    {
+        "slug": "ztpi-past-positive-rituals",
+        "name_it": "Tenere vivi i legami e i riti",
+        "recommended_when_it": "Quando il Passato Positivo (T2) e' una risorsa da valorizzare.",
+        "description_it": (
+            "Riconoscere i riti e i legami che danno continuita' — una cena ricorrente, un "
+            "luogo, un'amicizia lunga — e proteggerne almeno uno nella settimana: sono la parte "
+            "del passato che continua a sostenere il presente."
+        ),
+        "factor_codes": ["T2"],
+        "questionnaire_types": ["ZTPI"],
+        "keywords": "T2 passato positivo riti legami famiglia amicizie continuita",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": ZTPI_SOURCE,
+        "status": "draft",
+        "sort_order": 183,
+    },
+    {
+        "slug": "ztpi-past-positive-narrative-thread",
+        "name_it": "Il filo che tiene insieme la storia",
+        "recommended_when_it": "Quando il Passato Positivo (T2) e' una risorsa da valorizzare.",
+        "description_it": (
+            "Raccontare il proprio percorso di studi come una storia con un filo — da dove si e' "
+            "partiti, che cosa ha fatto svoltare, dove si e' adesso — invece che come una serie "
+            "di episodi slegati: il filo rende leggibile anche la direzione."
+        ),
+        "factor_codes": ["T2"],
+        "questionnaire_types": ["ZTPI"],
+        "keywords": "T2 passato positivo narrazione percorso identita continuita direzione",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": ZTPI_SOURCE,
+        "status": "draft",
+        "sort_order": 184,
+    },
+    {
+        "slug": "ztpi-hedonism-planned-pleasure",
+        "name_it": "Il piacere messo in calendario",
+        "recommended_when_it": "Quando il Presente Edonistico (T3) e' elevato.",
+        "description_it": (
+            "Collocare in calendario il tempo di piacere invece di lasciarlo prendere il posto "
+            "dello studio: cosi' non va difeso ogni volta contro il senso di colpa, e il tempo "
+            "di lavoro smette di essere quello che viene eroso."
+        ),
+        "factor_codes": ["T3"],
+        "questionnaire_types": ["ZTPI"],
+        "keywords": "T3 presente edonistico piacere calendario equilibrio studio",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": ZTPI_SOURCE,
+        "status": "draft",
+        "sort_order": 185,
+    },
+    {
+        "slug": "ztpi-hedonism-impulse-pause",
+        "name_it": "Una pausa fra impulso e azione",
+        "recommended_when_it": "Quando il Presente Edonistico (T3) e' elevato.",
+        "description_it": (
+            "Quando arriva il desiderio immediato che manderebbe all'aria il piano, darsi dieci "
+            "minuti prima di decidere e usarli per guardare che cosa costa: l'impulso spesso "
+            "non regge la pausa, e quando la regge la scelta e' comunque piu' consapevole."
+        ),
+        "factor_codes": ["T3"],
+        "questionnaire_types": ["ZTPI"],
+        "keywords": "T3 impulsivita pausa desiderio autocontrollo scelta presente",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": ZTPI_SOURCE,
+        "status": "draft",
+        "sort_order": 186,
+    },
+    {
+        "slug": "ztpi-fatalism-evidence-of-effect",
+        "name_it": "Cercare le prove che qualcosa ha inciso",
+        "recommended_when_it": "Quando il Presente Fatalistico (T4) e' elevato.",
+        "description_it": (
+            "Ripescare un caso recente in cui un'azione propria ha cambiato l'esito, anche "
+            "piccolo, e descriverlo nei dettagli: il fatalismo si regge sulla convinzione che "
+            "non esistano casi del genere, e di solito basta guardarli per trovarli."
+        ),
+        "factor_codes": ["T4"],
+        "questionnaire_types": ["ZTPI"],
+        "keywords": "T4 fatalismo controllo prove esito azione agentivita",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": ZTPI_SOURCE,
+        "status": "draft",
+        "sort_order": 187,
+    },
+    {
+        "slug": "ztpi-fatalism-one-week-experiment",
+        "name_it": "Esperimento di una settimana",
+        "recommended_when_it": "Quando il Presente Fatalistico (T4) e' elevato.",
+        "description_it": (
+            "Scegliere un solo comportamento da cambiare e osservarne l'effetto per sette "
+            "giorni, annotando ogni giorno una riga: l'esperimento breve verifica sul campo se "
+            "davvero nulla dipende da se', invece di discuterne in astratto."
+        ),
+        "factor_codes": ["T4"],
+        "questionnaire_types": ["ZTPI"],
+        "keywords": "T4 fatalismo esperimento settimana comportamento effetto verifica",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": ZTPI_SOURCE,
+        "status": "draft",
+        "sort_order": 188,
+    },
+    {
+        "slug": "ztpi-future-milestones",
+        "name_it": "Tappe intermedie visibili",
+        "recommended_when_it": "Quando si rafforza l'orientamento al Futuro (T5).",
+        "description_it": (
+            "Spezzare l'obiettivo lontano in tre tappe, ciascuna con una data e un segno "
+            "riconoscibile di averla raggiunta: senza tappe l'orientamento al futuro resta "
+            "un'intenzione, e la verifica arriva solo alla fine."
+        ),
+        "factor_codes": ["T5"],
+        "questionnaire_types": ["ZTPI"],
+        "keywords": "T5 futuro tappe obiettivi date pianificazione verifica",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": ZTPI_SOURCE,
+        "status": "draft",
+        "sort_order": 189,
+    },
+    {
+        "slug": "ztpi-future-cost-of-postponing",
+        "name_it": "Il costo del rimandare",
+        "recommended_when_it": "Quando si rafforza l'orientamento al Futuro (T5).",
+        "description_it": (
+            "Rendere esplicito che cosa costa rimandare — quante ore si accumulano, quale "
+            "margine si perde, che cosa diventa impossibile fare bene — invece di lasciare la "
+            "scadenza come una data astratta e lontana."
+        ),
+        "factor_codes": ["T5"],
+        "questionnaire_types": ["ZTPI"],
+        "keywords": "T5 futuro rimandare procrastinazione costo scadenza margine",
+        "certified_by": "Bozza da revisionare",
+        "source_reference": ZTPI_SOURCE,
+        "status": "draft",
+        "sort_order": 190,
+    },
 ]
 
 
@@ -784,10 +1459,14 @@ def seed_certified_strategies(db, models_module) -> int:
         )
         if exists:
             continue
+        # Una voce puo' dichiarare il proprio stato: le bozze restano fuori dalla
+        # chat finche' un admin non le certifica dal pannello.
+        spec = dict(spec)
+        status = spec.pop("status", "certified")
         db.add(
             models_module.CertifiedStrategy(
                 match_mode="any",
-                status="certified",
+                status=status,
                 is_active=True,
                 **spec,
             )
