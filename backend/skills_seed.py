@@ -114,6 +114,10 @@ CONCEPT_DIAGRAM_INSTRUCTIONS_EN = """## Concept diagram
 - 2-8 nodes, at most 12 edges; node label <= 80 chars, edge label <= 40,
   title <= 80.
 - `accent: true` on at most one node: the point the student can act on.
+- `form` says what kind of thing a node is, and picks its shape: `concept`
+  (default: a thing, an idea, a state), `action` (something done), `decision`
+  (a fork the student stands at), `outcome` (where it ends up). Use `decision`
+  only where the drawing really splits in two.
 - Give each node a fitting `icon` when possible, chosen only from this closed
   list: `book`, `brain`, `check`, `clock`, `compass`, `heart`, `idea`,
   `question`, `shield`, `target`. Omit it if none is honest; never invent a
@@ -131,6 +135,13 @@ CONCEPT_DIAGRAM_INSTRUCTIONS_EN = """## Concept diagram
 - When the nodes stand for factors, close with one line naming the pairing:
   "Nodes: tension = A1; persistence = A2". Without it the drawing and the prose
   around it speak two languages and the student has to translate.
+- The title says what the drawing shows, as a claim: "Understanding stays in
+  the head and is lost later", not "Study factors". Never a bare category.
+- `note`: one sentence, 200 characters at most, drawn under the diagram. It says
+  what the drawing shows or how to read it, never a list of the nodes. Write it
+  whenever the drawing would say little to someone who has not read the words
+  around it: the diagram travels alone into full screen, Telegram and the PDF.
+  Leave it out when the title already carries the whole point.
 - Data only: no colours, no thickness, no coordinates, no rendering syntax.
 """
 
@@ -211,6 +222,7 @@ ENGLISH_SKILL_INSTRUCTIONS_POLICY_MARKER = "skills_english_instructions_v1"
 DIAGRAM_EDGE_KINDS_POLICY_MARKER = "skills_diagram_edge_kinds_v1"
 DIAGRAM_ICONS_POLICY_MARKER = "skills_diagram_icons_v1"
 DIAGRAM_NODE_MAPPING_POLICY_MARKER = "skills_diagram_node_mapping_v1"
+DIAGRAM_SHAPES_POLICY_MARKER = "skills_diagram_shapes_and_note_v1"
 IDEA_FOCUS_POLICY_MARKER = "skills_idea_focus_v2"
 IDEA_WAYFINDER_POLICY_MARKER = "skills_idea_wayfinder_v1"
 IDEA_CONCEPT_POLICY_MARKER = "skills_idea_concept_v1"
@@ -233,6 +245,10 @@ CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V2_MD5 = "a3271155da66f68747a0114872c5fabf"
 # Contratto senza la didascalia di mappatura nodo->fattore: il disegno parlava a
 # parole e il testo attorno in sigle, e il collegamento lo faceva lo studente.
 CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V3_MD5 = "6291ff5cf7c7bc3d7712f0349418fc66"
+
+# Contratto senza le forme dei nodi e senza la nota: il disegno aveva una sola
+# forma per ogni cosa e taceva appena usciva dalla conversazione.
+CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V4_MD5 = "961614ab11e71eb9b68e570906a90899"
 
 SKILL_CONFIG_DEFAULTS = (
     (
@@ -382,7 +398,7 @@ SKILL_SEEDS = [
         "handler_params": {},
         "routing": "optional",
         "slot": "directive_tail",
-        "max_chars": 2400,
+        "max_chars": 3200,
         "sort_order": 35,
         "is_active": True,
         "bind": True,
@@ -696,6 +712,40 @@ def apply_diagram_node_mapping_policy(db) -> bool:
         key=DIAGRAM_NODE_MAPPING_POLICY_MARKER,
         value="applied",
         description="Migrazione una tantum: didascalia nodo->fattore nei diagrammi.",
+    ))
+    db.commit()
+    return updated
+
+
+def apply_diagram_shapes_policy(db) -> bool:
+    """Insegna le forme dei nodi e la nota al contratto del diagramma, una volta.
+
+    Come le migrazioni precedenti: tocca solo gli impianti fermi al testo di
+    serie, riconosciuto per hash. Se l'admin lo ha riscritto, il suo testo resta
+    e la migrazione si limita a segnarsi come fatta.
+    """
+    marker = db.query(models.Config).filter(
+        models.Config.key == DIAGRAM_SHAPES_POLICY_MARKER
+    ).first()
+    if marker is not None:
+        return False
+
+    seed_skills(db)
+    skill = db.query(models.Skill).filter(models.Skill.slug == "concept-diagram").first()
+    updated = False
+    if skill is not None:
+        current = (skill.instructions_i18n or {}).get("en", "")
+        if hashlib.md5(current.encode("utf-8")).hexdigest() == CONCEPT_DIAGRAM_INSTRUCTIONS_EN_V4_MD5:
+            skill.instructions_i18n = {"en": CONCEPT_DIAGRAM_INSTRUCTIONS_EN}
+            skill.max_chars = 3200
+            updated = True
+        elif current != CONCEPT_DIAGRAM_INSTRUCTIONS_EN:
+            logger.info("concept-diagram personalizzata dall'admin: forme e nota non imposte")
+
+    db.add(models.Config(
+        key=DIAGRAM_SHAPES_POLICY_MARKER,
+        value="applied",
+        description="Migrazione una tantum: forme dei nodi e nota sotto il diagramma.",
     ))
     db.commit()
     return updated

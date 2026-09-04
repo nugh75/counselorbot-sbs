@@ -33,6 +33,9 @@ MAX_EDGES_ANY = max(MAX_EDGES, *(edges for _, edges in TYPE_LIMITS.values()))
 MAX_LABEL = 80
 MAX_EDGE_LABEL = 40
 MAX_TITLE = 80
+# La nota e' una frase, non un paragrafo: dice cosa mostra il disegno a chi lo
+# guarda senza la conversazione attorno.
+MAX_NOTE = 200
 
 RENDER_TIMEOUT_S = 5
 # Larghezza di riga per mandare a capo le etichette lunghe dentro il nodo.
@@ -46,6 +49,22 @@ DIAGRAM_ICONS = (
     "heart", "idea", "question", "shield", "target",
 )
 ICON_DIR = Path(__file__).with_name("diagram_icons")
+
+# Che genere di cosa e' il nodo. Il modello dichiara il senso, non la geometria:
+# la forma la sceglie il renderer, come per i colori. Quattro, dallo standard
+# dei diagrammi di flusso, perche' si distinguano a colpo d'occhio: cio' che
+# resta fuori (un ostacolo, una domanda) lo dicono gia' l'icona e il tratto.
+NODE_FORMS = {
+    "concept": {"shape": "box", "rounded": True},
+    "action": {"shape": "box", "rounded": False},
+    "decision": {"shape": "diamond", "rounded": False},
+    "outcome": {"shape": "ellipse", "rounded": False},
+}
+DEFAULT_FORM = "concept"
+# Il rombo e l'ellisse crescono in tutte e due le direzioni: una riga lunga li
+# gonfia molto piu' di un rettangolo, percio' vanno a capo prima.
+NARROW_FORMS = {"decision", "outcome"}
+NARROW_WRAP_AT = 13
 
 # Ruolo argomentativo del nodo: dice che lavoro fa dentro il ragionamento, non
 # solo cosa contiene. Serve alla mappa di Idea, dove un nodo di testo libero
@@ -66,6 +85,15 @@ NODE_ROLES = {
     # La decisione e' l'unico nodo che non riguarda cio' che sai ma cio' a cui
     # tieni: e' l'unica icona dei dieci che non parla di conoscenza.
     "decision": "heart",
+}
+
+# Il ruolo argomentativo dice gia' che genere di cosa e' il nodo: chi lo
+# dichiara non deve anche scegliere la forma. Cio' che non compare qui e' un
+# concetto, cioe' la forma di serie.
+FORM_FROM_ROLE = {
+    "decision": "decision",
+    "step": "action",
+    "implication": "outcome",
 }
 
 # Quanto quel pezzo e' a fuoco, dal vocabolario di wayfinder ridotto a quattro
@@ -238,6 +266,7 @@ class DiagramNode(BaseModel):
     accent: bool = False
     icon: str | None = Field(default=None, max_length=24)
     role: str | None = Field(default=None, max_length=24)
+    form: str | None = Field(default=None, max_length=16)
     status: str | None = Field(default=None, max_length=16)
     flaw: str | None = Field(default=None, max_length=16)
     # Solo per i nodi `task` e per la radice `idea`: che genere di lavoro e',
@@ -263,6 +292,14 @@ class DiagramNode(BaseModel):
             return None
         cleaned = value.strip().lower()
         return cleaned if cleaned in NODE_ROLES else None
+
+    @field_validator("form", mode="before")
+    @classmethod
+    def _known_form_or_none(cls, value):
+        if not isinstance(value, str):
+            return None
+        cleaned = value.strip().lower()
+        return cleaned if cleaned in NODE_FORMS else None
 
     @field_validator("status", mode="before")
     @classmethod
@@ -290,10 +327,12 @@ class DiagramNode(BaseModel):
 
     @model_validator(mode="after")
     def _icon_from_role(self) -> "DiagramNode":
-        # Il ruolo basta: chi lo dichiara non deve anche scegliere l'icona.
-        # Un'icona esplicita resta comunque l'ultima parola.
+        # Il ruolo basta: chi lo dichiara non deve anche scegliere icona e
+        # forma. Le scelte esplicite restano comunque l'ultima parola.
         if self.icon is None and self.role:
             self.icon = NODE_ROLES[self.role]
+        if self.form is None and self.role:
+            self.form = FORM_FROM_ROLE.get(self.role)
         return self
 
 
@@ -313,6 +352,18 @@ class DiagramSpec(BaseModel):
     title: str = Field(min_length=1, max_length=MAX_TITLE)
     nodes: list[DiagramNode] = Field(min_length=2, max_length=MAX_NODES_ANY)
     edges: list[DiagramEdge] = Field(min_length=1, max_length=MAX_EDGES_ANY)
+    # Una frase sotto il disegno: cosa mostra, come si legge. Il disegno viaggia
+    # anche fuori dalla chat (Telegram, PDF, schermo intero) e li' la prosa che
+    # lo accompagnava non c'e' piu'.
+    note: str | None = Field(default=None, max_length=MAX_NOTE)
+
+    @field_validator("note", mode="before")
+    @classmethod
+    def _note_or_none(cls, value):
+        if not isinstance(value, str):
+            return None
+        cleaned = value.strip()
+        return cleaned or None
 
     @field_validator("title")
     @classmethod
@@ -381,14 +432,14 @@ def _lines_at(label: str, width: int) -> list[str]:
     return lines
 
 
-def _wrap(label: str) -> str:
+def _wrap(label: str, wrap_at: int = WRAP_AT) -> str:
     """Manda a capo le etichette lunghe e bilancia le righe.
 
     A parita' di numero di righe si sceglie la larghezza minore: niente riga
     lunga seguita da una parola sola, che nel nodo si legge male.
     """
-    lines = _lines_at(label, WRAP_AT)
-    for width in range(WRAP_AT - 1, WRAP_AT - 8, -1):
+    lines = _lines_at(label, wrap_at)
+    for width in range(wrap_at - 1, wrap_at - 8, -1):
         shorter = _lines_at(label, width)
         if len(shorter) > len(lines):
             break
@@ -414,25 +465,30 @@ def _display_label(node: DiagramNode) -> str:
     return node.label
 
 
-def _node_label(node: DiagramNode, colors: dict, theme: str) -> str:
-    """Etichetta Graphviz con icona vettoriale e testo, se richiesta."""
-    text = _display_label(node)
-    if not node.icon:
-        return f'"{_wrap(text)}"'
+def _node_label(node: DiagramNode, form: str) -> str:
+    """Etichetta del nodo: solo parole. L'icona sta fuori, in `xlabel`."""
+    wrap_at = NARROW_WRAP_AT if form in NARROW_FORMS else WRAP_AT
+    return f'"{_wrap(_display_label(node), wrap_at)}"'
 
+
+def _node_xlabel(node: DiagramNode, theme: str) -> str | None:
+    """L'icona come segno a se' stante, posata accanto alla bolla.
+
+    `xlabel` e' l'etichetta esterna di Graphviz: il motore la mette fuori dalla
+    forma ma vicino al nodo, e la scrive dentro lo stesso gruppo SVG, percio'
+    passo-passo, messa a fuoco e comparsa continuano a prenderla con il nodo.
+    Dentro la bolla resta solo il testo, che cosi' si stringe.
+    """
+    if not node.icon:
+        return None
     icon_path = ICON_DIR / f"{node.icon}-{theme}.png"
     if not icon_path.is_file():
         logger.warning("Icona diagramma non disponibile: %s", icon_path.name)
-        return f'"{_wrap(text)}"'
-
-    text_color = colors["accent_text"] if node.accent else colors["node_text"]
-    wrapped = "<BR/>".join(_xml_escape(line) for line in _lines_at(text, WRAP_AT))
+        return None
     return (
         '<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0">'
-        '<TR><TD FIXEDSIZE="TRUE" WIDTH="24" HEIGHT="24">'
+        '<TR><TD FIXEDSIZE="TRUE" WIDTH="26" HEIGHT="26">'
         f'<IMG SRC="{_xml_escape(str(icon_path))}" SCALE="TRUE"/>'
-        '</TD><TD WIDTH="8"></TD><TD ALIGN="LEFT">'
-        f'<FONT COLOR="{text_color}">{wrapped}</FONT>'
         '</TD></TR></TABLE>>'
     )
 
@@ -449,10 +505,12 @@ def _edge_label_chip(text: str, colors: dict, font_size: str = "10") -> str:
 
 
 def _title_block(spec: DiagramSpec, colors: dict, lang: str) -> str:
-    """Titolo del disegno e, se i tratti sono piu' d'uno, la legenda che li spiega.
+    """Titolo, legenda dei tratti e nota: cio' che rende il disegno autoportante.
 
     Serve alle immagini che viaggiano da sole (Telegram, PDF): nel web il titolo
-    sta nell'intestazione della card e la legenda sotto il disegno.
+    sta nell'intestazione della card, legenda e nota sotto il disegno. Qui la
+    nota resta in cima perche' Graphviz ha una sola etichetta di grafo: sopra il
+    disegno vale come attacco, in fondo non ci sarebbe posto per il titolo.
     """
     rows = [
         f'<TR><TD><FONT POINT-SIZE="15" COLOR="{colors["title"]}">'
@@ -465,6 +523,11 @@ def _title_block(spec: DiagramSpec, colors: dict, lang: str) -> str:
         )
         rows.append(
             f'<TR><TD><FONT POINT-SIZE="9" COLOR="{colors["edge"]}">{legend}</FONT></TD></TR>'
+        )
+    if spec.note:
+        note = "<BR/>".join(_xml_escape(line) for line in _lines_at(spec.note, 64))
+        rows.append(
+            f'<TR><TD><FONT POINT-SIZE="10" COLOR="{colors["edge"]}">{note}</FONT></TD></TR>'
         )
     return ('<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2">'
             + "".join(rows) + "</TABLE>>")
@@ -481,6 +544,9 @@ def to_dot(spec: DiagramSpec, *, theme: str = "light", embed_title: bool = False
         f'bgcolor="{background}"',
         f'fontname="{FONT_FAMILY}"',
         'pad="0.4"',
+        # Le icone sono etichette esterne: senza questo Graphviz le lascia
+        # cadere quando non trova posto, e un nodo resterebbe senza segno.
+        'forcelabels="true"',
     ]
     if spec.type == "cycle":
         # circo: cerchio piu' largo e archi curvi, cosi' le etichette respirano.
@@ -530,11 +596,16 @@ def to_dot(spec: DiagramSpec, *, theme: str = "light", embed_title: bool = False
     ]
 
     for node in spec.nodes:
-        attrs = [f'label={_node_label(node, colors, resolved_theme)}']
+        form = node.form or DEFAULT_FORM
+        geometry = NODE_FORMS[form]
+        attrs = [f'label={_node_label(node, form)}', f'shape="{geometry["shape"]}"']
+        xlabel = _node_xlabel(node, resolved_theme)
+        if xlabel:
+            attrs.append(f"xlabel={xlabel}")
         fill = colors["accent_fill"] if node.accent else colors["node_fill"]
         stroke = colors["accent_stroke"] if node.accent else colors["node_stroke"]
         text_colour = colors["accent_text"] if node.accent else colors["node_text"]
-        style = ["rounded", "filled"]
+        style = ["rounded", "filled"] if geometry["rounded"] else ["filled"]
         penwidth = "2.0" if node.accent else "1.2"
 
         # Lo status si vede come intensita': un nodo appena nominato e' pallido,
@@ -645,7 +716,10 @@ def describe(spec: DiagramSpec, lang: str = "it") -> str:
     for edge in spec.edges:
         verb = edge.label.strip() if edge.label and edge.label.strip() else verbs[edge.kind]
         relations.append(f"{by_id[edge.source]} {verb} {by_id[edge.target]}")
-    return f"{spec.title}: " + "; ".join(relations) + "."
+    spoken = f"{spec.title}: " + "; ".join(relations) + "."
+    # La nota e' la frase che dice cosa mostra il disegno: chi ascolta invece di
+    # guardare la deve sentire, o resta con l'elenco dei legami e nessun senso.
+    return f"{spoken} {spec.note}" if spec.note else spoken
 
 
 _SVG_TAG_RE = re.compile(r"<svg\b[^>]*>", re.IGNORECASE)

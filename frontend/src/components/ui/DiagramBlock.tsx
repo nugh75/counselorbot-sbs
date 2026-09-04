@@ -244,6 +244,19 @@ function DiagramLegend({ kinds, locale }: { kinds: DiagramEdgeKind[]; locale: st
     );
 }
 
+// La frase che dice cosa mostra il disegno. Sta sotto, dove si guarda dopo aver
+// guardato: il disegno viaggia anche fuori dalla chat (schermo intero, PNG di
+// Telegram, PDF) e li' la prosa che lo accompagnava non c'e' piu'.
+function DiagramNote({ note }: { note?: string }) {
+    const text = note?.trim();
+    if (!text) return null;
+    return (
+        <p className="w-full min-w-0 max-w-full border-t border-slate-200 px-3 py-2 text-sm leading-snug text-slate-600">
+            {text}
+        </p>
+    );
+}
+
 function DiagramSurface({
     markup,
     spec,
@@ -436,7 +449,8 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
         };
     }, [isFullscreen]);
 
-    const description = `${spec.title}: ${spec.nodes.map((node) => node.label).join('; ')}`;
+    const noteForScreenReader = spec.note?.trim() ? ` ${spec.note.trim()}` : '';
+    const description = `${spec.title}: ${spec.nodes.map((node) => node.label).join('; ')}.${noteForScreenReader}`;
     // La legenda compare solo se i tratti sono piu' d'uno: un tratto solo non ha nulla da spiegare.
     const legendKinds = diagramEdgeKinds(drawnSpec);
     const isCurrentRender = renderState.key === renderKey;
@@ -501,6 +515,7 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                     <span className="sr-only">{spec.title}</span>
                 </div>
             )}
+            <DiagramNote note={spec.note} />
             {markup ? <DiagramLegend kinds={legendKinds} locale={locale} /> : null}
             {isFullscreen && markup ? createPortal(
                 <div
@@ -546,6 +561,7 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                                 fa uscire il disegno: meglio sottostimare. */}
                             <DiagramSurface key={play} markup={markup} spec={drawnSpec} zoom={zoom} description={description} fitHeight="calc(100dvh - 14rem)" step={step} onTurns={onTurns} />
                         </div>
+                        <DiagramNote note={spec.note} />
                         <DiagramLegend kinds={legendKinds} locale={locale} />
                     </section>
                 </div>,
