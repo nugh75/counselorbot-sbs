@@ -591,139 +591,39 @@ h1.text-3xl {
 .dark .text-fuchsia-900, .dark .text-fuchsia-800, .dark .text-fuchsia-700 { color: #f0abfc; }
 .dark .text-yellow-900, .dark .text-yellow-800, .dark .text-yellow-700 { color: #fcd34d; }
 
-/* ---- Diagrammi inline: comparsa, passo-passo, messa a fuoco ----
+/* ---- Diagrammi inline: passo-passo e messa a fuoco ----
    Il disegno arriva come SVG nel DOM (non dentro un <img>), quindi ogni nodo e
-   ogni arco sono raggiungibili. `dg-svg` sta sul div contenitore, `dg-play`,
-   `dg-hold` e `dg-focusing` sull'<svg>: non chiederle mai sullo stesso
-   elemento. `--dg-step` e `data-dg-step` li assegna `tagDiagramSvg`: sono il
-   turno in cui quel pezzo entra.
-   `--dg-beat` e' la distanza fra un turno e il successivo: e' il ritmo con cui
-   il disegno si lascia leggere, non un dettaglio, e si regola qui una volta
-   sola. Le durate qui sotto gli stanno dietro in proporzione: la comparsa poco
-   piu' lunga di un battito, il tracciato ancora un po', la punta e il battito
-   dell'accento a valle di entrambi. Cambiare il battito senza toccarle
-   accavallerebbe i turni. */
+   ogni arco sono raggiungibili. `dg-svg` sta sul div contenitore, `dg-focusing`
+   sull'<svg>: non chiederle mai sullo stesso elemento. `data-dg-step` lo
+   assegna `tagDiagramSvg` ed e' il turno di quel pezzo nel passo-passo.
 
-.dg-svg {
-    --dg-beat: 2100ms;
-}
-
-.dg-play .dg-node,
-.dg-play .dg-edge,
-.dg-play .dg-chip {
-    /* `backwards` e non `both`: un'animazione che riempie in avanti blocca
-       l'opacita' sul valore finale e batte la cascata, quindi la messa a fuoco
-       non riusciva piu' a sbiadire nulla. */
-    animation: dg-enter 2400ms cubic-bezier(0.34, 1.4, 0.5, 1) backwards;
-    animation-delay: calc(var(--dg-step, 0) * var(--dg-beat));
-}
-
-@keyframes dg-enter {
-    from { opacity: 0; transform: translateY(10px) scale(0.9); }
-    to { opacity: 1; transform: none; }
-}
-
-/* La comparsa e' armata al montaggio ma tenuta ferma finche' la card non entra
-   in vista: in chat il disegno monta mentre si legge il testo sopra, e senza
-   questo l'animazione e' gia' finita quando lo studente ci arriva. */
-.dg-hold,
-.dg-hold * {
-    animation-play-state: paused;
-}
+   Il disegno non si anima. C'e' stata una comparsa a turni, il tracciato degli
+   archi, la punta che cresceva, il flusso al passaggio: nessuna di quelle cose
+   spiegava qualcosa che il disegno fermo non dicesse gia', e ognuna chiedeva
+   attenzione e tolleranza al movimento in cambio di niente. Restano i due
+   cambi di stato che il lettore comanda -- il passo-passo e la messa a fuoco --
+   con una dissolvenza breve, che non e' moto ma il modo di non far saltare
+   quello che cambia. */
 
 .dg-svg .dg-node,
 .dg-svg .dg-edge,
 .dg-svg .dg-chip {
-    transform-box: fill-box;
-    transform-origin: center;
-    /* Sullo stato base, non sulla classe che nasconde: dichiarata li', la
-       transizione spariva insieme alla classe e il pezzo che tornava scattava
-       di colpo. Un passo avanti non si vedeva, uno indietro si'. */
-    transition: opacity 650ms ease-out;
+    transition: opacity 200ms ease-out;
 }
 
-/* L'arco si traccia da un capo all'altro: il collegamento si vede nascere,
-   invece di essere gia' li'. `--dg-len` e' la lunghezza vera del tratto,
-   misurata nel browser.
-   Solo i tratti pieni, e la lunghezza vive dentro i fotogrammi: come regola
-   fissa `stroke-dasharray` batteva l'attributo di Graphviz per tutto il tempo
-   in cui `dg-play` resta posata, e `weakens` e `link` si vedevano pieni,
-   smentendo la legenda. */
-.dg-play .dg-edge:is(.dg-kind-drives, .dg-kind-strengthens) path {
-    animation: dg-draw 2700ms ease-out backwards;
-    animation-delay: calc(var(--dg-step, 0) * var(--dg-beat));
+/* Passo-passo: cio' che non e' ancora il suo turno non c'e'. */
+.dg-svg .dg-hidden {
+    opacity: 0;
+    pointer-events: none;
 }
 
-@keyframes dg-draw {
-    from { stroke-dasharray: var(--dg-len, 0); stroke-dashoffset: var(--dg-len, 0); }
-    to { stroke-dasharray: var(--dg-len, 0); stroke-dashoffset: 0; }
-}
-
-/* La punta arriva quando il tratto e' arrivato, e arriva crescendo: una punta
-   di otto pixel che si limita a sfumare non la vede nessuno. */
-.dg-play .dg-edge polygon {
-    animation: dg-tip 900ms cubic-bezier(0.34, 1.4, 0.5, 1) backwards;
-    animation-delay: calc(var(--dg-step, 0) * var(--dg-beat) + 2250ms);
-    transform-box: fill-box;
-    transform-origin: center;
-}
-
-@keyframes dg-tip {
-    from { opacity: 0; transform: scale(0.3); }
-    to { opacity: 1; transform: none; }
-}
-
-/* Il movimento appartiene agli archi: sono loro che dicono la direzione, e un
-   nodo che pulsa chiede attenzione senza spiegare niente. Il nodo su cui si
-   puo' agire si fa trovare dal colore, che sta fermo e resta anche stampato.
-
-   Dove il simbolo e' il nodo non c'e' bordo da accendere: l'accento vive nel
+/* Dove il simbolo e' il nodo non c'e' bordo da accendere: l'accento vive nel
    tracciato dell'icona, che qui vira all'ocra. Una dichiarazione CSS batte
    l'attributo `stroke` che il renderer scrive nell'SVG; nel PNG, che non ha un
-   foglio di stile, l'accento resta nelle parole sulla pastiglia. */
+   foglio di stile, l'accento resta nelle parole sulla pastiglia. E resta
+   colore: il punto su cui si puo' agire si fa trovare stando fermo. */
 .dg-svg .dg-accent > svg {
     stroke: #dca055;
-}
-
-/* La retroazione e' l'arco che nessuno legge a colpo d'occhio: B torna su A.
-   Il tratteggio che scorre lo dice senza parole, poi si ferma: un pezzo che
-   lampeggia per sempre su un disegno fermo e' rumore. */
-.dg-play .dg-kind-feedback path {
-    animation: dg-flow 4.5s linear 4;
-    animation-delay: calc(var(--dg-step, 0) * var(--dg-beat));
-}
-
-@keyframes dg-flow {
-    to { stroke-dashoffset: -16; }
-}
-
-/* Al passaggio del dito o del mouse gli archi si rifanno, e continuano finche'
-   si resta sul disegno: il tratto pieno si ridisegna da un capo all'altro, il
-   tratteggiato scorre. Il verso di un ciclo si vede, invece di doverlo dedurre
-   dalle punte.
-
-   Il movimento e' chiesto, non offerto: comincia quando ci si posa sopra e
-   finisce quando si va via. Percio' non c'e' niente da fermare -- nessun ciclo
-   perpetuo resta acceso nella periferia di chi sta leggendo il testo accanto,
-   che e' cio' che da' la nausea a chi ha un disturbo vestibolare e ruba il
-   turno alla lettura a tutti gli altri. Sono gli unici `infinite` del foglio e
-   vivono solo dentro un `:hover`; chi ha chiesto meno movimento non li vede
-   affatto, perche' la regola in fondo li spegne con tutto il resto. */
-.dg-svg svg:hover .dg-edge:is(.dg-kind-drives, .dg-kind-strengthens) path {
-    animation: dg-draw 3400ms linear infinite;
-}
-
-.dg-svg svg:hover .dg-edge:is(.dg-kind-weakens, .dg-kind-feedback, .dg-kind-link, .dg-kind-unclear) path {
-    animation: dg-flow 4500ms linear infinite;
-}
-
-/* Passo-passo: cio' che non e' ancora il suo turno non c'e'.
-   `!important` perche' un'animazione batte una dichiarazione normale: finche'
-   la comparsa e' in corso, o in attesa in pausa, `opacity: 0` perdeva e il
-   passo non si vedeva. Fra le due, solo l'importante vince. */
-.dg-svg .dg-hidden {
-    opacity: 0 !important;
-    pointer-events: none;
 }
 
 /* Messa a fuoco: sfiorando un nodo restano lui e i suoi collegamenti. */
@@ -756,24 +656,17 @@ h1.text-3xl {
     align-items: safe center;
 }
 
-/* Chi disattiva le animazioni deve vedere il diagramma intero, non uno vuoto:
-   la comparsa e' un aiuto alla lettura, mai l'unico modo di leggerlo.
-   `!important` perche' le regole di gioco qui sopra sono piu' specifiche: senza,
-   il tracciato dell'arco restava l'unico effetto in piedi. */
-@media (prefers-reduced-motion: reduce) {
-    .dg-svg [data-dg-step],
-    .dg-svg [data-dg-step] * {
-        animation: none !important;
-        transform: none !important;
-    }
-}
-
-/* La stessa richiesta, fatta dentro l'app invece che al sistema operativo.
-   L'impostazione di sistema esiste ma quasi nessuno studente sa di averla, e su
-   un computer di scuola non puo' cambiarla: chi sta male deve poterlo dire
-   dove si trova. */
-[data-motion="reduced"] .dg-svg [data-dg-step],
-[data-motion="reduced"] .dg-svg [data-dg-step] * {
-    animation: none !important;
-    transform: none !important;
+/* Meno movimento chiesto dentro l'app invece che al sistema operativo.
+   L'impostazione di sistema esiste -- la rispetta il blocco in cima al foglio --
+   ma quasi nessuno studente sa di averla, e su un computer di scuola non puo'
+   cambiarla: chi sta male deve poterlo dire dove si trova. Stesse regole di
+   quel blocco, cosi' i due interruttori si comportano allo stesso modo.
+   Il diagramma non compare qui perche' non si anima affatto. */
+[data-motion="reduced"] *,
+[data-motion="reduced"] *::before,
+[data-motion="reduced"] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
 }

@@ -97,30 +97,13 @@ export function tagDiagramSvg(root: Element, spec: DiagramSpec): number {
     }
 
     // I passi grezzi hanno mezze misure e ripetizioni: qui diventano turni
-    // consecutivi, cosi' il ritardo dipende da quanti turni servono e non da
+    // consecutivi, cosi' il passo-passo conta quanti turni servono e non
     // quanti nodi ci sono.
     const ordered = [...new Set(steps.map((entry) => entry.step))].sort((a, b) => a - b);
     for (const { element, step } of steps) {
-        const turn = ordered.indexOf(step);
-        element.setAttribute('data-dg-step', String(turn));
-        // La lunghezza del tratto serve al disegno che si traccia: senza, l'arco
-        // puo' solo comparire, non essere percorso da un capo all'altro.
-        const length = edgeLength(element);
-        element.setAttribute('style', `--dg-step:${turn}${length ? `;--dg-len:${length}` : ''}`);
+        element.setAttribute('data-dg-step', String(ordered.indexOf(step)));
     }
     return ordered.length;
-}
-
-function edgeLength(element: Element): number | null {
-    if (!element.classList.contains('dg-edge')) return null;
-    const path = element.querySelector('path');
-    if (!path || typeof (path as SVGPathElement).getTotalLength !== 'function') return null;
-    try {
-        const length = Math.ceil((path as SVGPathElement).getTotalLength());
-        return Number.isFinite(length) && length > 0 ? length : null;
-    } catch {
-        return null;
-    }
 }
 
 /**

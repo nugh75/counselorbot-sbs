@@ -14,14 +14,8 @@ const stylesheet = readFileSync(new URL('../app/globals.css', import.meta.url), 
 // attese di caricamento, che girano all'infinito a ragione.
 const css = stylesheet.slice(stylesheet.indexOf('/* ---- Diagrammi inline'));
 
-test('the animation classes are never asked for on the same element as dg-svg', () => {
-    for (const compound of ['.dg-svg.dg-play', '.dg-svg.dg-focusing', '.dg-play.dg-svg', '.dg-focusing.dg-svg']) {
-        assert.equal(css.includes(compound), false, `${compound} non puo' esistere: sono elementi diversi`);
-    }
-});
-
 test('every class the diagram code applies is styled somewhere', () => {
-    const applied = ['dg-node', 'dg-edge', 'dg-chip', 'dg-accent', 'dg-related', 'dg-play', 'dg-focusing'];
+    const applied = ['dg-node', 'dg-edge', 'dg-chip', 'dg-accent', 'dg-related', 'dg-focusing'];
     for (const name of applied) {
         assert.ok(css.includes(`.${name}`), `${name} viene applicata dal codice ma non ha stile`);
     }
@@ -36,60 +30,37 @@ test('the accent is carried by colour, never by movement', () => {
     assert.equal(css.includes('@keyframes dg-accent'), false);
 });
 
-test('the reveal is replayable: its animations hang off dg-play', () => {
-    // Senza `dg-play` la comparsa parte una volta sola, al montaggio, e quando
-    // l'utente guarda il disegno e' gia' finita.
-    for (const selector of ['.dg-play .dg-node', '.dg-play .dg-edge', '.dg-play .dg-kind-feedback']) {
-        assert.ok(css.includes(selector), `manca ${selector}`);
-    }
+test('the drawing does not animate: no reveal, no stroke, no flow', () => {
+    // C'e' stata una comparsa a turni, il tracciato degli archi, la punta che
+    // cresceva, il flusso al passaggio. Nessuna spiegava qualcosa che il
+    // disegno fermo non dicesse gia', e ognuna chiedeva attenzione e
+    // tolleranza al movimento in cambio di niente.
+    assert.ok(css.length > 0, 'blocco dei diagrammi non trovato nel foglio di stile');
+    assert.equal(css.includes('@keyframes'), false, 'nessun fotogramma nel disegno');
+    assert.equal(css.includes('animation:'), false, 'nessuna animazione nel disegno');
+    assert.equal(css.includes('infinite'), false);
 });
 
-test('nothing animates forever on its own: perpetual motion is asked for, never offered', () => {
-    // Un pezzo che si muove per sempre accanto a chi legge da' la nausea a chi
-    // ha un disturbo vestibolare e ruba il turno alla lettura a tutti gli
-    // altri; WCAG 2.2.2 vuole un modo per fermarlo. Qui il modo e' togliere il
-    // dito: ogni `infinite` deve vivere dentro un `:hover`.
-    assert.ok(css.length > 0, 'blocco dei diagrammi non trovato nel foglio di stile');
-    for (const rule of css.split('}')) {
-        if (!rule.includes('infinite')) continue;
-        assert.ok(rule.includes(':hover'), `movimento perpetuo fuori da :hover -> ${rule.trim().slice(0, 80)}`);
-    }
+test('what the reader commands still fades, because a jump reads as a glitch', () => {
+    // Passo-passo e messa a fuoco non sono moto: sono due stati che cambiano
+    // quando il lettore lo chiede, e la dissolvenza serve a non farli saltare.
+    const base = css.slice(css.indexOf('.dg-svg .dg-node,'));
+    assert.ok(base.includes('transition: opacity'));
+    // Sullo stato base, non sulla classe che nasconde: dichiarata li', la
+    // transizione spariva insieme alla classe e mostrare scattava.
+    const hidden = css.slice(css.indexOf('.dg-svg .dg-hidden'), css.indexOf('.dg-svg .dg-node { cursor'));
+    assert.equal(hidden.includes('transition'), false);
 });
 
 test('asking for less motion works from inside the app, not only from the system', () => {
     // L'impostazione di sistema esiste ma quasi nessuno studente sa di averla,
-    // e su un computer di scuola non puo' cambiarla.
-    const inApp = css.slice(css.indexOf('[data-motion="reduced"]'));
-    assert.ok(inApp.includes('animation: none !important'));
-    assert.ok(inApp.includes('transform: none !important'));
-});
-
-test('reduced motion leaves the diagram whole', () => {
-    assert.ok(css.includes('prefers-reduced-motion'));
-    // Le regole di gioco sono piu' specifiche di quelle che le spengono: senza
-    // `!important` il tracciato dell'arco sopravviveva ed era l'unico effetto
-    // in piedi, che e' esattamente il guasto che si vedeva.
-    const quiet = css.slice(css.indexOf('@media (prefers-reduced-motion'));
-    assert.ok(quiet.includes('animation: none !important'));
-    assert.ok(quiet.includes('transform: none !important'));
-});
-
-test('the stroke length lives in the keyframes, not in the rule', () => {
-    // Come dichiarazione fissa `stroke-dasharray` batte l'attributo di
-    // Graphviz finche' `dg-play` resta posata: `weakens` e `link` si vedevano
-    // pieni e la legenda mentiva.
-    const rule = css.slice(css.indexOf('.dg-play .dg-edge:is('), css.indexOf('@keyframes dg-draw'));
-    assert.equal(rule.includes('stroke-dasharray'), false);
-    assert.ok(css.slice(css.indexOf('@keyframes dg-draw')).includes('stroke-dasharray'));
-});
-
-test('only solid edges are drawn stroke by stroke', () => {
-    assert.ok(css.includes('.dg-play .dg-edge:is(.dg-kind-drives, .dg-kind-strengthens) path'));
-});
-
-test('the reveal waits: armed at mount, held until the card is seen', () => {
-    assert.ok(css.includes('.dg-hold'));
-    assert.ok(css.slice(css.indexOf('.dg-hold')).includes('animation-play-state: paused'));
+    // e su un computer di scuola non puo' cambiarla. Stesse regole del blocco
+    // di sistema, cosi' i due interruttori si comportano allo stesso modo.
+    const sheet = readFileSync(new URL('../app/globals.css', import.meta.url), 'utf-8');
+    const inApp = sheet.slice(sheet.indexOf('[data-motion="reduced"] *'));
+    assert.ok(inApp.includes('animation-duration: 0.01ms !important'));
+    assert.ok(inApp.includes('animation-iteration-count: 1 !important'));
+    assert.ok(inApp.includes('transition-duration: 0.01ms !important'));
 });
 
 test('centring inside a scrolling box is safe, or the start edge is lost', () => {
@@ -111,14 +82,6 @@ test('a drawing without a usable viewBox falls back instead of collapsing', () =
     assert.equal(svgAspectRatio('<svg viewBox="0 0 320 0">'), null);
 });
 
-test('the reveal fills backwards, or a finished animation would pin the opacity', () => {
-    // `both` blocca l'opacita' sul valore finale, e un'animazione conclusa batte
-    // le regole normali: la messa a fuoco non riusciva piu' a sbiadire nulla.
-    const enter = css.slice(css.indexOf('.dg-play .dg-node'), css.indexOf('@keyframes dg-enter'));
-    assert.ok(enter.includes('backwards'), 'la comparsa deve riempire solo all indietro');
-    assert.equal(enter.includes(' both'), false);
-});
-
 test('the step-by-step hides what has not had its turn', () => {
     assert.ok(css.includes('.dg-hidden'));
 });
@@ -134,33 +97,6 @@ test('the walk is tagged and revealed in one pass, on every step', () => {
     assert.ok(effect.includes('tagDiagramSvg('), 'la classificazione deve stare qui');
     assert.ok(effect.includes('revealUpTo('), 'il passo deve stare nello stesso effetto');
     assert.ok(/\}, \[[^\]]*\bstep\b[^\]]*\]/.test(effect), 'e deve rifarsi a ogni passo');
-});
-
-test('the walk beats a reveal still running', () => {
-    // Un'animazione batte una dichiarazione normale ma non una importante:
-    // senza, mentre la comparsa e' in corso (o in pausa in attesa di essere
-    // guardata) premere un passo non cambiava niente.
-    const hidden = css.slice(css.indexOf('.dg-svg .dg-hidden'));
-    assert.ok(hidden.includes('opacity: 0 !important'));
-});
-
-test('the walk fades in both directions', () => {
-    // Dichiarata sulla classe che nasconde, la transizione se ne andava con
-    // lei: nascondere sfumava, mostrare scattava.
-    const hidden = css.slice(css.indexOf('.dg-svg .dg-hidden'), css.indexOf('.dg-svg .dg-node { cursor'));
-    assert.equal(hidden.includes('transition'), false);
-    const base = css.slice(css.indexOf('.dg-svg .dg-node,'), css.indexOf('@keyframes dg-draw'));
-    assert.ok(base.includes('transition: opacity'));
-});
-
-test('one number governs the rhythm, and it is defined', () => {
-    // `var()` senza definizione rende invalido il `calc()`: il ritardo torna a
-    // zero e tutto il disegno entra insieme, senza un errore.
-    assert.ok(/\.dg-svg\s*\{[^}]*--dg-beat:\s*\d+ms/.test(css));
-    assert.ok(css.includes('calc(var(--dg-step, 0) * var(--dg-beat))'));
-    assert.equal(/animation-delay:[^;]*\d+ms\)(?![^;]*--dg-beat)/.test(
-        css.replace(/calc\(var\(--dg-step, 0\) \* var\(--dg-beat\)[^;]*\)/g, 'BEAT'),
-    ), false);
 });
 
 test('the walk is entered from the first turn, whichever arrow is pressed', () => {
