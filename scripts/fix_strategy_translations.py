@@ -1,4 +1,4 @@
-"""Correzioni editoriali alle traduzioni automatiche delle strategie di backfill.
+"""Correzioni editoriali alle traduzioni automatiche delle strategie.
 
 `translate_strategies` ha prodotto testi complessivamente buoni, con un gruppo di
 errori ricorrenti che la revisione ha trovato e che questo file riporta per
@@ -254,6 +254,160 @@ FIXES: dict[str, dict[str, dict[str, str]]] = {
                 "ett exempel som inte behandlats i lektionen och som du själv har letat upp: "
                 "det är här du upptäcker om du verkligen har förstått det eller om du bara har "
                 "känt igen ett redan sett fall."
+            ),
+        },
+    },
+    # --- Voci storiche: promosse in blocco, mai rilette prima --------------
+    "qsa-elaborative-links": {
+        # "Collegamenti" fra concetti, non collegamenti ipertestuali.
+        "name": {
+            "en": "Connections and examples (elaborative strategies)",
+            "es": "Conexiones y ejemplos (estrategias elaborativas)",
+            "fr": "Connexions et exemples (stratégies élaboratives)",
+            "sv": "Kopplingar och exempel (elaborativa strategier)",
+        },
+    },
+    "qsa-self-questioning": {
+        # Autointerrogazione e' porsi domande, tecnica di recupero attivo:
+        # tutte e cinque le lingue l'avevano resa come riflessione su di se'.
+        "name": {
+            "en": "Self-questioning",
+            "es": "Autointerrogación",
+            "fr": "Auto-questionnement",
+            "de": "Selbstbefragung",
+            "sv": "Självfrågande",
+        },
+    },
+    "qsa-disorientation-structure": {
+        "name": {"sv": "Ge struktur åt studierna"},
+    },
+    "qsa-collaboration-openness": {
+        "name": {"sv": "Öppenhet för samarbetsinlärning"},
+    },
+    "qsa-perseverance-small-goals": {
+        "name": {"sv": "Uthållighet och små mål"},
+    },
+    "qsa-growth-mindset-attribution": {
+        # "tillväxt" e' la crescita economica.
+        "name": {"sv": "Attributioner och utvecklande tankesätt"},
+    },
+    "qsa-perceived-competence": {
+        "name": {"sv": "Upplevd kompetens"},
+    },
+    "ztpi-past-negative-reframe": {
+        "name": {
+            "de": "Die negative Vergangenheit neu lesen",
+            "sv": "Omläsning av det negativa förflutna",
+        },
+    },
+    "qsa-concentration-environment": {
+        "name": {"sv": "Minska distraktioner och studera i intervall"},
+    },
+    "ztpi-fatalism-agency": {
+        # "agencia" in spagnolo e' l'ufficio; "agentivitet" non e' svedese.
+        "name": {
+            "es": "Reducir el fatalismo, construir capacidad de actuar",
+            "sv": "Minska fatalismen, bygga handlingskraft",
+        },
+    },
+    "qsa-retrieval-practice": {
+        # Recupero dalla memoria, non riposo: in tedesco era diventata una
+        # pausa di rilassamento, in svedese un esercizio di defaticamento.
+        "name": {
+            "en": "Retrieval practice (self-testing)",
+            "de": "Abrufübung (Selbsttest)",
+            "sv": "Aktiv återkallning (självtest)",
+        },
+    },
+    "qsa-spaced-practice": {
+        # "Studie"/"studie" e' la ricerca scientifica, non lo studiare.
+        "name": {
+            "de": "Zeitlich verteiltes Lernen",
+            "sv": "Inlärning fördelad över tid",
+        },
+    },
+    "qsa-active-preview-predict": {
+        "name": {
+            "de": "Aktive Vorschau und Hypothese vor dem Lernen",
+            "sv": "Aktiv förhandsgranskning och hypotes före studiepasset",
+        },
+    },
+    "qsa-multimodal-dual-coding": {
+        "name": {"sv": "Olika material integrerade i ett schema"},
+    },
+    "qsa-interleaved-practice": {
+        # Interleaving e' alternare tipi diversi. Tutte e cinque le lingue
+        # l'avevano reso come allenamento a intervalli, che e' un'altra cosa.
+        "name": {
+            "en": "Interleaved practice across different types",
+            "es": "Práctica intercalada entre tipos diferentes",
+            "fr": "Pratique entrelacée entre différents types",
+            "de": "Verschränktes Üben zwischen verschiedenen Typen",
+            "sv": "Varvad träning mellan olika typer",
+        },
+    },
+    "qsa-memory-map-check": {
+        # "Mappa da memoria" e' la mappa ridisegnata a memoria: il tedesco
+        # l'aveva letta come scheda SD e i "buchi" come fori da ispezionare.
+        "name": {
+            "en": "Map from memory and checking the gaps",
+            "es": "Mapa trazado de memoria y control de lagunas",
+            "fr": "Carte tracée de mémoire et repérage des lacunes",
+            "de": "Karte aus dem Gedächtnis und Lückenkontrolle",
+            "sv": "Karta ur minnet och kontroll av luckor",
+        },
+    },
+    "qsa-cognitive-reappraisal": {
+        "name": {"sv": "Kognitiv omvärdering (från hot till utmaning)"},
+    },
+    "qsa-successive-relearning": {
+        "name": {
+            "es": "Reaprendizaje sucesivo (dominio repetido)",
+            "fr": "Réapprentissage successif (maîtrise répétée)",
+            "sv": "Successiv återinlärning (upprepad behärskning)",
+        },
+    },
+    "qpcs-perseverance-microsteps": {
+        # Il "punto di ripresa" e' da dove si riparte, non un recupero fisico.
+        "name": {
+            "en": "Small steps and a point to resume from",
+            "es": "Pasos pequeños y punto de reanudación",
+            "de": "Kleine Schritte und ein Wiedereinstiegspunkt",
+            "sv": "Små steg och en återupptagningspunkt",
+        },
+    },
+    "qpcc-public-speaking-rehearsal": {
+        # "Esporre per gradi" e' preparare l'esposizione a tappe: le rese
+        # scelte erano quelle dell'esposizione terapeutica.
+        "name": {
+            "en": "Rehearse the talk in stages",
+            "es": "Exponer por etapas",
+            "fr": "Présenter par étapes",
+            "de": "Schrittweise vortragen",
+            "sv": "Presentera i steg",
+        },
+    },
+    "qpcc-elaboration-links": {
+        "name": {"sv": "Koppla, exemplifiera, verifiera"},
+    },
+    "qap-control-own-decision": {
+        # "Riprendere in mano" e' riappropriarsi della scelta, non riesaminarla.
+        "name": {
+            "en": "Take a decision back into your own hands",
+            "es": "Retomar una decisión como propia",
+            "fr": "Reprendre une décision en main",
+            "de": "Eine Entscheidung wieder selbst in die Hand nehmen",
+            "sv": "Ta tillbaka kontrollen över ett beslut",
+        },
+    },
+    "qsa-self-explanation-teach-back": {
+        # Le domande le fa il compagno, non chi studia: solo l'inglese aveva
+        # invertito i ruoli.
+        "description": {
+            "en": (
+                "Explain a concept out loud as if teaching a peer; note where you get stuck "
+                "and revisit only those points. When possible, check yourself with a peer who "
+                "asks you short questions."
             ),
         },
     },
