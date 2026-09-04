@@ -325,6 +325,33 @@ h1.text-3xl {
   line-height: 1rem;
 }
 
+/* La console amministrativa contiene dati, codici e azioni molto dense. Mantiene
+   la scala compatta del prodotto, ma evita testi sotto i 12px e target a sola
+   altezza di riga. Su touchscreen i comandi raggiungono l'area tattile comoda. */
+.admin-shell .text-xs,
+.admin-shell .text-2xs,
+.admin-shell [class~="text-[11px]"] {
+  font-size: 0.8rem;
+  line-height: 1.15rem;
+}
+
+.admin-shell button {
+  min-height: 1.75rem;
+}
+
+.admin-shell input:not([type="checkbox"]):not([type="radio"]),
+.admin-shell select {
+  min-height: 2.25rem;
+}
+
+@media (pointer: coarse) {
+  .admin-shell button,
+  .admin-shell [role="button"] {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
 /* Comando a icona dentro una riga densa: i pollici del riscontro e i pulsanti
    della barra di composizione stavano fra i 22 e i 32px. Stessa regola della
    topbar: il disegno non cambia, l'area toccabile arriva a 44px al dito. */

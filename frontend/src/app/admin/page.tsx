@@ -149,26 +149,52 @@ export default function AdminPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50">
-            <section className="page-wide px-4 py-8">
-                <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div className="admin-shell min-h-screen bg-slate-50">
+            <section className="mx-auto max-w-[96rem] px-0 py-6 sm:px-4 sm:py-8">
+                <div className="mb-5 flex flex-wrap items-center justify-between gap-4 xl:mb-8">
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 bg-indigo-600 rounded-md flex items-center justify-center">
                             <Settings className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                            <h1 className="font-bold text-2xl text-slate-900">{t('admin.group.research')}</h1>
+                            <h1 className="font-bold text-2xl text-slate-900">{t('admin.title')}</h1>
                             <p className="text-sm text-slate-500 mt-1">CounselorBot · {activeItem?.label}</p>
                         </div>
                     </div>
                     <BackButton variant="labelled" href="/" label={t('nav.home')} />
                 </div>
-                <div className={cn('grid gap-6', sidebarCollapsed ? 'lg:grid-cols-[4.5rem_1fr]' : 'lg:grid-cols-[17rem_1fr]')}>
-                    <aside className="glass-panel p-3 lg:sticky lg:top-24 lg:self-start">
+
+                <div className="glass-panel mb-5 p-3 xl:hidden">
+                    <label htmlFor="admin-section" className="mb-1.5 block text-sm font-semibold text-slate-700">
+                        {t('admin.header.subtitle')}
+                    </label>
+                    <select
+                        id="admin-section"
+                        value={activeTab}
+                        onChange={(event) => setActiveTab(event.target.value as AdminTab)}
+                        className="min-w-0 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                        {navGroups.map((group) => (
+                            <optgroup key={group.title} label={group.title}>
+                                {group.items.map((item) => (
+                                    <option key={item.id} value={item.id}>{item.label}</option>
+                                ))}
+                            </optgroup>
+                        ))}
+                    </select>
+                </div>
+
+                <div className={cn(
+                    'grid grid-cols-[minmax(0,1fr)] gap-6',
+                    sidebarCollapsed
+                        ? 'xl:grid-cols-[4.5rem_minmax(0,1fr)]'
+                        : 'xl:grid-cols-[17rem_minmax(0,1fr)]',
+                )}>
+                    <aside className="glass-panel hidden p-3 xl:sticky xl:top-24 xl:block xl:self-start">
                         <div className={cn('mb-3 flex items-center', sidebarCollapsed ? 'justify-center' : 'justify-between')}>
                             {!sidebarCollapsed && (
                                 <div>
-                                    <h2 className="text-sm font-bold text-slate-900">{t('admin.group.research')}</h2>
+                                    <h2 className="text-sm font-bold text-slate-900">{t('admin.title')}</h2>
                                     <p className="text-xs text-slate-500">{t('admin.header.subtitle')}</p>
                                 </div>
                             )}
