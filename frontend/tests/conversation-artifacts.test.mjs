@@ -97,7 +97,8 @@ for (const width of [320, 390, 1440]) {
 test('recommendation actions save per item, retry, and hand a prompt to the composer', async () => {
     const { page, context, control } = await fixture(390);
     try {
-        await page.locator('form button[aria-controls="guided-recommendations-panel"]').click();
+        await page.getByRole('button', { name: 'Mostra pannello', exact: true }).click();
+        await page.locator('button[aria-controls="guided-recommendations-panel"]').click();
         const panel = page.locator('#guided-recommendations-panel');
         await panel.getByRole('link', { name: 'https://example.invalid/libro' }).waitFor();
         await panel.getByRole('button', { name: 'Leggi la sintesi' }).click();
@@ -112,6 +113,7 @@ test('recommendation actions save per item, retry, and hand a prompt to the comp
         await panel.getByRole('button', { name: 'Riprendi in chat', exact: true }).click();
         assert.match(await page.locator('#guided-composer').inputValue(), /Libro per la prova/);
         assert.equal(control.requests.some(request => request.path === '/api/chat/stream'), false, 'discussion action does not send automatically');
+        await page.getByRole('button', { name: 'Mostra pannello', exact: true }).click();
         await panel.getByRole('tab', { name: /Strategie/ }).click();
         await panel.getByRole('button', { name: 'Voglio provarla', exact: true }).click();
         await panel.getByRole('button', { name: 'Provata', exact: true }).click();

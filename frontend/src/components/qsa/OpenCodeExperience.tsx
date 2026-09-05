@@ -560,6 +560,11 @@ export function OpenCodeExperience({
                             )}
                     </div>
                     <div className="flex flex-wrap items-center gap-1">
+                        {viewMode === 'chat' && <VisualTools compact sessionId={sessionId} locale={locale} onDiscuss={text => {
+                                setInput(previous => previous.trim() ? `${previous}\n\n${text}` : text);
+                                window.requestAnimationFrame(() => document.getElementById('opencode-composer')?.focus());
+                            }} />}
+
                         <button
                             type="button"
                             onClick={concludePath}
@@ -684,12 +689,6 @@ export function OpenCodeExperience({
                                     </div>
                                 </div>
                             ))}
-                        </div>
-                        <div className="shrink-0 border-t border-slate-200 bg-white px-3 py-2">
-                            <VisualTools sessionId={sessionId} locale={locale} onDiscuss={text => {
-                                setInput(previous => previous.trim() ? `${previous}\n\n${text}` : text);
-                                window.requestAnimationFrame(() => document.getElementById('opencode-composer')?.focus());
-                            }} />
                         </div>
                         <form onSubmit={submit} className="border-t border-slate-200 bg-white p-3 sm:p-4">
                             {error && messages.length > 0 && (
