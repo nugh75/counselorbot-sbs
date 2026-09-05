@@ -1,7 +1,7 @@
 'use client';
 
 import { Archive, BookOpen, ChevronDown, ChevronRight, MessageSquare, RotateCcw, Target, ThumbsDown, ThumbsUp } from 'lucide-react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 
 import { apiFetch } from '@/lib/auth';
@@ -32,8 +32,6 @@ interface RecommendationsPanelProps {
     onCatalogChange?: (catalog: RecommendationCatalog) => void;
     /** Consegna la domanda alla casella della chat. Non invia: scrive e basta. */
     onDiscuss?: (prompt: string) => void;
-    /** Cresce quando la scorciatoia della chat chiede di aprire il pannello. */
-    openSignal?: number;
 }
 
 // Chiave di un intervento in corso o fallito: una card per volta, per tipo.
@@ -44,41 +42,20 @@ export function RecommendationsPanel({
     sessionId,
     onCatalogChange,
     onDiscuss,
-    openSignal,
 }: RecommendationsPanelProps) {
     const { t, lang } = useI18n();
 
     const [isOpen, setIsOpen] = useState(false);
-    const [focusRequest, setFocusRequest] = useState(0);
     const [activeTab, setActiveTab] = useState<Tab>(catalog.reading.length ? 'reading' : 'strategy');
     const [pending, setPending] = useState<Record<string, boolean>>({});
     const [failed, setFailed] = useState<Record<string, RecommendationPatch>>({});
     const [showArchived, setShowArchived] = useState<Record<Tab, boolean>>({ reading: false, strategy: false });
 
-    const sectionRef = useRef<HTMLElement | null>(null);
-    const bodyRef = useRef<HTMLDivElement | null>(null);
     const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({ reading: null, strategy: null });
 
     const ids = useId();
     const tabId = (tab: Tab) => `${ids}-tab-${tab}`;
     const panelId = (tab: Tab) => `${ids}-panel-${tab}`;
-
-    // La scorciatoia della chat apre il pannello e ci porta il fuoco; una
-    // raccomandazione che arriva da sola non muove la pagina sotto le mani.
-    useEffect(() => {
-        if (!openSignal) return;
-        setIsOpen(true);
-        setFocusRequest(openSignal);
-    }, [openSignal]);
-
-    useEffect(() => {
-        if (!focusRequest || !isOpen) return;
-        const reduced = typeof window !== 'undefined'
-            && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-        sectionRef.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
-        bodyRef.current?.focus({ preventScroll: true });
-        setFocusRequest(0);
-    }, [focusRequest, isOpen]);
 
     const visibleTab: Tab = activeTab === 'reading' && !catalog.reading.length && catalog.strategy.length
         ? 'strategy'
@@ -146,7 +123,6 @@ export function RecommendationsPanel({
 
     return (
         <section
-            ref={sectionRef}
             className="glass-panel overflow-hidden border-l-4 border-l-indigo-400"
             aria-label={t('recommendations.title')}
         >
@@ -167,7 +143,6 @@ export function RecommendationsPanel({
 
             <div
                 id="guided-recommendations-panel"
-                ref={bodyRef}
                 tabIndex={-1}
                 className={cn('space-y-3 px-4 pb-4 lg:block lg:p-4', !isOpen && 'hidden lg:block')}
             >

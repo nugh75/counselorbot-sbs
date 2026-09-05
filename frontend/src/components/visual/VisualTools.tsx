@@ -14,6 +14,7 @@ type Tab = 'board' | 'comparison' | 'cards';
 type Props = {
     sessionId: string;
     locale: string;
+    compact?: boolean;
     catalog?: RecommendationCatalog;
     onDiscuss?: (text: string) => void;
     request?: { text: string; nonce: number } | null;
@@ -28,7 +29,7 @@ export function VisualTools(props: Props) {
     return <WorkspaceView key={props.sessionId} {...props} />;
 }
 
-function WorkspaceView({ sessionId, locale, catalog: providedCatalog, onDiscuss, request }: Props) {
+function WorkspaceView({ sessionId, locale, compact = false, catalog: providedCatalog, onDiscuss, request }: Props) {
     const l = (key: string) => visualLabel(locale, key);
     const endpoint = `/api/session/${encodeURIComponent(sessionId)}/visual-tools`;
     const [open, setOpen] = useState(false);
@@ -173,9 +174,11 @@ function WorkspaceView({ sessionId, locale, catalog: providedCatalog, onDiscuss,
     const removeButton = (label: string, remove: () => void) => <Button type="button" variant="ghost" className={buttonClass} aria-label={`${l('remove')}: ${label}`} onClick={remove}>{l('remove')}</Button>;
 
     return <>
-        <Button type="button" variant="secondary" className={`${buttonClass} max-w-full text-left`} onClick={launch} aria-label={l('open')}>
-            <LayoutList className="h-4 w-4 shrink-0" aria-hidden="true" />{l('title')}{dirty && <span aria-label={l('unsaved')}>•</span>}
-        </Button>
+        <Tooltip content={l('openHelp')}>
+            <Button type="button" variant="secondary" className={`${buttonClass} max-w-full text-left ${compact ? 'px-3' : ''}`} onClick={launch} aria-label={l('open')}>
+                <LayoutList className="h-4 w-4 shrink-0" aria-hidden="true" />{l(compact ? 'tools' : 'title')}{dirty && <span aria-label={l('unsaved')}>•</span>}
+            </Button>
+        </Tooltip>
         {open && createPortal(<div className="fixed inset-0 z-[85] flex justify-end bg-slate-950/60 p-1 sm:p-3">
             <section ref={dialog} role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} className="flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
                 <header className="shrink-0 border-b border-slate-200 p-3 sm:p-4">
