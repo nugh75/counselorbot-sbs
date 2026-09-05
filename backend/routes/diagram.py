@@ -3,6 +3,7 @@
 L'interruttore della funzione e' la skill `concept-diagram` nel pannello admin:
 spenta o non pubblicata, questi endpoint non esistono.
 """
+import asyncio
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -31,6 +32,9 @@ get_db = database.get_db
 
 SKILL_SLUG = "concept-diagram"
 DIAGRAM_PRESET_KEY = "diagram_preset_id"
+# Two models, including their repair attempts, must fit inside the browser's
+# 120-second request limit. Socket timeouts alone do not bound total elapsed time.
+DIAGRAM_MODEL_TIMEOUT_SECONDS = 40
 
 SPEC_ONLY_SYSTEM_PROMPT = (
     "You turn an explanation into one concept diagram. Answer with a single JSON object "
@@ -219,21 +223,33 @@ async def diagram_from_message(
         # restare addosso al successivo.
         ai_service = AIService(db)
         _apply_counselor_overrides(ai_service, dt, rb)
+        ai_service.config['ai_timeout_seconds'] = str(min(
+            int(ai_service.config.get('ai_timeout_seconds') or 120), DIAGRAM_MODEL_TIMEOUT_SECONDS,
+        ))
+        deadline = asyncio.get_running_loop().time() + DIAGRAM_MODEL_TIMEOUT_SECONDS
         system_prompt = SPEC_ONLY_SYSTEM_PROMPT
         for attempt in range(2):
             try:
-                reply = await run_in_threadpool(
-                    ai_service.call_model,
-                    provider=provider,
-                    model=model,
-                    user_message=_spec_request(request),
-                    system_prompt=system_prompt,
-                    max_tokens=2400,
+                remaining = deadline - asyncio.get_running_loop().time()
+                if remaining <= 0:
+                    raise asyncio.TimeoutError
+                # This worker only calls the model. Validation and persistence
+                # stay here, so a timed-out worker cannot save a late result.
+                reply = await asyncio.wait_for(
+                    asyncio.to_thread(
+                        ai_service.call_model,
+                        provider=provider,
+                        model=model,
+                        user_message=_spec_request(request),
+                        system_prompt=system_prompt,
+                        max_tokens=2400,
+                    ),
+                    timeout=remaining,
                 )
                 spec = parse_spec(_json_object(reply))
                 break
-            except AIError as exc:
-                logger.warning("Diagramma: %s/%s non disponibile: %s", provider, model, exc)
+            except (AIError, asyncio.TimeoutError) as exc:
+                logger.warning("Diagramma: %s/%s non disponibile (%s)", provider, model, type(exc).__name__)
                 unavailable = True
                 break
             except DiagramSpecError as exc:
