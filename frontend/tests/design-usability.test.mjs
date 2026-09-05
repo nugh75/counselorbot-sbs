@@ -60,8 +60,10 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1280, 720],
             const composer = page.locator('#guided-composer');
             await composer.waitFor();
             await settled(page);
-            assert.equal(await page.locator('.console-header').isVisible(), false);
+            assert.equal(await page.locator('.console-header').isVisible(), true);
             assert.equal(await page.locator('main > .page-wide > ol').count(), 0);
+            const headerBox = await page.locator('.console-header').boundingBox();
+            assert.ok((await page.locator('.chat-viewport').boundingBox()).y >= headerBox.y + headerBox.height, 'chat starts below the navbar');
             assert.equal(await page.getByRole('button', { name: 'Come funziona questo percorso?', exact: true }).count(), 0);
             assert.equal(await page.locator('section[aria-labelledby="guided-chat-title"] header button').count(), 1);
             const box = await composer.boundingBox();
@@ -177,12 +179,12 @@ test('mobile menu targets reach 44px and dark surfaces retain readable colours',
 });
 
 
-test('leaving chat restores the header with counselor selection and motion settings', async () => {
+test('the navbar remains available during chat and after leaving it', async () => {
     const { page, context } = await fixture({ width: 768, height: 1024, motion: 'no-preference' });
     try {
         await page.goto(`${origin}/?frozen=design-fixture`, { waitUntil: 'networkidle' });
         await page.locator('#guided-composer').waitFor();
-        assert.equal(await page.locator('.console-header').isVisible(), false);
+        assert.equal(await page.locator('.console-header').isVisible(), true);
         await page.getByRole('button', { name: 'Indietro', exact: true }).click();
         await page.locator('.console-header').waitFor({ state: 'visible' });
         await page.locator('button[aria-controls="mobile-menu"]').click();
@@ -208,6 +210,10 @@ for (const width of [320, 390]) {
             await settled(page);
             assert.equal(await composer.getAttribute('placeholder'), 'Scrivi…');
             assert.ok((await composer.boundingBox()).height <= 50, 'empty composer uses one line');
+            const advancement = await page.getByRole('navigation', { name: 'Avanzamento del percorso', exact: true }).boundingBox();
+            const inputBox = await composer.boundingBox();
+            assert.ok(advancement.y >= inputBox.y + inputBox.height, 'mobile advancement follows the composer');
+            assert.ok(advancement.y + advancement.height <= 844);
             const next = page.getByRole('button', { name: 'Prossimo Step', exact: true });
             assert.ok((await next.boundingBox()).width <= 48, 'next step is an icon');
             assert.equal((await next.innerText()).trim(), '');
@@ -271,6 +277,28 @@ for (const width of [320, 1440]) {
     });
 }
 
+
+test('guided phases keep neutral colours when advancing', async () => {
+    const { page, context, errors } = await fixture({ width: 1440, touch: false });
+    await page.route('**/api/qsa/guided-ui-texts?*', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ guided_steps: [
+        { id: 'intro', label: 'Introduzione', color_theme: 'rose', sort_order: 1, system_prompt_mode: 'qsa-intro' },
+        { id: 'cognitive', label: 'Processi cognitivi', color_theme: 'blue', sort_order: 2, system_prompt_mode: 'qsa-cognitive' },
+    ] }) }));
+    await page.route('**/api/chat/stream', route => route.fulfill({ contentType: 'text/event-stream', body: 'data: {"done":true,"response":"Proseguiamo."}\n\n' }));
+    try {
+        await page.goto(`${origin}/?frozen=design-fixture`, { waitUntil: 'networkidle' });
+        const active = page.locator('#guided-path-panel [aria-current="step"]');
+        const colours = () => page.locator('section[aria-labelledby="guided-chat-title"] header, #guided-path-panel [aria-current="step"]').evaluateAll(elements => elements.map(el => ({ background: getComputedStyle(el).backgroundColor, text: getComputedStyle(el).color })));
+        await active.waitFor();
+        await settled(page);
+        const before = await colours();
+        await page.getByRole('button', { name: 'Prossimo Step', exact: true }).click();
+        await active.getByText('Processi cognitivi', { exact: true }).waitFor();
+        await settled(page);
+        assert.deepEqual(await colours(), before, 'configured phase colours do not tint the chat or path');
+        assert.deepEqual(errors, []);
+    } finally { await context.close(); }
+});
 
 test('desktop advancement sits below the chat box and names the current step', async () => {
     const { page, context } = await fixture({ width: 1440, height: 1000, touch: false });

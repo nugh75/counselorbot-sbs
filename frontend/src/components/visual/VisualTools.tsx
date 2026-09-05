@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Columns3, LayoutList, Layers, Undo2, X } from 'lucide-react';
+import { ArrowRight, Columns3, Download, LayoutList, Layers, MessageSquare, Plus, RotateCcw, Save, Trash2, Undo2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { apiFetch } from '@/lib/auth';
@@ -22,7 +22,7 @@ type Props = {
     request?: VisualToolsRequest | null;
 };
 const inputClass = 'w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] text-slate-800';
-const buttonClass = 'min-h-[44px] min-w-[44px]';
+const buttonClass = 'h-[44px] w-[44px] shrink-0 p-0';
 const stages: ActionStage[] = ['todo', 'doing', 'done'];
 const buckets: CardBucket[] = ['unsorted', 'yes', 'explore', 'no'];
 const tabs: Tab[] = ['board', 'comparison', 'cards'];
@@ -31,7 +31,7 @@ export function VisualTools(props: Props) {
     return <WorkspaceView key={props.sessionId} {...props} />;
 }
 
-function WorkspaceView({ sessionId, locale, compact = false, hideTrigger = false, catalog: providedCatalog, onDiscuss, request }: Props) {
+function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: providedCatalog, onDiscuss, request }: Props) {
     const l = (key: string) => visualLabel(locale, key);
     const endpoint = `/api/session/${encodeURIComponent(sessionId)}/visual-tools`;
     const [open, setOpen] = useState(false);
@@ -173,12 +173,12 @@ function WorkspaceView({ sessionId, locale, compact = false, hideTrigger = false
             else { setOption(item.title); setOptionSource(item.title); }
         }}><option value="">{l('chooseSource')}</option>{sources.map(item => <option key={item.key} value={item.key}>{item.title}</option>)}</select>
     </label>;
-    const removeButton = (label: string, remove: () => void) => <Button type="button" variant="ghost" className={buttonClass} aria-label={`${l('remove')}: ${label}`} onClick={remove}>{l('remove')}</Button>;
+    const removeButton = (label: string, remove: () => void) => <Tooltip content={`${l('remove')}: ${label}`}><Button type="button" variant="ghost" className={buttonClass} aria-label={`${l('remove')}: ${label}`} onClick={remove}><Trash2 className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>;
 
     return <>
         {!hideTrigger && <Tooltip content={l('openHelp')}>
-            <Button type="button" variant="secondary" className={`${buttonClass} max-w-full text-left ${compact ? 'px-3' : ''}`} onClick={launch} aria-label={l('open')}>
-                <LayoutList className="h-4 w-4 shrink-0" aria-hidden="true" />{l(compact ? 'tools' : 'title')}{dirty && <span aria-label={l('unsaved')}>•</span>}
+            <Button type="button" variant="secondary" className={buttonClass} onClick={launch} aria-label={l('open')}>
+                <LayoutList className="h-4 w-4 shrink-0" aria-hidden="true" />{dirty && <span aria-label={l('unsaved')}>•</span>}
             </Button>
         </Tooltip>}
         {open && createPortal(<div className="fixed inset-0 z-[85] flex bg-white">
@@ -186,24 +186,24 @@ function WorkspaceView({ sessionId, locale, compact = false, hideTrigger = false
                 <header className="shrink-0 border-b border-slate-200 p-3 sm:p-4">
                     <div className="flex items-start justify-between gap-2">
                         <div><h2 id={`${id}-title`} className="text-lg font-semibold text-slate-800">{l('title')}</h2><p className="mt-1 hidden text-sm text-slate-600 sm:block">{l('working')}</p></div>
-                        <Button type="button" variant="ghost" className={buttonClass} autoFocus aria-label={l('close')} onClick={() => setOpen(false)}><X className="h-5 w-5" aria-hidden="true" /></Button>
+                        <Tooltip content={l('close')}><Button type="button" variant="ghost" className={buttonClass} autoFocus aria-label={l('close')} onClick={() => setOpen(false)}><X className="h-5 w-5" aria-hidden="true" /></Button></Tooltip>
                     </div>
                     <div role="tablist" aria-label={l('title')} className="mt-3 flex flex-wrap gap-1">
-                        {tabs.map((key, index) => { const Icon = [LayoutList, Columns3, Layers][index]; return <Button key={key} type="button" role="tab" aria-label={l(key)} id={`${id}-${key}`} aria-controls={`${id}-panel`} aria-selected={tab === key} tabIndex={tab === key ? 0 : -1}
-                            variant={tab === key ? 'primary' : 'secondary'} className={`${buttonClass} px-2 sm:px-4`} onClick={() => setTab(key)} onKeyDown={event => {
+                        {tabs.map((key, index) => { const Icon = [LayoutList, Columns3, Layers][index]; return <Tooltip key={key} content={l(key)}><Button type="button" role="tab" aria-label={l(key)} id={`${id}-${key}`} aria-controls={`${id}-panel`} aria-selected={tab === key} tabIndex={tab === key ? 0 : -1}
+                            variant={tab === key ? 'primary' : 'secondary'} className={buttonClass} onClick={() => setTab(key)} onKeyDown={event => {
                                 if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
                                 event.preventDefault();
                                 const next = event.key === 'Home' ? 0 : event.key === 'End' ? 2 : (index + (event.key === 'ArrowLeft' ? 2 : 1)) % 3;
                                 setTab(tabs[next]); document.getElementById(`${id}-${tabs[next]}`)?.focus();
-                            }}><Icon className="h-4 w-4 shrink-0" aria-hidden="true" />{l(`${key}Tab`)}</Button>; })}
+                            }}><Icon className="h-4 w-4 shrink-0" aria-hidden="true" /></Button></Tooltip>; })}
                     </div>
                 </header>
                 <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4" id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-${tab}`}>
                     {issue && <div role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
                         <p>{l(issue)}</p>
                         <div className="mt-2 flex flex-wrap gap-2">
-                            {['loadError', 'saveError', 'exportError', 'conflict'].includes(issue) && <Button type="button" variant="secondary" className={buttonClass} disabled={busy} onClick={() => { if (issue === 'loadError') void load(); else if (issue === 'exportError') void exportPdf(); else if (issue === 'saveError') void save(); else if (window.confirm(l('reloadConfirm'))) void load(); }}>{l(issue === 'conflict' ? 'reload' : 'retry')}</Button>}
-                            {loaded && <Button type="button" variant="secondary" className={buttonClass} onClick={() => download(new Blob([workspaceText(work, l)], { type: 'text/plain;charset=utf-8' }), 'counselorbot_visual_draft.txt')}>{l('copyDownload')}</Button>}
+                            {['loadError', 'saveError', 'exportError', 'conflict'].includes(issue) && <Tooltip content={l(issue === 'conflict' ? 'reload' : 'retry')}><Button aria-label={l(issue === 'conflict' ? 'reload' : 'retry')} type="button" variant="secondary" className={buttonClass} disabled={busy} onClick={() => { if (issue === 'loadError') void load(); else if (issue === 'exportError') void exportPdf(); else if (issue === 'saveError') void save(); else if (window.confirm(l('reloadConfirm'))) void load(); }}><RotateCcw className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
+                            {loaded && <Tooltip content={l('copyDownload')}><Button aria-label={l('copyDownload')} type="button" variant="secondary" className={buttonClass} onClick={() => download(new Blob([workspaceText(work, l)], { type: 'text/plain;charset=utf-8' }), 'counselorbot_visual_draft.txt')}><Download className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
                         </div>
                     </div>}
                     {!loaded ? <p role="status" className="text-slate-600">{l(busy ? 'loading' : 'loadError')}</p> : <fieldset disabled={busy} className="min-w-0 space-y-4">
@@ -223,14 +223,14 @@ function WorkspaceView({ sessionId, locale, compact = false, hideTrigger = false
                                     {onDiscuss && <p>{l('discussHelp')}</p>}
                                     <p>{l('undoHelp')}</p>
                                 </div>
-                                <Button type="button" variant="secondary" className={`${buttonClass} mt-3 max-w-full whitespace-normal text-left`} onClick={() => {
+                                <Tooltip content={l('startWorking')}><Button aria-label={l('startWorking')} type="button" variant="secondary" className={`${buttonClass} mt-3`} onClick={() => {
                                     setHelpOpen(previous => ({ ...previous, [tab]: false }));
                                     window.requestAnimationFrame(() => {
                                         const firstForm = dialog.current?.querySelector('form')?.closest('details')?.querySelector('summary');
                                         firstForm?.focus({ preventScroll: true });
                                         firstForm?.scrollIntoView({ block: 'nearest' });
                                     });
-                                }}>{l('startWorking')}</Button>
+                                }}><ArrowRight className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                             </details>
                         </section>
                         {tab === 'board' && <>
@@ -240,12 +240,12 @@ function WorkspaceView({ sessionId, locale, compact = false, hideTrigger = false
                                 {sourceSelector('action')}
                                 <label className="block text-sm font-medium">{l('titleField')}<input required maxLength={160} value={draftTitle} onChange={e => setDraftTitle(e.target.value)} className={`${inputClass} mt-1`} /></label>
                                 <label className="block text-sm">{l('detail')}<textarea maxLength={1000} rows={2} value={draftDetail} onChange={e => setDraftDetail(e.target.value)} className={`${inputClass} mt-1`} /></label>
-                                <Button type="submit" className={buttonClass} disabled={work.actions.length >= 30 || draftTitle.length > 160}>{l('addAction')}</Button>
+                                <Tooltip content={l('addAction')}><Button aria-label={l('addAction')} type="submit" className={buttonClass} disabled={work.actions.length >= 30 || draftTitle.length > 160}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                                 {work.actions.length >= 30 && <p role="status">{l('limit')}</p>}
                             </form></details>
                             {!work.actions.length && <p className="py-5 text-center text-slate-600">{l('emptyBoard')}</p>}
                             <div className="grid gap-3 lg:grid-cols-3">{stages.map(stage => <section key={stage} aria-label={l(stage)} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                                <h3 className={`mb-3 border-l-4 pl-2 font-semibold ${stage === 'doing' ? 'border-ochre-500' : 'border-indigo-400'}`}>{l(stage)} <span className="font-mono text-sm text-slate-500">{work.actions.filter(a => a.stage === stage).length}</span></h3>
+                                <h3 className="mb-3 font-semibold text-slate-700">{l(stage)} <span className="font-mono text-sm text-slate-500">{work.actions.filter(a => a.stage === stage).length}</span></h3>
                                 <div className="space-y-3">{work.actions.filter(a => a.stage === stage).map(action => <article key={action.id} className="rounded-lg border border-slate-200 bg-white p-3">
                                     <label className="block text-sm">{l('titleField')}<input data-workspace-field required maxLength={160} value={action.title} className={`${inputClass} mt-1 font-semibold`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, title: e.target.value } : a) })} /></label>
                                     <label className="mt-3 block text-sm">{l('move')}<select id={`${id}-action-${action.id}`} aria-label={`${l('move')}: ${action.title}`} value={action.stage} className={`${inputClass} mt-1 min-h-[44px]`} onChange={e => { edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, stage: e.target.value as ActionStage } : a) }); focusMoved(`${id}-action-${action.id}`); }}>{stages.map(s => <option key={s} value={s}>{l(s)}</option>)}</select></label>
@@ -264,7 +264,7 @@ function WorkspaceView({ sessionId, locale, compact = false, hideTrigger = false
                                 edit({ ...work, cards: [...work.cards, { id: crypto.randomUUID(), text: draftCard.trim(), bucket: 'unsorted', source: cardSource }] }); setDraftCard(''); setCardSource(''); }}>
                                 <label className="block text-sm font-medium">{l('cardText')}<textarea required maxLength={600} rows={3} value={draftCard} onChange={e => setDraftCard(e.target.value)} className={`${inputClass} mt-1`} /></label>
                                 <p className="text-xs text-slate-600">{draftCard.length}/600 · {l('source')}: {cardSource || l('personal')}</p>
-                                <Button type="submit" className={buttonClass} disabled={draftCard.length > 600 || work.cards.length >= 30}>{l('addCard')}</Button>
+                                <Tooltip content={l('addCard')}><Button aria-label={l('addCard')} type="submit" className={buttonClass} disabled={draftCard.length > 600 || work.cards.length >= 30}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                                 {(draftCard.length > 600 || work.cards.length >= 30) && <p role="status">{l('limit')}</p>}
                             </form></details>
                             {!work.cards.length && <p className="py-5 text-center text-slate-600">{l('emptyCards')}</p>}
@@ -284,7 +284,7 @@ function WorkspaceView({ sessionId, locale, compact = false, hideTrigger = false
                                 edit({ ...work, comparison: { ...work.comparison, options: [...work.comparison.options, { id: crypto.randomUUID(), title: option.trim(), source: optionSource }] } }); setOption(''); setOptionSource(''); }}>
                                 {sourceSelector('option')}
                                 <label className="block text-sm font-medium">{l('option')}<input required maxLength={160} value={option} onChange={e => setOption(e.target.value)} className={`${inputClass} mt-1`} /></label>
-                                <Button type="submit" className={buttonClass} disabled={work.comparison.options.length >= 3 || option.length > 160}>{l('addOption')}</Button>
+                                <Tooltip content={l('addOption')}><Button aria-label={l('addOption')} type="submit" className={buttonClass} disabled={work.comparison.options.length >= 3 || option.length > 160}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                             </form></details>
                             <section aria-label={l('criteria')} className="space-y-2"><details open={!work.comparison.criteria.length} className="rounded-xl border border-slate-200 p-3">
                                 <summary className="min-h-[44px] cursor-pointer py-3 font-semibold text-indigo-700">{l('criteria')}</summary>
@@ -295,7 +295,7 @@ function WorkspaceView({ sessionId, locale, compact = false, hideTrigger = false
                                 <form className="flex flex-wrap items-end gap-2" onSubmit={event => { event.preventDefault(); if (!criterion.trim() || work.comparison.criteria.length >= 6) return;
                                     edit({ ...work, comparison: { ...work.comparison, criteria: [...work.comparison.criteria, { id: crypto.randomUUID(), label: criterion.trim() }] } }); setCriterion(''); }}>
                                     <label className="min-w-0 flex-1 text-sm">{l('criterion')}<input required maxLength={100} value={criterion} className={`${inputClass} mt-1`} onChange={e => setCriterion(e.target.value)} /></label>
-                                    <Button type="submit" className={buttonClass} disabled={work.comparison.criteria.length >= 6}>{l('addCriterion')}</Button>
+                                    <Tooltip content={l('addCriterion')}><Button aria-label={l('addCriterion')} type="submit" className={buttonClass} disabled={work.comparison.criteria.length >= 6}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                                 </form></details>
                             </section>
                             {!work.comparison.options.length && <p className="py-5 text-center text-slate-600">{l('emptyComparison')}</p>}
@@ -314,10 +314,10 @@ function WorkspaceView({ sessionId, locale, compact = false, hideTrigger = false
                 <footer className="shrink-0 space-y-2 border-t border-slate-200 bg-slate-50 p-3">
                     <p role="status" className="text-sm text-slate-600">{l(busy ? 'saving' : dirty ? 'unsaved' : loaded ? 'saved' : 'loading')}</p>
                     <div className="flex flex-wrap gap-2">
-                        <Tooltip content={l('saveHelp')} side="top"><Button type="button" className={buttonClass} disabled={!loaded || busy || !dirty} onClick={() => void save()}>{l('save')}</Button></Tooltip>
-                        <Tooltip content={l('undoHelp')} side="top"><Button type="button" variant="secondary" aria-label={l('undo')} className={buttonClass} disabled={busy || !history.length} onClick={() => { const previous = history[history.length - 1]; if (previous) { setWork(previous); setHistory(history.slice(0, -1)); } }}><Undo2 className="h-4 w-4" aria-hidden="true" /><span className="hidden sm:inline">{l('undo')}</span></Button></Tooltip>
-                        <Tooltip content={l('exportHelp')} side="top"><Button type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork} onClick={() => void exportPdf()}>{l('export')}</Button></Tooltip>
-                        {onDiscuss && <Tooltip content={l('discussHelp')} side="top"><Button type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork} onClick={() => void discuss()}>{l('discuss')}</Button></Tooltip>}
+                        <Tooltip content={l('saveHelp')} side="top"><Button aria-label={l('save')} type="button" className={buttonClass} disabled={!loaded || busy || !dirty} onClick={() => void save()}><Save className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                        <Tooltip content={l('undoHelp')} side="top"><Button type="button" variant="secondary" aria-label={l('undo')} className={buttonClass} disabled={busy || !history.length} onClick={() => { const previous = history[history.length - 1]; if (previous) { setWork(previous); setHistory(history.slice(0, -1)); } }}><Undo2 className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                        <Tooltip content={l('exportHelp')} side="top"><Button aria-label={l('export')} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork} onClick={() => void exportPdf()}><Download className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                        {onDiscuss && <Tooltip content={l('discussHelp')} side="top"><Button aria-label={l('discuss')} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork} onClick={() => void discuss()}><MessageSquare className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
                     </div>
                 </footer>
             </section>

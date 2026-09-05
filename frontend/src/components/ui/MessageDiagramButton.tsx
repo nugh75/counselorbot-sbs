@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { GitBranch, Loader2, Send } from 'lucide-react';
+import { GitBranch, Loader2, RotateCcw, Send } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
 import { getSelectedCounselorId } from '@/lib/counselor';
 import { parseDiagramSpec, type DiagramSpec } from '@/lib/diagram-content';
@@ -114,20 +115,19 @@ export function MessageDiagramButton({
 
     return (
         <>
-            {renderTrigger ? renderTrigger(toggle, open) : <button
+            {renderTrigger ? renderTrigger(toggle, open) : <Tooltip content={label}><button
                 type="button"
                 onClick={toggle}
                 disabled={disabled}
-                title={label}
+                aria-label={label}
                 aria-expanded={open}
                 className={cn(
-                    'flex items-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-2xs font-medium transition-colors',
+                    'inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-md transition-colors',
                     open ? 'bg-slate-100 text-slate-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-600',
                 )}
             >
-                <GitBranch className="h-3 w-3" />
-                {label}
-            </button>}
+                <GitBranch className="h-4 w-4" aria-hidden="true" />
+            </button></Tooltip>}
             {open && (
                 <form
                     onSubmit={(event) => {
@@ -146,20 +146,19 @@ export function MessageDiagramButton({
                         autoFocus
                         className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17747a]"
                     />
-                    <button
+                    <Tooltip content={submitLabel}><button
                         type="submit"
                         disabled={state === 'loading' || disabled}
-                        title={submitLabel}
                         aria-label={submitLabel}
-                        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-50 hover:text-[#17747a] disabled:opacity-50"
+                        className="inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-50 hover:text-[#17747a] disabled:opacity-50"
                     >
                         {state === 'loading' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                    </button>
+                    </button></Tooltip>
                 </form>
             )}
             {state === 'failed' && <div role="alert" className="flex w-full flex-wrap items-center gap-2 text-xs text-slate-600">
                 <span>{error || failedLabel}</span>
-                <button type="button" onClick={() => void request()} className="rounded border border-slate-200 px-3 py-2 text-indigo-700">{diagramRequestLabel('retry', locale)}</button>
+                <Tooltip content={diagramRequestLabel('retry', locale)}><button type="button" aria-label={diagramRequestLabel('retry', locale)} onClick={() => void request()} className="inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><RotateCcw className="h-4 w-4" aria-hidden="true" /></button></Tooltip>
             </div>}
             {visibleSpec && (
                 <div className="min-w-0 w-full basis-full">

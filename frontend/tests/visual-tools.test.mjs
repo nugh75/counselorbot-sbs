@@ -102,6 +102,11 @@ for (const options of [{ width: 320, locale: 'it', touch: true }, { width: 390, 
             await dialog.getByText(l('emptyBoard'), { exact: true }).waitFor();
             const bounds = await dialog.boundingBox();
             assert.deepEqual({ x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }, { x: 0, y: 0, width: options.width, height: 844 }, 'visual tools fill the viewport');
+            for (const button of await dialog.locator('button:visible').all()) {
+                assert.equal((await button.innerText()).trim(), '', 'visual controls use icons');
+                assert.equal((await button.boundingBox()).width, 44);
+                assert.ok(await button.getAttribute('aria-label'));
+            }
             await dialog.getByLabel(l('titleField'), { exact: true }).fill('Studiare un capitolo');
             await dialog.getByLabel(l('detail'), { exact: true }).fill('Venti minuti e poi richiamo libero');
             await dialog.getByRole('button', { name: l('addAction'), exact: true }).click();
@@ -543,7 +548,7 @@ test('a single separator resizes the sidebar with keyboard and pointer and remem
     } finally { await context.close(); }
 });
 
-test('step navigation stays above the composer while a long conversation scrolls, and advances once', async () => {
+test('step navigation stays below the composer while a long conversation scrolls, and advances once', async () => {
     const { page, context, control } = await fixture(320, 'intro', { touch: true, longConversation: true });
     try {
         const chat = page.getByRole('region', { name: 'CounselorBot AI', exact: true });
@@ -556,7 +561,9 @@ test('step navigation stays above the composer while a long conversation scrolls
         const before = await navigation.boundingBox();
         await log.evaluate(e => { e.scrollTop = 0; });
         assert.equal((await navigation.boundingBox()).y, before.y);
-        assert.ok(before.y + before.height <= (await composer.boundingBox()).y);
+        const inputBox = await composer.boundingBox();
+        assert.ok(before.y >= inputBox.y + inputBox.height);
+        assert.ok(before.y + before.height <= 844);
         assert.ok(before.y >= (await log.boundingBox()).y + (await log.boundingBox()).height - 1);
         assert.match(await navigation.textContent(), /1\/3/);
         await navigation.getByRole('button').last().click();

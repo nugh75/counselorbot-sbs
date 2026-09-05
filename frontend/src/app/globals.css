@@ -228,10 +228,6 @@
   .chat-viewport > .flex > .min-h-chat { order: -1; flex: none; }
 }
 
-/* Conversation mode uses its own back action; global navigation returns on exit. */
-body:has(.chat-viewport) .console-header { display: none; }
-body:has(.chat-viewport) main#contenuto { padding-top: 1rem; }
-
 /* Keep the empty composer compact on short mobile screens. */
 @media (max-width: 1023px) and (max-height: 640px) {
   .chat-viewport textarea:placeholder-shown { white-space: nowrap; }
