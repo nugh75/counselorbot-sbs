@@ -228,14 +228,19 @@
   .chat-viewport > .flex > .min-h-chat { order: -1; flex: none; }
 }
 
-/* On short mobile screens the chat header already identifies the current
-   phase; give the conversation the space taken by the overall flow overview. */
+/* Conversation mode uses its own back action; global navigation returns on exit. */
+body:has(.chat-viewport) .console-header { display: none; }
+body:has(.chat-viewport) main#contenuto { padding-top: 1rem; }
+
+/* Keep the empty composer compact on short mobile screens. */
 @media (max-width: 1023px) and (max-height: 640px) {
-  .chat-flow-progress { display: none; }
   .chat-viewport textarea:placeholder-shown { white-space: nowrap; }
   .chat-viewport form .text-center { display: none; }
   .chat-viewport form > .p-3 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
 }
+
+.chat-options button[role="radio"] { min-width: 44px; min-height: 44px; }
+.chat-options summary::-webkit-details-marker { display: none; }
 
 /* Long-form messages keep the reading size through Markdown's small styles. */
 .chat-message :is(p, li, .prose) { font-size: inherit; line-height: inherit; }

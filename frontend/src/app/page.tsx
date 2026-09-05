@@ -759,10 +759,8 @@ export default function Home() {
 
     return (
         <div className={cn("page-wide", step === 'interaction' ? "space-y-4" : "space-y-8")}>
-            {step !== 'intro' && step !== 'base' && !(step === 'counselor-select' && counselorOpenedFromHome) && (
-                <div className={step === 'interaction' ? 'chat-flow-progress' : undefined}>
-                    <FlowStepper steps={flowStages} current={stageIndex} />
-                </div>
+            {step !== 'intro' && step !== 'base' && step !== 'interaction' && !(step === 'counselor-select' && counselorOpenedFromHome) && (
+                <FlowStepper steps={flowStages} current={stageIndex} />
             )}
 
             {/* Ogni passo porta la propria testata: il titolo sta nella schermata
@@ -862,7 +860,7 @@ export default function Home() {
                     {/* Step: Guided Chat Interaction */}
                     {step === 'interaction' && scores && selectedQuestionnaire && (
                         <div className="space-y-3">
-                            <BackButton onClick={goBack} label={t('nav.back')} />
+                            {experience !== 'standard' && <BackButton onClick={goBack} label={t('nav.back')} />}
                             {experience === null ? (
                                 /* Scelta modalità, compatta (tasti piccoli, affiancati). */
                                 <div className="max-w-md mx-auto">
@@ -887,6 +885,7 @@ export default function Home() {
                                 /* Schermata 3: chat (modalità già scelta, nessun toggle in alto). */
                                 <ChatViewport>
                                 <GuidedChatInterface
+                                    onBack={goBack}
                                     scores={scores}
                                     questionnaireType={selectedQuestionnaire.id}
                                     onComplete={handleInteractionComplete}

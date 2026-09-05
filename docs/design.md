@@ -155,8 +155,9 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   e `safe-area-inset`. Nel percorso guidato `ChatViewport` misura lo spazio sotto
   i comandi della pagina e segue il ridimensionamento del viewport visibile.
   I messaggi scorrono dentro la chat; scrittura e avanzamento restano raggiungibili.
-  Sugli schermi mobili bassi la fase è indicata nella chat e la panoramica del
-  percorso lascia spazio ai messaggi. In OpenCode, sotto 1280px, la conversazione
+  Durante la conversazione, su desktop e mobile, la navigazione generale e la
+  panoramica del percorso sono nascoste; Indietro le rende nuovamente disponibili.
+  In OpenCode, sotto 1280px, la conversazione
   precede il pannello dei punteggi, che resta disponibile scorrendo la pagina.
 - **Focus**: anello `2px` petrol con `outline-offset: 2px` su tutti gli
   interattivi, via `:focus-visible`. Non si rimuove.
@@ -165,6 +166,12 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
 - **Intestazione**: navigazione completa da `xl` (1280px); sotto questa soglia
   il menu raccoglie anche counselor, strumento e movimento. I nomi lunghi
   vengono troncati entro lo spazio disponibile.
+- **Chat essenziale**: Indietro è nella testata della chat guidata. Le attività
+  visive sono nelle risorse, fuori dalla testata. La sidebar desktop ha un solo
+  pulsante per chiudere/riaprire e un divisore regolabile con mouse o tastiera;
+  su mobile le risorse si aprono sotto la conversazione. I suggerimenti di prompt
+  sono rimossi; lunghezza e congelamento sono sotto i tre punti accanto al campo
+  di scrittura. Le risposte funzionali all’intervista Savickas restano disponibili.
 - **Selezione strumento**: la barra con nome selezionato e Continua resta
   visibile sotto l’intestazione durante lo scorrimento.
 - **Home di ritorno**: ripresa e catalogo completo precedono le attività
