@@ -77,6 +77,7 @@ for (const width of [320, 390, 1440]) {
             await page.locator('figure svg g.node').first().waitFor();
             const buttons = page.locator('figure button:visible');
             for (const button of await buttons.all()) {
+                await button.scrollIntoViewIfNeeded();
                 const box = await button.boundingBox();
                 assert.ok(box.x >= 0 && box.x + box.width <= width, 'diagram control fits viewport');
                 assert.equal((await button.innerText()).trim(), '', 'diagram controls use icons');
@@ -224,13 +225,57 @@ test('guided steps keep future neighbours hidden and survive fullscreen', async 
     } finally { await context.close(); }
 });
 
+for (const width of [320, 1440]) {
+    test(`diagram toolbar stays in one row and its menu preserves drawing space at ${width}px`, async () => {
+        const { page, context, control } = await fixture(width, 'intro', { graph: true, dark: width === 320 });
+        try {
+            await page.locator('figure .dg-node').first().waitFor();
+            await page.getByRole('button', { name: 'Apri il diagramma a schermo intero' }).click();
+            const dialog = page.getByRole('dialog');
+            const toolbar = dialog.locator('[data-diagram-controls]');
+            const viewport = dialog.locator('[data-diagram-viewport]');
+            const bar = await toolbar.boundingBox();
+            assert.ok(bar.height <= 56, 'the toolbar occupies one compact row');
+            const drawing = await viewport.boundingBox();
+            assert.ok(drawing.height > 844 * 0.7, 'the drawing gets most of the viewport');
+            const menu = dialog.getByRole('button', { name: 'Zoom ed esportazione', exact: true });
+            const close = dialog.getByRole('button', { name: 'Chiudi lo schermo intero', exact: true });
+            for (const button of [menu, close]) {
+                const box = await button.boundingBox();
+                assert.ok(box.x >= 0 && box.x + box.width <= width);
+                assert.ok(Math.abs(box.y - bar.y - 4) < 1, 'controls align in the same row');
+            }
+            await menu.click();
+            const popup = dialog.locator('[popover]:popover-open');
+            await popup.waitFor();
+            assert.deepEqual(await viewport.boundingBox(), drawing, 'options overlay the drawing without shrinking it');
+            const bounds = await popup.boundingBox();
+            assert.ok(bounds.x >= 0 && bounds.y >= 0 && bounds.x + bounds.width <= width && bounds.y + bounds.height <= 844);
+            await popup.getByRole('button', { name: 'Scarica SVG', exact: true }).focus();
+            await page.getByRole('tooltip', { name: 'Scarica SVG', exact: true }).waitFor();
+            await page.keyboard.press('Escape');
+            await page.keyboard.press('Escape');
+            await popup.waitFor({ state: 'hidden' });
+            assert.ok(await menu.evaluate(el => el === document.activeElement));
+            assert.ok(await dialog.isVisible(), 'Escape closes options before fullscreen');
+            await dialog.getByRole('button', { name: 'Passo-passo', exact: true }).click();
+            assert.equal((await toolbar.boundingBox()).height, bar.height, 'step controls share the same row');
+            await dialog.getByRole('button', { name: 'Un passo avanti', exact: true }).click();
+            assert.ok(await dialog.getByText('Passaggio 2 di 4', { exact: true }).isVisible());
+            await close.click();
+            await dialog.waitFor({ state: 'detached' });
+            assert.deepEqual(control.errors, []);
+        } finally { await context.close(); }
+    });
+}
+
 test('exports contain the full graph despite partial steps and recover from failure', async () => {
     const { page, context, control } = await fixture(1440, 'intro', { graph: true });
     try {
         const figure = page.locator('figure');
         await figure.locator('.dg-node').first().waitFor();
         await figure.getByRole('button', { name: 'Passo-passo', exact: true }).click();
-        await figure.locator('summary').click();
+        await figure.getByRole('button', { name: 'Zoom ed esportazione', exact: true }).click();
         control.failExport = true;
         await figure.getByRole('button', { name: 'Scarica SVG' }).click();
         await figure.getByRole('alert').waitFor();
@@ -253,7 +298,7 @@ test('motion is opt-in, playback pauses and reduced motion stops it', async () =
         const figure = page.locator('figure');
         await figure.locator('.dg-node').first().waitFor();
         assert.equal(await figure.locator('.dg-node').first().evaluate(node => getComputedStyle(node).transitionDuration), '0s');
-        await figure.locator('summary').click();
+        await figure.getByRole('button', { name: 'Zoom ed esportazione', exact: true }).click();
         await figure.getByRole('checkbox', { name: 'Animazioni leggere' }).check();
         assert.equal(await figure.locator('.dg-node').first().evaluate(node => getComputedStyle(node).transitionDuration), '0.16s');
         await figure.getByRole('button', { name: 'Passo-passo', exact: true }).click();
@@ -267,6 +312,7 @@ test('motion is opt-in, playback pauses and reduced motion stops it', async () =
         await page.evaluate(() => { document.documentElement.dataset.motion = 'reduced'; });
         await figure.getByRole('button', { name: 'Riproduci la spiegazione' }).waitFor();
         assert.ok(await figure.getByRole('button', { name: 'Riproduci la spiegazione' }).isDisabled());
+        await figure.getByRole('button', { name: 'Zoom ed esportazione', exact: true }).click();
         assert.equal(await figure.getByRole('checkbox').isChecked(), false);
         assert.deepEqual(control.errors, []);
     } finally { await context.close(); }
@@ -287,10 +333,10 @@ test('fullscreen touch zoom and drag preserve selection and can be recentered', 
         await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: x - 30, y }, { x: x + 30, y }] });
         await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x - 60, y }, { x: x + 60, y }] });
         await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-        await dialog.locator('summary').click();
+        await dialog.getByRole('button', { name: 'Zoom ed esportazione', exact: true }).click();
         assert.ok(parseInt(await dialog.locator('[data-diagram-zoom]').textContent()) > 150);
         assert.equal(await dialog.locator('.dg-selected').count(), 0);
-        await dialog.locator('summary').click();
+        await dialog.getByRole('button', { name: 'Zoom ed esportazione', exact: true }).click();
         // Let the viewport finish resizing after the tools panel closes.
         await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
         const panBox = await viewport.boundingBox();
@@ -301,7 +347,7 @@ test('fullscreen touch zoom and drag preserve selection and can be recentered', 
         await page.waitForFunction(({ element, previous }) => element.scrollTop > previous + 60, { element: await viewport.elementHandle(), previous: topBefore });
         await session.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
         assert.equal(await dialog.locator('.dg-selected').count(), 0);
-        await dialog.locator('summary').click();
+        await dialog.getByRole('button', { name: 'Zoom ed esportazione', exact: true }).click();
         await dialog.getByRole('button', { name: 'Adatta allo spazio' }).click();
         assert.equal(await dialog.locator('[data-diagram-zoom]').textContent(), '100%');
         await page.waitForFunction(element => element.scrollTop === 0 && element.scrollLeft === 0, await viewport.elementHandle());
@@ -332,7 +378,7 @@ test('fullscreen retains the reading position and zoom on return to the card', a
         const figure = page.locator('figure');
         await figure.locator('.dg-node').first().waitFor();
         await figure.getByRole('button', { name: 'Lettura', exact: true }).click();
-        await figure.locator('summary').click();
+        await figure.getByRole('button', { name: 'Zoom ed esportazione', exact: true }).click();
         await figure.getByRole('button', { name: 'Ingrandisci', exact: true }).click();
         const viewport = figure.locator('[data-diagram-viewport]');
         await viewport.evaluate(element => { element.scrollTop = element.scrollHeight * 0.5; });
