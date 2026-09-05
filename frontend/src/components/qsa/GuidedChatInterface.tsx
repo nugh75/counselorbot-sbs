@@ -1,6 +1,6 @@
 'use client';
 
-import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, MoreHorizontal } from 'lucide-react';
+import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, RefreshCw, GitBranch, Layers, PanelLeft } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
@@ -21,6 +21,7 @@ import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/Res
 import { toast } from '@/components/ui/Toast';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { ChatActionsPopover } from '@/components/ui/ChatActionsPopover';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
 import { MessageDiagramButton, type SavedMessageDiagram } from '@/components/ui/MessageDiagramButton';
 import { IdeaBranchBar } from '@/components/qsa/IdeaBranchBar';
@@ -1481,29 +1482,42 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const showRepeatStep = lastAnalysisFailed && isAnalysisStep(currentPhase);
     const hasStepNavigation = showPreviousStep || showStandardAdvance || showSavickasAdvance || showRepeatStep;
 
+    const nextStepLabel = currentPhase === FIXED_QUESTIONS_ID ? t('guided.concludeSession') : t(questionnaireType === 'SAVICKAS' ? 'guided.nextTopic' : 'guided.nextStep');
+    const stepButtonClass = 'h-[44px] w-[44px] shrink-0 p-0';
+    const messageActionClass = 'chat-action-item flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 text-left text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50';
     const renderStepNavigation = () => (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1">
             {showPreviousStep && <Tooltip content={t('guided.prevStep')} side="top">
-                <Button type="button" variant="secondary" className="min-h-[44px] min-w-[44px] px-3" aria-label={t('guided.prevStep')} disabled={isLoading} onClick={goToPreviousStep}>
-                    <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                <Button type="button" variant="ghost" className={stepButtonClass} aria-label={t('guided.prevStep')} disabled={isLoading} onClick={goToPreviousStep}>
+                    <ChevronLeft className="h-5 w-5" aria-hidden="true" />
                 </Button>
             </Tooltip>}
-            {showStandardAdvance && <Button type="button" variant="secondary" className="min-h-[44px] max-w-full whitespace-normal text-left" disabled={isLoading} onClick={() => void advancePhase()}>
-                {currentPhase === FIXED_QUESTIONS_ID ? t('guided.concludeSession') : t('guided.nextStep')}
-                <ChevronRight className="h-4 w-4 shrink-0" aria-hidden="true" />
-            </Button>}
-            {showSavickasAdvance && <Button type="button" variant="secondary" className="min-h-[44px] max-w-full whitespace-normal text-left" disabled={isLoading} onClick={() => void advancePhase()}>
-                {t('guided.nextTopic')}<ChevronRight className="h-4 w-4 shrink-0" aria-hidden="true" />
-            </Button>}
-            {showRepeatStep && <Button type="button" variant="secondary" className="min-h-[44px] max-w-full whitespace-normal text-left" disabled={isLoading} onClick={repeatCurrentStep}>{t('guided.repeatStep')}</Button>}
+            {(showStandardAdvance || showSavickasAdvance) && <Tooltip content={nextStepLabel} side="top">
+                <Button type="button" variant="ghost" className={stepButtonClass} aria-label={nextStepLabel} disabled={isLoading} onClick={() => void advancePhase()}>
+                    {currentPhase === FIXED_QUESTIONS_ID ? <CheckCircle2 className="h-5 w-5" aria-hidden="true" /> : <ChevronRight className="h-5 w-5" aria-hidden="true" />}
+                </Button>
+            </Tooltip>}
+            {showRepeatStep && <Tooltip content={t('guided.repeatStep')} side="top">
+                <Button type="button" variant="ghost" className={stepButtonClass} aria-label={t('guided.repeatStep')} disabled={isLoading} onClick={repeatCurrentStep}>
+                    <RefreshCw className="h-5 w-5" aria-hidden="true" />
+                </Button>
+            </Tooltip>}
         </div>
     );
+    const stepNavigation = !isIdea && hasStepNavigation ? <nav aria-label={chatLayoutLabel(activeLocale, 'navigation')} className="flex shrink-0 items-center justify-between gap-2 bg-slate-50 px-2 py-1 lg:rounded-lg lg:border lg:border-slate-200 lg:px-3">
+        <div className="min-w-0 text-xs font-medium text-slate-600">
+            <span>{chatLayoutLabel(activeLocale, 'step')} {currentStepIndex}/{totalSteps}</span>
+            <span className="ml-2 hidden font-semibold text-slate-800 lg:inline">{getPhaseLabel(currentPhase)}</span>
+        </div>
+        {renderStepNavigation()}
+    </nav> : null;
 
     return (
         <div className="space-y-4">
         <ChatWorkspace locale={activeLocale} subtitle={getPhaseLabel(currentPhase)} headerClassName={currentColors.headerBg}
             resourceCount={recommendations.reading.length + recommendations.strategy.length}
             onBack={onBack}
+            advancement={stepNavigation}
             tools={<VisualTools sessionId={sessionId} locale={activeLocale} catalog={recommendations} request={visualRequest}
                         onDiscuss={currentPhase === FIXED_CONCLUSION_ID ? undefined : text => {
                             setInput(previous => previous.trim() ? `${previous}\n\n${text}` : text);
@@ -1620,6 +1634,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     </div>
                 )}
             </>}>
+            {openPanel => <>
                 <p className="sr-only" aria-live="polite">{liveAnnouncement}</p>
 
                 {/* Messages */}
@@ -1628,7 +1643,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     onScroll={(event) => { stickToBottom.current = isNearBottom(event.currentTarget); }}
                     role="log"
                     aria-labelledby="guided-chat-title"
-                    className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 space-y-6"
+                    className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-2 sm:p-4 space-y-4 lg:space-y-6"
                 >
                     {isIdea && (
                         <div className="space-y-3">
@@ -1681,8 +1696,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             {msg.role === 'system' ? (
                                 <span className="max-w-full break-words rounded-full bg-slate-50 px-3 py-2 text-2xs font-medium uppercase tracking-widest text-slate-500">{msg.content}</span>
                             ) : (
-                                <div className={cn("flex min-w-0 max-w-[94%] flex-col gap-1 sm:max-w-[90%]", msg.role === 'user' ? "items-end" : "items-start")}>
-                                    <ChatBubble role={msg.role === 'user' ? 'user' : 'assistant'}>
+                                <div className={cn("flex min-w-0 max-w-full flex-col gap-1 lg:max-w-[90%]", msg.role === 'user' ? "items-end" : "items-start")}>
+                                    <ChatBubble role={msg.role === 'user' ? 'user' : 'assistant'} className="px-3 py-2 sm:px-3 sm:py-2 lg:px-5 lg:py-3.5">
                                         {msg.role === 'assistant' ? (
                                             <div className="space-y-2">
                                                 {msg.reasoning && (
@@ -1707,7 +1722,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                     </div>
                                                 )}
                                                 {msg.content.trim() ? (
-                                                    <div className="min-w-0 max-w-full overflow-hidden rounded-lg border border-slate-200/80 bg-white">
+                                                    <div className="min-w-0 max-w-full overflow-hidden bg-white lg:rounded-lg lg:border lg:border-slate-200/80">
                                                         <GuidedMessageContent
                                                             content={msg.content}
                                                             locale={activeLocale}
@@ -1726,10 +1741,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
                                     {msg.role === 'assistant' && msg.content.trim() && (
                                         <div className="flex min-w-0 w-full flex-wrap items-center gap-1">
-                                            <Button type="button" variant="ghost" className="min-h-[44px] text-indigo-700" disabled={isLoading}
-                                                onClick={() => setVisualRequest({ text: diagramContentForSpeech(msg.content) || msg.content, nonce: Date.now() })}>
-                                                {visualLabel(activeLocale, 'organize')}
-                                            </Button>
                                             <MessageDiagramButton
                                                 text={diagramContentForSpeech(msg.content) || msg.content}
                                                 locale={activeLocale}
@@ -1742,50 +1753,30 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                 savedDiagrams={savedDiagrams}
                                                 onSaved={diagram => setSavedDiagrams(previous => ({ ...previous, [diagram.source_key]: diagram }))}
                                                 disabled={isLoading}
+                                                renderTrigger={(toggleDiagram, diagramOpen) => <ChatActionsPopover label={chatLayoutLabel(activeLocale, 'messageActions')} inlineDesktop>
+                                                    {close => <>
+                                                        <button type="button" className={messageActionClass} disabled={isLoading} onClick={() => {
+                                                            close();
+                                                            setVisualRequest({ text: diagramContentForSpeech(msg.content) || msg.content, nonce: Date.now() });
+                                                        }}><Layers className="h-4 w-4 shrink-0" aria-hidden="true" />{visualLabel(activeLocale, 'organize')}</button>
+                                                        <button type="button" className={messageActionClass} disabled={isLoading} aria-expanded={diagramOpen} onClick={() => { close(); toggleDiagram(); }}>
+                                                            <GitBranch className="h-4 w-4 shrink-0" aria-hidden="true" />{t('guided.diagram')}
+                                                        </button>
+                                                        {diagramContentForSpeech(msg.content) && <button type="button" className={messageActionClass} disabled={isAudioLoading} onClick={() => { close(); void handlePlayTTS(diagramContentForSpeech(msg.content), idx); }}>
+                                                            {isAudioLoading && playingMessageIdx === idx ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : playingMessageIdx === idx ? <Square className="h-4 w-4 fill-current" aria-hidden="true" /> : <Volume2 className="h-4 w-4" aria-hidden="true" />}
+                                                            {playingMessageIdx === idx ? t('guided.stopListen') : t('guided.listen')}
+                                                        </button>}
+                                                        {(!!msg.strategyIds?.length || !!msg.responseId) && <>
+                                                            <button type="button" className={messageActionClass} aria-pressed={msg.feedback === true} onClick={() => { close(); void submitStrategyFeedback(idx, true); }}>
+                                                                <ThumbsUp className="h-4 w-4" aria-hidden="true" />{t('guided.feedback.helpful')}
+                                                            </button>
+                                                            <button type="button" className={messageActionClass} aria-pressed={msg.feedback === false} onClick={() => { close(); void submitStrategyFeedback(idx, false); }}>
+                                                                <ThumbsDown className="h-4 w-4" aria-hidden="true" />{t('guided.feedback.notHelpful')}
+                                                            </button>
+                                                        </>}
+                                                    </>}
+                                                </ChatActionsPopover>}
                                             />
-                                            {diagramContentForSpeech(msg.content) && (
-                                            <button
-                                                onClick={() => handlePlayTTS(diagramContentForSpeech(msg.content), idx)}
-                                                disabled={isAudioLoading}
-                                                className={cn(
-                                                    "flex items-center gap-1.5 px-2 py-1 rounded-md text-2xs font-medium transition-colors border",
-                                                    playingMessageIdx === idx
-                                                        ? "bg-indigo-50 text-indigo-600 border-indigo-200"
-                                                        : "bg-transparent text-slate-500 border-transparent hover:bg-slate-50 hover:text-slate-600"
-                                                )}
-                                            >
-                                                {isAudioLoading && playingMessageIdx === idx ? (
-                                                    <Loader2 className="w-3 h-3 animate-spin" />
-                                                ) : playingMessageIdx === idx ? (
-                                                    <Square className="w-3 h-3 fill-current" />
-                                                ) : (
-                                                    <Volume2 className="w-3 h-3" />
-                                                )}
-                                                {playingMessageIdx === idx ? t('guided.stopListen') : t('guided.listen')}
-                                            </button>
-                                            )}
-                                            {(!!msg.strategyIds?.length || !!msg.responseId) && (
-                                                <>
-                                                    <button
-                                                        type="button"
-                                                        title={t('guided.feedback.helpful')}
-                                                        aria-label={t('guided.feedback.helpful')}
-                                                        onClick={() => submitStrategyFeedback(idx, true)}
-                                                        className={cn("tap-icon rounded text-slate-500 hover:text-green-600", msg.feedback === true && "text-green-600")}
-                                                    >
-                                                        <ThumbsUp className="w-3.5 h-3.5" />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        title={t('guided.feedback.notHelpful')}
-                                                        aria-label={t('guided.feedback.notHelpful')}
-                                                        onClick={() => submitStrategyFeedback(idx, false)}
-                                                        className={cn("tap-icon rounded text-slate-500 hover:text-red-600", msg.feedback === false && "text-red-600")}
-                                                    >
-                                                        <ThumbsDown className="w-3.5 h-3.5" />
-                                                    </button>
-                                                </>
-                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -1804,10 +1795,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     )}
                 </div>
 
-                {!isIdea && hasStepNavigation && <nav aria-label={chatLayoutLabel(activeLocale, 'navigation')} className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-slate-50 px-3 py-2">
-                    <p className="text-xs font-medium text-slate-600">{chatLayoutLabel(activeLocale, 'step')} {currentStepIndex}/{totalSteps}</p>
-                    {renderStepNavigation()}
-                </nav>}
+                {stepNavigation && <div className="border-t border-slate-200 lg:hidden">{stepNavigation}</div>}
 
                 {/* Input Area */}
                 {currentPhase === FIXED_CONCLUSION_ID ? (
@@ -1902,21 +1890,19 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                     </Tooltip>
                                 </>
                             )}
-                            <details className="chat-options relative shrink-0"
-                                onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) event.currentTarget.open = false; }}
-                                onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); event.currentTarget.open = false; event.currentTarget.querySelector('summary')?.focus(); } }}>
-                                <summary aria-label={chatLayoutLabel(activeLocale, 'options')} className="flex h-[44px] w-[44px] cursor-pointer list-none items-center justify-center rounded-md text-slate-500 hover:bg-slate-100">
-                                    <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
-                                </summary>
-                                <div className="absolute bottom-full left-0 z-20 mb-2 w-64 space-y-3 rounded-lg border border-slate-200 bg-white p-3 shadow-lg">
-                                    <p className="text-sm font-semibold text-slate-700">{t('responseLength.label')}</p>
+                            <ChatActionsPopover label={chatLayoutLabel(activeLocale, 'options')}>
+                                {close => <div className="space-y-2">
+                                    <button type="button" className={messageActionClass} onClick={() => { close(); openPanel(); }}>
+                                        <PanelLeft className="h-4 w-4 shrink-0" aria-hidden="true" />{chatLayoutLabel(activeLocale, 'panelTitle')}
+                                        {recommendations.reading.length + recommendations.strategy.length > 0 && <span className="ml-auto text-xs">{recommendations.reading.length + recommendations.strategy.length}</span>}
+                                    </button>
+                                    <p className="px-2 text-sm font-semibold text-slate-700">{t('responseLength.label')}</p>
                                     <ResponseLengthSelector value={responseLength} onChange={setResponseLength} disabled={isLoading} />
-                                    <button type="button" onClick={() => void handleFreeze()} disabled={isLoading || !sessionId}
-                                        className="flex min-h-[44px] w-full items-center gap-2 rounded-md text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50">
+                                    <button type="button" onClick={() => { close(); void handleFreeze(); }} disabled={isLoading || !sessionId} className={messageActionClass}>
                                         <Snowflake className="h-4 w-4" aria-hidden="true" />{t('frozen.freeze')}
                                     </button>
-                                </div>
-                            </details>
+                                </div>}
+                            </ChatActionsPopover>
                             <AutoGrowTextarea
                                 id="guided-composer"
                                 value={input}
@@ -1927,7 +1913,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                         void handleSend(e);
                                     }
                                 }}
-                                placeholder={inputPlaceholder}
+                                placeholder={chatLayoutLabel(activeLocale, 'write')}
+                                aria-label={inputPlaceholder}
                                 minRows={1}
                                 maxRows={6}
                                 className="min-w-0 flex-1 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50"
@@ -1959,6 +1946,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         </div>
                     </form>
                 )}
+            </>}
         </ChatWorkspace>
 
         {/* Idea: mappa e rami sotto la conversazione, sempre raggiungibili. */}

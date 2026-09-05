@@ -198,6 +198,42 @@ test('leaving chat restores the header with counselor selection and motion setti
     } finally { await context.close(); }
 });
 
+for (const width of [320, 390]) {
+    test(`mobile chat keeps controls compact at ${width}px`, async () => {
+        const { page, context, errors } = await fixture({ width, height: 844, dark: width === 320 });
+        try {
+            await page.goto(`${origin}/?frozen=design-fixture`, { waitUntil: 'networkidle' });
+            const composer = page.locator('#guided-composer');
+            await composer.waitFor();
+            await settled(page);
+            assert.equal(await composer.getAttribute('placeholder'), 'Scrivi…');
+            assert.ok((await composer.boundingBox()).height <= 50, 'empty composer uses one line');
+            const next = page.getByRole('button', { name: 'Prossimo Step', exact: true });
+            assert.ok((await next.boundingBox()).width <= 48, 'next step is an icon');
+            assert.equal((await next.innerText()).trim(), '');
+            assert.equal(await page.getByRole('button', { name: 'Crea una carta', exact: true }).count(), 0);
+            const actions = page.getByRole('button', { name: 'Azioni del messaggio', exact: true }).last();
+            await actions.click();
+            const menu = page.getByRole('group', { name: 'Azioni del messaggio', exact: true });
+            const box = await menu.boundingBox();
+            assert.ok(box.x >= 0 && box.y >= 0 && box.x + box.width <= width && box.y + box.height <= 844);
+            await page.getByRole('button', { name: 'Diagramma', exact: true }).click();
+            await page.locator('input[maxlength="400"]').waitFor();
+            assert.equal(await menu.isVisible(), false, 'selection closes the menu');
+            await actions.click();
+            await menu.waitFor({ state: 'visible' });
+            await page.keyboard.press('Tab');
+            assert.equal(await menu.evaluate(el => el.contains(document.activeElement)), true);
+            await page.keyboard.press('Escape');
+            assert.equal(await actions.evaluate(el => el === document.activeElement), true);
+            await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
+            await page.locator('.chat-options:popover-open').getByRole('button', { name: 'Percorso e risorse', exact: true }).click();
+            await page.getByRole('complementary', { name: 'Percorso e risorse', exact: true }).waitFor();
+            assert.deepEqual(errors, []);
+        } finally { await context.close(); }
+    });
+}
+
 for (const width of [320, 1440]) {
     test(`conversation options stay secondary and keep the draft at ${width}px`, async () => {
         const { page, context } = await fixture({ width, height: 844, dark: width === 320 });
@@ -205,16 +241,70 @@ for (const width of [320, 1440]) {
             await page.goto(`${origin}/?frozen=design-fixture`, { waitUntil: 'networkidle' });
             const composer = page.locator('#guided-composer');
             await composer.fill('Conservo la mia domanda.');
-            const options = page.locator('.chat-options');
-            assert.equal(await options.getAttribute('open'), null);
-            await options.locator('summary').click();
+            const options = page.getByRole('group', { name: 'Opzioni della conversazione', exact: true, includeHidden: true });
+            assert.equal(await options.isVisible(), false);
+            await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
             await page.getByRole('radio', { name: 'Lunghezza risposta: Breve', exact: true }).click();
             assert.equal(await page.getByRole('radio', { name: 'Lunghezza risposta: Breve', exact: true }).getAttribute('aria-checked'), 'true');
             const freeze = await options.getByRole('button', { name: 'Congela sessione', exact: true }).boundingBox();
-            assert.ok(freeze.x >= 0 && freeze.y >= 0 && freeze.x + freeze.width <= width);
+            assert.ok(freeze.x >= 0 && freeze.y >= 0 && freeze.x + freeze.width <= width && freeze.y + freeze.height <= 844);
             await page.keyboard.press('Escape');
-            assert.equal(await options.getAttribute('open'), null);
+            assert.equal(await options.isVisible(), false);
             assert.equal(await composer.inputValue(), 'Conservo la mia domanda.');
         } finally { await context.close(); }
     });
 }
+
+
+test('desktop advancement sits below the chat box and names the current step', async () => {
+    const { page, context } = await fixture({ width: 1440, height: 1000, touch: false });
+    try {
+        await page.goto(`${origin}/?frozen=design-fixture`, { waitUntil: 'networkidle' });
+        await page.locator('#guided-composer').waitFor();
+        const chat = page.locator('section[aria-labelledby="guided-chat-title"]');
+        const advancement = page.getByRole('navigation', { name: 'Avanzamento del percorso', exact: true });
+        const chatBox = await chat.boundingBox();
+        const stepBox = await advancement.boundingBox();
+        assert.ok(stepBox.y >= chatBox.y + chatBox.height, 'advancement follows the entire chat box');
+        assert.ok(stepBox.y + stepBox.height <= 1000, 'advancement stays in the viewport');
+        assert.match(await advancement.innerText(), /Introduzione/);
+        assert.doesNotMatch(await chat.locator('header').innerText(), /Introduzione/);
+        assert.ok((await page.locator('#guided-composer').boundingBox()).y < stepBox.y);
+    } finally { await context.close(); }
+});
+
+test('step icons advance, retry a failed analysis, and return without clearing the conversation', async () => {
+    const { page, context, errors } = await fixture({ width: 390, height: 844 });
+    const requests = [];
+    let fail = true;
+    await page.route('**/api/qsa/guided-ui-texts?*', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ guided_steps: [
+        { id: 'intro', label: 'Introduzione', sort_order: 1, system_prompt_mode: 'qsa-intro' },
+        { id: 'cognitive', label: 'Processi cognitivi', sort_order: 2, system_prompt_mode: 'qsa-cognitive' },
+    ] }) }));
+    await page.route(/\/api\/chat(?:\/stream)?$/, route => {
+        requests.push(route.request().postDataJSON());
+        if (fail) return route.fulfill({ status: 503, contentType: 'application/json', body: '{}' });
+        const response = 'Riprendiamo il passo: scegli una situazione concreta.';
+        return route.fulfill({ contentType: 'text/event-stream', body: `data: ${JSON.stringify({ display: response })}\n\ndata: ${JSON.stringify({ done: true, response })}\n\n` });
+    });
+    try {
+        await page.goto(`${origin}/?frozen=design-fixture`, { waitUntil: 'networkidle' });
+        const log = page.getByRole('log');
+        const initialMessages = await log.locator('.chat-message').count();
+        assert.equal(await page.getByRole('button', { name: 'Ripeti Passaggio', exact: true }).count(), 0);
+        await page.getByRole('button', { name: 'Prossimo Step', exact: true }).click();
+        const retry = page.getByRole('button', { name: 'Ripeti Passaggio', exact: true });
+        await retry.waitFor();
+        assert.equal((await retry.innerText()).trim(), '');
+        const previousRequests = requests.length;
+        fail = false;
+        await retry.click();
+        await log.getByText('Riprendiamo il passo: scegli una situazione concreta.', { exact: true }).waitFor();
+        assert.ok(requests.length > previousRequests);
+        assert.equal(requests.at(-1).phase, 'cognitive');
+        await page.getByRole('button', { name: 'Step Precedente', exact: true }).click();
+        await page.getByRole('navigation', { name: 'Avanzamento del percorso' }).getByText('Passo 1/4', { exact: true }).waitFor();
+        assert.ok(await log.locator('.chat-message').count() >= initialMessages);
+        assert.deepEqual(errors, []);
+    } finally { await context.close(); }
+});

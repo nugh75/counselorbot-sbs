@@ -193,6 +193,7 @@ test('organizing a message creates an editable card with its source, without sen
     const { page, context, control } = await fixture(390);
     const l = key => visualLabel('it', key);
     try {
+        await page.getByRole('button', { name: chatLayoutLabel('it', 'messageActions'), exact: true }).click();
         await page.getByRole('button', { name: l('organize'), exact: true }).click();
         const dialog = page.getByRole('dialog');
         await dialog.getByRole('textbox', { name: l('cardText'), exact: true }).waitFor();

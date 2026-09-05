@@ -155,6 +155,13 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   e `safe-area-inset`. Nel percorso guidato `ChatViewport` misura lo spazio sotto
   i comandi della pagina e segue il ridimensionamento del viewport visibile.
   I messaggi scorrono dentro la chat; scrittura e avanzamento restano raggiungibili.
+  Nella chat guidata, su desktop la barra di avanzamento segue il riquadro della
+  conversazione e della scrittura e contiene il nome del passo; su mobile precede
+  la scrittura. I comandi dei passi sono icone da 44px con etichette accessibili.
+  Il menu accanto alla scrittura raccoglie percorso e risorse, lunghezza della
+  risposta e congelamento. Su mobile le azioni di ogni risposta stanno nel suo
+  menu a tre punti; i diagrammi creati restano visibili nel trascritto. Il campo
+  vuoto parte da una riga e cresce con il testo.
   Durante la conversazione, su desktop e mobile, la navigazione generale e la
   panoramica del percorso sono nascoste; Indietro le rende nuovamente disponibili.
   In OpenCode, sotto 1280px, la conversazione
