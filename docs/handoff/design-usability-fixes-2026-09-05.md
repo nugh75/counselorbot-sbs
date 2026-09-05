@@ -116,3 +116,27 @@ Criteri aggiuntivi: nessuna barra generale in chat; un solo pulsante nella
 testata guidata (Indietro); almeno metà dell’altezza del viewport disponibile
 per i messaggi nelle cinque dimensioni verificate. Opzioni utilizzabili con
 tastiera, conservazione della bozza e ripristino della navigazione all’uscita.
+
+## Esito finale su main e produzione
+
+La semplificazione è nel commit applicativo `17ff7a5`, pubblicato su `main`
+remoto insieme ai fix precedenti. Il branch `fix/design-usability` conserva la
+stessa storia. La pubblicazione è avvenuta senza forzature e include la revisione
+della chat precedentemente distribuita in `4f9599c`.
+
+Immagine finale in esecuzione:
+`counselorbot-10-step-frontend:chat-focus-20260905`,
+ID `sha256:2ef06ec06420c30e839aa47ab93db4757f9a87fb67334cf5092d4efcd7273ba4`.
+La build standard Docker/Turbopack e TypeScript è superata. Il frontend risponde
+200 in locale; il dominio pubblico rimanda al login SSO previsto. Il backend
+rimane in esecuzione con lo stesso avvio precedente alla distribuzione.
+
+Sulla build finale in produzione passano **18 test di usabilità, 14 degli
+artefatti e 23 degli strumenti visivi**. Passano inoltre i 104 test di base;
+lint e traduzioni mantengono gli esiti già riportati. I test browser continuano
+a intercettare tutte le API con dati fittizi.
+
+Nella verifica visiva della chat guidata, l’area messaggi misura circa 604px
+su 390×844 e 366px su 320×568. La guida include le nuove immagini dimostrative,
+senza dati personali, e descrive le opzioni e le risorse nelle sei lingue.
+Le anteprime temporanee avviate per questa lavorazione sono state arrestate.
