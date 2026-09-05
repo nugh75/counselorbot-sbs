@@ -57,3 +57,32 @@ build context `/home/nugh75/counselorbot-sbs-mobile-compact/frontend`.
 Local `/` returns HTTP 200; the public host redirects unauthenticated requests
 (HTTP 302). The running container matches the tested image and starts normally.
 Previous frontend image retained: `counselorbot-10-step-frontend:chat-focus-20260905`.
+
+## Follow-up: mobile resource windows
+
+This follow-up supersedes the mobile resource-panel placement and deployment above.
+The horizontal three-dot conversation menu now has separate Path, Scores and
+Visual tools entries. Path and Scores open native modal windows with an X,
+Escape dismissal, keyboard focus containment and focus restoration. Recommended
+readings and strategies remain reachable through the same menu. No resource
+panel occupies space below the mobile chat. The menu also remains available
+after completion, so visual work can still be consulted and exported.
+
+VisualTools stays mounted when its window closes; opening it from the menu
+preserves drafts and the selected tab. Creating a card from a message still
+opens the card editor with its source. Desktop sidebar resizing and advancement
+below the chat remain intact. The guide and close labels cover all six languages.
+
+Validation: 104 unit tests and all 59 production browser fixture tests passed
+(design, artifacts and visual tools). Lint and TypeScript passed, with the same
+four existing lint warnings. Mobile screenshots were inspected in light and
+dark themes at 320 and 390 px. Browser APIs were mocked; physical phone keyboards
+and authenticated live conversations were not tested.
+
+Only the frontend was rebuilt and recreated, using
+`counselorbot-10-step-frontend:mobile-windows-20260905` and
+`/tmp/cb-mobile-windows-deploy.yml`. Tested and deployed image ID:
+`sha256:0c765e6c3be1d8042d97aedc8a5f4b8606e4cc8b3e4f13895d2aaf1db43ce231`.
+Local HTTP 200 and unauthenticated public HTTP 302 were verified. Backend and
+PostgreSQL container IDs and start times are unchanged. The previous
+`mobile-compact-20260905` image is retained.

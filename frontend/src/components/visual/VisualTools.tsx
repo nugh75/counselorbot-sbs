@@ -17,7 +17,7 @@ type Props = {
     compact?: boolean;
     catalog?: RecommendationCatalog;
     onDiscuss?: (text: string) => void;
-    request?: { text: string; nonce: number } | null;
+    request?: { text?: string; nonce: number } | null;
 };
 const inputClass = 'w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] text-slate-800';
 const buttonClass = 'min-h-[44px] min-w-[44px]';
@@ -92,7 +92,10 @@ function WorkspaceView({ sessionId, locale, compact = false, catalog: providedCa
     useEffect(() => {
         if (!request) return;
         opener.current = document.activeElement as HTMLElement;
-        setDraftCard(request.text); setCardSource(visualLabel(locale, 'fromChat')); setTab('cards'); setOpen(true);
+        if (request.text !== undefined) {
+            setDraftCard(request.text); setCardSource(visualLabel(locale, 'fromChat')); setTab('cards');
+        }
+        setOpen(true);
     }, [request, locale]);
     useEffect(() => {
         if (!dirty) return;

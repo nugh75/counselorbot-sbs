@@ -1,6 +1,6 @@
 'use client';
 
-import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, RefreshCw, GitBranch, Layers, PanelLeft } from 'lucide-react';
+import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, RefreshCw, GitBranch, Layers, PanelLeft, LayoutList, BookOpen } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
@@ -522,10 +522,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const [isAudioLoading, setIsAudioLoading] = useState(false);
     const [showAdvanceSuggestion, setShowAdvanceSuggestion] = useState(false);
     const [userMessagesInPhase, setUserMessagesInPhase] = useState(0);
-    const [isPathPanelOpen, setIsPathPanelOpen] = useState(false);
-    const [isScoresPanelOpen, setIsScoresPanelOpen] = useState(false);
     const [recommendations, setRecommendations] = useState<RecommendationCatalog>(EMPTY_RECOMMENDATIONS);
-    const [visualRequest, setVisualRequest] = useState<{ text: string; nonce: number } | null>(null);
+    const [visualRequest, setVisualRequest] = useState<{ text?: string; nonce: number } | null>(null);
     const [savedDiagrams, setSavedDiagrams] = useState<Record<string, SavedMessageDiagram>>({});
     // Indici dei messaggi con il box "Ragionamento" collassato (toggle per nasconderlo).
     const [hiddenReasoning, setHiddenReasoning] = useState<Set<number>>(new Set());
@@ -1512,10 +1510,42 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         {renderStepNavigation()}
     </nav> : null;
 
+    const renderConversationOptions = (openPanel: (panel?: 'path' | 'scores' | 'resources') => void) => (
+        <ChatActionsPopover label={chatLayoutLabel(activeLocale, 'options')}>
+            {close => <div className="space-y-2">
+                <button type="button" className={`${messageActionClass} hidden lg:flex`} onClick={() => { close(); openPanel(); }}>
+                    <PanelLeft className="h-4 w-4 shrink-0" aria-hidden="true" />{chatLayoutLabel(activeLocale, 'panelTitle')}
+                    {recommendations.reading.length + recommendations.strategy.length > 0 && <span className="ml-auto text-xs">{recommendations.reading.length + recommendations.strategy.length}</span>}
+                </button>
+                <div className="lg:hidden">
+                    {!isIdea && <button type="button" className={messageActionClass} onClick={() => { close(); openPanel('path'); }}>
+                        <PanelLeft className="h-4 w-4 shrink-0" aria-hidden="true" />{t('guided.path')}
+                    </button>}
+                    {hasScoreEntries && <button type="button" className={messageActionClass} onClick={() => { close(); openPanel('scores'); }}>
+                        <BarChart3 className="h-4 w-4 shrink-0" aria-hidden="true" />{t('guided.scores')}
+                    </button>}
+                    <button type="button" className={messageActionClass} aria-label={visualLabel(activeLocale, 'open')} onClick={() => { close(); setVisualRequest({ nonce: Date.now() }); }}>
+                        <LayoutList className="h-4 w-4 shrink-0" aria-hidden="true" />{visualLabel(activeLocale, 'title')}
+                    </button>
+                    {recommendations.reading.length + recommendations.strategy.length > 0 && <button type="button" className={messageActionClass} aria-label={t('recommendations.title')} onClick={() => { close(); openPanel('resources'); }}>
+                        <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />{t('recommendations.title')}
+                        <span className="ml-auto text-xs">{recommendations.reading.length + recommendations.strategy.length}</span>
+                    </button>}
+                </div>
+                {currentPhase !== FIXED_CONCLUSION_ID && <>
+                    <p className="px-2 text-sm font-semibold text-slate-700">{t('responseLength.label')}</p>
+                    <ResponseLengthSelector value={responseLength} onChange={setResponseLength} disabled={isLoading} />
+                    <button type="button" onClick={() => { close(); void handleFreeze(); }} disabled={isLoading || !sessionId} className={messageActionClass}>
+                        <Snowflake className="h-4 w-4" aria-hidden="true" />{t('frozen.freeze')}
+                    </button>
+                </>}
+            </div>}
+        </ChatActionsPopover>
+    );
+
     return (
         <div className="space-y-4">
         <ChatWorkspace locale={activeLocale} subtitle={getPhaseLabel(currentPhase)} headerClassName={currentColors.headerBg}
-            resourceCount={recommendations.reading.length + recommendations.strategy.length}
             onBack={onBack}
             advancement={stepNavigation}
             tools={<VisualTools sessionId={sessionId} locale={activeLocale} catalog={recommendations} request={visualRequest}
@@ -1523,25 +1553,11 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             setInput(previous => previous.trim() ? `${previous}\n\n${text}` : text);
                             window.requestAnimationFrame(() => document.getElementById('guided-composer')?.focus());
                         }} />}
-            sidebar={closePanel => <>
+            sidebar={(closePanel, mobilePanel) => <>
                 {/* Phase Progress — per Idea non esiste una sequenza da mostrare:
                     il passo successivo dipende da cosa manca alla mappa. */}
-                <div className={cn("glass-panel overflow-hidden", isIdea && "hidden")}>
-                    <button
-                        type="button"
-                        onClick={() => setIsPathPanelOpen(open => !open)}
-                        aria-expanded={isPathPanelOpen}
-                        aria-controls="guided-path-panel"
-                        className="flex w-full items-center gap-3 p-4 text-left lg:hidden"
-                    >
-                        <h3 className="min-w-0 flex-1 text-sm font-semibold uppercase tracking-wider text-slate-700">{t('guided.path')}</h3>
-                        <span className="text-xs text-slate-500">{currentStepIndex}/{totalSteps}</span>
-                        <ChevronRight className={cn("h-4 w-4 text-slate-500 transition-transform", isPathPanelOpen && "rotate-90")} />
-                    </button>
-                    <div
-                        id="guided-path-panel"
-                        className={cn("space-y-3 px-4 pb-4 lg:block lg:p-4", !isPathPanelOpen && "hidden lg:block")}
-                    >
+                <div hidden={isIdea || (mobilePanel !== null && mobilePanel !== 'path')} className="glass-panel overflow-hidden">
+                    <div id="guided-path-panel" className="space-y-3 p-4">
                         <div className="hidden items-center justify-between lg:flex">
                             <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">{t('guided.path')}</h3>
                             <span className="text-xs text-slate-500">{currentStepIndex}/{totalSteps}</span>
@@ -1575,7 +1591,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     </div>
                 </div>
 
-                <RecommendationsPanel
+                <div hidden={mobilePanel !== null && mobilePanel !== 'resources'}><RecommendationsPanel
+                    expanded={mobilePanel === 'resources'}
                     catalog={recommendations}
                     sessionId={sessionId}
                     onCatalogChange={setRecommendations}
@@ -1587,26 +1604,12 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             document.getElementById('guided-composer')?.scrollIntoView({ block: 'nearest' });
                         });
                     }}
-                />
+                /></div>
 
                 {/* Scores Display */}
                 {hasScoreEntries && (
-                    <div className="glass-panel overflow-hidden">
-                        <button
-                            type="button"
-                            onClick={() => setIsScoresPanelOpen(open => !open)}
-                            aria-expanded={isScoresPanelOpen}
-                            aria-controls="guided-scores-panel"
-                            className="flex w-full items-center gap-2 p-4 text-left lg:hidden"
-                        >
-                            <BarChart3 className="h-4 w-4 text-slate-600" />
-                            <span className="min-w-0 flex-1 text-sm font-semibold text-slate-700">{t('guided.scores')}</span>
-                            <ChevronRight className={cn("h-4 w-4 text-slate-500 transition-transform", isScoresPanelOpen && "rotate-90")} />
-                        </button>
-                        <div
-                            id="guided-scores-panel"
-                            className={cn("space-y-3 px-4 pb-4 lg:block lg:p-4", !isScoresPanelOpen && "hidden lg:block")}
-                        >
+                    <div hidden={mobilePanel !== null && mobilePanel !== 'scores'} className="glass-panel overflow-hidden">
+                        <div id="guided-scores-panel" className="space-y-3 p-4">
                             <div className="hidden items-center gap-2 text-sm font-semibold text-slate-700 lg:flex">
                                 <BarChart3 className="w-4 h-4" />
                                 {t('guided.scores')}
@@ -1799,7 +1802,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
                 {/* Input Area */}
                 {currentPhase === FIXED_CONCLUSION_ID ? (
-                    <div className="flex justify-center border-t border-slate-100 bg-slate-50 p-3 sm:p-4">
+                    <div className="flex items-center justify-center gap-2 border-t border-slate-100 bg-slate-50 p-3 sm:p-4">
+                        <div className="lg:hidden">{renderConversationOptions(openPanel)}</div>
                         <button
                             onClick={handleComplete}
                             className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors"
@@ -1890,19 +1894,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                     </Tooltip>
                                 </>
                             )}
-                            <ChatActionsPopover label={chatLayoutLabel(activeLocale, 'options')}>
-                                {close => <div className="space-y-2">
-                                    <button type="button" className={messageActionClass} onClick={() => { close(); openPanel(); }}>
-                                        <PanelLeft className="h-4 w-4 shrink-0" aria-hidden="true" />{chatLayoutLabel(activeLocale, 'panelTitle')}
-                                        {recommendations.reading.length + recommendations.strategy.length > 0 && <span className="ml-auto text-xs">{recommendations.reading.length + recommendations.strategy.length}</span>}
-                                    </button>
-                                    <p className="px-2 text-sm font-semibold text-slate-700">{t('responseLength.label')}</p>
-                                    <ResponseLengthSelector value={responseLength} onChange={setResponseLength} disabled={isLoading} />
-                                    <button type="button" onClick={() => { close(); void handleFreeze(); }} disabled={isLoading || !sessionId} className={messageActionClass}>
-                                        <Snowflake className="h-4 w-4" aria-hidden="true" />{t('frozen.freeze')}
-                                    </button>
-                                </div>}
-                            </ChatActionsPopover>
+                            {renderConversationOptions(openPanel)}
                             <AutoGrowTextarea
                                 id="guided-composer"
                                 value={input}

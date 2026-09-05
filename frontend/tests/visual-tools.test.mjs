@@ -81,10 +81,15 @@ async function fixture(width, phase = 'intro', options = {}) {
         return route.fulfill({ contentType: 'application/json', body: JSON.stringify(data) });
     });
     await page.goto(`${origin}/?frozen=fixture`, { waitUntil: 'networkidle' });
-    if (width < 1024 && options.experience !== 'opencode' && options.openResources !== false) {
-        await page.locator('aside > button[aria-controls]').first().click();
-    }
     return { page, context, control };
+}
+
+async function openVisual(page, label) {
+    if (page.viewportSize().width < 1024 && await page.locator('#guided-chat-title').count()) {
+        const locale = await page.evaluate(() => localStorage.getItem('cb_lang'));
+        await page.getByRole('button', { name: chatLayoutLabel(locale, 'options'), exact: true }).click();
+    }
+    await page.getByRole('button', { name: label, exact: true }).click();
 }
 
 for (const options of [{ width: 320, locale: 'it', touch: true }, { width: 390, locale: 'de', dark: true }, { width: 1440, locale: 'en' }]) {
@@ -92,7 +97,7 @@ for (const options of [{ width: 320, locale: 'it', touch: true }, { width: 390, 
         const { page, context, control } = await fixture(options.width, 'intro', options);
         const l = key => visualLabel(options.locale, key);
         try {
-            await page.getByRole('button', { name: l('open'), exact: true }).click();
+            await openVisual(page, l('open'));
             const dialog = page.getByRole('dialog', { name: l('title'), exact: true });
             await dialog.getByText(l('emptyBoard'), { exact: true }).waitFor();
             await dialog.getByLabel(l('titleField'), { exact: true }).fill('Studiare un capitolo');
@@ -147,8 +152,7 @@ for (const options of [{ width: 320, locale: 'it', touch: true }, { width: 390, 
             assert.match(await page.locator('#guided-composer').inputValue(), /Posso frequentarlo/);
             assert.equal(control.requests.some(r => r.path === '/api/chat/stream'), false);
             await page.goto(`${origin}/?frozen=fixture`, { waitUntil: 'networkidle' });
-            if (options.width < 1024) await page.locator('aside > button[aria-controls]').first().click();
-            await page.getByRole('button', { name: l('open'), exact: true }).click();
+            await openVisual(page, l('open'));
             await dialog.getByLabel(l('titleField'), { exact: true }).nth(1).waitFor();
             assert.equal(await dialog.getByLabel(l('titleField'), { exact: true }).nth(1).inputValue(), 'Studiare un capitolo');
             assert.deepEqual(control.errors, []);
@@ -161,7 +165,7 @@ test('failed writes and revision conflicts retain the local draft', async () => 
     const l = key => visualLabel('it', key);
     try {
         control.failLoad = true;
-        await page.getByRole('button', { name: l('open'), exact: true }).click();
+        await openVisual(page, l('open'));
         const dialog = page.getByRole('dialog');
         await dialog.getByRole('alert').waitFor();
         assert.ok(await dialog.getByRole('button', { name: l('save'), exact: true }).isDisabled());
@@ -213,13 +217,13 @@ test('suggested material can seed a plan without changing recommendation state, 
     const { page, context, control } = await fixture(390);
     const l = key => visualLabel('it', key);
     try {
-        await page.getByRole('button', { name: l('open'), exact: true }).click();
+        await openVisual(page, l('open'));
         const dialog = page.getByRole('dialog');
         await dialog.getByRole('combobox', { name: l('fromCatalog'), exact: true }).selectOption('strategy:test-strategy');
         assert.equal(await dialog.getByLabel(l('titleField'), { exact: true }).inputValue(), 'Recupero attivo');
         await dialog.getByRole('button', { name: l('addAction'), exact: true }).click();
         await dialog.getByRole('button', { name: l('close'), exact: true }).click();
-        await page.getByRole('button', { name: l('open'), exact: true }).click();
+        await openVisual(page, l('open'));
         assert.equal(await dialog.getByLabel(l('titleField'), { exact: true }).nth(1).inputValue(), 'Recupero attivo');
         control.failPdf = true;
         await dialog.getByRole('button', { name: l('export'), exact: true }).click();
@@ -240,7 +244,7 @@ test('OpenCode graphical chat restores the same session workspace and accepts it
     const l = key => visualLabel('it', key);
     try {
         control.visual.workspace.cards = [{ id: 'card-opencode', text: 'La mia riflessione', source: '', bucket: 'yes' }];
-        await page.getByRole('button', { name: l('open'), exact: true }).click();
+        await openVisual(page, l('open'));
         const dialog = page.getByRole('dialog');
         await dialog.getByRole('tab', { name: l('cards'), exact: true }).click();
         await dialog.locator('article textarea').waitFor();
@@ -257,7 +261,7 @@ test('completed sessions keep visual export available without offering a missing
     const { page, context, control } = await fixture(390, 'conclusion');
     const l = key => visualLabel('it', key);
     try {
-        await page.getByRole('button', { name: l('open'), exact: true }).click();
+        await openVisual(page, l('open'));
         const dialog = page.getByRole('dialog');
         await dialog.getByText(l('emptyBoard'), { exact: true }).waitFor();
         assert.equal(await dialog.getByRole('button', { name: l('discuss'), exact: true }).count(), 0);
@@ -275,11 +279,11 @@ test('a delayed earlier load cannot replace edits made after reopening the panel
     const firstRead = new Promise(resolve => { started = resolve; });
     control.deferRead = () => { started(); return pending; };
     try {
-        await page.getByRole('button', { name: l('open'), exact: true }).click();
+        await openVisual(page, l('open'));
         await firstRead;
         const dialog = page.getByRole('dialog');
         await dialog.getByRole('button', { name: l('close'), exact: true }).click();
-        await page.getByRole('button', { name: l('open'), exact: true }).click();
+        await openVisual(page, l('open'));
         await dialog.getByLabel(l('titleField'), { exact: true }).fill('Conserva questa bozza');
         await dialog.getByRole('button', { name: l('addAction'), exact: true }).click();
         const response = page.waitForResponse(r => r.url().endsWith('/visual-tools') && r.request().method() === 'GET');
@@ -296,7 +300,7 @@ for (const locale of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
         const { page, context, control } = await fixture(320, 'intro', { locale, touch: true, dark: locale === 'de' });
         const l = key => visualLabel(locale, key);
         try {
-            await page.getByRole('button', { name: l('open'), exact: true }).click();
+            await openVisual(page, l('open'));
             const dialog = page.getByRole('dialog', { name: l('title'), exact: true });
             const help = dialog.getByRole('region', { name: l('howTo'), exact: true });
             for (const tab of ['board', 'comparison', 'cards']) {
@@ -321,7 +325,8 @@ for (const locale of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
             // Each tab retains its own collapsed help while the workspace stays open.
             await dialog.getByRole('tab', { name: l('board'), exact: true }).click();
             assert.equal(await help.locator('li').first().isVisible(), false);
-            assert.equal(control.requests.some(r => r.method !== 'GET'), false);
+            // The chat may auto-freeze while the help is read; the tools must not write.
+            assert.equal(control.requests.some(r => r.method !== 'GET' && r.path !== '/api/session/freeze'), false);
             assert.deepEqual(control.errors, []);
         } finally { await context.close(); }
     });
@@ -331,7 +336,7 @@ test('keyboard tooltips explain actions and Escape dismisses help before the wor
     const { page, context, control } = await fixture(1440);
     const l = key => visualLabel('it', key);
     try {
-        await page.getByRole('button', { name: l('open'), exact: true }).click();
+        await openVisual(page, l('open'));
         const dialog = page.getByRole('dialog', { name: l('title'), exact: true });
         await dialog.getByLabel(l('titleField'), { exact: true }).fill('Una piccola prova');
         await dialog.getByRole('button', { name: l('addAction'), exact: true }).click();
@@ -346,7 +351,8 @@ test('keyboard tooltips explain actions and Escape dismisses help before the wor
         }
         await page.keyboard.press('Escape');
         await dialog.waitFor({ state: 'detached' });
-        assert.equal(control.requests.some(r => r.method !== 'GET'), false);
+        // The chat may auto-freeze while the help is read; the tools must not write.
+        assert.equal(control.requests.some(r => r.method !== 'GET' && r.path !== '/api/session/freeze'), false);
         assert.deepEqual(control.errors, []);
     } finally { await context.close(); }
 });
@@ -363,14 +369,13 @@ for (const options of [{ width: 320, locale: 'it', touch: true }, { width: 390, 
             assert.equal(await header.getByRole('button', { name: l('hide'), exact: true }).count(), 0);
             await page.locator('#guided-composer').fill('Una bozza da conservare');
             if (options.width < 1024) {
-                assert.ok((await panel.boundingBox()).y >= (await chat.boundingBox()).y + (await chat.boundingBox()).height);
-                const toggle = panel.locator(':scope > button');
-                assert.equal(await toggle.getAttribute('aria-expanded'), 'false');
-                await toggle.click();
-                assert.equal(await page.getByRole('dialog').count(), 0);
-                await panel.getByRole('button', { name: visualLabel(options.locale, 'open'), exact: true }).waitFor();
-                await toggle.click();
-                assert.equal(await toggle.getAttribute('aria-expanded'), 'false');
+                assert.equal(await panel.count(), 0, 'resources do not occupy space below the chat');
+                await openVisual(page, visualLabel(options.locale, 'open'));
+                const dialog = page.getByRole('dialog', { name: visualLabel(options.locale, 'title'), exact: true });
+                await dialog.getByRole('button', { name: visualLabel(options.locale, 'close'), exact: true }).click();
+                await dialog.waitFor({ state: 'detached' });
+                const trigger = page.getByRole('button', { name: l('options'), exact: true });
+                assert.equal(await trigger.evaluate(el => el === document.activeElement), true);
             } else {
                 await panel.getByRole('button', { name: visualLabel(options.locale, 'open'), exact: true }).waitFor();
                 const original = await chat.boundingBox();
@@ -417,7 +422,7 @@ test('a single separator resizes the sidebar with keyboard and pointer and remem
         await page.setViewportSize({ width: 1024, height: 844 });
         assert.ok((await page.getByRole('region', { name: 'CounselorBot AI', exact: true }).boundingBox()).width >= 420);
         await page.setViewportSize({ width: 390, height: 844 });
-        await panel.locator(':scope > button').waitFor();
+        await panel.waitFor({ state: 'hidden' });
         assert.equal(await separator.count(), 0);
         await page.setViewportSize({ width: 1440, height: 844 });
         await separator.waitFor();
