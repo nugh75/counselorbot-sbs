@@ -1,0 +1,16 @@
+{
+  "type": "flow",
+  "title": "Un piano di studio da mettere alla prova",
+  "note": "Il controllo finale aiuta a capire se il metodo scelto è utile.",
+  "nodes": [
+    { "id": "a", "label": "Scegliere un obiettivo", "form": "concept", "accent": true },
+    { "id": "b", "label": "Studiare un argomento", "form": "action" },
+    { "id": "c", "label": "Ricordo i concetti?", "form": "decision" },
+    { "id": "d", "label": "Verificare il risultato", "form": "outcome" }
+  ],
+  "edges": [
+    { "from": "a", "to": "b", "kind": "drives", "label": "orienta" },
+    { "from": "b", "to": "c", "kind": "drives", "label": "poi controlla" },
+    { "from": "c", "to": "d", "kind": "drives", "label": "confronta gli appunti" }
+  ]
+}

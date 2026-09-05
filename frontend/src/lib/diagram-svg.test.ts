@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { svgAspectRatio, walkStep } from './diagram-svg.ts';
+import { svgAspectRatio, diagramReadingWidth } from './diagram-svg.ts';
 
 // Le classi del diagramma vivono su due elementi diversi: `dg-svg` sul div che
 // contiene il disegno, `dg-play` e `dg-focusing` sull'<svg> dentro di esso.
@@ -48,7 +48,7 @@ test('what the reader commands still fades, because a jump reads as a glitch', (
     assert.ok(base.includes('transition: opacity'));
     // Sullo stato base, non sulla classe che nasconde: dichiarata li', la
     // transizione spariva insieme alla classe e mostrare scattava.
-    const hidden = css.slice(css.indexOf('.dg-svg .dg-hidden'), css.indexOf('.dg-svg .dg-node { cursor'));
+    const hidden = css.slice(css.indexOf('.dg-svg .dg-hidden'), css.indexOf('.dg-dialog-motion'));
     assert.equal(hidden.includes('transition'), false);
 });
 
@@ -86,33 +86,6 @@ test('the step-by-step hides what has not had its turn', () => {
     assert.ok(css.includes('.dg-hidden'));
 });
 
-test('the walk is tagged and revealed in one pass, on every step', () => {
-    // Classificazione e passo stavano in due effetti con dipendenze diverse:
-    // un passo poteva lavorare su un disegno che quel ramo non aveva mai
-    // classificato, e il contatore avanzava mentre il disegno restava intero.
-    const block = readFileSync(new URL('../components/ui/DiagramBlock.tsx', import.meta.url), 'utf-8');
-    const start = block.indexOf('useLayoutEffect(() => {');
-    const deps = block.indexOf('}, [', start);
-    const effect = block.slice(start, block.indexOf(');', deps));
-    assert.ok(effect.includes('tagDiagramSvg('), 'la classificazione deve stare qui');
-    assert.ok(effect.includes('revealUpTo('), 'il passo deve stare nello stesso effetto');
-    assert.ok(/\}, \[[^\]]*\bstep\b[^\]]*\]/.test(effect), 'e deve rifarsi a ogni passo');
-});
-
-test('the walk is entered from the first turn, whichever arrow is pressed', () => {
-    // Entrando dalla fine spariva un pezzo solo e i tasti sembravano inerti.
-    assert.equal(walkStep(null, 7, 'forward'), 0);
-    assert.equal(walkStep(null, 7, 'back'), 0);
-});
-
-test('the walk advances, stops at the start and leaves at the end', () => {
-    assert.equal(walkStep(0, 7, 'forward'), 1);
-    assert.equal(walkStep(0, 7, 'back'), 0);
-    assert.equal(walkStep(5, 7, 'forward'), 6);
-    assert.equal(walkStep(6, 7, 'forward'), null);
-    assert.equal(walkStep(6, 7, 'back'), 5);
-});
-
 test('an edge arrives with the node it reaches, not half a turn later', () => {
     // Mezzo turno di scarto raddoppiava i turni: ogni pressione muoveva un
     // pezzo solo e i tasti sembravano inerti.
@@ -121,6 +94,13 @@ test('an edge arrives with the node it reaches, not half a turn later', () => {
     assert.equal(step.includes('+ 0.5'), false);
 });
 
-test('a drawing with nothing to walk stays whole', () => {
-    assert.equal(walkStep(null, 0, 'forward'), null);
+test('reading mode keeps the smallest SVG labels at fifteen CSS pixels', () => {
+    assert.equal(diagramReadingWidth('<svg viewBox="0 0 400 800"><text font-size="12">Node</text><text font-size="10">Edge</text></svg>'), 600);
+    assert.equal(diagramReadingWidth('<svg viewBox="0 0 240 100"><text font-size="15">Label</text></svg>'), 240);
+});
+
+test('reading width handles missing or invalid renderer dimensions', () => {
+    assert.equal(diagramReadingWidth('<svg/>'), 320);
+    assert.equal(diagramReadingWidth('<svg viewBox="0 0 0 20"/>'), 320);
+    assert.equal(diagramReadingWidth('<svg viewBox="0 0 200 400"/>'), 250);
 });

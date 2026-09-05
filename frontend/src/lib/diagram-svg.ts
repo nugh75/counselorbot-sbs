@@ -79,6 +79,8 @@ export function tagDiagramSvg(root: Element, spec: DiagramSpec): number {
         group.classList.add('dg-node');
         if (accents.has(id)) group.classList.add('dg-accent');
         group.setAttribute('data-node', id);
+        group.setAttribute('role', 'button');
+        group.setAttribute('aria-label', spec.nodes.find(node => node.id === id)?.label ?? id);
         steps.push({ element: group, step: nodeOrder.get(id) ?? 0 });
     }
 
@@ -107,20 +109,6 @@ export function tagDiagramSvg(root: Element, spec: DiagramSpec): number {
 }
 
 /**
- * Il passo successivo del percorso. `null` e' il disegno intero.
- *
- * Da intero si entra sempre dal primo turno, in tutte e due le direzioni:
- * entrare dalla fine faceva sparire un pezzo solo, e i tasti sembravano rotti.
- * Oltre l'ultimo turno si esce, e il disegno torna intero.
- */
-export function walkStep(step: number | null, turns: number, direction: 'back' | 'forward'): number | null {
-    if (turns < 1) return null;
-    if (step === null) return 0;
-    if (direction === 'back') return Math.max(0, step - 1);
-    return step + 1 > turns - 1 ? null : step + 1;
-}
-
-/**
  * Mostra il disegno fino a un certo turno: e' il passo-passo, quando lo
  * studente lo percorre a mano invece di guardarlo scorrere.
  */
@@ -128,6 +116,10 @@ export function revealUpTo(root: Element, step: number | null) {
     for (const element of Array.from(root.querySelectorAll('[data-dg-step]'))) {
         const turn = Number(element.getAttribute('data-dg-step') ?? 0);
         element.classList.toggle('dg-hidden', step !== null && turn > step);
+        if (element.classList.contains('dg-node')) {
+            element.setAttribute('tabindex', step !== null && turn > step ? '-1' : '0');
+            element.setAttribute('aria-hidden', String(step !== null && turn > step));
+        }
     }
 }
 
@@ -137,14 +129,38 @@ export function revealUpTo(root: Element, step: number | null) {
  */
 export function focusDiagramNode(root: Element, nodeId: string | null) {
     root.classList.toggle('dg-focusing', Boolean(nodeId));
+    const neighbours = new Set(nodeId ? [nodeId] : []);
+    for (const edge of Array.from(root.querySelectorAll('.dg-edge'))) {
+        const from = edge.getAttribute('data-from');
+        const to = edge.getAttribute('data-to');
+        if (nodeId && (from === nodeId || to === nodeId)) {
+            if (from) neighbours.add(from);
+            if (to) neighbours.add(to);
+        }
+    }
     for (const group of Array.from(root.querySelectorAll('.dg-node, .dg-edge, .dg-chip'))) {
         const related = nodeId !== null && (
-            group.getAttribute('data-node') === nodeId
+            neighbours.has(group.getAttribute('data-node') ?? '')
             || group.getAttribute('data-from') === nodeId
             || group.getAttribute('data-to') === nodeId
         );
         group.classList.toggle('dg-related', related);
+        if (group.classList.contains('dg-node')) {
+            const selected = group.getAttribute('data-node') === nodeId;
+            group.classList.toggle('dg-selected', selected);
+            group.setAttribute('aria-pressed', String(selected));
+        }
     }
+}
+
+/** CSS width that keeps even edge labels at 15px in reading mode. */
+export function diagramReadingWidth(markup: string): number {
+    const box = /viewBox="([^"]+)"/i.exec(markup)?.[1].trim().split(/[\s,]+/).map(Number);
+    const width = box?.[2];
+    if (!width || !Number.isFinite(width) || width < 0) return 320;
+    const sizes = [...markup.matchAll(/font-size="([\d.]+)(?:px)?"/gi)]
+        .map(match => Number(match[1])).filter(size => size > 0 && Number.isFinite(size));
+    return width * 15 / (sizes.length ? Math.min(...sizes) : 12);
 }
 
 /**
