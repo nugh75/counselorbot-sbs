@@ -123,6 +123,13 @@ pacchetto font (`fonts-inter` se disponibile nella base, altrimenti
   una scelta esplicita dell'admin: senza quella chiave la richiesta viene
   rifiutata come prima. Serve al bottone
   "Visualizza come schema"; non modifica la conversazione.
+  La generazione richiede 2400 token; il totale effettivo può crescere per
+  rispettare il budget di ragionamento del preset. Un JSON che non supera la validazione riceve
+  un solo tentativo di correzione per modello, con indicazione dei campi errati;
+  le etichette non vengono troncate. Una risposta senza JSON passa direttamente
+  alla riserva. Se nessun modello produce uno spec valido, la risposta è 502;
+  se l'ultimo modello è indisponibile, è 503. Il 422 resta per richieste non
+  valide o per l'assenza di un modello configurato.
 
 Interruttore globale: chiave di configurazione `feature_diagrams`
 (default acceso), letta come le altre da `_config_true`. Spenta: la skill non
