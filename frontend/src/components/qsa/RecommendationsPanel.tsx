@@ -27,6 +27,7 @@ type Tab = RecommendationType;
 
 interface RecommendationsPanelProps {
     catalog: RecommendationCatalog;
+    expanded?: boolean;
     sessionId?: string;
     /** Il catalogo aggiornato torna al genitore: qui non si tiene stato dei dati. */
     onCatalogChange?: (catalog: RecommendationCatalog) => void;
@@ -39,6 +40,7 @@ const cardKey = (type: RecommendationType, slug: string) => `${type}:${slug}`;
 
 export function RecommendationsPanel({
     catalog,
+    expanded = false,
     sessionId,
     onCatalogChange,
     onDiscuss,
@@ -131,7 +133,7 @@ export function RecommendationsPanel({
                 onClick={() => setIsOpen((open) => !open)}
                 aria-expanded={isOpen}
                 aria-controls="guided-recommendations-panel"
-                className="flex w-full items-center gap-2 p-4 text-left lg:hidden"
+                className={cn('flex w-full items-center gap-2 p-4 text-left lg:hidden', expanded && 'hidden')}
             >
                 <BookOpen className="h-4 w-4 text-indigo-600" />
                 <span id="recommendations-title" className="min-w-0 flex-1 text-sm font-semibold text-slate-700">
@@ -144,7 +146,7 @@ export function RecommendationsPanel({
             <div
                 id="guided-recommendations-panel"
                 tabIndex={-1}
-                className={cn('space-y-3 px-4 pb-4 lg:block lg:p-4', !isOpen && 'hidden lg:block')}
+                className={cn('space-y-3 px-4 pb-4 lg:block lg:p-4', expanded ? 'pt-4' : !isOpen && 'hidden lg:block')}
             >
                 <div className="hidden items-center gap-2 lg:flex">
                     <BookOpen className="h-4 w-4 text-indigo-600" />

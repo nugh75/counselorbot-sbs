@@ -226,9 +226,32 @@ for (const width of [320, 390]) {
             assert.equal(await menu.evaluate(el => el.contains(document.activeElement)), true);
             await page.keyboard.press('Escape');
             assert.equal(await actions.evaluate(el => el === document.activeElement), true);
-            await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
-            await page.locator('.chat-options:popover-open').getByRole('button', { name: 'Percorso e risorse', exact: true }).click();
-            await page.getByRole('complementary', { name: 'Percorso e risorse', exact: true }).waitFor();
+            const optionsTrigger = page.getByRole('button', { name: 'Opzioni della conversazione', exact: true });
+            assert.equal(await page.getByRole('complementary', { name: 'Percorso e risorse', exact: true }).count(), 0, 'no resource panel below mobile chat');
+            await composer.fill('Una domanda da conservare');
+            const scrollTop = await page.getByRole('log').evaluate(el => el.scrollTop);
+            for (const title of ['Percorso', 'Punteggi']) {
+                await optionsTrigger.click();
+                const dots = await optionsTrigger.locator('svg circle').evaluateAll(elements => elements.map(el => Number(el.getAttribute('cy'))));
+                assert.equal(dots.length, 3);
+                assert.equal(new Set(dots).size, 1, 'three dots are horizontal');
+                await page.locator('.chat-options:popover-open').getByRole('button', { name: title, exact: true }).click();
+                const dialog = page.getByRole('dialog', { name: title, exact: true });
+                await dialog.waitFor();
+                assert.equal(await page.locator('.chat-options:popover-open').count(), 0);
+                assert.equal(await dialog.locator(title === 'Percorso' ? '#guided-path-panel' : '#guided-scores-panel').isVisible(), true);
+                assert.equal(await dialog.locator(title === 'Percorso' ? '#guided-scores-panel' : '#guided-path-panel').isVisible(), false);
+                const bounds = await dialog.boundingBox();
+                assert.ok(bounds.x >= 0 && bounds.y >= 0 && bounds.x + bounds.width <= width && bounds.y + bounds.height <= 844);
+                await page.keyboard.press('Tab');
+                assert.equal(await dialog.evaluate(el => el.contains(document.activeElement)), true, 'focus stays in the window');
+                if (title === 'Percorso') await dialog.getByRole('button', { name: 'Chiudi finestra', exact: true }).click();
+                else await page.keyboard.press('Escape');
+                await dialog.waitFor({ state: 'hidden' });
+                assert.equal(await optionsTrigger.evaluate(el => el === document.activeElement), true);
+            }
+            assert.equal(await composer.inputValue(), 'Una domanda da conservare');
+            assert.equal(await page.getByRole('log').evaluate(el => el.scrollTop), scrollTop);
             assert.deepEqual(errors, []);
         } finally { await context.close(); }
     });

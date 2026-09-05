@@ -158,8 +158,10 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   Nella chat guidata, su desktop la barra di avanzamento segue il riquadro della
   conversazione e della scrittura e contiene il nome del passo; su mobile precede
   la scrittura. I comandi dei passi sono icone da 44px con etichette accessibili.
-  Il menu accanto alla scrittura raccoglie percorso e risorse, lunghezza della
-  risposta e congelamento. Su mobile le azioni di ogni risposta stanno nel suo
+  Il menu a tre punti orizzontali accanto alla scrittura raccoglie percorso e
+  risorse, lunghezza della risposta e congelamento. Su mobile Percorso, Punteggi
+  e Strumenti visivi hanno voci separate; ciascuna apre una finestra richiudibile
+  con X o Escape. Anche le letture e strategie di «Per te» si aprono dal menu. Su mobile le azioni di ogni risposta stanno nel suo
   menu a tre punti; i diagrammi creati restano visibili nel trascritto. Il campo
   vuoto parte da una riga e cresce con il testo.
   Durante la conversazione, su desktop e mobile, la navigazione generale e la
@@ -176,7 +178,8 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
 - **Chat essenziale**: Indietro è nella testata della chat guidata. Le attività
   visive sono nelle risorse, fuori dalla testata. La sidebar desktop ha un solo
   pulsante per chiudere/riaprire e un divisore regolabile con mouse o tastiera;
-  su mobile le risorse si aprono sotto la conversazione. I suggerimenti di prompt
+  su mobile le risorse si aprono in finestre modali, senza pannelli sotto la
+  conversazione. La chiusura riporta il focus al menu e conserva le bozze. I suggerimenti di prompt
   sono rimossi; lunghezza e congelamento sono sotto i tre punti accanto al campo
   di scrittura. Le risposte funzionali all’intervista Savickas restano disponibili.
 - **Selezione strumento**: la barra con nome selezionato e Continua resta
