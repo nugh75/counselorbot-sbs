@@ -239,27 +239,6 @@ function normalizeLoadedSteps(questionnaireType: string, loadedSteps: StepDef[])
     return { steps: ordered, usedFallback: false };
 }
 
-// --- Color theme mapping (string literals for Tailwind scanner) ---
-
-const COLOR_THEMES: Record<string, { headerBg: string; iconBg: string; border: string; text: string; ring: string }> = {
-    blue:   { headerBg: 'bg-blue-50',   iconBg: 'bg-blue-500',   border: 'border-blue-500',   text: 'text-blue-700',   ring: 'ring-blue-500/15' },
-    purple: { headerBg: 'bg-purple-50', iconBg: 'bg-purple-500', border: 'border-purple-500', text: 'text-purple-700', ring: 'ring-purple-500/15' },
-    indigo: { headerBg: 'bg-indigo-50', iconBg: 'bg-indigo-500', border: 'border-indigo-500', text: 'text-indigo-700', ring: 'ring-indigo-500/15' },
-    pink:   { headerBg: 'bg-pink-50',   iconBg: 'bg-pink-500',   border: 'border-pink-500',   text: 'text-pink-700',   ring: 'ring-pink-500/15' },
-    orange: { headerBg: 'bg-orange-50', iconBg: 'bg-orange-500', border: 'border-orange-500', text: 'text-orange-700', ring: 'ring-orange-500/15' },
-    teal:   { headerBg: 'bg-teal-50',   iconBg: 'bg-teal-500',   border: 'border-teal-500',   text: 'text-teal-700',   ring: 'ring-teal-500/15' },
-    green:  { headerBg: 'bg-green-50',  iconBg: 'bg-green-500',  border: 'border-green-500',  text: 'text-green-700',  ring: 'ring-green-500/15' },
-    red:    { headerBg: 'bg-red-50',    iconBg: 'bg-red-500',    border: 'border-red-500',    text: 'text-red-700',    ring: 'ring-red-500/15' },
-    amber:  { headerBg: 'bg-amber-50',  iconBg: 'bg-amber-500',  border: 'border-amber-500',  text: 'text-amber-700',  ring: 'ring-amber-500/15' },
-    cyan:   { headerBg: 'bg-cyan-50',   iconBg: 'bg-cyan-500',   border: 'border-cyan-500',   text: 'text-cyan-700',   ring: 'ring-cyan-500/15' },
-    slate:  { headerBg: 'bg-slate-50',  iconBg: 'bg-slate-500',  border: 'border-slate-500',  text: 'text-slate-700',  ring: 'ring-slate-500/15' },
-    rose:   { headerBg: 'bg-rose-50',   iconBg: 'bg-rose-500',   border: 'border-rose-500',   text: 'text-rose-700',   ring: 'ring-rose-500/15' },
-};
-
-const DEFAULT_COLOR = { headerBg: 'bg-indigo-50', iconBg: 'bg-indigo-600', border: 'border-indigo-600', text: 'text-indigo-700', ring: 'ring-indigo-600/15' };
-const QUESTIONS_COLOR = { headerBg: 'bg-green-50', iconBg: 'bg-green-500', border: 'border-green-500', text: 'text-green-700', ring: 'ring-green-500/15' };
-const CONCLUSION_COLOR = { headerBg: 'bg-slate-50', iconBg: 'bg-slate-500', border: 'border-slate-500', text: 'text-slate-700', ring: 'ring-slate-500/15' };
-
 // --- Fixed phases ---
 
 const FIXED_QUESTIONS_ID = 'questions';
@@ -833,13 +812,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         } catch {
             // A memory update must not block the counseling workflow.
         }
-    };
-
-    const getPhaseColors = (phaseId: string) => {
-        if (phaseId === FIXED_QUESTIONS_ID) return QUESTIONS_COLOR;
-        if (phaseId === FIXED_CONCLUSION_ID) return CONCLUSION_COLOR;
-        const step = getStepDef(phaseId);
-        return (step && COLOR_THEMES[step.color_theme]) || DEFAULT_COLOR;
     };
 
     const isAnalysisStep = (phaseId: string): boolean => {
@@ -1430,7 +1402,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         );
     }
 
-    const currentColors = getPhaseColors(currentPhase);
     const currentStepIndex = phases.indexOf(currentPhase) + 1;
     const totalSteps = phases.length;
     const sidebarPhases = phases;
@@ -1529,9 +1500,9 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         <span className="ml-auto text-xs">{recommendations.reading.length + recommendations.strategy.length}</span>
                     </button>}
                 </div>
-                <button type="button" className={messageActionClass} aria-label={visualLabel(activeLocale, 'open')} onClick={() => { close(); setVisualRequest({ tab: 'board', nonce: Date.now() }); }}>
-                    <LayoutList className="h-4 w-4 shrink-0" aria-hidden="true" />{visualLabel(activeLocale, 'title')}
-                </button>
+                <Tooltip content={visualLabel(activeLocale, 'open')}><Button type="button" variant="ghost" className={stepButtonClass} aria-label={visualLabel(activeLocale, 'open')} onClick={() => { close(); setVisualRequest({ tab: 'board', nonce: Date.now() }); }}>
+                    <LayoutList className="h-4 w-4" aria-hidden="true" />
+                </Button></Tooltip>
                 {currentPhase !== FIXED_CONCLUSION_ID && <>
                     <p className="px-2 text-sm font-semibold text-slate-700">{t('responseLength.label')}</p>
                     <ResponseLengthSelector value={responseLength} onChange={setResponseLength} disabled={isLoading} />
@@ -1545,7 +1516,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
     return (
         <div className="space-y-4">
-        <ChatWorkspace locale={activeLocale} subtitle={getPhaseLabel(currentPhase)} headerClassName={currentColors.headerBg}
+        <ChatWorkspace locale={activeLocale} subtitle={getPhaseLabel(currentPhase)}
             onBack={onBack}
             advancement={stepNavigation}
             sidebar={(closePanel, mobilePanel) => <>
@@ -1563,17 +1534,15 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             const isActive = currentPhase === phaseId;
                             const phaseIndex = phases.indexOf(phaseId);
                             const isDone = phases.indexOf(currentPhase) > phaseIndex;
-                            const phaseColors = getPhaseColors(phaseId);
 
                             return (
-                                <div key={phaseId} className={cn(
+                                <div key={phaseId} aria-current={isActive ? "step" : undefined} className={cn(
                                     "flex items-center gap-2 p-2 rounded-lg text-xs transition-colors",
-                                    isActive ? `${phaseColors.headerBg} ${phaseColors.text} font-medium` : isDone ? phaseColors.text : "text-slate-500"
+                                    isActive ? "bg-slate-100 text-slate-800 font-semibold" : "text-slate-500"
                                 )}>
                                     <div className={cn(
                                         "w-4 h-4 rounded-full flex items-center justify-center text-[8px] border",
-                                        isActive ? `${phaseColors.border} ${phaseColors.iconBg} text-white` :
-                                            isDone ? `${phaseColors.border} ${phaseColors.iconBg} text-white` : `${phaseColors.border} bg-white`
+                                        isActive || isDone ? "border-slate-600 bg-slate-600 text-white" : "border-slate-300 bg-white"
                                     )}>
                                         {isDone ? <CheckCircle2 className="w-2.5 h-2.5" /> : phaseIndex + 1}
                                     </div>
@@ -1786,8 +1755,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     )}
                 </div>
 
-                {stepNavigation && <div className="border-t border-slate-200 lg:hidden">{stepNavigation}</div>}
-
                 {/* Input Area */}
                 {currentPhase === FIXED_CONCLUSION_ID ? (
                     <div className="flex items-center justify-center gap-2 border-t border-slate-100 bg-slate-50 p-3 sm:p-4">
@@ -1926,6 +1893,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         </div>
                     </form>
                 )}
+                {stepNavigation && <div className="border-t border-slate-200 lg:hidden">{stepNavigation}</div>}
             </>}
         </ChatWorkspace>
         <VisualTools hideTrigger sessionId={sessionId} locale={activeLocale} catalog={recommendations} request={visualRequest}

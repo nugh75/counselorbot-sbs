@@ -79,6 +79,9 @@ for (const width of [320, 390, 1440]) {
             for (const button of await buttons.all()) {
                 const box = await button.boundingBox();
                 assert.ok(box.x >= 0 && box.x + box.width <= width, 'diagram control fits viewport');
+                assert.equal((await button.innerText()).trim(), '', 'diagram controls use icons');
+                assert.equal(box.width, 44);
+                assert.ok(await button.getAttribute('aria-label'));
             }
             await page.getByRole('button', { name: 'Apri il diagramma a schermo intero' }).click();
             const dialog = page.getByRole('dialog');

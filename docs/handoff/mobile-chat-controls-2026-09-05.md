@@ -161,3 +161,30 @@ Deployed frontend: `counselorbot-10-step-frontend:sidebar-toggle-20260905`, imag
 Override: `/tmp/cb-sidebar-toggle-deploy.yml`. Local HTTP 200, unauthenticated
 public HTTP 302 and normal startup were verified. Backend and PostgreSQL
 container IDs/start times are unchanged; the previous frontend image is retained.
+
+## Correction: restore the navbar, neutral phases and icon controls
+
+The global navbar remains visible during both guided chat and OpenCode. The
+upper flow-stage overview stays hidden during the interaction step. Guided
+phases now use the same neutral slate styling regardless of their configured
+colour; numbers, the active highlight and completion marks retain orientation.
+On mobile, advancement follows the composer. Desktop advancement remains below
+the chat box. Visual tools and diagram controls use compact 44 px icons with
+localized accessible names and tooltips, including their internal toolbars,
+tabs, creation, removal, retry and export actions. Visual board stage headings
+also lose their coloured decorative stripes. Guides were updated in six languages.
+
+Validation: 104 unit tests and 64 production browser fixture tests passed.
+Checks cover the restored navbar, viewport bounds, advancement placement,
+phase-colour stability, icon sizes and labels, sidebar toggling and persistence,
+diagram interaction/export, and visual-workspace editing and saving. Browser
+APIs are mocked. Desktop light and mobile dark screenshots were inspected.
+Lint has no errors and four existing warnings; localization, TypeScript and
+the frontend Docker build passed.
+
+Deployed frontend: `counselorbot-10-step-frontend:neutral-chat-20260905`, image
+`sha256:2e520bf380f70d0367c3aa6c47fa75ad2c57231db27be7261944073e9c444d94`.
+Override: `/tmp/cb-neutral-chat-deploy.yml`. Local HTTP 200, unauthenticated
+public HTTP 302 and normal startup were verified. Backend and PostgreSQL
+container IDs/start times are unchanged. The previous frontend image is retained,
+and the separate `feat/chat-workspace-layout` worktree was not modified.

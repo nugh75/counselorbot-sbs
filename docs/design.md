@@ -156,7 +156,7 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   i comandi della pagina e segue il ridimensionamento del viewport visibile.
   I messaggi scorrono dentro la chat; scrittura e avanzamento restano raggiungibili.
   Nella chat guidata, su desktop la barra di avanzamento segue il riquadro della
-  conversazione e della scrittura e contiene il nome del passo; su mobile precede
+  conversazione e della scrittura e contiene il nome del passo; su mobile segue
   la scrittura. I comandi dei passi sono icone da 44px con etichette accessibili.
   Un solo menu a tre punti verticali (kebab), accanto alla scrittura, raccoglie
   percorso e risorse, Strumenti visivi, lunghezza della risposta e congelamento.
@@ -167,8 +167,12 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   Strumenti visivi si apre solo dal menu della conversazione, anche a percorso
   concluso, parte da Azioni e occupa tutto il viewport. Le carte si creano nella
   scheda Carte. Il campo vuoto parte da una riga e cresce con il testo.
-  Durante la conversazione, su desktop e mobile, la navigazione generale e la
-  panoramica del percorso sono nascoste; Indietro le rende nuovamente disponibili.
+  Durante la conversazione, su desktop e mobile, la navbar generale resta
+  visibile in alto; solo la panoramica superiore delle tappe viene nascosta.
+  Le fasi del percorso usano toni slate uniformi: numero, grassetto e segno di
+  completamento distinguono il passo corrente dai precedenti e dai successivi.
+  I comandi di Strumenti visivi e Diagramma sono icone da 44px, con etichette
+  accessibili e tooltip localizzati, anche nelle barre interne alle finestre.
   In OpenCode, sotto 1280px, la conversazione
   precede il pannello dei punteggi, che resta disponibile scorrendo la pagina.
 - **Focus**: anello `2px` petrol con `outline-offset: 2px` su tutti gli
