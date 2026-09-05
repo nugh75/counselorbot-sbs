@@ -23,6 +23,13 @@ export const LANG_STORAGE_KEY = 'cb_lang';
 type Dict = Record<string, string>;
 
 const it: Dict = {
+    'admin.routing.title': "Modelli, contesto e ripieghi",
+    'admin.routing.help': "Il modello scelto resta la prima scelta. I ripieghi partono prima che inizi la risposta. I servizi a pagamento si fermano quando la spesa registrata raggiunge il budget mensile. I modelli gratuiti possono avere limiti e indisponibilità. I profili definiscono limiti verificati di contesto; compact riduce il materiale teorico facoltativo.",
+    'admin.routing.targets': "Ripieghi ordinati (JSON)",
+    'admin.routing.context': "Capacità per provider/modello (JSON)",
+    'admin.routing.timeout': "Timeout per tentativo (secondi)",
+    'admin.routing.example': "Esempi di configurazione; adatta modelli e limiti al server utilizzato.",
+
     // nav
     'nav.admin': 'Admin',
     'nav.groupsClasses': 'Gruppi e classi',
@@ -1126,6 +1133,13 @@ const it: Dict = {
 };
 
 const en: Dict = {
+    'admin.routing.title': "Models, context and fallbacks",
+    'admin.routing.help': "The selected model is tried first. Fallbacks start before the response begins. Paid services stop when recorded spending reaches the monthly budget. Free models may have limits and outages. Profiles define verified context limits; compact reduces optional theory.",
+    'admin.routing.targets': "Ordered fallbacks (JSON)",
+    'admin.routing.context': "Capacity by provider/model (JSON)",
+    'admin.routing.timeout': "Timeout per attempt (seconds)",
+    'admin.routing.example': "Configuration examples; adapt models and limits to your server.",
+
     'nav.admin': 'Admin',
     'nav.groupsClasses': 'Groups and classes',
     'nav.teacherPanel': 'Teacher panel',
@@ -2210,6 +2224,13 @@ const en: Dict = {
 };
 
 const es: Dict = {
+    'admin.routing.title': "Modelos, contexto y alternativas",
+    'admin.routing.help': "El modelo elegido se intenta primero. Las alternativas se prueban antes de iniciar la respuesta. Los servicios de pago se detienen cuando el gasto registrado alcanza el presupuesto mensual. Los modelos gratuitos pueden tener límites e interrupciones. Los perfiles definen límites de contexto verificados; compact reduce la teoría opcional.",
+    'admin.routing.targets': "Alternativas ordenadas (JSON)",
+    'admin.routing.context': "Capacidad por proveedor/modelo (JSON)",
+    'admin.routing.timeout': "Tiempo de espera por intento (segundos)",
+    'admin.routing.example': "Ejemplos de configuración; adapta los modelos y límites a tu servidor.",
+
     'nav.admin': 'Admin',
     'nav.groupsClasses': 'Grupos y clases',
     'nav.teacherPanel': 'Panel docente',
@@ -3293,6 +3314,13 @@ const es: Dict = {
 };
 
 const fr: Dict = {
+    'admin.routing.title': "Modèles, contexte et solutions de repli",
+    'admin.routing.help': "Le modèle choisi est essayé en premier. Les solutions de repli interviennent avant le début de la réponse. Les services payants sont bloqués lorsque les dépenses enregistrées atteignent le budget mensuel. Les modèles gratuits peuvent être limités ou indisponibles. Les profils définissent des limites de contexte vérifiées ; compact réduit la théorie facultative.",
+    'admin.routing.targets': "Solutions de repli ordonnées (JSON)",
+    'admin.routing.context': "Capacité par fournisseur/modèle (JSON)",
+    'admin.routing.timeout': "Délai par tentative (secondes)",
+    'admin.routing.example': "Exemples de configuration ; adaptez les modèles et limites à votre serveur.",
+
     'nav.admin': 'Admin',
     'nav.groupsClasses': 'Groupes et classes',
     'nav.teacherPanel': 'Espace enseignant',
@@ -4376,6 +4404,13 @@ const fr: Dict = {
 };
 
 const de: Dict = {
+    'admin.routing.title': "Modelle, Kontext und Ersatzmodelle",
+    'admin.routing.help': "Das gewählte Modell wird zuerst versucht. Ersatzmodelle werden vor Beginn der Antwort versucht. Kostenpflichtige Dienste werden gesperrt, sobald die erfassten Ausgaben das Monatsbudget erreichen. Kostenlose Modelle können eingeschränkt oder nicht verfügbar sein. Profile definieren geprüfte Kontextgrenzen; compact reduziert optionale Theorie.",
+    'admin.routing.targets': "Geordnete Ersatzmodelle (JSON)",
+    'admin.routing.context': "Kapazität je Anbieter/Modell (JSON)",
+    'admin.routing.timeout': "Zeitlimit je Versuch (Sekunden)",
+    'admin.routing.example': "Konfigurationsbeispiele; Modelle und Grenzen an den Server anpassen.",
+
     'nav.admin': 'Admin',
     'nav.groupsClasses': 'Gruppen und Klassen',
     'nav.teacherPanel': 'Lehrkräftebereich',
@@ -5459,6 +5494,13 @@ const de: Dict = {
 };
 
 const sv: Dict = {
+    'admin.routing.title': "Modeller, kontext och reservmodeller",
+    'admin.routing.help': "Den valda modellen provas först. Reservmodeller provas innan svaret börjar. Betaltjänster stoppas när registrerade kostnader når månadsbudgeten. Gratis modeller kan ha begränsningar och avbrott. Profiler anger verifierade kontextgränser; compact minskar valfri teori.",
+    'admin.routing.targets': "Reservmodeller i ordning (JSON)",
+    'admin.routing.context': "Kapacitet per leverantör/modell (JSON)",
+    'admin.routing.timeout': "Tidsgräns per försök (sekunder)",
+    'admin.routing.example': "Konfigurationsexempel; anpassa modeller och gränser till servern.",
+
     'nav.admin': 'Admin',
     'nav.groupsClasses': 'Grupper och klasser',
     'nav.teacherPanel': 'Lärarpanel',

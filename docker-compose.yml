@@ -15,6 +15,7 @@ services:
       - .env
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - OMNIROUTE_API_URL=${OMNIROUTE_API_URL:-http://omniroute:20128/v1}
       - SESSION_MEMORY_DIR=/app/session_memory
       - AI4AUTH_VERIFY_URL=${AI4AUTH_VERIFY_URL:-http://ai4auth:9091/api/verify}
       - AI4AUTH_PUBLIC_HOST=${AI4AUTH_PUBLIC_HOST:-counselorbot-sbs.ai4educ.org}

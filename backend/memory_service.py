@@ -61,7 +61,7 @@ class SessionMemory:
             text = self._strip_section(text, "Transcript")
             return self._cut_at_line(text, MAX_MEMORY_CHARS)
 
-    def get_scores(self, session_id: str) -> str:
+    def get_scores(self, session_id: str, *, touch: bool = True) -> str:
         """Punteggi del profilo persistiti per la sessione (stringa grezza).
 
         Servono a iniettare i punteggi come riferimento permanente nel system
@@ -71,10 +71,11 @@ class SessionMemory:
             text = self._read(session_id)
             if not text:
                 return ""
-            self._touch(session_id)
+            if touch:
+                self._touch(session_id)
         return str(self._parse(text).get("scores") or "")
 
-    def get_transcript(self, session_id: str) -> List[Dict[str, str]]:
+    def get_transcript(self, session_id: str, *, touch: bool = True) -> List[Dict[str, str]]:
         """Storico verbatim role-tagged dei turni reali della sessione.
 
         Lista di `{"role": "user"|"assistant", "content": str}` in ordine
@@ -84,7 +85,8 @@ class SessionMemory:
             text = self._read(session_id)
             if not text:
                 return []
-            self._touch(session_id)
+            if touch:
+                self._touch(session_id)
         return self._parse_transcript(text)
 
     def get_notebook_suggestion(
@@ -670,7 +672,7 @@ class SessionMemory:
         section = self._section(text, title)
         return [line[2:].strip() for line in section.splitlines() if line.startswith("- ") and line[2:].strip() != "-"]
 
-    def get_student_state(self, session_id: str) -> Dict[str, object]:
+    def get_student_state(self, session_id: str, *, touch: bool = True) -> Dict[str, object]:
         """Stato studente distillato per il blocco [STUDENT] dell'envelope: solo
         dati stabili della sessione (questionario, lingua, fase, step, goals,
         preferences, note esterne). Niente episodi, niente punteggi, niente
@@ -679,7 +681,8 @@ class SessionMemory:
             text = self._read(session_id)
             if not text:
                 return {}
-            self._touch(session_id)
+            if touch:
+                self._touch(session_id)
         data = self._parse(text)
         return {
             "questionnaire": data["questionnaire"],

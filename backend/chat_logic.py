@@ -486,11 +486,11 @@ def _apply_global_directives(system_prompt: str, language: Optional[str], db=Non
         if language and language in mappings:
             eng, native = mappings[language]
             lang_directive = (
-                f"[LANGUAGE] You MUST write your ENTIRE response in {eng} ({native}), "
+                f"[LANGUAGE] You MUST write your student-facing response in {eng} ({native}), "
                 f"regardless of the language of the instructions or scores above. "
                 f"Translate any fixed phrases, headings and labels into {eng} as well. "
                 f"Also produce your internal reasoning/thinking in {eng} ({native}). "
-                f"Do NOT mix languages."
+                f"Do NOT mix languages in the visible prose. Keep technical block names, JSON keys and identifiers unchanged."
             )
         else:
             lang_directive = ""
@@ -535,6 +535,7 @@ def _apply_global_directives(system_prompt: str, language: Optional[str], db=Non
             "next action. Ask at most one focused question when a question is needed."
         )
 
+    from .prompt_contract import platform_context
     parts = [system_prompt]
     if conversation_quality_directive:
         parts.append("\n\n" + conversation_quality_directive)
@@ -548,6 +549,7 @@ def _apply_global_directives(system_prompt: str, language: Optional[str], db=Non
         parts.append("\n\n" + thinking_directive)
     if affirmative_directive:
         parts.append("\n\n" + affirmative_directive)
+    parts.append("\n\n" + platform_context(db))
     return "".join(parts)
 
 
@@ -561,11 +563,11 @@ def _apply_language_directive(system_prompt: str, language: Optional[str], db=No
     eng, native = mappings[language]
     return (
         f"{system_prompt}\n\n"
-        f"[LANGUAGE] You MUST write your ENTIRE response in {eng} ({native}), "
+        f"[LANGUAGE] You MUST write your student-facing response in {eng} ({native}), "
         f"regardless of the language of the instructions or scores above. "
         f"Translate any fixed phrases, headings and labels into {eng} as well. "
         f"Also produce your internal reasoning/thinking in {eng} ({native}). "
-        f"Do NOT mix languages."
+        f"Do NOT mix languages in the visible prose. Keep technical block names, JSON keys and identifiers unchanged."
     )
 
 
@@ -776,7 +778,7 @@ def _phase_factor_codes(db, phase: Optional[str]) -> set[str]:
 
 def _guided_path_context(db, questionnaire_type: str, current_step_id: str | None, language: str) -> str:
     qtype = (questionnaire_type or "").strip()
-    if not qtype:
+    if not qtype or qtype == IDEA_INSTRUMENT:
         return ""
     steps = (
         db.query(models.GuidedStep)
@@ -1177,7 +1179,7 @@ def _apply_qsa_factor_directive(
         f"{system_prompt}\n\n"
         "[FACTOR LABELS] In every reply addressed to the student, never write "
         f"an isolated {instrument} factor code. Each code must be immediately "
-        "accompanied by its full name, in the form `C2 (Self-regulation)`. "
+        "accompanied by its full name, using the exact code and name from the reference below. "
         f"Mandatory reference: {examples}.\n\n"
         "[INTERPRETATION TABLE] Scale 1-9. Assign each factor the label of its "
         "score band by reading ITS OWN row below; the labels are already in the "
@@ -2373,7 +2375,9 @@ def build_context_envelope(
     "CONTEXT OF PREVIOUS CONVERSATIONS" sul messaggio utente.
 
     Ritorna (system_prompt_final, full_message, history)."""
+    from .prompt_contract import persona_context
     language = request.language or "it"
+    c_persona = persona_context(c_persona, counselor_name)
 
     # --- [SECTION] (già risolto e direttivato dal router) ---
     if not _component_enabled(component_flags, "system_prompt"):
@@ -2422,7 +2426,7 @@ def build_context_envelope(
 
     # Slot [SECTION] delle skill: predisposto, nessuna skill lo usa nel pilota.
     for block in (skills_blocks or {}).get("section", []):
-        parts_system.append(block)
+        parts_system.append("[SECTION]\n" + block)
 
     # --- [STUDENT] dati studente da identity + stato sessione distillato ---
     student_lines: list[str] = []
@@ -2446,7 +2450,7 @@ def build_context_envelope(
         student_lines.append(f"- Questionario: {questionnaire_type}")
     if step_label:
         student_lines.append(f"- Step corrente: {step_label}")
-    state = session_memory.get_student_state(session_id) if include_session_memory else {}
+    state = session_memory.get_student_state(session_id, touch=create_anonymous_code) if include_session_memory else {}
     if state:
         completed = state.get("completed_steps") or []
         if completed:
@@ -2481,7 +2485,7 @@ def build_context_envelope(
     persisted_scores = (
         ""
         if model_scores_context or not include_session_memory or not include_scores_reference
-        else session_memory.get_scores(session_id)
+        else session_memory.get_scores(session_id, touch=create_anonymous_code)
     )
     if persisted_scores:
         scoped_scores = _scope_scores_to_codes(persisted_scores, _phase_factor_codes(db, request.phase))
@@ -2580,7 +2584,7 @@ def build_context_envelope(
     )
 
     # --- MESSAGES: history verbatim + user corrente (scores scope-ati + msg) ---
-    history = session_memory.get_transcript(session_id) if include_history and include_session_memory and _component_enabled(component_flags, "history") else []
+    history = session_memory.get_transcript(session_id, touch=create_anonymous_code) if include_history and include_session_memory and _component_enabled(component_flags, "history") else []
     if getattr(request, "use_phase_prompt", False):
         # QPCS è un dialogo riflessivo: all'ingresso di uno step il prompt di fase
         # finisce nel system e il turno utente sarebbe solo i punteggi. Così il

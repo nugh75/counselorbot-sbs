@@ -12,6 +12,7 @@ API_KEY_ENV_MAP: dict[str, tuple[str, ...]] = {
     "anthropic": ("API_KEY_ANTHROPIC",),
     "gemini": ("API_KEY_GEMINI", "GEMINI_API_KEY", "GOOGLE_API_KEY"),
     "mistral": ("API_KEY_MISTRAL",),
+    "omniroute": ("OMNIROUTE_API_KEY", "API_KEY_OMNIROUTE"),
     "openrouter": ("API_KEY_OPENROUTER", "OPENROUTER_API_KEY"),
     "groq": ("API_KEY_GROQ", "GROQ_API_KEY"),
     "cerebras": ("API_KEY_CEREBRAS", "CEREBRAS_API_KEY"),

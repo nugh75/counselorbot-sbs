@@ -1108,55 +1108,55 @@ META_SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
         "key": "prompt_meta_QSAR_qsar-intro",
         "label": "QSAr Intro - Contesto Pellerey",
         "description": "Concetto di auto-direzione per lo step introduttivo QSAr",
-        "default": PELLEREY_SELF_DIRECTION,
+        "default": _text("qsar_meta_intro"),
     },
     {
         "key": "prompt_meta_QSAR_qsar-cognitive",
         "label": "QSAr Cognitive - Contesto Pellerey",
         "description": "Framework processi cognitivi per QSAr",
-        "default": PELLEREY_COGNITIVE_PROCESSES,
+        "default": _text("qsar_meta_cognitive"),
     },
     {
         "key": "prompt_meta_QSAR_qsar-affective",
         "label": "QSAr Affective - Contesto Pellerey",
         "description": "Framework processi affettivi per QSAr",
-        "default": PELLEREY_AFFECTIVE_PROCESSES,
+        "default": _text("qsar_meta_affective"),
     },
     {
         "key": "prompt_meta_QSAR_qsar-processing",
         "label": "QSAr Processing - Contesto Pellerey",
         "description": "Elaborazione e organizzazione per QSAr",
-        "default": PELLEREY_ELABORATION,
+        "default": _text("qsar_meta_processing"),
     },
     {
         "key": "prompt_meta_QSAR_qsar-selfcontrol",
         "label": "QSAr Self-control - Contesto Pellerey",
         "description": "Autoregolazione e attenzione per QSAr",
-        "default": PELLEREY_SELF_REGULATION_CYCLE,
+        "default": _text("qsar_meta_selfcontrol"),
     },
     {
         "key": "prompt_meta_QSAR_qsar-motivation",
         "label": "QSAr Motivation - Contesto Pellerey",
         "description": "Motivazione e competenza percepita per QSAr",
-        "default": PELLEREY_MOTIVATION,
+        "default": _text("qsar_meta_motivation"),
     },
     {
         "key": "prompt_meta_QSAR_qsar-emotions",
         "label": "QSAr Emotions - Contesto Pellerey",
         "description": "Gestione emotiva per QSAr",
-        "default": PELLEREY_EMOTIONS,
+        "default": _text("qsar_meta_emotions"),
     },
     {
         "key": "prompt_meta_QSAR_qsar-attributions",
         "label": "QSAr Attributions - Contesto Pellerey",
         "description": "Attribuzioni causali per QSAr",
-        "default": PELLEREY_ATTRIBUTION,
+        "default": _text("qsar_meta_attributions"),
     },
     {
         "key": "prompt_meta_QSAR_qsar-synthesis",
         "label": "QSAr Synthesis - Contesto Pellerey",
         "description": "Sintesi integrata per QSAr",
-        "default": PELLEREY_SYNTHESIS,
+        "default": _text("qsar_meta_synthesis"),
     },
     # ZTPI per-step meta prompts
     {
@@ -1240,7 +1240,7 @@ GLOBAL_DIRECTIVE_DEFINITIONS: List[Dict[str, str]] = [
         "key": "directive_language",
         "label": "Direttiva linguaggio",
         "description": "Istruzione [LANGUAGE] iniettata in ogni system prompt (usa {lang} e {lang_native} come placeholder per la lingua dello studente). Vuoto = usa default hardcoded.",
-        "default": "[LANGUAGE] You MUST write your ENTIRE response in {lang} ({lang_native}), regardless of the language of the instructions or scores above. Translate any fixed phrases, headings and labels into {lang} as well. Also produce your internal reasoning/thinking in {lang} ({lang_native}). Do NOT mix languages.",
+        "default": "[LANGUAGE] You MUST write your student-facing response in {lang} ({lang_native}), regardless of the language of the instructions or scores above. Translate any fixed phrases, headings and labels into {lang} as well. Also produce your internal reasoning/thinking in {lang} ({lang_native}). Do NOT mix languages in the visible prose. Keep technical block names, JSON keys and identifiers unchanged.",
     },
     {
         "key": "directive_register",
@@ -1257,8 +1257,8 @@ GLOBAL_DIRECTIVE_DEFINITIONS: List[Dict[str, str]] = [
     {
         "key": "directive_affirmative",
         "label": "Direttiva linguaggio affermativo",
-        "description": "Istruzione [AFFIRMATIVE] iniettata in ogni system prompt: vieta frasi che iniziano con negazioni. Vuoto = nessuna direttiva.",
-        "default": "[AFFIRMATIVE] When explaining a concept to the student, always describe what something IS, never what it is NOT. Avoid sentences that begin with negations like 'X is not...', 'X does not mean...', 'Unlike...'. Example: instead of 'A2 is not generic motivation — it is the ability to persist', write 'A2 is the ability to persist even when motivation drops'. The student learns from positive, direct statements; negations create confusion and sound defensive.",
+        "description": "Istruzione [AFFIRMATIVE]: preferisce spiegazioni dirette preservando distinzioni, correzioni e incertezza. Vuoto = nessuna direttiva.",
+        "default": "[AFFIRMATIVE] Prefer direct, affirmative explanations. Use negation when it clarifies a construct, corrects a false premise, or states a real limitation. State uncertainty plainly and briefly when the evidence is insufficient.",
     },
 ]
 
@@ -1676,7 +1676,7 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
             "with balance and responsibility; "
             "'present fatalistic' = the feeling of being unable to influence events and resignation. "
             "Do not reveal to the user any formulas, conversions or technical parameters. "
-            "Suggest 2-3 concrete strategies for moving closer to the balanced profile."
+            "Discuss actions already agreed to; add at most ONE new practical suggestion only when permitted by the current step and supported by a certified candidate."
         ),
         "system_prompt_mode": "ztpi-btp",
         "color_theme": "purple",
@@ -1720,7 +1720,7 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
             "Savickas interview - question 1 of 5. "
             "Ask this question: 'Who are three people you admired growing up "
             "(real or fictional) and what specific qualities do you admire in each of them?'. "
-            "Then add 1-2 useful follow-up micro-questions. "
+            "Wait for the answer before asking one useful follow-up in a later turn. "
             "When you have enough material, give a mini-summary and on the last line put only [[AVANZA_STEP]]."
         ),
         "system_prompt_mode": "savickas-interview",
@@ -1735,7 +1735,7 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
             "Savickas interview - question 2 of 5. "
             "Ask this question: 'Which magazines, websites, channels or content do you follow most willingly, "
             "and what attracts you about this content?'. "
-            "Then add 1-2 useful follow-up micro-questions. "
+            "Wait for the answer before asking one useful follow-up in a later turn. "
             "When you have enough material, give a mini-summary and on the last line put only [[AVANZA_STEP]]."
         ),
         "system_prompt_mode": "savickas-interview",
@@ -1750,7 +1750,7 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
             "Savickas interview - question 3 of 5. "
             "Ask this question: 'What is your favourite story from a book, film or series? "
             "Tell it to me briefly and say what strikes you most about it.'. "
-            "Then add 1-2 useful follow-up micro-questions. "
+            "Wait for the answer before asking one useful follow-up in a later turn. "
             "When you have enough material, give a mini-summary and on the last line put only [[AVANZA_STEP]]."
         ),
         "system_prompt_mode": "savickas-interview",
@@ -1765,7 +1765,7 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
             "Savickas interview - question 4 of 5. "
             "Ask this question: 'What is your motto, or the phrase that guides you most often? "
             "How do you apply it in important choices?'. "
-            "Then add 1-2 useful follow-up micro-questions. "
+            "Wait for the answer before asking one useful follow-up in a later turn. "
             "When you have enough material, give a mini-summary and on the last line put only [[AVANZA_STEP]]."
         ),
         "system_prompt_mode": "savickas-interview",
@@ -1780,7 +1780,7 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
             "Savickas interview - question 5 of 5. "
             "Ask this question: 'Tell me three early memories (ideally between ages 3 and 6) "
             "and give a short title to each memory.'. "
-            "Then add 1-2 useful follow-up micro-questions. "
+            "Wait for the answer before asking one useful follow-up in a later turn. "
             "When you have enough material, give a mini-summary and on the last line put only [[AVANZA_STEP]]."
         ),
         "system_prompt_mode": "savickas-interview",
@@ -1794,7 +1794,7 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
         "prompt": (
             "Final Savickas interview summary: integrate the answers that emerged across the 5 questions and "
             "build a coherent narrative portrait. "
-            "Include: central theme, resources, obstacles, 2-3 direction hypotheses and a 7/30/90-day plan. "
+            "Include: central theme, resources, obstacles, 2-3 tentative direction hypotheses, and actions and timeframes actually agreed to by the student. Distinguish proposals from commitments. "
             "On the last line put only [[AVANZA_STEP]]."
         ),
         "system_prompt_mode": "savickas-summary",
@@ -2051,7 +2051,7 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
             "the student sees the whole picture. THEN integrate their self-assessment results "
             "into an overall reading (perceived strengths and areas they feel less sure about, "
             "treating the scores as reference points, not judgements), with recurring resources, "
-            "areas to work on, 2-3 practical suggestions and a 7/30/90-day plan. End with a "
+            "areas to work on and actions the student already agreed to. Offer at most ONE new practical suggestion when this step permits it and a certified candidate supports it; otherwise consolidate existing actions. End with a "
             "reflection question. On the last line put only [[AVANZA_STEP]]."
         ),
         "system_prompt_mode": "qpcs-summary",
