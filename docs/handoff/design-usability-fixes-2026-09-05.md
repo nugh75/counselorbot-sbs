@@ -53,7 +53,7 @@ già tracciata, sia quella interna della nuova struttura, così i commit
 dell’audit restano separati dal lavoro contemporaneo. La build di consegna
 integra anche `4f9599c` per preservare le funzionalità già in produzione.
 
-## Esito della consegna
+## Esito della prima consegna
 
 Fix implementati nel commit `21d6cf0`, integrati con la versione già online in
 `7bdf2e4`, sul branch `fix/design-usability`. Il worktree di consegna è
@@ -93,3 +93,26 @@ Avvisi fuori ambito: i quattro warning lint riguardano dipendenze degli hook
 già presenti in `page.tsx` e `ConfigForm.tsx`, e `variant` non utilizzato in
 `IdeaMapPanel.tsx`. `npm ci` segnala 14 vulnerabilità nelle dipendenze (1 bassa,
 3 moderate, 10 alte); le versioni e il lockfile non sono stati modificati.
+
+## Semplificazione richiesta sugli screenshot
+
+La successiva indicazione dell’utente richiede meno elementi durante la chat e
+la consegna su `main` remoto e produzione. Il piano è stato esteso così:
+
+1. Nascondere navigazione generale e panoramica del percorso durante la chat,
+   sia su desktop sia su mobile; conservare Indietro e ripristinare la
+   navigazione uscendo dalla conversazione.
+2. Eliminare Pannello e Strumenti dalla testata. Lasciare un solo comando di
+   chiusura/riapertura della sidebar e il divisore per regolarne la larghezza.
+3. Mettere le attività visive nelle risorse, che sul telefono restano sotto
+   la conversazione; conservare bozze, recupero e discussione delle attività.
+4. Togliere i suggerimenti di prompt e il suggerimento generico sotto il campo.
+   Spostare lunghezza della risposta e congelamento sotto un solo comando con
+   tre punti. Conservare le risposte necessarie al flusso Savickas.
+5. Aggiornare testi della guida nelle sei lingue e immagini dimostrative.
+6. Verificare, pubblicare su `main` remoto e distribuire il frontend aggiornato.
+
+Criteri aggiuntivi: nessuna barra generale in chat; un solo pulsante nella
+testata guidata (Indietro); almeno metà dell’altezza del viewport disponibile
+per i messaggi nelle cinque dimensioni verificate. Opzioni utilizzabili con
+tastiera, conservazione della bozza e ripristino della navigazione all’uscita.

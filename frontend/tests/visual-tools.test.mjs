@@ -81,6 +81,9 @@ async function fixture(width, phase = 'intro', options = {}) {
         return route.fulfill({ contentType: 'application/json', body: JSON.stringify(data) });
     });
     await page.goto(`${origin}/?frozen=fixture`, { waitUntil: 'networkidle' });
+    if (width < 1024 && options.experience !== 'opencode' && options.openResources !== false) {
+        await page.locator('aside > button[aria-controls]').first().click();
+    }
     return { page, context, control };
 }
 
@@ -144,6 +147,7 @@ for (const options of [{ width: 320, locale: 'it', touch: true }, { width: 390, 
             assert.match(await page.locator('#guided-composer').inputValue(), /Posso frequentarlo/);
             assert.equal(control.requests.some(r => r.path === '/api/chat/stream'), false);
             await page.goto(`${origin}/?frozen=fixture`, { waitUntil: 'networkidle' });
+            if (options.width < 1024) await page.locator('aside > button[aria-controls]').first().click();
             await page.getByRole('button', { name: l('open'), exact: true }).click();
             await dialog.getByLabel(l('titleField'), { exact: true }).nth(1).waitFor();
             assert.equal(await dialog.getByLabel(l('titleField'), { exact: true }).nth(1).inputValue(), 'Studiare un capitolo');
@@ -347,33 +351,32 @@ test('keyboard tooltips explain actions and Escape dismisses help before the wor
 });
 
 for (const options of [{ width: 320, locale: 'it', touch: true }, { width: 390, locale: 'de', touch: true, dark: true }, { width: 1024, locale: 'sv' }, { width: 1440, locale: 'en' }]) {
-    test(`chat keeps tools in its header and its panel ${options.width < 1024 ? 'below' : 'beside'} it at ${options.width}px`, async () => {
-        const { page, context, control } = await fixture(options.width, 'intro', options);
+    test(`chat keeps secondary tools with resources at ${options.width}px`, async () => {
+        const { page, context, control } = await fixture(options.width, 'intro', { ...options, openResources: false });
         const l = key => chatLayoutLabel(options.locale, key);
         try {
             const chat = page.getByRole('region', { name: 'CounselorBot AI', exact: true });
             const panel = page.getByRole('complementary', { name: l('panelTitle'), exact: true });
             const header = chat.locator('header');
-            await header.getByRole('button', { name: visualLabel(options.locale, 'open'), exact: true }).waitFor();
-            assert.equal(await chat.getByRole('button', { name: visualLabel(options.locale, 'open'), exact: true }).count(), 1);
-            assert.equal(await header.getByRole('button', { name: visualLabel(options.locale, 'open'), exact: true }).textContent(), visualLabel(options.locale, 'tools'));
+            assert.equal(await header.getByRole('button', { name: visualLabel(options.locale, 'open'), exact: true }).count(), 0);
+            assert.equal(await header.getByRole('button', { name: l('hide'), exact: true }).count(), 0);
             await page.locator('#guided-composer').fill('Una bozza da conservare');
             if (options.width < 1024) {
                 assert.ok((await panel.boundingBox()).y >= (await chat.boundingBox()).y + (await chat.boundingBox()).height);
-                await header.getByRole('button', { name: l('show'), exact: true }).click();
-                assert.equal(await page.getByRole('dialog').count(), 0, 'mobile panel stays in the page');
-                assert.notEqual(await page.evaluate(() => document.body.style.overflow), 'hidden');
-                assert.ok((await panel.boundingBox()).y >= (await chat.boundingBox()).y + (await chat.boundingBox()).height);
-                await panel.getByRole('button', { name: l('panelTitle'), exact: true }).click();
-                assert.equal(await header.getByRole('button', { name: l('show'), exact: true }).getAttribute('aria-expanded'), 'false');
+                const toggle = panel.locator(':scope > button');
+                assert.equal(await toggle.getAttribute('aria-expanded'), 'false');
+                await toggle.click();
+                assert.equal(await page.getByRole('dialog').count(), 0);
+                await panel.getByRole('button', { name: visualLabel(options.locale, 'open'), exact: true }).waitFor();
+                await toggle.click();
+                assert.equal(await toggle.getAttribute('aria-expanded'), 'false');
             } else {
+                await panel.getByRole('button', { name: visualLabel(options.locale, 'open'), exact: true }).waitFor();
                 const original = await chat.boundingBox();
-                assert.ok((await panel.boundingBox()).x < original.x);
-                await header.getByRole('button', { name: l('hide'), exact: true }).click();
+                await panel.getByRole('button', { name: l('hide'), exact: true }).click();
                 assert.equal(await panel.isVisible(), false);
                 assert.ok((await chat.boundingBox()).width > original.width + 250);
             }
-            assert.ok(await header.getByLabel(`${l('resources')}: 2`, { exact: true }).isVisible());
             assert.equal(await page.locator('#guided-composer').inputValue(), 'Una bozza da conservare');
             assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
             assert.equal(control.requests.some(r => r.path === '/api/chat/stream'), false);
@@ -382,19 +385,16 @@ for (const options of [{ width: 320, locale: 'it', touch: true }, { width: 390, 
     });
 }
 
-test('desktop panel resizes with buttons, keyboard and pointer and remembers width and visibility', async () => {
+test('a single separator resizes the sidebar with keyboard and pointer and remembers preferences', async () => {
     const { page, context, control } = await fixture(1440);
     const l = key => chatLayoutLabel('it', key);
     try {
         const panel = page.getByRole('complementary', { name: l('panelTitle'), exact: true });
         const separator = page.getByRole('separator', { name: l('resize'), exact: true });
         await separator.waitFor();
+        assert.equal(await panel.getByRole('button', { name: l('widen'), exact: true }).count(), 0);
+        assert.equal(await panel.getByRole('button', { name: l('narrow'), exact: true }).count(), 0);
         const waitWidth = value => page.waitForFunction(value => { const separator = document.querySelector('[role="separator"]'); return separator?.getAttribute('aria-valuenow') === String(value) && separator.previousElementSibling.getBoundingClientRect().width === Number(value); }, value);
-        const original = (await panel.boundingBox()).width;
-        await panel.getByRole('button', { name: l('widen'), exact: true }).click();
-        await page.waitForFunction(({ label, original }) => document.querySelector(`aside[aria-label="${label}"]`)?.getBoundingClientRect().width > original, { label: l('panelTitle'), original });
-        await panel.getByRole('button', { name: l('narrow'), exact: true }).click();
-        await page.waitForFunction(({ label, original }) => document.querySelector(`aside[aria-label="${label}"]`)?.getBoundingClientRect().width === original, { label: l('panelTitle'), original });
         await separator.focus(); await page.keyboard.press('Home');
         await waitWidth(260);
         await page.keyboard.press('ArrowRight');
@@ -408,7 +408,6 @@ test('desktop panel resizes with buttons, keyboard and pointer and remembers wid
         await page.mouse.move(grip.x + grip.width / 2 + 70, grip.y + 80, { steps: 5 }); await page.mouse.up();
         await waitWidth(330);
         const resized = Number(await separator.getAttribute('aria-valuenow'));
-        assert.ok(resized >= 329 && resized <= 331);
         await page.getByRole('button', { name: l('hide'), exact: true }).click();
         await page.goto(`${origin}/?frozen=fixture`, { waitUntil: 'networkidle' });
         assert.equal(await panel.isVisible(), false);
@@ -417,7 +416,7 @@ test('desktop panel resizes with buttons, keyboard and pointer and remembers wid
         await page.setViewportSize({ width: 1024, height: 844 });
         assert.ok((await page.getByRole('region', { name: 'CounselorBot AI', exact: true }).boundingBox()).width >= 420);
         await page.setViewportSize({ width: 390, height: 844 });
-        await page.getByRole('button', { name: l('show'), exact: true }).waitFor();
+        await panel.locator(':scope > button').waitFor();
         assert.equal(await separator.count(), 0);
         await page.setViewportSize({ width: 1440, height: 844 });
         await separator.waitFor();

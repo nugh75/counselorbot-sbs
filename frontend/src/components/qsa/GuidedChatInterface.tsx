@@ -1,6 +1,6 @@
 'use client';
 
-import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X } from 'lucide-react';
+import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, MoreHorizontal } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
@@ -67,6 +67,7 @@ interface GuidedChatInterfaceProps {
     locale?: string;
     scoresContextOverride?: string;
     onFrozen?: () => void;
+    onBack?: () => void;
     frozenSnapshot?: FrozenSessionDetail | null;
 }
 
@@ -440,7 +441,7 @@ function GuidedMessageContent({ content, locale, errorMessage }: { content: stri
 
 // --- Main Component ---
 
-export function GuidedChatInterface({ scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, frozenSnapshot }: GuidedChatInterfaceProps) {
+export function GuidedChatInterface({ scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot }: GuidedChatInterfaceProps) {
     const { t, tf, lang: contextLang } = useI18n();
     const activeLocale = normalizeLocale(locale || contextLang);
     const [steps, setSteps] = useState<StepDef[]>([]);
@@ -539,7 +540,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const [questionsBanner, setQuestionsBanner] = useState(() => t('guided.questionsBanner'));
     const [questionsIntro, setQuestionsIntro] = useState(() => t('guided.questionsIntro'));
     const [conclusionText, setConclusionText] = useState(() => t('guided.conclusionText'));
-    const [fixedPhaseQuestions, setFixedPhaseQuestions] = useState<string[]>([]);
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const requestRef = useRef<AbortController | null>(null);
@@ -694,7 +694,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
         const loadData = async () => {
             try {
-                setFixedPhaseQuestions([]);
                 const res = await fetch(`/api/qsa/guided-ui-texts?questionnaire_type=${questionnaireType}&lang=${activeLocale}`);
                 if (!res.ok) return;
 
@@ -787,9 +786,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 setQuestionsBanner(data.text_guided_questions_phase_banner || t('guided.questionsBanner'));
                 setQuestionsIntro(data.text_guided_questions_intro || t('guided.questionsIntro'));
                 setConclusionText(data.text_guided_conclusion || t('guided.conclusionText'));
-                setFixedPhaseQuestions(Array.isArray(data.fixed_phase_questions) ? data.fixed_phase_questions : []);
             } catch {
-                setFixedPhaseQuestions([]);
                 if (questionnaireType === 'SAVICKAS') {
                     setSteps(SAVICKAS_FALLBACK_STEPS.map((s) => ({ ...s, label: stepLabel(activeLocale, s.id, s.label) })));
                     const fallbackOrder = [...SAVICKAS_FALLBACK_STEPS.map((s) => s.id), FIXED_CONCLUSION_ID];
@@ -1440,9 +1437,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const sidebarPhases = phases;
     const hasScoreEntries = scoreGroups.some(group => group.entries.length > 0);
     const isSavickasAgreement = questionnaireType === 'SAVICKAS' && currentPhase === 'savickas-patto';
-    const suggestedQuestions = currentPhase === FIXED_QUESTIONS_ID
-        ? fixedPhaseQuestions
-        : getStepDef(currentPhase)?.suggested_questions || [];
     const quickReplies: QuickReply[] = (() => {
         if (questionnaireType === 'SAVICKAS') {
             if (isSavickasAgreement) {
@@ -1478,13 +1472,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const inputPlaceholder = isSavickasAgreement
         ? t('guided.input.pattoPlaceholder')
         : t('guided.input.placeholder');
-    const inputHint = isSavickasAgreement
-        ? t('guided.hint.savickasPatto')
-        : isAnalysisStep(currentPhase)
-            ? questionnaireType === 'SAVICKAS'
-                ? t('guided.hint.savickas')
-                : t('guided.hint.analysis')
-            : t('guided.hint.free');
     const showPreviousStep = currentPhase !== FIXED_CONCLUSION_ID && phases.indexOf(currentPhase) > 0;
     const showStandardAdvance = currentPhase !== FIXED_CONCLUSION_ID && questionnaireType !== 'SAVICKAS';
     const showSavickasAdvance = currentPhase !== FIXED_CONCLUSION_ID
@@ -1516,8 +1503,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         <div className="space-y-4">
         <ChatWorkspace locale={activeLocale} subtitle={getPhaseLabel(currentPhase)} headerClassName={currentColors.headerBg}
             resourceCount={recommendations.reading.length + recommendations.strategy.length}
-            hasSidebar={!isIdea || hasScoreEntries || recommendations.reading.length + recommendations.strategy.length > 0}
-            tools={<VisualTools compact sessionId={sessionId} locale={activeLocale} catalog={recommendations} request={visualRequest}
+            onBack={onBack}
+            tools={<VisualTools sessionId={sessionId} locale={activeLocale} catalog={recommendations} request={visualRequest}
                         onDiscuss={currentPhase === FIXED_CONCLUSION_ID ? undefined : text => {
                             setInput(previous => previous.trim() ? `${previous}\n\n${text}` : text);
                             window.requestAnimationFrame(() => document.getElementById('guided-composer')?.focus());
@@ -1843,21 +1830,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             />
                         )}
                         <div className="p-3 sm:p-4">
-                        {/* Domande suggerite per lo step corrente: compilano l'input per permettere modifica prima dell'invio. */}
-                        {!isLoading && suggestedQuestions.length > 0 && (
-                            <div className="mb-2 flex flex-wrap gap-1.5">
-                                {suggestedQuestions.map((question) => (
-                                    <button
-                                        key={question}
-                                        type="button"
-                                        onClick={() => setInput(question)}
-                                        className="max-w-full rounded-md border border-indigo-100 bg-indigo-50 px-3 py-1.5 text-left text-xs font-medium leading-snug text-indigo-700 transition-colors hover:border-indigo-200 hover:bg-indigo-100"
-                                    >
-                                        {question}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
                         {/* Risposte rapide ancora necessarie per il flusso Savickas. */}
                         {!isLoading && messages.length > 0 && quickReplies.length > 0 && (
                             <div className="mb-2 flex flex-wrap gap-1.5">
@@ -1902,7 +1874,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                 </button>
                             </div>
                         )}
-                        <div className="mb-2 flex items-center justify-end gap-1.5">
+                        <div className="relative flex items-end gap-2">
                             {isIdea && (
                                 <>
                                     <input
@@ -1930,24 +1902,21 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                     </Tooltip>
                                 </>
                             )}
-                            <Tooltip content={t('frozen.freeze')} side="top">
-                                <button
-                                    type="button"
-                                    onClick={() => void handleFreeze()}
-                                    disabled={isLoading || !sessionId}
-                                    aria-label={t('frozen.freeze')}
-                                    className="tap-icon rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    <Snowflake className="h-4 w-4" />
-                                </button>
-                            </Tooltip>
-                            <ResponseLengthSelector
-                                value={responseLength}
-                                onChange={setResponseLength}
-                                disabled={isLoading}
-                            />
-                        </div>
-                        <div className="relative flex items-end gap-2">
+                            <details className="chat-options relative shrink-0"
+                                onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) event.currentTarget.open = false; }}
+                                onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); event.currentTarget.open = false; event.currentTarget.querySelector('summary')?.focus(); } }}>
+                                <summary aria-label={chatLayoutLabel(activeLocale, 'options')} className="flex h-[44px] w-[44px] cursor-pointer list-none items-center justify-center rounded-md text-slate-500 hover:bg-slate-100">
+                                    <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
+                                </summary>
+                                <div className="absolute bottom-full left-0 z-20 mb-2 w-64 space-y-3 rounded-lg border border-slate-200 bg-white p-3 shadow-lg">
+                                    <p className="text-sm font-semibold text-slate-700">{t('responseLength.label')}</p>
+                                    <ResponseLengthSelector value={responseLength} onChange={setResponseLength} disabled={isLoading} />
+                                    <button type="button" onClick={() => void handleFreeze()} disabled={isLoading || !sessionId}
+                                        className="flex min-h-[44px] w-full items-center gap-2 rounded-md text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50">
+                                        <Snowflake className="h-4 w-4" aria-hidden="true" />{t('frozen.freeze')}
+                                    </button>
+                                </div>
+                            </details>
                             <AutoGrowTextarea
                                 id="guided-composer"
                                 value={input}
@@ -1986,11 +1955,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                 </button>
                             )}
                         </div>
-                        <div className="mt-2 text-center">
-                            <p className="text-2xs text-slate-500">
-                                {inputHint}
-                            </p>
-                        </div>
+                        {isSavickasAgreement && <p className="mt-2 text-sm text-slate-500">{t('guided.hint.savickasPatto')}</p>}
                         </div>
                     </form>
                 )}

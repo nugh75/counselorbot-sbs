@@ -6,7 +6,7 @@
 
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, MessageSquareText, Send, Snowflake, ThumbsDown, ThumbsUp, Volume2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MoreHorizontal, Send, Snowflake, ThumbsDown, ThumbsUp, Volume2, X } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useI18n } from '@/lib/i18n-context';
 
@@ -16,7 +16,7 @@ export default function GuidePage() {
     const { t } = useI18n();
     const sections = Array.from({ length: SECTION_COUNT }, (_, i) => i + 1);
     const chatControls = [
-        { key: 'suggested', icon: <MessageSquareText className="h-4 w-4" aria-hidden="true" /> },
+        { key: 'options', icon: <MoreHorizontal className="h-4 w-4" aria-hidden="true" /> },
         { key: 'freeze', icon: <Snowflake className="h-4 w-4" aria-hidden="true" /> },
         {
             key: 'length',
@@ -76,8 +76,8 @@ export default function GuidePage() {
                 <span className="block overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
                     <Image
                         src={src}
-                        width={src === '/guide/chat-guidata.png' ? 1440 : 803}
-                        height={src === '/guide/chat-guidata.png' ? 1098 : 171}
+                        width={src === '/guide/chat-guidata.png' ? 1440 : 764}
+                        height={src === '/guide/chat-guidata.png' ? 900 : 260}
                         alt={alt}
                         className="h-auto w-full"
                     />

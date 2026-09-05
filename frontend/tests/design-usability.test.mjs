@@ -39,7 +39,7 @@ async function fixture({ width = 390, height = 844, touch = true, locale = 'it',
         else if (url.pathname === '/api/session/frozen') data = [{ ...snapshot, label: 'QSA · Organizzare lo studio' }];
         else if (url.pathname === '/api/session/frozen/design-fixture') data = snapshot;
         else if (url.pathname === '/api/opencode/workspace') data = { key: 'design-fixture', api_available: true, session_id: 'opencode-fixture', needs_seed: false, history: snapshot.messages.filter(message => message.role !== 'system') };
-        else if (url.pathname === '/api/qsa/guided-ui-texts') data = { guided_steps: [{ id: 'intro', label: 'Introduzione', sort_order: 1, system_prompt_mode: 'qsa-intro' }] };
+        else if (url.pathname === '/api/qsa/guided-ui-texts') data = { guided_steps: [{ id: 'intro', label: 'Introduzione', sort_order: 1, system_prompt_mode: 'qsa-intro', suggested_questions: ['Come funziona questo percorso?'] }] };
         else if (url.pathname.endsWith('/recommendations')) data = { reading: [], strategy: [] };
         return route.fulfill({ contentType: 'application/json', body: JSON.stringify(data) });
     });
@@ -60,10 +60,14 @@ for (const [width, height] of [[320, 568], [390, 844], [768, 1024], [1280, 720],
             const composer = page.locator('#guided-composer');
             await composer.waitFor();
             await settled(page);
+            assert.equal(await page.locator('.console-header').isVisible(), false);
+            assert.equal(await page.locator('main > .page-wide > ol').count(), 0);
+            assert.equal(await page.getByRole('button', { name: 'Come funziona questo percorso?', exact: true }).count(), 0);
+            assert.equal(await page.locator('section[aria-labelledby="guided-chat-title"] header button').count(), 1);
             const box = await composer.boundingBox();
             assert.ok(box.y >= 60 && box.y + box.height <= height, `composer fits: ${JSON.stringify(box)}`);
             const log = await page.locator('[role="log"]').evaluate(el => ({ visible: el.clientHeight, total: el.scrollHeight }));
-            assert.ok(log.visible >= 110 && log.total > log.visible, `messages scroll inside the chat: ${JSON.stringify(log)}`);
+            assert.ok(log.visible >= height * 0.5 && log.total > log.visible, `messages scroll inside the chat: ${JSON.stringify(log)}`);
             const next = await page.getByRole('button', { name: 'Prossimo Step', exact: true }).boundingBox();
             assert.ok(next.y >= 60 && next.y + next.height <= height, 'step navigation remains visible');
             const size = await page.locator('.chat-message p').first().evaluate(el => parseFloat(getComputedStyle(el).fontSize));
@@ -103,11 +107,11 @@ test('chat follows viewport resize with a draft in the composer', async () => {
 });
 
 for (const width of [768, 1024, 1280, 1440]) {
-    test(`header controls do not overlap at ${width}px with a long admin name`, async () => {
+    test(`header controls outside chat do not overlap at ${width}px with a long admin name`, async () => {
         const { page, context } = await fixture({ width, height: 1024, admin: true, locale: 'de' });
         try {
-            await page.goto(`${origin}/?frozen=design-fixture`, { waitUntil: 'networkidle' });
-            await page.locator('#guided-composer').waitFor();
+            await page.goto(origin, { waitUntil: 'networkidle' });
+            await page.locator('.console-header').waitFor();
             await settled(page);
             const collisions = await page.locator('.console-header').evaluate(header => {
                 const boxes = [...header.querySelectorAll('a,button')].filter(e => e.getClientRects().length).map(e => ({ name: e.getAttribute('aria-label') || e.textContent, rect: e.getBoundingClientRect() }));
@@ -173,10 +177,14 @@ test('mobile menu targets reach 44px and dark surfaces retain readable colours',
 });
 
 
-test('compact header preserves counselor selection and motion settings', async () => {
+test('leaving chat restores the header with counselor selection and motion settings', async () => {
     const { page, context } = await fixture({ width: 768, height: 1024, motion: 'no-preference' });
     try {
         await page.goto(`${origin}/?frozen=design-fixture`, { waitUntil: 'networkidle' });
+        await page.locator('#guided-composer').waitFor();
+        assert.equal(await page.locator('.console-header').isVisible(), false);
+        await page.getByRole('button', { name: 'Indietro', exact: true }).click();
+        await page.locator('.console-header').waitFor({ state: 'visible' });
         await page.locator('button[aria-controls="mobile-menu"]').click();
         const menu = page.locator('#mobile-menu');
         assert.ok(await menu.getByText('QSA', { exact: true }).isVisible());
@@ -189,3 +197,24 @@ test('compact header preserves counselor selection and motion settings', async (
         assert.equal(await page.locator('html').getAttribute('data-motion'), 'reduced');
     } finally { await context.close(); }
 });
+
+for (const width of [320, 1440]) {
+    test(`conversation options stay secondary and keep the draft at ${width}px`, async () => {
+        const { page, context } = await fixture({ width, height: 844, dark: width === 320 });
+        try {
+            await page.goto(`${origin}/?frozen=design-fixture`, { waitUntil: 'networkidle' });
+            const composer = page.locator('#guided-composer');
+            await composer.fill('Conservo la mia domanda.');
+            const options = page.locator('.chat-options');
+            assert.equal(await options.getAttribute('open'), null);
+            await options.locator('summary').click();
+            await page.getByRole('radio', { name: 'Lunghezza risposta: Breve', exact: true }).click();
+            assert.equal(await page.getByRole('radio', { name: 'Lunghezza risposta: Breve', exact: true }).getAttribute('aria-checked'), 'true');
+            const freeze = await options.getByRole('button', { name: 'Congela sessione', exact: true }).boundingBox();
+            assert.ok(freeze.x >= 0 && freeze.y >= 0 && freeze.x + freeze.width <= width);
+            await page.keyboard.press('Escape');
+            assert.equal(await options.getAttribute('open'), null);
+            assert.equal(await composer.inputValue(), 'Conservo la mia domanda.');
+        } finally { await context.close(); }
+    });
+}
