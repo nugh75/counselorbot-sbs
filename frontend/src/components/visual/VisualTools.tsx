@@ -48,6 +48,7 @@ function WorkspaceView({ sessionId, locale, catalog: providedCatalog, onDiscuss,
     const [option, setOption] = useState('');
     const [optionSource, setOptionSource] = useState('');
     const dialog = useRef<HTMLElement>(null);
+    const loadGeneration = useRef(0);
     const opener = useRef<HTMLElement | null>(null);
     const id = useId();
     const dirty = JSON.stringify(work) !== JSON.stringify(saved.workspace);
@@ -64,14 +65,16 @@ function WorkspaceView({ sessionId, locale, catalog: providedCatalog, onDiscuss,
     });
     const launch = () => { opener.current = document.activeElement as HTMLElement; setOpen(true); };
     const load = useCallback(async () => {
+        const generation = ++loadGeneration.current;
         setBusy(true); setIssue('');
         try {
             const response = await apiFetch(endpoint, { signal: AbortSignal.timeout(15000) });
             if (!response.ok) throw new Error();
             const result: SavedWorkspace = await response.json();
+            if (generation !== loadGeneration.current) return;
             setSaved(result); setWork(result.workspace); setHistory([]); setLoaded(true);
-        } catch { setIssue('loadError'); }
-        finally { setBusy(false); }
+        } catch { if (generation === loadGeneration.current) setIssue('loadError'); }
+        finally { if (generation === loadGeneration.current) setBusy(false); }
     }, [endpoint]);
 
     useEffect(() => { if (open && !loaded) void load(); }, [open, loaded, load]);
