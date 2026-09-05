@@ -11,6 +11,20 @@ from .diagram_render import DiagramSpec, parse_spec, DiagramSpecError
 ACTION = "message_diagram"
 
 
+def session_questionnaire(db: Session, session_id: str | None) -> str | None:
+    """Read only after session ownership has been checked by the caller."""
+    if not session_id:
+        return None
+    result = db.query(models.QuestionnaireResult.questionnaire_type).filter(
+        models.QuestionnaireResult.session_id == session_id,
+    ).first()
+    if not result:
+        result = db.query(models.FrozenSession.questionnaire_type).filter(
+            models.FrozenSession.session_id == session_id,
+        ).first()
+    return result[0] if result else None
+
+
 def session_owner(db: Session, session_id: str, identity: dict) -> str:
     username = identity.get("username") or ""
     if not username:
@@ -49,6 +63,7 @@ def save_diagram(db: Session, *, session_id: str, username: str,
 
 
 def list_diagrams(db: Session, session_id: str, username: str | None = None) -> list[dict]:
+    questionnaire_type = session_questionnaire(db, session_id)
     query = db.query(models.Log).filter(
         models.Log.action == ACTION, models.Log.session_id == session_id,
     )
@@ -61,7 +76,7 @@ def list_diagrams(db: Session, session_id: str, username: str | None = None) -> 
         if not isinstance(source, str) or not source.strip():
             continue
         try:
-            spec = parse_spec(details.get("spec") or {})
+            spec = parse_spec(details.get("spec") or {}, questionnaire_type=questionnaire_type)
         except DiagramSpecError:
             continue
         key = details.get("source_key") or hashlib.sha256(source.strip().encode()).hexdigest()

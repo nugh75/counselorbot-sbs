@@ -1,0 +1,26 @@
+<svg
+ viewBox="0.00 0.00 172.60 267.60" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" role="img"><title>La fiducia e le attribuzioni sono in relazione</title><desc>La fiducia e le attribuzioni sono in relazione: Percezione di competenza bassa rafforza Cause controllabili.</desc>
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(28.8 238.8)">
+<title>diagram</title>
+<!-- a -->
+<g id="node1" class="node">
+<title>a</title>
+<svg x="36" y="-206" width="44px" height="44px" viewBox="0 0 24 24" fill="none" stroke="#17747a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"></circle><path d="M20 21a8 8 0 0 0-16 0"></path></svg>
+<text text-anchor="start" x="19" y="-152.4" font-family="Inter,DejaVu Sans,sans-serif" font-size="12.00" fill="#0e3539">Percezione di</text>
+<text text-anchor="start" x="4.5" y="-139.4" font-family="Inter,DejaVu Sans,sans-serif" font-size="12.00" fill="#0e3539">competenza bassa</text>
+</g>
+<!-- b -->
+<g id="node2" class="node">
+<title>b</title>
+<svg x="36" y="-74" width="44px" height="44px" viewBox="0 0 24 24" fill="none" stroke="#17747a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"></path><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"></circle></svg>
+<text text-anchor="start" x="40" y="-20.4" font-family="Inter,DejaVu Sans,sans-serif" font-size="12.00" fill="#0e3539">Cause</text>
+<text text-anchor="start" x="24.5" y="-7.4" font-family="Inter,DejaVu Sans,sans-serif" font-size="12.00" fill="#0e3539">controllabili</text>
+</g>
+<!-- a&#45;&gt;b -->
+<g id="edge1" class="edge">
+<title>a&#45;&gt;b</title>
+<path fill="none" stroke="#41707a" stroke-width="2.6" d="M57.5,-131.7C57.5,-117.42 57.5,-101.05 57.5,-86.14"/>
+<polygon fill="#41707a" stroke="#41707a" stroke-width="2.6" points="60.3,-86.03 57.5,-78.03 54.7,-86.03 60.3,-86.03"/>
+</g>
+</g>
+</svg>

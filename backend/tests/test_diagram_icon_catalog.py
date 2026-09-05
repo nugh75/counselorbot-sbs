@@ -79,7 +79,7 @@ def test_both_generation_paths_receive_the_complete_semantic_catalogue():
     seed = next(seed for seed in skills_seed.SKILL_SEEDS if seed['slug'] == 'concept-diagram')
     assert truncate(instructions, seed['max_chars']) == instructions
     assert 'every node in' not in instructions
-    assert 'self-efficacy' in instructions
+    assert 'set factor to INSTRUMENT:CODE' in instructions
 
 
 @pytest.mark.parametrize('custom', [False, True])

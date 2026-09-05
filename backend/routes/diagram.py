@@ -15,7 +15,8 @@ from starlette.concurrency import run_in_threadpool
 from .. import auth, database, models
 from ..ai_service import AIService, AIError
 from ..diagram_icon_catalog import ICON_SELECTION_PROMPT
-from ..message_diagrams import session_owner, save_diagram, list_diagrams
+from ..diagram_symbols import factor_selection_prompt
+from ..message_diagrams import session_owner, session_questionnaire, save_diagram, list_diagrams
 from ..diagram_render import (
     DiagramSpec,
     DiagramSpecError,
@@ -200,6 +201,8 @@ async def diagram_from_message(
     """Ricava uno spec dal testo di un messaggio gia' scritto e lo disegna."""
     _require_feature(db)
     owner = session_owner(db, request.session_id, identity) if request.session_id else None
+    questionnaire_type = session_questionnaire(db, request.session_id)
+    base_prompt = SPEC_ONLY_SYSTEM_PROMPT + factor_selection_prompt(questionnaire_type)
     c_provider, c_model, _persona, _name, disable_thinking, reasoning_budget = _resolve_counselor(
         db, request.counselor_id
     )
@@ -226,7 +229,7 @@ async def diagram_from_message(
             int(ai_service.config.get('ai_timeout_seconds') or 120), DIAGRAM_MODEL_TIMEOUT_SECONDS,
         ))
         deadline = asyncio.get_running_loop().time() + DIAGRAM_MODEL_TIMEOUT_SECONDS
-        system_prompt = SPEC_ONLY_SYSTEM_PROMPT
+        system_prompt = base_prompt
         for attempt in range(2):
             try:
                 remaining = deadline - asyncio.get_running_loop().time()
@@ -245,7 +248,7 @@ async def diagram_from_message(
                     ),
                     timeout=remaining,
                 )
-                spec = parse_spec(_json_object(reply))
+                spec = parse_spec(_json_object(reply), questionnaire_type=questionnaire_type)
                 break
             except (AIError, asyncio.TimeoutError) as exc:
                 logger.warning("Diagramma: %s/%s non disponibile (%s)", provider, model, type(exc).__name__)
@@ -262,7 +265,7 @@ async def diagram_from_message(
                 if attempt or not issues:
                     break
                 feedback = "; ".join(f"{'.'.join(map(str, issue['loc']))}: {issue['msg']}" for issue in issues)
-                system_prompt = SPEC_ONLY_SYSTEM_PROMPT + (
+                system_prompt = base_prompt + (
                     " Your previous output failed validation: " + feedback +
                     ". Generate a new complete JSON object from the source. "
                     "Keep labels concise: node labels and title <= 80 characters, "

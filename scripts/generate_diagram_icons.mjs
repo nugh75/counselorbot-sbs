@@ -54,7 +54,7 @@ const escape = value => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').r
 const cards = [];
 for (const entry of catalog) {
     const svg = await readFile(new URL(`backend/diagram_icons/${entry.id}.svg`, root), 'utf8');
-    cards.push(`<article data-search="${escape(`${entry.label_it} ${entry.id} ${entry.meaning}`.toLowerCase())}">${svg}<h2>${escape(entry.label_it)}</h2><p>${escape(entry.meaning)}</p><code>${entry.id}</code></article>`);
+    cards.push(`<article data-search="${escape([entry.label_it, entry.id, entry.meaning, ...(entry.aliases || [])].join(' ').toLowerCase())}">${svg}<h2>${escape(entry.label_it)}</h2><p>${escape(entry.meaning)}</p><code>${entry.id}</code></article>`);
 }
 if (!check) await mkdir(new URL('docs/diagrams/', root), { recursive: true });
 await output('docs/diagrams/icon-catalog.html', `<!doctype html>
@@ -63,13 +63,33 @@ await output('docs/diagrams/icon-catalog.html', `<!doctype html>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#fff;color:#334155;font:16px/1.5 Inter,system-ui,sans-serif}main{max-width:1200px;margin:auto;padding:32px 20px}h1{font-size:28px;color:#155e63;margin:0 0 12px}header p{max-width:760px}label{display:block;font-weight:600;margin-top:24px}input{font:inherit;width:100%;padding:12px;border:1px solid #94a3b8;border-radius:8px;margin:8px 0}input:focus{outline:2px solid #17747a;outline-offset:2px}#count{margin:8px 0 20px;color:#64748b}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px}article{border:1px solid #cbd5e1;border-radius:8px;padding:18px 14px}article[hidden]{display:none}article svg{width:40px;height:40px}h2{font-size:15px;color:#155e63;line-height:1.35;margin:12px 0 6px}article p{font-size:13px;margin:0 0 8px}code{font-size:12px;color:#64748b}a{color:#155e63}footer{margin-top:32px;font-size:14px}@media(max-width:420px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}main{padding:24px 12px}}
 </style>
-<main><header><h1>Le 100 icone dei diagrammi</h1><p>Ogni simbolo indica un significato preciso. Il testo del nodo resta essenziale: se il simbolo non rappresenta bene il concetto, il diagramma può usare una forma senza icona.</p><p>Un obiettivo da raggiungere non è un risultato ottenuto. Concetti astratti come l’autoefficacia possono rimanere testuali.</p></header>
+<main><header><h1>Le 100 icone dei diagrammi</h1><p>Ogni simbolo indica un significato preciso. Il testo del nodo resta essenziale: se il simbolo non rappresenta bene il concetto, il diagramma può usare una forma senza icona.</p><p>Un obiettivo da raggiungere non è un risultato ottenuto. I fattori riconosciuti ricevono sempre il simbolo del <a href="factor-symbols.html">dizionario dei 41 fattori</a>; livelli e difficoltà restano nel testo.</p></header>
 <label for="search">Cerca un significato o un’icona</label><input id="search" type="search" placeholder="Per esempio: pianificazione, confronto, incertezza"><p id="count" role="status">100 icone</p>
 <section class="grid" aria-label="Catalogo delle icone">${cards.join('\n')}</section>
 <footer>90 nuove icone da <a href="https://lucide.dev/">Lucide</a>, versione ${require('lucide-react/package.json').version}; conservati i 10 simboli precedenti. Catalogo generato da <code>backend/diagram_icon_catalog.json</code>. Significati operativi in inglese per tutti i modelli e tutte le lingue.</footer></main>
 <script>
 const search=document.querySelector('#search');const cards=[...document.querySelectorAll('article')];
-search.addEventListener('input',()=>{const query=search.value.trim().toLowerCase();let count=0;for(const card of cards){card.hidden=!card.dataset.search.includes(query);if(!card.hidden)count++;}document.querySelector('#count').textContent=count+' icone';});
+search.addEventListener('input',()=>{const query=search.value.trim().toLowerCase();let count=0;for(const card of cards){card.hidden=!card.dataset.search.includes(query);if(!card.hidden)count++;}document.querySelector('#count').textContent=count+(count===1?' icona':' icone');});
+</script></html>
+`);
+const factors = JSON.parse(await readFile(new URL('backend/diagram_factor_symbols.json', root), 'utf8'));
+const factorCards = [];
+for (const factor of factors) {
+    const svg = await readFile(new URL(`backend/diagram_icons/${factor.icon}.svg`, root), 'utf8');
+    factorCards.push(`<article data-search="${escape(`${factor.id} ${Object.values(factor.labels).join(' ')}`.toLowerCase())}">${svg}<div><code>${escape(factor.id)}</code><h2>${escape(factor.labels.it)}</h2><p>Simbolo: ${escape(factor.icon)}</p></div></article>`);
+}
+await output('docs/diagrams/factor-symbols.html', `<!doctype html>
+<html lang="it"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dizionario dei simboli dei fattori — CounselorBot</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#fff;color:#334155;font:16px/1.5 system-ui,sans-serif}main{max-width:1100px;margin:auto;padding:28px 16px}h1{color:#155e63;font-size:28px}header p{max-width:800px}a{color:#155e63}label{display:block;font-weight:600;margin-top:24px}input{font:inherit;width:100%;padding:12px;border:1px solid #94a3b8;border-radius:8px;margin:8px 0}input:focus{outline:2px solid #17747a;outline-offset:2px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}article{display:flex;gap:16px;border:1px solid #cbd5e1;border-radius:8px;padding:18px}article[hidden]{display:none}article svg{width:40px;height:40px;flex-shrink:0}article h2{font-size:16px;line-height:1.4;margin:6px 0}article p,code{font-size:13px;color:#64748b;margin:0}footer{margin-top:28px}
+</style>
+<main><header><a href="icon-catalog.html">Tutte le 100 icone</a><h1>Dizionario dei simboli dei fattori</h1><p>41 associazioni stabili per QSA, QSAr, ZTPI, QPCS, QPCC e QAP. Il programma applica questi simboli anche quando il modello omette l’icona o ne propone un’altra.</p><p>Il simbolo identifica la dimensione, non il punteggio: una percezione di competenza bassa e una alta mantengono lo stesso simbolo. Il testo specifica livello, difficoltà e significato. Dimensioni affini possono condividere il simbolo; nome e codice le distinguono.</p></header>
+<label for="search">Cerca un fattore o un questionario</label><input id="search" type="search" placeholder="Per esempio: QSA:A6, competenza, volizione"><p id="count" role="status">41 fattori</p><section class="grid" aria-label="Simboli dei fattori">${factorCards.join('\n')}</section>
+<footer>Le associazioni sono convenzioni visive dell’applicazione. Gli strumenti narrativi non hanno fattori numerici e mantengono il dizionario generale.</footer></main>
+<script>
+const search=document.querySelector('#search');const cards=[...document.querySelectorAll('article')];
+search.addEventListener('input',()=>{const query=search.value.trim().toLowerCase();let count=0;for(const card of cards){card.hidden=!card.dataset.search.includes(query);if(!card.hidden)count++;}document.querySelector('#count').textContent=count+(count===1?' fattore':' fattori');});
 </script></html>
 `);
 console.log(`${check ? 'Verified' : 'Generated'} ${catalog.length} icon definitions; Lucide ${require('lucide-react/package.json').version}.`);
