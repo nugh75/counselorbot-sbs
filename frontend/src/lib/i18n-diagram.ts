@@ -5,6 +5,106 @@
 import type { Lang } from './i18n';
 import type { DiagramEdgeKind } from './diagram-content';
 
+const diagramUiIt = {
+    overview: 'Panoramica', reading: 'Lettura', walk: 'Passo-passo', whole: 'Mostra tutto',
+    expand: 'Espandi', tools: 'Zoom ed esportazione', fit: 'Adatta allo spazio',
+    text: 'Leggi come testo', hideText: 'Chiudi il testo', clear: 'Togli la selezione',
+    exploreHint: 'Seleziona un concetto per esplorare i suoi collegamenti.',
+    step: 'Passaggio {current} di {total}', starting: 'Inizia da questo concetto.',
+    isolated: 'Questo concetto non ha collegamenti nel diagramma.',
+    noNewConnections: 'Nessun nuovo collegamento in questo passaggio.',
+    download: 'Scarica', exportFailed: 'Impossibile esportare il diagramma. Riprova.',
+    play: 'Riproduci la spiegazione', pause: 'Pausa', motion: 'Animazioni leggere',
+    reduced: 'Movimento ridotto attivo: puoi avanzare manualmente.',
+    gesture: 'Trascina per spostare. Usa due dita per ingrandire.',
+    concept: 'Concetto', action: 'Azione', decision: 'Decisione', outcome: 'Risultato',
+    loading: 'Preparazione del diagramma…',
+};
+type DiagramUiKey = keyof typeof diagramUiIt;
+const DIAGRAM_UI: Record<Lang, Record<DiagramUiKey, string>> = {
+    it: diagramUiIt,
+    en: {
+        overview: 'Overview', reading: 'Reading', walk: 'Step by step', whole: 'Show all',
+        expand: 'Expand', tools: 'Zoom and export', fit: 'Fit to view',
+        text: 'Read as text', hideText: 'Close text', clear: 'Clear selection',
+        exploreHint: 'Select a concept to explore its connections.',
+        step: 'Step {current} of {total}', starting: 'Start with this concept.',
+        isolated: 'This concept has no connections in the diagram.',
+        noNewConnections: 'No new connections at this step.',
+        download: 'Download', exportFailed: 'Could not export the diagram. Try again.',
+        play: 'Play explanation', pause: 'Pause', motion: 'Gentle animations',
+        reduced: 'Reduced motion is on: you can advance manually.',
+        gesture: 'Drag to move. Use two fingers to zoom.',
+        concept: 'Concept', action: 'Action', decision: 'Decision', outcome: 'Outcome',
+        loading: 'Preparing the diagram…',
+    },
+    es: {
+        overview: 'Vista general', reading: 'Lectura', walk: 'Paso a paso', whole: 'Mostrar todo',
+        expand: 'Ampliar', tools: 'Zoom y exportación', fit: 'Ajustar a la vista',
+        text: 'Leer como texto', hideText: 'Cerrar el texto', clear: 'Quitar selección',
+        exploreHint: 'Selecciona un concepto para explorar sus conexiones.',
+        step: 'Paso {current} de {total}', starting: 'Empieza por este concepto.',
+        isolated: 'Este concepto no tiene conexiones en el diagrama.',
+        noNewConnections: 'No hay conexiones nuevas en este paso.',
+        download: 'Descargar', exportFailed: 'No se pudo exportar el diagrama. Inténtalo de nuevo.',
+        play: 'Reproducir la explicación', pause: 'Pausa', motion: 'Animaciones suaves',
+        reduced: 'Movimiento reducido activado: puedes avanzar manualmente.',
+        gesture: 'Arrastra para mover. Usa dos dedos para ampliar.',
+        concept: 'Concepto', action: 'Acción', decision: 'Decisión', outcome: 'Resultado',
+        loading: 'Preparando el diagrama…',
+    },
+    fr: {
+        overview: 'Vue d’ensemble', reading: 'Lecture', walk: 'Pas à pas', whole: 'Tout afficher',
+        expand: 'Agrandir', tools: 'Zoom et export', fit: 'Adapter à la vue',
+        text: 'Lire en texte', hideText: 'Fermer le texte', clear: 'Effacer la sélection',
+        exploreHint: 'Sélectionnez un concept pour explorer ses liens.',
+        step: 'Étape {current} sur {total}', starting: 'Commencez par ce concept.',
+        isolated: 'Ce concept n’a aucun lien dans le diagramme.',
+        noNewConnections: 'Aucun nouveau lien à cette étape.',
+        download: 'Télécharger', exportFailed: 'Impossible d’exporter le diagramme. Réessayez.',
+        play: 'Lire l’explication', pause: 'Pause', motion: 'Animations douces',
+        reduced: 'Mouvement réduit activé : vous pouvez avancer manuellement.',
+        gesture: 'Faites glisser pour déplacer. Utilisez deux doigts pour zoomer.',
+        concept: 'Concept', action: 'Action', decision: 'Décision', outcome: 'Résultat',
+        loading: 'Préparation du diagramme…',
+    },
+    de: {
+        overview: 'Übersicht', reading: 'Lesen', walk: 'Schritt für Schritt', whole: 'Alles anzeigen',
+        expand: 'Vergrößern', tools: 'Zoom und Export', fit: 'An Ansicht anpassen',
+        text: 'Als Text lesen', hideText: 'Text schließen', clear: 'Auswahl aufheben',
+        exploreHint: 'Wähle einen Begriff, um seine Verbindungen zu erkunden.',
+        step: 'Schritt {current} von {total}', starting: 'Beginne mit diesem Begriff.',
+        isolated: 'Dieser Begriff hat keine Verbindungen im Diagramm.',
+        noNewConnections: 'Keine neuen Verbindungen in diesem Schritt.',
+        download: 'Herunterladen', exportFailed: 'Das Diagramm konnte nicht exportiert werden. Versuche es erneut.',
+        play: 'Erklärung abspielen', pause: 'Pause', motion: 'Sanfte Animationen',
+        reduced: 'Reduzierte Bewegung aktiv: Du kannst manuell weitergehen.',
+        gesture: 'Zum Verschieben ziehen. Mit zwei Fingern zoomen.',
+        concept: 'Begriff', action: 'Aktion', decision: 'Entscheidung', outcome: 'Ergebnis',
+        loading: 'Diagramm wird vorbereitet…',
+    },
+    sv: {
+        overview: 'Översikt', reading: 'Läsning', walk: 'Steg för steg', whole: 'Visa allt',
+        expand: 'Förstora', tools: 'Zoom och export', fit: 'Anpassa till vyn',
+        text: 'Läs som text', hideText: 'Stäng texten', clear: 'Rensa markeringen',
+        exploreHint: 'Välj ett begrepp för att utforska dess samband.',
+        step: 'Steg {current} av {total}', starting: 'Börja med det här begreppet.',
+        isolated: 'Det här begreppet har inga samband i diagrammet.',
+        noNewConnections: 'Inga nya samband i det här steget.',
+        download: 'Ladda ner', exportFailed: 'Det gick inte att exportera diagrammet. Försök igen.',
+        play: 'Spela upp förklaringen', pause: 'Paus', motion: 'Mjuka animationer',
+        reduced: 'Minskad rörelse är aktiv: du kan gå vidare manuellt.',
+        gesture: 'Dra för att flytta. Zooma med två fingrar.',
+        concept: 'Begrepp', action: 'Handling', decision: 'Beslut', outcome: 'Resultat',
+        loading: 'Förbereder diagrammet…',
+    },
+};
+
+export function diagramUiLabel(key: DiagramUiKey, locale: string, values: Record<string, string | number> = {}): string {
+    const dict = DIAGRAM_UI[locale.slice(0, 2) as Lang] ?? DIAGRAM_UI.en;
+    return dict[key].replace(/\{(\w+)\}/g, (match, name: string) => String(values[name] ?? match));
+}
+
 type KindDict = Record<DiagramEdgeKind, string>;
 type FullscreenAction = 'open' | 'close';
 
