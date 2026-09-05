@@ -78,7 +78,10 @@ export function ChatWorkspace({ locale, subtitle, headerClassName = '', onBack, 
 
     const resize = (value: number) => setPreferences(previous => ({ ...previous, width: Math.max(minWidth, Math.min(limit, value)) }));
     const openPanel = (panel: MobilePanel = 'path') => {
-        if (desktop) setPreferences(previous => ({ ...previous, open: true }));
+        if (desktop) {
+            setPreferences(previous => ({ ...previous, open: !previous.open }));
+            if (desktopOpen) return;
+        }
         else { setMobilePanel(panel); setMobileOpen(true); return; }
         window.requestAnimationFrame(() => {
             const panel = document.getElementById(id);
