@@ -16,7 +16,7 @@ import { LANGUAGES } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { ai4authLoginUrl, AI4AUTH_LOGOUT_URL, AI4EDUC_PORTAL_URL, AI4EDUC_MANAGER_URL, getIdentity, type Identity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
-import { canUseAssistant, canUsePersonalPage, canUseResearchConsole, canUseTeacherAssistant, isResearcher, isTeacher } from '@/lib/roles';
+import { canUseAssistant, canUsePersonalPage, canUseResearchConsole, canUseTeacherAssistant } from '@/lib/roles';
 import { useDarkMode } from '@/lib/use-dark-mode';
 import { LOCAL_RESUME_HREF, PQBL_RESUME_HREF, resumeHref, useResumeEntries, type ResumeEntries } from '@/lib/use-resume-entries';
 
@@ -24,6 +24,7 @@ interface SecondaryItem {
     key: string;
     href: string;
     external?: boolean;
+    menuOnly?: boolean;
     icon: LucideIcon;
     label: string;
 }
@@ -59,8 +60,8 @@ export function Header() {
     const secondaryItems: SecondaryItem[] = [];
     // Guida all'interfaccia: disponibile per tutti, anche senza login.
     secondaryItems.push({ key: 'guide', href: '/guide', icon: BookOpen, label: t('nav.guide') });
-    if (isAuthenticated && !identity?.is_admin && !isResearcher(identity) && !isTeacher(identity)) {
-        secondaryItems.push({ key: 'orientation', href: '/bussola', icon: Compass, label: t('nav.orientation') });
+    if (isAuthenticated) {
+        secondaryItems.push({ key: 'orientation', href: '/bussola', icon: Compass, label: t('orientation.landing.open'), menuOnly: true });
     }
     if (canOpenAssistant) {
         secondaryItems.push({ key: 'assistant', href: '/assistente', icon: Bot, label: t('assistant.title') });
@@ -80,6 +81,8 @@ export function Header() {
     if (canOpenResearchConsole) {
         secondaryItems.push({ key: 'admin', href: '/admin', icon: Settings, label: t('nav.admin') });
     }
+
+    const desktopItems = secondaryItems.filter(item => !item.menuOnly);
 
     return (
         <TooltipProvider delayDuration={300}>
@@ -109,7 +112,7 @@ export function Header() {
                             </div>
                         ) : (
                             <>
-                                <MobileHeaderMenu
+                                <HeaderMenu
                                     items={secondaryItems}
                                     resumeEntries={resumeEntries}
                                     label={t('header.menu')}
@@ -140,9 +143,9 @@ export function Header() {
                                 )}
 
                                 {/* Navigazione secondaria: in linea su schermi >= xl; su mobile sta tutta nel menu. */}
-                                {secondaryItems.length > 0 && (
+                                {desktopItems.length > 0 && (
                                     <div className="hidden items-center gap-1 xl:flex">
-                                        {secondaryItems.map((item) => {
+                                        {desktopItems.map((item) => {
                                             const Icon = item.icon;
                                             return (
                                                 <Tooltip key={item.key} content={item.label}>
@@ -161,7 +164,7 @@ export function Header() {
                                     </div>
                                 )}
 
-                                {secondaryItems.length > 0 && <span className={cn(SEPARATOR, 'hidden xl:block')} />}
+                                {desktopItems.length > 0 && <span className={cn(SEPARATOR, 'hidden xl:block')} />}
 
                                 {/* Accedi ad altre risorse: subito prima di Esci. */}
                                 {showServices && (
@@ -210,7 +213,7 @@ export function Header() {
     );
 }
 
-function MobileHeaderMenu({
+function HeaderMenu({
     items,
     resumeEntries,
     label,
@@ -276,7 +279,7 @@ function MobileHeaderMenu({
     const itemClass = 'flex min-h-[44px] w-full items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700';
 
     return (
-        <div ref={ref} className="relative xl:hidden">
+        <div ref={ref} className={cn("relative", !items.some(item => item.menuOnly) && "xl:hidden")}>
             <button
                 type="button"
                 ref={triggerRef}
@@ -290,12 +293,12 @@ function MobileHeaderMenu({
             </button>
             {open && (
                 <div id="mobile-menu" className="absolute right-0 top-full z-[60] mt-2 max-h-[calc(100dvh-4.5rem)] w-[min(88vw,18rem)] overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
-                    <div className="compact-header-selection flex flex-wrap items-center gap-2 px-3 py-2 empty:hidden">
+                    <div className="compact-header-selection flex xl:hidden flex-wrap items-center gap-2 px-3 py-2 empty:hidden">
                         <HeaderInstrument />
                         <HeaderCounselor inline />
                     </div>
                     {accountLabel && (
-                        <div className="border-b border-slate-100 px-3 py-2 dark:border-slate-700">
+                        <div className="border-b border-slate-100 px-3 py-2 dark:border-slate-700 xl:hidden">
                             <div className="text-2xs font-semibold uppercase tracking-wide text-slate-500">{t('header.account')}</div>
                             <div className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100" title={accountLabel}>
                                 {accountLabel}
@@ -311,15 +314,16 @@ function MobileHeaderMenu({
                             </>
                         );
                         return item.external ? (
-                            <a key={item.key}href={item.href} className={itemClass} onClick={close}>
+                            <a key={item.key}href={item.href} className={cn(itemClass, !item.menuOnly && "xl:hidden")} onClick={close}>
                                 {inner}
                             </a>
                         ) : (
-                            <Link key={item.key}href={item.href} className={itemClass} onClick={close}>
+                            <Link key={item.key}href={item.href} className={cn(itemClass, !item.menuOnly && "xl:hidden")} onClick={close}>
                                 {inner}
                             </Link>
                         );
                     })}
+                    <div className="xl:hidden">
                     {/* Sessioni congelate + chat locale interrotta: su mobile questa è
                         l'unica porta, l'icona "Riprendi" della topbar non c'è. */}
                     {resumeCount > 0 && (
@@ -407,6 +411,7 @@ function MobileHeaderMenu({
                                 </button>
                             ))}
                         </div>
+                    </div>
                     </div>
                 </div>
             )}

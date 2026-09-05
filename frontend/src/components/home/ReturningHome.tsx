@@ -141,9 +141,6 @@ export function ReturningHome({
             <section>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">{t('base.instruments.title')}</h2>
-                    <Link href="/bussola" className="inline-flex min-h-[44px] items-center gap-2 rounded-md px-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">
-                        <CompassMark className="h-5 w-5" />{t('orientation.landing.open')}
-                    </Link>
                 </div>
                 <nav className="mt-4 flex flex-wrap gap-2" aria-label={t('base.categories.label')}>
                     {TOOL_CATEGORIES.map((group) => (

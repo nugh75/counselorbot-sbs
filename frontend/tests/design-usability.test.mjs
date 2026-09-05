@@ -352,3 +352,23 @@ test('step icons advance, retry a failed analysis, and return without clearing t
         assert.deepEqual(errors, []);
     } finally { await context.close(); }
 });
+
+for (const width of [390, 1440]) {
+    for (const admin of [false, true]) {
+        test(`Bussola is only in the navbar menu at ${width}px for ${admin ? 'admins' : 'students'}`, async () => {
+            const { page, context } = await fixture({ width, admin, touch: width < 1280 });
+            try {
+                await page.goto(origin, { waitUntil: 'networkidle' });
+                assert.equal(await page.locator('main a[href="/bussola"]').count(), 0);
+                assert.equal(await page.locator('.console-header a[href="/bussola"]:visible').count(), 0);
+                await page.locator('button[aria-controls="mobile-menu"]').click();
+                const link = page.locator('#mobile-menu').getByRole('link', { name: 'Apri la Bussola', exact: true });
+                const box = await link.boundingBox();
+                assert.ok(box && box.x >= 0 && box.x + box.width <= width && box.height >= 44);
+                await link.click();
+                await page.waitForURL('**/bussola');
+                assert.equal(await page.locator('#mobile-menu').count(), 0);
+            } finally { await context.close(); }
+        });
+    }
+}
