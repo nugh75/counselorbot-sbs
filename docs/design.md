@@ -173,6 +173,11 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   completamento distinguono il passo corrente dai precedenti e dai successivi.
   I comandi di Strumenti visivi e Diagramma sono icone da 44px, con etichette
   accessibili e tooltip localizzati, anche nelle barre interne alle finestre.
+  Nei diagrammi i comandi principali stanno su una sola riga, scorrevole
+  orizzontalmente se necessario; menu e chiusura restano sempre raggiungibili.
+  Zoom, esportazione, animazioni e aiuto si aprono in un menu sovrapposto,
+  senza sottrarre altezza al disegno. Il pannello inferiore appare solo per
+  un concetto selezionato, la lettura passo-passo o il testo alternativo.
   In OpenCode, sotto 1280px, la conversazione
   precede il pannello dei punteggi, che resta disponibile scorrendo la pagina.
 - **Focus**: anello `2px` petrol con `outline-offset: 2px` su tutti gli

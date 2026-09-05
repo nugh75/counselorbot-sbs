@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import { BookOpen, ChevronLeft, ChevronRight, FileCode, FileImage, FileText, GitBranch, Loader2, Maximize2, Network, Pause, Play, RotateCcw, Route, Scan, ScanLine, Wrench, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, FileCode, FileImage, FileText, GitBranch, Loader2, Maximize2, Network, Pause, Play, RotateCcw, Route, Scan, ScanLine, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { completeDiagramEdges, diagramEdgeKinds, type DiagramEdgeKind, type DiagramSpec } from '@/lib/diagram-content';
 import { diagramFullscreenLabel, diagramRequestLabel, diagramStepLabel, diagramZoomLabel, diagramUiLabel, edgeKindLabel } from '@/lib/i18n-diagram';
 import { sanitizeSvgMarkup } from '@/lib/diagram-svg';
 import { DiagramViewport, type DiagramPosition } from '@/components/ui/DiagramViewport';
 import { apiFetch } from '@/lib/auth';
 import { useDarkMode } from '@/lib/use-dark-mode';
+import { ChatActionsPopover } from '@/components/ui/ChatActionsPopover';
 import { Tooltip } from '@/components/ui/Tooltip';
 
 interface DiagramBlockProps {
@@ -184,7 +185,10 @@ function DiagramView({ spec, locale }: DiagramBlockProps) {
         const origin = expandButton.current;
         const previousOverflow = document.body.style.overflow;
         const close = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') { closeFullscreen(); return; }
+            if (event.key === 'Escape') {
+                if (!dialog.current?.querySelector(':popover-open')) closeFullscreen();
+                return;
+            }
             if (event.key !== 'Tab') return;
             const focusable = [...(dialog.current?.querySelectorAll<HTMLElement>(
                 'button:not([disabled]), input:not([disabled]), summary, [tabindex="0"], a[href]',
@@ -256,35 +260,53 @@ function DiagramView({ spec, locale }: DiagramBlockProps) {
         finally { window.clearTimeout(timeout); setExporting(false); }
     };
 
-    const controls = (full: boolean) => <div className="space-y-2 border-b border-slate-200 bg-slate-50 p-3">
-        <div className="flex flex-wrap items-center gap-1" role="group" aria-label={spec.title}>
-            <div className="flex rounded-lg border border-slate-200 bg-white p-0.5">
-                <Tooltip content={labels('overview')}><button aria-label={labels('overview')} type="button" className={`${controlClass} ${!reading ? 'bg-indigo-50 text-indigo-800' : ''}`} aria-pressed={!reading} onClick={fit}><Scan className="h-5 w-5" aria-hidden="true" /></button></Tooltip>
-                <Tooltip content={labels('reading')}><button aria-label={labels('reading')} type="button" className={`${controlClass} ${reading ? 'bg-indigo-50 text-indigo-800' : ''}`} aria-pressed={reading} onClick={() => { if (!reading && !selected) position.current = { x: 0.5, y: 0 }; setReading(true); setZoom(1); }}><BookOpen className="h-5 w-5" aria-hidden="true" /></button></Tooltip>
+    const controls = (full: boolean) => <div data-diagram-controls className="shrink-0 border-b border-slate-200 bg-slate-50 px-2 py-1">
+        <div className="flex items-center gap-1" role="group" aria-label={spec.title}>
+            <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex shrink-0 rounded-lg bg-white">
+                    <Tooltip content={labels('overview')}><button aria-label={labels('overview')} type="button" className={`${controlClass} ${!reading ? 'bg-indigo-50 text-indigo-800' : ''}`} aria-pressed={!reading} onClick={fit}><Scan className="h-5 w-5" aria-hidden="true" /></button></Tooltip>
+                    <Tooltip content={labels('reading')}><button aria-label={labels('reading')} type="button" className={`${controlClass} ${reading ? 'bg-indigo-50 text-indigo-800' : ''}`} aria-pressed={reading} onClick={() => { if (!reading && !selected) position.current = { x: 0.5, y: 0 }; setReading(true); setZoom(1); }}><BookOpen className="h-5 w-5" aria-hidden="true" /></button></Tooltip>
+                </div>
+                <Tooltip content={labels('walk')}><button aria-label={labels('walk')} type="button" disabled={!markup} className={`${controlClass} ${step !== null ? 'bg-indigo-50 text-indigo-800' : ''}`} aria-pressed={step !== null}
+                    onClick={() => go(step === null ? 0 : null)}><Route className="h-5 w-5" aria-hidden="true" /></button></Tooltip>
+                {step !== null && <div className="flex shrink-0 items-center gap-1">
+                    <Tooltip content={diagramStepLabel('back', locale)}><button type="button" className={controlClass} disabled={step === 0} aria-label={diagramStepLabel('back', locale)} onClick={() => go(Math.max(0, step - 1))}><ChevronLeft className="h-5 w-5" /></button></Tooltip>
+                    <span className="whitespace-nowrap text-sm font-semibold tabular-nums">{labels('step', { current: step + 1, total: spec.nodes.length })}</span>
+                    <Tooltip content={diagramStepLabel('forward', locale)}><button type="button" className={controlClass} disabled={step === spec.nodes.length - 1} aria-label={diagramStepLabel('forward', locale)} onClick={() => go(Math.min(spec.nodes.length - 1, step + 1))}><ChevronRight className="h-5 w-5" /></button></Tooltip>
+                    <Tooltip content={labels('whole')}><button aria-label={labels('whole')} type="button" className={controlClass} onClick={() => go(null)}><Network className="h-5 w-5" aria-hidden="true" /></button></Tooltip>
+                    <Tooltip content={labels(playing ? 'pause' : 'play')}><button aria-label={labels(playing ? 'pause' : 'play')} type="button" className={controlClass} disabled={reduced || !markup} onClick={() => {
+                        if (playing) setPlaying(false);
+                        else { setSelected(null); if (step === spec.nodes.length - 1) setStep(0); setPlaying(true); }
+                    }}>{playing ? <Pause className="h-5 w-5" aria-hidden="true" /> : <Play className="h-5 w-5" aria-hidden="true" />}</button></Tooltip>
+                </div>}
+                {!failed && <Tooltip content={labels(showText ? 'hideText' : 'text')}><button aria-label={labels(showText ? 'hideText' : 'text')} type="button" className={controlClass} aria-expanded={showText} onClick={() => setShowText(value => !value)}><FileText className="h-5 w-5" aria-hidden="true" /></button></Tooltip>}
             </div>
-            <Tooltip content={labels('walk')}><button aria-label={labels('walk')} type="button" disabled={!markup} className={`${controlClass} ${step !== null ? 'bg-indigo-50 text-indigo-800' : ''}`} aria-pressed={step !== null}
-                onClick={() => go(step === null ? 0 : null)}><Route className="h-5 w-5" aria-hidden="true" /></button></Tooltip>
+            <ChatActionsPopover label={labels('tools')}>
+                {() => <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-1 py-1">
+                        <Tooltip content={diagramZoomLabel('out', locale)}><button type="button" className={controlClass} disabled={zoom <= 0.25} aria-label={diagramZoomLabel('out', locale)} onClick={() => setZoom(value => Math.max(0.25, value / 1.25))}><ZoomOut className="h-5 w-5" /></button></Tooltip>
+                        <span data-diagram-zoom className="min-w-12 text-center text-sm tabular-nums" aria-live="polite">{Math.round(zoom * 100)}%</span>
+                        <Tooltip content={diagramZoomLabel('in', locale)}><button type="button" className={controlClass} disabled={zoom >= 4} aria-label={diagramZoomLabel('in', locale)} onClick={() => setZoom(value => Math.min(4, value * 1.25))}><ZoomIn className="h-5 w-5" /></button></Tooltip>
+                        <Tooltip content={labels('fit')}><button aria-label={labels('fit')} type="button" className={controlClass} onClick={fit}><ScanLine className="h-5 w-5" aria-hidden="true" /></button></Tooltip>
+                    </div>
+                    <div className="flex items-center gap-1 border-t border-slate-200 pt-2">
+                        {(['svg', 'png'] as const).map(format => <Tooltip key={format} content={`${labels('download')} ${format.toUpperCase()}`}><button aria-label={`${labels('download')} ${format.toUpperCase()}`} type="button" className={controlClass} disabled={exporting} onClick={() => void download(format)}>
+                            {format === 'svg' ? <FileCode className="h-5 w-5" aria-hidden="true" /> : <FileImage className="h-5 w-5" aria-hidden="true" />}
+                        </button></Tooltip>)}
+                    </div>
+                    <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700">
+                        <input type="checkbox" checked={motion} disabled={reduced} onChange={event => setAnimate(event.target.checked)} />{labels('motion')}
+                    </label>
+                    {reduced && <p className="text-xs text-slate-600">{labels('reduced')}</p>}
+                    <p className="text-xs text-slate-600">{labels('exploreHint')}</p>
+                    {full && <p className="text-xs text-slate-600">{labels('gesture')}</p>}
+                </div>}
+            </ChatActionsPopover>
             {full ? <Tooltip content={diagramFullscreenLabel('close', locale)}><button type="button" autoFocus className={controlClass} onClick={closeFullscreen} aria-label={diagramFullscreenLabel('close', locale)}><X className="h-5 w-5" /></button></Tooltip>
                 : <Tooltip content={diagramFullscreenLabel('open', locale)}><button type="button" ref={expandButton} disabled={!markup} className={controlClass} onClick={() => { setCardBodyHeight(cardBody.current?.getBoundingClientRect().height ?? 0); setIsFullscreen(true); }} aria-label={diagramFullscreenLabel('open', locale)}>
                     <Maximize2 className="h-5 w-5" aria-hidden="true" />
                 </button></Tooltip>}
         </div>
-        <details>
-            <Tooltip content={labels('tools')}><summary aria-label={labels('tools')} className={`${controlClass} cursor-pointer text-slate-600`}><Wrench className="h-5 w-5" aria-hidden="true" /></summary></Tooltip>
-            <div className="flex flex-wrap items-center gap-1 py-1">
-                <Tooltip content={diagramZoomLabel('out', locale)}><button type="button" className={controlClass} disabled={zoom <= 0.25} aria-label={diagramZoomLabel('out', locale)} onClick={() => setZoom(value => Math.max(0.25, value / 1.25))}><ZoomOut className="h-5 w-5" /></button></Tooltip>
-                <span data-diagram-zoom className="min-w-12 text-center text-sm tabular-nums" aria-live="polite">{Math.round(zoom * 100)}%</span>
-                <Tooltip content={diagramZoomLabel('in', locale)}><button type="button" className={controlClass} disabled={zoom >= 4} aria-label={diagramZoomLabel('in', locale)} onClick={() => setZoom(value => Math.min(4, value * 1.25))}><ZoomIn className="h-5 w-5" /></button></Tooltip>
-                <Tooltip content={labels('fit')}><button aria-label={labels('fit')} type="button" className={controlClass} onClick={fit}><ScanLine className="h-5 w-5" aria-hidden="true" /></button></Tooltip>
-                {(['svg', 'png'] as const).map(format => <Tooltip key={format} content={`${labels('download')} ${format.toUpperCase()}`}><button aria-label={`${labels('download')} ${format.toUpperCase()}`} type="button" className={controlClass} disabled={exporting} onClick={() => void download(format)}>
-                    {format === 'svg' ? <FileCode className="h-5 w-5" aria-hidden="true" /> : <FileImage className="h-5 w-5" aria-hidden="true" />}
-                </button></Tooltip>)}
-            </div>
-            <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700">
-                <input type="checkbox" checked={motion} disabled={reduced} onChange={event => setAnimate(event.target.checked)} />{labels('motion')}
-            </label>
-            {reduced && <p className="text-xs text-slate-600">{labels('reduced')}</p>}
-        </details>
         {exportFailed && <p role="alert" className="text-sm text-red-800">{labels('exportFailed')}</p>}
     </div>;
 
@@ -296,31 +318,20 @@ function DiagramView({ spec, locale }: DiagramBlockProps) {
                 <Tooltip content={diagramRequestLabel('retry', locale)}><button aria-label={diagramRequestLabel('retry', locale)} type="button" className={controlClass} onClick={() => setRetry(value => value + 1)}><RotateCcw className="h-5 w-5" aria-hidden="true" /></button></Tooltip></div>
                 : <div className="flex min-h-40 items-center justify-center gap-2 p-4 text-sm text-indigo-700" role="status">
                     <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />{labels('loading')}</div>}
-        <div className={`space-y-3 border-t border-slate-200 p-3 ${full ? 'max-h-[35dvh] shrink-0 overflow-auto' : ''}`}>
-            {step !== null && <div className="flex flex-wrap items-center gap-1">
-                <Tooltip content={diagramStepLabel('back', locale)}><button type="button" className={controlClass} disabled={step === 0} aria-label={diagramStepLabel('back', locale)} onClick={() => go(Math.max(0, step - 1))}><ChevronLeft className="h-5 w-5" /></button></Tooltip>
-                <span className="text-sm font-semibold tabular-nums">{labels('step', { current: step + 1, total: spec.nodes.length })}</span>
-                <Tooltip content={diagramStepLabel('forward', locale)}><button type="button" className={controlClass} disabled={step === spec.nodes.length - 1} aria-label={diagramStepLabel('forward', locale)} onClick={() => go(Math.min(spec.nodes.length - 1, step + 1))}><ChevronRight className="h-5 w-5" /></button></Tooltip>
-                <Tooltip content={labels('whole')}><button aria-label={labels('whole')} type="button" className={controlClass} onClick={() => go(null)}><Network className="h-5 w-5" aria-hidden="true" /></button></Tooltip>
-                <Tooltip content={labels(playing ? 'pause' : 'play')}><button aria-label={labels(playing ? 'pause' : 'play')} type="button" className={controlClass} disabled={reduced || !markup} onClick={() => {
-                    if (playing) setPlaying(false);
-                    else { setSelected(null); if (step === spec.nodes.length - 1) setStep(0); setPlaying(true); }
-                }}>{playing ? <Pause className="h-5 w-5" aria-hidden="true" /> : <Play className="h-5 w-5" aria-hidden="true" />}</button></Tooltip>
-            </div>}
+        {(activeNode || showText || failed) && <div className={`space-y-3 border-t border-slate-200 p-3 ${full ? 'max-h-[35dvh] shrink-0 overflow-auto' : ''}`}>
             {activeNode ? <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-sm text-slate-800" role="status" aria-live="polite">
                 <span className="text-xs font-medium text-indigo-700">{labels(activeNode.form || 'concept')}</span>
                 <p className="mt-1 font-semibold">{activeNode.label}</p>
                 {relatedEdges.length ? <ul className="mt-2 space-y-2">{relatedEdges.map((edge, index) => <li key={index}>{describeEdge(edge)}</li>)}</ul>
                     : <p className="mt-2">{labels(selected ? 'isolated' : step === 0 ? 'starting' : 'noNewConnections')}</p>}
                 {selected && <Tooltip content={labels('clear')}><button aria-label={labels('clear')} type="button" className={`${controlClass} mt-2`} onClick={() => select(null)}><X className="h-5 w-5" aria-hidden="true" /></button></Tooltip>}
-            </div> : <p className="text-sm text-slate-600">{labels('exploreHint')}</p>}
-            {full && <p className="text-xs text-slate-600">{labels('gesture')}</p>}
-            {failed ? <p className="text-sm font-semibold">{labels('text')}</p> : <Tooltip content={labels(showText ? 'hideText' : 'text')}><button aria-label={labels(showText ? 'hideText' : 'text')} type="button" className={controlClass} aria-expanded={showText} onClick={() => setShowText(value => !value)}><FileText className="h-5 w-5" aria-hidden="true" /></button></Tooltip>}
+            </div> : null}
+            {failed && <p className="text-sm font-semibold">{labels('text')}</p>}
             {(showText || failed) && <div className="space-y-3 text-sm leading-relaxed text-slate-800">
                 <ol className="list-decimal space-y-2 pl-5">{spec.nodes.map(node => <li key={node.id}><span className="font-medium">{node.label}</span> · {labels(node.form || 'concept')}</li>)}</ol>
                 <ul className="space-y-2">{(spec.edges || []).map((edge, index) => <li key={index}>{describeEdge(edge)}</li>)}</ul>
             </div>}
-        </div>
+        </div>}
         <DiagramNote note={spec.note} />
         <DiagramLegend kinds={diagramEdgeKinds(spec)} locale={locale} />
     </>;

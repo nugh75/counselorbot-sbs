@@ -188,3 +188,28 @@ Override: `/tmp/cb-neutral-chat-deploy.yml`. Local HTTP 200, unauthenticated
 public HTTP 302 and normal startup were verified. Backend and PostgreSQL
 container IDs/start times are unchanged. The previous frontend image is retained,
 and the separate `feat/chat-workspace-layout` worktree was not modified.
+
+## Correction: a single diagram toolbar
+
+Diagram controls share one 52.5 px row. Primary and step controls can scroll
+horizontally on narrow screens; the options menu and fullscreen/close control
+stay fixed at the right. Zoom, SVG/PNG export, animation preferences and usage
+hints move into an overlaid popover. Opening it does not resize the drawing.
+The permanent help/text-button strip below the drawing is removed; selected
+concepts, step explanations, text alternatives, notes and legends remain.
+Escape dismisses a focused tooltip, then the options menu, then fullscreen.
+
+Validation: all 16 browser artifact checks passed against the production image,
+including two layout/menu regressions at 320 and 1440 px. Browser APIs are mocked.
+Light/dark screenshots at 320, 390 and 1440 px were inspected: the default drawing
+has 662–688 px of an 844 px viewport. Export, reduced motion, touch zoom/pan,
+text fallback, fullscreen focus and reading-position preservation passed.
+Lint has no errors and four existing warnings; localization, TypeScript and the
+Docker build passed.
+
+Deployed frontend: `counselorbot-10-step-frontend:diagram-toolbar-20260905`, image
+`sha256:8e83dc3025adac00289f1419328aec5504ec3340301b81ad3083bb0d3f3dca97`.
+Override: `/tmp/cb-diagram-toolbar-deploy.yml`. Local HTTP 200, unauthenticated
+public HTTP 302 and normal startup were verified. Backend and PostgreSQL
+container IDs/start times are unchanged. The prior image and unrelated worktree
+changes are preserved.
