@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "npm run i18n:check && eslint",
     "test": "node --test --experimental-strip-types src/lib/*.test.ts",
+    "test:logs": "node --test tests/log-viewer.test.mjs",
     "i18n:check": "node scripts/check-i18n.mjs"
   },
   "dependencies": {
@@ -45,6 +46,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.3",
+    "playwright": "1.62.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

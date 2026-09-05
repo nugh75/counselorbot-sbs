@@ -1,8 +1,8 @@
 'use client';
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import {
-    AlertTriangle,
     BarChart3,
     ChevronDown,
     ChevronLeft,
@@ -10,13 +10,11 @@ import {
     Download,
     FileJson,
     Filter,
-    Globe2,
     MessageSquare,
     RefreshCw,
     Search,
     ShieldCheck,
     SlidersHorizontal,
-    SquareTerminal,
     ThumbsDown,
     ThumbsUp,
     Trash2,
@@ -26,6 +24,8 @@ import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useI18n } from '@/lib/i18n-context';
+import { Button } from '@/components/ui/Button';
+import { ChatBubble } from '@/components/ui/ChatBubble';
 
 type LogDetails = Record<string, unknown>;
 
@@ -222,11 +222,6 @@ function firstText(details: LogDetails, keys: string[]): string {
     return '';
 }
 
-function short(value: string, max = 96): string {
-    if (value.length <= max) return value;
-    return `${value.slice(0, max - 1)}...`;
-}
-
 function formatDate(value?: string | null): string {
     if (!value) return '-';
     try {
@@ -236,10 +231,21 @@ function formatDate(value?: string | null): string {
     }
 }
 
-function csvLabel(value: boolean | null | undefined): string {
-    if (value === true) return 'positive';
-    if (value === false) return 'negative';
-    return '';
+function LogMarkdown({ text }: { text: string }) {
+    return (
+        <div className="prose prose-sm min-w-0 max-w-none break-words text-slate-700 prose-p:my-2 prose-pre:my-2 prose-pre:whitespace-pre-wrap prose-headings:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1 prose-table:my-2">
+            <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                    table: ({ children }) => <div className="my-3 overflow-x-auto"><table className="w-full border-collapse text-left text-sm">{children}</table></div>,
+                    th: ({ children, style }) => <th style={style} className="border-b border-slate-200 bg-slate-50 p-2 align-top font-semibold text-slate-700">{children}</th>,
+                    td: ({ children, style }) => <td style={style} className="border-b border-slate-200 p-2 align-top">{children}</td>,
+                }}
+            >
+                {text}
+            </ReactMarkdown>
+        </div>
+    );
 }
 
 export function LogViewer() {
@@ -282,6 +288,9 @@ export function LogViewer() {
     const [hygieneMessage, setHygieneMessage] = useState('');
     const [selectedSession, setSelectedSession] = useState<string | null>(null);
     const [selectedSessionKind, setSelectedSessionKind] = useState<'session' | 'conversation'>('session');
+    const overlayRef = useRef<HTMLDivElement>(null);
+    const dialogRef = useRef<HTMLDivElement>(null);
+    const closeRef = useRef<HTMLButtonElement>(null);
     const [sessionLogs, setSessionLogs] = useState<LogEntry[]>([]);
     const [sessionLoading, setSessionLoading] = useState(false);
     const [options, setOptions] = useState<LogOptions>({
@@ -297,6 +306,45 @@ export function LogViewer() {
     });
 
     const pageCount = Math.max(1, Math.ceil(total / limit));
+
+    useEffect(() => {
+        if (!selectedSession) return;
+        const trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        const previousOverflow = document.body.style.overflow;
+        const background = Array.from(document.body.children)
+            .filter((element): element is HTMLElement => element instanceof HTMLElement && element !== overlayRef.current)
+            .map((element) => ({ element, inert: element.inert }));
+        background.forEach(({ element }) => { element.inert = true; });
+        document.body.style.overflow = 'hidden';
+        closeRef.current?.focus({ preventScroll: true });
+
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                setSelectedSession(null);
+            }
+            if (event.key !== 'Tab') return;
+            const focusable = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(
+                'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, [tabindex="0"]',
+            ) || []).filter((element) => element.checkVisibility());
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last?.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first?.focus();
+            }
+        };
+        document.addEventListener('keydown', onKeyDown);
+        return () => {
+            document.removeEventListener('keydown', onKeyDown);
+            document.body.style.overflow = previousOverflow;
+            background.forEach(({ element, inert }) => { element.inert = inert; });
+            if (trigger?.isConnected) trigger.focus({ preventScroll: true });
+        };
+    }, [selectedSession]);
 
     const setFilter = (key: keyof typeof filters, value: string) => {
         setPage(0);
@@ -554,20 +602,6 @@ export function LogViewer() {
         });
     };
 
-    const actionIcon = (action: string) => {
-        if (action === 'chat_error') return <AlertTriangle className="h-4 w-4" />;
-        if (action === 'site_chat') return <Globe2 className="h-4 w-4" />;
-        if (action === 'opencode_chat') return <SquareTerminal className="h-4 w-4" />;
-        return <MessageSquare className="h-4 w-4" />;
-    };
-
-    const actionClass = (action: string) => {
-        if (action === 'chat_error') return 'bg-red-50 text-red-700 ring-red-100';
-        if (action === 'site_chat') return 'bg-emerald-50 text-emerald-700 ring-emerald-100';
-        if (action === 'opencode_chat') return 'bg-violet-50 text-violet-700 ring-violet-100';
-        return 'bg-sky-50 text-sky-700 ring-sky-100';
-    };
-
     const renderFeedback = (value: boolean | null | undefined) => {
         if (value === true) return <ThumbsUp className="h-4 w-4 text-emerald-600" aria-label={t('admin.logs.feedbackPositive')} />;
         if (value === false) return <ThumbsDown className="h-4 w-4 text-red-600" aria-label={t('admin.logs.feedbackNegative')} />;
@@ -614,9 +648,7 @@ export function LogViewer() {
     const detailBlock = (label: string, text: string, key?: string) => (
         <div key={key} className="rounded-md border border-slate-200 bg-slate-50 p-3">
             <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
-            <div className="prose prose-sm max-w-none break-words text-slate-700 prose-p:my-1 prose-pre:my-1 prose-pre:whitespace-pre-wrap prose-headings:my-1.5 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-table:my-1">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
-            </div>
+            <LogMarkdown text={text} />
         </div>
     );
 
@@ -659,17 +691,18 @@ export function LogViewer() {
         ) : null;
     };
 
-    const renderHumanDetail = (log: LogEntry) => {
+    const renderTechnicalDetail = (log: LogEntry) => {
         const details = asObject(log.details);
         const userInput = firstText(details, ['user_input', 'question']);
         const effective = textValue(details.effective_user_input);
         const systemPrompt = textValue(details.system_prompt);
-        const botResponse = firstText(details, ['bot_response', 'answer']);
-        const error = textValue(details.error);
         const usage = (details.usage && typeof details.usage === 'object') ? details.usage as Record<string, unknown> : {};
         const sources = Array.isArray(details.sources) ? details.sources as string[] : [];
         const conversationId = logConversationId(log);
         const chips: { k: string; v: string }[] = [
+            { k: t('admin.logs.username'), v: log.username || '-' },
+            { k: t('admin.logs.anonCode'), v: log.anonymous_research_code || textValue(details.anonymous_research_code) || '-' },
+            { k: t('admin.logs.action'), v: log.action },
             { k: t('admin.logs.conversationId'), v: conversationId || '-' },
             { k: t('admin.logs.sessionId'), v: log.session_id || '-' },
             { k: t('admin.logs.provider'), v: log.provider || textValue(details.provider) || '-' },
@@ -677,7 +710,7 @@ export function LogViewer() {
             { k: t('admin.logs.questionnaire'), v: log.questionnaire_type || '-' },
             { k: t('admin.logs.phase'), v: log.phase || textValue(details.phase) || '-' },
             { k: t('admin.logs.mode'), v: log.mode || textValue(details.mode) || '-' },
-            { k: t('admin.logs.cost'), v: typeof log.cost_usd === 'number' ? `$${log.cost_usd.toFixed(6)}` : '-' },
+            { k: t('admin.logs.cost'), v: typeof log.cost_usd === 'number' ? `$${log.cost_usd.toFixed(6)}` : textValue(details.cost_usd) || textValue(details.estimated_cost_usd) || '-' },
         ];
         const tokIn = textValue(usage.prompt_tokens) || textValue(usage.input_tokens);
         const tokOut = textValue(usage.completion_tokens) || textValue(usage.output_tokens);
@@ -699,25 +732,45 @@ export function LogViewer() {
             .map(([key, value]) => renderDetailValue(key, value, key))
             .filter(Boolean);
 
-        const hasContent = Boolean(userInput || botResponse || error || systemPrompt || effective)
-            || sources.length > 0 || otherNodes.length > 0;
         return (
-            <div className="space-y-3">
-                <div className="flex flex-wrap gap-2">
-                    {chips.map((c) => (
-                        <span key={c.k} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
-                            <span className="font-semibold text-slate-500">{c.k}:</span> {c.v}
-                        </span>
-                    ))}
+            <details className="min-w-0 rounded-md border border-slate-200 bg-white p-3">
+                <summary className="cursor-pointer text-sm font-medium text-slate-600">{t('admin.logs.d.meta')}</summary>
+                <div className="mt-3 space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                        {chips.map((c) => (
+                            <span key={c.k} className="min-w-0 break-words rounded-md bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
+                                <span className="font-semibold text-slate-500">{c.k}:</span> {c.v}
+                            </span>
+                        ))}
+                    </div>
+                    {effective && effective !== userInput && detailBlock(t('admin.logs.d.effectiveInput'), effective)}
+                    {systemPrompt && detailBlock(t('admin.logs.d.systemPrompt'), systemPrompt)}
+                    {sources.length > 0 && detailBlock(t('admin.logs.d.sources'), sources.join('\n'))}
+                    {otherNodes}
+                    <details>
+                        <summary className="cursor-pointer text-sm font-medium text-slate-600">{t('admin.logs.viewJson')}</summary>
+                        <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-md bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(details, null, 2)}</pre>
+                    </details>
                 </div>
+            </details>
+        );
+    };
+
+    const renderHumanDetail = (log: LogEntry) => {
+        const details = asObject(log.details);
+        const userInput = firstText(details, ['user_input', 'question']);
+        const botResponse = firstText(details, ['bot_response', 'answer']);
+        const error = textValue(details.error);
+        return (
+            <div className="min-w-0 space-y-3">
                 {userInput && detailBlock(t('admin.logs.d.userInput'), userInput)}
-                {effective && effective !== userInput && detailBlock(t('admin.logs.d.effectiveInput'), effective)}
-                {systemPrompt && detailBlock(t('admin.logs.d.systemPrompt'), systemPrompt)}
                 {botResponse && detailBlock(t('admin.logs.d.botResponse'), botResponse)}
                 {error && detailBlock(t('admin.logs.d.error'), error)}
-                {sources.length > 0 && detailBlock(t('admin.logs.d.sources'), sources.join('\n'))}
-                {otherNodes}
-                {!hasContent && <div className="text-sm text-slate-500">{t('admin.logs.d.empty')}</div>}
+                {!userInput && !botResponse && !error && <p className="text-sm text-slate-500">{t('admin.logs.d.empty')}</p>}
+                {renderTechnicalDetail(log)}
+                <Button type="button" variant="secondary" onClick={() => void openSession(log.session_id)}>
+                    {t('admin.logs.openSession')}
+                </Button>
             </div>
         );
     };
@@ -985,7 +1038,7 @@ export function LogViewer() {
                 <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 text-sm text-slate-500">
                         <span>{t('admin.logs.totalCount').replace('{n}', String(total))}</span>
-                        <div className="flex items-center gap-2">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
                             <span className="text-xs text-slate-500">{t('admin.logs.sortOrder')}:</span>
                             <select
                                 value={sort}
@@ -1008,122 +1061,61 @@ export function LogViewer() {
                             </button>
                         </div>
                     </div>
-                    <div>
-                        <table className="w-full table-fixed text-left text-sm">
-                            <colgroup>
-                                <col style={{ width: '8%' }} />
-                                <col style={{ width: '11%' }} />
-                                <col style={{ width: '9%' }} />
-                                <col style={{ width: '11%' }} />
-                                <col style={{ width: '8%' }} />
-                                <col style={{ width: '12%' }} />
-                                <col style={{ width: '10%' }} />
-                                <col style={{ width: '5%' }} />
-                                <col style={{ width: '9%' }} />
-                                <col style={{ width: '17%' }} />
-                            </colgroup>
-                            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-                                <tr>
-                                    <th className="px-2 py-2 font-semibold select-none">
-                                        <button
-                                            type="button"
-                                            onClick={() => setSort((current) => (current === 'desc' ? 'asc' : 'desc'))}
-                                            className="flex items-center gap-1 hover:text-slate-900 focus:outline-none"
-                                        >
-                                            {t('admin.logs.date')}
-                                            <span className="text-slate-500">
-                                                {sort === 'desc' ? '↓' : '↑'}
-                                            </span>
-                                        </button>
-                                    </th>
-                                    <th className="px-2 py-2 font-semibold">{t('admin.logs.conversation')}</th>
-                                    <th className="px-2 py-2 font-semibold">{t('admin.logs.anonCode')}</th>
-                                    <th className="px-2 py-2 font-semibold">{t('admin.logs.action')}</th>
-                                    <th className="px-2 py-2 font-semibold">{t('admin.logs.provider')}</th>
-                                    <th className="px-2 py-2 font-semibold">{t('admin.logs.model')}</th>
-                                    <th className="px-2 py-2 font-semibold">{t('admin.logs.questionnaire')}</th>
-                                    <th className="px-2 py-2 font-semibold">{t('admin.logs.feedback')}</th>
-                                    <th className="px-2 py-2 font-semibold">{t('admin.logs.cost')}</th>
-                                    <th className="px-2 py-2 font-semibold">{t('admin.logs.details')}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {logs.map((log) => {
-                                    const details = asObject(log.details);
-                                    const conversationId = logConversationId(log);
-                                    const anon = log.anonymous_research_code || textValue(details.anonymous_research_code) || '-';
-                                    const modelName = log.model_name || textValue(details.model) || '-';
-                                    const costText = typeof log.cost_usd === 'number' ? `$${log.cost_usd.toFixed(6)}` : (textValue(details.cost_usd) || textValue(details.estimated_cost_usd) || '-');
-                                    const previewFull = renderLogPreview(log);
-                                    return (
-                                        <Fragment key={log.id}>
-                                        <tr className="align-top hover:bg-slate-50">
-                                            <td className="px-2 py-2 align-top text-xs text-slate-600"><div className="truncate" title={formatDate(log.timestamp)}>{formatDate(log.timestamp)}</div></td>
-                                            <td className="px-2 py-2 align-top">
-                                                <button type="button" onClick={() => void openConversation(conversationId)} title={conversationId} className="block w-full truncate text-left font-mono text-xs font-medium text-sky-700 hover:text-sky-900">
-                                                    {short(conversationId, 18)}
-                                                </button>
-                                                <button type="button" onClick={() => void openSession(log.session_id)} title={log.session_id} className="block w-full truncate text-left font-mono text-[11px] text-slate-500 hover:text-slate-600">
-                                                    {t('admin.logs.session')}: {short(log.session_id, 14)}
-                                                </button>
-                                                {log.username && <div className="truncate text-xs text-slate-500" title={log.username}>{log.username}</div>}
-                                            </td>
-                                            <td className="px-2 py-2 align-top font-mono text-xs text-slate-600"><div className="truncate" title={anon}>{anon}</div></td>
-                                            <td className="px-2 py-2 align-top">
-                                                <span title={log.action} className={`inline-flex w-full items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ring-1 ${actionClass(log.action)}`}>
-                                                    <span className="shrink-0">{actionIcon(log.action)}</span>
-                                                    <span className="truncate">{log.action}</span>
-                                                </span>
-                                            </td>
-                                            <td className="px-2 py-2 align-top text-xs text-slate-600"><div className="truncate font-medium" title={log.provider || '-'}>{log.provider || '-'}</div></td>
-                                            <td className="px-2 py-2 align-top text-xs text-slate-600"><div className="truncate" title={modelName}>{modelName}</div></td>
-                                            <td className="px-2 py-2 align-top text-xs text-slate-600">
-                                                <div className="truncate font-medium" title={log.questionnaire_type || '-'}>{log.questionnaire_type || '-'}</div>
-                                                <div className="truncate text-slate-500" title={log.phase || log.mode || '-'}>{log.phase || log.mode || '-'}</div>
-                                            </td>
-                                            <td className="px-2 py-2 align-top">{renderFeedback(log.helpful)}</td>
-                                            <td className="px-2 py-2 align-top font-mono text-xs text-slate-600"><div className="truncate" title={costText}>{costText}</div></td>
-                                            <td className="px-2 py-2 align-top text-xs text-slate-600">
-                                                <button type="button" onClick={() => setExpandedLog(expandedLog === log.id ? null : log.id)} title={previewFull} className="block w-full truncate text-left hover:text-slate-900">
-                                                    {previewFull}
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        {expandedLog === log.id && (
-                                            <tr className="bg-slate-50/60">
-                                                <td colSpan={10} className="px-4 pb-4">
-                                                    <div className="rounded-lg border border-slate-200 bg-white p-4">
-                                                        <div className="mb-3 inline-flex rounded-md border border-slate-200 p-0.5">
-                                                            <button type="button" onClick={() => setDetailView('human')} className={`rounded px-3 py-1 text-xs font-medium transition-colors ${detailView === 'human' ? 'bg-sky-600 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>{t('admin.logs.viewHuman')}</button>
-                                                            <button type="button" onClick={() => setDetailView('json')} className={`rounded px-3 py-1 text-xs font-medium transition-colors ${detailView === 'json' ? 'bg-sky-600 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>{t('admin.logs.viewJson')}</button>
-                                                        </div>
-                                                        {detailView === 'human' ? renderHumanDetail(log) : (
-                                                            <pre className="max-h-[28rem] overflow-auto whitespace-pre-wrap break-words rounded-md bg-slate-950 p-3 text-xs text-slate-100">
-                                                                {JSON.stringify(details, null, 2)}
-                                                            </pre>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
+                    <ul className="divide-y divide-slate-200" aria-label={t('admin.logs.title')}>
+                        {logs.map((log) => {
+                            const details = asObject(log.details);
+                            const conversationId = logConversationId(log);
+                            const anon = log.anonymous_research_code || textValue(details.anonymous_research_code) || '-';
+                            const expanded = expandedLog === log.id;
+                            return (
+                                <li key={log.id} className="min-w-0 p-4">
+                                    <article className="min-w-0 space-y-4">
+                                        <div className="grid min-w-0 gap-3 lg:grid-cols-[8.5rem_12rem_minmax(0,1fr)_auto] lg:items-start lg:gap-4">
+                                            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600 lg:block">
+                                                <time dateTime={log.timestamp}>{formatDate(log.timestamp)}</time>
+                                                <span className="inline-flex items-center gap-1 lg:mt-2 lg:flex">{renderFeedback(log.helpful)}</span>
+                                                {log.action === 'chat_error' && <span className="text-red-700">{t('admin.logs.d.error')}</span>}
+                                            </div>
+                                            <div className="min-w-0 space-y-1 break-words text-sm">
+                                                <p className="font-semibold text-slate-800">{log.username || anon}</p>
+                                                <p className="text-slate-600">{log.questionnaire_type || '-'}{log.phase || log.mode ? ` · ${log.phase || log.mode}` : ''}</p>
+                                            </div>
+                                            <p className="line-clamp-3 min-w-0 break-words text-sm leading-relaxed text-slate-700">{renderLogPreview(log)}</p>
+                                            <div className="flex flex-wrap gap-2 lg:flex-col">
+                                                <Button type="button" onClick={() => void openConversation(conversationId)}>
+                                                    <MessageSquare className="h-4 w-4 shrink-0" />
+                                                    {t('admin.logs.openConversation')}
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    aria-expanded={expanded}
+                                                    aria-controls={`log-detail-${log.id}`}
+                                                    onClick={() => setExpandedLog(expanded ? null : log.id)}
+                                                >
+                                                    {t('admin.logs.details')}
+                                                    <ChevronDown className={`h-4 w-4 ${expanded ? 'rotate-180' : ''}`} />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                        {expanded && (
+                                            <div id={`log-detail-${log.id}`} className="min-w-0 rounded-lg border border-slate-200 bg-slate-50 p-3 sm:p-4">
+                                                <div className="mb-3 inline-flex rounded-md border border-slate-200 p-0.5">
+                                                    <Button type="button" variant={detailView === 'human' ? 'primary' : 'ghost'} onClick={() => setDetailView('human')}>{t('admin.logs.viewHuman')}</Button>
+                                                    <Button type="button" variant={detailView === 'json' ? 'primary' : 'ghost'} onClick={() => setDetailView('json')}>{t('admin.logs.viewJson')}</Button>
+                                                </div>
+                                                {detailView === 'human' ? renderHumanDetail(log) : (
+                                                    <pre className="max-h-[28rem] overflow-auto whitespace-pre-wrap break-words rounded-md bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(details, null, 2)}</pre>
+                                                )}
+                                            </div>
                                         )}
-                                        </Fragment>
-                                    );
-                                })}
-                                {logs.length === 0 && !loading && (
-                                    <tr>
-                                        <td colSpan={10} className="px-6 py-10 text-center text-slate-500">{t('admin.logs.empty')}</td>
-                                    </tr>
-                                )}
-                                {loading && (
-                                    <tr>
-                                        <td colSpan={10} className="px-6 py-10 text-center text-slate-500">
-                                            <RefreshCw className="mx-auto h-5 w-5 animate-spin" />
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                    </article>
+                                </li>
+                            );
+                        })}
+                        {logs.length === 0 && !loading && <li className="px-4 py-10 text-center text-slate-500">{t('admin.logs.empty')}</li>}
+                        {loading && <li role="status" className="flex items-center justify-center gap-2 px-4 py-10 text-slate-500"><RefreshCw className="h-5 w-5 animate-spin" />{t('common.loading')}</li>}
+                    </ul>
                 </div>
             )}
 
@@ -1217,63 +1209,76 @@ export function LogViewer() {
                 </div>
             )}
 
-            {selectedSession && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-                    <div className="flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-white shadow-xl">
-                        <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
-                            <div>
-                                <h4 className="font-semibold text-slate-900">{selectedSessionKind === 'conversation' ? t('admin.logs.conversation') : t('admin.logs.session')}</h4>
-                                <p className="font-mono text-xs text-slate-500">{selectedSession}</p>
+            {selectedSession && typeof document !== 'undefined' && createPortal(
+                <div
+                    ref={overlayRef}
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-2 sm:p-4"
+                    onClick={(event) => { if (event.target === event.currentTarget) setSelectedSession(null); }}
+                >
+                    <div
+                        ref={dialogRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="log-conversation-title"
+                        aria-describedby="log-conversation-id"
+                        className="flex max-h-[calc(100dvh-1rem)] w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-white shadow-xl sm:max-h-[90dvh]"
+                    >
+                        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 px-4 py-3">
+                            <div className="min-w-0">
+                                <h2 id="log-conversation-title" className="font-semibold text-slate-900">{selectedSessionKind === 'conversation' ? t('admin.logs.conversation') : t('admin.logs.session')}</h2>
+                                <p id="log-conversation-id" className="break-all font-mono text-xs text-slate-500">{selectedSession}</p>
                             </div>
-                            <div className="flex items-center gap-2">
-                                {selectedSessionKind === 'session' && (
-                                    <button type="button" onClick={() => void deleteSelectedSession()} className="inline-flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100">
-                                        <Trash2 className="h-4 w-4" />
-                                        {t('admin.logs.deleteSession')}
-                                    </button>
-                                )}
-                                <button type="button" onClick={() => setSelectedSession(null)} className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50">
-                                    <X className="h-4 w-4" />
+                            <div className="flex shrink-0 items-center gap-2">
+                                <button ref={closeRef} type="button" aria-label={t('common.close')} onClick={() => setSelectedSession(null)} className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50">
+                                    <X className="h-5 w-5" />
                                 </button>
                             </div>
                         </div>
-                        <div className="flex-1 space-y-5 overflow-y-auto bg-slate-50 p-4">
-                            {sessionLoading && <RefreshCw className="mx-auto h-5 w-5 animate-spin text-slate-500" />}
+                        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain bg-slate-50 p-3 sm:p-5" aria-busy={sessionLoading}>
+                            {sessionLoading && <div role="status" className="flex items-center justify-center gap-2 text-slate-500"><RefreshCw className="h-5 w-5 animate-spin" />{t('common.loading')}</div>}
                             {!sessionLoading && sessionLogs.map((log) => {
                                 const details = asObject(log.details);
                                 const userText = firstText(details, ['user_input', 'effective_user_input', 'question']);
                                 const botText = firstText(details, ['bot_response', 'answer']);
+                                const error = textValue(details.error);
                                 return (
-                                    <div key={log.id} className="space-y-2">
+                                    <article key={log.id} className="min-w-0 space-y-3">
                                         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
-                                            <span>{formatDate(log.timestamp)} · {log.action} · {log.provider || '-'}/{log.model_name || '-'}</span>
-                                            <span className="inline-flex items-center gap-1">{renderFeedback(log.helpful)} {csvLabel(log.helpful)}</span>
+                                            <time dateTime={log.timestamp}>{formatDate(log.timestamp)}{log.questionnaire_type ? ` · ${log.questionnaire_type}` : ''}</time>
+                                            <span className="inline-flex items-center gap-1">{renderFeedback(log.helpful)}</span>
                                         </div>
                                         {userText && (
                                             <div className="flex justify-end">
-                                                <div className="max-w-[78%] whitespace-pre-wrap break-words rounded-lg bg-sky-600 px-4 py-3 text-sm leading-relaxed text-white">
-                                                    {userText}
-                                                </div>
+                                                <ChatBubble role="user" className="max-w-full sm:max-w-[85%]">
+                                                    <p className="mb-1 text-xs font-semibold">{t('admin.logs.user')}</p>
+                                                    <p className="whitespace-pre-wrap">{userText}</p>
+                                                </ChatBubble>
                                             </div>
                                         )}
                                         {botText && (
-                                            <div className="flex justify-start">
-                                                <div className="max-w-[78%] whitespace-pre-wrap break-words rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-800">
-                                                    {botText}
-                                                </div>
-                                            </div>
+                                            <ChatBubble role="assistant" className="w-full">
+                                                <p className="mb-1 text-xs font-semibold text-slate-600">{t('admin.logs.counselor')}</p>
+                                                <LogMarkdown text={botText} />
+                                            </ChatBubble>
                                         )}
-                                        {!userText && !botText && (
-                                            <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-md bg-white p-3 text-xs text-slate-700">
-                                                {JSON.stringify(details, null, 2)}
-                                            </pre>
-                                        )}
-                                    </div>
+                                        {error && detailBlock(t('admin.logs.d.error'), error)}
+                                        {renderTechnicalDetail(log)}
+                                    </article>
                                 );
                             })}
+                            {!sessionLoading && sessionLogs.length === 0 && <p className="text-center text-sm text-slate-500">{t('admin.logs.empty')}</p>}
                         </div>
+                        {selectedSessionKind === 'session' && (
+                            <div className="shrink-0 border-t border-slate-200 px-4 py-3">
+                                <Button type="button" variant="danger" onClick={() => void deleteSelectedSession()}>
+                                    <Trash2 className="h-4 w-4" />
+                                    {t('admin.logs.deleteSession')}
+                                </Button>
+                            </div>
+                        )}
                     </div>
-                </div>
+                </div>,
+                document.body,
             )}
         </div>
     );
