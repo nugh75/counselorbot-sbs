@@ -1,0 +1,658 @@
+[
+  {
+    "id": "QSA:C1",
+    "icon": "connections",
+    "labels": {
+      "it": "Strategie elaborative",
+      "en": "Elaborative strategies",
+      "es": "Estrategias elaborativas",
+      "fr": "Stratégies d'élaboration",
+      "de": "Elaborationsstrategien",
+      "sv": "Bearbetningsstrategier"
+    },
+    "aliases": [
+      "Elaborative strategies",
+      "Elaborativa strategier"
+    ]
+  },
+  {
+    "id": "QSA:C2",
+    "icon": "tasks",
+    "labels": {
+      "it": "Autoregolazione",
+      "en": "Self-regulation",
+      "es": "Autorregulación",
+      "fr": "Autorégulation",
+      "de": "Selbstregulation",
+      "sv": "Självreglering"
+    },
+    "aliases": [
+      "Self-regulation",
+      "Självreglering"
+    ]
+  },
+  {
+    "id": "QSA:C3",
+    "icon": "uncertainty",
+    "labels": {
+      "it": "Disorientamento",
+      "en": "Disorientation",
+      "es": "Desorientación",
+      "fr": "Désorientation",
+      "de": "Desorientierung",
+      "sv": "Desorientering"
+    },
+    "aliases": [
+      "Disorientation in studying",
+      "Desorientering i studierna"
+    ]
+  },
+  {
+    "id": "QSA:C4",
+    "icon": "cooperation",
+    "labels": {
+      "it": "Disponibilità alla collaborazione",
+      "en": "Willingness to collaborate",
+      "es": "Disposición a colaborar",
+      "fr": "Disposition à collaborer",
+      "de": "Kooperationsbereitschaft",
+      "sv": "Samarbetsvilja"
+    },
+    "aliases": [
+      "Collaboration",
+      "Samarbete"
+    ]
+  },
+  {
+    "id": "QSA:C5",
+    "icon": "structure",
+    "labels": {
+      "it": "Uso di organizzatori semantici",
+      "en": "Use of semantic organisers",
+      "es": "Uso de organizadores semánticos",
+      "fr": "Usage d'organisateurs sémantiques",
+      "de": "Verwendung semantischer Organisatoren",
+      "sv": "Användning av semantiska organisatörer"
+    },
+    "aliases": [
+      "Graphic organisers",
+      "Grafiska organisatörer"
+    ]
+  },
+  {
+    "id": "QSA:C6",
+    "icon": "distraction",
+    "labels": {
+      "it": "Difficoltà di concentrazione",
+      "en": "Concentration difficulties",
+      "es": "Dificultades de concentración",
+      "fr": "Difficultés de concentration",
+      "de": "Konzentrationsschwierigkeiten",
+      "sv": "Koncentrationssvårigheter"
+    },
+    "aliases": [
+      "Difficulty concentrating",
+      "Koncentrationssvårigheter"
+    ]
+  },
+  {
+    "id": "QSA:C7",
+    "icon": "question",
+    "labels": {
+      "it": "Autointerrogazione",
+      "en": "Self-questioning",
+      "es": "Autointerrogación",
+      "fr": "Auto-questionnement",
+      "de": "Selbstbefragung",
+      "sv": "Självfrågande"
+    },
+    "aliases": [
+      "Self-questioning",
+      "Självfrågor"
+    ]
+  },
+  {
+    "id": "QSA:A1",
+    "icon": "distress",
+    "labels": {
+      "it": "Ansietà di base",
+      "en": "Baseline anxiety",
+      "es": "Ansiedad de base",
+      "fr": "Anxiété de base",
+      "de": "Grundangst",
+      "sv": "Grundångest"
+    },
+    "aliases": [
+      "Test anxiety",
+      "Provängslan"
+    ]
+  },
+  {
+    "id": "QSA:A2",
+    "icon": "start",
+    "labels": {
+      "it": "Volizione",
+      "en": "Volition",
+      "es": "Volición",
+      "fr": "Volition",
+      "de": "Volition",
+      "sv": "Vilja"
+    },
+    "aliases": [
+      "Volition",
+      "Viljestyrning"
+    ]
+  },
+  {
+    "id": "QSA:A3",
+    "icon": "access",
+    "labels": {
+      "it": "Attribuzione a cause controllabili",
+      "en": "Attribution to controllable causes",
+      "es": "Atribución a causas controlables",
+      "fr": "Attribution à des causes contrôlables",
+      "de": "Attribution auf kontrollierbare Ursachen",
+      "sv": "Attribution till kontrollerbara orsaker"
+    },
+    "aliases": [
+      "Attribution to controllable factors",
+      "Tillskrivning till kontrollerbara faktorer"
+    ]
+  },
+  {
+    "id": "QSA:A4",
+    "icon": "context",
+    "labels": {
+      "it": "Attribuzione a cause incontrollabili",
+      "en": "Attribution to uncontrollable causes",
+      "es": "Atribución a causas incontrolables",
+      "fr": "Attribution à des causes incontrôlables",
+      "de": "Attribution auf unkontrollierbare Ursachen",
+      "sv": "Attribution till okontrollerbara orsaker"
+    },
+    "aliases": [
+      "Attribution to uncontrollable factors",
+      "Tillskrivning till okontrollerbara faktorer"
+    ]
+  },
+  {
+    "id": "QSA:A5",
+    "icon": "pause",
+    "labels": {
+      "it": "Mancanza di perseveranza",
+      "en": "Lack of perseverance",
+      "es": "Falta de perseverancia",
+      "fr": "Manque de persévérance",
+      "de": "Mangelnde Ausdauer",
+      "sv": "Brist på uthållighet"
+    },
+    "aliases": [
+      "Lack of perseverance",
+      "Bristande uthållighet"
+    ]
+  },
+  {
+    "id": "QSA:A6",
+    "icon": "individual",
+    "labels": {
+      "it": "Percezione di competenza",
+      "en": "Perceived competence",
+      "es": "Percepción de competencia",
+      "fr": "Perception de compétence",
+      "de": "Kompetenzwahrnehmung",
+      "sv": "Upplevd kompetens"
+    },
+    "aliases": [
+      "Perceived competence",
+      "Upplevd kompetens"
+    ]
+  },
+  {
+    "id": "QSA:A7",
+    "icon": "heart",
+    "labels": {
+      "it": "Interferenze emotive",
+      "en": "Emotional interference",
+      "es": "Interferencias emocionales",
+      "fr": "Interférences émotionnelles",
+      "de": "Emotionale Interferenzen",
+      "sv": "Emotionella störningar"
+    },
+    "aliases": [
+      "Emotional interference",
+      "Känslomässig påverkan"
+    ]
+  },
+  {
+    "id": "QSAR:C1R",
+    "icon": "connections",
+    "labels": {
+      "it": "Strategie elaborative per comprendere e ricordare",
+      "en": "Elaborative strategies for understanding and remembering",
+      "es": "Estrategias elaborativas para comprender y recordar",
+      "fr": "Stratégies élaboratives pour comprendre et mémoriser",
+      "de": "Elaborative Strategien zum Verstehen und Erinnern",
+      "sv": "Bearbetningsstrategier för förståelse och minne"
+    },
+    "aliases": [
+      "Elaborative strategies for understanding and remembering",
+      "Elaborativa strategier för att förstå och minnas"
+    ]
+  },
+  {
+    "id": "QSAR:C2R",
+    "icon": "tasks",
+    "labels": {
+      "it": "Strategie autoregolative",
+      "en": "Self-regulated strategies",
+      "es": "Estrategias autorregulativas",
+      "fr": "Stratégies autorégulées",
+      "de": "Selbstregulative Strategien",
+      "sv": "Självreglerande strategier"
+    },
+    "aliases": [
+      "Self-regulatory strategies",
+      "Självreglerande strategier"
+    ]
+  },
+  {
+    "id": "QSAR:C3R",
+    "icon": "structure",
+    "labels": {
+      "it": "Strategie grafiche e organizzatori semantici",
+      "en": "Graphic strategies and semantic organisers",
+      "es": "Estrategias gráficas y organizadores semánticos",
+      "fr": "Stratégies graphiques et organisateurs sémantiques",
+      "de": "Grafische Strategien und semantische Organisatoren",
+      "sv": "Grafiska strategier och semantiska organisatörer"
+    },
+    "aliases": [
+      "Graphic strategies for understanding and remembering",
+      "Grafiska strategier för förståelse och minne"
+    ]
+  },
+  {
+    "id": "QSAR:C4R",
+    "icon": "distraction",
+    "labels": {
+      "it": "Carenza nel controllo dell'attenzione",
+      "en": "Lack of attention control",
+      "es": "Falta de control de la atención",
+      "fr": "Manque de contrôle de l'attention",
+      "de": "Mangelnde Aufmerksamkeitssteuerung",
+      "sv": "Bristande kontroll över uppmärksamheten"
+    },
+    "aliases": [
+      "Difficulty controlling attention",
+      "Svårigheter att kontrollera uppmärksamheten"
+    ]
+  },
+  {
+    "id": "QSAR:A1R",
+    "icon": "distress",
+    "labels": {
+      "it": "Ansietà e controllo delle emozioni",
+      "en": "Anxiety and emotional control",
+      "es": "Ansiedad y control de las emociones",
+      "fr": "Anxiété et contrôle des émotions",
+      "de": "Angst und Emotionskontrolle",
+      "sv": "Ångest och kontroll av känslor"
+    },
+    "aliases": [
+      "Difficulty regulating anxiety",
+      "Svårigheter att reglera oro"
+    ]
+  },
+  {
+    "id": "QSAR:A2R",
+    "icon": "start",
+    "labels": {
+      "it": "Volizione",
+      "en": "Volition",
+      "es": "Volición",
+      "fr": "Volition",
+      "de": "Volition",
+      "sv": "Vilja"
+    },
+    "aliases": [
+      "Volition",
+      "Viljestyrning"
+    ]
+  },
+  {
+    "id": "QSAR:A3R",
+    "icon": "access",
+    "labels": {
+      "it": "Attribuzioni causali",
+      "en": "Causal attributions",
+      "es": "Atribuciones causales",
+      "fr": "Attributions causales",
+      "de": "Kausale Attributionen",
+      "sv": "Orsaksförklaringar"
+    },
+    "aliases": [
+      "Controllable causal attributions",
+      "Kontrollerbara orsaksförklaringar"
+    ]
+  },
+  {
+    "id": "QSAR:A4R",
+    "icon": "individual",
+    "labels": {
+      "it": "Percezione di competenza",
+      "en": "Perceived competence",
+      "es": "Percepción de competencia",
+      "fr": "Perception de compétence",
+      "de": "Kompetenzwahrnehmung",
+      "sv": "Upplevd kompetens"
+    },
+    "aliases": [
+      "Perceived competence",
+      "Upplevd kompetens"
+    ]
+  },
+  {
+    "id": "ZTPI:T1",
+    "icon": "experience",
+    "labels": {
+      "it": "Passato Negativo",
+      "en": "Past Negative",
+      "es": "Pasado Negativo",
+      "fr": "Passé Négatif",
+      "de": "Negative Vergangenheit",
+      "sv": "Negativt Förflutet"
+    },
+    "aliases": [
+      "Past Negative",
+      "Negativt förflutet"
+    ]
+  },
+  {
+    "id": "ZTPI:T2",
+    "icon": "experience",
+    "labels": {
+      "it": "Passato Positivo",
+      "en": "Past Positive",
+      "es": "Pasado Positivo",
+      "fr": "Passé Positif",
+      "de": "Positive Vergangenheit",
+      "sv": "Positivt Förflutet"
+    },
+    "aliases": [
+      "Past Positive",
+      "Positivt förflutet"
+    ]
+  },
+  {
+    "id": "ZTPI:T3",
+    "icon": "wellbeing",
+    "labels": {
+      "it": "Presente Edonistico",
+      "en": "Present Hedonistic",
+      "es": "Presente Hedonista",
+      "fr": "Présent Hédoniste",
+      "de": "Hedonistische Gegenwart",
+      "sv": "Hedonistisk Nutid"
+    },
+    "aliases": [
+      "Present Hedonistic",
+      "Hedonistisk nutid"
+    ]
+  },
+  {
+    "id": "ZTPI:T4",
+    "icon": "constraint",
+    "labels": {
+      "it": "Presente Fatalistico",
+      "en": "Present Fatalistic",
+      "es": "Presente Fatalista",
+      "fr": "Présent Fataliste",
+      "de": "Fatalistische Gegenwart",
+      "sv": "Fatalistisk Nutid"
+    },
+    "aliases": [
+      "Present Fatalistic",
+      "Fatalistisk nutid"
+    ]
+  },
+  {
+    "id": "ZTPI:T5",
+    "icon": "calendar",
+    "labels": {
+      "it": "Futuro",
+      "en": "Future",
+      "es": "Futuro",
+      "fr": "Futur",
+      "de": "Zukunft",
+      "sv": "Framtid"
+    },
+    "aliases": [
+      "Future",
+      "Framtid"
+    ]
+  },
+  {
+    "id": "QPCS:S1",
+    "icon": "heart",
+    "labels": {
+      "it": "Gestione delle emozioni",
+      "en": "Managing emotions",
+      "es": "Gestión de las emociones",
+      "fr": "Gestion des émotions",
+      "de": "Emotionsmanagement",
+      "sv": "Hantera känslor"
+    },
+    "aliases": [
+      "Managing emotions",
+      "Hantera känslor"
+    ]
+  },
+  {
+    "id": "QPCS:S2",
+    "icon": "dialogue",
+    "labels": {
+      "it": "Competenza comunicativa",
+      "en": "Communicative competence",
+      "es": "Competencia comunicativa",
+      "fr": "Compétence communicationnelle",
+      "de": "Kommunikative Kompetenz",
+      "sv": "Kommunikativ kompetens"
+    },
+    "aliases": [
+      "Communicative competence",
+      "Kommunikativ kompetens"
+    ]
+  },
+  {
+    "id": "QPCS:S3",
+    "icon": "repeat",
+    "labels": {
+      "it": "Volontà e perseveranza",
+      "en": "Will & perseverance",
+      "es": "Voluntad y perseverancia",
+      "fr": "Volonté et persévérance",
+      "de": "Wille und Ausdauer",
+      "sv": "Vilja & uthållighet"
+    },
+    "aliases": [
+      "Will & perseverance",
+      "Vilja & uthållighet"
+    ]
+  },
+  {
+    "id": "QPCS:S4",
+    "icon": "cooperation",
+    "labels": {
+      "it": "Strategie e collaborazione",
+      "en": "Strategies & collaboration",
+      "es": "Estrategias y colaboración",
+      "fr": "Stratégies et collaboration",
+      "de": "Strategien und Zusammenarbeit",
+      "sv": "Strategier & samarbete"
+    },
+    "aliases": [
+      "Strategies & collaboration",
+      "Strategier & samarbete"
+    ]
+  },
+  {
+    "id": "QPCS:S5",
+    "icon": "route",
+    "labels": {
+      "it": "Fiducia e progetto di vita",
+      "en": "Confidence & life project",
+      "es": "Confianza y proyecto de vida",
+      "fr": "Confiance et projet de vie",
+      "de": "Vertrauen und Lebensentwurf",
+      "sv": "Tilltro & livsprojekt"
+    },
+    "aliases": [
+      "Confidence & life project",
+      "Tilltro & livsprojekt"
+    ]
+  },
+  {
+    "id": "QPCC:K1",
+    "icon": "explanation",
+    "labels": {
+      "it": "Comunicazione in pubblico",
+      "en": "Public speaking",
+      "es": "Comunicación en público",
+      "fr": "Communication en public",
+      "de": "Sprechen vor Publikum",
+      "sv": "Tala inför andra"
+    },
+    "aliases": [
+      "Public speaking",
+      "Tala inför andra"
+    ]
+  },
+  {
+    "id": "QPCC:K2",
+    "icon": "heart",
+    "labels": {
+      "it": "Gestione di ansia e responsabilità",
+      "en": "Managing anxiety & responsibility",
+      "es": "Gestión de la ansiedad y la responsabilidad",
+      "fr": "Gestion de l'anxiété et de la responsabilité",
+      "de": "Umgang mit Angst und Verantwortung",
+      "sv": "Hantera ångest & ansvar"
+    },
+    "aliases": [
+      "Managing anxiety & responsibility",
+      "Hantera ångest & ansvar"
+    ]
+  },
+  {
+    "id": "QPCC:K3",
+    "icon": "tasks",
+    "labels": {
+      "it": "Volizione e autoregolazione",
+      "en": "Volition & self-regulation",
+      "es": "Volición y autorregulación",
+      "fr": "Volition et autorégulation",
+      "de": "Volition und Selbstregulation",
+      "sv": "Vilja & självreglering"
+    },
+    "aliases": [
+      "Volition & self-regulation",
+      "Vilja & självreglering"
+    ]
+  },
+  {
+    "id": "QPCC:K4",
+    "icon": "connections",
+    "labels": {
+      "it": "Strategie di elaborazione",
+      "en": "Elaboration strategies",
+      "es": "Estrategias de elaboración",
+      "fr": "Stratégies d'élaboration",
+      "de": "Elaborationsstrategien",
+      "sv": "Bearbetningsstrategier"
+    },
+    "aliases": [
+      "Elaboration strategies",
+      "Bearbetningsstrategier"
+    ]
+  },
+  {
+    "id": "QPCC:K5",
+    "icon": "individual",
+    "labels": {
+      "it": "Convinzioni su di sé",
+      "en": "Beliefs about oneself",
+      "es": "Creencias sobre uno mismo",
+      "fr": "Croyances sur soi",
+      "de": "Überzeugungen über sich selbst",
+      "sv": "Föreställningar om sig själv"
+    },
+    "aliases": [
+      "Beliefs about oneself",
+      "Föreställningar om sig själv"
+    ]
+  },
+  {
+    "id": "QAP:AD1",
+    "icon": "calendar",
+    "labels": {
+      "it": "Orientamento al futuro",
+      "en": "Future orientation",
+      "es": "Orientación al futuro",
+      "fr": "Orientation vers l'avenir",
+      "de": "Zukunftsorientierung",
+      "sv": "Framtidsorientering"
+    },
+    "aliases": [
+      "Concern",
+      "Omsorg om framtiden"
+    ]
+  },
+  {
+    "id": "QAP:AD2",
+    "icon": "choice",
+    "labels": {
+      "it": "Controllo e autonomia",
+      "en": "Control & autonomy",
+      "es": "Control y autonomía",
+      "fr": "Contrôle et autonomie",
+      "de": "Kontrolle und Autonomie",
+      "sv": "Kontroll & självständighet"
+    },
+    "aliases": [
+      "Control",
+      "Kontroll"
+    ]
+  },
+  {
+    "id": "QAP:AD3",
+    "icon": "search",
+    "labels": {
+      "it": "Curiosità ed esplorazione",
+      "en": "Curiosity & exploration",
+      "es": "Curiosidad y exploración",
+      "fr": "Curiosité et exploration",
+      "de": "Neugier und Erkundung",
+      "sv": "Nyfikenhet & utforskande"
+    },
+    "aliases": [
+      "Curiosity",
+      "Nyfikenhet"
+    ]
+  },
+  {
+    "id": "QAP:AD4",
+    "icon": "puzzle",
+    "labels": {
+      "it": "Fiducia e problem solving",
+      "en": "Confidence & problem solving",
+      "es": "Confianza y resolución de problemas",
+      "fr": "Confiance et résolution de problèmes",
+      "de": "Vertrauen und Problemlösung",
+      "sv": "Tilltro & problemlösning"
+    },
+    "aliases": [
+      "Confidence",
+      "Tilltro"
+    ]
+  }
+]

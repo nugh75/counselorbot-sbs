@@ -1,0 +1,24 @@
+{
+  "type": "flow",
+  "title": "La fiducia e le attribuzioni sono in relazione",
+  "questionnaire_type": "QSA",
+  "nodes": [
+    {
+      "id": "a",
+      "label": "Percezione di competenza bassa",
+      "factor": "QSA:A6"
+    },
+    {
+      "id": "b",
+      "label": "Cause controllabili",
+      "factor": "QSA:A3"
+    }
+  ],
+  "edges": [
+    {
+      "from": "a",
+      "to": "b",
+      "kind": "strengthens"
+    }
+  ]
+}

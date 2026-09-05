@@ -31,6 +31,17 @@ test('all 100 catalogued icons survive parsing alongside a node without an icon'
     }
 });
 
+test('factor identities and questionnaire scope survive restore and rendering requests', () => {
+    const spec = parseDiagramSpec({ ...CYCLE, questionnaire_type: 'QSA', nodes: [
+        { id: 'a', label: 'Percezione di competenza bassa', factor: 'QSA:A6' },
+        { id: 'b', label: 'Cause controllabili', factor: 'QSA:A3', icon: 'access' },
+    ] });
+    assert.equal(spec?.questionnaire_type, 'QSA');
+    assert.equal(spec?.nodes[0].factor, 'QSA:A6');
+    assert.equal(spec?.nodes[0].label, 'Percezione di competenza bassa');
+    assert.equal(spec?.nodes[1].icon, 'access');
+});
+
 test('a declared form reaches the renderer', () => {
     const spec = parseDiagramSpec({
         ...CYCLE,

@@ -8,9 +8,10 @@ DIAGRAM_ICONS = tuple(entry['id'] for entry in ICON_CATALOG)
 
 ICON_SELECTION_PROMPT = (
     "Interpret each whole node in context, including negation; choose by meaning, never a keyword. "
-    "Choose independently below or omit icon/use null if no honest match exists. "
+    "Use the dictionary symbol when it fits; omit icon/use null only for unmatched concepts. "
     "Never mark an unmet goal or uncertain result as achieved. "
-    "Omit icons for abstract self-beliefs (e.g. self-efficacy), not generic brain/heart/shield. "
+    "For questionnaire factor nodes set factor to INSTRUMENT:CODE from the source, e.g. QSA:A6. "
+    "The server assigns the fixed factor symbol, including self-beliefs; keep levels in the label. "
     "Always keep the label. Icon meanings: "
     + '; '.join(f"{entry['id']}={entry['meaning']}" for entry in ICON_CATALOG) + '.'
 )

@@ -13,6 +13,7 @@ const spec = { type: 'flow', title: 'Piano di studio e verifica dei risultati', 
 const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="280" height="180" viewBox="0 0 280 180"><g class="node"><title>a</title><text x="40" y="40">Obiettivo</text></g><g class="edge"><title>a-&gt;b</title><path d="M60 50V100" stroke="#17747a"/></g><g class="node"><title>b</title><text x="40" y="130">Verifica</text></g></svg>';
 const graphSpec = JSON.parse(readFileSync(new URL('./fixtures/reading-diagram.json', import.meta.url), 'utf8'));
 const semanticSpec = JSON.parse(readFileSync(new URL('./fixtures/semantic-diagram.json', import.meta.url), 'utf8'));
+const factorSpec = JSON.parse(readFileSync(new URL('./fixtures/factor-diagram.json', import.meta.url), 'utf8'));
 
 async function openMessageDiagram(page) {
     const menu = page.getByRole('button', { name: 'Azioni del messaggio', exact: true });
@@ -23,8 +24,9 @@ async function openMessageDiagram(page) {
 async function fixture(width, phase = 'intro', options = {}) {
     const context = await browser.newContext({ viewport: { width, height: 844 }, reducedMotion: options.motion || 'reduce', hasTouch: Boolean(options.touch), isMobile: Boolean(options.touch) });
     const page = await context.newPage();
-    const fixtureSpec = options.semantic ? semanticSpec : options.graph ? graphSpec : spec;
-    const control = { failDiagram: false, failPatch: false, failRender: false, failExport: false, saved: options.graph || options.semantic ? [{ source_text: reply, source_key: createHash('sha256').update(reply).digest('hex'), instruction: '', spec: fixtureSpec }] : [], requests: [], errors: [] };
+    const fixtureName = options.factor ? 'factor' : options.semantic ? 'semantic' : options.graph ? 'reading' : null;
+    const fixtureSpec = options.factor ? factorSpec : options.semantic ? semanticSpec : options.graph ? graphSpec : spec;
+    const control = { failDiagram: false, failPatch: false, failRender: false, failExport: false, saved: fixtureName ? [{ source_text: reply, source_key: createHash('sha256').update(reply).digest('hex'), instruction: '', spec: fixtureSpec }] : [], requests: [], errors: [] };
     const catalog = {
         reading: [{ slug: 'test-book', title: 'Libro per la prova', why: 'Collegato al metodo di studio.', synopsis: 'SINOSSI COMPLETA DEL LIBRO', where: 'https://example.invalid/libro', languages: ['it', 'en'], warning: 'AVVERTENZA DEL LIBRO', status: 'proposed' }],
         strategy: [{ slug: 'test-strategy', name: 'Recupero attivo', description: 'Chiudi il testo e scrivi tre concetti.', recommended_when: 'Quando vuoi verificare cosa ricordi.', status: 'proposed' }],
@@ -59,8 +61,8 @@ async function fixture(width, phase = 'intro', options = {}) {
         } else if (url.pathname === '/api/diagram/render') {
             const body = request.postDataJSON();
             if (control.failRender || (body.embed_title && control.failExport)) return route.fulfill({ status: 503, body: '{}' });
-            return route.fulfill({ contentType: body.format === 'png' ? 'image/png' : 'image/svg+xml', body: options.graph || options.semantic
-                ? readFileSync(new URL(`./fixtures/${options.semantic ? 'semantic' : 'reading'}-diagram-${body.theme}.${body.format}`, import.meta.url)) : svg });
+            return route.fulfill({ contentType: body.format === 'png' ? 'image/png' : 'image/svg+xml', body: fixtureName
+                ? readFileSync(new URL(`./fixtures/${fixtureName}-diagram-${body.theme}.${body.format}`, import.meta.url)) : svg });
         }
         else if (url.pathname.endsWith('/summary')) data = { summary: '## Scelta finale\nProverò il recupero attivo per una settimana.', status: 'ready' };
         else if (url.pathname.endsWith('/pdf')) return route.fulfill({ contentType: 'application/pdf', headers: { 'X-Summary-Status': 'ready' }, body: '%PDF-1.4\n%%EOF' });
@@ -86,6 +88,26 @@ test('semantic icons and an icon-free node survive restore and export', async ()
         const exported = control.requests.find(request => request.path === '/api/diagram/render' && request.body.embed_title);
         assert.equal(exported.body.spec.nodes[1].label, 'Obiettivo non ancora raggiunto');
         assert.equal(exported.body.spec.nodes[0].icon, 'calendar');
+        assert.deepEqual(control.errors, []);
+    } finally { await context.close(); }
+});
+
+test('factor references without model icons reach rendering and export', async () => {
+    const { page, context, control } = await fixture(390, 'intro', { factor: true, dark: true });
+    try {
+        const figure = page.locator('figure');
+        await figure.locator('svg g.node').first().waitFor();
+        assert.equal(await figure.locator('svg g.node svg').count(), 2);
+        const request = control.requests.find(request => request.path === '/api/diagram/render');
+        assert.equal(request.body.spec.questionnaire_type, 'QSA');
+        assert.deepEqual(request.body.spec.nodes.map(node => node.factor), ['QSA:A6', 'QSA:A3']);
+        await figure.getByRole('button', { name: 'Zoom ed esportazione', exact: true }).click();
+        const download = page.waitForEvent('download');
+        await figure.getByRole('button', { name: 'Scarica SVG', exact: true }).click();
+        await download;
+        const exported = control.requests.find(request => request.path === '/api/diagram/render' && request.body.embed_title);
+        assert.equal(exported.body.spec.nodes[0].factor, 'QSA:A6');
+        assert.equal(exported.body.spec.nodes[0].label, 'Percezione di competenza bassa');
         assert.deepEqual(control.errors, []);
     } finally { await context.close(); }
 });

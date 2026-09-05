@@ -16,6 +16,8 @@ export interface DiagramNode {
     label: string;
     accent?: boolean;
     icon?: DiagramIcon;
+    // Stable questionnaire identity; the backend supplies its dictionary symbol.
+    factor?: string;
     form?: DiagramNodeForm;
 }
 
@@ -34,6 +36,7 @@ export interface DiagramSpec {
     // Una frase sotto il disegno: cosa mostra, come si legge. Il disegno finisce
     // anche fuori dalla chat, dove la prosa che lo accompagnava non c'e' piu'.
     note?: string;
+    questionnaire_type?: string;
 }
 
 export type DiagramContentSegment =

@@ -16,9 +16,10 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, ValidationInfo, field_validator, model_validator
 
 from .diagram_icon_catalog import DIAGRAM_ICONS
+from .diagram_symbols import INSTRUMENTS, factor_id, resolve_symbol
 
 logger = logging.getLogger(__name__)
 
@@ -272,6 +273,7 @@ class DiagramNode(BaseModel):
     label: str = Field(min_length=1, max_length=MAX_LABEL)
     accent: bool = False
     icon: str | None = Field(default=None, max_length=24)
+    factor: str | None = Field(default=None, max_length=24)
     role: str | None = Field(default=None, max_length=24)
     form: str | None = Field(default=None, max_length=16)
     status: str | None = Field(default=None, max_length=16)
@@ -281,6 +283,11 @@ class DiagramNode(BaseModel):
     task_type: str | None = Field(default=None, max_length=24)
     closed: bool = False
     conclusion: str | None = Field(default=None, max_length=120)
+
+    @field_validator("factor", mode="before")
+    @classmethod
+    def _known_factor_or_none(cls, value):
+        return factor_id(value)
 
     @field_validator("icon", mode="before")
     @classmethod
@@ -363,6 +370,13 @@ class DiagramSpec(BaseModel):
     # anche fuori dalla chat (Telegram, PDF, schermo intero) e li' la prosa che
     # lo accompagnava non c'e' piu'.
     note: str | None = Field(default=None, max_length=MAX_NOTE)
+    questionnaire_type: str | None = Field(default=None, max_length=16)
+
+    @field_validator("questionnaire_type", mode="before")
+    @classmethod
+    def _known_questionnaire_or_none(cls, value):
+        value = value.strip().upper() if isinstance(value, str) else ''
+        return value if value in INSTRUMENTS else None
 
     @field_validator("note", mode="before")
     @classmethod
@@ -381,7 +395,10 @@ class DiagramSpec(BaseModel):
         return cleaned
 
     @model_validator(mode="after")
-    def _coherent(self) -> "DiagramSpec":
+    def _coherent(self, info: ValidationInfo) -> "DiagramSpec":
+        if info.context and info.context.get('questionnaire_type'):
+            instrument = info.context['questionnaire_type'].upper()
+            self.questionnaire_type = instrument if instrument in INSTRUMENTS else None
         max_nodes, max_edges = TYPE_LIMITS.get(self.type, (MAX_NODES, MAX_EDGES))
         if len(self.nodes) > max_nodes:
             raise ValueError(f"troppi nodi per un diagramma {self.type}: massimo {max_nodes}")
@@ -396,15 +413,22 @@ class DiagramSpec(BaseModel):
                 raise ValueError(f"arco verso un nodo inesistente: {edge.source} -> {edge.target}")
         if sum(1 for node in self.nodes if node.accent) > 1:
             raise ValueError("al massimo un nodo accentato")
+        if self.type in SYMBOL_TYPES:
+            for node in self.nodes:
+                factor, icon, canonical = resolve_symbol(node.label, node.factor, self.questionnaire_type)
+                if factor:
+                    node.factor = factor
+                if icon and (canonical or node.icon is None):
+                    node.icon = icon
         return self
 
 
-def parse_spec(raw: dict | str) -> DiagramSpec:
+def parse_spec(raw: dict | str, *, questionnaire_type: str | None = None) -> DiagramSpec:
     """Valida uno spec (dict o JSON) e solleva `DiagramSpecError` se non regge."""
     try:
         if isinstance(raw, str):
-            return DiagramSpec.model_validate_json(raw)
-        return DiagramSpec.model_validate(raw)
+            return DiagramSpec.model_validate_json(raw, context={'questionnaire_type': questionnaire_type})
+        return DiagramSpec.model_validate(raw, context={'questionnaire_type': questionnaire_type})
     except ValidationError as exc:
         raise DiagramSpecError(str(exc)) from exc
 

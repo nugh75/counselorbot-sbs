@@ -185,6 +185,8 @@ DIAGRAM_SHAPES_POLICY_MARKER = "skills_diagram_shapes_and_note_v1"
 DIAGRAM_SYMBOL_POLICY_MARKER = "skills_diagram_symbol_nodes_v1"
 DIAGRAM_SEMANTIC_ICONS_POLICY_MARKER = "skills_diagram_semantic_icons_v1"
 PREVIOUS_DIAGRAM_INSTRUCTIONS_SHA256 = "23490f2ce25f8697af5890d3db4dda2eb989067065a53910841b77b0a761f442"
+DIAGRAM_FACTOR_SYMBOLS_POLICY_MARKER = "skills_diagram_factor_symbols_v1"
+PREVIOUS_SEMANTIC_INSTRUCTIONS_SHA256 = "d92dc5a59f870714f48963acbf57587f86889d48414aae06cd7146b23e5d7c64"
 IDEA_FOCUS_POLICY_MARKER = "skills_idea_focus_v2"
 IDEA_WAYFINDER_POLICY_MARKER = "skills_idea_wayfinder_v1"
 IDEA_CONCEPT_POLICY_MARKER = "skills_idea_concept_v1"
@@ -364,7 +366,7 @@ SKILL_SEEDS = [
         "handler_params": {},
         "routing": "optional",
         "slot": "directive_tail",
-        "max_chars": 3900,
+        "max_chars": 4100,
         "sort_order": 35,
         "is_active": True,
         "bind": True,
@@ -768,6 +770,25 @@ def apply_diagram_semantic_icons_policy(db) -> bool:
         value="applied",
         description="One-time migration: semantic icon catalogue and optional icons per node.",
     ))
+    db.commit()
+    return updated
+
+
+def apply_diagram_factor_symbols_policy(db) -> bool:
+    """Update stock factor instructions, preserving admin text and activation flags."""
+    if db.query(models.Config).filter(models.Config.key == DIAGRAM_FACTOR_SYMBOLS_POLICY_MARKER).first():
+        return False
+    skill = db.query(models.Skill).filter(models.Skill.slug == "concept-diagram").first()
+    updated = False
+    if skill is not None:
+        current = (skill.instructions_i18n or {}).get("en", "")
+        if (current == CONCEPT_DIAGRAM_INSTRUCTIONS_EN or
+                hashlib.sha256(current.encode()).hexdigest() == PREVIOUS_SEMANTIC_INSTRUCTIONS_SHA256):
+            skill.instructions_i18n = {"en": CONCEPT_DIAGRAM_INSTRUCTIONS_EN}
+            skill.max_chars = max(int(skill.max_chars or 0), 4100)
+            updated = True
+    db.add(models.Config(key=DIAGRAM_FACTOR_SYMBOLS_POLICY_MARKER, value="applied",
+                         description="One-time migration: fixed questionnaire factor symbols."))
     db.commit()
     return updated
 
