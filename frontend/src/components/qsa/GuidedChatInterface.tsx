@@ -27,6 +27,9 @@ import { IdeaBranchBar } from '@/components/qsa/IdeaBranchBar';
 import { IdeaBranchIntro } from '@/components/qsa/IdeaBranchIntro';
 import { IdeaWorkspace } from '@/components/qsa/IdeaWorkspace';
 import { RecommendationsPanel } from '@/components/qsa/RecommendationsPanel';
+import { VisualTools } from '@/components/visual/VisualTools';
+import { Button } from '@/components/ui/Button';
+import { visualLabel } from '@/lib/i18n-visual-tools';
 import {
     deleteIdeaReference,
     fetchIdeaNextStep,
@@ -519,6 +522,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const [isScoresPanelOpen, setIsScoresPanelOpen] = useState(false);
     const [recommendations, setRecommendations] = useState<RecommendationCatalog>(EMPTY_RECOMMENDATIONS);
     const [recommendationsOpenSignal, setRecommendationsOpenSignal] = useState(0);
+    const [visualRequest, setVisualRequest] = useState<{ text: string; nonce: number } | null>(null);
     const [savedDiagrams, setSavedDiagrams] = useState<Record<string, SavedMessageDiagram>>({});
     // Indici dei messaggi con il box "Ragionamento" collassato (toggle per nasconderlo).
     const [hiddenReasoning, setHiddenReasoning] = useState<Set<number>>(new Set());
@@ -1796,6 +1800,10 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
                                     {msg.role === 'assistant' && msg.content.trim() && (
                                         <div className="flex min-w-0 w-full flex-wrap items-center gap-1">
+                                            <Button type="button" variant="ghost" className="min-h-[44px] text-indigo-700" disabled={isLoading}
+                                                onClick={() => setVisualRequest({ text: diagramContentForSpeech(msg.content) || msg.content, nonce: Date.now() })}>
+                                                {visualLabel(activeLocale, 'organize')}
+                                            </Button>
                                             <MessageDiagramButton
                                                 text={diagramContentForSpeech(msg.content) || msg.content}
                                                 locale={activeLocale}
@@ -1868,6 +1876,14 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             <LearnerProfileCard variant="update" sessionId={sessionId} />
                         </div>
                     )}
+                </div>
+
+                <div className="shrink-0 border-t border-slate-200 bg-white px-3 py-2">
+                    <VisualTools sessionId={sessionId} locale={activeLocale} catalog={recommendations} request={visualRequest}
+                        onDiscuss={currentPhase === FIXED_CONCLUSION_ID ? undefined : text => {
+                            setInput(previous => previous.trim() ? `${previous}\n\n${text}` : text);
+                            window.requestAnimationFrame(() => document.getElementById('guided-composer')?.focus());
+                        }} />
                 </div>
 
                 {/* Input Area */}
