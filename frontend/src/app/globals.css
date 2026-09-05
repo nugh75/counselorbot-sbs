@@ -209,6 +209,37 @@
   max-height: var(--chat-mobile-h);
 }
 
+/* Both chat layouts consume the height measured below their page controls. */
+.chat-viewport .min-h-chat {
+  height: var(--chat-mobile-h);
+  min-height: 0;
+}
+
+.chat-viewport section[aria-labelledby="guided-chat-title"] {
+  height: var(--chat-h);
+  min-height: 0;
+}
+
+.chat-viewport form { flex-shrink: 0; }
+.chat-viewport textarea { font-size: 1.066667rem; }
+
+/* In OpenCode's stacked layout the conversation precedes the score panel. */
+@media (max-width: 1279px) {
+  .chat-viewport > .flex > .min-h-chat { order: -1; flex: none; }
+}
+
+/* On short mobile screens the chat header already identifies the current
+   phase; give the conversation the space taken by the overall flow overview. */
+@media (max-width: 1023px) and (max-height: 640px) {
+  .chat-flow-progress { display: none; }
+  .chat-viewport textarea:placeholder-shown { white-space: nowrap; }
+  .chat-viewport form .text-center { display: none; }
+  .chat-viewport form > .p-3 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+}
+
+/* Long-form messages keep the reading size through Markdown's small styles. */
+.chat-message :is(p, li, .prose) { font-size: inherit; line-height: inherit; }
+
 /* Card: radius unico (rounded-xl) cotto nell'utility -> nessun rounded-* ai call-site. */
 @utility glass-panel {
   @apply bg-white border border-slate-200 rounded-xl shadow-sm transition-colors duration-150;
@@ -306,6 +337,8 @@ h1.text-3xl {
   width: 44px;
   height: 44px;
 }
+
+.compact-header-selection button { min-height: 44px; }
 
 /* Su puntatore grossolano ogni icona della topbar prende la stessa misura: da
    sm in su la barra ne mostra fino a dodici, e a 32px erano bersagli stretti

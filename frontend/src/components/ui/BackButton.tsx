@@ -18,10 +18,10 @@ interface BackButtonProps {
 }
 
 const ICON =
-    'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-indigo-700';
+    'inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-indigo-700';
 
 const LABELLED =
-    'inline-flex h-11 shrink-0 items-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-indigo-700';
+    'inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-indigo-700';
 
 export function BackButton({ href, onClick, label, className, variant = 'icon' }: BackButtonProps) {
     const cls = cn(variant === 'labelled' ? LABELLED : ICON, className);

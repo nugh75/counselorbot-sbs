@@ -10,6 +10,7 @@
     "test": "node --test --experimental-strip-types src/lib/*.test.ts",
     "test:logs": "node --test tests/log-viewer.test.mjs",
     "test:artifacts": "node --test tests/conversation-artifacts.test.mjs",
+    "test:design": "node --test tests/design-usability.test.mjs",
     "i18n:check": "node scripts/check-i18n.mjs",
     "test:visual": "node --test --experimental-strip-types tests/visual-tools.test.mjs"
   },
