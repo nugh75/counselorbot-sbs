@@ -13,6 +13,12 @@ const spec = { type: 'flow', title: 'Piano di studio e verifica dei risultati', 
 const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="280" height="180" viewBox="0 0 280 180"><g class="node"><title>a</title><text x="40" y="40">Obiettivo</text></g><g class="edge"><title>a-&gt;b</title><path d="M60 50V100" stroke="#17747a"/></g><g class="node"><title>b</title><text x="40" y="130">Verifica</text></g></svg>';
 const graphSpec = JSON.parse(readFileSync(new URL('./fixtures/reading-diagram.json', import.meta.url), 'utf8'));
 
+async function openMessageDiagram(page) {
+    const menu = page.getByRole('button', { name: 'Azioni del messaggio', exact: true });
+    if (await menu.count()) await menu.first().click();
+    await page.getByRole('button', { name: 'Diagramma', exact: true }).click();
+}
+
 async function fixture(width, phase = 'intro', options = {}) {
     const context = await browser.newContext({ viewport: { width, height: 844 }, reducedMotion: options.motion || 'reduce', hasTouch: Boolean(options.touch), isMobile: Boolean(options.touch) });
     const page = await context.newPage();
@@ -65,7 +71,7 @@ for (const width of [320, 390, 1440]) {
     test(`message diagrams persist and controls fit at ${width}px`, async () => {
         const { page, context, control } = await fixture(width);
         try {
-            await page.getByRole('button', { name: 'Diagramma', exact: true }).click();
+            await openMessageDiagram(page);
             const send = page.locator('form').filter({ has: page.locator('input[maxlength="400"]') }).locator('button[type="submit"]');
             await send.click();
             await page.locator('figure svg g.node').first().waitFor();

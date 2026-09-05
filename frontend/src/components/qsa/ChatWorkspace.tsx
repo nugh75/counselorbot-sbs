@@ -36,10 +36,11 @@ type Props = {
     onBack?: () => void;
     sidebar: (closeOnMobile: () => void) => ReactNode;
     tools: ReactNode;
-    children: ReactNode;
+    advancement?: ReactNode;
+    children: (openPanel: () => void) => ReactNode;
 };
 
-export function ChatWorkspace({ locale, subtitle, headerClassName = '', resourceCount, onBack, sidebar, tools, children }: Props) {
+export function ChatWorkspace({ locale, subtitle, headerClassName = '', resourceCount, onBack, sidebar, tools, advancement, children }: Props) {
     const { t } = useI18n();
     const l = (key: string) => chatLayoutLabel(locale, key);
     const id = useId();
@@ -66,7 +67,16 @@ export function ChatWorkspace({ locale, subtitle, headerClassName = '', resource
     }, [preferences]);
 
     const resize = (value: number) => setPreferences(previous => ({ ...previous, width: Math.max(minWidth, Math.min(limit, value)) }));
-    const panelContent = <aside id={id} aria-label={l('panelTitle')} hidden={desktop && !visible} className={desktop ? 'min-h-0 min-w-0 overflow-y-auto pr-1' : 'order-2 mt-4 rounded-xl border border-slate-200 bg-white p-3'}>
+    const openPanel = () => {
+        if (desktop) setPreferences(previous => ({ ...previous, open: true }));
+        else setMobileOpen(true);
+        window.requestAnimationFrame(() => {
+            const panel = document.getElementById(id);
+            panel?.scrollIntoView({ block: 'start' });
+            panel?.focus({ preventScroll: true });
+        });
+    };
+    const panelContent = <aside id={id} tabIndex={-1} aria-label={l('panelTitle')} hidden={desktop && !visible} className={desktop ? 'min-h-0 min-w-0 overflow-y-auto pr-1' : 'order-2 mt-4 rounded-xl border border-slate-200 bg-white p-3'}>
         {desktop ? <div className="mb-3 flex flex-wrap items-center justify-between gap-1">
             <h2 className="text-sm font-semibold text-slate-700">{l('panelTitle')}</h2>
             <Tooltip content={l('hide')}><button type="button" className="inline-flex h-[44px] w-[44px] items-center justify-center rounded-md text-slate-600 hover:bg-slate-100" aria-label={l('hide')} aria-controls={id} aria-expanded={true} onClick={() => setPreferences(previous => ({ ...previous, open: false }))}><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button></Tooltip>
@@ -89,12 +99,15 @@ export function ChatWorkspace({ locale, subtitle, headerClassName = '', resource
                 if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
                 event.preventDefault(); resize(event.key === 'Home' ? minWidth : event.key === 'End' ? limit : actualWidth + (event.key === 'ArrowLeft' ? -20 : 20));
             }}><span className="w-px bg-slate-200 group-hover:bg-indigo-400" /></div>}
-        <section aria-labelledby="guided-chat-title" className="order-1 flex h-chat min-h-[28rem] min-w-0 flex-col lg:order-none lg:h-full lg:min-h-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="guided-chat-column order-1 flex h-chat min-h-0 min-w-0 flex-col lg:order-none lg:h-full lg:gap-2">
+        <section aria-labelledby="guided-chat-title" className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
             <header className={`flex shrink-0 items-center gap-3 border-b border-slate-100 px-3 py-2 ${headerClassName}`}>
                 {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
-                <div className="min-w-0"><h3 id="guided-chat-title" className="font-bold text-slate-800">CounselorBot AI</h3><p className="text-xs font-medium text-slate-500">{subtitle}</p></div>
+                <div className="min-w-0"><h3 id="guided-chat-title" className="font-bold text-slate-800">CounselorBot AI</h3><p className={`text-xs font-medium text-slate-500 ${advancement ? 'lg:hidden' : ''}`}>{subtitle}</p></div>
             </header>
-            {children}
+            {children(openPanel)}
         </section>
+        {advancement && <div className="hidden shrink-0 lg:block">{advancement}</div>}
+        </div>
     </div>;
 }

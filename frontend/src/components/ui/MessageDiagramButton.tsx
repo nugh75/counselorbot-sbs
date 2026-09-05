@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { GitBranch, Loader2, Send } from 'lucide-react';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
 import { getSelectedCounselorId } from '@/lib/counselor';
@@ -24,6 +24,7 @@ interface MessageDiagramButtonProps {
     savedDiagrams: Record<string, SavedMessageDiagram>;
     onSaved: (diagram: SavedMessageDiagram) => void;
     disabled?: boolean;
+    renderTrigger?: (toggle: () => void, open: boolean) => ReactNode;
 }
 
 type State = 'idle' | 'loading' | 'done' | 'failed';
@@ -50,6 +51,7 @@ export function MessageDiagramButton({
     savedDiagrams,
     onSaved,
     disabled,
+    renderTrigger,
 }: MessageDiagramButtonProps) {
     const [open, setOpen] = useState(false);
     const [instruction, setInstruction] = useState('');
@@ -105,14 +107,16 @@ export function MessageDiagramButton({
         }
     };
 
+    const toggle = () => {
+        if (!open && savedDiagram && !spec) setInstruction(savedDiagram.instruction);
+        setOpen(value => !value);
+    };
+
     return (
         <>
-            <button
+            {renderTrigger ? renderTrigger(toggle, open) : <button
                 type="button"
-                onClick={() => {
-                    if (!open && savedDiagram && !spec) setInstruction(savedDiagram.instruction);
-                    setOpen((value) => !value);
-                }}
+                onClick={toggle}
                 disabled={disabled}
                 title={label}
                 aria-expanded={open}
@@ -123,7 +127,7 @@ export function MessageDiagramButton({
             >
                 <GitBranch className="h-3 w-3" />
                 {label}
-            </button>
+            </button>}
             {open && (
                 <form
                     onSubmit={(event) => {
