@@ -13,7 +13,7 @@ import { Tooltip } from '@/components/ui/Tooltip';
 // dove si trova, non nelle preferenze di un sistema che non controlla.
 const STORAGE_KEY = 'cb_motion';
 
-export function MotionToggle() {
+export function MotionToggle({ labelled = false }: { labelled?: boolean }) {
     const { t } = useI18n();
     const reduced = useReducedMotion();
     const systemDecided = useSystemReducedMotion();
@@ -37,11 +37,12 @@ export function MotionToggle() {
             <button
                 type="button"
                 onClick={toggle}
-                className="console-topbar-icon"
+                className={labelled ? 'flex min-h-[44px] w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100' : 'console-topbar-icon'}
                 aria-pressed={reduced}
                 aria-label={reduced ? t('motion.restore') : t('motion.reduce')}
             >
                 {reduced ? <ZapOff className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
+                {labelled && <span>{reduced ? t('motion.restore') : t('motion.reduce')}</span>}
             </button>
         </Tooltip>
     );

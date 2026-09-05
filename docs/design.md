@@ -132,7 +132,9 @@ Tre ruoli, caricati in `layout.tsx` con `next/font`:
 | display | **Bricolage Grotesque** (`font-display`) | wordmark, titoli `h1.text-2xl`/`text-3xl`, `tracking -0.02em` |
 | mono | **IBM Plex Mono** (`font-mono`) | codici fattore, punteggi, link, numeri |
 
-`html { font-size: 15px }` — scala -1 rispetto al default. Tutte le utility
+`html { font-size: 15px }` — scala -1 rispetto al default. Le bolle delle
+conversazioni usano `text-base` (15px), mantenuto anche nel Markdown; il campo
+di scrittura guidato usa 16px per facilitare la lettura su mobile. Tutte le utility
 `text-*` si rimpiccioliscono in proporzione: l'interfaccia è densa per scelta.
 
 La display face si applica **da CSS sui selettori**, non classe per classe: un
@@ -149,11 +151,26 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   `glass-panel-hover` per le card cliccabili. 91 call-site: è il contenitore.
 - **Larghezza**: due soli token. `page-narrow` (max-w-4xl) per lettura e form;
   `page-wide` (max-w-6xl) per chat, dashboard, admin.
-- **Altezza chat**: `--chat-h` / `h-chat` / `min-h-chat`, basate su `svh`/`dvh`
-  con `safe-area-inset`: le superfici di chat non saltano su mobile.
+- **Altezza chat**: `--chat-h` / `h-chat` / `min-h-chat`, con fallback `svh`/`dvh`
+  e `safe-area-inset`. Nel percorso guidato `ChatViewport` misura lo spazio sotto
+  i comandi della pagina e segue il ridimensionamento del viewport visibile.
+  I messaggi scorrono dentro la chat; scrittura e avanzamento restano raggiungibili.
+  Sugli schermi mobili bassi la fase è indicata nella chat e la panoramica del
+  percorso lascia spazio ai messaggi. In OpenCode, sotto 1280px, la conversazione
+  precede il pannello dei punteggi, che resta disponibile scorrendo la pagina.
 - **Focus**: anello `2px` petrol con `outline-offset: 2px` su tutti gli
   interattivi, via `:focus-visible`. Non si rimuove.
-- **Target tattili**: `console-topbar-icon--lg` = 44px per il menu mobile.
+- **Target tattili**: menu compatto, categorie e azioni della home, BackButton
+  e ForwardButton hanno almeno 44px effettivi: `h-11` con radice a 15px non basta.
+- **Intestazione**: navigazione completa da `xl` (1280px); sotto questa soglia
+  il menu raccoglie anche counselor, strumento e movimento. I nomi lunghi
+  vengono troncati entro lo spazio disponibile.
+- **Selezione strumento**: la barra con nome selezionato e Continua resta
+  visibile sotto l’intestazione durante lo scorrimento.
+- **Home di ritorno**: ripresa e catalogo completo precedono le attività
+  secondarie; counselor e preferenze stanno in un pannello espandibile, che
+  conserva anche l’accesso alla presentazione iniziale. La Bussola resta accanto
+  al titolo del catalogo.
 - **Movimento**: le variabili `--animate-*` vanno in `@theme`, non in `:root`
   — Tailwind v4 genera le utility `animate-*` solo da lì, e tenute in `:root`
   esistono le variabili ma non le classi. Solo `fade-in-up` all'ingresso e la barra indeterminata di

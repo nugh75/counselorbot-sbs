@@ -11,6 +11,8 @@ import { InputMethodSelector } from '@/components/qsa/InputMethodSelector';
 import { ScoreInputForm } from '@/components/qsa/ScoreInputForm';
 import { PDFUploader } from '@/components/qsa/PDFUploader';
 import { ProfileVisualization } from '@/components/qsa/ProfileVisualization';
+import { ChatViewport } from '@/components/qsa/ChatViewport';
+import { cn } from '@/lib/utils';
 import { GuidedChatInterface } from '@/components/qsa/GuidedChatInterface';
 import { SessionReport } from '@/components/qsa/SessionReport';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
@@ -756,8 +758,12 @@ export default function Home() {
                                     : 6 + stageOffset;
 
     return (
-        <div className="page-wide space-y-8">
-            {step !== 'intro' && step !== 'base' && !(step === 'counselor-select' && counselorOpenedFromHome) && <FlowStepper steps={flowStages} current={stageIndex} />}
+        <div className={cn("page-wide", step === 'interaction' ? "space-y-4" : "space-y-8")}>
+            {step !== 'intro' && step !== 'base' && !(step === 'counselor-select' && counselorOpenedFromHome) && (
+                <div className={step === 'interaction' ? 'chat-flow-progress' : undefined}>
+                    <FlowStepper steps={flowStages} current={stageIndex} />
+                </div>
+            )}
 
             {/* Ogni passo porta la propria testata: il titolo sta nella schermata
                 (o nella card), e la "prima riga" di comandi — BackButton più
@@ -855,7 +861,7 @@ export default function Home() {
 
                     {/* Step: Guided Chat Interaction */}
                     {step === 'interaction' && scores && selectedQuestionnaire && (
-                        <div className="space-y-6">
+                        <div className="space-y-3">
                             <BackButton onClick={goBack} label={t('nav.back')} />
                             {experience === null ? (
                                 /* Scelta modalità, compatta (tasti piccoli, affiancati). */
@@ -879,6 +885,7 @@ export default function Home() {
                                 </div>
                             ) : experience === 'standard' ? (
                                 /* Schermata 3: chat (modalità già scelta, nessun toggle in alto). */
+                                <ChatViewport>
                                 <GuidedChatInterface
                                     scores={scores}
                                     questionnaireType={selectedQuestionnaire.id}
@@ -892,7 +899,9 @@ export default function Home() {
                                         setStep('questionnaire-select');
                                     }}
                                 />
+                                </ChatViewport>
                             ) : (
+                                <ChatViewport>
                                 <OpenCodeExperience
                                     scores={scores}
                                     questionnaire={selectedQuestionnaire}
@@ -906,6 +915,7 @@ export default function Home() {
                                             : undefined
                                     }
                                 />
+                                </ChatViewport>
                             )}
                         </div>
                     )}

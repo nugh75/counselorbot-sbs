@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 // disegnata; l'attesa vince lo spinner, che sta dentro il vocabolario di
 // movimento dichiarato in design.md §4 (il pallino pulsante non c'era).
 
-const BASE = 'min-w-0 break-words rounded-lg px-4 py-3 text-sm leading-relaxed shadow-sm sm:px-5 sm:py-3.5';
+const BASE = 'chat-message min-w-0 break-words rounded-lg px-4 py-3 text-base leading-relaxed shadow-sm sm:px-5 sm:py-3.5';
 
 const ROLE: Record<'user' | 'assistant', string> = {
     user: 'bg-indigo-600 text-white rounded-tr-sm',

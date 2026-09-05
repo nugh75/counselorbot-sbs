@@ -6,7 +6,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
-import { BookOpen, RotateCcw } from 'lucide-react';
+import { BookOpen, ChevronDown, RotateCcw } from 'lucide-react';
 import { QUESTIONNAIRE_LIST, QuestionnaireConfig, QuestionnaireType } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { cn } from '@/lib/utils';
@@ -70,71 +70,11 @@ export function ReturningHome({
     ].filter(Boolean).join(' · ');
 
     return (
-        <div className="space-y-10 py-2">
-            <header className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <h1 className="font-display text-3xl font-bold text-slate-900">{t('base.title')}</h1>
-                    <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-600">{t('base.subtitle')}</p>
-                </div>
-                <button
-                    type="button"
-                    onClick={onOpenIntro}
-                    className="inline-flex shrink-0 items-center gap-2 self-start rounded-md border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-indigo-300 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
-                >
-                    <CompassMark className="h-5 w-5" />
-                    {t('base.about')}
-                </button>
+        <div className="space-y-5 py-2">
+            <header>
+                <h1 className="font-display text-3xl font-bold text-slate-900">{t('base.title')}</h1>
+                <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-600">{t('base.subtitle')}</p>
             </header>
-
-            <section className="glass-panel relative overflow-hidden border-indigo-100 p-5 sm:p-6">
-                <div className="absolute -right-10 -top-12 h-32 w-32 rounded-full border border-indigo-100" aria-hidden="true" />
-                <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-start gap-4">
-                        <CompassMark className="mt-0.5 h-9 w-9 shrink-0" />
-                        <div>
-                            <h2 className="font-display text-xl font-bold text-slate-900">{t('orientation.title')}</h2>
-                            <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-600">{t('orientation.subtitle')}</p>
-                        </div>
-                    </div>
-                    <Link href="/bussola" className="inline-flex shrink-0 items-center justify-center rounded-md bg-ochre-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-ochre-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ochre-400 focus-visible:ring-offset-2">
-                        {t('orientation.landing.open')}
-                    </Link>
-                </div>
-            </section>
-
-            <section className="grid gap-4 border-y border-slate-100 py-6 sm:grid-cols-2">
-                <div>
-                    <span className="block h-0.5 w-10 rounded-full bg-teal-500" />
-                    <h2 className="mt-3 text-base font-bold text-slate-900">{t('base.counselor.title')}</h2>
-                    <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                        {counselorName ?? t('base.counselor.none')}
-                    </p>
-                    <button
-                        type="button"
-                        onClick={onChangeCounselor}
-                        className="mt-1.5 text-sm font-medium text-indigo-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
-                    >
-                        {t('base.counselor.changeDefault')}
-                    </button>
-                </div>
-
-                <div>
-                    <span className="block h-0.5 w-10 rounded-full bg-teal-500" />
-                    <h2 className="mt-3 text-base font-bold text-slate-900">{t('base.prefs.title')}</h2>
-                    <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                        {prefsSummary || t('base.prefs.none')}
-                    </p>
-                    {prefsSummary && (
-                        <button
-                            type="button"
-                            onClick={clearFlowPrefs}
-                            className="mt-1.5 text-sm font-medium text-indigo-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
-                        >
-                            {t('base.prefs.reset')}
-                        </button>
-                    )}
-                </div>
-            </section>
 
             {resumeCount > 0 && (
                 <section>
@@ -174,16 +114,43 @@ export function ReturningHome({
                 </section>
             )}
 
+            <details className="group glass-panel p-3">
+                <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 rounded-md text-sm font-semibold text-slate-700">
+                    <span>{t('base.counselor.title')} · {t('base.prefs.title')}</span>
+                    <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" aria-hidden="true" />
+                </summary>
+                <div className="mt-3 grid gap-4 border-t border-slate-200 pt-4 sm:grid-cols-2">
+                    <div>
+                        <h2 className="text-sm font-bold text-slate-900">{t('base.counselor.title')}</h2>
+                        <p className="mt-1 text-sm text-slate-600">{counselorName ?? t('base.counselor.none')}</p>
+                        <button type="button" onClick={onChangeCounselor} className="mt-1 inline-flex min-h-[44px] items-center rounded-md text-sm font-medium text-indigo-700 hover:underline">
+                            {t('base.counselor.changeDefault')}
+                        </button>
+                    </div>
+                    <div>
+                        <h2 className="text-sm font-bold text-slate-900">{t('base.prefs.title')}</h2>
+                        <p className="mt-1 text-sm text-slate-600">{prefsSummary || t('base.prefs.none')}</p>
+                        {prefsSummary && <button type="button" onClick={clearFlowPrefs} className="mt-1 inline-flex min-h-[44px] items-center rounded-md text-sm font-medium text-indigo-700 hover:underline">{t('base.prefs.reset')}</button>}
+                    </div>
+                </div>
+                <button type="button" onClick={onOpenIntro} className="mt-3 inline-flex min-h-[44px] items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-700">
+                    <CompassMark className="h-5 w-5" />{t('base.about')}
+                </button>
+            </details>
+
             <section>
-                <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
-                    {t('base.instruments.title')}
-                </h2>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">{t('base.instruments.title')}</h2>
+                    <Link href="/bussola" className="inline-flex min-h-[44px] items-center gap-2 rounded-md px-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">
+                        <CompassMark className="h-5 w-5" />{t('orientation.landing.open')}
+                    </Link>
+                </div>
                 <nav className="mt-4 flex flex-wrap gap-2" aria-label={t('base.categories.label')}>
                     {TOOL_CATEGORIES.map((group) => (
                         <a
                             key={group.id}
                             href={`#tools-${group.id}`}
-                            className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-indigo-300 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                            className="inline-flex min-h-[44px] items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-indigo-300 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                         >
                             {t(`base.category.${group.id}`)}
                         </a>
@@ -228,7 +195,7 @@ export function ReturningHome({
                                             </span>
                                             <div className="flex flex-wrap items-center gap-2 pt-1">
                                                 {canCompleteQuestionnaire && (
-                                                    <Link href={`/somministrazione/${q.id}/${lang}`} className="inline-flex items-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2">
+                                                    <Link href={`/somministrazione/${q.id}/${lang}`} className="inline-flex min-h-[44px] items-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2">
                                                         {t('selector.completeQuestionnaire')}
                                                     </Link>
                                                 )}
@@ -236,13 +203,13 @@ export function ReturningHome({
                                                     type="button"
                                                     onClick={() => onStartInstrument(q)}
                                                     className={cn(
-                                                        'inline-flex items-center rounded-md px-3.5 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2',
+                                                        'inline-flex min-h-[44px] items-center rounded-md px-3.5 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2',
                                                         canCompleteQuestionnaire ? 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50' : 'bg-indigo-600 text-white hover:bg-indigo-700',
                                                     )}
                                                 >
                                                     {t(q.agentOnly ? 'base.instrument.startPath' : 'base.instrument.analyze')}
                                                 </button>
-                                                <Link href={`/strumenti/${q.id}`} className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2">
+                                                <Link href={`/strumenti/${q.id}`} className="inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2">
                                                     <BookOpen className="h-4 w-4" />
                                                     {t('selector.learn')}
                                                 </Link>
@@ -259,7 +226,7 @@ export function ReturningHome({
                                         </div>
                                         <p className="grow text-sm leading-relaxed text-slate-500">{t('pqbl.card.desc')}</p>
                                         <div className="pt-1">
-                                            <Link href="/pqbl" className="inline-flex items-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2">
+                                            <Link href="/pqbl" className="inline-flex min-h-[44px] items-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2">
                                                 {t('pqbl.card.cta')}
                                             </Link>
                                         </div>

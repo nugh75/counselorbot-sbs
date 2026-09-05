@@ -73,7 +73,7 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
                 : unavailableInCurrentLanguage
                     ? t('selector.badge.unavailableLanguage')
                     : q.agentOnly
-                    ? t('selector.badge.agent')
+                    ? t(q.id === 'IDEA' ? 'selector.badge.freeChat' : 'selector.badge.agent')
                     : t('selector.badge.results');
         return (
             <article
@@ -198,8 +198,11 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
 
     return (
         <div className="space-y-8">
-            <div className="flex items-center gap-3">
+            <div className="sticky top-20 z-20 flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
                 {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
+                <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-700" aria-live="polite">
+                    {selectedKey === 'pqbl' ? t('pqbl.card.title') : active.find((q) => q.id === selectedKey)?.name || t('flow.select')}
+                </p>
                 <ForwardButton onClick={handleContinue} disabled={!selectedKey} label={t('counselor.continue')} />
             </div>
 

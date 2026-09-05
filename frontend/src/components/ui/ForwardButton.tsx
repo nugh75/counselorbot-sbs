@@ -21,7 +21,7 @@ interface ForwardButtonProps {
 }
 
 const BASE =
-    'inline-flex h-11 shrink-0 items-center gap-2 rounded-md bg-indigo-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:hover:bg-slate-300';
+    'inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-md bg-indigo-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:hover:bg-slate-300';
 
 export function ForwardButton({ href, onClick, label, className, disabled, type = 'button', form }: ForwardButtonProps) {
     const cls = cn(BASE, className);

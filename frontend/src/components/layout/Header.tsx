@@ -34,7 +34,7 @@ export function Header() {
     const { t } = useI18n();
     const [identity, setIdentity] = useState<Identity | null | undefined>(undefined);
     // Le voci "Riprendi" vivono qui e servono due rendering: l'icona su schermi
-    // >= sm e il menu mobile. Un solo fetch, lo stesso elenco.
+    // >= xl e il menu mobile. Un solo fetch, lo stesso elenco.
     const resumeEntries = useResumeEntries();
 
     useEffect(() => {
@@ -55,7 +55,7 @@ export function Header() {
     const authLabel = isAuthenticated ? t('nav.logout') : t('nav.adminLogin');
     const AuthIcon = isAuthenticated ? LogOut : LogIn;
 
-    // Azioni di navigazione secondarie: in linea da `sm`, raccolte in un menu su mobile.
+    // Azioni di navigazione secondarie: in linea da `xl`, raccolte in un menu su mobile.
     const secondaryItems: SecondaryItem[] = [];
     // Guida all'interfaccia: disponibile per tutti, anche senza login.
     secondaryItems.push({ key: 'guide', href: '/guide', icon: BookOpen, label: t('nav.guide') });
@@ -85,7 +85,7 @@ export function Header() {
         <TooltipProvider delayDuration={300}>
             <header className="console-header fixed top-0 left-0 right-0 z-50">
                 <div className="page-wide h-full flex items-center gap-3 px-3 sm:gap-4 sm:px-6">
-                    <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex shrink-0 items-center gap-3 min-w-0">
                         <CompassMark className="h-8 w-8 shrink-0" />
                         {/* CounselorBot e' il brand principale: titolo grande -> home. */}
                         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
@@ -96,14 +96,14 @@ export function Header() {
 
                     <div className="ml-auto flex min-w-0 items-center gap-1">
                         {/* Strumento e counselor selezionati: badge compatti durante il percorso. */}
-                        <div className="hidden min-w-0 items-center gap-1 sm:flex">
+                        <div className="hidden shrink-0 items-center gap-1 xl:flex">
                             <HeaderInstrument />
                             <HeaderCounselor />
                         </div>
 
                         {isLoading ? (
                             // Riserva lo spazio mentre l'identità arriva: niente layout shift.
-                            <div className="hidden items-center gap-1 sm:flex" aria-hidden="true">
+                            <div className="hidden items-center gap-1 xl:flex" aria-hidden="true">
                                 <span className="console-topbar-icon"><span className="block h-4 w-4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /></span>
                                 <span className="console-topbar-icon"><span className="block h-4 w-4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /></span>
                             </div>
@@ -125,7 +125,7 @@ export function Header() {
                                     <Link
                                         href="/profilo"
                                         title={[identity?.username, identity?.email, identity?.groups.join(', ')].filter(Boolean).join(' - ')}
-                                        className="hidden sm:inline max-w-52 truncate px-2 text-sm text-slate-500 hover:text-indigo-600 transition-colors font-medium"
+                                        className="hidden xl:inline min-w-0 max-w-32 truncate px-2 text-sm text-slate-500 hover:text-indigo-600 transition-colors font-medium"
                                     >
                                         {accountLabel}
                                     </Link>
@@ -133,15 +133,15 @@ export function Header() {
                                 {accountLabel && !canOpenPersonalPage && (
                                     <span
                                         title={[identity?.username, identity?.email, identity?.groups.join(', ')].filter(Boolean).join(' - ')}
-                                        className="hidden sm:inline max-w-52 truncate px-2 text-sm text-slate-500 font-medium"
+                                        className="hidden xl:inline min-w-0 max-w-32 truncate px-2 text-sm text-slate-500 font-medium"
                                     >
                                         {accountLabel}
                                     </span>
                                 )}
 
-                                {/* Navigazione secondaria: in linea su schermi >= sm; su mobile sta tutta nel menu. */}
+                                {/* Navigazione secondaria: in linea su schermi >= xl; su mobile sta tutta nel menu. */}
                                 {secondaryItems.length > 0 && (
-                                    <div className="hidden items-center gap-1 sm:flex">
+                                    <div className="hidden items-center gap-1 xl:flex">
                                         {secondaryItems.map((item) => {
                                             const Icon = item.icon;
                                             return (
@@ -161,11 +161,11 @@ export function Header() {
                                     </div>
                                 )}
 
-                                {secondaryItems.length > 0 && <span className={cn(SEPARATOR, 'hidden sm:block')} />}
+                                {secondaryItems.length > 0 && <span className={cn(SEPARATOR, 'hidden xl:block')} />}
 
                                 {/* Accedi ad altre risorse: subito prima di Esci. */}
                                 {showServices && (
-                                    <div className="hidden sm:block">
+                                    <div className="hidden xl:block">
                                         <Tooltip content={t('header.services')}>
                                             <a href={consoleUrl} className="console-topbar-icon" aria-label={t('header.services')} title={t('header.services')}>
                                                 <LayoutGrid className="w-4 h-4" />
@@ -174,7 +174,7 @@ export function Header() {
                                     </div>
                                 )}
 
-                                <div className="hidden sm:block">
+                                <div className="hidden xl:block">
                                     <Tooltip content={authLabel}>
                                         <a href={authHref} className="console-topbar-icon" aria-label={authLabel}>
                                             <AuthIcon className="w-4 h-4" />
@@ -184,16 +184,16 @@ export function Header() {
                             </>
                         )}
 
-                        <span className={cn(SEPARATOR, 'hidden sm:block')} />
+                        <span className={cn(SEPARATOR, 'hidden xl:block')} />
 
                         {/* Riprendi la sessione interrotta (se presente). Su mobile la
                             stessa lista sta nel menu: qui l'icona affollerebbe la barra. */}
-                        <div className="hidden sm:block">
+                        <div className="hidden xl:block">
                             <HeaderResume entries={resumeEntries} />
                         </div>
 
                         {/* Set minimo sempre disponibile: feedback, tema, lingua. */}
-                        <div className="hidden items-center gap-1 sm:flex">
+                        <div className="hidden items-center gap-1 xl:flex">
                             <Tooltip content={t('nav.feedback')}>
                                 <Link href="/questionario" className="console-topbar-icon" aria-label={t('nav.feedback')}>
                                     <ClipboardList className="w-4 h-4" />
@@ -273,10 +273,10 @@ function MobileHeaderMenu({
         }
         close();
     };
-    const itemClass = 'flex w-full items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700';
+    const itemClass = 'flex min-h-[44px] w-full items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700';
 
     return (
-        <div ref={ref} className="relative sm:hidden">
+        <div ref={ref} className="relative xl:hidden">
             <button
                 type="button"
                 ref={triggerRef}
@@ -290,6 +290,10 @@ function MobileHeaderMenu({
             </button>
             {open && (
                 <div id="mobile-menu" className="absolute right-0 top-full z-[60] mt-2 max-h-[calc(100dvh-4.5rem)] w-[min(88vw,18rem)] overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+                    <div className="compact-header-selection flex flex-wrap items-center gap-2 px-3 py-2 empty:hidden">
+                        <HeaderInstrument />
+                        <HeaderCounselor />
+                    </div>
                     {accountLabel && (
                         <div className="border-b border-slate-100 px-3 py-2 dark:border-slate-700">
                             <div className="text-2xs font-semibold uppercase tracking-wide text-slate-500">{t('header.account')}</div>
@@ -378,6 +382,7 @@ function MobileHeaderMenu({
                         {dark ? <Sun className="h-4 w-4 shrink-0" /> : <Moon className="h-4 w-4 shrink-0" />}
                         <span className="truncate">{dark ? t('theme.toLight') : t('theme.toDark')}</span>
                     </button>
+                    <MotionToggle labelled />
                     <div className="border-t border-slate-100 p-2 dark:border-slate-700">
                         <div className="px-1 pb-1 text-2xs font-semibold uppercase tracking-wide text-slate-500">
                             {t('nav.language')}: {currentLanguage.label}
@@ -394,7 +399,7 @@ function MobileHeaderMenu({
                                     title={language.label}
                                     aria-label={language.label}
                                     className={cn(
-                                        'flex h-9 items-center justify-center rounded-md transition-colors hover:bg-slate-50 dark:hover:bg-slate-700',
+                                        'flex min-h-[44px] items-center justify-center rounded-md transition-colors hover:bg-slate-50 dark:hover:bg-slate-700',
                                         language.code === lang && 'bg-indigo-50 ring-1 ring-indigo-200 dark:bg-indigo-950',
                                     )}
                                 >
