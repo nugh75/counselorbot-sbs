@@ -1,6 +1,6 @@
 'use client';
 
-import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, RefreshCw, GitBranch, Layers, PanelLeft, LayoutList, BookOpen } from 'lucide-react';
+import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, RefreshCw, GitBranch, PanelLeft, LayoutList, BookOpen } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
@@ -1524,14 +1524,14 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     {hasScoreEntries && <button type="button" className={messageActionClass} onClick={() => { close(); openPanel('scores'); }}>
                         <BarChart3 className="h-4 w-4 shrink-0" aria-hidden="true" />{t('guided.scores')}
                     </button>}
-                    <button type="button" className={messageActionClass} aria-label={visualLabel(activeLocale, 'open')} onClick={() => { close(); setVisualRequest({ nonce: Date.now() }); }}>
-                        <LayoutList className="h-4 w-4 shrink-0" aria-hidden="true" />{visualLabel(activeLocale, 'title')}
-                    </button>
                     {recommendations.reading.length + recommendations.strategy.length > 0 && <button type="button" className={messageActionClass} aria-label={t('recommendations.title')} onClick={() => { close(); openPanel('resources'); }}>
                         <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />{t('recommendations.title')}
                         <span className="ml-auto text-xs">{recommendations.reading.length + recommendations.strategy.length}</span>
                     </button>}
                 </div>
+                <button type="button" className={messageActionClass} aria-label={visualLabel(activeLocale, 'open')} onClick={() => { close(); setVisualRequest({ tab: 'board', nonce: Date.now() }); }}>
+                    <LayoutList className="h-4 w-4 shrink-0" aria-hidden="true" />{visualLabel(activeLocale, 'title')}
+                </button>
                 {currentPhase !== FIXED_CONCLUSION_ID && <>
                     <p className="px-2 text-sm font-semibold text-slate-700">{t('responseLength.label')}</p>
                     <ResponseLengthSelector value={responseLength} onChange={setResponseLength} disabled={isLoading} />
@@ -1548,11 +1548,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         <ChatWorkspace locale={activeLocale} subtitle={getPhaseLabel(currentPhase)} headerClassName={currentColors.headerBg}
             onBack={onBack}
             advancement={stepNavigation}
-            tools={<VisualTools sessionId={sessionId} locale={activeLocale} catalog={recommendations} request={visualRequest}
-                        onDiscuss={currentPhase === FIXED_CONCLUSION_ID ? undefined : text => {
-                            setInput(previous => previous.trim() ? `${previous}\n\n${text}` : text);
-                            window.requestAnimationFrame(() => document.getElementById('guided-composer')?.focus());
-                        }} />}
             sidebar={(closePanel, mobilePanel) => <>
                 {/* Phase Progress — per Idea non esiste una sequenza da mostrare:
                     il passo successivo dipende da cosa manca alla mappa. */}
@@ -1743,7 +1738,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                     </ChatBubble>
 
                                     {msg.role === 'assistant' && msg.content.trim() && (
-                                        <div className="flex min-w-0 w-full flex-wrap items-center gap-1">
+                                        <div role="group" aria-label={chatLayoutLabel(activeLocale, 'messageActions')} className="flex min-w-0 w-full flex-wrap items-center gap-1">
                                             <MessageDiagramButton
                                                 text={diagramContentForSpeech(msg.content) || msg.content}
                                                 locale={activeLocale}
@@ -1756,32 +1751,22 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                 savedDiagrams={savedDiagrams}
                                                 onSaved={diagram => setSavedDiagrams(previous => ({ ...previous, [diagram.source_key]: diagram }))}
                                                 disabled={isLoading}
-                                                renderTrigger={(toggleDiagram, diagramOpen) => <ChatActionsPopover label={chatLayoutLabel(activeLocale, 'messageActions')}>
-                                                    {close => <>
-                                                        <button type="button" className={`${messageActionClass} hidden lg:flex`} disabled={isLoading} onClick={() => {
-                                                            close(); setVisualRequest({ tab: 'board', nonce: Date.now() });
-                                                        }}><LayoutList className="h-4 w-4 shrink-0" aria-hidden="true" />{visualLabel(activeLocale, 'title')}</button>
-                                                        <button type="button" className={`${messageActionClass} lg:hidden`} disabled={isLoading} onClick={() => {
-                                                            close();
-                                                            setVisualRequest({ text: diagramContentForSpeech(msg.content) || msg.content, nonce: Date.now() });
-                                                        }}><Layers className="h-4 w-4 shrink-0" aria-hidden="true" />{visualLabel(activeLocale, 'organize')}</button>
-                                                        <button type="button" className={messageActionClass} disabled={isLoading} aria-expanded={diagramOpen} onClick={() => { close(); toggleDiagram(); }}>
-                                                            <GitBranch className="h-4 w-4 shrink-0" aria-hidden="true" />{t('guided.diagram')}
-                                                        </button>
-                                                        {diagramContentForSpeech(msg.content) && <button type="button" className={messageActionClass} disabled={isAudioLoading} onClick={() => { close(); void handlePlayTTS(diagramContentForSpeech(msg.content), idx); }}>
-                                                            {isAudioLoading && playingMessageIdx === idx ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : playingMessageIdx === idx ? <Square className="h-4 w-4 fill-current" aria-hidden="true" /> : <Volume2 className="h-4 w-4" aria-hidden="true" />}
-                                                            {playingMessageIdx === idx ? t('guided.stopListen') : t('guided.listen')}
-                                                        </button>}
-                                                        {(!!msg.strategyIds?.length || !!msg.responseId) && <>
-                                                            <button type="button" className={messageActionClass} aria-pressed={msg.feedback === true} onClick={() => { close(); void submitStrategyFeedback(idx, true); }}>
-                                                                <ThumbsUp className="h-4 w-4" aria-hidden="true" />{t('guided.feedback.helpful')}
-                                                            </button>
-                                                            <button type="button" className={messageActionClass} aria-pressed={msg.feedback === false} onClick={() => { close(); void submitStrategyFeedback(idx, false); }}>
-                                                                <ThumbsDown className="h-4 w-4" aria-hidden="true" />{t('guided.feedback.notHelpful')}
-                                                            </button>
-                                                        </>}
+                                                renderTrigger={(toggleDiagram, diagramOpen) => <>
+                                                    <Tooltip content={t('guided.diagram')}><Button type="button" variant="ghost" className={stepButtonClass} aria-label={t('guided.diagram')} disabled={isLoading} aria-expanded={diagramOpen} onClick={toggleDiagram}>
+                                                        <GitBranch className="h-4 w-4" aria-hidden="true" />
+                                                    </Button></Tooltip>
+                                                    {diagramContentForSpeech(msg.content) && <Tooltip content={t(playingMessageIdx === idx ? 'guided.stopListen' : 'guided.listen')}><Button type="button" variant="ghost" className={stepButtonClass} aria-label={t(playingMessageIdx === idx ? 'guided.stopListen' : 'guided.listen')} disabled={isAudioLoading} onClick={() => void handlePlayTTS(diagramContentForSpeech(msg.content), idx)}>
+                                                        {isAudioLoading && playingMessageIdx === idx ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : playingMessageIdx === idx ? <Square className="h-4 w-4 fill-current" aria-hidden="true" /> : <Volume2 className="h-4 w-4" aria-hidden="true" />}
+                                                    </Button></Tooltip>}
+                                                    {(!!msg.strategyIds?.length || !!msg.responseId) && <>
+                                                        <Tooltip content={t('guided.feedback.helpful')}><Button type="button" variant="ghost" className={`${stepButtonClass} aria-pressed:bg-indigo-50 aria-pressed:text-indigo-700`} aria-label={t('guided.feedback.helpful')} aria-pressed={msg.feedback === true} onClick={() => void submitStrategyFeedback(idx, true)}>
+                                                            <ThumbsUp className="h-4 w-4" aria-hidden="true" />
+                                                        </Button></Tooltip>
+                                                        <Tooltip content={t('guided.feedback.notHelpful')}><Button type="button" variant="ghost" className={`${stepButtonClass} aria-pressed:bg-indigo-50 aria-pressed:text-indigo-700`} aria-label={t('guided.feedback.notHelpful')} aria-pressed={msg.feedback === false} onClick={() => void submitStrategyFeedback(idx, false)}>
+                                                            <ThumbsDown className="h-4 w-4" aria-hidden="true" />
+                                                        </Button></Tooltip>
                                                     </>}
-                                                </ChatActionsPopover>}
+                                                </>}
                                             />
                                         </div>
                                     )}
@@ -1806,7 +1791,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 {/* Input Area */}
                 {currentPhase === FIXED_CONCLUSION_ID ? (
                     <div className="flex items-center justify-center gap-2 border-t border-slate-100 bg-slate-50 p-3 sm:p-4">
-                        <div className="lg:hidden">{renderConversationOptions(openPanel)}</div>
+                        {renderConversationOptions(openPanel)}
                         <button
                             onClick={handleComplete}
                             className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md transition-colors"
@@ -1943,6 +1928,11 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 )}
             </>}
         </ChatWorkspace>
+        <VisualTools hideTrigger sessionId={sessionId} locale={activeLocale} catalog={recommendations} request={visualRequest}
+                        onDiscuss={currentPhase === FIXED_CONCLUSION_ID ? undefined : text => {
+                            setInput(previous => previous.trim() ? `${previous}\n\n${text}` : text);
+                            window.requestAnimationFrame(() => document.getElementById('guided-composer')?.focus());
+                        }} />
 
         {/* Idea: mappa e rami sotto la conversazione, sempre raggiungibili. */}
         {isIdea && (

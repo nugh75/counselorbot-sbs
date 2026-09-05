@@ -115,3 +115,31 @@ The compose override is `/tmp/cb-desktop-tools-deploy.yml`. Local HTTP 200,
 unauthenticated public HTTP 302 and normal container startup were verified.
 Backend and PostgreSQL container IDs/start times are unchanged; the previous
 `mobile-windows-20260905` image is retained.
+
+## Correction: one conversation menu and direct response controls
+
+The final requested arrangement supersedes the per-message menus above:
+
+- Exactly one kebab remains beside the composer (also available after completion).
+- Visual tools opens only from that menu, on Actions, in the full-page window.
+  Its launcher is removed from the sidebar; its state remains mounted separately.
+- Diagram, Listen and eligible positive/negative feedback are direct 44 px icon
+  controls below their response, with localized tooltips and accessible labels.
+  Diagram placement was explicitly confirmed by the user. Feedback retains its
+  existing target eligibility and endpoint; selected votes have a visible state.
+- Cards are created in the Cards tab. Guides describe the final arrangement in
+  all six languages.
+
+Validation: 104 unit tests and all 62 production browser fixture tests passed.
+New checks count a single menu with 20 replies, verify audio request text and
+stop controls, and assert that both positive and negative votes carry the correct
+response ID. APIs and audio playback are mocked. Light desktop and dark mobile
+screenshots were inspected. Lint has no errors and four pre-existing warnings;
+TypeScript, localization checks and the Docker build passed.
+
+Deployed frontend: `counselorbot-10-step-frontend:single-chat-menu-20260905`, image
+`sha256:3d3910dfcc74d72a89029c71b7b6961a0425988ae63b5c06e5396cddde4063dc`.
+Override: `/tmp/cb-single-menu-deploy.yml`. Local HTTP 200, unauthenticated public
+HTTP 302 and normal startup were verified. Backend and PostgreSQL container
+IDs/start times are unchanged. The previous `desktop-tools-20260905` image is
+retained. The separate worktree on `feat/chat-workspace-layout` was not modified.

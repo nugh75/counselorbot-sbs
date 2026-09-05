@@ -35,12 +35,11 @@ type Props = {
     headerClassName?: string;
     onBack?: () => void;
     sidebar: (closeOnMobile: () => void, mobilePanel: MobilePanel | null) => ReactNode;
-    tools: ReactNode;
     advancement?: ReactNode;
     children: (openPanel: (panel?: MobilePanel) => void) => ReactNode;
 };
 
-export function ChatWorkspace({ locale, subtitle, headerClassName = '', onBack, sidebar, tools, advancement, children }: Props) {
+export function ChatWorkspace({ locale, subtitle, headerClassName = '', onBack, sidebar, advancement, children }: Props) {
     const { t } = useI18n();
     const l = (key: string) => chatLayoutLabel(locale, key);
     const id = useId();
@@ -92,7 +91,7 @@ export function ChatWorkspace({ locale, subtitle, headerClassName = '', onBack, 
             <h2 className="text-sm font-semibold text-slate-700">{l('panelTitle')}</h2>
             <Tooltip content={l('hide')}><button type="button" className="inline-flex h-[44px] w-[44px] items-center justify-center rounded-md text-slate-600 hover:bg-slate-100" aria-label={l('hide')} aria-controls={id} aria-expanded={true} onClick={() => setPreferences(previous => ({ ...previous, open: false }))}><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button></Tooltip>
         </div>
-        <div id={`${id}-content`} className="space-y-4">{desktop && sidebar(() => {}, null)}{tools}</div>
+        <div id={`${id}-content`} className="space-y-4">{desktop && sidebar(() => {}, null)}</div>
     </aside>;
 
     return <div ref={grid} className="grid min-w-0 lg:h-chat" style={{ gridTemplateColumns: desktop ? visible ? `${actualWidth}px 16px minmax(0, 1fr)` : '44px minmax(0, 1fr)' : 'minmax(0, 1fr)' }}>

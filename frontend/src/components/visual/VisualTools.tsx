@@ -11,11 +11,12 @@ import { visualLabel } from '@/lib/i18n-visual-tools';
 import { emptyWorkspace, removeCriterion, removeOption, setCell, workspaceText, type ActionStage, type CardBucket, type SavedWorkspace, type VisualWorkspace } from '@/lib/visual-tools';
 
 type Tab = 'board' | 'comparison' | 'cards';
-export type VisualToolsRequest = { text?: string; tab?: Tab; nonce: number };
+export type VisualToolsRequest = { tab: Tab; nonce: number };
 type Props = {
     sessionId: string;
     locale: string;
     compact?: boolean;
+    hideTrigger?: boolean;
     catalog?: RecommendationCatalog;
     onDiscuss?: (text: string) => void;
     request?: VisualToolsRequest | null;
@@ -30,7 +31,7 @@ export function VisualTools(props: Props) {
     return <WorkspaceView key={props.sessionId} {...props} />;
 }
 
-function WorkspaceView({ sessionId, locale, compact = false, catalog: providedCatalog, onDiscuss, request }: Props) {
+function WorkspaceView({ sessionId, locale, compact = false, hideTrigger = false, catalog: providedCatalog, onDiscuss, request }: Props) {
     const l = (key: string) => visualLabel(locale, key);
     const endpoint = `/api/session/${encodeURIComponent(sessionId)}/visual-tools`;
     const [open, setOpen] = useState(false);
@@ -93,11 +94,8 @@ function WorkspaceView({ sessionId, locale, compact = false, catalog: providedCa
     useEffect(() => {
         if (!request) return;
         opener.current = document.activeElement as HTMLElement;
-        if (request.text !== undefined) {
-            setDraftCard(request.text); setCardSource(visualLabel(locale, 'fromChat')); setTab('cards');
-        } else if (request.tab) setTab(request.tab);
-        setOpen(true);
-    }, [request, locale]);
+        setTab(request.tab); setOpen(true);
+    }, [request]);
     useEffect(() => {
         if (!dirty) return;
         const prevent = (event: BeforeUnloadEvent) => { event.preventDefault(); };
@@ -178,11 +176,11 @@ function WorkspaceView({ sessionId, locale, compact = false, catalog: providedCa
     const removeButton = (label: string, remove: () => void) => <Button type="button" variant="ghost" className={buttonClass} aria-label={`${l('remove')}: ${label}`} onClick={remove}>{l('remove')}</Button>;
 
     return <>
-        <Tooltip content={l('openHelp')}>
+        {!hideTrigger && <Tooltip content={l('openHelp')}>
             <Button type="button" variant="secondary" className={`${buttonClass} max-w-full text-left ${compact ? 'px-3' : ''}`} onClick={launch} aria-label={l('open')}>
                 <LayoutList className="h-4 w-4 shrink-0" aria-hidden="true" />{l(compact ? 'tools' : 'title')}{dirty && <span aria-label={l('unsaved')}>•</span>}
             </Button>
-        </Tooltip>
+        </Tooltip>}
         {open && createPortal(<div className="fixed inset-0 z-[85] flex bg-white">
             <section ref={dialog} role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-white">
                 <header className="shrink-0 border-b border-slate-200 p-3 sm:p-4">
