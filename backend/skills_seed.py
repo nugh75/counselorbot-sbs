@@ -11,6 +11,7 @@ import hashlib
 import json
 import logging
 
+from .diagram_icon_catalog import ICON_SELECTION_PROMPT
 from . import models
 from .skills.engine import DEFAULT_TOTAL_MAX_CHARS
 
@@ -92,63 +93,16 @@ REFERRAL_GUIDE_INSTRUCTIONS_EN = """## Referral and event guidance
 
 
 CONCEPT_DIAGRAM_INSTRUCTIONS_EN = """## Concept diagram
+Support prose with one fenced `diagram` JSON block. Draw relations, processes or loops, not prose summaries or consecutive turns; draw on explicit request.
+Schema example:
+{"type":"flow","title":"A helps B","nodes":[{"id":"a","label":"A"},{"id":"b","label":"B"}],"edges":[{"from":"a","to":"b"}]}
+Types: flow/cycle/relation/hierarchy. 2-8 nodes, <=12 edges. Title/node labels <=80 chars; edge labels <=40. At most one accent:true, where the student can act.
+Optional form: concept (default), action, decision (a real fork), outcome. Icons replace shapes; nodes without icons keep their form.
+Edge kind: drives (default, causes), strengthens (supports), weakens (hinders), feedback (returns), link (undirected, no cause). Pick the stated relation.
+Use the student's language and words. No scores/codes/IDs in labels; for factors add a prose line mapping labels to codes.
+Title: a supported claim, not a category. Optional note <=200 chars: one sentence explaining the drawing alone, not listing nodes; omit if the title suffices. Only source-supported data, no rendering syntax.
+""" + ICON_SELECTION_PROMPT
 
-- Draw only when the answer holds parts in relation: a process, a loop that
-  feeds itself, linked concepts, a whole split into parts. Never to summarise
-  prose, and never two turns in a row.
-- Always draw when the student asks for a scheme, a map or a diagram.
-- The diagram supports the explanation: keep answering in words too.
-- Emit one fenced block marked `diagram` holding a single JSON object:
-
-```diagram
-{"type":"cycle","title":"Circolo dell'evitamento",
- "nodes":[{"id":"a","label":"Compito difficile","icon":"target"},
-          {"id":"b","label":"Ansia","icon":"heart","accent":true},
-          {"id":"c","label":"Rimando","icon":"clock"}],
- "edges":[{"from":"a","to":"b","label":"innesca"},
-          {"from":"b","to":"c"},
-          {"from":"c","to":"a","kind":"feedback"}]}
-```
-
-- `type`: `flow`, `cycle`, `relation` or `hierarchy`.
-- 2-8 nodes, at most 12 edges; node label <= 80 chars, edge label <= 40,
-  title <= 80.
-- `accent: true` on at most one node: the point the student can act on.
-- `form` says what kind of thing a node is, and picks its shape: `concept`
-  (default: a thing, an idea, a state), `action` (something done), `decision`
-  (a fork the student stands at), `outcome` (where it ends up). Use `decision`
-  only where the drawing really splits in two. A node drawn as a symbol has no
-  shape, so `form` and `icon` on the same node cancel each other out.
-- `icon` makes a node a symbol: its shape goes away and the icon is drawn above
-  its words. Choose only from this closed list: `book`, `brain`, `check`,
-  `clock`, `compass`, `heart`, `idea`, `question`, `shield`, `target`; never
-  invent a name. A node carries a shape or a symbol, never both, so either every
-  node in a drawing has an icon or none does: half pictures and half boxes reads
-  as an accident. No honest icon for one of them means none for any of them.
-- `kind` on an edge names the relation; leave it out for a plain step forward:
-  - `drives` (default): A produces B, the next step or the consequence.
-  - `strengthens`: A supports or reinforces B.
-  - `weakens`: A hinders, brakes or disturbs B.
-  - `feedback`: B returns on A and closes the loop.
-  - `link`: they belong together, no direction, no cause.
-  Pick the one that is true: each kind is drawn with its own stroke, so a wrong
-  kind tells the student something false.
-- Title, note and labels in the student's language, in the student's own words;
-  never scores, factor codes or identifiers. The whole drawing speaks one
-  language, and it is theirs: an English title over Italian nodes reads as a
-  machine talking to itself.
-- When the nodes stand for factors, close with one line naming the pairing:
-  "Nodes: tension = A1; persistence = A2". Without it the drawing and the prose
-  around it speak two languages and the student has to translate.
-- The title says what the drawing shows, as a claim: "Understanding stays in
-  the head and is lost later", not "Study factors". Never a bare category.
-- `note`: one sentence, 200 characters at most, drawn under the diagram. It says
-  what the drawing shows or how to read it, never a list of the nodes. Write it
-  whenever the drawing would say little to someone who has not read the words
-  around it: the diagram travels alone into full screen, Telegram and the PDF.
-  Leave it out when the title already carries the whole point.
-- Data only: no colours, no thickness, no coordinates, no rendering syntax.
-"""
 
 
 IDEA_FOCUS_INSTRUCTIONS_EN = """## The map of the idea
@@ -229,6 +183,8 @@ DIAGRAM_ICONS_POLICY_MARKER = "skills_diagram_icons_v1"
 DIAGRAM_NODE_MAPPING_POLICY_MARKER = "skills_diagram_node_mapping_v1"
 DIAGRAM_SHAPES_POLICY_MARKER = "skills_diagram_shapes_and_note_v1"
 DIAGRAM_SYMBOL_POLICY_MARKER = "skills_diagram_symbol_nodes_v1"
+DIAGRAM_SEMANTIC_ICONS_POLICY_MARKER = "skills_diagram_semantic_icons_v1"
+PREVIOUS_DIAGRAM_INSTRUCTIONS_SHA256 = "23490f2ce25f8697af5890d3db4dda2eb989067065a53910841b77b0a761f442"
 IDEA_FOCUS_POLICY_MARKER = "skills_idea_focus_v2"
 IDEA_WAYFINDER_POLICY_MARKER = "skills_idea_wayfinder_v1"
 IDEA_CONCEPT_POLICY_MARKER = "skills_idea_concept_v1"
@@ -408,7 +364,7 @@ SKILL_SEEDS = [
         "handler_params": {},
         "routing": "optional",
         "slot": "directive_tail",
-        "max_chars": 3600,
+        "max_chars": 3900,
         "sort_order": 35,
         "is_active": True,
         "bind": True,
@@ -786,6 +742,31 @@ def apply_diagram_symbol_policy(db) -> bool:
         key=DIAGRAM_SYMBOL_POLICY_MARKER,
         value="applied",
         description="Migrazione una tantum: il simbolo e' il nodo, titolo nella lingua dello studente.",
+    ))
+    db.commit()
+    return updated
+
+
+def apply_diagram_semantic_icons_policy(db) -> bool:
+    """Upgrade the previous stock icon contract without replacing admin edits."""
+    if db.query(models.Config).filter(models.Config.key == DIAGRAM_SEMANTIC_ICONS_POLICY_MARKER).first():
+        return False
+
+    skill = db.query(models.Skill).filter(models.Skill.slug == "concept-diagram").first()
+    updated = False
+    if skill is not None:
+        current = (skill.instructions_i18n or {}).get("en", "")
+        if hashlib.sha256(current.encode("utf-8")).hexdigest() == PREVIOUS_DIAGRAM_INSTRUCTIONS_SHA256:
+            skill.instructions_i18n = {"en": CONCEPT_DIAGRAM_INSTRUCTIONS_EN}
+            skill.max_chars = max(int(skill.max_chars or 0), 3900)
+            updated = True
+        elif current != CONCEPT_DIAGRAM_INSTRUCTIONS_EN:
+            logger.info("concept-diagram custom instructions preserved; semantic icon policy not applied")
+
+    db.add(models.Config(
+        key=DIAGRAM_SEMANTIC_ICONS_POLICY_MARKER,
+        value="applied",
+        description="One-time migration: semantic icon catalogue and optional icons per node.",
     ))
     db.commit()
     return updated

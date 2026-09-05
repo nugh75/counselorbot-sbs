@@ -1,0 +1,32 @@
+{
+  "type": "flow",
+  "title": "Un piano lascia spazio alla verifica",
+  "nodes": [
+    {
+      "id": "a",
+      "label": "Pianificare la settimana",
+      "icon": "calendar"
+    },
+    {
+      "id": "b",
+      "label": "Obiettivo non ancora raggiunto",
+      "icon": null,
+      "form": "outcome"
+    },
+    {
+      "id": "c",
+      "label": "Rivedere la strategia",
+      "icon": "review"
+    }
+  ],
+  "edges": [
+    {
+      "from": "a",
+      "to": "b"
+    },
+    {
+      "from": "b",
+      "to": "c"
+    }
+  ]
+}

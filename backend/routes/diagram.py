@@ -14,6 +14,7 @@ from starlette.concurrency import run_in_threadpool
 
 from .. import auth, database, models
 from ..ai_service import AIService, AIError
+from ..diagram_icon_catalog import ICON_SELECTION_PROMPT
 from ..message_diagrams import session_owner, save_diagram, list_diagrams
 from ..diagram_render import (
     DiagramSpec,
@@ -40,14 +41,12 @@ SPEC_ONLY_SYSTEM_PROMPT = (
     "You turn an explanation into one concept diagram. Answer with a single JSON object "
     "and nothing else: no prose, no code fence. Schema: "
     '{"type":"flow|relation|cycle|hierarchy","title":"<= 80 chars",'
-    '"nodes":[{"id":"a","label":"<= 80 chars","icon":"target","accent":false}],'
+    '"nodes":[{"id":"a","label":"<= 80 chars","accent":false}],'
     '"edges":[{"from":"a","to":"b","label":"<= 40 chars","kind":"drives"}]}. '
     "Use 2 to 8 nodes and at most 12 edges. Mark at most one node with accent:true: "
     "the one the reader should act on. An icon makes a node a symbol: its shape goes away "
-    "and the icon is drawn above its words. Choose only from book, brain, check, clock, "
-    "compass, heart, idea, question, shield, target; never invent another name. A node "
-    "carries a shape or a symbol, never both, so either every node in the drawing has an "
-    "icon or none does. On each edge, kind "
+    "and the icon is drawn above its words. A node without an icon keeps its form. "
+    + ICON_SELECTION_PROMPT + " On each edge, kind "
     "names the relation and is "
     "drawn with its own stroke: drives (A produces B, the default), strengthens "
     "(A supports B), weakens (A hinders B), feedback (B returns on A and closes the "

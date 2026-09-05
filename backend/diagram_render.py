@@ -18,6 +18,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
+from .diagram_icon_catalog import DIAGRAM_ICONS
+
 logger = logging.getLogger(__name__)
 
 DIAGRAM_TYPES = ("flow", "relation", "cycle", "hierarchy", "mindmap")
@@ -44,10 +46,6 @@ WRAP_AT = 18
 # Vocabolario chiuso: il modello sceglie il significato, il renderer conserva
 # il controllo sui file letti e sull'aspetto. Gli SVG sono la fonte; le copie
 # PNG servono soltanto a Graphviz per Telegram/PDF.
-DIAGRAM_ICONS = (
-    "book", "brain", "check", "clock", "compass",
-    "heart", "idea", "question", "shield", "target",
-)
 ICON_DIR = Path(__file__).with_name("diagram_icons")
 # Il simbolo non decora il nodo: e' il nodo. Dove c'e', la figura sparisce e
 # restano l'icona grande e le sue parole sotto, come nei diagrammi concettuali.
