@@ -52,3 +52,44 @@ La misura dell’altezza supporta sia la navigazione mobile esterna della chat
 già tracciata, sia quella interna della nuova struttura, così i commit
 dell’audit restano separati dal lavoro contemporaneo. La build di consegna
 integra anche `4f9599c` per preservare le funzionalità già in produzione.
+
+## Esito della consegna
+
+Fix implementati nel commit `21d6cf0`, integrati con la versione già online in
+`7bdf2e4`, sul branch `fix/design-usability`. Il worktree di consegna è
+`/home/nugh75/counselorbot-sbs-design-fixes`; le modifiche esterne nel workspace
+originale sono state preservate.
+
+| Controllo | Esito |
+| --- | --- |
+| Test di base (`npm test`) | 104 superati |
+| Usabilità sul container di produzione (`test:design`) | 16 superati |
+| Artefatti sul container di produzione (`test:artifacts`) | 14 superati |
+| Strumenti visivi sul container di produzione (`test:visual`) | 23 superati |
+| Traduzioni | 2425 chiavi allineate nelle 6 lingue |
+| Lint | 0 errori, 4 avvisi preesistenti |
+| Build Docker con `next build` / Turbopack e TypeScript | Superata, 25 pagine statiche |
+| Container frontend e HTTP locale | In esecuzione, risposta 200 |
+
+Il test del menu attende esplicitamente il caricamento del nome del counselor
+dopo l’apertura: la build di produzione ha evidenziato una verifica anticipata
+nel test, corretta senza modificare il comportamento dell’applicazione.
+
+La home mobile a 390px mostra il titolo del catalogo a circa 383px dall’inizio
+della pagina, con una sessione da riprendere. I nove strumenti sono mantenuti.
+
+Immagine distribuita: `counselorbot-10-step-frontend:design-usability-20260905`,
+ID `sha256:59f3e77dedc0cb9ffbf5c97bb42964557d18f4988be4c5ddea6dfaf7396dad9a`.
+È stato ricreato solo `counselorbot_frontend`, usando il progetto Compose
+`counselorbot-10-step`, il Compose originale e `/tmp/cb-design-deploy.yml`.
+Backend e dati persistenti non sono stati ricreati. L’override specifica
+l’immagine sopra e il contesto `frontend` del worktree di consegna.
+
+Limiti della verifica: i test browser usano API simulate e non attestano una
+conversazione reale con un modello o un accesso SSO autenticato. Il controllo
+della tastiera fisica mobile rimane da eseguire su dispositivo.
+
+Avvisi fuori ambito: i quattro warning lint riguardano dipendenze degli hook
+già presenti in `page.tsx` e `ConfigForm.tsx`, e `variant` non utilizzato in
+`IdeaMapPanel.tsx`. `npm ci` segnala 14 vulnerabilità nelle dipendenze (1 bassa,
+3 moderate, 10 alte); le versioni e il lockfile non sono stati modificati.
