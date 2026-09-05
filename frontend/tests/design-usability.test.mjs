@@ -181,7 +181,8 @@ test('compact header preserves counselor selection and motion settings', async (
         const menu = page.locator('#mobile-menu');
         assert.ok(await menu.getByText('QSA', { exact: true }).isVisible());
         const counselor = menu.getByRole('button', { name: /Counselor di prova con nome lungo/ });
-        assert.ok(await counselor.isVisible());
+        // Opening the menu mounts its counselor control and loads its labels.
+        await counselor.waitFor({ state: 'visible' });
         await counselor.click();
         await menu.getByRole('button', { name: /Counselor di prova con nome lungo/ }).last().click();
         await menu.getByRole('button', { name: 'Riduci il movimento', exact: true }).click();
