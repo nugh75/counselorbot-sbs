@@ -282,3 +282,63 @@ test('a delayed earlier load cannot replace edits made after reopening the panel
         assert.deepEqual(control.errors, []);
     } finally { release(); await context.close(); }
 });
+
+for (const locale of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
+    test(`visual tools explain purpose, steps and examples on touch in ${locale}`, async () => {
+        const { page, context, control } = await fixture(320, 'intro', { locale, touch: true, dark: locale === 'de' });
+        const l = key => visualLabel(locale, key);
+        try {
+            await page.getByRole('button', { name: l('open'), exact: true }).click();
+            const dialog = page.getByRole('dialog', { name: l('title'), exact: true });
+            const help = dialog.getByRole('region', { name: l('howTo'), exact: true });
+            for (const tab of ['board', 'comparison', 'cards']) {
+                await dialog.getByRole('tab', { name: l(tab), exact: true }).click();
+                await help.getByText(l(`${tab}Purpose`), { exact: true }).waitFor();
+                assert.equal(await help.locator('li').count(), 3);
+                for (const key of [`${tab}Step1`, `${tab}Step2`, `${tab}Step3`, `${tab}Example`, 'saveHelp', 'discussHelp', 'exportHelp', 'undoHelp']) {
+                    assert.notEqual(l(key), key, `translated ${locale}:${key}`);
+                    assert.ok(await help.getByText(l(key), { exact: key !== `${tab}Example` }).isVisible());
+                }
+                await help.locator('summary').tap();
+                assert.ok(await help.getByText(l(`${tab}Purpose`), { exact: true }).isVisible());
+                assert.equal(await help.locator('li').first().isVisible(), false);
+                await help.locator('summary').tap();
+                assert.ok(await help.locator('li').first().isVisible());
+                await help.getByRole('button', { name: l('startWorking'), exact: true }).tap();
+                await page.waitForFunction(() => document.activeElement === document.querySelector('[role="dialog"] form')?.closest('details')?.querySelector('summary'));
+                assert.equal(await dialog.evaluate(e => e.scrollWidth <= e.clientWidth), true);
+                const box = await help.locator('summary').boundingBox();
+                assert.ok(box.height >= 44 && box.x >= 0 && box.x + box.width <= 320);
+            }
+            // Each tab retains its own collapsed help while the workspace stays open.
+            await dialog.getByRole('tab', { name: l('board'), exact: true }).click();
+            assert.equal(await help.locator('li').first().isVisible(), false);
+            assert.equal(control.requests.some(r => r.method !== 'GET'), false);
+            assert.deepEqual(control.errors, []);
+        } finally { await context.close(); }
+    });
+}
+
+test('keyboard tooltips explain actions and Escape dismisses help before the workspace', async () => {
+    const { page, context, control } = await fixture(1440);
+    const l = key => visualLabel('it', key);
+    try {
+        await page.getByRole('button', { name: l('open'), exact: true }).click();
+        const dialog = page.getByRole('dialog', { name: l('title'), exact: true });
+        await dialog.getByLabel(l('titleField'), { exact: true }).fill('Una piccola prova');
+        await dialog.getByRole('button', { name: l('addAction'), exact: true }).click();
+        for (const key of ['save', 'undo', 'export', 'discuss']) {
+            await dialog.getByRole('button', { name: l(key), exact: true }).focus();
+            const tooltip = page.getByRole('tooltip');
+            await tooltip.waitFor();
+            assert.equal(await tooltip.textContent(), l(`${key}Help`));
+            await page.keyboard.press('Escape');
+            await tooltip.waitFor({ state: 'detached' });
+            assert.ok(await dialog.isVisible());
+        }
+        await page.keyboard.press('Escape');
+        await dialog.waitFor({ state: 'detached' });
+        assert.equal(control.requests.some(r => r.method !== 'GET'), false);
+        assert.deepEqual(control.errors, []);
+    } finally { await context.close(); }
+});

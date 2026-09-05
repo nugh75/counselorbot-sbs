@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Columns3, LayoutList, Layers, Undo2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { apiFetch } from '@/lib/auth';
 import { normalizeRecommendationCatalog, type RecommendationCatalog } from '@/lib/recommendations';
 import { visualLabel } from '@/lib/i18n-visual-tools';
@@ -32,6 +33,7 @@ function WorkspaceView({ sessionId, locale, catalog: providedCatalog, onDiscuss,
     const endpoint = `/api/session/${encodeURIComponent(sessionId)}/visual-tools`;
     const [open, setOpen] = useState(false);
     const [tab, setTab] = useState<Tab>('board');
+    const [helpOpen, setHelpOpen] = useState<Record<Tab, boolean>>({ board: true, comparison: true, cards: true });
     const [saved, setSaved] = useState<SavedWorkspace>({ revision: 0, workspace: emptyWorkspace() });
     const [work, setWork] = useState<VisualWorkspace>(emptyWorkspace);
     const [history, setHistory] = useState<VisualWorkspace[]>([]);
@@ -102,7 +104,11 @@ function WorkspaceView({ sessionId, locale, catalog: providedCatalog, onDiscuss,
         const previous = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
         const keyboard = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') { event.preventDefault(); setOpen(false); }
+            if (event.key === 'Escape') {
+                // Let the tooltip dismiss first; a second Escape closes the workspace.
+                if (event.defaultPrevented || document.querySelector('[role="tooltip"]')) return;
+                event.preventDefault(); setOpen(false);
+            }
             if (event.key !== 'Tab') return;
             const controls = [...(dialog.current?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), summary, [tabindex="0"]') ?? [])]
                 .filter(element => element.getClientRects().length);
@@ -196,7 +202,32 @@ function WorkspaceView({ sessionId, locale, catalog: providedCatalog, onDiscuss,
                         </div>
                     </div>}
                     {!loaded ? <p role="status" className="text-slate-600">{l(busy ? 'loading' : 'loadError')}</p> : <fieldset disabled={busy} className="min-w-0 space-y-4">
-                        <p className="text-sm text-slate-600">{l(`${tab}Hint`)}</p>
+                        <section aria-label={l('howTo')} className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm leading-relaxed text-slate-800">
+                            <h3 className="font-semibold">{l(tab)}</h3>
+                            <p className="mt-1">{l(`${tab}Purpose`)}</p>
+                            <details key={tab} open={helpOpen[tab]} onToggle={event => {
+                                const expanded = event.currentTarget.open;
+                                setHelpOpen(previous => previous[tab] === expanded ? previous : { ...previous, [tab]: expanded });
+                            }}>
+                                <summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('howTo')}</summary>
+                                <ol className="list-decimal space-y-2 pl-5">{[1, 2, 3].map(step => <li key={step}>{l(`${tab}Step${step}`)}</li>)}</ol>
+                                <p className="mt-3"><strong>{l('example')}: </strong>{l(`${tab}Example`)}</p>
+                                <div className="mt-3 space-y-2 border-t border-indigo-200 pt-3 text-slate-600">
+                                    <p>{l('saveHelp')}</p>
+                                    <p>{l('exportHelp')}</p>
+                                    {onDiscuss && <p>{l('discussHelp')}</p>}
+                                    <p>{l('undoHelp')}</p>
+                                </div>
+                                <Button type="button" variant="secondary" className={`${buttonClass} mt-3 max-w-full whitespace-normal text-left`} onClick={() => {
+                                    setHelpOpen(previous => ({ ...previous, [tab]: false }));
+                                    window.requestAnimationFrame(() => {
+                                        const firstForm = dialog.current?.querySelector('form')?.closest('details')?.querySelector('summary');
+                                        firstForm?.focus({ preventScroll: true });
+                                        firstForm?.scrollIntoView({ block: 'nearest' });
+                                    });
+                                }}>{l('startWorking')}</Button>
+                            </details>
+                        </section>
                         {tab === 'board' && <>
                             <details open={!work.actions.length || Boolean(draftTitle)} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('addAction')}</summary>
                             <form className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3" onSubmit={event => { event.preventDefault(); if (!draftTitle.trim() || draftTitle.length > 160 || work.actions.length >= 30) return;
@@ -278,10 +309,10 @@ function WorkspaceView({ sessionId, locale, catalog: providedCatalog, onDiscuss,
                 <footer className="shrink-0 space-y-2 border-t border-slate-200 bg-slate-50 p-3">
                     <p role="status" className="text-sm text-slate-600">{l(busy ? 'saving' : dirty ? 'unsaved' : loaded ? 'saved' : 'loading')}</p>
                     <div className="flex flex-wrap gap-2">
-                        <Button type="button" className={buttonClass} disabled={!loaded || busy || !dirty} onClick={() => void save()}>{l('save')}</Button>
-                        <Button type="button" variant="secondary" aria-label={l('undo')} className={buttonClass} disabled={busy || !history.length} onClick={() => { const previous = history[history.length - 1]; if (previous) { setWork(previous); setHistory(history.slice(0, -1)); } }}><Undo2 className="h-4 w-4" aria-hidden="true" /><span className="hidden sm:inline">{l('undo')}</span></Button>
-                        <Button type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork} onClick={() => void exportPdf()}>{l('export')}</Button>
-                        {onDiscuss && <Button type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork} onClick={() => void discuss()}>{l('discuss')}</Button>}
+                        <Tooltip content={l('saveHelp')} side="top"><Button type="button" className={buttonClass} disabled={!loaded || busy || !dirty} onClick={() => void save()}>{l('save')}</Button></Tooltip>
+                        <Tooltip content={l('undoHelp')} side="top"><Button type="button" variant="secondary" aria-label={l('undo')} className={buttonClass} disabled={busy || !history.length} onClick={() => { const previous = history[history.length - 1]; if (previous) { setWork(previous); setHistory(history.slice(0, -1)); } }}><Undo2 className="h-4 w-4" aria-hidden="true" /><span className="hidden sm:inline">{l('undo')}</span></Button></Tooltip>
+                        <Tooltip content={l('exportHelp')} side="top"><Button type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork} onClick={() => void exportPdf()}>{l('export')}</Button></Tooltip>
+                        {onDiscuss && <Tooltip content={l('discussHelp')} side="top"><Button type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork} onClick={() => void discuss()}>{l('discuss')}</Button></Tooltip>}
                     </div>
                 </footer>
             </section>
