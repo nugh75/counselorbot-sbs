@@ -624,24 +624,19 @@ h1.text-3xl {
    sull'<svg>: non chiederle mai sullo stesso elemento. `data-dg-step` lo
    assegna `tagDiagramSvg` ed e' il turno di quel pezzo nel passo-passo.
 
-   Il disegno non si anima. C'e' stata una comparsa a turni, il tracciato degli
-   archi, la punta che cresceva, il flusso al passaggio: nessuna di quelle cose
-   spiegava qualcosa che il disegno fermo non dicesse gia', e ognuna chiedeva
-   attenzione e tolleranza al movimento in cambio di niente. Restano i due
-   cambi di stato che il lettore comanda -- il passo-passo e la messa a fuoco --
-   con una dissolvenza breve, che non e' moto ma il modo di non far saltare
-   quello che cambia. */
+   Static by default. Optional short transitions accompany explicit selection
+   and reading steps; nodes never move or pulse while the student reads. */
 
 .dg-svg .dg-node,
 .dg-svg .dg-edge,
 .dg-svg .dg-chip {
-    transition: opacity 200ms ease-out;
+    transition: opacity 160ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-/* Passo-passo: cio' che non e' ancora il suo turno non c'e'. */
-.dg-svg .dg-hidden {
-    opacity: 0;
-    pointer-events: none;
+.dg-motion-static .dg-node,
+.dg-motion-static .dg-edge,
+.dg-motion-static .dg-chip {
+    transition: none;
 }
 
 /* Dove il simbolo e' il nodo non c'e' bordo da accendere: l'accento vive nel
@@ -653,19 +648,46 @@ h1.text-3xl {
     stroke: #dca055;
 }
 
-/* Messa a fuoco: sfiorando un nodo restano lui e i suoi collegamenti. */
+/* Selection is identical for click, touch and keyboard. */
 .dg-svg .dg-node { cursor: pointer; }
+.dg-svg .dg-node:focus-visible {
+    outline: 2px solid #17747a;
+    outline-offset: 5px;
+}
+.dg-svg .dg-selected text,
+.dg-svg .dg-current text { font-weight: 600; }
 
 .dg-focusing .dg-node,
 .dg-focusing .dg-edge,
 .dg-focusing .dg-chip {
-    opacity: 0.12;
-    transition: opacity 160ms ease-out;
+    opacity: 0.55;
 }
 
 .dg-focusing .dg-related {
     opacity: 1;
 }
+
+/* Hidden steps win over the selection, including related endpoints. */
+.dg-svg .dg-hidden {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+.dg-dialog-motion {
+    opacity: 1;
+    transition: opacity 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.dg-dialog-motion > section {
+    transform: scale(1);
+    transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@starting-style {
+    .dg-dialog-motion { opacity: 0; }
+    .dg-dialog-motion > section { transform: scale(0.98); }
+}
+.dg-dialog-closing { opacity: 0; transition-duration: 120ms; }
+.dg-dialog-closing > section { transform: scale(0.98); transition-duration: 120ms; }
 
 /* Il disegno riempie la larghezza che il contenitore gli assegna; e' il
    contenitore che tiene conto anche dell'altezza disponibile. */
@@ -688,7 +710,7 @@ h1.text-3xl {
    ma quasi nessuno studente sa di averla, e su un computer di scuola non puo'
    cambiarla: chi sta male deve poterlo dire dove si trova. Stesse regole di
    quel blocco, cosi' i due interruttori si comportano allo stesso modo.
-   Il diagramma non compare qui perche' non si anima affatto. */
+   Also overrides the optional diagram transitions. */
 [data-motion="reduced"] *,
 [data-motion="reduced"] *::before,
 [data-motion="reduced"] *::after {

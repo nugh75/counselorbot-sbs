@@ -1,0 +1,59 @@
+<svg
+ viewBox="0.00 0.00 229.60 552.31" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" role="img"><title>Un piano di studio da mettere alla prova</title><desc>Un piano di studio da mettere alla prova: Scegliere un obiettivo orienta Studiare un argomento; Studiare un argomento poi controlla Ricordo i concetti?; Ricordo i concetti? confronta gli appunti Verificare il risultato. Il controllo finale aiuta a capire se il metodo scelto è utile.</desc>
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(28.8 523.51)">
+<title>diagram</title>
+<!-- a -->
+<g id="node1" class="node">
+<title>a</title>
+<path fill="#faf1e3" stroke="#dca055" stroke-width="2" d="M126,-494.71C126,-494.71 46,-494.71 46,-494.71 40,-494.71 34,-488.71 34,-482.71 34,-482.71 34,-456.71 34,-456.71 34,-450.71 40,-444.71 46,-444.71 46,-444.71 126,-444.71 126,-444.71 132,-444.71 138,-450.71 138,-456.71 138,-456.71 138,-482.71 138,-482.71 138,-488.71 132,-494.71 126,-494.71"/>
+<text text-anchor="middle" x="86" y="-473.11" font-family="Inter,DejaVu Sans,sans-serif" font-size="12.00" fill="#5a3211">Scegliere un</text>
+<text text-anchor="middle" x="86" y="-460.11" font-family="Inter,DejaVu Sans,sans-serif" font-size="12.00" fill="#5a3211">obiettivo</text>
+</g>
+<!-- b -->
+<g id="node2" class="node">
+<title>b</title>
+<polygon fill="#e9f2f2" stroke="#69abad" stroke-width="1.2" points="135,-373.71 37,-373.71 37,-323.71 135,-323.71 135,-373.71"/>
+<text text-anchor="middle" x="86" y="-352.11" font-family="Inter,DejaVu Sans,sans-serif" font-size="12.00" fill="#0e3539">Studiare un</text>
+<text text-anchor="middle" x="86" y="-339.11" font-family="Inter,DejaVu Sans,sans-serif" font-size="12.00" fill="#0e3539">argomento</text>
+</g>
+<!-- a&#45;&gt;b -->
+<g id="edge1" class="edge">
+<title>a&#45;&gt;b</title>
+<path fill="none" stroke="#64748b" stroke-width="1.5" d="M86,-444.63C86,-426.56 86,-401.65 86,-381.88"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.5" points="88.8,-381.76 86,-373.76 83.2,-381.76 88.8,-381.76"/>
+<path fill="#ffffff" stroke="transparent" d="M91.67,-400.71C91.67,-400.71 119.33,-400.71 119.33,-400.71 122.17,-400.71 125,-403.54 125,-406.38 125,-406.38 125,-412.04 125,-412.04 125,-414.88 122.17,-417.71 119.33,-417.71 119.33,-417.71 91.67,-417.71 91.67,-417.71 88.83,-417.71 86,-414.88 86,-412.04 86,-412.04 86,-406.38 86,-406.38 86,-403.54 88.83,-400.71 91.67,-400.71"/>
+<text text-anchor="start" x="89.5" y="-406.21" font-family="Inter,DejaVu Sans,sans-serif" font-size="10.00" fill="#64748b">orienta</text>
+</g>
+<!-- c -->
+<g id="node3" class="node">
+<title>c</title>
+<polygon fill="#e9f2f2" stroke="#69abad" stroke-width="1.2" points="86,-252.71 0,-202.71 86,-152.71 172,-202.71 86,-252.71"/>
+<text text-anchor="middle" x="86" y="-206.11" font-family="Inter,DejaVu Sans,sans-serif" font-size="12.00" fill="#0e3539">Ricordo i</text>
+<text text-anchor="middle" x="86" y="-193.11" font-family="Inter,DejaVu Sans,sans-serif" font-size="12.00" fill="#0e3539">concetti?</text>
+</g>
+<!-- b&#45;&gt;c -->
+<g id="edge2" class="edge">
+<title>b&#45;&gt;c</title>
+<path fill="none" stroke="#64748b" stroke-width="1.5" d="M86,-323.61C86,-306.57 86,-282.98 86,-261.23"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.5" points="88.8,-261 86,-253 83.2,-261 88.8,-261"/>
+<path fill="#ffffff" stroke="transparent" d="M91.67,-279.71C91.67,-279.71 144.33,-279.71 144.33,-279.71 147.17,-279.71 150,-282.54 150,-285.38 150,-285.38 150,-291.04 150,-291.04 150,-293.88 147.17,-296.71 144.33,-296.71 144.33,-296.71 91.67,-296.71 91.67,-296.71 88.83,-296.71 86,-293.88 86,-291.04 86,-291.04 86,-285.38 86,-285.38 86,-282.54 88.83,-279.71 91.67,-279.71"/>
+<text text-anchor="start" x="89" y="-285.21" font-family="Inter,DejaVu Sans,sans-serif" font-size="10.00" fill="#64748b">poi controlla</text>
+</g>
+<!-- d -->
+<g id="node4" class="node">
+<title>d</title>
+<ellipse fill="#e9f2f2" stroke="#69abad" stroke-width="1.2" cx="86" cy="-35.36" rx="62.87" ry="35.21"/>
+<text text-anchor="middle" x="86" y="-38.76" font-family="Inter,DejaVu Sans,sans-serif" font-size="12.00" fill="#0e3539">Verificare</text>
+<text text-anchor="middle" x="86" y="-25.76" font-family="Inter,DejaVu Sans,sans-serif" font-size="12.00" fill="#0e3539">il risultato</text>
+</g>
+<!-- c&#45;&gt;d -->
+<g id="edge3" class="edge">
+<title>c&#45;&gt;d</title>
+<path fill="none" stroke="#64748b" stroke-width="1.5" d="M86,-152.55C86,-129.15 86,-101.43 86,-78.94"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.5" points="88.8,-78.91 86,-70.91 83.2,-78.91 88.8,-78.91"/>
+<path fill="#ffffff" stroke="transparent" d="M95.33,-97.71C95.33,-97.71 142.67,-97.71 142.67,-97.71 147.33,-97.71 152,-102.38 152,-107.04 152,-107.04 152,-116.38 152,-116.38 152,-121.04 147.33,-125.71 142.67,-125.71 142.67,-125.71 95.33,-125.71 95.33,-125.71 90.67,-125.71 86,-121.04 86,-116.38 86,-116.38 86,-107.04 86,-107.04 86,-102.38 90.67,-97.71 95.33,-97.71"/>
+<text text-anchor="start" x="89" y="-114.71" font-family="Inter,DejaVu Sans,sans-serif" font-size="10.00" fill="#64748b">confronta gli</text>
+<text text-anchor="start" x="101.5" y="-103.71" font-family="Inter,DejaVu Sans,sans-serif" font-size="10.00" fill="#64748b">appunti</text>
+</g>
+</g>
+</svg>
