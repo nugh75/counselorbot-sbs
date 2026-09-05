@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, validator
-from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any, Union, Literal
 from datetime import datetime
 import json
 import re
@@ -104,6 +104,12 @@ class PromptAuditRequest(BaseModel):
     session_id: Optional[str] = None
     counselor_id: Optional[int] = None
     max_tokens: Optional[int] = None
+    response_length: Optional[Literal["short", "medium", "long"]] = None
+    conversation_id: Optional[str] = None
+    idea_variant: Optional[str] = None
+    idea_budget: Optional[int] = None
+    retrieval_context: Optional[Dict[str, Any]] = None
+    journey_context: Optional[str] = None
     include_knowledge: bool = True
     include_history: bool = False
     component_flags: Optional[Dict[str, Any]] = None

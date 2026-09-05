@@ -55,7 +55,7 @@ def test_fingerprint_changes_for_same_turn_count_content_and_choices():
 
 def test_current_final_step_is_reused_only_in_its_language(monkeypatch, db, result):
     db.add(models.GuidedStep(id='sl-synthesis', questionnaire_type='QSA', sort_order=1, label='Sintesi', prompt='Summarize the session.', system_prompt_mode='qsa-summary'))
-    row = models.Log(action='chat_message', session_id=result.session_id, phase='sl-synthesis', details={'language':'it','bot_response':'Sintesi concordata'})
+    row = models.Log(action='chat_message', session_id=result.session_id, phase='sl-synthesis', details={'language':'it','bot_response':'Sintesi concordata','journey_coverage':'complete'})
     db.add(row); db.commit()
     monkeypatch.setattr(survey, '_generate_summary', lambda *args, **kwargs: 'Sintesi aggiornata')
     args = dict(result=result, scores={}, messages=[{'role':'counselor','text':'Sintesi concordata'}], recommendations={}, lang='it')
@@ -70,6 +70,15 @@ def test_model_failure_is_explicit_and_not_cached(monkeypatch, db, result):
     monkeypatch.setattr(survey, '_generate_summary', lambda *args, **kwargs: None)
     assert survey.canonical_summary(db, result=result, scores={}, messages=[{'text':'Parliamo'}], recommendations={}, lang='it') == (None, 'unavailable')
     assert db.query(models.Log).filter(models.Log.action == survey.PDF_SUMMARY_ACTION).count() == 0
+
+
+def test_legacy_final_step_without_whole_journey_evidence_is_regenerated(monkeypatch, db, result):
+    db.add(models.GuidedStep(id='sl-synthesis', questionnaire_type='QSA', sort_order=1, label='Sintesi', prompt='Summarize.', system_prompt_mode='qsa-summary'))
+    db.add(models.Log(action='chat_message', session_id=result.session_id, phase='sl-synthesis', details={'language':'it', 'bot_response':'Only the last turns'}))
+    db.commit()
+    monkeypatch.setattr(survey, '_generate_summary', lambda *args, **kwargs: 'Whole journey including the first answer')
+    text, _ = survey.canonical_summary(db, result=result, scores={}, messages=[{'role':'counselor','text':'Only the last turns'}], recommendations={}, lang='it')
+    assert text == 'Whole journey including the first answer'
 
 
 def test_pdf_and_preview_share_inputs_and_ownership(monkeypatch, db, result):
