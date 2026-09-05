@@ -6,6 +6,10 @@ import type { Lang } from './i18n';
 type Dict = Record<string, string>;
 
 const it: Dict = {
+    'admin.logs.openConversation': 'Apri conversazione',
+    'admin.logs.openSession': 'Apri sessione',
+    'admin.logs.user': 'Utente',
+    'admin.logs.counselor': 'Counselor',
     // localized admin panels
     'admin.approvedStrategies.title': 'Strategie RAG approvate',
     'admin.approvedStrategies.subtitle': 'Modifica le strategie generiche che possono comparire in strategy_ids. Origine attuale: {source}.',
@@ -690,6 +694,10 @@ const it: Dict = {
 };
 
 const en: Dict = {
+    'admin.logs.openConversation': 'Open conversation',
+    'admin.logs.openSession': 'Open session',
+    'admin.logs.user': 'User',
+    'admin.logs.counselor': 'Counselor',
     // localized admin panels
     'admin.approvedStrategies.title': 'Approved RAG strategies',
     'admin.approvedStrategies.subtitle': 'Edit the generic strategies that can appear in strategy_ids. Current source: {source}.',
@@ -1368,6 +1376,10 @@ const en: Dict = {
 
 const es: Dict = {
     ...en,
+    'admin.logs.openConversation': 'Abrir conversación',
+    'admin.logs.openSession': 'Abrir sesión',
+    'admin.logs.user': 'Usuario',
+    'admin.logs.counselor': 'Orientador',
     // localized admin panels
     'admin.approvedStrategies.title': 'Estrategias RAG aprobadas',
     'admin.approvedStrategies.subtitle': 'Edita las estrategias genéricas que pueden aparecer en strategy_ids. Origen actual: {source}.',
@@ -1912,6 +1924,10 @@ const es: Dict = {
 
 const fr: Dict = {
     ...en,
+    'admin.logs.openConversation': 'Ouvrir la conversation',
+    'admin.logs.openSession': 'Ouvrir la session',
+    'admin.logs.user': 'Utilisateur',
+    'admin.logs.counselor': 'Conseiller',
     // localized admin panels
     'admin.approvedStrategies.title': 'Stratégies RAG approuvées',
     'admin.approvedStrategies.subtitle': 'Modifiez les stratégies génériques qui peuvent apparaître dans strategy_ids. Source actuelle : {source}.',
@@ -2456,6 +2472,10 @@ const fr: Dict = {
 
 const de: Dict = {
     ...en,
+    'admin.logs.openConversation': 'Gespräch öffnen',
+    'admin.logs.openSession': 'Sitzung öffnen',
+    'admin.logs.user': 'Nutzer',
+    'admin.logs.counselor': 'Berater',
     // localized admin panels
     'admin.approvedStrategies.title': 'Genehmigte RAG-Strategien',
     'admin.approvedStrategies.subtitle': 'Bearbeite die generischen Strategien, die in strategy_ids erscheinen können. Aktuelle Quelle: {source}.',
@@ -3000,6 +3020,10 @@ const de: Dict = {
 
 const sv: Dict = {
     ...en,
+    'admin.logs.openConversation': 'Öppna samtal',
+    'admin.logs.openSession': 'Öppna session',
+    'admin.logs.user': 'Användare',
+    'admin.logs.counselor': 'Vägledare',
     // localized admin panels
     'admin.approvedStrategies.title': 'Godkända RAG-strategier',
     'admin.approvedStrategies.subtitle': 'Redigera de generiska strategier som kan visas i strategy_ids. Nuvarande källa: {source}.',

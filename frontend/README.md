@@ -46,6 +46,19 @@ npm run build
 npx tsc --noEmit
 ```
 
+The conversation-log browser regression test uses Playwright with synthetic API
+responses, including authentication; it does not read or write backend data.
+Start the frontend first, then run:
+
+```bash
+npx playwright install chromium
+npm run test:logs
+```
+
+Set `LOG_VIEWER_BASE_URL` to test a different frontend address (default:
+`http://127.0.0.1:3000`). It checks desktop, tablet, small mobile and dark mode,
+including dialog positioning, keyboard navigation, Markdown and technical details.
+
 ## Production build
 
 The Dockerfile builds a standalone Next.js output and runs it with `node server.js`:
