@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { after, before, test } from 'node:test';
 import { chromium } from 'playwright';
 
@@ -10,17 +11,18 @@ after(async () => { await browser?.close(); });
 const reply = 'Scegli un obiettivo, studia e verifica quello che ricordi.';
 const spec = { type: 'flow', title: 'Piano di studio e verifica dei risultati', nodes: [{ id: 'a', label: 'Obiettivo' }, { id: 'b', label: 'Verifica' }], edges: [{ from: 'a', to: 'b' }] };
 const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="280" height="180" viewBox="0 0 280 180"><g class="node"><title>a</title><text x="40" y="40">Obiettivo</text></g><g class="edge"><title>a-&gt;b</title><path d="M60 50V100" stroke="#17747a"/></g><g class="node"><title>b</title><text x="40" y="130">Verifica</text></g></svg>';
+const graphSpec = JSON.parse(readFileSync(new URL('./fixtures/reading-diagram.json', import.meta.url), 'utf8'));
 
-async function fixture(width, phase = 'intro') {
-    const context = await browser.newContext({ viewport: { width, height: 844 }, reducedMotion: 'reduce' });
+async function fixture(width, phase = 'intro', options = {}) {
+    const context = await browser.newContext({ viewport: { width, height: 844 }, reducedMotion: options.motion || 'reduce', hasTouch: Boolean(options.touch), isMobile: Boolean(options.touch) });
     const page = await context.newPage();
-    const control = { failDiagram: false, failPatch: false, saved: [], requests: [], errors: [] };
+    const control = { failDiagram: false, failPatch: false, failRender: false, failExport: false, saved: options.graph ? [{ source_text: reply, source_key: createHash('sha256').update(reply).digest('hex'), instruction: '', spec: graphSpec }] : [], requests: [], errors: [] };
     const catalog = {
         reading: [{ slug: 'test-book', title: 'Libro per la prova', why: 'Collegato al metodo di studio.', synopsis: 'SINOSSI COMPLETA DEL LIBRO', where: 'https://example.invalid/libro', languages: ['it', 'en'], warning: 'AVVERTENZA DEL LIBRO', status: 'proposed' }],
         strategy: [{ slug: 'test-strategy', name: 'Recupero attivo', description: 'Chiudi il testo e scrivi tre concetti.', recommended_when: 'Quando vuoi verificare cosa ricordi.', status: 'proposed' }],
     };
     page.on('pageerror', error => control.errors.push(error.message));
-    await page.addInitScript(() => { localStorage.setItem('cb_lang', 'it'); localStorage.setItem('counselorbot_selected_counselor', '1'); });
+    await page.addInitScript(({ locale, dark }) => { localStorage.setItem('cb_lang', locale || 'it'); localStorage.setItem('counselorbot_selected_counselor', '1'); localStorage.setItem('cb_theme', dark ? 'dark' : 'light'); }, options);
     await page.route('**/*', route => {
         const request = route.request();
         const url = new URL(request.url());
@@ -45,7 +47,12 @@ async function fixture(width, phase = 'intro') {
             assert.equal(body.session_id, 'fixture');
             control.saved = [{ source_text: body.source_text, source_key: createHash('sha256').update(body.source_text.trim()).digest('hex'), instruction: body.instruction, spec }];
             data = spec;
-        } else if (url.pathname === '/api/diagram/render') return route.fulfill({ contentType: 'image/svg+xml', body: svg });
+        } else if (url.pathname === '/api/diagram/render') {
+            const body = request.postDataJSON();
+            if (control.failRender || (body.embed_title && control.failExport)) return route.fulfill({ status: 503, body: '{}' });
+            return route.fulfill({ contentType: body.format === 'png' ? 'image/png' : 'image/svg+xml', body: options.graph
+                ? readFileSync(new URL(`./fixtures/reading-diagram-${body.theme}.${body.format}`, import.meta.url)) : svg });
+        }
         else if (url.pathname.endsWith('/summary')) data = { summary: '## Scelta finale\nProverò il recupero attivo per una settimana.', status: 'ready' };
         else if (url.pathname.endsWith('/pdf')) return route.fulfill({ contentType: 'application/pdf', headers: { 'X-Summary-Status': 'ready' }, body: '%PDF-1.4\n%%EOF' });
         return route.fulfill({ contentType: 'application/json', body: JSON.stringify(data) });
@@ -62,7 +69,7 @@ for (const width of [320, 390, 1440]) {
             const send = page.locator('form').filter({ has: page.locator('input[maxlength="400"]') }).locator('button[type="submit"]');
             await send.click();
             await page.locator('figure svg g.node').first().waitFor();
-            const buttons = page.locator('figcaption button');
+            const buttons = page.locator('figure button:visible');
             for (const button of await buttons.all()) {
                 const box = await button.boundingBox();
                 assert.ok(box.x >= 0 && box.x + box.width <= width, 'diagram control fits viewport');
@@ -70,7 +77,7 @@ for (const width of [320, 390, 1440]) {
             await page.getByRole('button', { name: 'Apri il diagramma a schermo intero' }).click();
             const dialog = page.getByRole('dialog');
             await dialog.waitFor();
-            for (const button of await dialog.locator('button').all()) {
+            for (const button of await dialog.locator('button:visible').all()) {
                 const box = await button.boundingBox();
                 assert.ok(box.x >= 0 && box.x + box.width <= width, 'fullscreen control fits viewport');
             }
@@ -129,6 +136,204 @@ test('completed session previews the summary and downloads both PDF formats', as
         }
         assert.ok(control.requests.some(request => request.search.includes('mode=brief')));
         assert.ok(control.requests.some(request => request.search.includes('mode=full')));
+        assert.deepEqual(control.errors, []);
+    } finally { await context.close(); }
+});
+
+for (const options of [{ width: 320, touch: true }, { width: 390, dark: true }, { width: 1440 }]) {
+    test(`diagram reading, selection and text view at ${options.width}px${options.dark ? ' dark' : ''}`, async () => {
+        const { page, context, control } = await fixture(options.width, 'intro', { ...options, graph: true });
+        try {
+            const figure = page.locator('figure');
+            await figure.locator('.dg-node').first().waitFor();
+            assert.equal(await figure.locator('.dg-hidden').count(), 0);
+            await figure.getByRole('button', { name: 'Lettura', exact: true }).click();
+            await figure.locator('[data-reading="true"]').waitFor();
+            await page.waitForFunction(svg => Math.min(...[...svg.querySelectorAll('text')].map(text => Number(text.getAttribute('font-size')) * Math.abs(text.getScreenCTM().a))) >= 14.9, await figure.locator('.dg-svg > svg').elementHandle());
+            const font = await figure.locator('.dg-svg > svg').evaluate(svg => Math.min(...[...svg.querySelectorAll('text')].map(text => Number(text.getAttribute('font-size')) * Math.abs(text.getScreenCTM().a))));
+            assert.ok(Number.isFinite(font) && font >= 14.9, `readable labels: ${font}px`);
+            const node = figure.locator('[data-node="b"]');
+            await node.scrollIntoViewIfNeeded();
+            if (options.touch) await node.tap(); else await node.click();
+            await figure.locator('[data-node="b"][aria-pressed="true"]').waitFor();
+            assert.equal(await node.getAttribute('aria-pressed'), 'true');
+            for (const id of ['a', 'b', 'c']) assert.match(await figure.locator(`[data-node="${id}"]`).getAttribute('class'), /dg-related/);
+            assert.doesNotMatch(await figure.locator('[data-node="d"]').getAttribute('class'), /dg-related/);
+            await node.focus(); await page.keyboard.press('Escape');
+            assert.equal(await node.getAttribute('aria-pressed'), 'false');
+            await page.keyboard.press('Enter');
+            assert.equal(await node.getAttribute('aria-pressed'), 'true');
+            await page.keyboard.press('ArrowDown');
+            assert.equal(await page.evaluate(() => document.activeElement.getAttribute('data-node')), 'c');
+            await figure.getByRole('button', { name: 'Leggi come testo' }).click();
+            assert.ok(await figure.locator('ol').getByText('Ricordo i concetti?', { exact: false }).isVisible());
+            assert.ok(await figure.getByText('Ricordo i concetti? — confronta gli appunti → Verificare il risultato', { exact: true }).isVisible());
+            await figure.getByRole('button', { name: 'Panoramica', exact: true }).click();
+            await page.waitForFunction(element => element.scrollTop === 0 && element.scrollLeft === 0, await figure.locator('[data-diagram-viewport]').elementHandle());
+            for (const button of await figure.locator('button:visible').all()) {
+                const box = await button.boundingBox();
+                assert.ok(box.x >= 0 && box.x + box.width <= options.width && box.height >= 44, 'controls fit and have touch targets');
+            }
+            assert.deepEqual(control.errors, []);
+        } finally { await context.close(); }
+    });
+}
+
+test('guided steps keep future neighbours hidden and survive fullscreen', async () => {
+    const { page, context, control } = await fixture(390, 'intro', { graph: true });
+    try {
+        const figure = page.locator('figure');
+        await figure.locator('.dg-node').first().waitFor();
+        await figure.getByRole('button', { name: 'Passo-passo', exact: true }).click();
+        await figure.getByText('Passaggio 1 di 4', { exact: true }).waitFor();
+        assert.equal(await figure.locator('.dg-node:not(.dg-hidden)').count(), 1);
+        await figure.locator('[data-node="a"]').click();
+        assert.equal(await figure.locator('[data-node="b"]').evaluate(node => getComputedStyle(node).opacity), '0');
+        assert.equal(await figure.locator('[data-node="b"]').getAttribute('tabindex'), '-1');
+        await figure.getByRole('button', { name: 'Un passo avanti' }).click();
+        await figure.getByRole('status').filter({ hasText: 'Scegliere un obiettivo — orienta → Studiare un argomento' }).waitFor();
+        assert.equal(await figure.locator('.dg-node:not(.dg-hidden)').count(), 2);
+        await figure.getByRole('button', { name: 'Apri il diagramma a schermo intero' }).click();
+        const dialog = page.getByRole('dialog');
+        await dialog.getByText('Passaggio 2 di 4', { exact: true }).waitFor();
+        await dialog.getByRole('button', { name: 'Leggi come testo' }).click();
+        await dialog.locator('button:visible').last().focus();
+        for (let i = 0; i < 15; i++) {
+            await page.keyboard.press('Tab');
+            assert.equal(await page.evaluate(() => !!document.activeElement.closest('[role="dialog"]')), true);
+        }
+        await dialog.getByRole('button', { name: 'Chiudi lo schermo intero' }).click();
+        await dialog.waitFor({ state: 'detached' });
+        assert.ok(await figure.getByText('Passaggio 2 di 4', { exact: true }).isVisible());
+        assert.ok(await page.getByRole('button', { name: 'Apri il diagramma a schermo intero' }).evaluate(button => button === document.activeElement));
+        await figure.getByRole('button', { name: 'Mostra tutto' }).click();
+        assert.equal(await figure.locator('.dg-hidden').count(), 0);
+        assert.deepEqual(control.errors, []);
+    } finally { await context.close(); }
+});
+
+test('exports contain the full graph despite partial steps and recover from failure', async () => {
+    const { page, context, control } = await fixture(1440, 'intro', { graph: true });
+    try {
+        const figure = page.locator('figure');
+        await figure.locator('.dg-node').first().waitFor();
+        await figure.getByRole('button', { name: 'Passo-passo', exact: true }).click();
+        await figure.locator('summary').click();
+        control.failExport = true;
+        await figure.getByRole('button', { name: 'Scarica SVG' }).click();
+        await figure.getByRole('alert').waitFor();
+        control.failExport = false;
+        for (const format of ['SVG', 'PNG']) {
+            const download = page.waitForEvent('download');
+            await figure.getByRole('button', { name: `Scarica ${format}` }).click();
+            assert.ok((await download).suggestedFilename().endsWith(format.toLowerCase()));
+        }
+        const requests = control.requests.filter(request => request.path === '/api/diagram/render' && request.body.embed_title);
+        assert.ok(requests.every(request => request.body.spec.nodes.length === 4 && request.body.spec.edges.length === 3 && request.body.lang === 'it'));
+        assert.equal(await figure.locator('.dg-node:not(.dg-hidden)').count(), 1);
+        assert.deepEqual(control.errors, []);
+    } finally { await context.close(); }
+});
+
+test('motion is opt-in, playback pauses and reduced motion stops it', async () => {
+    const { page, context, control } = await fixture(390, 'intro', { graph: true, motion: 'no-preference' });
+    try {
+        const figure = page.locator('figure');
+        await figure.locator('.dg-node').first().waitFor();
+        assert.equal(await figure.locator('.dg-node').first().evaluate(node => getComputedStyle(node).transitionDuration), '0s');
+        await figure.locator('summary').click();
+        await figure.getByRole('checkbox', { name: 'Animazioni leggere' }).check();
+        assert.equal(await figure.locator('.dg-node').first().evaluate(node => getComputedStyle(node).transitionDuration), '0.16s');
+        await figure.getByRole('button', { name: 'Passo-passo', exact: true }).click();
+        await figure.getByRole('button', { name: 'Riproduci la spiegazione' }).click();
+        await figure.getByText('Passaggio 2 di 4', { exact: true }).waitFor({ timeout: 11000 });
+        await figure.getByRole('button', { name: 'Pausa', exact: true }).click();
+        const count = await figure.locator('.dg-node:not(.dg-hidden)').count();
+        await page.waitForTimeout(3300);
+        assert.equal(await figure.locator('.dg-node:not(.dg-hidden)').count(), count);
+        await figure.getByRole('button', { name: 'Riproduci la spiegazione' }).click();
+        await page.evaluate(() => { document.documentElement.dataset.motion = 'reduced'; });
+        await figure.getByRole('button', { name: 'Riproduci la spiegazione' }).waitFor();
+        assert.ok(await figure.getByRole('button', { name: 'Riproduci la spiegazione' }).isDisabled());
+        assert.equal(await figure.getByRole('checkbox').isChecked(), false);
+        assert.deepEqual(control.errors, []);
+    } finally { await context.close(); }
+});
+
+test('fullscreen touch zoom and drag preserve selection and can be recentered', async () => {
+    const { page, context, control } = await fixture(390, 'intro', { graph: true, touch: true });
+    try {
+        await page.locator('figure .dg-node').first().waitFor();
+        await page.getByRole('button', { name: 'Apri il diagramma a schermo intero' }).click();
+        const dialog = page.getByRole('dialog');
+        await dialog.getByRole('button', { name: 'Lettura', exact: true }).click();
+        await dialog.locator('[data-reading="true"]').waitFor();
+        const viewport = dialog.locator('[data-diagram-viewport]');
+        const box = await viewport.boundingBox();
+        const session = await context.newCDPSession(page);
+        const x = box.x + box.width / 2, y = box.y + box.height / 2;
+        await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: x - 30, y }, { x: x + 30, y }] });
+        await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x - 60, y }, { x: x + 60, y }] });
+        await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+        await dialog.locator('summary').click();
+        assert.ok(parseInt(await dialog.locator('[data-diagram-zoom]').textContent()) > 150);
+        assert.equal(await dialog.locator('.dg-selected').count(), 0);
+        await dialog.locator('summary').click();
+        // Let the viewport finish resizing after the tools panel closes.
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        const panBox = await viewport.boundingBox();
+        const panX = panBox.x + panBox.width / 2, panY = panBox.y + panBox.height / 2;
+        const topBefore = await viewport.evaluate(element => element.scrollTop);
+        await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: panX, y: panY }] });
+        await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: panX, y: panY - 80 }] });
+        await page.waitForFunction(({ element, previous }) => element.scrollTop > previous + 60, { element: await viewport.elementHandle(), previous: topBefore });
+        await session.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
+        assert.equal(await dialog.locator('.dg-selected').count(), 0);
+        await dialog.locator('summary').click();
+        await dialog.getByRole('button', { name: 'Adatta allo spazio' }).click();
+        assert.equal(await dialog.locator('[data-diagram-zoom]').textContent(), '100%');
+        await page.waitForFunction(element => element.scrollTop === 0 && element.scrollLeft === 0, await viewport.elementHandle());
+        assert.deepEqual(control.errors, []);
+    } finally { await context.close(); }
+});
+
+test('render failure keeps a readable text alternative and supports retry', async () => {
+    const { page, context, control } = await fixture(390, 'intro', { graph: true });
+    try {
+        control.failRender = true;
+        await page.goto(`${origin}/?frozen=fixture`, { waitUntil: 'networkidle' });
+        const figure = page.locator('figure');
+        await figure.getByRole('button', { name: 'Riprova', exact: true }).waitFor();
+        assert.ok(await figure.locator('ol').getByText('Ricordo i concetti?', { exact: false }).isVisible());
+        assert.equal(await figure.locator('.dg-node').count(), 0);
+        control.failRender = false;
+        await figure.getByRole('button', { name: 'Riprova', exact: true }).click();
+        await figure.locator('.dg-node').first().waitFor();
+        assert.equal(await figure.locator('.dg-node').count(), 4);
+        assert.deepEqual(control.errors, []);
+    } finally { await context.close(); }
+});
+
+test('fullscreen retains the reading position and zoom on return to the card', async () => {
+    const { page, context, control } = await fixture(390, 'intro', { graph: true });
+    try {
+        const figure = page.locator('figure');
+        await figure.locator('.dg-node').first().waitFor();
+        await figure.getByRole('button', { name: 'Lettura', exact: true }).click();
+        await figure.locator('summary').click();
+        await figure.getByRole('button', { name: 'Ingrandisci', exact: true }).click();
+        const viewport = figure.locator('[data-diagram-viewport]');
+        await viewport.evaluate(element => { element.scrollTop = element.scrollHeight * 0.5; });
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        const position = await viewport.evaluate(element => (element.scrollTop + element.clientHeight / 2) / element.scrollHeight);
+        await figure.getByRole('button', { name: 'Apri il diagramma a schermo intero' }).click();
+        const dialog = page.getByRole('dialog');
+        await dialog.locator('[data-reading="true"]').waitFor();
+        await dialog.getByRole('button', { name: 'Chiudi lo schermo intero' }).click();
+        await dialog.waitFor({ state: 'detached' });
+        await page.waitForFunction(({ element, expected }) => Math.abs((element.scrollTop + element.clientHeight / 2) / element.scrollHeight - expected) < 0.02,
+            { element: await viewport.elementHandle(), expected: position });
+        assert.equal(await figure.locator('[data-diagram-zoom]').textContent(), '125%');
         assert.deepEqual(control.errors, []);
     } finally { await context.close(); }
 });
