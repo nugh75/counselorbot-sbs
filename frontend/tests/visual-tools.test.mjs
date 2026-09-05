@@ -24,7 +24,7 @@ async function fixture(width, phase = 'intro', options = {}) {
     };
     page.on('pageerror', error => control.errors.push(error.message));
     await page.addInitScript(({ locale, dark }) => { localStorage.setItem('cb_lang', locale || 'it'); localStorage.setItem('counselorbot_selected_counselor', '1'); localStorage.setItem('cb_theme', dark ? 'dark' : 'light'); }, options);
-    await page.route('**/*', route => {
+    await page.route('**/*', async route => {
         const request = route.request();
         const url = new URL(request.url());
         if (url.origin !== origin) return route.abort();
@@ -33,6 +33,13 @@ async function fixture(width, phase = 'intro', options = {}) {
         let data = [];
         if (url.pathname === '/api/opencode/workspace') data = { key: 'fixture', api_available: true, session_id: 'opencode-fixture', needs_seed: false, history: [{ role: 'assistant', content: reply }] };
         else if (url.pathname === '/api/session/fixture/visual-tools') {
+            if (request.method() === 'GET' && control.deferRead) {
+                const wait = control.deferRead; control.deferRead = null;
+                const snapshot = structuredClone(control.visual);
+                await wait();
+                return route.fulfill({ contentType: 'application/json', body: JSON.stringify(snapshot) });
+            }
+
             if (request.method() === 'PUT') {
                 if (control.failSave) return route.fulfill({ status: 503, body: '{}' });
                 const body = request.postDataJSON();
@@ -249,4 +256,29 @@ test('completed sessions keep visual export available without offering a missing
         assert.equal(await dialog.getByRole('button', { name: l('export'), exact: true }).count(), 1);
         assert.deepEqual(control.errors, []);
     } finally { await context.close(); }
+});
+
+test('a delayed earlier load cannot replace edits made after reopening the panel', async () => {
+    const { page, context, control } = await fixture(390);
+    const l = key => visualLabel('it', key);
+    let release;
+    const pending = new Promise(resolve => { release = resolve; });
+    let started;
+    const firstRead = new Promise(resolve => { started = resolve; });
+    control.deferRead = () => { started(); return pending; };
+    try {
+        await page.getByRole('button', { name: l('open'), exact: true }).click();
+        await firstRead;
+        const dialog = page.getByRole('dialog');
+        await dialog.getByRole('button', { name: l('close'), exact: true }).click();
+        await page.getByRole('button', { name: l('open'), exact: true }).click();
+        await dialog.getByLabel(l('titleField'), { exact: true }).fill('Conserva questa bozza');
+        await dialog.getByRole('button', { name: l('addAction'), exact: true }).click();
+        const response = page.waitForResponse(r => r.url().endsWith('/visual-tools') && r.request().method() === 'GET');
+        release(); await response;
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        assert.equal(await dialog.locator('article input').count(), 1);
+        assert.equal(await dialog.locator('article input').inputValue(), 'Conserva questa bozza');
+        assert.deepEqual(control.errors, []);
+    } finally { release(); await context.close(); }
 });

@@ -41,9 +41,9 @@ composer for review before sending.
 - 104 frontend unit tests; TypeScript; six-language checks; ESLint (only four existing warnings).
 - 24 targeted backend tests: ownership, bounded data, revision conflicts, persistence,
   final PDF compatibility and multi-page content.
-- Eight visual-workspace browser cases, including 320/390/1440px, Italian/German/English,
-  dark mode, keyboard focus, undo, network failures, conflicts, PDF retry, OpenCode
-  and completed-session behavior. Fourteen existing artifact cases also pass.
+- Nine visual-workspace browser cases, including 320/390/1440px, Italian/German/English,
+  dark mode, keyboard focus, undo, network failures, conflicts, PDF retry, OpenCode,
+  completed-session behavior, and an out-of-order response after closing/reopening. Fourteen existing artifact cases also pass.
 - Actual screenshots inspected for mobile/desktop and the generated PDF.
 - Our two integration files apply cleanly to a read-only snapshot of the prompt
   agent's in-progress files. No file in that worktree was edited.
