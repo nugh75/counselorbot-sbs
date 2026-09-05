@@ -86,3 +86,32 @@ Only the frontend was rebuilt and recreated, using
 Local HTTP 200 and unauthenticated public HTTP 302 were verified. Backend and
 PostgreSQL container IDs and start times are unchanged. The previous
 `mobile-compact-20260905` image is retained.
+
+## Follow-up: desktop tools and shared kebab menus
+
+The user's subsequent choice moves all desktop message actions into the same
+compact menu used on mobile. Both message and conversation menus now use
+vertical dots (kebab), superseding the horizontal orientation above.
+In the desktop message menu, Visual tools replaces Create a card and explicitly
+opens Actions. Mobile retains the message-to-card action. Opening Actions after
+visiting another tab preserves the unsubmitted draft and creates no entries.
+
+The VisualTools window now fills the viewport on desktop and mobile, with its
+header/close control and footer outside the scrolling content. Sidebar panels
+have matching borders and heading styles; the recommendation stripe and active
+step's decorative ring are removed. Guides were updated in all six languages.
+
+Validation: 104 unit tests and 60 production browser fixture tests passed.
+The latter verify full viewport bounds at 320, 390 and 1440 px, menu placement,
+opening Actions after Cards, draft preservation, and the existing visual,
+diagram, recommendation and chat workflows. Light desktop and dark mobile
+screenshots were inspected. Lint has no errors and the same four existing
+warnings; TypeScript and the Docker build passed. Browser APIs remain mocked.
+
+Only the frontend was recreated from
+`counselorbot-10-step-frontend:desktop-tools-20260905`, with image ID
+`sha256:40a1b9d0436431c277b890060e6d38234ee898631bb05c4ba96c39f4f0bf7e5b`.
+The compose override is `/tmp/cb-desktop-tools-deploy.yml`. Local HTTP 200,
+unauthenticated public HTTP 302 and normal container startup were verified.
+Backend and PostgreSQL container IDs/start times are unchanged; the previous
+`mobile-windows-20260905` image is retained.

@@ -100,6 +100,8 @@ for (const options of [{ width: 320, locale: 'it', touch: true }, { width: 390, 
             await openVisual(page, l('open'));
             const dialog = page.getByRole('dialog', { name: l('title'), exact: true });
             await dialog.getByText(l('emptyBoard'), { exact: true }).waitFor();
+            const bounds = await dialog.boundingBox();
+            assert.deepEqual({ x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }, { x: 0, y: 0, width: options.width, height: 844 }, 'visual tools fill the viewport');
             await dialog.getByLabel(l('titleField'), { exact: true }).fill('Studiare un capitolo');
             await dialog.getByLabel(l('detail'), { exact: true }).fill('Venti minuti e poi richiamo libero');
             await dialog.getByRole('button', { name: l('addAction'), exact: true }).click();
@@ -189,6 +191,40 @@ test('failed writes and revision conflicts retain the local draft', async () => 
         page.once('dialog', d => d.accept());
         await dialog.getByRole('button', { name: l('reload'), exact: true }).click();
         await dialog.getByText(l('emptyBoard'), { exact: true }).waitFor();
+        assert.deepEqual(control.errors, []);
+    } finally { await context.close(); }
+});
+
+test('desktop message kebab opens full-page visual tools on Actions and preserves drafts', async () => {
+    const { page, context, control } = await fixture(1440);
+    const l = key => visualLabel('it', key);
+    try {
+        assert.equal(await page.getByRole('button', { name: l('organize'), exact: true }).count(), 0);
+        assert.equal(await page.getByRole('button', { name: 'Diagramma', exact: true }).count(), 0);
+        const trigger = page.getByRole('button', { name: chatLayoutLabel('it', 'messageActions'), exact: true });
+        const menu = page.getByRole('group', { name: chatLayoutLabel('it', 'messageActions'), exact: true });
+        await trigger.click();
+        const dots = await trigger.locator('svg circle').evaluateAll(elements => elements.map(el => [el.getAttribute('cx'), el.getAttribute('cy')]));
+        assert.equal(dots.length, 3);
+        assert.equal(new Set(dots.map(dot => dot[0])).size, 1);
+        assert.equal(new Set(dots.map(dot => dot[1])).size, 3);
+        await menu.getByRole('button', { name: l('title'), exact: true }).click();
+        const dialog = page.getByRole('dialog', { name: l('title'), exact: true });
+        await dialog.getByLabel(l('titleField'), { exact: true }).fill('Una bozza ancora da completare');
+        assert.equal(await dialog.getByRole('tab', { name: l('board'), exact: true }).getAttribute('aria-selected'), 'true');
+        assert.equal(await menu.isVisible(), false);
+        await dialog.getByRole('tab', { name: l('cards'), exact: true }).click();
+        await dialog.getByRole('button', { name: l('close'), exact: true }).click();
+        await dialog.waitFor({ state: 'detached' });
+        assert.equal(await trigger.evaluate(el => el === document.activeElement), true);
+        await trigger.click();
+        await menu.getByRole('button', { name: l('title'), exact: true }).click();
+        await dialog.getByLabel(l('titleField'), { exact: true }).waitFor();
+        assert.equal(await dialog.getByRole('tab', { name: l('board'), exact: true }).getAttribute('aria-selected'), 'true');
+        assert.equal(await dialog.getByLabel(l('titleField'), { exact: true }).inputValue(), 'Una bozza ancora da completare');
+        const bounds = await dialog.boundingBox();
+        assert.deepEqual(bounds, { x: 0, y: 0, width: 1440, height: 844 });
+        assert.equal(control.requests.some(r => r.method !== 'GET' && r.path !== '/api/session/freeze'), false);
         assert.deepEqual(control.errors, []);
     } finally { await context.close(); }
 });

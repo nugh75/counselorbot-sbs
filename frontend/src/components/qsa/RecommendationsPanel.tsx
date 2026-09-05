@@ -125,7 +125,7 @@ export function RecommendationsPanel({
 
     return (
         <section
-            className="glass-panel overflow-hidden border-l-4 border-l-indigo-400"
+            className="glass-panel overflow-hidden"
             aria-label={t('recommendations.title')}
         >
             <button

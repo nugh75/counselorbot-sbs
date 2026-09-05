@@ -30,7 +30,7 @@ import { IdeaWorkspace } from '@/components/qsa/IdeaWorkspace';
 import { RecommendationsPanel } from '@/components/qsa/RecommendationsPanel';
 import { ChatWorkspace } from '@/components/qsa/ChatWorkspace';
 import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
-import { VisualTools } from '@/components/visual/VisualTools';
+import { VisualTools, type VisualToolsRequest } from '@/components/visual/VisualTools';
 import { Button } from '@/components/ui/Button';
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import {
@@ -523,7 +523,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const [showAdvanceSuggestion, setShowAdvanceSuggestion] = useState(false);
     const [userMessagesInPhase, setUserMessagesInPhase] = useState(0);
     const [recommendations, setRecommendations] = useState<RecommendationCatalog>(EMPTY_RECOMMENDATIONS);
-    const [visualRequest, setVisualRequest] = useState<{ text?: string; nonce: number } | null>(null);
+    const [visualRequest, setVisualRequest] = useState<VisualToolsRequest | null>(null);
     const [savedDiagrams, setSavedDiagrams] = useState<Record<string, SavedMessageDiagram>>({});
     // Indici dei messaggi con il box "Ragionamento" collassato (toggle per nasconderlo).
     const [hiddenReasoning, setHiddenReasoning] = useState<Set<number>>(new Set());
@@ -1559,7 +1559,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 <div hidden={isIdea || (mobilePanel !== null && mobilePanel !== 'path')} className="glass-panel overflow-hidden">
                     <div id="guided-path-panel" className="space-y-3 p-4">
                         <div className="hidden items-center justify-between lg:flex">
-                            <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">{t('guided.path')}</h3>
+                            <h3 className="text-sm font-semibold text-slate-700">{t('guided.path')}</h3>
                             <span className="text-xs text-slate-500">{currentStepIndex}/{totalSteps}</span>
                         </div>
 
@@ -1577,7 +1577,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                 )}>
                                     <div className={cn(
                                         "w-4 h-4 rounded-full flex items-center justify-center text-[8px] border",
-                                        isActive ? `${phaseColors.border} ${phaseColors.iconBg} ${phaseColors.ring} text-white ring-4` :
+                                        isActive ? `${phaseColors.border} ${phaseColors.iconBg} text-white` :
                                             isDone ? `${phaseColors.border} ${phaseColors.iconBg} text-white` : `${phaseColors.border} bg-white`
                                     )}>
                                         {isDone ? <CheckCircle2 className="w-2.5 h-2.5" /> : phaseIndex + 1}
@@ -1756,9 +1756,12 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                 savedDiagrams={savedDiagrams}
                                                 onSaved={diagram => setSavedDiagrams(previous => ({ ...previous, [diagram.source_key]: diagram }))}
                                                 disabled={isLoading}
-                                                renderTrigger={(toggleDiagram, diagramOpen) => <ChatActionsPopover label={chatLayoutLabel(activeLocale, 'messageActions')} inlineDesktop>
+                                                renderTrigger={(toggleDiagram, diagramOpen) => <ChatActionsPopover label={chatLayoutLabel(activeLocale, 'messageActions')}>
                                                     {close => <>
-                                                        <button type="button" className={messageActionClass} disabled={isLoading} onClick={() => {
+                                                        <button type="button" className={`${messageActionClass} hidden lg:flex`} disabled={isLoading} onClick={() => {
+                                                            close(); setVisualRequest({ tab: 'board', nonce: Date.now() });
+                                                        }}><LayoutList className="h-4 w-4 shrink-0" aria-hidden="true" />{visualLabel(activeLocale, 'title')}</button>
+                                                        <button type="button" className={`${messageActionClass} lg:hidden`} disabled={isLoading} onClick={() => {
                                                             close();
                                                             setVisualRequest({ text: diagramContentForSpeech(msg.content) || msg.content, nonce: Date.now() });
                                                         }}><Layers className="h-4 w-4 shrink-0" aria-hidden="true" />{visualLabel(activeLocale, 'organize')}</button>

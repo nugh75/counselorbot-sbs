@@ -11,13 +11,14 @@ import { visualLabel } from '@/lib/i18n-visual-tools';
 import { emptyWorkspace, removeCriterion, removeOption, setCell, workspaceText, type ActionStage, type CardBucket, type SavedWorkspace, type VisualWorkspace } from '@/lib/visual-tools';
 
 type Tab = 'board' | 'comparison' | 'cards';
+export type VisualToolsRequest = { text?: string; tab?: Tab; nonce: number };
 type Props = {
     sessionId: string;
     locale: string;
     compact?: boolean;
     catalog?: RecommendationCatalog;
     onDiscuss?: (text: string) => void;
-    request?: { text?: string; nonce: number } | null;
+    request?: VisualToolsRequest | null;
 };
 const inputClass = 'w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] text-slate-800';
 const buttonClass = 'min-h-[44px] min-w-[44px]';
@@ -94,7 +95,7 @@ function WorkspaceView({ sessionId, locale, compact = false, catalog: providedCa
         opener.current = document.activeElement as HTMLElement;
         if (request.text !== undefined) {
             setDraftCard(request.text); setCardSource(visualLabel(locale, 'fromChat')); setTab('cards');
-        }
+        } else if (request.tab) setTab(request.tab);
         setOpen(true);
     }, [request, locale]);
     useEffect(() => {
@@ -182,8 +183,8 @@ function WorkspaceView({ sessionId, locale, compact = false, catalog: providedCa
                 <LayoutList className="h-4 w-4 shrink-0" aria-hidden="true" />{l(compact ? 'tools' : 'title')}{dirty && <span aria-label={l('unsaved')}>•</span>}
             </Button>
         </Tooltip>
-        {open && createPortal(<div className="fixed inset-0 z-[85] flex justify-end bg-slate-950/60 p-1 sm:p-3">
-            <section ref={dialog} role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} className="flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+        {open && createPortal(<div className="fixed inset-0 z-[85] flex bg-white">
+            <section ref={dialog} role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-white">
                 <header className="shrink-0 border-b border-slate-200 p-3 sm:p-4">
                     <div className="flex items-start justify-between gap-2">
                         <div><h2 id={`${id}-title`} className="text-lg font-semibold text-slate-800">{l('title')}</h2><p className="mt-1 hidden text-sm text-slate-600 sm:block">{l('working')}</p></div>
