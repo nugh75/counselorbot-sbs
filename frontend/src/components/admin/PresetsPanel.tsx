@@ -5,7 +5,7 @@ import { Plus, Pencil, Trash2, Check, X, RefreshCw, List } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 
 const PROVIDERS = [
-    'openai', 'anthropic', 'gemini', 'mistral', 'openrouter',
+    'openai', 'anthropic', 'gemini', 'mistral', 'openrouter', 'omniroute',
     'groq', 'cerebras', 'deepseek', 'together', 'fireworks', 'deepinfra',
     'ollama', 'llamacpp',
 ];

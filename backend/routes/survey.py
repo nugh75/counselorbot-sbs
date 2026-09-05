@@ -926,21 +926,8 @@ def _store_summary(
 
 
 def _summary_chunks(messages: list[dict], lang: str) -> list[str]:
-    """Divide la conversazione in scaglioni, senza mai tagliarne la coda.
-
-    Troncare ai primi caratteri buttava via proprio la fine, dove stanno le
-    decisioni. Anche un singolo messaggio molto lungo viene diviso in blocchi
-    limitati; le note vengono ridotte a livelli quando serve.
-    """
-    lines = [
-        f"{('Student' if msg.get('role') == 'student' else 'Counselor')}: "
-        f"{strip_for_speech(msg.get('text', ''), lang=lang).strip()}"
-        for msg in messages
-        if msg.get("text")
-    ]
-    transcript = "\n".join(lines)
-    return [transcript[start:start + _SUMMARY_CHUNK_CHARS]
-            for start in range(0, len(transcript), _SUMMARY_CHUNK_CHARS)]
+    from ..journey_context import transcript_chunks
+    return transcript_chunks(messages, lang, _SUMMARY_CHUNK_CHARS)
 
 
 _SUMMARY_SYSTEM_PROMPT = (
@@ -1111,7 +1098,8 @@ def canonical_summary(
         same_language = step_log and (step_log.details or {}).get("language") == lang
         choices_changed = any(item.get("status", "proposed") != "proposed" or item.get("helpful") is not None
                               for items in (recommendations or {}).values() for item in items)
-        if step_summary and same_language and not choices_changed and not _student_spoke_after(db, result.session_id, log_id):
+        full_coverage = step_log and (step_log.details or {}).get("journey_coverage") == "complete"
+        if step_summary and full_coverage and same_language and not choices_changed and not _student_spoke_after(db, result.session_id, log_id):
             _store_summary(
                 db, result=result, lang=lang, fingerprint=fingerprint,
                 summary=step_summary, source="guided_step", turn_count=len(messages),

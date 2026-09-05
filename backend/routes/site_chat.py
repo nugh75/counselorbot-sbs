@@ -19,6 +19,7 @@ from starlette.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models, model_pricing
+from ..prompt_contract import persona_context
 from ..ai_service import AIService, AIError
 from ..chat_logic import (
     _apply_language_directive,
@@ -340,7 +341,7 @@ async def site_chat_stream(
     # Counselor AI: anteponi la persona al system prompt, se selezionato.
     c_persona, c_name = _resolve_counselor(db, request.counselor_id)
     if c_persona:
-        system_prompt = f"{c_persona.strip()}\n\n{system_prompt}"
+        system_prompt = f"{persona_context(c_persona, c_name)}\n\n{system_prompt}"
     system_prompt = _apply_response_length_directive(system_prompt, request.response_length)
     max_tokens = _response_length_max_tokens(request.response_length, request.max_tokens)
     top_k = _top_k(ai_service)
@@ -381,18 +382,20 @@ async def site_chat_stream(
     def _log_and_persist(answer: str, sources: list[str], usage: dict | None = None) -> str | None:
         """Logga l'interazione, aggiorna la memoria conversazionale e crea il
         candidato per il 'mi piace'. Ritorna response_id (per l'evento done)."""
+        actual_provider = getattr(ai_service, "last_provider", None) or provider
+        actual_model = getattr(ai_service, "last_model", None) or model
         log_db = database.SessionLocal()
         response_id = None
         try:
-            cost_usd = _usage_cost_usd(usage, provider, model)
+            cost_usd = _usage_cost_usd(usage, actual_provider, actual_model)
             log_entry = models.Log(
                 session_id=session_id,
                 conversation_id=conversation_id,
                 action="site_chat",
                 username=current_user.get("username") or None,
                 email=current_user.get("email") or None,
-                provider=provider,
-                model_name=model,
+                provider=actual_provider,
+                model_name=actual_model,
                 cost_usd=cost_usd,
                 questionnaire_type=_SITE_QTYPE,
                 phase=request.audience or None,
@@ -402,8 +405,9 @@ async def site_chat_stream(
                     "question": question,
                     "answer": answer,
                     "sources": sources,
-                    "provider": provider,
-                    "model": model,
+                    "provider": actual_provider,
+                    "model": actual_model,
+                    "model_attempts": getattr(ai_service, "last_attempts", []),
                     "n_results": len(results) if results else 0,
                     "usage": usage,
                     "response_length": request.response_length,

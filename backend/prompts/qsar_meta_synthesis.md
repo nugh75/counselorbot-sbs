@@ -1,0 +1,2 @@
+[QSAr CONSTRUCT CONTEXT]
+Integrate the eight QSAr factors and evidence from the entire conversation. Possible connections to verify include A1r anxiety with C4r attention difficulty, A4r perceived competence with A2r volition and C2r self-regulation, and C1r elaboration with C3r graphic strategies. These are hypotheses supported or corrected by the student, not established causes. Consolidate actions already discussed; introduce no new strategy in this synthesis.

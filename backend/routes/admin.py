@@ -41,6 +41,7 @@ _KNOWN_LOG_PROVIDERS = {
     "gemini",
     "mistral",
     "openrouter",
+    "omniroute",
     "ollama",
     "llamacpp",
     "opencode",
@@ -1136,6 +1137,11 @@ async def create_or_update_config(config: schemas.ConfigCreate, current_user: mo
             status_code=409,
             detail="Le chiavi API si modificano in ai4educ Console, pagina Segreti",
         )
+    from ..model_context import validate_routing_config
+    try:
+        validate_routing_config(config.key, config.value)
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     db_config = db.query(models.Config).filter(models.Config.key == config.key).first()
     if db_config:
         db_config.value = config.value

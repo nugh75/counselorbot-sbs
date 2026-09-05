@@ -415,6 +415,8 @@ def _guided_prompt_markdown(
     locale: str,
 ) -> str:
     """Esporta la guida effettiva usata dalla chat guidata per lo strumento."""
+    from ..chat_logic import _apply_global_directives, _instrument_meta_system_prompt, _step_allows_practical_advice
+    from ..prompt_contract import turn_contract
     _ensure_questionnaire_guided_steps(db, questionnaire_type)
     steps = (
         db.query(models.GuidedStep)
@@ -433,9 +435,17 @@ def _guided_prompt_markdown(
         prompt_key, system_prompt = _resolve_system_prompt(
             ai_service, step.system_prompt_mode, step.id, db
         )
-        system_prompt = _apply_language_directive(system_prompt, locale, db=db)
+        system_prompt = _apply_global_directives(system_prompt, locale, db=db)
         system_prompt = _apply_qsa_factor_directive(
             system_prompt, questionnaire_type, locale
+        )
+        meta = _instrument_meta_system_prompt(db, questionnaire_type, step.id)
+        if meta:
+            system_prompt += "\n\n" + meta
+        system_prompt += "\n\n" + turn_contract(
+            language=locale, questionnaire_type=questionnaire_type, phase=step.id,
+            advice_allowed=_step_allows_practical_advice(step.system_prompt_mode, step.id),
+            synthesis=step.system_prompt_mode.endswith("-summary"),
         )
         sections.extend([
             f"## {step.sort_order}. {step.label}",
