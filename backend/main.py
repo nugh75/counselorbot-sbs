@@ -81,6 +81,7 @@ from .routes import frozen_sessions as frozen_sessions_routes
 from .routes import idea_map as idea_map_routes
 from .routes import skills as skills_routes
 from .routes import diagram as diagram_routes
+from .routes import visual_tools as visual_tools_routes
 from .routes import institutions as institutions_routes
 from .routes import orientation_referrals as orientation_referrals_routes
 
@@ -1753,6 +1754,7 @@ app.include_router(certified_readings_routes.router)
 app.include_router(research_contacts_routes.router)
 app.include_router(skills_routes.router)
 app.include_router(diagram_routes.router)
+app.include_router(visual_tools_routes.router)
 app.include_router(administration_plans_routes.router)
 app.include_router(assistant_questions_routes.router)
 app.include_router(rag_docs_routes.router)

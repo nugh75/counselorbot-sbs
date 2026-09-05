@@ -16,6 +16,7 @@ from ..strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_me
 from ..pdf_generator import generate_questionnaire_pdf, generate_student_booklet_pdf
 from ..diagram_blocks import strip_for_speech
 from ..message_diagrams import attach_message_diagrams
+from ..visual_tools import load_workspace
 from ..ai_service import AIService
 from .. import scoring_service, recommendation_service
 from .. import content_version_service, i18n_fields
@@ -1209,6 +1210,7 @@ async def download_questionnaire_pdf(
         messages=inputs["messages"] or None,
         summary_text=summary_text,
         recommendations=inputs["recommendations"],
+        visual_workspace=load_workspace(db, result.session_id, result.username or "")["workspace"],
         mode="brief" if brief else "full",
     )
 
