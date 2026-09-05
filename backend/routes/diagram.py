@@ -7,7 +7,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
@@ -54,7 +54,7 @@ SPEC_ONLY_SYSTEM_PROMPT = (
     "drawing really splits in two. "
     # Il disegno esce dalla chat: schermo intero, PNG di Telegram, PDF. La nota
     # e' l'unica cosa che va con lui.
-    "note is one sentence drawn under the diagram: what the drawing shows or how to read it, "
+    "note is one sentence of at most 200 characters drawn under the diagram: what the drawing shows or how to read it, "
     "never a list of the nodes. Write it whenever the drawing would say little to someone who "
     "has not read the text; leave it out when the title already carries the whole point. "
     "Write the title, the note and every label in the language of the text "
@@ -219,28 +219,48 @@ async def diagram_from_message(
         # restare addosso al successivo.
         ai_service = AIService(db)
         _apply_counselor_overrides(ai_service, dt, rb)
-        try:
-            reply = await run_in_threadpool(
-                ai_service.call_model,
-                provider=provider,
-                model=model,
-                user_message=_spec_request(request),
-                system_prompt=SPEC_ONLY_SYSTEM_PROMPT,
-                max_tokens=700,
-            )
-            spec = parse_spec(_json_object(reply))
+        system_prompt = SPEC_ONLY_SYSTEM_PROMPT
+        for attempt in range(2):
+            try:
+                reply = await run_in_threadpool(
+                    ai_service.call_model,
+                    provider=provider,
+                    model=model,
+                    user_message=_spec_request(request),
+                    system_prompt=system_prompt,
+                    max_tokens=2400,
+                )
+                spec = parse_spec(_json_object(reply))
+                break
+            except AIError as exc:
+                logger.warning("Diagramma: %s/%s non disponibile: %s", provider, model, exc)
+                unavailable = True
+                break
+            except DiagramSpecError as exc:
+                unavailable = False
+                # A usable JSON object can still violate a label limit. Give
+                # the model one correction attempt; never truncate its meaning.
+                cause = exc.__cause__
+                issues = cause.errors(include_input=False, include_url=False) if isinstance(cause, ValidationError) else []
+                logger.warning("Diagramma non valido da %s/%s (tentativo %s): %s",
+                               provider, model, attempt + 1, [issue["type"] for issue in issues] or ["missing_json"])
+                if attempt or not issues:
+                    break
+                feedback = "; ".join(f"{'.'.join(map(str, issue['loc']))}: {issue['msg']}" for issue in issues)
+                system_prompt = SPEC_ONLY_SYSTEM_PROMPT + (
+                    " Your previous output failed validation: " + feedback +
+                    ". Generate a new complete JSON object from the source. "
+                    "Keep labels concise: node labels and title <= 80 characters, "
+                    "edge labels <= 40 characters, note <= 200 characters. "
+                    "Shorten wording without changing its meaning; omit optional edge labels if unnecessary."
+                )
+        if spec is not None:
             break
-        except AIError as exc:
-            logger.warning("Diagramma: %s/%s non disponibile: %s", provider, model, exc)
-            unavailable = True
-        except DiagramSpecError as exc:
-            logger.info("Diagramma scartato da %s/%s: %s", provider, model, exc)
-            unavailable = False
 
     if spec is None:
         raise HTTPException(
-            status_code=503 if unavailable else 422,
-            detail="diagram model unavailable" if unavailable else "the text does not yield a diagram",
+            status_code=503 if unavailable else 502,
+            detail="diagram model unavailable" if unavailable else "diagram model returned an invalid specification",
         )
 
     if request.session_id and owner:
