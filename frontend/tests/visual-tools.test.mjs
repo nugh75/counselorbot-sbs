@@ -463,6 +463,46 @@ for (const options of [{ width: 320, locale: 'it', touch: true }, { width: 390, 
     });
 }
 
+test('the conversation menu toggles the desktop sidebar and remembers its visibility', async () => {
+    const { page, context, control } = await fixture(1440);
+    const l = key => chatLayoutLabel('it', key);
+    try {
+        const panel = page.getByRole('complementary', { name: l('panelTitle'), exact: true });
+        const chat = page.getByRole('region', { name: 'CounselorBot AI', exact: true });
+        const trigger = page.getByRole('button', { name: l('options'), exact: true });
+        const composer = page.locator('#guided-composer');
+        const togglePanel = async () => {
+            await trigger.click();
+            await page.locator('[popover]:popover-open').getByRole('button', { name: new RegExp(`^${l('panelTitle')}`) }).click();
+        };
+        await panel.waitFor();
+        const original = await chat.boundingBox();
+        const panelWidth = (await panel.boundingBox()).width;
+        await composer.fill('Una bozza da conservare');
+        await togglePanel();
+        await panel.waitFor({ state: 'hidden' });
+        assert.equal(await page.locator('[popover]:popover-open').count(), 0);
+        assert.equal(await trigger.evaluate(el => el === document.activeElement), true);
+        assert.ok((await chat.boundingBox()).width > original.width + 250);
+        assert.equal(await composer.inputValue(), 'Una bozza da conservare');
+        await page.goto(`${origin}/?frozen=fixture`, { waitUntil: 'networkidle' });
+        await composer.waitFor();
+        assert.equal(await panel.isVisible(), false, 'the menu saves the collapsed preference');
+        await composer.fill('Riprendo la bozza');
+        await togglePanel();
+        await panel.waitFor();
+        await page.waitForFunction(() => document.activeElement?.tagName === 'ASIDE');
+        assert.equal((await panel.boundingBox()).width, panelWidth);
+        assert.equal((await chat.boundingBox()).width, original.width);
+        assert.equal(await composer.inputValue(), 'Riprendo la bozza');
+        await page.goto(`${origin}/?frozen=fixture`, { waitUntil: 'networkidle' });
+        await panel.waitFor();
+        assert.ok(await panel.isVisible(), 'the menu saves the expanded preference');
+        assert.equal(control.requests.some(r => r.path === '/api/chat/stream'), false);
+        assert.deepEqual(control.errors, []);
+    } finally { await context.close(); }
+});
+
 test('a single separator resizes the sidebar with keyboard and pointer and remembers preferences', async () => {
     const { page, context, control } = await fixture(1440);
     const l = key => chatLayoutLabel('it', key);

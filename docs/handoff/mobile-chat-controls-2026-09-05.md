@@ -143,3 +143,21 @@ Override: `/tmp/cb-single-menu-deploy.yml`. Local HTTP 200, unauthenticated publ
 HTTP 302 and normal startup were verified. Backend and PostgreSQL container
 IDs/start times are unchanged. The previous `desktop-tools-20260905` image is
 retained. The separate worktree on `feat/chat-workspace-layout` was not modified.
+
+## Correction: toggle the sidebar from the conversation menu
+
+On desktop, Path and resources now toggles the sidebar instead of always opening
+it. Closing keeps focus on the conversation menu trigger; reopening focuses the
+sidebar. Saved visibility and width, composer drafts and mobile dialogs are
+preserved.
+
+Validation: the new browser regression reproduced the deployed bug before the
+fix. It now passes, alongside 11 relevant desktop/mobile browser checks, against
+the production image with mocked APIs. Localization, lint (four existing
+warnings, no errors), TypeScript and the Docker build passed.
+
+Deployed frontend: `counselorbot-10-step-frontend:sidebar-toggle-20260905`, image
+`sha256:506b389a6cac322d35b648d11e7903b1c7756dd5000a14159104b862d4fb73a7`.
+Override: `/tmp/cb-sidebar-toggle-deploy.yml`. Local HTTP 200, unauthenticated
+public HTTP 302 and normal startup were verified. Backend and PostgreSQL
+container IDs/start times are unchanged; the previous frontend image is retained.
