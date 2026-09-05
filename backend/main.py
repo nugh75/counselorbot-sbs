@@ -774,6 +774,7 @@ def _run_seed_and_migrations():
                 apply_diagram_node_mapping_policy,
                 apply_diagram_shapes_policy,
                 apply_diagram_symbol_policy,
+                apply_diagram_semantic_icons_policy,
                 apply_english_skill_instructions_policy,
                 apply_idea_focus_policy,
                 apply_idea_concept_policy,
@@ -795,6 +796,7 @@ def _run_seed_and_migrations():
             diagram_mapping_changed = apply_diagram_node_mapping_policy(db)
             diagram_shapes_changed = apply_diagram_shapes_policy(db)
             diagram_symbol_changed = apply_diagram_symbol_policy(db)
+            diagram_semantic_icons_changed = apply_diagram_semantic_icons_policy(db)
             idea_changed = apply_idea_focus_policy(db)
             idea_concept_changed = apply_idea_concept_policy(db)
             wayfinder_changed = apply_idea_wayfinder_policy(db)
@@ -804,6 +806,7 @@ def _run_seed_and_migrations():
                     or diagram_icons_changed or diagram_mapping_changed
                     or diagram_shapes_changed
                     or diagram_symbol_changed or idea_changed or idea_concept_changed or wayfinder_changed
+                    or diagram_semantic_icons_changed
                     or budget_changed):
                 logger.info("Seed skill completato")
         except Exception as e:

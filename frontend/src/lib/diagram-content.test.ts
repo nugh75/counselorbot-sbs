@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { parseDiagramSpec, splitDiagramContent } from './diagram-content.ts';
+import { DIAGRAM_ICONS, parseDiagramSpec, splitDiagramContent } from './diagram-content.ts';
 
 const CYCLE = {
     type: 'cycle',
@@ -13,6 +14,22 @@ const CYCLE = {
     ],
     edges: [{ from: 'a', to: 'b' }],
 };
+
+test('all 100 catalogued icons survive parsing alongside a node without an icon', () => {
+    const catalog = JSON.parse(readFileSync(new URL('../../../backend/diagram_icon_catalog.json', import.meta.url), 'utf8')) as { id: string }[];
+    assert.equal(catalog.length, 100);
+    assert.deepEqual(DIAGRAM_ICONS, catalog.map(entry => entry.id));
+    for (const { id } of catalog) {
+        const spec = parseDiagramSpec({ ...CYCLE, nodes: [
+            { id: 'a', label: 'Significato specifico', icon: id },
+            { id: 'b', label: 'Obiettivo non ancora raggiunto', icon: null, form: 'outcome' },
+        ] });
+        assert.equal(spec?.nodes[0].icon, id);
+        assert.equal(spec?.nodes[1].icon, undefined);
+        assert.equal(spec?.nodes[1].label, 'Obiettivo non ancora raggiunto');
+        assert.equal(spec?.nodes[1].form, 'outcome');
+    }
+});
 
 test('a declared form reaches the renderer', () => {
     const spec = parseDiagramSpec({
