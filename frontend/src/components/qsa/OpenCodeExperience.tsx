@@ -26,6 +26,7 @@ import { QuestionnaireConfig } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { isNearBottom } from '@/lib/chat-scroll';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
+import { VisualTools } from '@/components/visual/VisualTools';
 import '@xterm/xterm/css/xterm.css';
 
 interface OpenCodeExperienceProps {
@@ -684,12 +685,19 @@ export function OpenCodeExperience({
                                 </div>
                             ))}
                         </div>
+                        <div className="shrink-0 border-t border-slate-200 bg-white px-3 py-2">
+                            <VisualTools sessionId={sessionId} locale={locale} onDiscuss={text => {
+                                setInput(previous => previous.trim() ? `${previous}\n\n${text}` : text);
+                                window.requestAnimationFrame(() => document.getElementById('opencode-composer')?.focus());
+                            }} />
+                        </div>
                         <form onSubmit={submit} className="border-t border-slate-200 bg-white p-3 sm:p-4">
                             {error && messages.length > 0 && (
                                 <p className="text-xs text-rose-600 mb-2">{error}</p>
                             )}
                             <div className="flex min-w-0 items-end gap-2 rounded-xl border border-slate-300 bg-slate-50 p-2 focus-within:border-transparent focus-within:ring-2 focus-within:ring-indigo-500">
                                 <textarea
+                                    id="opencode-composer"
                                     value={input}
                                     onChange={event => setInput(event.target.value)}
                                     onKeyDown={onInputKeyDown}
