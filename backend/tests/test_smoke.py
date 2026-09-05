@@ -2899,6 +2899,12 @@ def test_chat_stream_and_resume_expose_the_sessions_recommendations():
     _set_config("skills_engine_enabled", "true")
     _set_config("skills_engine_instruments", json.dumps(list(SEEDED_INSTRUMENTS)))
 
+    original_stream = _FakeAIService.stream_response
+    def recommended_stream(self, *args, **kwargs):
+        text = 'Ti consiglio Manuale Zefiro.\n```recommendations\n' + json.dumps({'reading':[reading_slug], 'strategy':[]}) + '\n```'
+        for char in text:
+            yield {'type':'content', 'text':char}
+    _FakeAIService.stream_response = recommended_stream
     main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
     try:
         response = client.post("/chat/stream", json={
@@ -2917,6 +2923,9 @@ def test_chat_stream_and_resume_expose_the_sessions_recommendations():
             if line.startswith("data: ")
         ]
         done = next(event for event in events if event.get("done"))
+        assert all('```recommend' not in event.get('display', '') for event in events)
+        assert reading_slug not in ''.join(event.get('delta', '') for event in events)
+        assert reading_slug not in done['response']
         titles = {item["title"] for item in done["recommendations"]["reading"]}
         assert titles == {"Existing reading", "Manuale Zefiro"}
 
@@ -2924,6 +2933,7 @@ def test_chat_stream_and_resume_expose_the_sessions_recommendations():
         assert resumed.status_code == 200, resumed.text
         assert resumed.json() == done["recommendations"]
     finally:
+        _FakeAIService.stream_response = original_stream
         main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
         session_memory.clear(session_id)
         db = _TestSession()
@@ -3913,7 +3923,7 @@ def test_questionnaire_result_summary_uses_final_guided_step_for_every_instrumen
                         action="chat_message",
                         questionnaire_type=questionnaire_type,
                         phase=final_step.id,
-                        details={"bot_response": f"Sintesi finale {questionnaire_type}"},
+                        details={"bot_response": f"Sintesi finale {questionnaire_type}", "language": "it"},
                     ),
                     models.Log(
                         session_id=session_id,
@@ -3927,7 +3937,7 @@ def test_questionnaire_result_summary_uses_final_guided_step_for_every_instrumen
 
             response = client.get(f"/user/questionnaire-result/{session_id}/summary")
             assert response.status_code == 200, response.text
-            assert response.json() == {"summary": f"Sintesi finale {questionnaire_type}"}
+            assert response.json() == {"summary": f"Sintesi finale {questionnaire_type}", "status": "ready"}
     finally:
         with _TestSession() as db:
             db.query(models.Log).filter(models.Log.session_id.in_(session_ids)).delete(synchronize_session=False)
@@ -3966,7 +3976,7 @@ def test_qpcs_summary_ignores_a_later_legacy_step():
                     action="chat_message",
                     questionnaire_type="QPCS",
                     phase="qpcs-sintesi",
-                    details={"bot_response": "Sintesi finale QPCS"},
+                    details={"bot_response": "Sintesi finale QPCS", "language": "it"},
                 ),
                 models.Log(
                     session_id=session_id,
@@ -3980,7 +3990,7 @@ def test_qpcs_summary_ignores_a_later_legacy_step():
 
         response = client.get(f"/user/questionnaire-result/{session_id}/summary")
         assert response.status_code == 200, response.text
-        assert response.json() == {"summary": "Sintesi finale QPCS"}
+        assert response.json() == {"summary": "Sintesi finale QPCS", "status": "ready"}
     finally:
         with _TestSession() as db:
             db.query(models.Log).filter(models.Log.session_id == session_id).delete(synchronize_session=False)
@@ -4434,72 +4444,80 @@ def test_role_preview_impersonation_scopes_data_to_demo_account():
 
 def test_questionnaire_pdf_download():
     """Crea un risultato e verifica che il PDF sia scaricabile."""
-    r = client.post("/questionnaire-result", json={
-        "session_id": "pdf-test-session",
-        "questionnaire_type": "QSA",
-        "scores": {"C1": 8, "C2": 5, "C3": 2},
-    })
-    assert r.status_code == 200, r.text
-    r = client.get("/questionnaire-result/pdf-test-session/pdf")
-    assert r.status_code == 200, r.text
-    assert r.headers["content-type"] == "application/pdf"
-    assert len(r.content) > 100
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        r = client.post("/questionnaire-result", json={
+            "session_id": "pdf-test-session",
+            "questionnaire_type": "QSA",
+            "scores": {"C1": 8, "C2": 5, "C3": 2},
+        })
+        assert r.status_code == 200, r.text
+        r = client.get("/questionnaire-result/pdf-test-session/pdf")
+        assert r.status_code == 200, r.text
+        assert r.headers["content-type"] == "application/pdf"
+        assert len(r.content) > 100
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
 def test_questionnaire_pdf_download_generates_cached_ai_summary():
     """Il PDF include una sintesi AI cacheata quando esiste una conversazione."""
-    session_id = "pdf-summary-test-session"
-    client.post("/questionnaire-result", json={
-        "session_id": session_id,
-        "questionnaire_type": "SAVICKAS",
-        "scores": {},
-    })
-    db = _TestSession()
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
     try:
-        db.query(models.Log).filter(models.Log.session_id == session_id).delete()
-        db.add(models.Log(
-            session_id=session_id,
-            action="chat_message",
-            questionnaire_type="SAVICKAS",
-            details={
-                "user_input": "Voglio scegliere un percorso piu' coerente con i miei interessi.",
-                "bot_response": "Emerge il tema della curiosita' e della continuita'.",
-                "certified_strategy_ids": [],
-                "strategy_ids": [],
-            },
-        ))
-        db.commit()
+        session_id = "pdf-summary-test-session"
+        client.post("/questionnaire-result", json={
+            "session_id": session_id,
+            "questionnaire_type": "SAVICKAS",
+            "scores": {},
+        })
+        db = _TestSession()
+        try:
+            db.query(models.Log).filter(models.Log.session_id == session_id).delete()
+            db.add(models.Log(
+                session_id=session_id,
+                action="chat_message",
+                questionnaire_type="SAVICKAS",
+                details={
+                    "user_input": "Voglio scegliere un percorso piu' coerente con i miei interessi.",
+                    "bot_response": "Emerge il tema della curiosita' e della continuita'.",
+                    "certified_strategy_ids": [],
+                    "strategy_ids": [],
+                },
+            ))
+            db.commit()
+        finally:
+            db.close()
+
+        calls = []
+        original = survey_routes.AIService.get_response
+
+        def fake_summary(self, *args, **kwargs):
+            calls.append((args, kwargs))
+            return "## Sintesi della discussione\nHai riflettuto su interessi e continuita'.\n\n## Strategie suggerite\nProva un primo passo concreto."
+
+        survey_routes.AIService.get_response = fake_summary
+        try:
+            first = client.get(f"/questionnaire-result/{session_id}/pdf?lang=it")
+            second = client.get(f"/questionnaire-result/{session_id}/pdf?lang=it")
+        finally:
+            survey_routes.AIService.get_response = original
+
+        assert first.status_code == 200, first.text
+        assert second.status_code == 200, second.text
+        assert len(calls) == 1
+
+        db = _TestSession()
+        try:
+            cached = db.query(models.Log).filter(
+                models.Log.session_id == session_id,
+                models.Log.action == survey_routes.PDF_SUMMARY_ACTION,
+            ).all()
+            assert len(cached) == 1
+            assert "Strategie" in cached[0].details["summary"]
+        finally:
+            db.close()
     finally:
-        db.close()
-
-    calls = []
-    original = survey_routes.AIService.get_response
-
-    def fake_summary(self, *args, **kwargs):
-        calls.append((args, kwargs))
-        return "## Sintesi della discussione\nHai riflettuto su interessi e continuita'.\n\n## Strategie suggerite\nProva un primo passo concreto."
-
-    survey_routes.AIService.get_response = fake_summary
-    try:
-        first = client.get(f"/questionnaire-result/{session_id}/pdf?lang=it")
-        second = client.get(f"/questionnaire-result/{session_id}/pdf?lang=it")
-    finally:
-        survey_routes.AIService.get_response = original
-
-    assert first.status_code == 200, first.text
-    assert second.status_code == 200, second.text
-    assert len(calls) == 1
-
-    db = _TestSession()
-    try:
-        cached = db.query(models.Log).filter(
-            models.Log.session_id == session_id,
-            models.Log.action == survey_routes.PDF_SUMMARY_ACTION,
-        ).all()
-        assert len(cached) == 1
-        assert "Strategie" in cached[0].details["summary"]
-    finally:
-        db.close()
+        main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
 def test_qsa_extractor_rejects_incomplete_scores():
@@ -6474,7 +6492,10 @@ def test_skills_chat_uses_certified_advice_only_for_every_supported_instrument()
         assert response.status_code == 200, response.text
         body = response.json()
         assert body["strategy_ids"] == []
-        assert len(body["certified_strategy_ids"]) == 1, (
+        # The stub makes no proposal: candidates stay available to the model,
+        # but do not become user recommendations merely by being retrieved.
+        assert body["certified_strategy_ids"] == []
+        assert len(_latest_log_details(f"skills-policy-{questionnaire_type.lower()}")["certified_strategy_ids"]) == 1, (
             questionnaire_type,
             body,
         )

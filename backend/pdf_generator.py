@@ -3,6 +3,7 @@ from datetime import datetime
 from io import BytesIO
 import logging
 from pathlib import Path
+import re
 
 from fpdf import FPDF
 from fpdf.enums import MethodReturnValue
@@ -10,6 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from .diagram_blocks import segments as diagram_segments
 from .diagram_render import DiagramSpec, DiagramSpecError, describe, render as render_diagram
+from .reading_frame import frame as reading_labels
 
 logger = logging.getLogger(__name__)
 
@@ -322,6 +324,11 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "summary": "Sintesi e consigli",
         "student": "Studente",
         "counselor": "Counselor",
+        "diagrams": "Diagrammi del percorso",
+        "chosen": "Scelta",
+        "tried": "Provata",
+        "helpful_yes": "Utile",
+        "helpful_no": "Non utile",
     },
     "en": {
         "title": "CounselorBot - Questionnaire Results",
@@ -342,6 +349,11 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "summary": "Summary and advice",
         "student": "Student",
         "counselor": "Counselor",
+        "diagrams": "Diagrams from the pathway",
+        "chosen": "Chosen",
+        "tried": "Tried",
+        "helpful_yes": "Helpful",
+        "helpful_no": "Not helpful",
     },
     "es": {
         "title": "CounselorBot - Resultados del Cuestionario",
@@ -362,6 +374,11 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "summary": "Resumen y consejos",
         "student": "Estudiante",
         "counselor": "Counselor",
+        "diagrams": "Diagramas del recorrido",
+        "chosen": "Elegida",
+        "tried": "Probada",
+        "helpful_yes": "Útil",
+        "helpful_no": "No útil",
     },
     "fr": {
         "title": "CounselorBot - Résultats du Questionnaire",
@@ -382,6 +399,11 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "summary": "Synthèse et conseils",
         "student": "Étudiant",
         "counselor": "Counselor",
+        "diagrams": "Schémas du parcours",
+        "chosen": "Choisie",
+        "tried": "Essayée",
+        "helpful_yes": "Utile",
+        "helpful_no": "Pas utile",
     },
     "de": {
         "title": "CounselorBot - Fragebogen-Ergebnisse",
@@ -402,6 +424,11 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "summary": "Zusammenfassung und Empfehlungen",
         "student": "Student",
         "counselor": "Counselor",
+        "diagrams": "Diagramme aus dem Verlauf",
+        "chosen": "Gewählt",
+        "tried": "Ausprobiert",
+        "helpful_yes": "Hilfreich",
+        "helpful_no": "Nicht hilfreich",
     },
     "sv": {
         "title": "CounselorBot - Frågeformulärsresultat",
@@ -422,6 +449,11 @@ UI_TEXT: dict[str, dict[str, str]] = {
         "summary": "Sammanfattning och råd",
         "student": "Student",
         "counselor": "Counselor",
+        "diagrams": "Diagram från vägledningen",
+        "chosen": "Vald",
+        "tried": "Prövad",
+        "helpful_yes": "Hjälpsam",
+        "helpful_no": "Inte hjälpsam",
     },
 }
 
@@ -580,8 +612,29 @@ def _ensure_space(pdf: FPDF, height: float) -> None:
         pdf.add_page()
 
 
-def _section_heading(pdf: FPDF, title: str, content_w: float) -> None:
-    _ensure_space(pdf, 12)
+# L'intestazione occupa la fascia alta di ogni pagina: il corpo comincia sotto.
+_BODY_TOP = 31.0
+# Sotto questa altezza un frammento di card non vale la pena: va a pagina nuova
+# intero. Sopra, la card comincia dov'e' e prosegue: cosi' un titolo non resta
+# mai da solo a fondo pagina.
+_MIN_CARD_FRAGMENT = 18.0
+
+
+def _body_height(pdf: FPDF) -> float:
+    return pdf.h - _BODY_TOP - pdf.b_margin - 2
+
+
+def _measure_card(pdf: FPDF, text: str, width: float) -> float:
+    """Altezza della card: il font deve essere gia' quello del corpo."""
+    return float(pdf.multi_cell(
+        width, 5, text, dry_run=True, output=MethodReturnValue.HEIGHT, padding=(3, 4),
+    ))
+
+
+def _section_heading(pdf: FPDF, title: str, content_w: float, keep_with: float = 22) -> None:
+    """Titolo di sezione. `keep_with` e' l'altezza del primo blocco che segue:
+    un titolo che entra a fondo pagina senza il suo contenuto non dice niente."""
+    _ensure_space(pdf, 12 + keep_with)
     x, y = pdf.l_margin, pdf.get_y()
     pdf.set_fill_color(*APP_PRIMARY_SOFT)
     pdf.set_draw_color(*APP_PRIMARY_BORDER)
@@ -591,6 +644,44 @@ def _section_heading(pdf: FPDF, title: str, content_w: float) -> None:
     pdf.set_text_color(*APP_PRIMARY)
     pdf.cell(content_w - 8, 7, _latin1(title), new_x="LMARGIN", new_y="NEXT")
     pdf.set_y(y + 12)
+
+
+def _wrap_blocks(pdf: FPDF, text: str, width: float) -> list[str]:
+    """Spezza il testo in pezzi che stanno in una pagina.
+
+    Una card piu' alta della pagina disegnava una cornice che finiva sotto il
+    piede: il testo continuava, il riquadro no.
+    """
+    return pdf.multi_cell(width, 5, text, dry_run=True,
+                          output=MethodReturnValue.LINES, padding=(3, 4))
+
+
+def _draw_card(
+    pdf: FPDF,
+    text: str,
+    card_w: float,
+    *,
+    fill: tuple[int, int, int],
+    border: tuple[int, int, int],
+    text_color: tuple[int, int, int],
+    inset: float,
+) -> None:
+    height = _measure_card(pdf, text, card_w)
+    x, y = pdf.l_margin + inset, pdf.get_y()
+    pdf.set_fill_color(*fill)
+    pdf.set_draw_color(*border)
+    pdf.rect(x, y, card_w, height, style="DF", round_corners=True, corner_radius=2.5)
+    pdf.set_xy(x, y)
+    pdf.set_text_color(*text_color)
+    pdf.multi_cell(
+        card_w,
+        5,
+        text,
+        new_x="LMARGIN",
+        new_y="NEXT",
+        padding=(3, 4),
+    )
+    pdf.set_y(y + height + 2)
 
 
 def _text_card(
@@ -608,30 +699,28 @@ def _text_card(
         return
     card_w = content_w - inset
     pdf.set_font("Helvetica", "", 9.5)
-    height = float(pdf.multi_cell(
-        card_w,
-        5,
-        cleaned,
-        dry_run=True,
-        output=MethodReturnValue.HEIGHT,
-        padding=(3, 4),
-    ))
-    _ensure_space(pdf, height + 2)
-    x, y = pdf.l_margin + inset, pdf.get_y()
-    pdf.set_fill_color(*fill)
-    pdf.set_draw_color(*border)
-    pdf.rect(x, y, card_w, height, style="DF", round_corners=True, corner_radius=2.5)
-    pdf.set_xy(x, y)
-    pdf.set_text_color(*text_color)
-    pdf.multi_cell(
-        card_w,
-        5,
-        cleaned,
-        new_x="LMARGIN",
-        new_y="NEXT",
-        padding=(3, 4),
-    )
-    pdf.set_y(y + height + 2)
+    page_h = _body_height(pdf)
+    if _measure_card(pdf, cleaned, card_w) + 2 <= pdf.h - pdf.b_margin - pdf.get_y():
+        _draw_card(pdf, cleaned, card_w, fill=fill, border=border, text_color=text_color, inset=inset)
+        return
+
+    blocks = _wrap_blocks(pdf, cleaned, card_w)
+    while blocks:
+        available = pdf.h - pdf.b_margin - pdf.get_y() - 2
+        if available < _MIN_CARD_FRAGMENT:
+            pdf.add_page()
+            continue
+        budget = min(available, page_h)
+        taken: list[str] = []
+        for index in range(len(blocks)):
+            if _measure_card(pdf, "\n".join(blocks[:index + 1]), card_w) > budget:
+                break
+            taken = blocks[:index + 1]
+        if not taken:
+            pdf.add_page()
+            continue
+        _draw_card(pdf, "\n".join(taken), card_w, fill=fill, border=border, text_color=text_color, inset=inset)
+        blocks = blocks[len(taken):]
 
 
 def _diagram_card(pdf: FPDF, spec: DiagramSpec, content_w: float, lang: str) -> None:
@@ -700,12 +789,11 @@ def _render_score_chart(
     payload = render_score_chart_png(questionnaire_type, scores, lang)
     if not payload:
         return
-    _section_heading(pdf, ui["score_chart"], content_w)
     with Image.open(BytesIO(payload)) as image:
         pixel_w, pixel_h = image.size
     image_w = content_w - 8
     image_h = image_w * pixel_h / pixel_w
-    _ensure_space(pdf, image_h + 8)
+    _section_heading(pdf, ui["score_chart"], content_w, keep_with=image_h + 8)
     x, y = pdf.l_margin + 4, pdf.get_y()
     pdf.image(BytesIO(payload), x=x, y=y, w=image_w, h=image_h, alt_text=ui["score_chart"])
     pdf.set_y(y + image_h + 5)
@@ -716,8 +804,22 @@ def _render_recommendations(
     recommendations: dict[str, list[dict]],
     ui: dict[str, str],
     content_w: float,
+    lang: str = "it",
 ) -> None:
-    readings = recommendations.get("reading") or []
+    labels = reading_labels(lang)
+    def active(items):
+        return sorted((item for item in items if item.get("status") != "dismissed"),
+                      key=lambda item: item.get("status") not in ("selected", "tried"))
+
+    def state(item):
+        parts = []
+        if item.get("status") in ("selected", "tried"):
+            parts.append(ui["chosen" if item["status"] == "selected" else "tried"])
+        if isinstance(item.get("helpful"), bool):
+            parts.append(ui["helpful_yes" if item["helpful"] else "helpful_no"])
+        return " · ".join(parts)
+
+    readings = active(recommendations.get("reading") or [])
     _section_heading(pdf, ui["readings"], content_w)
     if not readings:
         _text_card(pdf, ui["no_readings"], content_w, fill=APP_PAGE, border=APP_BORDER)
@@ -730,12 +832,31 @@ def _render_recommendations(
             heading += f" - {creators}"
         if year:
             heading += f" ({year})"
-        detail = item.get("why") or item.get("summary") or item.get("synopsis") or ""
+        details = []
+        seen = set()
+        for field in ("why", "summary", "synopsis"):
+            value = str(item.get(field) or "").strip()
+            if value and value not in seen:
+                details.append(f"{labels[field]}: {value}")
+                seen.add(value)
+        if item.get("languages"):
+            details.append(f"{labels['languages']}: " + ", ".join(item["languages"]))
+        if item.get("warning"):
+            details.append(f"{labels['warning']}: {item['warning']}")
         where = str(item.get("where") or "").strip()
-        body = "\n".join(part for part in (heading, str(detail).strip(), where) if part)
+        body = "\n".join(part for part in (heading, state(item), *details) if part)
         _text_card(pdf, body, content_w, fill=APP_PRIMARY_SOFT, border=APP_PRIMARY_BORDER)
+        if where:
+            _ensure_space(pdf, 12)
+            pdf.set_font("Helvetica", "", 9)
+            pdf.set_text_color(*APP_PRIMARY)
+            pdf.write(5, _latin1(labels['where'] + ": "))
+            for part in re.split(r'(https?://[^\s<>"\']+)', where):
+                url = part.rstrip(".,;)") if part.startswith(("http://", "https://")) else ""
+                pdf.write(5, _latin1(part), link=url)
+            pdf.ln(8)
 
-    strategies = recommendations.get("strategy") or []
+    strategies = active(recommendations.get("strategy") or [])
     _section_heading(pdf, ui["strategies"], content_w)
     if not strategies:
         _text_card(pdf, ui["no_strategies"], content_w, fill=APP_PAGE, border=APP_BORDER)
@@ -743,7 +864,7 @@ def _render_recommendations(
         name = str(item.get("name") or item.get("slug") or "").strip()
         detail = str(item.get("description") or "").strip()
         when = str(item.get("recommended_when") or "").strip()
-        body = "\n".join(part for part in (name, detail, when) if part)
+        body = "\n".join(part for part in (name, state(item), detail, when) if part)
         _text_card(pdf, body, content_w, fill=APP_PRIMARY_SOFT, border=APP_PRIMARY_BORDER)
 
 
@@ -803,6 +924,7 @@ def generate_questionnaire_pdf(
     messages: list[dict] | None = None,
     summary_text: str | None = None,
     recommendations: dict[str, list[dict]] | None = None,
+    mode: str = "full",
 ) -> BytesIO:
     """Genera un PDF dei risultati nella lingua selezionata, restituisce BytesIO.
 
@@ -838,13 +960,26 @@ def generate_questionnaire_pdf(
     )
     pdf.ln(2)
 
-    # Apertura operativa: prima il profilo visivo, poi i materiali consigliati
-    # e la sintesi; il dettaglio analitico e la trascrizione seguono dopo.
-    if scores:
-        _render_score_chart(pdf, questionnaire_type, scores, lang, ui, content_w)
-    _render_recommendations(pdf, recommendations or {}, ui, content_w)
+    # La sintesi e le scelte aprono il documento che lo studente porta con se'.
     if summary_text and summary_text.strip():
         _render_summary(pdf, summary_text.strip(), ui, content_w)
+    _render_recommendations(pdf, recommendations or {}, ui, content_w, lang)
+
+    if mode == "brief":
+        diagrams = [part for message in (messages or [])
+                    for part in diagram_segments(message.get("text") or "")
+                    if isinstance(part, DiagramSpec)]
+        if diagrams:
+            _section_heading(pdf, ui["diagrams"], content_w, keep_with=130)
+            for spec in diagrams:
+                _diagram_card(pdf, spec, content_w, lang)
+        pdf_bytes = BytesIO()
+        pdf.output(pdf_bytes)
+        pdf_bytes.seek(0)
+        return pdf_bytes
+
+    if scores:
+        _render_score_chart(pdf, questionnaire_type, scores, lang, ui, content_w)
 
     has_inverted = False
 

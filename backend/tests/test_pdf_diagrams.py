@@ -46,7 +46,7 @@ def test_summary_pdf_embeds_diagrams_from_the_conversation():
     assert b"Inter" in pdf
 
 
-def test_score_chart_is_a_png_and_precedes_recommendations_and_details():
+def test_summary_and_recommendations_precede_chart_and_details():
     chart = render_score_chart_png(
         questionnaire_type="QPCS",
         scores={"S1": 7, "S2": 5, "S3": 3, "S4": 6, "S5": 8},
@@ -73,4 +73,4 @@ def test_score_chart_is_a_png_and_precedes_recommendations_and_details():
     strategies_pos = text.index("Strategie consigliate")
     advice_pos = text.index("Sintesi e consigli")
     details_pos = text.index("Punteggi per fattore")
-    assert chart_pos < readings_pos < strategies_pos < advice_pos < details_pos
+    assert advice_pos < readings_pos < strategies_pos < chart_pos < details_pos

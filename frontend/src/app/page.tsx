@@ -12,6 +12,7 @@ import { ScoreInputForm } from '@/components/qsa/ScoreInputForm';
 import { PDFUploader } from '@/components/qsa/PDFUploader';
 import { ProfileVisualization } from '@/components/qsa/ProfileVisualization';
 import { GuidedChatInterface } from '@/components/qsa/GuidedChatInterface';
+import { SessionReport } from '@/components/qsa/SessionReport';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { ReturningHome } from '@/components/home/ReturningHome';
 import dynamic from 'next/dynamic';
@@ -214,13 +215,9 @@ export default function Home() {
     const [sessionId, setSessionId] = useState<string>('');
     const [pdfToken, setPdfToken] = useState<string | undefined>(undefined);
     const [experience, setExperience] = useState<'standard' | 'opencode' | null>(null);
-    // PDF finale inline: barra di avanzamento durante la preparazione, poi
-    // anteprima in un iframe sotto la card (niente pagina/download separati).
-    const [pdfLoading, setPdfLoading] = useState(false);
     // Apertura della chat in corso: tiene fermo il comando finché le due
     // scritture non sono andate.
     const [starting, setStarting] = useState(false);
-    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [frozenSnapshot, setFrozenSnapshot] = useState<FrozenSessionDetail | null>(null);
     const [savedResults, setSavedResults] = useState<SavedResult[] | null>(null);
     const [notebookUpdatedAt, setNotebookUpdatedAt] = useState<string | null | undefined>(undefined);
@@ -292,14 +289,6 @@ export default function Home() {
         window.addEventListener('popstate', onPopState);
         return () => window.removeEventListener('popstate', onPopState);
     }, []);
-
-    // Uscendo dalla schermata finale, libera l'object URL del PDF inline.
-    useEffect(() => {
-        if (step !== 'completed' && pdfUrl) {
-            window.URL.revokeObjectURL(pdfUrl);
-            setPdfUrl(null);
-        }
-    }, [step, pdfUrl]);
 
     // Sull'intro nessuno strumento è ancora in corso: il chip nell'header non
     // deve mostrarne uno rimasto da un percorso precedente. Il counselor invece
@@ -390,6 +379,8 @@ export default function Home() {
                 const profiles = getCompletedProfiles();
                 const profile = profiles.find((p) => p.sessionId === r.sessionId)
                     ?? profiles.find((p) => p.questionnaireType === r.instrument);
+                // Restore the persisted external session when entering the page.
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setSelectedQuestionnaire(q);
                 setSelectedInstrumentId(r.instrument);
                 if (r.counselorId != null) setSelectedCounselorId(r.counselorId);
@@ -455,6 +446,8 @@ export default function Home() {
         if (ready || entryClaimed.current) return;
         if (!identity?.authenticated) return;
         if (savedResults === null || notebookUpdatedAt === undefined) return;
+        // Choose the entry screen after the external profile requests resolve.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setStep(savedResults.length > 0 || notebookUpdatedAt ? 'base' : 'intro');
         setReady(true);
     }, [ready, identity, savedResults, notebookUpdatedAt]);
@@ -930,75 +923,16 @@ export default function Home() {
                                     </p>
                                 </div>
 
-                                {/* Tre comandi, un solo primario: il PDF è l'esito che si porta
-                                    via. Senza prefisso responsive le tre colonne restavano
-                                    affiancate anche a 360px, in tracce da ~95px. */}
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4">
+                                <SessionReport sessionId={sessionId} questionnaireType={selectedQuestionnaire?.id || 'QSA'} />
+                                <div className="grid grid-cols-1 gap-3 border-t border-slate-200 pt-4 sm:grid-cols-2">
                                     <Button variant="secondary" size="lg" onClick={analyzeAnother}>
                                         {t('completed.another')}
-                                    </Button>
-                                    <Button
-                                        size="lg"
-                                        onClick={async () => {
-                                            // Il comando dice "scarica" e finora apriva soltanto
-                                            // un'anteprima: nessun file arrivava sul dispositivo, e
-                                            // su iOS il PDF in un iframe resta un riquadro bianco.
-                                            // Ora salva davvero, come l'area personale e il libretto,
-                                            // e l'anteprima resta in più dove il browser la rende.
-                                            setPdfLoading(true);
-                                            try {
-                                                const res = await apiFetch(`/api/questionnaire-result/${sessionId}/pdf?lang=${lang}`);
-                                                if (!res.ok) throw new Error('PDF download failed');
-                                                const blob = await res.blob();
-                                                if (pdfUrl) window.URL.revokeObjectURL(pdfUrl);
-                                                const url = window.URL.createObjectURL(blob);
-                                                const type = selectedQuestionnaire?.id || 'QSA';
-                                                const link = document.createElement('a');
-                                                link.href = url;
-                                                link.download = `counselorbot_${type}_${sessionId.slice(0, 8)}.pdf`;
-                                                document.body.appendChild(link);
-                                                link.click();
-                                                link.remove();
-                                                setPdfUrl(url);
-                                            } catch (e) {
-                                                console.error('Failed to load PDF', e);
-                                                toast.error(t('toast.error'));
-                                            } finally {
-                                                setPdfLoading(false);
-                                            }
-                                        }}
-                                        disabled={pdfLoading}
-                                    >
-                                        {t('completed.downloadPdf')}
                                     </Button>
                                     <Button variant="secondary" size="lg" onClick={() => setStep('farewell')}>
                                         {t('completed.end')}
                                     </Button>
                                 </div>
-
-                                {/* Barra di avanzamento (indeterminata) durante la preparazione del PDF. */}
-                                {pdfLoading && (
-                                    <div className="space-y-1.5">
-                                        <p className="text-xs text-slate-500">{t('completed.pdfPreparing')}</p>
-                                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                                            <div className="h-full w-1/3 animate-indeterminate rounded-full bg-indigo-500" />
-                                        </div>
-                                    </div>
-                                )}
-
-                                <p className="pt-4 border-t border-slate-100 text-sm text-slate-500">
-                                    {t('completed.thanks')}
-                                </p>
                             </div>
-
-                            {/* Anteprima PDF inline sotto la card, senza aprire un'altra pagina. */}
-                            {pdfUrl && (
-                                <iframe
-                                    src={pdfUrl}
-                                    title={t('completed.pdfPreview')}
-                                    className="mt-6 w-full h-[75vh] rounded-xl border border-slate-200 bg-white shadow-sm"
-                                />
-                            )}
                         </div>
                     )}
 

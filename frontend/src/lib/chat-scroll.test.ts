@@ -30,8 +30,11 @@ test('the streaming chats scroll their own container, never the page', () => {
     // decine di volte al secondo, e lo scroll risultava bloccato.
     for (const file of ['../components/qsa/GuidedChatInterface.tsx', '../components/qsa/OpenCodeExperience.tsx']) {
         const source = readFileSync(new URL(file, import.meta.url), 'utf8');
-        // La chiamata, non la parola: i commenti qui sopra spiegano perché non si usa.
-        assert.doesNotMatch(source, /\.scrollIntoView\(/, `${file} deve scrollare il contenitore, non gli antenati`);
+        // Lo spostamento chiesto dal lettore ("Riprendi in chat") resta consentito.
+        const scroll = source.indexOf('el.scrollTop = el.scrollHeight');
+        assert.ok(scroll >= 0);
+        const effect = source.slice(source.lastIndexOf('useEffect(() => {', scroll), source.indexOf('}, [messages]', scroll));
+        assert.doesNotMatch(effect, /\.scrollIntoView\(/, `${file} deve scrollare il contenitore durante lo streaming`);
         assert.match(source, /stickToBottom/, `${file} deve smettere di inseguire chi è risalito`);
     }
 });

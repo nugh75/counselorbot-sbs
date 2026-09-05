@@ -1,6 +1,8 @@
 """Endpoint survey + feedback strategie (pubblici e admin)."""
+import hashlib
+import json
 import logging
-from typing import List, Optional
+from typing import List, Optional, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
@@ -13,6 +15,7 @@ from ..validation_export import build_validation_csv, validation_query, validati
 from ..strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_memory, strategy_memory
 from ..pdf_generator import generate_questionnaire_pdf, generate_student_booklet_pdf
 from ..diagram_blocks import strip_for_speech
+from ..message_diagrams import attach_message_diagrams
 from ..ai_service import AIService
 from .. import scoring_service, recommendation_service
 from .. import content_version_service, i18n_fields
@@ -720,7 +723,12 @@ async def delete_questionnaire_result(
 
 
 PDF_SUMMARY_ACTION = "questionnaire_pdf_summary"
-_PDF_SUMMARY_MAX_CONVERSATION_CHARS = 12000
+# Contratto della sintesi: cambia quando cambiano prompt o sezioni. Entra
+# nell'impronta, cosi' una sintesi scritta col prompt vecchio non torna a galla.
+SUMMARY_PROMPT_VERSION = "2"
+# Quanta conversazione entra in una sola chiamata. Oltre, si riassume a
+# scaglioni e poi si fondono le note: nessun pezzo di discussione resta fuori.
+_SUMMARY_CHUNK_CHARS = 12000
 
 
 _PDF_SUMMARY_FALLBACK = {
@@ -730,6 +738,17 @@ _PDF_SUMMARY_FALLBACK = {
     "fr": "La synthèse automatique n'est pas disponible pour le moment. La transcription complète reste disponible dans les pages suivantes.",
     "de": "Die automatische Zusammenfassung ist momentan nicht verfügbar. Das vollständige Gesprächsprotokoll bleibt auf den folgenden Seiten verfügbar.",
     "sv": "Den automatiska sammanfattningen är inte tillgänglig just nu. Hela samtalsutskriften finns på följande sidor.",
+}
+
+
+# Il PDF breve non porta la trascrizione: rimandarci sarebbe una bugia.
+_PDF_SUMMARY_FALLBACK_BRIEF = {
+    "it": "La sintesi automatica non e' disponibile in questo momento: scarica il documento completo per rileggere la conversazione.",
+    "en": "The automatic summary is not available right now: download the full document to read the conversation again.",
+    "es": "El resumen automático no está disponible en este momento: descarga el documento completo para releer la conversación.",
+    "fr": "La synthèse automatique n'est pas disponible pour le moment : télécharge le document complet pour relire la conversation.",
+    "de": "Die automatische Zusammenfassung ist momentan nicht verfügbar: Lade das vollständige Dokument herunter, um das Gespräch noch einmal zu lesen.",
+    "sv": "Den automatiska sammanfattningen är inte tillgänglig just nu: ladda ner det fullständiga dokumentet för att läsa samtalet igen.",
 }
 
 
@@ -764,14 +783,20 @@ def _session_conversation_messages(db: Session, session_id: str) -> list[dict]:
             messages.append({"role": "student", "text": user_input})
         if bot_response:
             messages.append({"role": "counselor", "text": bot_response})
-    return messages
+    # I diagrammi salvati a mano vivono in un log separato: senza riattaccarli
+    # il PDF perde figure che lo studente vede accanto al messaggio in chat.
+    return attach_message_diagrams(db, session_id, messages)
 
 
-def _session_final_summary(
+def _final_step_summary(
     db: Session,
     result: models.QuestionnaireResult,
-) -> str | None:
-    """Return the latest response from the instrument's configured synthesis step."""
+) -> tuple[str | None, int | None]:
+    """Ultima risposta dello step di sintesi dello strumento, con il suo id di log.
+
+    L'id serve a sapere se la sintesi e' ancora attuale: da sola direbbe solo
+    che qualcosa e' stato scritto, non quando.
+    """
     steps = (
         db.query(models.GuidedStep)
         .filter(models.GuidedStep.questionnaire_type == result.questionnaire_type)
@@ -779,7 +804,7 @@ def _session_final_summary(
         .all()
     )
     if not steps:
-        return None
+        return None, None
 
     summary_ids = {
         "QSA": "sl-synthesis",
@@ -810,96 +835,175 @@ def _session_final_summary(
         .first()
     )
     summary = ((row.details or {}).get("bot_response") or "").strip() if row else ""
-    return summary or None
+    return (summary or None), (row.id if row else None)
 
 
-def _pdf_strategy_context(db: Session, session_id: str, lang: str) -> str:
-    log_rows = (
+def _student_spoke_after(db: Session, session_id: str, log_id: int) -> bool:
+    """Vero se lo studente ha ancora parlato dopo la sintesi dello step.
+
+    Quello che la persona decide dopo la sintesi non e' dentro la sintesi:
+    riservirla in silenzio consegnerebbe una fotografia vecchia.
+    """
+    rows = (
         db.query(models.Log)
-        .filter(models.Log.action == "chat_message", models.Log.session_id == session_id)
-        .order_by(models.Log.timestamp.asc())
+        .filter(
+            models.Log.action == "chat_message",
+            models.Log.session_id == session_id,
+            models.Log.id > log_id,
+        )
         .all()
     )
-    certified_slugs: list[str] = []
-    strategy_ids: list[str] = []
-    for row in log_rows:
-        d = row.details or {}
-        certified_slugs.extend(str(item) for item in (d.get("certified_strategy_ids") or []) if item)
-        strategy_ids.extend(str(item) for item in (d.get("strategy_ids") or []) if item)
-
-    lines: list[str] = []
-    if certified_slugs:
-        rows = (
-            db.query(models.CertifiedStrategy)
-            .filter(models.CertifiedStrategy.slug.in_(list(dict.fromkeys(certified_slugs))))
-            .all()
-        )
-        by_slug = {row.slug: row for row in rows}
-        for slug in dict.fromkeys(certified_slugs):
-            row = by_slug.get(slug)
-            if not row:
-                continue
-            name = _localized_strategy_field(db, row, "name", lang) or row.slug
-            desc = _localized_strategy_field(db, row, "description", lang)
-            lines.append(f"- {name}: {desc}" if desc else f"- {name}")
-    for strategy_id in dict.fromkeys(strategy_ids):
-        lines.append(f"- {strategy_id}")
-    return "\n".join(lines)
+    return any(((row.details or {}).get("user_input") or "").strip() for row in rows)
 
 
-def _cached_pdf_summary(db: Session, session_id: str, lang: str, turn_count: int) -> str | None:
+def _summary_fingerprint(
+    *,
+    messages: list[dict],
+    scores: dict,
+    recommendations: dict[str, list[dict]] | None,
+    lang: str,
+) -> str:
+    """Impronta di tutto cio' da cui la sintesi dipende.
+
+    Contare i turni non basta: correggere l'ultimo messaggio lascia il conto
+    invariato e riconsegnerebbe la sintesi scritta prima della correzione.
+    """
+    payload = json.dumps(
+        {
+            "version": SUMMARY_PROMPT_VERSION,
+            "lang": lang,
+            "scores": scores or {},
+            "messages": [[msg.get("role", ""), msg.get("text", "")] for msg in messages],
+            "recommendations": recommendations or {},
+        },
+        sort_keys=True,
+        ensure_ascii=False,
+        default=str,
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _cached_summary(db: Session, session_id: str, fingerprint: str) -> str | None:
     rows = (
         db.query(models.Log)
         .filter(models.Log.action == PDF_SUMMARY_ACTION, models.Log.session_id == session_id)
-        .order_by(models.Log.timestamp.desc())
+        .order_by(models.Log.timestamp.desc(), models.Log.id.desc())
         .all()
     )
     for row in rows:
         d = row.details or {}
-        if d.get("language") == lang and d.get("turn_count") == turn_count:
+        if d.get("fingerprint") == fingerprint:
             summary = (d.get("summary") or "").strip()
             if summary:
                 return summary
     return None
 
 
-def _generate_pdf_summary(
+def _store_summary(
     db: Session,
     *,
     result: models.QuestionnaireResult,
-    scores: dict,
-    messages: list[dict],
     lang: str,
-) -> str | None:
-    if not messages:
-        return None
+    fingerprint: str,
+    summary: str,
+    source: str,
+    turn_count: int,
+) -> None:
+    db.add(models.Log(
+        session_id=result.session_id,
+        action=PDF_SUMMARY_ACTION,
+        questionnaire_type=result.questionnaire_type,
+        details={
+            "language": lang,
+            "fingerprint": fingerprint,
+            "source": source,
+            "turn_count": turn_count,
+            "summary": summary,
+        },
+    ))
+    db.commit()
 
-    lang = _pdf_language(lang)
-    cached = _cached_pdf_summary(db, result.session_id, lang, len(messages))
-    if cached:
-        return cached
 
-    conversation = "\n".join(
+def _summary_chunks(messages: list[dict], lang: str) -> list[str]:
+    """Divide la conversazione in scaglioni, senza mai tagliarne la coda.
+
+    Troncare ai primi caratteri buttava via proprio la fine, dove stanno le
+    decisioni. Anche un singolo messaggio molto lungo viene diviso in blocchi
+    limitati; le note vengono ridotte a livelli quando serve.
+    """
+    lines = [
         f"{('Student' if msg.get('role') == 'student' else 'Counselor')}: "
         f"{strip_for_speech(msg.get('text', ''), lang=lang).strip()}"
         for msg in messages
         if msg.get("text")
-    )[:_PDF_SUMMARY_MAX_CONVERSATION_CHARS]
-    strategies = _pdf_strategy_context(db, result.session_id, lang) or "-"
-    system_prompt = (
-        "You write concise, student-facing counseling summaries. Avoid diagnosis. "
-        "Extract only what is supported by the questionnaire results and conversation."
-    )
-    user_prompt = f"""
+    ]
+    transcript = "\n".join(lines)
+    return [transcript[start:start + _SUMMARY_CHUNK_CHARS]
+            for start in range(0, len(transcript), _SUMMARY_CHUNK_CHARS)]
+
+
+_SUMMARY_SYSTEM_PROMPT = (
+    "You write concise, student-facing counseling summaries. Avoid diagnosis. "
+    "Use only what the questionnaire results, the listed certified material and the "
+    "conversation support: never invent readings, exercises or personalised actions "
+    "that are absent from that material or from what the student already decided."
+)
+
+
+def _ask_model(ai: AIService, user_prompt: str, session_id: str, *, max_tokens: int) -> str | None:
+    """Risposta del modello, o None quando non e' raggiungibile."""
+    try:
+        answer = ai.get_response(user_prompt, _SUMMARY_SYSTEM_PROMPT, "generic", max_tokens=max_tokens)
+    except Exception as exc:
+        logger.warning("Summary generation failed for session %s: %s", session_id, exc)
+        return None
+    return (answer or "").strip() or None
+
+
+def _chunk_prompt(index: int, total: int, lang: str, chunk: str) -> str:
+    return f"""
 Write in {_PDF_SUMMARY_LANG_NAME[lang]}.
 
-Questionnaire: {result.questionnaire_type}
+This is part {index} of {total} of a single counseling conversation, in order.
+
+Take dense notes on this part: what the student said about themselves, the themes
+discussed, the material proposed and, above all, the decisions, commitments and
+corrections the student stated. Keep decisions and corrections in the student's own
+words when they are short. Notes only, no preamble and no conclusions, at most 250 words.
+
+Transcript of part {index}:
+{chunk}
+""".strip()
+
+
+def _summary_prompt(
+    *,
+    questionnaire_type: str,
+    scores: dict,
+    material: str,
+    strategies: str,
+    transcript: str,
+    lang: str,
+    from_notes: bool,
+) -> str:
+    source = (
+        "Ordered notes on consecutive parts of the conversation. Later parts are more "
+        "recent: where they disagree with earlier ones, the later statement is the one that holds"
+        if from_notes
+        else "Conversation transcript"
+    )
+    return f"""
+Write in {_PDF_SUMMARY_LANG_NAME[lang]}.
+
+Questionnaire: {questionnaire_type}
 Scores: {scores or '-'}
-Certified or retrieved strategies mentioned:
+Certified readings and strategies shown to the student:
+{material}
+Certified or retrieved strategies mentioned in the conversation:
 {strategies}
 
-Conversation transcript:
-{conversation}
+{source}:
+{transcript}
 
 Create a short Markdown summary with these four sections:
 1. Discussion summary
@@ -907,26 +1011,136 @@ Create a short Markdown summary with these four sections:
 3. Suggested strategies
 4. First practical steps
 
-Keep it concrete, warm, and useful for the student. Maximum 350 words.
+Report the decisions the student actually made and, where they changed their mind,
+the version that holds at the end. Keep it concrete, warm, and useful for the
+student. Maximum 350 words.
 """.strip()
 
-    try:
-        summary = AIService(db).get_response(user_prompt, system_prompt, "generic", max_tokens=900).strip()
-    except Exception as exc:
-        logger.warning("PDF summary generation failed for session %s: %s", result.session_id, exc)
-        return _PDF_SUMMARY_FALLBACK[lang]
 
+def _summary_material(recommendations: dict[str, list[dict]] | None) -> str:
+    """Le voci certificate ancora in piedi: il modello non puo' andare oltre."""
+    lines: list[str] = []
+    for item in (recommendations or {}).get("reading") or []:
+        if _recommendation_status(item) == "dismissed":
+            continue
+        lines.append(json.dumps({"type": "reading", **item}, ensure_ascii=False))
+    for item in (recommendations or {}).get("strategy") or []:
+        if _recommendation_status(item) == "dismissed":
+            continue
+        lines.append(json.dumps({"type": "strategy", **item}, ensure_ascii=False))
+    return "\n".join(dict.fromkeys(line for line in lines if line.strip())) or "-"
+
+
+def _recommendation_status(item: dict) -> str:
+    return str(item.get("status") or "proposed").strip().lower()
+
+
+def _generate_summary(
+    db: Session,
+    *,
+    result: models.QuestionnaireResult,
+    scores: dict,
+    messages: list[dict],
+    recommendations: dict[str, list[dict]] | None,
+    lang: str,
+) -> str | None:
+    chunks = _summary_chunks(messages, lang)
+    if not chunks:
+        return None
+    ai = AIService(db)
+    from_notes = False
+    while len(chunks) > 1:
+        notes: list[str] = []
+        for index, chunk in enumerate(chunks, start=1):
+            note = _ask_model(ai, _chunk_prompt(index, len(chunks), lang, chunk), result.session_id, max_tokens=700)
+            if note is None:
+                return None
+            notes.append(f"[Part {index}/{len(chunks)}]\n{note}")
+        combined = "\n\n".join(notes)
+        if len(combined) >= sum(len(chunk) for chunk in chunks):
+            # A provider ignoring the note limit must not create an endless reduction.
+            return None
+        chunks = [combined[start:start + _SUMMARY_CHUNK_CHARS]
+                  for start in range(0, len(combined), _SUMMARY_CHUNK_CHARS)]
+        from_notes = True
+    transcript = chunks[0]
+    return _ask_model(
+        ai,
+        _summary_prompt(
+            questionnaire_type=result.questionnaire_type,
+            scores=scores,
+            material=_summary_material(recommendations),
+            strategies="See the confirmed material above; proposed does not mean chosen.",
+            transcript=transcript,
+            lang=lang,
+            from_notes=from_notes,
+        ),
+        result.session_id,
+        max_tokens=900,
+    )
+
+
+def canonical_summary(
+    db: Session,
+    *,
+    result: models.QuestionnaireResult,
+    scores: dict,
+    messages: list[dict],
+    recommendations: dict[str, list[dict]] | None,
+    lang: str,
+    regenerate: bool = False,
+) -> tuple[str | None, str]:
+    """La sintesi che leggono sia l'anteprima sia il PDF, con il suo stato.
+
+    Una sola sintesi per impronta: guardarla nel profilo e poi scaricarla non
+    fa girare il modello due volte, e i due posti non possono divergere.
+    """
+    lang = _pdf_language(lang)
+    if not messages:
+        return None, "empty"
+    fingerprint = _summary_fingerprint(
+        messages=messages, scores=scores, recommendations=recommendations, lang=lang,
+    )
+    if not regenerate:
+        cached = _cached_summary(db, result.session_id, fingerprint)
+        if cached:
+            return cached, "ready"
+        step_summary, log_id = _final_step_summary(db, result)
+        step_log = db.query(models.Log).filter(models.Log.id == log_id).first() if log_id is not None else None
+        same_language = step_log and (step_log.details or {}).get("language") == lang
+        choices_changed = any(item.get("status", "proposed") != "proposed" or item.get("helpful") is not None
+                              for items in (recommendations or {}).values() for item in items)
+        if step_summary and same_language and not choices_changed and not _student_spoke_after(db, result.session_id, log_id):
+            _store_summary(
+                db, result=result, lang=lang, fingerprint=fingerprint,
+                summary=step_summary, source="guided_step", turn_count=len(messages),
+            )
+            return step_summary, "ready"
+
+    summary = _generate_summary(
+        db, result=result, scores=scores, messages=messages,
+        recommendations=recommendations, lang=lang,
+    )
     if not summary:
-        return _PDF_SUMMARY_FALLBACK[lang]
+        return None, "unavailable"
+    _store_summary(
+        db, result=result, lang=lang, fingerprint=fingerprint,
+        summary=summary, source="generated", turn_count=len(messages),
+    )
+    return summary, "ready"
 
-    db.add(models.Log(
-        session_id=result.session_id,
-        action=PDF_SUMMARY_ACTION,
-        questionnaire_type=result.questionnaire_type,
-        details={"language": lang, "turn_count": len(messages), "summary": summary},
-    ))
-    db.commit()
-    return summary
+
+def _summary_inputs(db: Session, result: models.QuestionnaireResult, lang: str) -> dict:
+    """Gli stessi ingredienti per anteprima e PDF: impronta uguale, sintesi unica."""
+    return {
+        "result": result,
+        "scores": result.scores if isinstance(result.scores, dict) else {},
+        "messages": _session_conversation_messages(db, result.session_id),
+        "recommendations": recommendation_service.list_for_session(
+            db, session_id=result.session_id, username=result.username or "", language=_pdf_language(lang),
+        ),
+        "lang": lang,
+    }
 
 
 @router.get("/user/questionnaire-result/{session_id}/conversation")
@@ -951,55 +1165,59 @@ async def get_user_session_conversation(
 @router.get("/user/questionnaire-result/{session_id}/summary")
 async def get_user_session_summary(
     session_id: str,
+    lang: str = Query("it", description="Lingua della sintesi (it, en, es, fr, de, sv)"),
+    regenerate: bool = Query(False, description="Riscrive la sintesi anche quando ne esiste una in cache"),
     current_user: dict = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Restituisce la sintesi prodotta nel passo finale dello strumento."""
+    """Anteprima della sintesi: e' lo stesso testo che finisce nel PDF."""
     result = _get_owned_questionnaire_result(session_id, current_user, db)
-    return {"summary": _session_final_summary(db, result)}
+    summary, status = canonical_summary(
+        db, **_summary_inputs(db, result, lang), regenerate=regenerate,
+    )
+    return {"summary": summary, "status": status}
 
 
 @router.get("/questionnaire-result/{session_id}/pdf")
 async def download_questionnaire_pdf(
     session_id: str,
     lang: str = Query("it", description="Lingua del PDF (it, en, es, fr, de, sv)"),
+    mode: Literal["brief", "full"] = Query("full", description="full: dettaglio e trascrizione; brief: sintesi, consigli e diagrammi"),
+    current_user: dict = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
     """Scarica il PDF con i risultati del questionario per una sessione."""
-    result = db.query(models.QuestionnaireResult).filter(
-        models.QuestionnaireResult.session_id == session_id
-    ).first()
-    if not result:
-        raise HTTPException(status_code=404, detail="Risultato non trovato per questa sessione")
-
-    scores = result.scores if isinstance(result.scores, dict) else {}
-    submitted_str = str(result.submitted_at) if result.submitted_at else None
+    result = _get_owned_questionnaire_result(session_id, current_user, db)
 
     # ponytail: usa solo user_input (la vera interazione studente).
     # effective_user_input contiene il prompt di sistema inglese dei guided
     # step: non è una vera interazione e non va nel PDF studente.
-    messages = _session_conversation_messages(db, session_id)
-    summary_text = _generate_pdf_summary(db, result=result, scores=scores, messages=messages, lang=lang)
-    recommendations = recommendation_service.list_for_session(
-        db,
-        session_id=session_id,
-        username=result.username or "",
-    )
+    inputs = _summary_inputs(db, result, lang)
+    summary_text, summary_status = canonical_summary(db, **inputs)
+    brief = (mode or "full").strip().lower() == "brief"
+    if summary_status == "unavailable":
+        # Il PDF dice perche' la sintesi manca e rimanda dove il testo resta.
+        fallback = _PDF_SUMMARY_FALLBACK_BRIEF if brief else _PDF_SUMMARY_FALLBACK
+        summary_text = fallback[_pdf_language(lang)]
 
     pdf_bytes = generate_questionnaire_pdf(
         questionnaire_type=result.questionnaire_type,
-        scores=scores,
+        scores=inputs["scores"],
         session_id=result.session_id,
-        submitted_at=submitted_str,
+        submitted_at=str(result.submitted_at) if result.submitted_at else None,
         language=lang,
-        messages=messages or None,
+        messages=inputs["messages"] or None,
         summary_text=summary_text,
-        recommendations=recommendations,
+        recommendations=inputs["recommendations"],
+        mode="brief" if brief else "full",
     )
 
-    filename = f"counselorbot_{result.questionnaire_type}_{result.id}.pdf"
+    filename = f"counselorbot_{result.questionnaire_type}_{result.id}{'_brief' if brief else ''}.pdf"
     return Response(
         content=pdf_bytes.read(),
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "X-Summary-Status": summary_status,
+        },
     )

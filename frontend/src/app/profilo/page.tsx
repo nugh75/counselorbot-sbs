@@ -212,7 +212,7 @@ export default function ProfilePage() {
                 if (active) setConvLoading(false);
             });
 
-        apiFetch(`/api/user/questionnaire-result/${selectedSession.session_id}/summary`)
+        apiFetch(`/api/user/questionnaire-result/${selectedSession.session_id}/summary?lang=${lang}`)
             .then(async (res) => {
                 if (!res.ok) throw new Error('Failed to fetch summary');
                 const data = await res.json();
@@ -227,7 +227,7 @@ export default function ProfilePage() {
             });
 
         return () => { active = false; };
-    }, [selectedSession]);
+    }, [selectedSession, lang]);
 
     const handleDelete = async (sessionId: string) => {
         setActionLoading(sessionId);
