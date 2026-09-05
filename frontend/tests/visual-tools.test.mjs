@@ -1,3 +1,4 @@
+import { chatLayoutLabel } from '../src/lib/i18n-chat-layout.ts';
 import { visualLabel } from '../src/lib/i18n-visual-tools.ts';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -17,6 +18,7 @@ const graphSpec = JSON.parse(readFileSync(new URL('./fixtures/reading-diagram.js
 async function fixture(width, phase = 'intro', options = {}) {
     const context = await browser.newContext({ viewport: { width, height: 844 }, reducedMotion: options.motion || 'reduce', hasTouch: Boolean(options.touch), isMobile: Boolean(options.touch) });
     const page = await context.newPage();
+    page.setDefaultTimeout(10000);
     const control = { failSave: false, failLoad: false, failPdf: false, visual: { revision: 0, workspace: { actions: [], cards: [], comparison: { options: [], criteria: [], cells: [], chosen: null, reason: '' } } }, failDiagram: false, failPatch: false, failRender: false, failExport: false, saved: options.graph ? [{ source_text: reply, source_key: createHash('sha256').update(reply).digest('hex'), instruction: '', spec: graphSpec }] : [], requests: [], errors: [] };
     const catalog = {
         reading: [{ slug: 'test-book', title: 'Libro per la prova', why: 'Collegato al metodo di studio.', synopsis: 'SINOSSI COMPLETA DEL LIBRO', where: 'https://example.invalid/libro', languages: ['it', 'en'], warning: 'AVVERTENZA DEL LIBRO', status: 'proposed' }],
@@ -31,6 +33,7 @@ async function fixture(width, phase = 'intro', options = {}) {
         if (!url.pathname.startsWith('/api/')) return request.method() === 'GET' ? route.continue() : route.abort();
         control.requests.push({ path: url.pathname, search: url.search, method: request.method(), body: request.postDataJSON() });
         let data = [];
+        if (url.pathname === '/api/chat/stream') return route.fulfill({ contentType: 'text/event-stream', body: 'data: ' + JSON.stringify({ display: 'Possiamo approfondire questo punto.' }) + '\n\ndata: ' + JSON.stringify({ done: true, response: 'Possiamo approfondire questo punto.', session_id: 'fixture' }) + '\n\n' });
         if (url.pathname === '/api/opencode/workspace') data = { key: 'fixture', api_available: true, session_id: 'opencode-fixture', needs_seed: false, history: [{ role: 'assistant', content: reply }] };
         else if (url.pathname === '/api/session/fixture/visual-tools') {
             if (request.method() === 'GET' && control.deferRead) {
@@ -52,7 +55,7 @@ async function fixture(width, phase = 'intro', options = {}) {
             return route.fulfill({ contentType: 'application/pdf', body: '%PDF-1.4\n%%EOF' });
         } else if (url.pathname === '/api/auth/me') data = { authenticated: true, is_admin: false, username: 'fixture', name: 'Prova', groups: ['studenti'] };
         else if (url.pathname === '/api/counselors') data = [{ id: 1, slug: 'fixture', name: 'Counselor di prova', language: ['it'], suitable: true }];
-        else if (url.pathname === '/api/session/frozen/fixture') data = { session_id: 'fixture', questionnaire_type: 'QSA', current_phase: phase, counselor_id: 1, experience: options.experience || 'standard', scores: { C1: 7 }, messages: [{ role: 'system', content: phase === 'intro' ? '--- Introduzione ---' : 'FINE PERCORSO' }, { role: 'user', content: 'Vorrei organizzarmi.' }, { role: 'assistant', content: reply }] };
+        else if (url.pathname === '/api/session/frozen/fixture') data = { session_id: 'fixture', questionnaire_type: 'QSA', current_phase: phase, counselor_id: 1, experience: options.experience || 'standard', scores: { C1: 7 }, messages: [{ role: 'system', content: phase === 'intro' ? '--- Introduzione ---' : 'FINE PERCORSO' }, { role: 'user', content: 'Vorrei organizzarmi.' }, ...Array.from({ length: options.longConversation ? 20 : 1 }, () => ({ role: 'assistant', content: reply }))] };
         else if (url.pathname === '/api/qsa/guided-ui-texts') data = { guided_steps: [{ id: 'intro', label: 'Introduzione', sort_order: 1, system_prompt_mode: 'qsa-intro' }], text_guided_conclusion: 'FINE PERCORSO' };
         else if (url.pathname === '/api/session/fixture/diagrams') data = control.saved;
         else if (url.pathname === '/api/session/fixture/recommendations') data = catalog;
@@ -339,6 +342,121 @@ test('keyboard tooltips explain actions and Escape dismisses help before the wor
         await page.keyboard.press('Escape');
         await dialog.waitFor({ state: 'detached' });
         assert.equal(control.requests.some(r => r.method !== 'GET'), false);
+        assert.deepEqual(control.errors, []);
+    } finally { await context.close(); }
+});
+
+for (const options of [{ width: 320, locale: 'it', touch: true }, { width: 390, locale: 'de', touch: true, dark: true }, { width: 1024, locale: 'sv' }, { width: 1440, locale: 'en' }]) {
+    test(`chat keeps tools in its header and its panel ${options.width < 1024 ? 'below' : 'beside'} it at ${options.width}px`, async () => {
+        const { page, context, control } = await fixture(options.width, 'intro', options);
+        const l = key => chatLayoutLabel(options.locale, key);
+        try {
+            const chat = page.getByRole('region', { name: 'CounselorBot AI', exact: true });
+            const panel = page.getByRole('complementary', { name: l('panelTitle'), exact: true });
+            const header = chat.locator('header');
+            await header.getByRole('button', { name: visualLabel(options.locale, 'open'), exact: true }).waitFor();
+            assert.equal(await chat.getByRole('button', { name: visualLabel(options.locale, 'open'), exact: true }).count(), 1);
+            assert.equal(await header.getByRole('button', { name: visualLabel(options.locale, 'open'), exact: true }).textContent(), visualLabel(options.locale, 'tools'));
+            await page.locator('#guided-composer').fill('Una bozza da conservare');
+            if (options.width < 1024) {
+                assert.ok((await panel.boundingBox()).y >= (await chat.boundingBox()).y + (await chat.boundingBox()).height);
+                await header.getByRole('button', { name: l('show'), exact: true }).click();
+                assert.equal(await page.getByRole('dialog').count(), 0, 'mobile panel stays in the page');
+                assert.notEqual(await page.evaluate(() => document.body.style.overflow), 'hidden');
+                assert.ok((await panel.boundingBox()).y >= (await chat.boundingBox()).y + (await chat.boundingBox()).height);
+                await panel.getByRole('button', { name: l('panelTitle'), exact: true }).click();
+                assert.equal(await header.getByRole('button', { name: l('show'), exact: true }).getAttribute('aria-expanded'), 'false');
+            } else {
+                const original = await chat.boundingBox();
+                assert.ok((await panel.boundingBox()).x < original.x);
+                await header.getByRole('button', { name: l('hide'), exact: true }).click();
+                assert.equal(await panel.isVisible(), false);
+                assert.ok((await chat.boundingBox()).width > original.width + 250);
+            }
+            assert.ok(await header.getByLabel(`${l('resources')}: 2`, { exact: true }).isVisible());
+            assert.equal(await page.locator('#guided-composer').inputValue(), 'Una bozza da conservare');
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+            assert.equal(control.requests.some(r => r.path === '/api/chat/stream'), false);
+            assert.deepEqual(control.errors, []);
+        } finally { await context.close(); }
+    });
+}
+
+test('desktop panel resizes with buttons, keyboard and pointer and remembers width and visibility', async () => {
+    const { page, context, control } = await fixture(1440);
+    const l = key => chatLayoutLabel('it', key);
+    try {
+        const panel = page.getByRole('complementary', { name: l('panelTitle'), exact: true });
+        const separator = page.getByRole('separator', { name: l('resize'), exact: true });
+        await separator.waitFor();
+        const waitWidth = value => page.waitForFunction(value => { const separator = document.querySelector('[role="separator"]'); return separator?.getAttribute('aria-valuenow') === String(value) && separator.previousElementSibling.getBoundingClientRect().width === Number(value); }, value);
+        const original = (await panel.boundingBox()).width;
+        await panel.getByRole('button', { name: l('widen'), exact: true }).click();
+        await page.waitForFunction(({ label, original }) => document.querySelector(`aside[aria-label="${label}"]`)?.getBoundingClientRect().width > original, { label: l('panelTitle'), original });
+        await panel.getByRole('button', { name: l('narrow'), exact: true }).click();
+        await page.waitForFunction(({ label, original }) => document.querySelector(`aside[aria-label="${label}"]`)?.getBoundingClientRect().width === original, { label: l('panelTitle'), original });
+        await separator.focus(); await page.keyboard.press('Home');
+        await waitWidth(260);
+        await page.keyboard.press('ArrowRight');
+        await waitWidth(280);
+        await page.keyboard.press('End');
+        await waitWidth(await separator.getAttribute('aria-valuemax'));
+        await page.keyboard.press('Home');
+        await waitWidth(260);
+        const grip = await separator.boundingBox();
+        await page.mouse.move(grip.x + grip.width / 2, grip.y + 80); await page.mouse.down();
+        await page.mouse.move(grip.x + grip.width / 2 + 70, grip.y + 80, { steps: 5 }); await page.mouse.up();
+        await waitWidth(330);
+        const resized = Number(await separator.getAttribute('aria-valuenow'));
+        assert.ok(resized >= 329 && resized <= 331);
+        await page.getByRole('button', { name: l('hide'), exact: true }).click();
+        await page.goto(`${origin}/?frozen=fixture`, { waitUntil: 'networkidle' });
+        assert.equal(await panel.isVisible(), false);
+        await page.getByRole('button', { name: l('show'), exact: true }).click();
+        assert.equal(Number(await separator.getAttribute('aria-valuenow')), resized);
+        await page.setViewportSize({ width: 1024, height: 844 });
+        assert.ok((await page.getByRole('region', { name: 'CounselorBot AI', exact: true }).boundingBox()).width >= 420);
+        await page.setViewportSize({ width: 390, height: 844 });
+        await page.getByRole('button', { name: l('show'), exact: true }).waitFor();
+        assert.equal(await separator.count(), 0);
+        await page.setViewportSize({ width: 1440, height: 844 });
+        await separator.waitFor();
+        assert.equal(Number(await separator.getAttribute('aria-valuenow')), resized);
+        assert.deepEqual(control.errors, []);
+    } finally { await context.close(); }
+});
+
+test('step navigation stays above the composer while a long conversation scrolls, and advances once', async () => {
+    const { page, context, control } = await fixture(320, 'intro', { touch: true, longConversation: true });
+    try {
+        const chat = page.getByRole('region', { name: 'CounselorBot AI', exact: true });
+        const navigation = chat.getByRole('navigation', { name: chatLayoutLabel('it', 'navigation'), exact: true });
+        const log = chat.getByRole('log');
+        const composer = page.locator('#guided-composer');
+        await navigation.waitFor();
+        assert.equal(await page.getByRole('navigation', { name: chatLayoutLabel('it', 'navigation'), exact: true }).count(), 1);
+        assert.ok(await log.evaluate(e => e.scrollHeight > e.clientHeight));
+        const before = await navigation.boundingBox();
+        await log.evaluate(e => { e.scrollTop = 0; });
+        assert.equal((await navigation.boundingBox()).y, before.y);
+        assert.ok(before.y + before.height <= (await composer.boundingBox()).y);
+        assert.ok(before.y >= (await log.boundingBox()).y + (await log.boundingBox()).height - 1);
+        assert.match(await navigation.textContent(), /1\/3/);
+        await navigation.getByRole('button').last().click();
+        await page.waitForFunction(() => document.querySelector('nav[aria-label="Avanzamento del percorso"]')?.textContent.includes('2/3'));
+        await log.getByText('Possiamo approfondire questo punto.', { exact: true }).waitFor();
+        assert.equal(control.requests.filter(r => r.path === '/api/chat/stream').length, 1);
+        assert.deepEqual(control.errors, []);
+    } finally { await context.close(); }
+});
+
+test('invalid saved panel preferences do not prevent reopening the chat', async () => {
+    const { page, context, control } = await fixture(1440);
+    try {
+        await page.evaluate(() => localStorage.setItem('cb_chat_panel', '{broken'));
+        await page.goto(`${origin}/?frozen=fixture`, { waitUntil: 'networkidle' });
+        await page.getByRole('button', { name: chatLayoutLabel('it', 'hide'), exact: true }).waitFor();
+        assert.ok(await page.locator('#guided-composer').isVisible());
         assert.deepEqual(control.errors, []);
     } finally { await context.close(); }
 });
