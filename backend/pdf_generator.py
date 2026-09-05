@@ -925,6 +925,7 @@ def generate_questionnaire_pdf(
     summary_text: str | None = None,
     recommendations: dict[str, list[dict]] | None = None,
     mode: str = "full",
+    visual_workspace: dict | None = None,
 ) -> BytesIO:
     """Genera un PDF dei risultati nella lingua selezionata, restituisce BytesIO.
 
@@ -934,8 +935,9 @@ def generate_questionnaire_pdf(
     lang = _normalize_lang(language)
     ui = UI_TEXT[lang]
     trans = FACTOR_TRANS[lang]
+    from .visual_tools import LABELS, workspace_sections
 
-    pdf = ResultPDF(title=ui["title"], page_label=ui["page"])
+    pdf = ResultPDF(title=LABELS[lang][0] if mode == "visual" else ui["title"], page_label=ui["page"])
     pdf.alias_nb_pages()
     pdf.set_auto_page_break(auto=True, margin=18)
     pdf.add_page()
@@ -963,9 +965,15 @@ def generate_questionnaire_pdf(
     # La sintesi e le scelte aprono il documento che lo studente porta con se'.
     if summary_text and summary_text.strip():
         _render_summary(pdf, summary_text.strip(), ui, content_w)
-    _render_recommendations(pdf, recommendations or {}, ui, content_w, lang)
+    if mode != "visual":
+        _render_recommendations(pdf, recommendations or {}, ui, content_w, lang)
+    if visual_workspace:
+        for heading, cards in workspace_sections(visual_workspace, lang):
+            _section_heading(pdf, heading, content_w)
+            for card in cards:
+                _text_card(pdf, card, content_w, fill=APP_SURFACE, border=APP_BORDER)
 
-    if mode == "brief":
+    if mode in {"brief", "visual"}:
         diagrams = [part for message in (messages or [])
                     for part in diagram_segments(message.get("text") or "")
                     if isinstance(part, DiagramSpec)]
