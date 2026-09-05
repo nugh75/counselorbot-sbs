@@ -9,6 +9,7 @@
     "lint": "npm run i18n:check && eslint",
     "test": "node --test --experimental-strip-types src/lib/*.test.ts",
     "test:logs": "node --test tests/log-viewer.test.mjs",
+    "test:artifacts": "node --test tests/conversation-artifacts.test.mjs",
     "i18n:check": "node scripts/check-i18n.mjs"
   },
   "dependencies": {

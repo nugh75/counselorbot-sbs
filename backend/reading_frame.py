@@ -15,13 +15,7 @@ FALLBACK_LANGUAGE = "en"
 
 READING_FRAME: dict[str, dict[str, str]] = {
     "it": {
-        "intro": (
-            "Catalogo approvato: sono le uniche opere che puoi consigliare come lettura, "
-            "film o materiale. Le voci pertinenti sono gia' visibili nel pannello "
-            "Raccomandazioni. Non ripetere titoli o autori nella risposta: usa il catalogo "
-            "solo per discutere in modo naturale perche' il tema puo' essere utile e come "
-            "collegarlo alla situazione dello studente. Non aggiungere opere assenti."
-        ),
+        "intro": 'Catalogo approvato: queste sono le sole opere disponibili da proporre. Scegli solo quelle che consigli effettivamente nella risposta e spiega il collegamento alla situazione dello studente. Le opere scelte compariranno nel pannello Raccomandazioni dopo la risposta. Non aggiungere opere assenti.',
         "synopsis": "Di cosa parla",
         "why": "Perche'",
         "summary": "Aiuta a capire",
@@ -45,13 +39,7 @@ READING_FRAME: dict[str, dict[str, str]] = {
         ),
     },
     "en": {
-        "intro": (
-            "Approved catalogue: these are the only works you may recommend as a reading, "
-            "a film or material. Relevant entries are already visible in the Recommendations "
-            "panel. Do not repeat titles or authors in the response: use the catalogue only "
-            "to discuss naturally why the theme may help and how it relates to the student's "
-            "situation. Do not add works absent from the catalogue."
-        ),
+        "intro": "Approved catalogue: these are the only works available to propose. Select only works you actually recommend in the reply and explain their connection to the student's situation. Selected works will appear in the Recommendations panel after the reply. Do not add absent works.",
         "synopsis": "What it is about",
         "why": "Why",
         "summary": "Helps to understand",
@@ -74,13 +62,7 @@ READING_FRAME: dict[str, dict[str, str]] = {
         ),
     },
     "es": {
-        "intro": (
-            "Catálogo aprobado: son las únicas obras que puedes recomendar como lectura, "
-            "película o material. Las entradas pertinentes ya aparecen en el panel de "
-            "Recomendaciones. No repitas títulos ni autores en la respuesta: usa el catálogo "
-            "solo para explicar de forma natural por qué el tema puede ayudar y cómo se "
-            "relaciona con la situación del estudiante. No añadas obras ausentes."
-        ),
+        "intro": 'Catálogo aprobado: estas son las únicas obras disponibles para proponer. Selecciona solo las que realmente recomiendas en la respuesta y explica su relación con la situación del estudiante. Aparecerán en el panel de Recomendaciones después de la respuesta. No añadas obras ausentes.',
         "synopsis": "De qué trata",
         "why": "Por qué",
         "summary": "Ayuda a entender",
@@ -103,13 +85,7 @@ READING_FRAME: dict[str, dict[str, str]] = {
         ),
     },
     "fr": {
-        "intro": (
-            "Catalogue approuvé : ce sont les seules œuvres que tu peux recommander comme "
-            "lecture, film ou matériel. Les entrées pertinentes figurent déjà dans le panneau "
-            "Recommandations. Ne répète ni titres ni auteurs dans la réponse : utilise le "
-            "catalogue uniquement pour expliquer naturellement l'utilité du thème et son lien "
-            "avec la situation de l'élève. N'ajoute aucune œuvre absente."
-        ),
+        "intro": 'Catalogue approuvé : seules ces œuvres peuvent être proposées. Sélectionne uniquement celles réellement recommandées dans la réponse et explique leur lien avec la situation de l’étudiant. Elles apparaîtront dans le panneau Recommandations après la réponse. N’ajoute aucune œuvre absente.',
         "synopsis": "De quoi il s'agit",
         "why": "Pourquoi",
         "summary": "Aide à comprendre",
@@ -132,13 +108,7 @@ READING_FRAME: dict[str, dict[str, str]] = {
         ),
     },
     "de": {
-        "intro": (
-            "Freigegebener Katalog: Nur diese Werke darfst du als Lektüre, Film oder Material "
-            "empfehlen. Passende Einträge sind bereits im Bereich Empfehlungen sichtbar. "
-            "Wiederhole in der Antwort keine Titel oder Namen von Autorinnen und Autoren: Nutze "
-            "den Katalog nur, um den Nutzen des Themas und den Bezug zur Situation der Person "
-            "natürlich zu erläutern. Füge keine fehlenden Werke hinzu."
-        ),
+        "intro": 'Genehmigter Katalog: Nur diese Werke dürfen vorgeschlagen werden. Wähle nur Werke, die du in der Antwort tatsächlich empfiehlst, und erkläre ihren Bezug zur Situation der lernenden Person. Sie erscheinen nach der Antwort im Empfehlungsbereich. Füge keine anderen Werke hinzu.',
         "synopsis": "Worum es geht",
         "why": "Warum",
         "summary": "Hilft zu verstehen",
@@ -162,13 +132,7 @@ READING_FRAME: dict[str, dict[str, str]] = {
         ),
     },
     "sv": {
-        "intro": (
-            "Godkänd katalog: det här är de enda verk du får rekommendera som läsning, film "
-            "eller material. Relevanta poster syns redan i panelen Rekommendationer. Upprepa "
-            "inte titlar eller upphovspersoner i svaret: använd katalogen bara för att naturligt "
-            "förklara varför temat kan hjälpa och hur det hänger ihop med studentens situation. "
-            "Lägg inte till verk som saknas."
-        ),
+        "intro": 'Godkänd katalog: endast dessa verk får föreslås. Välj bara verk som du faktiskt rekommenderar i svaret och förklara kopplingen till studentens situation. De visas i rekommendationspanelen efter svaret. Lägg inte till andra verk.',
         "synopsis": "Vad det handlar om",
         "why": "Varför",
         "summary": "Hjälper att förstå",

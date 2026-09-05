@@ -6,10 +6,12 @@ import logging
 import os
 import tempfile
 import uuid
+from typing import Literal
 
 import edge_tts
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
@@ -30,6 +32,7 @@ from ..idea_map import (
 from ..memory_service import session_memory
 from ..strategy_memory import shared_response_memory
 from ..skills import engine as skills_engine
+from .. import recommendation_blocks
 from .. import recommendation_service as _recommendation_service
 from ..certified_reading_service import certified_reading_memory
 from ..i18n_fields import localized
@@ -381,6 +384,54 @@ def _apply_idea_patch(response_content: str, *, questionnaire_type: str, usernam
         map_db.close()
 
 
+def _recommendation_candidates(
+    db: Session,
+    *,
+    reading_ids: list[str],
+    strategy_ids: list[str],
+    language: str,
+) -> tuple[dict[str, str], dict[str, str]]:
+    """Id -> titolo delle voci offerte al modello in questo turno.
+
+    Sono candidati, non raccomandazioni: servono a scrivere la direttiva e a
+    fare da whitelist quando il modello dichiara che cosa ha davvero proposto.
+    """
+    readings: dict[str, str] = {}
+    if reading_ids:
+        rows = (
+            db.query(models.CertifiedReading)
+            .filter(
+                models.CertifiedReading.slug.in_(reading_ids),
+                models.CertifiedReading.status == "certified",
+                models.CertifiedReading.is_active.is_(True),
+            )
+            .all()
+        )
+        by_slug = {row.slug: row for row in rows}
+        readings = {
+            slug: by_slug[slug].title for slug in reading_ids if slug in by_slug
+        }
+
+    strategies: dict[str, str] = {}
+    if strategy_ids:
+        rows = (
+            db.query(models.CertifiedStrategy)
+            .filter(
+                models.CertifiedStrategy.slug.in_(strategy_ids),
+                models.CertifiedStrategy.status == "certified",
+                models.CertifiedStrategy.is_active.is_(True),
+            )
+            .all()
+        )
+        by_slug = {row.slug: row for row in rows}
+        strategies = {
+            slug: (localized(by_slug[slug], "name", language) or slug)
+            for slug in strategy_ids
+            if slug in by_slug
+        }
+    return readings, strategies
+
+
 def _record_recommendations(
     db: Session,
     *,
@@ -392,7 +443,11 @@ def _record_recommendations(
     turn_index: int,
     matched_on: dict[str, dict] | None = None,
 ) -> dict[str, list[dict]]:
-    """Persist the recommendations exposed by a completed chat turn."""
+    """Persist the items the completed turn actually recommended.
+
+    Gli ids arrivano dalla dichiarazione del modello, non dal recupero: quello
+    che era solo disponibile non entra nel libretto dello studente.
+    """
     if not username:
         return {"reading": [], "strategy": []}
 
@@ -605,6 +660,20 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         knowledge_context = _sanitize_ztpi_user_text(knowledge_context, request.language)
 
+    # 2b. Il catalogo del turno e' un'offerta: il modello dichiara in un blocco
+    # privato quali voci ha davvero proposto, e solo quelle vengono registrate.
+    reading_candidates, strategy_candidates = _recommendation_candidates(
+        db, reading_ids=reading_ids, strategy_ids=certified_strategy_ids,
+        language=request.language or "it",
+    )
+    system_prompt = recommendation_blocks.apply_directive(
+        system_prompt, reading_candidates, strategy_candidates
+    )
+    system_prompt += _recommendation_service.conversation_context(
+        db, session_id=session_id, username=identity.get("username", ""),
+        message=request.message or "", language=request.language or "it",
+    )
+
     # 3. Assembla l'envelope canonico (Fase 5):
     #    SYSTEM = [PERSONA] [SECTION] [STUDENT] [PROFILE] [KNOWLEDGE]
     #    MESSAGES = history verbatim + user (scores scope-ati + msg)
@@ -642,6 +711,11 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         _log_error(db, session_id, str(e), identity=identity, questionnaire_type=questionnaire_type,
                    mode=request.mode, phase=request.phase, conversation_id=conversation_id)
         raise HTTPException(status_code=502, detail=str(e))
+    # Il blocco privato esce subito: non deve raggiungere lo studente, il
+    # transcript, il log o il PDF.
+    response_content, recommended = recommendation_blocks.extract(
+        response_content, readings=reading_candidates, strategies=strategy_candidates,
+    )
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         response_content = _sanitize_ztpi_user_text(response_content, request.language)
     elif _is_strategy_questionnaire(questionnaire_type):
@@ -662,7 +736,11 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         lang=request.language or "it",
     )
     response_content = _strip_generic_acknowledgement(response_content)
-    response_content, _ = _limit_visible_words(response_content, effective_response_length)
+    response_content, truncated = _limit_visible_words(response_content, effective_response_length)
+    if truncated:
+        recommended = recommendation_blocks.retain_visible(
+            recommended, response_content, readings=reading_candidates, strategies=strategy_candidates,
+        )
 
     if _should_sanitize_ztpi_text(request.mode, request.phase):
         step_label = _sanitize_ztpi_step_label(step_label, request.language)
@@ -705,7 +783,12 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         "questionnaire_type": questionnaire_type,
         "knowledge_context_length": len(knowledge_context),
         "strategy_ids": strategy_ids,
+        # `certified_strategy_ids` resta l'elenco iniettato nel prompt; i
+        # `recommended_*` sono quello che la risposta ha davvero proposto.
         "certified_strategy_ids": certified_strategy_ids,
+        "recommended_strategy_ids": recommended["strategy"],
+        "recommended_reading_ids": recommended["reading"],
+        "language": request.language or "it",
         "usage": _usage,
         "cost_usd": _cost_usd,
     }, "user_input", "effective_user_input", "bot_response")
@@ -744,8 +827,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         session_id=session_id,
         username=identity.get("username", "") if identity else "",
         language=request.language or "it",
-        reading_ids=reading_ids,
-        strategy_ids=certified_strategy_ids,
+        reading_ids=recommended["reading"],
+        strategy_ids=recommended["strategy"],
         matched_on=recommendation_meta,
         turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
     )
@@ -755,7 +838,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         "session_id": session_id,
         "conversation_id": conversation_id,
         "strategy_ids": strategy_ids,
-        "certified_strategy_ids": certified_strategy_ids,
+        "certified_strategy_ids": recommended["strategy"],
         "response_id": response_id,
         "idea_revision_id": idea_revision_id,
         "recommendations": recommendations_for_response,
@@ -929,6 +1012,21 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     if sanitize:
         step_label = _sanitize_ztpi_step_label(step_label, request.language)
 
+    # Il catalogo del turno e' un'offerta: il modello dichiara in un blocco
+    # privato quali voci ha davvero proposto, e solo quelle vengono registrate.
+    reading_candidates, strategy_candidates = _recommendation_candidates(
+        db, reading_ids=reading_ids, strategy_ids=certified_strategy_ids,
+        language=request.language or "it",
+    )
+    has_recommendation_candidates = bool(reading_candidates or strategy_candidates)
+    system_prompt = recommendation_blocks.apply_directive(
+        system_prompt, reading_candidates, strategy_candidates
+    )
+    system_prompt += _recommendation_service.conversation_context(
+        db, session_id=session_id, username=identity.get("username", ""),
+        message=request.message or "", language=request.language or "it",
+    )
+
     # Assembla l'envelope canonico (Fase 5):
     #   SYSTEM = [PERSONA] [SECTION] [STUDENT] [PROFILE] [KNOWLEDGE]
     #   MESSAGES = history verbatim + user (scores scope-ati + msg)
@@ -946,7 +1044,11 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     provider = c_provider or ai_service.config.get('active_provider', 'unknown')
     model = c_model or ai_service.config.get('model_name', 'unknown')
 
-    def _log_stream(response_content: str, usage: dict | None = None) -> str | None:
+    def _log_stream(
+        response_content: str,
+        usage: dict | None = None,
+        recommended: dict[str, list[str]] | None = None,
+    ) -> str | None:
         log_db = database.SessionLocal()
         try:
             cost_usd = _usage_cost_usd(usage, provider, model)
@@ -964,7 +1066,12 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 "questionnaire_type": questionnaire_type,
                 "knowledge_context_length": len(knowledge_context),
                 "strategy_ids": strategy_ids,
+                # `certified_strategy_ids` resta l'elenco iniettato nel prompt; i
+                # `recommended_*` sono quello che la risposta ha davvero proposto.
                 "certified_strategy_ids": certified_strategy_ids,
+                "recommended_strategy_ids": (recommended or {}).get("strategy", []),
+                "recommended_reading_ids": (recommended or {}).get("reading", []),
+                "language": request.language or "it",
                 "streamed": True,
                 "response_length": request.response_length,
                 "usage": usage,
@@ -1011,6 +1118,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     def event_gen():
         chunks = []
         usage_info = None
+        previous_display = ""
         try:
             for item in ai_service.stream_response(
                 full_message, system_prompt_final, request.mode,
@@ -1036,18 +1144,27 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 )
                 if questionnaire_type == IDEA_INSTRUMENT:
                     display_response = strip_patch_for_display(display_response)
+                display_response = recommendation_blocks.strip_for_display(display_response)
                 display_response, truncated = _limit_visible_words(display_response, effective_response_length)
                 event = {"display": display_response}
                 if effective_response_length is None:
-                    event["delta"] = text
+                    event["delta"] = display_response[len(previous_display):] if display_response.startswith(previous_display) else ""
+                previous_display = display_response
                 yield f"data: {_json.dumps(event)}\n\n"
                 # IDEA manda la patch tecnica in fondo: continuiamo a consumare
                 # lo stream anche quando il testo visibile ha gia' raggiunto il
                 # limite, altrimenti il diagramma non riceve mai l'aggiornamento.
-                if truncated and questionnaire_type != IDEA_INSTRUMENT:
+                # Stesso motivo per il blocco delle raccomandazioni: senza, il
+                # turno non sa che cosa e' stato davvero proposto.
+                if truncated and questionnaire_type != IDEA_INSTRUMENT and not has_recommendation_candidates:
                     break
 
             raw_response = "".join(chunks)
+            # Il blocco privato esce prima di ogni altra elaborazione: non deve
+            # raggiungere lo studente, il transcript, il log o il PDF.
+            raw_response, recommended = recommendation_blocks.extract(
+                raw_response, readings=reading_candidates, strategies=strategy_candidates,
+            )
             if questionnaire_type == IDEA_INSTRUMENT:
                 response_content, idea_revision_id = _apply_idea_patch(
                     raw_response,
@@ -1078,7 +1195,11 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     user_message=request.message or "",
                     lang=request.language or "it",
                 )
-            response_content, _ = _limit_visible_words(response_content, effective_response_length)
+            response_content, truncated = _limit_visible_words(response_content, effective_response_length)
+            if truncated:
+                recommended = recommendation_blocks.retain_visible(
+                    recommended, response_content, readings=reading_candidates, strategies=strategy_candidates,
+                )
             if not response_content.strip():
                 raise AIError(
                     "Il provider AI ha terminato lo stream senza contenuto visibile. "
@@ -1113,7 +1234,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 transcript_user=_transcript_user,
             )
 
-            response_id = _log_stream(response_content, usage_info)
+            response_id = _log_stream(response_content, usage_info, recommended)
             recommendations_for_response: dict[str, list[dict]] = {"reading": [], "strategy": []}
             recommendation_db = database.SessionLocal()
             try:
@@ -1122,8 +1243,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     session_id=session_id,
                     username=identity.get("username", "") if identity else "",
                     language=request.language or "it",
-                    reading_ids=reading_ids,
-                    strategy_ids=certified_strategy_ids,
+                    reading_ids=recommended["reading"],
+                    strategy_ids=recommended["strategy"],
                     matched_on=recommendation_meta,
                     turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
                 )
@@ -1132,7 +1253,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             finally:
                 recommendation_db.close()
 
-            yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': certified_strategy_ids, 'response_id': response_id, 'idea_revision_id': idea_revision_id, 'recommendations': recommendations_for_response})}\n\n"
+            yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': recommended['strategy'], 'response_id': response_id, 'idea_revision_id': idea_revision_id, 'recommendations': recommendations_for_response})}\n\n"
         except Exception as e:
             logger.error(f"Errore stream chat session {session_id}: {e}")
             try:
@@ -1351,13 +1472,66 @@ TTS_CHUNK_MAX_CHARS = 3000
 @router.get("/session/{session_id}/recommendations")
 async def get_session_recommendations(
     session_id: str,
+    lang: str | None = None,
     db: Session = Depends(get_db),
     identity: dict = Depends(auth.get_identity_view_as),
 ):
-    """Log persistente delle raccomandazioni per la sidebar."""
+    """Log persistente delle raccomandazioni per la sidebar.
+
+    Con `?lang=` i testi tornano nella lingua richiesta, ma solo dove esiste una
+    traduzione certificata: provenienza e stato dello studente non cambiano.
+    """
     username = identity.get("username", "") if identity else ""
     return _recommendation_service.list_for_session(
         db, session_id=session_id, username=username,
+        language=_normalize_language(lang) if lang else None,
+    )
+
+
+class RecommendationStateUpdate(BaseModel):
+    """Stato che lo studente puo' dare a una voce del suo libretto."""
+
+    status: Literal["proposed", "selected", "tried", "dismissed"] | None = None
+    helpful: bool | None = None
+
+
+@router.patch("/session/{session_id}/recommendations/{recommendation_type}/{slug}")
+async def update_session_recommendation(
+    session_id: str,
+    recommendation_type: str,
+    slug: str,
+    update: RecommendationStateUpdate,
+    lang: str | None = None,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    """Marca una raccomandazione dello studente e ritorna il libretto aggiornato.
+
+    Solo il proprietario: la voce di un altro studente non e' un bersaglio e non
+    viene ne' letta ne' scritta.
+    """
+    username = identity.get("username", "") if identity else ""
+    if not username:
+        raise HTTPException(status_code=403, detail="Serve un profilo per aggiornare le raccomandazioni")
+    if recommendation_type not in _recommendation_service.RECOMMENDATION_TYPES:
+        raise HTTPException(status_code=400, detail="Tipo di raccomandazione non valido")
+    fields = update.model_dump(exclude_unset=True)
+    if not fields:
+        raise HTTPException(status_code=400, detail="Nessun campo da aggiornare")
+    row = _recommendation_service.set_state(
+        db,
+        session_id=session_id,
+        username=username,
+        recommendation_type=recommendation_type,
+        slug=slug,
+        status=fields.get("status"),
+        helpful=fields["helpful"] if "helpful" in fields else _recommendation_service.UNSET,
+    )
+    if row is None:
+        raise HTTPException(status_code=404, detail="Raccomandazione non trovata")
+    return _recommendation_service.list_for_session(
+        db, session_id=session_id, username=username,
+        language=_normalize_language(lang) if lang else None,
     )
 
 

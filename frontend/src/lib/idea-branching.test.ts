@@ -27,7 +27,10 @@ test('nothing is deleted when a branch is filtered out', () => {
 test('branch commands sit next to the composer', () => {
     const source = chat();
     assert.match(source, /<IdeaBranchBar/);
-    assert.match(source, /<form onSubmit=\{handleSend\}[\s\S]{0,400}<IdeaBranchBar/);
+    const formStart = source.indexOf('<form onSubmit={handleSend}');
+    const composer = source.slice(formStart, source.indexOf('</form>', formStart));
+    assert.match(composer, /<IdeaBranchBar/);
+    assert.match(composer, /<AutoGrowTextarea/);
 });
 
 test('the map is inline so its nodes can be clicked', () => {

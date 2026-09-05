@@ -13,6 +13,7 @@ from starlette.concurrency import run_in_threadpool
 
 from .. import auth, database, models
 from ..ai_service import AIService, AIError
+from ..message_diagrams import session_owner, save_diagram, list_diagrams
 from ..diagram_render import (
     DiagramSpec,
     DiagramSpecError,
@@ -101,6 +102,8 @@ class FromMessageRequest(BaseModel):
     # Il bottone chiede lo spec, non il disegno: lo passa alla stessa card degli
     # altri diagrammi, che ci mette titolo, legenda, zoom e schermo intero.
     spec_only: bool = False
+    session_id: str | None = Field(default=None, min_length=1, max_length=200)
+    source_text: str | None = Field(default=None, min_length=1, max_length=200000)
 
 
 def feature_enabled(db: Session) -> bool:
@@ -175,6 +178,16 @@ async def render_diagram(
     )
 
 
+@router.get("/session/{session_id}/diagrams")
+def session_diagrams(
+    session_id: str,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    owner = session_owner(db, session_id, identity)
+    return list_diagrams(db, session_id, owner)
+
+
 @router.post("/diagram/from-message")
 async def diagram_from_message(
     request: FromMessageRequest,
@@ -183,6 +196,7 @@ async def diagram_from_message(
 ):
     """Ricava uno spec dal testo di un messaggio gia' scritto e lo disegna."""
     _require_feature(db)
+    owner = session_owner(db, request.session_id, identity) if request.session_id else None
     c_provider, c_model, _persona, _name, disable_thinking, reasoning_budget = _resolve_counselor(
         db, request.counselor_id
     )
@@ -228,6 +242,11 @@ async def diagram_from_message(
             status_code=503 if unavailable else 422,
             detail="diagram model unavailable" if unavailable else "the text does not yield a diagram",
         )
+
+    if request.session_id and owner:
+        save_diagram(db, session_id=request.session_id, username=owner,
+                     source_text=request.source_text or request.text,
+                     instruction=request.instruction, spec=spec)
 
     if request.spec_only:
         # `by_alias`: il modello interno tiene source/target, il contratto

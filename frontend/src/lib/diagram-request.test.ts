@@ -16,3 +16,12 @@ test('an on-demand diagram request carries the counselor selected for the chat',
         },
     );
 });
+
+test('saving uses the full original message while model input stays bounded', () => {
+    const source = 'Messaggio originale '.repeat(1000);
+    const request = buildDiagramFromMessageRequest(source, 'it', '  Solo due passi  ', 42, 'session-a', source);
+    assert.equal(request.text.length, 8000);
+    assert.equal(request.source_text, source);
+    assert.equal(request.session_id, 'session-a');
+    assert.equal(request.instruction, 'Solo due passi');
+});

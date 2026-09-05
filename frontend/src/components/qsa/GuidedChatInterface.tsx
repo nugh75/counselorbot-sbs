@@ -22,7 +22,7 @@ import { toast } from '@/components/ui/Toast';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
-import { MessageDiagramButton } from '@/components/ui/MessageDiagramButton';
+import { MessageDiagramButton, type SavedMessageDiagram } from '@/components/ui/MessageDiagramButton';
 import { IdeaBranchBar } from '@/components/qsa/IdeaBranchBar';
 import { IdeaBranchIntro } from '@/components/qsa/IdeaBranchIntro';
 import { IdeaWorkspace } from '@/components/qsa/IdeaWorkspace';
@@ -518,6 +518,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const [isPathPanelOpen, setIsPathPanelOpen] = useState(false);
     const [isScoresPanelOpen, setIsScoresPanelOpen] = useState(false);
     const [recommendations, setRecommendations] = useState<RecommendationCatalog>(EMPTY_RECOMMENDATIONS);
+    const [recommendationsOpenSignal, setRecommendationsOpenSignal] = useState(0);
+    const [savedDiagrams, setSavedDiagrams] = useState<Record<string, SavedMessageDiagram>>({});
     // Indici dei messaggi con il box "Ragionamento" collassato (toggle per nasconderlo).
     const [hiddenReasoning, setHiddenReasoning] = useState<Set<number>>(new Set());
     const toggleReasoning = (idx: number) => setHiddenReasoning(prev => {
@@ -588,13 +590,26 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         setRecommendations({ reading: [], strategy: [] });
         if (!sessionId) return () => { active = false; };
 
-        void apiFetch(`/api/session/${encodeURIComponent(sessionId)}/recommendations`)
+        void apiFetch(`/api/session/${encodeURIComponent(sessionId)}/recommendations?lang=${activeLocale}`)
             .then(async (response) => response.ok ? response.json() : null)
             .then((payload) => {
                 if (active && payload) setRecommendations(normalizeRecommendationCatalog(payload));
             })
             .catch(() => undefined);
 
+        return () => { active = false; };
+    }, [sessionId, activeLocale]);
+
+    useEffect(() => {
+        let active = true;
+        setSavedDiagrams({});
+        if (sessionId) void apiFetch(`/api/session/${encodeURIComponent(sessionId)}/diagrams`)
+            .then(response => response.ok ? response.json() : [])
+            .then((items: SavedMessageDiagram[]) => {
+                if (active && Array.isArray(items)) setSavedDiagrams(previous => ({
+                    ...Object.fromEntries(items.map(item => [item.source_key, item])), ...previous,
+                }));
+            }).catch(() => undefined);
         return () => { active = false; };
     }, [sessionId]);
 
@@ -1607,7 +1622,17 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     </div>
                 </div>
 
-                <RecommendationsPanel catalog={recommendations} />
+                <RecommendationsPanel
+                    catalog={recommendations}
+                    sessionId={sessionId}
+                    onCatalogChange={setRecommendations}
+                    openSignal={recommendationsOpenSignal}
+                    onDiscuss={prompt => {
+                        setInput(previous => previous.trim() ? `${previous}\n\n${prompt}` : prompt);
+                        document.getElementById('guided-composer')?.focus();
+                        document.getElementById('guided-composer')?.scrollIntoView({ block: 'center' });
+                    }}
+                />
 
                 {/* Scores Display */}
                 {hasScoreEntries && (
@@ -1770,7 +1795,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                     </ChatBubble>
 
                                     {msg.role === 'assistant' && msg.content.trim() && (
-                                        <div className="flex flex-wrap items-center gap-1">
+                                        <div className="flex min-w-0 w-full flex-wrap items-center gap-1">
                                             <MessageDiagramButton
                                                 text={diagramContentForSpeech(msg.content) || msg.content}
                                                 locale={activeLocale}
@@ -1778,6 +1803,11 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                 failedLabel={t('guided.diagramFailed')}
                                                 placeholder={t('guided.diagramPrompt')}
                                                 submitLabel={t('guided.diagramSend')}
+                                                sessionId={sessionId}
+                                                sourceText={msg.content}
+                                                savedDiagrams={savedDiagrams}
+                                                onSaved={diagram => setSavedDiagrams(previous => ({ ...previous, [diagram.source_key]: diagram }))}
+                                                disabled={isLoading}
                                             />
                                             {diagramContentForSpeech(msg.content) && (
                                             <button
@@ -1852,6 +1882,14 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     </div>
                 ) : (
                     <form onSubmit={handleSend} className="border-t border-slate-100 bg-white">
+                        {(recommendations.reading.length + recommendations.strategy.length) > 0 && (
+                            <button type="button" onClick={() => setRecommendationsOpenSignal(value => value + 1)}
+                                className="m-3 mb-0 flex items-center gap-2 rounded-lg border border-indigo-200 px-3 py-2 text-xs font-medium text-indigo-700 lg:hidden"
+                                aria-controls="guided-recommendations-panel">
+                                {t('recommendations.title')}
+                                <span aria-live="polite" className="rounded-full bg-indigo-50 px-2 py-0.5">{recommendations.reading.length + recommendations.strategy.length}</span>
+                            </button>
+                        )}
                         {isIdea && sessionId && (
                             <IdeaBranchBar
                                 sessionId={sessionId}
@@ -1967,6 +2005,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         </div>
                         <div className="relative flex items-end gap-2">
                             <AutoGrowTextarea
+                                id="guided-composer"
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={(e) => {

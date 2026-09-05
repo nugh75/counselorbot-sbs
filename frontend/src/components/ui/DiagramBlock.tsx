@@ -5,7 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, GitBranch, Loader2, Maximize2, SkipBack, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { completeDiagramEdges, diagramEdgeKinds, type DiagramEdgeKind, type DiagramSpec } from '@/lib/diagram-content';
-import { diagramFullscreenLabel, diagramStepLabel, diagramZoomLabel, edgeKindLabel } from '@/lib/i18n-diagram';
+import { diagramFullscreenLabel, diagramRequestLabel, diagramStepLabel, diagramZoomLabel, edgeKindLabel } from '@/lib/i18n-diagram';
 import { focusDiagramNode, revealUpTo, sanitizeSvgMarkup, svgAspectRatio, tagDiagramSvg, walkStep } from '@/lib/diagram-svg';
 import { useDarkMode } from '@/lib/use-dark-mode';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -315,6 +315,7 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
     const renderKey = `${isDark ? 'dark' : 'light'}:${locale}:${normalizedSpecJson}`;
     const [renderState, setRenderState] = useState<RenderState>({ key: '', markup: null, failed: false });
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [retry, setRetry] = useState(0);
     const [zoom, setZoom] = useState(1);
     // `null` = disegno intero; un numero = fermo a quel turno del passo-passo.
     const [step, setStep] = useState<number | null>(null);
@@ -329,6 +330,10 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
 
     useEffect(() => {
         const controller = new AbortController();
+        const timeout = window.setTimeout(() => {
+            setRenderState({ key: renderKey, markup: null, failed: true });
+            controller.abort();
+        }, 30000);
 
         // Il disegno entra nel DOM invece che in un <img>: solo cosi' nodi e
         // archi si possono animare e mettere a fuoco. Passa da un ripulitore,
@@ -358,10 +363,11 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
             .catch((error: unknown) => {
                 if (error instanceof DOMException && error.name === 'AbortError') return;
                 setRenderState({ key: renderKey, markup: null, failed: true });
-            });
+            })
+            .finally(() => window.clearTimeout(timeout));
 
-        return () => controller.abort();
-    }, [isDark, locale, normalizedSpecJson, renderKey]);
+        return () => { window.clearTimeout(timeout); controller.abort(); };
+    }, [isDark, locale, normalizedSpecJson, renderKey, retry]);
 
     useEffect(() => {
         if (!isFullscreen) return;
@@ -411,13 +417,13 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
     // Il fondo della card e' lo stesso colore della pastiglia sotto le etichette del disegno.
     return (
         <figure className="my-2 w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white">
-            <figcaption className="flex items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800">
+            <figcaption className="flex flex-col gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800">
                 <span className="flex min-w-0 items-center gap-2">
                     <GitBranch className="h-4 w-4 shrink-0 text-[#17747a]" aria-hidden="true" />
-                    <span className="truncate">{spec.title}</span>
+                    <span className="break-words">{spec.title}</span>
                 </span>
                 {markup ? (
-                    <span className="flex shrink-0 items-center gap-0.5">
+                    <span className="flex min-w-0 flex-wrap items-center justify-end gap-0.5">
                         <StepControls step={step} turns={turns} setStep={setStep} locale={locale} size="sm" />
                         <ZoomControls zoom={zoom} setZoom={setZoom} locale={locale} size="sm" />
                         <Tooltip content={openFullscreenLabel}>
@@ -446,7 +452,10 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                     <DiagramSurface markup={markup} spec={drawnSpec} zoom={zoom} description={description} fitHeight="min(32rem, 70dvh)" step={step} onTurns={onTurns} />
                 </div>
             ) : failed ? (
-                <ol className="grid gap-2 p-3 sm:grid-cols-2" aria-label={spec.title}>
+                <div className="space-y-2 p-3">
+                <p role="status" className="text-xs text-slate-600">{diagramRequestLabel('renderFailed', locale)}</p>
+                <button type="button" className="rounded border border-slate-200 px-3 py-2 text-xs text-indigo-700" onClick={() => setRetry(value => value + 1)}>{diagramRequestLabel('retry', locale)}</button>
+                <ol className="grid gap-2 sm:grid-cols-2" aria-label={spec.title}>
                     {spec.nodes.map((node, index) => (
                         <li
                             key={node.id}
@@ -457,6 +466,10 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                         </li>
                     ))}
                 </ol>
+                <ul className="space-y-1 text-xs text-slate-600">
+                    {(drawnSpec.edges || []).map((edge, index) => <li key={index}>{drawnSpec.nodes.find(node => node.id === edge.from)?.label} — {edge.label || edgeKindLabel(edge.kind || 'drives', locale)} → {drawnSpec.nodes.find(node => node.id === edge.to)?.label}</li>)}
+                </ul>
+                </div>
             ) : (
                 <div className="flex min-h-28 items-center justify-center text-[#17747a]" role="status">
                     <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
@@ -479,12 +492,12 @@ export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
                         aria-modal="true"
                         aria-label={spec.title}
                     >
-                        <header className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3">
+                        <header className="flex flex-col gap-2 border-b border-slate-200 bg-slate-50 px-3 py-3 sm:px-4">
                             <span className="flex min-w-0 items-center gap-2 font-semibold text-slate-800">
                                 <GitBranch className="h-5 w-5 shrink-0 text-[#17747a]" aria-hidden="true" />
                                 <span className="truncate">{spec.title}</span>
                             </span>
-                            <span className="flex shrink-0 items-center gap-0.5">
+                            <span className="flex min-w-0 flex-wrap items-center justify-end gap-0.5">
                             <StepControls step={step} turns={turns} setStep={setStep} locale={locale} size="lg" />
                             <ZoomControls zoom={zoom} setZoom={setZoom} locale={locale} size="lg" />
                             <button

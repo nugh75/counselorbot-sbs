@@ -108,3 +108,17 @@ export function diagramFullscreenLabel(action: FullscreenAction, lang: string): 
     const dict = FULLSCREEN_LABELS[(lang || 'it').slice(0, 2) as Lang] ?? FULLSCREEN_LABELS.en;
     return dict[action];
 }
+
+type RequestAction = 'retry' | 'unavailable' | 'unsuitable' | 'disabled' | 'saved' | 'renderFailed';
+const REQUEST_LABELS: Record<Lang, Record<RequestAction, string>> = {
+    it: { retry: 'Riprova', unavailable: 'Il servizio non risponde. Riprova tra poco.', unsuitable: 'Non è stato possibile ricavare un diagramma. Prova a precisare la richiesta.', disabled: 'I diagrammi non sono disponibili per questa sessione.', saved: 'Diagramma salvato nella sessione', renderFailed: 'Impossibile mostrare il disegno. Le relazioni sono riportate qui sotto.' },
+    en: { retry: 'Retry', unavailable: 'The service is not responding. Try again shortly.', unsuitable: 'A diagram could not be created. Try clarifying your request.', disabled: 'Diagrams are unavailable for this session.', saved: 'Diagram saved in the session', renderFailed: 'The drawing could not be displayed. Its relationships are listed below.' },
+    es: { retry: 'Reintentar', unavailable: 'El servicio no responde. Inténtalo de nuevo en unos instantes.', unsuitable: 'No se pudo crear un diagrama. Intenta precisar la solicitud.', disabled: 'Los diagramas no están disponibles para esta sesión.', saved: 'Diagrama guardado en la sesión', renderFailed: 'No se pudo mostrar el dibujo. Las relaciones se indican a continuación.' },
+    fr: { retry: 'Réessayer', unavailable: 'Le service ne répond pas. Réessayez dans un instant.', unsuitable: 'Le diagramme n’a pas pu être créé. Essayez de préciser la demande.', disabled: 'Les diagrammes ne sont pas disponibles pour cette session.', saved: 'Diagramme enregistré dans la session', renderFailed: 'Le dessin ne peut pas être affiché. Ses relations sont indiquées ci-dessous.' },
+    de: { retry: 'Erneut versuchen', unavailable: 'Der Dienst antwortet nicht. Versuche es gleich noch einmal.', unsuitable: 'Das Diagramm konnte nicht erstellt werden. Präzisiere deine Anfrage.', disabled: 'Diagramme sind für diese Sitzung nicht verfügbar.', saved: 'Diagramm in der Sitzung gespeichert', renderFailed: 'Die Zeichnung konnte nicht angezeigt werden. Ihre Beziehungen stehen unten.' },
+    sv: { retry: 'Försök igen', unavailable: 'Tjänsten svarar inte. Försök igen om en stund.', unsuitable: 'Ett diagram kunde inte skapas. Försök förtydliga din begäran.', disabled: 'Diagram är inte tillgängliga för den här sessionen.', saved: 'Diagrammet sparades i sessionen', renderFailed: 'Bilden kunde inte visas. Sambanden anges nedan.' },
+};
+
+export function diagramRequestLabel(action: RequestAction, lang: string): string {
+    return (REQUEST_LABELS[(lang || 'it').slice(0, 2) as Lang] ?? REQUEST_LABELS.en)[action];
+}
