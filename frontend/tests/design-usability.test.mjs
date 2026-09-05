@@ -232,9 +232,9 @@ for (const width of [320, 390]) {
             const scrollTop = await page.getByRole('log').evaluate(el => el.scrollTop);
             for (const title of ['Percorso', 'Punteggi']) {
                 await optionsTrigger.click();
-                const dots = await optionsTrigger.locator('svg circle').evaluateAll(elements => elements.map(el => Number(el.getAttribute('cy'))));
+                const dots = await optionsTrigger.locator('svg circle').evaluateAll(elements => elements.map(el => Number(el.getAttribute('cx'))));
                 assert.equal(dots.length, 3);
-                assert.equal(new Set(dots).size, 1, 'three dots are horizontal');
+                assert.equal(new Set(dots).size, 1, 'three dots are vertical');
                 await page.locator('.chat-options:popover-open').getByRole('button', { name: title, exact: true }).click();
                 const dialog = page.getByRole('dialog', { name: title, exact: true });
                 await dialog.waitFor();

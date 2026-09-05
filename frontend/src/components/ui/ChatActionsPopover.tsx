@@ -1,13 +1,12 @@
 'use client';
 
 import { useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreVertical } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
 
 /** Native popovers escape the transcript's clipping and handle outside tap/Escape. */
-export function ChatActionsPopover({ label, inlineDesktop = false, children }: {
+export function ChatActionsPopover({ label, children }: {
     label: string;
-    inlineDesktop?: boolean;
     children: (close: () => void) => ReactNode;
 }) {
     const id = useId();
@@ -54,13 +53,11 @@ export function ChatActionsPopover({ label, inlineDesktop = false, children }: {
         document.getElementById(`${id}-trigger`)?.focus({ preventScroll: true });
     };
 
-    return <>
-        {inlineDesktop && <div className="chat-inline-actions hidden flex-wrap items-center gap-1 lg:flex">{children(() => {})}</div>}
-        <div className={inlineDesktop ? 'shrink-0 lg:hidden' : 'shrink-0'}>
+    return <div className="shrink-0">
             <Tooltip content={label}>
                 <button ref={trigger} id={`${id}-trigger`} type="button" popoverTarget={id} aria-label={label} aria-expanded={open} aria-controls={id}
                     className="inline-flex h-[44px] w-[44px] items-center justify-center rounded-md text-slate-500 hover:bg-slate-100">
-                    <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
+                    <MoreVertical className="h-5 w-5" aria-hidden="true" />
                 </button>
             </Tooltip>
             <div ref={panel} id={id} popover="auto" role="group" aria-label={label}
@@ -69,6 +66,5 @@ export function ChatActionsPopover({ label, inlineDesktop = false, children }: {
                 style={{ inset: 'auto', visibility: open ? 'visible' : 'hidden' }}>
                 {children(close)}
             </div>
-        </div>
-    </>;
+    </div>;
 }

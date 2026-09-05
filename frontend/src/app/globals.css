@@ -240,7 +240,6 @@ body:has(.chat-viewport) main#contenuto { padding-top: 1rem; }
 }
 
 .chat-options button[role="radio"] { min-width: 44px; min-height: 44px; }
-.chat-inline-actions .chat-action-item { width: auto; font-size: 0.8rem; }
 
 /* Long-form messages keep the reading size through Markdown's small styles. */
 .chat-message :is(p, li, .prose) { font-size: inherit; line-height: inherit; }
