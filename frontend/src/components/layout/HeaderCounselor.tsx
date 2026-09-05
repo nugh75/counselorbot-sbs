@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useSyncExternalStore } from 'react';
+import { useEffect, useState, useRef, useSyncExternalStore, useId } from 'react';
 import { ChevronDown, User } from 'lucide-react';
 import {
     fetchCounselors,
@@ -12,10 +12,12 @@ import {
 import { getSelectedInstrumentId, subscribeToInstrument } from '@/lib/instrument';
 import { useI18n } from '@/lib/i18n-context';
 
-export function HeaderCounselor() {
+export function HeaderCounselor({ inline = false }: { inline?: boolean }) {
     const { t, lang } = useI18n();
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const optionsId = useId();
     const selectedId = useSyncExternalStore(
         subscribeToCounselor,
         getSelectedCounselorId,
@@ -49,15 +51,25 @@ export function HeaderCounselor() {
     const choose = (c: PublicCounselor | null) => {
         setSelectedCounselorId(c ? c.id : null);
         setOpen(false);
+        triggerRef.current?.focus();
     };
 
     return (
-        <div className="relative" ref={ref}>
+        <div className={inline ? 'contents' : 'relative'} ref={ref} onKeyDownCapture={(event) => {
+            if (event.key === 'Escape' && open) {
+                event.stopPropagation();
+                setOpen(false);
+                triggerRef.current?.focus();
+            }
+        }}>
             <button
+                ref={triggerRef}
                 type="button"
+                aria-expanded={open}
+                aria-controls={optionsId}
                 onClick={() => setOpen((o) => !o)}
                 title={selected ? t('header.counselorChosen', { name: selected.name }) : t('counselor.pick')}
-                className={`flex h-8 items-center gap-1 rounded-full border px-3 py-1 text-sm font-medium transition-colors ${
+                className={`flex max-w-full h-8 items-center gap-1 rounded-full border px-3 py-1 text-sm font-medium transition-colors ${
                     selected
                         ? 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
                         : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
@@ -69,7 +81,7 @@ export function HeaderCounselor() {
             </button>
 
             {open && (
-                <div className="absolute right-0 mt-1 w-56 rounded-md border border-slate-200 bg-white shadow-lg z-[60] max-h-64 overflow-y-auto">
+                <div id={optionsId} className={`${inline ? 'w-full basis-full' : 'absolute right-0 w-56 shadow-lg z-[60]'} mt-1 rounded-md border border-slate-200 bg-white max-h-64 overflow-y-auto`}>
                     {selected && (
                         <button
                             type="button"

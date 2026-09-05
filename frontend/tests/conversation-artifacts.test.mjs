@@ -37,9 +37,10 @@ async function fixture(width, phase = 'intro', options = {}) {
         control.requests.push({ path: url.pathname, search: url.search, method: request.method(), body: request.postDataJSON() });
         let data = [];
         if (url.pathname === '/api/auth/me') data = { authenticated: true, is_admin: false, username: 'fixture', name: 'Prova', groups: ['studenti'] };
-        else if (url.pathname === '/api/counselors') data = [{ id: 1, slug: 'fixture', name: 'Counselor di prova', language: ['it'], suitable: true }];
+        else if (url.pathname === '/api/counselors') data = [{ id: 1, slug: 'fixture', name: 'Counselor di prova', language: ['it'], suitable: true }, { id: 2, slug: 'second', name: 'Secondo counselor', language: ['it'], suitable: true }];
         else if (url.pathname === '/api/session/frozen/fixture') data = { session_id: 'fixture', questionnaire_type: 'QSA', current_phase: phase, counselor_id: 1, experience: 'standard', scores: { C1: 7 }, messages: [{ role: 'system', content: phase === 'intro' ? '--- Introduzione ---' : 'FINE PERCORSO' }, { role: 'user', content: 'Vorrei organizzarmi.' }, { role: 'assistant', content: reply }] };
         else if (url.pathname === '/api/qsa/guided-ui-texts') data = { guided_steps: [{ id: 'intro', label: 'Introduzione', sort_order: 1, system_prompt_mode: 'qsa-intro' }], text_guided_conclusion: 'FINE PERCORSO' };
+        else if (url.pathname === '/api/chat/stream') return route.fulfill({ contentType: 'text/event-stream', body: 'data: {"done":true,"response":"Proseguiamo."}\n\n' });
         else if (url.pathname === '/api/session/fixture/diagrams') data = control.saved;
         else if (url.pathname === '/api/session/fixture/recommendations') data = catalog;
         else if (url.pathname.startsWith('/api/session/fixture/recommendations/')) {
@@ -395,3 +396,43 @@ test('fullscreen retains the reading position and zoom on return to the card', a
         assert.deepEqual(control.errors, []);
     } finally { await context.close(); }
 });
+
+for (const width of [320, 390]) {
+    test(`mobile counselor selection fits and applies to the next diagram at ${width}px`, async () => {
+        const { page, context, control } = await fixture(width, 'intro', { touch: true, dark: true });
+        try {
+            await page.locator('#guided-composer').fill('Conserva questa domanda.');
+            await page.locator('button[aria-controls="mobile-menu"]').tap();
+            const menu = page.locator('#mobile-menu');
+            const trigger = menu.locator('button[aria-controls]').filter({ hasText: 'Counselor di prova' });
+            await trigger.tap();
+            const options = page.locator(`[id="${await trigger.getAttribute('aria-controls')}"]`);
+            const menuBox = await menu.boundingBox();
+            const box = await options.boundingBox();
+            assert.ok(box.x >= menuBox.x && box.x + box.width <= menuBox.x + menuBox.width, 'counselors fit inside the scrollable menu');
+            for (const button of await options.getByRole('button').all()) {
+                assert.ok((await button.boundingBox()).height >= 44);
+            }
+            await options.getByRole('button', { name: 'Secondo counselor', exact: true }).tap();
+            assert.equal(await page.evaluate(() => localStorage.getItem('counselorbot_selected_counselor')), '2');
+            assert.equal(await options.count(), 0);
+            const selected = menu.locator('button[aria-controls]').filter({ hasText: 'Secondo counselor' });
+            await selected.tap();
+            await options.waitFor({ state: 'visible' });
+            await page.keyboard.press('Escape');
+            assert.equal(await menu.count(), 1, 'Escape closes the counselor list first');
+            assert.equal(await selected.getAttribute('aria-expanded'), 'false');
+            await page.keyboard.press('Escape');
+            assert.equal(await menu.count(), 0);
+            assert.equal(await page.locator('#guided-composer').inputValue(), 'Conserva questa domanda.');
+            await openMessageDiagram(page);
+            await page.locator('form').filter({ has: page.locator('input[maxlength="400"]') }).locator('button[type="submit"]').tap();
+            await page.locator('figure svg g.node').first().waitFor();
+            assert.equal(control.requests.find(request => request.path === '/api/diagram/from-message').body.counselor_id, 2);
+            const nextChat = page.waitForRequest('**/api/chat/stream');
+            await page.locator('#guided-composer').press('Enter');
+            assert.equal((await nextChat).postDataJSON().counselor_id, 2);
+            assert.deepEqual(control.errors, []);
+        } finally { await context.close(); }
+    });
+}

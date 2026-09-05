@@ -292,7 +292,7 @@ function MobileHeaderMenu({
                 <div id="mobile-menu" className="absolute right-0 top-full z-[60] mt-2 max-h-[calc(100dvh-4.5rem)] w-[min(88vw,18rem)] overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
                     <div className="compact-header-selection flex flex-wrap items-center gap-2 px-3 py-2 empty:hidden">
                         <HeaderInstrument />
-                        <HeaderCounselor />
+                        <HeaderCounselor inline />
                     </div>
                     {accountLabel && (
                         <div className="border-b border-slate-100 px-3 py-2 dark:border-slate-700">
