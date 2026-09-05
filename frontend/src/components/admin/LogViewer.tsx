@@ -191,7 +191,7 @@ function MultiSelectFilter({
 }
 
 const DEFAULT_ACTIONS = ['chat_message', 'site_chat', 'opencode_chat', 'chat_error'];
-const DEFAULT_PROVIDERS = ['openai', 'anthropic', 'gemini', 'mistral', 'openrouter', 'ollama', 'llamacpp', 'opencode', 'unknown'];
+const DEFAULT_PROVIDERS = ['openai', 'anthropic', 'gemini', 'mistral', 'openrouter', 'omniroute', 'ollama', 'llamacpp', 'opencode', 'unknown'];
 const DEFAULT_QUESTIONNAIRES = ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP', 'SAVICKAS', 'IDEA', 'SITE', 'OPENCODE'];
 
 function asObject(details: LogEntry['details']): LogDetails {

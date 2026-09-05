@@ -700,7 +700,7 @@ def map_context(spec: DiagramSpec | None, message: str = "", lang: str = "it",
             "The map is empty. Create it in THIS turn, from what the person has "
             "already said, EVEN IF the idea is still vague: a vague idea is a "
             "node with \"status\":\"mentioned\", never a reason to wait. Ask "
-            "your narrowing question in the same reply, after the block. "
+            "your narrowing question in the visible reply, before the private patch. "
             "At least two nodes and one edge, one node with "
             "\"role\":\"idea\" and \"accent\":true, plus a short \"title\". "
             "If the kind of work is not clear yet, leave \"task_type\" out and "

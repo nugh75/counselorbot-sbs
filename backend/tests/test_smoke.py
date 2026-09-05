@@ -35,6 +35,7 @@ from starlette.testclient import TestClient
 from backend import database, models, auth
 import backend.main as main
 import backend.routes.chat as chat_routes
+import backend.chat_preparation as chat_preparation
 import backend.routes.diagram as diagram_routes
 import backend.routes.idea_map as idea_map_routes
 import backend.routes.survey as survey_routes
@@ -1422,7 +1423,7 @@ def test_benchmark_run_endpoint_creates_run():
 def test_openai_compatible_providers_registered():
     from backend.ai_service import OPENAI_COMPAT_PROVIDERS, AIService
     assert set(OPENAI_COMPAT_PROVIDERS) == {
-        "groq", "cerebras", "deepseek", "together", "fireworks", "deepinfra",
+        "groq", "cerebras", "deepseek", "together", "fireworks", "deepinfra", "omniroute",
     }
     assert hasattr(AIService, "_call_openai_compatible")
     assert hasattr(AIService, "_stream_openai_compatible")
@@ -2003,7 +2004,7 @@ def test_startup_migration_adds_the_final_idea_plan_without_overwriting_custom_p
         db.close()
 
 
-def test_prompt_audit_scopes_certified_strategies_to_qsa_second_level_step():
+def test_prompt_audit_live_scopes_certified_strategies_to_qsa_second_level_step():
     _ensure_guided_steps("QSA")
     db = _TestSession()
     try:
@@ -2039,7 +2040,7 @@ def test_prompt_audit_scopes_certified_strategies_to_qsa_second_level_step():
         "- A1: 8/9", "- A2: 6/9", "- A3: 5/9", "- A4: 8/9",
         "- A5: 3/9", "- A6: 3/9", "- A7: 7/9",
     ])
-    r = client.post("/admin/prompt-audit/dry-run", json={
+    r = client.post("/admin/prompt-audit/live", json={
         "questionnaire_type": "QSA",
         "language": "it",
         "phase": "sl-motivation",
@@ -3360,11 +3361,11 @@ def test_idea_stream_finishes_and_applies_the_hidden_patch_after_visible_limit()
         })
         assert response.status_code == 200, response.text
         done = _done_sse_event(response)
-        assert len(chat_logic._VISIBLE_WORD_RE.findall(done["response"])) == 600
+        assert len(chat_logic._VISIBLE_WORD_RE.findall(done["response"])) == 80
         assert done["response"].endswith("…")
         assert "```idea" not in done["response"]
         assert done["idea_revision_id"] is not None
-        assert _FakeAIService.last_stream_args["max_tokens"] == 2000
+        assert _FakeAIService.last_stream_args["max_tokens"] == 1456
 
         current = client.get("/idea/map", params={"session_id": session_id})
         assert current.status_code == 200, current.text
@@ -3599,7 +3600,7 @@ def test_generic_acknowledgement_is_removed_from_visible_chat_openings():
     original_stream = _FakeAIService.stream_response
     original_response = _FakeAIService.get_response
     original_search = site_chat_routes.site_rag_index.search
-    original_retrieval = chat_routes._retrieved_context
+    original_retrieval = chat_preparation._retrieved_context
 
     def assent_stream(self, *args, **kwargs):
         yield {"type": "content", "text": "Capisco. La difficolta centrale e distinguere le priorita."}
@@ -3609,7 +3610,7 @@ def test_generic_acknowledgement_is_removed_from_visible_chat_openings():
 
     _FakeAIService.stream_response = assent_stream
     _FakeAIService.get_response = assent_response
-    chat_routes._retrieved_context = lambda *a, **kw: ("", [], [], [], [], {})
+    chat_preparation._retrieved_context = lambda *a, **kw: ("", [], [], [], [], {})
     site_chat_routes.site_rag_index.search = lambda *a, **kw: [
         {"score": 0.9, "source": "fonti/qsa.md", "title": "QSA", "text": "Materiale QSA."}
     ]
@@ -3637,7 +3638,7 @@ def test_generic_acknowledgement_is_removed_from_visible_chat_openings():
     finally:
         _FakeAIService.stream_response = original_stream
         _FakeAIService.get_response = original_response
-        chat_routes._retrieved_context = original_retrieval
+        chat_preparation._retrieved_context = original_retrieval
         site_chat_routes.site_rag_index.search = original_search
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
@@ -3923,7 +3924,7 @@ def test_questionnaire_result_summary_uses_final_guided_step_for_every_instrumen
                         action="chat_message",
                         questionnaire_type=questionnaire_type,
                         phase=final_step.id,
-                        details={"bot_response": f"Sintesi finale {questionnaire_type}", "language": "it"},
+                        details={"bot_response": f"Sintesi finale {questionnaire_type}", "language": "it", "journey_coverage": "complete"},
                     ),
                     models.Log(
                         session_id=session_id,
@@ -3976,7 +3977,7 @@ def test_qpcs_summary_ignores_a_later_legacy_step():
                     action="chat_message",
                     questionnaire_type="QPCS",
                     phase="qpcs-sintesi",
-                    details={"bot_response": "Sintesi finale QPCS", "language": "it"},
+                    details={"bot_response": "Sintesi finale QPCS", "language": "it", "journey_coverage": "complete"},
                 ),
                 models.Log(
                     session_id=session_id,
@@ -6249,12 +6250,13 @@ def test_skills_behaviour_reaches_the_prompt_without_rag_knowledge():
     _set_config("skills_engine_enabled", "true")
     _set_config("skills_engine_instruments", json.dumps(list(SEEDED_INSTRUMENTS)))
 
-    response = client.post("/admin/prompt-audit/dry-run", json={
+    response = client.post("/admin/prompt-audit/live", json={
         "questionnaire_type": "QAP",
         "language": "it",
         "mode": "generic",
         "message": "Non capisco cosa significa questo risultato",
-        "include_knowledge": False,
+        "include_knowledge": True,
+        "component_flags": {"knowledge": False},
         "include_history": False,
     })
 
@@ -6300,7 +6302,7 @@ def test_explicit_reading_request_receives_certified_catalog_when_rag_is_off():
     _set_config("skills_engine_instruments", json.dumps(list(SEEDED_INSTRUMENTS)))
 
     try:
-        response = client.post("/admin/prompt-audit/dry-run", json={
+        response = client.post("/admin/prompt-audit/live", json={
             "questionnaire_type": "QSA",
             "language": "it",
             "phase": "cognitive",
@@ -6368,7 +6370,7 @@ def test_skills_profile_comparison_uses_only_the_same_students_results():
     _set_config("skills_engine_enabled", "true")
     _set_config("skills_engine_instruments", json.dumps(list(SEEDED_INSTRUMENTS)))
 
-    response = client.post("/admin/prompt-audit/dry-run", json={
+    response = client.post("/admin/prompt-audit/live", json={
         "session_id": session_id,
         "questionnaire_type": "QAP",
         "language": "it",

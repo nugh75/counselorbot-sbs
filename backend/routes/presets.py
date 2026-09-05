@@ -21,7 +21,7 @@ _LOCAL_PROVIDERS = {"ollama", "llamacpp"}
 
 def _provider_configured(config: dict, provider: str) -> bool:
     """True se il provider e' utilizzabile: locale, oppure con chiave attiva."""
-    if provider in _LOCAL_PROVIDERS:
+    if provider in _LOCAL_PROVIDERS or provider == "omniroute":
         return True
     return bool((config.get(f"api_key_{provider}") or "").strip())
 

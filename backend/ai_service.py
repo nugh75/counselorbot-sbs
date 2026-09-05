@@ -16,6 +16,7 @@ from . import models
 from . import pii
 from . import pii_ner
 from .api_secrets import API_KEY_ENV_MAP, config_key, resolve_api_secrets
+from .model_context import context_profile, fit_context
 from .reasoning_profiles import DISABLED_PLAN, ReasoningPlan, resolve_plan
 
 logger = logging.getLogger(__name__)
@@ -58,6 +59,7 @@ SUMMARY_SYSTEM_PROMPT = (
 ENV_KEY_MAP = {
     **{config_key(provider): env_vars for provider, env_vars in API_KEY_ENV_MAP.items()},
     'ollama_ip': ('OLLAMA_BASE_URL',),
+    'omniroute_url': ('OMNIROUTE_API_URL',),
     'ollama_num_ctx': ('OLLAMA_NUM_CTX',),
     'ollama_keep_alive': ('OLLAMA_KEEP_ALIVE',),
     'ollama_preload': ('OLLAMA_PRELOAD',),
@@ -71,6 +73,7 @@ ENV_KEY_MAP = {
 # nome_provider -> base_url. La chiave DB e' sempre 'api_key_<nome>'.
 # Aggiungere un provider OpenAI-compatibile = una voce qui (+ ENV_KEY_MAP).
 OPENAI_COMPAT_PROVIDERS = {
+    'omniroute': 'http://omniroute:20128/v1',
     'groq':      'https://api.groq.com/openai/v1',
     'cerebras':  'https://api.cerebras.ai/v1',
     'deepseek':  'https://api.deepseek.com/v1',
@@ -87,6 +90,11 @@ class AIService:
         self.db = db
         self.config = self._load_config()
         self.last_usage = None
+        self.last_provider = None
+        self.last_model = None
+        self.last_attempts = []
+        self.last_context_report = None
+        self.last_envelope = None
         # Ultimo ragionamento «sto pensando» estratto (nativo Ollama o tag <think>),
         # esposto ai chiamatori non-stream (es. audit /live) come canale separato.
         self.last_thinking = None
@@ -158,8 +166,10 @@ class AIService:
         return data or None
 
     def _provider(self, name: str) -> dict:
-        """Voce del registro per il provider; fallback a openai se sconosciuto."""
-        return self._providers.get(name, self._providers['openai'])
+        """Unknown providers fail explicitly; they must never select a paid service."""
+        if name not in self._providers:
+            raise AIError(f"Provider sconosciuto: {name}")
+        return self._providers[name]
 
     @staticmethod
     def _normalize_history(history) -> list:
@@ -215,15 +225,15 @@ class AIService:
             ).scalar() or 0.0
             self._budget_locked_cache = float(spent) >= self.monthly_budget_usd
         except Exception as e:
-            logger.warning(f"Verifica budget fallita (non bloccante): {e}")
-            self._budget_locked_cache = False
+            logger.warning("Budget unavailable; paid dispatch blocked (%s)", type(e).__name__)
+            self._budget_locked_cache = True
         return self._budget_locked_cache
 
     def _apply_budget_lock(self, provider: str, model: str):
         """Se il budget e' superato, forza Ollama locale + modello di fallback.
         Lascia invariati i provider gia' locali. Non tocca il benchmark
         (che usa call_model, percorso esplicito dell'admin)."""
-        if provider != 'ollama' and self._budget_is_locked():
+        if not self._free_target(provider, model) and self._budget_is_locked():
             fallback = self.budget_fallback_model or 'muse-glimmer:30b'
             logger.info(f"Budget mensile superato: fallback {provider}/{model} -> ollama/{fallback}")
             return 'ollama', fallback
@@ -358,10 +368,7 @@ class AIService:
                     base = f"{base}/v1"
                 client = OpenAI(base_url=base, api_key="llamacpp", timeout=timeout)
             elif provider in OPENAI_COMPAT_PROVIDERS:
-                api_key = self._get_api_key(f'api_key_{provider}')
-                if not api_key:
-                    return []
-                client = OpenAI(base_url=OPENAI_COMPAT_PROVIDERS[provider], api_key=api_key, timeout=timeout)
+                client = self._openai_compatible_client(provider, timeout=timeout)
             else:
                 # anthropic/gemini/mistral: nessun elenco dinamico, usa il fallback statico lato UI
                 return []
@@ -391,6 +398,8 @@ class AIService:
                     base_url = "https://openrouter.ai/api/v1"
                 elif provider in OPENAI_COMPAT_PROVIDERS:
                     base_url = OPENAI_COMPAT_PROVIDERS[provider]
+                    if provider == "omniroute":
+                        base_url = self.config.get("omniroute_url") or base_url
                 kwargs = {"base_url": base_url} if base_url else {}
                 client = OpenAI(api_key=api_key, timeout=timeout, **kwargs)
                 client.models.list()
@@ -418,58 +427,86 @@ class AIService:
         precedenti, iniettato come messaggi nativi ⟨user,assistant⟩ prima del
         messaggio utente corrente. `provider`/`model` opzionali come sopra.
         """
-        effective_provider = provider or self.config.get('active_provider', 'openai')
-        history = self._normalize_history(history)
-        # Se l'utente sovrascrive il provider (es. gemini), usa un modello
-        # predefinito per quel provider, non il model_name generico che
-        # potrebbe essere un modello Ollama (es. qwen3.5:9b).
-        _PROVIDER_DEFAULT_MODELS = {
-            "openai": "gpt-4o",
-            "anthropic": "claude-sonnet-4-20250514",
-            "gemini": "gemini-2.0-flash",
-            "openrouter": "meta-llama/llama-3.3-70b-instruct:free",
-            "mistral": "mistral-small-latest",
-            "ollama": "muse-glimmer:30b",
-            "llamacpp": "default",
-            "groq": "llama-3.3-70b-versatile",
-            "cerebras": "llama-3.3-70b",
-            "deepseek": "deepseek-v4-flash",
-            "together": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-            "fireworks": "accounts/fireworks/models/llama-v3p3-70b-instruct",
-            "deepinfra": "meta-llama/Llama-3.3-70B-Instruct",
-        }
-        if model:
-            model_name = model
-        elif provider:
-            model_name = (
-                self.config.get(f'model_name_{provider}')
-                or _PROVIDER_DEFAULT_MODELS.get(provider, 'gpt-4o')
-            )
-        else:
-            model_name = self.config.get('model_name', 'gpt-4o')
-
-        # Inietta il riassunto conversazionale come contesto
         if conversation_summary:
-            user_message = (
-                f"CONTEXT OF PREVIOUS CONVERSATIONS:\n{conversation_summary}\n\n"
-                f"---\n\n{user_message}"
-            )
-        
-        effective_provider, model_name = self._apply_budget_lock(effective_provider, model_name)
-        entry = self._provider(effective_provider)
-        plan = self._resolve_reasoning(model_name, requested_max_tokens=max_tokens,
-                                       fallback_max_tokens=entry['call_max'])
-        mt = plan.max_tokens
+            user_message = f"CONTEXT OF PREVIOUS CONVERSATIONS:\n{conversation_summary}\n\n{user_message}"
+        return self._response_with_fallback(
+            user_message, system_prompt, provider, model, max_tokens, history, json_mode,
+        )
+
+    def _selected_target(self, provider, model):
+        chosen = provider or self.config.get("active_provider", "openai")
+        if model:
+            return chosen, model
+        if provider and chosen != self.config.get("active_provider"):
+            selected = self.config.get(f"model_name_{chosen}")
+            defaults = {"openrouter": "openrouter/free", "omniroute": "auto/best-chat",
+                        "ollama": self.budget_fallback_model, "llamacpp": "default"}
+            selected = selected or defaults.get(chosen)
+            if not selected:
+                raise AIError(f"Seleziona un modello per {chosen}")
+            return chosen, selected
+        return chosen, self.config.get("model_name", "gpt-4o")
+
+    @staticmethod
+    def _free_target(provider, model):
+        return provider in LOCAL_PROVIDERS or (provider == "openrouter" and
+                (model == "openrouter/free" or (model.endswith(":free") and not model.startswith("openrouter/auto"))))
+
+    def _targets(self, provider, model):
+        primary = self._selected_target(provider, model)
+        primary = self._apply_budget_lock(*primary)
+        raw = self.config.get("ai_fallback_targets", "[]")
+        configured = json.loads(raw) if isinstance(raw, str) else raw
+        targets = [primary]
+        for target in configured or []:
+            candidate = (target["provider"], target["model"])
+            self._provider(candidate[0])
+            if candidate not in targets:
+                # A gateway's name does not prove that its upstream is free.
+                if not self._free_target(*candidate) and self._budget_is_locked():
+                    continue
+                targets.append(candidate)
+        return targets[:4]
+
+    def _attempt_input(self, provider, model, message, system, history, max_tokens, streaming):
+        entry = self._provider(provider)
+        plan = self._resolve_reasoning(model, requested_max_tokens=max_tokens,
+                                       fallback_max_tokens=entry['stream_max' if streaming else 'call_max'])
+        profile = context_profile(self.config, provider, model)
+        system, message, history, self.last_context_report = fit_context(
+            system, message, self._normalize_history(history), profile, plan.max_tokens,
+        )
+        self.last_envelope = {"system_prompt_final": system, "full_message": message, "history": history}
+        # A local-to-cloud fallback crosses the privacy boundary too.
+        message, system, history, mapping = self._anonymize_external(provider, message, system, history)
         self.last_usage = None
-        try:
-            if effective_provider == 'ollama':
-                return entry['call'](user_message, system_prompt, model_name, max_tokens=mt, history=history, json_mode=json_mode)
-            return entry['call'](user_message, system_prompt, model_name, max_tokens=mt, history=history)
-        except AIError:
-            raise
-        except Exception as e:
-            logger.error(f"Errore chiamata AI ({effective_provider}): {e}")
-            raise AIError(f"Errore AI ({effective_provider}): {e}") from e
+        self.last_thinking = None
+        self.last_provider, self.last_model = provider, model
+        return entry, plan.max_tokens, message, system, history, mapping
+
+    def _response_with_fallback(self, message, system, provider, model, max_tokens, history, json_mode):
+        self.last_attempts = []
+        last_error = None
+        for selected_provider, selected_model in self._targets(provider, model):
+            attempt = {"provider": selected_provider, "model": selected_model, "status": "failed"}
+            self.last_attempts.append(attempt)
+            try:
+                entry, mt, msg, sys, hist, mapping = self._attempt_input(
+                    selected_provider, selected_model, message, system, history, max_tokens, False)
+                kwargs = {"max_tokens": mt, "history": hist}
+                if selected_provider == "ollama":
+                    kwargs["json_mode"] = json_mode
+                result = entry['call'](msg, sys, selected_model, **kwargs)
+                if not result or not result.strip():
+                    raise AIError("Il modello ha restituito una risposta vuota")
+                attempt["status"] = "succeeded"
+                return pii.restore(result, mapping) if mapping else result
+            except Exception as exc:
+                last_error = exc
+                # Log classifications only; upstream errors can contain request data.
+                attempt["error_type"] = type(exc).__name__
+                logger.warning("AI attempt %s/%s failed (%s)", selected_provider, selected_model, type(exc).__name__)
+        raise AIError(f"Nessun modello configurato ha completato la risposta ({type(last_error).__name__}).") from last_error
 
     def call_model(self, provider: str, model: str, user_message: str, system_prompt: str, max_tokens: int = None):
         """Chiamata bloccante a un (provider, model) ESPLICITO, bypassando la
@@ -546,7 +583,7 @@ class AIService:
         api_key = self._get_api_key('api_key_openai')
         if not api_key: raise AIError("OpenAI API Key non configurata")
 
-        client = OpenAI(api_key=api_key, timeout=600)
+        client = OpenAI(api_key=api_key, timeout=self._int_config("ai_timeout_seconds", 120, 10, 600), max_retries=0)
         nak = self._normalize_history(history)
         messages = [{"role": "system", "content": system_prompt}]
         messages.extend(nak)
@@ -568,7 +605,8 @@ class AIService:
         client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
             api_key=api_key,
-            timeout=600,
+            timeout=self._int_config("ai_timeout_seconds", 120, 10, 600),
+            max_retries=0,
         )
         nak = self._normalize_history(history)
         messages = [{"role": "system", "content": system_prompt}]
@@ -581,66 +619,23 @@ class AIService:
         if max_tokens:
             kwargs["max_tokens"] = max_tokens
         kwargs["extra_body"] = {"reasoning": self._openrouter_reasoning()}
-        # Retry su rate-limit (429) con backoff esponenziale o Retry-After dai metadati/header
-        import time as _time
-        for attempt in range(6):
-            try:
-                response = client.chat.completions.create(**kwargs)
-                usage = getattr(response, "usage", None)
-                self.last_usage = self._usage_to_dict(usage)
-                return response.choices[0].message.content
-            except Exception as e:
-                status = getattr(e, 'status_code', None)
-                resp = getattr(e, 'response', None)
-                if status is None and resp is not None:
-                    status = getattr(resp, 'status_code', None)
+        response = client.chat.completions.create(**kwargs)
+        self.last_usage = self._usage_to_dict(getattr(response, "usage", None))
+        if isinstance(getattr(response, "model", None), str):
+            self.last_model = response.model
+        return response.choices[0].message.content
 
-                if status == 429 and attempt < 5:
-                    wait = None
-                    try:
-                        if resp is not None:
-                            # 1. Controlla gli header della response
-                            headers = getattr(resp, 'headers', None)
-                            if headers:
-                                h_wait = headers.get("Retry-After") or headers.get("retry-after")
-                                if h_wait:
-                                    wait = float(h_wait)
-                            
-                            # 2. Controlla il corpo JSON per metadata.retry_after_seconds
-                            if wait is None and hasattr(resp, 'json'):
-                                body = resp.json()
-                                if isinstance(body, dict):
-                                    err_info = body.get('error', {})
-                                    if isinstance(err_info, dict):
-                                        metadata = err_info.get('metadata', {})
-                                        if isinstance(metadata, dict):
-                                            wait = metadata.get('retry_after_seconds')
-                                            if wait is None:
-                                                raw_headers = metadata.get('headers', {})
-                                                if isinstance(raw_headers, dict):
-                                                    h_wait = raw_headers.get('Retry-After') or raw_headers.get('retry-after')
-                                                    if h_wait:
-                                                        wait = float(h_wait)
-                    except Exception as parse_ex:
-                        logger.warning(f"pQBL: errore parsing del retry status di OpenRouter: {parse_ex}")
-
-                    if wait is None or wait <= 0:
-                        wait = 2 ** (attempt + 2)  # 4s, 8s, 16s, 32s, 64s
-
-                    # Limitiamo l'attesa del singolo tentativo a max 90 secondi
-                    wait = min(max(wait, 1.0), 90.0)
-                    logger.warning(f"pQBL: OpenRouter rate-limit (tentativo {attempt + 1}/6), attesa di {wait:.1f}s prima del retry")
-                    _time.sleep(wait)
-                    continue
-                raise
-
-    def _openai_compatible_client(self, provider: str, timeout=600):
+    def _openai_compatible_client(self, provider: str, timeout=None):
         """Client OpenAI puntato a un provider OpenAI-compatibile (base_url + chiave)."""
         api_key = self._get_api_key(f'api_key_{provider}')
+        base_url = OPENAI_COMPAT_PROVIDERS[provider]
+        if provider == "omniroute":
+            base_url = self.config.get("omniroute_url") or base_url
+            api_key = api_key or "omniroute"
         if not api_key:
             raise AIError(f"{provider} API Key non configurata")
-        base_url = OPENAI_COMPAT_PROVIDERS[provider]
-        return OpenAI(base_url=base_url, api_key=api_key, timeout=timeout)
+        timeout = timeout or self._int_config("ai_timeout_seconds", 120, 10, 600)
+        return OpenAI(base_url=base_url, api_key=api_key, timeout=timeout, max_retries=0)
 
     def _call_openai_compatible(self, provider, user_message, system_prompt, model, max_tokens: int = None, history=None):
         client = self._openai_compatible_client(provider)
@@ -656,13 +651,15 @@ class AIService:
             kwargs["max_tokens"] = max_tokens
         response = client.chat.completions.create(**kwargs)
         self.last_usage = self._usage_to_dict(getattr(response, "usage", None))
+        if isinstance(getattr(response, "model", None), str):
+            self.last_model = response.model
         return response.choices[0].message.content
 
     def _call_anthropic(self, user_message, system_prompt, model, max_tokens: int = 4096, history=None):
         api_key = self._get_api_key('api_key_anthropic')
         if not api_key: raise AIError("Anthropic API Key non configurata")
 
-        client = anthropic.Anthropic(api_key=api_key, timeout=600)
+        client = anthropic.Anthropic(api_key=api_key, timeout=self._int_config("ai_timeout_seconds", 120, 10, 600), max_retries=0)
         nak = self._normalize_history(history)
         messages = list(nak)
         messages.append({"role": "user", "content": user_message})
@@ -691,20 +688,16 @@ class AIService:
         from google import genai
         from google.genai import types
 
-        client = genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=600_000))
-        # Gemini non ha messages array: lo storico viene inlined come testo
-        # role-tagged prima dell'ultimo user turn (System -> turni -> User).
-        nak = self._normalize_history(history)
-        parts = [f"System: {system_prompt}"]
-        for turn in nak:
-            tag = "User" if turn["role"] == "user" else "Assistant"
-            parts.append(f"{tag}: {turn['content']}")
-        parts.append(f"User: {user_message}")
-        full_prompt = "\n".join(parts)
+        client = genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=self._int_config("ai_timeout_seconds", 120, 10, 600) * 1000))
+        contents = [types.Content(
+            role="user" if turn["role"] == "user" else "model",
+            parts=[types.Part.from_text(text=turn["content"])],
+        ) for turn in self._normalize_history(history)]
+        contents.append(types.Content(role="user", parts=[types.Part.from_text(text=user_message)]))
         # I modelli gemini 2.5/3 "thinking" consumano il budget di output sul
         # ragionamento: con max_tokens piccoli response.text torna vuoto. Se il
         # no-thinking è attivo azzera il budget di reasoning (thinking_budget=0).
-        config_kwargs = {}
+        config_kwargs = {"system_instruction": system_prompt}
         if max_tokens:
             config_kwargs["max_output_tokens"] = max_tokens
         # thinking_budget bounded dal piano: spento -> 0; attivo -> cap esplicito
@@ -717,7 +710,7 @@ class AIService:
         config = types.GenerateContentConfig(**config_kwargs) if config_kwargs else None
         response = client.models.generate_content(
             model=model,
-            contents=full_prompt,
+            contents=contents,
             config=config,
         )
         text = response.text
@@ -756,7 +749,7 @@ class AIService:
             "stream": False,
             "keep_alive": self.ollama_keep_alive,
             "options": {
-                "num_ctx": self.ollama_num_ctx,
+                "num_ctx": context_profile(self.config, "ollama", model).get("context_tokens") or self.ollama_num_ctx,
                 "num_predict": max_tokens,
             },
         }
@@ -772,7 +765,7 @@ class AIService:
         response = httpx.post(
             f"{base_url}/api/chat",
             json=payload,
-            timeout=httpx.Timeout(600.0, connect=10.0),
+            timeout=httpx.Timeout(self._int_config("ai_timeout_seconds", 120, 10, 600), connect=10.0),
         )
         response.raise_for_status()
         message = response.json().get("message", {}) or {}
@@ -795,7 +788,7 @@ class AIService:
         client = OpenAI(
             base_url=base_url,
             api_key="llamacpp",  # richiesta dal client ma non usata dal server
-            timeout=httpx.Timeout(600.0, connect=10.0),
+            timeout=httpx.Timeout(self._int_config("ai_timeout_seconds", 120, 10, 600), connect=10.0),
         )
         system_prompt = self._apply_no_think(system_prompt)
         nak = self._normalize_history(history)
@@ -832,57 +825,50 @@ class AIService:
         `history` (opzionale): storico role-tagged iniettato come messaggi nativi.
         `provider`/`model` opzionali: forzano provider+modello (counselor via preset).
         """
-        provider = provider or self.config.get('active_provider', 'openai')
-        model_name = model or self.config.get('model_name', 'gpt-4o')
-        provider, model_name = self._apply_budget_lock(provider, model_name)
-        history = self._normalize_history(history)
-
         if conversation_summary:
-            user_message = (
-                f"CONTESTO DELLE CONVERSAZIONI PRECEDENTI:\n{conversation_summary}\n\n"
-                f"---\n\n{user_message}"
-            )
-
-        # Anonimizzazione PII verso provider esterni (mapping in RAM,
-        # ripristinato nei chunk in uscita prima della visualizzazione).
-        user_message, system_prompt, history, pii_mapping = self._anonymize_external(
-            provider, user_message, system_prompt, history)
-        restorer = pii_ner.StreamRestorer(pii_mapping) if pii_mapping else None
-
-        def _dispatch():
-            entry = self._provider(provider)
-            self.last_usage = None
-            if entry['stream']:
-                plan = self._resolve_reasoning(model_name, requested_max_tokens=max_tokens,
-                                               fallback_max_tokens=entry['stream_max'])
-                yield from entry['stream'](user_message, system_prompt, model_name, max_tokens=plan.max_tokens, history=history)
-            else:
-                # nessuno stream incrementale: chunk unico via call bloccante
-                plan = self._resolve_reasoning(model_name, requested_max_tokens=max_tokens,
-                                               fallback_max_tokens=entry['call_max'])
-                yield entry['call'](user_message, system_prompt, model_name, max_tokens=plan.max_tokens, history=history)
-
-        try:
-            # Normalizza: i provider possono produrre stringhe (solo testo) o dict
-            # {"type": "content"|"reasoning", "text": ...}. Esponi sempre dict.
-            for item in _dispatch():
-                if isinstance(item, dict):
-                    if restorer and item.get("type") == "content" and item.get("text"):
-                        item = {**item, "text": restorer.feed(item["text"])}
-                    elif restorer and item.get("type") == "reasoning" and item.get("text"):
-                        item = {**item, "text": pii.restore(item["text"], pii_mapping)}
+            user_message = f"CONTEXT OF PREVIOUS CONVERSATIONS:\n{conversation_summary}\n\n{user_message}"
+        self.last_attempts = []
+        last_error = None
+        for selected_provider, selected_model in self._targets(provider, model):
+            emitted = False
+            content_seen = False
+            attempt = {"provider": selected_provider, "model": selected_model, "status": "failed"}
+            self.last_attempts.append(attempt)
+            try:
+                entry, mt, msg, sys, hist, mapping = self._attempt_input(
+                    selected_provider, selected_model, user_message, system_prompt, history, max_tokens, True)
+                restorer = pii_ner.StreamRestorer(mapping) if mapping else None
+                if entry['stream']:
+                    output = entry['stream'](msg, sys, selected_model, max_tokens=mt, history=hist)
+                else:
+                    output = [entry['call'](msg, sys, selected_model, max_tokens=mt, history=hist)]
+                for item in output:
+                    if not item:
+                        continue
+                    item = item if isinstance(item, dict) else {"type": "content", "text": item}
+                    if item.get("text"):
+                        emitted = True
+                        content_seen = content_seen or item.get("type") == "content"
+                        if restorer and item.get("type") == "content":
+                            item = {**item, "text": restorer.feed(item["text"])}
+                        elif mapping:
+                            item = {**item, "text": pii.restore(item["text"], mapping)}
                     yield item
-                elif item:
-                    yield {"type": "content",
-                           "text": restorer.feed(item) if restorer else item}
-            if restorer:
-                tail = restorer.flush()
-                if tail:
-                    yield {"type": "content", "text": tail}
-        except AIError:
-            raise
-        except Exception as e:
-            raise RuntimeError(f"AI Error ({provider}): {str(e)}") from e
+                if not content_seen:
+                    raise AIError("Il modello ha terminato senza contenuto")
+                if restorer:
+                    tail = restorer.flush()
+                    if tail:
+                        yield {"type": "content", "text": tail}
+                attempt["status"] = "succeeded"
+                return
+            except Exception as exc:
+                last_error = exc
+                attempt["error_type"] = type(exc).__name__
+                if emitted:
+                    raise AIError("La risposta e stata interrotta dal modello; riprova il turno.") from exc
+                logger.warning("AI stream %s/%s failed before output (%s)", selected_provider, selected_model, type(exc).__name__)
+        raise AIError(f"Nessun modello configurato ha completato la risposta ({type(last_error).__name__}).") from last_error
 
     def _iter_chat_stream(self, client, model, system_prompt, user_message, extra_body=None, max_tokens: int = None, stream_options=None, history=None):
         """Itera lo stream di un client OpenAI-compatibile producendo i delta di testo."""
@@ -904,6 +890,8 @@ class AIService:
         stream = client.chat.completions.create(**kwargs)
         try:
             for chunk in stream:
+                if isinstance(getattr(chunk, "model", None), str):
+                    self.last_model = chunk.model
                 usage = getattr(chunk, "usage", None)
                 if usage is not None:
                     usage_dict = self._usage_to_dict(usage)
@@ -930,14 +918,14 @@ class AIService:
         api_key = self._get_api_key('api_key_openai')
         if not api_key:
             raise AIError("OpenAI API Key non configurata")
-        client = OpenAI(api_key=api_key, timeout=600)
+        client = OpenAI(api_key=api_key, timeout=self._int_config("ai_timeout_seconds", 120, 10, 600), max_retries=0)
         yield from self._iter_chat_stream(client, model, system_prompt, user_message, max_tokens=max_tokens, history=history)
 
     def _stream_openrouter(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
         api_key = self._get_api_key('api_key_openrouter')
         if not api_key:
             raise AIError("OpenRouter API Key non configurata")
-        client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key, timeout=600)
+        client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key, timeout=self._int_config("ai_timeout_seconds", 120, 10, 600), max_retries=0)
         # Reasoning bounded: budget separato dai metadati, l'headroom della
         # risposta e' gia' incluso in max_tokens (vedi reasoning_profiles).
         extra = {"reasoning": self._openrouter_reasoning()}
@@ -964,7 +952,7 @@ class AIService:
             "stream": True,
             "keep_alive": self.ollama_keep_alive,
             "options": {
-                "num_ctx": self.ollama_num_ctx,
+                "num_ctx": context_profile(self.config, "ollama", model).get("context_tokens") or self.ollama_num_ctx,
                 "num_predict": max_tokens or 4096,
             },
         }
@@ -978,7 +966,7 @@ class AIService:
         splitter = ThinkStreamSplitter()
         reasoning_acc: list[str] = []
         self.last_thinking = None
-        with httpx.Client(timeout=httpx.Timeout(600.0, connect=10.0)) as client:
+        with httpx.Client(timeout=httpx.Timeout(self._int_config("ai_timeout_seconds", 120, 10, 600), connect=10.0)) as client:
             with client.stream("POST", f"{base_url}/api/chat", json=payload) as response:
                 response.raise_for_status()
                 for line in response.iter_lines():
@@ -1010,7 +998,7 @@ class AIService:
         base_url = (self._get_api_key('llamacpp_url') or "http://localhost:8080").rstrip('/')
         if not base_url.endswith('/v1'):
             base_url = f"{base_url}/v1"
-        client = OpenAI(base_url=base_url, api_key="llamacpp", timeout=httpx.Timeout(600.0, connect=10.0))
+        client = OpenAI(base_url=base_url, api_key="llamacpp", timeout=httpx.Timeout(self._int_config("ai_timeout_seconds", 120, 10, 600), connect=10.0))
         system_prompt = self._apply_no_think(system_prompt)
         yield from self._iter_chat_stream(client, model or "default", system_prompt, user_message, max_tokens=max_tokens, history=history)
 
@@ -1032,7 +1020,7 @@ class AIService:
         api_key = self._get_api_key('api_key_anthropic')
         if not api_key:
             raise AIError("Anthropic API Key non configurata")
-        client = anthropic.Anthropic(api_key=api_key, timeout=600)
+        client = anthropic.Anthropic(api_key=api_key, timeout=self._int_config("ai_timeout_seconds", 120, 10, 600), max_retries=0)
         nak = self._normalize_history(history)
         messages = list(nak)
         messages.append({"role": "user", "content": user_message})
@@ -1070,7 +1058,7 @@ class AIService:
         # Batch contenuti per non superare i limiti di payload del server.
         BATCH = 32
         try:
-            with httpx.Client(timeout=httpx.Timeout(600.0, connect=10.0)) as client:
+            with httpx.Client(timeout=httpx.Timeout(self._int_config("ai_timeout_seconds", 120, 10, 600), connect=10.0)) as client:
                 for start in range(0, len(texts), BATCH):
                     batch = texts[start:start + BATCH]
                     resp = client.post(
@@ -1110,7 +1098,7 @@ class AIService:
                 "keep_alive": self.ollama_keep_alive,
                 "messages": [{"role": "user", "content": "ok"}],
                 "stream": False,
-                "options": {"num_ctx": self.ollama_num_ctx, "num_predict": 1},
+                "options": {"num_ctx": context_profile(self.config, "ollama", model).get("context_tokens") or self.ollama_num_ctx, "num_predict": 1},
             }).encode()
             req = urllib.request.Request(
                 f"{base_url}/api/chat",

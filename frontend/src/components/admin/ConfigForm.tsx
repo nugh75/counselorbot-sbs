@@ -116,10 +116,15 @@ const PROVIDERS: Record<string, { label: string; models: string[] }> = {
         label: 'DeepInfra',
         models: ['meta-llama/Llama-3.3-70B-Instruct', 'Qwen/Qwen2.5-72B-Instruct', 'mistralai/Mistral-Small-24B-Instruct-2501']
     },
+    omniroute: {
+        label: 'OmniRoute',
+        models: ['auto/best-chat', 'auto/best-free', 'auto/best-fast', 'auto/best-reasoning']
+    },
     openrouter: {
         label: 'OpenRouter',
         models: [
             // Modelli :free per primi: il cambio provider seleziona il primo della lista
+            'openrouter/free',
             'meta-llama/llama-3.3-70b-instruct:free',
             'qwen/qwen3-next-80b-a3b-instruct:free',
             'qwen/qwen3-coder:free',
@@ -1825,6 +1830,30 @@ export function ConfigForm() {
                         </label>
                     </div>
                 </div>
+            </div>
+
+            <div className="space-y-4 rounded-lg border border-slate-200 p-4">
+                <h3 className="text-sm font-semibold text-slate-700">{t('admin.routing.title')}</h3>
+                <p className="text-sm text-slate-600">{t('admin.routing.help')}</p>
+                {[
+                    ['ai_fallback_targets', 'admin.routing.targets', '[]'],
+                    ['model_context_profiles', 'admin.routing.context', '{}'],
+                    ['ai_timeout_seconds', 'admin.routing.timeout', '120'],
+                ].map(([key, label, fallback]) => (
+                    <div key={key} className="space-y-2">
+                        <label htmlFor={key} className="block text-sm font-medium text-slate-700">{t(label)}</label>
+                        <textarea id={key} rows={key === 'ai_timeout_seconds' ? 1 : 3}
+                            value={getConfigValue(key) || fallback}
+                            onChange={event => setConfigDraft(key, event.target.value, t(label))}
+                            className="w-full rounded-md border border-slate-300 bg-slate-50 p-2 font-mono text-xs text-slate-900" />
+                        <Button onClick={() => handleSaveConfig({ key, value: getConfigValue(key) || fallback, description: t(label) })}>
+                            {t('common.save')}
+                        </Button>
+                    </div>
+                ))}
+                <p className="text-xs text-slate-500">{t('admin.routing.example')}</p>
+                <code className="block overflow-x-auto text-xs text-slate-700">{'[{"provider":"openrouter","model":"openrouter/free"},{"provider":"omniroute","model":"auto/best-chat"}]'}</code>
+                <code className="block overflow-x-auto text-xs text-slate-700">{'{"ollama/qwen3.8:latest":{"context_tokens":16384,"input_tokens":8000,"compact":true}}'}</code>
             </div>
 
             {/* 2. API Keys */}

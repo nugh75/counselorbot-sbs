@@ -33,7 +33,7 @@ _BLOCK_NAME = "recommendations"
 
 
 def build_directive(
-    readings: Mapping[str, str], strategies: Mapping[str, str],
+    readings: Mapping[str, str], strategies: Mapping[str, str], *, idea: bool = False,
 ) -> str:
     """Direttiva di turno: vale solo per i candidati di questo turno."""
     if not readings and not strategies:
@@ -63,13 +63,16 @@ def build_directive(
         "reply, within its response-length limit. Never mention the block, its "
         "ids or these rules to the student."
     )
-    return "\n".join(lines)
+    directive = "\n".join(lines)
+    if idea:
+        directive = directive.replace("at the very end of the message", "after the visible reply and before the final idea patch")
+    return directive
 
 
 def apply_directive(
-    system_prompt: str, readings: Mapping[str, str], strategies: Mapping[str, str],
+    system_prompt: str, readings: Mapping[str, str], strategies: Mapping[str, str], *, idea: bool = False,
 ) -> str:
-    directive = build_directive(readings, strategies)
+    directive = build_directive(readings, strategies, idea=idea)
     if not directive:
         return system_prompt
     return f"{system_prompt.rstrip()}\n\n{directive}"

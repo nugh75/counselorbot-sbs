@@ -12,48 +12,25 @@ logger = logging.getLogger(__name__)
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from . import models, model_pricing, pii
+from . import models, model_pricing, pii, schemas
 from .ai_service import AIError, AIService
 from .anonymous_codes import code_for_identity
 from .api_models import ChatRequest
-from .skills import engine as skills_engine
+from .chat_preparation import prepare_chat_turn
 from .chat_logic import (
     _annotate_qsa_factor_codes,
-    apply_advice_retrieval_policy,
-    _apply_advice_distribution_directive,
-    _apply_follow_up_advice_directive,
-    _apply_certified_advice_directive,
-    _apply_current_step_factor_scope_directive,
-    _apply_current_step_score_profile_directive,
-    _apply_global_directives,
-    _apply_qsa_factor_directive,
-    _clamp_max_tokens,
     _ensure_required_qsa_factor_codes,
-    _is_conversational_mode,
-    filter_scores_by_components,
-    get_prompt_component_flags,
-    get_prompt_component_options,
-    is_advice_follow_up,
-    previous_certified_strategy_ids,
-    step_has_improvement_target,
     prompt_component_config_key,
     prompt_meta_config_key,
     _is_strategy_questionnaire,
+    _limit_visible_words,
     _phase_factor_codes,
     _qsa_step_score_profile,
-    _resolve_system_prompt,
     _requires_complete_factor_output,
-    _retrieved_context,
-    _sanitize_ztpi_step_label,
     _sanitize_ztpi_user_text,
-    _scope_scores_to_codes,
-    _should_sanitize_ztpi_text,
-    _should_include_step_analysis_context,
-    _step_allows_practical_advice,
-    build_context_envelope,
+    _strip_generic_acknowledgement,
     conversation_id_for,
     full_prompt_logging_enabled,
-    PROMPT_COMPONENT_DEFAULTS,
     split_thinking,
 )
 from .guided_text_i18n import SECONDARY_LANGS
@@ -229,6 +206,20 @@ def _add_static_warnings(
     for code, pattern in _RISKY_PATTERNS:
         if pattern.search(scan_text):
             warnings.append({"code": code, "message": "Legacy/risky prompt wording detected."})
+    if questionnaire_type.upper() == "QSAR":
+        invalid = sorted(set(re.findall(r"\b[AC][1-7]\b", scan_text)))
+        if invalid:
+            warnings.append({"code": "qsar_foreign_factors", "message": "Full-QSA codes in the QSAr envelope: " + ", ".join(invalid)})
+    if questionnaire_type == "IDEA" and "Reply with exactly [[AVANZA_STEP]]" in scan_text:
+        warnings.append({"code": "idea_linear_navigation", "message": "Linear step navigation conflicts with IDEA map navigation."})
+    if "at most ONE" in scan_text and re.search(r"(?:2-3 (?:practical|concrete strategies)|1-2 .*questions|exactly three .*questions)", scan_text, re.I):
+        warnings.append({"code": "conflicting_output_counts", "message": "The assembled prompt contains incompatible question or advice counts."})
+    if re.search(r"ONE practical action, concrete and verifiable, that the student can start now\.|Suggest ONE concrete strategy for moving closer", scan_text, re.I):
+        warnings.append({"code": "unconditional_advice", "message": "The step requires advice even when current evidence or certified candidates may not permit it."})
+    if request.language != "it" and "Always reply in Italian" in scan_text:
+        warnings.append({"code": "conflicting_language", "message": "A fixed Italian instruction conflicts with the selected language."})
+    if "{{counselor_name}}" in scan_text:
+        warnings.append({"code": "unresolved_persona", "message": "Unresolved counselor name placeholder."})
 
 
 def _scores_context_from_result(result: models.QuestionnaireResult | None) -> str:
@@ -250,8 +241,9 @@ def build_prompt_audit(
     payload,
     *,
     ai_service_cls: Callable[[Session], AIService] = AIService,
+    allow_retrieval: bool = False,
 ) -> dict[str, Any]:
-    request = ChatRequest(**payload.model_dump(exclude={"include_knowledge", "include_history", "component_flags"}, exclude_none=False))
+    request = ChatRequest(**payload.model_dump(exclude={"include_knowledge", "include_history", "component_flags", "retrieval_context", "journey_context"}, exclude_none=False))
     request.language = _normalize_language(request.language)
     session_id = request.session_id or f"prompt-audit-{uuid.uuid4()}"
     result = db.query(models.QuestionnaireResult).filter(models.QuestionnaireResult.session_id == session_id).first() if request.session_id else None
@@ -261,162 +253,77 @@ def build_prompt_audit(
             request.scores_context = _scores_context_from_result(result)
     warnings: list[dict[str, str]] = []
 
+    if payload.include_knowledge and not allow_retrieval and payload.retrieval_context is None:
+        warnings.append({"code": "retrieval_not_replayed", "message": "Dry-run does not call models, retrieve external sources or run skill handlers. Supply retrieval_context to replay the captured turn, or use the live audit."})
     ai_service = ai_service_cls(db)
     counselor, c_provider, c_model, c_persona, c_disable_thinking, c_reasoning_budget, counselor_warnings = _resolve_counselor(db, request.counselor_id)
     warnings.extend(counselor_warnings)
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
 
-    max_tokens = _clamp_max_tokens(request.max_tokens)
-    effective_message, phase_prompt_key, step = _resolve_effective_message(request, db, warnings)
-    if step:
-        step_label = step.label
-        questionnaire_type = step.questionnaire_type
-    else:
-        step_label = ""
-        questionnaire_type = request.questionnaire_type or ""
-    step_mode = request.mode if _is_conversational_mode(request.mode) else (step.system_prompt_mode if step else request.mode)
-    component_flags = get_prompt_component_flags(db, questionnaire_type, request.phase)
-    advice_requested = is_advice_follow_up(request)
-    component_flags = apply_advice_retrieval_policy(
-        component_flags, step_mode, request.phase, advice_requested=advice_requested
+    # Retain input validation warnings; preparation itself is shared with /chat.
+    _message, _phase_key, audit_step = _resolve_effective_message(request, db, warnings)
+    runtime_valid = True
+    if request.use_phase_prompt and not request.message.strip() and (not request.phase or not audit_step):
+        if allow_retrieval:
+            raise HTTPException(status_code=400, detail="A valid phase is required when use_phase_prompt=true.")
+        runtime_valid = False
+        warnings.append({"code": "invalid_runtime_request", "message": "This request would be rejected by chat; the envelope below previews the remaining configuration only."})
+        request = request.copy(update={"use_phase_prompt": False})
+    prepared = prepare_chat_turn(
+        db, ai_service, request, session_id, {"username": result.username if result else ""},
+        c_persona=c_persona, counselor_name=(counselor or {}).get("name"),
+        include_retrieval=bool(payload.include_knowledge and allow_retrieval),
+        include_history=bool(payload.include_history), create_anonymous_code=False,
+        component_overrides=payload.component_flags,
+        retrieval_context=getattr(payload, "retrieval_context", None),
+        provider=c_provider, model=c_model, journey_override=getattr(payload, "journey_context", None),
+        allow_generation=allow_retrieval,
     )
-    component_options = get_prompt_component_options(
-        db,
-        questionnaire_type,
-        request.phase,
-        step_mode,
-        advice_requested=advice_requested,
-    )
-    # La richiesta apre il catalogo solo se l'admin non lo ha spento per questo
-    # step: la configurazione per step resta l'ultima parola.
-    advice_requested = (
-        advice_requested
-        and component_options["certified_strategy_limit"] > 0
-        and bool(component_flags.get("certified_strategies", True))
-    )
-    payload_flags = getattr(payload, "component_flags", None)
-    if isinstance(payload_flags, dict):
-        for name in PROMPT_COMPONENT_DEFAULTS:
-            if name in payload_flags:
-                component_flags[name] = bool(payload_flags[name])
-        if "certified_strategy_limit" in payload_flags:
-            try:
-                component_options["certified_strategy_limit"] = max(0, min(1, int(payload_flags["certified_strategy_limit"])))
-            except (TypeError, ValueError):
-                pass
-        if "allowed_strategies" in payload_flags:
-            val = payload_flags["allowed_strategies"]
-            if isinstance(val, list):
-                component_flags["allowed_strategies"] = [str(x) for x in val]
-                component_options["allowed_strategies"] = [str(x) for x in val]
-    component_flags = apply_advice_retrieval_policy(
-        component_flags, step_mode, request.phase, advice_requested=advice_requested
-    )
-
-    prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
-    system_prompt = _apply_global_directives(system_prompt, request.language, db)
-    include_analysis_context = _should_include_step_analysis_context(step_mode)
-    required_codes = _phase_factor_codes(db, request.phase) if include_analysis_context else set()
-    if include_analysis_context:
-        system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language, required_codes)
-        system_prompt = _apply_current_step_factor_scope_directive(system_prompt, questionnaire_type, required_codes)
-
-    model_scores_context = (
-        _annotate_qsa_factor_codes(request.scores_context, request.language, questionnaire_type=questionnaire_type)
-        if _is_strategy_questionnaire(questionnaire_type) else request.scores_context
-    )
-    component_scores_context = filter_scores_by_components(model_scores_context, questionnaire_type, component_flags)
-    if include_analysis_context and component_scores_context:
-        allows_advice = _step_allows_practical_advice(step_mode, request.phase)
-        is_follow_up = _is_conversational_mode(step_mode)
-        include_advice = advice_requested or (
-            allows_advice and not is_follow_up and step_has_improvement_target(
-                component_scores_context, questionnaire_type, request.language, required_codes
-            )
-        )
-        system_prompt = _apply_current_step_score_profile_directive(
-            system_prompt, questionnaire_type, request.language, component_scores_context, required_codes, include_advice
-        )
-        if include_advice:
-            system_prompt = _apply_advice_distribution_directive(system_prompt)
-            system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type)
-        elif is_follow_up and allows_advice:
-            system_prompt = _apply_follow_up_advice_directive(system_prompt)
-        else:
-            component_flags = apply_advice_retrieval_policy(component_flags, "factor", request.phase)
-            component_options["certified_strategy_limit"] = 0
-    elif include_analysis_context and _is_strategy_questionnaire(questionnaire_type) and not advice_requested:
-        component_flags = apply_advice_retrieval_policy(component_flags, "factor", request.phase)
-        component_options["certified_strategy_limit"] = 0
-    model_message = (
-        _annotate_qsa_factor_codes(effective_message, request.language, questionnaire_type=questionnaire_type)
-        if _is_strategy_questionnaire(questionnaire_type) else effective_message
-    )
-    message_scores_context = (
-        _scope_scores_to_codes(component_scores_context, required_codes)
-        if include_analysis_context and required_codes
-        else component_scores_context
-    )
-
-    knowledge_context = ""
-    strategy_ids: list[str] = []
-    certified_strategy_ids: list[str] = []
-    skills_blocks: dict[str, list[str]] = {}
-    include_knowledge = bool(getattr(payload, "include_knowledge", True))
-    if (
-        include_knowledge and component_flags.get("knowledge", True)
-    ) or skills_engine.enabled(db, questionnaire_type):
-        retrieval_query = f"{step_label} {model_message if component_flags.get('step_prompt', True) else ''} {component_scores_context}".strip()
-        retrieval_request = request.copy(update={"scores_context": component_scores_context})
-        retrieval_flags = dict(component_flags)
-        if not include_knowledge:
-            retrieval_flags["knowledge"] = False
-        (
-            knowledge_context, strategy_ids, certified_strategy_ids, skills_blocks,
-            _reading_ids, _recommendation_meta,
-        ) = _retrieved_context(
-            db, session_id, retrieval_request, questionnaire_type, retrieval_query, ai_service=ai_service,
-            certified_strategy_limit=component_options["certified_strategy_limit"],
-            component_flags=retrieval_flags,
-            excluded_certified_strategy_ids=previous_certified_strategy_ids(db, request.conversation_id),
-            username=result.username if result else "",
-        )
-
-    sanitize_ztpi = _should_sanitize_ztpi_text(request.mode, request.phase)
-    if sanitize_ztpi:
-        knowledge_context = _sanitize_ztpi_user_text(knowledge_context, request.language)
-        step_label_for_envelope = _sanitize_ztpi_step_label(step_label, request.language)
-    else:
-        step_label_for_envelope = step_label
-
-    components: dict[str, Any] = {}
-    system_prompt_final, full_message, history = build_context_envelope(
-        db,
-        ai_service,
-        request,
-        session_id,
-        {"username": result.username if result else ""},
-        c_persona=c_persona,
-        counselor_name=(counselor or {}).get("name"),
-        system_prompt=system_prompt,
-        step_label=step_label_for_envelope,
-        step_id=getattr(payload, "phase", None),
-        questionnaire_type=questionnaire_type,
-        effective_message=model_message,
-        model_scores_context=model_scores_context,
-        message_scores_context=message_scores_context,
-        knowledge_context=knowledge_context,
-        include_history=bool(getattr(payload, "include_history", False)),
-        include_session_memory=bool(getattr(payload, "include_history", False)),
-        include_scores_reference=include_analysis_context,
-        create_anonymous_code=False,
-        component_flags=component_flags,
-        components=components,
-        skills_blocks=skills_blocks,
-    )
+    max_tokens = prepared.max_tokens
+    effective_message = prepared.effective_message
+    phase_prompt_key = prepared.phase_prompt_key
+    step = prepared.step
+    step_label = prepared.step_label
+    questionnaire_type = prepared.questionnaire_type
+    component_flags = prepared.component_flags
+    component_options = prepared.component_options
+    prompt_key = prepared.prompt_key
+    system_prompt = prepared.system_prompt
+    model_scores_context = prepared.model_scores_context
+    model_message = prepared.model_message
+    message_scores_context = prepared.message_scores_context
+    knowledge_context = prepared.knowledge_context
+    strategy_ids = prepared.strategy_ids
+    certified_strategy_ids = prepared.certified_strategy_ids
+    components = prepared.components
+    system_prompt_final = prepared.system_prompt_final
+    full_message = prepared.full_message
+    history = prepared.history
+    raw_envelope = {"system_prompt_final": system_prompt_final, "full_message": full_message, "history": history}
+    required_codes = prepared.phase_codes
+    sanitize_ztpi = prepared.sanitize
 
     provider = c_provider or ai_service.config.get("active_provider", "unknown")
     model = c_model or ai_service.config.get("model_name", "unknown")
+    from .model_context import ContextCapacityError, context_profile, fit_context
+    from .reasoning_profiles import resolve_plan
+    plan = resolve_plan(model, disable_thinking=ai_service.disable_thinking,
+                        requested_max_tokens=max_tokens, fallback_max_tokens=700,
+                        budget_override=getattr(ai_service, "reasoning_budget_override", None))
+    context_report = {}
+    try:
+        system_prompt_final, full_message, history, context_report = fit_context(
+            system_prompt_final, full_message, history,
+            context_profile(ai_service.config, provider, model), plan.max_tokens,
+        )
+    except ContextCapacityError as exc:
+        warnings.append({"code": "context_capacity_exceeded", "message": str(exc)})
+    if context_report.get("context_tokens") is None:
+        warnings.append({"code": "unknown_context_capacity", "message": "No verified context window configured for this model."})
+    if context_report.get("history_messages_dropped") or context_report.get("removed"):
+        warnings.append({"code": "context_reduced", "message": "Optional theory or old history was removed to fit the configured model profile."})
+    if components.get("journey_coverage") == "requires_reduction":
+        warnings.append({"code": "journey_requires_reduction", "message": "Live synthesis will reduce the entire transcript; supply journey_context to reproduce that exact model input without model calls."})
     _add_static_warnings(
         warnings,
         ai_service=ai_service,
@@ -425,7 +332,7 @@ def build_prompt_audit(
         questionnaire_type=questionnaire_type,
         counselor=counselor,
         prompt_key=prompt_key,
-        system_prompt=system_prompt,
+        system_prompt=raw_envelope["system_prompt_final"],
         effective_message=effective_message,
         required_codes=required_codes,
         scores_context=model_scores_context,
@@ -433,6 +340,7 @@ def build_prompt_audit(
 
     return {
         "_ai_service": ai_service,
+        "_raw_envelope": raw_envelope,
         "_provider_override": c_provider,
         "_model_override": c_model,
         "_max_tokens": max_tokens,
@@ -453,6 +361,9 @@ def build_prompt_audit(
             "questionnaire_type": questionnaire_type,
             "language": request.language,
             "max_tokens": max_tokens,
+            "response_length": request.response_length,
+            "runtime_valid": runtime_valid,
+            "context_budget": context_report,
         },
         "envelope": {
             "system_prompt_final": system_prompt_final,
@@ -468,7 +379,7 @@ def build_prompt_audit(
             "phase_prompt_key": phase_prompt_key,
         },
         "knowledge": {
-            "included": bool(getattr(payload, "include_knowledge", True)) and component_flags.get("knowledge", True),
+            "included": bool((allow_retrieval and payload.include_knowledge) or payload.retrieval_context) and component_flags.get("knowledge", True),
             "context_length": len(knowledge_context),
             "strategy_ids": strategy_ids,
             "certified_strategy_ids": certified_strategy_ids,
@@ -673,19 +584,19 @@ def run_prompt_audit_live(
     *,
     ai_service_cls: Callable[[Session], AIService] = AIService,
 ) -> dict[str, Any]:
-    result = build_prompt_audit(db, payload, ai_service_cls=ai_service_cls)
+    result = build_prompt_audit(db, payload, ai_service_cls=ai_service_cls, allow_retrieval=True)
     ai_service = result["_ai_service"]
     t0 = time.monotonic()
     try:
         response_raw = ai_service.get_response(
-            result["envelope"]["full_message"],
-            result["envelope"]["system_prompt_final"],
+            result["_raw_envelope"]["full_message"],
+            result["_raw_envelope"]["system_prompt_final"],
             payload.mode,
             conversation_summary="",
             max_tokens=result["_max_tokens"],
             provider=result["_provider_override"],
             model=result["_model_override"],
-            history=result["envelope"]["history"],
+            history=result["_raw_envelope"]["history"],
         )
     except AIError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
@@ -716,9 +627,20 @@ def run_prompt_audit_live(
     else:
         response_visible = response_raw
 
+    from . import idea_map, recommendation_blocks
+    response_visible = recommendation_blocks.strip_for_display(response_visible)
+    if questionnaire_type == "IDEA":
+        response_visible = idea_map.strip_patch_for_display(response_visible)
+    response_visible = _strip_generic_acknowledgement(response_visible)
+    response_visible, _truncated = _limit_visible_words(response_visible, payload.response_length)
+
     usage = getattr(ai_service, "last_usage", None)
-    provider = result["resolved"].get("provider")
-    model = result["resolved"].get("model")
+    provider = getattr(ai_service, "last_provider", None) or result["resolved"].get("provider")
+    model = getattr(ai_service, "last_model", None) or result["resolved"].get("model")
+    result["resolved"].update(provider=provider, model=model, model_attempts=getattr(ai_service, "last_attempts", []))
+    if getattr(ai_service, "last_envelope", None):
+        result["envelope"] = ai_service.last_envelope
+        result["resolved"]["context_budget"] = ai_service.last_context_report
     public = _strip_internal(result)
     public.update({
         "response_raw": response_raw,
@@ -763,7 +685,7 @@ def prompt_audit_matrix(
     rows = []
     for counselor_id in counselor_ids:
         for step in steps:
-            request_payload = _MatrixAuditRequestAdapter(
+            request_payload = schemas.PromptAuditRequest(
                 questionnaire_type=questionnaire_type,
                 language=payload.language,
                 phase=step.id,
@@ -798,12 +720,3 @@ def prompt_audit_matrix(
         "counselors_count": len(counselor_ids),
         "rows": rows,
     }
-
-
-class _MatrixAuditRequestAdapter:
-    def __init__(self, **kwargs):
-        self.__dict__.update(kwargs)
-
-    def model_dump(self, *args, **kwargs):
-        exclude = set(kwargs.get("exclude") or set())
-        return {key: value for key, value in self.__dict__.items() if key not in exclude}
