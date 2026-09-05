@@ -649,6 +649,11 @@ class AIService:
         )
         if max_tokens:
             kwargs["max_tokens"] = max_tokens
+        if provider == "deepseek" and _requests_json_response(system_prompt, user_message):
+            # Structured extraction needs content, not a long reasoning trace
+            # that may consume the output budget before any JSON is returned.
+            kwargs["response_format"] = {"type": "json_object"}
+            kwargs["extra_body"] = {"thinking": {"type": "disabled"}}
         response = client.chat.completions.create(**kwargs)
         self.last_usage = self._usage_to_dict(getattr(response, "usage", None))
         if isinstance(getattr(response, "model", None), str):
