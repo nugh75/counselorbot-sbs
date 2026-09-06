@@ -1,8 +1,8 @@
 'use client';
 
-import { useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { MoreVertical } from 'lucide-react';
-import { Tooltip } from '@/components/ui/Tooltip';
+import { Tooltip, TooltipPortalContainer } from '@/components/ui/Tooltip';
 
 /** Native popovers escape the transcript's clipping and handle outside tap/Escape. */
 export function ChatActionsPopover({ label, children }: {
@@ -12,6 +12,11 @@ export function ChatActionsPopover({ label, children }: {
     const id = useId();
     const trigger = useRef<HTMLButtonElement>(null);
     const panel = useRef<HTMLDivElement>(null);
+    const [tooltipContainer, setTooltipContainer] = useState<HTMLDivElement | null>(null);
+    const attachPanel = useCallback((element: HTMLDivElement | null) => {
+        panel.current = element;
+        setTooltipContainer(element);
+    }, []);
     const [open, setOpen] = useState(false);
 
     useLayoutEffect(() => {
@@ -60,11 +65,13 @@ export function ChatActionsPopover({ label, children }: {
                     <MoreVertical className="h-5 w-5" aria-hidden="true" />
                 </button>
             </Tooltip>
-            <div ref={panel} id={id} popover="auto" role="group" aria-label={label}
+            <div ref={attachPanel} id={id} popover="auto" role="group" aria-label={label}
                 onToggle={event => setOpen(event.newState === 'open')}
-                className="chat-options fixed m-0 overflow-y-auto rounded-lg border border-slate-200 bg-white p-2 text-slate-700 shadow-lg"
+                className="chat-options fixed m-0 overflow-visible rounded-lg border border-slate-200 bg-white text-slate-700 shadow-lg"
                 style={{ inset: 'auto', visibility: open ? 'visible' : 'hidden' }}>
-                {children(close)}
+                <TooltipPortalContainer.Provider value={tooltipContainer}>
+                    <div className="overflow-y-auto p-2" style={{ maxHeight: 'inherit' }}>{children(close)}</div>
+                </TooltipPortalContainer.Provider>
             </div>
     </div>;
 }

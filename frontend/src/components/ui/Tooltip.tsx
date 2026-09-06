@@ -1,7 +1,10 @@
 'use client';
 
+import { createContext, useContext } from 'react';
 import * as RadixTooltip from '@radix-ui/react-tooltip';
 import { cn } from '@/lib/utils';
+
+export const TooltipPortalContainer = createContext<HTMLElement | null>(null);
 
 export const TooltipProvider = RadixTooltip.Provider;
 
@@ -13,12 +16,13 @@ interface TooltipProps {
 }
 
 export function Tooltip({ content, children, side = 'bottom', className }: TooltipProps) {
+    const container = useContext(TooltipPortalContainer);
     if (!content) return <>{children}</>;
 
     return (
         <RadixTooltip.Root>
             <RadixTooltip.Trigger asChild>{children}</RadixTooltip.Trigger>
-            <RadixTooltip.Portal>
+            <RadixTooltip.Portal container={container ?? undefined}>
                 <RadixTooltip.Content
                     side={side}
                     sideOffset={6}
