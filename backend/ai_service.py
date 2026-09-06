@@ -851,7 +851,6 @@ class AIService:
         self.last_attempts = []
         last_error = None
         for selected_provider, selected_model in self._targets(provider, model):
-            emitted = False
             content_seen = False
             attempt = {"provider": selected_provider, "model": selected_model, "status": "failed"}
             self.last_attempts.append(attempt)
@@ -868,7 +867,6 @@ class AIService:
                         continue
                     item = item if isinstance(item, dict) else {"type": "content", "text": item}
                     if item.get("text"):
-                        emitted = True
                         content_seen = content_seen or item.get("type") == "content"
                         if restorer and item.get("type") == "content":
                             item = {**item, "text": restorer.feed(item["text"])}
@@ -886,7 +884,12 @@ class AIService:
             except Exception as exc:
                 last_error = exc
                 attempt["error_type"] = type(exc).__name__
-                if emitted:
+                # Solo il contenuto gia' arrivato allo studente impedisce il
+                # ripiego. Il ragionamento viaggia su un canale separato, non
+                # entra nella risposta e non viene salvato: un modello che ha
+                # prodotto solo <think> e poi e' morto puo' essere sostituito
+                # dalla riserva senza duplicare nulla di visibile.
+                if content_seen:
                     raise AIError("La risposta e stata interrotta dal modello; riprova il turno.") from exc
                 logger.warning("AI stream %s/%s failed before output (%s)", selected_provider, selected_model, type(exc).__name__)
         raise AIError(f"Nessun modello configurato ha completato la risposta ({type(last_error).__name__}).") from last_error
