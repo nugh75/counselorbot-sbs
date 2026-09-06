@@ -1154,7 +1154,19 @@ def _annotate_qsa_factor_codes(
         annotated = re.sub(rf"\b{code}\b\s*[:\-–]?\s*{re.escape(name)}", f"{code} ({name})", annotated)
         # Caso in cui il modello stesso ha gia scritto "(name) name": collassa il doppione.
         annotated = re.sub(rf"\({re.escape(name)}\)\s*{re.escape(name)}\b", f"({name})", annotated)
-        annotated = re.sub(rf"\b{code}\b(?!\s*\()", f"{code} ({name})", annotated)
+        # Il nome accompagna la PRIMA occorrenza del codice, non tutte. Con la
+        # regola letterale un messaggio arrivava a 42 nomi completi, lo stesso
+        # codice fino a dodici volte: chi ha letto il nome una volta lo ha
+        # imparato, e ripeterlo a ogni riga trasforma la risposta in un modulo.
+        if not re.search(rf"\b{code}\b\s*\({re.escape(name)}\)", annotated):
+            annotated = re.sub(rf"\b{code}\b(?!\s*\()", f"{code} ({name})", annotated, count=1)
+        # Le ripetizioni scritte dal modello stesso si riducono al solo codice
+        # dalla seconda occorrenza in poi.
+        first = re.search(rf"\b{code}\b\s*\({re.escape(name)}\)", annotated)
+        if first:
+            annotated = annotated[:first.end()] + re.sub(
+                rf"\b{code}\b\s*\({re.escape(name)}\)", code, annotated[first.end():]
+            )
         # Se il modello usa solo il nome del fattore senza codice, marca almeno la
         # prima occorrenza. Questo preserva la copertura audit senza trasformare
         # ogni ripetizione del nome in testo pesante.
@@ -1236,9 +1248,11 @@ def _apply_qsa_factor_directive(
     interpretation_table = "\n".join(rows)
     base = (
         f"{system_prompt}\n\n"
-        "[FACTOR LABELS] In every reply addressed to the student, never write "
-        f"an isolated {instrument} factor code. Each code must be immediately "
-        "accompanied by its full name, using the exact code and name from the reference below. "
+        "[FACTOR LABELS] The FIRST time a reply mentions a "
+        f"{instrument} factor, write its code with the full name, using the exact "
+        "code and name from the reference below. After that, in the same reply, the "
+        "code alone is enough: the reader has already met the name, and repeating it "
+        "at every mention turns the answer into a form. "
         f"Mandatory reference: {examples}.\n\n"
         "[INTERPRETATION TABLE] Scale 1-9. Assign each factor the label of its "
         "score band by reading ITS OWN row below; the labels are already in the "

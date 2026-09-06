@@ -143,6 +143,26 @@ def test_a_chosen_catalogue_item_wins_over_the_prose(db):
     assert "The action you proposed and never came back to:" not in block
 
 
+def test_a_step_played_twice_is_recalled_not_regenerated(db):
+    """18 sessioni su 160 tornano su uno step gia' fatto, per 33 riesecuzioni:
+    il modello riscriveva un'analisi quasi identica perche' niente gli diceva
+    di averla gia' scritta."""
+    db.add(models.Log(
+        session_id=SESSION, username=STUDENT, action="chat_message", phase="cognitive",
+        questionnaire_type="QSA",
+        details={"user_input": "", "effective_user_input": "[step]", "bot_response": "Ecco i fattori.",
+                 "guided_phase_prompt_key": "guided_step:cognitive"},
+    ))
+    db.flush()
+    first_time = session_ledger.build(db, session_id=SESSION, username=STUDENT, step_id="affective")
+    assert first_time["replayed_step"] is False
+
+    again = session_ledger.build(db, session_id=SESSION, username=STUDENT, step_id="cognitive")
+    assert again["replayed_step"] is True
+    block = session_ledger.block(db, session_id=SESSION, username=STUDENT, step_id="cognitive")
+    assert "You already ran this step in this session" in block
+
+
 def test_a_refusal_is_not_reopened(db):
     _strategies(db, ("refused", "dismissed"))
     block = session_ledger.block(db, session_id=SESSION, username=STUDENT)

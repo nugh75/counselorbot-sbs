@@ -60,7 +60,7 @@ _ACTION_LINE = re.compile(
 )
 
 
-def build(db, *, session_id: str, username: str) -> dict:
+def build(db, *, session_id: str, username: str, step_id: str | None = None) -> dict:
     """Ledger of the session so far; empty parts stay empty, nothing is inferred.
 
     Scoped to the session and not to `conversation_id`: a resumed or frozen
@@ -77,6 +77,7 @@ def build(db, *, session_id: str, username: str) -> dict:
     chosen, refused = _actions(db, session_id=session_id, username=username)
     return {
         "answers": _answers(rows),
+        "replayed_step": _replayed(rows, step_id),
         "open_question": _open_question(rows),
         "pending_actions": chosen,
         "proposed_action": _proposed_action(rows),
@@ -97,7 +98,7 @@ def render(ledger: dict) -> str:
     ledger = {**_empty(), **(ledger or {})}
     answers = list(ledger["answers"])
     if not any((answers, ledger["pending_actions"], ledger["refused_actions"],
-                ledger["open_question"], ledger["proposed_action"])):
+                ledger["open_question"], ledger["proposed_action"], ledger["replayed_step"])):
         return ""
     while True:
         text = _compose(dict(ledger, answers=answers))
@@ -109,14 +110,14 @@ def render(ledger: dict) -> str:
         answers.pop(0)
 
 
-def block(db, *, session_id: str, username: str) -> str:
-    return render(build(db, session_id=session_id, username=username))
+def block(db, *, session_id: str, username: str, step_id: str | None = None) -> str:
+    return render(build(db, session_id=session_id, username=username, step_id=step_id))
 
 
 # --- helpers ---
 def _empty() -> dict:
     return {"answers": [], "open_question": "", "pending_actions": [], "proposed_action": "",
-            "refused_actions": [], "verification_asked": False}
+            "refused_actions": [], "verification_asked": False, "replayed_step": False}
 
 
 def _compose(ledger: dict) -> str:
@@ -168,6 +169,12 @@ def _directives(ledger: dict) -> list[str]:
             "Take your unanswered question back up instead of stacking a new one on top of it; "
             "if the student has moved on, let it go rather than insisting."
         )
+    if ledger["replayed_step"]:
+        directives.append(
+            "You already ran this step in this session: do not analyse it again from scratch. "
+            "Recall what came out of it in a sentence or two, then take a different angle — "
+            "what the student has said since, or what stayed unanswered."
+        )
     return directives
 
 
@@ -210,6 +217,18 @@ def _open_question(rows: list) -> str:
             return ""
         return question
     return ""
+
+
+def _replayed(rows: list, step_id: str | None) -> bool:
+    """Lo studente torna su uno step gia' percorso.
+
+    Succede in 18 sessioni su 160, per 33 riesecuzioni: il modello rigenerava
+    un'analisi quasi identica, perche' nulla gli diceva di averla gia' scritta.
+    """
+    if not step_id:
+        return False
+    key = f"guided_step:{step_id}"
+    return any((row.details or {}).get("guided_phase_prompt_key") == key for row in rows)
 
 
 def _visible(row) -> str:
