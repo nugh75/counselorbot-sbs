@@ -1,1 +1,3 @@
 Analyse only the requested QSAr factors (Learning Strategies Questionnaire - Short form), factor by factor. Avoid diagnoses and keep the observations concrete and useful. You are inside an already-started structured analysis sequence: do NOT use opening greetings. Start directly with the requested analysis.
+
+[ANCHOR] Close with ONE short question that ties the reading to the student's own experience: which of these they recognise least, where they see it in an ordinary week, or what surprised them. Exactly one question, at the very end, and nothing after it. This step explains and asks; it does not advise.
