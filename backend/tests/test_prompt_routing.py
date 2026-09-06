@@ -45,10 +45,9 @@ def test_local_to_cloud_redacts_every_input_and_records_actual_model(ai, streami
     assert [attempt["status"] for attempt in ai.last_attempts] == ["failed", "succeeded"]
 
 
-@pytest.mark.parametrize("kind", ["content", "reasoning"])
-def test_never_mix_models_after_stream_has_started(ai, kind):
+def test_never_mix_models_after_the_answer_has_started(ai):
     def interrupted(*args, **kwargs):
-        yield {"type": kind, "text": "already emitted"}
+        yield {"type": "content", "text": "already emitted"}
         raise TimeoutError("interrupted")
     ai._providers["ollama"]["stream"] = interrupted
     ai._providers["openrouter"]["stream"] = lambda *args, **kwargs: pytest.fail("must not switch after output")
@@ -57,6 +56,21 @@ def test_never_mix_models_after_stream_has_started(ai, kind):
     with pytest.raises(AIError, match="interrotta"):
         list(stream)
     assert len(ai.last_attempts) == 1
+
+
+def test_a_model_that_only_thought_is_replaced_by_the_reserve(ai):
+    """Il ragionamento viaggia su un canale separato: non entra nella risposta
+    e non viene salvato. Un modello morto dopo il solo <think> non ha mostrato
+    niente allo studente, quindi la riserva puo' subentrare senza duplicare."""
+    def only_thinking(*args, **kwargs):
+        yield {"type": "reasoning", "text": "sto pensando"}
+        raise TimeoutError("interrupted")
+    ai._providers["ollama"]["stream"] = only_thinking
+    ai._providers["openrouter"].update(call=lambda *a, **k: "Risposta della riserva", stream=None)
+    items = list(ai.stream_response("question", "system", "generic"))
+    assert [item["type"] for item in items] == ["reasoning", "content"]
+    assert items[-1]["text"] == "Risposta della riserva"
+    assert [attempt["status"] for attempt in ai.last_attempts] == ["failed", "succeeded"]
 
 
 @pytest.mark.parametrize("auto_model", ["openrouter/auto", "openrouter/auto:free"])
