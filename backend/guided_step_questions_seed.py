@@ -420,3 +420,42 @@ def seed_guided_step_questions(db, models) -> None:
 
     if changed:
         db.commit()
+
+
+# Sentence starters are inserted once per installation, including populated steps.
+# The marker also preserves subsequent admin deletions and edits.
+RESPONSE_OPENINGS = {
+    "it": ["Mi riconosco soprattutto in…", "Un episodio concreto che mi viene in mente è…"],
+    "en": ["What I recognise most in myself is…", "A specific experience that comes to mind is…"],
+    "es": ["Me reconozco sobre todo en…", "Una experiencia concreta que me viene a la mente es…"],
+    "fr": ["Je me reconnais surtout dans…", "Une expérience concrète qui me vient à l’esprit est…"],
+    "de": ["Ich erkenne mich besonders darin wieder, dass…", "Ein konkretes Erlebnis, das mir einfällt, ist…"],
+    "sv": ["Det jag känner igen mest hos mig själv är…", "En konkret händelse jag kommer att tänka på är…"],
+}
+
+
+def seed_response_openings(db, models) -> int:
+    key = "response_openings_v1_applied"
+    if db.query(models.Config).filter(models.Config.key == key).first():
+        return 0
+    inserted = 0
+    for step in db.query(models.GuidedStep).all():
+        if step.questionnaire_type not in ("QSA", "QSAr", "QPCC", "QAP", "QPCS", "ZTPI"):
+            continue
+        if step.sort_order == 0 or "summary" in step.system_prompt_mode or "sintesi" in step.id or "synthesis" in step.id:
+            continue
+        existing = db.query(models.GuidedStepQuestion).filter(
+            models.GuidedStepQuestion.questionnaire_type == step.questionnaire_type,
+            models.GuidedStepQuestion.step_id == step.id,
+        ).all()
+        order = max((row.sort_order for row in existing), default=-1) + 1
+        for lang, texts in RESPONSE_OPENINGS.items():
+            for offset, text in enumerate(texts):
+                if any(row.language == lang and row.text == text for row in existing):
+                    continue
+                db.add(models.GuidedStepQuestion(questionnaire_type=step.questionnaire_type,
+                    step_id=step.id, language=lang, text=text, sort_order=order + offset, is_active=True))
+                inserted += 1
+    db.add(models.Config(key=key, value="true"))
+    db.commit()
+    return inserted

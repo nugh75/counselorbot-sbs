@@ -3,13 +3,13 @@
 // Node nei test): la chiamata di rete vive nel pannello, qui c'e' solo la forma
 // dei dati e cio' che si puo' verificare da solo.
 
-export type RecommendationType = 'reading' | 'strategy';
+export type RecommendationType = 'reading' | 'strategy' | 'advice';
 
 // Lo stato e' scelto dallo studente, non dal modello: "proposta" e' il punto di
 // partenza, "archiviata" non cancella nulla e resta recuperabile.
-export type RecommendationStatus = 'proposed' | 'selected' | 'tried' | 'dismissed';
+export type RecommendationStatus = 'proposed' | 'selected' | 'tried' | 'dismissed' | 'closed';
 
-const STATUSES: RecommendationStatus[] = ['proposed', 'selected', 'tried', 'dismissed'];
+const STATUSES: RecommendationStatus[] = ['proposed', 'selected', 'tried', 'dismissed', 'closed'];
 
 interface RecommendationBase {
     slug: string;
@@ -47,9 +47,16 @@ export interface StrategyRecommendation extends RecommendationBase {
     recommended_when?: string;
 }
 
+export interface AdviceRecommendation extends RecommendationBase {
+    recommendation_type?: 'advice';
+    name?: string;
+    kind?: 'advice' | 'question';
+}
+
 export interface RecommendationCatalog {
     reading: ReadingRecommendation[];
     strategy: StrategyRecommendation[];
+    advice: AdviceRecommendation[];
 }
 
 export interface RecommendationPatch {
@@ -60,6 +67,7 @@ export interface RecommendationPatch {
 export const EMPTY_RECOMMENDATIONS: RecommendationCatalog = {
     reading: [],
     strategy: [],
+    advice: [],
 };
 
 function normalizeStatus(value: unknown): RecommendationStatus {
@@ -97,9 +105,10 @@ function normalizeBucket<T extends { slug: string }>(value: unknown): T[] {
 
 export function normalizeRecommendationCatalog(value: unknown): RecommendationCatalog {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
-        return { reading: [], strategy: [] };
+        return { reading: [], strategy: [], advice: [] };
     }
     return {
+        advice: normalizeBucket<AdviceRecommendation>(Reflect.get(value, 'advice')),
         reading: normalizeBucket<ReadingRecommendation>(Reflect.get(value, 'reading')),
         strategy: normalizeBucket<StrategyRecommendation>(Reflect.get(value, 'strategy')),
     };

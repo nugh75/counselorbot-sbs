@@ -15,6 +15,7 @@ import {
     recommendationPatchUrl,
 } from '@/lib/recommendations';
 import type {
+    AdviceRecommendation,
     ReadingRecommendation,
     RecommendationCatalog,
     RecommendationPatch,
@@ -51,23 +52,22 @@ export function RecommendationsPanel({
     const [activeTab, setActiveTab] = useState<Tab>(catalog.reading.length ? 'reading' : 'strategy');
     const [pending, setPending] = useState<Record<string, boolean>>({});
     const [failed, setFailed] = useState<Record<string, RecommendationPatch>>({});
-    const [showArchived, setShowArchived] = useState<Record<Tab, boolean>>({ reading: false, strategy: false });
+    const [showArchived, setShowArchived] = useState<Record<Tab, boolean>>({ reading: false, strategy: false, advice: false });
 
-    const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({ reading: null, strategy: null });
+    const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({ reading: null, strategy: null, advice: null });
 
     const ids = useId();
     const tabId = (tab: Tab) => `${ids}-tab-${tab}`;
     const panelId = (tab: Tab) => `${ids}-panel-${tab}`;
 
-    const visibleTab: Tab = activeTab === 'reading' && !catalog.reading.length && catalog.strategy.length
-        ? 'strategy'
-        : activeTab === 'strategy' && !catalog.strategy.length && catalog.reading.length
-            ? 'reading'
-            : activeTab;
-
+    const tabs: Tab[] = ['reading', 'strategy', 'advice'];
+    const visibleTab: Tab = catalog[activeTab].length ? activeTab
+        : tabs.find((tab) => catalog[tab].length) ?? activeTab;
     const readings = split(catalog.reading);
     const strategies = split(catalog.strategy);
-    const proposedCount = readings.open.length + strategies.open.length;
+    const advice = split(catalog.advice);
+    const proposedCount = readings.open.length + strategies.open.length + advice.open.length;
+    const rec = (key: RecommendationTextKey, vars?: Record<string, string | number>) => recommendationText(key, lang, vars);
 
     // Le azioni si mostrano solo se possono davvero salvare: senza sessione o
     // senza il genitore che adotta il catalogo resterebbero comandi finti.
@@ -103,16 +103,14 @@ export function RecommendationsPanel({
         const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
         if (!keys.includes(event.key)) return;
         event.preventDefault();
-        const next: Tab = event.key === 'Home'
-            ? 'reading'
-            : event.key === 'End'
-                ? 'strategy'
-                : visibleTab === 'reading' ? 'strategy' : 'reading';
+        const next: Tab = event.key === 'Home' ? tabs[0]
+            : event.key === 'End' ? tabs[tabs.length - 1]
+                : tabs[(tabs.indexOf(visibleTab) + (event.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
         setActiveTab(next);
         tabRefs.current[next]?.focus();
     };
 
-    if (!catalog.reading.length && !catalog.strategy.length) return null;
+    if (!catalog.reading.length && !catalog.strategy.length && !catalog.advice.length) return null;
 
     const cardState = (type: RecommendationType, slug: string) => ({
         pending: Boolean(pending[cardKey(type, slug)]),
@@ -156,7 +154,7 @@ export function RecommendationsPanel({
                     <span className="ml-auto rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700">{proposedCount}</span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-1 rounded-lg bg-slate-100 p-1" role="tablist">
+                <div className="grid grid-cols-3 gap-1 rounded-lg bg-slate-100 p-1" role="tablist">
                     <TabButton
                         ref={(node) => { tabRefs.current.reading = node; }}
                         active={visibleTab === 'reading'}
@@ -175,6 +173,13 @@ export function RecommendationsPanel({
                         controls={panelId('strategy')}
                         label={t('recommendations.strategy')}
                         onClick={() => setActiveTab('strategy')}
+                        onKeyDown={onTabKeys}
+                    />
+                    <TabButton
+                        ref={(node) => { tabRefs.current.advice = node; }}
+                        active={visibleTab === 'advice'} count={advice.open.length}
+                        id={tabId('advice')} controls={panelId('advice')}
+                        label={rec('advice.tab')} onClick={() => setActiveTab('advice')}
                         onKeyDown={onTabKeys}
                     />
                 </div>
@@ -208,7 +213,7 @@ export function RecommendationsPanel({
                             type="reading"
                         />
                     </div>
-                ) : (
+                ) : visibleTab === 'strategy' ? (
                     <div
                         className="space-y-2"
                         role="tabpanel"
@@ -236,6 +241,19 @@ export function RecommendationsPanel({
                             pending={pending}
                             type="strategy"
                         />
+                    </div>
+                ) : (
+                    <div className="space-y-2" role="tabpanel" id={panelId('advice')} aria-labelledby={tabId('advice')} tabIndex={0}>
+                        {advice.open.map((item) => (
+                            <AdviceCard key={item.slug} item={item} canAct={canAct}
+                                onPatch={(patch) => void sendPatch('advice', item.slug, patch)}
+                                onDiscuss={onDiscuss} {...cardState('advice', item.slug)} />
+                        ))}
+                        {!catalog.advice.length ? <EmptyState text={rec('advice.empty')} /> : null}
+                        <ArchivedList items={advice.archived.map((item) => ({ slug: item.slug, label: item.name || item.slug }))}
+                            open={showArchived.advice} onToggle={() => setShowArchived((state) => ({ ...state, advice: !state.advice }))}
+                            onRestore={(slug) => void sendPatch('advice', slug, { status: 'proposed' })}
+                            canAct={canAct} pending={pending} type="advice" />
                     </div>
                 )}
             </div>
@@ -368,6 +386,31 @@ function StrategyCard({ item, canAct, pending, failed, onRetry, onPatch, onDiscu
                     />
                 ) : null}
             </CardActions>
+        </article>
+    );
+}
+
+function AdviceCard({ item, canAct, pending, failed, onRetry, onPatch, onDiscuss }: CardControls & { item: AdviceRecommendation }) {
+    const { lang } = useI18n();
+    const rec = (key: RecommendationTextKey, vars?: Record<string, string | number>) => recommendationText(key, lang, vars);
+    const name = item.name || item.slug;
+    const question = item.kind === 'question';
+    return (
+        <article className="rounded-lg border border-slate-200 bg-white p-3">
+            <p className="text-2xs font-semibold text-indigo-700">{rec(question ? (item.status === 'closed' ? 'question.closed' : 'question.open') : 'advice.label')}</p>
+            <p className="mt-1 text-xs leading-relaxed text-slate-700">{name}</p>
+            {question && canAct ? (
+                <button type="button" disabled={pending} onClick={() => onPatch({ status: item.status === 'closed' ? 'proposed' : 'closed' })}
+                    className="mt-2 min-h-9 rounded-md border border-slate-200 px-2.5 text-xs font-semibold text-indigo-700 disabled:opacity-60">
+                    {rec(item.status === 'closed' ? 'question.reopen' : 'question.close')}
+                </button>
+            ) : null}
+            {question ? <p role="status" className="text-xs text-slate-500">{pending ? rec('saving') : ''}</p> : null}
+            {question && failed ? <p role="alert" className="text-xs text-red-700">{rec('error')} <button type="button" onClick={onRetry} className="min-h-9 underline">{rec('retry')}</button></p> : null}
+            <CardActions pending={pending} failed={question ? undefined : failed} onRetry={onRetry} status={item.status}
+                canAct={canAct && !question} onPatch={onPatch} selectLabel={rec('advice.select')} triedLabel={rec('advice.tried')}
+                discuss={onDiscuss ? () => onDiscuss(rec('discuss.advice.prompt', { name })) : undefined}
+                discussLabel={rec('discuss')} dismissLabel={rec('dismiss')} />
         </article>
     );
 }
@@ -609,7 +652,7 @@ function TabButton({ active, count, id, controls, label, onClick, onKeyDown, ref
                 active ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700',
             )}
         >
-            <span className="block truncate">{label}</span>
+            <span className="block break-words">{label}</span>
             <span className="text-2xs tabular-nums">{count}</span>
         </button>
     );

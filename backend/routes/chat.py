@@ -350,6 +350,7 @@ def _record_recommendations(
     strategy_ids: list[str],
     turn_index: int,
     matched_on: dict[str, dict] | None = None,
+    notes: list[dict] | None = None,
 ) -> dict[str, list[dict]]:
     """Persist the items the completed turn actually recommended.
 
@@ -411,6 +412,12 @@ def _record_recommendations(
             recommendation_type="strategy",
             payloads=strategy_payloads,
             turn_index=turn_index,
+        )
+
+    if notes:
+        _recommendation_service.record(
+            db, session_id=session_id, username=username,
+            recommendation_type="advice", payloads=notes, turn_index=turn_index,
         )
 
     return _recommendation_service.list_for_session(
@@ -483,6 +490,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         raise HTTPException(status_code=502, detail=str(e))
     # Il blocco privato esce subito: non deve raggiungere lo studente, il
     # transcript, il log o il PDF.
+    raw_recommendations = response_content
     response_content, recommended = recommendation_blocks.extract(
         response_content, readings=reading_candidates, strategies=strategy_candidates,
     )
@@ -602,6 +610,10 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         language=request.language or "it",
         reading_ids=recommended["reading"],
         strategy_ids=recommended["strategy"],
+        notes=recommendation_blocks.extract_notes(
+            raw_recommendations, response_content,
+            advice_allowed=bool(prepared.component_options["certified_strategy_limit"] and prepared.component_flags.get("certified_strategies", True)),
+        ),
         matched_on=recommendation_meta,
         turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
     )
@@ -805,6 +817,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 raise AIError("The provider returned no continuation.")
             # Il blocco privato esce prima di ogni altra elaborazione: non deve
             # raggiungere lo studente, il transcript, il log o il PDF.
+            raw_recommendations = raw_response
             raw_response, recommended = recommendation_blocks.extract(
                 raw_response, readings=reading_candidates, strategies=strategy_candidates,
             )
@@ -854,6 +867,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     full_message, system_prompt_final, request.mode,
                     max_tokens=max_tokens, provider=c_provider, model=c_model, history=history,
                 )
+                raw_recommendations = retry
                 retry, retry_recommended = recommendation_blocks.extract(
                     retry, readings=reading_candidates, strategies=strategy_candidates,
                 )
@@ -923,6 +937,10 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     language=request.language or "it",
                     reading_ids=recommended["reading"],
                     strategy_ids=recommended["strategy"],
+                    notes=recommendation_blocks.extract_notes(
+                        raw_recommendations, response_content,
+                        advice_allowed=bool(prepared.component_options["certified_strategy_limit"] and prepared.component_flags.get("certified_strategies", True)),
+                    ),
                     matched_on=recommendation_meta,
                     turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
                 )
@@ -1169,7 +1187,7 @@ async def get_session_recommendations(
 class RecommendationStateUpdate(BaseModel):
     """Stato che lo studente puo' dare a una voce del suo libretto."""
 
-    status: Literal["proposed", "selected", "tried", "dismissed"] | None = None
+    status: Literal["proposed", "selected", "tried", "dismissed", "closed"] | None = None
     helpful: bool | None = None
 
 
@@ -1196,15 +1214,19 @@ async def update_session_recommendation(
     fields = update.model_dump(exclude_unset=True)
     if not fields:
         raise HTTPException(status_code=400, detail="Nessun campo da aggiornare")
-    row = _recommendation_service.set_state(
-        db,
-        session_id=session_id,
-        username=username,
-        recommendation_type=recommendation_type,
-        slug=slug,
-        status=fields.get("status"),
-        helpful=fields["helpful"] if "helpful" in fields else _recommendation_service.UNSET,
-    )
+    try:
+        row = _recommendation_service.set_state(
+            db,
+            session_id=session_id,
+            username=username,
+            recommendation_type=recommendation_type,
+            slug=slug,
+            status=fields.get("status"),
+            helpful=fields["helpful"] if "helpful" in fields else _recommendation_service.UNSET,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
     if row is None:
         raise HTTPException(status_code=404, detail="Raccomandazione non trovata")
     return _recommendation_service.list_for_session(

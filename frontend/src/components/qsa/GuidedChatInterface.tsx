@@ -570,7 +570,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
     useEffect(() => {
         let active = true;
-        setRecommendations({ reading: [], strategy: [] });
+        setRecommendations({ reading: [], strategy: [], advice: [] });
         if (!sessionId) return () => { active = false; };
 
         void apiFetch(`/api/session/${encodeURIComponent(sessionId)}/recommendations?lang=${activeLocale}`)
@@ -1774,6 +1774,24 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                             />
                         )}
                         <div className="p-3 sm:p-4">
+                        {!isLoading && steps.find(step => step.id === currentPhase)?.suggested_questions?.length ? (
+                            <details className="mb-2 text-xs text-slate-600">
+                                <summary className="min-h-9 cursor-pointer py-2">{t('guided.questionsLabel')}</summary>
+                                <div className="flex flex-wrap gap-1.5 pb-2">
+                                    {steps.find(step => step.id === currentPhase)!.suggested_questions!.map((text) => (
+                                        <button key={text} type="button"
+                                            onClick={() => {
+                                                const draft = text.endsWith('…') ? text.slice(0, -1) + ' ' : text;
+                                                setInput(previous => previous.trim() ? `${previous}\n\n${draft}` : draft);
+                                                window.requestAnimationFrame(() => document.getElementById('guided-composer')?.focus());
+                                            }}
+                                            className="min-h-9 rounded-lg border border-slate-200 px-2.5 py-1 text-left hover:bg-indigo-50">
+                                            {text}
+                                        </button>
+                                    ))}
+                                </div>
+                            </details>
+                        ) : null}
                         {/* Risposte rapide ancora necessarie per il flusso Savickas. */}
                         {!isLoading && messages.length > 0 && quickReplies.length > 0 && (
                             <div className="mb-2 flex flex-wrap gap-1.5">
