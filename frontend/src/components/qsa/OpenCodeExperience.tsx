@@ -21,7 +21,7 @@ import { createTerminalSession, TerminalSession } from '@/lib/opencode-terminal'
 import { AUTO_FREEZE_DELAY_MS, autoFreezeSignature, shouldAutoFreeze } from '@/lib/auto-freeze';
 import { getSelectedCounselorId } from '@/lib/counselor';
 import { freezeSession, type FrozenSessionSnapshot } from '@/lib/frozen-session';
-import { streamChat } from '@/lib/chat-stream';
+import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { isNearBottom } from '@/lib/chat-scroll';
@@ -59,6 +59,7 @@ export function OpenCodeExperience({
     onComplete,
     restoredMessages,
 }: OpenCodeExperienceProps) {
+    const { streamChat, ...continuation } = useChatContinuation();
     const { t, tf } = useI18n();
     const terminalRef = useRef<TerminalSession | null>(null);
     const mountRef = useRef<HTMLDivElement | null>(null);
@@ -210,7 +211,7 @@ export function OpenCodeExperience({
             streamingRef.current = false;
             setStreaming(false);
         }
-    }, [t]);
+    }, [t, streamChat]);
 
     const startOpenCode = useCallback(async () => {
         setBusy(true);
@@ -690,6 +691,7 @@ export function OpenCodeExperience({
                                 </div>
                             ))}
                         </div>
+                        <ChatContinuation locale={locale} {...continuation} />
                         <form onSubmit={submit} className="border-t border-slate-200 bg-white p-3 sm:p-4">
                             {error && messages.length > 0 && (
                                 <p className="text-xs text-rose-600 mb-2">{error}</p>

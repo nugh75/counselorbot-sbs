@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
 import { BookOpen, Bot, ClipboardList, Compass, LayoutGrid, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, Users, type LucideIcon } from 'lucide-react';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { HeaderCounselor } from './HeaderCounselor';
@@ -36,7 +37,7 @@ export function Header() {
     const [identity, setIdentity] = useState<Identity | null | undefined>(undefined);
     // Le voci "Riprendi" vivono qui e servono due rendering: l'icona su schermi
     // >= xl e il menu mobile. Un solo fetch, lo stesso elenco.
-    const resumeEntries = useResumeEntries();
+    const resumeEntries = useResumeEntries(Boolean(identity?.authenticated));
 
     useEffect(() => {
         getIdentity().then(setIdentity);
@@ -326,11 +327,12 @@ function HeaderMenu({
                     <div className="xl:hidden">
                     {/* Sessioni congelate + chat locale interrotta: su mobile questa è
                         l'unica porta, l'icona "Riprendi" della topbar non c'è. */}
-                    {resumeCount > 0 && (
+                    {(resumeCount > 0 || resumeEntries.error) && (
                         <div className="border-y border-slate-100 py-1 dark:border-slate-700">
                             <div className="px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-slate-500">
                                 {t('frozen.resumeTitle')}
                             </div>
+                            <ResumeLoadError entries={resumeEntries} />
                             {frozen.map((row) => (
                                 <Link
                                     key={row.session_id}

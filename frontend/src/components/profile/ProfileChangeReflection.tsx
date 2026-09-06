@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Bot, Loader2, RefreshCw, Save, Send } from 'lucide-react';
-import { streamChat } from '@/lib/chat-stream';
+import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { toast } from '@/components/ui/Toast';
@@ -138,6 +138,7 @@ function bookletReflections(scheda: BookletScheda | undefined): BookletReflectio
 }
 
 export function ProfileChangeReflection({ lang }: { lang: string }) {
+    const { streamChat, ...continuation } = useChatContinuation();
     const { t } = useI18n();
     const [mode, setMode] = useState<'profilo' | 'libretto'>('profilo');
     const [history, setHistory] = useState<Revision[]>([]);
@@ -564,6 +565,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                             </div>
                         ))}
                     </div>
+                    <ChatContinuation locale={lang} {...continuation} />
                     <div className="flex gap-2">
                         <textarea
                             value={chatInput}

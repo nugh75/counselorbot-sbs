@@ -18,6 +18,7 @@ from starlette.concurrency import run_in_threadpool
 from .. import auth, database, models, model_pricing
 from ..anonymous_codes import code_for_identity
 from ..ai_service import AIService, AIError
+from ..chat_continuation import continuation_message
 from .. import pii
 from ..api_models import ChatRequest, QsaAuditRequest, TTSRequest
 from ..diagram_blocks import strip_for_speech
@@ -642,7 +643,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     if request.use_phase_prompt and step:
         first_step = db.query(models.GuidedStep).filter(models.GuidedStep.questionnaire_type == step.questionnaire_type).order_by(models.GuidedStep.sort_order).first()
         is_first_step = bool(first_step and first_step.id == step.id)
-        if is_first_step:
+        if is_first_step and not request.partial_response:
             session_memory.clear(session_id)
     prepared = prepare_chat_turn(
         db, ai_service, request, session_id, identity,
@@ -654,7 +655,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     effective_message = prepared.effective_message
     step_label = prepared.step_label
     questionnaire_type = prepared.questionnaire_type
-    effective_response_length = prepared.effective_response_length
+    effective_response_length = None if request.partial_response else prepared.effective_response_length
     max_tokens = prepared.max_tokens
     model_scores_context = prepared.model_scores_context
     knowledge_context = prepared.knowledge_context
@@ -665,7 +666,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     reading_candidates = prepared.reading_candidates
     strategy_candidates = prepared.strategy_candidates
     system_prompt_final = prepared.system_prompt_final
-    full_message = prepared.full_message
+    full_message = continuation_message(prepared.full_message, request.partial_response)
     history = prepared.history
     sanitize = prepared.sanitize
     session_memory.update_context(
@@ -755,7 +756,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             log_db.close()
 
     def event_gen():
-        chunks = []
+        yield f"data: {_json.dumps({'session_id': session_id, 'conversation_id': conversation_id})}\n\n"
+        chunks = [request.partial_response]
         usage_info = None
         previous_display = ""
         try:
@@ -799,6 +801,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     break
 
             raw_response = "".join(chunks)
+            if request.partial_response and not "".join(chunks[1:]).strip():
+                raise AIError("The provider returned no continuation.")
             # Il blocco privato esce prima di ogni altra elaborazione: non deve
             # raggiungere lo studente, il transcript, il log o il PDF.
             raw_response, recommended = recommendation_blocks.extract(
@@ -863,7 +867,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 _memory_user_message,
                 response_content,
                 step_label,
-                is_first_step,
+                is_first_step and not request.partial_response,
                 knowledge_context,
                 request.phase or "",
                 model_scores_context,

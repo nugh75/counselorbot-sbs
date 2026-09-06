@@ -187,7 +187,7 @@ export default function ProfilePage() {
     }, [loadData]);
 
     useEffect(() => {
-        if (!selectedSession) {
+        if (activeSection !== 'sessions' || !selectedSession) {
             setConversation(null);
             setSessionSummary(null);
             return;
@@ -227,7 +227,7 @@ export default function ProfilePage() {
             });
 
         return () => { active = false; };
-    }, [selectedSession, lang]);
+    }, [activeSection, selectedSession, lang]);
 
     const handleDelete = async (sessionId: string) => {
         setActionLoading(sessionId);

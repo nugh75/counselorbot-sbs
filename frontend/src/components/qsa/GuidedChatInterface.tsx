@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
 import { QUESTIONNAIRES } from '@/lib/questionnaires';
-import { streamChat } from '@/lib/chat-stream';
+import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
 import { apiFetch } from '@/lib/auth';
 import { getSelectedCounselorId } from '@/lib/counselor';
 import ReactMarkdown from 'react-markdown';
@@ -424,6 +424,7 @@ function GuidedMessageContent({ content, locale, errorMessage }: { content: stri
 export function GuidedChatInterface({ scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot }: GuidedChatInterfaceProps) {
     const { t, tf, lang: contextLang } = useI18n();
     const activeLocale = normalizeLocale(locale || contextLang);
+    const { streamChat, ...continuation } = useChatContinuation();
     const [steps, setSteps] = useState<StepDef[]>([]);
     const [phases, setPhases] = useState<string[]>([]);
     // Strumento Idea: la variante decide di che materia si parla, la versione
@@ -1746,7 +1747,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
 
 
-                    {isLoading && <ChatPending label={t('guided.processing')} />}
+                    {isLoading && !continuation.pending && <ChatPending label={t('guided.processing')} />}
                     {/* Fine sessione: invito a rivedere il profilo dopo la conversazione */}
                     {currentPhase === FIXED_CONCLUSION_ID && (
                         <div className="max-w-full sm:max-w-2xl">
@@ -1755,6 +1756,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     )}
                 </div>
 
+                <ChatContinuation locale={activeLocale} {...continuation} />
                 {/* Input Area */}
                 {currentPhase === FIXED_CONCLUSION_ID ? (
                     <div className="flex items-center justify-center gap-2 border-t border-slate-100 bg-slate-50 p-3 sm:p-4">

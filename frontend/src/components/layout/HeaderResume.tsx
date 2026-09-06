@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
 import { useEffect, useRef, useState } from 'react';
 import { RotateCcw } from 'lucide-react';
 import { LOCAL_RESUME_HREF, PQBL_RESUME_HREF, resumeHref, type ResumeEntries } from '@/lib/use-resume-entries';
@@ -28,7 +29,7 @@ export function HeaderResume({ entries }: { entries: ResumeEntries }) {
         return () => document.removeEventListener('mousedown', onClick);
     }, []);
 
-    if (count === 0) return null;
+    if (count === 0 && !entries.error) return null;
 
     // Resume apre sempre l'elenco: l'interazione resta prevedibile sia con una
     // sola sessione, sia quando convivono più snapshot e una chat locale.
@@ -55,6 +56,7 @@ export function HeaderResume({ entries }: { entries: ResumeEntries }) {
                     <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-100">
                         {t('frozen.resumeTitle')}
                     </div>
+                    <ResumeLoadError entries={entries} />
                     {frozen.map((row) => (
                         <Link
                             key={row.session_id}

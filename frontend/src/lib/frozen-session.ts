@@ -84,7 +84,7 @@ export async function freezeSession(snapshot: FrozenSessionSnapshot, options: Fr
 
 export async function listFrozenSessions(): Promise<FrozenSessionSummary[]> {
     const res = await apiFetch('/api/session/frozen');
-    if (!res.ok) return [];
+    if (!res.ok) throw new Error(`Frozen sessions unavailable (${res.status})`);
     return (await res.json()) as FrozenSessionSummary[];
 }
 

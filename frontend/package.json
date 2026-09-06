@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "npm run i18n:check && eslint",
     "test": "node --test --experimental-strip-types src/lib/*.test.ts",
+    "test:recovery": "node --test tests/chat-recovery.test.mjs",
     "test:logs": "node --test tests/log-viewer.test.mjs",
     "test:artifacts": "node --test tests/conversation-artifacts.test.mjs",
     "test:design": "node --test tests/design-usability.test.mjs",
