@@ -1,12 +1,14 @@
 """Modelli Pydantic delle richieste API (estratti da main.py per evitare
 import circolari tra i router e la logica di chat)."""
 from typing import Literal, Optional
+from pydantic import Field
 
 from . import schemas
 
 
 class ChatRequest(schemas.BaseModel):
     message: str = ""
+    partial_response: str = Field(default="", max_length=60000)
     mode: str = "generic"
     session_id: Optional[str] = None
     conversation_id: Optional[str] = None
@@ -27,6 +29,7 @@ class ChatRequest(schemas.BaseModel):
 class SiteChatRequest(schemas.BaseModel):
     """Domanda al chatbot informativo del sito (RAG su docs/)."""
     message: str = ""
+    partial_response: str = Field(default="", max_length=60000)
     audience: str = "studente"  # 'docente' | 'studente'
     session_id: Optional[str] = None
     conversation_id: Optional[str] = None
@@ -92,6 +95,7 @@ class OpencodeWorkspaceRequest(schemas.BaseModel):
 
 
 class OpencodeChatRequest(schemas.BaseModel):
+    partial_response: str = Field(default="", max_length=60000)
     session_id: str
     message: str = ""
     seed: bool = False

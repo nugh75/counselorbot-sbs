@@ -6,6 +6,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
+import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
 import { BookOpen, ChevronDown, RotateCcw } from 'lucide-react';
 import { QUESTIONNAIRE_LIST, QuestionnaireConfig, QuestionnaireType } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
@@ -33,7 +34,8 @@ export function ReturningHome({
     onOpenIntro,
 }: Props) {
     const { t, lang } = useI18n();
-    const { frozen, localResume, pqbl: pqblResume, count: resumeCount } = useResumeEntries();
+    const resumeEntries = useResumeEntries();
+    const { frozen, localResume, pqbl: pqblResume, count: resumeCount } = resumeEntries;
     const [counselorInfo, setCounselorInfo] = useState<{ id: number; name: string } | null>(null);
     const { rows: instrumentCatalog, loading: catalogLoading, error: catalogError, retry: retryCatalog } = useInstrumentCatalog();
     const counselorId = useSyncExternalStore(
@@ -76,11 +78,12 @@ export function ReturningHome({
                 <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-600">{t('base.subtitle')}</p>
             </header>
 
-            {resumeCount > 0 && (
+            {(resumeCount > 0 || resumeEntries.error) && (
                 <section>
                     <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
                         {t('frozen.resumeTitle')}
                     </h2>
+                    <ResumeLoadError entries={resumeEntries} />
                     <div className="mt-3 space-y-2">
                         {frozen.map((row) => (
                             <a

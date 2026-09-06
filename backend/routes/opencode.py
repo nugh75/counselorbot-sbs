@@ -35,6 +35,7 @@ from .. import auth, database, models, pii
 from ..anonymous_codes import code_for_identity
 from ..ai_service import AIService
 from ..api_models import ChatRequest, OpencodeChatRequest, OpencodeWorkspaceRequest
+from ..chat_continuation import continuation_message, continuation_prefix
 from ..chat_logic import (
     _apply_language_directive,
     _apply_qsa_factor_directive,
@@ -619,6 +620,7 @@ async def _ensure_opencode_session(
 
     history: list[dict[str, str]] = []
     has_assistant = False
+    continuing = False
     if isinstance(raw_messages, list):
         for item in raw_messages:
             if not isinstance(item, dict):
@@ -630,6 +632,21 @@ async def _ensure_opencode_session(
                 continue
             if role == "user" and seed_prompt and text == seed_prompt:
                 continue
+            partial = continuation_prefix(text) if role == "user" else None
+            if partial is not None:
+                if history and history[-1]["role"] == "assistant":
+                    history[-1]["content"] = partial
+                else:
+                    history.append({"role": "assistant", "content": partial})
+                continuing = True
+                continue
+            if continuing and role == "assistant":
+                suffix = "".join(str(part.get("text") or "") for part in (item.get("parts") or []) if part.get("type") == "text")
+                history[-1]["content"] += suffix
+                continuing = False
+                has_assistant = True
+                continue
+            continuing = False
             history.append({"role": role, "content": text})
             if role == "assistant":
                 has_assistant = True
@@ -888,8 +905,11 @@ async def chat_opencode(
         raise HTTPException(status_code=400, detail="Messaggio vuoto")
     if len(prompt) > 12000:
         raise HTTPException(status_code=400, detail="Messaggio troppo lungo")
+    original_prompt = prompt
+    prompt = continuation_message(prompt, request.partial_response)
 
     async def stream() -> AsyncIterator[str]:
+        yield f"data: {json.dumps({'session_id': request.session_id})}\n\n"
         full_text = ""
         current_part_id = ""
         text_part_count = 0
@@ -955,7 +975,7 @@ async def chat_opencode(
                                     full_text = ""
                                 full_text += delta
                                 if text_part_count > 1:
-                                    yield f"data: {json.dumps({'display': full_text})}\n\n"
+                                    yield f"data: {json.dumps({'display': request.partial_response + full_text})}\n\n"
                         elif event_type == "session.error":
                             error = properties.get("error") or "OpenCode error"
                             yield f"data: {json.dumps({'error': str(error)})}\n\n"
@@ -973,11 +993,15 @@ async def chat_opencode(
                                 message_count = len(items) if isinstance(items, list) else None
                                 for item in reversed(items if isinstance(items, list) else []):
                                     if (item.get("info") or {}).get("role") == "assistant":
-                                        full_text = _message_text(item.get("parts") or [])
+                                        parts = item.get("parts") or []
+                                        full_text = "".join(str(part.get("text") or "") for part in parts if part.get("type") == "text")
                                         break
                             else:
                                 message_count = 2
 
+                            if request.partial_response and not full_text.strip():
+                                raise RuntimeError("The provider returned no continuation.")
+                            full_text = request.partial_response + full_text
                             # Persist response as candidate for student feedback
                             response_id = None
                             try:
@@ -1014,7 +1038,7 @@ async def chat_opencode(
                                                 "model": OPENCODE_CHAT_MODEL,
                                                 "questionnaire_type": oc_qtype,
                                                 "locale": oc_locale,
-                                                "user_input": prompt,
+                                                "user_input": original_prompt,
                                                 "bot_response": full_text,
                                             }, "user_input", "bot_response"),
                                         )

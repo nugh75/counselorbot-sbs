@@ -6,7 +6,7 @@ import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { LucideIcon } from 'lucide-react';
 import { Send, Square, GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search, Award, Eye, Users } from 'lucide-react';
-import { streamChat } from '@/lib/chat-stream';
+import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
 import { ai4authLoginUrl, getIdentity, getViewAsAccount, type Identity } from '@/lib/auth';
 import { canUseAssistant, canUseTeacherAssistant } from '@/lib/roles';
 import { useI18n } from '@/lib/i18n-context';
@@ -118,6 +118,7 @@ const docUrl = (source: string, collection: string) =>
     `/api/site-chat/document?source=${encodeURIComponent(source)}&collection=${encodeURIComponent(collection)}`;
 
 export default function AssistentePage() {
+    const { streamChat, ...continuation } = useChatContinuation();
     const { t, lang } = useI18n();
     const [identity, setIdentity] = useState<Identity | null | undefined>(undefined);
     const [audience, setAudience] = useState<Audience>('studente');
@@ -589,6 +590,7 @@ export default function AssistentePage() {
                         ))}
                     </div>
 
+                    <ChatContinuation locale={lang} {...continuation} />
                     {/* Input */}
                     <div className="mb-2 flex justify-end">
                         <ResponseLengthSelector

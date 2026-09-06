@@ -19,6 +19,7 @@ from starlette.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models, model_pricing
+from ..chat_continuation import continuation_message
 from ..prompt_contract import persona_context
 from ..ai_service import AIService, AIError
 from ..chat_logic import (
@@ -443,12 +444,16 @@ async def site_chat_stream(
         return response_id
 
     def event_gen():
+        yield f"data: {_json.dumps({'session_id': session_id, 'conversation_id': conversation_id})}\n\n"
         # Errore di retrieval (es. modello embedding non disponibile)
         if retrieval_error is not None:
             yield f"data: {_json.dumps({'error': retrieval_error})}\n\n"
             return
         # Nessun materiale indicizzato (stato di errore infra): non persiste.
         if not results:
+            if request.partial_response:
+                yield f"data: {_json.dumps({'error': 'Continuation materials unavailable.'})}\n\n"
+                return
             no_material = _no_material_message(request.language)
             yield f"data: {_json.dumps({'delta': no_material, 'display': no_material})}\n\n"
             yield f"data: {_json.dumps({'done': True, 'response': no_material, 'session_id': session_id, 'conversation_id': conversation_id, 'sources': []})}\n\n"
@@ -472,7 +477,9 @@ async def site_chat_stream(
             f"---\n\nQUESTION:\n{question}"
         )
 
-        chunks: list[str] = []
+        full_message = continuation_message(full_message, request.partial_response)
+        visible_length = None if request.partial_response else request.response_length
+        chunks: list[str] = [request.partial_response]
         usage_info = None
         try:
             for item in ai_service.stream_response(full_message, system_prompt, "site-chat", max_tokens=max_tokens):
@@ -487,7 +494,7 @@ async def site_chat_stream(
                     continue
                 chunks.append(text)
                 display_response, truncated = _limit_visible_words(
-                    _strip_fonte_tokens("".join(chunks)), request.response_length
+                    _strip_fonte_tokens("".join(chunks)), visible_length
                 )
                 event = {"display": display_response}
                 if request.response_length is None:
@@ -497,7 +504,9 @@ async def site_chat_stream(
                     break
 
             answer = _strip_generic_acknowledgement(_strip_fonte_tokens("".join(chunks)))
-            answer, _ = _limit_visible_words(answer, request.response_length)
+            if request.partial_response and not "".join(chunks[1:]).strip():
+                raise AIError("The provider returned no continuation.")
+            answer, _ = _limit_visible_words(answer, visible_length)
             response_id = _log_and_persist(answer, sources, usage_info)
             yield f"data: {_json.dumps({'done': True, 'response': answer, 'session_id': session_id, 'conversation_id': conversation_id, 'sources': sources, 'response_id': response_id})}\n\n"
         except Exception as e:
