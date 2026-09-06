@@ -299,6 +299,10 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     system_prompt = recommendation_blocks.apply_directive(
         system_prompt, reading_candidates, strategy_candidates, idea=questionnaire_type == IDEA_INSTRUMENT,
     )
+    system_prompt += recommendation_blocks.notes_directive(
+        advice_allowed=bool(component_options["certified_strategy_limit"] and component_flags.get("certified_strategies", True)),
+        idea=questionnaire_type == IDEA_INSTRUMENT,
+    )
     system_prompt += _recommendation_service.conversation_context(
         db, session_id=session_id, username=identity.get("username", ""),
         message=request.message or "", language=request.language or "it",

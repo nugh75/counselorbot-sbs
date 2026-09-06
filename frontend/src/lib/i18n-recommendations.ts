@@ -11,6 +11,17 @@ type Dict = typeof it;
 export type RecommendationTextKey = keyof Dict;
 
 const it = {
+    "advice.select": "Voglio provarlo",
+    "advice.tried": "Provato",
+    "advice.tab": "Consigli e domande",
+    "advice.empty": "Nessun consiglio o domanda da riprendere.",
+    "question.open": "Domanda aperta",
+    "question.closed": "Domanda chiusa",
+    "question.close": "Segna come chiusa",
+    "question.reopen": "Riapri la domanda",
+    "discuss.advice.prompt": "Vorrei riprendere questo punto: «{name}»",
+    "advice.label": "Consiglio",
+
     'summary': 'Di cosa parla',
     'synopsis.show': 'Leggi la sintesi',
     'synopsis.hide': 'Chiudi la sintesi',
@@ -37,6 +48,17 @@ const it = {
 };
 
 const en: Dict = {
+    "advice.select": "I want to try it",
+    "advice.tried": "Tried",
+    "advice.tab": "Advice and questions",
+    "advice.empty": "No advice or questions to revisit.",
+    "question.open": "Open question",
+    "question.closed": "Closed question",
+    "question.close": "Mark as closed",
+    "question.reopen": "Reopen question",
+    "discuss.advice.prompt": "I would like to revisit this point: “{name}”",
+    "advice.label": "Advice",
+
     'summary': 'What it is about',
     'synopsis.show': 'Read the summary',
     'synopsis.hide': 'Close the summary',
@@ -63,6 +85,17 @@ const en: Dict = {
 };
 
 const es: Dict = {
+    "advice.select": "Quiero probarlo",
+    "advice.tried": "Probado",
+    "advice.tab": "Consejos y preguntas",
+    "advice.empty": "No hay consejos ni preguntas que retomar.",
+    "question.open": "Pregunta abierta",
+    "question.closed": "Pregunta cerrada",
+    "question.close": "Marcar como cerrada",
+    "question.reopen": "Reabrir la pregunta",
+    "discuss.advice.prompt": "Quisiera retomar este punto: «{name}»",
+    "advice.label": "Consejo",
+
     'summary': 'De qué trata',
     'synopsis.show': 'Leer la sinopsis',
     'synopsis.hide': 'Cerrar la sinopsis',
@@ -89,6 +122,17 @@ const es: Dict = {
 };
 
 const fr: Dict = {
+    "advice.select": "Je veux essayer",
+    "advice.tried": "Essayé",
+    "advice.tab": "Conseils et questions",
+    "advice.empty": "Aucun conseil ni question à reprendre.",
+    "question.open": "Question ouverte",
+    "question.closed": "Question close",
+    "question.close": "Marquer comme close",
+    "question.reopen": "Rouvrir la question",
+    "discuss.advice.prompt": "Je voudrais reprendre ce point : « {name} »",
+    "advice.label": "Conseil",
+
     'summary': 'De quoi il s’agit',
     'synopsis.show': 'Lire le résumé',
     'synopsis.hide': 'Fermer le résumé',
@@ -115,6 +159,17 @@ const fr: Dict = {
 };
 
 const de: Dict = {
+    "advice.select": "Möchte ich ausprobieren",
+    "advice.tried": "Ausprobiert",
+    "advice.tab": "Tipps und Fragen",
+    "advice.empty": "Keine Tipps oder Fragen zum Aufgreifen.",
+    "question.open": "Offene Frage",
+    "question.closed": "Abgeschlossene Frage",
+    "question.close": "Als abgeschlossen markieren",
+    "question.reopen": "Frage wieder öffnen",
+    "discuss.advice.prompt": "Ich möchte diesen Punkt wieder aufgreifen: „{name}“",
+    "advice.label": "Tipp",
+
     'summary': 'Worum es geht',
     'synopsis.show': 'Zusammenfassung lesen',
     'synopsis.hide': 'Zusammenfassung schließen',
@@ -141,6 +196,17 @@ const de: Dict = {
 };
 
 const sv: Dict = {
+    "advice.select": "Jag vill prova",
+    "advice.tried": "Provat",
+    "advice.tab": "Råd och frågor",
+    "advice.empty": "Inga råd eller frågor att återkomma till.",
+    "question.open": "Öppen fråga",
+    "question.closed": "Avslutad fråga",
+    "question.close": "Markera som avslutad",
+    "question.reopen": "Öppna frågan igen",
+    "discuss.advice.prompt": "Jag vill återkomma till denna punkt: ”{name}”",
+    "advice.label": "Råd",
+
     'summary': 'Vad den handlar om',
     'synopsis.show': 'Läs sammanfattningen',
     'synopsis.hide': 'Stäng sammanfattningen',

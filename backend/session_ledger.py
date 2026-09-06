@@ -75,10 +75,22 @@ def build(db, *, session_id: str, username: str, step_id: str | None = None) -> 
         models.Log.username == username,
     ).order_by(models.Log.timestamp.asc(), models.Log.id.asc()).all()
     chosen, refused = _actions(db, session_id=session_id, username=username)
+    open_question = _open_question(rows)
+    notes = db.query(models.RecommendationHistory).filter(
+        models.RecommendationHistory.session_id == session_id,
+        models.RecommendationHistory.username == username,
+        models.RecommendationHistory.recommendation_type == "advice",
+    ).all()
+    for note in notes:
+        payload = note.payload or {}
+        if payload.get("kind") == "question" and payload.get("status") == "closed":
+            if _clean(payload.get("name", ""), MAX_QUESTION_CHARS) == open_question:
+                open_question = ""
+                break
     return {
         "answers": _answers(rows),
         "replayed_step": _replayed(rows, step_id),
-        "open_question": _open_question(rows),
+        "open_question": open_question,
         "pending_actions": chosen,
         "proposed_action": _proposed_action(rows),
         "refused_actions": refused,

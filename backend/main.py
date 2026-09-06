@@ -1176,6 +1176,8 @@ def _run_seed_and_migrations():
         # Idempotente per questionario/step/lingua: non sovrascrive modifiche.
         from .guided_step_questions_seed import seed_guided_step_questions
         seed_guided_step_questions(db, models)
+        from .guided_step_questions_seed import seed_response_openings
+        seed_response_openings(db, models)
 
         # Seed traduzioni label step guidati (en/es/fr/de/sv in label_i18n).
         # Idempotente: riempie solo le lingue mancanti, non sovrascrive.
