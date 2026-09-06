@@ -702,3 +702,29 @@ for (const width of [320, 1440]) {
         } finally { await context.close(); }
     });
 }
+
+for (const width of [320, 1440]) {
+    test(`repeat step remains available without a detected error at ${width}px`, async () => {
+        const { page, context, control } = await fixture(width);
+        try {
+            const nav = page.getByRole('navigation', { name: chatLayoutLabel('it', 'navigation'), exact: true });
+            const repeat = nav.getByRole('button', { name: 'Ripeti Passaggio', exact: true });
+            await repeat.waitFor();
+            assert.equal((await repeat.innerText()).trim(), '');
+            assert.equal(await repeat.locator('svg.lucide-rotate-ccw').count(), 1);
+            assert.equal(await nav.getByRole('button').first().getAttribute('aria-label'), 'Ripeti Passaggio');
+            await repeat.click();
+            await page.getByRole('log').getByText('Possiamo approfondire questo punto.', { exact: true }).waitFor();
+            assert.match(await nav.textContent(), /1\/3/);
+            assert.equal(control.requests.filter(r => r.path === '/api/chat/stream').length, 1);
+            await nav.getByRole('button').last().click();
+            await page.waitForFunction(() => document.querySelector('nav[aria-label="Avanzamento del percorso"]')?.textContent.includes('2/3'));
+            assert.equal(await nav.getByRole('button').nth(1).getAttribute('aria-label'), 'Ripeti Passaggio');
+            await repeat.click();
+            await page.waitForFunction(() => [...document.querySelectorAll('nav button')].some(b => b.getAttribute('aria-label') === 'Ripeti Passaggio' && !b.disabled));
+            assert.equal(control.requests.filter(r => r.path === '/api/chat/stream').length, 3);
+            assert.match(await nav.textContent(), /2\/3/);
+            assert.deepEqual(control.errors, []);
+        } finally { await context.close(); }
+    });
+}

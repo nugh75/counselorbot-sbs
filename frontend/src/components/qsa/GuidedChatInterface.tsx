@@ -1,6 +1,6 @@
 'use client';
 
-import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, RefreshCw, GitBranch, PanelLeft, LayoutList, BookOpen } from 'lucide-react';
+import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, LayoutList, BookOpen } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
@@ -497,7 +497,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const [conversationId, setConversationId] = useState<string | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
-    const [lastAnalysisFailed, setLastAnalysisFailed] = useState(false);
     const [playingMessageIdx, setPlayingMessageIdx] = useState<number | null>(null);
     const [isAudioLoading, setIsAudioLoading] = useState(false);
     const [showAdvanceSuggestion, setShowAdvanceSuggestion] = useState(false);
@@ -852,7 +851,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         setUserMessagesInPhase(0);
 
         if (currentPhase === FIXED_QUESTIONS_ID) {
-            setLastAnalysisFailed(false);
             void recordMemoryEvent(currentPhase, false);
             const phaseMessages: ChatMessage[] = [];
             if (scoresContextOverride) {
@@ -865,7 +863,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             setMessages(prev => [...prev, ...phaseMessages]);
             void generateReflectionQuestions();
         } else if (currentPhase === FIXED_CONCLUSION_ID) {
-            setLastAnalysisFailed(false);
             void recordMemoryEvent(currentPhase, true);
             setMessages(prev => [...prev, {
                 role: 'assistant',
@@ -874,9 +871,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         } else if (isIdea) {
             // Il passo di Idea e' solo il contesto del prossimo turno della
             // persona, non un turno da generare: la conversazione la guida lei.
-            setLastAnalysisFailed(false);
         } else {
-            setLastAnalysisFailed(false);
             const step = getStepDef(currentPhase);
             if (step) {
                 generateAnalysis(step);
@@ -943,7 +938,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const generateAnalysis = async (step: StepDef) => {
         const controller = beginRequest();
         setIsLoading(true);
-        setLastAnalysisFailed(false);
         if (messages.length > 0) {
             setMessages(prev => [...prev, { role: 'system', content: `--- ${step.label} ---` }]);
         }
@@ -1021,7 +1015,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
             if (streamOk && extractAdvanceSignal(responseText).cleanText) {
                 const { cleanText, shouldAdvance } = extractAdvanceSignal(responseText);
                 updateLast(cleanText);
-                setLastAnalysisFailed(false);
                 // Savickas e QPCS: l'utente decide quando cambiare step. Non avanzare
                 // automaticamente sulla generazione dello step (per Savickas resta valido
                 // solo l'ultimo step).
@@ -1040,13 +1033,11 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     role: 'assistant',
                     content: t('guided.stepError')
                 }]);
-                setLastAnalysisFailed(true);
             } else {
                 setMessages(prev => [...prev, {
                     role: 'assistant',
                     content: t('guided.stepError')
                 }]);
-                setLastAnalysisFailed(true);
             }
         } catch {
             if (controller.signal.aborted) return;
@@ -1054,7 +1045,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 role: 'assistant',
                 content: t('guided.stepConnError')
             }]);
-            setLastAnalysisFailed(true);
         } finally {
             if (requestRef.current === controller) {
                 requestRef.current = null;
@@ -1249,7 +1239,11 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     };
 
     const repeatCurrentStep = () => {
-        if (isLoading || !isAnalysisStep(currentPhase)) return;
+        if (isLoading || currentPhase === FIXED_CONCLUSION_ID) return;
+        if (currentPhase === FIXED_QUESTIONS_ID) {
+            void generateReflectionQuestions();
+            return;
+        }
         const step = getStepDef(currentPhase);
         if (step) generateAnalysis(step);
     };
@@ -1449,7 +1443,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         && questionnaireType === 'SAVICKAS'
         && currentPhase !== 'savickas-patto'
         && (showAdvanceSuggestion || userMessagesInPhase >= 3);
-    const showRepeatStep = lastAnalysisFailed && isAnalysisStep(currentPhase);
+    const showRepeatStep = currentPhase !== FIXED_CONCLUSION_ID;
     const hasStepNavigation = showPreviousStep || showStandardAdvance || showSavickasAdvance || showRepeatStep;
 
     const nextStepLabel = currentPhase === FIXED_QUESTIONS_ID ? t('guided.concludeSession') : t(questionnaireType === 'SAVICKAS' ? 'guided.nextTopic' : 'guided.nextStep');
@@ -1462,16 +1456,17 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     <ChevronLeft className="h-5 w-5" aria-hidden="true" />
                 </Button>
             </Tooltip>}
+            {showRepeatStep && <Tooltip content={t('guided.repeatStep')} side="top">
+                <Button type="button" variant="ghost" className={stepButtonClass} aria-label={t('guided.repeatStep')} disabled={isLoading} onClick={repeatCurrentStep}>
+                    <RotateCcw className="h-5 w-5" aria-hidden="true" />
+                </Button>
+            </Tooltip>}
             {(showStandardAdvance || showSavickasAdvance) && <Tooltip content={nextStepLabel} side="top">
                 <Button type="button" variant="ghost" className={stepButtonClass} aria-label={nextStepLabel} disabled={isLoading} onClick={() => void advancePhase()}>
                     {currentPhase === FIXED_QUESTIONS_ID ? <CheckCircle2 className="h-5 w-5" aria-hidden="true" /> : <ChevronRight className="h-5 w-5" aria-hidden="true" />}
                 </Button>
             </Tooltip>}
-            {showRepeatStep && <Tooltip content={t('guided.repeatStep')} side="top">
-                <Button type="button" variant="ghost" className={stepButtonClass} aria-label={t('guided.repeatStep')} disabled={isLoading} onClick={repeatCurrentStep}>
-                    <RefreshCw className="h-5 w-5" aria-hidden="true" />
-                </Button>
-            </Tooltip>}
+
         </div>
     );
     const stepNavigation = !isIdea && hasStepNavigation ? <nav aria-label={chatLayoutLabel(activeLocale, 'navigation')} className="flex shrink-0 items-center justify-between gap-2 bg-slate-50 px-2 py-1 lg:rounded-lg lg:border lg:border-slate-200 lg:px-3">
