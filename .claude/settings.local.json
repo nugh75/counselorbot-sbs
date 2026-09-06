@@ -49,5 +49,6 @@
       "Bash(python -m py_compile backend/models.py backend/schemas.py backend/certified_strategy_service.py backend/routes/certified_strategies.py backend/chat_logic.py backend/main.py backend/tests/test_smoke.py)",
       "Bash(command -v python3)"
     ]
-  }
+  },
+  "outputStyle": "Concise"
 }
