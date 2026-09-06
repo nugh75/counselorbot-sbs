@@ -16,6 +16,8 @@ Con pytest:
     pytest backend/tests/test_thinking_directive_split.py
 """
 import os
+import json
+from unittest.mock import MagicMock, patch
 
 os.environ.setdefault("COUNSELOR_TRANSLATE_DISABLED", "1")
 os.environ.setdefault("ADMIN_SYNC_DISABLED", "1")
@@ -25,6 +27,7 @@ from backend.chat_logic import (
     _apply_thinking_directive,
     split_thinking,
 )
+from backend.ai_service import AIService
 
 
 def _reconstruct(items):
@@ -93,6 +96,121 @@ def test_stream_partial_tag_not_a_tag_is_flushed():
     content, reasoning = _reconstruct(items)
     assert content == "X<thi"
     assert reasoning == ""
+
+
+IRIDE_PREAMBLE = "Devo scrivere un breve benvenuto in italiano, informale, 3-4 frasi."
+IRIDE_ANSWER = "Ciao! Benvenuto nella tua esplorazione del QSA."
+IRIDE_CONTENT = f"**Ragione**\\\n{IRIDE_PREAMBLE}\n**Risposta**\\\n{IRIDE_ANSWER}"
+
+
+def test_iride_markdown_reasoning_is_separated():
+    reasoning, visible = split_thinking(IRIDE_CONTENT)
+    assert reasoning == IRIDE_PREAMBLE
+    assert visible == IRIDE_ANSWER
+
+
+def test_iride_stream_every_chunk_boundary():
+    for boundary in range(len(IRIDE_CONTENT) + 1):
+        sp = ThinkStreamSplitter()
+        items = sp.feed(IRIDE_CONTENT[:boundary]) + sp.feed(IRIDE_CONTENT[boundary:]) + sp.flush()
+        visible, reasoning = _reconstruct(items)
+        assert visible.strip() == IRIDE_ANSWER, boundary
+        assert reasoning == IRIDE_PREAMBLE, boundary
+
+
+def test_iride_stream_does_not_flash_reasoning():
+    sp = ThinkStreamSplitter()
+    items = []
+    preamble, answer = IRIDE_CONTENT.split("**Risposta**")
+    for ch in preamble:
+        emitted = sp.feed(ch)
+        assert not any(i["type"] == "content" and i["text"].strip() for i in emitted)
+        items.extend(emitted)
+    for ch in "**Risposta**" + answer:
+        items.extend(sp.feed(ch))
+    items.extend(sp.flush())
+    visible, reasoning = _reconstruct(items)
+    assert visible.strip() == IRIDE_ANSWER
+    assert reasoning == IRIDE_PREAMBLE
+
+
+def test_tagged_then_markdown_reasoning():
+    text = "<think>Native-style reasoning.</think>\n" + IRIDE_CONTENT
+    reasoning, visible = split_thinking(text)
+    assert reasoning == "Native-style reasoning.\n\n" + IRIDE_PREAMBLE
+    assert visible == IRIDE_ANSWER
+    sp = ThinkStreamSplitter()
+    items = []
+    for ch in text:
+        items.extend(sp.feed(ch))
+    visible, reasoning = _reconstruct(items + sp.flush())
+    assert visible.strip() == IRIDE_ANSWER
+    assert IRIDE_PREAMBLE in reasoning
+
+
+def test_ordinary_reasoning_words_and_unpaired_headings_are_preserved():
+    for text in (
+        "La ragione per cui studi conta.\n**Risposta**\nParliamone.",
+        "Ecco un esempio:\n**Ragione**\nVoglio capire.\n**Risposta**\nStudio.",
+        "**Ragione**\nUna motivazione importante.",
+        "**Risposta**\nCiao!",
+        "```json\n{\"reasoning\": \"esempio\"}\n```",
+    ):
+        assert split_thinking(text) == (None, text)
+        sp = ThinkStreamSplitter()
+        items = []
+        for ch in text:
+            items.extend(sp.feed(ch))
+        assert _reconstruct(items + sp.flush()) == (text, "")
+
+
+def test_english_heading_and_answer_without_newline():
+    text = "**Reasoning**\nPlan.\n**Answer** Hello!"
+    assert split_thinking(text) == ("Plan.", "Hello!")
+    sp = ThinkStreamSplitter()
+    assert _reconstruct(sp.feed(text) + sp.flush()) == ("Hello!", "Plan.")
+
+
+def test_ollama_keeps_native_and_markdown_reasoning_separate_from_answer():
+    with patch.object(AIService, "_load_config", return_value={}):
+        service = AIService(None)
+    response = MagicMock()
+    response.json.return_value = {"message": {"thinking": "Native reasoning.", "content": IRIDE_CONTENT}}
+    system = _apply_thinking_directive("System", "it")
+    with patch("backend.ai_service.httpx.post", return_value=response) as post:
+        assert service._call_ollama("Welcome", system, "nemotron-cascade-2:latest") == IRIDE_ANSWER
+    assert "native thinking channel" in post.call_args.kwargs['json']['messages'][0]['content']
+    assert "<think>" not in post.call_args.kwargs['json']['messages'][0]['content']
+    assert service.last_thinking == "Native reasoning.\n\n" + IRIDE_PREAMBLE
+
+    response.iter_lines.return_value = iter(
+        [json.dumps({"message": {"thinking": "Native reasoning."}})]
+        + [json.dumps({"message": {"content": ch}}) for ch in IRIDE_CONTENT]
+    )
+    client = MagicMock()
+    client.stream.return_value.__enter__.return_value = response
+    with patch("backend.ai_service.httpx.Client") as client_cls:
+        client_cls.return_value.__enter__.return_value = client
+        visible, reasoning = _reconstruct(list(service._stream_ollama("Welcome", system, "nemotron-cascade-2:latest")))
+    assert "native thinking channel" in client.stream.call_args.kwargs['json']['messages'][0]['content']
+    assert visible.strip() == IRIDE_ANSWER
+    assert reasoning == "Native reasoning." + IRIDE_PREAMBLE
+    assert service.last_thinking == reasoning
+
+
+def test_native_thinking_directive_preserves_other_instructions_and_no_think():
+    with patch.object(AIService, "_load_config", return_value={}):
+        service = AIService(None)
+    for separator in ("\n\n", "\n"):
+        system = _apply_thinking_directive("BASE", "it") + separator + "[REGISTER] Keep informal."
+        result = service._apply_ollama_thinking_directive(system)
+        assert result.startswith("BASE\n\n[THINKING]")
+        assert result.endswith(separator + "[REGISTER] Keep informal.")
+        assert "<think>" not in result
+    service.disable_thinking = True
+    result = service._apply_ollama_thinking_directive(system)
+    assert result.endswith("/no_think")
+    assert service._apply_ollama_thinking_directive("JSON only") == "JSON only\n\n/no_think"
 
 
 def _run_all():

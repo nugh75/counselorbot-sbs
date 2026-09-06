@@ -620,6 +620,26 @@ _THINK_OPEN_RE = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 
+# Some models repeat their reasoning in Markdown after the native thinking
+# channel. Require a leading reasoning heading AND a separate answer heading:
+# ordinary prose mentioning these words must pass through unchanged.
+_REASONING_HEADINGS = ("**ragione**", "**ragionamento**", "**reasoning**")
+_ANSWER_HEADING_RE = re.compile(
+    r"(?:^|\n)[ \t]*\*\*(?:risposta|answer|response)\*\*[ \t]*(?:\\\r?\n|\r?\n)?",
+    re.IGNORECASE,
+)
+
+
+def _split_markdown_thinking(text: str, *, final: bool = True) -> tuple[Optional[str], str]:
+    leading = text.lstrip()
+    heading = next((h for h in _REASONING_HEADINGS if leading.lower().startswith(h)), None)
+    if heading:
+        body = leading[len(heading):]
+        answer = _ANSWER_HEADING_RE.search(body)
+        if answer and (final or body[answer.end() - 1] == "\n"):
+            return body[:answer.start()].strip(" \t\r\n\\"), body[answer.end():].lstrip()
+    return None, text
+
 
 def split_thinking(text: str) -> tuple[Optional[str], str]:
     """Estrae i blocchi `<think>…</think>` (fallback per i modelli che inlineano il
@@ -642,6 +662,9 @@ def split_thinking(text: str) -> tuple[Optional[str], str]:
         reasoning_parts.append((open_match.group(1) or "").strip())
         visible = visible[: open_match.start()]
     visible = re.sub(r"\n{3,}", "\n\n", visible).strip()
+    markdown_reasoning, visible = _split_markdown_thinking(visible)
+    if markdown_reasoning:
+        reasoning_parts.append(markdown_reasoning)
     reasoning = "\n\n".join(part for part in reasoning_parts if part).strip() or None
     return reasoning, visible
 
@@ -659,6 +682,8 @@ class ThinkStreamSplitter:
     def __init__(self) -> None:
         self._buf = ""
         self._in_think = False
+        self._markdown_buf = ""
+        self._markdown_done = False
 
     def _emit(self, text: str) -> Optional[dict]:
         if not text:
@@ -676,7 +701,7 @@ class ThinkStreamSplitter:
                     break
         return best
 
-    def feed(self, delta: str) -> list[dict]:
+    def _feed_tags(self, delta: str) -> list[dict]:
         out: list[dict] = []
         self._buf += delta or ""
         while True:
@@ -704,10 +729,44 @@ class ThinkStreamSplitter:
             self._buf = self._buf[len(safe):]
         return out
 
+    def _filter_markdown(self, items: list[dict]) -> list[dict]:
+        out = []
+        for item in items:
+            if item["type"] != "content" or self._markdown_done:
+                out.append(item)
+                continue
+            self._markdown_buf += item["text"]
+            leading = self._markdown_buf.lstrip().lower()
+            if any(h.startswith(leading) or leading.startswith(h) for h in _REASONING_HEADINGS):
+                reasoning, visible = _split_markdown_thinking(self._markdown_buf, final=False)
+                if reasoning is None:
+                    # Do not flash a possible reasoning preamble into the chat.
+                    continue
+                out.append({"type": "reasoning", "text": reasoning})
+            else:
+                visible = self._markdown_buf
+            if visible:
+                out.append({"type": "content", "text": visible})
+            self._markdown_buf = ""
+            self._markdown_done = True
+        return out
+
+    def feed(self, delta: str) -> list[dict]:
+        return self._filter_markdown(self._feed_tags(delta))
+
     def flush(self) -> list[dict]:
         chunk = self._emit(self._buf)
         self._buf = ""
-        return [chunk] if chunk else []
+        out = self._filter_markdown([chunk] if chunk else [])
+        if self._markdown_buf:
+            # Without a paired answer heading, preserve legitimate Markdown.
+            reasoning, visible = _split_markdown_thinking(self._markdown_buf)
+            if reasoning is not None:
+                out.append({"type": "reasoning", "text": reasoning})
+            if visible:
+                out.append({"type": "content", "text": visible})
+            self._markdown_buf = ""
+        return out
 
 
 # Etichetta del blocco punteggi di riferimento, per lingua dello studente.
