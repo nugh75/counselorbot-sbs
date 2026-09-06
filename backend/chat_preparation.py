@@ -6,7 +6,7 @@ Writing session memory and recording model output remain endpoint responsibiliti
 from dataclasses import dataclass
 from .prompt_contract import turn_contract
 from .journey_context import SYNTHESIS_STEPS, journey_context, session_evidence
-from . import models, recommendation_blocks
+from . import models, recommendation_blocks, session_ledger
 from . import recommendation_service as _recommendation_service
 from .i18n_fields import localized
 from .idea_map import IDEA_INSTRUMENT
@@ -334,6 +334,17 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         components["journey_coverage"] = coverage
         if evidence:
             system_prompt_final += "\n\n[JOURNEY EVIDENCE]\nChronological evidence; later student corrections supersede earlier statements.\n" + evidence
+    elif include_history and getattr(request, "use_phase_prompt", False):
+        # Entering a step re-anchors the model on the analysis and fills the
+        # verbatim window with it; the ledger keeps the student's own answers and
+        # chosen actions from expiring with it. Synthesis already reads the whole
+        # transcript above, so it never needs both.
+        ledger = session_ledger.block(
+            db, session_id=session_id, username=(identity or {}).get("username", ""),
+        )
+        components["session_ledger"] = ledger
+        if ledger:
+            system_prompt_final += "\n\n" + ledger
     contract = turn_contract(
         language=request.language or "it", questionnaire_type=questionnaire_type,
         phase=request.phase, advice_allowed=bool(component_options["certified_strategy_limit"] and component_flags.get("certified_strategies", True)),
