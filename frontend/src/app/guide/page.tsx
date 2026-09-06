@@ -4,9 +4,12 @@
 // sezione, le schermate principali di CounselorBot. I testi vivono in i18n
 // (chiavi `guide.*`) nelle sei lingue.
 
-import Image from 'next/image';
+import Image, { type StaticImageData } from 'next/image';
+import chatOverview from '../../../public/guide/chat-guidata.png';
+import chatControlsImage from '../../../public/guide/controlli-chat.png';
+import personalToolsImage from '../../../public/guide/strumenti-annotazioni.png';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, MoreHorizontal, Send, Snowflake, ThumbsDown, ThumbsUp, Volume2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MoreVertical, RotateCcw, BookOpen, Send, Snowflake, ThumbsDown, ThumbsUp, Volume2, X } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useI18n } from '@/lib/i18n-context';
 
@@ -16,7 +19,7 @@ export default function GuidePage() {
     const { t } = useI18n();
     const sections = Array.from({ length: SECTION_COUNT }, (_, i) => i + 1);
     const chatControls = [
-        { key: 'options', icon: <MoreHorizontal className="h-4 w-4" aria-hidden="true" /> },
+        { key: 'options', icon: <MoreVertical className="h-4 w-4" aria-hidden="true" /> },
         { key: 'freeze', icon: <Snowflake className="h-4 w-4" aria-hidden="true" /> },
         {
             key: 'length',
@@ -29,7 +32,8 @@ export default function GuidePage() {
             ),
         },
         { key: 'message', icon: <Send className="h-4 w-4" aria-hidden="true" /> },
-        { key: 'navigation', icon: <span className="flex" aria-hidden="true"><ChevronLeft className="h-4 w-4" /><ChevronRight className="h-4 w-4" /></span> },
+        { key: 'navigation', icon: <span className="flex" aria-hidden="true"><ChevronLeft className="h-4 w-4" /><RotateCcw className="h-4 w-4" /><ChevronRight className="h-4 w-4" /></span> },
+        { key: 'tools', icon: <BookOpen className="h-4 w-4" aria-hidden="true" /> },
         { key: 'feedback', icon: <span className="flex gap-1" aria-hidden="true"><Volume2 className="h-4 w-4" /><ThumbsUp className="h-4 w-4" /><ThumbsDown className="h-4 w-4" /></span> },
     ];
 
@@ -65,19 +69,19 @@ export default function GuidePage() {
         setZoom({ src, alt });
     };
 
-    const renderFigure = (src: string, alt: string, caption: string) => (
-        <figure>
+    const renderFigure = (image: StaticImageData, alt: string, caption: string) => (
+        <figure className={image.width < image.height ? "mx-auto max-w-sm" : undefined}>
             <button
                 type="button"
-                onClick={(event) => openZoom(src, alt, event.currentTarget)}
+                onClick={(event) => openZoom(image.src, alt, event.currentTarget)}
                 aria-label={t('guide.zoomHint')}
                 className="block w-full cursor-zoom-in rounded-lg text-left"
             >
                 <span className="block overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
                     <Image
-                        src={src}
-                        width={src === '/guide/chat-guidata.png' ? 1440 : 764}
-                        height={src === '/guide/chat-guidata.png' ? 900 : 260}
+                        src={image}
+                        width={image.width}
+                        height={image.height}
                         alt={alt}
                         className="h-auto w-full"
                     />
@@ -139,14 +143,14 @@ export default function GuidePage() {
 
                         {n === 7 && (
                             <div className="mt-6 space-y-6 border-t border-slate-100 pt-6">
-                                {renderFigure('/guide/chat-guidata.png', t('guide.chat.overviewAlt'), t('guide.chat.overviewCaption'))}
+                                {renderFigure(chatOverview, t('guide.chat.overviewAlt'), t('guide.chat.overviewCaption'))}
 
                                 <div>
                                     <h3 className="font-semibold text-slate-900">{t('guide.chat.controlsTitle')}</h3>
                                     <p className="mt-1.5 max-w-prose text-sm leading-relaxed text-slate-600">{t('guide.chat.controlsIntro')}</p>
                                 </div>
 
-                                {renderFigure('/guide/controlli-chat.png', t('guide.chat.controlsAlt'), t('guide.chat.controlsCaption'))}
+                                {renderFigure(chatControlsImage, t('guide.chat.controlsAlt'), t('guide.chat.controlsCaption'))}
 
                                 <dl id="guide-chat-controls" className="grid scroll-mt-24 gap-3 sm:grid-cols-2">
                                     {chatControls.map((control) => (
@@ -163,6 +167,8 @@ export default function GuidePage() {
                                         </div>
                                     ))}
                                 </dl>
+
+                                {renderFigure(personalToolsImage, t('guide.chat.toolsAlt'), t('guide.chat.toolsCaption'))}
 
                                 <p className="rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-3 text-xs leading-relaxed text-indigo-900">
                                     {t('guide.chat.keyboardHint')}

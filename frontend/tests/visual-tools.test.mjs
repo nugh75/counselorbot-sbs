@@ -25,6 +25,7 @@ async function fixture(width, phase = 'intro', options = {}) {
         reading: [{ slug: 'test-book', title: 'Libro per la prova', why: 'Collegato al metodo di studio.', synopsis: 'SINOSSI COMPLETA DEL LIBRO', where: 'https://example.invalid/libro', languages: ['it', 'en'], warning: 'AVVERTENZA DEL LIBRO', status: 'proposed' }],
         strategy: [{ slug: 'test-strategy', name: 'Recupero attivo', description: 'Chiudi il testo e scrivi tre concetti.', recommended_when: 'Quando vuoi verificare cosa ricordi.', status: 'proposed' }],
     };
+    if (options.guide) { catalog.reading = []; catalog.strategy = []; }
     page.on('pageerror', error => control.errors.push(error.message));
     await page.addInitScript(({ locale, dark }) => { localStorage.setItem('cb_lang', locale || 'it'); localStorage.setItem('counselorbot_selected_counselor', '1'); localStorage.setItem('cb_theme', dark ? 'dark' : 'light'); }, options);
     await page.route('**/*', async route => {
@@ -69,8 +70,8 @@ async function fixture(width, phase = 'intro', options = {}) {
         } else if (url.pathname === '/api/session/fixture/visual-tools/pdf') {
             if (control.failPdf) return route.fulfill({ status: 503, body: '{}' });
             return route.fulfill({ contentType: 'application/pdf', body: '%PDF-1.4\n%%EOF' });
-        } else if (url.pathname === '/api/auth/me') data = { authenticated: true, is_admin: false, username: 'fixture', name: 'Prova', groups: ['studenti'] };
-        else if (url.pathname === '/api/counselors') data = [{ id: 1, slug: 'fixture', name: 'Counselor di prova', language: ['it'], suitable: true }];
+        } else if (url.pathname === '/api/auth/me') data = { authenticated: true, is_admin: false, username: 'fixture', name: options.guide ? 'Esempio' : 'Prova', groups: ['studenti'] };
+        else if (url.pathname === '/api/counselors') data = [{ id: 1, slug: 'fixture', name: options.guide ? 'Counselor dimostrativo' : 'Counselor di prova', language: ['it'], suitable: true }];
         else if (url.pathname === '/api/session/frozen/fixture') data = { session_id: 'fixture', questionnaire_type: 'QSA', current_phase: phase, counselor_id: 1, experience: options.experience || 'standard', scores: { C1: 7 }, messages: [{ role: 'system', content: phase === 'intro' ? '--- Introduzione ---' : 'FINE PERCORSO' }, { role: 'user', content: 'Vorrei organizzarmi.' }, ...Array.from({ length: options.longConversation ? 20 : 1 }, (_, index) => ({ role: 'assistant', content: reply, ...(options.feedback ? { responseId: `reply-${index}`, feedbackPhase: 'intro' } : {}) }))] };
         else if (url.pathname === '/api/qsa/guided-ui-texts') data = { guided_steps: [{ id: 'intro', label: 'Introduzione', sort_order: 1, system_prompt_mode: 'qsa-intro' }], text_guided_conclusion: 'FINE PERCORSO' };
         else if (url.pathname === '/api/session/fixture/diagrams') data = control.saved;
@@ -725,6 +726,65 @@ for (const width of [320, 1440]) {
             assert.equal(control.requests.filter(r => r.path === '/api/chat/stream').length, 3);
             assert.match(await nav.textContent(), /2\/3/);
             assert.deepEqual(control.errors, []);
+        } finally { await context.close(); }
+    });
+}
+
+test('capture current guide screenshots', { skip: process.env.UPDATE_GUIDE_SCREENSHOTS !== '1' }, async () => {
+    const { page, context } = await fixture(1440, 'intro', { guide: true });
+    try {
+        await page.setViewportSize({ width: 1440, height: 900 });
+        const nav = page.getByRole('navigation', { name: chatLayoutLabel('it', 'navigation'), exact: true });
+        await nav.getByRole('button').last().click();
+        await page.getByRole('log').getByText('Possiamo approfondire questo punto.', { exact: true }).waitFor();
+        await page.mouse.move(1400, 20);
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        await page.screenshot({ path: 'public/guide/chat-guidata.png' });
+        await page.setViewportSize({ width: 390, height: 844 });
+        await page.getByRole('button', { name: chatLayoutLabel('it', 'options'), exact: true }).click();
+        await page.locator('.chat-options:popover-open').waitFor();
+        await page.mouse.move(380, 20);
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        await page.screenshot({ path: 'public/guide/controlli-chat.png' });
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await page.getByRole('button', { name: visualLabel('it', 'open'), exact: true }).click();
+        const dialog = page.getByRole('dialog', { name: visualLabel('it', 'title'), exact: true });
+        await dialog.getByRole('button', { name: visualLabel('it', 'personalLinks'), exact: true }).click();
+        await dialog.getByLabel(visualLabel('it', 'transferDirection'), { exact: true }).selectOption('in');
+        await dialog.getByLabel(visualLabel('it', 'chooseContent'), { exact: true }).selectOption('notebook_goal');
+        await page.mouse.move(1400, 20);
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        await page.screenshot({ path: 'public/guide/strumenti-annotazioni.png' });
+    } finally { await context.close(); }
+});
+
+for (const options of [{ width: 320, locale: 'de' }, { width: 390, locale: 'it', dark: true }, { width: 1440, locale: 'en' }]) {
+    test(`updated guide loads and enlarges all screenshots at ${options.width}px in ${options.locale}`, async () => {
+        const { page, context, control } = await fixture(options.width, 'intro', options);
+        try {
+            await page.goto(`${origin}/guide`, { waitUntil: 'networkidle' });
+            const figures = page.locator('figure');
+            assert.equal(await figures.count(), 3);
+            for (const figure of await figures.all()) {
+                const thumbnail = figure.locator('img');
+                await thumbnail.scrollIntoViewIfNeeded();
+                await thumbnail.evaluate(img => img.decode());
+                assert.ok(await thumbnail.getAttribute('alt'));
+                const button = figure.getByRole('button');
+                await button.click();
+                const zoom = page.getByRole('dialog');
+                await zoom.waitFor();
+                await zoom.locator('img').evaluate(img => img.decode());
+                await page.keyboard.press('Escape');
+                assert.equal(await page.getByRole('dialog').count(), 0);
+                assert.equal(await button.evaluate(el => el === document.activeElement), true);
+            }
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+            assert.doesNotMatch(await page.locator('main').innerText(), /guide\.chat\./);
+            await page.locator('#guide-chat-controls').scrollIntoViewIfNeeded();
+            await page.screenshot({ path: `/tmp/guide-reviewed-${options.width}.png` });
+            assert.deepEqual(control.errors, []);
+
         } finally { await context.close(); }
     });
 }
