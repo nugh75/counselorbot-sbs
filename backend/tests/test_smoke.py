@@ -3307,6 +3307,8 @@ def test_response_length_is_enforced_on_both_web_streams():
         })
         assert chat_response.status_code == 200, chat_response.text
         chat_done = _done_sse_event(chat_response)
+        assert chat_done["incomplete"] is True
+        assert "response_id" not in chat_done
         assert len(chat_logic._VISIBLE_WORD_RE.findall(chat_done["response"])) == 80
         assert chat_done["response"].endswith("…")
         assert _FakeAIService.last_stream_args["max_tokens"] == 256
@@ -3320,6 +3322,8 @@ def test_response_length_is_enforced_on_both_web_streams():
         })
         assert site_response.status_code == 200, site_response.text
         site_done = _done_sse_event(site_response)
+        assert site_done["incomplete"] is True
+        assert "response_id" not in site_done
         assert len(chat_logic._VISIBLE_WORD_RE.findall(site_done["response"])) == 80
         assert site_done["response"].endswith("…")
         assert _FakeAIService.last_stream_args["max_tokens"] == 256

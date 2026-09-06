@@ -506,7 +506,10 @@ async def site_chat_stream(
             answer = _strip_generic_acknowledgement(_strip_fonte_tokens("".join(chunks)))
             if request.partial_response and not "".join(chunks[1:]).strip():
                 raise AIError("The provider returned no continuation.")
-            answer, _ = _limit_visible_words(answer, visible_length)
+            answer, truncated = _limit_visible_words(answer, visible_length)
+            if truncated:
+                yield f"data: {_json.dumps({'done': True, 'incomplete': True, 'response': answer, 'session_id': session_id, 'conversation_id': conversation_id})}\n\n"
+                return
             response_id = _log_and_persist(answer, sources, usage_info)
             yield f"data: {_json.dumps({'done': True, 'response': answer, 'session_id': session_id, 'conversation_id': conversation_id, 'sources': sources, 'response_id': response_id})}\n\n"
         except Exception as e:

@@ -850,6 +850,10 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     "del counselor o nella configurazione globale."
                 )
 
+            if truncated and questionnaire_type != IDEA_INSTRUMENT:
+                yield f"data: {_json.dumps({'done': True, 'incomplete': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id})}\n\n"
+                return
+
             # Transcript verbatim role-tagged per la sessione (Fase 2).
             if request.internal_message:
                 _transcript_user = ""

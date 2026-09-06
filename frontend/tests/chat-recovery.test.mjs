@@ -8,7 +8,7 @@ before(async () => { browser = await chromium.launch({ headless: true }); });
 after(async () => { await browser?.close(); });
 const event = data => `data: ${JSON.stringify(data)}\n\n`;
 
-async function fixture(width = 390, { initialError = false, experience = 'standard' } = {}) {
+async function fixture(width = 390, { initialError = false, experience = 'standard', incompleteDone = false } = {}) {
     const context = await browser.newContext({ viewport: { width, height: 844 }, reducedMotion: 'reduce' });
     const page = await context.newPage();
     const control = { frozenError: initialError, streams: [], details: [], errors: [] };
@@ -48,6 +48,7 @@ async function fixture(width = 390, { initialError = false, experience = 'standa
             if (control.streams.length === 2) return route.fulfill({ status: 503, body: '{}' });
             const body = control.streams.length === 1
                 ? event({ session_id: url.pathname.includes('/opencode/') ? 'opencode-test' : 'recovery', conversation_id: 'turn-session' }) + event({ display: 'Studia e' })
+                    + (incompleteDone ? event({ done: true, incomplete: true, response: 'Studia e' }) : '')
                 : event({ display: 'Studia e verifica.' }) + event({ done: true, response: 'Studia e verifica.', response_id: 'final-response' });
             return route.fulfill({ contentType: 'text/event-stream', body });
         }
@@ -57,8 +58,9 @@ async function fixture(width = 390, { initialError = false, experience = 'standa
 }
 
 for (const width of [390, 1440]) {
-    test(`guided partial response survives two failures and continues once at ${width}px`, async () => {
-        const { page, context, control } = await fixture(width);
+    for (const incompleteDone of [false, true]) {
+    test(`guided partial response survives two failures and continues once at ${width}px (incompleteDone=${incompleteDone})`, async () => {
+        const { page, context, control } = await fixture(width, { incompleteDone });
         try {
             await page.goto(`${origin}/?frozen=recovery`, { waitUntil: 'networkidle' });
             await page.locator('#guided-composer').fill('Come posso studiare?');
@@ -84,6 +86,7 @@ for (const width of [390, 1440]) {
             assert.deepEqual(control.errors, []);
         } finally { await context.close(); }
     });
+    }
 }
 
 for (const initialError of [false, true]) {
