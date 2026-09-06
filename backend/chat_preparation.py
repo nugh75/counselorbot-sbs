@@ -341,6 +341,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         # transcript above, so it never needs both.
         ledger = session_ledger.block(
             db, session_id=session_id, username=(identity or {}).get("username", ""),
+            step_id=request.phase,
         )
         components["session_ledger"] = ledger
         if ledger:
