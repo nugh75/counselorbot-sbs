@@ -337,12 +337,12 @@ test('exports contain the full graph despite partial steps and recover from fail
     } finally { await context.close(); }
 });
 
-test('motion is opt-in, playback pauses and reduced motion stops it', async () => {
+test('motion is opt-in and playback continues without animation when motion is reduced', async () => {
     const { page, context, control } = await fixture(390, 'intro', { graph: true, motion: 'no-preference' });
     try {
         const figure = page.locator('figure');
         await figure.locator('.dg-node').first().waitFor();
-        assert.equal(await figure.locator('.dg-node').first().evaluate(node => getComputedStyle(node).transitionDuration), '0s');
+        assert.ok(await figure.locator('.dg-node').first().evaluate(node => parseFloat(getComputedStyle(node).transitionDuration) <= 0.00001));
         await figure.getByRole('button', { name: 'Zoom ed esportazione', exact: true }).click();
         await figure.getByRole('checkbox', { name: 'Animazioni leggere' }).check();
         assert.equal(await figure.locator('.dg-node').first().evaluate(node => getComputedStyle(node).transitionDuration), '0.16s');
@@ -355,8 +355,14 @@ test('motion is opt-in, playback pauses and reduced motion stops it', async () =
         assert.equal(await figure.locator('.dg-node:not(.dg-hidden)').count(), count);
         await figure.getByRole('button', { name: 'Riproduci la spiegazione' }).click();
         await page.evaluate(() => { document.documentElement.dataset.motion = 'reduced'; });
-        await figure.getByRole('button', { name: 'Riproduci la spiegazione' }).waitFor();
-        assert.ok(await figure.getByRole('button', { name: 'Riproduci la spiegazione' }).isDisabled());
+        await figure.getByText('Passaggio 3 di 4', { exact: true }).waitFor({ timeout: 11000 });
+        assert.ok(await figure.locator('.dg-node').first().evaluate(node => parseFloat(getComputedStyle(node).transitionDuration) <= 0.00001));
+        await figure.getByText('Passaggio 4 di 4', { exact: true }).waitFor({ timeout: 11000 });
+        await figure.getByRole('button', { name: 'Riproduci la spiegazione' }).waitFor({ timeout: 11000 });
+        assert.equal(await figure.locator('.dg-node:not(.dg-hidden)').count(), 4);
+        await figure.getByRole('button', { name: 'Riproduci la spiegazione' }).click();
+        await figure.getByText('Passaggio 1 di 4', { exact: true }).waitFor();
+        await figure.getByRole('button', { name: 'Pausa', exact: true }).click();
         await figure.getByRole('button', { name: 'Zoom ed esportazione', exact: true }).click();
         assert.equal(await figure.getByRole('checkbox').isChecked(), false);
         assert.deepEqual(control.errors, []);
@@ -476,6 +482,26 @@ for (const width of [320, 390]) {
             const nextChat = page.waitForRequest('**/api/chat/stream');
             await page.locator('#guided-composer').press('Enter');
             assert.equal((await nextChat).postDataJSON().counselor_id, 2);
+            assert.deepEqual(control.errors, []);
+        } finally { await context.close(); }
+    });
+}
+
+for (const width of [390, 1440]) {
+    test(`step playback works with system reduced motion at ${width}px`, async () => {
+        const { page, context, control } = await fixture(width, 'intro', { graph: true });
+        try {
+            const figure = page.locator('figure');
+            await figure.locator('.dg-node').first().waitFor();
+            await figure.getByRole('button', { name: 'Passo-passo', exact: true }).click();
+            assert.ok(await figure.getByRole('button', { name: 'Riproduci la spiegazione' }).isEnabled());
+            await figure.getByRole('button', { name: 'Riproduci la spiegazione' }).click();
+            for (let step = 2; step <= 4; step++) {
+                await figure.getByText(`Passaggio ${step} di 4`, { exact: true }).waitFor({ timeout: 11000 });
+                assert.equal(await figure.locator('.dg-node:not(.dg-hidden)').count(), step);
+            }
+            await figure.getByRole('button', { name: 'Riproduci la spiegazione' }).waitFor({ timeout: 11000 });
+            assert.ok(await figure.locator('.dg-node').first().evaluate(node => parseFloat(getComputedStyle(node).transitionDuration) <= 0.00001));
             assert.deepEqual(control.errors, []);
         } finally { await context.close(); }
     });

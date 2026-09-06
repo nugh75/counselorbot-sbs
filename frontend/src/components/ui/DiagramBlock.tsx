@@ -216,7 +216,7 @@ function DiagramView({ spec, locale }: DiagramBlockProps) {
         return () => document.removeEventListener('visibilitychange', pause);
     }, []);
     useEffect(() => {
-        if (!playing || reduced || step === null || !markup) return;
+        if (!playing || step === null || !markup) return;
         const words = [activeNode?.label, ...relatedEdges.map(describeEdge)].join(' ').split(/\s+/).length;
         const timer = window.setTimeout(() => {
             if (step >= spec.nodes.length - 1) setPlaying(false);
@@ -225,11 +225,7 @@ function DiagramView({ spec, locale }: DiagramBlockProps) {
         return () => window.clearTimeout(timer);
     // The caption is derived only from these graph/selection inputs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [playing, reduced, step, selected, spec, locale, markup]);
-    useEffect(() => {
-        // Synchronize playback with the external accessibility preference.
-        if (reduced) setPlaying(false);
-    }, [reduced]);
+    }, [playing, step, selected, spec, locale, markup]);
 
     const select = useCallback((id: string | null) => { setPlaying(false); setSelected(id); }, []);
     const go = (next: number | null) => { setPlaying(false); setSelected(null); setStep(next); };
@@ -274,7 +270,7 @@ function DiagramView({ spec, locale }: DiagramBlockProps) {
                     <span className="whitespace-nowrap text-sm font-semibold tabular-nums">{labels('step', { current: step + 1, total: spec.nodes.length })}</span>
                     <Tooltip content={diagramStepLabel('forward', locale)}><button type="button" className={controlClass} disabled={step === spec.nodes.length - 1} aria-label={diagramStepLabel('forward', locale)} onClick={() => go(Math.min(spec.nodes.length - 1, step + 1))}><ChevronRight className="h-5 w-5" /></button></Tooltip>
                     <Tooltip content={labels('whole')}><button aria-label={labels('whole')} type="button" className={controlClass} onClick={() => go(null)}><Network className="h-5 w-5" aria-hidden="true" /></button></Tooltip>
-                    <Tooltip content={labels(playing ? 'pause' : 'play')}><button aria-label={labels(playing ? 'pause' : 'play')} type="button" className={controlClass} disabled={reduced || !markup} onClick={() => {
+                    <Tooltip content={labels(playing ? 'pause' : 'play')}><button aria-label={labels(playing ? 'pause' : 'play')} type="button" className={controlClass} disabled={!markup} onClick={() => {
                         if (playing) setPlaying(false);
                         else { setSelected(null); if (step === spec.nodes.length - 1) setStep(0); setPlaying(true); }
                     }}>{playing ? <Pause className="h-5 w-5" aria-hidden="true" /> : <Play className="h-5 w-5" aria-hidden="true" />}</button></Tooltip>
