@@ -6815,6 +6815,43 @@ def test_idea_never_carries_a_scores_line_into_the_prompt():
         main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
 
 
+def test_idea_step_directive_reaches_the_turn_that_carries_its_label():
+    """Chi clicca uno step mentre la domanda precedente e' ancora aperta.
+
+    La direttiva di fase finirebbe solo nel system e Idea non ha punteggi:
+    il turno utente resterebbe vuoto e il modello continuerebbe a discutere
+    la domanda dello step precedente mentre il turno porta gia' l'etichetta
+    del nuovo (sessione 98844d6c, turni 11 e 12).
+    """
+    _ensure_guided_steps("IDEA")
+    session_id = "idea-step-switch"
+    session_memory.clear(session_id)
+    db = _TestSession()
+    try:
+        step = db.query(models.GuidedStep).filter(models.GuidedStep.id == "idea-evidence").first()
+        assert step is not None, "step idea-evidence non seminato"
+        directive = step.prompt
+    finally:
+        db.close()
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    try:
+        r = client.post("/chat", json={
+            "message": "",
+            "mode": "idea-focus",
+            "phase": "idea-evidence",
+            "use_phase_prompt": True,
+            "session_id": session_id,
+            "questionnaire_type": "IDEA",
+            "language": "it",
+        })
+        assert r.status_code == 200, r.text
+        envelope = _latest_log_details(session_id).get("envelope")
+        assert directive in envelope["full_message"]
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        session_memory.clear(session_id)
+
+
 def test_idea_reference_upload_is_private_session_context():
     _set_idea_feature("true")
     main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
