@@ -438,6 +438,13 @@ SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
     },
 ]
 
+SYSTEM_PROMPT_DEFINITIONS.extend([
+    {"key": 'prompt_qpcc_summary', "label": 'prompt qpcc summary', "description": 'Percorso riflessivo canonico QPCC/QAP', "default": _text("prompt_qpcc_summary")},
+    {"key": 'prompt_qap_interview', "label": 'prompt qap interview', "description": 'Percorso riflessivo canonico QPCC/QAP', "default": _text("prompt_qap_interview")},
+    {"key": 'prompt_qpcc_interview', "label": 'prompt qpcc interview', "description": 'Percorso riflessivo canonico QPCC/QAP', "default": _text("prompt_qpcc_interview")},
+    {"key": 'prompt_qap_summary', "label": 'prompt qap summary', "description": 'Percorso riflessivo canonico QPCC/QAP', "default": _text("prompt_qap_summary")},
+])
+
 SYSTEM_PROMPT_DEFAULTS: Dict[str, str] = {
     item["key"]: item["default"] for item in SYSTEM_PROMPT_DEFINITIONS
 }
@@ -2061,57 +2068,207 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
 ]
 
 
-# --- Default QPCC guided steps (analisi fattori su punteggi 1-9, come QSA) ---
+# Canonical detailed reflective paths, aligned with the deployed paths.
+# Existing installations retain their own steps; startup seeds only empty paths.
 
-DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [
-    {
-        "id": "qpcc-welcome",
-        "sort_order": 0,
-        "label": "0. Presentazione",
-        "prompt": SCORE_BASED_INTRO_STEP_PROMPT,
-        "system_prompt_mode": "intro",
-        "color_theme": "teal",
-    },
-    {
-        "id": "qpcc-factors",
-        "sort_order": 1,
-        "label": "1. Analisi di Competenze e Convinzioni",
-        "prompt": (
-            "Analyse all the factors of my QPCC profile: K1 (Public communication), "
-            "K2 (Managing anxiety and responsibility), K3 (Volition and self-regulation), "
-            "K4 (Elaboration strategies), K5 (Beliefs about oneself). "
-            "For each, give the score, interpretation and a short practical comment."
-        ),
-        "system_prompt_mode": "qpcc-factor",
-        "color_theme": "indigo",
-        "questionnaire_type": "QPCC",
-    },
-]
+DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-intro',
+  'questionnaire_type': 'QPCC',
+  'sort_order': 0,
+  'label': '0. Patto di Collaborazione',
+  'prompt': 'Start of the QPCC path: build the agreement with the student. Briefly explain that you will '
+            'have a reflective interview (not a graded test) on competences and beliefs about oneself; '
+            'indicative duration (5 areas + summary), method (open questions), confidentiality. Ask for an '
+            "explicit confirmation to begin (e.g. 'If you agree, write: I accept'). Do NOT advance until "
+            'there is a clear confirmation. When the confirmation arrives, on the last line put only '
+            '[[AVANZA_STEP]].',
+  'system_prompt_mode': 'qpcc-interview',
+  'color_theme': 'cyan',
+  'label_i18n': {'en': '0. Collaboration Agreement',
+                 'es': '0. Pacto de Colaboración',
+                 'fr': '0. Pacte de Collaboration',
+                 'de': '0. Kooperationsvereinbarung',
+                 'sv': '0. Samarbetsöverenskommelse'}},
+ {'id': 'qpcc-comunicazione',
+  'questionnaire_type': 'QPCC',
+  'sort_order': 1,
+  'label': '1. Comunicazione in Pubblico',
+  'prompt': 'Area 1/5 - Communication and the ability to speak in public. Explore how the student '
+            'experiences speaking in front of others, how they prepare and structure a talk and how they try '
+            'to convince or engage their listeners. Ask for a concrete example. When the area is covered, '
+            'give a mini-summary and on the last line only [[AVANZA_STEP]].',
+  'system_prompt_mode': 'qpcc-interview',
+  'color_theme': 'blue',
+  'label_i18n': {'en': '1. Public Speaking',
+                 'es': '1. Comunicación en Público',
+                 'fr': '1. Communication en Public',
+                 'de': '1. Sprechen vor Publikum',
+                 'sv': '1. Att tala inför publik'}},
+ {'id': 'qpcc-controllo',
+  'questionnaire_type': 'QPCC',
+  'sort_order': 2,
+  'label': "2. Ansia, Controllo e Responsabilita'",
+  'prompt': 'Area 2/5 - Managing anxiety, control and responsibility. Explore how the student reacts when '
+            'facing difficult decisions and situations that put them under pressure, and how much they feel '
+            'blocked or nervous because of responsibility. Ask for an example. When the area is covered, '
+            'give a mini-summary and on the last line only [[AVANZA_STEP]].',
+  'system_prompt_mode': 'qpcc-interview',
+  'color_theme': 'indigo',
+  'label_i18n': {'en': '2. Anxiety, Control and Responsibility',
+                 'es': '2. Ansiedad, Control y Responsabilidad',
+                 'fr': '2. Anxiété, Contrôle et Responsabilité',
+                 'de': '2. Angst, Kontrolle und Verantwortung',
+                 'sv': '2. Oro, kontroll och ansvar'}},
+ {'id': 'qpcc-volizione',
+  'questionnaire_type': 'QPCC',
+  'sort_order': 3,
+  'label': '3. Volizione e Autoregolazione',
+  'prompt': 'Area 3/5 - Volition and self-regulation. Explore how the student completes the commitments they '
+            'take on, organises their work according to the time available and applies themselves even to '
+            'uninteresting tasks. Ask for a concrete example. When the area is covered, give a mini-summary '
+            'and on the last line only [[AVANZA_STEP]].',
+  'system_prompt_mode': 'qpcc-interview',
+  'color_theme': 'amber',
+  'label_i18n': {'en': '3. Volition and Self-regulation',
+                 'es': '3. Volición y Autorregulación',
+                 'fr': '3. Volition et Autorégulation',
+                 'de': '3. Volition und Selbstregulation',
+                 'sv': '3. Volition och självreglering'}},
+ {'id': 'qpcc-elaborazione',
+  'questionnaire_type': 'QPCC',
+  'sort_order': 4,
+  'label': '4. Strategie di Elaborazione',
+  'prompt': 'Area 4/5 - Elaboration and learning strategies. Explore how the student connects new ideas to '
+            'ones they already know, looks for concrete examples and applications, and identifies the '
+            'important things when studying or working. Ask for a concrete example. When the area is '
+            'covered, give a mini-summary and on the last line only [[AVANZA_STEP]].',
+  'system_prompt_mode': 'qpcc-interview',
+  'color_theme': 'teal',
+  'label_i18n': {'en': '4. Elaboration Strategies',
+                 'es': '4. Estrategias de Elaboración',
+                 'fr': "4. Stratégies d'Élaboration",
+                 'de': '4. Verarbeitungsstrategien',
+                 'sv': '4. Bearbetningsstrategier'}},
+ {'id': 'qpcc-convinzioni',
+  'questionnaire_type': 'QPCC',
+  'sort_order': 5,
+  'label': "5. Convinzioni su di Se'",
+  'prompt': 'Area 5/5 - Beliefs about oneself. Explore how much the student trusts their own ability to '
+            'succeed, what they attribute successes and failures to (effort vs external causes) and how much '
+            'they are driven by the desire to do well or to do better. Ask for an example. When the area is '
+            'covered, give a mini-summary and on the last line only [[AVANZA_STEP]].',
+  'system_prompt_mode': 'qpcc-interview',
+  'color_theme': 'rose',
+  'label_i18n': {'en': '5. Beliefs about Oneself',
+                 'es': '5. Convicciones sobre Sí Mismo',
+                 'fr': '5. Convictions sur Soi',
+                 'de': '5. Überzeugungen über sich selbst',
+                 'sv': '5. Föreställningar om sig själv'}},
+ {'id': 'qpcc-sintesi',
+  'questionnaire_type': 'QPCC',
+  'sort_order': 6,
+  'label': "6. Sintesi e Piano d'Azione",
+  'prompt': 'Final summary of the QPCC path: integrate what emerged across the 5 areas and build a portrait '
+            "of the student's competences and beliefs (strengths and areas for growth, in words, without "
+            'scores), with recurring resources, areas to work on, ONE practical suggestion, and points to '
+            'review it at 7, 30 and 90 days. On the last line put only [[AVANZA_STEP]].',
+  'system_prompt_mode': 'qpcc-summary',
+  'color_theme': 'purple',
+  'label_i18n': {'en': '6. Synthesis and Action Plan',
+                 'es': '6. Síntesis y Plan de Acción',
+                 'fr': "6. Synthèse et Plan d'Action",
+                 'de': '6. Synthese und Aktionsplan',
+                 'sv': '6. Syntes och handlingsplan'}}]
 
-
-# --- Default QAP guided steps (CAAS: 4 risorse, analisi su punteggi 1-9) ---
-
-DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [
-    {
-        "id": "qap-welcome",
-        "sort_order": 0,
-        "label": "0. Presentazione",
-        "prompt": SCORE_BASED_INTRO_STEP_PROMPT,
-        "system_prompt_mode": "intro",
-        "color_theme": "teal",
-    },
-    {
-        "id": "qap-factors",
-        "sort_order": 1,
-        "label": "1. Analisi delle Risorse",
-        "prompt": (
-            "Analyse the 4 resources of my QAP profile: AD1 (Future orientation), "
-            "AD2 (Control and autonomy), AD3 (Curiosity and exploration), "
-            "AD4 (Confidence and problem solving). "
-            "For each, give the score, interpretation and a short practical comment."
-        ),
-        "system_prompt_mode": "qap-factor",
-        "color_theme": "green",
-        "questionnaire_type": "QAP",
-    },
-]
+DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{'id': 'qap-intro',
+  'questionnaire_type': 'QAP',
+  'sort_order': 0,
+  'label': '0. Patto di Collaborazione',
+  'prompt': 'Start of the QAP path (Career Adaptability): build the agreement with the student. Briefly '
+            'explain that you will have a reflective interview (not a graded test) on the four resources '
+            'that help in facing study and work choices and transitions; indicative duration (4 areas + '
+            'summary), method (open questions), confidentiality. Ask for an explicit confirmation to begin '
+            "(e.g. 'If you agree, write: I accept'). Do NOT advance until there is a clear confirmation. "
+            'When the confirmation arrives, on the last line put only [[AVANZA_STEP]].',
+  'system_prompt_mode': 'qap-interview',
+  'color_theme': 'cyan',
+  'label_i18n': {'en': '0. Collaboration Agreement',
+                 'es': '0. Pacto de Colaboración',
+                 'fr': '0. Pacte de Collaboration',
+                 'de': '0. Kooperationsvereinbarung',
+                 'sv': '0. Samarbetsöverenskommelse'}},
+ {'id': 'qap-preoccupazione',
+  'questionnaire_type': 'QAP',
+  'sort_order': 1,
+  'label': '1. Orientamento al Futuro',
+  'prompt': 'Area 1/4 - Concern and future orientation (Concern). Explore how much the student thinks about '
+            "and prepares for their future, and how aware they are that today's choices influence tomorrow. "
+            'Ask how they imagine the coming years and what they do to prepare. When the area is covered, '
+            'give a mini-summary and on the last line only [[AVANZA_STEP]].',
+  'system_prompt_mode': 'qap-interview',
+  'color_theme': 'blue',
+  'label_i18n': {'en': '1. Future Orientation',
+                 'es': '1. Orientación al Futuro',
+                 'fr': "1. Orientation vers l'Avenir",
+                 'de': '1. Zukunftsorientierung',
+                 'sv': '1. Framtidsorientering'}},
+ {'id': 'qap-controllo',
+  'questionnaire_type': 'QAP',
+  'sort_order': 2,
+  'label': '2. Controllo e Autonomia',
+  'prompt': 'Area 2/4 - Control and autonomy (Control). Explore how much the student decides autonomously, '
+            'takes responsibility for their own actions and relies on themselves in important choices. Ask '
+            'for an example of a decision they made on their own. When the area is covered, give a '
+            'mini-summary and on the last line only [[AVANZA_STEP]].',
+  'system_prompt_mode': 'qap-interview',
+  'color_theme': 'indigo',
+  'label_i18n': {'en': '2. Control and Autonomy',
+                 'es': '2. Control y Autonomía',
+                 'fr': '2. Contrôle et Autonomie',
+                 'de': '2. Kontrolle und Autonomie',
+                 'sv': '2. Kontroll och autonomi'}},
+ {'id': 'qap-curiosita',
+  'questionnaire_type': 'QAP',
+  'sort_order': 3,
+  'label': "3. Curiosita' ed Esplorazione",
+  'prompt': 'Area 3/4 - Curiosity and exploration (Curiosity). Explore how much the student explores the '
+            'environment around them, looks for opportunities to grow and carefully examines the options '
+            'before choosing. Ask for an example of something new they have explored recently. When the area '
+            'is covered, give a mini-summary and on the last line only [[AVANZA_STEP]].',
+  'system_prompt_mode': 'qap-interview',
+  'color_theme': 'amber',
+  'label_i18n': {'en': '3. Curiosity and Exploration',
+                 'es': '3. Curiosidad y Exploración',
+                 'fr': '3. Curiosité et Exploration',
+                 'de': '3. Neugier und Erkundung',
+                 'sv': '3. Nyfikenhet och utforskande'}},
+ {'id': 'qap-fiducia',
+  'questionnaire_type': 'QAP',
+  'sort_order': 4,
+  'label': '4. Fiducia e Problem Solving',
+  'prompt': 'Area 4/4 - Confidence (Confidence). Explore how capable the student feels of completing tasks, '
+            'overcoming obstacles and facing and solving problems. Ask for an example of an obstacle they '
+            'overcame. When the area is covered, give a mini-summary and on the last line only '
+            '[[AVANZA_STEP]].',
+  'system_prompt_mode': 'qap-interview',
+  'color_theme': 'teal',
+  'label_i18n': {'en': '4. Confidence and Problem Solving',
+                 'es': '4. Confianza y Resolución de Problemas',
+                 'fr': '4. Confiance et Résolution de Problèmes',
+                 'de': '4. Zuversicht und Problemlösen',
+                 'sv': '4. Tillit och problemlösning'}},
+ {'id': 'qap-sintesi',
+  'questionnaire_type': 'QAP',
+  'sort_order': 5,
+  'label': "5. Sintesi e Piano d'Azione",
+  'prompt': 'Final summary of the QAP path: integrate what emerged across the 4 resources (future '
+            "orientation, control, curiosity, confidence) and build a portrait of the student's career "
+            'adaptability (strengths and areas for growth, in words, without scores), with ONE practical '
+            'suggestion, and points to review it at 7, 30 and 90 days. On the last line put only '
+            '[[AVANZA_STEP]].',
+  'system_prompt_mode': 'qap-summary',
+  'color_theme': 'purple',
+  'label_i18n': {'en': '5. Synthesis and Action Plan',
+                 'es': '5. Síntesis y Plan de Acción',
+                 'fr': "5. Synthèse et Plan d'Action",
+                 'de': '5. Synthese und Aktionsplan',
+                 'sv': '5. Syntes och handlingsplan'}}]
