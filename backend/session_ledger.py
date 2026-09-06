@@ -30,7 +30,11 @@ MAX_ANSWER_CHARS = 240
 MAX_QUESTION_CHARS = 220
 MAX_PENDING_ACTIONS = 4
 MAX_REFUSED_ACTIONS = 4
-MAX_BLOCK_CHARS = 1700
+MAX_ACTION_CHARS = 220
+# Oltre questo, l'azione appartiene a una parte della conversazione che si e'
+# gia' chiusa: ripescarla suonerebbe come un richiamo, non come un interesse.
+ACTION_MAX_AGE = 6
+MAX_BLOCK_CHARS = 1900
 # Beyond this many turns the conversation has moved on: insisting on a question
 # the student walked past twice is worse than letting it go.
 OPEN_QUESTION_MAX_AGE = 2
@@ -43,6 +47,15 @@ _ALREADY_ASKED = re.compile(
     r"\b(come (e'|è) andata|hai provato|hai messo in pratica|sei riuscit\w+ a"
     r"|how did it go|did you (try|manage)|has funcionado|lo has probado"
     r"|as-tu essay|hur gick det|hat es geklappt)\b",
+    re.IGNORECASE,
+)
+# L'azione datata che il counselor propone in chiaro. Quasi nessuna diventa una
+# riga di catalogo — in produzione nessuno stato e' `selected` — quindi senza
+# questa lettura del testo la promessa resterebbe senza verifica possibile.
+_ACTION_LINE = re.compile(
+    r"^\W*\**\s*(azione[^:]{0,24}|oggi|questa settimana|questo mese|micro-?(azione|passo)"
+    r"|action for (today|this week)|today|this week|acción[^:]{0,24}|hoy|esta semana"
+    r"|action[^:]{0,24}|aujourd'hui|cette semaine|heute|diese woche|i dag|denna vecka)\s*\**\s*[:：]",
     re.IGNORECASE,
 )
 
@@ -66,6 +79,7 @@ def build(db, *, session_id: str, username: str) -> dict:
         "answers": _answers(rows),
         "open_question": _open_question(rows),
         "pending_actions": chosen,
+        "proposed_action": _proposed_action(rows),
         "refused_actions": refused,
         # Asking once is a follow-up; asking at every step entry is the ritual
         # opener the global directives forbid.
@@ -83,7 +97,7 @@ def render(ledger: dict) -> str:
     ledger = {**_empty(), **(ledger or {})}
     answers = list(ledger["answers"])
     if not any((answers, ledger["pending_actions"], ledger["refused_actions"],
-                ledger["open_question"])):
+                ledger["open_question"], ledger["proposed_action"])):
         return ""
     while True:
         text = _compose(dict(ledger, answers=answers))
@@ -101,7 +115,7 @@ def block(db, *, session_id: str, username: str) -> str:
 
 # --- helpers ---
 def _empty() -> dict:
-    return {"answers": [], "open_question": "", "pending_actions": [],
+    return {"answers": [], "open_question": "", "pending_actions": [], "proposed_action": "",
             "refused_actions": [], "verification_asked": False}
 
 
@@ -120,6 +134,9 @@ def _compose(ledger: dict) -> str:
     if ledger["pending_actions"]:
         lines.append("Chosen by the student and not yet reported as tried:")
         lines.extend(f"- {name}" for name in ledger["pending_actions"])
+    if ledger["proposed_action"] and not ledger["pending_actions"]:
+        lines.append("The action you proposed and never came back to:")
+        lines.append(f"- \"{ledger['proposed_action']}\"")
     if ledger["refused_actions"]:
         lines.append("Already refused by the student:")
         lines.extend(f"- {name}" for name in ledger["refused_actions"])
@@ -137,9 +154,9 @@ def _compose(ledger: dict) -> str:
 def _directives(ledger: dict) -> list[str]:
     """Only the lines the ledger can actually support this turn."""
     directives = []
-    if ledger["pending_actions"] and not ledger["verification_asked"]:
+    if (ledger["pending_actions"] or ledger["proposed_action"]) and not ledger["verification_asked"]:
         directives.append(
-            "Ask how the chosen action went before you analyse anything else; ask it once, "
+            "Ask how that action went before you analyse anything else; ask it once, "
             "and take the answer as the starting point of this step."
         )
     if ledger["refused_actions"]:
@@ -197,6 +214,30 @@ def _open_question(rows: list) -> str:
 
 def _visible(row) -> str:
     return strip_for_speech((row.details or {}).get("bot_response") or "")
+
+
+def _proposed_action(rows: list) -> str:
+    """The dated action the counselor wrote in plain text and never returned to.
+
+    Read from the reply and not from the catalogue because in practice the
+    catalogue rows stay `proposed`: the student never marks them, so an action
+    that only ever lived in the prose would otherwise be unverifiable.
+    """
+    for row in reversed(rows[-ACTION_MAX_AGE:]):
+        lines = _visible(row).splitlines()
+        for position in range(len(lines) - 1, -1, -1):
+            match = _ACTION_LINE.search(lines[position])
+            if not match:
+                continue
+            action = lines[position]
+            # "Action for today:" alone is a heading; the action is underneath.
+            if len(_clean(action[match.end():], MAX_ACTION_CHARS)) < 15:
+                following = next((line for line in lines[position + 1:] if line.strip()), "")
+                action = f"{action} {following}"
+            action = _clean(action, MAX_ACTION_CHARS)
+            if len(action) >= 30:
+                return action
+    return ""
 
 
 def _last_question(visible: str) -> str:

@@ -99,12 +99,48 @@ def test_a_chosen_action_is_verified_once_and_not_at_every_step(db):
     _strategies(db, ("chosen", "selected"))
     _turn(db, student="ok", counselor="Bene.")
     first = session_ledger.block(db, session_id=SESSION, username=STUDENT)
-    assert "Ask how the chosen action went" in first
+    assert "Ask how that action went" in first
 
     _turn(db, student="", counselor="Come è andata con quella micro-azione?")
     again = session_ledger.block(db, session_id=SESSION, username=STUDENT)
     assert "Strategia chosen" in again  # still pending, still visible
-    assert "Ask how the chosen action went" not in again  # but asked once is enough
+    assert "Ask how that action went" not in again  # but asked once is enough
+
+
+def test_an_action_that_only_lived_in_the_prose_is_still_verified(db):
+    # No catalogue row is ever marked selected in production: the promise is text.
+    _turn(db, student="e adesso?", counselor=(
+        "C6 resta la leva.\n\n**Azione di oggi:** prima di aprire il testo, scrivi su un "
+        "post-it che cosa devi produrre in questa sessione."
+    ))
+    ledger = session_ledger.build(db, session_id=SESSION, username=STUDENT)
+    assert ledger["pending_actions"] == []
+    assert ledger["proposed_action"].startswith("Azione di oggi: prima di aprire il testo")
+    block = session_ledger.block(db, session_id=SESSION, username=STUDENT)
+    assert "The action you proposed and never came back to:" in block
+    assert "Ask how that action went" in block
+
+
+def test_a_bare_heading_takes_the_action_from_the_line_below(db):
+    _turn(db, student="ok", counselor=(
+        "**Azione da fare oggi (durata: 10-20 minuti):**\n\n"
+        "Quando studi con qualcuno, esercitati a non rispondere subito."
+    ))
+    action = session_ledger.build(db, session_id=SESSION, username=STUDENT)["proposed_action"]
+    assert "esercitati a non rispondere subito" in action
+
+
+def test_prose_about_this_week_is_not_a_commitment(db):
+    _turn(db, student="ok", counselor="Questa settimana molti studenti trovano il ritmo difficile.")
+    assert session_ledger.build(db, session_id=SESSION, username=STUDENT)["proposed_action"] == ""
+
+
+def test_a_chosen_catalogue_item_wins_over_the_prose(db):
+    _strategies(db, ("chosen", "selected"))
+    _turn(db, student="ok", counselor="**Oggi:** scrivi tre frasi a libro chiuso su un capitolo.")
+    block = session_ledger.block(db, session_id=SESSION, username=STUDENT)
+    assert "Chosen by the student and not yet reported as tried:" in block
+    assert "The action you proposed and never came back to:" not in block
 
 
 def test_a_refusal_is_not_reopened(db):
@@ -136,12 +172,19 @@ def test_another_students_session_is_never_read(db):
 
 
 def test_block_is_bounded_and_drops_the_oldest_answers_first(db):
-    for index in range(session_ledger.MAX_ANSWERS):
+    # A full ledger: long answers, a chosen action, a refusal and an open question.
+    _strategies(db, ("chosen", "selected"), ("refused", "dismissed"))
+    for index in range(session_ledger.MAX_ANSWERS - 1):
         _turn(db, student=f"{index} " + "parola " * 60, counselor="ok")
+    _turn(db, student=f"{session_ledger.MAX_ANSWERS - 1} " + "parola " * 60,
+          counselor="E tu come la vedi?")
     block = session_ledger.block(db, session_id=SESSION, username=STUDENT)
     assert len(block) <= session_ledger.MAX_BLOCK_CHARS
     assert f"{session_ledger.MAX_ANSWERS - 1} parola" in block  # the most recent survives
-    assert "0 parola" not in block  # the oldest is what goes
+    assert "0 parola" not in block  # the oldest answer is what goes
+    assert "Strategia chosen" in block  # never the actions
+    assert "E tu come la vedi?" in block  # nor the open question
+    assert "Ask how that action went" in block  # nor the directives
 
 
 def test_empty_session_renders_nothing(db):
