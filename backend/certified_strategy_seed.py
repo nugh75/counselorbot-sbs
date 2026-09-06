@@ -1448,6 +1448,67 @@ DEFAULT_CERTIFIED_STRATEGIES: list[dict[str, Any]] = [
 ]
 
 
+# Adaptations checked against the authorized source; see the editorial evidence sheet.
+DEFAULT_CERTIFIED_STRATEGIES.extend([{'slug': 'qsa-life-personal-commitment',
+  'name_it': 'Un impegno personale sostenibile',
+  'recommended_when_it': 'C2 basso; C2r basso. Quando lo studente ha già nominato un impegno personale o un '
+                         'progetto.',
+  'description_it': 'Scegli un impegno personale già emerso e riservagli uno spazio realistico nella '
+                    'settimana. Al termine controlla che cosa hai effettivamente fatto. Quale spazio sei '
+                    'riuscito a mantenere?',
+  'factor_codes': ['C2', 'C2r'],
+  'questionnaire_types': ['QSA', 'QSAr'],
+  'keywords': 'impegni progetto personale settimana tempo vita',
+  'certified_by': 'Verifica editoriale su fonte QSA autorizzata, 2026-09-06; adattamento dichiarato',
+  'source_reference': 'E. Ottone, APPRENDO, Schede sui fattori QSA, sezione C2 — Autoregolazione. '
+                      'https://www.competenzestrategiche.it/pluginfile.php/2132/mod_folder/content/0/QSA%20e%20QSAr/03_Schede%20fattori%20QSA.pdf?forcedownload=1 '
+                      'Adattamento editoriale circoscritto: docs/handoff/w4b-strategie-azione-vita.md.',
+  'sort_order': 200},
+ {'slug': 'qsa-life-goal-value',
+  'name_it': 'Il motivo per cui vale la pena',
+  'recommended_when_it': 'A2 basso; A2r basso. Quando un impegno di apprendimento legato a un progetto '
+                         'personale perde significato.',
+  'description_it': 'Scrivi in una frase a quale obiettivo personale, già nominato nella conversazione, '
+                    'serve l’impegno che fatichi a mantenere. Quanto senti ancora tuo quel motivo?',
+  'factor_codes': ['A2', 'A2r'],
+  'questionnaire_types': ['QSA', 'QSAr'],
+  'keywords': 'obiettivi valore significato progetto personale vita motivazione',
+  'certified_by': 'Verifica editoriale su fonte QSA autorizzata, 2026-09-06; adattamento dichiarato',
+  'source_reference': 'E. Ottone, APPRENDO, Schede sui fattori QSA, sezione A2 — Volizione. '
+                      'https://www.competenzestrategiche.it/pluginfile.php/2132/mod_folder/content/0/QSA%20e%20QSAr/03_Schede%20fattori%20QSA.pdf?forcedownload=1 '
+                      'Adattamento editoriale circoscritto: docs/handoff/w4b-strategie-azione-vita.md.',
+  'sort_order': 201},
+ {'slug': 'qsa-life-accessible-step',
+  'name_it': 'Un passo raggiungibile nel proprio progetto',
+  'recommended_when_it': 'A5 alto. Quando lo studente fatica a proseguire un progetto personale che richiede '
+                         'apprendimento.',
+  'description_it': 'Nel progetto di cui hai parlato scegli un risultato piccolo, raggiungibile nel tempo '
+                    'che hai davvero. Dopo il tentativo annota se lo hai raggiunto e cosa ti ha ostacolato. '
+                    'Il passo era sostenibile?',
+  'factor_codes': ['A5'],
+  'questionnaire_types': ['QSA'],
+  'keywords': 'progetto personale passo obiettivo raggiungibile vita perseveranza',
+  'certified_by': 'Verifica editoriale su fonte QSA autorizzata, 2026-09-06; adattamento dichiarato',
+  'source_reference': 'E. Ottone, APPRENDO, Schede sui fattori QSA, sezione A5 — Mancanza di perseveranza. '
+                      'https://www.competenzestrategiche.it/pluginfile.php/2132/mod_folder/content/0/QSA%20e%20QSAr/03_Schede%20fattori%20QSA.pdf?forcedownload=1 '
+                      'Adattamento editoriale circoscritto: docs/handoff/w4b-strategie-azione-vita.md.',
+  'sort_order': 202},
+ {'slug': 'qsa-life-personal-application',
+  'name_it': 'Un concetto nella propria esperienza',
+  'recommended_when_it': 'C1 basso; C1r basso. Quando lo studente cerca il legame tra ciò che apprende e una '
+                         'situazione personale già raccontata.',
+  'description_it': 'Scegli un concetto che stai apprendendo e usalo per rileggere una situazione personale '
+                    'già emersa. Scrivi un esempio concreto del collegamento. Che cosa ti aiuta a capire, e '
+                    'che cosa lascia fuori?',
+  'factor_codes': ['C1', 'C1r'],
+  'questionnaire_types': ['QSA', 'QSAr'],
+  'keywords': 'esperienza personale concetti collegamento vita progetto',
+  'certified_by': 'Verifica editoriale su fonte QSA autorizzata, 2026-09-06; adattamento dichiarato',
+  'source_reference': 'E. Ottone, APPRENDO, Schede sui fattori QSA, sezione C1 — Strategie elaborative. '
+                      'https://www.competenzestrategiche.it/pluginfile.php/2132/mod_folder/content/0/QSA%20e%20QSAr/03_Schede%20fattori%20QSA.pdf?forcedownload=1 '
+                      'Adattamento editoriale circoscritto: docs/handoff/w4b-strategie-azione-vita.md.',
+  'sort_order': 203}])
+
 def seed_certified_strategies(db, models_module) -> int:
     """Crea le strategie certificate mancanti e ritorna quante righe ha inserito."""
     inserted = 0

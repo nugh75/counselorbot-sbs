@@ -235,3 +235,24 @@ if __name__ == "__main__":
             print(f"ERROR {test.__name__}: {type(exc).__name__}: {exc}")
     print(f"\n{len(tests) - failed}/{len(tests)} passed")
     raise SystemExit(1 if failed else 0)
+
+
+def test_life_actions_are_retrievable_and_excluded_after_being_shown():
+    db = _TestSession()
+    try:
+        seed_certified_strategies(db, models)
+        derive_strategy_versions(db)
+        life = {s['slug'] for s in DEFAULT_CERTIFIED_STRATEGIES if s['slug'].startswith('qsa-life-')}
+        assert len(life) == 4
+        out = certified_strategy_memory.retrieve(db, 'QSA', scores_context='C2: 2/9',
+            query='impegni progetto personale settimana tempo vita', limit=1)
+        assert out and out[0]['id'] == 'qsa-life-personal-commitment'
+        excluded = certified_strategy_memory.retrieve(db, 'QSA', scores_context='C2: 2/9',
+            query='impegni progetto personale settimana tempo vita', excluded_ids=life, limit=20)
+        assert not (life & {item['id'] for item in excluded})
+        # The inverse factor targets high A5, never invents A5r for QSAr.
+        short = certified_strategy_memory.retrieve(db, 'QSAr', scores_context='A5: 9/9',
+            query='progetto personale passo obiettivo', limit=20)
+        assert 'qsa-life-accessible-step' not in {item['id'] for item in short}
+    finally:
+        _reset(db)
