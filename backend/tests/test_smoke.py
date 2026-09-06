@@ -3334,6 +3334,46 @@ def test_response_length_is_enforced_on_both_web_streams():
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
+def test_empty_visible_answer_falls_back_instead_of_erroring():
+    """Sette turni di produzione sono morti qui (2026-06-29 → 08-28).
+
+    Lo stream riesce — il contenuto arriva — ma la pipeline visibile lo svuota:
+    il modello ha emesso solo spazi attorno al canale di pensiero, che
+    `_ThinkSplitter` toglie a monte. Prima il turno finiva in `chat_error` e
+    ripartiva solo se lo studente ricliccava;
+    ora il percorso non-streaming, che percorre i target di riserva, ha una
+    possibilita' prima di dichiarare fallito il turno.
+    """
+    original_stream = _FakeAIService.stream_response
+    original_get = _FakeAIService.get_response
+
+    def whitespace_only(self, *args, **kwargs):
+        yield {"type": "content", "text": "   \n  "}
+
+    def reserve(self, *args, **kwargs):
+        self.last_usage = {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}
+        return "Risposta del modello di riserva."
+
+    _FakeAIService.stream_response = whitespace_only
+    _FakeAIService.get_response = reserve
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    try:
+        response = client.post("/chat/stream", json={
+            "message": "Rispondi",
+            "mode": "generic",
+            "session_id": "empty-visible-fallback",
+        })
+        assert response.status_code == 200, response.text
+        done = _done_sse_event(response)
+        assert done["response"] == "Risposta del modello di riserva."
+        assert "error" not in done
+    finally:
+        _FakeAIService.stream_response = original_stream
+        _FakeAIService.get_response = original_get
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        session_memory.clear("empty-visible-fallback")
+
+
 def test_idea_stream_finishes_and_applies_the_hidden_patch_after_visible_limit():
     original_stream = _FakeAIService.stream_response
     visible = " ".join(f"parola{i}" for i in range(1, 701))
@@ -3656,10 +3696,11 @@ def test_reasoning_resolve_plan():
     assert plan.reasoning_budget and plan.reasoning_budget > 0
     assert plan.max_tokens >= plan.reasoning_budget
 
-    # disable_thinking -> spento, nessun gonfiaggio (passa il richiesto invariato).
+    # disable_thinking -> spento, ma qwen3 emette <think> anche a pensiero
+    # spento: sotto il minimo la risposta visibile torna vuota.
     plan = rp.resolve_plan("qwen3.5:9b", disable_thinking=True, requested_max_tokens=800)
     assert plan.enabled is False
-    assert plan.max_tokens == 800
+    assert plan.max_tokens == 1800
 
     # Gemma 3 resta NON reasoning + thinking attivo -> spento, nessun gonfiaggio.
     plan = rp.resolve_plan("gemma3:1b", disable_thinking=False, requested_max_tokens=800)
