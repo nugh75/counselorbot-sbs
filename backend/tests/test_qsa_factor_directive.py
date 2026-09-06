@@ -146,6 +146,24 @@ def test_annotate_does_not_duplicate_name():
     assert out.count("Percezione di competenza") == 1, out
 
 
+def test_annotate_names_each_factor_once_per_reply():
+    """Un messaggio di produzione arrivava a 42 nomi completi, lo stesso codice
+    ripetuto per esteso dodici volte. Il nome serve al primo incontro; dopo, il
+    codice basta e la risposta smette di sembrare un modulo."""
+    out = _annotate_qsa_factor_codes("A5 a 9: A5 indebolisce A2, e A2 regge. A5 resta la leva.", "it")
+    assert out.count("Mancanza di perseveranza") == 1, out
+    assert out.count("Volizione") == 1, out
+    assert out.startswith("A5 (Mancanza di perseveranza) a 9"), out
+    assert out.endswith("A5 resta la leva."), out
+
+
+def test_annotate_collapses_the_models_own_repetitions():
+    out = _annotate_qsa_factor_codes(
+        "C1 (Strategie elaborative) sostiene C1 (Strategie elaborative) e C1 (Strategie elaborative).", "it")
+    assert out.count("Strategie elaborative") == 1, out
+    assert out.count("C1") == 3, out
+
+
 def test_annotate_collapses_model_side_duplication():
     # Il modello stesso ha gia prodotto "(nome) nome": va collassato.
     out = _annotate_qsa_factor_codes("C1 (Strategie elaborative) Strategie elaborative 7/9", "it")
