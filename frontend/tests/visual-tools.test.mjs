@@ -678,3 +678,27 @@ for (const width of [320, 1440]) {
         } catch (error) { await page.screenshot({ path: `/tmp/visual-personal-failure-${width}.png` }); console.error(await page.getByRole('dialog').innerText()); throw error; } finally { await context.close(); }
     });
 }
+
+for (const width of [320, 1440]) {
+    test(`chat menu labels tools and paints its tooltip above the native popover at ${width}px`, async () => {
+        const { page, context } = await fixture(width);
+        try {
+            await page.getByRole('button', { name: chatLayoutLabel('it', 'options'), exact: true }).click();
+            const menu = page.locator('.chat-options:popover-open');
+            const tools = menu.getByRole('button', { name: visualLabel('it', 'open'), exact: true });
+            assert.equal((await tools.innerText()).trim(), 'Strumenti');
+            assert.ok((await menu.locator('button').first().getAttribute('class')).startsWith(await tools.getAttribute('class')), 'same row styling as adjacent menu entries');
+            await tools.focus();
+            const tooltip = page.locator('[data-radix-popper-content-wrapper]').filter({ has: page.getByRole('tooltip', { name: visualLabel('it', 'open'), exact: true }) });
+            await tooltip.waitFor({ state: 'visible' });
+            assert.equal(await tooltip.evaluate(el => {
+                const r = el.getBoundingClientRect();
+                const front = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+                return el.contains(front);
+            }), true, 'tooltip is actually painted above the menu');
+            await page.screenshot({ path: `/tmp/chat-menu-tooltip-${width}.png` });
+            await tools.click();
+            await page.getByRole('dialog', { name: visualLabel('it', 'title'), exact: true }).waitFor();
+        } finally { await context.close(); }
+    });
+}
