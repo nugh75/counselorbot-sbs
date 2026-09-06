@@ -8,7 +8,8 @@ from .diagram_blocks import strip_for_speech
 
 SYNTHESIS_STEPS = {
     "sl-synthesis", "qsar-synthesis", "ztpi-btp", "savickas-final",
-    "qpcs-sintesi", "qpcc-factors", "qap-factors", "idea-synthesis",
+    "qpcs-sintesi", "qpcc-sintesi", "qap-sintesi", "idea-synthesis",
+    "qpcc-factors", "qap-factors",  # historical two-step installations
 }
 
 
