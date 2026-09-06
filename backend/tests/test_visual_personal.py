@@ -48,7 +48,7 @@ def test_notebook_append_preserves_other_data_and_retry_is_idempotent(db):
     update = request(db)
     result = transfer_to_personal(db, 'visual-a', 'alice', update)
     assert result['status'] == 'saved'
-    assert result['context']['notebook']['notes'].startswith('Originale\n\nPreferisco esempi\n(Strumenti visivi')
+    assert result['context']['notebook']['notes'].startswith('Originale\n\nPreferisco esempi\n(Tools')
     rows = db.query(models.LearnerProfileRevision).order_by(models.LearnerProfileRevision.id).all()
     assert len(rows) == 2 and rows[-1].data['age'] == '22' and rows[-1].data['goal'] == 'Obiettivo'
     assert rows[0].data['notes'] == 'Originale'

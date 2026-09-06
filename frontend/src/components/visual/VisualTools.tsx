@@ -38,7 +38,7 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
     const [open, setOpen] = useState(false);
     const [personalOpen, setPersonalOpen] = useState(false);
     const [tab, setTab] = useState<Tab>('board');
-    const [helpOpen, setHelpOpen] = useState<Record<Tab, boolean>>({ board: true, comparison: true, cards: true });
+    const [helpOpen, setHelpOpen] = useState<Record<Tab, boolean>>({ board: false, comparison: false, cards: false });
     const [saved, setSaved] = useState<SavedWorkspace>({ revision: 0, workspace: emptyWorkspace() });
     const [work, setWork] = useState<VisualWorkspace>(emptyWorkspace);
     const [history, setHistory] = useState<VisualWorkspace[]>([]);
@@ -188,7 +188,7 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
             <section ref={dialog} role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-white">
                 <header className="shrink-0 border-b border-slate-200 p-3 sm:p-4">
                     <div className="flex items-start justify-between gap-2">
-                        <div><h2 id={`${id}-title`} className="text-lg font-semibold text-slate-800">{l('title')}</h2><p className="mt-1 hidden text-sm text-slate-600 sm:block">{l('working')}</p></div>
+                        <div><h2 id={`${id}-title`} className="text-lg font-semibold text-slate-800">{l('title')}</h2></div>
                         <Tooltip content={l('close')}><Button type="button" variant="ghost" className={buttonClass} autoFocus aria-label={l('close')} onClick={() => setOpen(false)}><X className="h-5 w-5" aria-hidden="true" /></Button></Tooltip>
                     </div>
                     <div role="tablist" aria-label={l('title')} className="mt-3 flex flex-wrap gap-1">
@@ -212,12 +212,13 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
                     {personalOpen && loaded ? <VisualPersonalTransfer sessionId={sessionId} locale={locale} work={work} saveWorkspace={save} onClose={() => { setPersonalOpen(false); window.requestAnimationFrame(() => document.getElementById(`${id}-personal`)?.focus()); }} /> : !loaded ? <p role="status" className="text-slate-600">{l(busy ? 'loading' : 'loadError')}</p> : <fieldset disabled={busy} className="min-w-0 space-y-4">
                         <section aria-label={l('howTo')} className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm leading-relaxed text-slate-800">
                             <h3 className="font-semibold">{l(tab)}</h3>
-                            <p className="mt-1">{l(`${tab}Purpose`)}</p>
                             <details key={tab} open={helpOpen[tab]} onToggle={event => {
                                 const expanded = event.currentTarget.open;
                                 setHelpOpen(previous => previous[tab] === expanded ? previous : { ...previous, [tab]: expanded });
                             }}>
                                 <summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('howTo')}</summary>
+                                <p className="mb-3">{l(`${tab}Purpose`)}</p>
+                                <p className="mb-3 text-slate-600">{l('working')}</p>
                                 <ol className="list-decimal space-y-2 pl-5">{[1, 2, 3].map(step => <li key={step}>{l(`${tab}Step${step}`)}</li>)}</ol>
                                 <p className="mt-3"><strong>{l('example')}: </strong>{l(`${tab}Example`)}</p>
                                 <div className="mt-3 space-y-2 border-t border-indigo-200 pt-3 text-slate-600">

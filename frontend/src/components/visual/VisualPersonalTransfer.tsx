@@ -98,7 +98,7 @@ export function VisualPersonalTransfer({ sessionId, locale, work, saveWorkspace,
             <h3 ref={heading} tabIndex={-1} className="text-lg font-semibold text-slate-900">{l('personalLinks')}</h3>
             <Button type="button" variant="ghost" className="min-h-[44px]" onClick={onClose} disabled={busy}><ArrowLeft className="h-4 w-4" />{l('backTools')}</Button>
         </div>
-        <p className="text-sm text-slate-600">{l('personalHelp')}</p>
+        <details className="text-sm text-slate-600"><summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('howTo')}</summary><p>{l('personalHelp')}</p></details>
         {issue && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
             {l(issue)}{['personalLoadError', 'personalConflict'].includes(issue) && <Button type="button" variant="secondary" className="ml-2 min-h-[44px]" onClick={() => void load()} disabled={busy}>{l('reloadPersonal')}</Button>}
         </div>}
