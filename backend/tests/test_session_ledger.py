@@ -78,17 +78,55 @@ def test_diagrams_are_not_mistaken_for_the_question(db):
     assert session_ledger.build(db, session_id=SESSION, username=STUDENT)["open_question"] == ""
 
 
-def test_only_actions_the_student_chose_are_pending(db):
-    for slug, status in (("chosen", "selected"), ("done", "tried"),
-                         ("shown", "proposed"), ("refused", "dismissed")):
+def _strategies(db, *pairs):
+    for slug, status in pairs:
         db.add(models.RecommendationHistory(
             username=STUDENT, session_id=SESSION, recommendation_type="strategy", slug=slug,
             payload={"name": f"Strategia {slug}", "status": status},
         ))
     db.flush()
-    assert session_ledger.build(db, session_id=SESSION, username=STUDENT)["pending_actions"] == [
-        "Strategia chosen"
-    ]
+
+
+def test_only_actions_the_student_chose_are_pending(db):
+    _strategies(db, ("chosen", "selected"), ("done", "tried"),
+                ("shown", "proposed"), ("refused", "dismissed"))
+    ledger = session_ledger.build(db, session_id=SESSION, username=STUDENT)
+    assert ledger["pending_actions"] == ["Strategia chosen"]
+    assert ledger["refused_actions"] == ["Strategia refused"]
+
+
+def test_a_chosen_action_is_verified_once_and_not_at_every_step(db):
+    _strategies(db, ("chosen", "selected"))
+    _turn(db, student="ok", counselor="Bene.")
+    first = session_ledger.block(db, session_id=SESSION, username=STUDENT)
+    assert "Ask how the chosen action went" in first
+
+    _turn(db, student="", counselor="Come è andata con quella micro-azione?")
+    again = session_ledger.block(db, session_id=SESSION, username=STUDENT)
+    assert "Strategia chosen" in again  # still pending, still visible
+    assert "Ask how the chosen action went" not in again  # but asked once is enough
+
+
+def test_a_refusal_is_not_reopened(db):
+    _strategies(db, ("refused", "dismissed"))
+    block = session_ledger.block(db, session_id=SESSION, username=STUDENT)
+    assert "Already refused by the student:" in block
+    assert "Never propose a refused item again" in block
+
+
+def test_an_overtaken_question_is_let_go(db):
+    _turn(db, student="dimmi di più", counselor="Riconosci questo schema?")
+    assert session_ledger.build(db, session_id=SESSION, username=STUDENT)["open_question"]
+    for _ in range(session_ledger.OPEN_QUESTION_MAX_AGE + 1):
+        _turn(db, student="", counselor="Analisi del prossimo step.")
+    assert session_ledger.build(db, session_id=SESSION, username=STUDENT)["open_question"] == ""
+
+
+def test_directives_appear_only_when_the_ledger_can_support_them(db):
+    _turn(db, student="a casa mi distraggo", counselor="Capito.")
+    block = session_ledger.block(db, session_id=SESSION, username=STUDENT)
+    assert "a casa mi distraggo" in block
+    assert "Act on this before the analysis" not in block
 
 
 def test_another_students_session_is_never_read(db):
