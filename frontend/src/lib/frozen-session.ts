@@ -95,7 +95,8 @@ export async function getFrozenSession(sessionId: string): Promise<FrozenSession
 }
 
 export async function deleteFrozenSession(sessionId: string): Promise<boolean> {
-    const res = await apiFetch(`/api/session/frozen/${encodeURIComponent(sessionId)}`, { method: 'DELETE' });
-    if (res.ok) notifyFrozenSessionsChanged();
-    return res.ok;
+    const res = await apiFetch(`/api/session/frozen/${encodeURIComponent(sessionId)}`, { method: 'DELETE', signal: AbortSignal.timeout(15000) });
+    const deleted = res.ok || res.status === 404;
+    if (deleted) notifyFrozenSessionsChanged();
+    return deleted;
 }

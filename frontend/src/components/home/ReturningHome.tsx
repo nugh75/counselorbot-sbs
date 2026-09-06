@@ -6,6 +6,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
+import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
 import { BookOpen, ChevronDown, RotateCcw } from 'lucide-react';
 import { QUESTIONNAIRE_LIST, QuestionnaireConfig, QuestionnaireType } from '@/lib/questionnaires';
@@ -86,32 +87,37 @@ export function ReturningHome({
                     <ResumeLoadError entries={resumeEntries} />
                     <div className="mt-3 space-y-2">
                         {frozen.map((row) => (
-                            <a
-                                key={row.session_id}
-                                href={resumeHref(row)}
-                                className="glass-panel flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-indigo-300"
-                            >
-                                <RotateCcw className="h-4 w-4 shrink-0 text-indigo-600" />
-                                <span className="truncate">{row.label || row.questionnaire_type}</span>
-                            </a>
+                            <ResumeEntry key={row.session_id} target={{ kind: 'session', sessionId: row.session_id }} label={row.label || row.questionnaire_type}>
+                                <a
+                                    href={resumeHref(row)}
+                                    className="glass-panel flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-indigo-300"
+                                >
+                                    <RotateCcw className="h-4 w-4 shrink-0 text-indigo-600" />
+                                    <span className="truncate">{row.label || row.questionnaire_type}</span>
+                                </a>
+                            </ResumeEntry>
                         ))}
                         {localResume && (
-                            <a
-                                href={LOCAL_RESUME_HREF}
-                                className="glass-panel flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-indigo-300"
-                            >
-                                <RotateCcw className="h-4 w-4 shrink-0 text-indigo-600" />
-                                <span className="truncate">{t('header.resume')} · {localResume.instrument}</span>
-                            </a>
+                            <ResumeEntry target={{ kind: 'session', sessionId: localResume.sessionId }} label={`${t('header.resume')} · ${localResume.instrument}`}>
+                                <a
+                                    href={LOCAL_RESUME_HREF}
+                                    className="glass-panel flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-indigo-300"
+                                >
+                                    <RotateCcw className="h-4 w-4 shrink-0 text-indigo-600" />
+                                    <span className="truncate">{t('header.resume')} · {localResume.instrument}</span>
+                                </a>
+                            </ResumeEntry>
                         )}
                         {pqblResume && (
-                            <a
-                                href={PQBL_RESUME_HREF}
-                                className="glass-panel flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-indigo-300"
-                            >
-                                <RotateCcw className="h-4 w-4 shrink-0 text-indigo-600" />
-                                <span className="truncate">{t('header.resume')} · {t('pqbl.card.badge')}</span>
-                            </a>
+                            <ResumeEntry target={{ kind: 'pqbl' }} label={`${t('header.resume')} · ${t('pqbl.card.badge')}`}>
+                                <a
+                                    href={PQBL_RESUME_HREF}
+                                    className="glass-panel flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-indigo-300"
+                                >
+                                    <RotateCcw className="h-4 w-4 shrink-0 text-indigo-600" />
+                                    <span className="truncate">{t('header.resume')} · {t('pqbl.card.badge')}</span>
+                                </a>
+                            </ResumeEntry>
                         )}
                     </div>
                 </section>
