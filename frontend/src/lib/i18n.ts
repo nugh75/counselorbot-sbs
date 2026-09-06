@@ -23,6 +23,9 @@ export const LANG_STORAGE_KEY = 'cb_lang';
 type Dict = Record<string, string>;
 
 const it: Dict = {
+    'frozen.delete': "Elimina sessione",
+    'frozen.deleteConfirm': "Eliminare questa sessione dall’elenco delle sessioni da riprendere? Il punto di ripresa verrà rimosso. I risultati dei questionari resteranno conservati.",
+    'frozen.deleteError': "Impossibile eliminare la sessione. Riprova.",
     'admin.routing.title': "Modelli, contesto e ripieghi",
     'admin.routing.help': "Il modello scelto resta la prima scelta. I ripieghi partono prima che inizi la risposta. I servizi a pagamento si fermano quando la spesa registrata raggiunge il budget mensile. I modelli gratuiti possono avere limiti e indisponibilità. I profili definiscono limiti verificati di contesto; compact riduce il materiale teorico facoltativo.",
     'admin.routing.targets': "Ripieghi ordinati (JSON)",
@@ -1138,6 +1141,9 @@ const it: Dict = {
 };
 
 const en: Dict = {
+    'frozen.delete': "Delete session",
+    'frozen.deleteConfirm': "Delete this session from the resume list? The saved resume point will be removed. Questionnaire results will be kept.",
+    'frozen.deleteError': "Could not delete the session. Try again.",
     'admin.routing.title': "Models, context and fallbacks",
     'admin.routing.help': "The selected model is tried first. Fallbacks start before the response begins. Paid services stop when recorded spending reaches the monthly budget. Free models may have limits and outages. Profiles define verified context limits; compact reduces optional theory.",
     'admin.routing.targets': "Ordered fallbacks (JSON)",
@@ -2234,6 +2240,9 @@ const en: Dict = {
 };
 
 const es: Dict = {
+    'frozen.delete': "Eliminar sesión",
+    'frozen.deleteConfirm': "¿Eliminar esta sesión de la lista para reanudar? Se eliminará el punto de reanudación guardado. Los resultados de los cuestionarios se conservarán.",
+    'frozen.deleteError': "No se pudo eliminar la sesión. Inténtalo de nuevo.",
     'admin.routing.title': "Modelos, contexto y alternativas",
     'admin.routing.help': "El modelo elegido se intenta primero. Las alternativas se prueban antes de iniciar la respuesta. Los servicios de pago se detienen cuando el gasto registrado alcanza el presupuesto mensual. Los modelos gratuitos pueden tener límites e interrupciones. Los perfiles definen límites de contexto verificados; compact reduce la teoría opcional.",
     'admin.routing.targets': "Alternativas ordenadas (JSON)",
@@ -3329,6 +3338,9 @@ const es: Dict = {
 };
 
 const fr: Dict = {
+    'frozen.delete': "Supprimer la session",
+    'frozen.deleteConfirm': "Supprimer cette session de la liste des sessions à reprendre ? Le point de reprise sera supprimé. Les résultats des questionnaires seront conservés.",
+    'frozen.deleteError': "Impossible de supprimer la session. Réessayez.",
     'admin.routing.title': "Modèles, contexte et solutions de repli",
     'admin.routing.help': "Le modèle choisi est essayé en premier. Les solutions de repli interviennent avant le début de la réponse. Les services payants sont bloqués lorsque les dépenses enregistrées atteignent le budget mensuel. Les modèles gratuits peuvent être limités ou indisponibles. Les profils définissent des limites de contexte vérifiées ; compact réduit la théorie facultative.",
     'admin.routing.targets': "Solutions de repli ordonnées (JSON)",
@@ -4424,6 +4436,9 @@ const fr: Dict = {
 };
 
 const de: Dict = {
+    'frozen.delete': "Sitzung löschen",
+    'frozen.deleteConfirm': "Diese Sitzung aus der Fortsetzungsliste löschen? Der gespeicherte Fortsetzungspunkt wird entfernt. Fragebogenergebnisse bleiben erhalten.",
+    'frozen.deleteError': "Die Sitzung konnte nicht gelöscht werden. Versuche es erneut.",
     'admin.routing.title': "Modelle, Kontext und Ersatzmodelle",
     'admin.routing.help': "Das gewählte Modell wird zuerst versucht. Ersatzmodelle werden vor Beginn der Antwort versucht. Kostenpflichtige Dienste werden gesperrt, sobald die erfassten Ausgaben das Monatsbudget erreichen. Kostenlose Modelle können eingeschränkt oder nicht verfügbar sein. Profile definieren geprüfte Kontextgrenzen; compact reduziert optionale Theorie.",
     'admin.routing.targets': "Geordnete Ersatzmodelle (JSON)",
@@ -5519,6 +5534,9 @@ const de: Dict = {
 };
 
 const sv: Dict = {
+    'frozen.delete': "Ta bort session",
+    'frozen.deleteConfirm': "Ta bort sessionen från listan för att fortsätta? Den sparade återupptagningspunkten tas bort. Resultaten från frågeformulären behålls.",
+    'frozen.deleteError': "Det gick inte att ta bort sessionen. Försök igen.",
     'admin.routing.title': "Modeller, kontext och reservmodeller",
     'admin.routing.help': "Den valda modellen provas först. Reservmodeller provas innan svaret börjar. Betaltjänster stoppas när registrerade kostnader når månadsbudgeten. Gratis modeller kan ha begränsningar och avbrott. Profiler anger verifierade kontextgränser; compact minskar valfri teori.",
     'admin.routing.targets': "Reservmodeller i ordning (JSON)",
