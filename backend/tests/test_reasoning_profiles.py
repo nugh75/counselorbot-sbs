@@ -44,10 +44,22 @@ def test_disabled_thinking_still_reserves_room_on_a_reasoning_model():
     assert resolve_plan("muse-glimmer:30b", disable_thinking=True).max_tokens is None
 
 
+def test_qwen3_reserves_the_same_room_with_thinking_off():
+    """qwen3 emette <think> anche a pensiero spento — per questo esiste
+    `_ThinkSplitter` — quindi un turno 'short' da 256 token tornava vuoto come
+    su muse-glimmer. Vale per il preset "no reasoning" e per il modello globale
+    di default, entrambi qwen3."""
+    for model in ("qwen3.8:latest", "qwen3.5:9b"):
+        assert resolve_plan(model, disable_thinking=True,
+                            requested_max_tokens=256).max_tokens >= 1800, model
+        assert resolve_plan(model, disable_thinking=True,
+                            requested_max_tokens=4000).max_tokens == 4000, model
+
+
 def test_disabled_thinking_leaves_the_other_models_untouched():
     """Il minimo vale solo dove il problema e' misurato: per le altre famiglie
     resta il contratto "thinking spento -> nessun gonfiaggio"."""
-    for model in ("gemma3:latest", "qwen3.5:9b", "gemma4:e4b"):
+    for model in ("gemma3:latest", "gemma4:e4b"):
         assert resolve_plan(model, disable_thinking=True, requested_max_tokens=256).max_tokens == 256, model
 
 

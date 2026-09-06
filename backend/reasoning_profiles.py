@@ -87,8 +87,13 @@ _PATTERNS: list[tuple[re.Pattern, ReasoningProfile]] = [
      ReasoningProfile("deepseek-reasoner", True, True, 6000, 2000)),
     (re.compile(r"\bo[134]\b|o1-|o3-|o4-|gpt-5|gpt5"),
      ReasoningProfile("openai-o", True, True, 8000, 2000)),
+    # qwen3 emette il canale <think> anche con il pensiero spento (per questo
+    # esiste `_ThinkSplitter` lato ai_service): senza un minimo di output il cap
+    # arriva prima che il canale visibile si apra e la risposta torna vuota,
+    # esattamente come su muse-glimmer. Vale per il preset "no reasoning" e per
+    # il modello globale di default, entrambi qwen3.8.
     (re.compile(r"qwen-?3|qwq|qwen.*think"),
-     ReasoningProfile("qwen3", True, True, 5000, 1800)),
+     ReasoningProfile("qwen3", True, True, 5000, 1800, no_think_floor=1800)),
     # muse-glimmer (Ollama): ragiona di default e Ollama separa `thinking` da
     # `content`; `think: false` lo spegne. Misurato ~1200 caratteri di pensiero
     # su una domanda banale, quindi con num_predict basso la risposta visibile

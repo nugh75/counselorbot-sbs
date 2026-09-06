@@ -844,11 +844,42 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     recommended, response_content, readings=reading_candidates, strategies=strategy_candidates,
                 )
             if not response_content.strip():
-                raise AIError(
-                    "Il provider AI ha terminato lo stream senza contenuto visibile. "
-                    "Se stai usando un modello reasoning, abilita 'No reasoning' nel preset "
-                    "del counselor o nella configurazione globale."
+                # Lo stream e' andato a buon fine — il contenuto e' arrivato —
+                # ma la pipeline visibile lo ha svuotato: tipicamente un canale
+                # <think> attorno a spazi. Qui il ripiego di `stream_response`
+                # non e' mai stato tentato, perche' per lui il turno era
+                # riuscito. Lo chiediamo una volta al percorso non-streaming,
+                # che percorre gli stessi target di riserva.
+                retry = ai_service.get_response(
+                    full_message, system_prompt_final, request.mode,
+                    max_tokens=max_tokens, provider=c_provider, model=c_model, history=history,
                 )
+                retry, retry_recommended = recommendation_blocks.extract(
+                    retry, readings=reading_candidates, strategies=strategy_candidates,
+                )
+                retry, retry_revision_id = _apply_idea_patch(
+                    retry,
+                    questionnaire_type=questionnaire_type,
+                    username=identity.get("username"),
+                    session_id=session_id,
+                    step_id=request.phase,
+                    user_message=request.message or "",
+                    lang=request.language or "it",
+                )
+                retry = _student_visible_response(retry, questionnaire_type, request.language, sanitize)
+                if _requires_complete_factor_output(request.mode):
+                    retry = _ensure_required_qsa_factor_codes(
+                        retry, questionnaire_type, request.language, _phase_factor_codes(db, request.phase)
+                    )
+                retry, _ = _limit_visible_words(retry, effective_response_length)
+                if not retry.strip():
+                    raise AIError(
+                        "Il provider AI e il modello di riserva hanno risposto senza "
+                        "contenuto visibile. Riprova il turno."
+                    )
+                response_content, recommended = retry, retry_recommended
+                idea_revision_id = retry_revision_id or idea_revision_id
+                yield f"data: {_json.dumps({'display': response_content})}\n\n"
 
             if truncated and questionnaire_type != IDEA_INSTRUMENT:
                 yield f"data: {_json.dumps({'done': True, 'incomplete': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id})}\n\n"
