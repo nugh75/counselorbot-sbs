@@ -1,13 +1,33 @@
 """Read, save and export a student's visual workspace for an owned session."""
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from .. import auth, database
 from ..message_diagrams import session_owner
 from ..visual_tools import LABELS, SaveWorkspace, load_workspace, save_workspace
+from ..visual_personal import PersonalTransfer, personal_context, transfer_to_personal
 
 router = APIRouter()
+
+
+def _personal_owner(db, session_id, identity):
+    owner = session_owner(db, session_id, identity)
+    if owner != identity.get('username'):
+        raise HTTPException(403, 'Personal annotations belong to the student')
+    return owner
+
+
+@router.get('/session/{session_id}/visual-tools/personal')
+def read_personal_annotations(session_id: str, lang: str = 'it', db: Session = Depends(database.get_db),
+                              identity: dict = Depends(auth.get_identity_view_as)):
+    return personal_context(db, session_id, _personal_owner(db, session_id, identity), lang)
+
+
+@router.post('/session/{session_id}/visual-tools/personal')
+def write_personal_annotation(session_id: str, update: PersonalTransfer, db: Session = Depends(database.get_db),
+                               identity: dict = Depends(auth.get_identity_view_as)):
+    return transfer_to_personal(db, session_id, _personal_owner(db, session_id, identity), update)
 
 
 @router.get('/session/{session_id}/visual-tools')

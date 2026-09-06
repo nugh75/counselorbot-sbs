@@ -48,3 +48,7 @@ composer for review before sending.
 - Our two integration files apply cleanly to a read-only snapshot of the prompt
   agent's in-progress files. No file in that worktree was edited.
 - Touch validation uses browser emulation; no physical-device test was performed.
+
+## Explicit personal transfers (2026-09-06)
+
+The student can now select a visual entry and append edited text to a chosen notebook field or an existing/new booklet sheet for the session instrument. The full resulting field is previewed; excessive text is rejected without truncation. The reverse flow lets the student select an annotation field and create a card, action or comparison alternative. Both directions require confirmation and preserve provenance. There is no automatic synchronization. Notebook demographic fields and booklet factor scores are not offered as transfer content. Tests cover ownership, append preservation, stale writes, field limits, retry duplicates and desktop/mobile interaction.

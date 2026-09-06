@@ -20,6 +20,7 @@ async function fixture(width, phase = 'intro', options = {}) {
     const page = await context.newPage();
     page.setDefaultTimeout(10000);
     const control = { failSave: false, failLoad: false, failPdf: false, visual: { revision: 0, workspace: { actions: [], cards: [], comparison: { options: [], criteria: [], cells: [], chosen: null, reason: '' } } }, failDiagram: false, failPatch: false, failRender: false, failExport: false, saved: options.graph ? [{ source_text: reply, source_key: createHash('sha256').update(reply).digest('hex'), instruction: '', spec: graphSpec }] : [], requests: [], errors: [] };
+    control.personal = { questionnaire_type: 'QSA', limits: { notebook: 600, booklet: 2000 }, sources: { actions: 'Strumenti visivi · Piano personale', cards: 'Strumenti visivi · Carte', comparison: 'Strumenti visivi · Confronto' }, notebook: { notes: 'Annotazione originale', goal: 'Organizzare lo studio' }, booklets: [{ id: 7, title: 'La mia scheda', data: { student_notes: 'Nota esistente' } }] };
     const catalog = {
         reading: [{ slug: 'test-book', title: 'Libro per la prova', why: 'Collegato al metodo di studio.', synopsis: 'SINOSSI COMPLETA DEL LIBRO', where: 'https://example.invalid/libro', languages: ['it', 'en'], warning: 'AVVERTENZA DEL LIBRO', status: 'proposed' }],
         strategy: [{ slug: 'test-strategy', name: 'Recupero attivo', description: 'Chiudi il testo e scrivi tre concetti.', recommended_when: 'Quando vuoi verificare cosa ricordi.', status: 'proposed' }],
@@ -35,6 +36,21 @@ async function fixture(width, phase = 'intro', options = {}) {
         let data = [];
         if (url.pathname === '/api/chat/stream') return route.fulfill({ contentType: 'text/event-stream', body: 'data: ' + JSON.stringify({ display: 'Possiamo approfondire questo punto.' }) + '\n\ndata: ' + JSON.stringify({ done: true, response: 'Possiamo approfondire questo punto.', session_id: 'fixture' }) + '\n\n' });
         if (url.pathname === '/api/opencode/workspace') data = { key: 'fixture', api_available: true, session_id: 'opencode-fixture', needs_seed: false, history: [{ role: 'assistant', content: reply }] };
+        else if (url.pathname === '/api/session/fixture/visual-tools/personal') {
+            if (control.failPersonal) return route.fulfill({ status: 503, body: '{}' });
+            if (request.method() === 'POST') {
+                const body = request.postDataJSON();
+                let sheet = control.personal.booklets.find(item => item.id === body.booklet_id);
+                if (body.destination === 'booklet' && !sheet) {
+                    sheet = { id: 8, title: 'Nuova scheda', data: {} }; control.personal.booklets.push(sheet);
+                }
+                const target = body.destination === 'notebook' ? control.personal.notebook : sheet.data;
+                const block = `${body.text}\n(${control.personal.sources[body.entry.split(':')[0]]})`;
+                if ((target[body.field] || '').includes(block)) data = { status: 'duplicate', context: control.personal, booklet_id: sheet?.id };
+                else if ((target[body.field] || '') !== body.expected_text) return route.fulfill({ status: 409, body: '{}' });
+                else { target[body.field] = [target[body.field], block].filter(Boolean).join('\n\n'); data = { status: 'saved', context: control.personal, booklet_id: sheet?.id }; }
+            } else data = control.personal;
+        }
         else if (url.pathname === '/api/session/fixture/visual-tools') {
             if (request.method() === 'GET' && control.deferRead) {
                 const wait = control.deferRead; control.deferRead = null;
@@ -584,3 +600,81 @@ test('invalid saved panel preferences do not prevent reopening the chat', async 
         assert.deepEqual(control.errors, []);
     } finally { await context.close(); }
 });
+
+for (const width of [320, 1440]) {
+    test(`personal transfers require selection, preserve notes and import explicitly at ${width}px`, async () => {
+        const { page, context, control } = await fixture(width);
+        const l = key => visualLabel('it', key);
+        try {
+            control.visual.workspace.cards.push({ id: 'card1', text: 'Gli esempi aiutano', bucket: 'yes', source: '' });
+            await openVisual(page, l('open'));
+            const dialog = page.getByRole('dialog', { name: l('title'), exact: true });
+            control.failPersonal = true;
+            await dialog.getByRole('button', { name: l('personalLinks'), exact: true }).click();
+            await dialog.getByRole('button', { name: l('reloadPersonal'), exact: true }).waitFor();
+            control.failPersonal = false;
+            await dialog.getByRole('button', { name: l('reloadPersonal'), exact: true }).click();
+            await dialog.getByLabel(l('chooseContent'), { exact: true }).selectOption('cards:card1');
+            await dialog.getByLabel(l('reviewTransfer'), { exact: true }).fill('Testo scelto e rivisto');
+            assert.equal(control.requests.filter(r => r.path.endsWith('/personal') && r.method === 'POST').length, 0);
+            assert.match(await dialog.locator('details').innerText(), /Annotazione originale/);
+            control.personal.notebook.notes = 'Annotazione originale aggiornata';
+            await dialog.getByRole('button', { name: l('savePersonal'), exact: true }).click();
+            await dialog.getByText(l('personalConflict'), { exact: false }).waitFor();
+            await dialog.getByRole('button', { name: l('reloadPersonal'), exact: true }).click();
+            await dialog.getByText('Annotazione originale aggiornata', { exact: false }).waitFor();
+            assert.equal(await dialog.getByLabel(l('reviewTransfer'), { exact: true }).inputValue(), 'Testo scelto e rivisto');
+            await dialog.getByRole('button', { name: l('savePersonal'), exact: true }).click();
+            await dialog.getByText(l('personalSaved'), { exact: true }).waitFor();
+            assert.match(control.personal.notebook.notes, /^Annotazione originale aggiornata\n\nTesto scelto e rivisto/);
+            await dialog.getByRole('button', { name: l('savePersonal'), exact: true }).click();
+            await dialog.getByText(l('personalDuplicate'), { exact: true }).waitFor();
+            await dialog.getByLabel(l('reviewTransfer'), { exact: true }).fill('x'.repeat(601));
+            assert.equal(await dialog.getByRole('button', { name: l('savePersonal'), exact: true }).isEnabled(), false);
+            await dialog.getByLabel(l('reviewTransfer'), { exact: true }).fill('Un impegno');
+            await dialog.getByLabel(l('destination'), { exact: true }).selectOption('booklet');
+            await dialog.getByLabel(l('bookletSheet'), { exact: true }).selectOption('7');
+            await dialog.getByRole('button', { name: l('savePersonal'), exact: true }).click();
+            await dialog.getByText(l('personalSaved'), { exact: true }).waitFor();
+            assert.match(control.personal.booklets[0].data.student_notes, /^Nota esistente\n\nUn impegno/);
+            await dialog.getByLabel(l('bookletSheet'), { exact: true }).selectOption('');
+            await dialog.getByLabel(l('reviewTransfer'), { exact: true }).fill('Nuova riflessione');
+            await dialog.getByRole('button', { name: l('savePersonal'), exact: true }).click();
+            await dialog.getByText(l('personalSaved'), { exact: true }).waitFor();
+            assert.equal(control.personal.booklets.length, 2);
+            await dialog.getByLabel(l('transferDirection'), { exact: true }).selectOption('in');
+            await dialog.getByLabel(l('chooseContent'), { exact: true }).selectOption('notebook_goal');
+            await dialog.getByLabel(l('reviewTransfer'), { exact: true }).fill('Organizzare una prova');
+            control.failSave = true;
+            await dialog.getByRole('button', { name: l('saveVisual'), exact: true }).click();
+            await dialog.getByText(l('personalSaveError'), { exact: true }).waitFor();
+            assert.equal(await dialog.getByLabel(l('reviewTransfer'), { exact: true }).inputValue(), 'Organizzare una prova');
+            control.failSave = false;
+            await dialog.getByRole('button', { name: l('saveVisual'), exact: true }).click();
+            await dialog.getByText(l('personalImported'), { exact: true }).waitFor();
+            assert.equal(control.visual.workspace.cards.at(-1).text, 'Organizzare una prova');
+            assert.match(control.visual.workspace.cards.at(-1).source, /Taccuino/);
+            await dialog.getByRole('button', { name: l('saveVisual'), exact: true }).click();
+            await dialog.getByText(l('personalDuplicate'), { exact: true }).waitFor();
+            assert.equal(control.visual.workspace.cards.length, 2);
+            await dialog.getByLabel(l('chooseContent'), { exact: true }).selectOption('booklet_7_student_notes');
+            await dialog.getByLabel(l('destination'), { exact: true }).selectOption('actions');
+            await dialog.getByLabel(l('titleField'), { exact: true }).fill('Provare una strategia');
+            await dialog.getByLabel(l('reviewTransfer'), { exact: true }).fill('Parto dalla riflessione nel libretto');
+            await dialog.getByRole('button', { name: l('saveVisual'), exact: true }).click();
+            await dialog.getByText(l('personalImported'), { exact: true }).waitFor();
+            assert.equal(control.visual.workspace.actions[0].stage, 'todo');
+            assert.match(control.visual.workspace.actions[0].source, /Libretto/);
+            await dialog.getByLabel(l('destination'), { exact: true }).selectOption('comparison');
+            await dialog.getByLabel(l('reviewTransfer'), { exact: true }).fill('Una possibile alternativa');
+            await dialog.getByRole('button', { name: l('saveVisual'), exact: true }).click();
+            await dialog.getByText(l('personalImported'), { exact: true }).waitFor();
+            assert.equal(control.visual.workspace.comparison.options[0].title, 'Una possibile alternativa');
+            assert.equal(control.visual.workspace.comparison.chosen, null);
+            await dialog.getByRole('heading', { name: l('personalLinks'), exact: true }).scrollIntoViewIfNeeded();
+            assert.equal(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth), true);
+            await page.screenshot({ path: `/tmp/visual-personal-${width}.png`, fullPage: true });
+            assert.deepEqual(control.errors, []);
+        } catch (error) { await page.screenshot({ path: `/tmp/visual-personal-failure-${width}.png` }); console.error(await page.getByRole('dialog').innerText()); throw error; } finally { await context.close(); }
+    });
+}
