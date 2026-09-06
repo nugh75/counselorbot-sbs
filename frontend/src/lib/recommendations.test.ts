@@ -23,8 +23,8 @@ test('normalizeRecommendationCatalog keeps valid items and deduplicates slugs', 
 });
 
 test('normalizeRecommendationCatalog returns an empty catalog for invalid input', () => {
-    assert.deepEqual(normalizeRecommendationCatalog(undefined), { reading: [], strategy: [] });
-    assert.deepEqual(normalizeRecommendationCatalog([]), { reading: [], strategy: [] });
+    assert.deepEqual(normalizeRecommendationCatalog(undefined), { reading: [], strategy: [], advice: [] });
+    assert.deepEqual(normalizeRecommendationCatalog([]), { reading: [], strategy: [], advice: [] });
 });
 
 test('a choice already made survives a reload, an unknown one falls back to proposed', () => {
@@ -104,4 +104,16 @@ test('the patch address survives a slug with characters to escape', () => {
         recommendationPatchUrl('sess/1', 'reading', 'a b/c'),
         '/api/session/sess%2F1/recommendations/reading/a%20b%2Fc',
     );
+});
+
+test('closed questions and general advice survive normalization', () => {
+    const catalog = normalizeRecommendationCatalog({ advice: [
+        { slug: 'q1', kind: 'question', name: 'What changed?', status: 'closed' },
+        { slug: 'q1', kind: 'question', name: 'Duplicate' },
+        { slug: 'a1', kind: 'advice', name: 'Try one small step.', status: 'tried' },
+    ] });
+    assert.equal(catalog.advice.length, 2);
+    assert.equal(catalog.advice[0].status, 'closed');
+    assert.equal(catalog.advice[1].kind, 'advice');
+    assert.match(recommendationPatchUrl('session', 'advice', 'q1'), /recommendations\/advice\/q1$/);
 });

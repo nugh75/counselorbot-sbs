@@ -249,3 +249,13 @@ def test_offline_preparation_stays_free_of_session_data(db):
     _turn(db, student="a casa mi distraggo", counselor="Capito.")
     audited = _prepared(db, include_history=False)
     assert "[SESSION LEDGER]" not in audited.system_prompt_final
+
+
+def test_closed_sidebar_question_is_not_reopened_by_the_ledger(db):
+    question = 'Quale episodio ti viene in mente?'
+    _turn(db, counselor=question)
+    db.add(models.RecommendationHistory(session_id=SESSION, username=STUDENT,
+        recommendation_type='advice', slug='closed-question',
+        payload={'kind': 'question', 'name': question, 'status': 'closed'}))
+    db.flush()
+    assert session_ledger.build(db, session_id=SESSION, username=STUDENT)['open_question'] == ''

@@ -1289,8 +1289,8 @@ def test_guided_step_questions_seed_and_public_payload():
         "ZTPI": "ztpi-t1",
         "SAVICKAS": "savickas-q1",
         "QPCS": "qpcs-emozioni",
-        "QPCC": "qpcc-factors",
-        "QAP": "qap-factors",
+        "QPCC": "qpcc-comunicazione",
+        "QAP": "qap-preoccupazione",
     }
     for questionnaire_type, step_id in expected.items():
         r = client.get(f"/qsa/guided-ui-texts?questionnaire_type={questionnaire_type}&lang=it")
@@ -1515,8 +1515,8 @@ def test_qsar_guided_ui_texts_public():
 def test_new_questionnaire_guided_ui_texts_public():
     expected_steps = {
         "QPCS": ("qpcs-emozioni", "qpcs-analysis"),
-        "QPCC": ("qpcc-factors", "qpcc-factor"),
-        "QAP": ("qap-factors", "qap-factor"),
+        "QPCC": ("qpcc-comunicazione", "qpcc-interview"),
+        "QAP": ("qap-preoccupazione", "qap-interview"),
     }
     for questionnaire_type, (step_id, mode) in expected_steps.items():
         r = client.get(f"/qsa/guided-ui-texts?questionnaire_type={questionnaire_type}")
@@ -1543,8 +1543,8 @@ def test_prompt_audit_intro_envelope_is_light_for_all_instruments():
         # QPCS uses a qualitative interview path: its first step (qpcs-intro) is an
         # interview step that intentionally keeps scores internally, so it is not part
         # of the intro-light (score-free) family tested here.
-        ("QPCC", "qpcc-welcome", "PROFILO QPCC DELLO STUDENTE:\n- K1: 7/9\n- K2: 5/9"),
-        ("QAP", "qap-welcome", "PROFILO QAP DELLO STUDENTE:\n- AD1: 7/9\n- AD2: 5/9"),
+        # Canonical QPCC/QAP now use qualitative interview intros, like QPCS;
+        # their profile stays internal under the interview contract.
     ]
     for questionnaire_type, _, _ in intros:
         _ensure_guided_steps(questionnaire_type)
@@ -2665,7 +2665,7 @@ def test_chat_message_returns_the_sessions_recommendation_catalog():
     })
 
     assert r.status_code == 200, r.text
-    assert r.json()["recommendations"] == {"reading": [], "strategy": []}
+    assert r.json()["recommendations"] == {"reading": [], "strategy": [], "advice": []}
 
 
 

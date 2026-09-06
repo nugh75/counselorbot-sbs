@@ -49,3 +49,35 @@ def test_length_cut_does_not_record_a_proposal_the_student_cannot_see():
     visible, truncated = _limit_visible_words(text, 'short')
     assert truncated
     assert retain_visible(selected, visible, readings=readings, strategies=strategies) == {'reading': [], 'strategy': ['active']}
+
+
+def test_notes_require_visible_text_and_respect_advice_gate():
+    import json
+    from backend.recommendation_blocks import extract_notes
+    question = "Quale episodio ti viene in mente?"
+    advice = "Riserva dieci minuti al progetto."
+    raw = question + " " + advice + '\n```recommendations\n' + json.dumps({"notes": [
+        {"kind": "question", "text": question}, {"kind": "advice", "text": advice},
+    ]}) + '\n```'
+    visible = question + " " + advice
+    assert [x['kind'] for x in extract_notes(raw, visible, advice_allowed=True)] == ['question', 'advice']
+    assert [x['kind'] for x in extract_notes(raw, visible, advice_allowed=False)] == ['question']
+    assert extract_notes(raw, 'Testo tagliato.', advice_allowed=True) == []
+    assert extract_notes('```recommendations\n{bad\n```', visible, advice_allowed=True) == []
+    assert extract_notes(raw, visible, advice_allowed=True)[0]['slug'] == extract_notes(raw, visible, advice_allowed=False)[0]['slug']
+
+
+def test_real_model_json_fence_does_not_leak_or_lose_notes():
+    import json
+    from backend.recommendation_blocks import extract_notes
+    question = 'Quale episodio ti viene in mente?'
+    prefix = question + '\n'
+    raw = prefix + '```json\n' + json.dumps({'reading': [], 'strategy': [], 'notes': [{'kind': 'question', 'text': question}]}) + '\n```'
+    for end in range(len(prefix), len(raw) + 1):
+        assert strip_for_display(raw[:end]).strip() == question
+    visible, _ = extract(raw)
+    assert visible == question
+    assert extract_notes(raw, visible, advice_allowed=False)[0]['name'] == question
+    ordinary = 'Esempio:\n```json\n{"name": "Ada", "year": 2026}\n```'
+    assert strip_for_display(ordinary) == ordinary
+    assert extract(ordinary)[0] == ordinary
