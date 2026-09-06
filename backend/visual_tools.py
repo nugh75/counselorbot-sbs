@@ -114,12 +114,12 @@ def save_workspace(db: Session, session_id: str, username: str, update: SaveWork
 
 # Shared by the standalone export and the final session PDF.
 LABELS = {
-    'it': ['Strumenti visivi', 'Piano personale', 'Da provare', 'In corso', 'Provata', 'Riflessione', 'Carte', 'Da ordinare', 'Mi rappresenta', 'Da approfondire', 'Non mi rappresenta', 'Confronto', 'Scelta', 'Motivazione', 'Fonte'],
-    'en': ['Visual tools', 'Personal plan', 'To try', 'In progress', 'Tried', 'Reflection', 'Cards', 'Unsorted', 'Fits me', 'Explore further', 'Does not fit me', 'Comparison', 'Choice', 'Reason', 'Source'],
-    'es': ['Herramientas visuales', 'Plan personal', 'Por probar', 'En curso', 'Probada', 'Reflexión', 'Tarjetas', 'Sin ordenar', 'Me representa', 'Por explorar', 'No me representa', 'Comparación', 'Elección', 'Motivo', 'Fuente'],
-    'fr': ['Outils visuels', 'Plan personnel', 'À essayer', 'En cours', 'Essayée', 'Réflexion', 'Cartes', 'À classer', 'Me correspond', 'À approfondir', 'Ne me correspond pas', 'Comparaison', 'Choix', 'Motif', 'Source'],
-    'de': ['Visuelle Werkzeuge', 'Persönlicher Plan', 'Ausprobieren', 'In Arbeit', 'Ausprobiert', 'Reflexion', 'Karten', 'Unsortiert', 'Passt zu mir', 'Weiter erkunden', 'Passt nicht zu mir', 'Vergleich', 'Wahl', 'Begründung', 'Quelle'],
-    'sv': ['Visuella verktyg', 'Personlig plan', 'Att prova', 'Pågår', 'Provad', 'Reflektion', 'Kort', 'Osorterat', 'Stämmer för mig', 'Utforska vidare', 'Stämmer inte för mig', 'Jämförelse', 'Val', 'Motivering', 'Källa'],
+    'it': ['Tools', 'Piano personale', 'Da provare', 'In corso', 'Provata', 'Riflessione', 'Carte', 'Da ordinare', 'Mi rappresenta', 'Da approfondire', 'Non mi rappresenta', 'Confronto', 'Scelta', 'Motivazione', 'Fonte'],
+    'en': ['Tools', 'Personal plan', 'To try', 'In progress', 'Tried', 'Reflection', 'Cards', 'Unsorted', 'Fits me', 'Explore further', 'Does not fit me', 'Comparison', 'Choice', 'Reason', 'Source'],
+    'es': ['Tools', 'Plan personal', 'Por probar', 'En curso', 'Probada', 'Reflexión', 'Tarjetas', 'Sin ordenar', 'Me representa', 'Por explorar', 'No me representa', 'Comparación', 'Elección', 'Motivo', 'Fuente'],
+    'fr': ['Tools', 'Plan personnel', 'À essayer', 'En cours', 'Essayée', 'Réflexion', 'Cartes', 'À classer', 'Me correspond', 'À approfondir', 'Ne me correspond pas', 'Comparaison', 'Choix', 'Motif', 'Source'],
+    'de': ['Tools', 'Persönlicher Plan', 'Ausprobieren', 'In Arbeit', 'Ausprobiert', 'Reflexion', 'Karten', 'Unsortiert', 'Passt zu mir', 'Weiter erkunden', 'Passt nicht zu mir', 'Vergleich', 'Wahl', 'Begründung', 'Quelle'],
+    'sv': ['Tools', 'Personlig plan', 'Att prova', 'Pågår', 'Provad', 'Reflektion', 'Kort', 'Osorterat', 'Stämmer för mig', 'Utforska vidare', 'Stämmer inte för mig', 'Jämförelse', 'Val', 'Motivering', 'Källa'],
 }
 
 

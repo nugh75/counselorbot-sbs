@@ -80,7 +80,7 @@ def test_endpoints_enforce_ownership_and_restore_after_retry(db):
         assert pdf.status_code == 200 and pdf.content.startswith(b'%PDF')
         text = '\n'.join(page.extract_text() for page in PdfReader(BytesIO(pdf.content)).pages)
         assert 'Recupero attivo' in text and 'Corso serale' in text
-        assert 'Strumenti visivi' in text and 'Letture consigliate' not in text
+        assert 'Tools' in text and 'Letture consigliate' not in text
         assert 'Recupero attivo - In corso' in text
         assert db.query(models.RecommendationHistory).count() == 0
         assert db.query(models.Config).count() == 0

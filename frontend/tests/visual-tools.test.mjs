@@ -396,9 +396,13 @@ for (const locale of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
         try {
             await openVisual(page, l('open'));
             const dialog = page.getByRole('dialog', { name: l('title'), exact: true });
+            assert.equal(l('title'), 'Tools');
+            assert.equal(l('tools'), 'Tools');
             const help = dialog.getByRole('region', { name: l('howTo'), exact: true });
             for (const tab of ['board', 'comparison', 'cards']) {
                 await dialog.getByRole('tab', { name: l(tab), exact: true }).click();
+                assert.equal(await help.getByText(l(`${tab}Purpose`), { exact: true }).isVisible(), false);
+                await help.locator('summary').tap();
                 await help.getByText(l(`${tab}Purpose`), { exact: true }).waitFor();
                 assert.equal(await help.locator('li').count(), 3);
                 for (const key of [`${tab}Step1`, `${tab}Step2`, `${tab}Step3`, `${tab}Example`, 'saveHelp', 'discussHelp', 'exportHelp', 'undoHelp']) {
@@ -406,7 +410,7 @@ for (const locale of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
                     assert.ok(await help.getByText(l(key), { exact: key !== `${tab}Example` }).isVisible());
                 }
                 await help.locator('summary').tap();
-                assert.ok(await help.getByText(l(`${tab}Purpose`), { exact: true }).isVisible());
+                assert.equal(await help.getByText(l(`${tab}Purpose`), { exact: true }).isVisible(), false);
                 assert.equal(await help.locator('li').first().isVisible(), false);
                 await help.locator('summary').tap();
                 assert.ok(await help.locator('li').first().isVisible());
@@ -615,10 +619,15 @@ for (const width of [320, 1440]) {
             await dialog.getByRole('button', { name: l('reloadPersonal'), exact: true }).waitFor();
             control.failPersonal = false;
             await dialog.getByRole('button', { name: l('reloadPersonal'), exact: true }).click();
+            const help = dialog.locator('details').filter({ has: page.getByText(l('personalHelp'), { exact: true }) });
+            assert.equal(await help.getByText(l('personalHelp'), { exact: true }).isVisible(), false);
+            await help.locator('summary').click();
+            assert.ok(await help.getByText(l('personalHelp'), { exact: true }).isVisible());
+            await help.locator('summary').click();
             await dialog.getByLabel(l('chooseContent'), { exact: true }).selectOption('cards:card1');
             await dialog.getByLabel(l('reviewTransfer'), { exact: true }).fill('Testo scelto e rivisto');
             assert.equal(control.requests.filter(r => r.path.endsWith('/personal') && r.method === 'POST').length, 0);
-            assert.match(await dialog.locator('details').innerText(), /Annotazione originale/);
+            assert.match(await dialog.locator('details').filter({ has: page.getByText(l('resultPreview'), { exact: true }) }).innerText(), /Annotazione originale/);
             control.personal.notebook.notes = 'Annotazione originale aggiornata';
             await dialog.getByRole('button', { name: l('savePersonal'), exact: true }).click();
             await dialog.getByText(l('personalConflict'), { exact: false }).waitFor();
@@ -687,7 +696,7 @@ for (const width of [320, 1440]) {
             await page.getByRole('button', { name: chatLayoutLabel('it', 'options'), exact: true }).click();
             const menu = page.locator('.chat-options:popover-open');
             const tools = menu.getByRole('button', { name: visualLabel('it', 'open'), exact: true });
-            assert.equal((await tools.innerText()).trim(), 'Strumenti');
+            assert.equal((await tools.innerText()).trim(), 'Tools');
             assert.ok((await menu.locator('button').first().getAttribute('class')).startsWith(await tools.getAttribute('class')), 'same row styling as adjacent menu entries');
             await tools.focus();
             const tooltip = page.locator('[data-radix-popper-content-wrapper]').filter({ has: page.getByRole('tooltip', { name: visualLabel('it', 'open'), exact: true }) });

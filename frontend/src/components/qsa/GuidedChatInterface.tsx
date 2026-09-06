@@ -1497,7 +1497,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     </button>}
                 </div>
                 <Tooltip content={visualLabel(activeLocale, 'open')}><button type="button" className={messageActionClass} aria-label={visualLabel(activeLocale, 'open')} onClick={() => { close(); setVisualRequest({ tab: 'board', nonce: Date.now() }); }}>
-                    <LayoutList className="h-4 w-4 shrink-0" aria-hidden="true" />{t('profile.tab.tools')}
+                    <LayoutList className="h-4 w-4 shrink-0" aria-hidden="true" />{visualLabel(activeLocale, 'tools')}
                 </button></Tooltip>
                 {currentPhase !== FIXED_CONCLUSION_ID && <>
                     <p className="px-2 text-sm font-semibold text-slate-700">{t('responseLength.label')}</p>
