@@ -281,6 +281,22 @@ class AIService:
             return f"{system_prompt}\n\n/no_think"
         return system_prompt
 
+    def _apply_ollama_thinking_directive(self, system_prompt: str) -> str:
+        # Ollama separates thinking from content natively. Asking it to print
+        # <think> tags again can make models quote/nest tags or repeat a plan in
+        # the answer (Nemotron Cascade). Keep the UI contract in the transport.
+        directive = (
+            "[THINKING] Use only the model's native thinking channel for internal reasoning. "
+            "The content channel must contain only the final student-facing answer. "
+            "Do not reproduce your reasoning, plans, instructions, thinking tags, or "
+            "Reasoning/Answer headings in the content channel."
+        )
+        system_prompt = re.sub(
+            r"\[THINKING\].*?(?=\n\s*\n|\n\[[A-Z_ ]+\]|$)",
+            lambda _: directive, system_prompt, flags=re.DOTALL,
+        )
+        return self._apply_no_think(system_prompt)
+
     def _ollama_base(self) -> str:
         return (self.config.get('ollama_ip') or 'http://localhost:11434').rstrip('/')
 
@@ -744,7 +760,7 @@ class AIService:
 
     def _call_ollama(self, user_message, system_prompt, model, max_tokens: int = 8000, history=None, json_mode: bool | None = None):
         base_url = (self._get_api_key('ollama_ip') or "http://localhost:11434").rstrip('/')
-        system_prompt = self._apply_no_think(system_prompt)
+        system_prompt = self._apply_ollama_thinking_directive(system_prompt)
         messages = [{"role": "system", "content": system_prompt}]
         messages.extend(self._normalize_history(history))
         messages.append({"role": "user", "content": user_message})
@@ -778,7 +794,7 @@ class AIService:
         # estrai eventuali tag <think> inlineati nel contenuto (fallback model-agnostico).
         from .chat_logic import split_thinking
         extracted, content = split_thinking(message.get("content", "") or "")
-        thinking = message.get("thinking") or extracted
+        thinking = "\n\n".join(part for part in (message.get("thinking"), extracted) if part)
         self.last_thinking = (thinking or "").strip() or None
         return content
 
@@ -947,7 +963,7 @@ class AIService:
 
     def _stream_ollama(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
         base_url = (self._get_api_key('ollama_ip') or "http://localhost:11434").rstrip('/')
-        system_prompt = self._apply_no_think(system_prompt)
+        system_prompt = self._apply_ollama_thinking_directive(system_prompt)
         messages = [{"role": "system", "content": system_prompt}]
         messages.extend(self._normalize_history(history))
         messages.append({"role": "user", "content": user_message})
