@@ -334,6 +334,19 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         components["journey_coverage"] = coverage
         if evidence:
             system_prompt_final += "\n\n[JOURNEY EVIDENCE]\nChronological evidence; later student corrections supersede earlier statements.\n" + evidence
+        # Il taccuino e il Portfolio sono gia' nell'envelope, ma finora servivano
+        # solo a colorire il tono: la sintesi chiudeva sul metodo di studio e
+        # lasciava fuori il perche'. QSA, QSAr e QPCC non arrivano mai alla
+        # prospettiva di vita e professione, che vive solo in QAP, ZTPI,
+        # SAVICKAS e nell'area 5 del QPCS.
+        system_prompt_final += (
+            "\n\n[PERSPECTIVE] Close on the student's own horizon, not only on method. "
+            "Take ONE thread that actually came up in this session and connect it to the "
+            "current goal in their Notebook and to what the Portfolio shows they are "
+            "working on. One connection, in their own words, not a list. Do not invent a "
+            "future they have not mentioned: if nothing in the session touches it, say so "
+            "in a line and stay with what did come up."
+        )
     elif include_history and getattr(request, "use_phase_prompt", False):
         # Entering a step re-anchors the model on the analysis and fills the
         # verbatim window with it; the ledger keeps the student's own answers and

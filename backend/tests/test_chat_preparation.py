@@ -9,6 +9,7 @@ from backend import models, schemas
 from backend.ai_service import AIService
 from backend.api_models import ChatRequest
 from backend.chat_preparation import prepare_chat_turn
+from backend.journey_context import SYNTHESIS_STEPS
 from backend.model_context import context_profile, fit_context
 from backend.prompt_audit import build_prompt_audit, run_prompt_audit_live
 from backend.prompt_config import ALL_CONFIG_TEXT_DEFINITIONS
@@ -114,6 +115,42 @@ def test_live_audit_fallback_receives_original_history(monkeypatch, tmp_path):
         assert result['resolved']['model'] == 'large'
         assert result['resolved']['context_budget']['history_messages_dropped'] == 0
         assert 'EARLY_EVIDENCE' in result['envelope']['history'][0]['content']
+
+
+def test_only_the_synthesis_opens_on_life_and_work():
+    """QSA, QSAr e QPCC chiudevano sul metodo di studio e basta: la prospettiva
+    di vita e professione viveva solo in QAP, ZTPI, SAVICKAS e nell'area 5 del
+    QPCS. Taccuino e Portfolio erano gia' nell'envelope, ma nessuno chiedeva di
+    usarli per collegare un filo al perche' dello studente."""
+    for qtype in ("QSA", "QSAr", "QPCS", "QPCC", "QAP", "ZTPI", "SAVICKAS", "IDEA"):
+        _ensure_guided_steps(qtype)
+    db = _TestSession()
+    try:
+        for definition in ALL_CONFIG_TEXT_DEFINITIONS:
+            if not db.query(models.Config).filter_by(key=definition["key"]).first():
+                db.add(models.Config(key=definition["key"], value=definition["default"]))
+        db.flush()
+        ai = AIService(db)
+        ai.config.update(active_provider="ollama", model_name="test-local")
+        carried = set()
+        for step in db.query(models.GuidedStep).all():
+            request = ChatRequest(questionnaire_type=step.questionnaire_type, phase=step.id,
+                                  mode=step.system_prompt_mode, use_phase_prompt=True, language="it")
+            prepared = prepare_chat_turn(db, ai, request, "perspective", {},
+                                         include_retrieval=False, include_history=False,
+                                         create_anonymous_code=False)
+            is_synthesis = step.id in SYNTHESIS_STEPS or step.system_prompt_mode.endswith("-summary")
+            assert ("[PERSPECTIVE]" in prepared.system_prompt_final) == is_synthesis, step.id
+            if is_synthesis:
+                carried.add(step.id)
+        # La chiusura di ogni strumento deve arrivarci: nessuno resta sul metodo.
+        # QPCC e QAP portano gli id di fabbrica; in produzione le stesse chiusure
+        # si chiamano `qpcc-sintesi`/`qap-sintesi` e rientrano per il suffisso
+        # `-summary` del loro mode, non per l'id.
+        assert {"sl-synthesis", "qsar-synthesis", "qpcs-sintesi", "qpcc-factors",
+                "qap-factors", "ztpi-btp", "savickas-final", "idea-synthesis"} <= carried
+    finally:
+        db.close()
 
 
 def test_invalid_phase_is_preview_only():
