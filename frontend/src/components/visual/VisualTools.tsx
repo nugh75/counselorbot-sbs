@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowRight, Columns3, Download, LayoutList, Layers, MessageSquare, Plus, RotateCcw, Save, Trash2, Undo2, X } from 'lucide-react';
+import { ArrowRight, BookOpen, Columns3, Download, LayoutList, Layers, MessageSquare, Plus, RotateCcw, Save, Trash2, Undo2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { apiFetch } from '@/lib/auth';
 import { normalizeRecommendationCatalog, type RecommendationCatalog } from '@/lib/recommendations';
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import { emptyWorkspace, removeCriterion, removeOption, setCell, workspaceText, type ActionStage, type CardBucket, type SavedWorkspace, type VisualWorkspace } from '@/lib/visual-tools';
+import { VisualPersonalTransfer } from './VisualPersonalTransfer';
 
 type Tab = 'board' | 'comparison' | 'cards';
 export type VisualToolsRequest = { tab: Tab; nonce: number };
@@ -35,6 +36,7 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
     const l = (key: string) => visualLabel(locale, key);
     const endpoint = `/api/session/${encodeURIComponent(sessionId)}/visual-tools`;
     const [open, setOpen] = useState(false);
+    const [personalOpen, setPersonalOpen] = useState(false);
     const [tab, setTab] = useState<Tab>('board');
     const [helpOpen, setHelpOpen] = useState<Record<Tab, boolean>>({ board: true, comparison: true, cards: true });
     const [saved, setSaved] = useState<SavedWorkspace>({ revision: 0, workspace: emptyWorkspace() });
@@ -125,21 +127,22 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
         return () => { document.body.style.overflow = previous; document.removeEventListener('keydown', keyboard); opener.current?.focus({ preventScroll: true }); };
     }, [open]);
 
-    const save = async (): Promise<boolean> => {
-        if (!loaded || busy) return false;
-        if (work.actions.some(a => !a.title.trim()) || work.cards.some(c => !c.text.trim()) || work.comparison.options.some(o => !o.title.trim()) || work.comparison.criteria.some(c => !c.label.trim())) { setIssue('requiredFields'); return false; }
+    const save = async (next = work): Promise<SavedWorkspace | null> => {
+        if (!loaded || busy) return null;
+        if (next.actions.some(a => !a.title.trim()) || next.cards.some(c => !c.text.trim()) || next.comparison.options.some(o => !o.title.trim()) || next.comparison.criteria.some(c => !c.label.trim())) { setIssue('requiredFields'); return null; }
         for (const field of dialog.current?.querySelectorAll<HTMLInputElement>('[data-workspace-field]') ?? []) {
-            if (!field.reportValidity()) return false;
+            if (!field.reportValidity()) return null;
         }
-        if (!dirty) return true;
+        if (next === work && !dirty) return saved;
         setBusy(true); setIssue('');
         try {
             const response = await apiFetch(endpoint, { method: 'PUT', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ revision: saved.revision, workspace: work }), signal: AbortSignal.timeout(15000) });
-            if (!response.ok) { setIssue(response.status === 409 ? 'conflict' : 'saveError'); return false; }
+                body: JSON.stringify({ revision: saved.revision, workspace: next }), signal: AbortSignal.timeout(15000) });
+            if (!response.ok) { setIssue(response.status === 409 ? 'conflict' : 'saveError'); return null; }
             const result: SavedWorkspace = await response.json();
-            setSaved(result); setWork(result.workspace); return true;
-        } catch { setIssue('saveError'); return false; }
+            if (next !== work) setHistory(previous => [...previous.slice(-29), work]);
+            setSaved(result); setWork(result.workspace); return result;
+        } catch { setIssue('saveError'); return null; }
         finally { setBusy(false); }
     };
     const download = (blob: Blob, name: string) => {
@@ -190,15 +193,15 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
                     </div>
                     <div role="tablist" aria-label={l('title')} className="mt-3 flex flex-wrap gap-1">
                         {tabs.map((key, index) => { const Icon = [LayoutList, Columns3, Layers][index]; return <Tooltip key={key} content={l(key)}><Button type="button" role="tab" aria-label={l(key)} id={`${id}-${key}`} aria-controls={`${id}-panel`} aria-selected={tab === key} tabIndex={tab === key ? 0 : -1}
-                            variant={tab === key ? 'primary' : 'secondary'} className={buttonClass} onClick={() => setTab(key)} onKeyDown={event => {
+                            variant={tab === key ? 'primary' : 'secondary'} className={buttonClass} onClick={() => { setPersonalOpen(false); setTab(key); }} onKeyDown={event => {
                                 if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
                                 event.preventDefault();
                                 const next = event.key === 'Home' ? 0 : event.key === 'End' ? 2 : (index + (event.key === 'ArrowLeft' ? 2 : 1)) % 3;
-                                setTab(tabs[next]); document.getElementById(`${id}-${tabs[next]}`)?.focus();
+                                setPersonalOpen(false); setTab(tabs[next]); document.getElementById(`${id}-${tabs[next]}`)?.focus();
                             }}><Icon className="h-4 w-4 shrink-0" aria-hidden="true" /></Button></Tooltip>; })}
                     </div>
                 </header>
-                <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4" id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-${tab}`}>
+                <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4" id={`${id}-panel`} role={personalOpen ? "region" : "tabpanel"} aria-label={personalOpen ? l('personalLinks') : undefined} aria-labelledby={personalOpen ? undefined : `${id}-${tab}`}>
                     {issue && <div role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
                         <p>{l(issue)}</p>
                         <div className="mt-2 flex flex-wrap gap-2">
@@ -206,7 +209,7 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
                             {loaded && <Tooltip content={l('copyDownload')}><Button aria-label={l('copyDownload')} type="button" variant="secondary" className={buttonClass} onClick={() => download(new Blob([workspaceText(work, l)], { type: 'text/plain;charset=utf-8' }), 'counselorbot_visual_draft.txt')}><Download className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
                         </div>
                     </div>}
-                    {!loaded ? <p role="status" className="text-slate-600">{l(busy ? 'loading' : 'loadError')}</p> : <fieldset disabled={busy} className="min-w-0 space-y-4">
+                    {personalOpen && loaded ? <VisualPersonalTransfer sessionId={sessionId} locale={locale} work={work} saveWorkspace={save} onClose={() => { setPersonalOpen(false); window.requestAnimationFrame(() => document.getElementById(`${id}-personal`)?.focus()); }} /> : !loaded ? <p role="status" className="text-slate-600">{l(busy ? 'loading' : 'loadError')}</p> : <fieldset disabled={busy} className="min-w-0 space-y-4">
                         <section aria-label={l('howTo')} className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm leading-relaxed text-slate-800">
                             <h3 className="font-semibold">{l(tab)}</h3>
                             <p className="mt-1">{l(`${tab}Purpose`)}</p>
@@ -314,10 +317,11 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
                 <footer className="shrink-0 space-y-2 border-t border-slate-200 bg-slate-50 p-3">
                     <p role="status" className="text-sm text-slate-600">{l(busy ? 'saving' : dirty ? 'unsaved' : loaded ? 'saved' : 'loading')}</p>
                     <div className="flex flex-wrap gap-2">
-                        <Tooltip content={l('saveHelp')} side="top"><Button aria-label={l('save')} type="button" className={buttonClass} disabled={!loaded || busy || !dirty} onClick={() => void save()}><Save className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                        <Tooltip content={l('personalLinks')} side="top"><Button id={`${id}-personal`} aria-label={l('personalLinks')} aria-expanded={personalOpen} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy} onClick={() => setPersonalOpen(value => !value)}><BookOpen className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                        {!personalOpen && <><Tooltip content={l('saveHelp')} side="top"><Button aria-label={l('save')} type="button" className={buttonClass} disabled={!loaded || busy || !dirty} onClick={() => void save()}><Save className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                         <Tooltip content={l('undoHelp')} side="top"><Button type="button" variant="secondary" aria-label={l('undo')} className={buttonClass} disabled={busy || !history.length} onClick={() => { const previous = history[history.length - 1]; if (previous) { setWork(previous); setHistory(history.slice(0, -1)); } }}><Undo2 className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                         <Tooltip content={l('exportHelp')} side="top"><Button aria-label={l('export')} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork} onClick={() => void exportPdf()}><Download className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
-                        {onDiscuss && <Tooltip content={l('discussHelp')} side="top"><Button aria-label={l('discuss')} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork} onClick={() => void discuss()}><MessageSquare className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
+                        {onDiscuss && <Tooltip content={l('discussHelp')} side="top"><Button aria-label={l('discuss')} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork} onClick={() => void discuss()}><MessageSquare className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}</>}
                     </div>
                 </footer>
             </section>
