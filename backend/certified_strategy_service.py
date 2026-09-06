@@ -25,35 +25,12 @@ from .memory_embeddings import memory_embedder
 MAX_CERTIFIED_CONTEXT_CHARS = 1610
 
 _SIDEBAR_INSTRUCTION = {
-    "it": (
-        "Le strategie pertinenti sono gia' visibili nel pannello Raccomandazioni. "
-        "Non ripetere i nomi delle strategie nella risposta: applicane i principi in modo "
-        "naturale e concreto, senza parlare del pannello."
-    ),
-    "en": (
-        "Relevant strategies are already visible in the Recommendations panel. "
-        "Do not repeat strategy names in the response: apply their principles naturally "
-        "and concretely without mentioning the panel."
-    ),
-    "es": (
-        "Las estrategias pertinentes ya aparecen en el panel de Recomendaciones. "
-        "No repitas sus nombres en la respuesta: aplica sus principios de forma natural "
-        "y concreta sin mencionar el panel."
-    ),
-    "fr": (
-        "Les stratégies pertinentes figurent déjà dans le panneau Recommandations. "
-        "Ne répète pas leur nom dans la réponse : applique leurs principes de façon "
-        "naturelle et concrète sans mentionner le panneau."
-    ),
-    "de": (
-        "Passende Strategien sind bereits im Bereich Empfehlungen sichtbar. Wiederhole "
-        "ihre Namen nicht in der Antwort: Wende ihre Grundsätze natürlich und konkret an, "
-        "ohne den Bereich zu erwähnen."
-    ),
-    "sv": (
-        "Relevanta strategier syns redan i panelen Rekommendationer. Upprepa inte deras "
-        "namn i svaret: tillämpa principerna naturligt och konkret utan att nämna panelen."
-    ),
+    "it": "Catalogo autorizzato: scegli solo strategie effettivamente proposte nella risposta. Nomina una volta la strategia scelta e collegala alla situazione dello studente. Solo le scelte appariranno nel pannello dopo la risposta; non parlare del pannello.",
+    "en": "Approved catalogue: select only strategies actually proposed in the reply. Name the selected strategy once and connect it to the student’s situation. Only selected items appear in the panel after the reply; do not discuss the panel.",
+    "es": "Catálogo aprobado: selecciona solo estrategias propuestas en la respuesta. Nombra una vez la elegida y relaciónala con la situación del estudiante. Solo las elegidas aparecerán en el panel después; no hables del panel.",
+    "fr": "Catalogue approuvé : sélectionne seulement les stratégies proposées dans la réponse. Nomme une fois la stratégie choisie et relie-la à la situation de l’étudiant. Seules les stratégies choisies apparaîtront ensuite dans le panneau ; ne parle pas du panneau.",
+    "de": "Geprüfter Katalog: Wähle nur im Antworttext vorgeschlagene Strategien. Nenne die gewählte Strategie einmal und beziehe sie auf die Situation des Studierenden. Nur gewählte Einträge erscheinen danach im Bereich Empfehlungen; erwähne diesen Bereich nicht.",
+    "sv": "Godkänd katalog: välj bara strategier som föreslås i svaret. Nämn den valda strategin en gång och koppla den till studentens situation. Bara valda poster visas i panelen efter svaret; tala inte om panelen."
 }
 
 _QSA_INVERTED_CODES = {"C3", "C6", "A1", "A4", "A5", "A7"}
