@@ -34,7 +34,7 @@ def test_all_steps_and_languages_use_identical_runtime_and_audit_preparation():
                 return ai
         steps = db.query(models.GuidedStep).all()
         # Existing installations may have additional admin-defined interview steps.
-        assert len(steps) == 53
+        assert len(steps) == 62
         for step in steps:
             for lang in ("it", "en", "es", "fr", "de", "sv"):
                 for length in ("short", "medium", "long"):
@@ -144,11 +144,9 @@ def test_only_the_synthesis_opens_on_life_and_work():
             if is_synthesis:
                 carried.add(step.id)
         # La chiusura di ogni strumento deve arrivarci: nessuno resta sul metodo.
-        # QPCC e QAP portano gli id di fabbrica; in produzione le stesse chiusure
-        # si chiamano `qpcc-sintesi`/`qap-sintesi` e rientrano per il suffisso
-        # `-summary` del loro mode, non per l'id.
-        assert {"sl-synthesis", "qsar-synthesis", "qpcs-sintesi", "qpcc-factors",
-                "qap-factors", "ztpi-btp", "savickas-final", "idea-synthesis"} <= carried
+        # QPCC e QAP hanno le stesse sintesi nei default e in produzione.
+        assert {"sl-synthesis", "qsar-synthesis", "qpcs-sintesi", "qpcc-sintesi",
+                "qap-sintesi", "ztpi-btp", "savickas-final", "idea-synthesis"} <= carried
     finally:
         db.close()
 
@@ -160,3 +158,21 @@ def test_invalid_phase_is_preview_only():
         with pytest.raises(HTTPException) as exc:
             run_prompt_audit_live(db, payload)
         assert exc.value.status_code == 400
+
+
+def test_deliberate_compact_profile_keeps_removal_evidence_without_capacity_warning(monkeypatch):
+    import backend.model_context as audit
+    original = audit.fit_context
+    dropped = [0]
+    def compact_fit(*args, **kwargs):
+        system, message, history, report = original(*args, **kwargs)
+        return system, message, history, {**report, 'compact': True, 'removed': ['optional-background'], 'history_messages_dropped': dropped[0]}
+    monkeypatch.setattr(audit, 'fit_context', compact_fit)
+    _ensure_guided_steps('QSA')
+    with _TestSession() as db:
+        result = build_prompt_audit(db, schemas.PromptAuditRequest(questionnaire_type='QSA', phase='intro', mode='intro', include_knowledge=False))
+        assert not any(w['code'] == 'context_reduced' for w in result['warnings'])
+        assert result['resolved']['context_budget']['removed'] == ['optional-background']
+        dropped[0] = 1
+        reduced = build_prompt_audit(db, schemas.PromptAuditRequest(questionnaire_type='QSA', phase='intro', mode='intro', include_knowledge=False))
+        assert any(w['code'] == 'context_reduced' for w in reduced['warnings'])

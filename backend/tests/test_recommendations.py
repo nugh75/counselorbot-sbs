@@ -164,7 +164,7 @@ def test_list_for_session_orders_by_turn():
 def test_list_for_session_empty_session():
     db = _TestSession()
     result = list_for_session(db, session_id=f"{PREFIX}-nope", username="stud")
-    assert result == {"reading": [], "strategy": []}
+    assert result == {"reading": [], "strategy": [], "advice": []}
     db.close()
 
 
@@ -185,3 +185,34 @@ def test_same_session_id_keeps_each_students_recommendations_separate():
         db, session_id=sid, username="alice", recommendation_type="reading",
     ) == {"same-book"}
     db.close()
+
+
+def test_question_close_reopen_and_history_are_owned_and_persistent():
+    from backend.recommendation_service import set_state, conversation_context
+    sid = f'{PREFIX}-question'
+    with _TestSession() as db:
+        payload = {'slug': 'question-one', 'kind': 'question', 'name': 'Quale episodio ti viene in mente?'}
+        record(db, session_id=sid, username='alice', recommendation_type='advice', payloads=[payload])
+        assert set_state(db, session_id=sid, username='bob', recommendation_type='advice', slug='question-one', status='closed') is None
+        set_state(db, session_id=sid, username='alice', recommendation_type='advice', slug='question-one', status='closed')
+        record(db, session_id=sid, username='alice', recommendation_type='advice', payloads=[payload])
+        catalog = list_for_session(db, session_id=sid, username='alice')
+        assert len(catalog['advice']) == 1 and catalog['advice'][0]['status'] == 'closed'
+        context = conversation_context(db, session_id=sid, username='alice', message='Altro tema', language='it')
+        assert 'closed' in context and payload['name'] in context
+        set_state(db, session_id=sid, username='alice', recommendation_type='advice', slug='question-one', status='proposed')
+        assert list_for_session(db, session_id=sid, username='alice')['advice'][0]['status'] == 'proposed'
+
+
+def test_note_context_is_bounded_but_an_explicit_old_question_can_return():
+    from backend.recommendation_service import conversation_context
+    sid = f'{PREFIX}-bounded'
+    with _TestSession() as db:
+        for index in range(15):
+            record(db, session_id=sid, username='alice', recommendation_type='advice',
+                payloads=[{'slug': f'n{index}', 'kind': 'question', 'name': f'Domanda numero {index}?'}], turn_index=index)
+        context = conversation_context(db, session_id=sid, username='alice', message='altro', language='it')
+        assert 'Domanda numero 0?' not in context and 'Domanda numero 14?' in context
+        reopened = conversation_context(db, session_id=sid, username='alice', message='Domanda numero 0?', language='it')
+        assert 'Domanda numero 0?' in reopened
+        assert len(list_for_session(db, session_id=sid, username='alice')['advice']) == 15

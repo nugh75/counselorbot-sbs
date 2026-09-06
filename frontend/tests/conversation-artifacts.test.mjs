@@ -28,6 +28,7 @@ async function fixture(width, phase = 'intro', options = {}) {
     const fixtureSpec = options.factor ? factorSpec : options.semantic ? semanticSpec : options.graph ? graphSpec : spec;
     const control = { failDiagram: false, failPatch: false, failRender: false, failExport: false, saved: fixtureName ? [{ source_text: reply, source_key: createHash('sha256').update(reply).digest('hex'), instruction: '', spec: fixtureSpec }] : [], requests: [], errors: [] };
     const catalog = {
+        advice: [{ slug: 'question-one', kind: 'question', name: 'Quale episodio ti viene in mente?', status: 'proposed' }, { slug: 'advice-one', kind: 'advice', name: 'Riserva dieci minuti al progetto.', status: 'proposed' }],
         reading: [{ slug: 'test-book', title: 'Libro per la prova', why: 'Collegato al metodo di studio.', synopsis: 'SINOSSI COMPLETA DEL LIBRO', where: 'https://example.invalid/libro', languages: ['it', 'en'], warning: 'AVVERTENZA DEL LIBRO', status: 'proposed' }],
         strategy: [{ slug: 'test-strategy', name: 'Recupero attivo', description: 'Chiudi il testo e scrivi tre concetti.', recommended_when: 'Quando vuoi verificare cosa ricordi.', status: 'proposed' }],
     };
@@ -43,7 +44,7 @@ async function fixture(width, phase = 'intro', options = {}) {
         if (url.pathname === '/api/auth/me') data = { authenticated: true, is_admin: false, username: 'fixture', name: 'Prova', groups: ['studenti'] };
         else if (url.pathname === '/api/counselors') data = [{ id: 1, slug: 'fixture', name: 'Counselor di prova', language: ['it'], suitable: true }, { id: 2, slug: 'second', name: 'Secondo counselor', language: ['it'], suitable: true }];
         else if (url.pathname === '/api/session/frozen/fixture') data = { session_id: 'fixture', questionnaire_type: 'QSA', current_phase: phase, counselor_id: 1, experience: 'standard', scores: { C1: 7 }, messages: [{ role: 'system', content: phase === 'intro' ? '--- Introduzione ---' : 'FINE PERCORSO' }, { role: 'user', content: 'Vorrei organizzarmi.' }, { role: 'assistant', content: reply }] };
-        else if (url.pathname === '/api/qsa/guided-ui-texts') data = { guided_steps: [{ id: 'intro', label: 'Introduzione', sort_order: 1, system_prompt_mode: 'qsa-intro' }], text_guided_conclusion: 'FINE PERCORSO' };
+        else if (url.pathname === '/api/qsa/guided-ui-texts') data = { guided_steps: [{ id: 'intro', label: 'Introduzione', sort_order: 1, system_prompt_mode: 'qsa-intro', suggested_questions: ['Mi riconosco soprattutto in…'] }], text_guided_conclusion: 'FINE PERCORSO' };
         else if (url.pathname === '/api/chat/stream') return route.fulfill({ contentType: 'text/event-stream', body: 'data: {"done":true,"response":"Proseguiamo."}\n\n' });
         else if (url.pathname === '/api/session/fixture/diagrams') data = control.saved;
         else if (url.pathname === '/api/session/fixture/recommendations') data = catalog;
@@ -506,3 +507,49 @@ for (const width of [390, 1440]) {
         } finally { await context.close(); }
     });
 }
+
+
+for (const width of [390, 1440]) {
+    test(`questions can close, survive resume and reopen at ${width}px`, async () => {
+        const { page, context, control } = await fixture(width);
+        const openNotes = async () => {
+            const panel = page.locator('#guided-recommendations-panel');
+            if (!await panel.isVisible()) {
+                await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
+                await page.getByRole('button', { name: 'Per te', exact: true }).click();
+            }
+            await panel.getByRole('tab', { name: /Consigli e domande/ }).click();
+            return panel;
+        };
+        try {
+            let panel = await openNotes();
+            control.failPatch = true;
+            await panel.getByRole('button', { name: 'Segna come chiusa', exact: true }).click();
+            await panel.getByRole('alert').waitFor();
+            assert.equal(await panel.getByText('Domanda aperta', { exact: true }).isVisible(), true);
+            control.failPatch = false;
+            await panel.getByRole('button', { name: 'Riprova', exact: true }).click();
+            await panel.getByText('Domanda chiusa', { exact: true }).waitFor();
+            await page.goto(`${origin}/?frozen=fixture`, { waitUntil: 'networkidle' });
+            panel = await openNotes();
+            await panel.getByText('Domanda chiusa', { exact: true }).waitFor();
+            await panel.getByRole('button', { name: 'Riapri la domanda', exact: true }).click();
+            await panel.getByText('Domanda aperta', { exact: true }).waitFor();
+            const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+            assert.equal(overflow, false);
+            await page.screenshot({ path: `/tmp/w4-notes-${width}.png`, fullPage: true });
+            assert.deepEqual(control.errors, []);
+        } finally { await context.close(); }
+    });
+}
+
+
+test('a response opening fills the composer without sending', async () => {
+    const { page, context, control } = await fixture(390);
+    try {
+        await page.locator('summary').filter({ hasText: /Domande/ }).click();
+        await page.getByRole('button', { name: 'Mi riconosco soprattutto in…', exact: true }).click();
+        assert.equal(await page.locator('#guided-composer').inputValue(), 'Mi riconosco soprattutto in ');
+        assert.equal(control.requests.some(request => request.path === '/api/chat/stream'), false);
+    } finally { await context.close(); }
+});

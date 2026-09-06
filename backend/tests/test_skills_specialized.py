@@ -279,8 +279,8 @@ def test_certified_strategy_frame_keeps_names_out_of_chat_prose():
         [{"id": "weekly-plan", "name": "Weekly plan", "description": "Choose three tasks."}],
         language="en",
     )
-    assert "Recommendations panel" in block
-    assert "Do not repeat strategy names" in block
+    assert "panel after the reply" in block
+    assert "Name the selected strategy once" in block
 
 
 def test_skill_instructions_are_english_only():

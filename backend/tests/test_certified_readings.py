@@ -422,7 +422,8 @@ def test_the_frame_speaks_the_language_of_the_turn():
         assert "Why: because it fits" in block
         assert "Approved catalogue" in block
         assert "Recommendations panel" in block
-        assert "Do not repeat titles or authors" in block
+        assert "Select only works you actually recommend" in block
+        assert "after the reply" in block
         # Il tag resta un marcatore per il motore, non una frase da tradurre.
         assert "[CERTIFIED_READINGS]" in block
         assert "Di cosa parla" not in block and "Perche'" not in block
@@ -431,7 +432,7 @@ def test_the_frame_speaks_the_language_of_the_turn():
             certified_reading_memory.retrieve(db, themes={"ansia-e-prestazione"}, language="it"), "it")
         assert "Perche': perche' si'" in italian
         assert "pannello Raccomandazioni" in italian
-        assert "Non ripetere titoli o autori" in italian
+        assert "Scegli solo quelle che consigli" in italian
     finally:
         db.query(models.CertifiedReading).delete()
         db.commit(); db.close()

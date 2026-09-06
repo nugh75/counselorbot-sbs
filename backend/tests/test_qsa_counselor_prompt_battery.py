@@ -437,6 +437,8 @@ def discover(token: str, qtype: str = "QSA") -> tuple[list[dict], list[dict]]:
     counselor_ids: list[Optional[int]] = []
     counselors: list[dict] = []
     for r in rows:
+        if any(w["code"] == "counselor_instrument_mismatch" for w in r.get("warnings", [])):
+            continue
         cid = r["counselor_id"]
         if cid not in counselor_ids:
             counselor_ids.append(cid)
@@ -505,6 +507,7 @@ def run_static_prompt_battery(token: str, steps: list[dict], counselors: list[di
     # warning riflettono lo scenario reale (non un missing_factor_scores fittizio).
     matrix = _post("/admin/prompt-audit/matrix",
                    {"questionnaire_type": "QSA", "language": LANG, "include_knowledge": False,
+                    "counselor_ids": [c["id"] for c in counselors],
                     "scores_context": build_scores_context(CANONICAL_PROFILE)},
                    token, timeout=120)
     warned = [r for r in matrix["rows"] if r["warnings"]]
