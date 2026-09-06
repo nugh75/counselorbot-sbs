@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
 import { BookOpen, Bot, ClipboardList, Compass, LayoutGrid, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, Users, type LucideIcon } from 'lucide-react';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -334,39 +335,44 @@ function HeaderMenu({
                             </div>
                             <ResumeLoadError entries={resumeEntries} />
                             {frozen.map((row) => (
-                                <Link
-                                    key={row.session_id}
-                                    href={resumeHref(row)}
-                                    className={itemClass}
-                                    onClick={(event) => {
-                                        event.preventDefault();
-                                        close();
-                                        resumeWithReload(resumeHref(row));
-                                    }}
-                                >
-                                    <RotateCcw className="h-4 w-4 shrink-0" />
-                                    <span className="truncate">{row.label || row.questionnaire_type}</span>
-                                </Link>
+                                <ResumeEntry key={row.session_id} target={{ kind: 'session', sessionId: row.session_id }} label={row.label || row.questionnaire_type}>
+                                    <Link
+                                        href={resumeHref(row)}
+                                        className={itemClass}
+                                        onClick={(event) => {
+                                            event.preventDefault();
+                                            close();
+                                            resumeWithReload(resumeHref(row));
+                                        }}
+                                    >
+                                        <RotateCcw className="h-4 w-4 shrink-0" />
+                                        <span className="truncate">{row.label || row.questionnaire_type}</span>
+                                    </Link>
+                                </ResumeEntry>
                             ))}
                             {localResume && (
-                                <Link
-                                    href={LOCAL_RESUME_HREF}
-                                    className={itemClass}
-                                    onClick={(event) => {
-                                        event.preventDefault();
-                                        close();
-                                        resumeWithReload(LOCAL_RESUME_HREF);
-                                    }}
-                                >
-                                    <RotateCcw className="h-4 w-4 shrink-0" />
-                                    <span className="truncate">{t('header.resume')} · {localResume.instrument}</span>
-                                </Link>
+                                <ResumeEntry target={{ kind: 'session', sessionId: localResume.sessionId }} label={`${t('header.resume')} · ${localResume.instrument}`}>
+                                    <Link
+                                        href={LOCAL_RESUME_HREF}
+                                        className={itemClass}
+                                        onClick={(event) => {
+                                            event.preventDefault();
+                                            close();
+                                            resumeWithReload(LOCAL_RESUME_HREF);
+                                        }}
+                                    >
+                                        <RotateCcw className="h-4 w-4 shrink-0" />
+                                        <span className="truncate">{t('header.resume')} · {localResume.instrument}</span>
+                                    </Link>
+                                </ResumeEntry>
                             )}
                             {pqblResume && (
-                                <Link href={PQBL_RESUME_HREF} className={itemClass} onClick={close}>
-                                    <RotateCcw className="h-4 w-4 shrink-0" />
-                                    <span className="truncate">{t('header.resume')} · {t('pqbl.card.badge')}</span>
-                                </Link>
+                                <ResumeEntry target={{ kind: 'pqbl' }} label={`${t('header.resume')} · ${t('pqbl.card.badge')}`}>
+                                    <Link href={PQBL_RESUME_HREF} className={itemClass} onClick={close}>
+                                        <RotateCcw className="h-4 w-4 shrink-0" />
+                                        <span className="truncate">{t('header.resume')} · {t('pqbl.card.badge')}</span>
+                                    </Link>
+                                </ResumeEntry>
                             )}
                         </div>
                     )}

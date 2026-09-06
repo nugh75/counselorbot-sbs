@@ -1,3 +1,4 @@
+const CHANGE_EVENT = 'pqbl-progress-change';
 const STORAGE_KEY = 'counselorbot_pqbl_progress_v1';
 
 function browserStorage(): Storage | null {
@@ -28,7 +29,8 @@ export function savePqblProgress(value: unknown, storage: Storage | null = brows
 export function subscribeToPqblProgress(onChange: () => void): () => void {
     if (typeof window === 'undefined') return () => {};
     window.addEventListener('storage', onChange);
-    return () => window.removeEventListener('storage', onChange);
+    window.addEventListener(CHANGE_EVENT, onChange);
+    return () => { window.removeEventListener('storage', onChange); window.removeEventListener(CHANGE_EVENT, onChange); };
 }
 
 // Attività pQBL da riprendere: c'è un progresso salvato e non è né l'inizio né
@@ -42,6 +44,7 @@ export function hasPqblProgress(storage: Storage | null = browserStorage()): boo
 export function clearPqblProgress(storage: Storage | null = browserStorage()): void {
     try {
         storage?.removeItem(STORAGE_KEY);
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event(CHANGE_EVENT));
     } catch {
         // Nothing else to do if storage is unavailable.
     }
