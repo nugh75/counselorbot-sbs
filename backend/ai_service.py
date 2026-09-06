@@ -909,6 +909,7 @@ class AIService:
         if stream_options:
             kwargs["stream_options"] = stream_options
         stream = client.chat.completions.create(**kwargs)
+        finish_reason = None
         try:
             for chunk in stream:
                 if isinstance(getattr(chunk, "model", None), str):
@@ -918,9 +919,9 @@ class AIService:
                     usage_dict = self._usage_to_dict(usage)
                     self.last_usage = usage_dict
                     yield {"type": "usage", "usage": usage_dict}
-                    continue
                 try:
                     delta = chunk.choices[0].delta
+                    finish_reason = getattr(chunk.choices[0], "finish_reason", None) or finish_reason
                 except (IndexError, AttributeError):
                     continue
                 # Reasoning / thinking: OpenRouter usa `reasoning`, altri `reasoning_content`.
@@ -934,6 +935,8 @@ class AIService:
             close = getattr(stream, "close", None)
             if close:
                 close()
+        if finish_reason == "length":
+            raise AIError("The model reached its output token limit before completing the response.")
 
     def _stream_openai(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
         api_key = self._get_api_key('api_key_openai')
@@ -986,6 +989,7 @@ class AIService:
         from .chat_logic import ThinkStreamSplitter
         splitter = ThinkStreamSplitter()
         reasoning_acc: list[str] = []
+        done_reason = None
         self.last_thinking = None
         with httpx.Client(timeout=httpx.Timeout(self._int_config("ai_timeout_seconds", 120, 10, 600), connect=10.0)) as client:
             with client.stream("POST", f"{base_url}/api/chat", json=payload) as response:
@@ -994,6 +998,7 @@ class AIService:
                     if not line:
                         continue
                     event = json.loads(line)
+                    done_reason = event.get("done_reason") or done_reason
                     if event.get("error"):
                         raise RuntimeError(event["error"])
                     msg = event.get("message", {})
@@ -1014,6 +1019,8 @@ class AIService:
                         reasoning_acc.append(item["text"])
                     yield item
         self.last_thinking = "".join(reasoning_acc).strip() or None
+        if done_reason == "length":
+            raise AIError("The model reached its output token limit before completing the response.")
 
     def _stream_llamacpp(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
         base_url = (self._get_api_key('llamacpp_url') or "http://localhost:8080").rstrip('/')

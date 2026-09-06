@@ -48,6 +48,7 @@ export async function streamChat(
     let buffer = '';
     let full = typeof payload.partial_response === 'string' ? payload.partial_response : '';
     let completed = false;
+    let incomplete = false;
     let reasoning = '';
     let sessionId: string | undefined;
     let conversationId: string | undefined;
@@ -72,7 +73,7 @@ export async function streamChat(
                 const json = line.slice(5).trim();
                 if (!json) continue;
 
-                let evt: { delta?: string; display?: string; reasoning?: string; done?: boolean; response?: string; session_id?: string; conversation_id?: string; strategy_ids?: string[]; response_id?: string; idea_revision_id?: number; sources?: string[]; recommendations?: RecommendationCatalog; error?: string };
+                let evt: { delta?: string; display?: string; reasoning?: string; done?: boolean; incomplete?: boolean; response?: string; session_id?: string; conversation_id?: string; strategy_ids?: string[]; response_id?: string; idea_revision_id?: number; sources?: string[]; recommendations?: RecommendationCatalog; error?: string };
                 try {
                     evt = JSON.parse(json);
                 } catch {
@@ -97,7 +98,9 @@ export async function streamChat(
                 }
                 if (evt.done) {
                     completed = true;
+                    incomplete = evt.incomplete === true;
                     if (typeof evt.response === 'string') full = evt.response;
+                    if (incomplete) onDelta(full);
                     sessionId = evt.session_id ?? sessionId;
                     conversationId = evt.conversation_id ?? conversationId;
                     strategyIds = evt.strategy_ids;
@@ -116,7 +119,7 @@ export async function streamChat(
         await reader.cancel().catch(() => {});
         reader.releaseLock();
     }
-    if (!completed) {
+    if (!completed || incomplete) {
         throw new IncompleteChatStreamError({ response: full, session_id: sessionId, conversation_id: conversationId });
     }
 

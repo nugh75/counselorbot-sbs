@@ -5,6 +5,24 @@ import { streamChat, IncompleteChatStreamError } from './chat-stream.ts';
 
 const event = (data: object) => `data: ${JSON.stringify(data)}\n\n`;
 
+test('a successful HTTP/SSE close with incomplete=true offers continuation from the final visible prefix', async (t) => {
+    t.mock.method(globalThis, 'fetch', async () => new Response(
+        event({ display: 'C6: potresti perdere' }) + event({
+            done: true, incomplete: true, response: 'C6: potresti perdere attenzione.',
+            session_id: 's1', conversation_id: 'c1',
+        }),
+    ));
+    const updates: string[] = [];
+    await assert.rejects(streamChat({}, text => updates.push(text)), (error: unknown) => {
+        assert.ok(error instanceof IncompleteChatStreamError);
+        assert.deepEqual(error.partial, {
+            response: 'C6: potresti perdere attenzione.', session_id: 's1', conversation_id: 'c1',
+        });
+        return true;
+    });
+    assert.equal(updates.at(-1), 'C6: potresti perdere attenzione.');
+});
+
 test('a closed stream without done preserves text and server session IDs', async (t) => {
     t.mock.method(globalThis, 'fetch', async () => new Response(
         event({ session_id: 's1', conversation_id: 'c1' }) + event({ display: 'Studia e' }),
