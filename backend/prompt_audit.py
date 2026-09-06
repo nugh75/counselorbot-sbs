@@ -320,7 +320,11 @@ def build_prompt_audit(
         warnings.append({"code": "context_capacity_exceeded", "message": str(exc)})
     if context_report.get("context_tokens") is None:
         warnings.append({"code": "unknown_context_capacity", "message": "No verified context window configured for this model."})
-    if context_report.get("history_messages_dropped") or context_report.get("removed"):
+    # Explicit compact profiles deliberately omit optional background. The report
+    # retains that evidence; only unplanned capacity reductions are warnings.
+    if context_report.get("history_messages_dropped") or (
+        context_report.get("removed") and not context_report.get("compact")
+    ):
         warnings.append({"code": "context_reduced", "message": "Optional theory or old history was removed to fit the configured model profile."})
     if components.get("journey_coverage") == "requires_reduction":
         warnings.append({"code": "journey_requires_reduction", "message": "Live synthesis will reduce the entire transcript; supply journey_context to reproduce that exact model input without model calls."})
