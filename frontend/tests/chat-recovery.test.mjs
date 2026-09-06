@@ -11,7 +11,7 @@ const event = data => `data: ${JSON.stringify(data)}\n\n`;
 async function fixture(width = 390, { initialError = false, experience = 'standard', incompleteDone = false } = {}) {
     const context = await browser.newContext({ viewport: { width, height: 844 }, reducedMotion: 'reduce' });
     const page = await context.newPage();
-    const control = { frozenError: initialError, streams: [], details: [], errors: [] };
+    const control = { deleted: false, deleteError: false, deletions: [], frozenError: initialError, streams: [], details: [], errors: [] };
     page.on('pageerror', error => control.errors.push(error.message));
     await page.addInitScript(() => {
         localStorage.setItem('cb_lang', 'it');
@@ -32,7 +32,14 @@ async function fixture(width = 390, { initialError = false, experience = 'standa
         else if (url.pathname === '/api/user/learner-profile') data = { profile: {} };
         else if (url.pathname === '/api/session/frozen') {
             if (control.frozenError) return route.fulfill({ status: 503, body: '{}' });
-            data = [{ ...snapshot, label: 'Sessione da ritrovare' }];
+            data = control.deleted ? [] : [{ ...snapshot, label: 'Sessione da ritrovare' }];
+        }
+        else if (url.pathname.startsWith('/api/session/frozen/') && request.method() === 'DELETE') {
+            control.deletions.push(url.pathname);
+            if (control.deleteError) return route.fulfill({ status: 503, body: '{}' });
+            if (url.pathname.endsWith('/recovery')) control.deleted = true;
+            else return route.fulfill({ status: 404, body: '{}' });
+            data = { status: 'deleted' };
         }
         else if (url.pathname === '/api/session/frozen/recovery') data = snapshot;
         else if (url.pathname === '/api/qsa/guided-ui-texts') data = { guided_steps: [{ id: 'intro', label: 'Introduzione', sort_order: 1, system_prompt_mode: 'qsa-intro' }] };
@@ -100,11 +107,11 @@ for (const initialError of [false, true]) {
             }
             await page.getByRole('button', { name: 'Riprendi una sessione', exact: true }).click();
             await page.getByText('Impossibile aggiornare le sessioni da riprendere.').waitFor();
-            if (!initialError) assert.equal(await page.getByRole('menuitem', { name: 'Sessione da ritrovare' }).count(), 1);
+            if (!initialError) assert.equal(await page.getByRole('menuitem', { name: 'Sessione da ritrovare', exact: true }).count(), 1);
             control.frozenError = false;
             await page.getByRole('button', { name: 'Riprova', exact: true }).click();
             await page.getByRole('button', { name: 'Riprova', exact: true }).waitFor({ state: 'hidden' });
-            assert.equal(await page.getByRole('menuitem', { name: 'Sessione da ritrovare' }).count(), 1);
+            assert.equal(await page.getByRole('menuitem', { name: 'Sessione da ritrovare', exact: true }).count(), 1);
             assert.deepEqual(control.details, []);
             assert.deepEqual(control.errors, []);
         } finally { await context.close(); }
@@ -155,7 +162,81 @@ test('mobile navigation exposes retry after frozen-session failure', async () =>
         await menu.getByText('Impossibile aggiornare le sessioni da riprendere.').waitFor();
         control.frozenError = false;
         await menu.getByRole('button', { name: 'Riprova', exact: true }).click();
-        await menu.getByRole('link', { name: 'Sessione da ritrovare' }).waitFor();
+        await menu.getByRole('link', { name: 'Sessione da ritrovare', exact: true }).waitFor();
+        assert.deepEqual(control.errors, []);
+    } finally { await context.close(); }
+});
+
+for (const surface of ['desktop', 'mobile', 'home']) {
+    test(`resume deletion confirms, handles errors and updates all entries on ${surface}`, async () => {
+        const { page, context, control } = await fixture(surface === 'mobile' ? 390 : 1440);
+        try {
+            await page.goto(`${origin}${surface === 'home' ? '/' : '/profilo/taccuino'}`, { waitUntil: 'networkidle' });
+            await page.evaluate(() => {
+                localStorage.setItem('counselorbot_resume', JSON.stringify({ instrument: 'QSA', sessionId: 'recovery', experience: 'standard', counselorId: 1 }));
+                localStorage.setItem('counselorbot_pqbl_progress_v1', JSON.stringify({ phase: 'activity' }));
+                dispatchEvent(new Event('storage'));
+            });
+            let list;
+            if (surface === 'desktop') {
+                await page.getByRole('button', { name: 'Riprendi una sessione', exact: true }).click();
+                list = page.getByRole('menu');
+            } else if (surface === 'mobile') {
+                await page.locator('button[aria-controls="mobile-menu"]').click();
+                list = page.locator('#mobile-menu');
+            } else list = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Riprendi una sessione', exact: true }) });
+            const remove = list.getByLabel('Elimina sessione: Sessione da ritrovare', { exact: true });
+            const box = await remove.boundingBox();
+            assert.ok(box.width >= 44 && box.height >= 44);
+            assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+            await page.screenshot({ path: `/tmp/resume-delete-${surface}.png` });
+            page.once('dialog', dialog => dialog.dismiss());
+            await remove.focus();
+            await page.keyboard.press('Enter');
+            assert.equal(control.deletions.length, 0);
+            control.deleteError = true;
+            page.once('dialog', dialog => dialog.accept());
+            await remove.click();
+            await list.getByRole('alert').getByText('Impossibile eliminare la sessione. Riprova.').waitFor();
+            assert.ok(await remove.isVisible());
+            assert.ok(await page.evaluate(() => localStorage.getItem('counselorbot_resume')));
+            control.deleteError = false;
+            page.once('dialog', dialog => dialog.accept());
+            await remove.click();
+            await remove.waitFor({ state: 'hidden' });
+            assert.equal(await page.evaluate(() => localStorage.getItem('counselorbot_resume')), null);
+            assert.equal(await list.getByText('Sessione da ritrovare', { exact: true }).count(), 0);
+            assert.equal(control.deletions.length, 2);
+            const pqbl = list.locator('button[aria-label^="Elimina sessione:"]');
+            assert.equal(await pqbl.count(), 1, 'the unrelated pQBL session remains');
+            page.once('dialog', dialog => dialog.accept());
+            await pqbl.click();
+            await pqbl.waitFor({ state: 'hidden' });
+            assert.equal(await page.evaluate(() => localStorage.getItem('counselorbot_pqbl_progress_v1')), null);
+            assert.equal(control.deletions.length, 2, 'local pQBL deletion does not call the server');
+            await page.reload({ waitUntil: 'networkidle' });
+            assert.equal(await page.getByRole('button', { name: 'Riprendi una sessione', exact: true }).count(), 0);
+            assert.deepEqual(control.errors, []);
+        } finally { await context.close(); }
+    });
+}
+
+test('a local-only resume point can be deleted when no server snapshot exists', async () => {
+    const { page, context, control } = await fixture(1440);
+    try {
+        await page.goto(`${origin}/profilo/taccuino`, { waitUntil: 'networkidle' });
+        await page.evaluate(() => {
+            localStorage.setItem('counselorbot_resume', JSON.stringify({ instrument: 'QAP', sessionId: 'local-only', experience: 'standard', counselorId: 1 }));
+            dispatchEvent(new Event('counselorbot-resume-change'));
+        });
+        await page.getByRole('button', { name: 'Riprendi una sessione', exact: true }).click();
+        const menu = page.getByRole('menu');
+        const remove = menu.locator('button[aria-label^="Elimina sessione:"]').last();
+        page.once('dialog', dialog => dialog.accept());
+        await remove.click();
+        await page.waitForFunction(() => localStorage.getItem('counselorbot_resume') === null);
+        assert.deepEqual(control.deletions, ['/api/session/frozen/local-only']);
+        assert.ok(await menu.getByText('Sessione da ritrovare', { exact: true }).isVisible());
         assert.deepEqual(control.errors, []);
     } finally { await context.close(); }
 });
