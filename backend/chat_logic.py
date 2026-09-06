@@ -2651,7 +2651,11 @@ def build_context_envelope(
         # history (deriva/lag di uno step). Per le modalità QPCS mettiamo la
         # direttiva dello step ANCHE nel turno utente (segnale attuale, in coda),
         # così il modello passa in modo netto alla nuova area.
-        if (getattr(request, "mode", "") or "").startswith("qpcs-") and effective_message:
+        # Idea (mode `idea-focus`) ha lo stesso lag, anzi peggiore: non avendo
+        # punteggi il turno utente resterebbe vuoto, e il modello risponde alla
+        # domanda ancora aperta dello step precedente mentre il turno porta già
+        # l'etichetta del nuovo.
+        if (getattr(request, "mode", "") or "").startswith(("qpcs-", "idea-")) and effective_message:
             full_message = (
                 f"{message_scores_context}\n\n{effective_message}".strip()
                 if message_scores_context
