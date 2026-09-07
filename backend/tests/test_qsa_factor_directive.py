@@ -504,6 +504,39 @@ def test_ztpi_score_profile_resolves_zone():
     assert "T1 (Passato Negativo): 5/9 = Vicino al profilo equilibrato" in out_close
 
 
+def test_ztpi_score_profile_marks_the_side_of_the_balanced_range():
+    # Lo step finale deve dire se un fattore sta sotto o sopra il profilo
+    # equilibrato: la direzione arriva risolta, cosi' i prompt non devono
+    # portarsi dietro le bande numeriche per farla ricalcolare al modello.
+    above = _apply_current_step_score_profile_directive("BASE", "ZTPI", "it", "- T1: 7/9", {"T1"}, include_advice=False)
+    assert "7/9 = Area di crescita [internal: above the balanced range]" in above
+    below = _apply_current_step_score_profile_directive("BASE", "ZTPI", "it", "- T5: 2/9", {"T5"}, include_advice=False)
+    assert "2/9 = Area di crescita [internal: below the balanced range]" in below
+    inside = _apply_current_step_score_profile_directive("BASE", "ZTPI", "it", "- T1: 3/9", {"T1"}, include_advice=False)
+    assert "[internal: inside the balanced range]" in inside
+    # La direzione e' materiale interno: il blocco deve dirlo.
+    assert "do not repeat it, and never name ranges" in above
+
+
+def test_ztpi_prompts_do_not_carry_the_bands_any_more():
+    # Le bande vivono in _ZTPI_BANDS e arrivano risolte nel blocco iniettato:
+    # ripeterle nei prompt significava dare al modello di che contraddirle.
+    from backend.prompt_config import (
+        DEFAULT_SYSTEM_PROMPT_ZTPI_BTP,
+        DEFAULT_SYSTEM_PROMPT_ZTPI_FACTOR,
+        DEFAULT_ZTPI_GUIDED_STEPS,
+    )
+
+    texts = [DEFAULT_SYSTEM_PROMPT_ZTPI_FACTOR, DEFAULT_SYSTEM_PROMPT_ZTPI_BTP]
+    texts += [step["prompt"] for step in DEFAULT_ZTPI_GUIDED_STEPS]
+    for text in texts:
+        assert "ideal 2-4" not in text, text[:80]
+        assert "DBTP references" not in text, text[:80]
+        assert "proportional conversion" not in text, text[:80]
+    assert "[CURRENT STEP SCORE PROFILE]" in DEFAULT_SYSTEM_PROMPT_ZTPI_FACTOR
+    assert "[CURRENT STEP SCORE PROFILE]" in DEFAULT_SYSTEM_PROMPT_ZTPI_BTP
+
+
 def test_ztpi_score_profile_scopes_to_allowed_codes():
     scores = "- T1: 7/9\n- T2: 6/9\n- T4: 2/9"
     out = _apply_current_step_score_profile_directive("BASE", "ZTPI", "it", scores, {"T4"}, include_advice=False)
