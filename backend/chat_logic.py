@@ -848,7 +848,16 @@ def _phase_factor_codes(db, phase: Optional[str]) -> set[str]:
     return _extract_factor_codes(step.prompt)
 
 
-def _guided_path_context(db, questionnaire_type: str, current_step_id: str | None, language: str) -> str:
+def _guided_path_context(db, questionnaire_type: str, current_step_id: str | None, language: str,
+                         full: bool = False) -> str:
+    """Navigazione del percorso guidato.
+
+    Di default solo la posizione (corrente, prossimo, quanti step) piu' le regole
+    di avanzamento: l'elenco completo occupava 1.2k char a ogni turno per servire
+    una domanda sul percorso che arriva raramente. `full=True` lo rimette, e lo
+    chiede chi sa che quel turno parla del percorso (step di intro, fase fuori
+    dagli step, domanda sulla piattaforma).
+    """
     qtype = (questionnaire_type or "").strip()
     if not qtype or qtype == IDEA_INSTRUMENT:
         return ""
@@ -862,6 +871,9 @@ def _guided_path_context(db, questionnaire_type: str, current_step_id: str | Non
         return ""
 
     current_index = next((i for i, step in enumerate(steps) if step.id == current_step_id), None)
+    # Fuori dagli step configurati (domande di riflessione, conclusione) la
+    # posizione non basta a orientarsi: li' l'elenco serve davvero.
+    full = full or current_index is None
     next_step_id = (
         steps[current_index + 1].id
         if current_index is not None and current_index + 1 < len(steps)
@@ -871,18 +883,20 @@ def _guided_path_context(db, questionnaire_type: str, current_step_id: str | Non
         "Guided path for this questionnaire. Use it only for navigation and orientation; "
         "do not analyse later-step content before the matching step starts.",
     ]
-    for step in steps:
-        marker = ""
-        if step.id == current_step_id:
-            marker = " (current)"
-        elif step.id == next_step_id:
-            marker = " (next)"
-        label = resolve_step_label(step, language or "it")
-        lines.append(f"- sort_order {step.sort_order}: {label} [id: {step.id}]{marker}")
+    if full:
+        for step in steps:
+            marker = ""
+            if step.id == current_step_id:
+                marker = " (current)"
+            elif step.id == next_step_id:
+                marker = " (next)"
+            label = resolve_step_label(step, language or "it")
+            lines.append(f"- sort_order {step.sort_order}: {label} [id: {step.id}]{marker}")
 
     if current_index is not None:
         current = steps[current_index]
-        lines.append(f"Current guided step: {resolve_step_label(current, language or 'it')} [id: {current.id}].")
+        position = f"Step {current_index + 1} of {len(steps)}. " if not full else ""
+        lines.append(f"{position}Current guided step: {resolve_step_label(current, language or 'it')} [id: {current.id}].")
         if current_index + 1 < len(steps):
             next_step = steps[current_index + 1]
             lines.append(f"Next guided step: {resolve_step_label(next_step, language or 'it')} [id: {next_step.id}].")
@@ -2598,7 +2612,14 @@ def build_context_envelope(
     if student_block and _component_enabled(component_flags, "metadata"):
         parts_system.append("[STUDENT]\n" + student_block)
 
-    guided_path = _guided_path_context(db, questionnaire_type, step_id or request.phase, language)
+    current_step = (
+        db.query(models.GuidedStep).filter(models.GuidedStep.id == (step_id or request.phase)).first()
+        if (step_id or request.phase) else None
+    )
+    guided_path = _guided_path_context(
+        db, questionnaire_type, step_id or request.phase, language,
+        full=_is_intro_step_mode(current_step.system_prompt_mode) if current_step else False,
+    )
     if components is not None:
         components["guided_path"] = guided_path if _component_enabled(component_flags, "metadata") else ""
     if guided_path and _component_enabled(component_flags, "metadata"):
