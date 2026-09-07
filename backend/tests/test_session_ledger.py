@@ -1,7 +1,7 @@
 """The student's answers and choices must outlive the verbatim history window."""
 import pytest
 
-from backend import models, session_ledger
+from backend import models, recommendation_service, session_ledger
 from backend.ai_service import AIService
 from backend.api_models import ChatRequest
 from backend.chat_preparation import prepare_chat_turn
@@ -58,24 +58,6 @@ def test_hidden_step_directives_are_not_the_student_speaking(db):
     _turn(db, student="", counselor="Ecco i tuoi fattori cognitivi.")
     ledger = session_ledger.build(db, session_id=SESSION, username=STUDENT)
     assert ledger["answers"] == []
-
-
-def test_a_question_walked_past_stays_open_and_an_answered_one_does_not(db):
-    _turn(db, student="dimmi di più", counselor="Riconosci questo schema: perdi il filo dopo dieci minuti?")
-    assert session_ledger.build(db, session_id=SESSION, username=STUDENT)["open_question"] == (
-        "Riconosci questo schema: perdi il filo dopo dieci minuti?"
-    )
-    _turn(db, student="", counselor="Analisi del prossimo step.", phase="affective")
-    assert "Riconosci questo schema" in session_ledger.build(db, session_id=SESSION, username=STUDENT)["open_question"]
-    _turn(db, student="sì, mi ci ritrovo", counselor="Allora partiamo da lì.")
-    assert session_ledger.build(db, session_id=SESSION, username=STUDENT)["open_question"] == ""
-
-
-def test_diagrams_are_not_mistaken_for_the_question(db):
-    _turn(db, student="fai uno schema", counselor=(
-        "Ecco lo schema.\n\n```diagram\n{\"type\":\"flow\",\"title\":\"Come mai?\",\"nodes\":[],\"edges\":[]}\n```\n"
-    ))
-    assert session_ledger.build(db, session_id=SESSION, username=STUDENT)["open_question"] == ""
 
 
 def _strategies(db, *pairs):
@@ -170,14 +152,6 @@ def test_a_refusal_is_not_reopened(db):
     assert "Never propose a refused item again" in block
 
 
-def test_an_overtaken_question_is_let_go(db):
-    _turn(db, student="dimmi di più", counselor="Riconosci questo schema?")
-    assert session_ledger.build(db, session_id=SESSION, username=STUDENT)["open_question"]
-    for _ in range(session_ledger.OPEN_QUESTION_MAX_AGE + 1):
-        _turn(db, student="", counselor="Analisi del prossimo step.")
-    assert session_ledger.build(db, session_id=SESSION, username=STUDENT)["open_question"] == ""
-
-
 def test_directives_appear_only_when_the_ledger_can_support_them(db):
     _turn(db, student="a casa mi distraggo", counselor="Capito.")
     block = session_ledger.block(db, session_id=SESSION, username=STUDENT)
@@ -198,6 +172,7 @@ def test_block_is_bounded_and_drops_the_oldest_answers_first(db):
         _turn(db, student=f"{index} " + "parola " * 60, counselor="ok")
     _turn(db, student=f"{session_ledger.MAX_ANSWERS - 1} " + "parola " * 60,
           counselor="E tu come la vedi?")
+    _note(db, 'q-open', text='E tu come la vedi?', step_id='cognitive', step_order=1, turn=6)
     block = session_ledger.block(db, session_id=SESSION, username=STUDENT)
     assert len(block) <= session_ledger.MAX_BLOCK_CHARS
     assert f"{session_ledger.MAX_ANSWERS - 1} parola" in block  # the most recent survives
@@ -249,19 +224,6 @@ def test_offline_preparation_stays_free_of_session_data(db):
     _turn(db, student="a casa mi distraggo", counselor="Capito.")
     audited = _prepared(db, include_history=False)
     assert "[SESSION LEDGER]" not in audited.system_prompt_final
-
-
-def test_closed_sidebar_question_is_not_reopened_by_the_ledger(db):
-    question = 'Quale episodio ti viene in mente?'
-    _turn(db, counselor=question)
-    db.add(models.RecommendationHistory(session_id=SESSION, username=STUDENT,
-        recommendation_type='advice', slug='closed-question',
-        payload={'kind': 'question', 'name': question, 'status': 'closed'}))
-    db.flush()
-    assert session_ledger.build(db, session_id=SESSION, username=STUDENT)['open_question'] == ''
-
-
-from backend import recommendation_service
 
 
 def _note(db, slug, *, text, step_id, step_order, turn, status='proposed', closed_by=None):
@@ -330,3 +292,24 @@ def test_questions_are_read_by_their_recorded_state(db):
     assert [item['text'] for item in buckets['open']] == ['Aperta?']
     assert [item['text'] for item in buckets['answered_in_talk']] == ['Gia risposta?']
     assert [item['text'] for item in buckets['left_behind']] == ['Rimasta indietro?']
+
+
+def test_the_three_fates_get_three_different_rules(db):
+    _note(db, 'q-open', text='Che cosa ti blocca?', step_id='cognitive', step_order=1, turn=4)
+    _note(db, 'q-talk', text='Ti pesa di piu il tempo o il metodo?', step_id='cognitive',
+          step_order=1, turn=2, status='closed', closed_by='conversation')
+    _note(db, 'q-gone', text='Quando un risultato ti delude, che cosa prevale?',
+          step_id='affective', step_order=2, turn=1, status='stale')
+    text = session_ledger.block(db, session_id=SESSION, username=STUDENT, step_id='cognitive')
+    assert 'Che cosa ti blocca?' in text and 'once' in text
+    assert 'Ti pesa di piu il tempo o il metodo?' in text
+    assert 'already answered those questions while talking' in text
+    assert 'Quando un risultato ti delude, che cosa prevale?' in text
+    assert '(2)' in text  # la fase da cui viene
+    assert 'only if the student goes back to it' in text
+
+
+def test_a_ledger_without_questions_says_nothing_about_them(db):
+    _turn(db, student="ok", counselor="Bene.")
+    text = session_ledger.block(db, session_id=SESSION, username=STUDENT, step_id='cognitive')
+    assert 'unanswered' not in text and 'while talking' not in text
