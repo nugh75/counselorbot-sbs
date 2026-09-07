@@ -233,3 +233,75 @@ def test_the_declared_advice_and_its_candidates_are_shown(db):
     _turn(db)
     text = _input(db, advice_ids=["C1"], candidate_ids=["C1", "A5"])
     assert "C1" in text and "A5" in text
+
+
+# --- evaluation ---
+def _config(db, key, value):
+    db.add(models.Config(key=key, value=value))
+    db.flush()
+
+
+def _preset(db, **kwargs):
+    fields = dict(name="guard", provider="ollama", model="qwen3.8:latest",
+                  disable_thinking=True, is_active=True)
+    fields.update(kwargs)
+    row = models.ModelPreset(**fields)
+    db.add(row)
+    db.flush()
+    return row
+
+
+def _refuse(**kwargs):
+    raise AssertionError("the model must not be called")
+
+
+def _evaluate(db, call, **kwargs):
+    params = dict(call=call, session_id=SESSION, username=STUDENT, questionnaire_type="QSA",
+                  step_id="cognitive", step_label="Strategie cognitive",
+                  step_prompt="Analizza i fattori.", language="it",
+                  advice_ids=[], candidate_ids=[], turn=_turn(db))
+    params.update(kwargs)
+    return thread_guard.evaluate(db, **params)
+
+
+def test_the_guard_is_off_until_it_is_turned_on(db):
+    _preset(db)
+    assert _evaluate(db, _refuse) == []
+
+
+def test_without_a_preset_nothing_runs(db):
+    _config(db, thread_guard.ENABLED_KEY, "true")
+    assert _evaluate(db, _refuse) == []
+
+
+def test_a_preset_pointing_nowhere_is_not_a_preset(db):
+    _config(db, thread_guard.ENABLED_KEY, "true")
+    _config(db, thread_guard.PRESET_KEY, "9999")
+    assert _evaluate(db, _refuse) == []
+
+
+def test_a_verdict_is_stored_and_returned(db):
+    _config(db, thread_guard.ENABLED_KEY, "true")
+    _config(db, thread_guard.PRESET_KEY, str(_preset(db).id))
+    seen = {}
+
+    def call(**kwargs):
+        seen.update(kwargs)
+        return _raw(question_fit=False, question_note="The question belonged to another step.")
+
+    assert _evaluate(db, call) == ["The question belonged to another step."]
+    assert seen["provider"] == "ollama" and seen["model"] == "qwen3.8:latest"
+    assert "Analizza i fattori." in seen["user_message"]
+    assert db.query(models.Log).filter(models.Log.action == thread_guard.ACTION).count() == 1
+
+
+@pytest.mark.parametrize("failure", [
+    lambda **kwargs: (_ for _ in ()).throw(TimeoutError("too slow")),
+    lambda **kwargs: (_ for _ in ()).throw(RuntimeError("provider down")),
+    lambda **kwargs: "the model felt chatty today",
+])
+def test_a_failing_judge_leaves_no_trace(db, failure):
+    _config(db, thread_guard.ENABLED_KEY, "true")
+    _config(db, thread_guard.PRESET_KEY, str(_preset(db).id))
+    assert _evaluate(db, failure) == []
+    assert db.query(models.Log).filter(models.Log.action == thread_guard.ACTION).count() == 0
