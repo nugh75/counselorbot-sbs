@@ -49,3 +49,116 @@ def test_followup_gets_only_selected_or_explicitly_reopened_material(db, monkeyp
     assert 'Chiudi il libro.' in context
     service.set_state(db, session_id='fixture', username='alice', recommendation_type='strategy', slug='active', status='selected')
     assert 'Recupero attivo' in service.conversation_context(db, **args, message='Come proseguo?')
+
+
+def _question(db, slug='note-q', turn=1, step_id='affective', step_order=2):
+    service.record(
+        db, session_id='fixture', username='alice', recommendation_type='advice',
+        payloads=[{'slug': slug, 'name': 'Che cosa cambieresti?', 'kind': 'question',
+                   'step_id': step_id, 'step_order': step_order}],
+        turn_index=turn,
+    )
+
+
+def _advice_item(db, slug='note-q'):
+    entries = service.list_for_session(db, session_id='fixture', username='alice')['advice']
+    return next(item for item in entries if item['slug'] == slug)
+
+
+def test_only_a_question_can_be_retired(db):
+    _question(db)
+    service.set_state(db, session_id='fixture', username='alice',
+                      recommendation_type='advice', slug='note-q', status='stale')
+    item = _advice_item(db)
+    assert item['status'] == 'stale'
+    assert item['step_id'] == 'affective' and item['step_order'] == 2
+    with pytest.raises(ValueError):
+        service.set_state(db, session_id='fixture', username='alice',
+                          recommendation_type='strategy', slug='active', status='stale')
+
+
+def test_who_closed_the_question_is_recorded_and_cleared_on_reopen(db):
+    _question(db)
+    service.set_state(db, session_id='fixture', username='alice', recommendation_type='advice',
+                      slug='note-q', status='closed', closed_by='conversation')
+    assert _advice_item(db)['closed_by'] == 'conversation'
+    # Riaperta dallo studente: chi l'aveva chiusa non conta piu', e la domanda
+    # e' sottratta alla regola di decadenza.
+    service.set_state(db, session_id='fixture', username='alice', recommendation_type='advice',
+                      slug='note-q', status='proposed', revived=True)
+    item = _advice_item(db)
+    assert item['status'] == 'proposed' and item['closed_by'] is None and item['revived'] is True
+
+
+def test_an_unknown_closer_is_refused(db):
+    _question(db)
+    with pytest.raises(ValueError):
+        service.set_state(db, session_id='fixture', username='alice', recommendation_type='advice',
+                          slug='note-q', status='closed', closed_by='counselor')
+
+
+def test_the_students_own_close_is_attributed_to_the_student(db):
+    _question(db)
+    result = asyncio.run(update_session_recommendation(
+        session_id='fixture', recommendation_type='advice', slug='note-q',
+        update=RecommendationStateUpdate(status='closed'), db=db, identity={'username': 'alice'},
+    ))
+    item = next(entry for entry in result['advice'] if entry['slug'] == 'note-q')
+    assert item['status'] == 'closed' and item['closed_by'] == 'student'
+    result = asyncio.run(update_session_recommendation(
+        session_id='fixture', recommendation_type='advice', slug='note-q',
+        update=RecommendationStateUpdate(status='proposed'), db=db, identity={'username': 'alice'},
+    ))
+    item = next(entry for entry in result['advice'] if entry['slug'] == 'note-q')
+    assert item['closed_by'] is None and item['revived'] is True
+
+
+def test_state_survives_the_same_question_declared_again(db):
+    _question(db)
+    service.set_state(db, session_id='fixture', username='alice', recommendation_type='advice',
+                      slug='note-q', status='closed', closed_by='conversation')
+    _question(db, turn=5, step_id='cognitive', step_order=1)
+    item = _advice_item(db)
+    # Lo stato e' dello studente e resta; la fase e' del turno e si aggiorna.
+    assert item['status'] == 'closed' and item['closed_by'] == 'conversation'
+    assert item['step_id'] == 'cognitive' and item['step_order'] == 1
+
+
+def _asked(db, slug, text, *, status='proposed', closed_by=None):
+    service.record(db, session_id='fixture', username='alice', recommendation_type='advice',
+                   payloads=[{'slug': slug, 'name': text, 'kind': 'question',
+                              'step_id': 'cognitive', 'step_order': 1}], turn_index=1)
+    if status != 'proposed':
+        service.set_state(db, session_id='fixture', username='alice', recommendation_type='advice',
+                          slug=slug, status=status,
+                          closed_by=closed_by if closed_by else service.UNSET)
+
+
+def _context(db, message=''):
+    return service.conversation_context(db, session_id='fixture', username='alice',
+                                        message=message, language='it')
+
+
+def test_an_open_question_travels_in_the_ledger_and_not_here(db):
+    # Le due direttive si contraddicevano sullo stesso turno: qui si legge "non
+    # richiederla", nel ledger "riprendila una volta sola, riformulata". La riga
+    # aperta e' del ledger; questo canale porta il resto.
+    _asked(db, 'q-open', 'Che cosa ti blocca?')
+    assert 'Che cosa ti blocca?' not in _context(db)
+
+
+def test_a_closed_question_still_travels_here(db):
+    _asked(db, 'q-done', 'Ti pesa il tempo o il metodo?', status='closed', closed_by='student')
+    assert 'Ti pesa il tempo o il metodo?' in _context(db)
+
+
+def test_a_question_the_student_names_is_discussed(db):
+    _asked(db, 'q-open', 'Che cosa ti blocca?')
+    assert 'Che cosa ti blocca?' in _context(db, message='torniamo a che cosa ti blocca?')
+
+
+def test_advice_that_is_not_a_question_is_untouched(db):
+    service.record(db, session_id='fixture', username='alice', recommendation_type='advice',
+                   payloads=[{'slug': 'a-note', 'name': 'Prova a chiudere il libro.',
+                              'kind': 'advice'}], turn_index=1)
+    assert 'Prova a chiudere il libro.' in _context(db)

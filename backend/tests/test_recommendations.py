@@ -204,15 +204,15 @@ def test_question_close_reopen_and_history_are_owned_and_persistent():
         assert list_for_session(db, session_id=sid, username='alice')['advice'][0]['status'] == 'proposed'
 
 
-def test_note_context_is_bounded_but_an_explicit_old_question_can_return():
+def test_note_context_is_bounded_but_an_explicit_old_note_can_return():
     from backend.recommendation_service import conversation_context
     sid = f'{PREFIX}-bounded'
     with _TestSession() as db:
         for index in range(15):
             record(db, session_id=sid, username='alice', recommendation_type='advice',
-                payloads=[{'slug': f'n{index}', 'kind': 'question', 'name': f'Domanda numero {index}?'}], turn_index=index)
+                payloads=[{'slug': f'n{index}', 'kind': 'advice', 'name': f'Nota numero {index}.'}], turn_index=index)
         context = conversation_context(db, session_id=sid, username='alice', message='altro', language='it')
-        assert 'Domanda numero 0?' not in context and 'Domanda numero 14?' in context
-        reopened = conversation_context(db, session_id=sid, username='alice', message='Domanda numero 0?', language='it')
-        assert 'Domanda numero 0?' in reopened
+        assert 'Nota numero 0.' not in context and 'Nota numero 14.' in context
+        reopened = conversation_context(db, session_id=sid, username='alice', message='Nota numero 0.', language='it')
+        assert 'Nota numero 0.' in reopened
         assert len(list_for_session(db, session_id=sid, username='alice')['advice']) == 15

@@ -10,6 +10,7 @@ from . import models, recommendation_blocks, session_ledger, thread_guard
 from . import recommendation_service as _recommendation_service
 from .i18n_fields import localized
 from .idea_map import IDEA_INSTRUMENT
+from .memory_service import session_memory
 from .prompt_config import SYSTEM_PROMPT_DEFAULTS
 from .chat_logic import PROMPT_COMPONENT_DEFAULTS
 from .skills import engine as skills_engine
@@ -360,6 +361,14 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         # verbatim window with it; the ledger keeps the student's own answers and
         # chosen actions from expiring with it. Synthesis already reads the whole
         # transcript above, so it never needs both.
+        # La decadenza si scrive prima della lettura: il ledger deve vedere lo
+        # stesso registro che vedra' la sidebar. Stessa misura del turno usata da
+        # chi registra le note, o le due eta' non sarebbero confrontabili.
+        session_ledger.retire_stale_questions(
+            db, session_id=session_id, username=(identity or {}).get("username", ""),
+            step_id=request.phase,
+            turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
+        )
         ledger = session_ledger.block(
             db, session_id=session_id, username=(identity or {}).get("username", ""),
             step_id=request.phase, guard_notes=guard_notes,
