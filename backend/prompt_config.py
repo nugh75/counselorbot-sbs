@@ -791,6 +791,15 @@ DEFAULT_SYSTEM_PROMPT_QAP_INTRO = (
 
 
 # Questions / intro phase system prompts (stored in configs table)
+# Gli step di benvenuto di ogni percorso. QSA/QSAr/ZTPI/SAVICKAS li marcano anche
+# con `system_prompt_mode = "intro"`; QPCS/QPCC/QAP aprono invece con il mode di
+# analisi o intervista, quindi il mode da solo non basta a riconoscerli.
+WELCOME_PHASE_IDS = frozenset({
+    "intro", "qsar-intro", "ztpi-intro", "savickas-intro",
+    "qpcs-intro", "qpcc-intro", "qap-intro",
+})
+
+
 GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS: Dict[str, Dict[str, str]] = {
     "questions": {
         "key": "prompt_guided_questions",
@@ -822,19 +831,19 @@ GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS: Dict[str, Dict[str, str]] = {
         "description": "Prompt di sistema per lo step intro SAVICKAS",
         "default": DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTRO,
     },
-    "qpcs-welcome": {
+    "qpcs-intro": {
         "key": "prompt_qpcs_welcome",
         "label": "Guided - 0. Presentazione QPCS (system)",
         "description": "Prompt di sistema per lo step intro QPCS",
         "default": DEFAULT_SYSTEM_PROMPT_QPCS_INTRO,
     },
-    "qpcc-welcome": {
+    "qpcc-intro": {
         "key": "prompt_qpcc_welcome",
         "label": "Guided - 0. Presentazione QPCC (system)",
         "description": "Prompt di sistema per lo step intro QPCC",
         "default": DEFAULT_SYSTEM_PROMPT_QPCC_INTRO,
     },
-    "qap-welcome": {
+    "qap-intro": {
         "key": "prompt_qap_welcome",
         "label": "Guided - 0. Presentazione QAP (system)",
         "description": "Prompt di sistema per lo step intro QAP",
