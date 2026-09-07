@@ -100,3 +100,71 @@ def test_a_fenced_reply_is_still_read():
 def test_notes_of_nothing_render_nothing():
     assert thread_guard.render([]) == ""
     assert thread_guard.notes(None) == []
+
+
+# --- storage and staleness ---
+from backend import models  # noqa: E402
+from backend.tests.artifact_database import artifact_session  # noqa: E402
+
+SESSION = "guard-fixture"
+STUDENT = "alice"
+
+
+@pytest.fixture
+def db():
+    with artifact_session() as session:
+        yield session
+
+
+def _turn(db, *, student="mi distraggo", counselor="Capito."):
+    db.add(models.Log(
+        session_id=SESSION, username=STUDENT, action="chat_message", phase="cognitive",
+        questionnaire_type="QSA",
+        details={"user_input": student, "effective_user_input": student,
+                 "bot_response": counselor},
+    ))
+    db.flush()
+    return thread_guard.turn_hash(student, counselor)
+
+
+def test_a_verdict_about_the_last_turn_is_pending(db):
+    turn = _turn(db)
+    thread_guard.store(db, session_id=SESSION, username=STUDENT, turn=turn,
+                       verdict=thread_guard.parse(_raw(developed=False)))
+    assert thread_guard.pending(db, session_id=SESSION) == [thread_guard.ANSWERED_LINE]
+
+
+def test_a_verdict_about_an_older_turn_is_not_injected(db):
+    stale = _turn(db, student="prima", counselor="risposta")
+    thread_guard.store(db, session_id=SESSION, username=STUDENT, turn=stale,
+                       verdict=thread_guard.parse(_raw(developed=False)))
+    _turn(db, student="poi", counselor="altra risposta")  # the guard has not caught up
+    assert thread_guard.pending(db, session_id=SESSION) == []
+
+
+def test_no_verdict_injects_nothing(db):
+    _turn(db)
+    assert thread_guard.pending(db, session_id=SESSION) == []
+
+
+def test_an_unreadable_row_injects_nothing(db):
+    turn = _turn(db)
+    db.add(models.Log(session_id=SESSION, username=STUDENT, action="thread_guard",
+                      details={"turn": turn, "notes": "not a list"}))
+    db.flush()
+    assert thread_guard.pending(db, session_id=SESSION) == []
+
+
+def test_the_same_note_is_not_repeated_two_turns_running(db):
+    note = "The reply left the subject the student had raised."
+    first = _turn(db, student="uno", counselor="a")
+    thread_guard.store(db, session_id=SESSION, username=STUDENT, turn=first,
+                       verdict=thread_guard.parse(_raw(on_thread=False, on_thread_note=note)))
+    second = _turn(db, student="due", counselor="b")
+    kept = thread_guard.store(db, session_id=SESSION, username=STUDENT, turn=second,
+                              verdict=thread_guard.parse(_raw(on_thread=False, on_thread_note=note)))
+    assert kept == []
+    third = _turn(db, student="tre", counselor="c")
+    again = thread_guard.store(db, session_id=SESSION, username=STUDENT, turn=third,
+                               verdict=thread_guard.parse(_raw(on_thread=False, on_thread_note=note)))
+    assert again == [note]  # suppressed once, not forever
