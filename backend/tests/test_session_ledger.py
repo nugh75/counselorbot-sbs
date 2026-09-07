@@ -259,3 +259,74 @@ def test_closed_sidebar_question_is_not_reopened_by_the_ledger(db):
         payload={'kind': 'question', 'name': question, 'status': 'closed'}))
     db.flush()
     assert session_ledger.build(db, session_id=SESSION, username=STUDENT)['open_question'] == ''
+
+
+from backend import recommendation_service
+
+
+def _note(db, slug, *, text, step_id, step_order, turn, status='proposed', closed_by=None):
+    recommendation_service.record(
+        db, session_id=SESSION, username=STUDENT, recommendation_type='advice',
+        payloads=[{'slug': slug, 'name': text, 'kind': 'question',
+                   'step_id': step_id, 'step_order': step_order}],
+        turn_index=turn,
+    )
+    if status != 'proposed':
+        recommendation_service.set_state(
+            db, session_id=SESSION, username=STUDENT, recommendation_type='advice',
+            slug=slug, status=status,
+            closed_by=closed_by if closed_by else recommendation_service.UNSET,
+        )
+
+
+def test_a_question_from_another_step_is_retired(db):
+    _note(db, 'q-old', text='Quando un risultato ti delude, che cosa prevale?',
+          step_id='affective', step_order=2, turn=1)
+    retired = session_ledger.retire_stale_questions(
+        db, session_id=SESSION, username=STUDENT, step_id='cognitive', turn_index=2)
+    assert retired == ['q-old']
+    assert session_ledger.questions(
+        db, session_id=SESSION, username=STUDENT, step_id='cognitive')['left_behind'][0]['step_order'] == 2
+
+
+def test_a_question_older_than_the_age_is_retired_in_its_own_step(db):
+    _note(db, 'q-aged', text='Che cosa cambieresti?', step_id='cognitive', step_order=1, turn=1)
+    assert session_ledger.retire_stale_questions(
+        db, session_id=SESSION, username=STUDENT, step_id='cognitive',
+        turn_index=1 + session_ledger.QUESTION_MAX_AGE) == []
+    assert session_ledger.retire_stale_questions(
+        db, session_id=SESSION, username=STUDENT, step_id='cognitive',
+        turn_index=2 + session_ledger.QUESTION_MAX_AGE) == ['q-aged']
+
+
+def test_a_closed_question_never_decays_and_a_revived_one_is_spared(db):
+    _note(db, 'q-closed', text='Chiusa?', step_id='affective', step_order=2, turn=1,
+          status='closed', closed_by='student')
+    _note(db, 'q-revived', text='Ripresa?', step_id='affective', step_order=2, turn=1)
+    recommendation_service.set_state(
+        db, session_id=SESSION, username=STUDENT, recommendation_type='advice',
+        slug='q-revived', status='proposed', revived=True)
+    assert session_ledger.retire_stale_questions(
+        db, session_id=SESSION, username=STUDENT, step_id='cognitive', turn_index=9) == []
+
+
+def test_retiring_twice_writes_nothing_the_second_time(db):
+    _note(db, 'q-old', text='Superata?', step_id='affective', step_order=2, turn=1)
+    assert session_ledger.retire_stale_questions(
+        db, session_id=SESSION, username=STUDENT, step_id='cognitive', turn_index=2) == ['q-old']
+    assert session_ledger.retire_stale_questions(
+        db, session_id=SESSION, username=STUDENT, step_id='cognitive', turn_index=2) == []
+
+
+def test_questions_are_read_by_their_recorded_state(db):
+    _note(db, 'q-open', text='Aperta?', step_id='cognitive', step_order=1, turn=4)
+    _note(db, 'q-talk', text='Gia risposta?', step_id='cognitive', step_order=1, turn=2,
+          status='closed', closed_by='conversation')
+    _note(db, 'q-mine', text='Chiusa da me?', step_id='cognitive', step_order=1, turn=2,
+          status='closed', closed_by='student')
+    _note(db, 'q-gone', text='Rimasta indietro?', step_id='affective', step_order=2, turn=1,
+          status='stale')
+    buckets = session_ledger.questions(db, session_id=SESSION, username=STUDENT, step_id='cognitive')
+    assert [item['text'] for item in buckets['open']] == ['Aperta?']
+    assert [item['text'] for item in buckets['answered_in_talk']] == ['Gia risposta?']
+    assert [item['text'] for item in buckets['left_behind']] == ['Rimasta indietro?']
