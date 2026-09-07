@@ -43,3 +43,13 @@ def test_a_step_that_may_advise_carries_none_of_it():
     text = _contract(advice_allowed=True)
     assert "which later step" not in text
     assert "Offer at most ONE new practical action" in text
+
+
+def test_the_contract_forbids_reciting_itself():
+    # Twice now the model has handed the student the prompt's own words: the three
+    # example questions in [ANCHOR] became a fixed closing formula, and "not another
+    # day" came back translated. Both were fixed one at a time; this is the class.
+    text = _contract(advice_allowed=True)
+    assert "not material for the reply" in text
+    assert "never reuse their wording" in text
+    assert "not material for the reply" in _contract(advice_allowed=False)
