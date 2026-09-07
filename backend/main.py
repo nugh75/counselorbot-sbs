@@ -1160,6 +1160,12 @@ def _run_seed_and_migrations():
         if created_briefs:
             logger.info("Seeded orientation tool briefs: %s voci", created_briefs)
 
+        # Il giudice del thread guard: qwen3.8 locale, thinking spento. Riempie
+        # solo il vuoto, non tocca mai una scelta gia' fatta dall'admin.
+        from .thread_guard_seed import seed_thread_guard
+        if seed_thread_guard(db, models):
+            logger.info("Seeded thread guard judge preset")
+
         # Seed del catalogo letture. Le voci nascono in bozza: entrano in chat
         # solo quando un admin le certifica dopo la verifica bibliografica.
         from .certified_reading_seed import seed_certified_readings

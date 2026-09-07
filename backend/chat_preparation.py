@@ -6,7 +6,7 @@ Writing session memory and recording model output remain endpoint responsibiliti
 from dataclasses import dataclass
 from .prompt_contract import turn_contract
 from .journey_context import SYNTHESIS_STEPS, journey_context, session_evidence
-from . import models, recommendation_blocks, session_ledger
+from . import models, recommendation_blocks, session_ledger, thread_guard
 from . import recommendation_service as _recommendation_service
 from .i18n_fields import localized
 from .idea_map import IDEA_INSTRUMENT
@@ -324,6 +324,10 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         create_anonymous_code=create_anonymous_code,
     )
 
+    # What the guard saw on the previous turn. At a step entry it travels inside
+    # the ledger below; on any other turn it needs a block of its own, because the
+    # ledger is deliberately not injected there.
+    guard_notes = thread_guard.pending(db, session_id=session_id) if include_history else []
     is_synthesis = request.phase in SYNTHESIS_STEPS or (step and step.system_prompt_mode.endswith("-summary"))
     if is_synthesis:
         if journey_override is not None:
@@ -358,11 +362,17 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         # transcript above, so it never needs both.
         ledger = session_ledger.block(
             db, session_id=session_id, username=(identity or {}).get("username", ""),
-            step_id=request.phase,
+            step_id=request.phase, guard_notes=guard_notes,
         )
         components["session_ledger"] = ledger
         if ledger:
             system_prompt_final += "\n\n" + ledger
+        guard_notes = []
+    if guard_notes:
+        thread = thread_guard.render(guard_notes)
+        components["thread_guard"] = thread
+        if thread:
+            system_prompt_final += "\n\n" + thread
     contract = turn_contract(
         language=request.language or "it", questionnaire_type=questionnaire_type,
         phase=request.phase, advice_allowed=bool(component_options["certified_strategy_limit"] and component_flags.get("certified_strategies", True)),

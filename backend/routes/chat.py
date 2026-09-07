@@ -34,6 +34,7 @@ from ..memory_service import session_memory
 from ..chat_preparation import prepare_chat_turn
 from ..strategy_memory import shared_response_memory
 from .. import recommendation_blocks
+from .. import thread_guard
 from .. import recommendation_service as _recommendation_service
 from ..certified_reading_service import certified_reading_memory
 from ..i18n_fields import localized
@@ -147,6 +148,29 @@ def _resolve_counselor(db, counselor_id):
             disable_thinking = bool(preset.disable_thinking)
             reasoning_budget = preset.reasoning_budget
     return provider, model, counselor.persona, counselor.name, disable_thinking, reasoning_budget
+
+
+def _watch_thread(prepared, request, *, session_id, username, effective_message,
+                  response_content, recommended) -> None:
+    """Hand the finished turn to the guard.
+
+    Fire and forget, and never on the way out: the reply has already left, and a
+    verdict that costs the student a second of waiting is not worth having.
+    """
+    step = getattr(prepared, "step", None)
+    recommended = recommended or {}
+    thread_guard.schedule(
+        session_id=session_id,
+        username=username or "",
+        questionnaire_type=prepared.questionnaire_type,
+        step_id=request.phase or None,
+        step_label=prepared.step_label or "",
+        step_prompt=getattr(step, "prompt", "") or "",
+        language=request.language or "it",
+        advice_ids=list(recommended.get("strategy", [])) + list(recommended.get("reading", [])),
+        candidate_ids=list(prepared.certified_strategy_ids or []),
+        turn=thread_guard.turn_hash(effective_message, response_content),
+    )
 
 
 def _apply_counselor_overrides(
@@ -617,6 +641,10 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         matched_on=recommendation_meta,
         turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
     )
+    _watch_thread(prepared, request, session_id=session_id,
+                  username=identity.get("username") if identity else "",
+                  effective_message=effective_message, response_content=response_content,
+                  recommended=recommended)
 
     return {
         "response": response_content,
@@ -759,6 +787,10 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             if response_id:
                 log_entry.response_id = response_id
             log_db.commit()
+            _watch_thread(prepared, request, session_id=session_id,
+                          username=identity.get("username") if identity else "",
+                          effective_message=effective_message,
+                          response_content=response_content, recommended=recommended)
             return response_id
         except Exception as e:
             logger.error(f"Errore log stream session {session_id}: {e}")
