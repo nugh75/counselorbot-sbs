@@ -401,6 +401,10 @@ PRESET_KEY = "thread_guard_preset_id"
 # tardi, e il turno seguente lo scarterebbe come stantio.
 TIMEOUT_SECONDS = 20
 MAX_VERDICT_TOKENS = 400
+# Lo stesso turno deve dare lo stesso verdetto. Al default del provider non lo
+# dava: la stessa sessione e' tornata "developed" in una passata e "DROPPED"
+# nella successiva, e ogni misura di qualita' presa cosi' misura il rumore.
+JUDGE_TEMPERATURE = 0
 
 SYSTEM_PROMPT = """You silently review ONE counselor turn from a guided counselling session.
 
@@ -500,20 +504,32 @@ def schedule(**kwargs) -> None:
     threading.Thread(target=_run, kwargs=kwargs, daemon=True).start()
 
 
-def _run(**kwargs) -> None:
+def judge_service(db):
+    """The AIService the judge runs on: its own timeout, thinking and temperature.
+
+    Separate from `_run` so a test can read what the judge is configured with
+    without starting a thread or reaching a provider.
+    """
     from .ai_service import AIService
+
+    service = AIService(db)
+    service.config["ai_timeout_seconds"] = str(TIMEOUT_SECONDS)
+    service.temperature = JUDGE_TEMPERATURE
+    target = preset(db)
+    if target is not None:
+        service.disable_thinking = target[2]
+        service.config["disable_thinking"] = "true" if target[2] else "false"
+    return service
+
+
+def _run(**kwargs) -> None:
     from .database import SessionLocal
 
     db = SessionLocal()
     try:
         if not enabled(db):
             return
-        service = AIService(db)
-        service.config["ai_timeout_seconds"] = str(TIMEOUT_SECONDS)
-        target = preset(db)
-        if target is not None:
-            service.disable_thinking = target[2]
-            service.config["disable_thinking"] = "true" if target[2] else "false"
+        service = judge_service(db)
 
         def call(*, provider, model, user_message, system_prompt):
             return service.call_model(

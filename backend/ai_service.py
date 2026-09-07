@@ -103,6 +103,11 @@ class AIService:
         # Override opzionale del budget di ragionamento (es. dal preset del counselor).
         # None = usa il default della famiglia del modello (reasoning_profiles).
         self.reasoning_budget_override = None
+        # Temperatura esplicita per questa istanza. None = si lascia decidere al
+        # provider, che e' quello che e' sempre successo: nessun percorso mandava
+        # `temperature`. Serve a chi deve ottenere lo stesso esito sullo stesso
+        # input — un giudice, un parser — non alla conversazione.
+        self.temperature = None
         # Piano di reasoning della chiamata corrente: risolto per (provider, model)
         # prima del dispatch. Default neutro (spento) per chiamate dirette/riassunti.
         self._reasoning_plan = DISABLED_PLAN
@@ -610,6 +615,8 @@ class AIService:
         )
         if max_tokens:
             kwargs["max_tokens"] = max_tokens
+        if self.temperature is not None:
+            kwargs["temperature"] = self.temperature
         response = client.chat.completions.create(**kwargs)
         return response.choices[0].message.content
 
@@ -634,6 +641,8 @@ class AIService:
         )
         if max_tokens:
             kwargs["max_tokens"] = max_tokens
+        if self.temperature is not None:
+            kwargs["temperature"] = self.temperature
         kwargs["extra_body"] = {"reasoning": self._openrouter_reasoning()}
         response = client.chat.completions.create(**kwargs)
         self.last_usage = self._usage_to_dict(getattr(response, "usage", None))
@@ -665,6 +674,8 @@ class AIService:
         )
         if max_tokens:
             kwargs["max_tokens"] = max_tokens
+        if self.temperature is not None:
+            kwargs["temperature"] = self.temperature
         if provider == "deepseek" and _requests_json_response(system_prompt, user_message):
             # Structured extraction needs content, not a long reasoning trace
             # that may consume the output budget before any JSON is returned.
@@ -774,6 +785,8 @@ class AIService:
                 "num_predict": max_tokens,
             },
         }
+        if self.temperature is not None:
+            payload["options"]["temperature"] = self.temperature
         # Estrazione JSON (parser QSA): mai reasoning, altrimenti il `think` puo'
         # rompere/rallentare l'output strutturato. Forza think off a prescindere.
         is_json = json_mode if json_mode is not None else _requests_json_response(system_prompt, user_message)
