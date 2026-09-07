@@ -46,13 +46,39 @@ _SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 _MARKUP = re.compile(r"[*_`#]+")
 # Un ordine non e' un fatto: se il guardiano scrive l'istruzione al posto del
 # counselor, il prompt di step non decide piu' niente. Meglio nessuna nota.
+# Le note tornano nella lingua della conversazione anche quando il prompt chiede
+# l'inglese, quindi un filtro solo inglese lascia passare l'ordine nelle altre
+# cinque. Solo forme imperative: l'indicativo passato ("ha ignorato", "asked")
+# e' esattamente il fatto che si vuole tenere.
 _IMPERATIVE = re.compile(
-    r"^(ask|tell|avoid|do|don't|take|propose|use|make|stop|keep|go|return|reconnect"
+    r"^("
+    r"ask|tell|avoid|do|don't|take|propose|use|make|stop|keep|go|return|reconnect"
     r"|remind|suggest|consider|focus|check|verify|ensure|add|remove|start|connect"
-    r"|bring|follow|explain|clarify|acknowledge|recall|let|try|stay|pick|name)\b",
+    r"|bring|follow|explain|clarify|acknowledge|recall|let|try|stay|pick|name"
+    r"|chiedi|riprendi|riporta|evita|usa|torna|collega|proponi|ricorda|verifica"
+    r"|chiarisci|spiega|lascia|resta|smetti|aggiungi|togli|parti|segui|non\s+\w+re"
+    r"|pregunta|pide|evita|usa|vuelve|conecta|propone|recuerda|verifica|aclara"
+    r"|explica|deja|sigue|empieza"
+    r"|demande|demandez|évite|évitez|utilise|utilisez|reprends|reprenez|relie"
+    r"|reliez|propose|proposez|rappelle|rappelez|clarifie|clarifiez|explique"
+    r"|expliquez|reste|restez"
+    r"|frage|fragen\s+sie|vermeide|vermeiden\s+sie|nutze|nutzen\s+sie|greife"
+    r"|erkläre|erklären\s+sie|bleibe|bleiben\s+sie|verbinde"
+    r"|fråga|undvik|använd|återkom|koppla|föreslå|påminn|förklara|stanna"
+    r")\b",
     re.IGNORECASE,
 )
-_PRESCRIPTIVE = re.compile(r"\b(should|must|need to|ought to)\b", re.IGNORECASE)
+_PRESCRIPTIVE = re.compile(
+    r"\b("
+    r"should|must|need to|ought to"
+    r"|dovrebbe|dovrebbero|deve|devono|bisogna|occorre|va\s+fatto"
+    r"|debería|deberían|debe|deben|hay\s+que|tiene\s+que"
+    r"|devrait|devraient|doit|doivent|il\s+faut"
+    r"|sollte|sollten|muss|müssen"
+    r"|borde|bör|måste|ska"
+    r")\b",
+    re.IGNORECASE,
+)
 
 
 class Check(BaseModel):
@@ -85,8 +111,15 @@ def parse(raw: str | None) -> Verdict | None:
         return None
 
 
-def notes(verdict: Verdict | None) -> list[str]:
-    """The lines worth injecting: only what failed, severest first."""
+def notes(verdict: Verdict | None, *, student_spoke: bool = True) -> list[str]:
+    """The lines worth injecting: only what failed, severest first.
+
+    `student_spoke` is false on a step entry, where the student's message is a
+    hidden directive and nobody answered anything. Asking there whether the open
+    question was taken up is asking a question with a fixed answer: it fired on
+    seven of nine sampled turns. Whose question is open, and for how long, the
+    ledger already knows without a model.
+    """
     if verdict is None:
         return []
     lines = []
@@ -99,7 +132,7 @@ def notes(verdict: Verdict | None) -> list[str]:
         note = _usable_note(check.note)
         if note:
             lines.append(note)
-    if not verdict.answered.last_question_developed:
+    if student_spoke and not verdict.answered.last_question_developed:
         lines.append(ANSWERED_LINE)
     return lines
 
@@ -163,9 +196,10 @@ def turn_hash(user_text: str, bot_text: str) -> str:
     return digest.hexdigest()[:16]
 
 
-def store(db, *, session_id: str, username: str, turn: str, verdict: Verdict | None) -> list[str]:
+def store(db, *, session_id: str, username: str, turn: str, verdict: Verdict | None,
+          student_spoke: bool = True) -> list[str]:
     """Write the verdict and return the lines that will actually be injected."""
-    lines = notes(verdict)
+    lines = notes(verdict, student_spoke=student_spoke)
     previous = _latest_row(db, session_id)
     if previous is not None:
         already = {_key(line) for line in _stored_notes(previous)}
@@ -386,10 +420,16 @@ question_fit - false only if the question the counselor asked belongs to another
 step or has no bearing on the mandate.
 advice_grounded - false only if the turn gave advice that follows from nothing the
 student said. A turn that gives no advice is ok: true.
+
+The mandate frames the conversation; it is not a checklist. Answering what the
+student explicitly asked for is never off mandate: a turn that does so is on_thread
+and question_fit ok even when it performed none of the step's usual moves.
 answered.last_question_developed - false if a question the counselor had left open
 was neither answered nor taken further in this exchange. If there was none, true.
 
-Each note is ONE past-tense sentence of at most 140 characters saying what happened.
+Each note is ONE past-tense sentence of at most 140 characters saying what happened,
+written in English whatever language the conversation is in: it is read by a model,
+never shown to the student, and an Italian note risks being copied into an Italian reply.
 Never an instruction, never "should", never advice to the counselor. Use null when ok is true.
 Judge only from what you are given, and when in doubt answer ok: true."""
 
@@ -420,6 +460,7 @@ def evaluate(
     db, *, call, session_id: str, username: str, questionnaire_type: str,
     step_id: str | None, step_label: str, step_prompt: str, language: str,
     advice_ids: list[str], candidate_ids: list[str], turn: str,
+    student_spoke: bool = True,
 ) -> list[str]:
     """Judge the turn that just ended. Returns the lines that will be injected.
 
@@ -450,7 +491,8 @@ def evaluate(
     if verdict is None:
         logger.info("Thread guard returned no readable verdict (%s/%s)", provider, model)
         return []
-    return store(db, session_id=session_id, username=username, turn=turn, verdict=verdict)
+    return store(db, session_id=session_id, username=username, turn=turn, verdict=verdict,
+                 student_spoke=student_spoke)
 
 
 def schedule(**kwargs) -> None:
