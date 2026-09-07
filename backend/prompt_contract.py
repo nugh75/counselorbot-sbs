@@ -49,9 +49,9 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
          "If none fits, clarify the need or reflect without inventing an action.") if advice_allowed else
         "Introduce no new practical action in this turn. You may clarify actions already "
         "discussed. If the student asks for one, say plainly what this step is for and which "
-        "later step of this path takes that request up, naming it; it comes later in this same "
-        "path, not another day. State it in one or two sentences: no refusal formulas, no "
-        "justifying the design, and never compare the student with anyone else.",
+        "later step takes that request up, naming it. Do not present the wait as a separate "
+        "occasion or a later date. One or two sentences, no formulas, no justifying how the "
+        "path is built, and never compare the student with anyone else.",
     ]
     if questionnaire_type == "IDEA":
         lines[-1] = "Do not prescribe unrelated learning strategies. Develop the person's idea from their evidence and choices; provide the agreed production actions at closure."

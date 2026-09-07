@@ -20,12 +20,22 @@ def test_a_step_that_cannot_advise_is_told_how_to_say_so():
     text = _contract(advice_allowed=False)
     assert "what this step is for" in text
     assert "which later step" in text
-    assert "not another day" in text
+    assert "separate occasion or a later date" in text
+
+
+def test_the_rule_gives_no_sentence_to_copy():
+    # The first wording said "it comes later in this same path, not another day", and
+    # the model handed the student "Non e' un'altra giornata: e' qui dentro, piu'
+    # avanti" — both halves translated word for word. A ready-made sentence gets
+    # copied; a prohibition has to be obeyed rather than recited.
+    text = _contract(advice_allowed=False)
+    assert "not another day" not in text
+    assert "later in this same path" not in text
 
 
 def test_the_refusal_bans_formulas_justification_and_comparisons():
     text = _contract(advice_allowed=False)
-    assert "no refusal formulas" in text
+    assert "no formulas" in text
     assert "never compare the student with anyone else" in text
 
 
