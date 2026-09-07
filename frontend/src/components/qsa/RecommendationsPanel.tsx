@@ -287,8 +287,8 @@ function ReadingCard({ item, canAct, pending, failed, onRetry, onPatch, onDiscus
     const details = [item.summary, item.synopsis].filter(Boolean) as string[];
 
     return (
-        <article className="rounded-lg border border-slate-200 bg-cyan-50 p-3">
-            <div className="text-2xs font-semibold uppercase tracking-wide text-cyan-700">
+        <article className="rounded-lg border border-slate-200 bg-indigo-50 p-3">
+            <div className="text-2xs font-semibold uppercase tracking-wide text-indigo-700">
                 {item.kind_label || item.kind}
             </div>
             <h4 className="mt-0.5 text-sm font-semibold leading-snug text-slate-800">{title}</h4>
@@ -353,9 +353,9 @@ function StrategyCard({ item, canAct, pending, failed, onRetry, onPatch, onDiscu
     const name = item.name || item.slug;
 
     return (
-        <article className="rounded-lg border border-slate-200 bg-violet-50 p-3">
+        <article className="rounded-lg border border-slate-200 bg-indigo-50 p-3">
             <div className="flex items-start gap-2">
-                <Target className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" />
+                <Target className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
                 <h4 className="text-sm font-semibold leading-snug text-slate-800">{name}</h4>
             </div>
             {item.recommended_when ? (
