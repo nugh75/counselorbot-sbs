@@ -1607,8 +1607,13 @@ def test_prompt_audit_intro_envelope_is_light_for_all_instruments():
         assert "Only explicitly dialogic or interview phases are question-led" in system_prompt
         assert "[INTRO ALLOWED QUESTIONS]" in system_prompt
         assert "the path is guided step by step" in system_prompt
-        assert "QSA and QSAr for learning strategies" in system_prompt
-        assert "QAP for career adaptability" in system_prompt
+        # Il catalogo non e' piu' ricopiato a mano dentro il blocco intro: la
+        # domanda "quali strumenti ci sono" si risponde da [PLATFORM CAPABILITIES],
+        # che e' generato e non invecchia.
+        assert "answer from the [PLATFORM CAPABILITIES] block" in system_prompt
+        assert "QSA and QSAr for learning strategies" not in system_prompt
+        assert "QSA: detailed exploration" in system_prompt
+        assert "QAP: career adaptability" in system_prompt
         assert "how we'll explore my profile together" not in system_prompt
         if questionnaire_type == "SAVICKAS":
             assert "narrative interview path" in system_prompt

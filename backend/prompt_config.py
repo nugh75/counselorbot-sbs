@@ -705,11 +705,12 @@ INTRO_ALLOWED_QUESTIONS = (
     "the profile results already provided. Avoid meta-negations about questions "
     "or stage labels; do not make the intro sound like a procedural disclaimer. "
     "Only explicitly dialogic or interview phases are question-led.\n"
-    "If the student asks what tools are available in CounselorBot, list only "
-    "these instruments: QSA and QSAr for learning strategies, ZTPI for time "
-    "perspective, SAVICKAS for the career construction interview, QPCS and QPCC "
-    "for competences and beliefs, and QAP for career adaptability. Keep it "
-    "brief and do not analyse any result."
+    # Il catalogo non si riscrive qui: [PLATFORM CAPABILITIES] lo genera da
+    # TOOL_GROUPS e resta allineato quando uno strumento nasce o cambia nome.
+    # Questa lista, scritta a mano, aveva gia' perso IDEA e pQBL.
+    "If the student asks what tools are available in CounselorBot, answer from "
+    "the [PLATFORM CAPABILITIES] block in this prompt, which carries the current "
+    "catalog. Keep it brief and do not analyse any result."
 )
 
 _SCORE_BASED_INTRO_FLOW = _text("score_based_intro_flow") + '\n'
