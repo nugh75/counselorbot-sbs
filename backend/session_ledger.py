@@ -126,22 +126,6 @@ def render(ledger: dict) -> str:
         answers.pop(0)
 
 
-def open_question_note(db, *, session_id: str, username: str) -> str:
-    """The counselor's own question, still unanswered, as one line.
-
-    The ledger is injected at step entry only, so on a free turn nothing recalled
-    a question the student had walked past. Asking a model whether it was taken up
-    turned out to be noise on most turns; `_open_question` already answers it here
-    without one, and clears itself the moment the student replies.
-    """
-    open_question = build(db, session_id=session_id, username=username)["open_question"]
-    if not open_question:
-        return ""
-    return ("[THREAD] Your own question, asked earlier and still unanswered: "
-            f'"{open_question}" — take it back up rather than stacking a new one on '
-            "top of it, and if the student has moved on, let it go.")
-
-
 def block(db, *, session_id: str, username: str, step_id: str | None = None,
           guard_notes: list[str] | None = None) -> str:
     return render(build(db, session_id=session_id, username=username, step_id=step_id,
@@ -247,7 +231,15 @@ def _answers(rows: list) -> list[dict]:
 def _open_question(rows: list) -> str:
     """The most recent counselor question is open when the student wrote nothing
     after it — advancing a step is not an answer, and a question left behind
-    several turns ago has been overtaken by the conversation."""
+    several turns ago has been overtaken by the conversation.
+
+    This reads as a fact only at a step entry, which is the one place the ledger
+    is injected. On an ordinary turn the student's message is not in `rows` yet,
+    so "nobody wrote after it" is true of every question the counselor has just
+    asked: carried there, it told the counselor to take its own question back up
+    every single turn, and the chat started pressing instead of letting an answer
+    form.
+    """
     for position in range(len(rows) - 1, -1, -1):
         question = _last_question(_visible(rows[position]))
         if not question:

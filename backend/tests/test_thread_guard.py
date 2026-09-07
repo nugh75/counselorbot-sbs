@@ -457,25 +457,16 @@ def test_the_seed_run_twice_changes_nothing(db):
     assert db.query(models.ModelPreset).count() == 1
 
 
-# --- la domanda aperta torna al ledger, anche sui turni liberi ---------------
-def test_an_open_question_reaches_a_free_turn_without_a_model(db):
-    from backend import session_ledger
-
+# --- la domanda aperta resta al ledger, e solo a ingresso step ---------------
+def test_a_free_turn_is_not_told_to_re_ask_its_own_question(db):
+    # At preparation time the student's message is not logged yet, so the ledger's
+    # "nobody answered it" is true of every question just asked. Carried onto a free
+    # turn it made the counselor press its own question every turn instead of
+    # letting an answer form.
     _turn(db, student="dimmi di più",
           counselor="Riconosci questo schema: perdi il filo dopo dieci minuti?")
-    note = session_ledger.open_question_note(db, session_id=SESSION, username=STUDENT)
-    assert "perdi il filo dopo dieci minuti" in note
-
     prepared = _prepared(db, use_phase_prompt=False, message="e quindi?")
-    assert "perdi il filo dopo dieci minuti" in prepared.system_prompt_final
-
-
-def test_an_answered_question_reaches_nothing(db):
-    from backend import session_ledger
-
-    _turn(db, student="dimmi di più", counselor="Perdi il filo dopo dieci minuti?")
-    _turn(db, student="sì, mi ci ritrovo", counselor="Allora partiamo da lì.")
-    assert session_ledger.open_question_note(db, session_id=SESSION, username=STUDENT) == ""
+    assert "perdi il filo dopo dieci minuti" not in prepared.system_prompt_final
 
 
 def test_at_step_entry_the_ledger_says_it_once(db):

@@ -368,16 +368,6 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         if ledger:
             system_prompt_final += "\n\n" + ledger
         guard_notes = []
-    else:
-        # Fuori dall'ingresso step il ledger non entra, e la domanda rimasta aperta
-        # sparirebbe con la finestra verbatim. La riga la calcola il ledger, non un
-        # modello: e' un fatto che il codice sa gia'.
-        open_question = session_ledger.open_question_note(
-            db, session_id=session_id, username=(identity or {}).get("username", ""),
-        ) if include_history else ""
-        if open_question:
-            components["open_question"] = open_question
-            system_prompt_final += "\n\n" + open_question
     if guard_notes:
         thread = thread_guard.render(guard_notes)
         components["thread_guard"] = thread
