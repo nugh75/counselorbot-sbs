@@ -10,6 +10,7 @@
 ## Slide 1 — Chi sono
 
 **Bullet slide:**
+
 - Daniele Dragoni — PhD visiting, KTH (maggio → ottobre 2026)
 - Università Roma Tre — dottorato in AI ed educazione
 - Un ritorno allo studio: triennale → scienze cognitive → e-learning e media education → dottorato
@@ -21,13 +22,14 @@ Buongiorno a tutti.
 
 Mi chiamo Daniele Dragoni e sono un PhD visiting. Il mio soggiorno al KTH è iniziato a maggio e si concluderà a ottobre. Sono qui perché nel mio percorso sono obbligatori sei mesi di ricerca all'estero. Ho scelto la Svezia e Stoccolma perché sono affascinato dalla cultura svedese: dai valori green — penso alla battaglia degli alberi di Kungsträdgården —, dal rispetto della persona — penso al movimento MeToo — e dalla grande capacità di innovare, per esempio Spotify. E quindi ho pensato che potesse essere un buon posto per concludere il mio dottorato e finire di scrivere la mia tesi.
 
-Due parole su di me. La mia passione per lo studio è stata un ritorno. Mentre molte persone finivano gli studi ed entravano nel mondo accademico ambendo a diventare professori, con una carriera già avviata, io ci ritornavo. E devo dire che è stata una scelta molto importante, perché ha cambiato la mia vita. Ho iniziato a studiare mentre lavoravo, per prendermi una laurea triennale che avevo lasciato a metà, e pian piano sono stato travolto dall'università. Sono stato molto fortunato: ho conosciuto persone che mi hanno aiutato, che mi hanno fatto crescere, che mi hanno spinto a continuare. Così ho preso una laurea magistrale in scienze cognitive, poi durante il Covid una in e-learning e media education, e adesso sto finendo i miei tre anni di dottorato su AI ed educazione. Una situazione a cui non avrei mai pensato sei anni fa, quando sono rientrato in un'aula universitaria. In Italia diciamo: "non è mai troppo tardi per imparare".
+Due parole su di me. La mia carriera dentro l'accamdemia. Mentre molte persone finivano gli studi ed entravano nel mondo accademico ambendo a diventare professori, con una carriera già avviata, io ci ritornavo. E devo dire che è stata una scelta molto importante, perché ha cambiato la mia vita. Ho iniziato a studiare mentre lavoravo, per prendermi una laurea triennale che avevo lasciato a metà, e pian piano sono stato travolto dall'università. Sono stato molto fortunato: ho conosciuto persone che mi hanno aiutato, che mi hanno fatto crescere, che mi hanno spinto a continuare. Così ho preso una laurea magistrale in scienze cognitive, poi durante il Covid una in e-learning e media education, e adesso sto finendo i miei tre anni di dottorato su AI ed educazione. Una situazione a cui non avrei mai pensato sei anni fa, quando sono rientrato in un'aula universitaria. In Italia diciamo: "non è mai troppo tardi per imparare".
 
 ---
 
 ## Slide 2 — Roma Tre e l'Ostiense
 
 **Bullet slide:**
+
 - Roma Tre: 30 anni, ma erede del Magistero — dove insegnò Luigi Pirandello
 - Nessun campus isolato: l'università è innestata in un quartiere, l'Ostiense
 - Fabbriche dismesse diventate dipartimenti: ex Alfa Romeo, ex Mattatoio
@@ -44,6 +46,7 @@ Inoltre, l'università non ha uno sviluppo isolato come quello del campus del KT
 ## Slide 3 — CounselorBot: perché, e tre domande
 
 **Bullet slide:**
+
 - L'AI è già usata dagli studenti come consigliere: studio, amicizie, amore, lavoro, salute
 - L'AI sta diventando un mediatore culturale
 - **D1** — Si può costruire uno strumento AI che aiuti davvero nell'orientamento? Quali vincoli, quale design?
@@ -71,6 +74,7 @@ Una terza domanda: come possono essere sicuri da utilizzare, in termini di priva
 ## Slide 4 — Cos'è l'orientamento (e perché non è matching)
 
 **Bullet slide:**
+
 - La risposta classica: *matching* — misuri la persona, cataloghi i lavori, fai combaciare (Parsons, 1909)
 - Poggia su due stabilità che non esistono più: una persona stabile, un mercato stabile
 - Pellerey: orientamento = **dirigere se stessi** nello studio e nel lavoro
@@ -104,6 +108,7 @@ Notate cosa cambia. L'obiettivo non è più la risposta giusta, ma il processo g
 ## Slide 5 — Gli strumenti: le competenze strategiche
 
 **Bullet slide:**
+
 - Eredità: **competenzestrategiche.it** — piattaforma gratuita del gruppo Pellerey (CNOS-FAP), dal 2011
 - Questionari: **QSA** (1996) e **QSAr** — strategie di apprendimento; **QPCS** / **QPCC** — competenze strategiche percepite; **ZTPI** — prospettiva temporale; **QAP** — adattabilità professionale
 - Narrativi: intervista **Savickas**, eventi significativi di studio e di lavoro
@@ -134,6 +139,7 @@ Gli strumenti aspettano una guida che raramente c'è. Ecco il vuoto in cui si in
 ## Slide 6 — Come è fatto: l'harness (risposta a D1)
 
 **Bullet slide:**
+
 - Stack volutamente noioso: FastAPI + Next.js + PostgreSQL, Docker, streaming SSE
 - Non il modello — l'**harness**: l'infrastruttura di script, comandi, testi e prompt intorno al modello
   - **Envelope** — persona del counselor + dati e punteggi + prompt del passo + conoscenza recuperata + taccuino + storia: riassemblato a ogni turno
@@ -165,6 +171,7 @@ Quindi, la risposta alla prima domanda: il design non sta nel prompt. Sta nei vi
 ## Slide 7 — Il tempo della riflessione (secondo vincolo di design)
 
 **Bullet slide:**
+
 - Il primo vincolo era il modello. Il secondo è il **tempo**: come deve essere scandita la riflessione in una chat?
 - Una conoscenza e una scelta hanno bisogno di tempo: si devono sedimentare
 - Per design: **conversazione e riflessione sono due momenti separati**
@@ -192,6 +199,7 @@ Infine, ci sono sistemi di raccomandazione — per esempio libri e strategie —
 ## Slide 8 — La prima consulenza sugli esiti (risposta a D2) + demo
 
 **Bullet slide:**
+
 - Non sostituisce il consulente: è la **prima linea** della conversazione
 - Cosa fa: legge il profilo con lo studente, collega i punteggi a comportamenti concreti, propone strategie, apre domande
 - Cosa non fa: non diagnostica, non decide, non inventa consigli, non chiude il caso
@@ -220,6 +228,7 @@ E ora vi mostro come funziona. [DEMO]
 ## Slide 9 — Privacy, AI locale, norme (risposta a D3)
 
 **Bullet slide:**
+
 - Tredici provider dietro un'unica astrazione — **inclusi modelli locali** (Ollama, llama.cpp)
 - Locale = i dati non escono: demo, controllo dei costi, interazioni sensibili
 - Prima che i dati escano: **gateway di privacy** — nomi, email, istituzioni, identificatori nel testo libero
@@ -250,6 +259,7 @@ Il quadro normativo europeo, qui, non è un ostacolo: è un vincolo di design. I
 ## Slide 10 — Il circuito umano (e chi ha scritto il codice)
 
 **Bullet slide:**
+
 - Il rischio sociale: man mano che i modelli migliorano, le persone chiedono meno alle persone
 - L'AI è **un nodo** di una rete umana, non il centro
   - Docenti: gruppi classe, risultati e conversazioni dei propri studenti, note, messaggi (web e Telegram)
@@ -275,6 +285,7 @@ Per me questa è la proprietà più sottovalutata dell'AI attuale: cambia chi ha
 ## Slide 11 — Cosa cerco al KTH, e chiusura
 
 **Bullet slide:**
+
 - Collaborazione con il KTH (prof. Olle Bälter): **validare il QSAr in svedese** con studenti KTH
   - Interviste cognitive → pilota → raccolta dati → psicometria (CTT, CFA) → norme
   - Il manuale è già scritto, in inglese
@@ -306,21 +317,21 @@ Grazie.
 
 ## Cronometro
 
-| Slide | Contenuto | Minuti |
-|---|---|---|
-| 1 | Chi sono | 3 |
-| 2 | Roma Tre e l'Ostiense | 3 |
-| 3 | CounselorBot: perché + tre domande | 4 |
-| 4 | Cos'è l'orientamento | 5 |
-| 5 | Gli strumenti | 5 |
-| 6 | L'harness (D1) | 5 |
-| 7 | Il tempo della riflessione | 3 |
-| 8 | Prima consulenza (D2) + demo | 5 + 4 |
-| 9 | Privacy e AI locale (D3) | 4 |
-| 10 | Circuito umano + non-programmatore | 4 |
-| 11 | KTH e chiusura | 3 |
-| | **Totale parlato** | **~48** |
-| | Con tagli (vedi sotto) | ~35 + 5 di domande |
+| Slide | Contenuto                           | Minuti             |
+| ----- | ----------------------------------- | ------------------ |
+| 1     | Chi sono                            | 3                  |
+| 2     | Roma Tre e l'Ostiense               | 3                  |
+| 3     | CounselorBot: perché + tre domande | 4                  |
+| 4     | Cos'è l'orientamento               | 5                  |
+| 5     | Gli strumenti                       | 5                  |
+| 6     | L'harness (D1)                      | 5                  |
+| 7     | Il tempo della riflessione          | 3                  |
+| 8     | Prima consulenza (D2) + demo        | 5 + 4              |
+| 9     | Privacy e AI locale (D3)            | 4                  |
+| 10    | Circuito umano + non-programmatore  | 4                  |
+| 11    | KTH e chiusura                      | 3                  |
+|       | **Totale parlato**            | **~48**      |
+|       | Con tagli (vedi sotto)              | ~35 + 5 di domande |
 
 ## Piano di taglio (se sfori)
 
