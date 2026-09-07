@@ -51,12 +51,13 @@ def last_turn(db, session_id: str, free_only: bool = False):
         .filter(models.Log.action == "chat_message", models.Log.session_id == session_id)
         .order_by(models.Log.id.desc())
     )
-    if not free_only:
-        return query.first()
-    for row in query.limit(40).all():
-        if ((row.details or {}).get("user_input") or "").strip():
-            return row
-    return None
+    row = query.first()
+    if row is None or not free_only:
+        return row
+    # Judge the last turn or nothing: the input block is built from the session's
+    # most recent exchanges, so judging an older turn would show the judge a
+    # conversation that continued past the turn it was asked about.
+    return row if ((row.details or {}).get("user_input") or "").strip() else None
 
 
 def step_of(db, questionnaire_type: str, step_id: str | None):

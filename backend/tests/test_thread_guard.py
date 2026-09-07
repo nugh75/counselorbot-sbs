@@ -496,3 +496,22 @@ def test_the_judge_never_spends_its_budget_on_a_reasoning_trace(db):
     assert service.temperature == thread_guard.JUDGE_TEMPERATURE
     assert service.config["ai_timeout_seconds"] == str(thread_guard.TIMEOUT_SECONDS)
     assert thread_guard.TIMEOUT_SECONDS >= 45
+
+
+def test_a_hidden_step_directive_is_not_the_student_speaking(db):
+    # On a step entry `user_input` is empty and the directive travels in
+    # `effective_user_input`. Shown as the student's words it told the judge the
+    # student had asked for "exactly three open reflective questions", and the judge
+    # duly condemned a counselor who had answered what the student really asked.
+    # It is also the step script the mandate deliberately stops quoting.
+    db.add(models.Log(
+        session_id=SESSION, username=STUDENT, action="chat_message", phase="cognitive",
+        questionnaire_type="QSA",
+        details={"user_input": "", "bot_response": "Ecco i fattori.",
+                 "effective_user_input": "Ask the student exactly three open reflective questions."},
+    ))
+    db.flush()
+    _turn(db, student="mi suggerisci delle letture?", counselor="Due letture sul tuo nodo.")
+    text = _input(db)
+    assert "three open reflective questions" not in text
+    assert "mi suggerisci delle letture?" in text
