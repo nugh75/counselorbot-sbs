@@ -1105,6 +1105,31 @@ def _run_seed_and_migrations():
                 db.add(models.GuidedStep(**synth_def))
                 legacy_changed = True
 
+        # One-off: step di lettura del profilo per QPCS/QPCC/QAP. I prompt di
+        # analisi fattori esistevano gia' (`prompt_qpcs_factor` e gemelli) ma
+        # nessuno step li usava: erano modificabili dal pannello e mai serviti.
+        # Lo step entra in posizione 1, subito dopo il patto, e spinge avanti di
+        # uno gli step che seguono. Inserimento idempotente: lo spostamento
+        # avviene solo nel giro in cui lo step viene creato davvero.
+        profile_step_defaults = {
+            "QPCS": next(s for s in DEFAULT_QPCS_GUIDED_STEPS if s["id"] == "qpcs-profilo"),
+            "QPCC": next(s for s in DEFAULT_QPCC_GUIDED_STEPS if s["id"] == "qpcc-profilo"),
+            "QAP": next(s for s in DEFAULT_QAP_GUIDED_STEPS if s["id"] == "qap-profilo"),
+        }
+        for qtype, step_default in profile_step_defaults.items():
+            if db.query(models.GuidedStep).filter(models.GuidedStep.id == step_default["id"]).first():
+                continue
+            existing = db.query(models.GuidedStep).filter(
+                models.GuidedStep.questionnaire_type == qtype,
+                models.GuidedStep.sort_order >= step_default["sort_order"],
+            ).all()
+            if not existing:
+                continue
+            for step in existing:
+                step.sort_order = (step.sort_order or 0) + 1
+            db.add(models.GuidedStep(**{**step_default, "questionnaire_type": qtype}))
+            legacy_changed = True
+
         # Distribuzione consigli: gli step tematici possono recuperare al massimo
         # una nuova strategia; sintesi e step interpretativi non ne recuperano.
         for step in db.query(models.GuidedStep).filter(
