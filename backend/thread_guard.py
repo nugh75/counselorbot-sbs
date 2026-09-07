@@ -327,11 +327,20 @@ def _exchanges(db, session_id: str) -> str:
     for position, row in enumerate(reversed(rows)):
         judged = position == len(rows) - 1
         details = row.details or {}
-        student = details.get("effective_user_input") or details.get("user_input") or ""
+        # `effective_user_input` su un ingresso step e' la direttiva che la
+        # piattaforma manda a se stessa. Mostrata come parola dello studente ha
+        # detto al giudice che lo studente aveva chiesto "esattamente tre domande
+        # riflessive", e il giudice ha condannato chi invece rispondeva a quello
+        # che lo studente chiedeva davvero. E' anche il copione dello step, che
+        # il mandato ha smesso apposta di citare.
+        student = (details.get("user_input") or "").strip()
         counselor = details.get("bot_response") or ""
         student_cap = _JUDGED_STUDENT_CHARS if judged else _CONTEXT_TURN_CHARS
         counselor_cap = _JUDGED_COUNSELOR_CHARS if judged else _CONTEXT_TURN_CHARS
-        lines.append(f"student: {_clip(_safe(student), student_cap)}")
+        if student:
+            lines.append(f"student: {_clip(_safe(student), student_cap)}")
+        else:
+            lines.append("student: (said nothing — the platform opened a step here)")
         lines.append(f"counselor: {_clip(_safe(counselor), counselor_cap)}")
     return "\n".join(lines)
 
