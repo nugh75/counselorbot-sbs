@@ -179,6 +179,8 @@ On the **first startup** after this feature, `reconcile` writes a baseline: a pr
 
 **Consequence for whoever writes a migration**: do not add ad-hoc guards for customised text, and do not assume a rewrite will stick — if the row belongs to an admin, it will be reverted at the end of startup, by design.
 
+**A directive that applies to more than one instrument is written once, not copied into each row.** Put the text in `backend/prompts/<name>.md`, give it a sentinel (`[ANCHOR]`, `[SECOND-LEVEL METHOD]`, `[DEPTH ON REQUEST]`, `[FACTOR INTERPLAY]`), compose it into the code defaults, and append it to the live rows with an idempotent one-off keyed on that sentinel. Hand-copying the sentence into the QSA row and then into the QSAr row is how one instrument quietly keeps an older rule — the second-level closing formula survived months that way. `backend/tests/test_prompt_pair_drift.py` locks the blocks still duplicated across files and fails when the twins drift. When the target row is admin-owned, the live write alone is not enough: pair it with `prompt_revisions.record(..., ORIGIN_ADMIN)`, or the startup restore puts the old text back.
+
 ### AI Providers
 `AIService` (`backend/ai_service.py`) dispatches through a provider registry supporting **13 providers**: openai, anthropic, gemini, mistral, openrouter, ollama, llamacpp, **groq**, **cerebras**, **deepseek**, **together**, **fireworks**, **deepinfra**. Each provider: `call`, `stream`, `call_max`, `stream_max`. `disable_thinking` per-provider, driven by reasoning profiles (`backend/reasoning_profiles.py`). **Error contract**: config/provider failures raise `AIError` — never returned as chat content. Monthly budget fallback (`monthly_budget_usd`) switches to Ollama local model when exceeded.
 
