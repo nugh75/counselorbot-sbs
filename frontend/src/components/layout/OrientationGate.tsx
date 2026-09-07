@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getIdentity } from '@/lib/auth';
 import { fetchOrientationStatus } from '@/lib/orientation-api';
-import { orientationGateBypass } from '@/lib/tool-catalog';
+import { orientationGateBypass, orientationSkippedThisVisit } from '@/lib/tool-catalog';
 
 // Esito del cancello per questa sessione di pagina. Prima si interrogava
 // `/orientation/status` a ogni cambio rotta e, finché la risposta non
@@ -21,6 +21,13 @@ export function OrientationGate({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         if (gateSettled) {
+            setChecking(false);
+            return;
+        }
+        if (orientationSkippedThisVisit()) {
+            // Ha scelto di saltarla: il cancello tace per il resto della visita,
+            // invece di riproporgliela a ogni cambio rotta.
+            gateSettled = true;
             setChecking(false);
             return;
         }
