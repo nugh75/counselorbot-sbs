@@ -150,13 +150,17 @@ def _resolve_counselor(db, counselor_id):
     return provider, model, counselor.persona, counselor.name, disable_thinking, reasoning_budget
 
 
-def _watch_thread(prepared, request, *, session_id, username, effective_message,
+def _watch_thread(prepared, request, db, *, session_id, username, effective_message,
                   response_content, recommended) -> None:
     """Hand the finished turn to the guard.
 
     Fire and forget, and never on the way out: the reply has already left, and a
-    verdict that costs the student a second of waiting is not worth having.
+    verdict that costs the student a second of waiting is not worth having. The
+    flag is read here, on a session that is already open, so a turn on an
+    installation that has the guard off does not start a thread to learn it.
     """
+    if not thread_guard.enabled(db):
+        return
     step = getattr(prepared, "step", None)
     recommended = recommended or {}
     thread_guard.schedule(
@@ -641,7 +645,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         matched_on=recommendation_meta,
         turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
     )
-    _watch_thread(prepared, request, session_id=session_id,
+    _watch_thread(prepared, request, db, session_id=session_id,
                   username=identity.get("username") if identity else "",
                   effective_message=effective_message, response_content=response_content,
                   recommended=recommended)
@@ -787,7 +791,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             if response_id:
                 log_entry.response_id = response_id
             log_db.commit()
-            _watch_thread(prepared, request, session_id=session_id,
+            _watch_thread(prepared, request, log_db, session_id=session_id,
                           username=identity.get("username") if identity else "",
                           effective_message=effective_message,
                           response_content=response_content, recommended=recommended)
