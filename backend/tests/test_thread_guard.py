@@ -371,3 +371,49 @@ def test_with_no_verdict_nothing_is_added(db):
     prepared = _prepared(db, use_phase_prompt=False, message="e quindi?")
     assert "[THREAD]" not in prepared.system_prompt_final
     assert not prepared.components.get("thread_guard")
+
+
+# --- seed ---
+from backend.thread_guard_seed import seed_thread_guard  # noqa: E402
+
+
+def _guard_preset(db):
+    row = db.query(models.Config).filter(models.Config.key == thread_guard.PRESET_KEY).first()
+    return db.query(models.ModelPreset).filter(
+        models.ModelPreset.id == int(row.value)).first() if row and row.value else None
+
+
+def test_the_seed_prefers_a_local_qwen_without_thinking(db):
+    _preset(db, name="Qwen 3.8 Reasoning", disable_thinking=False)
+    wanted = _preset(db, name="Qwen 3.8B - no reasoning", disable_thinking=True)
+    _preset(db, name="Gemini", provider="gemini", model="gemini-3.8-flash")
+    assert seed_thread_guard(db, models) is True
+    assert _guard_preset(db).id == wanted.id
+    assert db.query(models.Config).filter(
+        models.Config.key == thread_guard.ENABLED_KEY).first().value == "false"
+
+
+def test_the_seed_creates_the_local_judge_when_there_is_none(db):
+    assert seed_thread_guard(db, models) is True
+    chosen = _guard_preset(db)
+    assert chosen.provider == "ollama" and chosen.model.startswith("qwen3.8")
+    assert chosen.disable_thinking is True
+
+
+def test_the_seed_never_overrules_the_admin(db):
+    external = _preset(db, name="Deepseek", provider="deepseek", model="deepseek-v4-flash",
+                       disable_thinking=False)
+    _config(db, thread_guard.PRESET_KEY, str(external.id))
+    _config(db, thread_guard.ENABLED_KEY, "true")
+    assert seed_thread_guard(db, models) is False
+    assert _guard_preset(db).id == external.id
+    assert db.query(models.Config).filter(
+        models.Config.key == thread_guard.ENABLED_KEY).first().value == "true"
+
+
+def test_the_seed_run_twice_changes_nothing(db):
+    assert seed_thread_guard(db, models) is True
+    first = _guard_preset(db).id
+    assert seed_thread_guard(db, models) is False
+    assert _guard_preset(db).id == first
+    assert db.query(models.ModelPreset).count() == 1
