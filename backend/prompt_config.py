@@ -73,7 +73,25 @@ SYNTHESIS_ADVICE_SENTINEL = "[SYNTHESIS ADVICE]"
 
 SYNTHESIS_ADVICE_DIRECTIVE = '\n\n' + _text("synthesis_advice_directive")
 
-DEFAULT_SECOND_LEVEL_METHOD = '\n\n' + _text("default_second_level_method")
+SECOND_LEVEL_METHOD_TEXT = _text("default_second_level_method")
+
+DEFAULT_SECOND_LEVEL_METHOD = '\n\n' + SECOND_LEVEL_METHOD_TEXT
+
+# La prima versione della direttiva descriveva la domanda riflessiva come un
+# invito a dire "se questa lettura corrisponde alla tua esperienza": i counselor
+# la ricopiavano alla lettera a ogni step di secondo livello (9 chiusure su 13
+# nelle log di produzione). Lo snapshot serve alla migrazione one-off in
+# `main.startup_event`, che sostituisce SOLO questo blocco - appeso da noi, non
+# scritto dall'admin - lasciando intatto il resto della riga.
+LEGACY_SECOND_LEVEL_METHOD = (
+    "[SECOND-LEVEL METHOD] After the integrated reading of the factors, always add: "
+    "(1) ONE interpretive hypothesis on the student's way of studying that emerges from "
+    "the combination of these factors (e.g. 'taken together, this suggests that...'), "
+    "going beyond the single scores; (2) ONE short reflective question inviting the "
+    "student to say whether this reading matches their experience. The reflective "
+    "question comes BEFORE any practical advice: the goal is to make the student "
+    "reflect first, not to hand out solutions."
+)
 
 DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL = (
     "Provide second-level analysis of the "

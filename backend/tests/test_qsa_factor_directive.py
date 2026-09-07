@@ -53,8 +53,10 @@ from backend.prompt_config import (
     DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL,
     DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL,
     FACTOR_INTERPLAY_SENTINEL,
+    LEGACY_SECOND_LEVEL_METHOD,
     QA_DEPTH_SENTINEL,
     SECOND_LEVEL_METHOD_SENTINEL,
+    SECOND_LEVEL_METHOD_TEXT,
     SYNTHESIS_ADVICE_SENTINEL,
 )
 
@@ -233,6 +235,24 @@ def test_second_level_defaults_require_method_directive():
         assert SECOND_LEVEL_METHOD_SENTINEL in prompt, prompt
         assert "interpretive hypothesis" in prompt, prompt
         assert "reflective question" in prompt, prompt
+
+
+def test_second_level_method_does_not_dictate_the_closing_formula():
+    # Il testo vecchio descriveva la domanda come invito a dire "se questa lettura
+    # corrisponde alla tua esperienza" e i counselor lo ricopiavano a ogni step
+    # (9 chiusure su 13 nelle log). La direttiva ora deve chiedere una domanda
+    # ancorata a cio' che lo studente ha detto e variata tra gli step.
+    # La formula non va nemmeno citata per vietarla: un modello piccolo la
+    # ricopierebbe lo stesso, e' il testo che ha davanti.
+    assert "matches their experience" not in SECOND_LEVEL_METHOD_TEXT
+    assert LEGACY_SECOND_LEVEL_METHOD not in SECOND_LEVEL_METHOD_TEXT
+    assert "Do not ask the student to confirm" in SECOND_LEVEL_METHOD_TEXT
+    assert "not from a fixed set of openers" in SECOND_LEVEL_METHOD_TEXT
+    assert "never reuse the opening or the frame" in SECOND_LEVEL_METHOD_TEXT
+    # Lo snapshot legacy deve restare riconoscibile dalla migrazione one-off:
+    # se qualcuno lo riformatta, le righe DB personalizzate non vengono piu' toccate.
+    assert LEGACY_SECOND_LEVEL_METHOD.startswith(SECOND_LEVEL_METHOD_SENTINEL)
+    assert "matches their experience" in LEGACY_SECOND_LEVEL_METHOD
 
 
 def _default_step_prompts(steps):
