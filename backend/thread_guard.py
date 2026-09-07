@@ -18,10 +18,13 @@ A verdict is never worth a turn. Every failure here renders an empty block.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 
 from pydantic import BaseModel, ValidationError
+
+from . import models
 
 # Two notes are a warning; four are wallpaper the model learns to skip.
 MAX_CHECK_NOTES = 2
@@ -139,3 +142,87 @@ def _usable_note(note: str | None) -> str:
     cut = text[:MAX_NOTE_CHARS - 1]
     space = cut.rfind(" ")
     return (cut[:space] if space > 0 else cut).rstrip() + "…"
+
+
+# --- storage ---
+ACTION = "thread_guard"
+
+
+def turn_hash(user_text: str, bot_text: str) -> str:
+    """Which exchange a verdict is about.
+
+    The worker runs after the turn and the next turn does not wait for it. A
+    verdict that arrives late is about an exchange the conversation has already
+    left behind: injecting it would answer a question nobody is still asking.
+    """
+    digest = hashlib.sha256(f"{user_text}\u0000{bot_text}".encode("utf-8"))
+    return digest.hexdigest()[:16]
+
+
+def store(db, *, session_id: str, username: str, turn: str, verdict: Verdict | None) -> list[str]:
+    """Write the verdict and return the lines that will actually be injected."""
+    lines = notes(verdict)
+    previous = _latest_row(db, session_id)
+    if previous is not None:
+        already = {_key(line) for line in _stored_notes(previous)}
+        # The same finding twice running reads as nagging, and the model starts
+        # skipping the section. Once it has been said, let the turn answer it.
+        lines = [line for line in lines if _key(line) not in already]
+    db.add(models.Log(
+        session_id=session_id,
+        username=username or None,
+        action=ACTION,
+        details={"turn": turn, "notes": lines,
+                 "verdict": verdict.model_dump() if verdict else None},
+    ))
+    db.commit()
+    return lines
+
+
+def pending(db, *, session_id: str) -> list[str]:
+    """The notes about the exchange that just happened, or nothing at all."""
+    last = _last_exchange(db, session_id)
+    if last is None:
+        return []
+    row = _latest_row(db, session_id)
+    if row is None or (row.details or {}).get("turn") != turn_hash(*last):
+        return []
+    return _stored_notes(row)
+
+
+def block(db, *, session_id: str) -> str:
+    return render(pending(db, session_id=session_id))
+
+
+def _latest_row(db, session_id: str):
+    return (
+        db.query(models.Log)
+        .filter(models.Log.session_id == session_id, models.Log.action == ACTION)
+        .order_by(models.Log.id.desc())
+        .first()
+    )
+
+
+def _last_exchange(db, session_id: str) -> tuple[str, str] | None:
+    row = (
+        db.query(models.Log)
+        .filter(models.Log.session_id == session_id, models.Log.action == "chat_message")
+        .order_by(models.Log.id.desc())
+        .first()
+    )
+    if row is None:
+        return None
+    details = row.details or {}
+    return (details.get("effective_user_input") or details.get("user_input") or "",
+            details.get("bot_response") or "")
+
+
+def _stored_notes(row) -> list[str]:
+    stored = (row.details or {}).get("notes")
+    if not isinstance(stored, list):
+        return []
+    return [line for line in stored if isinstance(line, str) and line.strip()]
+
+
+def _key(line: str) -> str:
+    return " ".join(line.lower().split())
