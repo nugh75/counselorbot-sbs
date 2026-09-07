@@ -6,13 +6,12 @@ import pytest
 from backend import thread_guard
 
 
-def _raw(*, on_thread=True, question_fit=True, advice=True, developed=True,
+def _raw(*, on_thread=True, question_fit=True, advice=True,
          on_thread_note=None, question_note=None, advice_note=None) -> str:
     return json.dumps({
         "on_thread": {"ok": on_thread, "note": on_thread_note},
         "question_fit": {"ok": question_fit, "note": question_note},
         "advice_grounded": {"ok": advice, "note": advice_note},
-        "answered": {"last_question_developed": developed},
     })
 
 
@@ -40,11 +39,12 @@ def test_only_the_two_most_severe_survive():
     assert lines == ["Advice ungrounded.", "Left the subject the student raised."]
 
 
-def test_an_undeveloped_question_adds_its_own_line():
-    verdict = thread_guard.parse(_raw(developed=False))
-    block = thread_guard.render(thread_guard.notes(verdict))
-    assert block.startswith("[THREAD]")
-    assert "not taken up" in block
+def test_the_model_is_not_asked_whether_a_question_was_answered():
+    # Both judges said "not developed" on most turns, whatever the turn held. The
+    # ledger already knows which question is open and clears it when the student
+    # answers, deterministically — so the model is not asked at all.
+    assert "answered" not in thread_guard.SYSTEM_PROMPT.lower()
+    assert not hasattr(thread_guard.Verdict, "answered")
 
 
 def test_the_block_stays_within_its_budget():
@@ -52,7 +52,6 @@ def test_the_block_stays_within_its_budget():
         on_thread=False, on_thread_note="x" * 400,
         question_fit=False, question_note="y" * 400,
         advice=False, advice_note="z" * 400,
-        developed=False,
     ))
     assert len(thread_guard.render(thread_guard.notes(verdict))) <= thread_guard.MAX_BLOCK_CHARS
 
@@ -72,15 +71,6 @@ def test_only_the_first_sentence_of_a_rambling_note_is_kept():
         on_thread_note="The reply changed subject. I would suggest going back to the previous topic.",
     ))
     assert thread_guard.notes(verdict) == ["The reply changed subject."]
-
-
-def test_a_step_entry_never_reports_an_unanswered_question():
-    # On a step entry the student says nothing: the message is a hidden directive.
-    # "The question was not taken up" is then true by construction, and it fired on
-    # seven of nine sampled turns. Whose question it is, and how old, is the ledger's.
-    verdict = thread_guard.parse(_raw(developed=False))
-    assert thread_guard.notes(verdict, student_spoke=False) == []
-    assert thread_guard.notes(verdict, student_spoke=True) == [thread_guard.ANSWERED_LINE]
 
 
 @pytest.mark.parametrize("note", [
@@ -126,15 +116,17 @@ def test_an_imperative_note_is_refused():
     "{}",
     json.dumps({"on_thread": {"ok": True}}),
     json.dumps({"on_thread": {"ok": "maybe"}, "question_fit": {"ok": True},
-                "advice_grounded": {"ok": True}, "answered": {"last_question_developed": True}}),
+                "advice_grounded": {"ok": True}}),
 ])
 def test_unusable_output_parses_to_nothing(raw):
     assert thread_guard.parse(raw) is None
 
 
 def test_a_fenced_reply_is_still_read():
-    verdict = thread_guard.parse("Here it is:\n```json\n" + _raw(developed=False) + "\n```\n")
-    assert verdict is not None and verdict.answered.last_question_developed is False
+    verdict = thread_guard.parse("Here it is:\n```json\n"
+                                 + _raw(on_thread=False, on_thread_note="Left the subject.")
+                                 + "\n```\n")
+    assert verdict is not None and verdict.on_thread.ok is False
 
 
 def test_notes_of_nothing_render_nothing():
@@ -170,14 +162,16 @@ def _turn(db, *, student="mi distraggo", counselor="Capito."):
 def test_a_verdict_about_the_last_turn_is_pending(db):
     turn = _turn(db)
     thread_guard.store(db, session_id=SESSION, username=STUDENT, turn=turn,
-                       verdict=thread_guard.parse(_raw(developed=False)))
-    assert thread_guard.pending(db, session_id=SESSION) == [thread_guard.ANSWERED_LINE]
+                       verdict=thread_guard.parse(_raw(on_thread=False,
+                                                       on_thread_note="Left the subject.")))
+    assert thread_guard.pending(db, session_id=SESSION) == ["Left the subject."]
 
 
 def test_a_verdict_about_an_older_turn_is_not_injected(db):
     stale = _turn(db, student="prima", counselor="risposta")
     thread_guard.store(db, session_id=SESSION, username=STUDENT, turn=stale,
-                       verdict=thread_guard.parse(_raw(developed=False)))
+                       verdict=thread_guard.parse(_raw(on_thread=False,
+                                                       on_thread_note="Left the subject.")))
     _turn(db, student="poi", counselor="altra risposta")  # the guard has not caught up
     assert thread_guard.pending(db, session_id=SESSION) == []
 
@@ -220,10 +214,14 @@ def _input(db, **kwargs):
     return thread_guard.build_input(db, **params)
 
 
-def test_the_input_carries_the_mandate_and_the_student_words(db):
+def test_the_mandate_names_the_step_without_quoting_its_script(db):
+    # Given the step prompt verbatim, the judge ticked its instructions off and
+    # condemned a turn that answered what the student had actually asked. The step
+    # names the area under discussion; it is not the turn's checklist.
     _turn(db, student="a casa mi distraggo sempre", counselor="Capito. Che cosa ti aiuta?")
     text = _input(db)
-    assert "Analizza i fattori cognitivi" in text
+    assert "Strategie cognitive" in text
+    assert "Analizza i fattori cognitivi" not in text
     assert "mi distraggo sempre" in text
     assert "Che cosa ti aiuta?" in text
 
@@ -331,7 +329,7 @@ def test_a_verdict_is_stored_and_returned(db):
 
     assert _evaluate(db, call) == ["The question belonged to another step."]
     assert seen["provider"] == "ollama" and seen["model"] == "qwen3.8:latest"
-    assert "Analizza i fattori." in seen["user_message"]
+    assert "Strategie cognitive" in seen["user_message"]
     assert db.query(models.Log).filter(models.Log.action == thread_guard.ACTION).count() == 1
 
 
@@ -457,3 +455,44 @@ def test_the_seed_run_twice_changes_nothing(db):
     assert seed_thread_guard(db, models) is False
     assert _guard_preset(db).id == first
     assert db.query(models.ModelPreset).count() == 1
+
+
+# --- la domanda aperta torna al ledger, anche sui turni liberi ---------------
+def test_an_open_question_reaches_a_free_turn_without_a_model(db):
+    from backend import session_ledger
+
+    _turn(db, student="dimmi di più",
+          counselor="Riconosci questo schema: perdi il filo dopo dieci minuti?")
+    note = session_ledger.open_question_note(db, session_id=SESSION, username=STUDENT)
+    assert "perdi il filo dopo dieci minuti" in note
+
+    prepared = _prepared(db, use_phase_prompt=False, message="e quindi?")
+    assert "perdi il filo dopo dieci minuti" in prepared.system_prompt_final
+
+
+def test_an_answered_question_reaches_nothing(db):
+    from backend import session_ledger
+
+    _turn(db, student="dimmi di più", counselor="Perdi il filo dopo dieci minuti?")
+    _turn(db, student="sì, mi ci ritrovo", counselor="Allora partiamo da lì.")
+    assert session_ledger.open_question_note(db, session_id=SESSION, username=STUDENT) == ""
+
+
+def test_at_step_entry_the_ledger_says_it_once(db):
+    _turn(db, student="dimmi di più",
+          counselor="Riconosci questo schema: perdi il filo dopo dieci minuti?")
+    prepared = _prepared(db)
+    assert prepared.system_prompt_final.count("perdi il filo dopo dieci minuti") == 1
+
+
+def test_the_judge_never_spends_its_budget_on_a_reasoning_trace(db):
+    # The verdict is a small JSON object. With thinking on, the larger judge timed
+    # out on one turn and returned an unreadable verdict on another.
+    _preset(db, name="nemotron", model="nemotron-cascade-2:latest", disable_thinking=False)
+    _config(db, thread_guard.PRESET_KEY, str(
+        db.query(models.ModelPreset).order_by(models.ModelPreset.id.desc()).first().id))
+    service = thread_guard.judge_service(db)
+    assert service.disable_thinking is True
+    assert service.temperature == thread_guard.JUDGE_TEMPERATURE
+    assert service.config["ai_timeout_seconds"] == str(thread_guard.TIMEOUT_SECONDS)
+    assert thread_guard.TIMEOUT_SECONDS >= 45

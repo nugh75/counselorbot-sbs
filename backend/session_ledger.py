@@ -126,6 +126,22 @@ def render(ledger: dict) -> str:
         answers.pop(0)
 
 
+def open_question_note(db, *, session_id: str, username: str) -> str:
+    """The counselor's own question, still unanswered, as one line.
+
+    The ledger is injected at step entry only, so on a free turn nothing recalled
+    a question the student had walked past. Asking a model whether it was taken up
+    turned out to be noise on most turns; `_open_question` already answers it here
+    without one, and clears itself the moment the student replies.
+    """
+    open_question = build(db, session_id=session_id, username=username)["open_question"]
+    if not open_question:
+        return ""
+    return ("[THREAD] Your own question, asked earlier and still unanswered: "
+            f'"{open_question}" — take it back up rather than stacking a new one on '
+            "top of it, and if the student has moved on, let it go.")
+
+
 def block(db, *, session_id: str, username: str, step_id: str | None = None,
           guard_notes: list[str] | None = None) -> str:
     return render(build(db, session_id=session_id, username=username, step_id=step_id,

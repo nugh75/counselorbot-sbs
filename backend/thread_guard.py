@@ -38,8 +38,6 @@ MAX_BLOCK_CHARS = 400
 # lost thread only costs a turn, a misplaced question costs less still.
 SEVERITY = ("advice_grounded", "on_thread", "question_fit")
 
-ANSWERED_LINE = "The question you left open in the previous turn was not taken up in this exchange."
-
 _FENCE = re.compile(r"```(?:json)?\s*(.*?)```", re.DOTALL)
 _OBJECT = re.compile(r"\{.*\}", re.DOTALL)
 _SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
@@ -87,17 +85,11 @@ class Check(BaseModel):
     note: str | None = None
 
 
-class Answered(BaseModel):
-    model_config = {"extra": "ignore"}
-    last_question_developed: bool
-
-
 class Verdict(BaseModel):
     model_config = {"extra": "ignore"}
     on_thread: Check
     question_fit: Check
     advice_grounded: Check
-    answered: Answered
 
 
 def parse(raw: str | None) -> Verdict | None:
@@ -111,15 +103,8 @@ def parse(raw: str | None) -> Verdict | None:
         return None
 
 
-def notes(verdict: Verdict | None, *, student_spoke: bool = True) -> list[str]:
-    """The lines worth injecting: only what failed, severest first.
-
-    `student_spoke` is false on a step entry, where the student's message is a
-    hidden directive and nobody answered anything. Asking there whether the open
-    question was taken up is asking a question with a fixed answer: it fired on
-    seven of nine sampled turns. Whose question is open, and for how long, the
-    ledger already knows without a model.
-    """
+def notes(verdict: Verdict | None) -> list[str]:
+    """The lines worth injecting: only what failed, severest first."""
     if verdict is None:
         return []
     lines = []
@@ -132,8 +117,6 @@ def notes(verdict: Verdict | None, *, student_spoke: bool = True) -> list[str]:
         note = _usable_note(check.note)
         if note:
             lines.append(note)
-    if student_spoke and not verdict.answered.last_question_developed:
-        lines.append(ANSWERED_LINE)
     return lines
 
 
@@ -196,10 +179,9 @@ def turn_hash(user_text: str, bot_text: str) -> str:
     return digest.hexdigest()[:16]
 
 
-def store(db, *, session_id: str, username: str, turn: str, verdict: Verdict | None,
-          student_spoke: bool = True) -> list[str]:
+def store(db, *, session_id: str, username: str, turn: str, verdict: Verdict | None) -> list[str]:
     """Write the verdict and return the lines that will actually be injected."""
-    lines = notes(verdict, student_spoke=student_spoke)
+    lines = notes(verdict)
     previous = _latest_row(db, session_id)
     if previous is not None:
         already = {_key(line) for line in _stored_notes(previous)}
@@ -282,8 +264,8 @@ _CONTEXT_TURNS = 2
 
 def build_input(
     db, *, session_id: str, username: str, questionnaire_type: str,
-    step_id: str | None, step_label: str, step_prompt: str, language: str,
-    advice_ids: list[str], candidate_ids: list[str],
+    step_id: str | None, step_label: str, step_prompt: str = "", language: str = "it",
+    advice_ids: list[str] | None = None, candidate_ids: list[str] | None = None,
 ) -> str:
     """What the judge sees. Deliberately small.
 
@@ -291,18 +273,19 @@ def build_input(
     turn, its mandate and what the session already holds, it answers about the
     turn. The four sections are the four things a verdict needs and nothing else.
     """
+    del step_prompt  # named by the signature for its callers, deliberately unused
     sections = [
         _mandate(db, questionnaire_type=questionnaire_type, username=username,
-                 session_id=session_id, step_label=step_label, step_prompt=step_prompt,
+                 session_id=session_id, step_label=step_label, step_id=step_id,
                  language=language),
         _exchanges(db, session_id),
         _ledger(db, session_id=session_id, username=username, step_id=step_id),
-        _advice(advice_ids, candidate_ids),
+        _advice(advice_ids or [], candidate_ids or []),
     ]
     return "\n\n".join(section for section in sections if section)[:MAX_INPUT_CHARS]
 
 
-def _mandate(db, *, questionnaire_type, username, session_id, step_label, step_prompt,
+def _mandate(db, *, questionnaire_type, username, session_id, step_label, step_id,
              language) -> str:
     lines = [f"MANDATE (instrument {questionnaire_type}, conversation language {language})"]
     if questionnaire_type == "IDEA":
@@ -310,10 +293,13 @@ def _mandate(db, *, questionnaire_type, username, session_id, step_label, step_p
         # costruendo, ed e' rispetto a quella che una domanda e' pertinente.
         lines.append(_map_line(db, username, session_id))
     else:
-        if step_label:
-            lines.append(f'Step: "{step_label}".')
-        lines.append("The step asks the counselor to:")
-        lines.append(_clip(step_prompt, _MANDATE_CHARS))
+        # Il prompt di step verbatim trasformava il giudice in un correttore di
+        # compiti: ha condannato un turno che rispondeva a quello che lo studente
+        # aveva chiesto perche' non faceva le mosse previste dallo step. Lo step
+        # dice di che cosa si sta parlando, non che cosa il turno deve contenere.
+        lines.append(f'Step under way: "{step_label or step_id or "free conversation"}".')
+        lines.append("That names the area the conversation is in. It is not a script for "
+                     "the turn, and you have not been given one.")
     return "\n".join(line for line in lines if line)
 
 
@@ -399,8 +385,12 @@ ENABLED_KEY = "thread_guard_enabled"
 PRESET_KEY = "thread_guard_preset_id"
 # Un giudizio non vale un turno: oltre questo il verdetto arriverebbe comunque
 # tardi, e il turno seguente lo scarterebbe come stantio.
-TIMEOUT_SECONDS = 20
+TIMEOUT_SECONDS = 45
 MAX_VERDICT_TOKENS = 400
+# Un verdetto e' un oggetto JSON piccolo: la traccia di ragionamento consuma il
+# budget senza migliorarlo, e col giudice grande ha prodotto un turno andato in
+# timeout e un verdetto illeggibile. Spento sempre, qualunque preset dica.
+JUDGE_THINKING = False
 # Lo stesso turno deve dare lo stesso verdetto. Al default del provider non lo
 # dava: la stessa sessione e' tornata "developed" in una passata e "DROPPED"
 # nella successiva, e ogni misura di qualita' presa cosi' misura il rumore.
@@ -415,8 +405,7 @@ connected it back to the mandate.
 Reply with one JSON object and nothing else:
 {"on_thread": {"ok": true, "note": null},
  "question_fit": {"ok": true, "note": null},
- "advice_grounded": {"ok": true, "note": null},
- "answered": {"last_question_developed": true}}
+ "advice_grounded": {"ok": true, "note": null}}
 
 on_thread - false only if the counselor lost the thread: it neither took up what
 the student raised nor tied it back to the mandate.
@@ -428,9 +417,6 @@ student said. A turn that gives no advice is ok: true.
 The mandate frames the conversation; it is not a checklist. Answering what the
 student explicitly asked for is never off mandate: a turn that does so is on_thread
 and question_fit ok even when it performed none of the step's usual moves.
-answered.last_question_developed - false if a question the counselor had left open
-was neither answered nor taken further in this exchange. If there was none, true.
-
 Each note is ONE past-tense sentence of at most 140 characters saying what happened,
 written in English whatever language the conversation is in: it is read by a model,
 never shown to the student, and an Italian note risks being copied into an Italian reply.
@@ -464,7 +450,6 @@ def evaluate(
     db, *, call, session_id: str, username: str, questionnaire_type: str,
     step_id: str | None, step_label: str, step_prompt: str, language: str,
     advice_ids: list[str], candidate_ids: list[str], turn: str,
-    student_spoke: bool = True,
 ) -> list[str]:
     """Judge the turn that just ended. Returns the lines that will be injected.
 
@@ -495,8 +480,7 @@ def evaluate(
     if verdict is None:
         logger.info("Thread guard returned no readable verdict (%s/%s)", provider, model)
         return []
-    return store(db, session_id=session_id, username=username, turn=turn, verdict=verdict,
-                 student_spoke=student_spoke)
+    return store(db, session_id=session_id, username=username, turn=turn, verdict=verdict)
 
 
 def schedule(**kwargs) -> None:
@@ -515,10 +499,8 @@ def judge_service(db):
     service = AIService(db)
     service.config["ai_timeout_seconds"] = str(TIMEOUT_SECONDS)
     service.temperature = JUDGE_TEMPERATURE
-    target = preset(db)
-    if target is not None:
-        service.disable_thinking = target[2]
-        service.config["disable_thinking"] = "true" if target[2] else "false"
+    service.disable_thinking = not JUDGE_THINKING
+    service.config["disable_thinking"] = "false" if JUDGE_THINKING else "true"
     return service
 
 

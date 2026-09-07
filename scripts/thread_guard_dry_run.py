@@ -149,11 +149,8 @@ def main() -> int:
             print("   verdict  : " + " | ".join(
                 f"{name} {'ok' if getattr(verdict, name).ok else 'FAIL'}"
                 for name in ("on_thread", "question_fit", "advice_grounded")
-            ) + f" | last question {'developed' if verdict.answered.last_question_developed else 'DROPPED'}")
-            lines = thread_guard.notes(
-                verdict,
-                student_spoke=bool((details.get("user_input") or "").strip()),
-            )
+            ))
+            lines = thread_guard.notes(verdict)
             if lines:
                 flagged += 1
                 for line in lines:
