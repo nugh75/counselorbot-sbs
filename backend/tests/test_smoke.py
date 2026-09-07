@@ -1783,6 +1783,40 @@ def test_platform_catalog_is_short_in_analysis_and_full_when_asked():
     assert "Tools available in CounselorBot:" not in asked
 
 
+def test_profile_step_serves_the_factor_prompt_of_its_instrument():
+    # I prompt di analisi fattori QPCS/QPCC/QAP esistevano senza uno step che li
+    # usasse. Ora il primo passo dopo il patto legge il profilo e li serve.
+    for questionnaire_type, step_id, key, code in (
+        ("QPCS", "qpcs-profilo", "prompt_qpcs_factor", "S1"),
+        ("QPCC", "qpcc-profilo", "prompt_qpcc_factor", "K1"),
+        ("QAP", "qap-profilo", "prompt_qap_factor", "AD1"),
+    ):
+        _ensure_guided_steps(questionnaire_type)
+        r = client.post("/admin/prompt-audit/dry-run", json={
+            "questionnaire_type": questionnaire_type,
+            "language": "it",
+            "phase": step_id,
+            "use_phase_prompt": True,
+            "message": "",
+            "scores_context": "",
+            "session_id": f"prompt-audit-profile-{step_id}",
+            "include_knowledge": False,
+            "include_history": False,
+        })
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["resolved"]["prompt_key"] == key, (step_id, body["resolved"]["prompt_key"])
+        envelope = body["envelope"]
+        assert code in envelope["system_prompt_final"] + envelope["full_message"], step_id
+        # Subito dopo il patto: la lettura del profilo precede le aree.
+        db = _TestSession()
+        try:
+            step = db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).first()
+            assert step is not None and step.sort_order == 1, step_id
+        finally:
+            db.close()
+
+
 def test_qpcs_welcome_prompt_is_actually_served_on_the_first_step():
     # Il prompt di benvenuto era registrato sulla fase "qpcs-welcome", che non
     # esiste: lo step di apertura si chiama qpcs-intro e finiva sul prompt di

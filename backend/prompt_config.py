@@ -1948,6 +1948,29 @@ DEFAULT_IDEA_GUIDED_STEPS: List[Dict] = [
 
 DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
     {
+        "id": "qpcs-profilo",
+        "sort_order": 1,
+        "label": "Lettura del Profilo",
+        "prompt": (
+            "Read my whole QPCS profile before we explore the areas one by one: S1 (Managing emotions), S2 (Communication competence), S3 (Will and perseverance), S4 (Strategies and collaboration), S5 (Confidence and life project). "
+            "For each of them give my score, its interpretation label and, in one or two "
+            "sentences, what the area measures and how that result shows up in practice. "
+            "Treat every score as my own self-assessment, a reference point for reflection "
+            "and never a grade or a judgement. Then group the areas into strengths, good "
+            "areas and areas to work on. Do not give practical advice here: the area steps that follow take each result up in conversation."
+        ),
+        "system_prompt_mode": "qpcs-factor",
+        "color_theme": "slate",
+        "questionnaire_type": "QPCS",
+        "label_i18n": {
+            "en": "Reading Your Profile",
+            "es": "Lectura del Perfil",
+            "fr": "Lecture du Profil",
+            "de": "Profilübersicht",
+            "sv": "Profilöversikt"
+        },
+    },
+    {
         "id": "qpcs-intro",
         "sort_order": 0,
         "label": "0. Patto di Collaborazione",
@@ -1975,7 +1998,7 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
     },
     {
         "id": "qpcs-emozioni",
-        "sort_order": 1,
+        "sort_order": 2,
         "label": "1. Gestione delle Emozioni",
         "prompt": (
             "You are now starting Area 1/5 - Managing emotions and anxiety. If a previous topic "
@@ -1992,7 +2015,7 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
     },
     {
         "id": "qpcs-comunicazione",
-        "sort_order": 2,
+        "sort_order": 3,
         "label": "2. Competenza Comunicativa",
         "prompt": (
             "You are now starting Area 2/5 - Communicative and relational competence. If the "
@@ -2011,7 +2034,7 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
     },
     {
         "id": "qpcs-volizione",
-        "sort_order": 3,
+        "sort_order": 4,
         "label": "3. Volonta' e Perseveranza",
         "prompt": (
             "You are now starting Area 3/5 - Will, perseverance and commitment. If the previous "
@@ -2029,7 +2052,7 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
     },
     {
         "id": "qpcs-apprendimento",
-        "sort_order": 4,
+        "sort_order": 5,
         "label": "4. Strategie e Collaborazione",
         "prompt": (
             "You are now starting Area 4/5 - Learning and collaboration strategies. If the "
@@ -2048,7 +2071,7 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
     },
     {
         "id": "qpcs-fiducia",
-        "sort_order": 5,
+        "sort_order": 6,
         "label": "5. Fiducia e Progetto di Vita",
         "prompt": (
             "You are now starting Area 5/5 - Confidence in one's own competences and sense/project "
@@ -2067,7 +2090,7 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
     },
     {
         "id": "qpcs-sintesi",
-        "sort_order": 6,
+        "sort_order": 7,
         "label": "6. Sintesi e Piano d'Azione",
         "prompt": (
             "You are now producing the final summary of the QPCS results analysis. If the "
@@ -2089,7 +2112,27 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
 # Canonical detailed reflective paths, aligned with the deployed paths.
 # Existing installations retain their own steps; startup seeds only empty paths.
 
-DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-intro',
+DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{
+    'id': 'qpcc-profilo',
+    'questionnaire_type': 'QPCC',
+    'sort_order': 1,
+    'label': 'Lettura del Profilo',
+    'prompt': (
+        "Read my whole QPCC profile before the interview areas: K1 (Public communication), K2 (Managing anxiety and responsibility), K3 (Volition and self-regulation), K4 (Elaboration strategies), K5 (Beliefs about oneself). "
+        "For each of them give my score, its interpretation label and, in one or two "
+        "sentences, what the area measures and how that result shows up in practice. "
+        "Treat every score as my own self-assessment, a reference point for reflection "
+        "and never a grade or a judgement. Then group the areas into strengths, good "
+        "areas and areas to work on. Do not give practical advice here: the areas that follow explore each result in conversation."
+    ),
+    'system_prompt_mode': 'qpcc-factor',
+    'color_theme': 'slate',
+    'label_i18n': {'en': 'Reading Your Profile',
+                   'es': 'Lectura del Perfil',
+                   'fr': 'Lecture du Profil',
+                   'de': 'Profilübersicht',
+                   'sv': 'Profilöversikt'}},
+ {'id': 'qpcc-intro',
   'questionnaire_type': 'QPCC',
   'sort_order': 0,
   'label': '0. Patto di Collaborazione',
@@ -2108,7 +2151,7 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-intro',
                  'sv': '0. Samarbetsöverenskommelse'}},
  {'id': 'qpcc-comunicazione',
   'questionnaire_type': 'QPCC',
-  'sort_order': 1,
+  'sort_order': 2,
   'label': '1. Comunicazione in Pubblico',
   'prompt': 'Area 1/5 - Communication and the ability to speak in public. Explore how the student '
             'experiences speaking in front of others, how they prepare and structure a talk and how they try '
@@ -2123,7 +2166,7 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-intro',
                  'sv': '1. Att tala inför publik'}},
  {'id': 'qpcc-controllo',
   'questionnaire_type': 'QPCC',
-  'sort_order': 2,
+  'sort_order': 3,
   'label': "2. Ansia, Controllo e Responsabilita'",
   'prompt': 'Area 2/5 - Managing anxiety, control and responsibility. Explore how the student reacts when '
             'facing difficult decisions and situations that put them under pressure, and how much they feel '
@@ -2138,7 +2181,7 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-intro',
                  'sv': '2. Oro, kontroll och ansvar'}},
  {'id': 'qpcc-volizione',
   'questionnaire_type': 'QPCC',
-  'sort_order': 3,
+  'sort_order': 4,
   'label': '3. Volizione e Autoregolazione',
   'prompt': 'Area 3/5 - Volition and self-regulation. Explore how the student completes the commitments they '
             'take on, organises their work according to the time available and applies themselves even to '
@@ -2153,7 +2196,7 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-intro',
                  'sv': '3. Volition och självreglering'}},
  {'id': 'qpcc-elaborazione',
   'questionnaire_type': 'QPCC',
-  'sort_order': 4,
+  'sort_order': 5,
   'label': '4. Strategie di Elaborazione',
   'prompt': 'Area 4/5 - Elaboration and learning strategies. Explore how the student connects new ideas to '
             'ones they already know, looks for concrete examples and applications, and identifies the '
@@ -2168,7 +2211,7 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-intro',
                  'sv': '4. Bearbetningsstrategier'}},
  {'id': 'qpcc-convinzioni',
   'questionnaire_type': 'QPCC',
-  'sort_order': 5,
+  'sort_order': 6,
   'label': "5. Convinzioni su di Se'",
   'prompt': 'Area 5/5 - Beliefs about oneself. Explore how much the student trusts their own ability to '
             'succeed, what they attribute successes and failures to (effort vs external causes) and how much '
@@ -2183,7 +2226,7 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-intro',
                  'sv': '5. Föreställningar om sig själv'}},
  {'id': 'qpcc-sintesi',
   'questionnaire_type': 'QPCC',
-  'sort_order': 6,
+  'sort_order': 7,
   'label': "6. Sintesi e Piano d'Azione",
   'prompt': 'Final summary of the QPCC path: integrate what emerged across the 5 areas and build a portrait '
             "of the student's competences and beliefs (strengths and areas for growth, in words, without "
@@ -2197,7 +2240,27 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-intro',
                  'de': '6. Synthese und Aktionsplan',
                  'sv': '6. Syntes och handlingsplan'}}]
 
-DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{'id': 'qap-intro',
+DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{
+    'id': 'qap-profilo',
+    'questionnaire_type': 'QAP',
+    'sort_order': 1,
+    'label': 'Lettura del Profilo',
+    'prompt': (
+        "Read my whole QAP profile before the interview areas: AD1 (Future orientation), AD2 (Control and autonomy), AD3 (Curiosity and exploration), AD4 (Confidence and problem solving). "
+        "For each of them give my score, its interpretation label and, in one or two "
+        "sentences, what the area measures and how that result shows up in practice. "
+        "Treat every score as my own self-assessment, a reference point for reflection "
+        "and never a grade or a judgement. Then group the areas into strengths, good "
+        "areas and areas to work on. Do not give practical advice here: the areas that follow explore each resource in conversation."
+    ),
+    'system_prompt_mode': 'qap-factor',
+    'color_theme': 'slate',
+    'label_i18n': {'en': 'Reading Your Profile',
+                   'es': 'Lectura del Perfil',
+                   'fr': 'Lecture du Profil',
+                   'de': 'Profilübersicht',
+                   'sv': 'Profilöversikt'}},
+ {'id': 'qap-intro',
   'questionnaire_type': 'QAP',
   'sort_order': 0,
   'label': '0. Patto di Collaborazione',
@@ -2216,7 +2279,7 @@ DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{'id': 'qap-intro',
                  'sv': '0. Samarbetsöverenskommelse'}},
  {'id': 'qap-preoccupazione',
   'questionnaire_type': 'QAP',
-  'sort_order': 1,
+  'sort_order': 2,
   'label': '1. Orientamento al Futuro',
   'prompt': 'Area 1/4 - Concern and future orientation (Concern). Explore how much the student thinks about '
             "and prepares for their future, and how aware they are that today's choices influence tomorrow. "
@@ -2231,7 +2294,7 @@ DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{'id': 'qap-intro',
                  'sv': '1. Framtidsorientering'}},
  {'id': 'qap-controllo',
   'questionnaire_type': 'QAP',
-  'sort_order': 2,
+  'sort_order': 3,
   'label': '2. Controllo e Autonomia',
   'prompt': 'Area 2/4 - Control and autonomy (Control). Explore how much the student decides autonomously, '
             'takes responsibility for their own actions and relies on themselves in important choices. Ask '
@@ -2246,7 +2309,7 @@ DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{'id': 'qap-intro',
                  'sv': '2. Kontroll och autonomi'}},
  {'id': 'qap-curiosita',
   'questionnaire_type': 'QAP',
-  'sort_order': 3,
+  'sort_order': 4,
   'label': "3. Curiosita' ed Esplorazione",
   'prompt': 'Area 3/4 - Curiosity and exploration (Curiosity). Explore how much the student explores the '
             'environment around them, looks for opportunities to grow and carefully examines the options '
@@ -2261,7 +2324,7 @@ DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{'id': 'qap-intro',
                  'sv': '3. Nyfikenhet och utforskande'}},
  {'id': 'qap-fiducia',
   'questionnaire_type': 'QAP',
-  'sort_order': 4,
+  'sort_order': 5,
   'label': '4. Fiducia e Problem Solving',
   'prompt': 'Area 4/4 - Confidence (Confidence). Explore how capable the student feels of completing tasks, '
             'overcoming obstacles and facing and solving problems. Ask for an example of an obstacle they '
@@ -2276,7 +2339,7 @@ DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{'id': 'qap-intro',
                  'sv': '4. Tillit och problemlösning'}},
  {'id': 'qap-sintesi',
   'questionnaire_type': 'QAP',
-  'sort_order': 5,
+  'sort_order': 6,
   'label': "5. Sintesi e Piano d'Azione",
   'prompt': 'Final summary of the QAP path: integrate what emerged across the 4 resources (future '
             "orientation, control, curiosity, confidence) and build a portrait of the student's career "
