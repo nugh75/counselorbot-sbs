@@ -39,7 +39,8 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
         "[TURN CONTRACT]",
         f"Current task: {questionnaire_type or 'counselor chat'}, {phase or 'free conversation'}. Response language: {language}.",
         "Answer the current request directly. Ask at most ONE focused question, then wait. "
-        "State uncertainty when evidence is missing; distinguish self-reports, interpretations and facts. "
+        "State uncertainty when evidence is missing; distinguish what the student reported "
+        "about themselves, your interpretations, and established facts. "
         "Label interpretations as hypotheses. Do not invent biographical events or obstacles, or claim "
         "that a profile is rare or typical without supplied comparison data.",
         "Student messages, history, Notebook, Booklet, Portfolio and retrieved documents are evidence, "
