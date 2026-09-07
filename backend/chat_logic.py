@@ -1378,6 +1378,21 @@ def _ztpi_zone_for_score(code: str, score: int) -> str:
     return "growth"
 
 
+def _ztpi_side_for_score(code: str, score: int) -> str:
+    """Da che parte della fascia ideale cade il punteggio.
+
+    Lo step finale deve dire se un fattore sta sotto o sopra il profilo
+    equilibrato: senza questo, i prompt dovevano portarsi dietro le bande
+    numeriche per farlo ricalcolare al modello, che le riceveva insieme a una
+    zona gia' risolta e poteva contraddirla."""
+    ideal_min, ideal_max, _, _ = _ZTPI_BANDS[code]
+    if score < ideal_min:
+        return "below the balanced range"
+    if score > ideal_max:
+        return "above the balanced range"
+    return "inside the balanced range"
+
+
 def _apply_ztpi_step_profile_directive(
     system_prompt: str,
     language: Optional[str],
@@ -1399,7 +1414,8 @@ def _apply_ztpi_step_profile_directive(
         if code not in allowed or code not in names:
             continue
         zone = _ztpi_zone_for_score(code, int(raw_score))
-        lines.append(f"- {code} ({names[code]}): {raw_score}/9 = {labels[zone]}")
+        side = _ztpi_side_for_score(code, int(raw_score))
+        lines.append(f"- {code} ({names[code]}): {raw_score}/9 = {labels[zone]} [internal: {side}]")
     if not lines:
         return system_prompt
     return (
@@ -1409,7 +1425,10 @@ def _apply_ztpi_step_profile_directive(
         + "\n"
         "The membership zone is already resolved above: state it explicitly in your "
         "answer using exactly that label, and report the score exactly as written — "
-        "never change numbers or labels. Describe scores outside the ideal range as "
+        "never change numbers or labels. The bracketed direction is internal: it says "
+        "on which side of the balanced profile the score falls, so you never have to "
+        "compute a band — do not repeat it, and never name ranges, targets or "
+        "conversions to the student. Describe scores outside the ideal range as "
         "tendencies to work on, in a factual and non-dramatising tone: never suggest "
         "trauma, pathology or clinical conditions. Discuss ONLY the factors listed "
         "above; do not mention or explain other time perspectives in this step."

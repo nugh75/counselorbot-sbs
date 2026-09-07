@@ -1612,11 +1612,10 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
         "label": "1. Passato Negativo",
         "prompt": (
             "Analyse the Past Negative factor of my time-perspective profile. "
-            "Use internally the balanced-profile band on a 1-9 scale: ideal 2-4, near 1-5. "
             "Give the score, the zone "
             "(In line with the balanced profile / Close to the balanced profile / Area for growth), "
             "what it means for the student, and a short practical comment. "
-            "Do not reveal to the user any formulas, conversions or technical parameters, and do not use acronyms."
+            "Do not use acronyms with the student."
         ),
         "system_prompt_mode": "ztpi-factor",
         "color_theme": "rose",
@@ -1628,11 +1627,10 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
         "label": "2. Passato Positivo",
         "prompt": (
             "Analyse the Past Positive factor of my time-perspective profile. "
-            "Use internally the balanced-profile band on a 1-9 scale: ideal 5-7, near 4-8. "
             "Give the score, the zone "
             "(In line with the balanced profile / Close to the balanced profile / Area for growth), "
             "what it means, and a practical comment. "
-            "Do not reveal to the user any formulas, conversions or technical parameters, and do not use acronyms."
+            "Do not use acronyms with the student."
         ),
         "system_prompt_mode": "ztpi-factor",
         "color_theme": "amber",
@@ -1644,13 +1642,12 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
         "label": "3. Presente Edonistico",
         "prompt": (
             "Analyse the Present Hedonistic factor of my time-perspective profile. "
-            "Use internally the balanced-profile band on a 1-9 scale: ideal 7-8, near 6-9. "
             "Give the score, the zone "
             "(In line with the balanced profile / Close to the balanced profile / Area for growth), "
             "what it means, and a practical comment. "
             "Always explain in simple terms that 'hedonistic' also means the ability to live in the present "
             "and seize the moment (carpe diem), beyond the pursuit of immediate gratification. "
-            "Do not reveal to the user any formulas, conversions or technical parameters, and do not use acronyms."
+            "Do not use acronyms with the student."
         ),
         "system_prompt_mode": "ztpi-factor",
         "color_theme": "orange",
@@ -1662,13 +1659,12 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
         "label": "4. Presente Fatalistico",
         "prompt": (
             "Analyse the Present Fatalistic factor of my time-perspective profile. "
-            "Use internally the balanced-profile band on a 1-9 scale: ideal 1-3, near 1-4. "
             "Give the score, the zone "
             "(In line with the balanced profile / Close to the balanced profile / Area for growth), "
             "what it means, and a practical comment. "
             "Always explain in simple terms that 'fatalistic' means the feeling of being unable "
             "to influence events and a tendency towards resignation. "
-            "Do not reveal to the user any formulas, conversions or technical parameters, and do not use acronyms."
+            "Do not use acronyms with the student."
         ),
         "system_prompt_mode": "ztpi-factor",
         "color_theme": "red",
@@ -1680,11 +1676,10 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
         "label": "5. Futuro",
         "prompt": (
             "Analyse the Future factor of my time-perspective profile. "
-            "Use internally the balanced-profile band on a 1-9 scale: ideal 5-7, near 4-8. "
             "Give the score, the zone "
             "(In line with the balanced profile / Close to the balanced profile / Area for growth), "
             "what it means, and a practical comment. "
-            "Do not reveal to the user any formulas, conversions or technical parameters, and do not use acronyms."
+            "Do not use acronyms with the student."
         ),
         "system_prompt_mode": "ztpi-factor",
         "color_theme": "teal",
@@ -1696,12 +1691,7 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
         "label": "6. Profilo Temporale Equilibrato",
         "prompt": (
             "Final time-perspective analysis: compare my overall profile with "
-            "Zimbardo's ideal balanced time perspective, "
-            "using the technical parametrisation internally. "
-            "(Past Negative ideal 2-4, Past Positive ideal 5-7, Present Hedonistic ideal 7-8, "
-            "Present Fatalistic ideal 1-3, Future ideal 5-7; "
-            "near bands: Past Negative 1-5, Past Positive 4-8, Present Hedonistic 6-9, "
-            "Present Fatalistic 1-4, Future 4-8). "
+            "Zimbardo's ideal balanced time perspective. "
             "Indicate which factors are in line with the balanced time perspective and which deviate, "
             "specifying for each factor whether it is below, inside or above the ideal range. "
             "Add a short reading of the overall deviation. "
