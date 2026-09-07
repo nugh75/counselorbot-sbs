@@ -22,6 +22,8 @@ from .prompt_config import (
     DEFAULT_FACTOR_INTERPLAY_QSA,
     DEFAULT_FACTOR_INTERPLAY_QSAR,
     SECOND_LEVEL_METHOD_SENTINEL,
+    SECOND_LEVEL_METHOD_TEXT,
+    LEGACY_SECOND_LEVEL_METHOD,
     DEFAULT_SECOND_LEVEL_METHOD,
     SYNTHESIS_ADVICE_SENTINEL,
     SYNTHESIS_ADVICE_DIRECTIVE,
@@ -1043,13 +1045,26 @@ def _run_seed_and_migrations():
                 legacy_changed = True
 
         # One-off: direttiva [SECOND-LEVEL METHOD] (ipotesi interpretativa + domanda
-        # riflessiva PRIMA dei consigli) sulle righe DB di secondo livello QSA/QSAr.
-        # Stessa meccanica del blocco precedente: append idempotente via sentinella,
-        # preserva le personalizzazioni admin.
-        for method_key in ("prompt_second_level", "prompt_qsar_second_level"):
+        # riflessiva PRIMA dei consigli) sulle righe DB di secondo livello QSA/QSAr e
+        # sulla sintesi cross-strumento. Append idempotente via sentinella, preserva le
+        # personalizzazioni admin. La prima versione del blocco dettava la formula della
+        # domanda ("whether this reading matches their experience") e i counselor la
+        # ricopiavano a ogni step: dove quel testo esatto e' ancora nel DB viene
+        # sostituito dalla versione corrente, che chiede invece una domanda ancorata a
+        # cio' che lo studente ha detto. Sostituzione di sottostringa, non della riga:
+        # tocca solo il blocco che questa stessa migrazione aveva appeso.
+        for method_key in ("prompt_second_level", "prompt_qsar_second_level",
+                           "prompt_cross_synthesis"):
             cfg_sl = db.query(models.Config).filter(models.Config.key == method_key).first()
-            if cfg_sl and SECOND_LEVEL_METHOD_SENTINEL not in (cfg_sl.value or ""):
-                cfg_sl.value = (cfg_sl.value or "").rstrip() + DEFAULT_SECOND_LEVEL_METHOD
+            if not cfg_sl:
+                continue
+            value = cfg_sl.value or ""
+            if LEGACY_SECOND_LEVEL_METHOD in value:
+                cfg_sl.value = value.replace(LEGACY_SECOND_LEVEL_METHOD,
+                                             SECOND_LEVEL_METHOD_TEXT)
+                legacy_changed = True
+            elif SECOND_LEVEL_METHOD_SENTINEL not in value:
+                cfg_sl.value = value.rstrip() + DEFAULT_SECOND_LEVEL_METHOD
                 legacy_changed = True
 
         # One-off: direttiva [DEPTH ON REQUEST] sui prompt QA di follow-up in-step
