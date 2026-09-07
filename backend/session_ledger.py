@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import re
 
-from . import models
+from . import models, recommendation_service
 from .diagram_blocks import strip_for_speech
 
 MAX_ANSWERS = 6
@@ -38,6 +38,10 @@ MAX_BLOCK_CHARS = 1900
 # Beyond this many turns the conversation has moved on: insisting on a question
 # the student walked past twice is worse than letting it go.
 OPEN_QUESTION_MAX_AGE = 2
+# Oltre questi turni la conversazione ha superato la domanda: decade, e la
+# decadenza e' un fatto registrato, non una sparizione.
+QUESTION_MAX_AGE = 3
+MAX_LEDGER_QUESTIONS = 2
 
 _SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 _MARKUP = re.compile(r"[*_`#]+")
@@ -326,3 +330,81 @@ def _clean(text: str, limit: int) -> str:
     if len(collapsed) <= limit:
         return collapsed
     return collapsed[:limit].rstrip() + "…"
+
+
+def question_rows(db, *, session_id: str, username: str) -> list:
+    """Le righe di registro che sono domande, dalla piu' vecchia. Pubblica perche'
+    la legge anche `thread_guard` per numerare le domande al giudice."""
+    rows = db.query(models.RecommendationHistory).filter(
+        models.RecommendationHistory.recommendation_type == "advice",
+        models.RecommendationHistory.session_id == session_id,
+        models.RecommendationHistory.username == username,
+    ).order_by(models.RecommendationHistory.turn_index.asc().nulls_last(),
+               models.RecommendationHistory.created_at.asc()).all()
+    return [row for row in rows if (row.payload or {}).get("kind") == "question"]
+
+
+def _decayed(payload: dict, turn_index: int | None, *, step_id: str | None, current_turn: int) -> bool:
+    """Superata dalla conversazione: la fase e' cambiata, o e' passato troppo.
+
+    Chi l'ha riaperta l'ha voluta viva: il click dello studente non puo' essere
+    annullato dalla prima costruzione del ledger che segue.
+    """
+    if payload.get("revived"):
+        return False
+    asked_in = (payload.get("step_id") or "").strip()
+    if step_id and asked_in and asked_in != step_id:
+        return True
+    return current_turn - (turn_index or 0) > QUESTION_MAX_AGE
+
+
+def retire_stale_questions(db, *, session_id: str, username: str,
+                           step_id: str | None, turn_index: int) -> list[str]:
+    """Manda in `stale` le domande che la conversazione ha superato.
+
+    Si scrive invece di calcolare: se restasse un calcolo, la sidebar mostrerebbe
+    "aperta" una domanda che il modello ha gia' lasciato andare.
+    """
+    if not session_id or not username:
+        return []
+    retired = []
+    for row in question_rows(db, session_id=session_id, username=username):
+        payload = row.payload or {}
+        if payload.get("status") != "proposed":
+            continue
+        if not _decayed(payload, row.turn_index, step_id=step_id, current_turn=turn_index):
+            continue
+        recommendation_service.set_state(
+            db, session_id=session_id, username=username,
+            recommendation_type="advice", slug=row.slug, status="stale",
+        )
+        retired.append(row.slug)
+    return retired
+
+
+def questions(db, *, session_id: str, username: str, step_id: str | None) -> dict[str, list[dict]]:
+    """Le domande della sessione divise per destino, lette dallo stato registrato.
+
+    Nessun giudizio qui dentro: chi decide ha gia' scritto (`retire_stale_questions`
+    per la decadenza, `thread_guard` per la risposta nel discorso).
+    """
+    buckets: dict[str, list[dict]] = {"open": [], "answered_in_talk": [], "left_behind": []}
+    if not session_id or not username:
+        return buckets
+    for row in question_rows(db, session_id=session_id, username=username):
+        payload = row.payload or {}
+        item = {"text": _clean(payload.get("name", ""), MAX_QUESTION_CHARS),
+                "step_order": payload.get("step_order")}
+        if not item["text"]:
+            continue
+        status = payload.get("status")
+        asked_in = (payload.get("step_id") or "").strip()
+        if status == "closed":
+            if payload.get("closed_by") == "conversation":
+                buckets["answered_in_talk"].append(item)
+            continue
+        if status == "stale" or (step_id and asked_in and asked_in != step_id):
+            buckets["left_behind"].append(item)
+        elif status == "proposed":
+            buckets["open"].append(item)
+    return {key: value[-MAX_LEDGER_QUESTIONS:] for key, value in buckets.items()}
