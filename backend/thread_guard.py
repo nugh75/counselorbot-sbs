@@ -24,7 +24,7 @@ import re
 
 from pydantic import BaseModel, ValidationError
 
-from . import models
+from . import models, pii, session_ledger
 
 # Two notes are a warning; four are wallpaper the model learns to skip.
 MAX_CHECK_NOTES = 2
@@ -226,3 +226,131 @@ def _stored_notes(row) -> list[str]:
 
 def _key(line: str) -> str:
     return " ".join(line.lower().split())
+
+
+# --- input ---
+MAX_INPUT_CHARS = 2500
+# Ogni sezione ha il suo tetto invece di un taglio unico in fondo: la lezione
+# del budget delle skill e' che un blocco che non entra sparisce in silenzio, e
+# qui a sparire sarebbe proprio il materiale su cui il giudizio si regge.
+_MANDATE_CHARS = 450
+_JUDGED_STUDENT_CHARS = 250
+_JUDGED_COUNSELOR_CHARS = 500
+_CONTEXT_TURN_CHARS = 120
+_LEDGER_CHARS = 550
+_ADVICE_CHARS = 180
+_CONTEXT_TURNS = 2
+
+
+def build_input(
+    db, *, session_id: str, username: str, questionnaire_type: str,
+    step_id: str | None, step_label: str, step_prompt: str, language: str,
+    advice_ids: list[str], candidate_ids: list[str],
+) -> str:
+    """What the judge sees. Deliberately small.
+
+    A local model given the whole session answers about the session; given the
+    turn, its mandate and what the session already holds, it answers about the
+    turn. The four sections are the four things a verdict needs and nothing else.
+    """
+    sections = [
+        _mandate(db, questionnaire_type=questionnaire_type, username=username,
+                 session_id=session_id, step_label=step_label, step_prompt=step_prompt,
+                 language=language),
+        _exchanges(db, session_id),
+        _ledger(db, session_id=session_id, username=username, step_id=step_id),
+        _advice(advice_ids, candidate_ids),
+    ]
+    return "\n\n".join(section for section in sections if section)[:MAX_INPUT_CHARS]
+
+
+def _mandate(db, *, questionnaire_type, username, session_id, step_label, step_prompt,
+             language) -> str:
+    lines = [f"MANDATE (instrument {questionnaire_type}, conversation language {language})"]
+    if questionnaire_type == "IDEA":
+        # Idea non ha il prompt di step: il metro e' la mappa che la sessione sta
+        # costruendo, ed e' rispetto a quella che una domanda e' pertinente.
+        lines.append(_map_line(db, username, session_id))
+    else:
+        if step_label:
+            lines.append(f'Step: "{step_label}".')
+        lines.append("The step asks the counselor to:")
+        lines.append(_clip(step_prompt, _MANDATE_CHARS))
+    return "\n".join(line for line in lines if line)
+
+
+def _map_line(db, username: str, session_id: str) -> str:
+    from .idea_map import current_map
+
+    spec = current_map(db, username, session_id)
+    if spec is None:
+        return "The map is still empty: this turn should be bringing the idea into focus."
+    labels = ", ".join(node.label for node in spec.nodes)
+    return _clip(f'The map so far is "{spec.title}", holding: {labels}.', _MANDATE_CHARS)
+
+
+def _exchanges(db, session_id: str) -> str:
+    rows = (
+        db.query(models.Log)
+        .filter(models.Log.session_id == session_id, models.Log.action == "chat_message")
+        .order_by(models.Log.id.desc())
+        .limit(_CONTEXT_TURNS + 1)
+        .all()
+    )
+    if not rows:
+        return ""
+    lines = ["RECENT EXCHANGES (oldest first; the last one is the turn to judge)"]
+    for position, row in enumerate(reversed(rows)):
+        judged = position == len(rows) - 1
+        details = row.details or {}
+        student = details.get("effective_user_input") or details.get("user_input") or ""
+        counselor = details.get("bot_response") or ""
+        student_cap = _JUDGED_STUDENT_CHARS if judged else _CONTEXT_TURN_CHARS
+        counselor_cap = _JUDGED_COUNSELOR_CHARS if judged else _CONTEXT_TURN_CHARS
+        lines.append(f"student: {_clip(_safe(student), student_cap)}")
+        lines.append(f"counselor: {_clip(_safe(counselor), counselor_cap)}")
+    return "\n".join(lines)
+
+
+def _ledger(db, *, session_id: str, username: str, step_id: str | None) -> str:
+    """Only the facts, and only the keys this module names.
+
+    Reading the ledger key by key is also what keeps the guard from ever seeing
+    its own earlier notes once they live in that same dict.
+    """
+    ledger = session_ledger.build(db, session_id=session_id, username=username, step_id=step_id)
+    lines = []
+    for answer in ledger.get("answers") or []:
+        lines.append(f'student said: "{_safe(answer.get("text", ""))}"')
+    if ledger.get("open_question"):
+        lines.append(f'question left open by the counselor: "{_safe(ledger["open_question"])}"')
+    for name in ledger.get("pending_actions") or []:
+        lines.append(f"action chosen and not yet verified: {_safe(name)}")
+    for name in ledger.get("refused_actions") or []:
+        lines.append(f"already refused by the student: {_safe(name)}")
+    if ledger.get("replayed_step"):
+        lines.append("this step has already been run once in this session")
+    if not lines:
+        return ""
+    return _clip("WHAT THE SESSION ALREADY HOLDS\n" + "\n".join(lines), _LEDGER_CHARS)
+
+
+def _advice(advice_ids: list[str], candidate_ids: list[str]) -> str:
+    if not advice_ids and not candidate_ids:
+        return ""
+    lines = ["ADVICE IN THE JUDGED TURN"]
+    lines.append("declared: " + (", ".join(advice_ids) if advice_ids else "none"))
+    if candidate_ids:
+        lines.append("catalogue available this turn: " + ", ".join(candidate_ids))
+    return _clip("\n".join(lines), _ADVICE_CHARS)
+
+
+def _safe(text: str) -> str:
+    # The admin may point the guard at an external provider, so the input leaves
+    # the machine: redaction here is a condition, not a logging preference.
+    return pii.redact_always(text) or ""
+
+
+def _clip(text: str, limit: int) -> str:
+    text = (text or "").strip()
+    return text if len(text) <= limit else text[:limit].rstrip() + "…"

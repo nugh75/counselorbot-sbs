@@ -168,3 +168,68 @@ def test_the_same_note_is_not_repeated_two_turns_running(db):
     again = thread_guard.store(db, session_id=SESSION, username=STUDENT, turn=third,
                                verdict=thread_guard.parse(_raw(on_thread=False, on_thread_note=note)))
     assert again == [note]  # suppressed once, not forever
+
+
+# --- input builder ---
+def _input(db, **kwargs):
+    params = dict(session_id=SESSION, username=STUDENT, questionnaire_type="QSA",
+                  step_id="cognitive", step_label="Strategie cognitive",
+                  step_prompt="Analizza i fattori cognitivi uno per uno.",
+                  language="it", advice_ids=[], candidate_ids=[])
+    params.update(kwargs)
+    return thread_guard.build_input(db, **params)
+
+
+def test_the_input_carries_the_mandate_and_the_student_words(db):
+    _turn(db, student="a casa mi distraggo sempre", counselor="Capito. Che cosa ti aiuta?")
+    text = _input(db)
+    assert "Analizza i fattori cognitivi" in text
+    assert "mi distraggo sempre" in text
+    assert "Che cosa ti aiuta?" in text
+
+
+def test_the_guard_never_reads_its_own_earlier_notes(db, monkeypatch):
+    from backend import session_ledger
+    monkeypatch.setattr(session_ledger, "build", lambda *a, **k: {
+        "answers": [{"step": "cognitive", "text": "mi distraggo"}], "open_question": "",
+        "pending_actions": [], "proposed_action": "", "refused_actions": [],
+        "verification_asked": False, "replayed_step": False,
+        "guard_notes": ["The reply left the subject the student had raised."],
+    })
+    _turn(db)
+    assert "left the subject" not in _input(db)
+
+
+def test_the_input_stays_within_its_budget(db):
+    for index in range(6):
+        _turn(db, student="x" * 3000, counselor="y" * 3000)
+    assert len(_input(db, step_prompt="z" * 4000)) <= thread_guard.MAX_INPUT_CHARS
+
+
+def test_personal_data_does_not_reach_the_judge(db):
+    _turn(db, student="scrivimi a mario.rossi@example.com", counselor="Va bene.")
+    assert "mario.rossi@example.com" not in _input(db)
+
+
+def test_for_idea_the_map_takes_the_place_of_the_step_prompt(db):
+    from backend import idea_map
+    from backend.diagram_render import DiagramEdge, DiagramNode, DiagramSpec
+    spec = DiagramSpec(
+        type="mindmap", title="Aprire uno studio di counseling",
+        nodes=[DiagramNode(id="n0", label="Studio di counseling"),
+               DiagramNode(id="n1", label="Trovare i primi clienti")],
+        edges=[DiagramEdge(source="n0", target="n1")])
+    db.add(models.IdeaMapRevision(session_id=SESSION, username=STUDENT,
+                                  spec=spec.model_dump(mode="json")))
+    db.flush()
+    assert idea_map.current_map(db, STUDENT, SESSION) is not None
+    _turn(db)
+    text = _input(db, questionnaire_type="IDEA", step_id=None, step_prompt="")
+    assert "Aprire uno studio di counseling" in text
+    assert "Trovare i primi clienti" in text
+
+
+def test_the_declared_advice_and_its_candidates_are_shown(db):
+    _turn(db)
+    text = _input(db, advice_ids=["C1"], candidate_ids=["C1", "A5"])
+    assert "C1" in text and "A5" in text
