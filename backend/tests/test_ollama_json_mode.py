@@ -123,3 +123,35 @@ if __name__ == "__main__":
     test_non_streaming_diagram_instructions_do_not_force_json_response()
     test_explicit_json_only_request_keeps_structured_mode()
     print("3/3 passed")
+
+
+def _ollama_payload(**attrs):
+    """Il payload che `call_model` manda a Ollama, con gli attributi impostati."""
+    service = AIService(_ConfigDB())
+    for name, value in attrs.items():
+        setattr(service, name, value)
+    payloads = []
+
+    def fake_post(_url, *, json, timeout):
+        del timeout
+        payloads.append(json)
+        return _CallResponse()
+
+    with patch("backend.ai_service.httpx.post", fake_post):
+        service.call_model(provider="ollama", model="qwen3.8:latest",
+                           user_message="Giudica il turno.", system_prompt="Sei un revisore.")
+    return payloads[0]
+
+
+def test_temperature_is_sent_only_when_someone_asks_for_one():
+    # Finora `temperature` non raggiungeva nessun provider: un giudice che deve
+    # dare lo stesso verdetto sullo stesso turno girava al default di Ollama.
+    assert "temperature" not in _ollama_payload()["options"]
+    assert _ollama_payload(temperature=0)["options"]["temperature"] == 0
+    assert _ollama_payload(temperature=0.4)["options"]["temperature"] == 0.4
+
+
+def test_the_thread_guard_judges_at_temperature_zero():
+    from backend import thread_guard
+
+    assert thread_guard.JUDGE_TEMPERATURE == 0

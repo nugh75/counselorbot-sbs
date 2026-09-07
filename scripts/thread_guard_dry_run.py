@@ -24,7 +24,6 @@ sys.path.insert(0, "/app")
 from sqlalchemy import func
 
 from backend import models, thread_guard
-from backend.ai_service import AIService
 from backend.database import SessionLocal
 
 
@@ -99,12 +98,12 @@ def main() -> int:
                 return 1
             provider, model, no_think = target
 
-        service = AIService(db)
-        service.config["ai_timeout_seconds"] = str(thread_guard.TIMEOUT_SECONDS)
+        service = thread_guard.judge_service(db)
         service.disable_thinking = no_think
         service.config["disable_thinking"] = "true" if no_think else "false"
 
-        print(f"judge: {provider}/{model} (thinking {'off' if no_think else 'on'})")
+        print(f"judge: {provider}/{model} (thinking {'off' if no_think else 'on'}, "
+      f"temperature {thread_guard.JUDGE_TEMPERATURE})")
         print(f"the guard writes nothing here; thread_guard_enabled stays as it is\n")
 
         judged = flagged = unreadable = 0
