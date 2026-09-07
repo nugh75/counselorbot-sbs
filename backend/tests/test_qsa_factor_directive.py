@@ -15,6 +15,7 @@ Con pytest:
     pytest backend/tests/test_qsa_factor_directive.py
 """
 import os
+import re
 
 # Stesse guardie dello smoke test: evitano side-effect (traduzioni async, sync
 # admin->contatti) al semplice import del modulo applicativo.
@@ -36,6 +37,8 @@ from backend.chat_logic import (
     _sanitize_qsa_inverted_wording,
     _qsa_assessment_labels,
     _qsa_factor_names,
+    _render_qsa_factor_labels,
+    _student_visible_response,
     _step_allows_practical_advice,
     step_has_improvement_target,
     _QSA_INVERTED_CODES,
@@ -509,6 +512,49 @@ def test_rag_filter_drops_other_instrument_chunks():
     assert len(_filter_rag_results_by_instrument(results, "QSAr")) == 3
     # Strumento sconosciuto o vuoto: nessun filtro.
     assert _filter_rag_results_by_instrument(results, "") == results
+
+
+def test_render_replaces_every_code_with_its_label():
+    # Nella chat "C7" non dice niente a chi legge: l'etichetta si, e a ogni
+    # menzione, non solo alla prima.
+    out = _render_qsa_factor_labels(
+        "C7 (Autointerrogazione) sostiene A2, e A2 regge C7.", "it")
+    assert out == "Autointerrogazione sostiene Volizione, e Volizione regge Autointerrogazione.", out
+
+
+def test_render_leaves_qsar_codes_intact_for_qsa_names():
+    # I codici QSAr finiscono per "r": il render del QSA non deve toccarli.
+    out = _render_qsa_factor_labels("C1r resta, C1 no.", "it")
+    assert out == "C1r resta, Strategie elaborative no.", out
+    out = _render_qsa_factor_labels("C1r a 7/9", "it", "QSAR")
+    assert out.startswith("Strategie elaborative per comprendere e ricordare"), out
+
+
+def test_render_is_idempotent():
+    once = _render_qsa_factor_labels("A5 e A5 (Mancanza di perseveranza)", "it")
+    assert _render_qsa_factor_labels(once, "it") == once, once
+
+
+def test_student_reply_carries_labels_and_no_codes():
+    out = _student_visible_response("A5 a 9: A5 indebolisce A2.", "QSA", "it", False)
+    assert "Mancanza di perseveranza a 9" in out, out
+    assert "Volizione" in out, out
+    assert not re.search(r"\b(?:A|C)\d\b", out), out
+
+
+def test_student_reply_scope_prefix_is_named_too():
+    # La riga di scope si scrive per codici, ma allo studente arriva per nomi:
+    # sarebbe rimasta l'unica sigla della risposta.
+    out = _student_visible_response(
+        "La collaborazione può essere strutturata meglio.", "QSA", "it", False,
+        required_codes={"C4"},
+    )
+    assert out.startswith("Fattori trattati: Disponibilità alla collaborazione"), out
+    assert "C4" not in out, out
+
+
+def test_non_strategy_reply_untouched_by_the_label_render():
+    assert _student_visible_response("T4 resta T4.", "ZTPI", "it", False) == "T4 resta T4."
 
 
 if __name__ == "__main__":
