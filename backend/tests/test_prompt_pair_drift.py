@@ -27,6 +27,8 @@ from backend.prompt_config import (
     DEFAULT_SYSTEM_PROMPT_QSAR_SECOND_LEVEL,
     DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL,
     DEFAULT_SYSTEM_PROMPT_ZTPI_FACTOR,
+    META_SYSTEM_PROMPT_DEFINITIONS,
+    SYSTEM_PROMPT_DEFINITIONS,
 )
 
 PAIRS = (
@@ -82,6 +84,28 @@ def test_pairs_still_differ_where_they_should():
         assert any(word in qsar.lower() for word in ("reduced", "compact", "short")), (
             f"{name}: il ramo QSAr non dice piu' che il profilo e' ridotto"
         )
+
+
+def _default_for(key: str) -> str:
+    for item in (*SYSTEM_PROMPT_DEFINITIONS, *META_SYSTEM_PROMPT_DEFINITIONS):
+        if item["key"] == key:
+            return item["default"]
+    raise AssertionError(f"chiave {key} assente dai default")
+
+
+def test_qpcc_and_qap_share_one_summary_text():
+    # Due file distinti con lo stesso identico testo: se una direttiva entra in
+    # uno solo, il percorso gemello resta indietro senza segnali.
+    qpcc = _default_for("prompt_qpcc_summary")
+    qap = _default_for("prompt_qap_summary")
+    assert qpcc == qap, "prompt_qpcc_summary e prompt_qap_summary sono divergenti"
+
+
+def test_the_three_competence_metas_stay_one_text():
+    # QPCS, QPCC e QAP condividono il quadro Pellerey: devono continuare a
+    # puntare allo stesso default, non a tre copie da allineare a mano.
+    metas = {key: _default_for(key) for key in ("prompt_meta_QPCS", "prompt_meta_QPCC", "prompt_meta_QAP")}
+    assert len(set(metas.values())) == 1, "i meta delle competenze sono divergenti"
 
 
 if __name__ == "__main__":
