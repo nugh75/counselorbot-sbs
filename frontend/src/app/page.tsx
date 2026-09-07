@@ -395,13 +395,17 @@ export default function Home() {
             }
         }
 
-        if (params.get('view') === 'questionnaires') {
+        // `view=home` arriva dal bivio della Bussola: chi sceglie gli strumenti
+        // deve trovare il catalogo di chi torna, non la presentazione, anche se
+        // è la prima volta e non ha ancora compilato nulla.
+        const view = params.get('view');
+        if (view === 'questionnaires' || view === 'home') {
             setSelectedQuestionnaire(null);
             setScores(null);
             setPdfToken(undefined);
             setSessionId('');
             setExperience(null);
-            setStep('questionnaire-select');
+            setStep(view === 'home' ? 'base' : 'questionnaire-select');
             window.history.replaceState(null, '', window.location.pathname);
             claimEntry();
             return;

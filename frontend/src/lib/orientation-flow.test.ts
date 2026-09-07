@@ -47,7 +47,7 @@ test('the landing shows before the gate, and its only way forward is the compass
 
 test('Bussola opens the notebook before and after the conversation, and never the booklet', () => {
     const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
-    assert.match(source, /variant="review"[\s\S]*onDone=\{startAfterNotebook\}/);
+    assert.match(source, /variant="review"[\s\S]*onDone=\{openFork\}/);
     assert.match(source, /session\.status === 'completed' && <LearnerProfileCard variant="update"/);
     assert.doesNotMatch(source, /StudentBookletCard/);
 });
@@ -129,4 +129,21 @@ test('a concluded Compass has a way out even when no tool is opened', () => {
 test('Bussola cards do not use decorative left borders', () => {
     const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
     assert.doesNotMatch(source, /border-l-/);
+});
+
+test('the notebook leads to a fork, not straight into the conversation', () => {
+    const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
+    // Chiuso il taccuino si sceglie: parlare con la Bussola, oppure andare al
+    // catalogo. Prima la conversazione partiva da sola e la seconda strada non
+    // c'era.
+    assert.match(source, /const openFork = useCallback\(\(\) => \{[\s\S]*?setAtFork\(true\)/);
+    assert.doesNotMatch(source, /onDone=\{startConversation\}/);
+    // Le due uscite del bivio.
+    assert.match(source, /atFork \? \([\s\S]*?onClick=\{startConversation\}[\s\S]*?onClick=\{goToTools\}/);
+    // Chi sceglie gli strumenti trova la schermata di chi torna, non la
+    // presentazione: `view=home`, e il cancello tace per la visita.
+    assert.match(source, /const goToTools = \(\) => \{\s*\n\s*skipOrientationThisVisit\(\);\s*\n\s*router\.push\('\/\?view=home'\);/);
+    const page = readFileSync(new URL('../app/page.tsx', import.meta.url), 'utf8');
+    assert.match(page, /view === 'questionnaires' \|\| view === 'home'/);
+    assert.match(page, /setStep\(view === 'home' \? 'base' : 'questionnaire-select'\)/);
 });
