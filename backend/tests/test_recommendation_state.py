@@ -122,3 +122,43 @@ def test_state_survives_the_same_question_declared_again(db):
     # Lo stato e' dello studente e resta; la fase e' del turno e si aggiorna.
     assert item['status'] == 'closed' and item['closed_by'] == 'conversation'
     assert item['step_id'] == 'cognitive' and item['step_order'] == 1
+
+
+def _asked(db, slug, text, *, status='proposed', closed_by=None):
+    service.record(db, session_id='fixture', username='alice', recommendation_type='advice',
+                   payloads=[{'slug': slug, 'name': text, 'kind': 'question',
+                              'step_id': 'cognitive', 'step_order': 1}], turn_index=1)
+    if status != 'proposed':
+        service.set_state(db, session_id='fixture', username='alice', recommendation_type='advice',
+                          slug=slug, status=status,
+                          closed_by=closed_by if closed_by else service.UNSET)
+
+
+def _context(db, message=''):
+    return service.conversation_context(db, session_id='fixture', username='alice',
+                                        message=message, language='it')
+
+
+def test_an_open_question_travels_in_the_ledger_and_not_here(db):
+    # Le due direttive si contraddicevano sullo stesso turno: qui si legge "non
+    # richiederla", nel ledger "riprendila una volta sola, riformulata". La riga
+    # aperta e' del ledger; questo canale porta il resto.
+    _asked(db, 'q-open', 'Che cosa ti blocca?')
+    assert 'Che cosa ti blocca?' not in _context(db)
+
+
+def test_a_closed_question_still_travels_here(db):
+    _asked(db, 'q-done', 'Ti pesa il tempo o il metodo?', status='closed', closed_by='student')
+    assert 'Ti pesa il tempo o il metodo?' in _context(db)
+
+
+def test_a_question_the_student_names_is_discussed(db):
+    _asked(db, 'q-open', 'Che cosa ti blocca?')
+    assert 'Che cosa ti blocca?' in _context(db, message='torniamo a che cosa ti blocca?')
+
+
+def test_advice_that_is_not_a_question_is_untouched(db):
+    service.record(db, session_id='fixture', username='alice', recommendation_type='advice',
+                   payloads=[{'slug': 'a-note', 'name': 'Prova a chiudere il libro.',
+                              'kind': 'advice'}], turn_index=1)
+    assert 'Prova a chiudere il libro.' in _context(db)

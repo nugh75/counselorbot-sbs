@@ -255,6 +255,14 @@ def conversation_context(db: Session, *, session_id: str, username: str, message
             explicitly_named = bool(name and name.casefold() in message.casefold())
             if kind == "advice" and item["slug"] not in recent_notes and not explicitly_named:
                 continue
+            # Una domanda ancora aperta viaggia nel ledger, che le da' la sua
+            # regola ("riprendila una volta sola, riformulata"). Qui la si
+            # leggerebbe insieme a "non richiederla", e il turno riceverebbe lo
+            # stesso testo due volte con due istruzioni opposte. Restano quelle
+            # chiuse, e quella che lo studente nomina: se ci torna lui, se ne parla.
+            if (kind == "advice" and item.get("kind") == "question"
+                    and item.get("status") == "proposed" and not explicitly_named):
+                continue
             if kind == "advice" or item.get("status") in ("selected", "tried", "dismissed") or explicitly_named:
                 items.append({"type": kind, **{field: item.get(field) for field in (
                     "title", "name", "kind", "why", "description", "recommended_when", "status", "helpful",
