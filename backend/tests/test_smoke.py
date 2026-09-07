@@ -1737,11 +1737,38 @@ def test_prompt_audit_followup_includes_guided_path_for_next_step():
     assert r.status_code == 200, r.text
     system_prompt = r.json()["envelope"]["system_prompt_final"]
     assert "[GUIDED PATH]" in system_prompt
-    assert "1. Fattori Cognitivi [id: cognitive] (current)" in system_prompt
-    assert "2. Fattori Affettivi [id: affective] (next)" in system_prompt
+    # Fuori dall'intro il percorso viaggia in forma breve: posizione, corrente,
+    # prossimo e le regole di avanzamento, senza l'elenco di tutti gli step.
+    assert "Current guided step: 1. Fattori Cognitivi [id: cognitive]." in system_prompt
     assert "Next guided step: 2. Fattori Affettivi [id: affective]." in system_prompt
+    assert "Step 2 of " in system_prompt
+    assert "[id: sl-motivation]" not in system_prompt
+    assert "sort_order" not in system_prompt
     assert "[[AVANZA_STEP]]" in system_prompt
     assert "do not say that you do not know the path" in system_prompt
+
+
+def test_prompt_audit_intro_step_keeps_the_whole_guided_path():
+    _ensure_guided_steps("QSA")
+    session_id = "prompt-audit-guided-path-intro"
+    session_memory.clear(session_id)
+
+    r = client.post("/admin/prompt-audit/dry-run", json={
+        "questionnaire_type": "QSA",
+        "language": "it",
+        "phase": "intro",
+        "use_phase_prompt": True,
+        "message": "",
+        "scores_context": "",
+        "session_id": session_id,
+        "include_knowledge": False,
+        "include_history": False,
+    })
+    assert r.status_code == 200, r.text
+    system_prompt = r.json()["envelope"]["system_prompt_final"]
+    # Sull'intro lo studente chiede com'e' fatto il percorso: l'elenco serve.
+    assert "sort_order 0:" in system_prompt
+    assert "[id: intro] (current)" in system_prompt
 
 
 def test_prompt_audit_component_flags_use_saved_and_payload_values():
