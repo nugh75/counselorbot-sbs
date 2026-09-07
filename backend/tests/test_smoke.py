@@ -1778,6 +1778,30 @@ def test_platform_catalog_is_short_in_analysis_and_full_when_asked():
     assert "Tools available in CounselorBot:" not in asked
 
 
+def test_qpcs_welcome_prompt_is_actually_served_on_the_first_step():
+    # Il prompt di benvenuto era registrato sulla fase "qpcs-welcome", che non
+    # esiste: lo step di apertura si chiama qpcs-intro e finiva sul prompt di
+    # analisi. Ricollegato, il turno usa il welcome e non porta punteggi.
+    _ensure_guided_steps("QPCS")
+    r = client.post("/admin/prompt-audit/dry-run", json={
+        "questionnaire_type": "QPCS",
+        "language": "it",
+        "phase": "qpcs-intro",
+        "use_phase_prompt": True,
+        "message": "",
+        "scores_context": "C1: 5/9",
+        "session_id": "prompt-audit-qpcs-welcome",
+        "include_knowledge": False,
+        "include_history": False,
+    })
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["resolved"]["prompt_key"] == "prompt_qpcs_welcome", body["resolved"]["prompt_key"]
+    system_prompt = body["envelope"]["system_prompt_final"]
+    assert "You are introducing yourself to the student at the start of the QPCS" in system_prompt
+    assert "Pellerey. Guide the student through the analysis" not in system_prompt
+
+
 def test_first_step_of_a_path_gets_the_full_catalog_even_without_intro_mode():
     # QPCS/QPCC/QAP aprono il percorso con un mode di analisi/intervista: il
     # turno resta un benvenuto, e li' il catalogo degli strumenti serve intero.

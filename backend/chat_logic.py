@@ -43,6 +43,7 @@ from .prompt_config import (
     DEFAULT_QAP_GUIDED_STEPS,
     DEFAULT_IDEA_GUIDED_STEPS,
     GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
+    WELCOME_PHASE_IDS,
     MODE_TO_SYSTEM_PROMPT_KEY,
     SYSTEM_PROMPT_DEFAULTS,
 )
@@ -2225,7 +2226,7 @@ def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None)
     flags["allowed_strategies"] = None
     try:
         step = db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).first() if step_id else None
-        if step and _is_intro_step_mode(step.system_prompt_mode):
+        if step and (_is_intro_step_mode(step.system_prompt_mode) or step.id in WELCOME_PHASE_IDS):
             flags.update({
                 "cognitive_factors": False,
                 "affective_factors": False,
