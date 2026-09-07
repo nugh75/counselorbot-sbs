@@ -7,9 +7,9 @@ export type RecommendationType = 'reading' | 'strategy' | 'advice';
 
 // Lo stato e' scelto dallo studente, non dal modello: "proposta" e' il punto di
 // partenza, "archiviata" non cancella nulla e resta recuperabile.
-export type RecommendationStatus = 'proposed' | 'selected' | 'tried' | 'dismissed' | 'closed';
+export type RecommendationStatus = 'proposed' | 'selected' | 'tried' | 'dismissed' | 'closed' | 'stale';
 
-const STATUSES: RecommendationStatus[] = ['proposed', 'selected', 'tried', 'dismissed', 'closed'];
+const STATUSES: RecommendationStatus[] = ['proposed', 'selected', 'tried', 'dismissed', 'closed', 'stale'];
 
 interface RecommendationBase {
     slug: string;
@@ -51,6 +51,10 @@ export interface AdviceRecommendation extends RecommendationBase {
     recommendation_type?: 'advice';
     name?: string;
     kind?: 'advice' | 'question';
+    // Chi ha chiuso la domanda, e da quale fase veniva: la sigla della fase e'
+    // un numero, non un'etichetta da tradurre.
+    closed_by?: 'student' | 'conversation' | null;
+    step_order?: number | null;
 }
 
 export interface RecommendationCatalog {

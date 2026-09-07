@@ -117,3 +117,20 @@ test('closed questions and general advice survive normalization', () => {
     assert.equal(catalog.advice[1].kind, 'advice');
     assert.match(recommendationPatchUrl('session', 'advice', 'q1'), /recommendations\/advice\/q1$/);
 });
+
+test('a retired question and its step survive normalisation', () => {
+    const catalog = normalizeRecommendationCatalog({
+        advice: [
+            { slug: 'q1', kind: 'question', name: 'Rimasta?', status: 'stale', step_order: 2 },
+            { slug: 'q2', kind: 'question', name: 'Risposta?', status: 'closed', closed_by: 'conversation' },
+        ],
+    });
+    assert.equal(catalog.advice[0].status, 'stale');
+    assert.equal(catalog.advice[0].step_order, 2);
+    assert.equal(catalog.advice[1].closed_by, 'conversation');
+});
+
+test('an unknown status still falls back to proposed', () => {
+    const catalog = normalizeRecommendationCatalog({ advice: [{ slug: 'q3', kind: 'question', status: 'boh' }] });
+    assert.equal(catalog.advice[0].status, 'proposed');
+});

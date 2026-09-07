@@ -395,14 +395,27 @@ function AdviceCard({ item, canAct, pending, failed, onRetry, onPatch, onDiscuss
     const rec = (key: RecommendationTextKey, vars?: Record<string, string | number>) => recommendationText(key, lang, vars);
     const name = item.name || item.slug;
     const question = item.kind === 'question';
+    // Quattro destini, un vocabolario di colore solo: petrol se la domanda e'
+    // ancora in gioco, neutro se e' stata chiusa o superata. I ruoli semantici
+    // (sky/amber/emerald/red) sono dei Callout, e altre tinte sarebbero un
+    // secondo vocabolario di stato che la guida vieta: a distinguere i quattro
+    // casi e' la parola, che e' tradotta in tutte e sei le lingue.
+    const open = item.status === 'proposed';
+    const questionLabel: RecommendationTextKey = item.status === 'stale' ? 'question.stale'
+        : item.status === 'closed'
+            ? (item.closed_by === 'conversation' ? 'question.answeredInTalk' : 'question.closed')
+            : 'question.open';
+    const phase = typeof item.step_order === 'number' ? ` \u00b7 ${item.step_order}` : '';
     return (
         <article className="rounded-lg border border-slate-200 bg-white p-3">
-            <p className="text-2xs font-semibold text-indigo-700">{rec(question ? (item.status === 'closed' ? 'question.closed' : 'question.open') : 'advice.label')}</p>
+            <p className={`text-2xs font-semibold ${question && !open ? 'text-slate-500' : 'text-indigo-700'}`}>
+                {question ? `${rec(questionLabel)}${phase}` : rec('advice.label')}
+            </p>
             <p className="mt-1 text-xs leading-relaxed text-slate-700">{name}</p>
             {question && canAct ? (
-                <button type="button" disabled={pending} onClick={() => onPatch({ status: item.status === 'closed' ? 'proposed' : 'closed' })}
+                <button type="button" disabled={pending} onClick={() => onPatch({ status: open ? 'closed' : 'proposed' })}
                     className="mt-2 min-h-9 rounded-md border border-slate-200 px-2.5 text-xs font-semibold text-indigo-700 disabled:opacity-60">
-                    {rec(item.status === 'closed' ? 'question.reopen' : 'question.close')}
+                    {rec(open ? 'question.close' : 'question.reopen')}
                 </button>
             ) : null}
             {question ? <p role="status" className="text-xs text-slate-500">{pending ? rec('saving') : ''}</p> : null}
