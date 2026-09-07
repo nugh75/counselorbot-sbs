@@ -56,6 +56,8 @@ export default function BussolaPage() {
     const [nextHref, setNextHref] = useState<string | null>(null);
     // Strumento scelto dalle raccomandazioni: prima di uscire si chiede il taccuino.
     const [pendingTool, setPendingTool] = useState<string | null>(null);
+    // Bivio dopo il taccuino: conversazione con la Bussola o catalogo degli strumenti.
+    const [atFork, setAtFork] = useState(false);
     const endRef = useRef<HTMLDivElement>(null);
     const startingRef = useRef(false);
     const leavingRef = useRef(false);
@@ -111,11 +113,18 @@ export default function BussolaPage() {
         setChoosingCounselor(false);
     };
 
-    // Il taccuino apre la Bussola: rivisto (o saltato) lo studente entra in chat.
-    // La card chiama onDone e poi onUnavailable dopo il salvataggio: la sessione va creata una volta sola.
-    const startAfterNotebook = useCallback(() => {
+    // Rivisto il taccuino non si entra dritti in chat: la conversazione con la
+    // Bussola è una delle due strade, e l'altra è il catalogo degli strumenti.
+    // La card chiama onDone e poi onUnavailable dopo il salvataggio: il bivio va aperto una volta sola.
+    const openFork = useCallback(() => {
         if (startingRef.current || pendingCounselorId === null) return;
         startingRef.current = true;
+        setAtFork(true);
+    }, [pendingCounselorId]);
+
+    const startConversation = useCallback(() => {
+        if (pendingCounselorId === null) return;
+        setAtFork(false);
         void createSession(pendingNewSession, pendingCounselorId);
     }, [createSession, pendingCounselorId, pendingNewSession]);
 
@@ -223,6 +232,13 @@ export default function BussolaPage() {
         router.push('/?view=questionnaires');
     };
 
+    // L'altra strada del bivio: il catalogo degli strumenti, la stessa schermata
+    // che accoglie chi torna. Il cancello tace per la visita, come nel salto.
+    const goToTools = () => {
+        skipOrientationThisVisit();
+        router.push('/?view=home');
+    };
+
     return (
         <div className="page-wide space-y-8">
             <header className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 py-7 shadow-sm sm:px-8 sm:py-9">
@@ -254,11 +270,23 @@ export default function BussolaPage() {
                         onBack={orientationRequired ? undefined : () => setChoosingCounselor(false)}
                     />
                 </section>
+            ) : atFork ? (
+                <section className="rounded-xl border border-indigo-200 bg-white p-5 shadow-sm sm:p-7">
+                    <div className="max-w-2xl">
+                        <h2 className="font-display text-2xl font-bold text-slate-900">{t('orientation.fork.title')}</h2>
+                        <p className="mt-2 text-sm leading-relaxed text-slate-600">{t('orientation.fork.body')}</p>
+                    </div>
+                    <div className="mt-6 flex flex-wrap gap-3">
+                        <Button type="button" variant="accent" onClick={startConversation}>{t('orientation.landing.open')}</Button>
+                        <Button type="button" variant="secondary" onClick={goToTools}>{t('orientation.landing.skip')}</Button>
+                        <Button type="button" variant="ghost" onClick={() => { startingRef.current = false; setAtFork(false); }}>{t('nav.back')}</Button>
+                    </div>
+                </section>
             ) : pendingCounselorId !== null ? (
                 <LearnerProfileCard
                     variant="review"
-                    onDone={startAfterNotebook}
-                    onUnavailable={startAfterNotebook}
+                    onDone={openFork}
+                    onUnavailable={openFork}
                     onBack={() => setChoosingCounselor(true)}
                 />
             ) : session && pendingTool ? (
