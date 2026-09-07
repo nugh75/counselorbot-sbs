@@ -147,6 +147,32 @@ _NEGATED_PATTERNS = {
 }
 
 
+# Domanda sul catalogo della piattaforma: quali strumenti esistono, che cos'e'
+# uno strumento, cosa si puo' fare qui. Sta fuori da `classify` di proposito: non
+# e' un comportamento da skill, decide solo se l'envelope deve portare il
+# catalogo completo degli strumenti o la sola lista dei nomi. Nomina gli
+# strumenti in modo esplicito o chiede del funzionamento: "questo strumento dice
+# che sono ansioso" non basta a farlo scattare.
+_PLATFORM_QUESTION = re.compile(
+    r"\b(?:quali\s+(?:strument|questionar|percors|test)|che\s+strument|"
+    r"quanti\s+(?:strument|questionar)|"
+    r"(?:cosa|che\s+cosa)\s+(?:e|sono|serve|servono|posso\s+fare|si\s+puo\s+fare)\b[^?]{0,40}"
+    r"(?:qui|counselorbot|piattaforma|app)|"
+    r"come\s+funziona\s+(?:questa|la|il|lo)?\s*(?:piattaforma|app|counselorbot|percorso|questionario)|"
+    r"che\s?cos\W{0,2}e\W{0,2}\s+(?:il\s+|la\s+|lo\s+)?(?:qsa|qsar|ztpi|qpcs|qpcc|qap|savickas|idea|pqbl)\b|"
+    r"which\s+(?:tools|questionnaires|instruments)|what\s+tools|how\s+many\s+questionnaires|"
+    r"what\s+(?:is|are)\s+(?:the\s+)?(?:qsa|qsar|ztpi|qpcs|qpcc|qap|savickas|idea|pqbl)\b|"
+    r"what\s+can\s+i\s+do\s+(?:here|in\s+this\s+app)|how\s+does\s+(?:this|the)\s+(?:app|platform|path)\s+work|"
+    r"que\s+(?:herramientas|cuestionarios)|quels?\s+(?:outils|questionnaires)|"
+    r"welche\s+(?:werkzeuge|instrumente|fragebogen)|vilka\s+(?:verktyg|frageformular))"
+)
+
+
+def asks_about_platform(message: str) -> bool:
+    """True quando il turno parla del catalogo degli strumenti, non del profilo."""
+    return bool(_PLATFORM_QUESTION.search(_plain(message)))
+
+
 def classify(message: str, *, guided: bool = False) -> str:
     """Ritorna compare|referral|factual|reading|advice|clarify|guided oppure "".
 
