@@ -36,14 +36,18 @@ turn hash. An invalid or late reply is discarded.
 **Input**, capped at ~2500 characters — a small local model on a larger input
 becomes slow and vague:
 
-1. The turn's mandate: instrument, step id and label, and the step prompt.
-   Without it "relevant" has no measure. For IDEA, whose turns have no step
-   prompt in that sense, the current map (nodes, edges, open questions) takes
-   its place.
+1. The turn's mandate: instrument and the step's **name**, never its prompt.
+   Given the script verbatim the judge ticked its instructions off and condemned
+   a turn that answered what the student had actually asked; the step names the
+   area under discussion, not what the turn must contain. For IDEA the current
+   map takes its place.
 2. The ledger dict from `session_ledger.build()`, minus the `guard` key: open
    question and its age, pending and refused actions, repeated step, the
    student's recent answers.
-3. The last three exchanges, PII-redacted, ~250 characters each.
+3. The last three exchanges, PII-redacted, ~250 characters each. A step entry is
+   shown as "the student said nothing": `effective_user_input` there is the
+   platform's hidden directive, and printed as the student's words it told the
+   judge the student had asked for things the step prompt had asked for.
 4. The advice declared in the turn: the ids from the `recommendations` block
    plus the certified candidates retrieved. Catalog membership is already
    enforced in code; the guard adds whether the advice follows from the
@@ -53,17 +57,23 @@ becomes slow and vague:
 The guard never sees its own earlier notes. Given them, it confirms itself and
 amplifies the same finding every turn.
 
-**Output** — four fields, English, because these are instructions for a model
+**Output** — three fields, English, because these are instructions for a model
 and not text for a student (the criterion already used for `tool_brief_seed`):
 
 ```json
 {
   "on_thread":       {"ok": true,  "note": null},
   "question_fit":    {"ok": false, "note": "Asked about exam anxiety; this step is about planning time."},
-  "advice_grounded": {"ok": true,  "note": null},
-  "answered":        {"last_question_developed": false}
+  "advice_grounded": {"ok": true,  "note": null}
 }
 ```
+
+A fourth field asked whether the counselor's open question had been taken up.
+Both judges tried answered "not developed" on most turns whatever the turn held,
+so it measured the model's prior rather than the conversation. It is gone: the
+ledger already knows which question is open and clears it the moment the student
+replies, and `session_ledger.open_question_note` carries that fact onto free
+turns, where the ledger itself is deliberately not injected.
 
 `note` is one factual sentence of at most 140 characters. The guard's prompt
 forbids imperatives and "should": the verdict states what happened, the
