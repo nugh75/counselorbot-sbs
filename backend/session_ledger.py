@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import re
 
-from . import models
+from . import models, recommendation_service
 from .diagram_blocks import strip_for_speech
 
 MAX_ANSWERS = 6
@@ -35,11 +35,11 @@ MAX_ACTION_CHARS = 220
 # gia' chiusa: ripescarla suonerebbe come un richiamo, non come un interesse.
 ACTION_MAX_AGE = 6
 MAX_BLOCK_CHARS = 1900
-# Beyond this many turns the conversation has moved on: insisting on a question
-# the student walked past twice is worse than letting it go.
-OPEN_QUESTION_MAX_AGE = 2
+# Oltre questi turni la conversazione ha superato la domanda: decade, e la
+# decadenza e' un fatto registrato, non una sparizione.
+QUESTION_MAX_AGE = 3
+MAX_LEDGER_QUESTIONS = 2
 
-_SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 _MARKUP = re.compile(r"[*_`#]+")
 # Una verifica gia' fatta, nelle sei lingue: la stessa domanda a ogni step
 # diventa la formula rituale che il resto dei prompt vieta.
@@ -76,22 +76,10 @@ def build(db, *, session_id: str, username: str, step_id: str | None = None,
         models.Log.username == username,
     ).order_by(models.Log.timestamp.asc(), models.Log.id.asc()).all()
     chosen, refused = _actions(db, session_id=session_id, username=username)
-    open_question = _open_question(rows)
-    notes = db.query(models.RecommendationHistory).filter(
-        models.RecommendationHistory.session_id == session_id,
-        models.RecommendationHistory.username == username,
-        models.RecommendationHistory.recommendation_type == "advice",
-    ).all()
-    for note in notes:
-        payload = note.payload or {}
-        if payload.get("kind") == "question" and payload.get("status") == "closed":
-            if _clean(payload.get("name", ""), MAX_QUESTION_CHARS) == open_question:
-                open_question = ""
-                break
     return {
         "answers": _answers(rows),
         "replayed_step": _replayed(rows, step_id),
-        "open_question": open_question,
+        "questions": questions(db, session_id=session_id, username=username, step_id=step_id),
         "pending_actions": chosen,
         "proposed_action": _proposed_action(rows),
         "refused_actions": refused,
@@ -113,8 +101,8 @@ def render(ledger: dict) -> str:
     ledger = {**_empty(), **(ledger or {})}
     answers = list(ledger["answers"])
     if not any((answers, ledger["pending_actions"], ledger["refused_actions"],
-                ledger["open_question"], ledger["proposed_action"], ledger["replayed_step"],
-                ledger["guard_notes"])):
+                any(ledger["questions"].values()), ledger["proposed_action"],
+                ledger["replayed_step"], ledger["guard_notes"])):
         return ""
     while True:
         text = _compose(dict(ledger, answers=answers))
@@ -134,9 +122,9 @@ def block(db, *, session_id: str, username: str, step_id: str | None = None,
 
 # --- helpers ---
 def _empty() -> dict:
-    return {"answers": [], "open_question": "", "pending_actions": [], "proposed_action": "",
-            "refused_actions": [], "verification_asked": False, "replayed_step": False,
-            "guard_notes": []}
+    return {"answers": [], "questions": {"open": [], "answered_in_talk": [], "left_behind": []},
+            "pending_actions": [], "proposed_action": "", "refused_actions": [],
+            "verification_asked": False, "replayed_step": False, "guard_notes": []}
 
 
 def _compose(ledger: dict) -> str:
@@ -160,9 +148,20 @@ def _compose(ledger: dict) -> str:
     if ledger["refused_actions"]:
         lines.append("Already refused by the student:")
         lines.extend(f"- {name}" for name in ledger["refused_actions"])
-    if ledger["open_question"]:
+    asked = ledger["questions"]
+    if asked["open"]:
         lines.append("Your own reflective question, still unanswered:")
-        lines.append(f"- \"{ledger['open_question']}\"")
+        lines.extend(f"- \"{item['text']}\"" for item in asked["open"])
+    if asked["answered_in_talk"]:
+        lines.append("Questions the student already answered while talking, without answering them:")
+        lines.extend(f"- \"{item['text']}\"" for item in asked["answered_in_talk"])
+    if asked["left_behind"]:
+        lines.append("Questions the conversation has passed:")
+        lines.extend(
+            f"- ({item['step_order']}) \"{item['text']}\"" if item["step_order"] is not None
+            else f"- \"{item['text']}\""
+            for item in asked["left_behind"]
+        )
     if ledger["guard_notes"]:
         # A step entry already carries the ledger; a separate block would say the
         # same thing twice in the same envelope.
@@ -189,10 +188,21 @@ def _directives(ledger: dict) -> list[str]:
         directives.append(
             "Never propose a refused item again, and do not argue with the refusal."
         )
-    if ledger["open_question"]:
+    asked = ledger["questions"]
+    if asked["open"]:
         directives.append(
-            "Take your unanswered question back up instead of stacking a new one on top of it; "
-            "if the student has moved on, let it go rather than insisting."
+            "Take your unanswered question back up once, reformulated, instead of stacking a "
+            "new one on top of it; do not repeat it word for word."
+        )
+    if asked["answered_in_talk"]:
+        directives.append(
+            "The student already answered those questions while talking: use what was said as "
+            "something already said, and never ask them again."
+        )
+    if asked["left_behind"]:
+        directives.append(
+            "Those questions belong to a step the conversation has left: pick one back up only "
+            "if the student goes back to it, and never bring them up yourself."
         )
     if ledger["replayed_step"]:
         directives.append(
@@ -226,30 +236,6 @@ def _answers(rows: list) -> list[dict]:
                        key=lambda index: len(spoken[index]["text"]), reverse=True)
     kept.update(by_length[:MAX_ANSWERS - KEEP_RECENT])
     return [spoken[index] for index in sorted(kept)]
-
-
-def _open_question(rows: list) -> str:
-    """The most recent counselor question is open when the student wrote nothing
-    after it — advancing a step is not an answer, and a question left behind
-    several turns ago has been overtaken by the conversation.
-
-    This reads as a fact only at a step entry, which is the one place the ledger
-    is injected. On an ordinary turn the student's message is not in `rows` yet,
-    so "nobody wrote after it" is true of every question the counselor has just
-    asked: carried there, it told the counselor to take its own question back up
-    every single turn, and the chat started pressing instead of letting an answer
-    form.
-    """
-    for position in range(len(rows) - 1, -1, -1):
-        question = _last_question(_visible(rows[position]))
-        if not question:
-            continue
-        later = rows[position + 1:]
-        answered = any(((row.details or {}).get("user_input") or "").strip() for row in later)
-        if answered or len(later) > OPEN_QUESTION_MAX_AGE:
-            return ""
-        return question
-    return ""
 
 
 def _replayed(rows: list, step_id: str | None) -> bool:
@@ -292,15 +278,6 @@ def _proposed_action(rows: list) -> str:
     return ""
 
 
-def _last_question(visible: str) -> str:
-    if "?" not in visible:
-        return ""
-    for sentence in reversed(_SENTENCE_END.split(visible.replace("\n", " "))):
-        if _clean(sentence, len(sentence) + 1).endswith("?"):
-            return _clean(sentence, MAX_QUESTION_CHARS)
-    return ""
-
-
 def _actions(db, *, session_id: str, username: str) -> tuple[list[str], list[str]]:
     """Chosen but not yet tried, and refused. `tried` needs no follow-up and
     `proposed` was only ever shown, so neither belongs here."""
@@ -326,3 +303,92 @@ def _clean(text: str, limit: int) -> str:
     if len(collapsed) <= limit:
         return collapsed
     return collapsed[:limit].rstrip() + "…"
+
+
+def question_rows(db, *, session_id: str, username: str) -> list:
+    """Le righe di registro che sono domande, dalla piu' vecchia. Pubblica perche'
+    la legge anche `thread_guard` per numerare le domande al giudice."""
+    rows = db.query(models.RecommendationHistory).filter(
+        models.RecommendationHistory.recommendation_type == "advice",
+        models.RecommendationHistory.session_id == session_id,
+        models.RecommendationHistory.username == username,
+    ).order_by(models.RecommendationHistory.turn_index.asc().nulls_last(),
+               models.RecommendationHistory.created_at.asc()).all()
+    return [row for row in rows if (row.payload or {}).get("kind") == "question"]
+
+
+def _from_another_step(payload: dict, step_id: str | None) -> bool:
+    """La domanda e' nata in uno step diverso da quello corrente.
+
+    Una sola regola, chiamata sia da chi ritira (`_decayed`) sia da chi legge
+    (`questions`): se si affinasse solo in un punto, l'altro leggerebbe uno
+    stato che il ritiro non riconoscerebbe piu' come superato.
+    """
+    asked_in = (payload.get("step_id") or "").strip()
+    return bool(step_id and asked_in and asked_in != step_id)
+
+
+def _decayed(payload: dict, turn_index: int | None, *, step_id: str | None, current_turn: int) -> bool:
+    """Superata dalla conversazione: la fase e' cambiata, o e' passato troppo.
+
+    Chi l'ha riaperta l'ha voluta viva: il click dello studente non puo' essere
+    annullato dalla prima costruzione del ledger che segue.
+    """
+    if payload.get("revived"):
+        return False
+    if _from_another_step(payload, step_id):
+        return True
+    return current_turn - (turn_index or 0) > QUESTION_MAX_AGE
+
+
+def retire_stale_questions(db, *, session_id: str, username: str,
+                           step_id: str | None, turn_index: int) -> list[str]:
+    """Manda in `stale` le domande che la conversazione ha superato.
+
+    Si scrive invece di calcolare: se restasse un calcolo, la sidebar mostrerebbe
+    "aperta" una domanda che il modello ha gia' lasciato andare.
+    """
+    if not session_id or not username:
+        return []
+    retired = []
+    for row in question_rows(db, session_id=session_id, username=username):
+        payload = row.payload or {}
+        if payload.get("status") != "proposed":
+            continue
+        if not _decayed(payload, row.turn_index, step_id=step_id, current_turn=turn_index):
+            continue
+        recommendation_service.set_state(
+            db, session_id=session_id, username=username,
+            recommendation_type="advice", slug=row.slug, status="stale",
+        )
+        retired.append(row.slug)
+    return retired
+
+
+def questions(db, *, session_id: str, username: str, step_id: str | None) -> dict[str, list[dict]]:
+    """Le domande della sessione divise per destino, lette dallo stato registrato.
+
+    Non giudica la decadenza per eta': quella la scrive `retire_stale_questions`.
+    Ma tratta come rimasta indietro anche una domanda di un altro step il cui
+    ritiro non e' ancora passato di qui — `thread_guard` costruisce il ledger
+    senza chiamarlo prima, e la sidebar non deve intanto mostrarla come aperta.
+    """
+    buckets: dict[str, list[dict]] = {"open": [], "answered_in_talk": [], "left_behind": []}
+    if not session_id or not username:
+        return buckets
+    for row in question_rows(db, session_id=session_id, username=username):
+        payload = row.payload or {}
+        item = {"text": _clean(payload.get("name", ""), MAX_QUESTION_CHARS),
+                "step_order": payload.get("step_order")}
+        if not item["text"]:
+            continue
+        status = payload.get("status")
+        if status == "closed":
+            if payload.get("closed_by") == "conversation":
+                buckets["answered_in_talk"].append(item)
+            continue
+        if status == "stale" or _from_another_step(payload, step_id):
+            buckets["left_behind"].append(item)
+        elif status == "proposed":
+            buckets["open"].append(item)
+    return {key: value[-MAX_LEDGER_QUESTIONS:] for key, value in buckets.items()}

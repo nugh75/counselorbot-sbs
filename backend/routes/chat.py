@@ -380,6 +380,8 @@ def _record_recommendations(
     turn_index: int,
     matched_on: dict[str, dict] | None = None,
     notes: list[dict] | None = None,
+    step_id: str | None = None,
+    step_order: int | None = None,
 ) -> dict[str, list[dict]]:
     """Persist the items the completed turn actually recommended.
 
@@ -444,9 +446,12 @@ def _record_recommendations(
         )
 
     if notes:
+        # La domanda porta con se' la fase in cui e' nata: `step_id` serve alla
+        # regola di decadenza, il numero a dire di che fase si tratta.
+        stamped = [{**note, "step_id": step_id or "", "step_order": step_order} for note in notes]
         _recommendation_service.record(
             db, session_id=session_id, username=username,
-            recommendation_type="advice", payloads=notes, turn_index=turn_index,
+            recommendation_type="advice", payloads=stamped, turn_index=turn_index,
         )
 
     return _recommendation_service.list_for_session(
@@ -648,6 +653,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         ),
         matched_on=recommendation_meta,
         turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
+        step_id=request.phase or "",
+        step_order=step.sort_order if step else None,
     )
     _watch_thread(prepared, request, db, session_id=session_id,
                   username=identity.get("username") if identity else "",
@@ -981,6 +988,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     ),
                     matched_on=recommendation_meta,
                     turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
+                    step_id=request.phase or "",
+                    step_order=step.sort_order if step else None,
                 )
             except Exception as exc:
                 logger.warning("Recommendation persistence failed for %s: %s", session_id, exc)
@@ -1252,6 +1261,7 @@ async def update_session_recommendation(
     fields = update.model_dump(exclude_unset=True)
     if not fields:
         raise HTTPException(status_code=400, detail="Nessun campo da aggiornare")
+    status = fields.get("status")
     try:
         row = _recommendation_service.set_state(
             db,
@@ -1259,8 +1269,11 @@ async def update_session_recommendation(
             username=username,
             recommendation_type=recommendation_type,
             slug=slug,
-            status=fields.get("status"),
+            status=status,
             helpful=fields["helpful"] if "helpful" in fields else _recommendation_service.UNSET,
+            # Da qui passa solo lo studente: il giudice chiama `set_state` diretto.
+            closed_by="student" if status == "closed" else _recommendation_service.UNSET,
+            revived=True if status == "proposed" else _recommendation_service.UNSET,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
