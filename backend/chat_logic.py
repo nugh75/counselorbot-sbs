@@ -1207,6 +1207,25 @@ def _annotate_qsa_factor_codes(
     return _sanitize_qsa_inverted_wording(annotated, language, questionnaire_type)
 
 
+def _render_qsa_factor_labels(
+    text: str, language: Optional[str], questionnaire_type: str = "QSA"
+) -> str:
+    """Sostituisce le sigle con il nome del fattore in cio che lo studente legge.
+
+    Il modello continua a scrivere codice e nome — e il prompt, l'audit e i
+    check di copertura continuano a contare i codici — ma nella chat "C7" non
+    dice niente a chi legge: l'etichetta si', e va usata sempre, non solo alla
+    prima menzione.
+    """
+    if not text:
+        return text
+    rendered = text
+    for code, name in _qsa_factor_names(language, questionnaire_type).items():
+        rendered = re.sub(rf"\b{code}\b\s*\({re.escape(name)}\)", name, rendered)
+        rendered = re.sub(rf"\b{code}\b", name, rendered)
+    return rendered
+
+
 def _ensure_required_qsa_factor_codes(
     text: str,
     questionnaire_type: str,
@@ -1498,13 +1517,19 @@ def _student_visible_response(
     questionnaire_type: str,
     language: Optional[str],
     sanitize_ztpi: bool,
+    required_codes: Optional[set[str]] = None,
 ) -> str:
     text = _strip_orphan_reasoning(text)
     text = _strip_generic_acknowledgement(text)
     if sanitize_ztpi:
         return _sanitize_ztpi_user_text(text, language)
     if _is_strategy_questionnaire(questionnaire_type):
-        return _annotate_qsa_factor_codes(text, language, progressive=True, questionnaire_type=questionnaire_type)
+        text = _annotate_qsa_factor_codes(text, language, progressive=True, questionnaire_type=questionnaire_type)
+        # La riga di scope parla ancora per codici: va scritta prima che il
+        # render li sostituisca, o resterebbe l'unica sigla della risposta.
+        if required_codes:
+            text = _ensure_required_qsa_factor_codes(text, questionnaire_type, language, required_codes)
+        return _render_qsa_factor_labels(text, language, questionnaire_type)
     return text
 
 

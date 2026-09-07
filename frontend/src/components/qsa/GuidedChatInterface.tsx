@@ -348,8 +348,10 @@ function CompactScoreBar({
 
     return (
         <div className="space-y-1">
+            {/* Il nome dice qualcosa a chi legge, la sigla no: resta nel title,
+                per chi confronta la pastiglia col profilo o col PDF. */}
             <div className="text-2xs leading-tight text-slate-600 break-words" title={`${code} (${factorName})`}>
-                <span className="font-mono font-semibold">{code}</span> <span>({factorName})</span>
+                <span className="font-semibold">{factorName}</span>
             </div>
             <div className="flex items-center gap-2">
                 <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">

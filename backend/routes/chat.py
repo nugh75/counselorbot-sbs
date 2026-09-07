@@ -69,6 +69,7 @@ from ..chat_logic import (
     _apply_global_directives,
     _ensure_questionnaire_guided_steps,
     _ensure_required_qsa_factor_codes,
+    _render_qsa_factor_labels,
     _limit_visible_words,
     _is_strategy_questionnaire,
     _phase_factor_codes,
@@ -532,6 +533,9 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             response_content = _ensure_required_qsa_factor_codes(
                 response_content, questionnaire_type, request.language, _phase_factor_codes(db, request.phase)
             )
+        response_content = _render_qsa_factor_labels(
+            response_content, request.language, questionnaire_type
+        )
     response_content, idea_revision_id = _apply_idea_patch(
         response_content,
         questionnaire_type=questionnaire_type,
@@ -872,12 +876,10 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 )
             else:
                 response_content = _student_visible_response(
-                    raw_response, questionnaire_type, request.language, sanitize
+                    raw_response, questionnaire_type, request.language, sanitize,
+                    required_codes=_phase_factor_codes(db, request.phase)
+                    if _requires_complete_factor_output(request.mode) else None,
                 )
-                if _requires_complete_factor_output(request.mode):
-                    response_content = _ensure_required_qsa_factor_codes(
-                        response_content, questionnaire_type, request.language, _phase_factor_codes(db, request.phase)
-                    )
                 response_content, idea_revision_id = _apply_idea_patch(
                     response_content,
                     questionnaire_type=questionnaire_type,
@@ -916,11 +918,11 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     user_message=request.message or "",
                     lang=request.language or "it",
                 )
-                retry = _student_visible_response(retry, questionnaire_type, request.language, sanitize)
-                if _requires_complete_factor_output(request.mode):
-                    retry = _ensure_required_qsa_factor_codes(
-                        retry, questionnaire_type, request.language, _phase_factor_codes(db, request.phase)
-                    )
+                retry = _student_visible_response(
+                    retry, questionnaire_type, request.language, sanitize,
+                    required_codes=_phase_factor_codes(db, request.phase)
+                    if _requires_complete_factor_output(request.mode) else None,
+                )
                 retry, _ = _limit_visible_words(retry, effective_response_length)
                 if not retry.strip():
                     raise AIError(
