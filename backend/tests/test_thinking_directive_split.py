@@ -223,3 +223,48 @@ def _run_all():
 
 if __name__ == "__main__":
     _run_all()
+
+
+# --- chiusura orfana: reasoning senza tag di apertura -------------------------
+# Due modelli in produzione (ornith:9b, nemotron-cascade-2) hanno aperto nessun
+# tag e chiuso il </think>: tutto cio' che precedeva e' arrivato allo studente
+# come risposta. Log 11668 e 12465, entrambi in streaming.
+ORPHAN = (
+    "block, then answer directly. No extra. Must keep visible answer under 260 words.\n"
+    "</think>\n\nTi spiego in due righe come funziona il percorso."
+)
+
+
+def test_split_orphan_closing_tag_is_reasoning():
+    reasoning, visible = split_thinking(ORPHAN)
+    assert reasoning is not None and "Must keep visible answer" in reasoning
+    assert visible == "Ti spiego in due righe come funziona il percorso."
+    assert "</think>" not in visible
+
+
+def test_orphan_closing_tag_never_reaches_the_student():
+    from backend.chat_logic import _student_visible_response
+
+    visible = _student_visible_response(ORPHAN, "QSA", "it", False)
+    assert "</think>" not in visible
+    assert "Must keep visible answer" not in visible
+    assert visible.startswith("Ti spiego in due righe")
+
+
+def test_the_streamed_display_shrinks_when_the_tag_arrives():
+    from backend.chat_logic import _student_visible_response
+
+    chunks, displays = [], []
+    for piece in ("block, then answer directly. ", "No extra.\n", "</think>\n\n",
+                  "Ti spiego in due righe ", "come funziona il percorso."):
+        chunks.append(piece)
+        displays.append(_student_visible_response("".join(chunks), "QSA", "it", False))
+    assert "No extra." in displays[1]          # flashes while the tag has not arrived
+    assert "No extra." not in displays[2]      # and is withdrawn the moment it does
+    assert displays[-1] == "Ti spiego in due righe come funziona il percorso."
+
+
+def test_a_paired_block_still_wins_and_plain_text_is_untouched():
+    reasoning, visible = split_thinking("<think>ragiono</think>Risposta.")
+    assert reasoning == "ragiono" and visible == "Risposta."
+    assert split_thinking("Nessun tag qui.") == (None, "Nessun tag qui.")
