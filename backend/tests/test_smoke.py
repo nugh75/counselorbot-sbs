@@ -1778,6 +1778,27 @@ def test_platform_catalog_is_short_in_analysis_and_full_when_asked():
     assert "Tools available in CounselorBot:" not in asked
 
 
+def test_first_step_of_a_path_gets_the_full_catalog_even_without_intro_mode():
+    # QPCS/QPCC/QAP aprono il percorso con un mode di analisi/intervista: il
+    # turno resta un benvenuto, e li' il catalogo degli strumenti serve intero.
+    _ensure_guided_steps("QPCS")
+    r = client.post("/admin/prompt-audit/dry-run", json={
+        "questionnaire_type": "QPCS",
+        "language": "it",
+        "phase": "qpcs-intro",
+        "use_phase_prompt": True,
+        "message": "",
+        "scores_context": "",
+        "session_id": "prompt-audit-qpcs-intro-catalog",
+        "include_knowledge": False,
+        "include_history": False,
+    })
+    assert r.status_code == 200, r.text
+    system_prompt = r.json()["envelope"]["system_prompt_final"]
+    assert "detailed exploration of cognitive and affective learning strategies" in system_prompt
+    assert "Tools available in CounselorBot:" not in system_prompt
+
+
 def test_prompt_audit_intro_step_keeps_the_whole_guided_path():
     _ensure_guided_steps("QSA")
     session_id = "prompt-audit-guided-path-intro"
