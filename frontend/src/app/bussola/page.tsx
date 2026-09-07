@@ -20,7 +20,7 @@ import {
     type OrientationSession,
 } from '@/lib/orientation-api';
 import { QUESTIONNAIRES, type QuestionnaireType } from '@/lib/questionnaires';
-import { orientationToolHref, safeOrientationNext } from '@/lib/tool-catalog';
+import { skipOrientationThisVisit, orientationToolHref, safeOrientationNext } from '@/lib/tool-catalog';
 import { getSelectedCounselorId } from '@/lib/counselor';
 
 function safeNextHref(): string | null {
@@ -215,6 +215,14 @@ export default function BussolaPage() {
         ? t('orientation.processing')
         : lastMessage?.role === 'assistant' ? lastMessage.content : '';
 
+    // Chi sa gia' che cosa vuole aprire non deve passare da qui. Il salto vale
+    // per la visita: il cancello tace, e il primo strumento davvero avviato
+    // rende `required` falso da se'.
+    const skipToTools = () => {
+        skipOrientationThisVisit();
+        router.push('/?view=questionnaires');
+    };
+
     return (
         <div className="page-wide space-y-8">
             <header className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 py-7 shadow-sm sm:px-8 sm:py-9">
@@ -267,6 +275,7 @@ export default function BussolaPage() {
                     <div className="flex flex-wrap gap-2">
                         {latestSessionId && <Button type="button" variant="secondary" onClick={() => void openSession(latestSessionId)}>{t('orientation.landing.latest')}</Button>}
                         <Button type="button" variant="accent" onClick={() => beginCounselorChoice(true)}>{t('orientation.landing.new')}</Button>
+                        {orientationRequired && <Button type="button" variant="ghost" onClick={skipToTools}>{t('orientation.landing.skip')}</Button>}
                     </div>
                 </section>
             ) : (

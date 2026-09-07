@@ -55,6 +55,22 @@ export function safeOrientationNext(value: string | null): string | null {
         : null;
 }
 
+// Chi preme "vai agli strumenti" sulla Bussola non deve poi essere rimbalzato
+// indietro dal cancello alla prima rotta che apre. Vale per la visita e non
+// oltre: `sessionStorage` muore con la scheda, e nel frattempo il primo
+// strumento davvero aperto rende `required` falso da solo lato server, quindi
+// non serve registrare un rifiuto da nessuna parte.
+const ORIENTATION_SKIP_KEY = 'orientation-skipped-this-visit';
+
+export function skipOrientationThisVisit(): void {
+    // Finestra anonima, storage disattivato: il salto non deve diventare un errore.
+    try { sessionStorage.setItem(ORIENTATION_SKIP_KEY, '1'); } catch { /* nulla da fare */ }
+}
+
+export function orientationSkippedThisVisit(): boolean {
+    try { return sessionStorage.getItem(ORIENTATION_SKIP_KEY) === '1'; } catch { return false; }
+}
+
 export function orientationGateBypass(pathname: string, search = ''): boolean {
     const exemptPaths = ['/bussola', '/login', '/register', '/guide', '/telegram-link', '/questionario'];
     if (exemptPaths.some((path) => pathname.startsWith(path))) return true;
