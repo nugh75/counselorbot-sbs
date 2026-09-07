@@ -174,9 +174,13 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
     # Catalogo completo degli strumenti solo dove il turno puo' parlarne: intro,
     # chat libera fuori dal percorso, o una domanda esplicita sulla piattaforma.
+    # Il primo step del percorso e' un benvenuto anche quando il suo mode dice
+    # altro: QPCS/QPCC/QAP aprono con `qpcs-analysis`/`qpcc-interview`/
+    # `qap-interview`, ed e' lì che il counselor presenta gli strumenti.
     platform_full = (
         step is None
         or _is_intro_step_mode(step.system_prompt_mode)
+        or (step.sort_order or 0) == 0
         or skills_intents.asks_about_platform(request.message or "")
     )
     system_prompt = _apply_global_directives(system_prompt, request.language, db,
