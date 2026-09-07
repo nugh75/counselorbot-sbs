@@ -28,7 +28,7 @@ from pydantic import BaseModel, ValidationError
 
 logger = logging.getLogger(__name__)
 
-from . import models, pii, session_ledger
+from . import models, pii, recommendation_service, session_ledger
 
 # Two notes are a warning; four are wallpaper the model learns to skip.
 MAX_CHECK_NOTES = 2
@@ -90,6 +90,9 @@ class Verdict(BaseModel):
     on_thread: Check
     question_fit: Check
     advice_grounded: Check
+    # Gli indici delle domande aperte a cui lo studente ha risposto parlando.
+    # Assente nei verdetti dei modelli che non lo conoscono: lista vuota.
+    answered: list[int] = []
 
 
 def parse(raw: str | None) -> Verdict | None:
@@ -179,9 +182,12 @@ def turn_hash(user_text: str, bot_text: str) -> str:
     return digest.hexdigest()[:16]
 
 
-def store(db, *, session_id: str, username: str, turn: str, verdict: Verdict | None) -> list[str]:
+def store(db, *, session_id: str, username: str, turn: str, verdict: Verdict | None,
+          open_questions: list[dict] | None = None) -> list[str]:
     """Write the verdict and return the lines that will actually be injected."""
     lines = notes(verdict)
+    _close_answered(db, session_id=session_id, username=username,
+                    verdict=verdict, open_questions=open_questions or [])
     previous = _latest_row(db, session_id)
     if previous is not None:
         already = {_key(line) for line in _stored_notes(previous)}
@@ -266,6 +272,7 @@ def build_input(
     db, *, session_id: str, username: str, questionnaire_type: str,
     step_id: str | None, step_label: str, step_prompt: str = "", language: str = "it",
     advice_ids: list[str] | None = None, candidate_ids: list[str] | None = None,
+    open_questions: list[dict] | None = None,
 ) -> str:
     """What the judge sees. Deliberately small.
 
@@ -281,6 +288,7 @@ def build_input(
         _exchanges(db, session_id),
         _ledger(db, session_id=session_id, username=username, step_id=step_id),
         _advice(advice_ids or [], candidate_ids or []),
+        _open_questions_section(open_questions or []),
     ]
     return "\n\n".join(section for section in sections if section)[:MAX_INPUT_CHARS]
 
@@ -414,7 +422,8 @@ connected it back to the mandate.
 Reply with one JSON object and nothing else:
 {"on_thread": {"ok": true, "note": null},
  "question_fit": {"ok": true, "note": null},
- "advice_grounded": {"ok": true, "note": null}}
+ "advice_grounded": {"ok": true, "note": null},
+ "answered": []}
 
 on_thread - false only if the counselor lost the thread: it neither took up what
 the student raised nor tied it back to the mandate.
@@ -422,6 +431,9 @@ question_fit - false only if the question the counselor asked belongs to another
 step or has no bearing on the mandate.
 advice_grounded - false only if the turn gave advice that follows from nothing the
 student said. A turn that gives no advice is ok: true.
+answered - the numbers of the OPEN QUESTIONS the student answered in substance in this
+exchange, even without answering them as questions. Empty when the section is absent, when
+nobody answered, or whenever you are unsure: a question closed by mistake is lost.
 
 The mandate frames the conversation; it is not a checklist. Answering what the
 student explicitly asked for is never off mandate: a turn that does so is on_thread
@@ -471,6 +483,9 @@ def evaluate(
     if target is None:
         return []
     provider, model, _no_think = target
+    # Letta una volta: gli indici del verdetto valgono su questa lista, e fra
+    # l'input e la chiusura c'e' di mezzo una chiamata a modello.
+    asked = open_questions(db, session_id=session_id, username=username, step_id=step_id)
     try:
         raw = call(
             provider=provider, model=model,
@@ -479,6 +494,7 @@ def evaluate(
                 questionnaire_type=questionnaire_type, step_id=step_id,
                 step_label=step_label, step_prompt=step_prompt, language=language,
                 advice_ids=advice_ids, candidate_ids=candidate_ids,
+                open_questions=asked,
             ),
             system_prompt=SYSTEM_PROMPT,
         )
@@ -489,7 +505,8 @@ def evaluate(
     if verdict is None:
         logger.info("Thread guard returned no readable verdict (%s/%s)", provider, model)
         return []
-    return store(db, session_id=session_id, username=username, turn=turn, verdict=verdict)
+    return store(db, session_id=session_id, username=username, turn=turn, verdict=verdict,
+                 open_questions=asked)
 
 
 def schedule(**kwargs) -> None:
@@ -534,3 +551,57 @@ def _run(**kwargs) -> None:
         db.rollback()
     finally:
         db.close()
+
+
+# --- le domande che il giudice puo' dichiarare risposte nel discorso ---------
+MAX_JUDGED_QUESTIONS = 2
+
+
+def open_questions(db, *, session_id: str, username: str, step_id: str | None) -> list[dict]:
+    """Le domande aperte che il giudice puo' dichiarare risposte nel discorso."""
+    found = []
+    for row in session_ledger.question_rows(db, session_id=session_id, username=username):
+        payload = row.payload or {}
+        if payload.get("status") != "proposed":
+            continue
+        asked_in = (payload.get("step_id") or "").strip()
+        if step_id and asked_in and asked_in != step_id:
+            continue
+        found.append({"slug": row.slug, "text": payload.get("name", ""),
+                      "step_order": payload.get("step_order")})
+    return found[-MAX_JUDGED_QUESTIONS:]
+
+
+def _open_questions_section(items: list[dict]) -> str:
+    if not items:
+        return ""
+    lines = ["OPEN QUESTIONS (asked earlier, still unanswered)"]
+    for index, item in enumerate(items, start=1):
+        step = f"(step {item['step_order']}) " if item.get("step_order") is not None else ""
+        lines.append(f'{index}. {step}"{_safe(item.get("text", ""))}"')
+    return "\n".join(lines)
+
+
+def _close_answered(db, *, session_id: str, username: str, verdict: Verdict | None,
+                    open_questions: list[dict]) -> None:
+    """Chiude le domande a cui lo studente ha risposto parlando.
+
+    Gli indici valgono sulla lista mostrata al giudice: fra la costruzione
+    dell'input e qui e' passata una chiamata a modello, e rileggere il registro
+    ora rischierebbe di numerare domande diverse.
+    """
+    if verdict is None or not open_questions:
+        return
+    for index in verdict.answered:
+        if not isinstance(index, int) or not 1 <= index <= len(open_questions):
+            continue
+        slug = open_questions[index - 1].get("slug")
+        if not slug:
+            continue
+        try:
+            recommendation_service.set_state(
+                db, session_id=session_id, username=username, recommendation_type="advice",
+                slug=slug, status="closed", closed_by="conversation",
+            )
+        except ValueError:  # una riga che non e' una domanda non si chiude
+            logger.info("Thread guard could not close %s", slug)

@@ -39,12 +39,17 @@ def test_only_the_two_most_severe_survive():
     assert lines == ["Advice ungrounded.", "Left the subject the student raised."]
 
 
-def test_the_model_is_not_asked_whether_a_question_was_answered():
-    # Both judges said "not developed" on most turns, whatever the turn held. The
-    # ledger already knows which question is open and clears it when the student
-    # answers, deterministically — so the model is not asked at all.
-    assert "answered" not in thread_guard.SYSTEM_PROMPT.lower()
-    assert not hasattr(thread_guard.Verdict, "answered")
+def test_the_model_judges_named_questions_and_never_a_general_one():
+    # Una prima versione chiedeva al modello un booleano — "la domanda aperta e'
+    # stata sviluppata?" — e su due giudici diversi rispondeva "no" quasi sempre,
+    # qualunque cosa contenesse il turno: misurava il suo pregiudizio, non la
+    # conversazione, e fu tolta. Torna in una forma diversa: non un giudizio in
+    # astratto ma gli indici di domande che ha davanti elencate, con l'ordine di
+    # lasciare la lista vuota nel dubbio, e non inietta un rimprovero ma chiude
+    # una riga del registro.
+    assert '"answered": []' in thread_guard.SYSTEM_PROMPT
+    assert "whenever you are unsure" in thread_guard.SYSTEM_PROMPT
+    assert thread_guard.Verdict.model_fields["answered"].default == []
 
 
 def test_the_block_stays_within_its_budget():
@@ -135,7 +140,7 @@ def test_notes_of_nothing_render_nothing():
 
 
 # --- storage and staleness ---
-from backend import models  # noqa: E402
+from backend import models, recommendation_service  # noqa: E402
 from backend.tests.artifact_database import artifact_session  # noqa: E402
 
 SESSION = "guard-fixture"
@@ -517,3 +522,66 @@ def test_a_hidden_step_directive_is_not_the_student_speaking(db):
     text = _input(db)
     assert "three open reflective questions" not in text
     assert "mi suggerisci delle letture?" in text
+
+
+# --- il giudice chiude cio' a cui lo studente ha risposto parlando ------------
+def _question_row(db, slug, text, *, step_id='cognitive', step_order=1, turn=1):
+    recommendation_service.record(
+        db, session_id=SESSION, username=STUDENT, recommendation_type='advice',
+        payloads=[{'slug': slug, 'name': text, 'kind': 'question',
+                   'step_id': step_id, 'step_order': step_order}], turn_index=turn)
+
+
+def _verdict(answered=None):
+    payload = ('{"on_thread": {"ok": true, "note": null},'
+               ' "question_fit": {"ok": true, "note": null},'
+               ' "advice_grounded": {"ok": true, "note": null}')
+    if answered is not None:
+        payload += f', "answered": {answered}'
+    return thread_guard.parse(payload + '}')
+
+
+def _advice(db):
+    return recommendation_service.list_for_session(
+        db, session_id=SESSION, username=STUDENT)['advice'][0]
+
+
+def test_a_verdict_without_answered_still_parses():
+    # I modelli che non conoscono il campo non devono produrre verdetti illeggibili.
+    verdict = _verdict()
+    assert verdict is not None and verdict.answered == []
+
+
+def test_the_judge_closes_the_question_answered_while_talking(db):
+    _question_row(db, 'q-1', 'Ti pesa il tempo o il metodo?')
+    thread_guard.store(db, session_id=SESSION, username=STUDENT, turn='t', verdict=_verdict('[1]'),
+                       open_questions=[{'slug': 'q-1', 'text': 'Ti pesa il tempo o il metodo?',
+                                        'step_order': 1}])
+    item = _advice(db)
+    assert item['status'] == 'closed' and item['closed_by'] == 'conversation'
+
+
+def test_an_index_outside_the_list_closes_nothing(db):
+    # Gli indici arrivano da un modello: fuori intervallo non devono chiudere la
+    # domanda sbagliata, e nemmeno sollevare.
+    _question_row(db, 'q-1', 'Ti pesa il tempo o il metodo?')
+    thread_guard.store(db, session_id=SESSION, username=STUDENT, turn='t',
+                       verdict=_verdict('[7, 0, -1]'),
+                       open_questions=[{'slug': 'q-1', 'text': 'x', 'step_order': 1}])
+    assert _advice(db)['status'] == 'proposed'
+
+
+def test_the_open_questions_reach_the_judge_numbered_with_their_step():
+    rendered = thread_guard._open_questions_section([
+        {'slug': 'q-1', 'text': 'Ti pesa il tempo o il metodo?', 'step_order': 2},
+    ])
+    assert '1. (step 2) "Ti pesa il tempo o il metodo?"' in rendered
+    assert thread_guard._open_questions_section([]) == ''
+
+
+def test_only_the_questions_of_this_step_are_offered_for_closing(db):
+    _question_row(db, 'q-here', 'Aperta qui?', step_id='cognitive')
+    _question_row(db, 'q-elsewhere', 'Aperta altrove?', step_id='affective', step_order=2)
+    asked = thread_guard.open_questions(db, session_id=SESSION, username=STUDENT,
+                                        step_id='cognitive')
+    assert [item['slug'] for item in asked] == ['q-here']
