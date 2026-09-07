@@ -11,6 +11,7 @@ import { BenchmarkPanel } from '@/components/admin/BenchmarkPanel';
 import { CounselorsPanel } from '@/components/admin/CounselorsPanel';
 import { ApprovedStrategiesPanel } from '@/components/admin/ApprovedStrategiesPanel';
 import { ToolBriefsPanel } from '@/components/admin/ToolBriefsPanel';
+import { ThreadGuardPanel } from '@/components/admin/ThreadGuardPanel';
 import { CertifiedReadingsPanel } from '@/components/admin/CertifiedReadingsPanel';
 import { OrientationReferralsPanel } from '@/components/admin/OrientationReferralsPanel';
 import { CertifiedStrategiesPanel } from '@/components/admin/CertifiedStrategiesPanel';
@@ -38,7 +39,7 @@ import { canUseResearchConsole } from '@/lib/roles';
 
 import { cn } from '@/lib/utils';
 
-type AdminTab = 'assistantManager' | 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'approvedStrategies' | 'toolBriefs' | 'certifiedStrategies' | 'certifiedReadings' | 'orientationReferrals' | 'skills' | 'assistantQuestions' | 'guidedStepQuestions' | 'promptExport' | 'ragDocs' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'groupsClasses' | 'usersSummary' | 'training' | 'pqbl' | 'rolePreview';
+type AdminTab = 'assistantManager' | 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'approvedStrategies' | 'toolBriefs' | 'threadGuard' | 'certifiedStrategies' | 'certifiedReadings' | 'orientationReferrals' | 'skills' | 'assistantQuestions' | 'guidedStepQuestions' | 'promptExport' | 'ragDocs' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'groupsClasses' | 'usersSummary' | 'training' | 'pqbl' | 'rolePreview';
 
 export default function AdminPage() {
     const router = useRouter();
@@ -59,6 +60,7 @@ export default function AdminPage() {
                 { id: 'counselors', label: t('admin.tab.counselors'), icon: Users },
                 { id: 'approvedStrategies', label: t('admin.tab.approvedStrategies'), icon: Database },
                 { id: 'toolBriefs', label: t('admin.tab.toolBriefs'), icon: Compass },
+                { id: 'threadGuard', label: t('admin.tab.threadGuard'), icon: Eye },
                 { id: 'certifiedStrategies', label: t('admin.tab.certified'), icon: Award },
                 { id: 'certifiedReadings', label: t('admin.tab.readings'), icon: BookOpen },
                 { id: 'orientationReferrals', label: t('admin.tab.orientationReferrals'), icon: Compass },
@@ -255,6 +257,7 @@ export default function AdminPage() {
                         {activeTab === 'counselors' && <CounselorsPanel />}
                         {activeTab === 'approvedStrategies' && <ApprovedStrategiesPanel />}
                         {activeTab === 'toolBriefs' && <ToolBriefsPanel />}
+                        {activeTab === 'threadGuard' && <ThreadGuardPanel />}
                         {activeTab === 'certifiedStrategies' && <CertifiedStrategiesPanel />}
                         {activeTab === 'certifiedReadings' && <CertifiedReadingsPanel />}
                         {activeTab === 'orientationReferrals' && <OrientationReferralsPanel />}

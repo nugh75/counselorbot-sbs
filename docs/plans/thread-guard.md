@@ -65,9 +65,13 @@ and not text for a student (the criterion already used for `tool_brief_seed`):
 }
 ```
 
-`note` is one factual sentence of at most 160 characters. The guard's prompt
+`note` is one factual sentence of at most 140 characters. The guard's prompt
 forbids imperatives and "should": the verdict states what happened, the
-counselor decides what to do about it. The model reports only whether the last
+counselor decides what to do about it, and a note that arrives as an order is
+dropped rather than injected. A rambling note keeps its first sentence and an
+over-long one is trimmed at a word boundary, because a small local model
+overshoots often enough that rejecting the whole verdict would throw away most
+of them. The model reports only whether the last
 question was developed; which question is open and how old it is comes from the
 ledger, which already computes both — less surface to hallucinate.
 

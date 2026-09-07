@@ -60,7 +60,8 @@ _ACTION_LINE = re.compile(
 )
 
 
-def build(db, *, session_id: str, username: str, step_id: str | None = None) -> dict:
+def build(db, *, session_id: str, username: str, step_id: str | None = None,
+          guard_notes: list[str] | None = None) -> dict:
     """Ledger of the session so far; empty parts stay empty, nothing is inferred.
 
     Scoped to the session and not to `conversation_id`: a resumed or frozen
@@ -68,7 +69,7 @@ def build(db, *, session_id: str, username: str, step_id: str | None = None) -> 
     student said earlier must still arrive.
     """
     if not session_id or not username:
-        return _empty()
+        return {**_empty(), "guard_notes": list(guard_notes or [])}
     rows = db.query(models.Log).filter(
         models.Log.action == "chat_message",
         models.Log.session_id == session_id,
@@ -97,6 +98,8 @@ def build(db, *, session_id: str, username: str, step_id: str | None = None) -> 
         # Asking once is a follow-up; asking at every step entry is the ritual
         # opener the global directives forbid.
         "verification_asked": any(_ALREADY_ASKED.search(_visible(row)) for row in rows),
+        # Written by `thread_guard`, the one part of this block the model produced.
+        "guard_notes": list(guard_notes or []),
     }
 
 
@@ -110,7 +113,8 @@ def render(ledger: dict) -> str:
     ledger = {**_empty(), **(ledger or {})}
     answers = list(ledger["answers"])
     if not any((answers, ledger["pending_actions"], ledger["refused_actions"],
-                ledger["open_question"], ledger["proposed_action"], ledger["replayed_step"])):
+                ledger["open_question"], ledger["proposed_action"], ledger["replayed_step"],
+                ledger["guard_notes"])):
         return ""
     while True:
         text = _compose(dict(ledger, answers=answers))
@@ -122,14 +126,17 @@ def render(ledger: dict) -> str:
         answers.pop(0)
 
 
-def block(db, *, session_id: str, username: str, step_id: str | None = None) -> str:
-    return render(build(db, session_id=session_id, username=username, step_id=step_id))
+def block(db, *, session_id: str, username: str, step_id: str | None = None,
+          guard_notes: list[str] | None = None) -> str:
+    return render(build(db, session_id=session_id, username=username, step_id=step_id,
+                        guard_notes=guard_notes))
 
 
 # --- helpers ---
 def _empty() -> dict:
     return {"answers": [], "open_question": "", "pending_actions": [], "proposed_action": "",
-            "refused_actions": [], "verification_asked": False, "replayed_step": False}
+            "refused_actions": [], "verification_asked": False, "replayed_step": False,
+            "guard_notes": []}
 
 
 def _compose(ledger: dict) -> str:
@@ -156,6 +163,12 @@ def _compose(ledger: dict) -> str:
     if ledger["open_question"]:
         lines.append("Your own reflective question, still unanswered:")
         lines.append(f"- \"{ledger['open_question']}\"")
+    if ledger["guard_notes"]:
+        # A step entry already carries the ledger; a separate block would say the
+        # same thing twice in the same envelope.
+        lines.append("Observed on the turn before this one, as facts and never "
+                     "mentioned to the student:")
+        lines.extend(f"- {note}" for note in ledger["guard_notes"])
     directives = _directives(ledger)
     if directives:
         lines.append("Act on this before the analysis, in at most one short sentence each, "
