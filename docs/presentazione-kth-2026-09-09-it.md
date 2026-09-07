@@ -168,7 +168,7 @@ Quindi, la risposta alla prima domanda: il design non sta nel prompt. Sta nei vi
 - Il primo vincolo era il modello. Il secondo è il **tempo**: come deve essere scandita la riflessione in una chat?
 - Una conoscenza e una scelta hanno bisogno di tempo: si devono sedimentare
 - Per design: **conversazione e riflessione sono due momenti separati**
-- Durante la conversazione: appunti con strumenti appositi — note, azioni, confronti
+- Durante la conversazione: appunti con strumenti appositi — note, azioni, confronti e carte
 - Negli spazi propri, senza AI: **Taccuino** (riflettere su di sé), **Libretto**, **Portfolio**
 - Il docente entra lì: legge chat e Taccuino, e scrive a sua volta note per correggere il tiro
 - Raccomandazioni (libri, strategie) e base di conoscenza RAG: contenuti inseriti dai docenti, con schede appropriate
@@ -179,7 +179,7 @@ Il primo vincolo di design era il modello — locale o provider esterno, ne parl
 
 La risposta che ci siamo dati è netta: una conoscenza e una scelta hanno bisogno di tempo, si devono sedimentare. E gli studenti devono avere spazi propri di riflessione, senza AI. Per questo, per design, abbiamo separato il momento della conversazione da quello della riflessione.
 
-Durante la conversazione, lo studente può prendere nota con strumenti appositi: annotazioni, azioni da compiere, confronti. Poi ci sono momenti in cui scrive e riflette sull'interazione: questo avviene con il Taccuino, che serve a riflettere su di sé, e con il Libretto e il Portfolio. Momenti in cui lo studente scrive di suo pugno.
+Durante la conversazione, lo studente può prendere nota con strumenti appositi: annotazioni, azioni da compiere, confronti, carte. Poi ci sono momenti in cui scrive e riflette sull'interazione: questo avviene con il Taccuino, che serve a riflettere su di sé, e con il Libretto e il Portfolio. Momenti in cui lo studente scrive di suo pugno.
 
 E il docente può entrare in questa interazione: leggendo le chat dello studente e il suo Taccuino, e scrivendo a sua volta note, per correggere il tiro di quello che è stato fatto.
 
@@ -234,6 +234,8 @@ E ora vi mostro come funziona. [DEMO]
 Terza domanda, e per me la più difficile: come rendere sicuri strumenti del genere su privacy, riservatezza e dati?
 
 Comincio da una scelta architetturale. CounselorBot può instradare le richieste verso provider esterni, ma supporta anche modelli locali, tramite Ollama e llama.cpp. I modelli locali sono utili per le dimostrazioni, per il controllo dei costi, per il funzionamento offline o a basso budget — ma soprattutto per le interazioni sensibili, perché in quel caso i dati non escono dal server. I provider esterni restano utili quando contano la qualità, la latenza o capacità specifiche.
+
+Nella costruzione di CounselorBot abbiamo tenuto aperte entrambe le strade, perché i modelli locali sono sempre più performanti: Qwen 3, per esempio, rende meglio di molti modelli proprietari, anche se alcune capacità di ragionamento restano oggi appannaggio dei grandi modelli. La scelta che abbiamo fatto è quella agnostica: chi usa il software decide, in maniera trasparente, cosa utilizzare.
 
 Il punto è che questa decisione deve essere esplicita, e deve essere visibile. Prima che i dati escano dal sistema locale, un gateway di privacy dovrebbe identificare nomi, email, istituzioni, identificatori nel testo libero e dettagli potenzialmente sensibili. Quando la risposta non richiede la re-identificazione, i dati vengono anonimizzati. Quando la re-identificazione serve per la sessione, si usa la pseudonimizzazione, tenendo la mappatura solo sul server locale. Non è una soluzione completa al problema della privacy — voglio essere chiaro su questo — ma rende il confine visibile e governabile. E il confine visibile è la precondizione di qualsiasi conformità.
 
