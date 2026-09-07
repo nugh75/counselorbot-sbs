@@ -166,7 +166,7 @@ So, the answer to the first question: the design is not in the prompt. It is in 
 - The first constraint was the model. The second is **time**: how should reflection be paced in a chat?
 - Knowledge and choices need time: they have to settle
 - By design: **conversation and reflection are two separate moments**
-- During the conversation: note-taking with dedicated tools — notes, actions, comparisons
+- During the conversation: note-taking with dedicated tools — notes, actions, comparisons and cards
 - In their own spaces, without AI: **notebook** (reflection on the self), **booklets**, **portfolio**
 - The teacher enters there: reads the chats and the notebook, and writes notes in turn to correct the aim
 - Recommendations (books, strategies) and the RAG knowledge base: content entered by teachers, with proper cards
@@ -177,7 +177,7 @@ The first design constraint was the model — local or external provider, I will
 
 Our answer is blunt: a piece of knowledge and a choice both need time; they have to settle. And students need spaces of their own for reflection, without AI. That is why, by design, we separated the moment of conversation from the moment of reflection.
 
-During the conversation, the student can take notes with dedicated tools: annotations, actions to take, comparisons. Then there are moments when they write and reflect on the interaction: this happens in the notebook, which is for reflecting on oneself, and in the booklets and the portfolio. Moments when the student writes in their own hand.
+During the conversation, the student can take notes with dedicated tools: annotations, actions to take, comparisons, cards. Then there are moments when they write and reflect on the interaction: this happens in the notebook, which is for reflecting on oneself, and in the booklets and the portfolio. Moments when the student writes in their own hand.
 
 And the teacher can enter this interaction: reading the student's chats and their notebook, and writing notes in turn, to correct the aim of what has been done.
 
@@ -232,6 +232,8 @@ And now let me show you how it works. [DEMO]
 Third question, and for me the hardest: how do we make such tools safe with respect to privacy, confidentiality and data?
 
 Let me start from an architectural choice. CounselorBot can route requests to external providers, but it also supports local models, through Ollama and llama.cpp. Local models are useful for demonstrations, for cost control, for offline or low-budget operation — but above all for sensitive interactions, because in that case the data never leaves the server. External providers remain useful when quality, latency or specific capabilities matter.
+
+We kept both paths open when building CounselorBot, because local models keep getting stronger: Qwen 3, for example, outperforms many proprietary models, even if some reasoning capabilities are still the exclusive domain of the large ones. The choice we made is the agnostic one: whoever uses the software decides, transparently, what to use.
 
 The point is that this decision must be explicit, and it must be visible. Before data leaves the local system, a privacy gateway should identify names, emails, institutions, free-text identifiers and potentially sensitive details. When the answer does not require re-identification, the data is anonymised. When re-identification is needed for the session, we use pseudonymisation, keeping the mapping only on the local server. This is not a complete solution to the privacy problem — I want to be clear about that — but it makes the boundary visible and governable. And a visible boundary is the precondition for any kind of compliance.
 
