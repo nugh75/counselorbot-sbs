@@ -174,6 +174,8 @@ def _watch_thread(prepared, request, db, *, session_id, username, effective_mess
         advice_ids=list(recommended.get("strategy", [])) + list(recommended.get("reading", [])),
         candidate_ids=list(prepared.certified_strategy_ids or []),
         turn=thread_guard.turn_hash(effective_message, response_content),
+        # On a step entry the message is a hidden directive, not the student.
+        student_spoke=bool(not request.internal_message and (request.message or "").strip()),
     )
 
 

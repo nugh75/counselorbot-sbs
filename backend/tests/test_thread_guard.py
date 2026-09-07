@@ -74,6 +74,46 @@ def test_only_the_first_sentence_of_a_rambling_note_is_kept():
     assert thread_guard.notes(verdict) == ["The reply changed subject."]
 
 
+def test_a_step_entry_never_reports_an_unanswered_question():
+    # On a step entry the student says nothing: the message is a hidden directive.
+    # "The question was not taken up" is then true by construction, and it fired on
+    # seven of nine sampled turns. Whose question it is, and how old, is the ledger's.
+    verdict = thread_guard.parse(_raw(developed=False))
+    assert thread_guard.notes(verdict, student_spoke=False) == []
+    assert thread_guard.notes(verdict, student_spoke=True) == [thread_guard.ANSWERED_LINE]
+
+
+@pytest.mark.parametrize("note", [
+    "Chiedi allo studente il suo metodo di studio.",
+    "Riprendi la domanda rimasta aperta prima di procedere.",
+    "Il counselor dovrebbe porre una domanda riflessiva.",
+    "Pregunta al estudiante por su método de estudio.",
+    "Demande à l'étudiant quelle est sa méthode.",
+    "Der Counselor sollte eine Frage stellen.",
+    "Fråga studenten om metoden.",
+])
+def test_an_order_is_refused_in_every_language(note):
+    # The verdict is data. The notes come back in the conversation's language, so a
+    # filter that only knows English lets an order through into the next prompt.
+    verdict = thread_guard.parse(_raw(question_fit=False, question_note=note))
+    assert thread_guard.notes(verdict) == []
+
+
+def test_a_factual_note_in_italian_survives():
+    verdict = thread_guard.parse(_raw(
+        on_thread=False, on_thread_note="Il counselor ha lasciato il tema che lo studente aveva aperto."))
+    assert thread_guard.notes(verdict) == [
+        "Il counselor ha lasciato il tema che lo studente aveva aperto."]
+
+
+def test_the_prompt_says_the_mandate_is_a_frame_not_a_checklist():
+    # A judged turn answered the student's request for readings and was marked off
+    # mandate for not asking the step's three reflective questions: the guard was
+    # punishing the counselor for following the student.
+    assert "not a checklist" in thread_guard.SYSTEM_PROMPT
+    assert "explicitly asked" in thread_guard.SYSTEM_PROMPT
+
+
 def test_an_imperative_note_is_refused():
     # The verdict is data. A note written as an order is not usable as data.
     verdict = thread_guard.parse(_raw(
