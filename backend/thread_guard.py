@@ -20,9 +20,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import re
+import threading
 
 from pydantic import BaseModel, ValidationError
+
+logger = logging.getLogger(__name__)
 
 from . import models, pii, session_ledger
 
@@ -354,3 +358,130 @@ def _safe(text: str) -> str:
 def _clip(text: str, limit: int) -> str:
     text = (text or "").strip()
     return text if len(text) <= limit else text[:limit].rstrip() + "…"
+
+
+# --- evaluation ---
+ENABLED_KEY = "thread_guard_enabled"
+PRESET_KEY = "thread_guard_preset_id"
+# Un giudizio non vale un turno: oltre questo il verdetto arriverebbe comunque
+# tardi, e il turno seguente lo scarterebbe come stantio.
+TIMEOUT_SECONDS = 20
+MAX_VERDICT_TOKENS = 400
+
+SYSTEM_PROMPT = """You silently review ONE counselor turn from a guided counselling session.
+
+You judge the counselor, never the student. A student who changes subject is not
+derailing anything: that is only a fault if the counselor neither followed it nor
+connected it back to the mandate.
+
+Reply with one JSON object and nothing else:
+{"on_thread": {"ok": true, "note": null},
+ "question_fit": {"ok": true, "note": null},
+ "advice_grounded": {"ok": true, "note": null},
+ "answered": {"last_question_developed": true}}
+
+on_thread - false only if the counselor lost the thread: it neither took up what
+the student raised nor tied it back to the mandate.
+question_fit - false only if the question the counselor asked belongs to another
+step or has no bearing on the mandate.
+advice_grounded - false only if the turn gave advice that follows from nothing the
+student said. A turn that gives no advice is ok: true.
+answered.last_question_developed - false if a question the counselor had left open
+was neither answered nor taken further in this exchange. If there was none, true.
+
+Each note is ONE past-tense sentence of at most 140 characters saying what happened.
+Never an instruction, never "should", never advice to the counselor. Use null when ok is true.
+Judge only from what you are given, and when in doubt answer ok: true."""
+
+
+def enabled(db) -> bool:
+    row = db.query(models.Config).filter(models.Config.key == ENABLED_KEY).first()
+    return (row.value or "").strip().lower() in ("1", "true", "yes", "on") if row else False
+
+
+def preset(db) -> tuple[str, str, bool] | None:
+    """Which model judges. Declared by the admin, never inherited.
+
+    The conversation can be served by an external provider while the guard runs
+    on a local one: it reads every turn, and that is a cost and an exposure the
+    admin should choose on purpose.
+    """
+    row = db.query(models.Config).filter(models.Config.key == PRESET_KEY).first()
+    value = (row.value or "").strip() if row else ""
+    if not value.isdigit():
+        return None
+    chosen = db.query(models.ModelPreset).filter(models.ModelPreset.id == int(value)).first()
+    if not chosen or not chosen.provider or not chosen.model:
+        return None
+    return chosen.provider, chosen.model, bool(chosen.disable_thinking)
+
+
+def evaluate(
+    db, *, call, session_id: str, username: str, questionnaire_type: str,
+    step_id: str | None, step_label: str, step_prompt: str, language: str,
+    advice_ids: list[str], candidate_ids: list[str], turn: str,
+) -> list[str]:
+    """Judge the turn that just ended. Returns the lines that will be injected.
+
+    `call` is the only way out of this module: the caller supplies it, so a test
+    can refuse it and a failing provider cannot become a failing turn.
+    """
+    if not enabled(db):
+        return []
+    target = preset(db)
+    if target is None:
+        return []
+    provider, model, _no_think = target
+    try:
+        raw = call(
+            provider=provider, model=model,
+            user_message=build_input(
+                db, session_id=session_id, username=username,
+                questionnaire_type=questionnaire_type, step_id=step_id,
+                step_label=step_label, step_prompt=step_prompt, language=language,
+                advice_ids=advice_ids, candidate_ids=candidate_ids,
+            ),
+            system_prompt=SYSTEM_PROMPT,
+        )
+    except Exception as exc:  # a judge that fails is a judge that says nothing
+        logger.info("Thread guard unavailable (%s/%s): %s", provider, model, type(exc).__name__)
+        return []
+    verdict = parse(raw)
+    if verdict is None:
+        logger.info("Thread guard returned no readable verdict (%s/%s)", provider, model)
+        return []
+    return store(db, session_id=session_id, username=username, turn=turn, verdict=verdict)
+
+
+def schedule(**kwargs) -> None:
+    """Fire and forget. The turn is already on its way to the student."""
+    threading.Thread(target=_run, kwargs=kwargs, daemon=True).start()
+
+
+def _run(**kwargs) -> None:
+    from .ai_service import AIService
+    from .database import SessionLocal
+
+    db = SessionLocal()
+    try:
+        if not enabled(db):
+            return
+        service = AIService(db)
+        service.config["ai_timeout_seconds"] = str(TIMEOUT_SECONDS)
+        target = preset(db)
+        if target is not None:
+            service.disable_thinking = target[2]
+            service.config["disable_thinking"] = "true" if target[2] else "false"
+
+        def call(*, provider, model, user_message, system_prompt):
+            return service.call_model(
+                provider=provider, model=model, user_message=user_message,
+                system_prompt=system_prompt, max_tokens=MAX_VERDICT_TOKENS,
+            )
+
+        evaluate(db, call=call, **kwargs)
+    except Exception as exc:  # pragma: no cover - the worker must never surface
+        logger.warning("Thread guard worker failed: %s", exc)
+        db.rollback()
+    finally:
+        db.close()
