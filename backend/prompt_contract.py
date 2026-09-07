@@ -12,15 +12,34 @@ def persona_context(persona: str | None, name: str | None = None) -> str:
     )
 
 
-def platform_context(db) -> str:
+def platform_context(db, full: bool = True) -> str:
+    """Catalogo degli strumenti. `full=False` lascia i soli nomi.
+
+    Il catalogo completo costa 1.405 caratteri a ogni turno per rispondere a una
+    domanda sulla piattaforma che arriva di rado. I nomi restano sempre, cosi' il
+    modello non puo' inventarsi uno strumento che non esiste, e chi compone
+    l'envelope rimette il catalogo quando il turno parla davvero di questo
+    (`intents.asks_about_platform`, intro, chat libera).
+    """
     # This is the catalog used by Bussola and its validated recommendation IDs.
     from .orientation import TOOL_GROUPS, TOOL_DESCRIPTIONS
     from . import models
     feature = db.query(models.Config).filter(models.Config.key == "feature_idea_focus").first()
     idea_enabled = feature is not None and feature.value.lower() == "true"
+    available_by_group = [
+        (label, [code for code in ids if code != "IDEA" or idea_enabled])
+        for label, ids in TOOL_GROUPS
+    ]
+    if not full:
+        names = [code for _, ids in available_by_group for code in ids]
+        return (
+            "[PLATFORM CAPABILITIES] Tools available in CounselorBot: "
+            + ", ".join(names)
+            + ". The full catalog is supplied when the student asks what a tool is "
+            "or which tools exist."
+        )
     lines = ["[PLATFORM CAPABILITIES]"]
-    for label, ids in TOOL_GROUPS:
-        available = [code for code in ids if code != "IDEA" or idea_enabled]
+    for label, available in available_by_group:
         lines.append(label + ": " + "; ".join(f"{code}: {TOOL_DESCRIPTIONS[code]}" for code in available))
     lines.append(
         "Italian item questionnaires are completed on competenzestrategiche.it; "

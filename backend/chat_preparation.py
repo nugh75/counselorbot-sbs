@@ -14,6 +14,7 @@ from .memory_service import session_memory
 from .prompt_config import SYSTEM_PROMPT_DEFAULTS
 from .chat_logic import PROMPT_COMPONENT_DEFAULTS
 from .skills import engine as skills_engine
+from .skills import intents as skills_intents
 from sqlalchemy.orm import Session
 from .chat_logic import (
     _annotate_qsa_factor_codes,
@@ -29,6 +30,7 @@ from .chat_logic import (
     _apply_qsa_factor_directive,
     _conversational_retrieval_tail,
     _is_conversational_mode,
+    _is_intro_step_mode,
     filter_scores_by_components,
     get_prompt_component_flags,
     get_prompt_component_options,
@@ -170,7 +172,15 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     if questionnaire_type == IDEA_INSTRUMENT:
         max_tokens = (max_tokens or 700) + 1200
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
-    system_prompt = _apply_global_directives(system_prompt, request.language, db)
+    # Catalogo completo degli strumenti solo dove il turno puo' parlarne: intro,
+    # chat libera fuori dal percorso, o una domanda esplicita sulla piattaforma.
+    platform_full = (
+        step is None
+        or _is_intro_step_mode(step.system_prompt_mode)
+        or skills_intents.asks_about_platform(request.message or "")
+    )
+    system_prompt = _apply_global_directives(system_prompt, request.language, db,
+                                             platform_full=platform_full)
     system_prompt = _apply_response_length_directive(system_prompt, effective_response_length)
     system_prompt = _apply_idea_variant_directive(system_prompt, ai_service, request)
     effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)

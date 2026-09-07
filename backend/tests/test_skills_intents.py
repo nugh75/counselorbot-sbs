@@ -1,6 +1,6 @@
 """Test puri della classificazione deterministica dell'intenzione studente."""
 
-from backend.skills.intents import classify
+from backend.skills.intents import asks_about_platform, classify
 
 
 def test_explicit_behaviour_intents_are_distinct():
@@ -103,6 +103,39 @@ def test_referral_root_words_do_not_swallow_ordinary_sentences():
     # I casi legittimi di referral restano riconosciuti.
     assert classify("vorrei parlare con lo psicologo della scuola") == "referral"
     assert classify("dov'e' l'ufficio orientamento?") == "referral"
+
+
+def test_platform_question_detector_covers_the_six_languages():
+    # Decide solo se l'envelope porta il catalogo completo degli strumenti.
+    for message in (
+        "quali strumenti ci sono?",
+        "che cos'e' il QSAr?",
+        "come funziona questa piattaforma?",
+        "what tools are available here?",
+        "what can I do here?",
+        "que herramientas hay?",
+        "quels outils sont disponibles ?",
+        "welche instrumente gibt es?",
+        "vilka verktyg finns?",
+    ):
+        assert asks_about_platform(message), message
+
+
+def test_platform_question_detector_ignores_profile_talk():
+    # Nominare "strumento" parlando di se' non e' una domanda sul catalogo:
+    # quei turni restano con il blocco corto.
+    for message in (
+        "questo strumento dice che sono ansioso",
+        "il mio punteggio A6 e' basso",
+        "non capisco il risultato del questionario che ho appena fatto",
+        "mi consigli una strategia per studiare?",
+    ):
+        assert not asks_about_platform(message), message
+
+
+def test_platform_question_is_not_a_skill_intent():
+    # Sta fuori dalla catena di classify: non deve spostare il routing skill.
+    assert classify("quali strumenti ci sono?") != "platform"
 
 
 if __name__ == "__main__":

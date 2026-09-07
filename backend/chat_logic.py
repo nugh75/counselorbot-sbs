@@ -455,14 +455,15 @@ _QSA_INVERTED_CODES = ("C3", "C6", "A1", "A4", "A5", "A7")
 _QSAR_INVERTED_CODES = ("C4r", "A1r")
 
 
-def _apply_global_directives(system_prompt: str, language: Optional[str], db=None) -> str:
+def _apply_global_directives(system_prompt: str, language: Optional[str], db=None,
+                            platform_full: bool = True) -> str:
     """Applica in un unico blocco le tre direttive globali: lingua, registro e
     thinking. Legge i testi dalle config del DB se presenti; altrimenti usa i
     default hardcoded."""
     if db is None:
         db_local = database.SessionLocal()
         try:
-            return _apply_global_directives(system_prompt, language, db_local)
+            return _apply_global_directives(system_prompt, language, db_local, platform_full)
         finally:
             db_local.close()
 
@@ -532,7 +533,7 @@ def _apply_global_directives(system_prompt: str, language: Optional[str], db=Non
             "right', 'of course', or equivalents. Restate the student's words only to resolve "
             "ambiguity or verify a working hypothesis. Make the orienting move explicit: clarify the "
             "situation, a relevant criterion, realistic alternatives and consequences, or one concrete "
-            "next action. Ask at most one focused question when a question is needed."
+            "next action."
             ' Close on the substance, not on the student: do not praise, reassure or pass judgement on how the student is doing, and never end with an encouraging remark about their effort or progress. If the student voices distress, answer it directly instead of softening it.'
         )
 
@@ -550,7 +551,7 @@ def _apply_global_directives(system_prompt: str, language: Optional[str], db=Non
         parts.append("\n\n" + thinking_directive)
     if affirmative_directive:
         parts.append("\n\n" + affirmative_directive)
-    parts.append("\n\n" + platform_context(db))
+    parts.append("\n\n" + platform_context(db, full=platform_full))
     return "".join(parts)
 
 

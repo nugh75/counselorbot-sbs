@@ -1748,6 +1748,36 @@ def test_prompt_audit_followup_includes_guided_path_for_next_step():
     assert "do not say that you do not know the path" in system_prompt
 
 
+def test_platform_catalog_is_short_in_analysis_and_full_when_asked():
+    _ensure_guided_steps("QSA")
+
+    def _envelope(message: str) -> str:
+        r = client.post("/admin/prompt-audit/dry-run", json={
+            "questionnaire_type": "QSA",
+            "language": "it",
+            "phase": "cognitive",
+            "mode": "factor-qa",
+            "use_phase_prompt": False,
+            "message": message,
+            "scores_context": "",
+            "session_id": "prompt-audit-platform-catalog",
+            "include_knowledge": False,
+            "include_history": False,
+        })
+        assert r.status_code == 200, r.text
+        return r.json()["envelope"]["system_prompt_final"]
+
+    analysis = _envelope("cosa vuol dire che C1 e' basso?")
+    # I nomi ci sono sempre: il modello non puo' inventarsi uno strumento.
+    assert "Tools available in CounselorBot:" in analysis
+    assert "QSA, QSAr, ZTPI" in analysis
+    assert "detailed exploration of cognitive and affective learning strategies" not in analysis
+
+    asked = _envelope("quali strumenti ci sono su questa piattaforma?")
+    assert "detailed exploration of cognitive and affective learning strategies" in asked
+    assert "Tools available in CounselorBot:" not in asked
+
+
 def test_prompt_audit_intro_step_keeps_the_whole_guided_path():
     _ensure_guided_steps("QSA")
     session_id = "prompt-audit-guided-path-intro"
