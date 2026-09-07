@@ -619,6 +619,14 @@ _THINK_OPEN_RE = re.compile(
     r"<\s*(?:think|thinking|sto_pensando)\s*>(.*)$",
     re.IGNORECASE | re.DOTALL,
 )
+# Una chiusura senza apertura. I blocchi accoppiati sono gia' stati tolti quando
+# questa entra in gioco, e lo stream splitter non e' mai entrato in modalita'
+# reasoning perche' nessun tag l'ha aperta: un `</think>` ancora presente qui e'
+# orfano per costruzione, e cio' che lo precede era il ragionamento del modello.
+_THINK_CLOSE_ORPHAN_RE = re.compile(
+    r"\A(.*?)</\s*(?:think|thinking|sto_pensando)\s*>",
+    re.IGNORECASE | re.DOTALL,
+)
 
 # Some models repeat their reasoning in Markdown after the native thinking
 # channel. Require a leading reasoning heading AND a separate answer heading:
@@ -661,6 +669,10 @@ def split_thinking(text: str) -> tuple[Optional[str], str]:
     if open_match:
         reasoning_parts.append((open_match.group(1) or "").strip())
         visible = visible[: open_match.start()]
+    orphan = _THINK_CLOSE_ORPHAN_RE.match(visible)
+    if orphan:
+        reasoning_parts.append((orphan.group(1) or "").strip())
+        visible = visible[orphan.end():]
     visible = re.sub(r"\n{3,}", "\n\n", visible).strip()
     markdown_reasoning, visible = _split_markdown_thinking(visible)
     if markdown_reasoning:
@@ -1464,12 +1476,29 @@ def _apply_certified_advice_directive(system_prompt: str, questionnaire_type: st
     )
 
 
+def _strip_orphan_reasoning(text: str) -> str:
+    """Toglie il ragionamento che un modello ha chiuso senza mai averlo aperto.
+
+    `ornith:9b` e `nemotron-cascade-2` hanno emesso solo il `</think>`: lo stream
+    splitter non ha mai visto un'apertura, quindi il ragionamento e' arrivato allo
+    studente come risposta (log 11668 e 12465). Il testo visibile viene ricalcolato
+    da zero sull'intero accumulato a ogni chunk, e l'evento SSE porta sempre
+    `display` intero, che il client sostituisce: applicarlo qui accorcia la
+    risposta nell'istante in cui il tag arriva, senza trattenere nulla prima.
+    """
+    if not text:
+        return text
+    orphan = _THINK_CLOSE_ORPHAN_RE.match(text)
+    return text[orphan.end():].lstrip() if orphan else text
+
+
 def _student_visible_response(
     text: str,
     questionnaire_type: str,
     language: Optional[str],
     sanitize_ztpi: bool,
 ) -> str:
+    text = _strip_orphan_reasoning(text)
     text = _strip_generic_acknowledgement(text)
     if sanitize_ztpi:
         return _sanitize_ztpi_user_text(text, language)
