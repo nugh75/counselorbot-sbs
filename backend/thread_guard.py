@@ -355,8 +355,8 @@ def _ledger(db, *, session_id: str, username: str, step_id: str | None) -> str:
     lines = []
     for answer in ledger.get("answers") or []:
         lines.append(f'student said: "{_safe(answer.get("text", ""))}"')
-    if ledger.get("open_question"):
-        lines.append(f'question left open by the counselor: "{_safe(ledger["open_question"])}"')
+    for item in (ledger.get("questions") or {}).get("open") or []:
+        lines.append(f'question left open by the counselor: "{_safe(item.get("text", ""))}"')
     for name in ledger.get("pending_actions") or []:
         lines.append(f"action chosen and not yet verified: {_safe(name)}")
     for name in ledger.get("refused_actions") or []:

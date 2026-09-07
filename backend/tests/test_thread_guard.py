@@ -229,7 +229,8 @@ def test_the_mandate_names_the_step_without_quoting_its_script(db):
 def test_the_guard_never_reads_its_own_earlier_notes(db, monkeypatch):
     from backend import session_ledger
     monkeypatch.setattr(session_ledger, "build", lambda *a, **k: {
-        "answers": [{"step": "cognitive", "text": "mi distraggo"}], "open_question": "",
+        "answers": [{"step": "cognitive", "text": "mi distraggo"}],
+        "questions": {"open": [], "answered_in_talk": [], "left_behind": []},
         "pending_actions": [], "proposed_action": "", "refused_actions": [],
         "verification_asked": False, "replayed_step": False,
         "guard_notes": ["The reply left the subject the student had raised."],
@@ -470,8 +471,18 @@ def test_a_free_turn_is_not_told_to_re_ask_its_own_question(db):
 
 
 def test_at_step_entry_the_ledger_says_it_once(db):
+    # La domanda aperta vive nel registro, non nel testo dell'ultima risposta:
+    # quello che si verifica qui e' che l'envelope la nomini una volta sola.
+    from backend import recommendation_service
+
     _turn(db, student="dimmi di più",
           counselor="Riconosci questo schema: perdi il filo dopo dieci minuti?")
+    recommendation_service.record(
+        db, session_id=SESSION, username=STUDENT, recommendation_type="advice",
+        payloads=[{"slug": "q-open", "name": "Riconosci questo schema: perdi il filo dopo dieci minuti?",
+                   "kind": "question", "step_id": "cognitive", "step_order": 1}],
+        turn_index=1,
+    )
     prepared = _prepared(db)
     assert prepared.system_prompt_final.count("perdi il filo dopo dieci minuti") == 1
 
