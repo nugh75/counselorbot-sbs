@@ -344,6 +344,17 @@ def question_rows(db, *, session_id: str, username: str) -> list:
     return [row for row in rows if (row.payload or {}).get("kind") == "question"]
 
 
+def _from_another_step(payload: dict, step_id: str | None) -> bool:
+    """La domanda e' nata in uno step diverso da quello corrente.
+
+    Una sola regola, chiamata sia da chi ritira (`_decayed`) sia da chi legge
+    (`questions`): se si affinasse solo in un punto, l'altro leggerebbe uno
+    stato che il ritiro non riconoscerebbe piu' come superato.
+    """
+    asked_in = (payload.get("step_id") or "").strip()
+    return bool(step_id and asked_in and asked_in != step_id)
+
+
 def _decayed(payload: dict, turn_index: int | None, *, step_id: str | None, current_turn: int) -> bool:
     """Superata dalla conversazione: la fase e' cambiata, o e' passato troppo.
 
@@ -352,8 +363,7 @@ def _decayed(payload: dict, turn_index: int | None, *, step_id: str | None, curr
     """
     if payload.get("revived"):
         return False
-    asked_in = (payload.get("step_id") or "").strip()
-    if step_id and asked_in and asked_in != step_id:
+    if _from_another_step(payload, step_id):
         return True
     return current_turn - (turn_index or 0) > QUESTION_MAX_AGE
 
@@ -385,8 +395,10 @@ def retire_stale_questions(db, *, session_id: str, username: str,
 def questions(db, *, session_id: str, username: str, step_id: str | None) -> dict[str, list[dict]]:
     """Le domande della sessione divise per destino, lette dallo stato registrato.
 
-    Nessun giudizio qui dentro: chi decide ha gia' scritto (`retire_stale_questions`
-    per la decadenza, `thread_guard` per la risposta nel discorso).
+    Non giudica la decadenza per eta': quella la scrive `retire_stale_questions`.
+    Ma tratta come rimasta indietro anche una domanda di un altro step il cui
+    ritiro non e' ancora passato di qui — `thread_guard` costruisce il ledger
+    senza chiamarlo prima, e la sidebar non deve intanto mostrarla come aperta.
     """
     buckets: dict[str, list[dict]] = {"open": [], "answered_in_talk": [], "left_behind": []}
     if not session_id or not username:
@@ -398,12 +410,11 @@ def questions(db, *, session_id: str, username: str, step_id: str | None) -> dic
         if not item["text"]:
             continue
         status = payload.get("status")
-        asked_in = (payload.get("step_id") or "").strip()
         if status == "closed":
             if payload.get("closed_by") == "conversation":
                 buckets["answered_in_talk"].append(item)
             continue
-        if status == "stale" or (step_id and asked_in and asked_in != step_id):
+        if status == "stale" or _from_another_step(payload, step_id):
             buckets["left_behind"].append(item)
         elif status == "proposed":
             buckets["open"].append(item)
