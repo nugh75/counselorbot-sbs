@@ -31,8 +31,11 @@ logger = logging.getLogger(__name__)
 
 RECOMMENDATION_TYPES = ("reading", "strategy", "advice")
 # `proposed` = mostrata dal counselor; le altre le sceglie lo studente.
-RECOMMENDATION_STATUSES = ("proposed", "selected", "tried", "dismissed", "closed")
+RECOMMENDATION_STATUSES = ("proposed", "selected", "tried", "dismissed", "closed", "stale")
 DEFAULT_STATUS = "proposed"
+# Una domanda ha una vita sua: aperta, chiusa (da qualcuno) o decaduta.
+QUESTION_STATUSES = ("proposed", "closed", "stale")
+CLOSED_BY = ("student", "conversation")
 
 # Distingue "campo assente" da "campo messo a null": azzerare un giudizio e'
 # un'azione, non un aggiornamento mancato.
@@ -139,6 +142,8 @@ def set_state(
     slug: str,
     status: str | None = None,
     helpful=UNSET,
+    closed_by=UNSET,
+    revived=UNSET,
 ) -> models.RecommendationHistory | None:
     """Aggiorna lo stato di una voce; `None` se non esiste per questo utente.
 
@@ -162,12 +167,22 @@ def set_state(
     if row is None:
         return None
     payload = dict(row.payload or {})
-    if payload.get("kind") == "question" and status not in (None, "proposed", "closed"):
-        raise ValueError("Question status must be proposed or closed")
-    if status == "closed" and payload.get("kind") != "question":
-        raise ValueError("Only a question can be closed")
+    is_question = payload.get("kind") == "question"
+    if is_question and status is not None and status not in QUESTION_STATUSES:
+        raise ValueError("Question status must be proposed, closed or stale")
+    if status in ("closed", "stale") and not is_question:
+        raise ValueError("Only a question can be closed or retired")
+    if closed_by is not UNSET:
+        if closed_by is not None and closed_by not in CLOSED_BY:
+            raise ValueError(f"Chi ha chiuso non e' valido: {closed_by}")
+        payload["closed_by"] = closed_by
+    if revived is not UNSET:
+        payload["revived"] = bool(revived)
     if status is not None:
         payload["status"] = status
+        # Una domanda che torna aperta non ha piu' nessuno che l'ha chiusa.
+        if status != "closed":
+            payload["closed_by"] = None
     if helpful is not UNSET:
         payload["helpful"] = helpful if isinstance(helpful, bool) else None
     payload.update(_state_fields(payload))
@@ -264,9 +279,14 @@ def _state_fields(source: dict | None) -> dict:
     source = source or {}
     status = source.get("status")
     helpful = source.get("helpful")
+    closed_by = source.get("closed_by")
     return {
         "status": status if status in RECOMMENDATION_STATUSES else DEFAULT_STATUS,
         "helpful": helpful if isinstance(helpful, bool) else None,
+        # Chi ha chiuso la domanda, e se lo studente l'ha rimessa in vita: senza,
+        # `_carry_over` li perderebbe alla prima ridichiarazione dello stesso slug.
+        "closed_by": closed_by if closed_by in CLOSED_BY else None,
+        "revived": bool(source.get("revived")),
     }
 
 
