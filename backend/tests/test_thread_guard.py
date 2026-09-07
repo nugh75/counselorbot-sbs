@@ -305,3 +305,69 @@ def test_a_failing_judge_leaves_no_trace(db, failure):
     _config(db, thread_guard.PRESET_KEY, str(_preset(db).id))
     assert _evaluate(db, failure) == []
     assert db.query(models.Log).filter(models.Log.action == thread_guard.ACTION).count() == 0
+
+
+# --- injection ---
+def _prepared(db, **overrides):
+    from backend.ai_service import AIService
+    from backend.api_models import ChatRequest
+    from backend.chat_preparation import prepare_chat_turn
+    from backend.prompt_config import ALL_CONFIG_TEXT_DEFINITIONS
+
+    for definition in ALL_CONFIG_TEXT_DEFINITIONS:
+        if not db.query(models.Config).filter_by(key=definition["key"]).first():
+            db.add(models.Config(key=definition["key"], value=definition["default"]))
+    if not db.query(models.GuidedStep).filter_by(id="cognitive").first():
+        db.add(models.GuidedStep(
+            id="cognitive", sort_order=1, label="1. Fattori Cognitivi", questionnaire_type="QSA",
+            prompt="Analyse the cognitive factors.", system_prompt_mode="factor", color_theme="blue",
+        ))
+    db.flush()
+    ai = AIService(db)
+    ai.config.update(active_provider="ollama", model_name="test-local")
+    request = ChatRequest(**{
+        "message": "", "mode": "factor", "phase": "cognitive", "questionnaire_type": "QSA",
+        "use_phase_prompt": True, "language": "it", **overrides,
+    })
+    return prepare_chat_turn(db, ai, request, SESSION, {"username": STUDENT},
+                             include_retrieval=False, create_anonymous_code=False)
+
+
+NOTE = "The question belonged to another step."
+
+
+def _verdict_on_the_last_turn(db):
+    turn = _turn(db, student="a casa mi distraggo", counselor="Capito.")
+    thread_guard.store(db, session_id=SESSION, username=STUDENT, turn=turn,
+                       verdict=thread_guard.parse(_raw(question_fit=False, question_note=NOTE)))
+
+
+def test_a_free_turn_carries_the_thread_block(db):
+    _verdict_on_the_last_turn(db)
+    prepared = _prepared(db, use_phase_prompt=False, message="e quindi?")
+    assert "[THREAD]" in prepared.system_prompt_final
+    assert NOTE in prepared.system_prompt_final
+    assert prepared.components["thread_guard"]
+
+
+def test_at_step_entry_the_notes_travel_inside_the_ledger(db):
+    _verdict_on_the_last_turn(db)
+    prepared = _prepared(db)
+    assert "[SESSION LEDGER]" in prepared.system_prompt_final
+    assert NOTE in prepared.components["session_ledger"]
+    assert "[THREAD]" not in prepared.system_prompt_final  # said once, not twice
+
+
+def test_notes_reach_the_ledger_even_when_it_would_be_empty(db):
+    turn = _turn(db, student="", counselor="Ecco i fattori.")
+    thread_guard.store(db, session_id=SESSION, username=STUDENT, turn=turn,
+                       verdict=thread_guard.parse(_raw(question_fit=False, question_note=NOTE)))
+    prepared = _prepared(db)
+    assert NOTE in prepared.system_prompt_final
+
+
+def test_with_no_verdict_nothing_is_added(db):
+    _turn(db, student="a casa mi distraggo", counselor="Capito.")
+    prepared = _prepared(db, use_phase_prompt=False, message="e quindi?")
+    assert "[THREAD]" not in prepared.system_prompt_final
+    assert not prepared.components.get("thread_guard")
