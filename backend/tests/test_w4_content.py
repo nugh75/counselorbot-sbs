@@ -7,6 +7,41 @@ from backend.prompt_config import DEFAULT_QAP_GUIDED_STEPS, DEFAULT_QPCC_GUIDED_
 from backend.guided_step_questions_seed import seed_guided_step_questions, seed_response_openings
 
 
+def test_student_facing_italian_uses_accents_not_apostrophes():
+    # "4. Volonta' e Perseveranza" e "Qual e' il mio punto di forza" erano testo
+    # che lo studente legge. Nei commenti l'ASCII resta la convenzione del
+    # codice; qui no.
+    import re
+
+    from backend.guided_step_questions_seed import DEFAULT_GUIDED_STEP_QUESTIONS
+    from backend.prompt_config import (
+        DEFAULT_GUIDED_STEPS,
+        DEFAULT_IDEA_GUIDED_STEPS,
+        DEFAULT_QAP_GUIDED_STEPS,
+        DEFAULT_QPCC_GUIDED_STEPS,
+        DEFAULT_QPCS_GUIDED_STEPS,
+        DEFAULT_QSAR_GUIDED_STEPS,
+        DEFAULT_SAVICKAS_GUIDED_STEPS,
+        DEFAULT_ZTPI_GUIDED_STEPS,
+    )
+
+    # Troncamenti corretti (po', da', fa') ed elisioni (un'idea) restano fuori:
+    # il difetto e' l'accento scritto con l'apostrofo.
+    wrong = re.compile(
+        r"\b(?:e|piu|puo|gia|cio|perche|poiche|cosi|se|sara|verra|meta|citta|"
+        r"[a-z]+ita|[a-z]+eta)'(?!\w)", re.IGNORECASE
+    )
+    for steps in (DEFAULT_GUIDED_STEPS, DEFAULT_QSAR_GUIDED_STEPS, DEFAULT_ZTPI_GUIDED_STEPS,
+                  DEFAULT_SAVICKAS_GUIDED_STEPS, DEFAULT_QPCS_GUIDED_STEPS,
+                  DEFAULT_QPCC_GUIDED_STEPS, DEFAULT_QAP_GUIDED_STEPS, DEFAULT_IDEA_GUIDED_STEPS):
+        for step in steps:
+            assert not wrong.search(step["label"]), (step["id"], step["label"])
+    for questionnaire_type, per_step in DEFAULT_GUIDED_STEP_QUESTIONS.items():
+        for step_id, questions in per_step.items():
+            for question in questions:
+                assert not wrong.search(question), (questionnaire_type, step_id, question)
+
+
 def test_step_labels_are_numbered_by_their_position():
     # La numerazione nelle label e' scritta a mano: quando un passo si inserisce
     # in mezzo (la lettura del profilo) tutte quelle che seguono vanno rifatte,
