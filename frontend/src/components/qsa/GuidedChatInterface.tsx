@@ -830,6 +830,14 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         return phaseId !== FIXED_QUESTIONS_ID && phaseId !== FIXED_CONCLUSION_ID;
     };
 
+    // Somministrazione degli item e congedo: si recita un testo, non si
+    // analizza. Sono le due fasi senza riga in `guided_steps`, quindi il server
+    // non le riconosce come fa con presentazione e patto: la scelta la annulla
+    // qui il client.
+    const effortForPhase = (phaseId: string): ReasoningEffort => (
+        isAnalysisStep(phaseId) ? reasoningEffort : 'off'
+    );
+
     const extractAdvanceSignal = (rawText: string): { cleanText: string; shouldAdvance: boolean } => {
         const shouldAdvance = rawText.includes(STEP_ADVANCE_MARKER);
         const cleanText = rawText.replace(/\[\[AVANZA_STEP\]\]/g, '').trim();
@@ -928,7 +936,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 language: activeLocale,
                 max_tokens: 500,
                 response_length: responseLength,
-                reasoning_effort: reasoningEffort,
+                reasoning_effort: effortForPhase(FIXED_QUESTIONS_ID),
                 counselor_id: getSelectedCounselorId(),
                 idea_variant: isIdea ? ideaVariant : undefined,
                 idea_budget: isIdea ? ideaBudget : undefined,
@@ -1178,7 +1186,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 language: activeLocale,
                 max_tokens: 900,
                 response_length: responseLength,
-                reasoning_effort: reasoningEffort,
+                reasoning_effort: effortForPhase(currentPhase),
                 counselor_id: getSelectedCounselorId(),
                 idea_variant: isIdea ? ideaVariant : undefined,
                 idea_budget: isIdea ? ideaBudget : undefined,
