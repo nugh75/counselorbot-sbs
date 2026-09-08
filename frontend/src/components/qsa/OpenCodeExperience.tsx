@@ -27,7 +27,7 @@ import { QuestionnaireConfig } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { isNearBottom } from '@/lib/chat-scroll';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
-import { NotebookBookletPanel, NotebookBookletTriggers, asBookletType, type DeskTab } from '@/components/profile/NotebookBookletPanel';
+import { NotebookBookletPanel, asBookletType, type DeskTab } from '@/components/profile/NotebookBookletPanel';
 import { VisualTools } from '@/components/visual/VisualTools';
 import '@xterm/xterm/css/xterm.css';
 
@@ -568,17 +568,13 @@ export function OpenCodeExperience({
                             )}
                     </div>
                     <div className="flex flex-wrap items-center gap-1">
-                        {viewMode === 'chat' && <VisualTools compact sessionId={sessionId} locale={locale} onDiscuss={text => {
+                        {viewMode === 'chat' && <VisualTools compact sessionId={sessionId} locale={locale}
+                            onOpenNotebook={() => setDeskTab('notebook')}
+                            onOpenBooklet={() => setDeskTab('booklet')}
+                            onDiscuss={text => {
                                 setInput(previous => previous.trim() ? `${previous}\n\n${text}` : text);
                                 window.requestAnimationFrame(() => document.getElementById('opencode-composer')?.focus());
                             }} />}
-
-                        {viewMode === 'chat' && (
-                            <NotebookBookletTriggers
-                                buttonClassName="flex items-center gap-1.5 rounded-lg p-1.5 text-xs text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
-                                onOpen={setDeskTab}
-                            />
-                        )}
 
                         <button
                             type="button"

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowRight, BookOpen, Columns3, Download, LayoutList, Layers, MessageSquare, Plus, RotateCcw, Save, Trash2, Undo2, X } from 'lucide-react';
+import { ArrowRight, BookMarked, BookOpen, Columns3, Download, LayoutList, Layers, MessageSquare, NotebookPen, Plus, RotateCcw, Save, Trash2, Undo2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { apiFetch } from '@/lib/auth';
@@ -20,6 +20,8 @@ type Props = {
     hideTrigger?: boolean;
     catalog?: RecommendationCatalog;
     onDiscuss?: (text: string) => void;
+    onOpenNotebook?: () => void;
+    onOpenBooklet?: () => void;
     request?: VisualToolsRequest | null;
 };
 const inputClass = 'w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] text-slate-800';
@@ -32,7 +34,7 @@ export function VisualTools(props: Props) {
     return <WorkspaceView key={props.sessionId} {...props} />;
 }
 
-function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: providedCatalog, onDiscuss, request }: Props) {
+function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: providedCatalog, onDiscuss, onOpenNotebook, onOpenBooklet, request }: Props) {
     const l = (key: string) => visualLabel(locale, key);
     const endpoint = `/api/session/${encodeURIComponent(sessionId)}/visual-tools`;
     const [open, setOpen] = useState(false);
@@ -189,7 +191,11 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
                 <header className="shrink-0 border-b border-slate-200 p-3 sm:p-4">
                     <div className="flex items-start justify-between gap-2">
                         <div><h2 id={`${id}-title`} className="text-lg font-semibold text-slate-800">{l('title')}</h2></div>
-                        <Tooltip content={l('close')}><Button type="button" variant="ghost" className={buttonClass} autoFocus aria-label={l('close')} onClick={() => setOpen(false)}><X className="h-5 w-5" aria-hidden="true" /></Button></Tooltip>
+                        <div className="flex shrink-0 items-center gap-1">
+                            {onOpenNotebook && <Tooltip content={l('notebook')}><Button type="button" variant="ghost" className={buttonClass} aria-label={l('notebook')} onClick={() => { setOpen(false); onOpenNotebook(); }}><NotebookPen className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
+                            {onOpenBooklet && <Tooltip content={l('booklet')}><Button type="button" variant="ghost" className={buttonClass} aria-label={l('booklet')} onClick={() => { setOpen(false); onOpenBooklet(); }}><BookMarked className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
+                            <Tooltip content={l('close')}><Button type="button" variant="ghost" className={buttonClass} autoFocus aria-label={l('close')} onClick={() => setOpen(false)}><X className="h-5 w-5" aria-hidden="true" /></Button></Tooltip>
+                        </div>
                     </div>
                     <div role="tablist" aria-label={l('title')} className="mt-3 flex flex-wrap gap-1">
                         {tabs.map((key, index) => { const Icon = [LayoutList, Columns3, Layers][index]; return <Tooltip key={key} content={l(key)}><Button type="button" role="tab" aria-label={l(key)} id={`${id}-${key}`} aria-controls={`${id}-panel`} aria-selected={tab === key} tabIndex={tab === key ? 0 : -1}
