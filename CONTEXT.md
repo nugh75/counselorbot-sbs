@@ -613,3 +613,5 @@ Makefile                    Prompt testing shortcuts
 - **Reasoning profiles**: `backend/reasoning_profiles.py` maps model families (qwen3, deepseek, gemini thinking, claude thinking, o-series) to reasoning budgets and `disable_thinking` behavior — a cross-provider reasoning architecture.
 - **PII redaction**: `log_pii_redact` config key (default: true) — emails, phones, fiscal codes redacted from conversation logs before storage via `backend/pii.py`.
 - **Counselor auto-translation**: `POST /api/admin/counselors/{id}/translate` triggers Ollama-based i18n for counselor descriptions (stored in `description_i18n` JSON field).
+
+- **Personal timeline entry**: `/profilo` includes a standalone Linea del tempo card. `/profilo/timeline` lists the student's saved sessions from `/api/user/questionnaire-results`; choosing one opens its timeline editor. Existing session/event deep links remain supported. Empty and failed lists have explicit states.
