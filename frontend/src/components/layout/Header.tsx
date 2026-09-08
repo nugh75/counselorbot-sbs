@@ -63,7 +63,7 @@ export function Header() {
     // Guida all'interfaccia: disponibile per tutti, anche senza login.
     secondaryItems.push({ key: 'guide', href: '/guide', icon: BookOpen, label: t('nav.guide') });
     if (isAuthenticated) {
-        secondaryItems.push({ key: 'orientation', href: '/bussola', icon: Compass, label: t('orientation.landing.open'), menuOnly: true });
+        secondaryItems.push({ key: 'orientation', href: '/bussola', icon: Compass, label: t('orientation.landing.open') });
     }
     if (canOpenAssistant) {
         secondaryItems.push({ key: 'assistant', href: '/assistente', icon: Bot, label: t('assistant.title') });
