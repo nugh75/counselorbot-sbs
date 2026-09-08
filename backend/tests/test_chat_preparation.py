@@ -34,7 +34,9 @@ def test_all_steps_and_languages_use_identical_runtime_and_audit_preparation():
                 return ai
         steps = db.query(models.GuidedStep).all()
         # Existing installations may have additional admin-defined interview steps.
-        assert len(steps) == 62
+        # 65 = i percorsi di fabbrica, con la lettura del profilo aggiunta a
+        # QPCS, QPCC e QAP.
+        assert len(steps) == 65
         for step in steps:
             for lang in ("it", "en", "es", "fr", "de", "sv"):
                 for length in ("short", "medium", "long"):

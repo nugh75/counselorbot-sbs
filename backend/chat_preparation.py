@@ -28,6 +28,7 @@ from .chat_logic import (
     _apply_current_step_factor_scope_directive,
     _apply_current_step_score_profile_directive,
     _apply_qsa_factor_directive,
+    competence_factor_names,
     _conversational_retrieval_tail,
     _is_conversational_mode,
     _is_intro_step_mode,
@@ -238,7 +239,8 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
             )
         )
         system_prompt = _apply_current_step_score_profile_directive(
-            system_prompt, questionnaire_type, request.language, component_scores_context, phase_codes, include_advice
+            system_prompt, questionnaire_type, request.language, component_scores_context, phase_codes, include_advice,
+            factor_names=competence_factor_names(db, questionnaire_type, request.language),
         )
         if include_advice:
             system_prompt = _apply_advice_distribution_directive(system_prompt)
