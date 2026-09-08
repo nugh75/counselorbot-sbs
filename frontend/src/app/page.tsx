@@ -73,8 +73,8 @@ function generateUUID() {
 }
 
 // Intro: orienta e fa partire, poi spiega. Hero centrato (unico segno: la bussola,
-// animata) → "che cos'è" → "come funziona" a 4 passi numerati (mono ocra, registro
-// strumento) → "cosa trovi" a 3 voci con micro-marcatore petrol → "cosa aspettarti"
+// animata) → "che cos'è" → "come funziona" per attività → "cosa trovi"
+// a 3 voci con micro-marcatore petrol → "cosa aspettarti"
 // (onestà su natura AI e limiti). Senza icone né card pesanti.
 function IntroScreen({ onStart }: { onStart: () => void }) {
     const { t } = useI18n();
@@ -83,7 +83,7 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
         { title: t('app.overview.savickas.title'), body: t('app.overview.savickas.body') },
         { title: t('app.overview.pqbl.title'), body: t('app.overview.pqbl.body') },
     ];
-    const howSteps = [
+    const activities = [
         { title: t('app.intro.how.s1.title'), body: t('app.intro.how.s1.body') },
         { title: t('app.intro.how.s2.title'), body: t('app.intro.how.s2.body') },
         { title: t('app.intro.how.s3.title'), body: t('app.intro.how.s3.body') },
@@ -144,9 +144,9 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
                     {t('app.intro.how.title')}
                 </h2>
                 <div className="mt-6 grid gap-8 sm:grid-cols-4">
-                    {howSteps.map((s, i) => (
+                    {activities.map((s) => (
                         <div key={s.title}>
-                            <span className="font-mono text-sm font-semibold text-ochre-500">0{i + 1}</span>
+                            <span className="block h-0.5 w-10 rounded-full bg-indigo-500" />
                             <h3 className="mt-2 text-base font-bold text-slate-900">{s.title}</h3>
                             <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{s.body}</p>
                         </div>
