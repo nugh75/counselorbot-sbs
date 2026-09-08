@@ -761,7 +761,8 @@ test('capture current guide screenshots', { skip: process.env.UPDATE_GUIDE_SCREE
         await dialog.getByRole('button', { name: visualLabel('it', 'personalLinks'), exact: true }).click();
         await dialog.getByLabel(visualLabel('it', 'transferDirection'), { exact: true }).selectOption('in');
         await dialog.getByLabel(visualLabel('it', 'chooseContent'), { exact: true }).selectOption('notebook_goal');
-        await page.mouse.move(1400, 20);
+        // Angolo libero: sopra la X il puntatore lascerebbe il tooltip nello scatto.
+        await page.mouse.move(720, 60);
         await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
         await page.screenshot({ path: 'public/guide/strumenti-annotazioni.png' });
     } finally { await context.close(); }
