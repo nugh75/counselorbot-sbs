@@ -1139,7 +1139,7 @@ const it: Dict = {
     'guide.section9.title': 'Scheda strumento',
     'guide.section9.body': 'Ogni strumento ha una pagina di dettaglio con cosa esplora, come si svolge, i dati necessari e, quando disponibile, un link diretto per compilare il questionario online.',
     'guide.chat.tools.title': "Tools, Taccuino e Libretto",
-    'guide.chat.tools.body': "Dal menu scegli “Tools” per aprire azioni, confronto e carte. L’icona del libro apre “Taccuino e Libretto”: scegli la direzione, il contenuto e la destinazione, poi rivedi il testo e conferma. Puoi aggiungere alle annotazioni esistenti o creare una carta, un’azione o un’alternativa a partire da una nota. Il Libretto propone le schede dello strumento della sessione. Nulla viene trasferito automaticamente.",
+    'guide.chat.tools.body': "Dal menu scegli “Tools” per aprire la finestra degli strumenti: cinque schede in fila — azioni, confronto, carte, Taccuino e Libretto — e si passa dall’una all’altra senza uscire dalla conversazione. In basso l’icona del libro apre il trasferimento fra Taccuino/Libretto e Tools: scegli la direzione, il contenuto e la destinazione, poi rivedi il testo e conferma. Puoi aggiungere alle annotazioni esistenti o creare una carta, un’azione o un’alternativa a partire da una nota. Il Libretto propone le schede dello strumento della sessione. Nulla viene trasferito automaticamente.",
     'guide.chat.toolsAlt': "Trasferimento selettivo dal Taccuino ai Tools, con direzione, contenuto, destinazione e testo modificabile.",
     'guide.chat.toolsCaption': "Esempio con dati dimostrativi: un obiettivo del Taccuino può diventare una carta. Il trasferimento avviene solo dopo la conferma.",
 };
@@ -2242,7 +2242,7 @@ const en: Dict = {
     'guide.section9.title': 'Tool overview',
     'guide.section9.body': 'Every instrument has a detail page with what it explores, how it works, the required data and \u2014 when available \u2014 a direct link to complete the questionnaire online.',
     'guide.chat.tools.title': "Tools, Notebook and Booklet",
-    'guide.chat.tools.body': "Choose “Tools” in the menu to open actions, comparisons and cards. The book icon opens “Notebook and Booklet”: choose the direction, content and destination, then review the text and confirm. Add to existing annotations or turn a note into a card, action or alternative. The Booklet offers sheets for the session instrument. Nothing transfers automatically.",
+    'guide.chat.tools.body': "Choose “Tools” in the menu to open the tools window: five tabs in a row — actions, comparisons, cards, Notebook and Booklet — and you move between them without leaving the conversation. At the bottom the book icon opens the transfer between Notebook/Booklet and Tools: choose the direction, content and destination, then review the text and confirm. Add to existing annotations or turn a note into a card, action or alternative. The Booklet offers sheets for the session instrument. Nothing transfers automatically.",
     'guide.chat.toolsAlt': "Selective transfer from the Notebook to Tools, with direction, content, destination and editable text.",
     'guide.chat.toolsCaption': "Example with demonstration data: a Notebook goal can become a card. Transfer happens only after confirmation.",
 };
@@ -3344,7 +3344,7 @@ const es: Dict = {
     'guide.section9.title': 'Ficha del instrumento',
     'guide.section9.body': 'Cada instrumento tiene una p\u00e1gina de detalle con qu\u00e9 explora, c\u00f3mo se desarrolla, los datos necesarios y, cuando est\u00e1 disponible, un enlace directo para completar el cuestionario en l\u00ednea.',
     'guide.chat.tools.title': "Tools, Cuaderno y Cuadernillo",
-    'guide.chat.tools.body': "Elige “Tools” para abrir acciones, comparaciones y tarjetas. El icono del libro abre “Cuaderno y Cuadernillo”: elige dirección, contenido y destino, revisa el texto y confirma. Puedes añadir a las anotaciones existentes o convertir una nota en tarjeta, acción o alternativa. El Cuadernillo ofrece fichas del instrumento de la sesión. No hay transferencias automáticas.",
+    'guide.chat.tools.body': "Elige “Tools” para abrir la ventana de herramientas: cinco pestañas en fila — acciones, comparaciones, tarjetas, Cuaderno y Cuadernillo — y pasas de una a otra sin salir de la conversación. Abajo, el icono del libro abre la transferencia entre Cuaderno/Cuadernillo y Tools: elige dirección, contenido y destino, revisa el texto y confirma. Puedes añadir a las anotaciones existentes o convertir una nota en tarjeta, acción o alternativa. El Cuadernillo ofrece fichas del instrumento de la sesión. No hay transferencias automáticas.",
     'guide.chat.toolsAlt': "Transferencia selectiva del Cuaderno a Tools, con dirección, contenido, destino y texto editable.",
     'guide.chat.toolsCaption': "Ejemplo con datos demostrativos: un objetivo del Cuaderno puede convertirse en tarjeta. Solo se transfiere tras confirmar.",
 };
@@ -4446,7 +4446,7 @@ const fr: Dict = {
     'guide.section9.title': 'Fiche outil',
     'guide.section9.body': 'Chaque instrument poss\u00e8de une page de d\u00e9tail avec ce qu\u2019il explore, son d\u00e9roulement, les donn\u00e9es requises et, quand elle est disponible, un lien direct pour remplir le questionnaire en ligne.',
     'guide.chat.tools.title': "Tools, Carnet et Livret",
-    'guide.chat.tools.body': "Choisissez « Tools » pour ouvrir actions, comparaisons et cartes. L’icône du livre ouvre « Carnet et Livret » : choisissez le sens, le contenu et la destination, puis relisez le texte et confirmez. Ajoutez aux annotations existantes ou transformez une note en carte, action ou alternative. Le Livret propose les fiches de l’instrument de la session. Aucun transfert n’est automatique.",
+    'guide.chat.tools.body': "Choisissez « Tools » pour ouvrir la fenêtre des outils : cinq onglets en ligne — actions, comparaisons, cartes, Carnet et Livret — et vous passez de l’un à l’autre sans quitter la conversation. En bas, l’icône du livre ouvre le transfert entre Carnet/Livret et Tools : choisissez le sens, le contenu et la destination, puis relisez le texte et confirmez. Ajoutez aux annotations existantes ou transformez une note en carte, action ou alternative. Le Livret propose les fiches de l’instrument de la session. Aucun transfert n’est automatique.",
     'guide.chat.toolsAlt': "Transfert sélectif du Carnet vers Tools, avec sens, contenu, destination et texte modifiable.",
     'guide.chat.toolsCaption': "Exemple avec des données de démonstration : un objectif du Carnet peut devenir une carte. Le transfert exige une confirmation.",
 };
@@ -5548,7 +5548,7 @@ const de: Dict = {
     'guide.section9.title': 'Werkzeug\u00fcbersicht',
     'guide.section9.body': 'Jedes Instrument hat eine Detailseite mit dem, was es untersucht, dem Ablauf, den ben\u00f6tigten Daten und \u2013 wenn verf\u00fcgbar \u2013 einem direkten Link zum Online-Fragebogen.',
     'guide.chat.tools.title': "Tools, Notizbuch und Arbeitsheft",
-    'guide.chat.tools.body': "Wähle „Tools“, um Aktionen, Vergleiche und Karten zu öffnen. Das Buchsymbol öffnet „Notizbuch und Arbeitsheft“: Wähle Richtung, Inhalt und Ziel, prüfe den Text und bestätige. Ergänze vorhandene Notizen oder mache aus einer Notiz eine Karte, Aktion oder Alternative. Das Arbeitsheft bietet Einträge zum Instrument der Sitzung an. Nichts wird automatisch übertragen.",
+    'guide.chat.tools.body': "Wähle „Tools“, um das Werkzeugfenster zu öffnen: fünf Reiter nebeneinander — Aktionen, Vergleiche, Karten, Notizbuch und Arbeitsheft — und du wechselst zwischen ihnen, ohne das Gespräch zu verlassen. Unten öffnet das Buchsymbol die Übertragung zwischen Notizbuch/Arbeitsheft und Tools: Wähle Richtung, Inhalt und Ziel, prüfe den Text und bestätige. Ergänze vorhandene Notizen oder mache aus einer Notiz eine Karte, Aktion oder Alternative. Das Arbeitsheft bietet Einträge zum Instrument der Sitzung an. Nichts wird automatisch übertragen.",
     'guide.chat.toolsAlt': "Gezielte Übertragung aus dem Notizbuch in Tools mit Richtung, Inhalt, Ziel und bearbeitbarem Text.",
     'guide.chat.toolsCaption': "Beispiel mit Demonstrationsdaten: Ein Ziel aus dem Notizbuch kann eine Karte werden. Die Übertragung erfolgt erst nach Bestätigung.",
 };
@@ -6650,7 +6650,7 @@ const sv: Dict = {
     'guide.section9.title': 'Verktygs\u00f6versikt',
     'guide.section9.body': 'Varje instrument har en detaljsida med vad det utforskar, hur det g\u00e5r till, vilka data som kr\u00e4vs och \u2013 n\u00e4r det finns \u2013 en direktl\u00e4nk till att fylla i fr\u00e5geformul\u00e4ret online.',
     'guide.chat.tools.title': "Tools, Anteckningsbok och Arbetshäfte",
-    'guide.chat.tools.body': "Välj ”Tools” för att öppna aktiviteter, jämförelser och kort. Bokikonen öppnar ”Anteckningsbok och Arbetshäfte”: välj riktning, innehåll och mål, granska texten och bekräfta. Lägg till i befintliga anteckningar eller gör en anteckning till ett kort, en aktivitet eller ett alternativ. Arbetshäftet visar poster för sessionens instrument. Ingenting överförs automatiskt.",
+    'guide.chat.tools.body': "Välj ”Tools” för att öppna verktygsfönstret: fem flikar i rad — aktiviteter, jämförelser, kort, Anteckningsbok och Arbetshäfte — och du växlar mellan dem utan att lämna samtalet. Längst ned öppnar bokikonen överföringen mellan Anteckningsbok/Arbetshäfte och Tools: välj riktning, innehåll och mål, granska texten och bekräfta. Lägg till i befintliga anteckningar eller gör en anteckning till ett kort, en aktivitet eller ett alternativ. Arbetshäftet visar poster för sessionens instrument. Ingenting överförs automatiskt.",
     'guide.chat.toolsAlt': "Vald överföring från Anteckningsboken till Tools med riktning, innehåll, mål och redigerbar text.",
     'guide.chat.toolsCaption': "Exempel med demonstrationsdata: ett mål i Anteckningsboken kan bli ett kort. Överföringen kräver bekräftelse.",
 };
