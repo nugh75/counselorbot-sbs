@@ -47,6 +47,9 @@ help: ## Mostra questo aiuto
 	@echo "  make prompt-test Q=QSAr STEP=qsar-cognitive STUDENT=barbaraambu"
 	@echo "  make prompt-dry  Q=ZTPI STEP=ztpi-t1 STUDENT=admin"
 	@echo "  make prompt-steps Q=QPCS"
+	@echo "  make prompt-test Q=QSA STEP=cognitive MSG=\"puoi approfondire C1?\"  (follow-up)"
+	@echo ""
+	@echo "Senza MSG si prova l'ingresso nello step; con MSG si prova un follow-up."
 
 prompt-test: ## Test live: chiama il LLM e salva il log (con envelope se logging attivo)
 	$(call RUN_PROMPT,live)
