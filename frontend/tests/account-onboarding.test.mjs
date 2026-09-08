@@ -209,3 +209,25 @@ test('counselor selection preserves manual score entry before a session exists',
         assert.equal(await score.inputValue(), '7');
     } finally { await context.close(); }
 });
+
+for (const width of [390, 1440]) {
+    test(`new user reads the introduction before the final Start button at ${width}px`, async () => {
+        const { page, context, errors } = await fixture({ width, noHistory: true, prefs: { counselor_id: null, counselor_ready: false, notebook_ready: false, setup_completed: false } });
+        try {
+            await page.goto(`${origin}/`);
+            const start = page.getByRole('button', { name: 'Inizia', exact: true });
+            await start.waitFor();
+            assert.equal(await start.count(), 1);
+            const pace = page.getByText(/^Procedi con uno strumento alla volta:/);
+            await pace.waitFor();
+            assert.ok(await start.evaluate(el => el.getBoundingClientRect().top >= innerHeight), 'Start is below the initial viewport');
+            assert.ok(await start.evaluate(el => Boolean(document.querySelector('main footer').compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)), 'Start follows every instruction and the contact footer');
+            assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+            await start.scrollIntoViewIfNeeded();
+            await page.screenshot({ path: `/tmp/intro-pace-${width}.png` });
+            await start.click();
+            await page.getByRole('heading', { name: 'Prepara il tuo spazio', exact: true }).waitFor();
+            assert.deepEqual(errors, []);
+        } finally { await context.close(); }
+    });
+}

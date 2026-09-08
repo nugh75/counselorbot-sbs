@@ -70,7 +70,7 @@ function generateUUID() {
     });
 }
 
-// Intro: orienta e fa partire, poi spiega. Hero centrato (unico segno: la bussola,
+// Intro: presenta le attività e le indicazioni, poi invita a iniziare. Hero centrato (bussola,
 // animata) → "che cos'è" → "come funziona" per attività → "cosa trovi"
 // a 3 voci con micro-marcatore petrol → "cosa aspettarti"
 // (onestà su natura AI e limiti). Senza icone né card pesanti.
@@ -96,9 +96,6 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
                 <p className="mt-4 max-w-xl text-lg leading-relaxed text-slate-600">
                     {t('app.intro.subtitle')}
                 </p>
-                <Button type="button" variant="accent" size="lg" onClick={onStart} className="mt-8">
-                    {t('app.home.cta')}
-                </Button>
             </div>
 
             <section className="mx-auto max-w-2xl text-center">
@@ -191,6 +188,7 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
                 <p className="mt-4 text-base leading-relaxed text-slate-600">
                     {t('app.intro.expect.body')}
                 </p>
+                <p className="mt-4 text-base leading-relaxed text-slate-600">{t('app.intro.pace.body')}</p>
             </section>
 
             <footer className="mx-auto max-w-xl border-t border-slate-100 pt-8 text-center">
@@ -203,6 +201,11 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
                     daniele.dragoni@uniroma3.it
                 </a>
             </footer>
+            <div className="text-center">
+                <Button type="button" variant="accent" size="lg" onClick={onStart}>
+                    {t('app.home.cta')}
+                </Button>
+            </div>
         </div>
     );
 }
