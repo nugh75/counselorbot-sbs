@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { MotionConfig } from 'framer-motion';
 import { Inter, Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
+import { CounselorNavigation } from '@/components/layout/CounselorNavigation';
 import { Header } from '@/components/layout/Header';
 import { RolePreviewBanner } from '@/components/layout/RolePreviewBanner';
 import { ViewAsFetchPatch } from '@/components/layout/ViewAsFetchPatch';
@@ -54,6 +55,7 @@ export default function RootLayout({
                         dell'albero, presente e futuro. */}
                     <MotionConfig reducedMotion="user">
                     <TooltipProvider delayDuration={300}>
+                        <CounselorNavigation>
                         <SkipLink />
                         <ViewAsFetchPatch />
                         <Header />
@@ -62,6 +64,7 @@ export default function RootLayout({
                         </main>
                         <RolePreviewBanner />
                         <Toaster />
+                        </CounselorNavigation>
                     </TooltipProvider>
                     </MotionConfig>
                 </I18nProvider>

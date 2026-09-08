@@ -9,7 +9,7 @@ import { fetchAccountPreferences, saveAccountPreferences, safeAccountNext, type 
 import { getSelectedCounselorId } from '@/lib/counselor';
 import { useI18n } from '@/lib/i18n-context';
 
-export function AccountSetup({ counselorOnly = false }: { counselorOnly?: boolean }) {
+export function AccountSetup({ counselorOnly = false, onReturn }: { counselorOnly?: boolean; onReturn?: () => void }) {
     const router = useRouter();
     const { t } = useI18n();
     const [prefs, setPrefs] = useState<AccountPreferences | null>(null);
@@ -20,7 +20,7 @@ export function AccountSetup({ counselorOnly = false }: { counselorOnly?: boolea
     useEffect(() => {
         let active = true;
         setError(false);
-        const params = new URLSearchParams(window.location.search);
+        const params = new URLSearchParams(onReturn ? '' : window.location.search);
         const destination = new URL(safeAccountNext(params.get('next')), window.location.origin);
         setInstrument(params.get('instrument') ?? destination.searchParams.get('start') ?? destination.searchParams.get('instrument') ?? undefined);
         void fetchAccountPreferences().then(async p => {
@@ -32,7 +32,11 @@ export function AccountSetup({ counselorOnly = false }: { counselorOnly?: boolea
             }
         }).catch(() => { if (active) setError(true); });
         return () => { active = false; };
-    }, [retry, counselorOnly, router]);
+    }, [retry, counselorOnly, router, onReturn]);
+    const returnToWork = () => {
+        if (onReturn) onReturn();
+        else router.replace(safeAccountNext(new URLSearchParams(window.location.search).get('next')));
+    };
     const finish = async (id: number | null, complete = false) => {
         if (busy) return;
         setBusy(true); setError(false);
@@ -40,7 +44,7 @@ export function AccountSetup({ counselorOnly = false }: { counselorOnly?: boolea
             const updated = await saveAccountPreferences(id, complete);
             setPrefs(updated);
             if (counselorOnly || updated.notebook_ready) {
-                router.replace(safeAccountNext(new URLSearchParams(window.location.search).get('next')));
+                returnToWork();
             }
         } catch { setError(true); }
         finally { setBusy(false); }
@@ -54,7 +58,7 @@ export function AccountSetup({ counselorOnly = false }: { counselorOnly?: boolea
         {error && <div role="alert"><p>{t('setup.error')}</p><Button onClick={() => setRetry(n => n + 1)}>{t('setup.retry')}</Button></div>}
         {prefs && (counselorOnly || !prefs.counselor_ready ?
             <CounselorSelector questionnaireType={instrument} questionnaireName={instrument} initialSelectedId={prefs.counselor_id ?? getSelectedCounselorId()} busy={busy}
-                onContinue={id => void finish(id)} onBack={() => router.push('/')} /> :
+                onContinue={id => void finish(id)} onBack={returnToWork} /> :
             !prefs.notebook_ready ? <LearnerProfileCard key={retry} variant="review" requireInitial onUnavailable={() => setError(true)} onDone={() => void finish(prefs.counselor_id, true)} /> :
             <Button disabled={busy} onClick={() => void finish(prefs.counselor_id, true)}>{t('counselor.continue')}</Button>)}
     </div>;

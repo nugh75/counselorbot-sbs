@@ -146,3 +146,66 @@ test('failed counselor save keeps the previous account preference and can be ret
         assert.equal(prefs.counselor_id, 2);
     } finally { await context.close(); }
 });
+
+for (const width of [390, 1440]) {
+    test(`navbar counselor returns to the same conversation and draft at ${width}px`, async () => {
+        const { page, context, prefs } = await fixture({ width });
+        try {
+            await page.goto(`${origin}/?frozen=account-fixture`);
+            const composer = page.locator('#guided-composer');
+            await composer.fill('Una domanda ancora da completare');
+            const openCounselor = async () => {
+                if (width < 1280) await page.locator('button[aria-controls="mobile-menu"]').click();
+                await page.getByRole('link', { name: 'Scegli il counselor', exact: true }).filter({ visible: true }).click();
+                await page.getByRole('heading', { name: 'Scegli il counselor', exact: true }).waitFor();
+            };
+            await openCounselor();
+            await page.getByRole('button', { name: /Counselor 2/ }).click();
+            await page.getByRole('button', { name: 'Continua', exact: true }).click();
+            await composer.waitFor();
+            assert.equal(await composer.inputValue(), 'Una domanda ancora da completare');
+            assert.equal(prefs.counselor_id, 2);
+            await openCounselor();
+            await page.getByRole('button', { name: /Counselor 1/ }).click();
+            await page.getByRole('dialog').getByRole('button', { name: 'Indietro', exact: true }).click();
+            await composer.waitFor();
+            assert.equal(await composer.inputValue(), 'Una domanda ancora da completare');
+            assert.equal(prefs.counselor_id, 2, 'cancelling does not save the draft selection');
+        } finally { await context.close(); }
+    });
+}
+
+test('counselor selection preserves the Compass draft and closes with Escape', async () => {
+    const { page, context } = await fixture();
+    try {
+        await page.goto(`${origin}/bussola`);
+        await page.getByRole('button', { name: 'Inizia un nuovo orientamento', exact: true }).click();
+        const composer = page.locator('#bussola-composer');
+        await composer.fill('Vorrei parlare delle mie scelte');
+        await page.getByRole('link', { name: 'Scegli il counselor', exact: true }).click();
+        await page.getByRole('dialog', { name: 'Scegli il counselor', exact: true }).waitFor();
+        await page.keyboard.press('Escape');
+        await composer.waitFor();
+        assert.equal(await composer.inputValue(), 'Vorrei parlare delle mie scelte');
+        assert.equal(new URL(page.url()).pathname, '/bussola');
+        await page.getByRole('link', { name: 'Scegli il counselor', exact: true }).click();
+        await page.getByRole('dialog').getByRole('button', { name: 'Continua', exact: true }).click();
+        await composer.waitFor();
+        assert.equal(await composer.inputValue(), 'Vorrei parlare delle mie scelte');
+    } finally { await context.close(); }
+});
+
+test('counselor selection preserves manual score entry before a session exists', async () => {
+    const { page, context } = await fixture();
+    try {
+        await page.goto(`${origin}/?start=QSA`);
+        await page.getByText('Inserimento Manuale', { exact: true }).click();
+        await page.getByRole('button', { name: 'Continua', exact: true }).click();
+        const score = page.locator('main input[inputmode="numeric"]').first();
+        await score.fill('7');
+        await page.getByRole('link', { name: 'Scegli il counselor', exact: true }).click();
+        await page.getByRole('dialog').getByRole('button', { name: 'Continua', exact: true }).click();
+        await score.waitFor();
+        assert.equal(await score.inputValue(), '7');
+    } finally { await context.close(); }
+});
