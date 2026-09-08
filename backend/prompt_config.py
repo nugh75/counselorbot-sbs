@@ -1035,6 +1035,12 @@ PELLEREY_SOCIAL = _text("pellerey_social")
 
 PELLEREY_SYNTHESIS = _text("pellerey_synthesis")
 
+# Quadri teorici degli strumenti senza meta per-step: ZTPI (t1-t4 giravano
+# senza alcun contesto) e Savickas (patto e cinque domande).
+META_ZTPI_TIME_PERSPECTIVE = _text("meta_ztpi_time_perspective")
+
+META_SAVICKAS_CAREER_CONSTRUCTION = _text("meta_savickas_career_construction")
+
 PELLEREY_STRATEGIC_COMPETENCES = _text("pellerey_strategic_competences")
 
 PELLEREY_SELF_REGULATION_CYCLE = _text("pellerey_self_regulation_cycle")
@@ -1063,13 +1069,13 @@ META_SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
         "key": "prompt_meta_ZTPI",
         "label": "Meta system prompt ZTPI",
         "description": "Contesto aggiuntivo iniettato come [META SYSTEM PROMPT] per lo strumento ZTPI",
-        "default": "",
+        "default": META_ZTPI_TIME_PERSPECTIVE,
     },
     {
         "key": "prompt_meta_SAVICKAS",
         "label": "Meta system prompt Savickas",
         "description": "Contesto aggiuntivo iniettato come [META SYSTEM PROMPT] per lo strumento Savickas",
-        "default": "",
+        "default": META_SAVICKAS_CAREER_CONSTRUCTION,
     },
     {
         "key": "prompt_meta_QPCS",
