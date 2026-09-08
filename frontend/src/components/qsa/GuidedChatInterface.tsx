@@ -1824,7 +1824,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                                                 setInput(previous => previous.trim() ? `${previous}\n\n${draft}` : draft);
                                                 window.requestAnimationFrame(() => document.getElementById('guided-composer')?.focus());
                                             }}
-                                            className="min-h-9 rounded-lg border border-slate-200 px-2.5 py-1 text-left hover:bg-indigo-50">
+                                            className="min-h-9 max-w-full whitespace-normal break-words rounded-lg border border-slate-200 px-2.5 py-1 text-left hover:bg-indigo-50">
                                             {text}
                                         </button>
                                     ))}
