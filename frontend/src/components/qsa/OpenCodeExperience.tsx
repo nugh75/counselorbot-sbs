@@ -19,19 +19,18 @@ import {
 } from 'lucide-react';
 import { createTerminalSession, TerminalSession } from '@/lib/opencode-terminal';
 import { AUTO_FREEZE_DELAY_MS, autoFreezeSignature, shouldAutoFreeze } from '@/lib/auto-freeze';
-import { getSelectedCounselorId } from '@/lib/counselor';
 import { freezeSession, type FrozenSessionSnapshot } from '@/lib/frozen-session';
 import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
 import type { ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { isNearBottom } from '@/lib/chat-scroll';
-import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { asBookletType } from '@/components/profile/NotebookBookletPanel';
 import { VisualTools } from '@/components/visual/VisualTools';
 import '@xterm/xterm/css/xterm.css';
 
 interface OpenCodeExperienceProps {
+    counselorId: number | null;
     scores: Record<string, number>;
     questionnaire: QuestionnaireConfig;
     pdfToken?: string;
@@ -56,6 +55,7 @@ interface ChatMessage {
 type ViewMode = 'chat' | 'terminal';
 
 export function OpenCodeExperience({
+    counselorId,
     scores,
     questionnaire,
     pdfToken,
@@ -383,7 +383,7 @@ export function OpenCodeExperience({
                 messages,
                 current_phase: '',
                 scores,
-                counselor_id: getSelectedCounselorId(),
+                counselor_id: counselorId,
                 experience: 'opencode',
                 locale,
                 response_length: responseLength,
@@ -394,7 +394,7 @@ export function OpenCodeExperience({
         };
         const timer = window.setTimeout(() => { void flushAutoFreeze(); }, AUTO_FREEZE_DELAY_MS);
         return () => window.clearTimeout(timer);
-    }, [messages, streaming, busy, sessionId, questionnaire.id, scores, locale, pdfToken, t, flushAutoFreeze, responseLength]);
+    }, [messages, streaming, busy, sessionId, counselorId, questionnaire.id, scores, locale, pdfToken, t, flushAutoFreeze, responseLength]);
 
     useEffect(() => {
         const onPageHide = () => { void flushAutoFreeze({ keepalive: true }); };
@@ -476,7 +476,6 @@ export function OpenCodeExperience({
                         </div>
                     </div>
                 </div>
-                <LearnerProfileCard variant="update" sessionId={sessionId} />
                 <button
                     type="button"
                     onClick={handleComplete}

@@ -7,7 +7,6 @@ import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/
 import { QUESTIONNAIRES } from '@/lib/questionnaires';
 import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
 import { apiFetch } from '@/lib/auth';
-import { getSelectedCounselorId } from '@/lib/counselor';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -15,7 +14,6 @@ import { useI18n } from '@/lib/i18n-context';
 import { isNearBottom } from '@/lib/chat-scroll';
 import { stepLabel, stripStepOrdinal } from '@/lib/i18n-steps';
 import type { Lang } from '@/lib/i18n';
-import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { asBookletType } from '@/components/profile/NotebookBookletPanel';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
@@ -63,6 +61,7 @@ interface StepDef {
 }
 
 interface GuidedChatInterfaceProps {
+    counselorId: number | null;
     scores: Record<string, number>;
     questionnaireType: string;
     onComplete: () => void;
@@ -430,7 +429,7 @@ function GuidedMessageContent({ content, locale, errorMessage }: { content: stri
 
 // --- Main Component ---
 
-export function GuidedChatInterface({ scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot, initialResponseLength, initialReasoningEffort, reasoningCapable = true }: GuidedChatInterfaceProps) {
+export function GuidedChatInterface({ counselorId, scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot, initialResponseLength, initialReasoningEffort, reasoningCapable = true }: GuidedChatInterfaceProps) {
     const { t, tf, lang: contextLang } = useI18n();
     const activeLocale = normalizeLocale(locale || contextLang);
     const { streamChat, ...continuation } = useChatContinuation();
@@ -939,7 +938,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 max_tokens: 500,
                 response_length: responseLength,
                 reasoning_effort: effortForPhase(FIXED_QUESTIONS_ID),
-                counselor_id: getSelectedCounselorId(),
+                counselor_id: counselorId,
                 idea_variant: isIdea ? ideaVariant : undefined,
                 idea_budget: isIdea ? ideaBudget : undefined,
             }, (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
@@ -981,7 +980,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         max_tokens: 700,
                         response_length: responseLength,
                         reasoning_effort: reasoningEffort,
-                        counselor_id: getSelectedCounselorId(),
+                        counselor_id: counselorId,
                         idea_variant: isIdea ? ideaVariant : undefined,
                         idea_budget: isIdea ? ideaBudget : undefined,
                     };
@@ -999,7 +998,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     max_tokens: 700,
                     response_length: responseLength,
                     reasoning_effort: reasoningEffort,
-                    counselor_id: getSelectedCounselorId(),
+                    counselor_id: counselorId,
                     idea_variant: isIdea ? ideaVariant : undefined,
                     idea_budget: isIdea ? ideaBudget : undefined,
                 };
@@ -1189,7 +1188,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 max_tokens: 900,
                 response_length: responseLength,
                 reasoning_effort: effortForPhase(currentPhase),
-                counselor_id: getSelectedCounselorId(),
+                counselor_id: counselorId,
                 idea_variant: isIdea ? ideaVariant : undefined,
                 idea_budget: isIdea ? ideaBudget : undefined,
             };
@@ -1297,7 +1296,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 body: JSON.stringify({
                     text,
                     voice: TTS_VOICE_BY_LOCALE[activeLocale],
-                    counselor_id: getSelectedCounselorId()
+                    counselor_id: counselorId
                 }),
             });
 
@@ -1334,7 +1333,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         messages,
         current_phase: currentPhase,
         scores,
-        counselor_id: getSelectedCounselorId(),
+        counselor_id: counselorId,
         experience: 'standard',
         locale: activeLocale,
         response_length: responseLength,
@@ -1781,12 +1780,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         "sto pensando", quindi il pendente in coda serve solo quando
                         quella bolla non c'e' ancora. */}
                     {isLoading && !continuation.pending && !awaitingAssistantBubble && <ChatPending label={t('guided.processing')} />}
-                    {/* Fine sessione: invito a rivedere il profilo dopo la conversazione */}
-                    {currentPhase === FIXED_CONCLUSION_ID && (
-                        <div className="max-w-full sm:max-w-2xl">
-                            <LearnerProfileCard variant="update" sessionId={sessionId} />
-                        </div>
-                    )}
                 </div>
 
                 <ChatContinuation locale={activeLocale} {...continuation} />

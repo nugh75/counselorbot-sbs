@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Check, Cpu, Cloud } from 'lucide-react';
-import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId, subscribeToCounselor, PublicCounselor } from '@/lib/counselor';
+import { fetchCounselors, getSelectedCounselorId, PublicCounselor } from '@/lib/counselor';
 import { useI18n } from '@/lib/i18n-context';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
@@ -10,7 +10,9 @@ import { ForwardButton } from '@/components/ui/ForwardButton';
 // Selettore counselor lato utente. Se non ci sono counselor configurati non
 // renderizza nulla: il flusso resta identico a prima.
 interface CounselorSelectorProps {
-    onContinue?: () => void;
+    onContinue?: (id: number) => void;
+    initialSelectedId?: number | null;
+    busy?: boolean;
     onBack?: () => void;
     questionnaireName?: string;
     // Codice dello strumento: alcuni strumenti sono a invito e non tutti i
@@ -18,7 +20,7 @@ interface CounselorSelectorProps {
     questionnaireType?: string;
 }
 
-export function CounselorSelector({ onContinue, onBack, questionnaireName, questionnaireType }: CounselorSelectorProps) {
+export function CounselorSelector({ onContinue, onBack, questionnaireName, questionnaireType, initialSelectedId, busy = false }: CounselorSelectorProps) {
     const { t, lang } = useI18n();
     const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
     const [selected, setSelected] = useState<number | null>(null);
@@ -29,7 +31,7 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName, quest
         try {
             const list = await fetchCounselors(lang, lang, questionnaireType);
             setCounselors(list);
-            const stored = getSelectedCounselorId();
+            const stored = initialSelectedId ?? getSelectedCounselorId();
             // se il counselor salvato non esiste piu', azzera
             setSelected(list.some((c) => c.id === stored && c.is_active !== false) ? stored : null);
         } catch (e) {
@@ -37,17 +39,13 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName, quest
         } finally {
             setLoaded(true);
         }
-    }, [lang, questionnaireType]);
+    }, [lang, questionnaireType, initialSelectedId]);
 
     useEffect(() => { void load(); }, [load]);
-
-    // Mantiene allineata l'evidenziazione se il counselor cambia dall'header.
-    useEffect(() => subscribeToCounselor(() => setSelected(getSelectedCounselorId())), []);
 
     const choose = (counselor: PublicCounselor) => {
         if (counselor.is_active === false || counselor.suitable === false) return;
         setSelected(counselor.id);
-        setSelectedCounselorId(counselor.id);
     };
 
     if (!loaded) {
@@ -176,9 +174,9 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName, quest
                 {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
                 {onContinue && (
                     <ForwardButton
-                        onClick={onContinue}
+                        onClick={() => { if (selected) onContinue(selected); }}
                         label={t('counselor.continue')}
-                        disabled={!selected}
+                        disabled={busy || !chosen || chosen.is_active === false || chosen.suitable === false}
                     />
                 )}
             </div>

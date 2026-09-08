@@ -10,6 +10,15 @@ class User(Base):
     hashed_password = Column(String)
     is_admin = Column(Boolean, default=False)
 
+class AccountPreferences(Base):
+    """Account-owned defaults; session counselor choices remain session-owned."""
+    __tablename__ = "account_preferences"
+
+    username = Column(String, primary_key=True)
+    counselor_id = Column(Integer, nullable=True)
+    notebook_completed = Column(Boolean, nullable=False, default=False)
+
+
 class Config(Base):
     __tablename__ = "configs"
 

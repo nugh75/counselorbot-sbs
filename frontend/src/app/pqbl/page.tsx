@@ -16,7 +16,6 @@ import { getSelectedCounselorId } from '@/lib/counselor';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Callout } from '@/components/ui/Callout';
 import { StickyActions } from '@/components/ui/StickyActions';
-import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { clearPqblProgress, loadPqblProgress, savePqblProgress } from '@/lib/pqbl-progress';
 import type { Lang } from '@/lib/i18n';
 
@@ -832,10 +831,7 @@ export default function PqblPage() {
                             </p>
                         </div>
                     ))}
-                    <LearnerProfileCard
-                        variant="update"
-                        sessionId={finalSessionId || sessionId}
-                    />
+
                     <button
                         onClick={restart}
                         className="w-full py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-md transition-colors flex items-center justify-center gap-2"

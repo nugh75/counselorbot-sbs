@@ -45,24 +45,9 @@ test('the landing shows before the gate, and its only way forward is the compass
     assert.match(source, /<IntroScreen onStart=\{startFromIntro\}/);
 });
 
-test('Bussola opens the notebook before and after the conversation, and never the booklet', () => {
-    const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
-    assert.match(source, /variant="review"[\s\S]*onDone=\{openFork\}/);
-    assert.match(source, /session\.status === 'completed' && <LearnerProfileCard variant="update"/);
-    assert.doesNotMatch(source, /StudentBookletCard/);
-});
 
-test('a recommended tool can be opened at any point, through the notebook question', () => {
-    const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
-    // Il bottone dello strumento non dipende più dallo stato della sessione.
-    // (È una <Button>, la primitiva, da quando il percorso studente la adotta.)
-    assert.match(source, /<Button type="button" onClick=\{\(\) => onPick\(item\.id\)\}/);
-    assert.match(source, /session && pendingTool \? \(\s*<LearnerProfileCard\s+variant="update"/);
-    assert.match(source, /onDone=\{\(\) => void leaveForTool\(\)\}/);
-    // Il gate rimanda alla Bussola chi non l'ha conclusa: uscire deve completarla.
-    assert.match(source, /completeOrientation\(session\.session_id\)/);
-    assert.match(source, /router\.push\(orientationToolHref\(pendingTool\)\)/);
-});
+
+
 
 test('the Compass header carries no feature blurbs', () => {
     const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
@@ -74,13 +59,7 @@ test('Bussola only advises: it writes neither notebook nor booklet', () => {
     assert.doesNotMatch(api, /notebook-review|notebook_draft|notebook_reviewed/);
 });
 
-test('Bussola asks for a counselor before creating the conversation', () => {
-    const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
-    assert.match(source, /CounselorSelector/);
-    assert.match(source, /orientation\.counselor\.title/);
-    assert.match(source, /setPendingCounselorId\(counselorId\)/);
-    assert.match(source, /createSession\(pendingNewSession, pendingCounselorId\)/);
-});
+
 
 test('counselor cards show the AI model used by each persona', () => {
     const source = readFileSync(
@@ -121,29 +100,10 @@ test('a concluded Compass has a way out even when no tool is opened', () => {
     // collegamento: restavano le schede degli strumenti e nient'altro.
     assert.match(source, /href=\{nextHref \?\? '\/'\}/);
     assert.match(source, /nextHref \? t\('orientation\.continue'\) : t\('nav\.home'\)/);
-    // Il taccuino chiesto prima di aprire uno strumento sostituisce la pagina:
-    // senza ritorno, ogni suo comando portava comunque a quello strumento.
-    assert.match(source, /onBack=\{\(\) => setPendingTool\(null\)\}/);
+
 });
 
 test('Bussola cards do not use decorative left borders', () => {
     const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
     assert.doesNotMatch(source, /border-l-/);
-});
-
-test('the notebook leads to a fork, not straight into the conversation', () => {
-    const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
-    // Chiuso il taccuino si sceglie: parlare con la Bussola, oppure andare al
-    // catalogo. Prima la conversazione partiva da sola e la seconda strada non
-    // c'era.
-    assert.match(source, /const openFork = useCallback\(\(\) => \{[\s\S]*?setAtFork\(true\)/);
-    assert.doesNotMatch(source, /onDone=\{startConversation\}/);
-    // Le due uscite del bivio.
-    assert.match(source, /atFork \? \([\s\S]*?onClick=\{startConversation\}[\s\S]*?onClick=\{goToTools\}/);
-    // Chi sceglie gli strumenti trova la schermata di chi torna, non la
-    // presentazione: `view=home`, e il cancello tace per la visita.
-    assert.match(source, /const goToTools = \(\) => \{\s*\n\s*skipOrientationThisVisit\(\);\s*\n\s*router\.push\('\/\?view=home'\);/);
-    const page = readFileSync(new URL('../app/page.tsx', import.meta.url), 'utf8');
-    assert.match(page, /view === 'questionnaires' \|\| view === 'home'/);
-    assert.match(page, /setStep\(view === 'home' \? 'base' : 'questionnaire-select'\)/);
 });

@@ -72,7 +72,7 @@ export function orientationSkippedThisVisit(): boolean {
 }
 
 export function orientationGateBypass(pathname: string, search = ''): boolean {
-    const exemptPaths = ['/bussola', '/login', '/register', '/guide', '/telegram-link', '/questionario'];
+    const exemptPaths = ['/inizia', '/counselor', '/profilo', '/bussola', '/login', '/register', '/guide', '/telegram-link', '/questionario'];
     if (exemptPaths.some((path) => pathname.startsWith(path))) return true;
     if (pathname !== '/') return false;
     const params = new URLSearchParams(search);

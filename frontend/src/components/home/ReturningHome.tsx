@@ -24,14 +24,12 @@ interface Props {
     // Ultima compilazione per strumento, in ISO; assente = mai compilato.
     lastCompiledAt: Partial<Record<QuestionnaireType, string>>;
     onStartInstrument: (questionnaire: QuestionnaireConfig) => void;
-    onChangeCounselor: () => void;
     onOpenIntro: () => void;
 }
 
 export function ReturningHome({
     lastCompiledAt,
     onStartInstrument,
-    onChangeCounselor,
     onOpenIntro,
 }: Props) {
     const { t, lang } = useI18n();
@@ -132,9 +130,7 @@ export function ReturningHome({
                     <div>
                         <h2 className="text-sm font-bold text-slate-900">{t('base.counselor.title')}</h2>
                         <p className="mt-1 text-sm text-slate-600">{counselorName ?? t('base.counselor.none')}</p>
-                        <button type="button" onClick={onChangeCounselor} className="mt-1 inline-flex min-h-[44px] items-center rounded-md text-sm font-medium text-indigo-700 hover:underline">
-                            {t('base.counselor.changeDefault')}
-                        </button>
+
                     </div>
                     <div>
                         <h2 className="text-sm font-bold text-slate-900">{t('base.prefs.title')}</h2>
