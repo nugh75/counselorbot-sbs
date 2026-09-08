@@ -540,6 +540,7 @@ h1.text-3xl {
 
 /* Sfondi pastello dei callout/badge → tinte scure leggibili */
 .dark .bg-indigo-50 { background-color: #103f42; }
+.dark .bg-ochre-50 { background-color: var(--color-ochre-900); }
 .dark .bg-amber-50 { background-color: #3a2206; }
 .dark .bg-green-50 { background-color: #052e16; }
 .dark .bg-emerald-50 { background-color: #052e16; }
