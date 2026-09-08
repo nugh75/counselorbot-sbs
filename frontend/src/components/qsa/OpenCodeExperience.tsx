@@ -22,6 +22,7 @@ import { AUTO_FREEZE_DELAY_MS, autoFreezeSignature, shouldAutoFreeze } from '@/l
 import { getSelectedCounselorId } from '@/lib/counselor';
 import { freezeSession, type FrozenSessionSnapshot } from '@/lib/frozen-session';
 import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
+import type { ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { isNearBottom } from '@/lib/chat-scroll';
@@ -36,6 +37,9 @@ interface OpenCodeExperienceProps {
     sessionId: string;
     locale: string;
     onComplete: () => void;
+    // Lunghezza risposta scelta nella schermata di modalità; regola direttiva
+    // e limite parole del turno OpenCode.
+    responseLength?: ResponseLength;
     // Trascrizione dello snapshot congelato, usata solo se il workspace non ha
     // più la propria (vedi `startOpenCode`).
     restoredMessages?: { role: string; content: string }[];
@@ -57,6 +61,7 @@ export function OpenCodeExperience({
     sessionId,
     locale,
     onComplete,
+    responseLength = 'medium',
     restoredMessages,
 }: OpenCodeExperienceProps) {
     const { streamChat, ...continuation } = useChatContinuation();
@@ -185,7 +190,7 @@ export function OpenCodeExperience({
 
         try {
             const result = await streamChat(
-                { session_id: targetSessionId, message: userMessage, seed },
+                { session_id: targetSessionId, message: userMessage, seed, response_length: responseLength },
                 updateLast,
                 controller.signal,
                 undefined,
@@ -211,7 +216,7 @@ export function OpenCodeExperience({
             streamingRef.current = false;
             setStreaming(false);
         }
-    }, [t, streamChat]);
+    }, [t, streamChat, responseLength]);
 
     const startOpenCode = useCallback(async () => {
         setBusy(true);
@@ -368,7 +373,7 @@ export function OpenCodeExperience({
             isLoading: streaming || busy,
             completed: completedRef.current,
         })) return;
-        const signature = autoFreezeSignature({ messages, currentPhase: '', responseLength: 'medium' });
+        const signature = autoFreezeSignature({ messages, currentPhase: '', responseLength });
         if (signature === savedSignatureRef.current) return;
         pendingSnapshotRef.current = {
             snapshot: {
@@ -380,7 +385,7 @@ export function OpenCodeExperience({
                 counselor_id: getSelectedCounselorId(),
                 experience: 'opencode',
                 locale,
-                response_length: 'medium',
+                response_length: responseLength,
                 label: `${questionnaire.id} — ${t('guided.mode.sandbox')}`,
                 pdf_token: pdfToken || null,
             },
@@ -388,7 +393,7 @@ export function OpenCodeExperience({
         };
         const timer = window.setTimeout(() => { void flushAutoFreeze(); }, AUTO_FREEZE_DELAY_MS);
         return () => window.clearTimeout(timer);
-    }, [messages, streaming, busy, sessionId, questionnaire.id, scores, locale, pdfToken, t, flushAutoFreeze]);
+    }, [messages, streaming, busy, sessionId, questionnaire.id, scores, locale, pdfToken, t, flushAutoFreeze, responseLength]);
 
     useEffect(() => {
         const onPageHide = () => { void flushAutoFreeze({ keepalive: true }); };
