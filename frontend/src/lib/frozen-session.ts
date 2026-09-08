@@ -29,6 +29,7 @@ export interface FrozenSessionDetail extends FrozenSessionSummary {
     counselor_id?: number | null;
     locale?: string | null;
     response_length?: 'short' | 'medium' | 'long' | null;
+    reasoning_effort?: 'off' | 'standard' | 'deep' | null;
     pdf_token?: string | null;
 }
 
@@ -42,6 +43,9 @@ export interface FrozenSessionSnapshot {
     experience: 'standard' | 'opencode';
     locale: string;
     response_length: 'short' | 'medium' | 'long';
+    // Solo la chat guidata: la sandbox OpenCode parla con il proprio agente e
+    // non ha una leva sul ragionamento.
+    reasoning_effort?: 'off' | 'standard' | 'deep';
     label: string;
     // Solo la sandbox OpenCode: il workspace rigenera `documento.md` a ogni
     // apertura, quindi senza il token la ripresa perderebbe il PDF del profilo.

@@ -31,6 +31,7 @@ from ..idea_map import (
     strip_patch_for_display,
 )
 from ..memory_service import session_memory
+from ..reasoning_profiles import effort_overrides
 from ..chat_preparation import prepare_chat_turn
 from ..strategy_memory import shared_response_memory
 from .. import recommendation_blocks
@@ -188,6 +189,20 @@ def _apply_counselor_overrides(
         ai_service.config["disable_thinking"] = "true" if disable_thinking else "false"
     if reasoning_budget is not None:
         ai_service.reasoning_budget_override = reasoning_budget
+
+
+def _apply_reasoning_effort(ai_service: AIService, effort: str | None) -> None:
+    """Scelta dello studente sullo spazio di ragionamento.
+
+    Il preset del counselor resta il punto di partenza; una scelta esplicita
+    (`off`/`deep`) vince su di esso, mentre `standard` non tocca nulla.
+    """
+    disable, budget = effort_overrides(effort)
+    if disable is None:
+        return
+    ai_service.disable_thinking = disable
+    ai_service.config["disable_thinking"] = "true" if disable else "false"
+    ai_service.reasoning_budget_override = budget
 
 # Questionari condotti dall'agente AI: testi intro/conclusione per tipo
 # (chiave_intro, default_intro, chiave_conclusione, default_conclusione).
@@ -469,6 +484,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     ai_service = AIService(db)
     c_provider, c_model, c_persona, c_name, c_disable_thinking, c_reasoning_budget = _resolve_counselor(db, request.counselor_id)
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
+    _apply_reasoning_effort(ai_service, request.reasoning_effort)
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
     is_first_step = False
     if request.use_phase_prompt and step:
@@ -693,6 +709,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     ai_service = AIService(db)
     c_provider, c_model, c_persona, c_name, c_disable_thinking, c_reasoning_budget = _resolve_counselor(db, request.counselor_id)
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
+    _apply_reasoning_effort(ai_service, request.reasoning_effort)
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
     is_first_step = False
     if request.use_phase_prompt and step:

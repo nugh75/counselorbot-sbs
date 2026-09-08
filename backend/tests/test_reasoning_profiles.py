@@ -9,7 +9,14 @@ Eseguibile senza pytest:
 Con pytest:
     pytest backend/tests/test_reasoning_profiles.py
 """
-from backend.reasoning_profiles import classify, is_reasoning_model, resolve_plan
+from backend.reasoning_profiles import (
+    DEEP_REASONING_BUDGET,
+    classify,
+    effort_overrides,
+    is_reasoning_model,
+    supports_reasoning,
+    resolve_plan,
+)
 
 
 def test_local_models_are_known_reasoners():
@@ -68,6 +75,38 @@ def test_thinking_can_be_disabled_for_the_local_models():
         plan = resolve_plan(model, disable_thinking=True, requested_max_tokens=700)
         assert plan.enabled is False, model
         assert is_reasoning_model(model) is True, model
+
+
+def test_standard_effort_imposes_nothing():
+    """Chi non tocca il selettore deve vedere il comportamento di sempre: la
+    scelta "standard" non scrive ne' il flag ne' il budget, cosi' decidono il
+    preset del counselor o la config globale."""
+    assert effort_overrides("standard") == (None, None)
+    assert effort_overrides(None) == (None, None)
+    assert effort_overrides("") == (None, None)
+
+
+def test_off_effort_disables_thinking():
+    disable, budget = effort_overrides("off")
+    assert disable is True
+    assert budget is None
+
+
+def test_deep_effort_widens_the_budget_of_a_known_reasoner():
+    disable, budget = effort_overrides("deep")
+    assert disable is False
+    assert budget == DEEP_REASONING_BUDGET
+    family = resolve_plan("qwen3.8:latest", disable_thinking=False)
+    deep = resolve_plan("qwen3.8:latest", disable_thinking=False, budget_override=budget)
+    assert deep.reasoning_budget > family.reasoning_budget
+
+
+def test_supports_reasoning_hides_the_lever_only_for_known_non_reasoners():
+    assert supports_reasoning("gemma3:latest") is False
+    assert supports_reasoning("llama3.1:8b") is False
+    assert supports_reasoning("qwen3.8:latest") is True
+    # Sconosciuto: la leva resta, come in resolve_plan.
+    assert supports_reasoning("modello-mai-visto:1b") is True
 
 
 if __name__ == "__main__":

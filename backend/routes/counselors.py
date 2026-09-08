@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from .. import models, schemas, auth, database, prompt_revisions
 from ..counselor_i18n import localized_description, translate_counselor_async, translate_counselor_sync
 from ..counselor_scope import restricted_instruments, suits
+from ..reasoning_profiles import supports_reasoning
 from sqlalchemy import cast as sa_cast, String
 
 router = APIRouter()
@@ -87,6 +88,7 @@ async def list_public_counselors(
         pub.model_origin = _provider_origin(provider)
         pub.model = preset.model if preset else active_model
         pub.suitable = suits(r, questionnaire_type, restricted)
+        pub.reasoning_capable = supports_reasoning(pub.model)
         out.append(pub)
     # Gli adatti in cima: chi sceglie legge prima cio' che puo' usare.
     out.sort(key=lambda item: not item.suitable)

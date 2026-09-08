@@ -31,6 +31,34 @@ def test_opencode_chat_request_accepts_response_length():
         OpencodeChatRequest(session_id="s", response_length="extra")
 
 
+def test_chat_request_accepts_reasoning_effort():
+    assert ChatRequest(reasoning_effort="deep").reasoning_effort == "deep"
+    assert ChatRequest().reasoning_effort is None
+    with pytest.raises(ValidationError):
+        ChatRequest(reasoning_effort="molto")
+
+
+def test_reasoning_effort_of_the_student_overrides_the_counselor_preset():
+    """Il preset e' il punto di partenza, la scelta dello studente vince."""
+    service = SimpleNamespace(disable_thinking=False, config={}, reasoning_budget_override=None)
+    chat._apply_counselor_overrides(service, False, 3000)
+
+    chat._apply_reasoning_effort(service, "off")
+    assert service.disable_thinking is True
+    assert service.config["disable_thinking"] == "true"
+
+    chat._apply_reasoning_effort(service, "deep")
+    assert service.disable_thinking is False
+    assert service.reasoning_budget_override == 8000
+
+
+def test_standard_reasoning_effort_leaves_the_preset_alone():
+    service = SimpleNamespace(disable_thinking=True, config={"disable_thinking": "true"}, reasoning_budget_override=3000)
+    chat._apply_reasoning_effort(service, "standard")
+    assert service.disable_thinking is True
+    assert service.reasoning_budget_override == 3000
+
+
 def test_continuation_quotes_the_partial_and_preserves_the_original_question():
     assert continuation_message("Question", "") == "Question"
     prompt = continuation_message("Question", 'Text\n"quoted"')

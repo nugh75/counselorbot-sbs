@@ -36,6 +36,7 @@ def _detail(row: models.FrozenSession) -> schemas.FrozenSessionDetail:
         counselor_id=data.get("counselor_id"),
         locale=data.get("locale"),
         response_length=data.get("response_length"),
+        reasoning_effort=data.get("reasoning_effort"),
         pdf_token=data.get("pdf_token"),
     )
 
