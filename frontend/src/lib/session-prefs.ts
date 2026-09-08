@@ -6,10 +6,12 @@
 export type InputMethodPref = 'manual' | 'upload';
 export type ExperiencePref = 'standard' | 'opencode';
 export type ResponseLengthPref = 'short' | 'medium' | 'long';
+export type ReasoningPref = 'off' | 'standard' | 'deep';
 
 const METHOD_KEY = 'counselorbot_input_method';
 const EXPERIENCE_KEY = 'counselorbot_experience';
 const RESPONSE_LENGTH_KEY = 'counselorbot_response_length';
+const REASONING_KEY = 'counselorbot_reasoning';
 const EVENT = 'counselorbot-prefs-change';
 
 function read<T extends string>(key: string, allowed: readonly T[]): T | null {
@@ -65,6 +67,16 @@ export function getResponseLengthPref(): ResponseLengthPref {
 
 export function setResponseLengthPref(value: ResponseLengthPref): void {
     write(RESPONSE_LENGTH_KEY, value);
+}
+
+// 'standard' non impone nulla al modello: vale il preset del counselor. È il
+// default proprio per questo, chi non sceglie non cambia niente.
+export function getReasoningPref(): ReasoningPref {
+    return read(REASONING_KEY, ['off', 'standard', 'deep'] as const) ?? 'standard';
+}
+
+export function setReasoningPref(value: ReasoningPref): void {
+    write(REASONING_KEY, value);
 }
 
 // Torna a farsi chiedere metodo e modalità al prossimo strumento.
