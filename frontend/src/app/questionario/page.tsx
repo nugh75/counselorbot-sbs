@@ -9,14 +9,13 @@ import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StickyActions } from '@/components/ui/StickyActions';
 import { AGE_BANDS } from '@/lib/age-bands';
+import { surveyCountries } from '@/lib/survey-countries';
 
 const API_BASE = '/api';
 
 // Options for demographics
 const ETA_OPTIONS = AGE_BANDS;
 const SESSO_OPTIONS = ['Maschio', 'Femmina', 'Altro', 'Preferisco non rispondere'];
-
-const PAESE_OPTIONS = ['Italia', 'Svezia', 'Regno Unito (Inghilterra)', 'Spagna', 'Francia', 'Germania', 'Altro'];
 
 const ISTRUZIONE_MAP: Record<string, string[]> = {
     'Italia': ['Scuola media', 'Diploma', 'Laurea triennale', 'Laurea magistrale', 'Dottorato', 'Altro'],
@@ -80,6 +79,7 @@ type FormData = {
 
 export default function QuestionarioPage() {
     const { t, tf, lang } = useI18n();
+    const countries = surveyCountries(lang);
     const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
     const [formData, setFormData] = useState<FormData>({
         paese: '',
@@ -118,6 +118,7 @@ export default function QuestionarioPage() {
     const TOTAL_STEPS = 4;
 
     const computeAreaStudio = (paese: string, istruzione: string, tipo_istituto: string) => {
+        if (!ISTRUZIONE_MAP[paese]) paese = 'Altro';
         const doctorates: Record<string, string[]> = {
             'Italia': ['Dottorato'],
             'Svezia': ['Doktorsexamen'],
@@ -313,8 +314,8 @@ export default function QuestionarioPage() {
                                 label={t('survey.field.paese')}
                                 placeholder={t('survey.select.placeholder')}
                                 value={formData.paese}
-                                options={PAESE_OPTIONS}
-                                optionLabel={(v) => tf(`survey.paese.${v}`, v)}
+                                options={[...countries.map(country => country.value), 'Altro']}
+                                optionLabel={(v) => countries.find(country => country.value === v)?.label || t('survey.paese.Altro')}
                                 onChange={(v) => handleDemographicChange('paese', v)}
                             />
                             <SelectField
@@ -338,21 +339,21 @@ export default function QuestionarioPage() {
                                     label={t('survey.field.istruzione')}
                                     placeholder={t('survey.select.placeholder')}
                                     value={formData.istruzione}
-                                    options={ISTRUZIONE_MAP[formData.paese] || []}
+                                    options={ISTRUZIONE_MAP[formData.paese] || ISTRUZIONE_MAP.Altro}
                                     onChange={(v) => handleDemographicChange('istruzione', v)}
                                 />
                                 <SelectField
                                     label={t('survey.field.tipoIstituto')}
                                     placeholder={t('survey.select.placeholder')}
                                     value={formData.tipo_istituto}
-                                    options={TIPO_ISTITUTO_MAP[formData.paese] || []}
+                                    options={TIPO_ISTITUTO_MAP[formData.paese] || TIPO_ISTITUTO_MAP.Altro}
                                     onChange={(v) => handleDemographicChange('tipo_istituto', v)}
                                 />
                                 <SelectField
                                     label={t('survey.field.provenienza')}
                                     placeholder={t('survey.select.placeholder')}
                                     value={formData.provenienza}
-                                    options={PROVENIENZA_MAP[formData.paese] || []}
+                                    options={PROVENIENZA_MAP[formData.paese] || PROVENIENZA_MAP.Altro}
                                     onChange={(v) => handleDemographicChange('provenienza', v)}
                                 />
                                 <div>
