@@ -1250,6 +1250,33 @@
           "Hur kan jag använda dessa färdigheter i mina studier eller i mitt arbete?",
           "Vilket litet mål kan jag sätta upp för mig själv inför nästa vecka?"
         ]
+      },
+      "qpcs-profilo": {
+        "en": [
+          "How should I read these scores?",
+          "What is my strongest area in this profile?",
+          "Which area is worth starting from?"
+        ],
+        "es": [
+          "¿Cómo se leen estas puntuaciones?",
+          "¿Cuál es mi punto fuerte en este perfil?",
+          "¿Por qué área conviene empezar?"
+        ],
+        "fr": [
+          "Comment lire ces scores ?",
+          "Quel est mon point fort dans ce profil ?",
+          "Par quel domaine vaut-il mieux commencer ?"
+        ],
+        "de": [
+          "Wie sind diese Werte zu lesen?",
+          "Was ist meine Stärke in diesem Profil?",
+          "Mit welchem Bereich sollte ich anfangen?"
+        ],
+        "sv": [
+          "Hur ska jag läsa de här poängen?",
+          "Vad är min styrka i den här profilen?",
+          "Vilket område är det bäst att börja med?"
+        ]
       }
     },
     "QPCC": {
@@ -1522,6 +1549,33 @@
           "Hur kopplar jag kompetenser och övertygelser till mina beslut?",
           "Kan du föreslå en kort plan för att stärka ett område?"
         ]
+      },
+      "qpcc-profilo": {
+        "en": [
+          "How should I read these scores?",
+          "What is my strongest area in this profile?",
+          "Which area is worth starting from?"
+        ],
+        "es": [
+          "¿Cómo se leen estas puntuaciones?",
+          "¿Cuál es mi punto fuerte en este perfil?",
+          "¿Por qué área conviene empezar?"
+        ],
+        "fr": [
+          "Comment lire ces scores ?",
+          "Quel est mon point fort dans ce profil ?",
+          "Par quel domaine vaut-il mieux commencer ?"
+        ],
+        "de": [
+          "Wie sind diese Werte zu lesen?",
+          "Was ist meine Stärke in diesem Profil?",
+          "Mit welchem Bereich sollte ich anfangen?"
+        ],
+        "sv": [
+          "Hur ska jag läsa de här poängen?",
+          "Vad är min styrka i den här profilen?",
+          "Vilket område är det bäst att börja med?"
+        ]
       }
     },
     "QAP": {
@@ -1766,6 +1820,33 @@
           "Vad är sammanfattningen av min QAP-profil?",
           "Hur kan jag utforska framtida möjligheter bättre?",
           "Vilken konkret åtgärd kan jag vidta under de kommande sju dagarna?"
+        ]
+      },
+      "qap-profilo": {
+        "en": [
+          "How should I read these scores?",
+          "Which resource is strongest in this profile?",
+          "Which resource is worth starting from?"
+        ],
+        "es": [
+          "¿Cómo se leen estas puntuaciones?",
+          "¿Cuál es mi recurso más sólido en este perfil?",
+          "¿Por qué recurso conviene empezar?"
+        ],
+        "fr": [
+          "Comment lire ces scores ?",
+          "Quelle ressource est la plus solide dans ce profil ?",
+          "Par quelle ressource vaut-il mieux commencer ?"
+        ],
+        "de": [
+          "Wie sind diese Werte zu lesen?",
+          "Welche Ressource ist in diesem Profil am stärksten?",
+          "Mit welcher Ressource sollte ich anfangen?"
+        ],
+        "sv": [
+          "Hur ska jag läsa de här poängen?",
+          "Vilken resurs är starkast i den här profilen?",
+          "Vilken resurs är det bäst att börja med?"
         ]
       }
     }

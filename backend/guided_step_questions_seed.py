@@ -197,6 +197,11 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
         ],
     },
     "QPCS": {
+        "qpcs-profilo": [
+            "Come si leggono questi punteggi?",
+            "Qual e' il mio punto di forza in questo profilo?",
+            "Da quale area conviene partire?",
+        ],
         "qpcs-intro": [
             "Come funziona il percorso QPCS?",
             "Che cosa sono le competenze strategiche?",
@@ -249,6 +254,11 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
         ],
     },
     "QPCC": {
+        "qpcc-profilo": [
+            "Come si leggono questi punteggi?",
+            "Qual e' il mio punto di forza in questo profilo?",
+            "Da quale area conviene partire?",
+        ],
         "qpcc-intro": [
             "Come funziona il percorso QPCC?",
             "Che cosa significa analizzare competenze e convinzioni?",
@@ -301,6 +311,11 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
         ],
     },
     "QAP": {
+        "qap-profilo": [
+            "Come si leggono questi punteggi?",
+            "Qual e' la mia risorsa piu' solida in questo profilo?",
+            "Da quale risorsa conviene partire?",
+        ],
         "qap-intro": [
             "Come funziona il percorso QAP?",
             "Che cosa significa adattabilita' professionale?",
