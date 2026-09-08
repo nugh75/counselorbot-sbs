@@ -38,7 +38,8 @@ def save(db, w=None, revision=0):
 def test_links_live_titles_deletion_and_no_cascade(db):
     state = save(db)
     assert state['workspace']['timeline']['events'][0]['portfolio'][0]['title'] == 'Le mie slide'
-    assert portfolio_timeline_links(db, 'alice', 1)['links'][0]['event_id'] == 'e'
+    from backend.personal_timeline import imported_id
+    assert portfolio_timeline_links(db, 'alice', 1)['links'][0]['event_id'] == imported_id('timeline-a', 'e')
     db.query(models.PortfolioItem).filter_by(id=1).update({'title': 'Slide aggiornate'})
     db.commit()
     assert load_workspace(db, 'timeline-a', 'alice')['workspace']['timeline']['events'][0]['portfolio'][0]['title'] == 'Slide aggiornate'

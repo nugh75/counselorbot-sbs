@@ -4,7 +4,7 @@ export type ActionKind = 'activity' | 'book' | 'article' | 'film';
 export type VisualAction = { kind?: ActionKind; id: string; title: string; detail: string; stage: ActionStage; reflection: string; source: string };
 export type ReflectionCard = { id: string; text: string; bucket: CardBucket; source: string };
 export type ComparisonOption = { id: string; title: string; source: string };
-export type TimelineEvent = { id: string; title: string; period: string; tense: 'past' | 'future'; symbol: 'milestone' | 'study' | 'work' | 'change'; reflection: string; source: string; action_ids: string[]; portfolio: { id: number; title: string }[] };
+export type TimelineEvent = { institution_event?: string | null; institution_available?: boolean; institution_date?: 'start' | 'deadline'; personal_links?: ('notebook' | 'booklet' | 'orientation')[]; id: string; title: string; period: string; tense: 'past' | 'future'; symbol: 'milestone' | 'study' | 'work' | 'change'; reflection: string; source: string; action_ids: string[]; portfolio: { id: number; title: string }[] };
 export type Timeline = { title: string; events: TimelineEvent[] };
 export type VisualWorkspace = {
     timeline?: Timeline;
