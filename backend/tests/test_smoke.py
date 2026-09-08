@@ -1817,6 +1817,26 @@ def test_profile_step_serves_the_factor_prompt_of_its_instrument():
             db.close()
 
 
+def test_historical_welcome_phase_still_resolves_to_the_same_prompt():
+    # Le installazioni a due passi hanno lo step `qpcs-welcome`: la riga di
+    # prompt e' la stessa di `qpcs-intro`, e l'id storico deve continuare a
+    # trovarla (vedi journey_context.SYNTHESIS_STEPS, "historical two-step").
+    from backend.chat_logic import _resolve_system_prompt
+    from backend.ai_service import AIService
+
+    db = _TestSession()
+    try:
+        service = AIService(db)
+        for legacy, current in (("qpcs-welcome", "qpcs-intro"), ("qpcc-welcome", "qpcc-intro"),
+                                ("qap-welcome", "qap-intro")):
+            legacy_key, legacy_prompt = _resolve_system_prompt(service, "generic", legacy, db)
+            current_key, current_prompt = _resolve_system_prompt(service, "generic", current, db)
+            assert legacy_key == current_key, (legacy, legacy_key, current_key)
+            assert legacy_prompt == current_prompt, legacy
+    finally:
+        db.close()
+
+
 def test_qpcs_welcome_prompt_is_actually_served_on_the_first_step():
     # Il prompt di benvenuto era registrato sulla fase "qpcs-welcome", che non
     # esiste: lo step di apertura si chiama qpcs-intro e finiva sul prompt di
