@@ -19,6 +19,7 @@ class ChatRequest(schemas.BaseModel):
     language: Optional[str] = None  # 'it' (default), 'en', 'es', 'fr', 'de', 'sv'
     max_tokens: Optional[int] = None
     response_length: Optional[Literal["short", "medium", "long"]] = None
+    reasoning_effort: Optional[Literal["off", "standard", "deep"]] = None  # spazio di ragionamento scelto dallo studente
     memory_message: Optional[str] = None  # Solo testo reale dell'utente, senza istruzioni interne
     internal_message: bool = False  # Istruzione tecnica: non mostrarla come input studente nei log/PDF
     counselor_id: Optional[int] = None  # se valorizzato: persona + provider/model dal counselor
