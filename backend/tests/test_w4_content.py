@@ -7,12 +7,32 @@ from backend.prompt_config import DEFAULT_QAP_GUIDED_STEPS, DEFAULT_QPCC_GUIDED_
 from backend.guided_step_questions_seed import seed_guided_step_questions, seed_response_openings
 
 
+def test_step_labels_are_numbered_by_their_position():
+    # La numerazione nelle label e' scritta a mano: quando un passo si inserisce
+    # in mezzo (la lettura del profilo) tutte quelle che seguono vanno rifatte,
+    # o il pannello mostra "1." come terzo passo del percorso.
+    from backend.guided_step_label_i18n import STEP_LABEL_I18N
+    from backend.prompt_config import DEFAULT_QPCS_GUIDED_STEPS
+
+    for steps in (DEFAULT_QPCS_GUIDED_STEPS, DEFAULT_QPCC_GUIDED_STEPS, DEFAULT_QAP_GUIDED_STEPS):
+        for step in steps:
+            prefix = f"{step['sort_order']}. "
+            assert step["label"].startswith(prefix), (step["id"], step["label"])
+            # Le traduzioni stanno inline sui percorsi compatti e nel modulo
+            # sugli altri: la numerazione deve reggere in entrambi i posti.
+            translations = dict(STEP_LABEL_I18N.get(step["id"], {}))
+            translations.update(step.get("label_i18n") or {})
+            assert translations, step["id"]
+            for lang, label in translations.items():
+                assert label.startswith(prefix), (step["id"], lang, label)
+
+
 def test_fresh_detailed_paths_have_prompts_labels_and_questions_in_six_languages():
     engine = create_engine('sqlite://')
     for table in (models.Config.__table__, models.GuidedStep.__table__, models.GuidedStepQuestion.__table__):
         table.create(engine)
     with Session(engine) as db:
-        for steps, expected in ((DEFAULT_QAP_GUIDED_STEPS, 6), (DEFAULT_QPCC_GUIDED_STEPS, 7)):
+        for steps, expected in ((DEFAULT_QAP_GUIDED_STEPS, 7), (DEFAULT_QPCC_GUIDED_STEPS, 8)):
             assert len(steps) == expected
             for step in steps:
                 assert step['prompt'] and all(step['label_i18n'].get(lang) for lang in ('en', 'es', 'fr', 'de', 'sv'))
