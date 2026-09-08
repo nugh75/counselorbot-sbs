@@ -6,7 +6,7 @@ const it: Dict = {
     'nav.orientation': 'Bussola',
     'orientation.eyebrow': 'Orientamento iniziale',
     'orientation.title': 'Bussola CounselorBot',
-    'orientation.subtitle': 'Racconta cosa vuoi affrontare: la Bussola collega le tue parole agli strumenti disponibili e ti consiglia da dove iniziare.',
+    'orientation.subtitle': "Racconta cosa vuoi affrontare: la Bussola ti consiglia uno strumento da cui partire e ti aiuta a valutare tempi e impegno. Procedi una domanda alla volta, in più turni e, se serve, in più incontri: non occorre fare tutti gli strumenti.",
     'orientation.landing.latest': 'Rivedi l’ultimo orientamento',
     'orientation.landing.open': 'Apri la Bussola',
     'orientation.landing.new': 'Inizia un nuovo orientamento',
@@ -38,7 +38,7 @@ const it: Dict = {
 
 const en: Dict = {
     'nav.orientation': 'Compass', 'orientation.eyebrow': 'Initial orientation', 'orientation.title': 'CounselorBot Compass',
-    'orientation.subtitle': 'Describe what you want to address: the Compass connects your words to available tools and advises you where to begin.',
+    'orientation.subtitle': "Describe what you want to address: the Compass suggests one tool to start with and helps you consider time and effort. Take one question at a time, over several turns and, if needed, several visits: you do not need to do every tool.",
     'orientation.landing.latest': 'Review the latest orientation', 'orientation.landing.open': 'Open the Compass', 'orientation.landing.new': 'Start a new orientation', 'orientation.landing.skip': 'Go straight to the tools',
     'orientation.fork.title': 'Where do you want to start?',
     'orientation.fork.body': "Talk to the Compass for guidance or go straight to the tools.",
@@ -60,7 +60,7 @@ const en: Dict = {
 
 const es: Dict = {
     'nav.orientation': 'Brújula', 'orientation.eyebrow': 'Orientación inicial', 'orientation.title': 'Brújula CounselorBot',
-    'orientation.subtitle': 'Cuenta qué quieres abordar: la Brújula conecta tus palabras con las herramientas disponibles y te aconseja por dónde empezar.',
+    'orientation.subtitle': "Cuenta qué quieres abordar: la Brújula te recomienda una herramienta para empezar y te ayuda a valorar el tiempo y el esfuerzo. Avanza una pregunta a la vez, en varios turnos y, si hace falta, varios encuentros: no necesitas hacer todas las herramientas.",
     'orientation.landing.latest': 'Revisar la última orientación', 'orientation.landing.open': 'Abrir la Brújula', 'orientation.landing.new': 'Iniciar una nueva orientación', 'orientation.landing.skip': 'Ir directamente a las herramientas',
     'orientation.fork.title': '¿Por dónde quieres empezar?',
     'orientation.fork.body': "Habla con la Brújula para orientarte o accede directamente a las herramientas.",
@@ -82,7 +82,7 @@ const es: Dict = {
 
 const fr: Dict = {
     'nav.orientation': 'Boussole', 'orientation.eyebrow': 'Orientation initiale', 'orientation.title': 'Boussole CounselorBot',
-    'orientation.subtitle': 'Expliquez ce que vous souhaitez aborder : la Boussole relie vos mots aux outils disponibles et vous conseille par où commencer.',
+    'orientation.subtitle': "Expliquez ce que vous souhaitez aborder : la Boussole conseille un outil pour commencer et vous aide à évaluer le temps et l’effort. Avancez une question à la fois, sur plusieurs tours et, si nécessaire, plusieurs rencontres : il n’est pas nécessaire de faire tous les outils.",
     'orientation.landing.latest': 'Revoir la dernière orientation', 'orientation.landing.open': 'Ouvrir la Boussole', 'orientation.landing.new': 'Commencer une nouvelle orientation', 'orientation.landing.skip': 'Aller directement aux outils',
     'orientation.fork.title': 'Par où veux-tu commencer ?',
     'orientation.fork.body': "Parlez avec la Boussole pour vous orienter ou accédez directement aux outils.",
@@ -104,7 +104,7 @@ const fr: Dict = {
 
 const de: Dict = {
     'nav.orientation': 'Kompass', 'orientation.eyebrow': 'Erste Orientierung', 'orientation.title': 'CounselorBot-Kompass',
-    'orientation.subtitle': 'Beschreibe dein Anliegen: Der Kompass verbindet deine Worte mit verfügbaren Werkzeugen und rät dir, wo du beginnen kannst.',
+    'orientation.subtitle': "Beschreibe dein Anliegen: Der Kompass empfiehlt ein Werkzeug für den Einstieg und hilft dir, Zeit und Aufwand einzuschätzen. Gehe eine Frage nach der anderen an, in mehreren Dialogschritten und bei Bedarf mehreren Treffen: Du musst nicht alle Werkzeuge nutzen.",
     'orientation.landing.latest': 'Letzte Orientierung ansehen', 'orientation.landing.open': 'Kompass öffnen', 'orientation.landing.new': 'Neue Orientierung beginnen', 'orientation.landing.skip': 'Direkt zu den Werkzeugen',
     'orientation.fork.title': 'Womit möchtest du beginnen?',
     'orientation.fork.body': "Sprich mit dem Kompass zur Orientierung oder öffne direkt die Werkzeuge.",
@@ -126,7 +126,7 @@ const de: Dict = {
 
 const sv: Dict = {
     'nav.orientation': 'Kompass', 'orientation.eyebrow': 'Inledande orientering', 'orientation.title': 'CounselorBot-kompassen',
-    'orientation.subtitle': 'Berätta vad du vill arbeta med: Kompassen kopplar dina ord till tillgängliga verktyg och råder dig var du kan börja.',
+    'orientation.subtitle': "Berätta vad du vill arbeta med: Kompassen föreslår ett verktyg att börja med och hjälper dig bedöma tid och arbetsinsats. Ta en fråga i taget, över flera turer och vid behov flera tillfällen: du behöver inte använda alla verktyg.",
     'orientation.landing.latest': 'Granska senaste orienteringen', 'orientation.landing.open': 'Öppna Kompassen', 'orientation.landing.new': 'Starta en ny orientering', 'orientation.landing.skip': 'Gå direkt till verktygen',
     'orientation.fork.title': 'Var vill du börja?',
     'orientation.fork.body': "Prata med Kompassen för vägledning eller gå direkt till verktygen.",

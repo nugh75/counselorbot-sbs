@@ -798,3 +798,35 @@ def test_current_cards_are_passed_to_the_same_model_call(monkeypatch):
     assert 'untrusted conversation data' in prompt
     assert 'QUESTIONNAIRES' in prompt and 'competenzestrategiche.it' in prompt
     assert 'Guide at /guide' in prompt and 'Assistant for platform questions' in prompt
+
+
+def test_orientation_paces_tools_and_time_in_the_effective_prompt(monkeypatch):
+    monkeypatch.setattr(orientation, 'AIService', _FakeAIService)
+    db = _Session()
+    try:
+        analyze_turn(db, 'Ho poco tempo e tutti questi strumenti mi confondono', 'it')
+        prompt = _FakeAIService.last_call[0][1]
+        assert 'Recommend one tool to start with' in prompt
+        assert 'Ask at most one focused question per turn' in prompt
+        assert '20–40 minutes' in prompt
+        assert 'not a measured or guaranteed duration' in prompt
+        assert 'separate visits' in prompt
+        assert 'name all nine catalog tools' not in prompt
+        assert 'keep every tool and space it names' not in prompt
+    finally:
+        db.close()
+
+
+def test_offline_recommendations_propose_only_one_starting_tool():
+    result = fallback_analysis('studio concentrazione motivazione futuro competenze', 'it')
+    assert len(result.recommendations) == 1
+
+
+def test_welcome_explains_pacing_and_flexible_time_in_every_language():
+    assert set(orientation_routes.WELCOME) == {'it', 'en', 'es', 'fr', 'de', 'sv'}
+    for text in orientation_routes.WELCOME.values():
+        assert '20–40' in text
+    italian = orientation_routes._welcome('it', None)
+    assert 'una domanda alla volta' in italian
+    assert 'Non serve farli tutti' in italian
+    assert 'non una durata fissa' in italian
