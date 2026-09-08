@@ -31,14 +31,15 @@ import { toast } from '@/components/ui/Toast';
 import { useI18n } from '@/lib/i18n-context';
 import { addCompletedProfile, getCompletedProfiles } from '@/lib/profile-tracker';
 import { apiFetch, ai4authLoginUrl, getIdentity, type Identity } from '@/lib/auth';
-import { getSelectedCounselorId, setSelectedCounselorId } from '@/lib/counselor';
-import { experiencePrefForInstrument, getExperiencePref, getInputMethodPref, getResponseLengthPref, setExperiencePref, setInputMethodPref, setResponseLengthPref } from '@/lib/session-prefs';
+import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId } from '@/lib/counselor';
+import { experiencePrefForInstrument, getExperiencePref, getInputMethodPref, getReasoningPref, getResponseLengthPref, setExperiencePref, setInputMethodPref, setReasoningPref, setResponseLengthPref } from '@/lib/session-prefs';
 import { setSelectedInstrumentId } from '@/lib/instrument';
 import { getResume, setResume } from '@/lib/resume';
 import { deleteFrozenSession, getFrozenSession, type FrozenSessionDetail } from '@/lib/frozen-session';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
+import { ReasoningSelector, type ReasoningEffort } from '@/components/ui/ReasoningSelector';
 import { shouldReviewNotebookBeforeInstrument } from '@/lib/notebook-flow';
 import { isStartableQuestionnaireId } from '@/lib/tool-catalog';
 import { enterStep, startTrail, stepAtDepth, type Trail } from '@/lib/flow-history';
@@ -219,6 +220,10 @@ export default function Home() {
     const [pdfToken, setPdfToken] = useState<string | undefined>(undefined);
     const [experience, setExperience] = useState<'standard' | 'opencode' | null>(null);
     const [responseLength, setResponseLength] = useState<ResponseLength>(() => getResponseLengthPref());
+    const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(() => getReasoningPref());
+    // Il selettore del ragionamento non farebbe nulla sui modelli noti come
+    // non-reasoning: si chiede al server se quello del counselor ragiona.
+    const [reasoningCapable, setReasoningCapable] = useState(true);
     // Apertura della chat in corso: tiene fermo il comando finché le due
     // scritture non sono andate.
     const [starting, setStarting] = useState(false);
@@ -365,6 +370,7 @@ export default function Home() {
                 // in modalità guidata mostrerebbe un percorso che non è il suo.
                 setExperience(snapshot.experience === 'opencode' ? 'opencode' : 'standard');
                 if (snapshot.response_length) setResponseLength(snapshot.response_length);
+                if (snapshot.reasoning_effort) setReasoningEffort(snapshot.reasoning_effort);
                 // La sandbox rigenera `documento.md` a ogni apertura: senza il
                 // token il PDF del profilo sparirebbe dal workspace.
                 setPdfToken(snapshot.pdf_token || undefined);
@@ -642,11 +648,31 @@ export default function Home() {
         beginInteraction(newSessionId, qType);
     };
 
+    useEffect(() => {
+        if (step !== 'interaction') return;
+        const counselorId = getSelectedCounselorId();
+        if (counselorId == null) return;
+        let cancelled = false;
+        void fetchCounselors(lang).then((rows) => {
+            if (cancelled) return;
+            const chosen = rows.find((row) => row.id === counselorId);
+            setReasoningCapable(chosen?.reasoning_capable !== false);
+        });
+        return () => { cancelled = true; };
+    }, [step, lang]);
+
     // Lunghezza risposta: scelta nella schermata della modalità e ricordata per
     // i prossimi strumenti; in chat guidata resta comunque regolabile.
     const handleResponseLengthChange = (value: ResponseLength) => {
         setResponseLength(value);
         setResponseLengthPref(value);
+    };
+
+    // Spazio di ragionamento: stessa logica della lunghezza. Vale per la chat
+    // guidata; la sandbox OpenCode parla con il proprio agente e non lo usa.
+    const handleReasoningChange = (value: ReasoningEffort) => {
+        setReasoningEffort(value);
+        setReasoningPref(value);
     };
 
     // Scelta modalità chat: apre la chat, la ricorda per i prossimi strumenti e
@@ -896,6 +922,10 @@ export default function Home() {
                                         <div className="mt-4 flex flex-col items-center gap-1.5">
                                             <p className="text-xs font-semibold text-slate-500">{t('responseLength.label')}</p>
                                             <ResponseLengthSelector value={responseLength} onChange={handleResponseLengthChange} />
+                                            {reasoningCapable && <>
+                                                <p className="mt-2 text-xs font-semibold text-slate-500">{t('reasoning.label')}</p>
+                                                <ReasoningSelector value={reasoningEffort} onChange={handleReasoningChange} />
+                                            </>}
                                         </div>
                                     </div>
                                 </div>
@@ -911,6 +941,8 @@ export default function Home() {
                                     locale={lang}
                                     frozenSnapshot={frozenSnapshot}
                                     initialResponseLength={responseLength}
+                                    initialReasoningEffort={reasoningEffort}
+                                    reasoningCapable={reasoningCapable}
                                     onFrozen={() => {
                                         setResume(null);
                                         setFrozenSnapshot(null);
