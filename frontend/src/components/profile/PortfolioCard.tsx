@@ -6,6 +6,7 @@ import { FolderOpen, ImagePlus, Loader2, Maximize2, Pencil, Plus, Save, Search, 
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import { toast } from '@/components/ui/Toast';
+import { PortfolioTimelineLinks } from './PortfolioTimelineLinks';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 
 // In anteprima le <img> (non passano da fetch) devono puntare all'account di
@@ -68,6 +69,9 @@ export function PortfolioCard() {
     // Conferma di eliminazione in linea, al posto della finestra nativa.
     const [confirmingDelete, setConfirmingDelete] = useState<number | null>(null);
     const [lightbox, setLightbox] = useState<LightboxImage | null>(null);
+    useEffect(() => {
+        if (window.location.hash.startsWith('#portfolio-')) document.getElementById(window.location.hash.slice(1))?.scrollIntoView({ block: 'center' });
+    }, [items]);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const lightboxTriggerRef = useRef<HTMLButtonElement | null>(null);
     const lightboxCloseRef = useRef<HTMLButtonElement | null>(null);
@@ -356,7 +360,7 @@ export function PortfolioCard() {
             ) : (
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {items.map((item) => (
-                        <article key={item.id} className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
+                        <article key={item.id} id={`portfolio-${item.id}`} className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
                             {item.images[0] ? (
                                 <button
                                     type="button"
@@ -402,6 +406,7 @@ export function PortfolioCard() {
                                     {item.item_date && <span>{new Date(item.item_date).toLocaleDateString(lang)}</span>}
                                 </div>
                                 {item.description && <p className="mt-1 line-clamp-3 text-xs text-slate-500">{item.description}</p>}
+                                <PortfolioTimelineLinks itemId={item.id} description={item.description} locale={lang} />
                                 {item.link && (
                                     <a href={item.link} target="_blank" rel="noopener noreferrer" className="mt-auto pt-1 text-xs font-semibold text-indigo-600 hover:underline">
                                         {t('portfolio.open')}

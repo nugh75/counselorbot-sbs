@@ -55,8 +55,8 @@ The student can now select a visual entry and append edited text to a chosen not
 
 ## Cose da fare: strumenti con immagini e schemi (2026-09-06)
 
-Stato: piano registrato, implementazione non avviata. La richiesta attuale
-autorizza la stesura del piano; lo sviluppo partirà su successiva indicazione.
+Stato aggiornato al 2026-09-08: carte illustrate e storyboard restano
+pianificati; la linea del tempo è stata autorizzata, implementata e verificata.
 Questa sezione descrive l'evoluzione futura, distinta dalle funzionalità già
 consegnate sopra.
 
@@ -67,8 +67,8 @@ consegnate sopra.
 - Seguire l'ordine sotto; completare anche le sottoattività in sequenza.
   Aggiornamento 2026-09-08: su indicazione dell'utente si riprende ora la
   progettazione della linea del tempo (attività 4). Le carte restano aperte;
-  non sono un prerequisito per questa prima versione. Lo sviluppo resta da
-  autorizzare dopo la revisione del piano.
+  non sono un prerequisito per questa prima versione. L’utente ha poi
+  autorizzato lo sviluppo e aggiunto obiettivi di lettura e visione.
 - Chiudere l'attività con risultato verificabile ed evidenze prima di passare
   alla successiva. Un blocco resta esplicito: non saltarlo iniziando altro.
 - Alla chiusura riportare cosa è terminato, verifiche e limiti, e quale attività
@@ -109,7 +109,7 @@ consegnate sopra.
   scuro; breve prova d'uso e correzione dei problemi emersi. Completare la
   consegna Git/runtime secondo il perimetro autorizzato prima di iniziare altro.
 
-- [ ] **4. Definire la linea del tempo personale.**
+- [x] **4. Definire la linea del tempo personale.**
   Definire eventi passati e futuri, date precise o periodi approssimativi,
   simboli e annotazioni, con collegamenti espliciti alle azioni dello spazio
   visuale e ai lavori del Portfolio. La prima versione non dipende da API
@@ -118,7 +118,7 @@ consegnate sopra.
   **Chiusura:** esempio revisionato, modello dei dati e interazioni concordati,
   inclusi collegamenti, rimozioni e salvataggio di una versione nel Portfolio.
 
-- [ ] **5. Realizzare e chiudere la linea del tempo.**
+- [x] **5. Realizzare e chiudere la linea del tempo.**
   Procedere nell'ordine: dati degli eventi; vista temporale; modifica e ordine;
   salvataggio e riapertura; collegamenti alle azioni; collegamenti al Portfolio;
   salvataggio di una versione nel Portfolio; ripresa in chat; PDF.
@@ -129,11 +129,29 @@ consegnate sopra.
   incerti inclusi, integrità dei collegamenti, prova d'uso e consegna completata
   nel perimetro autorizzato. Vedere i criteri dettagliati sotto.
 
+- [ ] **6. Definire lo storyboard di una situazione.**
+  Progettare una sequenza guidata di 3–5 scene: situazione, ostacolo, azione,
+  possibile esito. Riutilizzare il repertorio immagini. Eventuali proposte AI
+  restano bozze modificabili; valutare la generazione su richiesta solo dopo
+  aver verificato utilità e costi. Preparare un esempio educativo completo.
+  **Chiusura:** esempio revisionato e scelta esplicita delle funzioni della
+  prima versione, senza editor grafico libero.
+
+- [ ] **7. Realizzare e chiudere lo storyboard.**
+  Procedere nell'ordine: dati delle scene; immagini e didascalie; riordino;
+  salvataggio e riapertura; ripresa in chat; PDF. Riutilizzare React e l'eventuale
+  dnd kit introdotto per le carte, mantenendo testi e immagini separati e
+  modificabili. Konva non è necessario per caselle prestabilite.
+  **Chiusura:** verifiche equivalenti agli strumenti precedenti, ordine delle
+  scene incluso, prova d'uso e consegna completata nel perimetro autorizzato.
+
 ### Linea del tempo: piano rivisto (2026-09-08)
 
-**Stato:** revisione del piano richiesta dall'utente; sviluppo non avviato.
-I collegamenti ad azioni e Portfolio sono requisiti richiesti. Le modalità
-operative seguenti sono la proposta da rivedere prima dell'implementazione.
+**Stato (2026-09-08):** implementata e verificata sul branch
+`feature/personal-timeline`; frontend e backend ricostruiti e in esecuzione.
+I collegamenti ad azioni e Portfolio sono requisiti richiesti. L’utente ha
+confermato l’accesso dalla finestra Tools e aggiunto obiettivi di lettura di
+libri e articoli e di visione di film. Le modalità seguenti guidano la verifica.
 
 **Scopo educativo.** Collegare ciò che è accaduto, ciò che lo studente vuole
 fare e i lavori che documentano il percorso. Una tappa descrive un'esperienza
@@ -146,14 +164,18 @@ sessione, con titolo libero. Ogni tappa ha identificativo stabile, titolo,
 data o periodo indicativo, collocazione passata/futura, simbolo e riflessione
 facoltativa. I periodi approssimativi restano tali: non inventare un giorno
 preciso per ordinarli. Prevedere ordinamento esplicito nei casi ambigui.
-Resta da concordare se la consegna privilegi la storia personale ampia oppure
-un obiettivo specifico; il titolo libero permette di preparare esempi di
-entrambi senza introdurre due modalità applicative.
+Il titolo libero permette sia una storia personale ampia sia un percorso
+verso un obiettivo specifico, senza introdurre due modalità applicative.
 
 **Azioni.** Ogni tappa può collegare più azioni della bacheca della stessa
 sessione tramite «Collega un'azione» oppure crearne una tramite «Crea
 un'azione». L'azione creata compare nella bacheca e viene collegata alla
-tappa; contenuto e stato hanno un'unica fonte nella bacheca. Rimuovere il
+tappa; contenuto e stato hanno un’unica fonte nella bacheca. Ogni azione
+può essere un’attività, un libro da leggere, un articolo da studiare o un
+film da vedere. Il titolo è scelto dallo studente, lo stato resta modificabile
+nella bacheca e la tappa offre il periodo di riferimento. Una recensione o
+una scheda di lettura può essere collegata alla stessa tappa dal Portfolio.
+Nessuna proposta automatica di titoli o verifica automatica dell’apprendimento. Rimuovere il
 collegamento non elimina l'azione. La creazione deve essere ripetibile dopo
 un errore di rete senza generare duplicati.
 
@@ -207,21 +229,34 @@ ha aiutato a spiegare meglio». Una tappa successiva può collegare l'azione
    Provare l'intero esempio in browser mobile/desktop, tastiera, sei lingue,
    tema scuro e PDF. Concludere con la consegna Git/runtime autorizzata.
 
-- [ ] **6. Definire lo storyboard di una situazione.**
-  Progettare una sequenza guidata di 3–5 scene: situazione, ostacolo, azione,
-  possibile esito. Riutilizzare il repertorio immagini. Eventuali proposte AI
-  restano bozze modificabili; valutare la generazione su richiesta solo dopo
-  aver verificato utilità e costi. Preparare un esempio educativo completo.
-  **Chiusura:** esempio revisionato e scelta esplicita delle funzioni della
-  prima versione, senza editor grafico libero.
+### Verifica della linea del tempo (2026-09-08)
 
-- [ ] **7. Realizzare e chiudere lo storyboard.**
-  Procedere nell'ordine: dati delle scene; immagini e didascalie; riordino;
-  salvataggio e riapertura; ripresa in chat; PDF. Riutilizzare React e l'eventuale
-  dnd kit introdotto per le carte, mantenendo testi e immagini separati e
-  modificabili. Konva non è necessario per caselle prestabilite.
-  **Chiusura:** verifiche equivalenti agli strumenti precedenti, ordine delle
-  scene incluso, prova d'uso e consegna completata nel perimetro autorizzato.
+- Scheda «Linea del tempo» nella finestra Tools delle due esperienze di chat;
+  ritorno dal Portfolio alla tappa disponibile tramite pagina dedicata.
+- 36 test backend: validazione, accessi, riferimenti, revisioni obsolete,
+  anteprima, retry, copie indipendenti, rimozioni e PDF nelle sei lingue,
+  incluse le modalità di PDF finale con obiettivi libro/articolo/film.
+- 125 test frontend; TypeScript e controllo delle sei lingue superati.
+  ESLint senza errori, con quattro avvisi preesistenti fuori dal nuovo codice.
+- 43 prove browser sulla build di produzione, più una prova con API reali
+  e PostgreSQL in schema isolato: creazione dei tre tipi di obiettivo,
+  copia nel Portfolio, ritorno alla tappa, indipendenza della copia e
+  cancellazione senza perdita di azioni o lavori. Anche selezione per la
+  chat e riordino da tastiera sono verificati.
+- Ispezione delle schermate mobile/desktop e del tema scuro; PDF renderizzato
+  e testo estratto verificati. Le prime due prove ostacolate dal pulsante
+  diagnostico di Next.js nel server di sviluppo passano nella build finale.
+- `docker compose up -d --build --no-deps backend frontend` completato;
+  entrambi i servizi in esecuzione, pagina HTTP 200 e API protetta HTTP 401.
+  Nessuna modifica a schema applicativo, volumi o servizi dati. Verificata
+  la corrispondenza dei file backend nel container con i sorgenti testati.
+- Limiti espliciti: 30 tappe, 30 azioni nella bacheca, 20 lavori collegati
+  per tappa; il limite esistente di 4000 caratteri per la copia nel Portfolio
+  richiede di selezionare meno tappe o accorciare le riflessioni, senza tagli
+  automatici. Date indicative e ordine sono scelti dallo studente. Le prove
+  touch usano emulazione browser, non un dispositivo fisico.
+- Le carte illustrate e lo storyboard restano aperti. Questa consegna non
+  avvia automaticamente lo strumento successivo.
 
 ### Idee in coda, da valutare soltanto dopo
 

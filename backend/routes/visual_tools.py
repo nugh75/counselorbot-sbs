@@ -7,8 +7,27 @@ from .. import auth, database
 from ..message_diagrams import session_owner
 from ..visual_tools import LABELS, SaveWorkspace, load_workspace, save_workspace
 from ..visual_personal import PersonalTransfer, personal_context, transfer_to_personal
+from ..timeline import SnapshotRequest, SaveSnapshot, snapshot_preview, save_snapshot, portfolio_timeline_links
 
 router = APIRouter()
+
+
+@router.post('/session/{session_id}/visual-tools/timeline/preview')
+def preview_timeline(session_id: str, update: SnapshotRequest, db: Session = Depends(database.get_db),
+                     identity: dict = Depends(auth.get_identity_view_as)):
+    return snapshot_preview(db, session_id, _personal_owner(db, session_id, identity), update)
+
+
+@router.post('/session/{session_id}/visual-tools/timeline/portfolio')
+def copy_timeline(session_id: str, update: SaveSnapshot, db: Session = Depends(database.get_db),
+                  identity: dict = Depends(auth.get_identity_view_as)):
+    return save_snapshot(db, session_id, _personal_owner(db, session_id, identity), update)
+
+
+@router.get('/user/portfolio/{item_id}/timeline-links')
+def linked_timelines(item_id: int, db: Session = Depends(database.get_db),
+                     identity: dict = Depends(auth.get_current_user)):
+    return portfolio_timeline_links(db, identity['username'], item_id)
 
 
 def _personal_owner(db, session_id, identity):

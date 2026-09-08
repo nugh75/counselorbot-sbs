@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowRight, BookMarked, BookOpen, Columns3, Download, LayoutList, Layers, MessageSquare, NotebookPen, Plus, RotateCcw, Save, Trash2, Undo2, X } from 'lucide-react';
+import { ArrowRight, GitCommitHorizontal, BookMarked, BookOpen, Columns3, Download, LayoutList, Layers, MessageSquare, NotebookPen, Plus, RotateCcw, Save, Trash2, Undo2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { apiFetch } from '@/lib/auth';
@@ -10,14 +10,15 @@ import { normalizeRecommendationCatalog, type RecommendationCatalog } from '@/li
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import { NotebookBookletContent, type DeskTab } from '@/components/profile/NotebookBookletPanel';
 import type { BookletType } from '@/components/profile/StudentBookletCard';
-import { emptyWorkspace, removeCriterion, removeOption, setCell, workspaceText, type ActionStage, type CardBucket, type SavedWorkspace, type VisualWorkspace } from '@/lib/visual-tools';
+import { emptyWorkspace, removeAction, removeCriterion, removeOption, setCell, workspaceText, timelineText, type ActionStage, type CardBucket, type SavedWorkspace, type VisualWorkspace } from '@/lib/visual-tools';
 import { VisualPersonalTransfer } from './VisualPersonalTransfer';
+import { TimelineTools } from './TimelineTools';
 
-// Le tre schede di lavoro salvano il workspace; taccuino e libretto si salvano
+// Le schede di lavoro salvano il workspace; taccuino e libretto si salvano
 // da soli, quindi stanno nella stessa fila ma senza barra di salvataggio.
-type WorkTab = 'board' | 'comparison' | 'cards';
+type WorkTab = 'board' | 'comparison' | 'cards' | 'timeline';
 type Tab = WorkTab | DeskTab;
-export type VisualToolsRequest = { tab: WorkTab; nonce: number };
+export type VisualToolsRequest = { tab: WorkTab; nonce: number; eventId?: string };
 type Props = {
     sessionId: string;
     locale: string;
@@ -32,8 +33,8 @@ const inputClass = 'w-full min-w-0 rounded-md border border-slate-300 bg-white p
 const buttonClass = 'h-[44px] w-[44px] shrink-0 p-0';
 const stages: ActionStage[] = ['todo', 'doing', 'done'];
 const buckets: CardBucket[] = ['unsorted', 'yes', 'explore', 'no'];
-const tabs: Tab[] = ['board', 'comparison', 'cards', 'notebook', 'booklet'];
-const tabIcons = [LayoutList, Columns3, Layers, NotebookPen, BookMarked];
+const tabs: Tab[] = ['board', 'comparison', 'cards', 'timeline', 'notebook', 'booklet'];
+const tabIcons = [LayoutList, Columns3, Layers, GitCommitHorizontal, NotebookPen, BookMarked];
 const isDeskTab = (tab: Tab): tab is DeskTab => tab === 'notebook' || tab === 'booklet';
 
 export function VisualTools(props: Props) {
@@ -46,9 +47,10 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
     const [open, setOpen] = useState(false);
     const [personalOpen, setPersonalOpen] = useState(false);
     const [tab, setTab] = useState<Tab>('board');
-    const [helpOpen, setHelpOpen] = useState<Record<WorkTab, boolean>>({ board: false, comparison: false, cards: false });
+    const [helpOpen, setHelpOpen] = useState<Record<WorkTab, boolean>>({ board: false, comparison: false, cards: false, timeline: false });
     const [saved, setSaved] = useState<SavedWorkspace>({ revision: 0, workspace: emptyWorkspace() });
     const [work, setWork] = useState<VisualWorkspace>(emptyWorkspace);
+    const [timelineSelection, setTimelineSelection] = useState<string[] | null>(null);
     const [history, setHistory] = useState<VisualWorkspace[]>([]);
     const [loaded, setLoaded] = useState(false);
     const [busy, setBusy] = useState(false);
@@ -67,7 +69,7 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
     const opener = useRef<HTMLElement | null>(null);
     const id = useId();
     const dirty = JSON.stringify(work) !== JSON.stringify(saved.workspace);
-    const hasWork = Boolean(work.actions.length || work.cards.length || work.comparison.options.length);
+    const hasWork = Boolean(work.actions.length || work.cards.length || work.comparison.options.length || work.timeline?.events.length);
     const currentCatalog = providedCatalog ?? catalog;
     const sources = [
         ...currentCatalog.strategy.map(item => ({ title: item.name || item.slug, detail: item.description || '', key: `strategy:${item.slug}` })),
@@ -137,7 +139,7 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
 
     const save = async (next = work): Promise<SavedWorkspace | null> => {
         if (!loaded || busy) return null;
-        if (next.actions.some(a => !a.title.trim()) || next.cards.some(c => !c.text.trim()) || next.comparison.options.some(o => !o.title.trim()) || next.comparison.criteria.some(c => !c.label.trim())) { setIssue('requiredFields'); return null; }
+        if (next.actions.some(a => !a.title.trim()) || next.cards.some(c => !c.text.trim()) || next.comparison.options.some(o => !o.title.trim()) || next.comparison.criteria.some(c => !c.label.trim()) || (next.timeline?.events.length && (!next.timeline.title.trim() || next.timeline.events.some(e => !e.title.trim() || !e.period.trim())))) { setIssue('requiredFields'); return null; }
         for (const field of dialog.current?.querySelectorAll<HTMLInputElement>('[data-workspace-field]') ?? []) {
             if (!field.reportValidity()) return null;
         }
@@ -169,7 +171,7 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
         finally { setBusy(false); }
     };
     const discuss = async () => {
-        const text = workspaceText(work, l);
+        const text = tab === 'timeline' ? timelineText(work, l, timelineSelection ?? undefined) : workspaceText(work, l);
         if (text.length > 8000) { setIssue('tooLong'); return; }
         if (!(await save())) return;
         setOpen(false);
@@ -245,6 +247,7 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
                                 }}><ArrowRight className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                             </details>
                         </section>
+                        {tab === 'timeline' && <TimelineTools sessionId={sessionId} locale={locale} work={work} edit={edit} save={save} selected={timelineSelection} select={setTimelineSelection} focusEvent={request?.eventId} />}
                         {tab === 'board' && <>
                             <details open={!work.actions.length || Boolean(draftTitle)} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('addAction')}</summary>
                             <form className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3" onSubmit={event => { event.preventDefault(); if (!draftTitle.trim() || draftTitle.length > 160 || work.actions.length >= 30) return;
@@ -262,10 +265,11 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
                                     <label className="block text-sm">{l('titleField')}<input data-workspace-field required maxLength={160} value={action.title} className={`${inputClass} mt-1 font-semibold`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, title: e.target.value } : a) })} /></label>
                                     <label className="mt-3 block text-sm">{l('move')}<select id={`${id}-action-${action.id}`} aria-label={`${l('move')}: ${action.title}`} value={action.stage} className={`${inputClass} mt-1 min-h-[44px]`} onChange={e => { edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, stage: e.target.value as ActionStage } : a) }); focusMoved(`${id}-action-${action.id}`); }}>{stages.map(s => <option key={s} value={s}>{l(s)}</option>)}</select></label>
                                     <details className="mt-2"><summary className="min-h-[44px] cursor-pointer py-3 text-sm font-medium text-indigo-700">{l('detail')} · {l('reflection')}</summary>
+                                        <label className="block text-sm">{l('actionKind')}<select className={`${inputClass} mt-1`} value={action.kind || 'activity'} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, kind: e.target.value as 'activity' | 'book' | 'article' | 'film' } : a) })}>{['activity', 'book', 'article', 'film'].map(kind => <option key={kind} value={kind}>{l(kind)}</option>)}</select></label>
                                         <label className="block text-sm">{l('detail')}<textarea value={action.detail} maxLength={1000} rows={3} className={`${inputClass} mt-1`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, detail: e.target.value } : a) })} /></label>
                                         <label className="mt-2 block text-sm">{l('reflection')}<textarea value={action.reflection} maxLength={1000} rows={3} className={`${inputClass} mt-1`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, reflection: e.target.value } : a) })} /></label>
                                         <p className="mt-2 break-words text-xs text-slate-500">{l('source')}: {action.source || l('personal')}</p>
-                                        {removeButton(action.title, () => edit({ ...work, actions: work.actions.filter(a => a.id !== action.id) }))}
+                                        {removeButton(action.title, () => edit(removeAction(work, action.id)))}
                                     </details>
                                 </article>)}</div>
                             </section>)}</div>
@@ -330,7 +334,7 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
                         {!personalOpen && <><Tooltip content={l('saveHelp')} side="top"><Button aria-label={l('save')} type="button" className={buttonClass} disabled={!loaded || busy || !dirty} onClick={() => void save()}><Save className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                         <Tooltip content={l('undoHelp')} side="top"><Button type="button" variant="secondary" aria-label={l('undo')} className={buttonClass} disabled={busy || !history.length} onClick={() => { const previous = history[history.length - 1]; if (previous) { setWork(previous); setHistory(history.slice(0, -1)); } }}><Undo2 className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                         <Tooltip content={l('exportHelp')} side="top"><Button aria-label={l('export')} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork} onClick={() => void exportPdf()}><Download className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
-                        {onDiscuss && <Tooltip content={l('discussHelp')} side="top"><Button aria-label={l('discuss')} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork} onClick={() => void discuss()}><MessageSquare className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}</>}
+                        {onDiscuss && <Tooltip content={l('discussHelp')} side="top"><Button aria-label={l('discuss')} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork || (tab === 'timeline' && !(work.timeline?.events.some(e => timelineSelection === null || timelineSelection.includes(e.id))))} onClick={() => void discuss()}><MessageSquare className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}</>}
                     </div>
                 </footer>}
             </section>
