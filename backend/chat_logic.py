@@ -17,6 +17,7 @@ from .student_context import LEARNER_PROFILE_LABELS
 from . import database
 from . import prompt_config
 from .anonymous_codes import code_for_identity
+from .i18n_fields import localized
 from .ai_service import AIService
 from .memory_service import session_memory
 from .strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_memory, strategy_memory
@@ -1436,6 +1437,127 @@ def _apply_ztpi_step_profile_directive(
     )
 
 
+# --- Strumenti di competenza (QPCS, QPCC, QAP) --------------------------------
+# Questi tre percorsi non ricevevano nessun blocco punteggi risolto: le etichette
+# di interpretazione le dettava il prompt, in inglese, e uscivano cosi' dentro
+# risposte italiane. I nomi fattore in en/es/fr/de/sv stanno nel catalogo
+# strumenti; l'italiano no (gli originali italiani vivono sul sito esterno),
+# quindi la mappa italiana sta qui, accanto alle gemelle QSA e ZTPI.
+_COMPETENCE_INSTRUMENTS = {"QPCS", "QPCC", "QAP"}
+
+_COMPETENCE_IT_FACTOR_NAMES: dict[str, dict[str, str]] = {
+    "QPCS": {
+        "S1": "Gestione delle emozioni", "S2": "Competenza comunicativa",
+        "S3": "Volonta' e perseveranza", "S4": "Strategie e collaborazione",
+        "S5": "Fiducia e progetto di vita",
+    },
+    "QPCC": {
+        "K1": "Comunicazione in pubblico", "K2": "Ansia, controllo e responsabilita'",
+        "K3": "Volizione e autoregolazione", "K4": "Strategie di elaborazione",
+        "K5": "Convinzioni su di se'",
+    },
+    "QAP": {
+        "AD1": "Orientamento al futuro", "AD2": "Controllo e autonomia",
+        "AD3": "Curiosita' ed esplorazione", "AD4": "Fiducia e problem solving",
+    },
+}
+
+# Etichette di banda proprie di questi strumenti: piu' morbide di quelle QSA
+# ("Adeguato", "Forza"), che i loro prompt vietano esplicitamente da sempre.
+_COMPETENCE_BAND_LABELS: dict[str, dict[str, str]] = {
+    "it": {"growth": "Un fattore su cui lavorare", "adequate": "Buono", "strength": "Un tuo punto di forza"},
+    "en": {"growth": "A factor to work on", "adequate": "Good", "strength": "Your strength"},
+    "es": {"growth": "Un factor en el que trabajar", "adequate": "Bueno", "strength": "Tu punto fuerte"},
+    "fr": {"growth": "Un facteur a travailler", "adequate": "Bon", "strength": "Ton point fort"},
+    "de": {"growth": "Ein Bereich zum Weiterarbeiten", "adequate": "Gut", "strength": "Deine Starke"},
+    "sv": {"growth": "En faktor att arbeta med", "adequate": "Bra", "strength": "Din styrka"},
+}
+
+_COMPETENCE_SCORE_RE = re.compile(
+    r"\b(S[1-5]|K[1-5]|AD[1-4])\b[^\n\r0-9]{0,80}?([1-9])\s*/\s*9\b", re.IGNORECASE
+)
+
+
+def _is_competence_questionnaire(questionnaire_type: Optional[str]) -> bool:
+    return (questionnaire_type or "").upper() in _COMPETENCE_INSTRUMENTS
+
+
+def competence_factor_names(db, questionnaire_type: str, language: Optional[str]) -> dict[str, str]:
+    """Nomi fattore dello strumento nella lingua della risposta.
+
+    L'italiano viene dalla mappa qui sopra, le altre lingue dal catalogo. Un
+    fattore senza etichetta nella lingua servita resta con il suo codice, come
+    fa gia' `scoring_service._label_for`: meglio neutro che in lingua mista.
+    """
+    code = (questionnaire_type or "").upper()
+    if code not in _COMPETENCE_INSTRUMENTS:
+        return {}
+    italian = _COMPETENCE_IT_FACTOR_NAMES[code]
+    if (language or "it").lower() == "it":
+        return dict(italian)
+    names = {}
+    try:
+        rows = (
+            db.query(models.Factor)
+            .filter(models.Factor.instrument_code == code)
+            .order_by(models.Factor.sort_order)
+            .all()
+        )
+    except Exception:
+        return {}
+    for factor in rows:
+        label = localized(factor, "label", (language or "it").lower())
+        names[factor.code.upper()] = label or factor.code
+    return names or dict(italian)
+
+
+def _competence_band_for_score(score: int) -> str:
+    # Tutti i fattori di questi tre strumenti sono diretti (catalogo:
+    # is_interpretation_inverted false su tutti e 14).
+    if score <= 3:
+        return "growth"
+    if score <= 6:
+        return "adequate"
+    return "strength"
+
+
+def _apply_competence_step_profile_directive(
+    system_prompt: str,
+    questionnaire_type: str,
+    language: Optional[str],
+    scores_context: str,
+    allowed_codes: set[str],
+    factor_names: dict[str, str],
+) -> str:
+    if not scores_context or not factor_names:
+        return system_prompt
+    labels = _COMPETENCE_BAND_LABELS.get((language or "it").lower(), _COMPETENCE_BAND_LABELS["it"])
+    allowed = {code.upper() for code in allowed_codes} if allowed_codes else set()
+    lines = []
+    for code, raw_score in _COMPETENCE_SCORE_RE.findall(scores_context):
+        code = code.upper()
+        if allowed and code not in allowed:
+            continue
+        name = factor_names.get(code)
+        if not name:
+            continue
+        band = _competence_band_for_score(int(raw_score))
+        lines.append(f"- {code} ({name}): {raw_score}/9 = {labels[band]}")
+    if not lines:
+        return system_prompt
+    return (
+        f"{system_prompt}\n\n"
+        "[CURRENT STEP SCORE PROFILE]\n"
+        + "\n".join(lines)
+        + "\n"
+        "The interpretation label is already resolved above: use exactly that wording for "
+        "each factor and report the score exactly as written, never translating or "
+        "replacing either. Treat every score as the student's own self-assessment, a "
+        "reference point for reflection and never a grade. When you group the factors at "
+        "the end, use these same labels and skip a label that no factor received."
+    )
+
+
 def _apply_current_step_score_profile_directive(
     system_prompt: str,
     questionnaire_type: str,
@@ -1443,9 +1565,14 @@ def _apply_current_step_score_profile_directive(
     scores_context: str,
     allowed_codes: set[str],
     include_advice: bool,
+    factor_names: dict[str, str] | None = None,
 ) -> str:
     if (questionnaire_type or "").upper() == "ZTPI":
         return _apply_ztpi_step_profile_directive(system_prompt, language, scores_context, allowed_codes)
+    if _is_competence_questionnaire(questionnaire_type):
+        return _apply_competence_step_profile_directive(
+            system_prompt, questionnaire_type, language, scores_context, allowed_codes, factor_names or {}
+        )
     profile = _qsa_step_score_profile(scores_context, questionnaire_type, language, allowed_codes)
     if not profile:
         return system_prompt

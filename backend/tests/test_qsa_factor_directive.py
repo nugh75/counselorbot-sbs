@@ -508,6 +508,56 @@ def test_ztpi_score_profile_resolves_zone():
     assert "T1 (Passato Negativo): 5/9 = Vicino al profilo equilibrato" in out_close
 
 
+def test_competence_score_profile_resolves_labels_in_the_answer_language():
+    # QPCS/QPCC/QAP non ricevevano nessun blocco punteggi: le etichette le
+    # dettava il prompt, in inglese, e uscivano cosi' dentro risposte italiane.
+    from backend.chat_logic import _COMPETENCE_IT_FACTOR_NAMES, _apply_competence_step_profile_directive
+
+    scores = "PROFILO QPCS DELLO STUDENTE:\n- S1: 2/9\n- S2: 5/9\n- S5: 8/9"
+    out = _apply_competence_step_profile_directive(
+        "BASE", "QPCS", "it", scores, set(), _COMPETENCE_IT_FACTOR_NAMES["QPCS"])
+    assert "- S1 (Gestione delle emozioni): 2/9 = Un fattore su cui lavorare" in out
+    assert "- S2 (Competenza comunicativa): 5/9 = Buono" in out
+    assert "- S5 (Fiducia e progetto di vita): 8/9 = Un tuo punto di forza" in out
+    # Le etichette QSA restano fuori: questi strumenti le vietano da sempre.
+    assert "Adeguato" not in out and "Forza:" not in out
+
+    english = _apply_competence_step_profile_directive(
+        "BASE", "QAP", "en", "- AD1: 7/9", set(), {"AD1": "Concern"})
+    assert "- AD1 (Concern): 7/9 = Your strength" in english
+
+    # Fuori dai tre strumenti il blocco non si aggiunge.
+    assert _apply_competence_step_profile_directive("BASE", "QSA", "it", "- C1: 5/9", set(), {}) == "BASE"
+
+
+def test_competence_factor_names_fall_back_to_the_catalog_for_other_languages():
+    # L'italiano non esiste nel catalogo (gli originali stanno sul sito esterno):
+    # viene dalla mappa in codice, il resto dalle righe `factors`.
+    from backend.chat_logic import competence_factor_names
+
+    class _Factor:
+        def __init__(self, code, labels):
+            self.code = code
+            self.label_i18n = labels
+
+    class _Query:
+        def __init__(self, rows): self.rows = rows
+        def filter(self, *a, **k): return self
+        def order_by(self, *a, **k): return self
+        def all(self): return self.rows
+
+    class _Db:
+        def __init__(self, rows): self.rows = rows
+        def query(self, *a, **k): return _Query(self.rows)
+
+    db = _Db([_Factor("S1", {"en": "Managing emotions", "fr": "Gestion des émotions"})])
+    assert competence_factor_names(db, "QPCS", "it")["S1"] == "Gestione delle emozioni"
+    assert competence_factor_names(db, "QPCS", "fr")["S1"] == "Gestion des émotions"
+    # Lingua senza etichetta: resta il codice, mai un misto di lingue.
+    assert competence_factor_names(db, "QPCS", "sv")["S1"] == "S1"
+    assert competence_factor_names(db, "QSA", "it") == {}
+
+
 def test_ztpi_score_profile_marks_the_side_of_the_balanced_range():
     # Lo step finale deve dire se un fattore sta sotto o sopra il profilo
     # equilibrato: la direzione arriva risolta, cosi' i prompt non devono
