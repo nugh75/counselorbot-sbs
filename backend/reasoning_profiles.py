@@ -113,6 +113,27 @@ _PATTERNS: list[tuple[re.Pattern, ReasoningProfile]] = [
 ]
 
 
+# --- Scelta dello studente sullo spazio di ragionamento -------------------
+# Tre etichette, come la lunghezza della risposta. "standard" non impone nulla:
+# vale il default della famiglia (o il budget del preset del counselor), cosi'
+# chi non tocca il selettore vede il comportamento di sempre.
+DEEP_REASONING_BUDGET = 8000
+
+REASONING_EFFORTS = ("off", "standard", "deep")
+
+
+def effort_overrides(effort: Optional[str]) -> tuple[Optional[bool], Optional[int]]:
+    """(disable_thinking, budget_override) per la scelta dello studente.
+
+    `(None, None)` significa "nessun override": decide chi decideva prima.
+    """
+    if effort == "off":
+        return True, None
+    if effort == "deep":
+        return False, DEEP_REASONING_BUDGET
+    return None, None
+
+
 def classify(model: Optional[str]) -> Optional[ReasoningProfile]:
     """Profilo del modello, o None se sconosciuto.
 
@@ -133,6 +154,16 @@ def is_reasoning_model(model: Optional[str]) -> bool:
     """True solo per i modelli NOTI come reasoning. Sconosciuti -> False."""
     profile = classify(model)
     return bool(profile and profile.is_reasoning)
+
+
+def supports_reasoning(model: Optional[str]) -> bool:
+    """False solo per i modelli NOTI come non-reasoning.
+
+    Lo sconosciuto torna True, come in `resolve_plan`: meglio offrire la leva
+    dove forse non serve che nasconderla dove servirebbe.
+    """
+    profile = classify(model)
+    return profile is None or profile.is_reasoning
 
 
 def resolve_plan(

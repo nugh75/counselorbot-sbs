@@ -867,6 +867,7 @@ class FrozenSessionCreate(BaseModel):
     experience: Optional[str] = None
     locale: Optional[str] = Field(default=None, max_length=16)
     response_length: Optional[str] = None
+    reasoning_effort: Optional[str] = None
     label: Optional[str] = Field(default=None, max_length=200)
     pdf_token: Optional[str] = None
 
@@ -915,6 +916,7 @@ class FrozenSessionDetail(FrozenSessionSummary):
     counselor_id: Optional[int] = None
     locale: Optional[str] = None
     response_length: Optional[str] = None
+    reasoning_effort: Optional[str] = None
     pdf_token: Optional[str] = None
 
 
@@ -1050,6 +1052,9 @@ class CounselorPublic(BaseModel):
     # parametro sono adatti tutti. I non adatti non vengono nascosti: servono a
     # spiegare perche' quello scelto non va e quali si possono usare.
     suitable: bool = True
+    # Il modello puo' ragionare: falso solo per le famiglie note come
+    # non-reasoning. Serve a nascondere il selettore dove non farebbe nulla.
+    reasoning_capable: bool = True
 
     class Config:
         from_attributes = True
